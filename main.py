@@ -7725,6 +7725,17 @@ class Report(object):
             #this is only for adhoc "big button" reports.
             reporttype=str(self.params.check())
         reporttype=' '.join([ps,profile,reporttype])
+        if 'psprofiles' in kwargs:
+            reporttype=' '.join(
+                        [' '.join(
+                        [' '.join([ps]+
+                                ['('+'-'.join(kwargs['psprofiles'][ps])+')'
+                                            for ps in kwargs['psprofiles']
+                                            ])
+                                for ps in kwargs['psprofiles']
+                                ]),
+                                # profile,
+                                reporttype])
         bits=[str(self.reportbasefilename),rx.id(reporttype),"ReportXLP"]
         if not default:
             bits.append('mod')
@@ -8053,7 +8064,15 @@ class Report(object):
         self.basicreportfile=''.join([str(self.reportbasefilename)
                                         ,'_',''.join(sorted(self.cvtstodo)[:2])
                                         ,'_BasicReport.txt'])
-        xlpr=self.xlpstart(reporttype='Basic '+''.join(self.cvtstodo))
+        kwargs['psprofiles']={ps:profiles
+                            for profiles in [self.slices.profiles(ps=ps)[
+                                                    :self.settings.maxprofiles]
+                            for ps in self.slices.pss()[:self.settings.maxpss]]
+                            for ps in self.slices.pss()[:self.settings.maxpss]
+                            }
+        log.info("kwargs['psprofiles']={}".format(kwargs['psprofiles']))
+        xlpr=self.xlpstart(reporttype='Multislice '+''.join(self.cvtstodo),
+                            **kwargs)
         si=xlp.Section(xlpr,"Introduction")
         p=xlp.Paragraph(si,instr)
         sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
@@ -8071,8 +8090,8 @@ class Report(object):
         log.info(t)
         print(t)
         p=xlp.Paragraph(si,t)
-        for kwargs['ps'] in self.slices.pss()[:2]: #just the first two (Noun and Verb)
-            profiles=self.slices.profiles(ps=kwargs['ps'])[:self.settings.maxprofiles]
+        for kwargs['ps'] in kwargs['psprofiles']:
+            profiles=kwargs['psprofiles'][kwargs['ps']]
             t=_("{} data: (profiles: {})".format(kwargs['ps'],profiles))
             log.info(t)
             print(t)
