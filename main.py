@@ -12211,7 +12211,7 @@ class CheckParameters(dict):
                     # ("CV2#", "Word-final CV")
                     ],
                 3:[
-                    ("CxV2", _("Correspondence of third CV")),
+                    ("CxV3", _("Correspondence of third CV")),
                     ("CV1=CV2=CV3",_("Same First/only Three CVs")),
                     ("CV3", _("Third CV"))
                     ],
