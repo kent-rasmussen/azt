@@ -1718,7 +1718,7 @@ class Settings(object):
                     self.polygraphs[lang][pclass]={}
                 for pg in self.db.s[lang][sclass]:
                     if pg not in self.polygraphs[lang][pclass]:
-                        log.info("{} ([]/{}) has no Di/Trigraph setting; "
+                        log.info("{} ({}/{}) has no Di/Trigraph setting; "
                         "prompting user or info.".format(pg,pclass,sclass))
                         self.askaboutpolygraphs()
                         return
