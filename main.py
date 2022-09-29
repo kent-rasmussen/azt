@@ -9698,6 +9698,15 @@ class ReportCitationBasicTBackground(ReportCitationBasicT,Report,Comprehensive,T
     """docstring for ReportCitationT."""
     def tasktitle(self):
         return _("Comprehensive Tone Report, in the background")
+        # self.do=self.tonegroupreportcomprehensive
+        # self.do=self.tonegroupreport
+        # TaskDressing.__init__(self,parent)
+        MultisliceT.__init__(self)
+        # self.bylocation=False
+class ReportCitationMultisliceTBackground(Background,ReportCitationMultisliceT):
+    """docstring for ReportCitationT."""
+    def tasktitle(self):
+        return _("Multislice Tone Report")
         # Report on several slices of Citation Forms (in Tone Frames)")
     def taskicon(self):
         return program['theme'].photo['iconTRepcomp']
@@ -9715,12 +9724,21 @@ class ReportCitationBasicTBackground(ReportCitationBasicT,Report,Comprehensive,T
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self)
-        ui.Window.__init__(self,parent)
-        self.do=self.reportmulti
-        self.reportfn=self.tonegroupreport
-        TaskDressing.__init__(self,parent)
-        Report.__init__(self)
+        ReportCitationMultisliceT.__init__(self,parent)
+        Background.__init__(self)
+class ReportCitationMultisliceTLBackground(Background,ReportCitationMultisliceTL):
+    """docstring for ReportCitationT."""
+    def tasktitle(self):
+        return _("Multislice Tone Report (by location)")
+    def taskicon(self):
+        return program['theme'].photo['iconTRepcomp']
+    def tooltip(self):
+        return _("This report gives you reports across multiple lexical "
+                "categories, and across multiple syllable profiles. \nIt does "
+                "this for all data sorted in tone frames, organized by word.")
+    def __init__(self, parent): #frame, filename=None
+        ReportCitationMultisliceTL.__init__(self,parent)
+        Background.__init__(self)
         self.bylocation=True
 """Task definitions end here"""
 class Entry(lift.Entry): #Not in use
