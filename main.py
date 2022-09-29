@@ -1709,6 +1709,10 @@ class Settings(object):
         if not hasattr(self,'polygraphs'):
             self.polygraphs={}
         for lang in self.db.analangs:
+            if lang not in self.db.s:
+                log.error(_("Language {} found without segment settings."
+                            ).format(lang))
+                continue
             if lang not in self.polygraphs:
                 self.polygraphs[lang]={}
             for sclass in [sc for sc in self.db.s[lang]
