@@ -1706,6 +1706,7 @@ class Settings(object):
             nochanges() #this is the default exit behavior
     def polygraphcheck(self):
         log.info("Checking for Digraphs and Trigraphs!")
+        # log.info("Language settings: {}".format(self.db.s))
         if not hasattr(self,'polygraphs'):
             self.polygraphs={}
         for lang in self.db.analangs:
@@ -1721,6 +1722,8 @@ class Settings(object):
                 if pclass not in self.polygraphs[lang]:
                     self.polygraphs[lang][pclass]={}
                 for pg in self.db.s[lang][sclass]:
+                    # log.info("checking for {} ({}/{}) in {}"
+                    #         "".format(pg,pclass,sclass,self.polygraphs))
                     if pg not in self.polygraphs[lang][pclass]:
                         log.info("{} ({}/{}) has no Di/Trigraph setting; "
                         "prompting user or info.".format(pg,pclass,sclass))
