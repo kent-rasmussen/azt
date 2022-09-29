@@ -12863,6 +12863,13 @@ def dictcompare(x,y,ignore=[]):
     else:
         r=len(pairs)/(len(pairs)+len(unpairs))
     return (r,pairs,unpairs)
+def quote(x):
+    if "'" not in x:
+        return "'"+x+"'"
+    elif '"' not in x:
+        return '"'+x+'"'
+    else:
+        log.error("Looks like ˋ{}ˊ contains single and double quotes!".format(x))
 def indenteddict(indict):
     outdict={}
     # log.info("working on dict with keys {}".format(indict.keys()))
@@ -12876,8 +12883,8 @@ def indenteddict(indict):
                 log.info("printing double indented dict for {}: {} "
                             "keys".format(j,indict[j].keys()))
                 outdict[j]='{'+',\n'.join(
-                    ["'"+k+"':{"+',\n\t'.join(
-                                        ["'"+i+"':"+str(indict[j][k][i])
+                    [quote(k)+":{"+',\n\t'.join(
+                                        [quote(i)+":"+str(indict[j][k][i])
                                             for i in indict[j][k]#.keys()
                                             # for k in indict[j].keys()
                                             if i #and i in indict[j][k].keys()
@@ -12893,13 +12900,13 @@ def indenteddict(indict):
             else:
                 log.info("printing indented dict for {} "
                         "key".format(j))
-                outdict[j]='{'+',\n'.join(["'"+i+"':"+str(indict[j][i])
+                outdict[j]='{'+',\n'.join([quote(i)+":"+str(indict[j][i])
                                         for i in indict[j]#.keys()
                                         if i])+'}'
         elif indict[j]:
             log.info("printing unindented dict for {} "
                     "key".format(j))
-            outdict[j]="'"+str(indict[j])+"'"
+            outdict[j]=str(indict[j]) #don't quote booleans!
     return outdict
 def selected(groupvars):
     return [k for k in groupvars
