@@ -765,6 +765,15 @@ class StatusFrame(ui.Frame):
         self.opts['columnplus']=1
         t=(_("Max lexical categories: {}".format(self.settings.maxpss)))
         self.proselabel(t,cmd=self.taskchooser.getmaxpss,parent=line)
+    def multicheckscope(self):
+        if not hasattr(self.task,'cvtstodo'):
+            self.task.cvtstodo=['V']
+        line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
+                        columnspan=3,sticky='w')
+        self.opts['row']+=1
+        log.info(self.task.cvtstodoprose())
+        t=(_("Run all checks for {}").format(unlist(self.task.cvtstodoprose())))
+        self.proselabel(t,cmd=self.taskchooser.getmulticheckscope,parent=line)
     def redofinalbuttons(self):
         if hasattr(self,'bigbutton') and self.bigbutton.winfo_exists():
             self.bigbutton.destroy()
@@ -2484,6 +2493,9 @@ class Settings(object):
     def setmaxpss(self,choice,window):
         self.maxpss=choice
         window.destroy()
+    def setmulticheckscope(self,choice,window):
+        self.cvtstodo=self.taskchooser.task.cvtstodo=choice
+        window.destroy()
     def setglosslang(self,choice,window):
         self.glosslangs.lang1(choice)
         self.attrschanged.append('glosslangs')
@@ -3451,6 +3463,43 @@ class TaskDressing(object):
                             cmd=getcustom
                             )
         window.wait_window(window)
+    def getmulticheckscope(self,event=None):
+            log.info("Asking for multicheckscope...")
+            window=ui.Window(self.frame, title=_('Select Scope of Checks'))
+            ui.Label(window.frame,
+                    text=_('What kinds of checks to you want to run?')
+                    ).grid(column=0, row=0)
+            cvts=[[i] for i in self.params.cvts()]
+            cvts.remove(['T'])
+            cvtsdone=cvts[:]
+            # log.info("{};{}".format(len(cvts),cvts))
+            for j in cvts[:2]+[[i[0] for i in cvts[:2]]]:
+                cvtsdone+=[j+i for i in cvts
+                            if i[0] not in j
+                            if set(j+i) not in [set(i) for i in cvtsdone]]
+                # log.info("{};{}".format(len(cvtsdone),cvtsdone))
+            cvtsdone+=[[i[0] for i in cvts]]
+            options=[{'code':opt,
+                    'name':unlist([self.params.cvtdict()[i]['pl'] for i in opt])
+                    }
+                    for opt in cvtsdone
+                    ]
+            for opt in options:
+                if len(opt['code']) == 1:
+                    opt['name']+=' '+_("(only)")
+            buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                                    optionlist=options,
+                                    command=self.settings.setmulticheckscope,
+                                    window=window,
+                                    column=0, row=1
+                                                )
+    def cvtstodoprose(self,cvtstodo=None):
+        if not cvtstodo:
+            cvtstodo=self.cvtstodo
+        output=[]
+        for cvt in self.cvtstodo:
+            output+=[self.params.cvtdict()[cvt]['pl']]
+        return output
     def secondfieldnames(self):
         return (self.settings.secondformfield[self.settings.verbalps],
                 self.settings.secondformfield[self.settings.nominalps])
