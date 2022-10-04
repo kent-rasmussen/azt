@@ -7997,10 +7997,15 @@ class Report(object):
         kwargs['profile']=kwargs.get('profile',self.slices.profile())
         groups=self.status.groups(**kwargs) #was cvt only
         #CV checks depend on profile, too
-        checksunordered=self.status.checks(**kwargs)
-        self.checks=self.orderchecks(checksunordered)
-        """check set here"""
-        for kwargs['check'] in self.checks: #self.checkcodesbyprofile:
+        if isinstance(self,Multicheck):
+            checksunordered=self.status.checks(**kwargs)
+            checks=self.orderchecks(checksunordered)
+            log.info("Going to do these checks: {}".format(checksunordered))
+            log.info("Going to do this order checks: {}".format(checks))
+        else:
+            checks=[kwargs.get('check',self.params.check())]
+            """check set here"""
+        for kwargs['check'] in checks: #self.checkcodesbyprofile:
             """multithread here"""
             self.docheckreport(parent,**kwargs)
     def orderchecks(self,checklist):
