@@ -9336,7 +9336,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
             self.status.last('joinUF',update=True)
             self.tonegroupsjoinrename() #call again, in case needed
         self.makeanalysis()
-        def redo(timestamps):
+        def redo(timestamps="By manual request"):
             self.wait(_("Redoing Tone Analysis")+'\n'+timestamps)
             self.analysis.do()
             self.waitdone()
