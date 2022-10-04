@@ -4607,7 +4607,11 @@ class Segments(object):
                 # log.info("regS: {}".format(regS))
                 # log.info("replS: {}".format(replS))
                 # log.info("self.regexCV: {}".format(self.regexCV))
-                self.regexCV=rx.sub(regS,replS,self.regexCV, count=1)
+                if 'x' in check and not compared:
+                    self.regexCV=rx.sub(regS,replScomp,self.regexCV, count=1)
+                    compared=True
+                else:
+                    self.regexCV=rx.sub(regS,replS,self.regexCV, count=1)
                 # log.info("self.regexCV: {}".format(self.regexCV))
         #     else:
         #         log.info("{} not found in {}".format(S+str(occurrence),
