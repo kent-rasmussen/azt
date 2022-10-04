@@ -6961,7 +6961,7 @@ class Sound(object):
         lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
     def __init__(self):
         self.soundcheck()
-class Record(Sound):
+class Record(Sound,TaskDressing,ui.Window):
     """This holds all the Sound methods specific for Recording."""
     def showentryformstorecordpage(self):
         #The info we're going for is stored above sense, hence guid.
@@ -7219,6 +7219,8 @@ class Record(Sound):
                     command=next).grid(row=1,column=0)
         self.donewpyaudio()
     def __init__(self):
+        ui.Window.__init__(self,parent)
+        TaskDressing.__init__(self,parent)
         Sound.__init__(self)
         self.mikecheck() #only ask for settings check if recording
 class Report(object):
@@ -9326,8 +9328,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
         Tone.__init__(self)
         ui.Window.__init__(self, parent)
         TaskDressing.__init__(self, parent)
-class RecordCitation(Record,Segments,TaskDressing,ui.Window):
-    """docstring for RecordCitation."""
+class RecordCitation(Record,Segments):
     def tooltip(self):
         return _("This task helps you record words in isolation forms.")
     def dobuttonkwargs(self):
@@ -9344,12 +9345,10 @@ class RecordCitation(Record,Segments,TaskDressing,ui.Window):
         return program['theme'].photo['iconWordRec']
     def __init__(self, parent): #frame, filename=None
         Segments.__init__(self,parent)
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
+        # ui.Window.__init__(self,parent)
+        # TaskDressing.__init__(self,parent)
         Record.__init__(self)
-        # self.do=self.showentryformstorecord
-class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
-    """docstring for RecordCitation."""
+class RecordCitationT(Record,Tone):
     def tooltip(self):
         return _("This task helps you record words in tone frames, in citation form.")
     def dobuttonkwargs(self):
@@ -9366,10 +9365,7 @@ class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
         return _("Record Tone") #Citation Form Sorting in Tone Frames
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self)
-        ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
         Record.__init__(self)
-        # self.do=self.showtonegroupexs
 class ReportCitation(Report,Segments,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
