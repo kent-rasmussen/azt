@@ -7802,7 +7802,7 @@ class Report(object):
                                 ['('+'-'.join(kwargs['psprofiles'][ps])+')'
                                             ])
                                 for ps in kwargs['psprofiles']
-                                # profile,
+                                ])
         else:
             reporttype=' '.join([ps,profile])
         if isinstance(self,Multicheck):
