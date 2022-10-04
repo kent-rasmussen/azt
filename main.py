@@ -7266,6 +7266,8 @@ class Report(object):
             #             {'ps':ps,'profile':p,'usegui':False} for p in d[ps]])
         kwargs['xlpr'].close(me=me)
     def reportmulti(self,**kwargs):
+        """This backgrounds multiple reports at a time, not multiple sections
+        in one report"""
         # threading.Thread(target=self.tonegroupreport,kwargs=kwargs).start()
         start_time=nowruntime()
         log.info("reportmulti starting with fn {} and kwargs {} ".format(
