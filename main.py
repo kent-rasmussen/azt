@@ -7448,14 +7448,14 @@ class Report(object):
                         row=window.row,column=0, sticky="w"
                         )
                 window.row+=1
-        t=_("Summary of Frames by Draft Underlying Melody")
+        t=_("Summary of Frames by {} {} Draft Underlying Melody").format(ps,profile)
         m=7 #only this many columns in a table
         # Don't bother with lanscape if we're splitting the table in any case.
         if m >= len(checks) > 6:
             landscape=True
         else:
             landscape=False
-        s1s=xlp.Section(xlpr,t,landscape=landscape)
+        s1s=xlp.Section(s1parent,t,landscape=landscape)
         caption=' '.join([ps,profile])
         ptext=_("The following table shows correspondences across sortings by "
                 "tone frames, with a row for each unique pairing. ")
@@ -7500,7 +7500,7 @@ class Report(object):
                 len(self.analysis.senseidsbygroup[group])
                 ))
             sectitle=_('\n{}'.format(str(group)))
-            s1=xlp.Section(xlpr,title=sectitle)
+            s1=xlp.Section(s1parent,title=sectitle)
             output(window,r,sectitle)
             l=list()
             for x in self.analysis.valuesbygroupcheck[group]:
@@ -7560,8 +7560,8 @@ class Report(object):
                         self.framedtoXLP(framed,parent=s1,ftype=ftype,
                                                         showgroups=showgroups)
                     output(window,r,text)
-        sectitle=_('\nData Summary')
-        s2=xlp.Section(xlpr,title=sectitle)
+        sectitle=_('{} {} Data Summary').format(ps,profile)
+        s2=xlp.Section(s1parent,title=sectitle)
         try:
             eps='{:.2}'.format(float(counts['examples']/counts['senses']))
         except ZeroDivisionError:
@@ -7576,7 +7576,8 @@ class Report(object):
                 "").format(counts['senses'],counts['examples'],counts['audio'],
                             eps,audiopercent)
         ps2=xlp.Paragraph(s2,text=ptext)
-        xlpr.close(me=me)
+        if 'xlpr' not in kwargs:
+            xlpr.close(me=me)
         text=_("Finished in {} seconds.").format(nowruntime()-start_time)
         text=logfinished(start_time,msg="report {} {}".format(ps,profile))
         logfinished(start_time)
