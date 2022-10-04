@@ -777,7 +777,7 @@ class StatusFrame(ui.Frame):
     def redofinalbuttons(self):
         if hasattr(self,'bigbutton') and self.bigbutton.winfo_exists():
             self.bigbutton.destroy()
-            self.finalbuttons()
+        self.finalbuttons()
     def finalbuttons(self):
         # self.opts['row']+=6
         self.opts['row']+=1
@@ -2664,6 +2664,9 @@ class TaskDressing(object):
                 text=_("Analyze")
             else:
                 text=_("Collect Data")
+        elif isinstance(self,Report):
+            text=_("Reports")
+            self.taskchooser.showreports=True
         else:
             text=_("Tasks")
         if hasattr(self,'chooserbutton'):
@@ -3980,7 +3983,10 @@ class TaskChooser(TaskDressing,ui.Window):
         """This function allows the user to select from any of tasks whose
         prerequisites are minimally satisfied."""
         # if self.reports:
-        self.frame.status.bigbutton.destroy()
+        try:
+                self.frame.status.bigbutton.destroy()
+        except AttributeError:
+            log.info("There doesn't seem to be a big button")
         if not self.showreports:
             self.frame.status.finalbuttons()
         if not self.mainwindow:
