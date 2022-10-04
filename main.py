@@ -4094,27 +4094,22 @@ class TaskChooser(TaskDressing,ui.Window):
         self.whatsdone()
         if self.showreports:
             tasks=[
-                    ReportCitation,
-                    ReportCitationBackground
+                    ReportCitationBackground,
+                    ReportCitationMulticheckBackground,
+                    ReportCitationMultichecksliceBackground
                     ]
             if self.doneenough['collectionlc']:
                 """This currently takes way too much time. Until it gets
                 mutithreaded, it will not be an option"""
-                tasks.append(ReportCitationBasicV)
-                tasks.append(ReportCitationBasicC)
-                tasks.append(ReportCitationBasicCV)
-                tasks.append(ReportCitationBasicVC)
-                tasks.append(ReportCitationBasic)
             if self.doneenough['sortT']:
-                tasks.append(ReportCitationT)
-                tasks.append(ReportCitationTlocation)
-                tasks.append(ReportCitationTlocationBackground)
-                tasks.append(ReportCitationBasicT)
-                tasks.append(ReportCitationBasicTBackground)
+                tasks.append(ReportCitationTBackground)
+                tasks.append(ReportCitationTLBackground)
+                tasks.append(ReportCitationMultisliceTBackground)
+                tasks.append(ReportCitationMultisliceTLBackground)
             if self.doneenough['analysis']:
-                tasks.append(ReportCitationByUF)
                 tasks.append(ReportCitationByUFBackground)
-                tasks.append(ReportCitationBasicVByUF)
+                tasks.append(ReportCitationByUFMulticheckBackground)
+                tasks.append(ReportCitationByUFMultichecksliceBackground)
         elif self.datacollection:
             tasks=[
                     WordCollectionCitation,
