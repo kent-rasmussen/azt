@@ -8277,15 +8277,34 @@ class Report(object):
         self.profilesbysense=self.settings.profilesbysense
         self.s=self.settings.s
         self.byUFgroup=False
-class Comprehensive(object):
+class Multislice(object):
+    """This class just triggers which settings are visible to the user, and
+    updates changes from child classes"""
     def __init__(self):
+        # log.info("Setting up Multislice report, with {}".format(dir()))
+        """I think these two should go:"""
+        self.frame.status.redofinalbuttons() #because the fns changed
+class MultisliceS(Multislice):
+    def __init__(self):
+        self.do=self.basicreport
         self.status.group(None)
-        log.info("Setting up Multislice report, based on {}"
-                "".format(self.do.__name__))
+        Multislice.__init__(self)
+class MultisliceT(Multislice):
+    def __init__(self):
+        self.do=self.tonegroupreportcomprehensive
+        Multislice.__init__(self)
+class Multicheck(object):
+    def __init__(self):
+        """This should only be used for segmental checks; tone reports are
+        always multiple checks"""
+        self.status.group(None)
+        log.info("Setting up Multicheck report, based on {}".format(dir()))
         self.do=self.basicreport
         self.frame.status.redofinalbuttons() #because the fns changed
-        log.info("doing basic report on {} with groups {}".format(self.cvtstodo,
-                                                        self.status.group()))
+class Multicheckslice(Multicheck,MultisliceS):
+    def __init__(self):
+        Multicheck.__init__(self)
+        MultisliceS.__init__(self)
 class ByUF(Tone):
     def __init__(self):
         Tone.__init__(self) #Nothing here; just make methods available
@@ -8293,13 +8312,11 @@ class ByUF(Tone):
         log.info("doing report by UF groups")
 class Background(object):
     """This class runs a report function in the background, where possible"""
-    def __init__(self,parent):
+    def __init__(self):
         log.info("Setting up background report, based on {}"
                 "".format(self.do.__name__))
-        self.reportfn=self.do
-        self.do=self.reportmulti
+        self.do=lambda fn=self.do:self.background(fn)
         self.frame.status.redofinalbuttons() #because the fns changed
-        # super(Background, self).__init__(parent)
 class SortCV(Sort,Segments,TaskDressing,ui.Window):
     """docstring for SortCV."""
     def __init__(self, parent):
