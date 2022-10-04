@@ -8224,7 +8224,7 @@ class Report(object):
                     ufgroupsnids=[(i,j) for i,j in
                                 self.analysis.senseidsbygroup.items()
                                 #don't report small groups
-                                if len(j) >= self.minwords] 
+                                if len(j) >= self.minwords]
                     kwargs['sectlevel']=4
                     for kwargs['ufgroup'],kwargs['ufsenseids'] in ufgroupsnids:
                         if 'ufgroup' in kwargs:
