@@ -7264,6 +7264,7 @@ class Report(object):
             # with multiprocessing.Pool(processes=4) as pool:
             #     pool.map(self.tonegroupreport,[
             #             {'ps':ps,'profile':p,'usegui':False} for p in d[ps]])
+        kwargs['xlpr'].close(me=me)
     def reportmulti(self,**kwargs):
         # threading.Thread(target=self.tonegroupreport,kwargs=kwargs).start()
         start_time=nowruntime()
