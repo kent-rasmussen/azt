@@ -340,7 +340,13 @@ class Table(ET.Element):
                 <tr><td/></tr>
             </table>
         </tablenumbered>"""
+    def destroy(self):
+        if hasattr(self,'numbered'):
+            self.parent.node.remove(self.numbered)
+        else:
+            self.parent.node.remove(self.node)
     def __init__(self,parent,caption=None,numbered=True):
+        self.parent=parent
         if numbered:
             id=rx.id('nt'+caption)
             self.numbered=ET.SubElement(parent.node,'tablenumbered',attrib={'id':id})
