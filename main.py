@@ -4578,10 +4578,15 @@ class Segments(object):
         S=str(cvt) #should this ever be cvt? Do I ever want CV1xCV2,CV1=CV2?
         regexS='.*?'+S #This will be a problem if S=NC or CG...
         # log.info("regexS: {}".format(regexS))
-        if 'x' in check:
-            replS='\\1'+group+self.groupcomparison
+        if 'x' in check and cvt in ['V','C']:
+            replScomp='\\1'+self.groupcomparison
+            replS='\\1'+group
+            compared=False
             # log.info("Making regex for {} check with group {} and "
             # "comparison {} ({})".format(check,group,self.groupcomparison,replS))
+        elif 'x' in check:
+            replS='\\1'+group+self.groupcomparison
+            compared=True #well, don't do two runs, in any case.
         else:
             # log.info("Not comparing: {}".format(check))
             replS='\\1'+group
