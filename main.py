@@ -7656,6 +7656,8 @@ class Report(object):
         xlpr=self.xlpstart(**kwargs)
         if not hasattr(xlpr,'node'):
             log.info(_("Not repeating report that looks already started."))
+            if kwargs['usegui']:
+                self.waitdone()
             return
         """"Do I need this?"""
         print(_("Getting results of Search request"))
@@ -8133,6 +8135,10 @@ class Report(object):
                 }
         else:
             return {self.slices.ps():[self.slices.profile()]}
+    def basicreport(self,usegui=True,**kwargs):
+        """This does both multiple slices (starting with largest) and
+        multiple checks (all available per profile).
+        These should be separated"""
         """We iterate across these values in this script, so we save current
         values here, and restore them at the end."""
         def iteratecvt(parent,**kwargs):
@@ -8160,17 +8166,20 @@ class Report(object):
                 "examples of a segment type occur with different values, e.g., "
                 "V1≠V2, those words will appear multiple times, e.g., for "
                 "both V1=x and V2=y.")
+        kwargs['usegui']=usegui
         if kwargs['usegui']: #i.e., showing results in window
             self.wait(msg=_("Running {}").format(self.tasktitle()))
         self.basicreportfile=''.join([str(self.reportbasefilename)
                                         ,'_',''.join(sorted(self.cvtstodo)[:2])
-                                        ,'_BasicReport.txt'])
+                                        ,'_MultisliceReport.txt'])
         kwargs['psprofiles']=self.psprofilestodo()
         log.info("kwargs['psprofiles']={}".format(kwargs['psprofiles']))
-        xlpr=self.xlpstart(reporttype='Multislice '+''.join(self.cvtstodo),
-                            **kwargs)
+        reporttype='Multislice '+'-'.join(self.cvtstodo)
+        xlpr=self.xlpstart(**kwargs)
         if not hasattr(xlpr,'node'):
             log.info(_("Not repeating report that looks already started."))
+            if kwargs['usegui']:
+                self.waitdone()
             return
         si=xlp.Section(xlpr,"Introduction")
         p=xlp.Paragraph(si,instr)
@@ -8231,7 +8240,8 @@ class Report(object):
         xlpr.close(me=me)
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
-        self.waitdone()
+        if kwargs['usegui']:
+            self.waitdone()
     def coocurrencetables(self,xlpr):
         t=_("Summary Co-ocurrence Tables")
         s1s=xlp.Section(xlpr,t)
