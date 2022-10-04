@@ -7399,16 +7399,23 @@ class Report(object):
             window.row=0
         else:
             window=None
-        xlpr=self.xlpstart(reporttype='Tone',
+        if 'xlpr' in kwargs:
+            xlpr=kwargs['xlpr']
+            s1parent=s0=xlp.Section(xlpr,title='{} {}'.format(ps,profile))
+        else:
+            s1parent=xlpr=self.xlpstart(reporttype='Tone',
                             ps=ps,
                             profile=profile,
                             # bylocation=self.bylocation,
                             default=default
                             )
-        if not hasattr(xlpr,'node'):
-            log.info(_("Not repeating report that looks already started."))
-            return
-        s1=xlp.Section(xlpr,title='Introduction')
+            if not hasattr(xlpr,'node'):
+                log.info(_("Not repeating report that looks already started."))
+                if kwargs['usegui']:
+                    self.waitdone()
+                return
+        title=_('Introduction to {} {}').format(ps,profile)
+        s1=xlp.Section(s1parent,title=title)
         text=_("This report follows an analysis of sortings of {} morphemes "
         "(roots or affixes) across the following frames: {}. {} stores these "
         "sortings in lift examples, which are output here, with any glossing "
