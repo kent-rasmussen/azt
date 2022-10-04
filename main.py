@@ -7347,6 +7347,7 @@ class Report(object):
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
         checks=self.status.checks(wsorted=True,**kwargs)
+        kwargs['minwords']=kwargs.get('minwords',0)
         if not checks:
             if 'profile' in kwargs:
                 log.error("{} {} came up with no checks.".format(ps,profile))
