@@ -8633,7 +8633,7 @@ class SortT(Sort,Tone,TaskDressing,ui.Window):
         self.guidstosort.append(guid)
         self.guidssorted.remove(guid)
     """Doing stuff"""
-class Transcribe(Sound,Sort):
+class Transcribe(Sound,Sort,TaskDressing,ui.Window):
     def updateerror(self,event=None):
         self.errorlabel['text'] = ''
     def switchgroups(self,comparison=None):
@@ -9030,11 +9030,13 @@ class Transcribe(Sound,Sort):
         """Store these variables above, finish with (destroying window with
         local variables):"""
     def __init__(self,parent): #frame, filename=None
+        ui.Window.__init__(self, parent)
+        TaskDressing.__init__(self, parent)
         parent.settings.makeeverythingok()
         self.mistake=False #track when a user has made a mistake
         self.status.makecheckok()
         Sound.__init__(self)
-class TranscribeV(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
+class TranscribeV(Transcribe,Segments):
     def tasktitle(self):
         return _("Vowel Letters")
     def tooltip(self):
@@ -9050,9 +9052,6 @@ class TranscribeV(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['iconTranscribeV']
     def __init__(self, parent): #frame, filename=None
-        # Tone.__init__(self, parent)
-        ui.Window.__init__(self, parent)
-        TaskDressing.__init__(self, parent)
         self.glyphspossible=[ #'a','e','i','o','u','ɛ','ɔ','ɨ','ʉ']
         #tilde (decomposed):
         'ã', 'ẽ', 'ɛ̃', 'ə̃', 'ɪ̃', 'ĩ', 'õ', 'ɔ̃', 'ũ', 'ʊ̃',
@@ -9074,7 +9073,7 @@ class TranscribeV(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
         ]
         self.params.cvt('V')
         Transcribe.__init__(self,parent)
-class TranscribeC(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
+class TranscribeC(Transcribe,Segments):
     def tasktitle(self):
         return _("Consonant Letters")
     def tooltip(self):
@@ -9090,8 +9089,6 @@ class TranscribeC(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
     def taskicon(self):
         return program['theme'].photo['iconTranscribeC']
     def __init__(self, parent): #frame, filename=None
-        ui.Window.__init__(self, parent)
-        TaskDressing.__init__(self, parent)
         self.glyphspossible=[#'p','b','k','g','d','t',]
         'bh','dh','gh','gb',
         'b',#'B',
@@ -9130,7 +9127,7 @@ class TranscribeC(Transcribe,Segments,Sound,Sort,TaskDressing,ui.Window):
         ]
         self.params.cvt('C')
         Transcribe.__init__(self,parent)
-class TranscribeT(Transcribe,Tone,Sound,Sort,TaskDressing,ui.Window):
+class TranscribeT(Transcribe,Tone):
     def tasktitle(self):
         return _("Transcribe Tone")
     def tooltip(self):
@@ -9148,8 +9145,6 @@ class TranscribeT(Transcribe,Tone,Sound,Sort,TaskDressing,ui.Window):
         return program['theme'].photo['iconTranscribe']
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self)
-        ui.Window.__init__(self, parent)
-        TaskDressing.__init__(self, parent)
         self.glyphspossible=None
         self.params.cvt('T')
         Transcribe.__init__(self,parent)
@@ -9200,7 +9195,7 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
                     for senseid in self.analysis.senseidsbygroup[group]:
                         self.db.addtoneUF(senseid,uf,analang=self.analang,
                         write=False)
-            self.db.write()
+            self.maybewrite()
             self.runwindow.destroy()
             self.status.last('joinUF',update=True)
             self.tonegroupsjoinrename() #call again, in case needed
@@ -9219,9 +9214,9 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
         if not analysisOK:
             redo(timestamps) #otherwise, the user will almost certainly be upset to have to do it later
             return
-        self.update()
         self.getrunwindow(msg=_("Preparing to join draft underlying form groups"
                                 "")+'\n'+timestamps)
+        self.update()
         title=_("Join/Rename Draft Underlying {}-{} tone groups".format(
                                                         ps,profile))
         self.runwindow.title(title)
