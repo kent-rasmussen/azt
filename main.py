@@ -5641,12 +5641,6 @@ class ToneFrameDrafter(ui.Window):
 class Tone(object):
     """This keeps stuff used for Tone checks."""
     def makeanalysis(self,**kwargs):
-        return Analysis(self.params,
-                                self.slices,
-                                self.status,
-                                self.db,
-                                **kwargs
-                                )
         """was, now iterable, for multiple reports at a time:"""
         if not hasattr(self,'analysis'):
             self.analysis=Analysis(self.params,
@@ -7177,9 +7171,9 @@ class Record(Sound):
             (type(self.examplespergrouptorecord) is not int)):
             self.examplespergrouptorecord=100
             self.settings.storesettingsfile()
-        analysis=self.makeanalysis()
-        analysis.donoUFanalysis()
-        torecord=analysis.senseidsbygroup
+        self.makeanalysis()
+        self.analysis.donoUFanalysis()
+        torecord=self.analysis.senseidsbygroup
         ntorecord=len(torecord) #number of groups
         nexs=len([k for i in torecord for j in torecord[i] for k in j])
         nslice=self.slices.count()
@@ -7192,7 +7186,7 @@ class Record(Sound):
                             self.slices.profile(),
                             self.slices.ps()
                                                         ))
-            analysis.do()
+            self.analysis.do()
             self.showtonegroupexs()
             return
         batch={}
@@ -7365,11 +7359,11 @@ class Report(object):
             return
         start_time=nowruntime()
         counts={'senses':0,'examples':0, 'audio':0}
-        analysis=self.makeanalysis(**kwargs)
+        self.makeanalysis(**kwargs)
         # log.info("Caller function: {}".format(callerfn()))
         if analysisOK:
             log.info(_("Looks like the analysis is good; moving on."))
-            analysis.donoUFanalysis() #based on (sense) UF fields
+            self.analysis.donoUFanalysis() #based on (sense) UF fields
         elif callerfn() == 'run': #self.tonegroupreportmulti
             log.info(_("Sorry, the analysis isn't good, and we're running "
                     "in the background. That isn't going to work, so I'm "
@@ -7378,22 +7372,24 @@ class Report(object):
         else:
             log.info(_("Looks like the analysis isn't good, but we're not "
                     "in the background, so I'm doing a new analysis now."))
-            analysis.do() #full analysis from scratch, output to UF fields
+            self.analysis.do() #full analysis from scratch, output to UF fields
         """These are from LIFT, ordered by similarity for the report."""
-        if not analysis.orderedchecks or not analysis.orderedUFs:
+        if not self.analysis.orderedchecks or not self.analysis.orderedUFs:
             log.error("Problem with checks: {} (in {} {})."
                     "".format(checks,ps,profile))
             log.error("valuesbygroupcheck: {}, valuesbycheckgroup: {}"
-                        "".format(analysis.valuesbygroupcheck,
-                                    analysis.valuesbycheckgroup))
+                        "".format(self.analysis.valuesbygroupcheck,
+                                    self.analysis.valuesbycheckgroup))
             log.error("Ordered checks is {}, ordered UFs: {}"
-                    "".format(analysis.orderedchecks,
-                            analysis.orderedUFs))
+                    "".format(self.analysis.orderedchecks,
+                            self.analysis.orderedUFs))
             log.error("comparisonUFs: {}, comparisonchecks: {}"
-                    "".format(analysis.comparisonUFs,
-                            analysis.comparisonchecks))
-        grouplist=analysis.orderedUFs
-        checks=analysis.orderedchecks
+                    "".format(self.analysis.comparisonUFs,
+                            self.analysis.comparisonchecks))
+        grouplist=[i for i in self.analysis.orderedUFs
+                if len(self.analysis.senseidsbygroup[i]) > kwargs['minwords']
+                ]
+        checks=self.analysis.orderedchecks
         r = open(self.tonereportfile, "w", encoding='utf-8')
         title=_("Tone Report")
         if usegui:
@@ -7471,38 +7467,38 @@ class Report(object):
                 "And here are the structured similarity relationships for the "
                 "Frames: {}"
                 "".format(program['name'],
-                        str(analysis.comparisonUFs),
-                        str(analysis.comparisonchecks)))
+                        str(self.analysis.comparisonUFs),
+                        str(self.analysis.comparisonchecks)))
         else:
             ptext+=_("This is a non-default report, where a user has changed "
             "the default (hyper-split) groups created by {}.".format(
                                                         program['name']))
         p0=xlp.Paragraph(s1s,text=ptext)
-        analysis.orderedchecks=list(analysis.valuesbycheckgroup)
-        for slice in range(int(len(analysis.orderedchecks)/m)+1):
-            locslice=analysis.orderedchecks[slice*m:(slice+1)*m]
+        self.analysis.orderedchecks=list(self.analysis.valuesbycheckgroup)
+        for slice in range(int(len(self.analysis.orderedchecks)/m)+1):
+            locslice=self.analysis.orderedchecks[slice*m:(slice+1)*m]
             if len(locslice) >0:
                 self.buildXLPtable(s1s,caption+str(slice),
                         yterms=grouplist,
                         xterms=locslice,
                         values=lambda x,y:nn(unlist(
-                analysis.valuesbygroupcheck[y][x],ignore=[None, 'NA']
+                self.analysis.valuesbygroupcheck[y][x],ignore=[None, 'NA']
                                             )),
-                        ycounts=lambda x:len(analysis.senseidsbygroup[x]),
-                        xcounts=lambda y:len(analysis.valuesbycheck[y]))
+                        ycounts=lambda x:len(self.analysis.senseidsbygroup[x]),
+                        xcounts=lambda y:len(self.analysis.valuesbycheck[y]))
         #Can I break this for multithreading?
         for group in grouplist: #These already include ps-profile
             log.info("building report for {} ({}/{}, n={})".format(group,
                 grouplist.index(group)+1,len(grouplist),
-                len(analysis.senseidsbygroup[group])
+                len(self.analysis.senseidsbygroup[group])
                 ))
             sectitle=_('\n{}'.format(str(group)))
             s1=xlp.Section(xlpr,title=sectitle)
             output(window,r,sectitle)
             l=list()
-            for x in analysis.valuesbygroupcheck[group]:
+            for x in self.analysis.valuesbygroupcheck[group]:
                 l.append("{}: {}".format(x,', '.join(
-                    [i for i in analysis.valuesbygroupcheck[group][x]
+                    [i for i in self.analysis.valuesbygroupcheck[group][x]
                                                             if i is not None]
                         )))
             if not l:
@@ -7514,15 +7510,15 @@ class Report(object):
             if self.bylocation:
                 textout=list()
                 #This is better than checks, just whats there for this group
-                for check in analysis.valuesbygroupcheck[group]:
+                for check in self.analysis.valuesbygroupcheck[group]:
                     id=rx.id('x'+sectitle+check)
                     headtext='{}: {}'.format(check,', '.join(
                             [i for i in
-                            analysis.valuesbygroupcheck[group][check]
+                            self.analysis.valuesbygroupcheck[group][check]
                             if i is not None]
                                             ))
                     e1=xlp.Example(s1,id,heading=headtext)
-                    for senseid in analysis.senseidsbygroup[group]:
+                    for senseid in self.analysis.senseidsbygroup[group]:
                         #This is for window/text output only, not in XLP file
                         framed=self.taskchooser.datadict.getframeddata(senseid,check=None)
                         text=framed.formatted(noframe=True,showtonegroup=False)
@@ -7536,7 +7532,7 @@ class Report(object):
                     if not e1.node.find('listWord'):
                         s1.node.remove(e1.node) #Don't show examples w/o data
             else:
-                for senseid in analysis.senseidsbygroup[group]:
+                for senseid in self.analysis.senseidsbygroup[group]:
                     #This is for window/text output only, not in XLP file
                     framed=self.taskchooser.datadict.getframeddata(senseid,check=None)
                     if not framed:
@@ -7650,8 +7646,8 @@ class Report(object):
             self.runwindow.wait()
         si=xlp.Section(xlpr,text)
         if self.byUFgroup:
-            analysis=self.makeanalysis()
-            analysis.donoUFanalysis()
+            self.makeanalysis()
+            self.analysis.donoUFanalysis()
             # torecord=analysis.senseidsbygroup
             ufgroupsnsenseids=analysis.senseidsbygroup.items()
             kwargs['sectlevel']=4
@@ -8156,10 +8152,12 @@ class Report(object):
                 print(t)
                 log.info(t)
                 if self.byUFgroup:
-                    analysis=self.makeanalysis()
-                    analysis.donoUFanalysis()
+                    self.makeanalysis(**kwargs)
+                    self.analysis.donoUFanalysis()
                     # torecord=analysis.senseidsbygroup
-                    ufgroupsnids=analysis.senseidsbygroup.items()
+                    ufgroupsnids=[(i,j) for i,j in
+                                self.analysis.senseidsbygroup.items()
+                                if len(j)>2] #don't report groups of 1 or 2 words
                     kwargs['sectlevel']=4
                     for kwargs['ufgroup'],kwargs['ufsenseids'] in ufgroupsnids:
                         if 'ufgroup' in kwargs:
@@ -9178,28 +9176,28 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
                 groupsselected+=[group.get()] #value, name if selected, 0 if not
             groupsselected=[x for x in groupsselected if x != '']
             log.info("groupsselected:{}".format(groupsselected))
-            if uf in analysis.orderedUFs and uf not in groupsselected:
+            if uf in self.analysis.orderedUFs and uf not in groupsselected:
                 deja=_("That name is already there! (did you forget to include "
                         "the ‘{}’ group?)".format(uf))
                 log.debug(deja)
                 errorlabel['text'] = deja
                 return
             for group in groupsselected:
-                if group in analysis.senseidsbygroup: #selected ones only
+                if group in self.analysis.senseidsbygroup: #selected ones only
                     log.debug("Changing values from {} to {} for the following "
                             "senseids: {}".format(group,uf,
-                                        analysis.senseidsbygroup[group]))
-                    for senseid in analysis.senseidsbygroup[group]:
+                                        self.analysis.senseidsbygroup[group]))
+                    for senseid in self.analysis.senseidsbygroup[group]:
                         self.db.addtoneUF(senseid,uf,analang=self.analang,
                         write=False)
             self.db.write()
             self.runwindow.destroy()
             self.status.last('joinUF',update=True)
             self.tonegroupsjoinrename() #call again, in case needed
-        analysis=self.makeanalysis()
+        self.makeanalysis()
         def redo(timestamps):
             self.wait(_("Redoing Tone Analysis")+'\n'+timestamps)
-            analysis.do()
+            self.analysis.do()
             self.waitdone()
             # self.runwindow.destroy()
             self.tonegroupsjoinrename() #call again, in case needed
@@ -9272,9 +9270,9 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
         rwrow+=1
         scroll=ui.ScrollingFrame(self.runwindow.frame)
         scroll.grid(row=rwrow,column=0,sticky='ew')
-        analysis.donoUFanalysis()
+        self.analysis.donoUFanalysis()
         nheaders=0
-        if not analysis.orderedUFs:
+        if not self.analysis.orderedUFs:
             self.runwindow.waitdone()
             self.runwindow.destroy()
             ErrorNotice(title=_("No draft UF groups found for {} words!"
@@ -9285,18 +9283,18 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
                         )
             return
         # ufgroups= # order by structured groups? Store this somewhere?
-        for group in analysis.orderedUFs: #make a variable and button to select
-            idn=analysis.orderedUFs.index(group)
+        for group in self.analysis.orderedUFs: #make a variable and button to select
+            idn=self.analysis.orderedUFs.index(group)
             if idn % 5 == 0: #every five rows
                 col=1
-                for check in analysis.orderedchecks:
+                for check in self.analysis.orderedchecks:
                     col+=1
                     cbh=ui.Label(scroll.content, text=check, font='small')
                     cbh.grid(row=idn+nheaders,
                             column=col,sticky='ew')
                 nheaders+=1
             groupvars.append(ui.StringVar())
-            n=len(analysis.senseidsbygroup[group])
+            n=len(self.analysis.senseidsbygroup[group])
             buttontext=group+' ({})'.format(n)
             cb=ui.CheckButton(scroll.content, text = buttontext,
                                 variable = groupvars[idn],
@@ -9305,12 +9303,12 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
             cb.grid(row=idn+nheaders,column=0,sticky='ew')
             # analysis.valuesbygroupcheck[group]:
             col=1
-            for check in analysis.orderedchecks:
+            for check in self.analysis.orderedchecks:
                 col+=1
-                if check in analysis.valuesbygroupcheck[group]:
+                if check in self.analysis.valuesbygroupcheck[group]:
                     cbl=ui.Label(scroll.content,
                         text=unlist(
-                                analysis.valuesbygroupcheck[group][check]
+                                self.analysis.valuesbygroupcheck[group][check]
                                     )
                             )
                     cbl.grid(row=idn+nheaders,column=col,sticky='ew')
