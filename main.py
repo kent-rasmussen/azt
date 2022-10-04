@@ -1016,32 +1016,32 @@ class StatusFrame(ui.Frame):
         self.glosslangline()
         if isinstance(self.task,Segments):
             self.fieldsline()
-        if hasattr(self.settings,'slices') and (isinstance(self.task,Sort) or
-            (isinstance(self.task,Tone) and not isinstance(self.task,Report)) or
-            (isinstance(self.task,Report) and
-                                    not isinstance(self.task,Comprehensive)) or
-            isinstance(self.task,ParseSlice)
-                    ):
+        if (hasattr(self.settings,'slices') and
+                not isinstance(self.task,TaskChooser)):
             self.cvt=self.settings.params.cvt()
             self.ps=self.settings.slices.ps()
             self.profile=self.settings.slices.profile()
             self.check=self.settings.params.check()
             self.checks=self.settings.status.checks()
-            self.sliceline()
-            if not (isinstance(self.task,Report) or
+            if isinstance(self.task,Multislice): #any cvt
+                self.maxes()
+            else:
+                self.sliceline()
+            if isinstance(self.task,Multicheck): #segments only
+                self.multicheckscope()
+            elif not isinstance(self.task,ReportCitationT):
+                self.cvtline()
+            if isinstance(self.task,Sort):
+                self.buttoncolumnsline()
+            if not (
+                    # isinstance(self.task,Report) or
+                    isinstance(self.task,TaskChooser) or
                     isinstance(self.task,Record) or
                     isinstance(self.task,JoinUFgroups) or
                     isinstance(self.task,Parse)
                     ):
-                self.cvtline()
-                self.buttoncolumnsline()
                 self.maybeboard()
-            elif isinstance(self.task,Segments):
-                self.cvtline()
-        if isinstance(self.task,Comprehensive):
-            self.maxes()
-        if not self.taskchooser.showreports:
-            self.finalbuttons()
+        self.finalbuttons()
 class Settings(object):
     """docstring for Settings."""
     def interfacelangwrapper(self,choice=None,window=None):
