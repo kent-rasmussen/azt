@@ -7865,39 +7865,51 @@ class Report(object):
         matches=set(self.senseidformsbyregex(self.regex,**kwargs))
         if 'ufsenseids' in kwargs:
             matches=matches&set(kwargs['ufsenseids'])
-        if 'x' not in check and '=' not in check: #only pull from simple reports
-            for ncvt in self.ncvts: #for basic reports
-                try:    # this removes senses already reported (e.g., in V1=V2)
-                    matches-=self.basicreported[ncvt]
-                except AttributeError:
-                    log.info("Not removing ids from basic reported because it "
-                        "isn't there. Hope that's appropriate (e.g., in an "
-                        "ad hoc report)")
-                except KeyError:
-                    log.info("Not removing ncvt {} ids from basic reported; "
-                        "hope that's appropriate."
-                        "".format(ncvt))
+        if check in self.basicreported:
+            # log.info("Removing {} entries already found from {} entries found "
+            #         "by {} check".format(len(self.basicreported[check]),
+            #                             len(matches),
+            #                             check))
+            # log.info("Entries found ({}):".format(len(matches)))
+            for m in list(matches)[:4]:
+                log.info(self.taskchooser.datadict.getframeddata(m).framed)
+            # log.info("Entries removed ({}):".format(len(self.basicreported[check]&matches)))
+            for m in list(self.basicreported[check]&matches)[:4]:
+                log.info(self.taskchooser.datadict.getframeddata(m).framed)
+            # log.info("Entries remaining ({}):".format(len(matches-self.basicreported[check])))
+            for m in list(matches-self.basicreported[check])[:4]:
+                log.info(self.taskchooser.datadict.getframeddata(m).framed)
+            matches-=self.basicreported[check]
+            # log.info("{} entries remaining.".format(len(matches)))
         ufg=kwargs['ufgroup']
         n=len(matches)
         # log.info("{} matches found!: {}".format(len(matches),matches))
         if 'x' not in check:
-            try:
-                self.checkcounts[ps][profile][ufg][check][group]=n
-            except KeyError:
+            ncheckssimple=len(check.split('=')) #how many syllables impacted
+            chks=check.split('=')+[check] #each and all together
+            for r in range(1,ncheckssimple): #make other splits (e.g., V2=V3)
+                chks+=check.split('=',r)+check.rsplit('=',r)
+            for c in set(chks): #get each bit, and whole, too
                 try:
-                    self.checkcounts[ps][profile][ufg][check]={group:n}
+                    self.checkcounts[ps][profile][ufg][c][group]+=n
                 except KeyError:
                     try:
-                        self.checkcounts[ps][profile][ufg]={check:{group:n}}
+                        self.checkcounts[ps][profile][ufg][c][group]=n
                     except KeyError:
                         try:
-                            self.checkcounts[ps][profile]={ufg:{check:{
-                                                        group:n}}}
+                            self.checkcounts[ps][profile][ufg][c]={group:n}
                         except KeyError:
-                            self.checkcounts[ps]={profile:{ufg:{check:{
-                                                        group:n}}}}
-                            log.info("ps: {}, profile: {}, check: {}, group: {}"
-                                    "".format(ps,profile,check,group))
+                            try:
+                                self.checkcounts[ps][profile][ufg]={c:{group:n}}
+                            except KeyError:
+                                try:
+                                    self.checkcounts[ps][profile]={ufg:{c:{
+                                                                    group:n}}}
+                                except KeyError:
+                                    self.checkcounts[ps]={profile:{ufg:{c:{
+                                                                    group:n}}}}
+                                    # log.info("ps: {}, profile: {}, check: {}, "
+                                    #         "group: {}".format(ps,profile,c,group))
         if 'x' in check or len(check.split('=')) == 2:
             if 'x' in check:
                 othergroup=self.groupcomparison
