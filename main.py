@@ -2897,6 +2897,8 @@ class TaskDressing(object):
                 'maxprofiles':self.settings.maxprofiles,
                 'maxpss':self.settings.maxpss
                 }
+            if isinstance(self.task,Multicheck):
+                dictnow['cvtstodo']=self.task.cvtstodo
         else:
             dictnow={
                     'iflang':self.settings.interfacelangwrapper(),
