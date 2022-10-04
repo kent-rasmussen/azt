@@ -7705,18 +7705,19 @@ class Report(object):
         for ps in self.checkcounts:
             for profile in self.checkcounts[ps]:
                 for check in self.checkcounts[ps][profile]:
-                    for group in self.checkcounts[ps][profile][check]:
-                        i=self.checkcounts[ps][profile][check][group]
-                        if isinstance(i,int):
-                            n+=i
-                        else:
-                            for g2 in i:
-                                i2=i[g2]
-                                if isinstance(i2,int):
-                                    n+=i2
-                                else:
-                                    log.info("Not sure what I'm dealing with! "
-                                            "({})".format(i2))
+                    for ufg in self.checkcounts[ps][profile][ufg]:
+                        for group in self.checkcounts[ps][profile][ufg][check]:
+                            i=self.checkcounts[ps][profile][ufg][check][group]
+                            if isinstance(i,int):
+                                n+=i
+                            else:
+                                for g2 in i:
+                                    i2=i[g2]
+                                    if isinstance(i2,int):
+                                        n+=i2
+                                    else:
+                                        log.info("Not sure what I'm dealing with! "
+                                                "({})".format(i2))
         if not n: #i.e., nothing was found above
             text=_("No results for {}/{} ({})!").format(kwargs['profile'],
                                                         kwargs['check'],
@@ -7802,6 +7803,8 @@ class Report(object):
                                 reporttype])
         else:
             reporttype=' '.join([ps,profile,reporttype])
+        elif self.byUFgroup:
+                reporttype+='byUFgroup'
         bits=[str(self.reportbasefilename),rx.id(reporttype),"ReportXLP"]
         if not default:
             bits.append('mod')
