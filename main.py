@@ -1104,6 +1104,7 @@ class Settings(object):
                                 'giturls',
                                 'hgurls',
                                 'aztrepourls',
+                                'minimumwordstoreportUFgroup',
                                 'writeeverynwrites'
                                 ]},
             'profiledata':{
@@ -7347,7 +7348,6 @@ class Report(object):
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
         checks=self.status.checks(wsorted=True,**kwargs)
-        kwargs['minwords']=kwargs.get('minwords',0)
         if not checks:
             if 'profile' in kwargs:
                 log.error("{} {} came up with no checks.".format(ps,profile))
@@ -7407,7 +7407,7 @@ class Report(object):
                     "".format(self.analysis.comparisonUFs,
                             self.analysis.comparisonchecks))
         grouplist=[i for i in self.analysis.orderedUFs
-                if len(self.analysis.senseidsbygroup[i]) > kwargs['minwords']
+                if len(self.analysis.senseidsbygroup[i]) >= self.minwords
                 ]
         checks=self.analysis.orderedchecks
         r = open(self.tonereportfile, "w", encoding='utf-8')
@@ -8223,7 +8223,8 @@ class Report(object):
                     # torecord=analysis.senseidsbygroup
                     ufgroupsnids=[(i,j) for i,j in
                                 self.analysis.senseidsbygroup.items()
-                                if len(j)>2] #don't report groups of 1 or 2 words
+                                #don't report small groups
+                                if len(j) >= self.minwords] 
                     kwargs['sectlevel']=4
                     for kwargs['ufgroup'],kwargs['ufsenseids'] in ufgroupsnids:
                         if 'ufgroup' in kwargs:
@@ -8397,6 +8398,10 @@ class Report(object):
         self.reporttoaudiorelURL=self.settings.reporttoaudiorelURL
         self.distinguish=self.settings.distinguish
         self.profilesbysense=self.settings.profilesbysense
+        if self.settings.minimumwordstoreportUFgroup:
+            self.minwords=self.settings.minimumwordstoreportUFgroup
+        else: #provide a default, return to settings file for modification
+            self.minwords=self.settings.minimumwordstoreportUFgroup=3
         self.s=self.settings.s
         self.byUFgroup=False
 class Multislice(object):
