@@ -8260,6 +8260,20 @@ class Report(object):
                     columncounts={}
                     # Divide checks into those with multiple columns, and others
                     xchecks=[i for i in checks if 'x' in i]
+                    # eventually, this should have logic to see how wide each
+                    # table is, and whether it makes sense to put it where.
+                    # short tables should go next to short tables, but no more
+                    # than two (or one) wide table in a row
+                    if len(xchecks)>4: #only so many tables wide on a page
+                        xchecksVx=[i for i in xchecks if i.startswith('V')]
+                        xchecksCx=[i for i in xchecks if (not i.startswith('V')
+                                                        and i.startswith('Cx'))]
+                        xchecksCyx=[i for i in xchecks if (not i.startswith('V')
+                                                    and not i.startswith('Cx'))]
+                    else:
+                        xchecksVx=xchecks
+                        xchecksCx=[]
+                        xchecksCyx=[]
                     onecolchecks=[i for i in checks if 'x' not in i]
                     # Put all single column tables into one dataset:
                     for check in onecolchecks:
@@ -8273,43 +8287,45 @@ class Report(object):
                                 except (KeyError,UnboundLocalError):
                                     columncounts={row:{check:counts[row]}}
                     # Test the other checks, to see if any is wider than tall:
-                    wide=False
-                    for check in xchecks:
-                        counts=self.checkcounts[ps][profile][ufg][check]
-                        for r in [i for i in counts if counts[i]]:
-                            if len([i for i in counts[r] if counts[r][i]]
-                                    )>len([i for i in counts if counts[i]]):
-                                    wide=True
-                    if not wide:
-                        #if all are not wide, join them into one row
-                        caption=' '.join([ufg,ps,profile,check])
-                        table=xlp.Table(s3s,caption)
-                        row=xlp.Row(table)
+                    for xchecks in [i for i in
+                                        [xchecksVx,xchecksCx,xchecksCyx] if i]:
+                        wide=False
                         for check in xchecks:
                             counts=self.checkcounts[ps][profile][ufg][check]
-                            if (len(list(counts)) and
-                                    len([counts[k] for k in counts])):
-                                cell=xlp.Cell(row)
-                                caption=' '.join([ufg,ps,profile,check])
-                                tableb=xlp.Table(cell,caption,numbered=False)
-                                log.debug("Counts by ({}-{}) check: {}".format(
-                                                                ufg,
-                                                                check,
-                                                                counts))
-                                self.coocurrencetable(tableb,check,counts)
-                    else:
-                        #if they are wide, just leave them in their own tables:
-                        for check in xchecks:
-                            counts=self.checkcounts[ps][profile][ufg][check]
-                            if (len(list(counts)) and
-                                    len([counts[k] for k in counts])):
-                                log.debug("Counts by ({}-{}) check: {}".format(
+                            for r in [i for i in counts if counts[i]]:
+                                if len([i for i in counts[r] if counts[r][i]]
+                                        )>len([i for i in counts if counts[i]]):
+                                        wide=True
+                        if not wide:
+                            #if all are not wide, join them into one row
+                            caption=' '.join([ufg,ps,profile,check])
+                            table=xlp.Table(s3s,caption)
+                            row=xlp.Row(table)
+                            for check in xchecks:
+                                counts=self.checkcounts[ps][profile][ufg][check]
+                                if (len(list(counts)) and
+                                        len([counts[k] for k in counts])):
+                                    cell=xlp.Cell(row)
+                                    caption=' '.join([ufg,ps,profile,check])
+                                    tableb=xlp.Table(cell,caption,numbered=False)
+                                    log.debug("Counts by ({}-{}) check: {}".format(
                                                                     ufg,
                                                                     check,
                                                                     counts))
-                                caption=' '.join([ufg,ps,profile,check])
-                                table=xlp.Table(s3s,caption)
-                                self.coocurrencetable(table,check,counts)
+                                    self.coocurrencetable(tableb,check,counts)
+                        else:
+                            #if they are wide, just leave them in their own tables:
+                            for check in xchecks:
+                                counts=self.checkcounts[ps][profile][ufg][check]
+                                if (len(list(counts)) and
+                                        len([counts[k] for k in counts])):
+                                    log.debug("Counts by ({}-{}) check: {}".format(
+                                                                        ufg,
+                                                                        check,
+                                                                        counts))
+                                    caption=' '.join([ufg,ps,profile,check])
+                                    table=xlp.Table(s3s,caption)
+                                    self.coocurrencetable(table,check,counts)
                     #Finally, do all single column tables in one table:
                     if (columncounts and len(list(columncounts)) and
                             len([columncounts[k] for k in columncounts])):
