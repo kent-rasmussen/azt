@@ -9373,7 +9373,7 @@ class RecordCitationT(Record,Tone,TaskDressing,ui.Window):
 class ReportCitation(Report,Segments,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
-        return _("Alphabet Report") # on One Data Slice
+        return _("Alphabet Report (Not background)") # on One Data Slice
     def taskicon(self):
         return program['theme'].photo['iconReport']
     def tooltip(self):
@@ -9384,7 +9384,6 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.do,
-                # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
                 'image':self.taskchooser.theme.photo['Report'],
@@ -9708,12 +9707,10 @@ class ReportCitationBasicTBackground(ReportCitationBasicT,Report,Comprehensive,T
         # self.do=self.tonegroupreport
         # TaskDressing.__init__(self,parent)
         MultisliceT.__init__(self)
-        # self.bylocation=False
 class ReportCitationMultisliceTBackground(Background,ReportCitationMultisliceT):
     """docstring for ReportCitationT."""
     def tasktitle(self):
         return _("Multislice Tone Report")
-        # Report on several slices of Citation Forms (in Tone Frames)")
     def taskicon(self):
         return program['theme'].photo['iconTRepcomp']
     def tooltip(self):
@@ -9723,13 +9720,12 @@ class ReportCitationMultisliceTBackground(Background,ReportCitationMultisliceT):
     def dobuttonkwargs(self):
         return {'text':"Report!",
                 'fn':self.do,
-                # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
                 'image':self.taskchooser.theme.photo['TRepcomp'],
                 'sticky':'ew'
                 }
-    def __init__(self, parent): #frame, filename=None
+    def __init__(self, parent):
         ReportCitationMultisliceT.__init__(self,parent)
         Background.__init__(self)
 class ReportCitationMultisliceTLBackground(Background,ReportCitationMultisliceTL):
@@ -9742,10 +9738,9 @@ class ReportCitationMultisliceTLBackground(Background,ReportCitationMultisliceTL
         return _("This report gives you reports across multiple lexical "
                 "categories, and across multiple syllable profiles. \nIt does "
                 "this for all data sorted in tone frames, organized by word.")
-    def __init__(self, parent): #frame, filename=None
+    def __init__(self, parent):
         ReportCitationMultisliceTL.__init__(self,parent)
         Background.__init__(self)
-        self.bylocation=True
 """Task definitions end here"""
 class Entry(lift.Entry): #Not in use
     def __init__(self, db, guid, window=None, check=None, problem=None,
