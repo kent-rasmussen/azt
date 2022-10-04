@@ -7234,16 +7234,13 @@ class Report(object):
     def tonegroupreportcomprehensive(self,**kwargs):
         """Should set this to do all analyses upfront, then run all in the
         background"""
-        pss=self.slices.pss()[:self.settings.maxpss]
-        d={}
-        for ps in pss:
-            d[ps]=self.slices.profiles(ps=ps)[:self.settings.maxprofiles]
-        log.info("Starting comprehensive reports for {}".format(d))
+        kwargs['psprofiles']=self.psprofilestodo()
+        kwargs['xlpr']=self.xlpstart(reporttype='MultisliceTone',**kwargs)
+        log.info("Starting comprehensive reports for {}".format(
+                                                        kwargs['psprofiles']))
         kwargs['usegui']=False
-        for ps in pss:
-            for profile in d[ps]:
-                kwargs['ps']=ps
-                kwargs['profile']=profile
+        for kwargs['ps'] in kwargs['psprofiles']:
+            for kwargs['profile'] in kwargs['psprofiles'][kwargs['ps']]:
                 # self.tonegroupreport(**kwargs) #ps=ps,profile=profile)
                 self.tonegroupreport(**kwargs) #ps=ps,profile=profile)
             """Not working:"""
@@ -8086,6 +8083,13 @@ class Report(object):
                 continue
             print(ps, self.profilesbysense[ps])
     def basicreport(self,**kwargs):
+    def psprofilestodo(self):
+        if isinstance(self,Multislice):
+            return {ps:self.slices.profiles(ps=ps)[:self.settings.maxprofiles]
+                for ps in self.slices.pss()[:self.settings.maxpss]
+                }
+        else:
+            return {self.slices.ps():[self.slices.profile()]}
         """We iterate across these values in this script, so we save current
         values here, and restore them at the end."""
         def iteratecvt(parent,**kwargs):
@@ -8118,10 +8122,7 @@ class Report(object):
         self.basicreportfile=''.join([str(self.reportbasefilename)
                                         ,'_',''.join(sorted(self.cvtstodo)[:2])
                                         ,'_BasicReport.txt'])
-        kwargs['psprofiles']={ps:self.slices.profiles(ps=ps)[
-                                                    :self.settings.maxprofiles]
-                            for ps in self.slices.pss()[:self.settings.maxpss]
-                            }
+        kwargs['psprofiles']=self.psprofilestodo()
         log.info("kwargs['psprofiles']={}".format(kwargs['psprofiles']))
         xlpr=self.xlpstart(reporttype='Multislice '+''.join(self.cvtstodo),
                             **kwargs)
