@@ -8199,28 +8199,90 @@ class Report(object):
                                 self.checkcounts[ps][profile].keys()))
                 for ufg in self.checkcounts[ps][profile]:
                     checks=self.orderchecks(self.checkcounts[ps][profile][ufg])
-                    for check in checks:
+                    columncounts={}
+                    # Divide checks into those with multiple columns, and others
+                    xchecks=[i for i in checks if 'x' in i]
+                    onecolchecks=[i for i in checks if 'x' not in i]
+                    # Put all single column tables into one dataset:
+                    for check in onecolchecks:
                         counts=self.checkcounts[ps][profile][ufg][check]
-                        if len(list(counts)) and len([counts[k] for k in counts
-                                                    ]):
-                            log.debug("Counts by ({}-{}) check: {}".format(ufg,
-                                                                check,counts))
-                            caption=' '.join([ufg,ps,profile,check])
-                            table=xlp.Table(s3s,caption)
-                            self.coocurrencetable(table,check,counts)
+                        for row in counts:
+                            try:
+                                columncounts[row][check]=counts[row]
+                            except (KeyError,UnboundLocalError):
+                                try:
+                                    columncounts[row]={check:counts[row]}
+                                except (KeyError,UnboundLocalError):
+                                    columncounts={row:{check:counts[row]}}
+                    # Test the other checks, to see if any is wider than tall:
+                    wide=False
+                    for check in xchecks:
+                        counts=self.checkcounts[ps][profile][ufg][check]
+                        for r in [i for i in counts if counts[i]]:
+                            if len([i for i in counts[r] if counts[r][i]]
+                                    )>len([i for i in counts if counts[i]]):
+                                    wide=True
+                    if not wide:
+                        #if all are not wide, join them into one row
+                        caption=' '.join([ufg,ps,profile,check])
+                        table=xlp.Table(s3s,caption)
+                        row=xlp.Row(table)
+                        for check in xchecks:
+                            counts=self.checkcounts[ps][profile][ufg][check]
+                            if (len(list(counts)) and
+                                    len([counts[k] for k in counts])):
+                                cell=xlp.Cell(row)
+                                caption=' '.join([ufg,ps,profile,check])
+                                tableb=xlp.Table(cell,caption,numbered=False)
+                                log.debug("Counts by ({}-{}) check: {}".format(
+                                                                ufg,
+                                                                check,
+                                                                counts))
+                                self.coocurrencetable(tableb,check,counts)
+                    else:
+                        #if they are wide, just leave them in their own tables:
+                        for check in xchecks:
+                            counts=self.checkcounts[ps][profile][ufg][check]
+                            if (len(list(counts)) and
+                                    len([counts[k] for k in counts])):
+                                log.debug("Counts by ({}-{}) check: {}".format(
+                                                                    ufg,
+                                                                    check,
+                                                                    counts))
+                                caption=' '.join([ufg,ps,profile,check])
+                                table=xlp.Table(s3s,caption)
+                                self.coocurrencetable(table,check,counts)
+                    #Finally, do all single column tables in one table:
+                    if (columncounts and len(list(columncounts)) and
+                            len([columncounts[k] for k in columncounts])):
+                        log.debug("Counts by ({}-{}) check: {}".format(ufg,
+                                                            check,columncounts))
+                        caption=' '.join([ufg,ps,profile,check])
+                        table=xlp.Table(s3s,caption)
+                        self.coocurrencetable(table,'x',columncounts)
     def coocurrencetable(self,table,check,counts):
         """This needs to work with an additional layer, for UF groups"""
         """Basic report doesn't seem to put out any data"""
-        rows=list(counts)#self.checkcounts[ps][profile][check])
         if 'x' in check:
+            rows=[r for r,c in counts.items()
+                    if [c[v] for v in c
+                        if c[v]
+                        ]
+                ]
             cols=sorted(set(ck
                             for r,c in counts.items()
                             for ck,cv in c.items()
                             if c[ck]
                             ))
         else:
+            rows=[r for r,c in counts.items()
+                    if c
+                ]
             cols=[check]
         maxcols=20
+        if not rows:
+            table.destroy()
+            return
         if len(cols) >maxcols: #break table
             ncols=int(len(cols)/2)+1
             colsa=cols[:ncols]
@@ -8254,7 +8316,7 @@ class Report(object):
                 if x1 == 'header' and x2 == 'header':
                     # log.debug("header corner")
                     # cell=xlp.Cell(h,content=name,header=True)
-                    cell=xlp.Cell(h,content='',header=True)
+                    cell=xlp.Cell(h,content=check,header=True)
                 elif x1 == 'header':
                     # log.debug("header row")
                     cell=xlp.Cell(h,content=x2,header=True)
@@ -8266,7 +8328,10 @@ class Report(object):
                     if x2 == check:
                         value=counts[x1]
                     else:
-                        value=counts[x1][x2]
+                        try:
+                            value=counts[x1][x2]
+                        except KeyError:
+                            value=''
                     if not value:
                         value=''
                     cell=xlp.Cell(h,content=value)
