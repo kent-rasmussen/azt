@@ -8126,7 +8126,6 @@ class Report(object):
             if ps in ['Invalid','analang']:
                 continue
             print(ps, self.profilesbysense[ps])
-    def basicreport(self,**kwargs):
     def psprofilestodo(self):
         if isinstance(self,Multislice):
             return {ps:self.slices.profiles(ps=ps)[:self.settings.maxprofiles]
