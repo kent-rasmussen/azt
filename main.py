@@ -7913,31 +7913,32 @@ class Report(object):
         if 'x' in check or len(check.split('=')) == 2:
             if 'x' in check:
                 othergroup=self.groupcomparison
+                c=check
             else: #if len(check.split('=')) == 2:
                 """put X=Y data in XxY"""
                 othergroup=group
-                check=rx.sub('=','x',check, count=1)
+                c=rx.sub('=','x',check, count=1) #copy V1=V2 into V1xV2
             try:
-                self.checkcounts[ps][profile][ufg][check][
+                self.checkcounts[ps][profile][ufg][c][
                                                 group][othergroup]=n
             except KeyError:
                 try:
-                    self.checkcounts[ps][profile][ufg][check][
+                    self.checkcounts[ps][profile][ufg][c][
                                                 group]={othergroup:n}
                 except KeyError:
                     try:
-                        self.checkcounts[ps][profile][ufg][check]={group:{
+                        self.checkcounts[ps][profile][ufg][c]={group:{
                                                     othergroup:n}}
                     except KeyError:
                         try:
-                            self.checkcounts[ps][profile][ufg]={check:{group:{
+                            self.checkcounts[ps][profile][ufg]={c:{group:{
                                                     othergroup:n}}}
                         except KeyError:
                             try:
-                                self.checkcounts[ps][profile]={ufg:{check:{
+                                self.checkcounts[ps][profile]={ufg:{c:{
                                             group:{othergroup:n}}}}
                             except KeyError:
-                                self.checkcounts[ps]={profile:{ufg:{check:{
+                                self.checkcounts[ps]={profile:{ufg:{c:{
                                             group:{othergroup:n}}}}}
         if n>0:
             titlebits='x'+ps+profile+check+group
@@ -7947,17 +7948,21 @@ class Report(object):
                 titlebits+=kwargs['ufgroup']
             id=rx.id(titlebits)
             ex=xlp.Example(parent,id,heading=checkprose)
+            if '=' in check:
+                # log.info(self.basicreported.keys())
+                log.info("Adding to basicreported for keys {}".format(check.split('=')))
+                for c in check.split('='):
+                    log.info("adding {} matches".format(len(matches)))
+                    try:
+                        log.info("to {} matches for {}".format(
+                                len(self.basicreported[c]),c))
+                        self.basicreported[c]|=matches
+                        log.info("Last entries: {}".format(list(self.basicreported[c])[-5:]))
+                    except KeyError:
+                        log.info("to a new key for {}".format(c))
+                        self.basicreported[c]=matches
+                        log.info("First entries: {}".format(list(self.basicreported[c])[:5]))
             for senseid in matches:
-                if 'x' not in check: #This won't add XxY data again.
-                    for ncvt in self.ncvts:
-                        try:
-                            self.basicreported[ncvt].add(senseid)
-                        except AttributeError:
-                            pass
-                            # log.info("Not adding ids to basic reported because "
-                            #     "it isn't there.")
-                        except KeyError:
-                            self.basicreported[ncvt]=set([senseid])
                 framed=self.taskchooser.datadict.getframeddata(senseid)
                 self.framedtoXLP(framed,parent=ex,ftype=ftype,listword=True) #showgroups?
                 if usegui and hasattr(self,'results'): #i.e., showing results in window
