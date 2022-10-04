@@ -7793,26 +7793,27 @@ class Report(object):
     def xlpstart(self,**kwargs):
         ps=kwargs.get('ps',self.slices.ps())
         profile=kwargs.get('profile',self.slices.profile())
-        reporttype=kwargs.get('reporttype','adhoc')
         default=kwargs.get('default',True)
-        if reporttype == 'Tone':
-            if self.bylocation:
-                reporttype='Tone-bylocation'
-        elif not 'Basic' in reporttype: #We don't want this in the title
             #this is only for adhoc "big button" reports.
-            reporttype=str(self.params.check())
-        if 'psprofiles' in kwargs:
+
+        if isinstance(self, Multislice) and 'psprofiles' in kwargs:
             reporttype=' '.join(
-                        [' '.join(
                         [' '.join([ps]+
                                 ['('+'-'.join(kwargs['psprofiles'][ps])+')'
                                             ])
                                 for ps in kwargs['psprofiles']
-                                ]),
                                 # profile,
-                                reporttype])
         else:
-            reporttype=' '.join([ps,profile,reporttype])
+            reporttype=' '.join([ps,profile])
+        if isinstance(self,Multicheck):
+            reporttype+=' '+'-'.join(self.cvtstodo)
+        else:
+            reporttype+='-'+self.params.check()
+        if isinstance(self,Tone) and not isinstance(self,Segments): #not byUF
+            if self.bylocation:
+                reporttype='Tone-bylocation'
+            else:
+                reporttype='Tone'
         elif self.byUFgroup:
                 reporttype+='byUFgroup'
         bits=[str(self.reportbasefilename),rx.id(reporttype),"ReportXLP"]
