@@ -7681,6 +7681,7 @@ class Report(object):
         c2 = "Any"
         """nn() here keeps None and {} from the output, takes one string,
         list, or tuple."""
+        kwargs['formstosearch']=self.formspsprofile(**kwargs)
         text=(_("{} roots of form {} by {}".format(kwargs['ps'],
                                                     kwargs['profile'],
                                                     kwargs['check'])))
