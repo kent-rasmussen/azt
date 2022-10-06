@@ -4058,7 +4058,8 @@ class TaskChooser(TaskDressing,ui.Window):
         optionlist=self.makeoptions()
         # task,title,icon
         optionlist=[i for i in optionlist if not issubclass(i[0],Sound)]
-        log.info("getting default from option list {}".format(optionlist))
+        # log.info("getting default from option list {}".format(
+        #                                             [i[1] for i in optionlist]))
         if program['testing'] and hasattr(self,'testdefault'):
             self.maketask(self.testdefault)
         else:
@@ -4179,7 +4180,8 @@ class TaskChooser(TaskDressing,ui.Window):
                     tasktuples.append((task,str(task),task.taskicon(task)))
                 else:
                     tasktuples.append((task,str(task),None))
-        log.info("Tasks available ({}): {}".format(len(tasktuples),tasktuples))
+        log.info("Tasks available ({}): {}".format(len(tasktuples),
+                    [i[1] for i in tasktuples]))
         return tasktuples
         # [(Check,"Citation Form Sorting in Tone Frames"),
         #         (WordCollection,"Placeholder for future checks"),
