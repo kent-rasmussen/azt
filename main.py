@@ -4651,16 +4651,21 @@ class Segments(object):
             dicttosearch=self.formspsprofile(**kwargs)
         # log.info("Reduced to {} entries".format(len(dicttosearch)))
         # log.info("Looking for senses by regex {}".format(regex))
-        for form,id in [i for i in dicttosearch.items() if i[0]]:
-            # log.info("Looking for form {}, with id {}".format(form,id))
-            t = threading.Thread(target=self.ifregexadd,
-                                args=(regex,form,id))
-            t.start()
-        try:
-            t.join()
-        except:
-            log.info("Looks like no forms in senseidstocheck: {}".format(
-                                                        dicttosearch))
+        self.output=[
+                    j for k,v in dicttosearch.items()
+                    if k and regex.search(k)
+                    for j in v
+                    ]
+        # for form,id in [i for i in dicttosearch.items() if i[0]]:
+        #     # log.info("Looking for form {}, with id {}".format(form,id))
+        #     t = threading.Thread(target=self.ifregexadd,
+        #                         args=(regex,form,id))
+        #     t.start()
+        # try:
+        #     t.join()
+        # except:
+        #     log.info("Looks like no forms in senseidstocheck: {}".format(
+        #                                                 dicttosearch))
         # log.info("Found senses: {}".format(self.output))
         return self.output
     def presortgroups(self,**kwargs):
