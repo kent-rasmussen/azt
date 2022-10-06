@@ -1,9 +1,13 @@
 # A→Z+T Changelog
 
+# Version 0.9.7
+- Substantial reworking of reports, which all now run in the background, and with improved initial placement of tables.
+- Git integration works, both for updating A→Z+T and for language data. If your data is in a git repository, A→Z+T can make automatic commits for you, as well as pull and push from/to a respository on flash drive for sharing.
+
 # Version 0.9.4
-- Zulgo workshop tweaks
--lots of issues surrounding weird interface on their computer. For instance, the square consonant pushes everything off their screen, becausae of large space in buttons... 
-- A number of additions to make the update process smoother (now you can restart or retry, as appropriate, from the notification window) 
+## Zulgo workshop tweaks
+- lots of issues surrounding weird interface on their computer. For instance, the square consonant pushes everything off their screen, becausae of large space in buttons...
+- A number of additions to make the update process smoother (now you can restart or retry, as appropriate, from the notification window)
 - Multiple attempts to fix auto-reboot on Windows —sorry, nothing working yet.
 
 # Version 0.9.3
