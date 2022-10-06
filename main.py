@@ -7722,8 +7722,8 @@ class Report(object):
         n=0
         for ps in self.checkcounts:
             for profile in self.checkcounts[ps]:
-                for check in self.checkcounts[ps][profile]:
-                    for ufg in self.checkcounts[ps][profile][ufg]:
+                for ufg in self.checkcounts[ps][profile]:
+                    for check in self.checkcounts[ps][profile][ufg]:
                         for group in self.checkcounts[ps][profile][ufg][check]:
                             i=self.checkcounts[ps][profile][ufg][check][group]
                             if isinstance(i,int):
