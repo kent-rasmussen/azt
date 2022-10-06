@@ -1105,43 +1105,47 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['pvd']={}
         c['pvd'][2]=['bh','dh','gh','gb',
                     'bb','dd','gg', #French
-                    'gw','dw', 'ɗw', #gnd
+                    # 'gw','dw', 'ɗw', #gnd
                     'mb','nd','ŋg',
                     'Mb', 'Bw', #tsh
                     ]
         c['pvd'][3]=[
-                    'ndw', 'ŋgw' #gnd
+                    # 'ndw', 'ŋgw' #gnd
                     ]
         c['pvd'][1]=['b','B','d','g','ɡ'] #,'G' messes with profiles
         c['p']={}
         c['p'][2]=['kk','kp','cc','pp','pt','tt','ck',
-                    'kw','tw',
+                    # 'kw','tw',
                     'Pk','Pw' #tsh
                     ] #gnd
         c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k','q']
         c['fvd']={}
-        c['fvd'][2]=['bh','vh','zh']
+        c['fvd'][2]=['bh','vh','zh',
+                    # 'zw' #gnd
+                    ]
         c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ'] #problems w x?
         c['f']={}
         c['f'][3]=['sch']
         c['f'][2]=['ch','ph','sh','hh','pf','bv','ff','sc','ss','th',
-                    'hw' #gnd
+                    # 'hw','sw' #gnd
                     ]
         #Assuming x is voiceless, per IPA and most useage...
         c['f'][1]=['F','f','s','ʃ','θ','x','h'] #not 'S'
         c['avd']={}
         c['avd'][2]=['dj','dz','dʒ']
-        c['avd'][3]=['ndz','dzw'] #gnd
-        c['avd'][4]=['ndzw'] #gnd
+        c['avd'][3]=['ndz',
+                    # 'dzw' #gnd
+                    ]
+        # c['avd'][4]=['ndzw'] #gnd
         c['a']={}
         c['a'][3]=['chk','tch']
         c['a'][2]=['ts','tʃ']
         c['lfvd']={}
-        c['lfvd'][3]=['zlw']
+        # c['lfvd'][3]=['zlw']
         c['lfvd'][2]=['zl']
         c['lfvd'][1]=['ɮ']
         c['lf']={}
-        c['lf'][3]=['slw']
+        # c['lf'][3]=['slw']
         c['lf'][2]=['sl']
         c['lf'][1]=['ɬ']
         c['pn']={}
@@ -1149,41 +1153,41 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['pn'][2]=['ᵐb','ᵐp','ᵐv','ᵐf','ⁿd','ⁿt','ᵑg','ⁿg','ᵑg','ⁿk','ᵑk',
                     'ⁿj','ⁿs','ⁿz']
         x={} #dict to put all hypothetical segements in, by category
-        for nglyphs in [4,3,2,1]:
-            if nglyphs == 4:
-                consvar='Cqg'
-                dconsvar='Dqg'
-            elif nglyphs == 3:
-                consvar='Ctg'
-                dconsvar='Dtg'
-            elif nglyphs == 2:
-                consvar='Cdg'
-                dconsvar='Ddg'
-            elif nglyphs == 1:
+        c['G']={1:['ẅ','y','Y','w','W']}
+        c['N']={1:['m','M','n','ŋ','ɲ','ɱ']} #'N', messed with profiles
+        c['N'][2]=['mm','ŋŋ','ny','gn','nn']
+        c['N'][3]=["ng'"]
+        """Non-Nasal/Glide Sonorants"""
+        c['S']={1:['l','r']}
+        c['S'][2]=['rh','wh','ll','rr',
+                    # 'rw','lw' #gnd
+                    ]
+        for stype in c:
+            if stype in ['ʔ','G','N','S']: #'V'?
+                consvar=stype
+            elif 'vd' in stype:
+                consvar='D'
+            else:
                 consvar='C'
-                dconsvar='D'
-            x[consvar]=list() #to store valid consonants in
-            x[dconsvar]=list() #to store valid depressor consonants in
-            for stype in c:
-                if c[stype].get(nglyphs) is not None:
-                    if 'vd' in stype:
-                        x[dconsvar]+=c[stype][nglyphs]
-                    else:
-                        x[consvar]+=c[stype][nglyphs]
+            for nglyphs in [i for i in range(5) if i in c[stype]]:
+                for glyph in [i for i in c[stype][nglyphs]
+                                if not set(['w','ʷ'])&set(i)
+                                ]:
+                    try:
+                        c[stype][nglyphs+1]+=[glyph+'w']
+                    except KeyError:
+                        c[stype][nglyphs+1]=[glyph+'w']
+            for nglyphs,varsfx in [(4,'qg'),(3,'tg'),(2,'dg'),(1,'')]:
+                if c[stype].get(nglyphs):
+                    try:
+                        x[consvar+varsfx]+=c[stype][nglyphs]
+                    except KeyError:
+                        x[consvar+varsfx]=c[stype][nglyphs]
         x['ʔ']=['ʔ',
                 "ꞌ", #Latin Small Letter Saltillo
                 "'", #Tag Apostrophe
                 'ʼ'  #modifier letter apostrophe
                 ]
-        x['G']=['ẅ','y','Y','w','W']
-        x['N']=['m','M','n','ŋ','ɲ','ɱ'] #'N', messed with profiles
-        x['Ndg']=['mm','ŋŋ','ny','gn','nn']
-        x['Ntg']=["ng'"]
-        """Non-Nasal/Glide Sonorants"""
-        x['S']=['l','r']
-        x['Sdg']=['rh','wh','ll','rr',
-                    'rw','lw' #gnd
-                    ]
         x['V']=[
                 #decomposed first:
                 #tilde (decomposed):
