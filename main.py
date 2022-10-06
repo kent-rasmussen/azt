@@ -1988,7 +1988,10 @@ class Settings(object):
                 self.s[lang]={}
             """These should always be there, no matter what"""
             for sclass in [x for x in self.db.s[lang]
-                                        if 'dg' not in x and 'tg' not in x]: #Just populate each list now
+                                        if 'dg' not in x
+                                        and 'tg' not in x
+                                        and 'qg' not in x
+                                        ]: #Just populate each list now
                 if sclass in self.polygraphs[lang]:
                     pgthere=[k for k,v in self.polygraphs[lang][sclass].items() if v]
                     log.debug("Polygraphs for {} in {}: {}".format(lang,sclass,
