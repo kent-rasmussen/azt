@@ -4643,7 +4643,9 @@ class Segments(object):
         ps=kwargs.get('ps',self.slices.ps())
         self.output=[] #This is just a list of senseids now: (Do we need the dict?)
         # self.outputs=[] #This is just a list of senseids now: (Do we need the dict?)
-        dicttosearch=self.settings.formstosearch[ps]
+        dicttosearch=kwargs.get('formstosearch')
+        if not dicttosearch:
+            dicttosearch=self.formspsprofile(**kwargs)
         # log.info("Looking for senses by regex {}".format(regex))
         for form,id in [i for i in dicttosearch.items() if i[0]]:
             # log.info("Looking for form {}, with id {}".format(form,id))
