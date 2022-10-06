@@ -8028,8 +8028,8 @@ class Report(object):
         if isinstance(self,Multicheck):
             checksunordered=self.status.checks(**kwargs)
             checks=self.orderchecks(checksunordered)
-            log.info("Going to do these checks: {}".format(checksunordered))
-            log.info("Going to do this order checks: {}".format(checks))
+            # log.info("Going to do these checks: {}".format(checksunordered))
+            log.info("Going to do checks in this order: {}".format(checks))
         else:
             checks=[kwargs.get('check',self.params.check())]
             """check set here"""
@@ -8047,7 +8047,7 @@ class Report(object):
         kwargs['ps']=kwargs.get('ps',self.slices.ps())
         kwargs['profile']=kwargs.get('profile',self.slices.profile())
         kwargs['check']=kwargs.get('check',self.params.check())
-        log.info("docheckreport starting with kwargs {}".format(kwargs))
+        # log.info("docheckreport starting with kwargs {}".format(kwargs))
         groups=self.status.groups(**kwargs)
         group=self.status.group()
         self.ncvts=rx.split('[=x]',kwargs['check'])
@@ -8173,7 +8173,7 @@ class Report(object):
             for kwargs['cvt'] in self.cvtstodo:
                 t=_("{} checks".format(self.params.cvtdict()[
                                                         kwargs['cvt']]['sg']))
-                print(t)
+                # print(t)
                 log.info(t)
                 sid=" ".join([t,"for",kwargs['ufgroup'],kwargs['profile'],
                             kwargs['ps']+'s'])
@@ -8730,6 +8730,8 @@ class SortV(Sort,Segments,TaskDressing,ui.Window):
         return program['theme'].photo['iconV']
     def tasktitle(self):
         return _("Sort Vowels") #Citation Form Sorting in Tone Frames
+    def tooltip(self):
+        return _("This task helps you sort words in citation form by vowels.")
     def dobuttonkwargs(self):
         return {'text':_("Sort!"),
                 'fn':self.runcheck,
@@ -8752,6 +8754,8 @@ class SortC(Sort,Segments,TaskDressing,ui.Window):
         return program['theme'].photo['iconC']
     def tasktitle(self):
         return _("Sort Consonants") #Citation Form Sorting in Tone Frames
+    def tooltip(self):
+        return _("This task helps you sort words in citation form by consonants.")
     def dobuttonkwargs(self):
         return {'text':_("Sort!"),
                 'fn':self.runcheck,
@@ -10176,11 +10180,12 @@ class FramedDataDict(dict):
             if element:
                 # log.info("getting framed data from element")
                 d=self[source]=FramedDataElement(self,source,senseid,**kwargs)
-            log.info("FramedData from {} made with forms {}".format(source,
-                                                                    d.forms))
+            # log.info("FramedData from {} made with forms {}".format(source,
+            #                                                         d.forms))
         elif d:
-            log.info("FramedData used from ealier ({},with forms {})".format(
-                                                                source,d.forms))
+            pass
+            # log.info("FramedData used from ealier ({},with forms {})".format(
+            #                                                     source,d.forms))
         else:
             log.error("FramedData confused: ({}, with d={})".format(
                                                                 source,d))
