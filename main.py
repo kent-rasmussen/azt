@@ -4630,6 +4630,13 @@ class Segments(object):
         # This fn is just to make this threadable
         if regex.search(form):
             self.output+=id
+    def formspsprofile(self,**kwargs):
+        log.info("Asked for forms to search for a data slice (only do once!)")
+        ps=kwargs.get('ps',self.slices.ps())
+        d=self.settings.formstosearch[ps]
+        # log.info("Looking at {} entries".format(len(d)))
+        return {k:d[k] for k in d
+                        if set(d[k]) & set(self.slices.senseids(**kwargs))}
     def senseidformsbyregex(self,regex,**kwargs):
         """This function takes in a compiled regex,
         and outputs a list/dictionary of senseid/{senseid:form} form."""
