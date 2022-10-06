@@ -7877,6 +7877,7 @@ class Report(object):
             skipthisone=True
         if skipthisone:
             return
+        log.info(checkprose)
         """possibly iterating over all these parameters, used by buildregex"""
         self.buildregex(**kwargs)
         # log.info("{}; regexCV: {}"
