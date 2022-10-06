@@ -7870,7 +7870,7 @@ class Report(object):
         matches=set(self.senseidformsbyregex(self.regex,**kwargs))
         if 'ufsenseids' in kwargs:
             matches=matches&set(kwargs['ufsenseids'])
-        if check in self.basicreported:
+        if hasattr(self,'basicreported') and check in self.basicreported:
             # log.info("Removing {} entries already found from {} entries found "
             #         "by {} check".format(len(self.basicreported[check]),
             #                             len(matches),
@@ -7953,7 +7953,7 @@ class Report(object):
                 titlebits+=kwargs['ufgroup']
             id=rx.id(titlebits)
             ex=xlp.Example(parent,id,heading=checkprose)
-            if '=' in check:
+            if hasattr(self,'basicreported') and '=' in check:
                 # log.info(self.basicreported.keys())
                 log.info("Adding to basicreported for keys {}".format(check.split('=')))
                 for c in check.split('='):
