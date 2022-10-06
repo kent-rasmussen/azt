@@ -226,6 +226,8 @@ def nX(segmentsin,segmentsout,n):
     overlap=set(segmentsin) & set(segmentsout)
     if overlap:
         log.error("Your in/out segment lists overlap: {}".format(overlap))
+        # log.error("in: {}".format(segmentsin))
+        # log.error("out: {}".format(segmentsout))
     # for each of in/out, make a dict keyed by length, with value listing glyphs
     # with that length (automatically separate trigraphs, digraphs, etc)
     sindict={n:[i for i in segmentsin if len(i) == n]
@@ -296,7 +298,7 @@ def fromCV(CVs, sdict, distinguish, word=False, compile=False): #check, lang
         # log.info('x: {}; repl: {}'.format(x,CVrepl))
         # log.info('CVs: {}'.format(CVs))
     CVs=re.sub('\)([^(]+)\(',')(\\1)(',CVs) #?
-    log.info('Going to compile regex with CVs: {}'.format(CVs))
+    # log.info('Going to compile regex with CVs: {}'.format(CVs))
     return make(CVs, word=word, compile=compile)
 if __name__ == '__main__':
     x='ne [pas] plaire, ne pas agréer, ne pas'
