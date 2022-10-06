@@ -226,6 +226,8 @@ def nX(segmentsin,segmentsout,n):
     overlap=set(segmentsin) & set(segmentsout)
     if overlap:
         log.error("Your in/out segment lists overlap: {}".format(overlap))
+        # log.error("in: {}".format(segmentsin))
+        # log.error("out: {}".format(segmentsout))
     # for each of in/out, make a dict keyed by length, with value listing glyphs
     # with that length (automatically separate trigraphs, digraphs, etc)
     sindict={n:[i for i in segmentsin if len(i) == n]
