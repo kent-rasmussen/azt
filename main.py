@@ -8227,6 +8227,7 @@ class Report(object):
             log.info(t)
             print(t)
             for kwargs['profile'] in profiles:
+                kwargs['formstosearch']=self.formspsprofile(**kwargs)
                 t=_("{} {}s".format(kwargs['profile'],kwargs['ps']))
                 s2=xlp.Section(s1,t,level=2)
                 print(t)
