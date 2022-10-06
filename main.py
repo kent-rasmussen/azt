@@ -4641,11 +4641,13 @@ class Segments(object):
         """This function takes in a compiled regex,
         and outputs a list/dictionary of senseid/{senseid:form} form."""
         ps=kwargs.get('ps',self.slices.ps())
-        self.output=[] #This is just a list of senseids now: (Do we need the dict?)
-        # self.outputs=[] #This is just a list of senseids now: (Do we need the dict?)
+        self.output=[]
+        # log.info("Kwargs keys: {} (formstosearch n={})".format(kwargs.keys(),
+        #                                 len(kwargs['formstosearch'])))
         dicttosearch=kwargs.get('formstosearch')
         if not dicttosearch:
             dicttosearch=self.formspsprofile(**kwargs)
+        # log.info("Reduced to {} entries".format(len(dicttosearch)))
         # log.info("Looking for senses by regex {}".format(regex))
         for form,id in [i for i in dicttosearch.items() if i[0]]:
             # log.info("Looking for form {}, with id {}".format(form,id))
@@ -4656,8 +4658,7 @@ class Segments(object):
             t.join()
         except:
             log.info("Looks like no forms in senseidstocheck: {}".format(
-                                                        senseidstocheck))
-        # log.info("Found sensess: {}".format(self.outputs))
+                                                        dicttosearch))
         # log.info("Found senses: {}".format(self.output))
         return self.output
     def presortgroups(self,**kwargs):
@@ -4674,6 +4675,8 @@ class Segments(object):
         groups=self.status.groups(cvt=cvt)
         #multiprocess from here?
         w=self.getrunwindow(msg=_("Presorting ({}={})").format(check,groups))
+        # test this before implementing it:
+        # kwargs['formstosearch']=self.formsthisprofile(**kwargs)
         for group in groups:
             self.buildregex(group=group,cvt=cvt,profile=profile,check=check)
             # log.info("self.regex: {}; self.regexCV: {}".format(self.regex,
@@ -7874,13 +7877,13 @@ class Report(object):
             return
         """possibly iterating over all these parameters, used by buildregex"""
         self.buildregex(**kwargs)
-        log.info("{}; regexCV: {}"
-                # "; \nregex: {}"
-                "".format(
-                checkprose,
-                self.regexCV,
-                # self.regex
-                )         )
+        # log.info("{}; regexCV: {}"
+        #         # "; \nregex: {}"
+        #         "".format(
+        #         checkprose,
+        #         self.regexCV,
+        #         # self.regex
+        #         )         )
         matches=set(self.senseidformsbyregex(self.regex,**kwargs))
         if 'ufsenseids' in kwargs:
             matches=matches&set(kwargs['ufsenseids'])
@@ -7890,14 +7893,14 @@ class Report(object):
             #                             len(matches),
             #                             check))
             # log.info("Entries found ({}):".format(len(matches)))
-            for m in list(matches)[:4]:
-                log.info(self.taskchooser.datadict.getframeddata(m).framed)
-            # log.info("Entries removed ({}):".format(len(self.basicreported[check]&matches)))
-            for m in list(self.basicreported[check]&matches)[:4]:
-                log.info(self.taskchooser.datadict.getframeddata(m).framed)
-            # log.info("Entries remaining ({}):".format(len(matches-self.basicreported[check])))
-            for m in list(matches-self.basicreported[check])[:4]:
-                log.info(self.taskchooser.datadict.getframeddata(m).framed)
+            # for m in list(matches)[:4]:
+            #     log.info(self.taskchooser.datadict.getframeddata(m).framed)
+            # # log.info("Entries removed ({}):".format(len(self.basicreported[check]&matches)))
+            # for m in list(self.basicreported[check]&matches)[:4]:
+            #     log.info(self.taskchooser.datadict.getframeddata(m).framed)
+            # # log.info("Entries remaining ({}):".format(len(matches-self.basicreported[check])))
+            # for m in list(matches-self.basicreported[check])[:4]:
+            #     log.info(self.taskchooser.datadict.getframeddata(m).framed)
             matches-=self.basicreported[check]
             # log.info("{} entries remaining.".format(len(matches)))
         ufg=kwargs['ufgroup']
@@ -7969,18 +7972,21 @@ class Report(object):
             ex=xlp.Example(parent,id,heading=checkprose)
             if hasattr(self,'basicreported') and '=' in check:
                 # log.info(self.basicreported.keys())
-                log.info("Adding to basicreported for keys {}".format(check.split('=')))
+                # log.info("Adding to basicreported for keys {}"
+                #         "".format(check.split('=')))
                 for c in check.split('='):
-                    log.info("adding {} matches".format(len(matches)))
+                    # log.info("adding {} matches".format(len(matches)))
                     try:
-                        log.info("to {} matches for {}".format(
-                                len(self.basicreported[c]),c))
+                        # log.info("to {} matches for {}".format(
+                        #         len(self.basicreported[c]),c))
                         self.basicreported[c]|=matches
-                        log.info("Last entries: {}".format(list(self.basicreported[c])[-5:]))
+                        # log.info("Last entries: {}".format(
+                        #                 list(self.basicreported[c])[-5:]))
                     except KeyError:
-                        log.info("to a new key for {}".format(c))
+                        # log.info("to a new key for {}".format(c))
                         self.basicreported[c]=matches
-                        log.info("First entries: {}".format(list(self.basicreported[c])[:5]))
+                        # log.info("First entries: {}".format(
+                        #                     list(self.basicreported[c])[:5]))
             for senseid in matches:
                 framed=self.taskchooser.datadict.getframeddata(senseid)
                 self.framedtoXLP(framed,parent=ex,ftype=ftype,listword=True) #showgroups?
@@ -11451,7 +11457,7 @@ class SliceDict(dict):
     def inslice(self,senseids):
         senseidstochange=set(self._senseids).intersection(senseids)
         return senseidstochange
-    def senseids(self,ps=None,profile=None):
+    def senseids(self,ps=None,profile=None,**kwargs): #don't die on other kwargs
         """This returns an up to date list of senseids in the curent slice
         (because changing ps or profile calls renewsenseids), or else the
         specified slice"""
