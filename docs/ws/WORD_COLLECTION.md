@@ -1,4 +1,4 @@
-<a href="fr/WORD_COLLECTION.md">Français</a>
+<a href="../fr/ws/WORD_COLLECTION.md">Français</a>
 # Word Collection
 
 ## Prerequisites

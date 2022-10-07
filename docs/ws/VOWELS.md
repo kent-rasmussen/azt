@@ -1,3 +1,4 @@
+<a href="../fr/ws/VOWELS.md">Français</a>
 # Vowels
 
 ## Prerequisites

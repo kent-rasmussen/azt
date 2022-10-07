@@ -1,3 +1,4 @@
+<a href="../fr/ws/CONSONANTS.md">Français</a>
 # Consonants
 
 ## Prerequisites
