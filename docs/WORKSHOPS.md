@@ -12,7 +12,7 @@ If you want any of these workshops in your home area, please consider inviting a
   - how to pay for all of the above
   - If you want this in your home area, please consider inviting a neighboring language team to join you.
 - Buy a computer, if you do not already have one.
-- Get your computer set up with the SIL Cameroon keyboard.
+- Get your computer set up with the SIL Cameroon keyboard (or a similar soft keyboard that will enable you to type all the characters you may need).
 - Buy at least one flash drive dedicated to
   - backing up your data, and
   - sending your data to your consultant.
