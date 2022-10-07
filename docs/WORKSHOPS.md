@@ -18,6 +18,6 @@ If you want any of these workshops in your home area, please consider inviting a
   - sending your data to your consultant.
 
 ## [Word Collection](ws/WORD_COLLECTION.md)
-## [Parse Words](ws/PARSE_WORDS.md)
+## [Parse Words](ws/PARSE_WORDS.md) (This will be available with version 1.0)
 ## [Vowels](ws/VOWELS.md)
 ## [Consonants](ws/CONSONANTS.md)
