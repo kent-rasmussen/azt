@@ -1,17 +1,17 @@
-<a href="fr/WORD_COLLECTION.md">Français</a>
+<a href="fr/WORD_COLLECTION.md">English</a>
 
 # <a>Collecte de mots</a>
 
-## Prerequisites
+## Conditions préalables
 
 [Conditions préalables généraux des ateliers](../WORKSHOPS.md#Prerequisites)
 
-## Goals
+## Buts
 
 - Installez A→Z+T et familiarisez l'équipe avec le projet en gros, l'interface A→Z+T et la tâche de collecte de mots.
-- Decide on citation forms for nouns and verbs.
+- Décidez des formes de citation pour les noms et les verbes.
 - Lancez l'équipe sur la tâche de Collecte de mots.
-- Get the team started on the Record Words task.
+- Lancez l'équipe sur la tâche Enregistrer les mots.
 
 ## Measures à prendre pour le suivi
 
