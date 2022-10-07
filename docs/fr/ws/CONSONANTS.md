@@ -4,14 +4,14 @@
 
 ## Conditions préalables
 
-- [General workshop prerequisites](../WORKSHOPS.md#Prerequisites)
-- Completed action items from previous workshops
+- [Conditions préalables généraux des ateliers](../WORKSHOPS.md#Prerequisites)
+- Measures à prendre pour le suivi des ateliers précédents
 
 ## Buts
 
-- Work through the sorting of consonants in at least one syllable profile for nouns and verbs
+- Faire le tri des consonnes dans au moins un profil de syllabe pour les noms et les verbes
 
-## Follow-up Action Items
+## Measures à prendre pour le suivi
 
-- Work through the sorting of Consonants in at least the three most populous syllable profiles for nouns and verbs
-- Send your database to your consultant.
+- Faire le tri des consonnes dans au moins les trois profils de syllabes les plus populaires pour les noms et les verbes
+- Envoyez votre base de données à votre conseiller.
