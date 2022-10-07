@@ -13520,6 +13520,7 @@ def pythonmodules():
             ['numpy'],
             ['pyaudio'],
             ['Pillow', 'lxml'],
+            ['psutil'],
             ['patiencediff']
             ]
     for install in installs:
