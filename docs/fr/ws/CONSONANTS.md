@@ -1,4 +1,4 @@
-<a href="../fr/ws/CONSONANTS.md">English</a>
+<a href="../../ws/CONSONANTS.md">English</a>
 
 # Les consonnes
 

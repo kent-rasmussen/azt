@@ -1,4 +1,4 @@
-<a href="../fr/ws/PARSE_WORDS.md">English</a>
+<a href="../../ws/PARSE_WORDS.md">English</a>
 
 # Coupure des mots
 

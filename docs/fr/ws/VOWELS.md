@@ -1,4 +1,4 @@
-<a href="../fr/ws/VOWELS.md">English</a>
+<a href="../…./ws/VOWELS.md">English</a>
 
 # <a>Les voyelles</a>
 
