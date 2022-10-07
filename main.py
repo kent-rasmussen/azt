@@ -61,7 +61,6 @@ import multiprocessing
 import itertools
 import importlib.util
 import collections
-import psutil
 from random import randint
 if program['tkinter']==True:
     try:
@@ -13922,11 +13921,16 @@ if __name__ == "__main__":
                                     program['name'],program['version'],mt))
     log.info(_("Called with arguments ({}) {} / {}").format(sys.executable,
                                                     sys.argv[0], sys.argv))
-    log.info(_("Working directory is {} on {}, running on {} cores, at {}Mhz"
+    text=_("Working directory is {} on {}, running on {} cores"
             ).format(program['aztdir'],
                     program['hostname'],
-                    multiprocessing.cpu_count(),
-                    psutil.cpu_freq(percpu=True)))
+                    multiprocessing.cpu_count())
+    try:
+        import psutil
+        text+=", at {}Mhz".format(psutil.cpu_freq(percpu=True))
+    except ModuleNotFoundError:
+        log.info("No psutil; no cpu info.")
+    log.info(text)
     log.info(_("Computer identifies as {}").format(platform.uname()))
     log.info(_("Loglevel is {}; started at {}").format(loglevel,
                                         program['start_time'].isoformat()))
