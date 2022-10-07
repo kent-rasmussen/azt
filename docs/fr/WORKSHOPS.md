@@ -1,4 +1,4 @@
-<a href="fr/WORKSHOPS.md">English</a>
+<a href="../WORKSHOPS.md">English</a>
 
 # Ateliers de développement de langue basés sur les Actifs
 
