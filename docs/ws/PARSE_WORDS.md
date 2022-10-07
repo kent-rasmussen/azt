@@ -1,3 +1,4 @@
+<a href="../fr/ws/PARSE_WORDS.md">Français</a>
 # PARSE WORDS
 
 ## Prerequisites

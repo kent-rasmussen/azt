@@ -1,3 +1,4 @@
+<a href="../fr/ws/Template.md">Français</a>
 # Title HERE
 
 ## Prerequisites
@@ -7,5 +8,5 @@
 ## Goals
 -
 ## Follow-up Action Items
-- 
+-
 - Send your database to your consultant.
