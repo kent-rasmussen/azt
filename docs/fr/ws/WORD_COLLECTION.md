@@ -1,4 +1,4 @@
-<a href="fr/WORD_COLLECTION.md">English</a>
+<a href="../fr/ws/WORD_COLLECTION.md">English</a>
 
 # <a>Collecte de mots</a>
 
