@@ -21,3 +21,5 @@ If you want any of these workshops in your home area, please consider inviting a
 ## [Parse Words](ws/PARSE_WORDS.md) (This will be available with version 1.0)
 ## [Vowels](ws/VOWELS.md)
 ## [Consonants](ws/CONSONANTS.md)
+## [Sorting Nouns for Tone](ws/NOUN_ROOT_TONE.md)
+## [Sorting Verbs for Tone](ws/VERB_ROOT_TONE.md)
