@@ -1,9 +1,24 @@
 # A→Z+T Changelog
 
+#Next up:
+- make initial Git integration smooth, with initial clone and init, both for data and a flash drive
+- Parsing:
+  - Addition of second forms (primary data)
+  - Parsing of lexeme forms (analysis)
+  - writing of lexical categories (analysis)
+  - Store affixes in entry and elsewhere (new settings file?)
+  - Clarity for user wrt what is data (i.e. lc, pl, imp), and what is analysis (i.e., lx, ps) —in the presentation of the task itself, and in the documentation
+- Migration to working on the appropriate form, synchronizing across frame definitions, etc.
+- Catch up on translation
+
+# Version 0.9.7
+- Substantial reworking of reports, which all now run in the background, and with improved initial placement of tables.
+- Git integration works, both for updating A→Z+T and for language data. If your data is in a git repository, A→Z+T can make automatic commits for you, as well as pull and push from/to a respository on flash drive for sharing.
+
 # Version 0.9.4
-- Zulgo workshop tweaks
--lots of issues surrounding weird interface on their computer. For instance, the square consonant pushes everything off their screen, becausae of large space in buttons... 
-- A number of additions to make the update process smoother (now you can restart or retry, as appropriate, from the notification window) 
+## Zulgo workshop tweaks
+- lots of issues surrounding weird interface on their computer. For instance, the square consonant pushes everything off their screen, becausae of large space in buttons...
+- A number of additions to make the update process smoother (now you can restart or retry, as appropriate, from the notification window)
 - Multiple attempts to fix auto-reboot on Windows —sorry, nothing working yet.
 
 # Version 0.9.3

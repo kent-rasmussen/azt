@@ -19,6 +19,12 @@ class Report(object):
     def __init__(self,filename,report,langname):
         self.start_time=time.time()
         self.filename=filename
+        self.tmpfile=self.filename+'.tmp'
+        if file.exists(self.tmpfile):
+            log.info(_("Report {} already in process; not doing again."
+                    ).format(self.filename))
+            return
+        open(self.tmpfile, 'wb').close()
         self.stylesheetdir=file.getstylesheetdir(filename)
         # self.tree=ET.ElementTree(ET.Element('lingPaper'))
         self.node=ET.Element('lingPaper') #self.tree.getroot()
@@ -41,6 +47,7 @@ class Report(object):
         self.xlptypes()
         self.stylesheet()
         self.write()
+        file.remove(self.tmpfile)
         t=time.time()-self.start_time
         # m=int(t/60)
         # s=t%60
@@ -149,7 +156,11 @@ class Report(object):
         try:
             subprocess.run(xetexargs,shell=False) # was call
             # subprocess.call(xetexargs,shell=False) #does twice help?
-            exts=['out','aux','log']
+            exts=[
+                'tex',
+                'out','aux','log',
+                'xmla','xmlb','xmlc'
+                ]
             # exts+=['xmla','xmlb','xmlc','tex'] #once this is working...
             for ext in exts:
                 file.remove(outfile.replace('.xml', '.'+ext))
@@ -293,9 +304,15 @@ class Report(object):
         # >
 
 class Section(ET.Element):
-    def __init__(self,parent,title="No Section Title!",level=1,landscape=False):
+    def __init__(self,parent,title="No Section Title!",level=None,landscape=False):
         id=rx.id(title)
-        name='section'+str(level)
+        if level: #this shouldn't happen
+            self.level=level
+        elif hasattr(parent,'level'): #this should manage most cases
+            self.level=parent.level+1
+        else:
+            self.level=1
+        name='section'+str(self.level)
         attribs={'id':id}
         if landscape:
             attribs['showinlandscapemode']='yes'
@@ -323,17 +340,27 @@ class Table(ET.Element):
                 <tr><td/></tr>
             </table>
         </tablenumbered>"""
-    def __init__(self,parent,caption):
-        id=rx.id('nt'+caption)
-        self.numbered=ET.SubElement(parent.node,'tablenumbered',attrib={'id':id})
-        self.node=ET.SubElement(self.numbered,'table')
-        self.caption=ET.SubElement(self.node,'caption')
-        self.caption.text=caption
+    def destroy(self):
+        if hasattr(self,'numbered'):
+            self.parent.node.remove(self.numbered)
+        else:
+            self.parent.node.remove(self.node)
+    def __init__(self,parent,caption=None,numbered=True):
+        self.parent=parent
+        if numbered:
+            id=rx.id('nt'+caption)
+            self.numbered=ET.SubElement(parent.node,'tablenumbered',attrib={'id':id})
+            self.node=ET.SubElement(self.numbered,'table')
+        else:
+            self.node=ET.SubElement(parent.node,'table')
+        if caption:
+            self.caption=ET.SubElement(self.node,'caption')
+            self.caption.text=caption
 class Row(ET.Element):
     def __init__(self,parent):
         self.node=ET.SubElement(parent.node,'tr')
 class Cell(ET.Element):
-    def __init__(self,parent,content,header=False,linebreakwords=False):
+    def __init__(self,parent,content='',header=False,linebreakwords=False):
         if header == False:
             tag='td'
         elif header == True:
