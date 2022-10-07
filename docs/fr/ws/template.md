@@ -4,14 +4,14 @@
 
 ## Conditions préalables
 
-- [General workshop prerequisites](../WORKSHOPS.md#Prerequisites)
-- Completed action items from previous workshops
+- [Conditions préalables généraux des ateliers](../WORKSHOPS.md#Prerequisites)
+- Measures à prendre pour le suivi des ateliers précédents
 
 ## Buts
 
 -
 
-## Follow-up Action Items
+## Measures à prendre pour le suivi
 
 -
-- Send your database to your consultant.
+- Envoyez votre base de données à votre conseiller.
