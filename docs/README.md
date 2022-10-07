@@ -1,5 +1,5 @@
 <a href="https://gitlocalize.com/repo/7965/fr?utm_source=badge"> <img src="https://gitlocalize.com/repo/7965/fr/badge.svg" /> </a>
-<a href="fr/README.md"> Lisez cette page en Français </a>
+<a href="fr/README.md">Français</a>
 ## Simplest install on [MS Windows](SIMPLEINSTALL.md) or [Linux](SIMPLEINSTALL_LINUX.md)
 ## If you want consultant help, see also [this page](HELP_PREREQUISITES.md)
 
