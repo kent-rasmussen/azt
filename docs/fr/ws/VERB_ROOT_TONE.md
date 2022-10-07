@@ -1,4 +1,4 @@
-<a href="../fr/ws/VERB_ROOT_TONE.md">English</a>
+<a href="../../ws/VERB_ROOT_TONE.md">English</a>
 
 # Ton dans les racines verbales
 

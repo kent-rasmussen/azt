@@ -1,4 +1,4 @@
-<a href="../fr/ws/NOUN_ROOT_TONE.md">English</a>
+<a href="../../ws/NOUN_ROOT_TONE.md">English</a>
 
 # Ton dans les racines des noms
 

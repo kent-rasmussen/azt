@@ -1,4 +1,4 @@
-<a href="../fr/ws/Template.md">English</a>
+<a href="../../ws/Template.md">English</a>
 
 # Titre ICI
 
