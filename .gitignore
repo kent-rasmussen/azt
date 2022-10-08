@@ -41,4 +41,4 @@ reports/**
 *.ChorusRescuedFile
 *.git
 *.ini
-*lift.*
+.*lift.*
