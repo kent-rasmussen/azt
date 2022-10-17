@@ -1490,12 +1490,12 @@ class Settings(object):
             # log.info(', '.join(list(self.repo[r].files)[:5]))
             # log.info(', '.join([file.getreldir(self.repo[r].url,i) for i in file.getfilesofdirectory(self.audiodir, '*.wav')][:5]))
             # If we ever support mp3, we should add it here:
-            log.info("{}".format([file.getreldirposix(self.repo[r].url,i)
-                    for i in file.getfilesofdirectory(self.audiodir,
-                                                        '*.wav')]))
-            log.info("{}".format(set(file.getreldirposix(self.repo[r].url,i)
-                    for i in file.getfilesofdirectory(self.audiodir,
-                                                        '*.wav'))))
+            # log.info("{}".format([file.getreldirposix(self.repo[r].url,i)
+            #         for i in file.getfilesofdirectory(self.audiodir,
+            #                                             '*.wav')]))
+            # log.info("{}".format(set(file.getreldirposix(self.repo[r].url,i)
+            #         for i in file.getfilesofdirectory(self.audiodir,
+            #                                             '*.wav'))))
             audiohere=set([file.getreldirposix(self.repo[r].url,i)
                     for i in file.getfilesofdirectory(self.audiodir,
                                                         '*.wav')])
@@ -13410,6 +13410,11 @@ def propagate(self,attr):
 def donothing():
     log.debug("Doing Nothing!")
     pass
+def pickshortest(l):
+    shortestlength=min([len(i) for i in l])
+    for i in l:
+        if len(i) == shortestlength:
+            return i
 def getinterfacelangs():
     return [{'code':'fr','name':'Français'},
             {'code':'en','name':'English'},
