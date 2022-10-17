@@ -13492,6 +13492,8 @@ def findexecutable(exe):
         log.info("Executable {} found at {}".format(exe,program[exe]))
     else:
         log.info("Executable {} found multiple items: {}".format(exe,program[exe]))
+        program[exe]=pickshortest(program[exe])
+        log.info("Using shortest executable path: {}".format(program[exe]))
     if exe == 'praat' and program[exe] and not praatversioncheck():
         findexecutable('sendpraat') #only ask if it would be useful
     # os.environ["PATH"] += os.pathsep + os.path.join(os.getcwd(), 'node')
