@@ -1526,6 +1526,13 @@ class Node(ET.Element):
         super(Node, self).__init__(tag, attrib, **kwargs)
         parent.append(self)
 class Entry(object): # what does "object do here?"
+    """I think the right path forward is to make this the base thing searched,
+    with senses in that, and examples in that. each should have a class method
+    to find things, including parents (which would maybe just be stored in
+    attributes)
+    I might only need to convert these three levels to Node class instances;
+    other items could be left alone.
+    """
     #import lift.put as put #class put:
     #import get #class put:
     def formtextnodeofentry(self,tag,lang):
