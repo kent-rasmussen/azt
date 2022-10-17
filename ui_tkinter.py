@@ -63,12 +63,12 @@ class Theme(object):
             scale=1
         self.photo={}
         #do these once:
-        if x != y: #should be the same as scale != 1
+        if scale-1: #x != y: #should be the same as scale != 1
             scaledalreadydir='images/scaled/'+str(scale)+'/'
             file.makedir(file.fullpathname(scaledalreadydir)) #in case not there
         def mkimg(name,filename):
             relurl=file.getdiredurl('images/',filename)
-            if x != y:
+            if scale-1: #x != y:
                 scaledalready=file.getdiredurl(scaledalreadydir,filename)
                 if file.exists(file.fullpathname(scaledalready)):
                     # log.info("scaled image exists for {}".format(filename))
