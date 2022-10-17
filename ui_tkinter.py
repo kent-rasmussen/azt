@@ -61,12 +61,6 @@ class Theme(object):
             scale=self.program['scale']
         except (NameError,AttributeError):
             scale=1
-        # x and y here express a float as two integers, so 0.7 = 7/10, because
-        # the zoom and subsample fns only work on integers
-        # Higher number is better resolution (x*y/y), more time to process
-        y=50 #10 High OK, since we do this just once now
-        y=int(y)
-        x=int(scale*y)
         self.photo={}
         #do these once:
         if x != y: #should be the same as scale != 1
@@ -83,6 +77,13 @@ class Theme(object):
                 if scaledalready != relurl: # should scale if off by >2% either way
                     log.info("Scaling {}".format(relurl)) #Just do this once!
                     self.photo[name] = tkinter.PhotoImage(
+                        # x and y here express a float as two integers, so 0.7 = 7/10, because
+                        # the zoom and subsample fns only work on integers
+                        # Higher number is better resolution (x*y/y), more time to process
+                        #10>50 High OK, since we do this just once now
+                        #lower option if higher fails due to memory limitations
+                        # y=int(y)
+                        x=int(scale*y)
                                                 file = file.fullpathname(relurl)
                                                 ).zoom(x,x
                                                 ).subsample(y,y)
