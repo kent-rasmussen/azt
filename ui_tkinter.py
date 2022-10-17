@@ -75,8 +75,8 @@ class Theme(object):
                     relurl=scaledalready
                 # log.info("Dirs: {}?={}".format(scaledalready,relurl))
                 if scaledalready != relurl: # should scale if off by >2% either way
-                    self.photo[name] = tkinter.PhotoImage(
                     # log.info("Scaling {}".format(relurl)) #Just do this once!
+                    for y in range(100,10,-5):
                         # x and y here express a float as two integers, so 0.7 = 7/10, because
                         # the zoom and subsample fns only work on integers
                         # Higher number is better resolution (x*y/y), more time to process
@@ -84,11 +84,19 @@ class Theme(object):
                         #lower option if higher fails due to memory limitations
                         # y=int(y)
                         x=int(scale*y)
+                        log.info("Scaling {} @{} resolution".format(relurl,y)) #Just do this once!
+                        try:
+                            self.photo[name] = tkinter.PhotoImage(
                                                 file = file.fullpathname(relurl)
                                                 ).zoom(x,x
                                                 ).subsample(y,y)
-                    self.photo[name].write(scaledalready)
-                    return
+                            self.photo[name].write(scaledalready)
+                            return #stop when the first/best works
+                        except tkinter.TclError as e:
+                            # log.info(e)
+                            if ('not enough free memory '
+                                'for image buffer' in str(e)):
+                                continue
             # log.info("Using {}".format(relurl))
             self.photo[name] = tkinter.PhotoImage(file = file.fullpathname(relurl))
         for name,filename in [ ('transparent','AZT stacks6.png'),
