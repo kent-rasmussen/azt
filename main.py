@@ -13157,7 +13157,7 @@ def interfacelang(lang=None,magic=False):
                     "interface".format(
                                         locale.getdefaultlocale(),
                                         platform.system()))
-                    code='fr'
+                    code='en' #I think loc=None normally means English on macOS
                 if code in i18n:
                     return code
 def dictofchilddicts(self,remove=None):
