@@ -75,8 +75,8 @@ class Theme(object):
                     relurl=scaledalready
                 # log.info("Dirs: {}?={}".format(scaledalready,relurl))
                 if scaledalready != relurl: # should scale if off by >2% either way
-                    log.info("Scaling {}".format(relurl)) #Just do this once!
                     self.photo[name] = tkinter.PhotoImage(
+                    # log.info("Scaling {}".format(relurl)) #Just do this once!
                         # x and y here express a float as two integers, so 0.7 = 7/10, because
                         # the zoom and subsample fns only work on integers
                         # Higher number is better resolution (x*y/y), more time to process
