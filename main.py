@@ -13149,7 +13149,15 @@ def interfacelang(lang=None,magic=False):
                 log.debug("_ doesn't look defined yet, returning interface "
                             "language from locale.")
                 loc,enc=locale.getdefaultlocale()
-                code=loc.split('_')[0]
+                if loc:
+                    code=loc.split('_')[0]
+                else:
+                    log.debug("locale.getdefaultlocale doesn't seem to have "
+                    "returned any results: {} (OS: {}); using French user "
+                    "interface".format(
+                                        locale.getdefaultlocale(),
+                                        platform.system()))
+                    code='fr'
                 if code in i18n:
                     return code
 def dictofchilddicts(self,remove=None):
