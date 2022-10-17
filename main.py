@@ -11168,7 +11168,6 @@ class Splash(ui.Window):
         self.labels['titletext']['text']=(_("{name} Dictionary and Orthography "
                                         "Checker").format(name=program['name']))
         self.update_idletasks()
-
     def __init__(self, parent):
         parent.withdraw()
         super(Splash, self).__init__(parent,exit=0)
