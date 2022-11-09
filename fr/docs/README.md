@@ -1,4 +1,4 @@
-<a href="https://gitlocalize.com/repo/7965/fr?utm_source=badge"> <img src="https://gitlocalize.com/repo/7965/fr/badge.svg"> </a> <a href="fr/README.md">Français</a>
+<a href="https://gitlocalize.com/repo/7965/fr?utm_source=badge"></a><img src="https://gitlocalize.com/repo/7965/fr/badge.svg"> <a href="fr/README.md">English</a>
 
 ## Installation la plus simple sur [MS Windows](SIMPLEINSTALL.md) ou [Linux](SIMPLEINSTALL_LINUX.md)
 
@@ -6,13 +6,13 @@
 
 # A→Z+T ![CV](../images/AZT%20stacks6_icon.png "AZT")
 
-[A→Z+T](https://github.com/kent-rasmussen/azt) is designed to accelerate community-based language development, supplemented by (not as a replacement for) formal linguistic training. It does this by systematically checking a dictionary (and thus a writing system), with respect to consonants, vowels, and tone.
+[A→Z+T](https://github.com/kent-rasmussen/azt) est conçu pour accélérer le développement linguistique communautaire, complété par (et non en remplacement) une formation linguistique formelle. Il le fait en vérifiant systématiquement un dictionnaire (et donc un système d'écriture), en ce qui concerne les consonnes, les voyelles et le ton.
 
 Vous pouvez collecter une liste de mots à partir de zéro dans [A→Z+T](https://github.com/kent-rasmussen/azt) , si vous n'en avez pas déjà créé ailleurs, mais l'analyse des racines est toujours en développement, donc pour l'instant vous devriez le faire ailleurs (par exemple, [FLEx](https://software.sil.org/fieldworks/) ou [WeSay](https://software.sil.org/wesay/) ) si votre les formes de citation ont l'apposition obligatoire.
 
 Le travail [A→Z+T](https://github.com/kent-rasmussen/azt) aboutit à une base de données lexicales qui est vérifiée, sauvegardée avec des fichiers sonores et stockée sous [LIFT](https://code.google.com/archive/p/lift-standard/), un format XML ouvert et conçu pour le partage de données lexicales. Cette base de données doit donc être compatible avec d'autres outils capables de lire [LIFT](https://code.google.com/archive/p/lift-standard/), par exemple [WeSay](https://software.sil.org/wesay/) et [FLEx](https://software.sil.org/fieldworks/) .
 
-## If you currently use FLEx, and want to understand what A→Z+T is and decide if you should use it, please see [this page](OWL_GUIDE.md).
+## Si vous utilisez actuellement FLEx et souhaitez comprendre ce qu'est A→Z+T et décider si vous devez l'utiliser, veuillez consulter [cette page](OWL_GUIDE.md) .
 
 <!-- It is designed to *supplement* (not replace) formal training, on the one hand, and *facilitate* a particular kind of language development on the other, so it may not do what you want —it certainly does not do everything. If you want to get as many people involved in the development of their own language as possible, in a manner that results in a checked lexical database backed up by sound files, then this tool is for you. -->
 
