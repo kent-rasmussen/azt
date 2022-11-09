@@ -1,3 +1,4 @@
+<a href="../OWL_GUIDE.md">English</a>
 # Guide de A→Z+T pour le linguiste de travail ordinaire
 
 ## Ou, comment penser de A→Z+T, si vous êtes habitué à FLEx (ou WeSay).

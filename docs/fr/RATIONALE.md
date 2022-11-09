@@ -1,3 +1,4 @@
+<a href="../RATIONALE.md">English</a>
 # Pourquoi un autre programme, à partir de 30 000 pieds
 
 Certaines méthodologies (Kutsch Lojenga 1996) guident les gens à travers la découverte des faits de leur propre langue. Ceux-ci offrent un meilleur accès à une variété de données, en particulier du point de vue émique. Malheureusement, la documentation résultante est notoirement faible.

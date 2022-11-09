@@ -1490,12 +1490,12 @@ class Settings(object):
             # log.info(', '.join(list(self.repo[r].files)[:5]))
             # log.info(', '.join([file.getreldir(self.repo[r].url,i) for i in file.getfilesofdirectory(self.audiodir, '*.wav')][:5]))
             # If we ever support mp3, we should add it here:
-            log.info("{}".format([file.getreldirposix(self.repo[r].url,i)
-                    for i in file.getfilesofdirectory(self.audiodir,
-                                                        '*.wav')]))
-            log.info("{}".format(set(file.getreldirposix(self.repo[r].url,i)
-                    for i in file.getfilesofdirectory(self.audiodir,
-                                                        '*.wav'))))
+            # log.info("{}".format([file.getreldirposix(self.repo[r].url,i)
+            #         for i in file.getfilesofdirectory(self.audiodir,
+            #                                             '*.wav')]))
+            # log.info("{}".format(set(file.getreldirposix(self.repo[r].url,i)
+            #         for i in file.getfilesofdirectory(self.audiodir,
+            #                                             '*.wav'))))
             audiohere=set([file.getreldirposix(self.repo[r].url,i)
                     for i in file.getfilesofdirectory(self.audiodir,
                                                         '*.wav')])
@@ -11168,7 +11168,6 @@ class Splash(ui.Window):
         self.labels['titletext']['text']=(_("{name} Dictionary and Orthography "
                                         "Checker").format(name=program['name']))
         self.update_idletasks()
-
     def __init__(self, parent):
         parent.withdraw()
         super(Splash, self).__init__(parent,exit=0)
@@ -12884,7 +12883,7 @@ class Repository(object):
         self.repotypename=self.__class__.__name__
         self.thisos=platform.system()
         # For testing:
-        self.thisos="Windows"
+        # self.thisos="Windows"
         if self.thisos == "Linux":
             self.installpage=("https://github.com/kent-rasmussen/azt/blob/main/"
                                 "SIMPLEINSTALL_LINUX.md")
@@ -13149,7 +13148,15 @@ def interfacelang(lang=None,magic=False):
                 log.debug("_ doesn't look defined yet, returning interface "
                             "language from locale.")
                 loc,enc=locale.getdefaultlocale()
-                code=loc.split('_')[0]
+                if loc:
+                    code=loc.split('_')[0]
+                else:
+                    log.debug("locale.getdefaultlocale doesn't seem to have "
+                    "returned any results: {} (OS: {}); using French user "
+                    "interface".format(
+                                        locale.getdefaultlocale(),
+                                        platform.system()))
+                    code='en' #I think loc=None normally means English on macOS
                 if code in i18n:
                     return code
 def dictofchilddicts(self,remove=None):
@@ -13402,6 +13409,11 @@ def propagate(self,attr):
 def donothing():
     log.debug("Doing Nothing!")
     pass
+def pickshortest(l):
+    shortestlength=min([len(i) for i in l])
+    for i in l:
+        if len(i) == shortestlength:
+            return i
 def getinterfacelangs():
     return [{'code':'fr','name':'Français'},
             {'code':'en','name':'English'},
@@ -13479,6 +13491,8 @@ def findexecutable(exe):
         log.info("Executable {} found at {}".format(exe,program[exe]))
     else:
         log.info("Executable {} found multiple items: {}".format(exe,program[exe]))
+        program[exe]=pickshortest(program[exe])
+        log.info("Using shortest executable path: {}".format(program[exe]))
     if exe == 'praat' and program[exe] and not praatversioncheck():
         findexecutable('sendpraat') #only ask if it would be useful
     # os.environ["PATH"] += os.pathsep + os.path.join(os.getcwd(), 'node')

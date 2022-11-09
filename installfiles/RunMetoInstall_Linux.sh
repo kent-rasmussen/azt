@@ -9,9 +9,9 @@ echo "the SIL package repository manually (instructions at https://packages.sil.
 (. /etc/os-release && sudo tee /etc/apt/sources.list.d/packages-sil-org.list>/dev/null <<< "deb http://packages.sil.org/$ID $VERSION_CODENAME main")
 sudo apt update
 sudo apt-get install fonts-sil-charis
-wget https://github.com/kent-rasmussen/azt/blob/main/installfiles/azt.desktop?raw=true -O azt.desktop
-sed -i "s|~|${HOME}|" azt.desktop 
-cp azt.desktop $HOME/.local/share/applications/
+# wget https://github.com/kent-rasmussen/azt/blob/main/installfiles/azt.desktop?raw=true -O azt.desktop
+cp ${HOME}/azt/installfiles/azt.desktop $HOME/.local/share/applications/
+sed -i "s|~|${HOME}|" $HOME/.local/share/applications/azt.desktop 
 sudo desktop-file-validate $HOME/.local/share/applications/azt.desktop
 sudo update-desktop-database
 ln $HOME/.local/share/applications/azt.desktop $HOME/Desktop/
