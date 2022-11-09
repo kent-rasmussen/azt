@@ -12883,7 +12883,7 @@ class Repository(object):
         self.repotypename=self.__class__.__name__
         self.thisos=platform.system()
         # For testing:
-        self.thisos="Windows"
+        # self.thisos="Windows"
         if self.thisos == "Linux":
             self.installpage=("https://github.com/kent-rasmussen/azt/blob/main/"
                                 "SIMPLEINSTALL_LINUX.md")
