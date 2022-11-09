@@ -11,7 +11,7 @@ Perhaps the second most important thing to say is that [A→Z+T](https://github.
 
 So if you're sitting down in a field context with someone who doesn't have a high school degree, you aren't likely going to hand him the mouse and keyboard and ask him to make changes in [FLEx](https://software.sil.org/fieldworks/). [FLEx](https://software.sil.org/fieldworks/) just isn't designed to be used that way, but [A→Z+T](https://github.com/kent-rasmussen/azt) is.
 
-To use [A→Z+T](https://github.com/kent-rasmussen/azt) well, you want to gather a number of people who are proficient in their language and ready to discuss it with each other, and **hand one of them the mouse**. The keyboard is relevant for some tasks, but that should be operated by them, too. You guide and direct the conversation, but the decisions should be registered with [A→Z+T](https://github.com/kent-rasmussen/azt) by the speakers of the language, not you.
+To use [A→Z+T](https://github.com/kent-rasmussen/azt) well, you want to gather a number of people who are proficient in their language and ready to discuss it with each other, and **hand one of them the mouse**. The keyboard is relevant for some tasks, but that should be operated by them, too. You may guide, direct, and/or provide feedback on the conversation, but the decisions should be registered with [A→Z+T](https://github.com/kent-rasmussen/azt) by the speakers of the language, not you.
 
 ## Audience
 
