@@ -1,3 +1,4 @@
+<a href="fr/OWL_GUIDE.md">Français</a>
 # Guide to [A→Z+T](https://github.com/kent-rasmussen/azt) for the Ordinary Working Linguist
 
 ## Or, how to think about [A→Z+T](https://github.com/kent-rasmussen/azt), if you're used to [FLEx](https://software.sil.org/fieldworks/) (or [WeSay](https://software.sil.org/wesay/)).
