@@ -1,9 +1,5 @@
 <a href="https://gitlocalize.com/repo/7965/fr?utm_source=badge"> <img src="https://gitlocalize.com/repo/7965/fr/badge.svg" /> </a>
 <a href="fr/README.md">Français</a>
-[AZT]: https://github.com/kent-rasmussen/azt
-[WeSay]: https://software.sil.org/wesay/
-[FLEx]: https://software.sil.org/fieldworks/
-[LIFT]: https://code.google.com/archive/p/lift-standard/
 ## Simplest install on [MS Windows](SIMPLEINSTALL.md) or [Linux](SIMPLEINSTALL_LINUX.md)
 ## If you want consultant help, see also [this page](HELP_PREREQUISITES.md)
 
@@ -35,3 +31,7 @@ See [CHANGELOG](CHANGELOG.md) to see features by version, and [ROADMAP](ROADMAP.
 
 ## Bugs
 See [BUGS](BUGS.md) for information to send me if you have problems; see [KNOWNISSUES](KNOWNISSUES.md) with recommended work-arounds to a couple known issues.
+[AZT]: https://github.com/kent-rasmussen/azt
+[WeSay]: https://software.sil.org/wesay/
+[FLEx]: https://software.sil.org/fieldworks/
+[LIFT]: https://code.google.com/archive/p/lift-standard/
