@@ -5,11 +5,12 @@
 
 # A→Z+T ![CV](../images/AZT%20stacks6_icon.png "AZT")
 
-[A→Z+T][AZT] is designed to accelerate community-based language development, supplemented by (not as a replacement for) formal linguistic training. It does this by systematically checking a dictionary (and thus a writing system), with respect to consonants, vowels, and tone.
+[A→Z+T](AZT) is designed to accelerate community-based language development, supplemented by (not as a replacement for) formal linguistic training. It does this by systematically checking a dictionary (and thus a writing system), with respect to consonants, vowels, and tone.
+[AZT]: https://github.com/kent-rasmussen/azt
 
 You can collect a wordlist from scratch in [A→Z+T][AZT], if you don't already have one created elsewhere, but parsing roots is still in development, so for now you should do that elsewhere (e.g., [FLEx][FLEx] or [WeSay][WeSay]) if your citation forms have obligatory affixation.
 
-[A→Z+T][AZT] work results in a lexical database which is checked, backed up with sound files, and stored as [LIFT][LIFT], an open XML format designed for sharing lexical data. So this database should be forward compatible with other tools that can read [LIFT][LIFT], e.g., [WeSay][WeSay] and [FLEx][FLEx].
+[A→Z+T](AZT) work results in a lexical database which is checked, backed up with sound files, and stored as [LIFT][LIFT], an open XML format designed for sharing lexical data. So this database should be forward compatible with other tools that can read [LIFT][LIFT], e.g., [WeSay][WeSay] and [FLEx][FLEx].
 
 ## If you currently use FLEx, and want to understand what A→Z+T is and decide if you should use it, please see [this page](OWL_GUIDE.md).
 
