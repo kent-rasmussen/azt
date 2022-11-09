@@ -18,9 +18,9 @@ To use [A→Z+T](https://github.com/kent-rasmussen/azt) well, you want to gather
 ### Field dependency, High/low Context
 Some people like to see things in context, in order to understand them better, and to know how to fix them. Others are happier with lots of abstract options to pick from at any given moment. Neither of these are better; this is a difference reflected across cultures and personalities.
 
-[FLEx](https://software.sil.org/fieldworks/) is designed for people who are comfortable with computers, and provides options to filter and sort data in almost any way you can imagine. **If you like spreadsheets, you probably like [FLEx](https://software.sil.org/fieldworks/).**
+[FLEx](https://software.sil.org/fieldworks/) is designed for people who are more comfortable with computers, and provides options to filter and sort data in almost any way you can imagine. **If you like spreadsheets, you probably like [FLEx](https://software.sil.org/fieldworks/).**
 
-[A→Z+T](https://github.com/kent-rasmussen/azt), on the other hand, is designed for people who want to do a specific set of things, perhaps in a specific order, without needing a lot of options. On most pages, the user clicks one button at a time. Or, if there is a field to fill in (like for the word list collection), there is one field presented at a time. [A→Z+T](https://github.com/kent-rasmussen/azt) specifically avoids offering a user the chance to put good data in the wrong place. So **if you've ever been confused, frustrated or lost using a spreadsheet, you may enjoy using [A→Z+T](https://github.com/kent-rasmussen/azt).**
+[A→Z+T](https://github.com/kent-rasmussen/azt), on the other hand, is designed for people who want to do a specific set of things, perhaps in a specific order, without needing a lot of options. On most pages, the user clicks one button at a time. Or, if there is a field to fill in (like for the word list collection), there is one field presented at a time. [A→Z+T](https://github.com/kent-rasmussen/azt) specifically avoids offering a user the chance to put good data in the wrong place. So **if you've ever been confused, frustrated or lost using a spreadsheet, you should enjoy using [A→Z+T](https://github.com/kent-rasmussen/azt).**
 
 ## Functions
 
