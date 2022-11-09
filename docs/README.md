@@ -31,7 +31,7 @@ See [CHANGELOG](CHANGELOG.md) to see features by version, and [ROADMAP](ROADMAP.
 
 ## Bugs
 See [BUGS](BUGS.md) for information to send me if you have problems; see [KNOWNISSUES](KNOWNISSUES.md) with recommended work-arounds to a couple known issues.
-[AZT]: https://github.com/kent-rasmussen/azt
-[WeSay]: https://software.sil.org/wesay/
+[AZT]:  https://github.com/kent-rasmussen/azt
+[WeSay]:  https://software.sil.org/wesay/
 [FLEx]: https://software.sil.org/fieldworks/
 [LIFT]: https://code.google.com/archive/p/lift-standard/
