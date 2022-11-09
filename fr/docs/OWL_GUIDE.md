@@ -16,15 +16,15 @@ Pour bien utiliser [A→Z+T](https://github.com/kent-rasmussen/azt) , vous devez
 
 ## Public Cible
 
-### Field dependency, High/low Context
+### Dépendance du champ, contexte haut/bas
 
-Some people like to see things in context, in order to understand them better, and to know how to fix them. Others are happier with lots of abstract options to pick from at any given moment. Neither of these are better; this is a difference reflected across cultures and personalities.
+Certaines personnes aiment voir les choses dans leur contexte, afin de mieux les comprendre et de savoir comment les réparer. D'autres sont plus heureux avec de nombreuses options abstraites parmi lesquelles choisir à tout moment. Aucun de ceux-ci n'est meilleur; c'est une différence reflétée à travers les cultures et les personnalités.
 
 [FLEx](https://software.sil.org/fieldworks/) est conçu pour les personnes qui sont plus à l'aise avec les ordinateurs et offre des options pour filtrer et trier les données de presque toutes les manières que vous pouvez imaginer. <strong data-md-type="double_emphasis">Si vous aimez les feuilles de calcul, vous aimez probablement [FLEx](https://software.sil.org/fieldworks/) .</strong>
 
 [A→Z+T](https://github.com/kent-rasmussen/azt), d'autre part, est conçu pour les personnes qui veulent faire un ensemble de choses spécifiques, peut-être dans un ordre spécifique, sans avoir besoin de beaucoup d'options. Sur la plupart des pages, l'utilisateur clique sur un bouton à la fois. Ou, s'il y a un champ à remplir (comme pour la collection de listes de mots), il y a un champ présenté à la fois. [A→Z+T](https://github.com/kent-rasmussen/azt) évite à l'expres d'offrir à un utilisateur la possibilité de mettre de bonnes données au mauvais endroit. Donc, <strong data-md-type="double_emphasis">si vous avez jamais été confus, frustré ou perdu en utilisant une feuille de calcul, vous devriez apprécier [A→Z+T](https://github.com/kent-rasmussen/azt) .</strong>
 
-## Functions
+## Les fonctions
 
 ### Entrées/Senses individuelles v groupées
 
