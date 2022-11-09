@@ -7,11 +7,11 @@
 
 [A→Z+T](https://github.com/kent-rasmussen/azt) is designed to accelerate community-based language development, supplemented by (not as a replacement for) formal linguistic training. It does this by systematically checking a dictionary (and thus a writing system), with respect to consonants, vowels, and tone.
 
-You can collect a wordlist from scratch in [A→Z+T](https://github.com/kent-rasmussen/azt), if you don't already have one created elsewhere, but parsing roots is in development, so for now you should do that elsewhere (e.g., [FLEx](https://software.sil.org/fieldworks/) or [WeSay](https://software.sil.org/wesay/)) if your citation forms have obligatory affixation.
+You can collect a wordlist from scratch in [A→Z+T](https://github.com/kent-rasmussen/azt), if you don't already have one created elsewhere, but parsing roots is still in development, so for now you should do that elsewhere (e.g., [FLEx](https://software.sil.org/fieldworks/) or [WeSay](https://software.sil.org/wesay/)) if your citation forms have obligatory affixation.
 
 [A→Z+T](https://github.com/kent-rasmussen/azt) work results in a lexical database which is checked, backed up with sound files, and stored as [LIFT](https://code.google.com/archive/p/lift-standard/), an open XML format designed for sharing lexical data. So this database should be forward compatible with other tools that can read [LIFT](https://code.google.com/archive/p/lift-standard/), e.g., [WeSay](https://software.sil.org/wesay/) and [FLEx](https://software.sil.org/fieldworks/).
 
-## If you currently use FLEx, and want to understand what A→Z+T is, see [this page](OWL_GUIDE.md).
+## If you currently use FLEx, and want to understand what A→Z+T is and decide if you should use it, please see [this page](OWL_GUIDE.md).
 
 <!-- It is designed to *supplement* (not replace) formal training, on the one hand, and *facilitate* a particular kind of language development on the other, so it may not do what you want —it certainly does not do everything. If you want to get as many people involved in the development of their own language as possible, in a manner that results in a checked lexical database backed up by sound files, then this tool is for you. -->
 ## Why
