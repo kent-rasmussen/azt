@@ -8943,9 +8943,13 @@ class Transcribe(Sound,Sort,TaskDressing,ui.Window):
                     # log.info("Exited, not making changes: ({})".format(diff))
                     self.mistake=False #reset for next submit
                     return
+                # if self.runwindow.exitFlag.istrue(): # or self.mistake:
+                #     # log.info("Exited, not making changes: ({})".format(diff))
+                #     self.mistake=False #reset for next submit
+                #     return
                 # log.info("Done with diff (without exit): {}".format(diff))
             # log.info("Doing updatebygroupsenseid: {}>{}".format(self.group,newvalue))
-            self.mistake=False
+            # self.mistake=False
             self.updatebygroupsenseid(self.group,newvalue,updateforms=True)
             #NO: this should update formstosearch and profile data.
             # log.info("Doing renamegroup: {}>{}".format(self.group,newvalue))
