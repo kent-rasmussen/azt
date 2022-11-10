@@ -38,7 +38,7 @@ So, when a difference is discovered in sorting (which wasn't noticed in transcri
 4. Confirm that words that contain the newly written  sound contrasts are now in the correct syllable profiles, i.e.:
    - CVp should be in CVC and CVpə should be in CVCV.
    - ʔaCV should be in CVCV and aCV should be in VCV.
-   - CaːCV should be in CVVCV and CaCV should be in CVCV (assuming you distinguish vowel length in the [segment interpretation settings](USAGE.md#), otherwise they should both be in CVCV)
+   - CaːCV should be in CVVCV and CaCV should be in CVCV (assuming you distinguish vowel length in the [segment interpretation settings](USAGE.md#segment-interpretation), otherwise they should both be in CVCV)
 5. If you get anything else, or if you run into any trouble with this process, [submit a bug](BUGS.md) and ask for help.
 
 [A→Z+T]:  https://github.com/kent-rasmussen/azt
