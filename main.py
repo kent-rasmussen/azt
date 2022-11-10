@@ -12513,6 +12513,13 @@ class Repository(object):
     def status(self):
         args=["status"]
         log.info(self.do(args))
+    def clone(self,directory):
+        args=["clone", "--bare", '.', directory] #this needs from-to args
+        msg=_("Cloning to {}; this may take some time."
+                    "").format(directory)
+        w=ui.Wait(program['root'],msg=msg)
+        log.info(self.do(args))
+        w.on_quit()
     def log(self):
         args=["log"]
         log.info(self.do(args))
