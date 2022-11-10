@@ -8906,7 +8906,7 @@ class Transcribe(Sound,Sort,TaskDressing,ui.Window):
         if newvalue != self.group: #only make changes!
             showpolygraphs=False
             diff=False
-            if newvalue in self.groups :
+            if newvalue in self.groups:
                 deja=_("Sorry, there is already a group with "
                                 "that label; If you want to join the "
                                 "groups, give it a different name now, "
