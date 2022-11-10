@@ -1,5 +1,10 @@
 # A→Z+T Changelog
 
+#UW priorities:
+- use of pictures
+- sortingby click and drag
+- check recording and transcription tasks are working normally
+
 #Next up:
 - make initial Git integration smooth, with initial clone and init, both for data and a flash drive
 - Parsing:
