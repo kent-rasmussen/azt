@@ -12633,11 +12633,14 @@ class Repository(object):
                                     ).format(self.description),
                             wait=True)
                 return self.findpresentremotes(firsttry=False)
-            else:
+            elif not self.directorydontask:
+                #don't ask more than once per session, if user refused to give.
                 d=file.getdirectory(_("Please select where to find the {} "
                                         "locally").format(self.description))
                 # log.info("file.getdirectory returned {}".format(d))
                 return self.addifis(d)
+                if not d:
+                    self.directorydontask=True
         else:
             return l
     def root(self):
@@ -12871,6 +12874,7 @@ class Repository(object):
         self.url = url
         self.repotypename=self.__class__.__name__
         self.thisos=platform.system()
+        self.directorydontask=False
         # For testing:
         # self.thisos="Windows"
         if self.thisos == "Linux":
