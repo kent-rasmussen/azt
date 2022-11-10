@@ -12637,9 +12637,13 @@ class Repository(object):
         #pull me once this is documented and reasonable to expect of users
         elif self.code == 'git' and me:
             if firsttry:
-                ErrorNotice(_("I can't find where you store your {} {} locally; is "
-                            "it attached?").format(self.repotypename,
-                                                    self.description),
+                text=_("I can't find where you store your {} {} locally. "
+                "\nIf you have a USB drive to backup your data, "
+                "insert it now, and press OK."
+                "\nIf not, plug in a USB drive, and I will copy your data there."
+                "").format(self.repotypename,
+                self.description)
+                ErrorNotice(text,
                             title=_("Please plug in USB for {}"
                                     ).format(self.description),
                             wait=True)
