@@ -12628,6 +12628,9 @@ class Repository(object):
             return l
         #pull me once this is documented and reasonable to expect of users
         elif self.code == 'git' and me:
+            # if repo URLs either aren't in the config or aren't connected,
+            # only ask for them once, in case the drive got unplugged.
+            # If the user doesn't want to use this fn, don't keep asking.
             if firsttry:
                 text=_("I can't find where you store your {} {} locally. "
                 "\nIf you have a USB drive to backup your data, "
