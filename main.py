@@ -8915,26 +8915,24 @@ class Transcribe(Sound,Sort,TaskDressing,ui.Window):
                 self.errorlabel['text'] = deja
                 return 1
             if self.params.cvt() != 'T': #Warning only on segmental changes
-                if len(newvalue) > len(self.group): #longer name!
-                    diff="longer"
-                elif len(newvalue) < len(self.group): #shorter name!
-                    diff="shorter"
-                if diff:
-                    notext=_("Undo; I made a mistake!")
-                    warning=_("Your new name (‘{}’) is {} than your old "
-                            "one (‘{}’). \nAssuming you want this, {} will "
-                            "restart now and "
-                            "do a new syllable profile analysis (as it will "
-                            "certainly change)."
-                            "").format(newvalue,diff,self.group,program['name'])
-                    if diff == "shorter":
-                        warning+=_("\nIf you're done using ‘{}’, "
-                            "remove it from the digraph and trigraph settings "
-                            "(the next page; then {} will restart)."
-                            ).format(self.group,program['name'])
-                        showpolygraphs=True
+                if len(newvalue) != 1 or len(self.group) != 1:
+                    warning=_("This name change (‘{}’ > ‘{}’) impacts your "
+                                "digraph and trigraph settings."
+                                ).format(self.group,newvalue)
+                    if len(newvalue) > 1:
+                        warning+=_("\n{} will add ‘{}’ to those settings."
+                                    ).format(program['name'],newvalue)
+                    if len(self.group) > 1:
+                        warning+=_("\n{} will *not* remove ‘{}’ from "
+                                    "those settings, because you may still be "
+                                    "using it elsewhere."
+                                    ).format(program['name'],self.group)
                     warning+=_("\n\n**If this isn't what you wanted, "
-                                "click ‘{}’ NOW.**").format(notext)
+                                "fix and confirm your digraph and "
+                                "trigraph settings in the menu "
+                                "\n(this will make {} restart and redo "
+                                "the syllable profile analysis)."
+                                ).format(program['name'])
                     title=_("Syllable profile change?")
                     #Just state this and move on to making changes:
                     self.err=ErrorNotice(warning,parent=self,title=title)
