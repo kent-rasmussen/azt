@@ -12695,6 +12695,7 @@ class Repository(object):
                     ErrorNotice(txt)
                 except (RuntimeError,AssertionError):
                     log.info(txt)
+                    return output
             if me and iwascalledby in ["pull"] and self.code == 'git':
                 log.info(_("Call to {} ({}) gave error: \n{}\nMerging.").format(
                                                         self.repotypename,
