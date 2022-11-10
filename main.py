@@ -7265,7 +7265,7 @@ class Record(Sound,TaskDressing,ui.Window):
                     text=_("Continue to next syllable profile"),
                     command=next).grid(row=1,column=0)
         self.donewpyaudio()
-    def __init__(self):
+    def __init__(self,parent):
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         Sound.__init__(self)
@@ -9541,7 +9541,7 @@ class RecordCitation(Record,Segments):
         Segments.__init__(self,parent)
         # ui.Window.__init__(self,parent)
         # TaskDressing.__init__(self,parent)
-        Record.__init__(self)
+        Record.__init__(self,parent)
 class RecordCitationT(Record,Tone):
     def tooltip(self):
         return _("This task helps you record words in tone frames, in citation form.")
@@ -9559,7 +9559,7 @@ class RecordCitationT(Record,Tone):
         return _("Record Tone") #Citation Form Sorting in Tone Frames
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self)
-        Record.__init__(self)
+        Record.__init__(self,parent)
 class ReportCitation(Report,Segments,TaskDressing,ui.Window):
     """docstring for ReportCitation."""
     def tasktitle(self):
