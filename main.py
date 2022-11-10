@@ -12605,8 +12605,8 @@ class Repository(object):
             return True
         elif not len(thatrepohashes):
             log.info("Repository at {} looks empty, so I'm assuming you "
-            "just cloned it".format(directory))
-            True
+            "just initialized it".format(directory))
+            return True
         error=_("The directory {} doesn't seem to have a repository related "
                 "to {}; removing.").format(directory,self.url)
         log.info(error)
