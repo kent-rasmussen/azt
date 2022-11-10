@@ -8936,16 +8936,8 @@ class Transcribe(Sound,Sort,TaskDressing,ui.Window):
                     warning+=_("\n\n**If this isn't what you wanted, "
                                 "click ‘{}’ NOW.**").format(notext)
                     title=_("Syllable profile change?")
-                    self.err=ErrorNotice(warning,parent=self,title=title,#wait=True,
-                                )
-                # log.info("Mistake: {}".format(self.mistake)) #Why isn't this setting true?
-                # if self.runwindow.exitFlag.istrue(): # or self.mistake:
-                #     # log.info("Exited, not making changes: ({})".format(diff))
-                #     self.mistake=False #reset for next submit
-                #     return
-                # log.info("Done with diff (without exit): {}".format(diff))
-            # log.info("Doing updatebygroupsenseid: {}>{}".format(self.group,newvalue))
-            # self.mistake=False
+                    #Just state this and move on to making changes:
+                    self.err=ErrorNotice(warning,parent=self,title=title)
             self.updatebygroupsenseid(self.group,newvalue,updateforms=True)
             #NO: this should update formstosearch and profile data.
             # log.info("Doing renamegroup: {}>{}".format(self.group,newvalue))
@@ -8953,9 +8945,6 @@ class Transcribe(Sound,Sort,TaskDressing,ui.Window):
             # log.info("Doing updategroups")
             self.updategroups()
             self.settings.storesettingsfile(setting='status')
-            # log.info("Done with changes: {}".format(diff))
-            #because people need to do a profile analysis here.
-            # self.restart()
             """Update regular expressions here!!"""
         else: #move on, but notify in logs
             log.info("User selected ‘{}’, but with no change.".format(
