@@ -12645,9 +12645,9 @@ class Repository(object):
                 d=file.getdirectory(_("Please select where to find the {} "
                                         "locally").format(self.description))
                 # log.info("file.getdirectory returned {}".format(d))
-                return self.addifis(d)
                 if not d:
                     self.directorydontask=True
+                return self.addifisorisnt(d) #if there add, maybe clone first.
         else:
             return l
     def root(self):
