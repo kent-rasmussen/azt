@@ -12528,11 +12528,12 @@ class Repository(object):
             url=self.url
             self.url=otherurl
         r=self.do(["log", "--format=%H"])
-        if r:
+        if r and 'fatal' not in r:
             log.info("Found {} commits for {}".format(len(r),self.url))
         else:
             log.info("Found no commits; is {} a {} repo?".format(self.url,
                                                             self.repotypename))
+            return r
         if otherurl:
             self.url=url
         if r:
@@ -12590,8 +12591,12 @@ class Repository(object):
         return r #ok if we don't track results for each
     def isrelated(self,directory):
         #Git doesn't seem to care if repos are related, but I do...
-        thisrepohashes=self.commithashes()
         thatrepohashes=self.commithashes(directory)
+        if "fatal: not a git repository" in thatrepohashes:
+            return False
+        thisrepohashes=self.commithashes()
+        if "fatal: not a git repository" in thisrepohashes:
+            return False
         # with open(rx.urlok(self.url),'a') as f:
         #     for l in thisrepohashes:
         #         f.write(l+'\n')
