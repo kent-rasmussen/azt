@@ -12614,6 +12614,7 @@ class Repository(object):
         self.removeremote(directory)
     def addifis(self,directory):
         if directory and file.exists(directory) and self.isrelated(directory):
+            # log.info("Found related repository: {}".format(directory))
             self.addremote(directory)
             return [directory] #this needs to add to lists, and iterate
         return []
