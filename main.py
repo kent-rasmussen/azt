@@ -8936,13 +8936,9 @@ class Transcribe(Sound,Sort,TaskDressing,ui.Window):
                     warning+=_("\n\n**If this isn't what you wanted, "
                                 "click ‘{}’ NOW.**").format(notext)
                     title=_("Syllable profile change?")
-                    self.err=ErrorNotice(warning,parent=self,title=title,wait=True,
-                                button=(notext,self.unsubmit))
+                    self.err=ErrorNotice(warning,parent=self,title=title,#wait=True,
+                                )
                 # log.info("Mistake: {}".format(self.mistake)) #Why isn't this setting true?
-                if self.runwindow.exitFlag.istrue() or self.mistake:
-                    # log.info("Exited, not making changes: ({})".format(diff))
-                    self.mistake=False #reset for next submit
-                    return
                 # if self.runwindow.exitFlag.istrue(): # or self.mistake:
                 #     # log.info("Exited, not making changes: ({})".format(diff))
                 #     self.mistake=False #reset for next submit
