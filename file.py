@@ -187,9 +187,10 @@ def gethome():
     if platform.uname().node == 'karlap':
         home=pathlib.Path.joinpath(home, "Assignment","Tools","WeSay")
     return home
-def getdirectory(title=None):
+def getdirectory(title=None,home=None):
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
-    home=gethome()
+    if not home:
+        home=gethome()
     if not title:
         title=_("Select a new location for your LIFT Lexicon and other Files")
     f=filedialog.askdirectory(initialdir = home, title = title)
