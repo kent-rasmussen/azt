@@ -9270,8 +9270,8 @@ class TranscribeV(Transcribe,Segments):
         # # 'Â', 'Ê', 'Î', 'Ô', 'Û',
         # 'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
         ]
-        self.params.cvt('V')
         Transcribe.__init__(self,parent)
+        self.params.cvt('V')
 class TranscribeC(Transcribe,Segments):
     def tasktitle(self):
         return _("Consonant Letters")
@@ -9324,8 +9324,8 @@ class TranscribeC(Transcribe,Segments):
         'l','r',
         'rh','wh',
         ]
-        self.params.cvt('C')
         Transcribe.__init__(self,parent)
+        self.params.cvt('C')
 class TranscribeT(Transcribe,Tone):
     def tasktitle(self):
         return _("Transcribe Tone")
@@ -9345,8 +9345,8 @@ class TranscribeT(Transcribe,Tone):
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self)
         self.glyphspossible=None
-        self.params.cvt('T')
         Transcribe.__init__(self,parent)
+        self.params.cvt('T')
 class JoinUFgroups(Tone,TaskDressing,ui.Window):
     """docstring for JoinUFgroups."""
     def tasktitle(self):
