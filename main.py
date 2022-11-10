@@ -12610,7 +12610,6 @@ class Repository(object):
         error=_("The directory {} doesn't seem to have a repository related "
                 "to {}; removing.").format(directory,self.url)
         log.info(error)
-        ErrorNotice(error,wait=True)
         self.removeremote(directory)
     def addifis(self,directory):
         if directory and file.exists(directory) and self.isrelated(directory):
