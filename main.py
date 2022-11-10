@@ -12879,6 +12879,7 @@ class Repository(object):
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
+        self.dirname = file.getfilenamefrompath(self.url)
         self.repotypename=self.__class__.__name__
         self.thisos=platform.system()
         self.directorydontask=False
