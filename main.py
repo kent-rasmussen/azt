@@ -12732,8 +12732,9 @@ class Repository(object):
                                                         self.repotypename,
                                                         ' '.join(args),
                                                         output))
-                if r:
+                if output and 'fatal' not in output:
                     r=self.mergetool(**kwargs)
+                    if r and 'fatal' not in r:
                         self.pull(**kwargs)
             if "The current branch master has no upstream branch." in output:
                 log.info("iwascalledby {}, but don't have upstream."
