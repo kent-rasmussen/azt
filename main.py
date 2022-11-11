@@ -12903,6 +12903,8 @@ class Repository(object):
                 self.branch=c.split('/')[-1].strip()
                 log.info("Found branch: {}".format(self.branch))
         return self.branch
+    def setdescription(self):
+        self.description=_("language data")
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
@@ -12927,7 +12929,7 @@ class Repository(object):
         self.usernameargs=self.getusernameargs()
         self.getfiles()
         self.ignorecheck()
-        self.description=_("language data")
+        self.setdescription()
         try:
             log.info("{} repository object initialized on branch {} at {} "
                     "for {}, with {} files."
@@ -13080,12 +13082,10 @@ class GitReadOnly(Git):
         pass
     def commit(self,file=None):
         pass
+    def setdescription(self):
+        self.description=_("AZT source")
     def __init__(self, url):
         super(GitReadOnly, self).__init__(url)
-        self.description="AZT source"
-        log.info("Using branch {} at {} for {}".format(self.branchname(),
-                                                        self.url,
-                                                        self.description))
 class ResultWindow(ui.Window):
     def __init__(self, parent, nowait=False,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
