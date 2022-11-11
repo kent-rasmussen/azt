@@ -12714,7 +12714,10 @@ class Repository(object):
                 txt=_("Call to {} ({}) gave error: \n{}").format(
                                                         self.repotypename,
                                                         ' '.join(
-                                                        [str(i) for i in args]),
+                                                        [str(i) for i in
+                                                        args #one or the other
+                                                        # cmd #this gives git ...
+                                                        ]),
                                                         output)
                 try:
                     assert self.code == 'git' #don't give hg notices here
