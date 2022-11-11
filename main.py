@@ -12609,6 +12609,8 @@ class Repository(object):
         elif not len(thatrepohashes):
             log.info("Repository at {} looks empty, so I'm assuming you "
             "just initialized it".format(directory))
+            log.info("This use case should probably go away!! Are we "
+                "initializing empty repos somewhere, or asking the user to?")
             return True
         error=_("The directory {} doesn't seem to have a repository related "
                 "to {}; removing.").format(directory,self.url)
@@ -12721,8 +12723,10 @@ class Repository(object):
                                                         output)
                 try:
                     assert self.code == 'git' #don't give hg notices here
+                    #these are states we don't want to bother the user with:
                     assert 'ot a git repository' not in output
                     assert "error: unknown option `cached'" not in output
+                    assert "does not have any commits yet" not in output
                     ErrorNotice(txt)
                 except (RuntimeError,AssertionError):
                     log.info(txt)
