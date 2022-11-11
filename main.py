@@ -12523,23 +12523,22 @@ class Repository(object):
     def log(self):
         args=["log"]
         log.info(self.do(args))
-    def commithashes(self,otherurl=None):
         if otherurl:
+    def commithashes(self,url=None):
+        r=self.do(["log", "--format=%H"],url=url)
+        if not url:
             url=self.url
-            self.url=otherurl
-        r=self.do(["log", "--format=%H"])
         if r and 'fatal' not in r:
-            log.info("Found {} commits for {}".format(len(r),self.url))
         else:
-            log.info("Found no commits; is {} a {} repo?".format(self.url,
                                                             self.repotypename))
             return r
-        if otherurl:
-            self.url=url
         if r:
+            log.info("Found {} commits for {}".format(len(r),url))
             return r.split('\n')
         else:
             return []
+            log.info("Found no commits; is {} a {} repo?".format(url,
+            if r:
     def share(self,remotes=None,branch=None):
         if not remotes:
             remotes=self.findpresentremotes() #do once
@@ -12687,8 +12686,12 @@ class Repository(object):
             self.files=[file.getfile(i) for i in r.split('\n')]
         else:
             self.files=[]
-    def do(self,args):
-        cmd=[self.cmd,self.pwd,str(self.url)] #-R
+    def do(self,args,**kwargs):
+        cmd=[self.cmd,self.pwd] #-R
+        if 'url' in kwargs and kwargs['url']:
+            cmd.extend([str(kwargs['url'])])
+        else:
+            cmd.extend([str(self.url)])
         try:
             cmd.extend(self.usernameargs)
         except AttributeError as e:
@@ -12727,9 +12730,9 @@ class Repository(object):
                                                         self.repotypename,
                                                         ' '.join(args),
                                                         output))
-                r=self.mergetool()
                 if r:
-                    self.pull()
+                    r=self.mergetool(**kwargs)
+                        self.pull(**kwargs)
             if "The current branch master has no upstream branch." in output:
                 log.info("iwascalledby {}, but don't have upstream."
                             "".format(iwascalledby))
@@ -13007,9 +13010,9 @@ class Git(Repository):
                 '*.ini',
                 '*lift.*',
                 ]
-    def mergetool(self):
+    def mergetool(self,**kwargs):
         args=['mergetool', '--tool=xmlmeld']
-        r=self.do(args)
+        r=self.do(args,**kwargs)
         log.info(r)
         return r
         # git mergetool --tool=<tool>' may be set to one of the following:
