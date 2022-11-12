@@ -14,7 +14,7 @@ The sort process would then look like this:
 - Server side:
   - A word is assigned to a client whenever a client doesn't have one assigned (e.g., on startup, or when sorts a word), if an unsorted word exists.
     - a word/card should be in only one person's hand at a time, to avoid it being sorted into two different groups at a time. This accurately models pen and paper methodology.
-  - When all words are sorted (or even just assigned?), a group is assigned to a client for verification whenever a group is verified, until all groups are verified.
+  - When all words are sorted (or even just assigned?), a group is assigned to a client for verification whenever a client doesn't have one assigned (e.g., on startup, or whenever a group is verified), until all groups are verified.
   - When asked, assign a group to a user for verification.
     - a group can be assigned to multiple clients at a time. Update each's list with unsorting done by the other. If each unsorts the same word before such an update completes from the other, be cool.
 - Client side:
