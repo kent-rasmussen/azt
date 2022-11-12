@@ -17,6 +17,9 @@ The sort process would then look like this:
   - When all words are sorted (or even just assigned?), a group is assigned to a client for verification whenever a client doesn't have one assigned (e.g., on startup, or whenever a group is verified), until all groups are verified.
   - When asked, assign a group to a user for verification.
     - a group can be assigned to multiple clients at a time. Update each's list with unsorting done by the other. If each unsorts the same word before such an update completes from the other, be cool.
+  - at all times:
+    - mark (un)sorted words
+    - mark (un)verified groups (e.g., whenever a word is sorted into it)
 - Client side:
   - When assigned a word, a client sees the word segments and gloss, and scrolls through a list of groups already there:
     - short press on a group to sort into that group
