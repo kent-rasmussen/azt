@@ -12440,14 +12440,15 @@ class Repository(object):
         return r
     def add(self,file):
         #This function must be used to see changes
-        args=["add", str(file)]
-        self.do(args)
-        if not self.alreadythere(file):
-            log.info(_("Adding {}, which is not already there.").format(file))
-            self.files+=[file] #keep this up to date
-            # self.getfiles() #this was more work
-        else:
-            log.info(_("Adding {}, which is already there.").format(file))
+        if not self.bare:
+            args=["add", str(file)]
+            self.do(args)
+            if not self.alreadythere(file):
+                log.info(_("Adding {}, which is not already there.").format(file))
+                self.files+=[file] #keep this up to date
+                # self.getfiles() #this was more work
+            else:
+                log.info(_("Adding {}, which is already there.").format(file))
     def commitconfirm(self,diff): #don't run the diff again...
         def ok(event=None):
             self.commitconfirmed=nowruntime()
@@ -12504,11 +12505,12 @@ class Repository(object):
         # if theres no diff, or I don't want to commit, still share commits:
         return True
     def diff(self,cached=False):
-        args=["diff"]
-        if cached:
-            args+=['--cached']
-        args+=['--stat']
-        return self.do(args)
+        if not self.bare:
+            args=["diff"]
+            if cached:
+                args+=['--cached']
+            args+=['--stat']
+            return self.do(args)
         # log.info("{} diff returned {}".format(self.repotypename,r))
     def status(self):
         args=["status"]
