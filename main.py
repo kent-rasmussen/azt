@@ -2054,8 +2054,9 @@ class Settings(object):
         if sclass not in self.rx:
             self.rx[sclass]={}
         for pn in range(4,-1,-1):
-            self.rx[sclass][pn]=rx.s(self.s[self.analang],sclass,polyn=pn,
-                                                            compile=True)
+            self.rx[sclass][pn]=rx.s(self.s[self.analang],sclass,
+                                polyn=pn, #limit by glyph length, 0=everything
+                                compile=True)
             if self.rx[sclass][pn] == rx.compile('()'):
                 # log.info("Empty Regex; removing.")
                 del self.rx[sclass][pn]
