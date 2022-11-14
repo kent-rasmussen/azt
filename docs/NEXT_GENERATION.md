@@ -31,3 +31,5 @@ The sort process would then look like this:
     - click on any that don't belong to unsort it.
     - click "these are all the same" when that applies.
   - When not assigned, may select a group to verify (again).
+  - Additionally, at least one client would need to be able to nagivate from one task or slice to another.
+    - It may be a better option to separate different tasks into different client apps.
