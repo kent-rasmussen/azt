@@ -12825,8 +12825,7 @@ class Repository(object):
     def exists(self,f=None):
         if not f:
             f=self.deltadir
-            log.info("FYI, I didn't get an arg to check, so checking {}".format(
-                                                                            f))
+            log.info("Checking repo existence via {}".format(f))
         return file.exists(f)
     def exewarning(self):
         title=_("Warning: {} Executable Missing!".format(self.repotypename))
