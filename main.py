@@ -2073,6 +2073,8 @@ class Settings(object):
     def setupCVrxs(self):
         slcassesC=['N','S','G','ʔ','D']
         self.rx={}
+        #Each glyph variable found in the language gets a regex for each length,
+        # plus 0 to find them all together – since we're looking for glyphs.
         for sclass in list(self.s[self.analang])+['C']: #be sure to do C last
             if self.s[self.analang][sclass] != []: #don't make if empty
                 if sclass in slcassesC and not self.distinguish[sclass]:
@@ -2083,14 +2085,20 @@ class Settings(object):
         for cc in ['CG','CS','NC','VN','VV']:
             ccc=cc.replace('C','[CSGDʔN]{1}')
             self.rx[cc]=rx.compile(ccc) #no polygraphs here
-        for c in slcassesC:
-            if c == 'N': #i.e., before C
-                self.rx[c+'_']=rx.compile(c+'(?!([CSGDʔ]|\Z))') #no polygraphs here
+        for c in slcassesC: #no polygraphs for these, since we're looking for
+            # glyph variables, not glyphs.
+            # (?!) – negative lookahead
+            # (?=) – positive lookahead
+            # (?<=) – positive lookbehind
+            # (?<!) – negative lookbehind
+            if c == 'N':
+                #i.e., neither before C nor before word end
+                self.rx[c+'_']=rx.compile(c+'(?!([CSGDʔ]|\Z))')
             elif c in ['ʔ','D']:
-                self.rx[c+'_']=rx.compile(c+'(?!\Z)') #no polygraphs here
+                self.rx[c+'_']=rx.compile(c+'(?!\Z)') #not word final
             else:
-                self.rx[c+'_']=rx.compile('(?<![CSGDNʔ])'+c) #no polygraphs here
-            self.rx[c+'wd']=rx.compile(c+'(?=\Z)') #no polygraphs here
+                self.rx[c+'_']=rx.compile('(?<![CSGDNʔ])'+c) #not after C
+            self.rx[c+'wd']=rx.compile(c+'(?=\Z)') # word final
     def reloadprofiledata(self,showpolygraphs=False):
         self.storesettingsfile() # why?
         self.profilesbysense={}
