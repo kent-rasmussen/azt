@@ -1934,11 +1934,18 @@ class Settings(object):
         o=["̀",'<','=','ː']
         cc=['CG','CS','NC','VN','VV']
         for g in [i for i in c+o if i in form]:
+            #Remove this glyph variable wherever it occurs:
             if not self.distinguish[g]:
-                if g in o:# and o in self.rx:?
-                    form=self.rx[g].sub('',form) #no polygraphs here
+                if g in o:
+                    # log.info("Using self.rx[{}]={}".format(g,self.rx[g]))
+                    # If I ever want to pull these based on word position, this
+                    # should be updated. This just pulls all of a given o set.
+                    form=self.rx[g][0].sub('',form)
                 else:
+                    # This and following rx in this method search for variables,
+                    # not glyphs, so don't use a polyglyph dictionary layer.
                     form=self.rx[g+'_'].sub('C',form) #no polygraphs here
+            #Remove this glyph variable word finally:
             if 'wd' in g and not self.distinguish[c+'wd']:
                 form=self.rx[g+'wd'].sub('C',form) #no polygraphs here
                 # log.debug("{}wd regex result: {}".format(c,form))
