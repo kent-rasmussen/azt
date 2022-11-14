@@ -133,6 +133,15 @@ class FileChooser(object):
                                 column=0, row=1
                                 )
         window.wait_window(window)
+    def findrepolift(self,repo):
+        # log.info("Looking for just one LIFT file.")
+        l=[i for i in repo.files if str(i).endswith('.lift')]
+        if len(l) == 1:
+            log.info("Found just one LIFT file: {}".format(l))
+            return l[0]
+        else:
+            log.info(_("returned more or less than one lift file! ({})"
+                    ).format(l))
     def newfilelocation(self,newfile):
         msg=_("Your new LIFT file is at {n}."
                 "\nIf you don't want it there, close {azt} and move the whole "
