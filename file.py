@@ -199,6 +199,15 @@ def getdirectory(title=None,home=None):
 def getfilesofdirectory(dir,regex='*'):
     # return pathlib.Path(dir).iterdir()
     return pathlib.Path(dir).glob(regex)
+def getmediadirectory():
+    log.info("Looking for media directory")
+    if platform.system() == 'Linux':
+        media=getdiredurl('/media/',os.getlogin())
+        log.info("media: {} ".format(media))
+    else:
+        media=None
+    return getdirectory(_("Please select where to find the media locally"),
+                            media)
 def lift():
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
     home=gethome()

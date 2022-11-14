@@ -12661,15 +12661,8 @@ class Repository(object):
                 return self.findpresentremotes(firsttry=False)
             elif not self.directorydontask:
                 #don't ask more than once per session, if user refused to give.
-                if platform.system() == 'Linux':
-                    media=file.getdiredurl('/media/',os.getlogin())
-                    log.info("media: {} ".format(media))
-                else:
-                    media=None
-                d=file.getdirectory(_("Please select where to find the {} "
-                                        "locally").format(self.description),
-                                        media)
                 # log.info("file.getdirectory returned {}".format(d))
+                d=file.getmediadirectory()
                 if not d:
                     self.directorydontask=True
                 return self.addifisorisnt(d) #if there add, maybe clone first.
