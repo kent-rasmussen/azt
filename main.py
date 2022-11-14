@@ -12513,7 +12513,18 @@ class Repository(object):
     def status(self):
         args=["status"]
         log.info(self.do(args))
-    def clone(self,directory):
+    def clonefromUSB(self,directory):
+        log.info("Preparing to clone to {} from USB repo".format(directory))
+        #this should be a pathlib object
+        # log.info("Continuing to clone to {} from USB repo".format(directory))
+        args=["clone", self.url, str(directory)] #this needs from-to args
+        msg=_("Cloning from {} to {}; this may take some time."
+                    "").format(self.url, directory)
+        log.info(msg)
+        w=ui.Wait(program['root'],msg=msg)
+        log.info(self.do(args))
+        w.on_quit()
+    def clonetoUSB(self,directory):
         args=["clone", "--bare", '.', directory] #this needs from-to args
         msg=_("Cloning to {}; this may take some time."
                     "").format(directory)
