@@ -150,7 +150,7 @@ class FileChooser(object):
                 ).format(n=newfile,
                         f=file.getfilenamedir(newfile),
                         azt=program['name'])
-        log.info(msg)
+        # log.info(msg)
         ErrorNotice(msg,wait=True)
     def loadCAWL(self):
         stockCAWL=file.fullpathname('SILCAWL/SILCAWL.lift')
