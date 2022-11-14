@@ -209,7 +209,7 @@ class FileChooser(object):
             e=ErrorNotice("That doesn't look like an ethnologue code "
                         "(just three letters)",wait=True)
             return
-        dir=file.getdirectory()
+        dir=file.gethome()
         newfile=file.getnewlifturl(dir,analang.get())
         if not newfile:
             ErrorNotice(_("Problem creating file; does the directory "
