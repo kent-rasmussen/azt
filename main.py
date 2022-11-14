@@ -11396,7 +11396,10 @@ class SliceDict(dict):
     def makepsok(self):
         pss=self.pss()
         if not hasattr(self,'_ps') or self._ps not in pss:
-            self.ps(pss[0])
+            if pss:
+                self.ps(pss[0])
+            else:
+                log.info("I don't have a ps to use; I hope that's OK!")
     def makeprofileok(self):
         if not hasattr(self,'_ps'):
             self.makepsok()
