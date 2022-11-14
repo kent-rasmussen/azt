@@ -233,7 +233,8 @@ def writefilename(filename=''):
     except:
         log.error("writefilename lift_url didn't import.")
         filenames=[]
-    if filename and filename not in filenames:
+    # log.info("filenames: {} ({})".format(filenames,filename))
+    if filename and str(filename) not in filenames:
         filenames.append(str(filename))
     file=pathlib.Path.joinpath(pathlib.Path(__file__).parent, "lift_url.py")
     f = open(file, 'w', encoding='utf-8') # to append, "a"
