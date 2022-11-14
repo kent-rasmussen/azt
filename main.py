@@ -221,7 +221,7 @@ class FileChooser(object):
             exit()
     def loaddatabase(self):
         try:
-            self.db=lift.Lift(self.name)
+            self.db=lift.Lift(str(self.name))
         except lift.BadParseError:
             text=_("{} doesn't look like a well formed lift file; please "
                     "try again.").format(self.name)
