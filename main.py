@@ -12636,7 +12636,7 @@ class Repository(object):
     def addifisnt(self,directory):
         if directory and not file.exists(directory): #cloning on top will fail.
             log.info("No related repository (@{}); cloning.".format(directory))
-            self.clone(directory)
+            self.clonetoUSB(directory)
             return self.addifis(directory)
     def addifisorisnt(self,directory):
         if directory:
