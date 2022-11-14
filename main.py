@@ -12646,6 +12646,15 @@ class Repository(object):
             return d
     def findpresentremotes(self,remote=None,firsttry=True):
         l=[]
+        # Add start 'new project from USB' to change database options.
+        # If settings has anything,
+        #     - act on plugged in
+        #     - or:
+        #         - remind to plug in: 'Retry'
+        #         - offer to clone: 'create USB backup'
+        # Otherwise, say "AZT can't find your language data backup"
+        #     - 'Continue without backup'
+        #     - 'create USB backup'
         self.addorigintoremotes() #this should only have to happen once, but when?
         for d in self.remoteurls().values():
             # log.info("adding {} to {}".format(d,l))
