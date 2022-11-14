@@ -123,9 +123,11 @@ class FileChooser(object):
         text=_('What LIFT database do you want to work on?')
         ui.Label(window.frame, text=text).grid(column=0, row=0)
         optionlist=[('New',_("Start work on a new language"))]
+        optionlist+=[('Clone',_("Copy work from a USB drive"))]
         if filenamelist:
             optionlist+=[(f,f) for f in filenamelist] #keep everything a tuple
-        optionlist+=[('Other',_("Select another database on my computer"))]
+        self.other=_("Select another database on my computer") #use later, too
+        optionlist+=[('Other',self.other)]
         buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                 optionlist=optionlist,
                                 command=setfilename,
