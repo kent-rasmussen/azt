@@ -4419,7 +4419,10 @@ class TaskChooser(TaskDressing,ui.Window):
         # log.info("Not writing to lift")
         sysrestart()
     def changedatabase(self):
-        log.debug("Removing database name, so user will be asked again.")
+        log.debug("Preparing to change database name.")
+        self.task.withdraw()
+        curname = self.file.name
+        log.info(_("Current database: {}").format(curname))
         self.file.askwhichlift(file.getfilenames())
         # text=_("{} will now exit; restart to work with the new database."
         #         "".format(program['name']))
@@ -4428,7 +4431,13 @@ class TaskChooser(TaskDressing,ui.Window):
         # subprocess.call?
         # __name__
         # main()
-        self.restart()
+        log.info(_("Current database: {}").format(self.file.name))
+        if self.file.name and curname != self.file.name:
+            log.info(_("User selected a new database; restarting with it."))
+            self.restart()
+        else:
+            log.info(_("User didn't select a new database; continuing."))
+            self.task.deiconify()
         # self.restart(self.filename)
     def ifcollectionlc(self):
         log.info("Considering finishing setup for post-collection projects")
