@@ -1940,7 +1940,7 @@ class Settings(object):
                 else:
                     form=self.rx[g+'_'].sub('C',form) #no polygraphs here
             if 'wd' in g and not self.distinguish[c+'wd']:
-                form=self.rx[c+'wd'].sub('C',form) #no polygraphs here
+                form=self.rx[g+'wd'].sub('C',form) #no polygraphs here
                 # log.debug("{}wd regex result: {}".format(c,form))
         for cc in [i for i in cc if i in form]:
             form=self.rx[cc].sub(self.interpret[cc],form) #no polygraphs here
