@@ -133,6 +133,16 @@ class FileChooser(object):
                                 column=0, row=1
                                 )
         window.wait_window(window)
+    def newfilelocation(self,newfile):
+        msg=_("Your new LIFT file is at {n}."
+                "\nIf you don't want it there, close {azt} and move the whole "
+                "{f} folder wherever you like."
+                "\nThen open {azt} and tell it where you put the LIFT file."
+                ).format(n=newfile,
+                        f=file.getfilenamedir(newfile),
+                        azt=program['name'])
+        log.info(msg)
+        ErrorNotice(msg,wait=True)
     def loadCAWL(self):
         stockCAWL=file.fullpathname('SILCAWL/SILCAWL.lift')
         if file.exists(stockCAWL):
@@ -209,8 +219,13 @@ class FileChooser(object):
             ErrorNotice(_("The file {} already exists! {}").format(newfile),
                                                                 wait=True)
             return
-        log.info("Copying over stock to new LIFT file.")
+        # msg=_("Copying over stock to new LIFT file at {}."
+        #         "\nIf you don't want it there, close {azt} and move the folder."
+        #         "\nThen open {azt} and tell it where you put the LIFT file."
+        #         ).format(newfile,azt=program['name'])
+        # ErrorNotice(msg)
         self.copytonewfile(newfile)
+        self.newfilelocation(newfile)
         return str(newfile)
     def getfilename(self):
         self.name=file.getfilename()
