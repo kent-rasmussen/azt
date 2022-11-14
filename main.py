@@ -12635,6 +12635,7 @@ class Repository(object):
             return d
     def findpresentremotes(self,remote=None,firsttry=True):
         l=[]
+        self.addorigintoremotes() #this should only have to happen once, but when?
         for d in self.remoteurls().values():
             # log.info("adding {} to {}".format(d,l))
             l+=self.addifis(d) #add to list only what is there now AND related
@@ -12720,6 +12721,7 @@ class Repository(object):
                     assert 'ot a git repository' not in output
                     assert "error: unknown option `cached'" not in output
                     assert "does not have any commits yet" not in output
+                    assert "error: No such remote 'origin'" not in output
                     ErrorNotice(txt)
                 except (RuntimeError,AssertionError):
                     log.info(txt)
