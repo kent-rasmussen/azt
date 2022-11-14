@@ -12969,10 +12969,9 @@ class Repository(object):
         return self.branch
     def setdescription(self):
         self.description=_("language data")
-    def __init__(self, url, bare=False):
+    def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
-        self.bare = bare
         self.dirname = file.getfilenamefrompath(self.url)
         self.repotypename=self.__class__.__name__
         self.thisos=platform.system()
@@ -12986,10 +12985,15 @@ class Repository(object):
             self.installpage=("https://github.com/kent-rasmussen/azt/blob/main/"
                                 "SIMPLEINSTALL.md")
         self.cmd=program[self.code]
-        if self.bare:
+        self.deltadir=file.getdiredurl(self.url,'.'+self.code)
+        if file.exists(self.deltadir):
+            self.bare=False
+        elif str(self.url).endswith('.'+self.code):
             self.deltadir=self.url
+            self.bare=True
         else:
-            self.deltadir=file.getdiredurl(self.url,'.'+self.code)
+            log.info("Assuming this is not a bare repo ({}).".format(self.url))
+            self.bare=False
         if not self.cmd:
             log.info("Found no {} executable!".format(self.repotypename))
             self.exewarning()
@@ -13034,7 +13038,7 @@ class Mercurial(Repository):
         args=['update', 'null']
     def origin(self):
         pass
-    def __init__(self, url, bare=False):
+    def __init__(self, url):
         self.code='hg'
         self.branchnamefile='branch'
         # self.cmd=program['hg']
@@ -13045,7 +13049,7 @@ class Mercurial(Repository):
         self.pwd='--cwd'
         self.lsfiles='files'
         self.argstogetusername=['config', 'ui.username']
-        super(Mercurial, self).__init__(url, bare)
+        super(Mercurial, self).__init__(url)
         # These files are just ignored in git, but if Chorus put something
         # there, we want to know
         if hasattr(self,'files'):
@@ -13108,7 +13112,7 @@ class Git(Repository):
         r=self.do(args)
         if "error: No such remote 'origin'" not in r:
             return r
-    def __init__(self, url, bare=False):
+    def __init__(self, url):
         self.code='git'
         self.branchnamefile='HEAD'
         self.wdownloadsurl="https://git-scm.com/download/win"
@@ -13118,7 +13122,7 @@ class Git(Repository):
         self.pwd='-C'
         self.lsfiles='ls-files'
         self.argstogetusername=['config', '--get', 'user.name']
-        super(Git, self).__init__(url, bare)
+        super(Git, self).__init__(url)
 class GitReadOnly(Git):
     def share(self,event=None):
         """I'm going to ned to stash and stash apply here, I think"""
