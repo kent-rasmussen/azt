@@ -12878,7 +12878,7 @@ class Repository(object):
     def addremote(self,remote):
         #This doesn't return a value
         remotes=self.remoteurls()
-        if remote in remotes.values():
+        if not remote or remote in remotes.values():
             return
         for key in ["Thing"+str(i) for i in range(1,20)]:
             if key not in remotes: #don't overwrite keys
@@ -12902,6 +12902,8 @@ class Repository(object):
             log.info("You passed me a remotes value that isn't a dict?")
         else:
             return getattr(self,'_remotes',{}).copy() #so I can iterate and change
+    def addorigintoremotes(self):
+        self.addremote(self.origin())
     def branchname(self):
         repoheadfile='.'+self.code+'/'+self.branchnamefile
         log.info("Looking for {} branch name in {}".format(self.repotypename,
@@ -12978,6 +12980,8 @@ class Mercurial(Repository):
                 exit()
     def makebare(self):
         args=['update', 'null']
+    def origin(self):
+        pass
     def __init__(self, url, bare=False):
         self.code='hg'
         self.branchnamefile='branch'
@@ -13047,6 +13051,11 @@ class Git(Repository):
         r=self.do(args)
         # log.info(r)
         return r
+    def origin(self):
+        args=['remote', 'get-url', 'origin']
+        r=self.do(args)
+        if "error: No such remote 'origin'" not in r:
+            return r
     def __init__(self, url, bare=False):
         self.code='git'
         self.branchnamefile='HEAD'
