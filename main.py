@@ -12915,9 +12915,10 @@ class Repository(object):
         return self.branch
     def setdescription(self):
         self.description=_("language data")
-    def __init__(self, url):
+    def __init__(self, url, bare=False):
         super(Repository, self).__init__()
         self.url = url
+        self.bare = bare
         self.dirname = file.getfilenamefrompath(self.url)
         self.repotypename=self.__class__.__name__
         self.thisos=platform.system()
@@ -12931,7 +12932,10 @@ class Repository(object):
             self.installpage=("https://github.com/kent-rasmussen/azt/blob/main/"
                                 "SIMPLEINSTALL.md")
         self.cmd=program[self.code]
-        self.deltadir=file.getdiredurl(self.url,'.'+self.code)
+        if self.bare:
+            self.deltadir=self.url
+        else:
+            self.deltadir=file.getdiredurl(self.url,'.'+self.code)
         if not self.cmd:
             log.info("Found no {} executable!".format(self.repotypename))
             self.exewarning()
@@ -12974,7 +12978,7 @@ class Mercurial(Repository):
                 exit()
     def makebare(self):
         args=['update', 'null']
-    def __init__(self, url):
+    def __init__(self, url, bare=False):
         self.code='hg'
         self.branchnamefile='branch'
         # self.cmd=program['hg']
@@ -12985,7 +12989,7 @@ class Mercurial(Repository):
         self.pwd='--cwd'
         self.lsfiles='files'
         self.argstogetusername=['config', 'ui.username']
-        super(Mercurial, self).__init__(url)
+        super(Mercurial, self).__init__(url, bare)
         # These files are just ignored in git, but if Chorus put something
         # there, we want to know
         if hasattr(self,'files'):
@@ -13043,7 +13047,7 @@ class Git(Repository):
         r=self.do(args)
         # log.info(r)
         return r
-    def __init__(self, url):
+    def __init__(self, url, bare=False):
         self.code='git'
         self.branchnamefile='HEAD'
         self.wdownloadsurl="https://git-scm.com/download/win"
@@ -13053,7 +13057,7 @@ class Git(Repository):
         self.pwd='-C'
         self.lsfiles='ls-files'
         self.argstogetusername=['config', '--get', 'user.name']
-        super(Git, self).__init__(url)
+        super(Git, self).__init__(url, bare)
 class GitReadOnly(Git):
     def share(self,event=None):
         """I'm going to ned to stash and stash apply here, I think"""
