@@ -12656,13 +12656,18 @@ class Repository(object):
         w=ui.Wait(program['root'],msg=msg)
         log.info(self.do(args))
         w.on_quit()
-    def clonetoUSB(self,directory):
-        args=["clone", self.bareclonearg, '.', directory] #this needs from-to
-        msg=_("Cloning to {}; this may take some time."
-                    "").format(directory)
-        w=ui.Wait(program['root'],msg=msg)
-        log.info(self.do(args))
-        w.on_quit()
+    def clonetoUSB(self,event=None):
+        # log.info("Trying to run clonetoUSB")
+        directory=self.clonetobaredirname()
+        log.info("directory: {}".format(directory))
+        if directory:
+            args=["clone", self.bareclonearg, '.', directory] #this needs from-to
+            msg=_("Copying to {}; this may take some time."
+                        "").format(directory)
+            w=ui.Wait(program['root'],msg=msg)
+            log.info(self.do(args))
+            self.addremote(directory)
+            w.on_quit()
     def log(self):
         args=["log"]
         log.info(self.do(args))
@@ -12765,6 +12770,10 @@ class Repository(object):
             self.addremote(directory)
             return [directory] #this needs to add to lists, and iterate
         return []
+    def clonetobaredirname(self):
+        d=file.getfile(file.getmediadirectory())
+        if d:
+            return d.joinpath(self.dirname).with_suffix('.'+self.code)
     def findpresentremotes(self,remote=None,firsttry=True):
         l=[]
         # Add start 'new project from USB' to change database options.
