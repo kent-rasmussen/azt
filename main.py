@@ -194,8 +194,8 @@ class FileChooser(object):
             else:
                 msg=_("It looks like the repository was cloned, but "
                             "I can't find just one lift file."
-                            "You will have to tell {} which file you want to "
-                            "Analyze.").format(program['name'])
+                            "\nTell {} which file you want to "
+                            "Analyze on the next page.").format(program['name'])
                 # log.info(msg)
                 ErrorNotice(msg,wait=True)
     def findrepolift(self,repo):
