@@ -16,6 +16,8 @@ If the project has never been used with USB backup before, the user will get jus
 ## Copy to a USB drive
 Any time [A→Z+T] doesn't find a USB drive attached, the message window contains a button allowing the user to copy the data repository to a new USB drive. Click the button, then tell [A→Z+T] where to put the new repository folder copy (e.g., select a USB drive).
 
+If you use a USB drive normally, but want to make another, just unplug the first while [A→Z+T] is opening or closing, and this menu will appear.
+
 ## Start a project from a USB drive
 When the user selects to change databases (or on [A→Z+T]'s first boot), one option is "Copy work from a USB drive". When selected, [A→Z+T] will ask where the repository is found (in which folder, on which drive), then copy that repository to your home folder for future use.
 
