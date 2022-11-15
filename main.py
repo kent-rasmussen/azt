@@ -13136,6 +13136,8 @@ class Mercurial(Repository):
         self.pwd='--cwd'
         self.lsfiles='files'
         self.argstogetusername=['config', 'ui.username']
+        self.bareclonearg="-U"
+        self.nonbareclonearg=""
         super(Mercurial, self).__init__(url)
         # These files are just ignored in git, but if Chorus put something
         # there, we want to know
@@ -13209,6 +13211,8 @@ class Git(Repository):
         self.pwd='-C'
         self.lsfiles='ls-files'
         self.argstogetusername=['config', '--get', 'user.name']
+        self.bareclonearg="--bare"
+        self.nonbareclonearg=""
         super(Git, self).__init__(url)
 class GitReadOnly(Git):
     def share(self,event=None):
