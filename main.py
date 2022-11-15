@@ -205,6 +205,10 @@ class FileChooser(object):
             log.info("Found just one LIFT file: {}".format(l))
             return l[0]
         else:
+            # I could, if this becomes a problem, return the shortest filename,
+            # or on that contains the ISO code, but I think this is sane enough
+            # for now —anyone with more than one *.lift file should know what
+            # they're doing
             log.info(_("returned more or less than one lift file! ({})"
                     ).format(l))
     def newfilelocation(self,newfile):
