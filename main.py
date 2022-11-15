@@ -12782,40 +12782,44 @@ class Repository(object):
         # Otherwise, say "AZT can't find your language data backup"
         #     - 'Continue without backup'
         #     - 'create USB backup'
-        self.addorigintoremotes() #this should only have to happen once, but when?
-        for d in self.remoteurls().values():
+        #
+        # addorigintoremotes should only have to happen once, but when?
+        # it should happen after the settings object is there, so it isn't
+        # overwritten by the settings file. So on init here is probably
+        # too early. For now, on each is inefficient, but OK.
+        self.addorigintoremotes()
+        remotesinsettings=self.remoteurls().values()
+        for d in remotesinsettings:
             # log.info("adding {} to {}".format(d,l))
             l+=self.addifis(d) #add to list only what is there now AND related
             # the related test will remove it if there AND NOT related.
             # Otherwise, we leave it for later, in case it just isn't there now.
         if l:
             return l
-        #pull me once this is documented and reasonable to expect of users
-        elif self.code == 'git' and me:
+        # If there are not remotes both in settings and present, say so, and
+        # offer the user options to address that (plug in, clone, ignore)
+        # but just do this once; don't annoy the user.
+        #pull 'me' once this is documented and reasonable to expect of users
+        elif self.code == 'git' and firsttry: # and me:
             # if repo URLs either aren't in the config or aren't connected,
             # only ask for them once, in case the drive got unplugged.
-            # If the user doesn't want to use this fn, don't keep asking.
-            if firsttry:
-                text=_("I can't find where you store your {} {} locally. "
-                "\nIf you have a USB drive to backup your data, "
-                "insert it now, and press OK."
-                "\nIf not, plug in a USB drive, and I will copy your data there."
-                "").format(self.repotypename,
-                self.description)
+            # Show this only once per run, if a user doesn't have settings
+            if remotesinsettings or not self.directorydontask:
+                text=_("{} can't find your {} {} backup. "
+                "\nIf you have a USB drive for this, insert it now."
+                # "\nIf not, plug in a USB drive, and I will copy your data there."
+                "").format(program['name'], self.repotypename, self.description)
+                button=(_("Copy data to USB"),self.clonetoUSB)
                 ErrorNotice(text,
-                            title=_("Please plug in USB for {}"
+                            title=_("No {} USB backup found"
                                     ).format(self.description),
+                            button=button,
                             wait=True)
-                return self.findpresentremotes(firsttry=False)
-            elif not self.directorydontask:
-                #don't ask more than once per session, if user refused to give.
-                # log.info("file.getdirectory returned {}".format(d))
-                d=file.getmediadirectory()
-                if not d:
+                #At this point, the user will have cloned or not already.
+                if self.remoteurls().values(): #this will have new clone value
+                    return self.findpresentremotes(firsttry=False)
+                else: #if still nothing, just give up and don't ask again.
                     self.directorydontask=True
-                return self.addifisorisnt(d) #if there add, maybe clone first.
-        else:
-            return l
     def root(self):
         args=["root"]
         self.root=self.do(args)
