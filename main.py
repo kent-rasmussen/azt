@@ -13065,7 +13065,7 @@ class Repository(object):
         self.dirname = file.getfilenamefrompath(self.url)
         self.repotypename=self.__class__.__name__
         self.thisos=platform.system()
-        self.directorydontask=False
+        self.directorydontask=False #set on init, track first request rejection
         # For testing:
         # self.thisos="Windows"
         if self.thisos == "Linux":
