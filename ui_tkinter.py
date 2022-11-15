@@ -57,6 +57,7 @@ class Theme(object):
     def setimages(self):
         # Program icon(s) (First should be transparent!)
         log.info("Maybe scaling images; please wait...") #threading?
+        self.scalings=[]
         try:
             scale=self.program['scale']
         except (NameError,AttributeError):
@@ -76,7 +77,11 @@ class Theme(object):
                 # log.info("Dirs: {}?={}".format(scaledalready,relurl))
                 if scaledalready != relurl: # should scale if off by >2% either way
                     # log.info("Scaling {}".format(relurl)) #Just do this once!
-                    for y in range(100,10,-5):
+                    if not self.scalings:
+                        maxscaled=100
+                    else:
+                        maxscaled=int(sum(self.scalings)/len(self.scalings)+10)
+                    for y in range(maxscaled,10,-5):
                         # x and y here express a float as two integers, so 0.7 = 7/10, because
                         # the zoom and subsample fns only work on integers
                         # Higher number is better resolution (x*y/y), more time to process
@@ -91,6 +96,7 @@ class Theme(object):
                                                 ).zoom(x,x
                                                 ).subsample(y,y)
                             self.photo[name].write(scaledalready)
+                            self.scalings.append(y)
                             return #stop when the first/best works
                         except tkinter.TclError as e:
                             # log.info(e)
