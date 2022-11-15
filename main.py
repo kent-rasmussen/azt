@@ -13073,14 +13073,15 @@ class Repository(object):
                                 "SIMPLEINSTALL.md")
         self.cmd=program[self.code]
         self.deltadir=file.getdiredurl(self.url,'.'+self.code)
-        if file.exists(self.deltadir):
-            self.bare=False
-        elif str(self.url).endswith('.'+self.code):
+        self.bare=self.isbare()
+        log.info("Repo {} is bare: {}".format(self.url,self.bare))
+        if (not file.exists(self.deltadir) # and self.code == 'git':
+            and str(self.url).endswith('.'+self.code)):# or self.code == 'hg':
             self.deltadir=self.url
-            self.bare=True
-        else:
-            log.info("Assuming this is not a bare repo ({}).".format(self.url))
-            self.bare=False
+        if not file.exists(self.deltadir):
+            log.info("Not a {} repo ({})? Returning".format(self.repotypename,
+                                                            self.url))
+            return
         if not self.cmd:
             log.info("Found no {} executable!".format(self.repotypename))
             self.exewarning()
