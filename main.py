@@ -102,19 +102,18 @@ class FileChooser(object):
     some basic processing on it."""
     def askwhichlift(self,filenamelist):
         def setfilename(choice,window):
+            window.withdraw()
             if choice == 'New':
-                window.withdraw()
                 self.name=self.startnewfile()
-                log.info("self.name: {}".format(self.name))
-                window.deiconify()
-                if self.name in ['New',''] or not hasattr(self,'analang'):
-                    return
             elif choice == 'Other':
                 self.name=file.lift()
-                if not self.name:
-                    return
+            elif choice == 'Clone':
+                log.info("trying clone from USB")
+                self.name=self.clonefromUSB()
             else:
                 self.name=choice
+            log.info("self.name: {}".format(self.name))
+            window.deiconify()
             if self.name:
                 file.writefilename(self.name)
                 window.destroy()
@@ -135,6 +134,7 @@ class FileChooser(object):
                                 column=0, row=1
                                 )
         window.wait_window(window)
+        return self.name
     def clonefromUSB(self):
         def makenewrepo(repoclass,mediadir):
             repo=repoclass(mediadir)
