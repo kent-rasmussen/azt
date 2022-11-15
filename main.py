@@ -13123,6 +13123,9 @@ class Mercurial(Repository):
                 exit()
     def makebare(self):
         args=['update', 'null']
+    def isbare(self):
+        # any return implies a working directory parent (not bare)
+        return not self.do(['parent'])
     def origin(self):
         pass
     def __init__(self, url):
@@ -13181,6 +13184,8 @@ class Git(Repository):
 		# meld
     def makebare(self):
         args=['config', '--bool', 'core.bare', 'true']
+    def isbare(self):
+        return self.do(['config', 'core.bare']) # pass on the config value
     def leaveunicodealonesargs(self):
         return ['-c','core.quotePath=false']
     def argstoputusername(self,username):
