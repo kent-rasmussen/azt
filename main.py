@@ -135,6 +135,69 @@ class FileChooser(object):
                                 column=0, row=1
                                 )
         window.wait_window(window)
+    def clonefromUSB(self):
+        def makenewrepo(repoclass,mediadir):
+            repo=repoclass(mediadir)
+            if (hasattr(repo,'files') #fails if no exe
+                and repo.exists()): #tests for .code dir
+                    log.info(_("Found {} Repository! ({})").format(repo.code,
+                                                                    mediadir))
+                    dirname=repo.dirname
+                    # log.info("repo in {} directory".format(dirname))
+                    newdirname=file.getfile(homedir).joinpath(dirname)
+                    if newdirname.suffix == '.'+repo.code: #strip this on clone
+                        newdirname=newdirname.with_suffix('')
+                    if file.exists(newdirname):
+                        # log.info("Exists!")
+                        msg=_("The directory {} already exists, so I'm "
+                                "not going to copy your data there."
+                                "\nDo you already have your data on your "
+                                "computer? \nIf so, click '{}' on the next "
+                                "screen.").format(newdirname,self.other)
+                        log.info(msg)
+                        ErrorNotice(msg,wait=True)
+                        return
+                    log.info("cloning repo to {} directory".format(newdirname))
+                    repo.clonefromUSB(newdirname)
+                    newrepo=repoclass(newdirname)
+                    if newrepo.exists():
+                        return newrepo
+            else:
+                log.info("No {} repo at {}".format(repoclass,mediadir))
+        log.info("starting clone from USB")
+        mediadir=file.getmediadirectory() #ask where it is
+        homedir=file.gethome() #don't ask where to put it
+        # log.info("Media dir: {}; home: {}".format(mediadir,homedir))
+        if not file.exists(homedir): #this should never happen
+            ErrorNotice(_("I can't find your home directory ({}); please "
+                        "submit a bug report!").format(homedir))
+        newrepo=None
+        newrepo=makenewrepo(Git,mediadir)
+        if not newrepo:
+            log.info("trying with Mercurial")
+            newrepo=makenewrepo(Mercurial,mediadir)
+        if newrepo: # if there, already exists
+            filename=self.findrepolift(newrepo) #find the lift file
+            # log.info("found filename {}".format(filename))
+            if filename: #this will be None, if no or multiple *.lift files
+                # log.info("using filename {}".format(filename))
+                newfile=newrepo.url.joinpath(filename) #make file a url
+                # log.info("using newfile {}".format(newfile))
+                if file.exists(newfile): #should always be there
+                    # log.info("notifying newfile {}".format(newfile))
+                    self.newfilelocation(newfile) #tell user where to find it
+                    # log.info("returning newfile {}".format(newfile))
+                    return newfile
+                else:
+                    log.error(_("looks like there was a problem finding "
+                                "your new file. ({})").format(newfile))
+            else:
+                msg=_("It looks like the repository was cloned, but "
+                            "I can't find just one lift file."
+                            "You will have to tell {} which file you want to "
+                            "Analyze.").format(program['name'])
+                # log.info(msg)
+                ErrorNotice(msg,wait=True)
     def findrepolift(self,repo):
         # log.info("Looking for just one LIFT file.")
         l=[i for i in repo.files if str(i).endswith('.lift')]
