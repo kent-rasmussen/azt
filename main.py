@@ -12651,7 +12651,7 @@ class Repository(object):
         log.info(self.do(args))
         w.on_quit()
     def clonetoUSB(self,directory):
-        args=["clone", "--bare", '.', directory] #this needs from-to args
+        args=["clone", self.bareclonearg, '.', directory] #this needs from-to
         msg=_("Cloning to {}; this may take some time."
                     "").format(directory)
         w=ui.Wait(program['root'],msg=msg)
