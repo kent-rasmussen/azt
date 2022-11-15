@@ -45,6 +45,9 @@ UPDATE: You can now start your database in A→Z+T, using the [Data Collection T
 ### Collaboration and Archival
 I **strongly** recommend using a version controlled repository (e.g., mercurial, git), as is normally done in [WeSay] and in recommended [FLEx] collaboration schemes. Even if you are the only one to ever see this data (why would that be?), the advantages in history and preservation of your data are already there. But if you will be sharing changes with others, you really **must** have an easy way to do this, or you will get bogged down in the logistics of sharing data changes. I  use [Language Depot](https://languagedepot.org), though there are certainly other ways to meet this need. In any case, setting this up early is always easier than trying to merge divergent data later.
 
+More details are available [here](COLLABORATION_AND_BACKUP.md).
+
+
 ### Tone Frame Design
 In order to sort tone data in [A→Z+T], you have to have tone frames defined. There is a tool in [A→Z+T] to help you **define** your tone frames, but help **designing** your tone frames is beyond the scope of [A→Z+T]. How to design good tone frames is covered in a field methods course in some graduate linguistics programs, and you have find further help in Keith Snider's Tone Analysis for Field Linguists (2018). I have also made two short videos that show good frames [here](../../releases/download/v0.8.6.1/NounToneFrames.bvm.mp4) and [here](../../releases/download/v0.8.6.1/VerbToneFrames.bvm.mp4). If this is not enough for you, you should get help from a linguist that can do this with you. It involves syntactic analysis for each of the grammatical categories that you will study.
 
