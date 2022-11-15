@@ -12642,7 +12642,8 @@ class Repository(object):
         log.info("Preparing to clone to {} from USB repo".format(directory))
         #this should be a pathlib object
         # log.info("Continuing to clone to {} from USB repo".format(directory))
-        args=["clone", self.url, str(directory)] #this needs from-to args
+        # this needs from-to args
+        args=["clone", self.nonbareclonearg, self.url, str(directory)]
         msg=_("Cloning from {} to {}; this may take some time."
                     "").format(self.url, directory)
         log.info(msg)
