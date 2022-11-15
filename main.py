@@ -212,6 +212,7 @@ class FileChooser(object):
             log.info(_("returned more or less than one lift file! ({})"
                     ).format(l))
     def newfilelocation(self,newfile):
+        #Do users care about this?
         msg=_("Your new LIFT file is at {n}."
                 "\nIf you don't want it there, close {azt} and move the whole "
                 "{f} folder wherever you like."
