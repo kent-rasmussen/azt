@@ -12650,7 +12650,7 @@ class Repository(object):
         # log.info("Continuing to clone to {} from USB repo".format(directory))
         # this needs from-to args
         args=["clone", self.nonbareclonearg, self.url, str(directory)]
-        msg=_("Cloning from {} to {}; this may take some time."
+        msg=_("Copying from {} to {}; this may take some time."
                     "").format(self.url, directory)
         log.info(msg)
         w=ui.Wait(program['root'],msg=msg)
