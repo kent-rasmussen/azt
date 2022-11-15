@@ -11491,6 +11491,8 @@ class SliceDict(dict):
     def makeprofileok(self):
         if not hasattr(self,'_ps'):
             self.makepsok()
+        if not hasattr(self,'_ps'): #still
+            return
         profiles=self.profiles()
         try:
             profiles+=self.adhoc()[self._ps].keys()
@@ -11511,14 +11513,17 @@ class SliceDict(dict):
         elif ps:
             log.error("You asked to change to ps {}, which isn't in the list "
                         "of pss: {}".format(ps,pss))
-        else:
-            # self.makepsok()
+        elif hasattr(self,'_ps'):
             return self._ps
+        else:
+            log.error("You asked for the ps, but I do't have any (pss: {})"
+                        "".format(pss))
     def profiles(self,ps=None):
         """This returns profiles for either a specified ps or the current one"""
-        if ps is None:
+        if not ps:
             ps=self.ps()
-        return self._profiles[ps]
+        if ps:
+            return self._profiles[ps]
     def profile(self,profile=None):
         if profile is not None and profile in self.profiles(self._ps):
             self._profile=profile
