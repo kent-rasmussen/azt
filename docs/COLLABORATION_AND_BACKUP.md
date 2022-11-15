@@ -11,7 +11,7 @@ If it finds a drive with a repository it has shared with before, it will do that
 ## Reminders
 If the project has been used with a USB backup in the past, but none are connected when looked for, then [A→Z+T] notifies the user once per attempted send/receive.
 
-If the project has never been used with USB backup before, the user will get just one message, on startup, each time [A→Z+T] boots. I trust that minimal engagement will not be burdensome for those who have decided against backing up their data, for whatever reason.
+If the project has never been used with USB backup before, the user will get just one message each time [A→Z+T] boots. I trust that minimal engagement will not be burdensome for those who have decided against backing up their data, for whatever reason.
 
 ## Copy to a USB drive
 Any time [A→Z+T] doesn't find a USB drive attached, the message window contains a button allowing the user to copy their data repository to a new USB drive. Click the button, then tell [A→Z+T] where to put the new repository folder copy (e.g., select a USB drive).

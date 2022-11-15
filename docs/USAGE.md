@@ -45,7 +45,7 @@ UPDATE: You can now start your database in A→Z+T, using the [Data Collection T
 ### Collaboration and Archival
 I **strongly** recommend using a version controlled repository (e.g., mercurial, git), as is normally done in [WeSay] and in recommended [FLEx] collaboration schemes. Even if you are the only one to ever see this data (why would that be?), the advantages in history and preservation of your data are already there. But if you will be sharing changes with others, you really **must** have an easy way to do this, or you will get bogged down in the logistics of sharing data changes. I use [Language Depot](https://languagedepot.org), though there are certainly other ways to meet this need. In any case, setting this up early is always easier than trying to merge divergent data later.
 
-More details are available [here](COLLABORATION_AND_BACKUP.md).
+More details on how to do this in [A→Z+T] are available [here](COLLABORATION_AND_BACKUP.md).
 
 
 ### Tone Frame Design
