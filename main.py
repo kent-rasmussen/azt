@@ -12765,17 +12765,6 @@ class Repository(object):
             self.addremote(directory)
             return [directory] #this needs to add to lists, and iterate
         return []
-    def addifisnt(self,directory):
-        if directory and not file.exists(directory): #cloning on top will fail.
-            log.info("No related repository (@{}); cloning.".format(directory))
-            self.clonetoUSB(directory)
-            return self.addifis(directory)
-    def addifisorisnt(self,directory):
-        if directory:
-            d=self.addifis(directory)#This should be the actual repo name, if there
-            if not d: #directory is the parent directory, where it will be cloned.
-                d=self.addifisnt(file.getdiredurl(directory,self.dirname+'.git'))
-            return d
     def findpresentremotes(self,remote=None,firsttry=True):
         l=[]
         # Add start 'new project from USB' to change database options.
