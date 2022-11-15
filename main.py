@@ -11285,6 +11285,7 @@ class Splash(ui.Window):
     def __init__(self, parent):
         parent.withdraw()
         super(Splash, self).__init__(parent,exit=0)
+        self.withdraw() #don't show until placed
         self.labels={'titletext':ui.Label(self.frame, text='', pady=10,
                         font='title',anchor='c',padx=25,
                         row=0,column=0,sticky='we'
@@ -11302,7 +11303,6 @@ class Splash(ui.Window):
                     }
         self.maketexts()
         self.title(self.labels['titletext']['text'])
-        self.withdraw() #don't show until placed
         self.w = self.winfo_reqwidth()
         x=int(self.master.winfo_screenwidth()/2-(self.w/2))
         self.h = self.winfo_reqheight()
