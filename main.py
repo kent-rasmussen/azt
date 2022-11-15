@@ -215,6 +215,7 @@ class FileChooser(object):
                     ).format(l))
     def newfilelocation(self,newfile):
         #Do users care about this?
+        return #not for now
         msg=_("Your new LIFT file is at {n}."
                 "\nIf you don't want it there, close {azt} and move the whole "
                 "{f} folder wherever you like."
@@ -223,7 +224,7 @@ class FileChooser(object):
                         f=file.getfilenamedir(newfile),
                         azt=program['name'])
         # log.info(msg)
-        ErrorNotice(msg,wait=True)
+        ErrorNotice(msg,title=_("New LIFT file location"),wait=True)
     def loadCAWL(self):
         stockCAWL=file.fullpathname('SILCAWL/SILCAWL.lift')
         if file.exists(stockCAWL):
