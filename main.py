@@ -12610,7 +12610,7 @@ class Repository(object):
             return True
     def commit(self,file=None):
         #I may need to rearrange these args:
-        if self.code == 'hg': #don't commit here, at least for now
+        if self.bare or self.code == 'hg': #don't commit here, at least for now
             return True
         if not file and self.code == 'git':
             file='-a' # 'git commit -a' is equivalent to 'hg commit'.
