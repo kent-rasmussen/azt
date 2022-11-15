@@ -4628,6 +4628,7 @@ class TaskChooser(TaskDressing,ui.Window):
         self.setmainwindow(self)
         splash = Splash(self)
         self.getfile()
+        splash.draw()
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
         """Can whatsdone be joined with makedefaulttask? they appear together
@@ -11277,6 +11278,10 @@ class Splash(ui.Window):
         self.labels['titletext']['text']=(_("{name} Dictionary and Orthography "
                                         "Checker").format(name=program['name']))
         self.update_idletasks()
+    def draw(self):
+        self.geometry('+%d+%d' % (x, y))
+        self.deiconify() #show after placement
+        self.update()
     def __init__(self, parent):
         parent.withdraw()
         super(Splash, self).__init__(parent,exit=0)
@@ -11312,9 +11317,7 @@ class Splash(ui.Window):
                             command=self.updateaztlocal
                             )
         self.config(menu=menu)
-        self.geometry('+%d+%d' % (x, y))
-        self.deiconify() #show after placement
-        self.update()
+        # self.draw() #if not needed first
 class Analysis(object):
     """Currently for tone, but sorting out values by group"""
     """The following two functions analyze the similarity of UF groups and
