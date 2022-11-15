@@ -12838,7 +12838,7 @@ class Repository(object):
             log.info("usernameargs not found ({}); OK if initializing the repo."
                     "\nYou may also get a 'fatal: not a git repository...' "
                     "notice, if the repo isn't there yet. ".format(e))
-        cmd.extend(args)
+        cmd.extend([a for a in args if a]) #don't give null args
         # log.info("{} cmd args: {};{}".format(self.code,cmd))
         iwascalledby=callerfn()
         try:
