@@ -11,8 +11,10 @@ sudo apt update
 sudo apt-get install fonts-sil-charis
 # wget https://github.com/kent-rasmussen/azt/blob/main/installfiles/azt.desktop?raw=true -O azt.desktop
 cp ${HOME}/azt/installfiles/azt.desktop $HOME/.local/share/applications/
-sed -i "s|~|${HOME}|" $HOME/.local/share/applications/azt.desktop 
+sed -i "s|~|${HOME}|" $HOME/.local/share/applications/azt.desktop
 sudo desktop-file-validate $HOME/.local/share/applications/azt.desktop
 sudo update-desktop-database
+gio set $HOME/.local/share/applications/azt.desktop metadata::trusted true
+chmod a+x $HOME/.local/share/applications/azt.desktop
 ln $HOME/.local/share/applications/azt.desktop $HOME/Desktop/
 cd -
