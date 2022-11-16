@@ -881,6 +881,8 @@ class StatusFrame(ui.Frame):
         profileori=self.settings.slices.profile()
         if hasattr(self,'leaderboard') and type(self.leaderboard) is ui.Frame:
             self.leaderboard.destroy()
+        if hasattr(self,'noboard'): # and type(self.leaderboard) is ui.Frame:
+            self.noboard.destroy()
         self.leaderboard=ui.Frame(self,row=0,column=1,sticky="") #nesw
         #Given the line above, much of the below can go, but not all?
         if (
