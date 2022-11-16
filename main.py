@@ -12689,7 +12689,7 @@ class Repository(object):
         # log.info("Trying to run clonetoUSB")
         directory=self.clonetobaredirname()
         log.info("directory: {}".format(directory))
-        if directory:
+        if directory and not self.addifis(directory):
             args=["clone", self.bareclonearg, '.', directory] #this needs from-to
             msg=_("Copying to {}; this may take some time."
                         "").format(directory)
