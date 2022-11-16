@@ -12841,7 +12841,7 @@ class Repository(object):
                 "\nIf you have a USB drive for this, insert it now."
                 # "\nIf not, plug in a USB drive, and I will copy your data there."
                 "").format(program['name'], self.repotypename, self.description)
-                button=(_("Copy data to USB"),self.clonetoUSB)
+                button=(_("Use attached USB"),self.clonetoUSB)
                 ErrorNotice(text,
                             title=_("No {} USB backup found"
                                     ).format(self.description),
