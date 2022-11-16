@@ -942,7 +942,10 @@ class StatusFrame(ui.Frame):
         lps.bind('<ButtonRelease-1>',self.taskchooser.getps)
     def makenoboard(self):
         log.info("No Progress board")
-        self.boardtitle()
+        try:
+            self.boardtitle()
+        except:
+            log.info("Problem making board title")
         self.noboard=ui.Label(self.leaderboard,
                             image=self.theme.photo['transparent'],
                             text='', pady=50,
