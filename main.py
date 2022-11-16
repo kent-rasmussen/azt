@@ -2252,7 +2252,7 @@ class Settings(object):
             del self.status[None]
         self.status.store()
         logfinished(start_time)
-        w.destroy()
+        w.close()
     def categorizebygrouping(self,fn,senseid,**kwargs):
         #Don't complain if more than one found:
         check=kwargs.get('check',self.params.check())
@@ -12661,7 +12661,7 @@ class Repository(object):
         log.info(msg)
         w=ui.Wait(program['root'],msg=msg)
         log.info(self.do(args))
-        w.on_quit()
+        w.close()
     def clonetoUSB(self,event=None):
         # log.info("Trying to run clonetoUSB")
         directory=self.clonetobaredirname()
@@ -12673,7 +12673,7 @@ class Repository(object):
             w=ui.Wait(program['root'],msg=msg)
             log.info(self.do(args))
             self.addremote(directory)
-            w.on_quit()
+            w.close()
     def log(self):
         args=["log"]
         log.info(self.do(args))
