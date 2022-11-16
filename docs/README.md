@@ -36,3 +36,4 @@ See [BUGS](BUGS.md) for information to send me if you have problems; see [KNOWNI
 [WeSay]:  https://software.sil.org/wesay/
 [FLEx]: https://software.sil.org/fieldworks/
 [LIFT]: https://code.google.com/archive/p/lift-standard/
+[CAWL]: http://www.comparalex.org/resources/SIL%20Comparative%20African%20Word%20List.pdf
