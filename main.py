@@ -13094,6 +13094,14 @@ class Repository(object):
         return self.branch
     def setdescription(self):
         self.description=_("language data")
+    def populate(self):
+        #this is done on normal __init__, or after an init later on.
+        #These are things that need an actual repository there
+        self.bare=self.isbare()
+        log.info("Repo {} is bare: {}".format(self.url,self.bare))
+        self.usernameargs=self.getusernameargs()
+        self.getfiles()
+        self.ignorecheck()
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
@@ -13124,10 +13132,7 @@ class Repository(object):
             log.info("Found no {} executable!".format(self.repotypename))
             self.exewarning()
             return #before getting a file list!
-        self.usernameargs=self.getusernameargs()
-        self.getfiles()
-        self.ignorecheck()
-        self.setdescription()
+        self.populate() #get files, etc.
         try:
             log.info("{} repository object initialized on branch {} at {} "
                     "for {}, with {} files."
@@ -13234,6 +13239,7 @@ class Git(Repository):
         args=['init', '--initial-branch="main"']
         r=self.do(args)
         log.info(r)
+        self.populate() #because this won't have been done yet
         # git config branch.$branchname.mergeoptions "-X ignore-space-change"
     def lastcommitdate(self):
         args=['log', '-1', '--format=%cd']
