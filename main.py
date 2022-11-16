@@ -11696,6 +11696,10 @@ class SliceDict(dict):
         self.analang=profilesbysense['analang']
         self._profilesbysense={k:v for k,v in profilesbysense.items()
                                                 if k != 'analang'}
+        if not self._profilesbysense:
+            ErrorNotice(_("There doesn't seem to be any profile data, but "
+                        "you asked for a slice dictionary. This is a problem; "
+                        "please report it!"))
         self.updateslices() #any time we add to self._profilesbysense
         """These two are only done here, as the only change with new data"""
         self.slicepriority()
