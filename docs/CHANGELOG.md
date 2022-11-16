@@ -7,6 +7,8 @@
 
 #Next up:
 - make initial Git integration smooth, with initial clone and init, both for data and a flash drive
+- provide (or at least make for my use) demo databases specific to English, French, and Spanish, at least
+- rework USAGE.md
 - Parsing:
   - Addition of second forms (primary data)
   - Parsing of lexeme forms (analysis)
