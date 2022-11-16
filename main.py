@@ -2340,8 +2340,20 @@ class Settings(object):
                 self.analang=parent
                 errortext+=_("\n(guessing [{}]; if that's not correct, exit now "
                             "and fix it!)").format(self.analang)
-            log.info(errortext)
-            e=ErrorNotice(errortext,title=_("Error!"),wait=True)
+                log.info(errortext)
+            else:
+                self.taskchooser.splash.withdraw()
+                errortext+=_("\nFurthermore, your LIFT file doesn't seem to "
+                            "indicate your language code: \n{} "
+                            "\nchange that or add some data "
+                            "to your database, so I know what language we're "
+                            "working on. "
+                            "\nOr select a different database on "
+                            "the next screen."
+                            ).format(self.liftfilename)
+                e=ErrorNotice(errortext,title=_("Error!"),wait=True)
+                file.writefilename() #just clear the default; let user move on
+                sysrestart()
             self.db.pss=self.db.getpssbylang(self.analang) #redo this, specify
             # return
         elif nlangs == 1:
