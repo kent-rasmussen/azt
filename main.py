@@ -12796,7 +12796,7 @@ class Repository(object):
         if directory and file.exists(directory) and self.isrelated(directory):
             # log.info("Found related repository: {}".format(directory))
             self.addremote(directory)
-            return [directory] #this needs to add to lists, and iterate
+            return [str(directory)] #this needs to add to lists, and iterate
         return []
     def clonetobaredirname(self):
         d=file.getfile(file.getmediadirectory())
