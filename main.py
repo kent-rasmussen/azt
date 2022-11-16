@@ -878,7 +878,6 @@ class StatusFrame(ui.Frame):
             self.bigbutton=self.button(**self.task.dobuttonkwargs())
     """Right side"""
     def maybeboard(self):
-        profileori=self.settings.slices.profile()
         if hasattr(self,'leaderboard') and type(self.leaderboard) is ui.Frame:
             self.leaderboard.destroy()
         if hasattr(self,'noboard'): # and type(self.leaderboard) is ui.Frame:
@@ -898,6 +897,7 @@ class StatusFrame(ui.Frame):
             not self.taskchooser.doneenough['collectionlc']):
             self.makenoboard()
             return
+        profileori=self.settings.slices.profile()
         self.settings.status.cull() #remove nodes with no data
         if self.cvt in self.settings.status:
             if self.ps in self.settings.status[self.cvt]: #because we cull, this == data is there.
