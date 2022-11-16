@@ -12822,7 +12822,7 @@ class Repository(object):
         remotesinsettings=self.remoteurls().values()
         for d in remotesinsettings:
             # log.info("adding {} to {}".format(d,l))
-            l+=self.addifis(d) #add to list only what is there now AND related
+            l.extend(self.addifis(d)) #add to list only what is there now AND related
             # the related test will remove it if there AND NOT related.
             # Otherwise, we leave it for later, in case it just isn't there now.
         if l:
