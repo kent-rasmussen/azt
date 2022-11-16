@@ -1,7 +1,7 @@
 # Data Collection Tasks
-If you want to run a report on any of the following (to see what you have done), those are described under [Analysis Tasks](TASKSANALYSIS.md).
+If you want to run a report on any of the following (to see what you have done), those are described [here](REPORTS.md).
 
-## Adding words level data
+## Adding word level data
 
 ### Add Words
 If you clicked on "Start work on a new language", either when A→Z+T opens, or after "Change to another database", this "Add Words" task is the first (and only, until you complete it) task you will see.
