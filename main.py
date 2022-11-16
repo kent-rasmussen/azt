@@ -13231,7 +13231,7 @@ class Git(Repository):
         return ['-c', 'user.name={}'.format(username[0]),
                 '-c', 'user.email={}'.format(username[1])]
     def init(self):
-        args=['init']
+        args=['init', '--initial-branch="main"']
         r=self.do(args)
         log.info(r)
         # git config branch.$branchname.mergeoptions "-X ignore-space-change"
