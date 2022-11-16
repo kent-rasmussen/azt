@@ -11279,7 +11279,6 @@ class Splash(ui.Window):
                                         "Checker").format(name=program['name']))
         self.update_idletasks()
     def draw(self):
-        self.geometry('+%d+%d' % (x, y))
         self.deiconify() #show after placement
         self.update()
     def __init__(self, parent):
@@ -11307,6 +11306,7 @@ class Splash(ui.Window):
         x=int(self.master.winfo_screenwidth()/2-(self.w/2))
         self.h = self.winfo_reqheight()
         y=int(self.master.winfo_screenheight()/2 -(self.h/2))
+        self.geometry('+%d+%d' % (x, y))
         menu=ui.Menu(self)
         menu.add_command(
                             label=_("Update A→Z+T"),
