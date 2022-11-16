@@ -1142,14 +1142,7 @@ class StatusFrame(ui.Frame):
                 self.cvtline()
             if isinstance(self.task,Sort):
                 self.buttoncolumnsline()
-            if not (
-                    # isinstance(self.task,Report) or
-                    isinstance(self.task,TaskChooser) or
-                    isinstance(self.task,Record) or
-                    isinstance(self.task,JoinUFgroups) or
-                    isinstance(self.task,Parse)
-                    ):
-                self.maybeboard()
+        self.maybeboard()
         self.finalbuttons()
 class Settings(object):
     """docstring for Settings."""
