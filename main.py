@@ -12958,6 +12958,7 @@ class Repository(object):
                                             iwascalledby,args[1:]))
         return t
     def alreadythere(self,url):
+        self.getfiles()
         if file.getreldir(self.url,url) in self.files: # as str
             # log.info(_("URL {} is already in repo {}".format(url,self.url)))
             return True
