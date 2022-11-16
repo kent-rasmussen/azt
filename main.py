@@ -886,8 +886,6 @@ class StatusFrame(ui.Frame):
         self.settings.status.cull() #remove nodes with no data
         if self.cvt in self.settings.status:
             if self.ps in self.settings.status[self.cvt]: #because we cull, this == data is there.
-                if (hasattr(self,'noboard') and (self.noboard is not None)):
-                    self.noboard.destroy()
                 if self.cvt == 'T':
                     if self.ps in self.settings.toneframes:
                         self.makeprogresstable()
