@@ -14,7 +14,7 @@ If you have entries with glosses corresponding to [CAWL] entries, but which aren
 
 The "Add a Word" button allows you to add one form and glosses for any word you like. It is only present after the [CAWL] is done.
 
-## Record Words
+### Record Words
 Once you have collected a word list, you can record those words here. These recordings become another form of the word (citation/plural/imperative) forms in your [LIFT] database.
 
 ## Sorting Words
