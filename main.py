@@ -1156,6 +1156,7 @@ class Settings(object):
         else:
             return interfacelang()
     def repocheck(self):
+        log.info(_("Checking for a data repository"))
         # self.repo={}
         self.repo=dict() #then copy to class attribute if there
         # return #for now, until fixed
