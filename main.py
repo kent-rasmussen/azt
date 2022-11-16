@@ -883,6 +883,19 @@ class StatusFrame(ui.Frame):
             self.leaderboard.destroy()
         self.leaderboard=ui.Frame(self,row=0,column=1,sticky="") #nesw
         #Given the line above, much of the below can go, but not all?
+        if (
+            # isinstance(self.task,Report) or
+            isinstance(self.task,TaskChooser) or
+            isinstance(self.task,WordCollection) or
+            isinstance(self.task,Parse)
+            ):
+            return
+        if (
+            isinstance(self.task,Record) or
+            isinstance(self.task,JoinUFgroups) or
+            not self.taskchooser.doneenough['collectionlc']):
+            self.makenoboard()
+            return
         self.settings.status.cull() #remove nodes with no data
         if self.cvt in self.settings.status:
             if self.ps in self.settings.status[self.cvt]: #because we cull, this == data is there.
