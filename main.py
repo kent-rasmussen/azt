@@ -306,9 +306,9 @@ class FileChooser(object):
         #         "\nThen open {azt} and tell it where you put the LIFT file."
         #         ).format(newfile,azt=program['name'])
         # ErrorNotice(msg)
-        window.wait(msg=_("Setting up new LIFT file now."))
+        w=ui.Wait(parent=program['root'],msg=_("Setting up new LIFT file now."))
         self.copytonewfile(newfile)
-        window.waitdone()
+        w.close()
         self.newfilelocation(newfile)
         return str(newfile)
     def getfilename(self):
