@@ -4,7 +4,7 @@ Reports are a fundamental part of the analytical process, but can also be an enc
 Most of these reports run in the background, so you can ask for a report, then ask for another report (or go back to some other work) without waiting for the report to finish.
 
 ### Alphabet Reports
-The most basic reports do one check on a single slice of data (one lexical category and syllable profile). Set which of each you want in your report (or use current settings):
+The most basic reports do just one check on a single slice of data (one lexical category and syllable profile). Users can set each of the following for a report:
 - lexical category
 - syllable profile
 - type of check (vowels, consonants, vowel-consonant combinations, or consonant-vowel combinations)
