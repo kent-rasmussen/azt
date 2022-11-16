@@ -1564,7 +1564,6 @@ class Wait(Window): #tkinter.Toplevel?
         self.parent.deiconify() #this will show a root window, if Root is parent
         self.destroy()
     def __init__(self, parent, msg=None):
-        global program
         super(Wait, self).__init__(parent,exit=False)
         self.withdraw() #don't show until we're done making it
         parent.withdraw()
