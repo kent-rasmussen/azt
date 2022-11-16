@@ -1165,14 +1165,16 @@ class Settings(object):
                     'hg': Mercurial(self.directory),
                     }
             for r in repo:
-                if hasattr(repo[r],'files'): #fails if no exe
-                    if repo[r].exists(): #tests for .code dir
-                        log.info(_("Found {} Repository!"
-                                    ).format(repo[r].repotypename))
-                    elif r == 'git': #don't worry about hg, if not there already
-                        repo[r].init()
-                        repo[r].add(self.liftfilename)
-                        repo[r].commit()
+                if (hasattr(repo[r],'files') #fails if no exe
+                        and repo[r].exists()): #tests for .code dir
+                    log.info(_("Found {} Repository!"
+                                ).format(repo[r].repotypename))
+                    self.repo[r]=repo[r]
+                elif r == 'git': #don't worry about hg, if not there already
+                    log.info(_("No Git data repository found; creating."))
+                    repo[r].init()
+                    repo[r].add(self.liftfilename)
+                    repo[r].commit()
                     self.repo[r]=repo[r]
     def settingsbyfile(self):
         #Here we set which settings are stored in which files
