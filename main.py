@@ -4630,9 +4630,9 @@ class TaskChooser(TaskDressing,ui.Window):
         self.interfacelangs=getinterfacelangs()
         ui.Window.__init__(self,parent)
         self.setmainwindow(self)
-        splash = Splash(self)
+        self.splash = Splash(self)
         self.getfile()
-        splash.draw()
+        self.splash.draw()
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
         """Can whatsdone be joined with makedefaulttask? they appear together
@@ -4641,7 +4641,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if hasattr(self.file,'analang'): #i.e., new file
             self.analang=self.file.analang #I need to keep this alive until objects are done
         self.makesettings()
-        splash.maketexts() #update for translation change
+        self.splash.maketexts() #update for translation change
         TaskDressing.__init__(self,parent) #I think this should be after settings
         if not self.settings.writeeverynwrites: #0/None are not sensible values
             self.settings.writeeverynwrites=1
@@ -4658,7 +4658,7 @@ class TaskChooser(TaskDressing,ui.Window):
         self.makedefaulttask() #normal default
         # self.gettask() # let the user pick
         """Do I want this? Rather give errors..."""
-        splash.destroy()
+        self.splash.destroy()
 class Segments(object):
     """docstring for Segments."""
     def getlisttodo(self,**kwargs):
