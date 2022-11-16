@@ -1548,7 +1548,7 @@ class Entry(object): # what does "object do here?"
         else:
             tag,attrib=rx.splitxpath(tag)
             tagnode=Node(self,tag,attrib)
-            prettyprint(tagnode)
+            # prettyprint(tagnode)
             return tagnode.makeformnode(lang,gimmetext=True)
     def __init__(self, db, guid=None, *args, **kwargs):
         if guid is None:
