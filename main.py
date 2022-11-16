@@ -13120,6 +13120,7 @@ class Repository(object):
                                 "SIMPLEINSTALL.md")
         self.cmd=program[self.code]
         self.deltadir=file.getdiredurl(self.url,'.'+self.code)
+        self.setdescription()
         if (not file.exists(self.deltadir) # and self.code == 'git':
             and str(self.url).endswith('.'+self.code)):# or self.code == 'hg':
             self.deltadir=self.url
