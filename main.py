@@ -13855,6 +13855,9 @@ def tryrun(cmd):
         text=_("{} command error: {}\n({})").format(cmd.__name__,e,cmd)
         log.error(text)
         ErrorNotice(text,title=_("{} command error!").format(cmd.__name__))
+def sysshutdown():
+    logsetup.shutdown()
+    sys.exit()
 def sysrestart(event=None):
     osys=platform.system()
     log.info("Hard shutting down now.")
@@ -14007,7 +14010,7 @@ def main():
     """Translation starts here:"""
     myapp = TaskChooser(root) #TaskChooser MainApplication
     myapp.mainloop()
-    logsetup.shutdown()
+    sysshutdown()
 def mainproblem():
     try:
         log.info(_("Starting up help line..."))
