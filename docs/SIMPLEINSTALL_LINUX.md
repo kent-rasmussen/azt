@@ -1,6 +1,6 @@
 # Simple and Straightforward Instructions for Installing A→Z+T on Ubuntu Linux
 
-## (or just run [this script](../installfiles/RunMetoInstall_Linux.sh?raw=true).)
+## (or just run [this script](../installfiles/RunMetoInstall_Linux.sh?raw=true) —you will be asked for your sudo password to install packages.)
 This document offers instructions with **exactly one set of options**; to explore more options, see [INSTALL](INSTALL.md).
 
 For simple install instructions for MS Windows, see [SIMPLEINSTALL](SIMPLEINSTALL.md).
@@ -33,10 +33,12 @@ Run this command: `cd;git clone https://github.com/kent-rasmussen/azt.git`.
 - `cp $HOME/Downloads/azt.desktop $HOME/.local/share/applications/`
 - `sudo desktop-file-validate  $HOME/.local/share/applications/azt.desktop`
 - `sudo update-desktop-database`
+- `gio set $HOME/.local/share/applications/azt.desktop metadata::trusted true`
+- `chmod a+x $HOME/.local/share/applications/azt.desktop`
 - `ln $HOME/.local/share/applications/azt.desktop $HOME/Desktop/`
 3. Click on the link on your desktop to run A→Z+T
 4. **Celebrate your accomplishment; you're done installing A→Z+T!**
-5. Read [USAGE](USAGE.md) for how to use A→Z+T
+5. Read [TASKS](TASKS.md) for a quick orientation to A→Z+T, or find more info in [USAGE](USAGE.md).
 6. Send me information on any [bugs](BUGS.md) you find, so I can help you and improve the program for others.
 
 ## Additional Important Steps to get the most out of A→Z+T

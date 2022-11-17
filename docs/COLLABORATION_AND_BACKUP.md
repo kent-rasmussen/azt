@@ -3,6 +3,9 @@
 
 As described in the [usage page](USAGE.md#collaboration-and-archival), being able to store and share data is critical to any serious research project. This page orients you to the way [A→Z+T] can help you do that.
 
+## Keeping [A→Z+T] up to date
+In the Help menu (or on the splash screen, if you only get that far), there are menu items to update [AZT] either locally (from a flash drive) or the internet.
+ 
 ## Normal usage
 Each time [A→Z+T] opens and closes, it attempts to store changes in a repository (the folder with your [LIFT] file), as well as send and receive between that repository and one or more on attached media (USB drives).
 

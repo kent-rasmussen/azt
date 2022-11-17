@@ -122,7 +122,7 @@ You can change any setting by clicking on where that setting is displayed on the
 Settings are saved to file each time you run a check, and loaded again on the next boot. If you change a setting that leaves another setting invalid (e.g., `V1=g`, or `C1=C2` for `VCV nouns`), the invalid setting is removed and replaced with an assumption (as above).
 
 ### The Main Window
-On the upper left of the main window, each of these settings are indicated:
+On the upper left of the main window, relevant settings are indicated:
 
  - interface language
  - analysis language
@@ -130,9 +130,7 @@ On the upper left of the main window, each of these settings are indicated:
  - lexical category and syllable profile (with count)
  - type of check (i.e., C, V, or T) and current stage/frame
 
-There are by default **no menus**; if you see something you want to change (including the way the language name appears), click on it, and a menu will appear for you to change it.
-*If you prefer menus*, you can *show menus* through a context menu via right click anywhere in the main window –these menus allow you to change all these settings, and more.
-If the **font size** is too big for you (e.g., things are getting pushed off the screen), the context menu also allows you to select a theme with smaller fonts.
+There are no [Menus](MENUS.md) by default.
 
 ### Tone Frames
 If you don't have any tone frames set up yet, you will be asked to do so when you try to sort on tone. You can also do that in the Advanced menu, for as many frames as you want to define. Note the *name* is important, as this is how you will refer to this frame in A→Z+T, and how it will be identified in your database in the future (unless and until you change that). So if you're testing the plural form, something like "Pl" or "Plural", or "Pluriel" might be appropriate --but this is just a name, so make it distinct but useful to your workflow.
