@@ -8,6 +8,7 @@
 #Next up:
 - make initial Git integration smooth, with initial clone and init, both for data and a flash drive
 - provide (or at least make for my use) demo databases specific to English, French, and Spanish, at least
+  - Use lift.py to make codes for each language code that is there in glosses, and remove present lx and lc form information. (make at least lang="en" lang="fr" lang="swh" lang="ha-CL"; others?)
 - rework USAGE.md
 - Parsing:
   - Addition of second forms (primary data)
