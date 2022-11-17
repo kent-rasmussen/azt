@@ -3029,34 +3029,28 @@ class TaskDressing(object):
                                                     not in ['V','C','CV']):
             self.settings.setcvt('V')
     def makestatusframe(self,dict=None):
-        if hasattr(self,'slices'):
-            dictnow={
+        dictnow={
+                'mainrelief':self.mainrelief,
+                'self.fontthemesmall':self.fontthemesmall,
                 'iflang':self.settings.interfacelangwrapper(),
                 'analang':self.params.analang(),
                 'glang1':self.glosslangs.lang1(),
                 'glang2':self.glosslangs.lang2(),
+                'secondformfield':str(self.settings.secondformfield),
+                'maxprofiles':self.settings.maxprofiles,
+                'maxpss':self.settings.maxpss
+                }
+        if hasattr(self,'slices'):
+            dictnow.update({
                 'cvt':self.params.cvt(),
                 'check':self.params.check(),
                 'ps':self.slices.ps(),
                 'profile':self.slices.profile(),
                 'group':self.status.group(),
-                'secondformfield':str(self.settings.secondformfield),
                 'tableiteration':self.tableiteration,
-                'maxprofiles':self.settings.maxprofiles,
-                'maxpss':self.settings.maxpss
-                }
+                })
             if isinstance(self.task,Multicheck):
-                dictnow['cvtstodo']=self.task.cvtstodo
-        else:
-            dictnow={
-                    'iflang':self.settings.interfacelangwrapper(),
-                    'analang':self.params.analang(),
-                    'glang1':self.glosslangs.lang1(),
-                    'glang2':self.glosslangs.lang2(),
-                    'secondformfield':str(self.settings.secondformfield),
-                    'maxprofiles':self.settings.maxprofiles,
-                    'maxpss':self.settings.maxpss
-                    }
+                dictnow.update({'cvtstodo':self.task.cvtstodo})
         """Call this just once. If nothing changed, wait; if changes, run,
         then run again."""
         if dict == dictnow:
