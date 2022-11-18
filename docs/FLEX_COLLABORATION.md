@@ -18,7 +18,7 @@ It was this inability of [FLEx] to _store and manipulate primary tone data_ that
 
 So [A→Z+T] is trying to be something else. A tool to _store primary data_ in a way that _respects the nature of tone_. But also a tool that enables communities to get involved in the collection and analysis of their language. Which may not be what you need for your work.
 
-## Assumption #2: [A→Z+T] is a bad tool if it doesn't interoperate seamlessly with [FLEx].
+## Assumption #2: [A→Z+T] should interoperate seamlessly with [FLEx].
 
 Despite the fact that [FLEx] and [A→Z+T] are not trying to do the same thing, many people hope/expect them to read and write the same database seamlessly.  This isn't bad; they are both editing lexical data, and both claim to read and write [LIFT]. In fact, FLEx interoperability was one of my primary reasons for choosing [LIFT] as the [A→Z+T] database format. Whatever it's imperfections, it is _the best open and publicly available standard for storing and sharing lexical data._ But [A→Z+T] and [FLEx] don't use [LIFT] in the same way.
 
@@ -26,7 +26,7 @@ Despite the fact that [FLEx] and [A→Z+T] are not trying to do the same thing, 
 
 [FLEx], on the other hand, doesn't modify [LIFT] directly, but rather imports and exports it to [FLEx]'s own proprietary XML under the hood. So any weirdness in interpreting the [LIFT] standard (either in reading it or writing to it) happens internally to [FLEx], away from my ability to observe or control.
 
-Furthermore, FLEx is designed to track and share incremental changes to a database using Chorus, which is so far inaccessible to a tool like [A→Z+T]. But even for [WeSay] (which is built on the same technology as Chorus), interoperability through Chorus is not seamless. Decisions it makes are not always made clear to the user, nor IMHO correct (for instance, some decisions prefer the data from the tool of the newer version, which may not be the newest data).
+Furthermore, [FLEx] is designed to track and share incremental changes to a database using Chorus, which is so far inaccessible to a tool like [A→Z+T]. But even for [WeSay] (which is built on the same technology as Chorus), interoperability through Chorus is not seamless. Decisions it makes are not always made clear to the user, nor IMHO correct (for instance, some decisions prefer the data from the tool of the newer version, which may not be the newest data).
 
 Given that [FLEx] developers just don't have the resources to develop new features, it isn't surprising that using [FLEx] to collaborate with a tool that didn't exist three years ago is non-trivial.
 
