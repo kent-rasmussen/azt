@@ -6,7 +6,7 @@ This is perhaps the most frequently asked question I get, when introducing peopl
 Unfortunately, people seem to come to this question with different assumptions in mind, so I'll try to lay those out below:
 
 ## Assumption #1: I need [FLEx] for my work
-Some people seem to think that a particular computer particular tool is needed for their work, without having actually engaged in the question of what their work requires. I've heard this kind of thing said about [FLEx], MS Office, Adobe, and other tools.
+Some people seem to think that a particular computer particular tool is needed for their work, without having engaged in the question of what their work requires. I've heard this kind of thing said about [FLEx], MS Office, Adobe, and other tools.
 
 But I like to think of computer tools _like any other tool_, in that their usefulness depends on their usefulness in helping me **perform some task**. It is not the _tool_ that should determine what _work_ I should do, but the other way around.
 
@@ -16,7 +16,7 @@ But I work in languages where the writing system isn't already established, and 
 
 It was this inability of [FLEx] to _store and manipulate primary tone data_ that led me to ask for (and ultimately start designing) another tool. This isn't necessarily a problem with [FLEx], it is just something it wasn't designed for —and I think it is helpful to be realistic about that. Yes, you can make [FLEx] do some of the things that I want, but after all the arm twisting to try to make it work, you basically have a very complex spreadsheet.
 
-So [A→Z+T] is trying to be something else. A tool to store primary data in a way that respects the nature of tone. But also a tool that enables communities to get involved in the collection and analysis of their language. Which may not be what you need for your work.
+So [A→Z+T] is trying to be something else. A tool to _store primary data_ in a way that _respects the nature of tone_. But also a tool that enables communities to get involved in the collection and analysis of their language. Which may not be what you need for your work.
 
 ## Assumption #2: [A→Z+T] is a bad tool if it doesn't interoperate seamlessly with [FLEx].
 
@@ -28,15 +28,15 @@ Despite the fact that [FLEx] and [A→Z+T] are not trying to do the same thing, 
 
 Furthermore, FLEx is designed to track and share incremental changes to a database using Chorus, which is so far inaccessible to a tool like [A→Z+T]. But even for [WeSay] (which is built on the same technology as Chorus), interoperability through Chorus is not seamless. Decisions it makes are not always made clear to the user, nor IMHO correct (for instance, some decisions prefer the data from the tool of the newer version, which may not be the newest data).
 
-Given that [FLEx] developers just don't have the resources to develop new features, it isn't surprising that using FLEx to collaborate with a tool that didn't exist three years ago is a non-trivial agenda item.
+Given that [FLEx] developers just don't have the resources to develop new features, it isn't surprising that using [FLEx] to collaborate with a tool that didn't exist three years ago is non-trivial.
 
-## Assumption #3: A good workflow would involve synchronization between FLEx and [A→Z+T] on a regular basis.
+## Assumption #3: A good workflow would involve synchronization between [FLEx] and [A→Z+T] on a regular basis.
 
 Some people seem to think that bringing data in and out of [FLEx] on a daily (or at least regular) basis would be a good idea. While this theoretically shouldn't be a problem (given the above assumptions are clear), I think it betrays a misconception of the workflow that [A→Z+T] is designed to facilitate —namely, a community sorting process, rather than a traditional elicitation process. That said, there are times where a particular kind of edit is better done in [FLEx], though this is not the kind of edit I would expect most [A→Z+T] users to make without help —and I'm working to make the need for these fewer and fewer.
 
 Assuming you have decided that you really do need [FLEx], and that you accept that some of the synchronization problems between [FLEx] and [A→Z+T] are due to [FLEx]'s maintenance mode development, it isn't necessary that you should open yourself to encountering those problems on a regular basis.
 
-I don't know of any current hurdles to exchanging data on LIFT import and export (that's what Lexical Interchange Format is for); most of the problems I have heard of relate to the tracking of incremental changes. So, if you have data in FLEx, and you export to LIFT, then read/write that LIFT file for some months, then import it back into FLEx, then you should have problems fewer in frequency and kind.
+I don't know of any current hurdles to exchanging data on [LIFT] import and export (that's what Lexical Interchange Format is for); most of the problems I have heard of relate to the tracking of incremental changes. So, if you have data in [FLEx], and you export to [LIFT], then read/write that [LIFT] file for some months, then import it back into [FLEx], then you should have problems fewer in frequency and kind.
 
 One consequence of this work flow (as I understand [FLEx]'s current operation) is that a new project would be created on [LIFT] import. I don't know that [FLEx] allows importing a [LIFT] file back into a project from which it was exported, without either having those incremental changes tracked, or else serious problems in duplicating data (entries, senses, or examples). This would mean that any links between your lexicon and texts would need to be re-established, which may not be acceptable to you, if you work heavily in [FLEx] outside the lexicon.
 
