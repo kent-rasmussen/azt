@@ -38,7 +38,7 @@ Assuming you have decided that you really do need [FLEx], and that you accept th
 
 I don't know of any current hurdles to exchanging data on [LIFT] import and export (that's what Lexical Interchange Format is for); most of the problems I have heard of relate to the tracking of incremental changes through Chorus. So, if you have data in [FLEx], and you export to [LIFT], then read/write that [LIFT] file over the course of [A→Z+T] work for some months, then import it back into [FLEx], then you should have problems fewer in frequency and kind.
 
-One consequence of this work flow (as I understand [FLEx]'s current operation) is that a new project would be created on [LIFT] import. I don't know that [FLEx] allows importing a [LIFT] file back into a project from which it was exported, without either having those incremental changes tracked, or else serious problems in duplicating data (entries, senses, or examples). This would mean that any links between your lexicon and texts would need to be re-established, which may not be acceptable to you, if you work heavily in [FLEx] outside the lexicon.
+One consequence of this work flow (as I understand [FLEx]'s current operation) is that a new project would be created on [LIFT] import. I don't know that [FLEx] allows importing a [LIFT] file back into a project from which it was exported, without either having those incremental changes tracked, or else serious problems in duplicating data (entries, senses, or examples). This would mean that any links between your lexicon and texts would need to be re-established. This may not be acceptable to you, if you work heavily in [FLEx] outside the lexicon.
 
 [A→Z+T]:  https://github.com/kent-rasmussen/azt
 [WeSay]:  https://software.sil.org/wesay/
