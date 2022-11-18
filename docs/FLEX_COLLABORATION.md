@@ -1,16 +1,16 @@
 <a href="fr/FLEX_COLLABORATION.md">Français</a>
 # Does [A→Z+T] work with [FLEx]?
 
-This is perhaps the most frequently asked question I get when introducing people to [A→Z+T], so I'll try to answer it here.
+This is perhaps the most frequently asked question I get, when introducing people to [A→Z+T]. So I'll try to answer it here.
 
-Unfortunately, people seem to come to this question from a couple different angles, so I'll try to lay those out, too:
+Unfortunately, people seem to come to this question with different assumptions in mind, so I'll try to lay those out below:
 
 ## Assumption #1: I need [FLEx] for my work
 Some people seem to think that a particular computer particular tool is needed for their work, without having actually engaged in the question of what their work requires. I've heard this kind of thing said about [FLEx], MS Office, Adobe, and other tools.
 
 But I like to think of computer tools _like any other tool_, in that their usefulness depends on their usefulness in helping me **perform some task**. It is not the _tool_ that should determine what _work_ I should do, but the other way around.
 
-So if you think you need [FLEx], I would ask you _what do you need it for?_ [FLEx] is designed for building dictionaries on the basis of texts collected in a segmental orthography (IPA or working, but nothing autosegmental). If that's what you want to do, and if [FLEx]'s complexity doesn't bother/scare you, then [FLEx] is probably the tool for you.
+So if you think you need [FLEx], I would ask you _what do you need it for?_ [FLEx] is designed for building dictionaries on the basis of texts collected in a segmental orthography (just consonants, vowels, and their diacritics). If that's what you want to do, and if [FLEx]'s complexity doesn't bother/scare you, then [FLEx] is probably the tool for you.
 
 But I work in languages where the writing system isn't already established, and I work in tone languages. So I need to be able to represent and store primary data to build/justify an orthography. That representation must include both the segments _and the phonetic pitch_ of an utterance, as well as some searchable indication of the context where that utterance was observed —neither of which FLEx was designed to do.
 
