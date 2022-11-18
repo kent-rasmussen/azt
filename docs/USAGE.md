@@ -150,12 +150,12 @@ Once you have the form and gloss content in the appropriate boxes, click on 'see
 
 If you absolutely regret a tone frame you have set up, all your frames are stored in `<lift filename>_ToneFrames.py` next to your [LIFT] file. Be careful editing this, though; you may need to redefine all your frames if you corrupt this file (This would be a great time to ask for help if you don't absolutely certainly know what you're doing).
 
-### Tone Frame Groups ![Tone Frame Groups](images/T%20alone%20clear6_icon.png "ToneFrameGroups")
+### Tone Frame Groups ![Tone Frame Groups](../images/T%20alone%20clear6_icon.png "ToneFrameGroups")
 [A→Z+T] by default labels the groups into which you sort your data by frame with numbers. This is because, at least initially, the fact that it is its own thing (all one thing, and unlike the other groups) is more important than any description of the group, however objective it may be.
 That said, there may come a time where you want to give one or more of these groups a particular name, like `HL` or `[˦˦ ˨˨]`, perhaps because you want to remember how you thought of the surface form at the time, or because you don't want the group names in your database to be just numbers. To do this, right click on the verification window *while verifying the group you want to rename*, and click on `Show Menu`. This will provide a menu which will allow you to change the name.
-Regarding name changes, please be cognizant of the fact that these names are for a *lexical category* and *syllable profile*, **in a given frame**. These should describe the *surface* tone only; hypotheses regarding underlying tone come later (see [`Joining and Renaming Draft Tone Groups`](#joining-and-renaming-draft-tone-groups), below; see also the following process flow chart). ![AZT Process Flow Chart](docs/AZT%20Process%20Flow%20Chart.png "Flow Chart")
+Regarding name changes, please be cognizant of the fact that these names are for a *lexical category* and *syllable profile*, **in a given frame**. These should describe the *surface* tone only; hypotheses regarding underlying tone come later (see [`Joining and Renaming Draft Tone Groups`](#joining-and-renaming-draft-tone-groups), below; see also the following process flow chart). ![AZT Process Flow Chart](AZT%20Process%20Flow%20Chart.png "Flow Chart")
 
-### Recording ![Recording](images/Microphone%20alone_sm.png "microphone")
+### Recording ![Recording](../images/Microphone%20alone_sm.png "microphone")
 The first time you try to record, you will be asked to tell [A→Z+T] what sound card parameters you want. You can set frequency, bit depth, and sound card number (to select between multiple cards, for your microphone and for your speakers. This window is designed with test `play` and `record` buttons, so you can set parameters and test them, before moving on. I suggest you budget some time to play with the settings there, until you are satisfied with them.
 
 N.B.: There are some combinations of settings (likely those beyond the physical limits of your sound card) which **play fine in AZT, but do not produce good sound files**. This is simple enough to discover, by playing the sound file in another tool, such as [Praat](https://www.fon.hum.uva.nl/praat/) (right click on `play`, if [Praat](https://www.fon.hum.uva.nl/praat/) is installed in your operating system's path). Please check that you are creating good sound files before recording language data. There is a video overview of this process [here](https://github.com/kent-rasmussen/azt/releases/download/v0.8.6/PraatVerification.mp4).
@@ -172,11 +172,11 @@ Regarding external (e.g., USB) sound interfaces, there is an issue worth pointin
 
 Finally, note that you are presented words to record based on the **most recent tone analysis**. So if you feel that words are missing in the recording windows, it should help to redo the tone analysis.
 
-## Subsequent Runs: CV analysis ![CV](images/ZA%20alone%20clear6_icon.png "ZA")
+## Subsequent Runs: CV analysis ![CV](../images/ZA%20alone%20clear6_icon.png "ZA")
 ### (View data and run reports)
 [A→Z+T] doesn't do CV sorting and verification (Yet!), but you can make recordings and filter your data and look at it through a number of checks (e.g., by C1, or by V1=V2, etc.).
 
-### Recording Citation and Secondary Forms ![Recording](images/Microphone%20alone_sm.png "microphone")
+### Recording Citation and Secondary Forms ![Recording](../images/Microphone%20alone_sm.png "microphone")
 When Consonants or Vowels are selected, you can click on "Record Dictionary Words", which will give you a page of `Record` buttons next to words filtered by ps-profile combinations, largest first. To skip to the next slice of data, just click "Next Group". For each entry in the data slice, this page provides a button to record a sound file for citation or lexeme fields, but also plural and imperative fields, if in the database. These recordings should then appear in reports, [FLEx], and other uses of the [LIFT] database (e.g., the [Dictionary App Builder](https://software.sil.org/dictionaryappbuilder/)).
 
 ### Consonant and Vowel Reports
@@ -188,7 +188,7 @@ This tool will ultimately be able to help with the sorting and correction of con
 
 **Note on scripts and fonts**: Reports are run with Charis SIL; if this doesn't meet your needs (e.g., for Ethiopic scripts), please [write me](<mailto:kent_rasmussen@sil.org?subject=A→Z+T script request>) with the relevant language code(s) and the scripts needed, and I can add them. In any case, as these reports are editable, changes can also be made manually.
 
-## Subsequent Runs: Tone (Sort, and Follow Directions) ![Tone](images/T%20alone%20clear6_icon.png "Tone")
+## Subsequent Runs: Tone (Sort, and Follow Directions) ![Tone](../images/T%20alone%20clear6_icon.png "Tone")
 ### Sorting progression: The Status Table
 Once you have done any sorting for the selected lexical category, to the right on the main window you will see a status pane, with groupings by syllable profile and check stage (for one lexical category and check type at a time). To see progress for another check type or lexical category, switch to that check type or lexical category.
 
@@ -198,7 +198,7 @@ You will, of course from time to time want to move to another lexical category o
 
 At some point you will likely want to give your sorting groups (within a ps-profile-frame) more meaningful names than the default (numbers). Until then, the status table gives you a count of the names, plus a count of the verified groups (w/+, in parentheses). Once you name a group, all groups for that ps-profile-frame will be listed separately, in the appropriate cell. If you don't like that, there is a context menu to "Hide group names," which will go back to just showing counts. In any case, the status table also indicates the presence of unsorted data in a group, via a preceding '!'.
 
-## Recording Data Sorted in Frames ![Recording](images/Microphone%20alone_sm.png "microphone")
+## Recording Data Sorted in Frames ![Recording](../images/Microphone%20alone_sm.png "microphone")
 Recording data in frames can be done at any point once sorting has begun. However, when a word is presented for recording, a button for each example (sorting context) in the sense appears. So if you sort one field, then record, then sort the next, you will see your earlier recordings again. Recordings can move rather quickly, so I recommend putting them last in your workflow, and doing them all at once —at least once you've tested that they're working correctly with your recording equipment, etc.
 
 ### How Much of Which Data to Record
