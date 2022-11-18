@@ -30,7 +30,7 @@ Furthermore, FLEx is designed to track and share incremental changes to a databa
 
 Given that [FLEx] developers just don't have the resources to develop new features, it isn't surprising that using [FLEx] to collaborate with a tool that didn't exist three years ago is non-trivial.
 
-## Assumption #3: It would be good to synchronize between [FLEx] and [A→Z+T] on a regular basis.
+## Assumption #3: We should synchronize between [FLEx] and [A→Z+T] on a regular basis.
 
 Some people seem to think that bringing data in and out of [FLEx] on a daily (or at least regular) basis would be a good idea. While this theoretically shouldn't be a problem (given the above assumptions are clear), I think it betrays a misconception of the workflow that [A→Z+T] is designed to facilitate —namely, a community sorting process, rather than a traditional elicitation process. That said, there are times where a particular kind of edit is better done in [FLEx], though this is not the kind of edit I would expect most [A→Z+T] users to make without help —and I'm working to make the need for these fewer and fewer.
 
