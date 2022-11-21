@@ -5595,7 +5595,7 @@ class ToneFrameDrafter(ui.Window):
             checkdefntoadd[lang]=str(before+'__'+after)
         self.task.toneframes.addframe(self.ps,checktoadd,checkdefntoadd)
         framed=self.task.datadict.getframeddata(senseid)
-        framed.setframe(checktoadd)
+        framed.setframe(checktoadd,allframedlangs=True)
         #At this point, remove this frame (in case we don't submit it)
         del self.task.toneframes[self.ps][checktoadd]
         """Display framed data"""
@@ -10445,14 +10445,21 @@ class FramedDataSense(FramedData):
     by senseid. It is called to make the example fields, and pulls form/gloss/etc
     information from the entry, but cannot be used for recording (which
     requires) an example or other node be specified, not a whole sense."""
-    def setframe(self,frame=None):
+    def setframe(self,frame=None,allframedlangs=False):
         """This should never be done on an example, which should
         already be framed. Also, self.ps won't be defined, so you'll get
         a key error."""
+        if allframedlangs: #When we want all langs in a frame
+            langs=[l for l in self.frames[self.ps][frame]
+                                if l != 'location'
+                                if l != 'field'
+                                ]
+        else:
+            langs=[self.analang]+self.glosslangs
         if frame is not None and (self.ps in self.frames and
                                     frame in self.frames[self.ps]):
             self.frame=self.frames[self.ps][frame]
-            self.forms.frame(self.frame,[self.analang]+self.glosslangs)
+            self.forms.frame(self.frame,langs)
             self.framed=self.forms.framed
             self.check=frame
             # log.info("setframe framed: {}".format(self.forms.framed))
