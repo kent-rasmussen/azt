@@ -13495,6 +13495,7 @@ def dictcompare(x,y,ignore=[]):
         r=len(pairs)/(len(pairs)+len(unpairs))
     return (r,pairs,unpairs)
 def quote(x):
+    #does this fail on non-string x?
     if "'" not in x:
         return "'"+x+"'"
     elif '"' not in x:
