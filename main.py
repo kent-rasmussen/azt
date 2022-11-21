@@ -135,6 +135,9 @@ class FileChooser(object):
                                 window=window,
                                 column=0, row=1
                                 )
+        # make mediadir look for *.git
+        ui.Label(window.frame, image=program['theme'].photo['small'],
+                text=text, font='title', column=1, row=1)
         window.wait_window(window)
         return self.name
     def clonefromUSB(self):
