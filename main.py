@@ -5768,6 +5768,7 @@ class ToneFrameDrafter(ui.Window):
         self.task.status.renewchecks() #renew (not update), because of new frame
         self.settings.storesettingsfile(setting='toneframes')
         self.settings.setcheck(checktoadd) #assume we will use this now
+        self.task.deiconize()
         self.destroy()
     def gimmesenseid(self,**kwargs):
         idsbyps=self.slices.senseids(ps=self.ps)
@@ -5815,6 +5816,7 @@ class ToneFrameDrafter(ui.Window):
         return senseid
     def __init__(self,parent):
         ui.Window.__init__(self,parent)
+        parent.withdraw()
         self.task=parent #this should always be called by a window task
         self.settings=parent.settings
         self.analang=parent.analang
