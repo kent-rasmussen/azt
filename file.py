@@ -251,6 +251,7 @@ if __name__ == "__main__":
     import sys
     import datetime
     import shutil
+    from tkinter import ttk
     def usage():
         log.info("usage for one entry:")
         log.info(" python3 " + pathlib.Path(__file__).name + " <forms|ids|tones|prontones|glosses|gloss2s|plurals|pses|all|cards|lxnglosses> <lift file> <guid>")
@@ -269,7 +270,13 @@ if __name__ == "__main__":
         global wsfolder
         global xyz
         return str(pathlib.Path.joinpath(wsfolder, xyz))
-
+    # Create an instance of ttk
+    s = ttk.Style()
+    # log.info(
+    for t in s.theme_names():
+    # Use the window native theme
+        s.theme_use(t)
+        log.info(getmediadirectory(mediatype=t))
     # def baklift():
     #     global wsfolder
     #     global xyz
