@@ -310,7 +310,8 @@ class FileChooser(object):
         self.newfilelocation(newfile)
         return str(newfile)
     def getfilename(self):
-        self.name=file.getfilename()
+        # This method pulls filename(s) from settings, else self.askwhichlift
+        self.name=file.getfilename() #returns filename if there, else filenames
         if not self.name or type(self.name) is list:
             self.askwhichlift(self.name)
         if not self.name or not file.exists(self.name):
