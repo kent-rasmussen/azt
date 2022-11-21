@@ -13515,7 +13515,7 @@ def indenteddict(indict):
                             "keys".format(j,indict[j].keys()))
                 outdict[j]='{'+',\n'.join(
                     [quote(k)+":{"+',\n\t'.join(
-                                        [quote(i)+":"+str(indict[j][k][i])
+                                        [quote(i)+":"+quote(indict[j][k][i])
                                             for i in indict[j][k]#.keys()
                                             # for k in indict[j].keys()
                                             if i #and i in indict[j][k].keys()
@@ -13531,7 +13531,7 @@ def indenteddict(indict):
             else:
                 log.info("printing indented dict for {} "
                         "key".format(j))
-                outdict[j]='{'+',\n'.join([quote(i)+":"+str(indict[j][i])
+                outdict[j]='{'+',\n'.join([quote(i)+":"+quote(indict[j][i])
                                         for i in indict[j]#.keys()
                                         if i])+'}'
         elif indict[j]:
