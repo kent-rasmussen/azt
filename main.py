@@ -5468,44 +5468,55 @@ class ToneFrameDrafter(ui.Window):
         log.info("Langs langstodo: {}".format(langstodo))
         nothing='______'#"<"+_("nothing")+">"
         for n,l in enumerate(self.langs):
-            tintro=_("Frame in {0}:").format(self.settings.languagenames[l])
-            ui.Label(self.fds,text=tintro,column=0,row=n+1)
-            lineframe=ui.Frame(self.fds,column=1,row=n+1)
-            tword=_("<{0} word>").format(self.settings.languagenames[l])
-            try:
-                text=self.forms[l]['before']
-                if text == '':
-                    text=nothing
-            except KeyError:
+            if l in self.forms:
+                tintro=_("Frame in {0}:").format(self.settings.languagenames[l])
+                ui.Label(self.fds,text=tintro,column=0,row=n+1)
+                lineframe=ui.Frame(self.fds,column=1,row=n+1)
+                tword=_("<{0} word>").format(self.settings.languagenames[l])
                 try:
-                    self.forms[l]={'before':''}
-                    text=nothing
-                except:
-                    text="<"+_("No {} frame info").format(
-                            self.settings.languagenames[l])+">"
-            button=ui.Button(lineframe,text=text,
-                            relief=relief,
-                            cmd=lambda l=l, context='before':
-                                    self.promptwindow(l,context),
-                            column=1,row=0,padx=0,ipadx=0)
-            ui.ToolTip(button)
-            if l not in self.forms:
-                continue
-            ui.Label(lineframe,text=tword,column=2,row=0,padx=0,ipadx=0)
-            try:
-                text=self.forms[l]['after']
-                if text == '':
-                    text=nothing
-            except KeyError:
-                if 'before' in self.forms[l]:
-                    self.forms[l]['after'] == '' #in case it got deleted
-                text=nothing
-            button=ui.Button(lineframe,text=text,
-                            relief=relief,
-                            cmd=lambda l=l, context='after':
-                                    self.promptwindow(l,context),
-                            column=3,row=0,padx=0,ipadx=0)
-            ui.ToolTip(button)
+                    text=self.forms[l]['before']
+                    if text == '':
+                        text=nothing
+                except KeyError:
+                    try:
+                        self.forms[l]={'before':''}
+                        text=nothing
+                    except:
+                        text="<"+_("No {} frame info").format(
+                                self.settings.languagenames[l])+">"
+                button=ui.Button(lineframe,text=text,
+                                relief=relief,
+                                cmd=lambda l=l, context='before':
+                                        self.promptwindow(l,context),
+                                column=1,row=0,padx=0,ipadx=0)
+                ui.ToolTip(button)
+                if l not in self.forms:
+                    continue
+                ui.Label(lineframe,text=tword,column=2,row=0,padx=0,ipadx=0)
+                try:
+                    text=self.forms[l]['after']
+                    if text == '':
+                        text=nothing
+                except KeyError:
+                    if 'before' in self.forms[l]:
+                        self.forms[l]={'after':''} #in case it got deleted
+                        text=nothing
+                button=ui.Button(lineframe,text=text,
+                                relief=relief,
+                                cmd=lambda l=l, context='after':
+                                        self.promptwindow(l,context),
+                                column=3,row=0,padx=0,ipadx=0)
+                ui.ToolTip(button)
+            else:
+                text=_("{0} gloss not in Frame (add)").format(
+                                                self.settings.languagenames[l])
+                button=ui.Button(self.fds,text=text,
+                                relief=relief,
+                                font='small',
+                                cmd=lambda l=l, context='before':
+                                        self.promptwindow(l,context),
+                                column=0,row=n+1,padx=0,ipadx=0)
+                ui.ToolTip(button)
         text=_("Get Example")
         exemplify=ui.Button(self.fds,text=text,cmd=self.exemplified,
                             column=0,row=n+2)
