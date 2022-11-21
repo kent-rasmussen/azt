@@ -11759,12 +11759,16 @@ class ToneFrames(dict):
     def __init__(self, dict):
         super(ToneFrames, self).__init__()
         updated=False
-        for k in dict:
-            self[k]=dict[k]
-            for name in self[k]:
-                if 'field' not in self[k][name]:
-                    updated=True
-                    self[k][name]['field']='lc'
+        for ps in dict:
+            self[ps]=dict[ps]
+            for name in self[ps]:
+                try:
+                    if 'field' not in self[ps][name]:
+                        updated=True
+                        self[ps][name]['field']='lc'
+                except TypeError as e:
+                    log.info("problem with frame at ps:{}, name:{} ({})"
+                            "".format(ps,name,e))
         if updated:
             log.info("updated toneframes for field; you should save it!")
 class StatusDict(dict):
