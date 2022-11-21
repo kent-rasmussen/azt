@@ -5585,7 +5585,11 @@ class ToneFrameDrafter(ui.Window):
         """Define the new frame"""
         checkdefntoadd={'field':self.forms['field']}
         log.info("Ready to add frame with this form info: {}".format(self.forms))
-        for lang in self.lookingfor: #just the defined languages
+        log.info("Ready to add frame with this lookingfor info: {}".format(self.lookingfor))
+        for lang in [i for i in self.forms #self.lookingfor
+                            if 'before' in self.forms[i]
+                            if 'after' in self.forms[i]
+                ]: #just the defined languages
             before=self.forms[lang]['before']
             after=self.forms[lang]['after']
             checkdefntoadd[lang]=str(before+'__'+after)
