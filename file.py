@@ -212,7 +212,12 @@ def lift():
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
     home=gethome()
     filename=filedialog.askopenfilename(initialdir = home,#"$HOME",#filetypes=[('LIFT','*.lift')],
-                                    title = _("Select LIFT Lexicon File"))
+                                    title = _("Select LIFT Lexicon File"),
+                                    filetypes=[
+                                            ("LIFT File",'*.[Ll][Ii][Ff][Tt]'),
+                                            # ("Git repository",'*.git'),
+                                            ]
+                                    )
     if not filename:
         return
     if exists(filename):
