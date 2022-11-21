@@ -120,7 +120,7 @@ class FileChooser(object):
         self.name=None # in case of exit
         window=ui.Window(program['root'],title=_("Select LIFT Database"))
         text=_('What do you want to work on?') #LIFT database
-        ui.Label(window.frame, text=text).grid(column=0, row=0)
+        ui.Label(window.frame, text=text, font='title', column=0, row=0)
         optionlist=[('New',_("Start work on a new language"))]
         optionlist+=[('Clone',_("Copy work from a USB drive"))]
         if filenamelist:
