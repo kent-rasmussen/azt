@@ -134,7 +134,8 @@ class FileChooser(object):
                                 command=setfilename,
                                 window=window,
                                 column=0, row=1,
-                                sticky='ew'
+                                bsticky='ew',
+                                sticky=''
                                 )
         # make mediadir look for *.git
         ui.Label(window.frame, image=program['theme'].photo['small'],
