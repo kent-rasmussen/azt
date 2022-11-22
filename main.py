@@ -631,7 +631,7 @@ class Menus(ui.Menu):
         helpitems=[(_("About"), self.parent.helpabout)]
         if program['git']:
             helpitems+=[(_("Update A→Z+T"), updateazt)]
-            helpitems+=[(_("Update A→Z+T (local)"), self.parent.updateaztlocal)]
+            helpitems+=[(_("Update A→Z+T (USB)"), self.parent.updateaztlocal)]
             if program['repo'].branchname() == 'main':
                 helpitems+=[(_("Try A→Z+T test version"),
                                 self.parent.trytestazt)]
@@ -11360,7 +11360,7 @@ class Splash(ui.Window):
                             command=lambda x=self:updateazt(parent=x)
                             )
             help.add_command(
-                            label='    '+_("Update A→Z+T (local)"),
+                            label='    '+_("Update A→Z+T (USB)"),
                             command=self.updateaztlocal
                             )
             self.config(menu=menu)
