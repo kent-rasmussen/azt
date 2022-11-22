@@ -219,7 +219,8 @@ def lift():
     filename=filedialog.askopenfilename(initialdir = home,#"$HOME",#filetypes=[('LIFT','*.lift')],
                                     title = _("Select LIFT Lexicon File"),
                                     filetypes=[
-                                            ("LIFT File",'*.[Ll][Ii][Ff][Tt]'),
+                                            ("LIFT File",'.[Ll][Ii][Ff][Tt]','TEXT'),
+                                            ("lift File",'.lift','TEXT'),
                                             # ("Git repository",'*.git'),
                                             ]
                                     )
@@ -276,6 +277,8 @@ if __name__ == "__main__":
         global xyz
         return str(pathlib.Path.joinpath(wsfolder, xyz))
     # Create an instance of ttk
+    log.info(lift())
+    quit()
     s = ttk.Style()
     # log.info(
     for t in s.theme_names():
