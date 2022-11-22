@@ -583,6 +583,15 @@ class Gridded(ObectwArgs):
         for opt in self.gridkwargs:
             if opt in kwargs:
                 del kwargs[opt]
+            if 'b'+opt in kwargs:
+                del kwargs['b'+opt]
+        return kwargs
+    def gridbkwargs(self,**kwargs):
+        # preserve some of these for buttons
+        for opt in self.gridkwargs:
+            if 'b'+opt in kwargs:
+                kwargs[opt]=kwargs['b'+opt]
+                del kwargs['b'+opt]
         return kwargs
     def __init__(self, *args, **kwargs): #because this is used everywhere.
         """this removes gridding kwargs from the widget calls"""
@@ -878,6 +887,7 @@ class Button(Gridded,Text,tkinter.Button):
         Childof.__init__(self,parent)
         Text.__init__(self,parent,**kwargs)
         kwargs=self.lesstextkwargs(**kwargs)
+        kwargs=self.gridbkwargs(**kwargs)
         # `command` is my hacky command specification, with lots of args added.
         # cmd is just the command passing through.
         if 'cmd' in kwargs and kwargs['cmd'] is not None:
