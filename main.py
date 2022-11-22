@@ -13534,7 +13534,7 @@ def dictcompare(x,y,ignore=[]):
     return (r,pairs,unpairs)
 def quote(x):
     #does this fail on non-string x?
-    if isinstance(x,dict):
+    if isinstance(x,dict) or isinstance(x,int) or isinstance(x,list):
         return str(x) #don't put brackets around this, just make it a string
     if "'" not in x:
         return "'"+x+"'"
