@@ -2933,7 +2933,7 @@ class TaskDressing(object):
                 "right of the main {0} window."
                 "\nEither window allows you to run reports."
                 "").format(program['name'])
-        url='https://github.com/kent-rasmussen/azt/blob/main/TASKS.md'
+        url='https://github.com/kent-rasmussen/azt/blob/main/docs/TASKS.md'
         webtext=_("For more information on {} tasks, please check out the "
                 "documentation at {} ").format(program['name'],url)
         ui.Label(window.frame, image=self.frame.theme.photo['icon'],
@@ -4348,7 +4348,8 @@ class TaskChooser(TaskDressing,ui.Window):
         self.restart()
     def asktoconvertlxtolc(self):
         title=_("Convert lexeme field data to citation form fields?")
-        url="https://github.com/kent-rasmussen/azt/blob/main/CITATIONFORMS.md"
+        url="https://github.com/kent-rasmussen/azt/blob/main/docs/"
+        "CITATIONFORMS.md"
         w=ui.Window(self,title=title,exit=False)
         lexemesdone=list(self.db.nentrieswlexemedata.values())#[self.settings.analang]
         citationsdone=list(self.db.nentrieswcitationdata.values())#[self.settings.analang]
@@ -13148,10 +13149,10 @@ class Repository(object):
         # self.thisos="Windows"
         if self.thisos == "Linux":
             self.installpage=("https://github.com/kent-rasmussen/azt/blob/main/"
-                                "SIMPLEINSTALL_LINUX.md")
+                                "docs/SIMPLEINSTALL_LINUX.md")
         elif self.thisos == 'Windows':
             self.installpage=("https://github.com/kent-rasmussen/azt/blob/main/"
-                                "SIMPLEINSTALL.md")
+                                "docs/SIMPLEINSTALL.md")
         self.cmd=program[self.code]
         self.deltadir=file.getdiredurl(self.url,'.'+self.code)
         self.setdescription()
@@ -14106,7 +14107,7 @@ def mainproblem():
             row=0,column=0
             )
     if exceptiononload:
-        durl=('https://github.com/kent-rasmussen/azt/blob/main/INSTALL.md'
+        durl=('https://github.com/kent-rasmussen/azt/blob/main/docs/INSTALL.md'
                 '#dependencies')
         m=ui.Label(errorw.frame,text=_("\nPlease see {}").format(durl),
             justify='left', font='instructions',
