@@ -219,8 +219,10 @@ def lift():
     filename=filedialog.askopenfilename(initialdir = home,#"$HOME",#filetypes=[('LIFT','*.lift')],
                                     title = _("Select LIFT Lexicon File"),
                                     filetypes=[
-                                            ("LIFT File",'.[Ll][Ii][Ff][Tt]','TEXT'),
-                                            ("lift File",'.lift','TEXT'),
+                                            # ("LIFT File",'.[Ll][Ii][Ff][Tt]','TEXT'),
+                                            # ("LIFT File",'.LIFT .lift','TEXT'),
+                                            ("LIFT File",'.LIFT','TEXT'),
+                                            ("LIFT File",'.lift','TEXT'),
                                             # ("Git repository",'*.git'),
                                             ]
                                     )
