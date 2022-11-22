@@ -14045,7 +14045,7 @@ def main():
     root.wraplength=root.winfo_screenwidth()-300 #exit button
     root.wraplength=int(root.winfo_screenwidth()*.7) #exit button
     root.withdraw()
-    if platform.system() != 'Linux': #this is only for MS Windows!
+    if platform.system() == 'Windows': #this is only for MS Windows!
         import ctypes
         user32 = ctypes.windll.user32
         import ctypes
