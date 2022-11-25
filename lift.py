@@ -1540,7 +1540,10 @@ class Entry(object): # what does "object do here?"
         # hence, the limiting by lang
         nodes=self.findall(tag)
         for node in nodes:
-            formtexts=node.findall('form[@lang="{}"]/text'.format(lang))
+            if tag == 'gloss':
+                formtexts=node.findall('.[@lang="{}"]/text'.format(lang))
+            else:
+                formtexts=node.findall('form[@lang="{}"]/text'.format(lang))
             if formtexts:
                 return formtexts[0]
         if nodes:
