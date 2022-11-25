@@ -71,10 +71,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.getglosslangs() #sets: self.glosslangs
         self.getanalangs() #sets: self.analangs, self.audiolangs
         self.legacylangconvert() #update from any old language forms to xyz-x-py
-        self.getentrieswlexemedata() #sets: self.entrieswlexemedata & self.nentrieswlexemedata
-        self.getentrieswcitationdata() #sets: self.entrieswcitationdata & self.nentrieswcitationdata
-        self.getsenseswglossdata() #sets: self.nsenseswglossdata
-        self.getsenseswdefndata() #sets: self.nsenseswdefndata
+        self.getentrieswanalangdata() #sets: self.(n)entriesw(lexeme|citation)data
+        self.getsenseswglosslangdata() #sets: self.nsensesw(gloss|defn)data
         self.getfieldnames() #sets self.fieldnames (of entry)
         self.getsensefieldnames() #sets self.sensefieldnames (fields of sense)
         self.legacyverificationconvert() #data to form nodes (no name changes)
@@ -946,6 +944,27 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def getsenseids(self):
         self.senseids=self.get('sense').get('senseid')
         self.nsenseids=len(self.senseids)
+    def getentrieswanalangdata(self):
+        #do each of these, then cull
+        self.getentrieswlexemedata() #sets: self.(n)entrieswlexemedata
+        self.getentrieswcitationdata() #sets: self.(n)entrieswcitationdata
+        for lang in self.analangs.copy():
+            if (not self.nentrieswlexemedata[lang] and
+                not self.nentrieswcitationdata[lang]):
+                self.analangs.remove(lang)
+            elif not (self.nentrieswlexemedata[lang] > self.nguids/100 or
+                        self.nentrieswcitationdata[lang] > self.nguids/100
+                    ):
+                log.info("Analysis language ˋ{}ˊ appears in in less than "
+                        "1% of entries ({}): {} "
+                        "".format(lang,
+                                    (self.nentrieswcitationdata[lang]+
+                                    self.nentrieswlexemedata[lang]),
+                                    [i.get('id')
+                                    for i in (self.entrieswlexemedata[lang]+
+                                            self.entrieswcitationdata[lang])
+                                    ],
+                                ))
     def getentrieswcitationdata(self):
         self.entrieswcitationdata={}
         self.nentrieswcitationdata={}
@@ -955,24 +974,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     if textornone(Entry.formtextnodeofentry(i,'citation',lang))
                             ]
             self.nentrieswcitationdata[lang]=len(self.entrieswcitationdata[lang])
-    def getsenseswglossdata(self):
-        senseswglossdata={}
-        self.nsenseswglossdata={}
-        for lang in self.glosslangs:
-            senseswglossdata[lang]=[
-                    i for i in self.nodes.findall('entry/sense')
-                    if textornone(Entry.formtextnodeofentry(i,'gloss',lang))
-                            ]
-            self.nsenseswglossdata[lang]=len(senseswglossdata[lang])
-    def getsenseswdefndata(self):
-        senseswdefndata={}
-        self.nsenseswdefndata={}
-        for lang in self.glosslangs:
-            senseswdefndata[lang]=[
-                    i for i in self.nodes.findall('entry/sense')
-                    if textornone(Entry.formtextnodeofentry(i,'definition',lang))
-                            ]
-            self.nsenseswdefndata[lang]=len(senseswdefndata[lang])
     def getentrieswlexemedata(self):
         self.entrieswlexemedata={}
         self.nentrieswlexemedata={}
@@ -1040,6 +1041,47 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 log.info("Found {} fieldswsoundfiles for {}".format(
                             self.nfieldswsoundfiles[lang],lang))
         # log.info("Found {} fieldswsoundfiles".format(self.nfieldswsoundfiles))
+    def getsenseswglosslangdata(self):
+        #do each of these, then cull in the second one
+        self.getsenseswglossdata() #sets: self.nentrieswglossdata
+        self.getsenseswdefndata() #sets: self.nentrieswdefndata
+        for lang in self.glosslangs.copy():
+            if not self.nsenseswdefndata[lang] and (
+                                    not self.nsenseswglossdata[lang]):
+                self.glosslangs.remove(lang) #do this just once
+    def getsenseswglossdata(self):
+        senseswglossdata={}
+        self.nsenseswglossdata={}
+        for lang in self.glosslangs:
+            senseswglossdata[lang]=[
+                    i for i in self.nodes.findall('entry/sense')
+                    if textornone(Entry.formtextnodeofentry(i,'gloss',lang))
+                            ]
+            self.nsenseswglossdata[lang]=len(senseswglossdata[lang])
+            if lang in self.analangs:
+                if (self.nsenseswglossdata[lang] < self.nguids/100):
+                    log.info("Glosslang ˋ{}ˊ appears in less than "
+                            "1% of entries: {}"
+                            "".format(lang,[i.get('id')
+                                            for i in senseswglossdata[lang]]
+                                    ))
+    def getsenseswdefndata(self):
+        senseswdefndata={}
+        self.nsenseswdefndata={}
+        for lang in self.glosslangs:
+            senseswdefndata[lang]=[
+                    i for i in self.nodes.findall('entry/sense')
+                    if textornone(Entry.formtextnodeofentry(i,'definition',lang))
+                            ]
+            self.nsenseswdefndata[lang]=len(senseswdefndata[lang])
+            if lang in self.analangs:
+                if self.nsenseswdefndata[lang] and (self.nsenseswdefndata[lang]
+                                                    < self.nguids/100):
+                    log.info("Glosslang ˋ{}ˊ appears in less than "
+                            "1% of entries: {}"
+                            "".format(lang,[i.get('id')
+                                            for i in senseswdefndata[lang]]
+                                    ))
     def getguids(self):
         self.guids=self.get('entry').get('guid')
         self.nguids=len(self.guids)
