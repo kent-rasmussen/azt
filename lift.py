@@ -73,6 +73,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.legacylangconvert() #update from any old language forms to xyz-x-py
         self.getentrieswlexemedata() #sets: self.entrieswlexemedata & self.nentrieswlexemedata
         self.getentrieswcitationdata() #sets: self.entrieswcitationdata & self.nentrieswcitationdata
+        self.getsenseswglossdata() #sets: self.nsenseswglossdata
+        self.getsenseswdefndata() #sets: self.nsenseswdefndata
         self.getfieldnames() #sets self.fieldnames (of entry)
         self.getsensefieldnames() #sets self.sensefieldnames (fields of sense)
         self.legacyverificationconvert() #data to form nodes (no name changes)
@@ -82,6 +84,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                     self.nentrieswlexemedata,
                                                     self.nentrieswcitationdata,
                                                     self.nsenseids))
+        log.info("Found gloss data counts: {}, definition counts: {}"
+                "".format(
+                        self.nsenseswglossdata,
+                        self.nsenseswdefndata,
+                        ))
         self.pss=self.getpssbylang() #dict keyed by lang
         #This may be superfluous:
         self.getsenseidsbyps() #sets: self.senseidsbyps and self.nsenseidsbyps
@@ -948,6 +955,24 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     if textornone(Entry.formtextnodeofentry(i,'citation',lang))
                             ]
             self.nentrieswcitationdata[lang]=len(self.entrieswcitationdata[lang])
+    def getsenseswglossdata(self):
+        senseswglossdata={}
+        self.nsenseswglossdata={}
+        for lang in self.glosslangs:
+            senseswglossdata[lang]=[
+                    i for i in self.nodes.findall('entry/sense')
+                    if textornone(Entry.formtextnodeofentry(i,'gloss',lang))
+                            ]
+            self.nsenseswglossdata[lang]=len(senseswglossdata[lang])
+    def getsenseswdefndata(self):
+        senseswdefndata={}
+        self.nsenseswdefndata={}
+        for lang in self.glosslangs:
+            senseswdefndata[lang]=[
+                    i for i in self.nodes.findall('entry/sense')
+                    if textornone(Entry.formtextnodeofentry(i,'definition',lang))
+                            ]
+            self.nsenseswdefndata[lang]=len(senseswdefndata[lang])
     def getentrieswlexemedata(self):
         self.entrieswlexemedata={}
         self.nentrieswlexemedata={}
@@ -1540,7 +1565,10 @@ class Entry(object): # what does "object do here?"
         # hence, the limiting by lang
         nodes=self.findall(tag)
         for node in nodes:
-            formtexts=node.findall('form[@lang="{}"]/text'.format(lang))
+            if tag == 'gloss':
+                formtexts=node.findall('.[@lang="{}"]/text'.format(lang))
+            else:
+                formtexts=node.findall('form[@lang="{}"]/text'.format(lang))
             if formtexts:
                 return formtexts[0]
         if nodes:
