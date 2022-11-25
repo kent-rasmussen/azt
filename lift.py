@@ -948,6 +948,24 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     if textornone(Entry.formtextnodeofentry(i,'citation',lang))
                             ]
             self.nentrieswcitationdata[lang]=len(self.entrieswcitationdata[lang])
+    def getsenseswglossdata(self):
+        senseswglossdata={}
+        self.nsenseswglossdata={}
+        for lang in self.glosslangs:
+            senseswglossdata[lang]=[
+                    i for i in self.nodes.findall('entry/sense')
+                    if textornone(Entry.formtextnodeofentry(i,'gloss',lang))
+                            ]
+            self.nsenseswglossdata[lang]=len(senseswglossdata[lang])
+    def getsenseswdefndata(self):
+        senseswdefndata={}
+        self.nsenseswdefndata={}
+        for lang in self.glosslangs:
+            senseswdefndata[lang]=[
+                    i for i in self.nodes.findall('entry/sense')
+                    if textornone(Entry.formtextnodeofentry(i,'definition',lang))
+                            ]
+            self.nsenseswdefndata[lang]=len(senseswdefndata[lang])
     def getentrieswlexemedata(self):
         self.entrieswlexemedata={}
         self.nentrieswlexemedata={}
