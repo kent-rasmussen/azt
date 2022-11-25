@@ -3708,7 +3708,7 @@ class TaskDressing(object):
                 "you don't understand, or if you're not \nsure what a tone "
                 "frame is, please ask for help. \nWhen you are done making "
                 "frames, click ‘Exit’ to continue.".format(btext))
-                cmd=self.addframe
+                cmd=self.task.addframe
             else:
                 btext=_("Return to A→Z+T, to fix settings")
                 text=_("I can't find any checks for type {}, ps {}, profile {}."
