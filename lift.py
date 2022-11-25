@@ -73,6 +73,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.legacylangconvert() #update from any old language forms to xyz-x-py
         self.getentrieswlexemedata() #sets: self.entrieswlexemedata & self.nentrieswlexemedata
         self.getentrieswcitationdata() #sets: self.entrieswcitationdata & self.nentrieswcitationdata
+        self.getsenseswglossdata() #sets: self.nsenseswglossdata
+        self.getsenseswdefndata() #sets: self.nsenseswdefndata
         self.getfieldnames() #sets self.fieldnames (of entry)
         self.getsensefieldnames() #sets self.sensefieldnames (fields of sense)
         self.legacyverificationconvert() #data to form nodes (no name changes)
@@ -82,6 +84,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                     self.nentrieswlexemedata,
                                                     self.nentrieswcitationdata,
                                                     self.nsenseids))
+        log.info("Found gloss data counts: {}, definition counts: {}"
+                "".format(
+                        self.nsenseswglossdata,
+                        self.nsenseswdefndata,
+                        ))
         self.pss=self.getpssbylang() #dict keyed by lang
         #This may be superfluous:
         self.getsenseidsbyps() #sets: self.senseidsbyps and self.nsenseidsbyps
