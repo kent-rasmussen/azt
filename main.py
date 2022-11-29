@@ -5418,6 +5418,15 @@ class Placeholder(TaskDressing,ui.Window):
                     text="This is a check placeholder.",
                     row=r, column=0)
 class ToneFrameDrafter(ui.Window):
+    def addback(self,lang,event=None):
+        self.forms[lang]={
+                        'before':'',
+                        'after':''
+                        }
+        self.status()
+    def skiplang(self,lang,event=None):
+        del self.forms[lang]
+        self.status()
     def status(self):
         if self.exitFlag.istrue():
             return
