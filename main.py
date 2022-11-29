@@ -5418,6 +5418,15 @@ class Placeholder(TaskDressing,ui.Window):
                     text="This is a check placeholder.",
                     row=r, column=0)
 class ToneFrameDrafter(ui.Window):
+    def addback(self,lang,event=None):
+        self.forms[lang]={
+                        'before':'',
+                        'after':''
+                        }
+        self.status()
+    def skiplang(self,lang,event=None):
+        del self.forms[lang]
+        self.status()
     def status(self):
         if self.exitFlag.istrue():
             return
@@ -5426,7 +5435,7 @@ class ToneFrameDrafter(ui.Window):
             self.exf.destroy()
         except AttributeError:
             log.info("Probably the first time running status.")
-        self.fds=ui.Frame(self.frame,row=1,column=0)
+        self.fds=ui.Frame(self.content,row=1,column=0)
         if 'field' not in self.forms:
             d=self.task.params.ftype()
             log.info("Didn't find field type; setting current ({}).".format(d))
@@ -5445,18 +5454,22 @@ class ToneFrameDrafter(ui.Window):
         text=self.forms['name']
         if text == '':
             text=_("Give a frame name!")
-        nametext=_("Frame name: \n(used in status table and reports)"
-                    ).format(text)
+        nametext=_("Frame name:")
         log.info(nametext)
         relief='raised' #flat, raised, sunken, groove, and ridge
-        nameframe=ui.Frame(self.fds,column=0,row=0,padx=50)
+        frameparams=ui.Frame(self.fds,columnspan=4,column=0,row=0,pady=50,
+                            # highlightthickness=5,
+                            # highlightbackground=self.theme.activebackground
+                            )
+        nameframe=ui.Frame(frameparams,columnspan=2,column=0,row=0,padx=50)
         namelabel=ui.Label(nameframe,text=nametext,column=0,row=0)
         namebutton=ui.Button(nameframe, relief=relief,
                             cmd=self.promptwindow,
                             text=text,column=1,row=0)
-        ui.ToolTip(namebutton)
+        text=_("Set the frame name for status table and reports")
+        ui.ToolTip(namebutton,text)
         fieldname=_("Field to frame:")
-        ftypeframe=ui.Frame(self.fds,column=1,row=0)
+        ftypeframe=ui.Frame(frameparams,column=2,row=0)
         ftypelabel=ui.Label(ftypeframe,text=fieldname,column=0,row=0)
         ftypebutton=ui.Button(ftypeframe,text=self.fieldtypename(),
                             cmd=self.getfieldtype,
@@ -5470,16 +5483,27 @@ class ToneFrameDrafter(ui.Window):
                                             and 'before' in self.forms[i]
                                             and 'after' not in self.forms[i]]
         langstodo=[i for i in self.langs if i not in langs+langsbeforeonly]
-        log.info("Langs done: {}".format(langs))
-        log.info("Langs in process: {}".format(langsbeforeonly))
-        log.info("Langs langstodo: {}".format(langstodo))
+        # log.info("Langs done: {}".format(langs))
+        # log.info("self.langs: {}".format(self.langs))
+        # log.info("Langs in process: {}".format(langsbeforeonly))
+        # log.info("Langs langstodo: {}".format(langstodo))
         nothing='______'#"<"+_("nothing")+">"
         for n,l in enumerate(self.langs):
+            langname=self.settings.languagenames[l]
             if l in self.forms:
-                tintro=_("Frame in {0}:").format(self.settings.languagenames[l])
-                ui.Label(self.fds,text=tintro,column=0,row=n+1)
-                lineframe=ui.Frame(self.fds,column=1,row=n+1)
-                tword=_("<{0} word>").format(self.settings.languagenames[l])
+                log.info("Working on {}".format(langname))
+                tintro=_("Frame in {}:").format(langname)
+                if l != self.analang:
+                    b=ui.Button(self.fds,text='X',
+                            cmd=lambda l=l:self.skiplang(l),
+                            column=0,row=n+1,sticky='e')
+                    b.tt=ui.ToolTip(b, _("Skip {}").format(langname))
+                ui.Label(self.fds,text=tintro,column=1,row=n+1)
+                lineframe=ui.Frame(self.fds,column=2,row=n+1)
+                if "Language " in langname:
+                    tword=_("<word>")
+                else:
+                    tword=_("<{0} word>").format(langname)
                 try:
                     text=self.forms[l]['before']
                     if text == '':
@@ -5515,18 +5539,18 @@ class ToneFrameDrafter(ui.Window):
                                 column=3,row=0,padx=0,ipadx=0)
                 ui.ToolTip(button)
             else:
-                text=_("{0} gloss not in Frame (add)").format(
-                                                self.settings.languagenames[l])
+                text=_("Add {0}").format(langname)
                 button=ui.Button(self.fds,text=text,
                                 relief=relief,
                                 font='small',
-                                cmd=lambda l=l, context='before':
-                                        self.promptwindow(l,context),
-                                column=0,row=n+1,padx=0,ipadx=0)
-                ui.ToolTip(button)
+                                cmd=lambda l=l: self.addback(l),
+                                columnspan=2,column=0,row=n+1,padx=0,ipadx=0)
+                ui.ToolTip(button,_("Add {} values for this frame").format(
+                                    langname
+                                    ))
         text=_("Get Example")
         exemplify=ui.Button(self.fds,text=text,cmd=self.exemplified,
-                            column=0,row=n+2)
+                            columnspan=2,column=0,row=n+2)
     def setfieldtype(self,choice,window):
         self.forms['field']=choice
         window.on_quit()
@@ -5550,7 +5574,7 @@ class ToneFrameDrafter(ui.Window):
         ]
         return [(i,j) for (i,j) in opts if i]
     def getfieldtype(self,event=None):
-        w=ui.Window(self.frame,
+        w=ui.Window(self,
                         row=1,column=0,
                         sticky='ew',
                         padx=25,pady=25)
@@ -5564,7 +5588,7 @@ class ToneFrameDrafter(ui.Window):
         checktoadd=self.forms['name']
         if hasattr(self,'exf'):
             self.exf.destroy()
-        self.exf=ui.Frame(self.frame,row=2,column=0,sticky='w')
+        self.exf=ui.Frame(self.content,row=2,column=0,sticky='w')
         if checktoadd in ['', None]:
             text=_('Sorry, empty name! \nPlease provide at least \na frame '
                 'name, to distinguish it \nfrom other frames.')
@@ -5646,9 +5670,9 @@ class ToneFrameDrafter(ui.Window):
                                             n=checktoadd: self.submit(x,n),
                           row=0,column=0,
                           )
-        ui.Label(subframe, text=_("<= No changes after this; please check that "
+        ui.Label(subframe, text=_("<= No changes after this! \nPlease check that "
                                 "the above looks good on several examples!"),
-                row=0,column=1)
+                                justify='left', row=0, column=1, padx=15)
         log.info('sub_btn:{}'.format(stext))
     def promptstrings(self,lang=None,context=None):
         #None of this changes in editing. Is that what we want?
@@ -5659,14 +5683,12 @@ class ToneFrameDrafter(ui.Window):
             if lang == self.analang:
                 kind=_('form')
                 ok=_('Use this form')
-                skip=None
             else:
                 kind=_('gloss')
                 ok=_('Use this {} form {} the dictionary gloss'.format(
                                 self.settings.languagenames[lang],
                                 _(context)))
                 self.glosslangs.append(lang)
-                skip = _('Skip {} gloss').format(self.settings.languagenames[lang])
             if context == 'before':
                 text+='\n'+_("What text goes *before* \n<==the {} word *{}* "
                         "\nin the frame?"
@@ -5682,8 +5704,7 @@ class ToneFrameDrafter(ui.Window):
                             self.settings.languagenames[self.analang]
                             )
             ok=_("Use this name")
-            skip=None
-        return {'lang':lang, 'prompt':text, 'ok':ok, 'skip':skip}
+        return {'lang':lang, 'prompt':text, 'ok':ok}
     def promptwindow(self,lang=None,context=None,event=None):
         def submitform(event=None):
             log.info("context: {}; lang: {}".format(context,lang))
@@ -5706,13 +5727,9 @@ class ToneFrameDrafter(ui.Window):
         def setNull(event=None):
             if v.get() == '':
                 v.set(null)
-        def skipform(event=None):
-            del self.forms[lang]
-            self.w.on_quit() #Just move on.
-            self.status()
         log.info("context: {}; lang: {}".format(context,lang))
         strings=self.promptstrings(lang,context)
-        self.w=ui.Window(self.frame,
+        self.w=ui.Window(self,
                         row=1,column=0,
                         sticky='ew',
                         padx=25,pady=25)
@@ -5758,11 +5775,6 @@ class ToneFrameDrafter(ui.Window):
         sub_btn=ui.Button(self.w.frame,text = strings['ok'],
                             command = submitform,
                             anchor ='c',row=2,column=0,sticky='')
-        if strings['skip']:
-            sub_btnNo=ui.Button(self.w.frame,
-                                text = strings['skip'],
-                                command = skipform,
-                                row=1,column=1,sticky='')
         sub_btn.wait_window(formfield) #then move to next step
         if not self.exitFlag.istrue():
             self.deiconify()
@@ -5832,8 +5844,14 @@ class ToneFrameDrafter(ui.Window):
         self.ps=parent.slices.ps()
         self.forms={}
         # we want to start this net wide, to cover future usage
-        self.langs=[self.analang]+self.db.glosslangs
-        for l in self.langs: #assume there, remove later if not wanted
+        # At some point, I may want to distinguish the analang from its gloss
+        # in the same language code. They have different values in LIFT, and
+        # there might be reason to distinguish them in the frame definitions.
+        # But until I figure out how i want to do that, each language should
+        # just appear once.
+        self.langs=[self.analang]+[i for i in self.db.glosslangs
+                                    if i != self.analang]
+        for l in [self.analang]+self.settings.glosslangs: #actually selected
             self.forms[l]={'after':''}
             self.forms[l]['before']=''
         self.glosslangs=list()
@@ -5845,6 +5863,8 @@ class ToneFrameDrafter(ui.Window):
         t=(_("Add {} Tone Frame for {}").format(self.ps,
                         self.settings.languagenames[self.analang]))#+'\n'?
         ui.Label(self.frame,text=t,font='title',row=0,column=0)
+        self.scroll=ui.ScrollingFrame(self.frame,row=1,column=0)
+        self.content=self.scroll.content
         log.info("drafting a tone frame for these langs: {}".format(self.langs))
         self.status()
 class Tone(object):
@@ -14158,7 +14178,7 @@ def mainproblem():
     if not me:
         o.bind("<Button-1>", lambda e: openweburl(eurl))
     scroll.tobottom()
-    ui.Button(errorw.outsideframe,text=_("Restart {}").format(program['name']),
+    ui.Button(errorw.outsideframe,text=_("Restart \n{}").format(program['name']),
                 cmd=sysrestart, #This should be in task/chooser
                 row=1,column=2)
     if program['git']:
