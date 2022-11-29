@@ -5458,6 +5458,10 @@ class ToneFrameDrafter(ui.Window):
                     ).format(text)
         log.info(nametext)
         relief='raised' #flat, raised, sunken, groove, and ridge
+        frameparams=ui.Frame(self.fds,columnspan=4,column=0,row=0,pady=50,
+                            # highlightthickness=5,
+                            # highlightbackground=self.theme.activebackground
+                            )
         nameframe=ui.Frame(frameparams,columnspan=2,column=0,row=0,padx=50)
         namelabel=ui.Label(nameframe,text=nametext,column=0,row=0)
         namebutton=ui.Button(nameframe, relief=relief,
@@ -5465,7 +5469,7 @@ class ToneFrameDrafter(ui.Window):
                             text=text,column=1,row=0)
         ui.ToolTip(namebutton)
         fieldname=_("Field to frame:")
-        ftypeframe=ui.Frame(self.fds,column=1,row=0)
+        ftypeframe=ui.Frame(frameparams,column=2,row=0)
         ftypelabel=ui.Label(ftypeframe,text=fieldname,column=0,row=0)
         ftypebutton=ui.Button(ftypeframe,text=self.fieldtypename(),
                             cmd=self.getfieldtype,
