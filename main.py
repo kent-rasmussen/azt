@@ -5655,9 +5655,9 @@ class ToneFrameDrafter(ui.Window):
                                             n=checktoadd: self.submit(x,n),
                           row=0,column=0,
                           )
-        ui.Label(subframe, text=_("<= No changes after this; \nplease check that "
+        ui.Label(subframe, text=_("<= No changes after this! \nPlease check that "
                                 "the above looks good on several examples!"),
-                row=0,column=1)
+                                justify='left', row=0, column=1, padx=15)
         log.info('sub_btn:{}'.format(stext))
     def promptstrings(self,lang=None,context=None):
         #None of this changes in editing. Is that what we want?
