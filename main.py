@@ -5426,7 +5426,7 @@ class ToneFrameDrafter(ui.Window):
             self.exf.destroy()
         except AttributeError:
             log.info("Probably the first time running status.")
-        self.fds=ui.Frame(self.frame,row=1,column=0)
+        self.fds=ui.Frame(self.content,row=1,column=0)
         if 'field' not in self.forms:
             d=self.task.params.ftype()
             log.info("Didn't find field type; setting current ({}).".format(d))
@@ -5564,7 +5564,7 @@ class ToneFrameDrafter(ui.Window):
         checktoadd=self.forms['name']
         if hasattr(self,'exf'):
             self.exf.destroy()
-        self.exf=ui.Frame(self.frame,row=2,column=0,sticky='w')
+        self.exf=ui.Frame(self.content,row=2,column=0,sticky='w')
         if checktoadd in ['', None]:
             text=_('Sorry, empty name! \nPlease provide at least \na frame '
                 'name, to distinguish it \nfrom other frames.')
@@ -5646,7 +5646,7 @@ class ToneFrameDrafter(ui.Window):
                                             n=checktoadd: self.submit(x,n),
                           row=0,column=0,
                           )
-        ui.Label(subframe, text=_("<= No changes after this; please check that "
+        ui.Label(subframe, text=_("<= No changes after this; \nplease check that "
                                 "the above looks good on several examples!"),
                 row=0,column=1)
         log.info('sub_btn:{}'.format(stext))
@@ -5845,6 +5845,8 @@ class ToneFrameDrafter(ui.Window):
         t=(_("Add {} Tone Frame for {}").format(self.ps,
                         self.settings.languagenames[self.analang]))#+'\n'?
         ui.Label(self.frame,text=t,font='title',row=0,column=0)
+        self.scroll=ui.ScrollingFrame(self.frame,row=1,column=0)
+        self.content=self.scroll.content
         log.info("drafting a tone frame for these langs: {}".format(self.langs))
         self.status()
 class Tone(object):
