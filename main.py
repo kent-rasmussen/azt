@@ -5841,8 +5841,14 @@ class ToneFrameDrafter(ui.Window):
         self.ps=parent.slices.ps()
         self.forms={}
         # we want to start this net wide, to cover future usage
-        self.langs=[self.analang]+self.db.glosslangs
-        for l in self.langs: #assume there, remove later if not wanted
+        # At some point, I may want to distinguish the analang from its gloss
+        # in the same language code. They have different values in LIFT, and
+        # there might be reason to distinguish them in the frame definitions.
+        # But until I figure out how i want to do that, each language should
+        # just appear once.
+        self.langs=[self.analang]+[i for i in self.db.glosslangs
+                                    if i != self.analang]
+        for l in [self.analang]+self.settings.glosslangs: #actually selected
             self.forms[l]={'after':''}
             self.forms[l]['before']=''
         self.glosslangs=list()
