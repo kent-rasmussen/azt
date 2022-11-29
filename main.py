@@ -5458,7 +5458,7 @@ class ToneFrameDrafter(ui.Window):
                     ).format(text)
         log.info(nametext)
         relief='raised' #flat, raised, sunken, groove, and ridge
-        nameframe=ui.Frame(self.fds,column=0,row=0,padx=50)
+        nameframe=ui.Frame(frameparams,columnspan=2,column=0,row=0,padx=50)
         namelabel=ui.Label(nameframe,text=nametext,column=0,row=0)
         namebutton=ui.Button(nameframe, relief=relief,
                             cmd=self.promptwindow,
@@ -5535,7 +5535,7 @@ class ToneFrameDrafter(ui.Window):
                 ui.ToolTip(button)
         text=_("Get Example")
         exemplify=ui.Button(self.fds,text=text,cmd=self.exemplified,
-                            column=0,row=n+2)
+                            columnspan=2,column=0,row=n+2)
     def setfieldtype(self,choice,window):
         self.forms['field']=choice
         window.on_quit()
