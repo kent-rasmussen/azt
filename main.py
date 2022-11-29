@@ -14169,7 +14169,7 @@ def mainproblem():
     if not me:
         o.bind("<Button-1>", lambda e: openweburl(eurl))
     scroll.tobottom()
-    ui.Button(errorw.outsideframe,text=_("Restart {}").format(program['name']),
+    ui.Button(errorw.outsideframe,text=_("Restart \n{}").format(program['name']),
                 cmd=sysrestart, #This should be in task/chooser
                 row=1,column=2)
     if program['git']:
