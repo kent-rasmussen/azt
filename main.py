@@ -5559,7 +5559,7 @@ class ToneFrameDrafter(ui.Window):
         ]
         return [(i,j) for (i,j) in opts if i]
     def getfieldtype(self,event=None):
-        w=ui.Window(self.frame,
+        w=ui.Window(self,
                         row=1,column=0,
                         sticky='ew',
                         padx=25,pady=25)
@@ -5714,7 +5714,7 @@ class ToneFrameDrafter(ui.Window):
                 v.set(null)
         log.info("context: {}; lang: {}".format(context,lang))
         strings=self.promptstrings(lang,context)
-        self.w=ui.Window(self.frame,
+        self.w=ui.Window(self,
                         row=1,column=0,
                         sticky='ew',
                         padx=25,pady=25)
