@@ -5668,14 +5668,12 @@ class ToneFrameDrafter(ui.Window):
             if lang == self.analang:
                 kind=_('form')
                 ok=_('Use this form')
-                skip=None
             else:
                 kind=_('gloss')
                 ok=_('Use this {} form {} the dictionary gloss'.format(
                                 self.settings.languagenames[lang],
                                 _(context)))
                 self.glosslangs.append(lang)
-                skip = _('Skip {} gloss').format(self.settings.languagenames[lang])
             if context == 'before':
                 text+='\n'+_("What text goes *before* \n<==the {} word *{}* "
                         "\nin the frame?"
@@ -5691,8 +5689,7 @@ class ToneFrameDrafter(ui.Window):
                             self.settings.languagenames[self.analang]
                             )
             ok=_("Use this name")
-            skip=None
-        return {'lang':lang, 'prompt':text, 'ok':ok, 'skip':skip}
+        return {'lang':lang, 'prompt':text, 'ok':ok}
     def promptwindow(self,lang=None,context=None,event=None):
         def submitform(event=None):
             log.info("context: {}; lang: {}".format(context,lang))
@@ -5715,10 +5712,6 @@ class ToneFrameDrafter(ui.Window):
         def setNull(event=None):
             if v.get() == '':
                 v.set(null)
-        def skipform(event=None):
-            del self.forms[lang]
-            self.w.on_quit() #Just move on.
-            self.status()
         log.info("context: {}; lang: {}".format(context,lang))
         strings=self.promptstrings(lang,context)
         self.w=ui.Window(self.frame,
@@ -5767,11 +5760,6 @@ class ToneFrameDrafter(ui.Window):
         sub_btn=ui.Button(self.w.frame,text = strings['ok'],
                             command = submitform,
                             anchor ='c',row=2,column=0,sticky='')
-        if strings['skip']:
-            sub_btnNo=ui.Button(self.w.frame,
-                                text = strings['skip'],
-                                command = skipform,
-                                row=1,column=1,sticky='')
         sub_btn.wait_window(formfield) #then move to next step
         if not self.exitFlag.istrue():
             self.deiconify()
