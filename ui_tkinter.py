@@ -550,6 +550,10 @@ class Exitable(object):
         if self.mainwindow: #exit afterwards if main window
             self.killall()
         else:
+            if hasattr(self,'parent') and not isinstance(self.parent,Root):
+                # log.info("Going to deiconify {}".format(self.parent))
+                self.parent.deiconify()
+            # log.info("Going to cleanup {}".format(self))
             self.cleanup()
             self.destroy() #do this for everything
     def __init__(self):
