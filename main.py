@@ -5454,8 +5454,7 @@ class ToneFrameDrafter(ui.Window):
         text=self.forms['name']
         if text == '':
             text=_("Give a frame name!")
-        nametext=_("Frame name: \n(used in status table and reports)"
-                    ).format(text)
+        nametext=_("Frame name:")
         log.info(nametext)
         relief='raised' #flat, raised, sunken, groove, and ridge
         frameparams=ui.Frame(self.fds,columnspan=4,column=0,row=0,pady=50,
@@ -5467,7 +5466,8 @@ class ToneFrameDrafter(ui.Window):
         namebutton=ui.Button(nameframe, relief=relief,
                             cmd=self.promptwindow,
                             text=text,column=1,row=0)
-        ui.ToolTip(namebutton)
+        text=_("Set the frame name for status table and reports")
+        ui.ToolTip(namebutton,text)
         fieldname=_("Field to frame:")
         ftypeframe=ui.Frame(frameparams,column=2,row=0)
         ftypelabel=ui.Label(ftypeframe,text=fieldname,column=0,row=0)
@@ -5483,16 +5483,27 @@ class ToneFrameDrafter(ui.Window):
                                             and 'before' in self.forms[i]
                                             and 'after' not in self.forms[i]]
         langstodo=[i for i in self.langs if i not in langs+langsbeforeonly]
-        log.info("Langs done: {}".format(langs))
-        log.info("Langs in process: {}".format(langsbeforeonly))
-        log.info("Langs langstodo: {}".format(langstodo))
+        # log.info("Langs done: {}".format(langs))
+        # log.info("self.langs: {}".format(self.langs))
+        # log.info("Langs in process: {}".format(langsbeforeonly))
+        # log.info("Langs langstodo: {}".format(langstodo))
         nothing='______'#"<"+_("nothing")+">"
         for n,l in enumerate(self.langs):
+            langname=self.settings.languagenames[l]
             if l in self.forms:
-                tintro=_("Frame in {0}:").format(self.settings.languagenames[l])
-                ui.Label(self.fds,text=tintro,column=0,row=n+1)
-                lineframe=ui.Frame(self.fds,column=1,row=n+1)
-                tword=_("<{0} word>").format(self.settings.languagenames[l])
+                log.info("Working on {}".format(langname))
+                tintro=_("Frame in {}:").format(langname)
+                if l != self.analang:
+                    b=ui.Button(self.fds,text='X',
+                            cmd=lambda l=l:self.skiplang(l),
+                            column=0,row=n+1,sticky='e')
+                    b.tt=ui.ToolTip(b, _("Skip {}").format(langname))
+                ui.Label(self.fds,text=tintro,column=1,row=n+1)
+                lineframe=ui.Frame(self.fds,column=2,row=n+1)
+                if "Language " in langname:
+                    tword=_("<word>")
+                else:
+                    tword=_("<{0} word>").format(langname)
                 try:
                     text=self.forms[l]['before']
                     if text == '':
@@ -5528,15 +5539,15 @@ class ToneFrameDrafter(ui.Window):
                                 column=3,row=0,padx=0,ipadx=0)
                 ui.ToolTip(button)
             else:
-                text=_("{0} gloss not in Frame (add)").format(
-                                                self.settings.languagenames[l])
+                text=_("Add {0}").format(langname)
                 button=ui.Button(self.fds,text=text,
                                 relief=relief,
                                 font='small',
-                                cmd=lambda l=l, context='before':
-                                        self.promptwindow(l,context),
-                                column=0,row=n+1,padx=0,ipadx=0)
-                ui.ToolTip(button)
+                                cmd=lambda l=l: self.addback(l),
+                                columnspan=2,column=0,row=n+1,padx=0,ipadx=0)
+                ui.ToolTip(button,_("Add {} values for this frame").format(
+                                    langname
+                                    ))
         text=_("Get Example")
         exemplify=ui.Button(self.fds,text=text,cmd=self.exemplified,
                             columnspan=2,column=0,row=n+2)
