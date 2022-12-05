@@ -307,7 +307,7 @@ class FileChooser(object):
         log.info("newfilelocation done")
         return str(newfile)
     def copytonewfile(self,newfile):
-        if 'Demo' in newfile:
+        if 'Demo' in str(newfile):
             type="demo"
         else:
             type="empty"
