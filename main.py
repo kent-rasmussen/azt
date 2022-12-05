@@ -4704,6 +4704,8 @@ class TaskChooser(TaskDressing,ui.Window):
         self.setmainwindow(self)
         self.splash = Splash(self)
         self.getfile()
+        if program['root'].exitFlag.istrue():
+            return
         self.splash.draw()
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
