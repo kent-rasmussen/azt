@@ -1636,10 +1636,14 @@ class Node(ET.Element):
         if gimmenode:
             return n
     def childrenwtext(self):
-        return [i for i in self
-                    if i.findall('text') and
-                    [j for j in i.findall('text') if j.text]
-                ]
+        if self.tag == 'gloss':
+            if i.findall('text'):
+                return [self]
+        else:
+            return [i for i in self
+                        if i.findall('text') and
+                        [j for j in i.findall('text') if j.text]
+                    ]
     def __init__(self, parent, tag, attrib={}, **kwargs):
         super(Node, self).__init__(tag, attrib, **kwargs)
         parent.append(self)
