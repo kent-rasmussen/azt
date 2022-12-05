@@ -1058,8 +1058,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nsenseswglossdata={}
         for lang in self.glosslangs:
             senseswglossdata[lang]=[
-                    i for i in self.nodes.findall('entry/sense')
-                    if textornone(Entry.formtextnodeofentry(i,'gloss',lang))
+                    i for i in self.nodes.findall('entry')
+                    if textornone(Entry.formtextnodeofentry(i,'gloss',lang,
+                                                            nomake=True))
                             ]
             self.nsenseswglossdata[lang]=len(senseswglossdata[lang])
             if lang in self.analangs:
@@ -1074,8 +1075,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nsenseswdefndata={}
         for lang in self.glosslangs:
             senseswdefndata[lang]=[
-                    i for i in self.nodes.findall('entry/sense')
-                    if textornone(Entry.formtextnodeofentry(i,'definition',lang))
+                    i for i in self.nodes.findall('entry')
+                    if textornone(Entry.formtextnodeofentry(i,'definition',lang,
+                                                            nomake=True))
                             ]
             self.nsenseswdefndata[lang]=len(senseswdefndata[lang])
             if lang in self.analangs:
