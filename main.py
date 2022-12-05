@@ -363,6 +363,9 @@ class FileChooser(object):
                                                                 wait=True)
             return
         w=ui.Wait(parent=program['root'],msg=_("Setting up new LIFT file now."))
+        log.info("Beginning Copy of stock to new LIFT file.")
+        self.loadCAWL()
+        self.stripcawldb()
         self.copytonewfile(newfile)
         w.close()
         self.newfilelocation(newfile)
