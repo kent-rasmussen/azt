@@ -1551,22 +1551,48 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def convertlxtolc(self,**kwargs):
         # This is a move operation, removing 'from' when done, unless 'to'
         # is both there and different
+        kwargs['from']='lexical-unit'
+        kwargs['to']='citation'
+        self.convertxtoy(**kwargs)
+    def convertxtoy(self,lang=None,**kwargs):
         for e in self.getentrynode(**kwargs):
-            lxs=e.findall('lexical-unit') # I need form node, not text node
-            for lx in lxs:
+            log.info("Looking at entry {}".format(e.get('guid')))
+            if kwargs['from'] in ['definition','gloss']:
+                p=e.findall('sense')[0]
+            else: #parent of node to find may be sense or entry
+                p=e
+            froms=p.findall(kwargs['from']) # I need form node, not text node
+            log.info("Found entry parent node {}".format(p))
+            log.info("Found {} entry {} fields".format(len(froms),kwargs['from']))
+            # if e.get('guid') == '29febd49-9f74-4f6b-8256-21f81d6ba0f2':
+            #     prettyprint(e)
+            #     exit()
+            for f in froms:
                 log.info("Looking at entry w/guid: {}".format(e.get("guid")))
-                log.info("Found {}".format(Node.childrenwtext(lx)))
-                for lxf in Node.childrenwtext(lx):
-                    lxfl=lxf.get('lang')
-                    lxft=lxf.find('text')
+                if lang:
+                    if f.tag == 'gloss' and f.get('lang') != lang:
+                        continue
+                    elif f.tag == 'gloss':
+                        nodes=[f]
+                    else:
+                        nodes=[i for i in Node.childrenwtext(f)
+                                    if i.get('lang') == lang]
+                else:
+                    nodes=Node.childrenwtext(f)
+                log.info("Found {}".format(nodes))
+                for ff in nodes:
+                    ffl=ff.get('lang')
+                    fft=ff.find('text')
                     # log.info("Moving {} from lang {}".format(lxft.text,lxfl))
                     """This finds or creates, by lang:"""
-                    lc=Entry.formtextnodeofentry(e,'citation',lxfl) #This gives text node
-                    log.info("Moving lexeme ‘{}’ to citation (was {}) for lang {}"
-                            "".format(lxft.text,lc.text,lxfl))
-                    if not lc.text: #don't overwrite info
-                        lc.text=lxft.text
-                        lxft.text='' #clear only on move
+                    to=Entry.formtextnodeofentry(e,kwargs['to'],ffl) #This gives text node
+                    log.info("Moving {} ‘{}’ to {} (was {}) for lang {}"
+                            "".format(kwargs['from'],fft.text,
+                                        kwargs['to'],to.text,ffl))
+                    if not to.text: #don't overwrite info
+                        to.text=fft.text
+                    if to.text == fft.text and not kwargs.get('keep'):
+                        fft.text='' #clear if redundant before or after move
 class EmptyTextNodePlaceholder(object):
     """Just be able to return self.text when asked."""
     def __init__(self):
