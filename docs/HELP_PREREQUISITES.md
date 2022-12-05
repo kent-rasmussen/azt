@@ -15,8 +15,8 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
   - Take a look at the [practical prerequisites](USAGE.md#practical-prerequisites) for your database, and see that yours has what it needs.
     - If you ~~followed the `WeSay from Scratch` directions~~ started your project in A→Z+T as above, you should be OK.
 
-## Install A→Z+T
-- Run [this file](RunMetoInstall.bat?raw=true) (or use the simple instructions [here](SIMPLEINSTALL.md)). If you have any problems with the batch file, please let me know, and consider moving to the [simple instructions](SIMPLEINSTALL.md). If you use the simple instructions, please work all the way down this page, and do everything on it. Don't stop unless you really can't continue. If you get stuck, please [Email me](<mailto:kent_rasmussen@sil.org?subject=Please help with A→Z+T Installation>) with specific questions or problems.
+## Install [A→Z+T]
+- Run [this file](RunMetoInstall.bat?raw=true) (or use the simple instructions [here](SIMPLEINSTALL.md)). If you have any problems with the batch file, please let me know, and consider moving to the [simple instructions](SIMPLEINSTALL.md). If you use the simple instructions, please work all the way down this page, and do everything on it. Don't stop unless you really can't continue. If you get stuck, please [Email me](<mailto:kent_rasmussen@sil.org?subject=Please help with [A→Z+T] Installation>) with specific questions or problems.
 
 ## Field Work: Develop draft tone frames
 - See [Tone Frame Design](USAGE.md#tone-frame-design) for a description of this task.
@@ -32,18 +32,18 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
 - If you don't already understand what this entails, you will need help from a linguist near you.
 - If you think you _do_ already understand what this entails, please watch [these videos](https://github.com/kent-rasmussen/azt/wiki/Designing-Tone-Frames), just so we're on the same page.
 
-## Define Your Tone Frames in A→Z+T
+## Define Your Tone Frames in [A→Z+T]
 - Instructions are [here](USAGE.md#tone-frames).
 - Do more extensive testing of your tone frames, again with one speaker.
-  - You can test a frame with more words, more quickly, by doing some sorting in A→Z+T.
+  - You can test a frame with more words, more quickly, by doing some sorting in [A→Z+T].
   - confirm that word-frame combinations look OK, and
   - confirm that most words work in each of the frames. If a frame has many words that don't work in it, you should probably replace it.
   - ATTENTION: to **confirm your tone frames** will give you what you need for tone analysis, do one syllable profile of about 25 words in each of your proposed frames, for each of nouns and verbs. Record all that data, then send this data to me (see [Collaborate and Get Help](#collaborate-and-get-help), below) **_before_ doing a lot more sorting**.
 
-## Collect data in A→Z+T
+## Collect data in [A→Z+T]
 - **Organize a meeting** of more (3+) speakers, for them to sort and record data together in A→Z+T. You can organize this as you like, but expect at **least two weeks** of full time work for everyone.
 - At the meeting:
-  - **Sort** data in A→Z+T: 
+  - **Sort** data in [A→Z+T]: 
     - As you sort, 
       - each surface group should have **just one** pitch melody for the whole utterance, for each word in the group.
         -  if not, remove the different ones on the "Verify" page.
@@ -57,7 +57,7 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
       - There is a lot more sorting you can do, but this should be the right place to start, and will be a good beginning to understand your tone system.
       - **Tonally different**: if you don't know what this means, plan on getting help from a linguist near you, or sorting on at least eight frames (You should have this sorted out above, before starting a workshop).
     
-  - **Record** all sorted data in A→Z+T
+  - **Record** all sorted data in [A→Z+T]
     - Please pay attention to 
       - **speak as naturally as possible**, without unnecessary pauses. Pauses may break your recording into multiple phonological phrases, making your recordings useless for tone study.
         - if the syntactic context of a frame requires a significant pause (>150ms), you should probably use a different frame. 
@@ -68,3 +68,9 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
 
 ## Collaborate and Get Help
 - Once you have data you want feedback on, give me permission to read your languagedepot.org repository (Settings/Members/New Member), and [send me your questions](<mailto:kent_rasmussen@sil.org?subject=Please%20help%20with%20A→Z+T>)!
+
+[A→Z+T]:  https://github.com/kent-rasmussen/azt
+[WeSay]:  https://software.sil.org/wesay/
+[FLEx]: https://software.sil.org/fieldworks/
+[LIFT]: https://code.google.com/archive/p/lift-standard/
+[CAWL]: http://www.comparalex.org/resources/SIL%20Comparative%20African%20Word%20List.pdf
