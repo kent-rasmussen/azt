@@ -1593,6 +1593,21 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                         to.text=fft.text
                     if to.text == fft.text and not kwargs.get('keep'):
                         fft.text='' #clear if redundant before or after move
+    def convertdefntogloss(self,**kwargs):
+        # This is a move operation, removing 'from' when done, unless 'to'
+        # is both there and different
+        kwargs['from']='definition'
+        kwargs['to']='gloss'
+        self.convertxtoy(**kwargs)
+    def convertglosstocitation(self,lang,**kwargs):
+        # This is a move operation, removing 'from' when done, unless 'to'
+        # is both there and different
+        #This should only ever happen for one lang at a time, to make a demo db
+        kwargs['from']='gloss'
+        kwargs['to']='citation'
+        kwargs['lang']=lang
+        self.convertxtoy(**kwargs)
+
 class EmptyTextNodePlaceholder(object):
     """Just be able to return self.text when asked."""
     def __init__(self):
