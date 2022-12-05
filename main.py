@@ -110,6 +110,9 @@ class FileChooser(object):
             elif choice == 'Clone':
                 log.info("trying clone from USB")
                 self.name=self.clonefromUSB()
+            elif choice == 'Demo':
+                log.info("Making a CAWL demo database")
+                self.name=self.makeCAWLdemo()
             else:
                 self.name=choice
             log.info("self.name: {}".format(self.name))
@@ -129,6 +132,8 @@ class FileChooser(object):
         else:
             self.other=_("Select a database on my computer") #use later
         optionlist+=[('Other',self.other)]
+        optionlist+=[('Demo',_("Make a demo database to try out {}"
+                                ).format(program['name']))]
         buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                 optionlist=optionlist,
                                 command=setfilename,
@@ -247,22 +252,73 @@ class FileChooser(object):
             return
         log.info("Parsed stock LIFT file to tree/nodes.")
         return self.cawldb
-    def copytonewfile(self,newfile):
-        log.info("Beginning Copy of stock to new LIFT file.")
-        self.loadCAWL()
+    def stripcawldb(self):
         for n in (self.cawldb.nodes.findall('entry/lexical-unit')+
                     self.cawldb.nodes.findall('entry/citation')):
             for f in n.findall('form'):
                 n.remove(f)
         log.info("Stripped stock LIFT file.")
-        log.info("Trying to write empty LIFT file to {}".format(newfile))
+    def submitdemolang(self,choice,window): #event=None):
+        log.info("picked {}, from {}".format(choice,self.cawldb.glosslangs))
+        if choice in self.cawldb.glosslangs:
+            self.demolang=choice
+            window.destroy()
+    def makeCAWLdemo(self):
+        title=_("Make a Demo LIFT Database")
+        w=ui.Window(program['root'],title=title)
+        w.wait(_("Loading Demo Template"))
+        w.mainwindow=False
+        t=ui.Label(w.frame, text=title, row=0, column=0)
+        inst=_("Which language would you like to study, in this demonstration "
+                "of what {} can do?").format(program['name'])
+        t=ui.Label(w.frame, text=inst, row=1, column=0, columnspan=2)
+        self.loadCAWL()
+        Settings.langnames(self,self.cawldb.glosslangs)
+        opts=[(i,self.languagenames[i]) for i in self.cawldb.glosslangs]
+        log.info("Options: {}".format(opts))
+        s=ui.ScrollingButtonFrame(w.frame,
+                                    optionlist=opts,
+                                    command=self.submitdemolang,
+                                    window=w, sticky='',
+                                    column=0, row=2)
+        cbuttontext=_("Keep this as gloss language")
+        keep=ui.BooleanVar()
+        cb=ui.CheckButton(w.frame, text = cbuttontext,
+                            variable = keep,
+                            onvalue = True, offvalue = False,
+                            column=1, row=2)
+        w.waitdone()
+        w.wait_window(w)
+        log.info("Done waiting")
+        self.stripcawldb()
+        ww=ui.Wait(program['root'],_("Making Demo Database \n(will restart)"))
+        self.cawldb.convertglosstocitation(self.demolang,keep=keep.get())
+        homedir=file.gethome() #don't ask where to put it
+        log.info(homedir)
+        newdirname=file.getfile(homedir).joinpath('Demo_'+self.demolang)
+        log.info(newdirname)
+        file.makedir(newdirname)
+        newfile=newdirname.joinpath('Demo_'+self.demolang+'.lift')
+        log.info(newfile)
+        self.copytonewfile(newfile)
+        log.info("copytonewfile done")
+        ww.close()
+        self.newfilelocation(newfile)
+        log.info("newfilelocation done")
+        return str(newfile)
+    def copytonewfile(self,newfile):
+        if 'Demo' in str(newfile):
+            type="demo"
+        else:
+            type="empty"
+        log.info("Trying to write {} LIFT file to {}".format(type,newfile))
         try:
             self.cawldb.write(str(newfile))
         except Exception as e:
             log.error("Exception: {}".format(e))
-        log.info("Tried to write empty LIFT file to {}".format(newfile))
+        log.info("Tried to write {} LIFT file to {}".format(type,newfile))
         if file.exists(newfile):
-            log.info("Wrote empty LIFT file to {}".format(newfile))
+            log.info("Wrote {} LIFT file to {}".format(type,newfile))
     def startnewfile(self):
         def done(event=None):
             window.destroy()
@@ -307,6 +363,9 @@ class FileChooser(object):
                                                                 wait=True)
             return
         w=ui.Wait(parent=program['root'],msg=_("Setting up new LIFT file now."))
+        log.info("Beginning Copy of stock to new LIFT file.")
+        self.loadCAWL()
+        self.stripcawldb()
         self.copytonewfile(newfile)
         w.close()
         self.newfilelocation(newfile)
@@ -314,11 +373,16 @@ class FileChooser(object):
     def getfilename(self):
         # This method pulls filename(s) from settings, else self.askwhichlift
         self.name=file.getfilename() #returns filename if there, else filenames
-        if not self.name or type(self.name) is list:
+        if type(self.name) is not list and not file.exists(self.name):
+                self.name=None #don't return a file that isn't there
+        if not self.name or type(self.name) is list: #nothing or a selection
             self.askwhichlift(self.name)
-        if not self.name or not file.exists(self.name):
-            log.error("Didn't select a lexical database to check; exiting.")
-            exit()
+        if (not self.name or not file.exists(self.name)) and (
+                            not program['root'].exitFlag.istrue()):
+            self.getfilename() #if the above doesn't result in a file, do again.
+            return
+        if self.name and 'Demo' in self.name:
+            file.writefilename() #Don't just keep loading this; select next time
     def loaddatabase(self):
         try:
             self.db=lift.Lift(str(self.name))
@@ -326,7 +390,11 @@ class FileChooser(object):
             text=_("{} doesn't look like a well formed lift file; please "
                     "try again.").format(self.name)
             log.info("'lift_url.py' removed.")
-            ErrorNotice(text,title='LIFT parse error',wait=True)
+            if program['root'].exitFlag.istrue():
+                log.info(text)
+                return
+            else:
+                ErrorNotice(text,title='LIFT parse error',wait=True)
             file.writefilename() #just clear the default
             raise #Then force a quit and retry
         except Exception as e:
@@ -376,6 +444,8 @@ class FileChooser(object):
         super(FileChooser, self).__init__()
         self.getfilename()
         self.loaddatabase()
+        if program['root'].exitFlag.istrue():
+            return
         self.dailybackup()
         self.senseidtriage() #sets: self.senseidswanyps self.senseidswops self.senseidsinvalid self.senseidsvalid
         self.getwritingsystemsinfo()
@@ -1748,7 +1818,7 @@ class Settings(object):
         nochangetext=_("Exit {} with no changes".format(program['name']))
         log.info("Asking about Digraphs and Trigraphs!")
         titlet=_("A→Z+T Digraphs and Trigraphs")
-        pgw=ui.Window(self.taskchooser.frame,title=titlet)
+        pgw=ui.Window(self.taskchooser,title=titlet)
         t=_("Select which of the following graph sequences found in your data "
                 "refer to a single sound (digraph or trigraph) in {}".format(
             unlist([self.languagenames[y] for y in self.db.analangs])))
@@ -2679,15 +2749,18 @@ class Settings(object):
     def setsoundcardoutindex(self,choice,window):
         self.soundsettings.audio_card_out=choice
         window.destroy()
-    def langnames(self):
+    def langnames(self,langs=None):
         """This is for getting the prose name for a language from a code."""
         """It should ultimately use a xyz.ldml file, produced (at least)
         by WeSay, but for now is just a dict."""
+        log.info("Setting up language names")
         #ET.register_namespace("", 'palaso')
         ns = {'palaso': 'urn://palaso.org/ldmlExtensions/v1'}
         node=None
         self.languagenames={}
-        for xyz in [self.analang]+self.db.analangs+self.db.glosslangs:
+        if not langs:
+            langs=[self.analang]+self.db.analangs+self.db.glosslangs
+        for xyz in langs:
             # log.info(' '.join('Looking for language name for',xyz))
             """This provides an ldml node"""
             #log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
@@ -3086,7 +3159,7 @@ class TaskDressing(object):
                 ok.value=True
                 w.destroy()
             ti=_("Important Notice!")
-            w=ui.Window(self.frame,title=ti)
+            w=ui.Window(self,title=ti)
             til=ui.Label(w.frame,text=ti,font='title')
             til.grid(row=0,column=0)
             t=_("You are changing segment interpretation "
@@ -3332,7 +3405,7 @@ class TaskDressing(object):
         self.runwindow.waitdone()
     def getinterfacelang(self,event=None):
         log.info("Asking for interface language...")
-        window=ui.Window(self.frame, title=_('Select Interface Language'))
+        window=ui.Window(self, title=_('Select Interface Language'))
         ui.Label(window.frame, text=_('What language do you want {} '
                                 'to address you in?').format(program['name'])
                 ).grid(column=0, row=0)
@@ -3354,7 +3427,7 @@ class TaskDressing(object):
                 # if self.analang in self.adnlangnames:
             self.settings.storesettingsfile()
             window.destroy()
-        window=ui.Window(self.frame,title=_('Enter Analysis Language Name'))
+        window=ui.Window(self,title=_('Enter Analysis Language Name'))
         curname=self.settings.languagenames[self.analang]
         defaultname=_("Language with code [{}]").format(self.analang)
         t=_("How do you want to display the name of {}").format(curname)
@@ -3375,7 +3448,7 @@ class TaskDressing(object):
             return
         log.info("this sets the language")
         # fn=inspect.currentframe().f_code.co_name
-        window=ui.Window(self.frame,title=_('Select Analysis Language'))
+        window=ui.Window(self,title=_('Select Analysis Language'))
         if self.db.analangs is None :
             ui.Label(window.frame,
                           text='Error: please set Lift file first! ('
@@ -3397,7 +3470,7 @@ class TaskDressing(object):
                                      column=0, row=4
                                      )
     def getglosslang(self,event=None):
-        window=ui.Window(self.frame,title=_('Select Gloss Language'))
+        window=ui.Window(self,title=_('Select Gloss Language'))
         text=_('What Language do you want to use for glosses?')
         ui.Label(window.frame, text=text, column=0, row=1)
         langs=list()
@@ -3411,7 +3484,7 @@ class TaskDressing(object):
                                  column=0, row=4
                                  )
     def getglosslang2(self,event=None):
-        window=ui.Window(self.frame,title='Select Second Gloss Language')
+        window=ui.Window(self,title='Select Second Gloss Language')
         text=_('What other language do you want to use for glosses?')
         ui.Label(window.frame, text=text, column=0, row=1)
         langs=list()
@@ -3430,7 +3503,7 @@ class TaskDressing(object):
                                     )
     def getcvt(self,event=None):
         log.debug(_("Asking for check cvt/type"))
-        window=ui.Window(self.frame,title=_('Select Check Type'))
+        window=ui.Window(self,title=_('Select Check Type'))
         cvts=[]
         x=0
         tdict=self.params.cvtdict()
@@ -3455,7 +3528,7 @@ class TaskDressing(object):
     def getps(self,event=None):
         log.info("Asking for ps...")
         # self.refreshattributechanges()
-        window=ui.Window(self.frame, title=_('Select Lexical Category'))
+        window=ui.Window(self, title=_('Select Lexical Category'))
         ui.Label(window.frame, text=_('What lexical category do you '
                                     'want to work with (Part of speech)?')
                 ).grid(column=0, row=0)
@@ -3472,7 +3545,7 @@ class TaskDressing(object):
     def getprofile(self,event=None,**kwargs):
         log.info("Asking for profile...")
         # self.refreshattributechanges()
-        window=ui.Window(self.frame,title=_('Select Syllable Profile'))
+        window=ui.Window(self,title=_('Select Syllable Profile'))
         ps=self.slices.ps()
         if self.settings.profilesbysense[ps] is None: #likely never happen...
             ui.Label(window.frame,
@@ -3533,7 +3606,7 @@ class TaskDressing(object):
             setcmd(custom.get())
             window.on_quit()
         title=_('Make Custom Second Form Field for {}').format(ps)
-        window=ui.Window(self.frame,title=title)
+        window=ui.Window(self,title=title)
         #should never be othername
         l=ui.Label(window,
                 text=_("What field name do you want to use for {} words?"
@@ -3577,7 +3650,7 @@ class TaskDressing(object):
         else:
             optionslist = self.db.fieldnames[self.analang]
         title=_('Select Second Form Field for {}').format(ps)
-        window=ui.Window(self.frame,title=title)
+        window=ui.Window(self,title=title)
         if other:
             text=_("What database field name do you want to use for second "
                     "forms for {} words?".format(ps))
@@ -3615,7 +3688,7 @@ class TaskDressing(object):
         window.wait_window(window)
     def getmulticheckscope(self,event=None):
             log.info("Asking for multicheckscope...")
-            window=ui.Window(self.frame, title=_('Select Scope of Checks'))
+            window=ui.Window(self, title=_('Select Scope of Checks'))
             ui.Label(window.frame,
                     text=_('What kinds of checks to you want to run?')
                     ).grid(column=0, row=0)
@@ -3655,7 +3728,7 @@ class TaskDressing(object):
                 self.settings.secondformfield[self.settings.nominalps])
     def getbuttoncolumns(self,event=None):
         log.info("Asking for number of button columns...")
-        window=ui.Window(self.frame,title=_('Select Button Columns'))
+        window=ui.Window(self,title=_('Select Button Columns'))
         ui.Label(window.frame, text=_('How many columns do you want to use for '
                                         'the sort buttons?')
                                         ).grid(column=0, row=0)
@@ -3669,7 +3742,7 @@ class TaskDressing(object):
         window.wait_window(window)
     def getmaxpss(self,event=None):
         title=_('Select Maximum Number of Lexical Categories')
-        window=ui.Window(self.frame, title=title)
+        window=ui.Window(self, title=title)
         text=_('How many lexical categories to report (2 = Noun and Verb) ?')
         ui.Label(window.frame, text=text, column=0, row=0)
         r=[x for x in range(1,10)]
@@ -3682,7 +3755,7 @@ class TaskDressing(object):
         buttonFrame1.wait_window(window)
     def getmaxprofiles(self,event=None):
         title=_('Select Maximum Number of Syllable Profiles')
-        window=ui.Window(self.frame, title=title)
+        window=ui.Window(self, title=title)
         text=_('How many syllable profiles to report?')
         ui.Label(window.frame, text=text, column=0, row=0)
         r=[x for x in range(1,10)]
@@ -3698,7 +3771,7 @@ class TaskDressing(object):
         # fn=inspect.currentframe().f_code.co_name
         log.info("Getting the check name...")
         checks=self.status.checks(**kwargs)
-        window=ui.Window(self.frame,title='Select Check')
+        window=ui.Window(self,title='Select Check')
         if not checks:
             if self.params.cvt() == 'T':
                 btext=_("Define a New Tone Frame")
@@ -3836,15 +3909,15 @@ class TaskDressing(object):
         self.settings.refreshattributechanges()
         cvt=kwargs.get('cvt',self.params.cvt())
         if cvt == "V":
-            w=ui.Window(self.frame,title=_('Select Vowel'))
+            w=ui.Window(self,title=_('Select Vowel'))
             self._getgroup(window=w,**kwargs)
             # w.wait_window(window=w)
         elif cvt == "C":
-            w=ui.Window(self.frame,title=_('Select Consonant'))
+            w=ui.Window(self,title=_('Select Consonant'))
             self._getgroup(w,**kwargs)
             # self.frame.wait_window(window=w)
         elif cvt == "CV":
-            w=ui.Window(self.frame,title=_('Select Consonant/Vowel'))
+            w=ui.Window(self,title=_('Select Consonant/Vowel'))
             CV=''
             for kwargs['cvt'] in ['C','V']:
                 self._getgroup(**kwargs)
@@ -3852,7 +3925,7 @@ class TaskDressing(object):
             self.status.group(CV)
             # cvt = "CV"
         elif cvt == "T":
-            w=ui.Window(self.frame,title=_('Select Framed Tone Group'))
+            w=ui.Window(self,title=_('Select Framed Tone Group'))
             self._getgroup(window=w,**kwargs) #guess=guess,
             # windowT.wait_window(window=windowT) #?!?
         return w #so others can wait for this
@@ -3881,7 +3954,7 @@ class TaskDressing(object):
             {'code':1000,'name':"1000 - All examples in VERY large databases"}
                         ]
         title=_('Select Number of Examples per Group to Record')
-        window=ui.Window(self.frame, title=title)
+        window=ui.Window(self, title=title)
         text=_("The {0} tone report splits sorted data into "
                 "draft underlying tone melody groups. "
                 # ", with distinct values for each of your tone frames. This "
@@ -3944,7 +4017,7 @@ class TaskDressing(object):
             log.info("Runwindow already there! Resetting frame...")
             self.runwindow.resetframe() #I think I'll always want this here...
         else:
-            self.runwindow=ui.Window(self.frame,title=title)
+            self.runwindow=ui.Window(self,title=title)
         self.runwindow.title(title)
         self.runwindow.attributes('-fullscreen', True)
         self.runwindow.bind('<Escape>', releasefullscreen)
@@ -4531,6 +4604,7 @@ class TaskChooser(TaskDressing,ui.Window):
         log.info("You're done enough with: {}".format(self.doneenough))
     def restart(self,filename=None):
         log.info("Restarting from TaskChooser")
+        file.writefilename(self.file.name)
         if hasattr(self,'warning') and self.warning.winfo_exists():
             self.warning.destroy()
         # log.info("towrite: {}; writing: {}".format(self.towrite,self.writing))
@@ -4648,6 +4722,8 @@ class TaskChooser(TaskDressing,ui.Window):
         self.setmainwindow(self)
         self.splash = Splash(self)
         self.getfile()
+        if program['root'].exitFlag.istrue():
+            return
         self.splash.draw()
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
@@ -6956,7 +7032,7 @@ class Sound(object):
             self.pyaudio=sound.AudioInterface()
     def getsoundcardindex(self,event=None):
         log.info("Asking for input sound card...")
-        window=ui.Window(self.frame, title=_('Select Input Sound Card'))
+        window=ui.Window(self, title=_('Select Input Sound Card'))
         ui.Label(window.frame, text=_('What sound card do you '
                                     'want to record sound with with?')
                 ).grid(column=0, row=0)
@@ -6972,7 +7048,7 @@ class Sound(object):
                                     )
     def getsoundcardoutindex(self,event=None):
         log.info("Asking for output sound card...")
-        window=ui.Window(self.frame, title=_('Select Output Sound Card'))
+        window=ui.Window(self, title=_('Select Output Sound Card'))
         ui.Label(window.frame, text=_('What sound card do you '
                                     'want to play sound with?')
                 ).grid(column=0, row=0)
@@ -6988,7 +7064,7 @@ class Sound(object):
                                     )
     def getsoundformat(self,event=None):
         log.info("Asking for audio format...")
-        window=ui.Window(self.frame, title=_('Select Audio Format'))
+        window=ui.Window(self, title=_('Select Audio Format'))
         ui.Label(window.frame, text=_('What audio format do you '
                                     'want to work with?')
                 ).grid(column=0, row=0)
@@ -7005,7 +7081,7 @@ class Sound(object):
                                     )
     def getsoundhz(self,event=None):
         log.info("Asking for sampling frequency...")
-        window=ui.Window(self.frame, title=_('Select Sampling Frequency'))
+        window=ui.Window(self, title=_('Select Sampling Frequency'))
         ui.Label(window.frame, text=_('What sampling frequency you '
                                     'want to work with?')
                 ).grid(column=0, row=0)
@@ -7157,7 +7233,7 @@ class Sound(object):
     def mikecheck(self):
         #move this to Record, after confirming that can be safely done.
         self.pyaudiocheck()
-        self.soundsettingswindow=ui.Window(self.frame, exit=False,
+        self.soundsettingswindow=ui.Window(self, exit=False,
                                 title=_('Select Sound Card Settings'))
         self.soundsettingswindow.protocol("WM_DELETE_WINDOW", self.quittask)
         self.soundcheckrefresh()
@@ -8755,7 +8831,7 @@ class SortCV(Sort,Segments,TaskDressing,ui.Window):
         print(t)
         check.fix='V1'
         #window.destroy()
-        #window=ui.Window(self.frame,, title=t, entry=entry, backcmd=fixdiff)
+        #window=ui.Window(self,, title=t, entry=entry, backcmd=fixdiff)
         window.resetframe()
         t2=(_("It looks like the vowels aren't the same; let's fix that."))
         ui.Label(window.frame, text=t2, justify=ui.LEFT).grid(column=0,
@@ -8787,23 +8863,23 @@ class SortCV(Sort,Segments,TaskDressing,ui.Window):
         entry.problem=choice
         entry.addresult(check, result=entry.problem)
         window.destroy()
-        window=ui.Window(self.frame.parent, entry=entry, backcmd=notpickedback)
+        window=ui.Window(self.parent, entry=entry, backcmd=notpickedback)
         ui.Label(window, text="Let's fix those problems").grid(column=0, row=0)
         if entry.problem == "badCheck": #This isn't the right check for this entry --re.search("V1≠V2",difference):
             window.destroy()
             t=(_("fixVs:Different vowels! "))+entry.lexeme+': '+entry.guid
-            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
+            window=ui.Window(self, title=t, entry=entry, backcmd=Check.fixdiff)
             Check.fixV1(parent, window, check, entry, choice)
             window.wait_window(window=window)
-            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
+            window=ui.Window(self, title=t, entry=entry, backcmd=Check.fixdiff)
             Check.fixV2(parent, window, check, entry, choice) #I should make this wait until the first one finishes..…
             window.wait_window(window=window)
-            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
+            window=ui.Window(self, title=t, entry=entry, backcmd=Check.fixdiff)
             Check.fixVs(parent, window, check, entry, choice)
         elif entry.problem == "badSubcheck": #This isn't the right subcheck for this entry --re.search("V1=V2≠"+Vo,difference): #
             window.destroy()
             t=(_("fixVs:Same Vowel, but wrong one! "))+entry.lexeme+': '+entry.guid
-            window=ui.Window(self.frame, title=t, entry=entry, backcmd=Check.fixdiff)
+            window=ui.Window(self, title=t, entry=entry, backcmd=Check.fixdiff)
             Check.fixV12(parent, window, check, entry, choice)
         else:
             log.info("Huh? I don't understand what the user wants.")
@@ -9772,7 +9848,7 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
         if not profile:
             self.getprofile()
         if not profile or not ps:
-            window=ui.Window(self.frame)
+            window=ui.Window(self)
             text=_('Error: please set Ps-Profile first! ({}/{}/{})').format(
                                                      ps,check,profile)
             ui.Label(window,text=text).grid(column=0, row=i)
@@ -12627,6 +12703,7 @@ class ErrorNotice(ui.Window):
         super(ErrorNotice, self).__init__(parent,title=title)
         self.title = title
         self.text = text
+        log.info("Making ErrorNotice with frame {}".format(self.frame))
         l=ui.Label(self.frame, text=text, row=0, column=0, ipadx=25)
         l.wrap()
         log.error(text)

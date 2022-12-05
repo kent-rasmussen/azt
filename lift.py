@@ -262,6 +262,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         formnodes=self.nodes.findall(".//form")
         formlangs=set([i.get('lang') for i in formnodes])
         langs=self.analangs+self.glosslangs
+        langs=set([i for i in langs if i])
         log.info("looking to convert pylangs for {}".format(langs))
         for lang in langs:
             for flang in self.pylanglegacy(lang),self.pylanglegacy2(lang):
@@ -971,6 +972,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for lang in self.analangs:
             self.entrieswcitationdata[lang]=[
                     i for i in self.nodes.findall('entry')
+                    # This creates the node, if not there; textornone forces
+                    # a boolean interpretable response:
                     if textornone(Entry.formtextnodeofentry(i,'citation',lang))
                             ]
             self.nentrieswcitationdata[lang]=len(self.entrieswcitationdata[lang])
@@ -980,6 +983,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for lang in self.analangs:
             self.entrieswlexemedata[lang]=[
                 i for i in self.nodes.findall('entry')
+                # This creates the node, if not there; textornone forces
+                # a boolean interpretable response:
                 if textornone(Entry.formtextnodeofentry(i,'lexical-unit',lang))
                             ]
             self.nentrieswlexemedata[lang]=len(self.entrieswlexemedata[lang])
@@ -1054,8 +1059,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nsenseswglossdata={}
         for lang in self.glosslangs:
             senseswglossdata[lang]=[
-                    i for i in self.nodes.findall('entry/sense')
-                    if textornone(Entry.formtextnodeofentry(i,'gloss',lang))
+                    i for i in self.nodes.findall('entry')
+                    if textornone(Entry.formtextnodeofentry(i,'gloss',lang,
+                                                            nomake=True))
                             ]
             self.nsenseswglossdata[lang]=len(senseswglossdata[lang])
             if lang in self.analangs:
@@ -1070,8 +1076,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nsenseswdefndata={}
         for lang in self.glosslangs:
             senseswdefndata[lang]=[
-                    i for i in self.nodes.findall('entry/sense')
-                    if textornone(Entry.formtextnodeofentry(i,'definition',lang))
+                    i for i in self.nodes.findall('entry')
+                    if textornone(Entry.formtextnodeofentry(i,'definition',lang,
+                                                            nomake=True))
                             ]
             self.nsenseswdefndata[lang]=len(senseswdefndata[lang])
             if lang in self.analangs:
@@ -1185,7 +1192,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     # 'kw','tw',
                     'Pk','Pw' #tsh
                     ] #gnd
-        c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k','q']
+        c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k','q',
+                    'ç' #French
+                    ]
         c['fvd']={}
         c['fvd'][2]=['bh','vh','zh',
                     # 'zw' #gnd
@@ -1273,7 +1282,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 'Á', 'É', 'Í', 'Ó', 'Ú',
                 'â', 'ê', 'î', 'ô', 'û',
                 'Â', 'Ê', 'Î', 'Ô', 'Û',
-                'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
+                'ã', 'ẽ', 'ĩ', 'õ', 'ũ',
+                'œ','ë' #French
                 ]
         x['Vdg']=['ou','ei','ɨʉ','ai', #requested by bfj
                 'óu','éi','ɨ́ʉ','ái',
@@ -1294,7 +1304,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 ] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
         x['ː']=[":","ː"] # vowel length markers
         x['=']=['=','-'] #affix boundary markers
-        x['<']=['<','&lt;','&gt;','>','›','»','‹','«',''] #macron here?
+        x['<']=['<','&lt;','&gt;','>','›','»','‹','«','',
+                # ';','"','.' #pull these; they shouldn't appear in words
+                ] #macron here?
         # """We need to address long and idiosyncratic vowel orthographies,
         # especially for Cameroon. This should also include diacritics, together
         # or separately."""
@@ -1540,23 +1552,65 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     # if not lx.text: #don't overwrite info
                     #     lcft.text='' #don't clear
     def convertlxtolc(self,**kwargs):
-        # This is a move operation, removing lx when done
+        # This is a move operation, removing 'from' when done, unless 'to'
+        # is both there and different
+        kwargs['from']='lexical-unit'
+        kwargs['to']='citation'
+        self.convertxtoy(**kwargs)
+    def convertxtoy(self,lang=None,**kwargs):
         for e in self.getentrynode(**kwargs):
-            lxs=e.findall('lexical-unit') # I need form node, not text node
-            for lx in lxs:
+            log.info("Looking at entry {}".format(e.get('guid')))
+            if kwargs['from'] in ['definition','gloss']:
+                p=e.findall('sense')[0]
+            else: #parent of node to find may be sense or entry
+                p=e
+            froms=p.findall(kwargs['from']) # I need form node, not text node
+            log.info("Found entry parent node {}".format(p))
+            log.info("Found {} entry {} fields".format(len(froms),kwargs['from']))
+            # if e.get('guid') == '29febd49-9f74-4f6b-8256-21f81d6ba0f2':
+            #     prettyprint(e)
+            #     exit()
+            for f in froms:
                 log.info("Looking at entry w/guid: {}".format(e.get("guid")))
-                log.info("Found {}".format(Node.childrenwtext(lx)))
-                for lxf in Node.childrenwtext(lx):
-                    lxfl=lxf.get('lang')
-                    lxft=lxf.find('text')
+                if lang:
+                    if f.tag == 'gloss' and f.get('lang') != lang:
+                        continue
+                    elif f.tag == 'gloss':
+                        nodes=[f]
+                    else:
+                        nodes=[i for i in Node.childrenwtext(f)
+                                    if i.get('lang') == lang]
+                else:
+                    nodes=Node.childrenwtext(f)
+                log.info("Found {}".format(nodes))
+                for ff in nodes:
+                    ffl=ff.get('lang')
+                    fft=ff.find('text')
                     # log.info("Moving {} from lang {}".format(lxft.text,lxfl))
                     """This finds or creates, by lang:"""
-                    lc=Entry.formtextnodeofentry(e,'citation',lxfl) #This gives text node
-                    log.info("Moving lexeme ‘{}’ to citation (was {}) for lang {}"
-                            "".format(lxft.text,lc.text,lxfl))
-                    if not lc.text: #don't overwrite info
-                        lc.text=lxft.text
-                        lxft.text='' #clear only on move
+                    to=Entry.formtextnodeofentry(e,kwargs['to'],ffl) #This gives text node
+                    log.info("Moving {} ‘{}’ to {} (was {}) for lang {}"
+                            "".format(kwargs['from'],fft.text,
+                                        kwargs['to'],to.text,ffl))
+                    if not to.text: #don't overwrite info
+                        to.text=fft.text
+                    if to.text == fft.text and not kwargs.get('keep'):
+                        fft.text='' #clear if redundant before or after move
+    def convertdefntogloss(self,**kwargs):
+        # This is a move operation, removing 'from' when done, unless 'to'
+        # is both there and different
+        kwargs['from']='definition'
+        kwargs['to']='gloss'
+        self.convertxtoy(**kwargs)
+    def convertglosstocitation(self,lang,**kwargs):
+        # This is a move operation, removing 'from' when done, unless 'to'
+        # is both there and different
+        #This should only ever happen for one lang at a time, to make a demo db
+        kwargs['from']='gloss'
+        kwargs['to']='citation'
+        kwargs['lang']=lang
+        self.convertxtoy(**kwargs)
+
 class EmptyTextNodePlaceholder(object):
     """Just be able to return self.text when asked."""
     def __init__(self):
@@ -1585,10 +1639,14 @@ class Node(ET.Element):
         if gimmenode:
             return n
     def childrenwtext(self):
-        return [i for i in self
-                    if i.findall('text') and
-                    [j for j in i.findall('text') if j.text]
-                ]
+        if self.tag == 'gloss':
+            if i.findall('text'):
+                return [self]
+        else:
+            return [i for i in self
+                        if i.findall('text') and
+                        [j for j in i.findall('text') if j.text]
+                    ]
     def __init__(self, parent, tag, attrib={}, **kwargs):
         super(Node, self).__init__(tag, attrib, **kwargs)
         parent.append(self)
@@ -1602,24 +1660,43 @@ class Entry(object): # what does "object do here?"
     """
     #import lift.put as put #class put:
     #import get #class put:
-    def formtextnodeofentry(self,tag,lang):
+    def formtextnodeofentry(self,tag,lang,**kwargs):
         # this gives the form/text node, from which one can easily extract .text
         # hence, the limiting by lang
-        nodes=self.findall(tag)
+        if self.tag != 'entry':
+            import inspect
+            log.info(_("This method needs to operate on entries; fix caller {}!"
+                    ).format(
+                    inspect.getouterframes(inspect.currentframe())[2].function))
+            return
+        if tag in ['definition','gloss']:
+            p=self.findall('sense')[0] #parent of node to create
+        else:
+            p=self
+        nodes=p.findall(tag) # This should typically be a single item list
         for node in nodes:
-            if tag == 'gloss':
+            if tag == 'gloss': # But not in this case
                 formtexts=node.findall('.[@lang="{}"]/text'.format(lang))
             else:
                 formtexts=node.findall('form[@lang="{}"]/text'.format(lang))
             if formtexts:
                 return formtexts[0]
-        if nodes:
+        # If no matching form/lang combo found, check for a node to make new one
+        # This doesn't apply to gloss, as they are one per lang, without form
+        # nodes. If gloss is found w/matching lang, we already returned above
+        if kwargs.get('nomake'):
+            return
+        if nodes and tag != 'gloss':
             return Node.makeformnode(nodes[0],lang,gimmetext=True)
-        else:
+        else: #build from scratch (incl if gloss found, but wo matching lang).
             tag,attrib=rx.splitxpath(tag)
-            tagnode=Node(self,tag,attrib)
+            tagnode=Node(p,tag,attrib)
             # prettyprint(tagnode)
-            return tagnode.makeformnode(lang,gimmetext=True)
+            if tag == 'gloss': #no form node here
+                tagnode.set('lang',lang)
+                return tagnode.maketextnode(gimmetext=True)
+            else:
+                return tagnode.makeformnode(lang,gimmetext=True)
     def __init__(self, db, guid=None, *args, **kwargs):
         if guid is None:
             log.info("Sorry, I was kidding about that; I really do need the entry's guid.")
@@ -2931,7 +3008,10 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/bse/SIL CAWL Wushi.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
     filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/cky/Mushere Exported AZT file.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/cky/Mushere Exported AZT file.lift"
+    # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift_backupBeforeLx2LcConversion"
+    filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift"
+    # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL_test.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/ETON_propre/Eton.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift"
@@ -2941,6 +3021,12 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
     lift=Lift(filename)
+    # lift.convertlxtolc()
+    # lift.convertdefntogloss()
+    # lift.convertglosstocitation('ha',keep=True)
+    # lift.write('userlogs/testwrite.lift')
+    # lift.write('userlogs/SILCAWL_test.lift')
+    quit()
     # prettyprint(lift.nodes)
     senseids=[
             # "begin_7c6fe6a9-9918-48a8-bc3a-e88e61efa8fa",
