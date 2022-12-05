@@ -382,7 +382,11 @@ class FileChooser(object):
             text=_("{} doesn't look like a well formed lift file; please "
                     "try again.").format(self.name)
             log.info("'lift_url.py' removed.")
-            ErrorNotice(text,title='LIFT parse error',wait=True)
+            if program['root'].exitFlag.istrue():
+                log.info(text)
+                return
+            else:
+                ErrorNotice(text,title='LIFT parse error',wait=True)
             file.writefilename() #just clear the default
             raise #Then force a quit and retry
         except Exception as e:
@@ -432,6 +436,8 @@ class FileChooser(object):
         super(FileChooser, self).__init__()
         self.getfilename()
         self.loaddatabase()
+        if program['root'].exitFlag.istrue():
+            return
         self.dailybackup()
         self.senseidtriage() #sets: self.senseidswanyps self.senseidswops self.senseidsinvalid self.senseidsvalid
         self.getwritingsystemsinfo()
