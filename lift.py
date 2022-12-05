@@ -1657,10 +1657,20 @@ class Entry(object): # what does "object do here?"
     """
     #import lift.put as put #class put:
     #import get #class put:
-    def formtextnodeofentry(self,tag,lang):
+    def formtextnodeofentry(self,tag,lang,**kwargs):
         # this gives the form/text node, from which one can easily extract .text
         # hence, the limiting by lang
-        nodes=self.findall(tag)
+        if self.tag != 'entry':
+            import inspect
+            log.info(_("This method needs to operate on entries; fix caller {}!"
+                    ).format(
+                    inspect.getouterframes(inspect.currentframe())[2].function))
+            return
+        if tag in ['definition','gloss']:
+            p=self.findall('sense')[0] #parent of node to create
+        else:
+            p=self
+        nodes=p.findall(tag) # This should typically be a single item list
         for node in nodes:
             if tag == 'gloss': # But not in this case
                 formtexts=node.findall('.[@lang="{}"]/text'.format(lang))
@@ -1668,16 +1678,22 @@ class Entry(object): # what does "object do here?"
                 formtexts=node.findall('form[@lang="{}"]/text'.format(lang))
             if formtexts:
                 return formtexts[0]
-        if nodes:
         # If no matching form/lang combo found, check for a node to make new one
         # This doesn't apply to gloss, as they are one per lang, without form
         # nodes. If gloss is found w/matching lang, we already returned above
+        if kwargs.get('nomake'):
+            return
+        if nodes and tag != 'gloss':
             return Node.makeformnode(nodes[0],lang,gimmetext=True)
         else: #build from scratch (incl if gloss found, but wo matching lang).
             tag,attrib=rx.splitxpath(tag)
-            tagnode=Node(self,tag,attrib)
+            tagnode=Node(p,tag,attrib)
             # prettyprint(tagnode)
-            return tagnode.makeformnode(lang,gimmetext=True)
+            if tag == 'gloss': #no form node here
+                tagnode.set('lang',lang)
+                return tagnode.maketextnode(gimmetext=True)
+            else:
+                return tagnode.makeformnode(lang,gimmetext=True)
     def __init__(self, db, guid=None, *args, **kwargs):
         if guid is None:
             log.info("Sorry, I was kidding about that; I really do need the entry's guid.")
