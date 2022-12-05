@@ -375,6 +375,8 @@ class FileChooser(object):
         if not self.name or not file.exists(self.name):
             log.error("Didn't select a lexical database to check; exiting.")
             exit()
+        if self.name and 'Demo' in self.name:
+            file.writefilename() #Don't just keep loading this; select next time
     def loaddatabase(self):
         try:
             self.db=lift.Lift(str(self.name))
