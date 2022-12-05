@@ -971,6 +971,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for lang in self.analangs:
             self.entrieswcitationdata[lang]=[
                     i for i in self.nodes.findall('entry')
+                    # This creates the node, if not there; textornone forces
+                    # a boolean interpretable response:
                     if textornone(Entry.formtextnodeofentry(i,'citation',lang))
                             ]
             self.nentrieswcitationdata[lang]=len(self.entrieswcitationdata[lang])
@@ -980,6 +982,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for lang in self.analangs:
             self.entrieswlexemedata[lang]=[
                 i for i in self.nodes.findall('entry')
+                # This creates the node, if not there; textornone forces
+                # a boolean interpretable response:
                 if textornone(Entry.formtextnodeofentry(i,'lexical-unit',lang))
                             ]
             self.nentrieswlexemedata[lang]=len(self.entrieswlexemedata[lang])
@@ -1540,7 +1544,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     # if not lx.text: #don't overwrite info
                     #     lcft.text='' #don't clear
     def convertlxtolc(self,**kwargs):
-        # This is a move operation, removing lx when done
+        # This is a move operation, removing 'from' when done, unless 'to'
+        # is both there and different
         for e in self.getentrynode(**kwargs):
             lxs=e.findall('lexical-unit') # I need form node, not text node
             for lx in lxs:
@@ -1607,15 +1612,18 @@ class Entry(object): # what does "object do here?"
         # hence, the limiting by lang
         nodes=self.findall(tag)
         for node in nodes:
-            if tag == 'gloss':
+            if tag == 'gloss': # But not in this case
                 formtexts=node.findall('.[@lang="{}"]/text'.format(lang))
             else:
                 formtexts=node.findall('form[@lang="{}"]/text'.format(lang))
             if formtexts:
                 return formtexts[0]
         if nodes:
+        # If no matching form/lang combo found, check for a node to make new one
+        # This doesn't apply to gloss, as they are one per lang, without form
+        # nodes. If gloss is found w/matching lang, we already returned above
             return Node.makeformnode(nodes[0],lang,gimmetext=True)
-        else:
+        else: #build from scratch (incl if gloss found, but wo matching lang).
             tag,attrib=rx.splitxpath(tag)
             tagnode=Node(self,tag,attrib)
             # prettyprint(tagnode)
