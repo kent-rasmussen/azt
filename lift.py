@@ -1189,7 +1189,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     # 'kw','tw',
                     'Pk','Pw' #tsh
                     ] #gnd
-        c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k','q']
+        c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k','q',
+                    'ç' #French
+                    ]
         c['fvd']={}
         c['fvd'][2]=['bh','vh','zh',
                     # 'zw' #gnd
@@ -1277,7 +1279,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 'Á', 'É', 'Í', 'Ó', 'Ú',
                 'â', 'ê', 'î', 'ô', 'û',
                 'Â', 'Ê', 'Î', 'Ô', 'Û',
-                'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
+                'ã', 'ẽ', 'ĩ', 'õ', 'ũ',
+                'œ','ë' #French
                 ]
         x['Vdg']=['ou','ei','ɨʉ','ai', #requested by bfj
                 'óu','éi','ɨ́ʉ','ái',
@@ -1298,7 +1301,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 ] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
         x['ː']=[":","ː"] # vowel length markers
         x['=']=['=','-'] #affix boundary markers
-        x['<']=['<','&lt;','&gt;','>','›','»','‹','«',''] #macron here?
+        x['<']=['<','&lt;','&gt;','>','›','»','‹','«','',
+                # ';','"','.' #pull these; they shouldn't appear in words
+                ] #macron here?
         # """We need to address long and idiosyncratic vowel orthographies,
         # especially for Cameroon. This should also include diacritics, together
         # or separately."""
