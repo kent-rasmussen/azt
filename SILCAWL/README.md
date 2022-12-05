@@ -1,4 +1,4 @@
-The SILCAWL.lift file in this folder is from https://github.com/sillsdev/wesay/blob/develop/common/wordpacks/SILCAWL/, retrieved on September 20, 2021. It was accompanied by the following license:
+The SILCAWL.lift file in this folder was retrieved from https://github.com/sillsdev/wesay/blob/develop/common/wordpacks/SILCAWL/, on September 20, 2021. It was accompanied by the following license:
 
 The MIT License (MIT)
 
@@ -9,3 +9,10 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# Modifications
+
+In keeping with this license, I have made modifications:
+- trivial whitespace changes
+- I copied definitions to empty gloss fields
+- I removed definitions where they were redundant with the corresponding gloss.
