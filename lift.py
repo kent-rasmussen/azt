@@ -262,8 +262,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         formnodes=self.nodes.findall(".//form")
         formlangs=set([i.get('lang') for i in formnodes])
         langs=self.analangs+self.glosslangs
+        langs=set([i for i in langs if i])
         log.info("looking to convert pylangs for {}".format(langs))
-        for lang in set([i for i in langs if i]):
+        for lang in langs:
             for flang in self.pylanglegacy(lang),self.pylanglegacy2(lang):
                 if flang in formlangs:
                     log.info("Found {}; converting to {}".format(flang,
