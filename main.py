@@ -370,11 +370,14 @@ class FileChooser(object):
     def getfilename(self):
         # This method pulls filename(s) from settings, else self.askwhichlift
         self.name=file.getfilename() #returns filename if there, else filenames
-        if not self.name or type(self.name) is list:
+        if type(self.name) is not list and not file.exists(self.name):
+                self.name=None #don't return a file that isn't there
+        if not self.name or type(self.name) is list: #nothing or a selection
             self.askwhichlift(self.name)
-        if not self.name or not file.exists(self.name):
-            log.error("Didn't select a lexical database to check; exiting.")
-            exit()
+        if (not self.name or not file.exists(self.name)) and (
+                            not program['root'].exitFlag.istrue()):
+            self.getfilename() #if the above doesn't result in a file, do again.
+            return
         if self.name and 'Demo' in self.name:
             file.writefilename() #Don't just keep loading this; select next time
     def loaddatabase(self):
