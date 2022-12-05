@@ -2735,15 +2735,18 @@ class Settings(object):
     def setsoundcardoutindex(self,choice,window):
         self.soundsettings.audio_card_out=choice
         window.destroy()
-    def langnames(self):
+    def langnames(self,langs=None):
         """This is for getting the prose name for a language from a code."""
         """It should ultimately use a xyz.ldml file, produced (at least)
         by WeSay, but for now is just a dict."""
+        log.info("Setting up language names")
         #ET.register_namespace("", 'palaso')
         ns = {'palaso': 'urn://palaso.org/ldmlExtensions/v1'}
         node=None
         self.languagenames={}
-        for xyz in [self.analang]+self.db.analangs+self.db.glosslangs:
+        if not langs:
+            langs=[self.analang]+self.db.analangs+self.db.glosslangs
+        for xyz in langs:
             # log.info(' '.join('Looking for language name for',xyz))
             """This provides an ldml node"""
             #log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
