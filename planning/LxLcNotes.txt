@@ -1,3 +1,4 @@
+This should be resolved through specification of tone frames, which are unique to a lexical category.
 ◻ *Lx v lc thoughts* - I need to solve this question now, because it impacts the verb frames. In fact, any time the lc contains more segmental content than the lx (which is not then obligatory in all frames), that information should not be included in the data to sort, export, etc.
 So the frames really do need to pull lx information, and I need to be smart enough to know when more complete lc information is necessary.
 Isolation tone frames should pull from lc, others should pull from lx? Maybe except for imp and pl?
