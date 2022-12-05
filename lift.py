@@ -3010,7 +3010,7 @@ if __name__ == '__main__':
     filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/cky/Mushere Exported AZT file.lift"
     # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift_backupBeforeLx2LcConversion"
-    # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift"
+    filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift"
     # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL_test.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/ETON_propre/Eton.lift"
