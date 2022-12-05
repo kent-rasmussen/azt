@@ -110,6 +110,9 @@ class FileChooser(object):
             elif choice == 'Clone':
                 log.info("trying clone from USB")
                 self.name=self.clonefromUSB()
+            elif choice == 'Demo':
+                log.info("Making a CAWL demo database")
+                self.name=self.makeCAWLdemo()
             else:
                 self.name=choice
             log.info("self.name: {}".format(self.name))
@@ -129,6 +132,8 @@ class FileChooser(object):
         else:
             self.other=_("Select a database on my computer") #use later
         optionlist+=[('Other',self.other)]
+        optionlist+=[('Demo',_("Make a demo database to try out {}"
+                                ).format(program['name']))]
         buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                 optionlist=optionlist,
                                 command=setfilename,
@@ -253,15 +258,67 @@ class FileChooser(object):
             for f in n.findall('form'):
                 n.remove(f)
         log.info("Stripped stock LIFT file.")
+    def submitdemolang(self,choice,window): #event=None):
+        log.info("picked {}, from {}".format(choice,self.cawldb.glosslangs))
+        if choice in self.cawldb.glosslangs:
+            self.demolang=choice
+            window.destroy()
+    def makeCAWLdemo(self):
+        title=_("Make a Demo LIFT Database")
+        w=ui.Window(program['root'],title=title)
+        w.wait(_("Loading Demo Template"))
+        w.mainwindow=False
+        t=ui.Label(w.frame, text=title, row=0, column=0)
+        inst=_("Which language would you like to study, in this demonstration "
+                "of what {} can do?").format(program['name'])
+        t=ui.Label(w.frame, text=inst, row=1, column=0, columnspan=2)
+        self.loadCAWL()
+        Settings.langnames(self,self.cawldb.glosslangs)
+        opts=[(i,self.languagenames[i]) for i in self.cawldb.glosslangs]
+        log.info("Options: {}".format(opts))
+        s=ui.ScrollingButtonFrame(w.frame,
+                                    optionlist=opts,
+                                    command=self.submitdemolang,
+                                    window=w, sticky='',
+                                    column=0, row=2)
+        cbuttontext=_("Keep this as gloss language")
+        keep=ui.BooleanVar()
+        cb=ui.CheckButton(w.frame, text = cbuttontext,
+                            variable = keep,
+                            onvalue = True, offvalue = False,
+                            column=1, row=2)
+        w.waitdone()
+        w.wait_window(w)
+        log.info("Done waiting")
+        self.stripcawldb()
+        ww=ui.Wait(program['root'],_("Making Demo Database \n(will restart)"))
+        self.cawldb.convertglosstocitation(self.demolang,keep=keep.get())
+        homedir=file.gethome() #don't ask where to put it
+        log.info(homedir)
+        newdirname=file.getfile(homedir).joinpath('Demo_'+self.demolang)
+        log.info(newdirname)
+        file.makedir(newdirname)
+        newfile=newdirname.joinpath('Demo_'+self.demolang+'.lift')
+        log.info(newfile)
+        self.copytonewfile(newfile)
+        log.info("copytonewfile done")
+        ww.close()
+        self.newfilelocation(newfile)
+        log.info("newfilelocation done")
+        return str(newfile)
     def copytonewfile(self,newfile):
-        log.info("Trying to write empty LIFT file to {}".format(newfile))
+        if 'Demo' in newfile:
+            type="demo"
+        else:
+            type="empty"
+        log.info("Trying to write {} LIFT file to {}".format(type,newfile))
         try:
             self.cawldb.write(str(newfile))
         except Exception as e:
             log.error("Exception: {}".format(e))
-        log.info("Tried to write empty LIFT file to {}".format(newfile))
+        log.info("Tried to write {} LIFT file to {}".format(type,newfile))
         if file.exists(newfile):
-            log.info("Wrote empty LIFT file to {}".format(newfile))
+            log.info("Wrote {} LIFT file to {}".format(type,newfile))
     def startnewfile(self):
         def done(event=None):
             window.destroy()
