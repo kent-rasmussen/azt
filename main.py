@@ -249,10 +249,10 @@ class FileChooser(object):
         return self.cawldb
     def stripcawldb(self):
         for n in (self.cawldb.nodes.findall('entry/lexical-unit')+
-        self.cawldb.nodes.findall('entry/citation')):
-        for f in n.findall('form'):
-            n.remove(f)
-            log.info("Stripped stock LIFT file.")
+                    self.cawldb.nodes.findall('entry/citation')):
+            for f in n.findall('form'):
+                n.remove(f)
+        log.info("Stripped stock LIFT file.")
     def copytonewfile(self,newfile):
         log.info("Trying to write empty LIFT file to {}".format(newfile))
         try:
