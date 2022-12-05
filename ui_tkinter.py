@@ -538,6 +538,12 @@ class Exitable(object):
         sys.exit()
     def cleanup(self):
         pass
+    def exittoroot(self):
+        if hasattr(self,'parent') and not isinstance(self.parent,Root):
+            self.parent.exittoroot()
+            return
+        elif hasattr(self,'parent'):
+            self.parent.exitFlag.true()
     def on_quit(self):
         """Do this when a window closes, so any window functions can know
         to just stop, rather than trying to build graphic components and
@@ -548,6 +554,7 @@ class Exitable(object):
             print("Setting window exit flag True!")
             self.exitFlag.true()
         if self.mainwindow: #exit afterwards if main window
+            self.exittoroot()
             self.killall()
         else:
             if hasattr(self,'parent') and not isinstance(self.parent,Root):
