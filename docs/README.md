@@ -2,6 +2,7 @@
 <a href="fr/README.md">Français</a>
 ## Simplest install on [MS Windows](SIMPLEINSTALL.md) or [Linux](SIMPLEINSTALL_LINUX.md)
 ## If you want consultant help, see also [this page](HELP_PREREQUISITES.md)
+## You can now [create a Demo database](DEMOS.md) to try out [A→Z+T].
 
 # A→Z+T ![CV](../images/AZT%20stacks6_icon.png "AZT")
 
@@ -28,6 +29,9 @@ To run: `python main.py` (or `python3 main.py`, as appropriate for the (3+) vers
 See [INSTALL](INSTALL.md) for more help installing; see [USAGE](USAGE.md) for how to use this tool.
 
 See [CHANGELOG](CHANGELOG.md) to see features by version, and [ROADMAP](ROADMAP.md) to see what I'm working on next.
+
+## Updates and the test version
+You can keep [A→Z+T] [up to date with the user interface](UPDATING.md), as well as try out a [testing version](TESTING.md).
 
 ## Bugs
 See [BUGS](BUGS.md) for information to send me if you have problems; see [KNOWNISSUES](KNOWNISSUES.md) with recommended work-arounds to a couple known issues.
