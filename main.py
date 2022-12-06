@@ -14098,7 +14098,8 @@ def updateazt(**kwargs): #should only be parent, for errorroot
             t=str(t)+_('\n(Check your internet connection and try again)')
             button=(_("Try Again"),tryagain)
         else:
-            t=str(t)+_('\n(Restart {} to use this update)').format(
+            t='\n'.join(t.split('\n')[:10]
+                        )+_('\n(Restart {} to use this update)').format(
                                                             program['name'])
             button=(_("Restart Now"),sysrestart) #This should be in task/chooser
         if set(['parent']).issuperset(set(kwargs.keys())):
