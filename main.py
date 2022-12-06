@@ -12696,6 +12696,9 @@ class ErrorNotice(ui.Window):
     def __init__(self, text, **kwargs):
         # parent=None, title="Error!", wait=False, button=False,):
         # log.info("Making ErrorNotice")
+        if program['root'].exitFlag.istrue():
+            log.error(text)
+            return
         parent=kwargs.get('parent',program['root'])
         title=kwargs.get('title',_("Error!"))
         wait=kwargs.get('wait',False)
