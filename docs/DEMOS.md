@@ -1,13 +1,13 @@
 # Demonstrating [A→Z+T] (or just trying it out)
 
-You may want to try out [A→Z+T] with real language data without having a database yourself, that you are willing to make changes to. This may help you better understand [A→Z+T] yourself, or show it to others.
+You may want to try out [A→Z+T] with real language data, but not on your database. This may help you better understand [A→Z+T] yourself, or show it to others.
 
 ## Create a Demo Database
 To **create** a demo database,
-- Open the `Select LIFT Database` dialog, either by
-  - Opening [A→Z+T] without a LIFT file (e.g., for the first time), or
+- Open the `Select LIFT Database` dialog, either
+  - Open [A→Z+T] without a LIFT file (e.g., for the first time), or
   - Open the dialog from another project:
-    - make sure the [menus are shown](MENUS.md)
+    - Make sure the [menus are shown](MENUS.md)
     - Then select `Advanced`, then `Change to another Database (Restart)`.
 - In the `Select LIFT Database` dialog, select `Make a demo database to try out [A→Z+T]`.
 - Select a language to analyze (from the glossing languages in the stock [CAWL])
