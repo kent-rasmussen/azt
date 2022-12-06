@@ -12706,10 +12706,8 @@ class ErrorNotice(ui.Window):
         super(ErrorNotice, self).__init__(parent,title=title)
         self.title = title
         self.text = text
-        log.info("Making ErrorNotice with frame {}".format(self.frame))
         l=ui.Label(self.frame, text=text, row=0, column=0, ipadx=25)
         l.wrap()
-        log.error(text)
         if button and type(button) is tuple:
             b=ui.Button(self.frame, text=button[0],
                     cmd=None,
