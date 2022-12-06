@@ -14091,10 +14091,10 @@ def updateazt(**kwargs): #should only be parent, for errorroot
             button=False
         elif type(t) is str and ("No route to host" in t or
                                     "unable to access" in t or
-                                    "Could not resolve host:" in t) or (
+                                    "Could not resolve host" in t) or (
             type(t) is not str and (b"No route to host" in t or
                                         b"unable to access" in t or
-                                        b"Could not resolve host:" in t)):
+                                        b"Could not resolve host" in t)):
             t=str(t)+_('\n(Check your internet connection and try again)')
             button=(_("Try Again"),tryagain)
         else:
