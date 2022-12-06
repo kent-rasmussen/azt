@@ -165,7 +165,7 @@ def getfilenames():
         log.debug("getfilename lift_url didn't import")
     if hasattr(lift_url,'filenames') and lift_url.filenames:
         log.info("Returning filenames: {}".format(lift_url.filenames))
-        return lift_url.filenames
+        return [i for i in lift_url.filenames if exists(i)]
 def getfilename():
     """This returns a single filename, if there, else a list if there, else
     it asks for user input."""
