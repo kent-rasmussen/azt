@@ -4043,6 +4043,7 @@ class TaskDressing(object):
             self.taskchooser.restart()
     def trytestazt(self,event=None):
         #This only goes to the test version at the top of this file
+        self.updateazt()
         r=program['repo'].testversion()
         log.info("trytestazt: {}".format(r))
         if r:# == "Your branch is up to date with 'origin/{}'.".format(
