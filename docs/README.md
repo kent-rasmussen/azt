@@ -8,7 +8,7 @@
 
 [A→Z+T] is designed to accelerate community-based language development, supplemented by (not as a replacement for) formal linguistic training. It does this by systematically checking a dictionary (and thus a writing system), with respect to consonants, vowels, and tone.
 
-You can collect a wordlist from scratch in [A→Z+T], if you don't already have one created elsewhere, but parsing roots is still in development, so for now you should do that elsewhere (e.g., [FLEx] or [WeSay]) if your citation forms have obligatory affixation.
+You can collect a wordlist from scratch in [A→Z+T], if you don't already have one created elsewhere. But parsing roots is still in development, so for now you should do that elsewhere (e.g., [FLEx] or [WeSay]) if your citation forms have obligatory affixation.
 
 [A→Z+T] work results in a lexical database which is checked, backed up with sound files, and stored as [LIFT], an open XML format designed for sharing lexical data. So this database should be forward compatible with other tools that can read [LIFT], e.g., [WeSay] and [FLEx].
 
