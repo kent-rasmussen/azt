@@ -5,7 +5,7 @@ You may want to try out [A→Z+T] with real language data without having a datab
 ## Create a Demo Database
 To **create** a demo database,
 - Open the `Select LIFT Database` dialog, either by
-  - Opening [A→Z+T] for the first time, or
+  - Opening [A→Z+T] without a LIFT file (e.g., for the first time), or
   - Open the dialog from another project:
     - make sure the [menus are shown](MENUS.md)
     - Then select `Advanced`, then `Change to another Database (Restart)`.
