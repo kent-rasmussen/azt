@@ -701,7 +701,7 @@ class Menus(ui.Menu):
         self.cascade(self,_("Help"),'helpmenu')
         helpitems=[(_("About"), self.parent.helpabout)]
         if program['git']:
-            helpitems+=[(_("Update A→Z+T"), updateazt)]
+            helpitems+=[(_("Update A→Z+T (Internet)"), updateazt)]
             helpitems+=[(_("Update A→Z+T (USB)"), self.parent.updateaztlocal)]
             if program['repo'].branchname() == 'main':
                 helpitems+=[(_("Try A→Z+T test version"),
@@ -11454,7 +11454,7 @@ class Splash(ui.Window):
             help=ui.Menu(self)
             menu.add_cascade(label=_("Help"),menu=help)
             help.add_command(
-                            label=_("Update A→Z+T"),
+                            label=_("Update A→Z+T (Internet)"),
                             command=lambda x=self:updateazt(parent=x)
                             )
             help.add_command(
