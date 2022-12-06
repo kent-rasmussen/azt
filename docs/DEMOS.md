@@ -15,8 +15,9 @@ To **create** a demo database,
 - [A→Z+T] will automatically:
   - Make a copy of the stock CAWL database
   - Put stock gloss information for that language in [citation form fields](CITATIONFORMS.md)
-  - write that file to a new `Demo_<lang>` directory your home folder
-  - restart with that file.
+  - Remove that gloss information from gloss fields (or not, based on your selection)
+  - Write that file to a new `Demo_<lang>` directory your home folder
+  - Restart with that file.
 
 ## Use a Demo Database
 To **use** a demo database:
