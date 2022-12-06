@@ -6,7 +6,7 @@ To switch between main and testing versions,
 - First, make sure the [menus are shown](MENUS.md)
 - Then select `Help`, then `Try [A→Z+T] test version` or `Revert to [A→Z+T] main version`, as appropriate.
 - [A→Z+T] will automatically:
-  - [update] [A→Z+T](UPDATING.md)
+  - [update][A→Z+T] [A→Z+T]
   - switch versions
   - restart
 
