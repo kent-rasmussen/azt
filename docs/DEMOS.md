@@ -20,7 +20,7 @@ To **create** a demo database,
 
 ## Use a Demo Database
 To **use** a demo database:
-- the first time: it should appear automatically
+- On creation (above): it should appear automatically
 - Afterwards: select it from the list of databases on your computer, in the `Select LIFT Database` dialog
 
 [A→Z+T]:  https://github.com/kent-rasmussen/azt
