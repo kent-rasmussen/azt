@@ -18,9 +18,18 @@ pause
 If exist python-3.6.8-amd64.exe (ECHO python-3.6.8-amd64.exe is there!) ELSE (powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.python.org/ftp/python/3.6.8/python-3.6.8-amd64.exe' -OutFile 'python-3.6.8-amd64.exe'")
 
 ECHO Installing Python 3.6.8
+ECHO
+ECHO ATTENTION!!
+ECHO            vvvvvvvvvvvvvvvvvvv
 ECHO Be sure to check "add to PATH" in the dialog BEFORE you click "Install Now"
-ECHO You should be fine with all default options
+ECHO            ^^^^^^^^^^^^^^^^^^^
+ECHO ALSO:
+ECHO        vvvvvvvvvvvvvvvvvv                      vvvvvvvvvvvvvvvvvvvvvvvv
 ECHO At the end of the install, be sure to click on "remove path limitation"
+ECHO        ^^^^^^^^^^^^^^^^^^                      ^^^^^^^^^^^^^^^^^^^^^^^^
+ECHO
+ECHO Otherwise, you should be fine with all default options
+ECHO
 start python-3.6.8-amd64.exe
 
 ECHO Downloading Git 2.33.0.2 (50101024; 48M)...
