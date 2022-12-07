@@ -4,6 +4,7 @@ ECHO
 ECHO
 ECHO
 ECHO A→Z+T Install batch file
+ECHO This script installs stuff —it must be run **As Administrator**!
 ECHO Will download and install Python 3.6.8
 ECHO Will download and install Git 2.33.0.2
 ECHO Will clone/download A→Z+T source to azt directory on your desktop
