@@ -90,10 +90,8 @@ def gettransformsdir():
         # os.mkdir(dir)
     return dir
 def exists(file):
-    if os.path.exists(file):
+    if file and os.path.exists(file):
         return True
-    else:
-        return False
 def remove(file):
     if exists(file):
         os.remove(file)
