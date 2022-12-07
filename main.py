@@ -12699,11 +12699,24 @@ class ErrorNotice(ui.Window):
         ui.Window.withdraw(self)
     def __init__(self, text, **kwargs):
         # parent=None, title="Error!", wait=False, button=False,):
-        # log.info("Making ErrorNotice")
-        if program['root'].exitFlag.istrue():
-            log.error(text)
-            return
-        parent=kwargs.get('parent',program['root'])
+        log.info("Making ErrorNotice")
+        # log.info("parent: {}".format(kwargs['parent']))
+        # log.info("program: {}".format(program))
+        # log.info("program['root']: {}".format(program['root']))
+        # log.info("program['root'].exitFlag: {}".format(program['root'].exitFlag))
+        # log.info("program['root'].exitFlag.istrue(): {}".format(program['root'].exitFlag.istrue()))
+        try:
+            if (not ('root' not in program or
+                    not program['root'].winfo_exists() or (
+                    hasattr(program['root'],'exitFlag') and
+                    program['root'].exitFlag.istrue())) and
+                'parent' not in kwargs):
+                log.error(text)
+                return
+        except Exception as e:
+            log.info(e)
+        parent=kwargs.get('parent',program.get('root',ui.Root))
+        # log.info("parent: {}".format(kwargs['parent']))
         title=kwargs.get('title',_("Error!"))
         wait=kwargs.get('wait',False)
         button=kwargs.get('button',False)
@@ -14075,7 +14088,7 @@ def sysrestart(event=None):
     sys.exit()
 def updateazt(**kwargs): #should only be parent, for errorroot
     def tryagain(event=None):
-        updateazt()
+        updateazt(**kwargs)
     if 'git' in program:
         gitargs=[str(program['git']), "-C", str(program['aztdir']), "pull"]
         try:
@@ -14106,21 +14119,13 @@ def updateazt(**kwargs): #should only be parent, for errorroot
                         )+_('\n(Restart {} to use this update)').format(
                                                             program['name'])
             button=(_("Restart Now"),sysrestart) #This should be in task/chooser
-        if set(['parent']).issuperset(set(kwargs.keys())):
-            # log.info("Making Error Window")
-            # log.info(t)
-            # log.info("parent: {}".format(kwargs['parent']))
-            # log.info(**kwargs)
+        try:
             try:
                 title=_("Update (Git) output")
             except:
                 title="Update (Git) output"
-            e=ErrorNotice(t,title=title,button=button,**kwargs)
-            # except Exception as e:
-            #     log.info(e)
-            # log.info(e.__dir__)
-            e.wait_window(e)
-        else:
+            ErrorNotice(t,title=title,button=button,wait=True,**kwargs)
+        except:
             log.info(set(kwargs.keys()))
             log.info(set(['parent']))
 def main():
@@ -14261,17 +14266,17 @@ def mainproblem():
     if not me:
         o.bind("<Button-1>", lambda e: openweburl(eurl))
     scroll.tobottom()
-    ui.Button(errorw.outsideframe,text=_("Restart \n{}").format(program['name']),
-                cmd=sysrestart, #This should be in task/chooser
-                row=1,column=2)
+    f=ui.Frame(errorw.outsideframe,row=1,column=2)
     if program['git']:
-        # log.info("Making update menu")
-        errormenu=ui.Menu(errorroot)
-        errormenu.add_command(
-                            label=_("Update A→Z+T"),
-                            command=lambda x=errorw:updateazt(parent=x)
-                            )
-        errorw.config(menu=errormenu)
+        ui.Button(f,
+                text=_("Check for \n{} \nupdates").format(program['name']),
+                cmd=lambda x=errorw:updateazt(parent=x),
+                row=0,column=0,
+                pady=20)
+    ui.Button(f,text=_("Restart \n{}").format(program['name']),
+                cmd=sysrestart, #This should be in task/chooser
+                row=1,column=0,
+                pady=20)
         # log.info(_("Done making update menu"))
     errorw.wait_window(errorw)
     if newtk: #likely never work/needed?
