@@ -1820,7 +1820,7 @@ class Settings(object):
         titlet=_("A→Z+T Digraphs and Trigraphs")
         pgw=ui.Window(self.taskchooser,title=titlet)
         t=_("Select which of the following graph sequences found in your data "
-                "refer to a single sound (digraph or trigraph) in {}".format(
+                "refer to a single sound (digraph or trigraph) in {}.".format(
             unlist([self.languagenames[y] for y in self.db.analangs])))
         row=0
         title=ui.Label(pgw.frame,text=titlet, font='title',
@@ -1841,10 +1841,13 @@ class Settings(object):
         t2=ui.Label(pgw.frame,text=t,column=0, row=row)
         t2.bind("<Button-1>", lambda e: openweburl(eurl))
         t=_("Clicking ‘{}’ will restart {} and trigger another syllable "
-            "profile analysis. \nIf you don't want that, click ‘{}’ ==>"
-            "\nEither way, you won't get past this window until you answer "
-            "This question.".format(
-                                        oktext,program['name'],nochangetext))
+            "profile analysis. \nIf you don't want that, click ‘{}’."
+            # "\nEither way, you won't get past this window until you answer "
+            # "this question."
+            "\nIf you just started this database, and are unsure what to do, "
+            "you are probably OK to leave them all selected."
+            "\nYou can always come back here and make changes as you need."
+            "".format(oktext,program['name'],nochangetext))
         row+=1
         t3=ui.Label(pgw.frame,text=t,column=0, row=row)
         eurl='mailto:{}?subject=New trigraph or digraph to add (today)'.format(

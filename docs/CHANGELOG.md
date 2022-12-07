@@ -1,14 +1,12 @@
 # A→Z+T Changelog
 
 #UW priorities:
-- use of pictures
+- use of pictures (how to use open clipart?)
 - sortingby click and drag
 - check recording and transcription tasks are working normally
+- ?other comparative wordlists
 
 #Next up:
-- make initial Git integration smooth, with initial clone and init, both for data and a flash drive
-- provide (or at least make for my use) demo databases specific to English, French, and Spanish, at least
-  - Use lift.py to make codes for each language code that is there in glosses, and remove present lx and lc form information. (make at least lang="en" lang="fr" lang="swh" lang="ha-CL"; others?)
 - rework USAGE.md
 - Parsing:
   - Addition of second forms (primary data)
@@ -18,6 +16,10 @@
   - Clarity for user wrt what is data (i.e. lc, pl, imp), and what is analysis (i.e., lx, ps) —in the presentation of the task itself, and in the documentation
 - Migration to working on the appropriate form, synchronizing across frame definitions, etc.
 - Catch up on translation
+
+# Version 0.9.8
+- initial Git integration should now be smooth, with initial clone and init, both for data and a flash drive
+- demo database creation now in Choose LIFT database dialog. Can be specific to any gloss language in the stock CAWL.
 
 # Version 0.9.7
 - Substantial reworking of reports, which all now run in the background, and with improved initial placement of tables.
