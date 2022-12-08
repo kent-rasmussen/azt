@@ -14147,7 +14147,6 @@ def main():
     # log.info("Theme ipadx: {}".format(program['theme'].ipadx))
     # log.info("Theme pady: {}".format(program['theme'].pady))
     # log.info("Theme padx: {}".format(program['theme'].padx))
-    program['repo']=GitReadOnly(program['aztdir']) #this needs root for errors
     lastcommit=program['repo'].lastcommitdate()
     root.program=program
     root.wraplength=root.winfo_screenwidth()-300 #exit button
