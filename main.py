@@ -146,7 +146,8 @@ class FileChooser(object):
         ui.Label(window.frame, image=program['theme'].photo['small'],
                 text=text, font='title', column=1, row=1, ipadx=20)
         window.wait_window(window)
-        return self.name
+        if not self.name: #If not set, for any reason
+            return 1
     def clonefromUSB(self):
         def makenewrepo(repoclass,mediadir):
             repo=repoclass(mediadir)
@@ -289,6 +290,11 @@ class FileChooser(object):
                             column=1, row=2)
         w.waitdone()
         w.wait_window(w)
+        if not hasattr(self,'demolang') or not self.demolang:
+            log.info("User exited without selecting a language.")
+            return
+        else:
+            log.info("User selected a language: {}.".format(self.demolang))
         log.info("Done waiting")
         self.stripcawldb()
         ww=ui.Wait(program['root'],_("Making Demo Database \n(will restart)"))
@@ -376,7 +382,9 @@ class FileChooser(object):
         if type(self.name) is not list and not file.exists(self.name):
                 self.name=None #don't return a file that isn't there
         if not self.name or type(self.name) is list: #nothing or a selection
-            self.askwhichlift(self.name)
+            r=self.askwhichlift(self.name)
+        if r:
+            sysshutdown()
         if (not self.name or not file.exists(self.name)) and (
                             not program['root'].exitFlag.istrue()):
             self.getfilename() #if the above doesn't result in a file, do again.
@@ -1777,16 +1785,14 @@ class Settings(object):
         except AttributeError:
             log.info(_('Looks like there is no Imperative field in the database'))
             self.imperativename=None
-    def askaboutpolygraphs(self):
+    def askaboutpolygraphs(self,onboot=False):
         def nochanges():
             log.info("Trying to make no changes")
-            if foundchanges() and not pgw.exitFlag.istrue():
-                log.info("Found changes; exiting.")
+            if not pgw.exitFlag.istrue():
                 pgw.destroy()
-                self.parent.destroy()
-                exit()
-            elif not pgw.exitFlag.istrue():
-                pgw.destroy()
+            if foundchanges():
+                log.info("Found changes, but not storing them; returning 1.")
+                return 1
         def makechanges():
             log.info("Changes called for; like it or not, redoing analysis.")
             pgw.destroy()
@@ -1815,13 +1821,21 @@ class Settings(object):
                             return True
             log.info("No changes found to polygraph settings, continuing.")
         oktext=_("OK")
-        nochangetext=_("Exit {} with no changes".format(program['name']))
+        if onboot:
+            nochangetext=_("Exit {} with no changes".format(program['name']))
+        else:
+            nochangetext=_("Exit with no changes")
         log.info("Asking about Digraphs and Trigraphs!")
         titlet=_("A→Z+T Digraphs and Trigraphs")
-        pgw=ui.Window(self.taskchooser,title=titlet)
-        t=_("Select which of the following graph sequences found in your data "
-                "refer to a single sound (digraph or trigraph) in {}.".format(
-            unlist([self.languagenames[y] for y in self.db.analangs])))
+        #From wherever this is opened, it should withdraw and deiconize that
+        pgw=ui.Window(self.taskchooser.mainwindowis,title=titlet,exit=False)
+        t=_("Which of the following letter sequences "
+            "refer to a single sound?")
+        lnames=[self.languagenames[y] for y in self.db.analangs]
+        if len(lnames)>1:
+            t+=_(" (Answer for each of {}.)".format(unlist(lnames)))
+        else:
+            t+=_(" (in {})".format(unlist(lnames)))
         row=0
         title=ui.Label(pgw.frame,text=titlet, font='title',
                         column=0, row=row
@@ -1835,23 +1849,28 @@ class Settings(object):
                         column=0, row=row
                         )
         instr.wrap()
-        t=_("If your data contains a digraph or trigraph that isn't listed "
+        t=_("If you expect one that isn't listed "
             "here, please click here to Email me, and I can add it.")
         row+=1
         t2=ui.Label(pgw.frame,text=t,column=0, row=row)
+        eurl='mailto:{}?subject=New trigraph or digraph to add (today)'.format(
+                                                            program['Email'])
         t2.bind("<Button-1>", lambda e: openweburl(eurl))
-        t=_("Clicking ‘{}’ will restart {} and trigger another syllable "
+        t=_("Making changes will restart {} and trigger another syllable "
             "profile analysis. \nIf you don't want that, click ‘{}’."
             # "\nEither way, you won't get past this window until you answer "
             # "this question."
-            "\nIf you just started this database, and are unsure what to do, "
-            "you are probably OK to leave them all selected."
-            "\nYou can always come back here and make changes as you need."
-            "".format(oktext,program['name'],nochangetext))
+            # "\nIf you just started this database, and are unsure what to do, "
+            # "you are probably OK to leave them all selected."
+            # "\nYou can always come back here and make changes as you need."
+            "".format(program['name'],nochangetext))
         row+=1
         t3=ui.Label(pgw.frame,text=t,column=0, row=row)
-        eurl='mailto:{}?subject=New trigraph or digraph to add (today)'.format(
-                                                            program['Email'])
+        helpurl='{}/POLYGRAPHS.md'.format(program['docsurl'],program['Email'])
+        t=_("See {} for further instructions.").format(helpurl)
+        row+=1
+        t4=ui.Label(pgw.frame,text=t,column=0, row=row)
+        t4.bind("<Button-1>", lambda e: openweburl(helpurl))
         if not hasattr(self,'polygraphs'):
             self.polygraphs={}
         vars={}
@@ -1903,7 +1922,7 @@ class Settings(object):
                     column=0, row=row, sticky='e',padx=15)
         pgw.wait_window(pgw)
         if not self.taskchooser.exitFlag.istrue():
-            nochanges() #this is the default exit behavior
+            return nochanges() #this is the default exit behavior
     def polygraphcheck(self):
         log.info("Checking for Digraphs and Trigraphs!")
         # log.info("Language settings: {}".format(self.db.s))
@@ -1926,8 +1945,12 @@ class Settings(object):
                     #         "".format(pg,pclass,sclass,self.polygraphs))
                     if pg not in self.polygraphs[lang][pclass]:
                         log.info("{} ({}/{}) has no Di/Trigraph setting; "
-                        "prompting user or info.".format(pg,pclass,sclass))
-                        self.askaboutpolygraphs()
+                        "prompting user for info.".format(pg,pclass,sclass))
+                        if self.askaboutpolygraphs(onboot=True):
+                            log.info(_("Asked about polgraphs, but user "
+                                        "exited, so exiting {}"
+                                        ).format(program['name']))
+                            self.taskchooser.mainwindowis.on_quit()
                         return
         log.info("Di/Trigraph settings seem complete; moving on.")
     def checkinterpretations(self):
@@ -3009,7 +3032,7 @@ class TaskDressing(object):
                 "right of the main {0} window."
                 "\nEither window allows you to run reports."
                 "").format(program['name'])
-        url='https://github.com/kent-rasmussen/azt/blob/main/docs/TASKS.md'
+        url='{}/TASKS.md'.format(program['docsurl'])
         webtext=_("For more information on {} tasks, please check out the "
                 "documentation at {} ").format(program['name'],url)
         ui.Label(window.frame, image=self.frame.theme.photo['icon'],
@@ -4425,8 +4448,7 @@ class TaskChooser(TaskDressing,ui.Window):
         self.restart()
     def asktoconvertlxtolc(self):
         title=_("Convert lexeme field data to citation form fields?")
-        url="https://github.com/kent-rasmussen/azt/blob/main/docs/"
-        "CITATIONFORMS.md"
+        url="{}/CITATIONFORMS.md".format(program['docsurl'])
         w=ui.Window(self,title=title,exit=False)
         lexemesdone=list(self.db.nentrieswlexemedata.values())#[self.settings.analang]
         citationsdone=list(self.db.nentrieswcitationdata.values())#[self.settings.analang]
@@ -12747,15 +12769,18 @@ class Repository(object):
         return r
     def add(self,file):
         #This function must be used to see changes
+        log.info("self.bare: {}".format(self.bare))
         if not self.bare:
-            args=["add", str(file)]
-            self.do(args)
             if not self.alreadythere(file):
                 log.info(_("Adding {}, which is not already there.").format(file))
                 self.files+=[file] #keep this up to date
                 # self.getfiles() #this was more work
             else:
                 log.info(_("Adding {}, which is already there.").format(file))
+            args=["add", str(file)]
+            self.do(args)
+        else:
+            log.info("Not adding {} to bare repo {}".format(file,self.url))
     def commitconfirm(self,diff): #don't run the diff again...
         def ok(event=None):
             self.commitconfirmed=nowruntime()
@@ -12859,9 +12884,9 @@ class Repository(object):
         else:
             log.info("Found no commits; is {} a {} repo?".format(url,
                                                             self.repotypename))
-            # log.info("r: {}".format(r))
+            # log.info("commithashes: {}".format(r))
             if r:
-                return r
+                return r #need to pass errors for processing
             else:
                 return []
     def share(self,remotes=None,branch=None):
@@ -12916,11 +12941,17 @@ class Repository(object):
     def isrelated(self,directory):
         #Git doesn't seem to care if repos are related, but I do...
         thatrepohashes=self.commithashes(directory)
+        # log.info(thatrepohashes)
         if thatrepohashes and "fatal: not a git repository" in thatrepohashes:
             return False
+        if thatrepohashes and "does not have any commits yet" in thatrepohashes:
+            thatrepohashes=[]
         thisrepohashes=self.commithashes()
+        # log.info(thisrepohashes)
         if thisrepohashes and "fatal: not a git repository" in thisrepohashes:
             return False
+        if thisrepohashes and "does not have any commits yet" in thisrepohashes:
+            thisrepohashes=[]
         # with open(rx.urlok(self.url),'a') as f:
         #     for l in thisrepohashes:
         #         f.write(l+'\n')
@@ -13194,19 +13225,26 @@ class Repository(object):
         w.deiconify()
         w.lift()
     def getusernameargs(self):
+        #This populates self.usernameargs, once per init.
         r=self.do(self.argstogetusername)
+        re=self.do(self.argstogetuseremail)
         if r:
-            log.info("Using {} username '{}'".format(r,self.repotypename))
+            log.info("Using {} username '{}'".format(self.repotypename,r))
+            if re:
+                log.info("Using {} useremail '{}'".format(self.repotypename,re))
         else:
-            r=[program['name']+'-'+program['hostname'],
-                program['name']+'@'+program['hostname']]
+            r=program['name']+'-'+program['hostname']
             log.info("No {} username found; using '{}'"
                     "".format(self.repotypename,r))
-        return self.argstoputusername(r)
+        if not re:
+            re=program['name']+'@'+program['hostname']
+            log.info("No {} useremail found; using '{}'"
+            "".format(self.repotypename,re))
+        self.usernameargs=self.argstoputuserids(r,re)
     def addremote(self,remote):
         #This doesn't return a value
         remotes=self.remoteurls()
-        if not remote or remote in remotes.values():
+        if not remote or str(remote) in remotes.values(): # compare str w str
             return
         for key in ["Thing"+str(i) for i in range(1,20)]:
             if key not in remotes: #don't overwrite keys
@@ -13248,11 +13286,21 @@ class Repository(object):
     def populate(self):
         #this is done on normal __init__, or after an init later on.
         #These are things that need an actual repository there
-        self.bare=self.isbare()
+        self.bare=bool(self.isbare())
         log.info("Repo {} is bare: {}".format(self.url,self.bare))
-        self.usernameargs=self.getusernameargs()
+        self.getusernameargs()
         self.getfiles()
         self.ignorecheck()
+        try:
+            log.info("{} repository object initialized on branch {} at {} "
+                    "for {}, with {} files."
+                    "".format(self.repotypename, self.branchname(), self.url,
+                        self.description, len(self.files)))
+        except FileNotFoundError:
+            log.info("{} repository object initialized at {} "
+                    "for {}, with {} files."
+                    "".format(self.repotypename, self.url,
+                        self.description, len(self.files)))
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
@@ -13283,16 +13331,6 @@ class Repository(object):
             self.exewarning()
             return #before getting a file list!
         self.populate() #get files, etc.
-        try:
-            log.info("{} repository object initialized on branch {} at {} "
-                    "for {}, with {} files."
-                    "".format(self.repotypename, self.branchname(), self.url,
-                        self.description, len(self.files)))
-        except FileNotFoundError:
-            log.info("{} repository object initialized at {} "
-                    "for {}, with {} files."
-                    "".format(self.repotypename, self.url,
-                        self.description, len(self.files)))
 class Mercurial(Repository):
     def ignorelist(self):
         return ['*.pdf','*.xcf',
@@ -13300,8 +13338,8 @@ class Mercurial(Repository):
                 ]
     def leaveunicodealonesargs(self):
         return []
-    def argstoputusername(self,username):
-        return ['--config','ui.username={}'.format(username[0])]
+    def argstoputuserids(self,username,email):
+        return ['--config','ui.username={}'.format(username)] # just one field
     def choruscheck(self):
         rescues=[]
         for file in self.files:
@@ -13379,12 +13417,14 @@ class Git(Repository):
     def makebare(self):
         args=['config', '--bool', 'core.bare', 'true']
     def isbare(self):
-        return self.do(['config', 'core.bare']) # pass on the config value
+        r=self.do(['config', 'core.bare'])
+        if r != 'false': # if it is, don't return, i.e., False.
+            return r # pass on the config value, if not 'false', which == True
     def leaveunicodealonesargs(self):
         return ['-c','core.quotePath=false']
-    def argstoputusername(self,username):
-        return ['-c', 'user.name={}'.format(username[0]),
-                '-c', 'user.email={}'.format(username[1])]
+    def argstoputuserids(self,username,email):
+        return ['-c', 'user.name={}'.format(username),
+                '-c', 'user.email={}'.format(str(email))]
     def init(self):
         args=['init', '--initial-branch="main"']
         r=self.do(args)
@@ -13411,11 +13451,19 @@ class Git(Repository):
         self.pwd='-C'
         self.lsfiles='ls-files'
         self.argstogetusername=['config', '--get', 'user.name']
+        self.argstogetuseremail=['config', '--get', 'user.email']
         self.bareclonearg="--bare"
         self.nonbareclonearg=""
         super(Git, self).__init__(url)
 class GitReadOnly(Git):
     def share(self,event=None):
+        """This method should only ever pull or push, depending on who
+        is doing it"""
+        if me: #no one else should push changes
+            r=Repository.push(self,remotes=remotes,branch=branches[i])
+        else:
+            r=Repository.pull(self,remotes=remotes,branch=branches[i])
+        return
         """I'm going to ned to stash and stash apply here, I think"""
         remotes=self.findpresentremotes() #do once
         if not remotes:
@@ -13918,13 +13966,15 @@ def praatversioncheck():
         log.info("Praat version less than {}".format(justpraatversion))
         return False
 def pythonmodules():
-    import distutils.util
     log.info("Installing python dependencies")
-    if platform.platform() == 'Linux':
+    if platform.system() == 'Linux':
         log.info("If you have errors containing ˋportaudioˊ above, you should "
             "install pyaudio with your package manager.")
-    log.info("FYI, looking for this platform: {}".format(
-                distutils.util.get_platform().replace('.','_').replace('-','_')))
+    log.info("FYI, looking for this platform: {}_{}".format(
+                                                        platform.system(),
+                                                        platform.processor()))
+    # The above is there to see what version python will be looking for, and
+    # why it didn't find what's there. It doesn't input to any of the following.
     installfolder='modulestoinstall/'
     installedsomething=False
     if not program['python']:
@@ -14090,6 +14140,8 @@ def updateazt(**kwargs): #should only be parent, for errorroot
     def tryagain(event=None):
         updateazt(**kwargs)
     if 'git' in program:
+        program['repo'].share()
+        return
         gitargs=[str(program['git']), "-C", str(program['aztdir']), "pull"]
         try:
             o=subprocess.check_output(gitargs,shell=False,
@@ -14149,7 +14201,6 @@ def main():
     # log.info("Theme ipadx: {}".format(program['theme'].ipadx))
     # log.info("Theme pady: {}".format(program['theme'].pady))
     # log.info("Theme padx: {}".format(program['theme'].padx))
-    program['repo']=GitReadOnly(program['aztdir']) #this needs root for errors
     lastcommit=program['repo'].lastcommitdate()
     root.program=program
     root.wraplength=root.winfo_screenwidth()-300 #exit button
@@ -14215,8 +14266,7 @@ def mainproblem():
             row=0,column=0
             )
     if exceptiononload:
-        durl=('https://github.com/kent-rasmussen/azt/blob/main/docs/INSTALL.md'
-                '#dependencies')
+        durl='{}/INSTALL.md#dependencies'.format(program['docsurl'])
         m=ui.Label(errorw.frame,text=_("\nPlease see {}").format(durl),
             justify='left', font='instructions',
             row=1,column=0
@@ -14315,20 +14365,23 @@ if __name__ == "__main__":
         program['aztdir'] = thisexe.parent
     #This isn't helpful where things are copied to disk later:
     mt=datetime.datetime.fromtimestamp(thisexe.stat().st_mtime)
-    try:
-        with file.getdiredurl(program['aztdir'],'.git/HEAD').open(mode='r') as f:
-            branchURL=file.getfile(f.read()) #f contains a git branch URL
-            branch=branchURL.name.strip()
-            if branch != 'main':
-                program['version'] += " ({})".format(branch)
-    except FileNotFoundError:
-        log.info(".git/HEAD File Not Found; assuming this is the main branch.")
     """Not translating yet"""
     transdir=file.gettranslationdirin(program['aztdir'])
     i18n={}
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
     interfacelang(interfacelang()) #translation works from here
+    findexecutable('git')
+    program['repo']=GitReadOnly(program['aztdir']) #this needs root for errors
+    try:
+        branch=program['repo'].branch
+    except AttributeError:
+        branch='main'
+        log.info("Repo has no branch attribute; assuming main branch.")
+    if branch != 'main':
+        program['version'] += " ({})".format(branch)
+    program['docsurl']=('https://github.com/kent-rasmussen/azt/blob/{}/docs'
+        '').format(branch)
     log.info(_("Running {} v{} (main.py updated to {})").format(
                                     program['name'],program['version'],mt))
     log.info(_("Called with arguments ({}) {} / {}").format(sys.executable,
@@ -14347,7 +14400,7 @@ if __name__ == "__main__":
     log.info(_("Loglevel is {}; started at {}").format(loglevel,
                                         program['start_time'].isoformat()))
     #'sendpraat' now in 'praat', if useful
-    for exe in ['praat','hg','ffmpeg','lame','git','python','python3']:
+    for exe in ['praat','hg','ffmpeg','lame','python','python3']:
         findexecutable(exe)
     if program['python3']: #be sure we're using python v3
         program['python']=program.pop('python3')
@@ -14357,7 +14410,7 @@ if __name__ == "__main__":
     if exceptiononload:
         pythonmodules()
         # sysrestart()
-        # mainproblem()
+        mainproblem()
     else:
         try:
             import profile

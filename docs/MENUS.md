@@ -2,7 +2,7 @@
 
 [A→Z+T] has by default **no menus**; if you see something you want to change (including the way the language name appears), click on it, and a dialog will appear for you to change it.
 
-If you *need menus*, you can *show menus* through a context menu via right click anywhere in the main window –these menus allow you to change all these settings, and more.
+If you *need menus*, you can *show menus* through a context menu via right click anywhere in the main window –these menus allow you to change all these settings, and more. You may need to move the mouse around a bit before you right click.
 
 The context menu also has a couple more options:
 
