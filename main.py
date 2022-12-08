@@ -12982,7 +12982,10 @@ class Repository(object):
     def clonetobaredirname(self):
         d=file.getfile(file.getmediadirectory())
         if d:
-            return d.joinpath(self.dirname).with_suffix('.'+self.code)
+            if d == d.with_suffix('.'+self.code):
+                return d
+            else:
+                return d.joinpath(self.dirname).with_suffix('.'+self.code)
     def findpresentremotes(self,remote=None,firsttry=True):
         l=[]
         # Add start 'new project from USB' to change database options.
