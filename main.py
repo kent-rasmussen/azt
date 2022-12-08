@@ -12848,9 +12848,9 @@ class Repository(object):
         else:
             log.info("Found no commits; is {} a {} repo?".format(url,
                                                             self.repotypename))
-            # log.info("r: {}".format(r))
+            # log.info("commithashes: {}".format(r))
             if r:
-                return r
+                return r #need to pass errors for processing
             else:
                 return []
     def share(self,remotes=None,branch=None):
