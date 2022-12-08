@@ -12728,15 +12728,13 @@ class ErrorNotice(ui.Window):
         # log.info("program['root'].exitFlag: {}".format(program['root'].exitFlag))
         # log.info("program['root'].exitFlag.istrue(): {}".format(program['root'].exitFlag.istrue()))
         try:
-            if (not ('root' not in program or
-                    not program['root'].winfo_exists() or (
-                    hasattr(program['root'],'exitFlag') and
-                    program['root'].exitFlag.istrue())) and
-                'parent' not in kwargs):
+            assert not program['root'].exitFlag.istrue()
+        except Exception as e:
+            if 'parent' not in kwargs:
+                log.info("Exception: {}".format(e))
+                log.error(_("Couldn't find a parent; error message follows"))
                 log.error(text)
                 return
-        except Exception as e:
-            log.info(e)
         parent=kwargs.get('parent',program.get('root',ui.Root))
         # log.info("parent: {}".format(kwargs['parent']))
         title=kwargs.get('title',_("Error!"))
