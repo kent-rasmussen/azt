@@ -13183,15 +13183,22 @@ class Repository(object):
         w.deiconify()
         w.lift()
     def getusernameargs(self):
+        #This populates self.usernameargs, once per init.
         r=self.do(self.argstogetusername)
+        re=self.do(self.argstogetuseremail)
         if r:
-            log.info("Using {} username '{}'".format(r,self.repotypename))
+            log.info("Using {} username '{}'".format(self.repotypename,r))
+            if re:
+                log.info("Using {} useremail '{}'".format(self.repotypename,re))
         else:
-            r=[program['name']+'-'+program['hostname'],
-                program['name']+'@'+program['hostname']]
+            r=program['name']+'-'+program['hostname']
             log.info("No {} username found; using '{}'"
                     "".format(self.repotypename,r))
-        return self.argstoputusername(r)
+        if not re:
+            re=program['name']+'@'+program['hostname']
+            log.info("No {} useremail found; using '{}'"
+            "".format(self.repotypename,re))
+        self.usernameargs=self.argstoputuserids(r,re)
     def addremote(self,remote):
         #This doesn't return a value
         remotes=self.remoteurls()
@@ -13239,7 +13246,7 @@ class Repository(object):
         #These are things that need an actual repository there
         self.bare=self.isbare()
         log.info("Repo {} is bare: {}".format(self.url,self.bare))
-        self.usernameargs=self.getusernameargs()
+        self.getusernameargs()
         self.getfiles()
         self.ignorecheck()
     def __init__(self, url):
@@ -13289,8 +13296,8 @@ class Mercurial(Repository):
                 ]
     def leaveunicodealonesargs(self):
         return []
-    def argstoputusername(self,username):
-        return ['--config','ui.username={}'.format(username[0])]
+    def argstoputuserids(self,username,email):
+        return ['--config','ui.username={}'.format(username)] # just one field
     def choruscheck(self):
         rescues=[]
         for file in self.files:
@@ -13371,9 +13378,9 @@ class Git(Repository):
         return self.do(['config', 'core.bare']) # pass on the config value
     def leaveunicodealonesargs(self):
         return ['-c','core.quotePath=false']
-    def argstoputusername(self,username):
-        return ['-c', 'user.name={}'.format(username[0]),
-                '-c', 'user.email={}'.format(username[1])]
+    def argstoputuserids(self,username,email):
+        return ['-c', 'user.name={}'.format(username),
+                '-c', 'user.email={}'.format(str(email))]
     def init(self):
         args=['init', '--initial-branch="main"']
         r=self.do(args)
@@ -13400,6 +13407,7 @@ class Git(Repository):
         self.pwd='-C'
         self.lsfiles='ls-files'
         self.argstogetusername=['config', '--get', 'user.name']
+        self.argstogetuseremail=['config', '--get', 'user.email']
         self.bareclonearg="--bare"
         self.nonbareclonearg=""
         super(Git, self).__init__(url)
