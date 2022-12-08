@@ -1,6 +1,6 @@
 # Digraphs and Trigraphs in [A→Z+T]
 
-When you first open a new database, [A→Z+T] will ask you to indicate which possible combinations of vowels or consonants are actually digraphs or trigraphs in your data. That is, where do two or three letters refer to just one sound.
+When you first open a new database, [A→Z+T] will ask you to indicate which possible combinations of vowels or consonants are actually digraphs or trigraphs in your data. That is, where two or three letters refer to just one sound.
 
 ## Initial Assumptions
 [A→Z+T] initially asssumes that all possible polygraphs (that I've told it about) found in the data are actually polygraphs; this is what you see on the window with all the boxes ticked. If any one of those is actually a sequence of sounds in your language, untick that box, and AZT will treat it as a sequence of sounds in the syllable profile analysis.
