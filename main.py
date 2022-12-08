@@ -13444,6 +13444,13 @@ class Git(Repository):
         super(Git, self).__init__(url)
 class GitReadOnly(Git):
     def share(self,event=None):
+        """This method should only ever pull or push, depending on who
+        is doing it"""
+        if me: #no one else should push changes
+            r=Repository.push(self,remotes=remotes,branch=branches[i])
+        else:
+            r=Repository.pull(self,remotes=remotes,branch=branches[i])
+        return
         """I'm going to ned to stash and stash apply here, I think"""
         remotes=self.findpresentremotes() #do once
         if not remotes:
@@ -14118,8 +14125,10 @@ def sysrestart(event=None):
     sys.exit()
 def updateazt(**kwargs): #should only be parent, for errorroot
     def tryagain(event=None):
-        updateazt()
+        updateazt(**kwargs)
     if 'git' in program:
+        program['repo'].share()
+        return
         gitargs=[str(program['git']), "-C", str(program['aztdir']), "pull"]
         try:
             o=subprocess.check_output(gitargs,shell=False,
