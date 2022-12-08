@@ -13202,7 +13202,7 @@ class Repository(object):
     def addremote(self,remote):
         #This doesn't return a value
         remotes=self.remoteurls()
-        if not remote or remote in remotes.values():
+        if not remote or str(remote) in remotes.values(): # compare str w str
             return
         for key in ["Thing"+str(i) for i in range(1,20)]:
             if key not in remotes: #don't overwrite keys
