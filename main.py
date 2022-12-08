@@ -13244,7 +13244,7 @@ class Repository(object):
     def populate(self):
         #this is done on normal __init__, or after an init later on.
         #These are things that need an actual repository there
-        self.bare=self.isbare()
+        self.bare=bool(self.isbare())
         log.info("Repo {} is bare: {}".format(self.url,self.bare))
         self.getusernameargs()
         self.getfiles()
@@ -13375,7 +13375,9 @@ class Git(Repository):
     def makebare(self):
         args=['config', '--bool', 'core.bare', 'true']
     def isbare(self):
-        return self.do(['config', 'core.bare']) # pass on the config value
+        r=self.do(['config', 'core.bare'])
+        if r != 'false': # if it is, don't return, i.e., False.
+            return r # pass on the config value, if not 'false', which == True
     def leaveunicodealonesargs(self):
         return ['-c','core.quotePath=false']
     def argstoputuserids(self,username,email):
