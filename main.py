@@ -12905,11 +12905,17 @@ class Repository(object):
     def isrelated(self,directory):
         #Git doesn't seem to care if repos are related, but I do...
         thatrepohashes=self.commithashes(directory)
+        # log.info(thatrepohashes)
         if thatrepohashes and "fatal: not a git repository" in thatrepohashes:
             return False
+        if thatrepohashes and "does not have any commits yet" in thatrepohashes:
+            thatrepohashes=[]
         thisrepohashes=self.commithashes()
+        # log.info(thisrepohashes)
         if thisrepohashes and "fatal: not a git repository" in thisrepohashes:
             return False
+        if thisrepohashes and "does not have any commits yet" in thisrepohashes:
+            thisrepohashes=[]
         # with open(rx.urlok(self.url),'a') as f:
         #     for l in thisrepohashes:
         #         f.write(l+'\n')
