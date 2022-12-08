@@ -14192,7 +14192,7 @@ def updateazt(**kwargs): #should only be parent, for errorroot
         try:
             try:
                 title=_("Update (Git) output")
-            except:
+            except: #in case translation isn't working yet
                 title="Update (Git) output"
             ErrorNotice(t,title=title,button=button,wait=True,**kwargs)
         except:
