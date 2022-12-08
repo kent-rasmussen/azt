@@ -13249,6 +13249,16 @@ class Repository(object):
         self.getusernameargs()
         self.getfiles()
         self.ignorecheck()
+        try:
+            log.info("{} repository object initialized on branch {} at {} "
+                    "for {}, with {} files."
+                    "".format(self.repotypename, self.branchname(), self.url,
+                        self.description, len(self.files)))
+        except FileNotFoundError:
+            log.info("{} repository object initialized at {} "
+                    "for {}, with {} files."
+                    "".format(self.repotypename, self.url,
+                        self.description, len(self.files)))
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
@@ -13279,16 +13289,6 @@ class Repository(object):
             self.exewarning()
             return #before getting a file list!
         self.populate() #get files, etc.
-        try:
-            log.info("{} repository object initialized on branch {} at {} "
-                    "for {}, with {} files."
-                    "".format(self.repotypename, self.branchname(), self.url,
-                        self.description, len(self.files)))
-        except FileNotFoundError:
-            log.info("{} repository object initialized at {} "
-                    "for {}, with {} files."
-                    "".format(self.repotypename, self.url,
-                        self.description, len(self.files)))
 class Mercurial(Repository):
     def ignorelist(self):
         return ['*.pdf','*.xcf',
