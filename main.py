@@ -12863,14 +12863,19 @@ class Repository(object):
         # log.info("Trying to run clonetoUSB")
         directory=self.clonetobaredirname()
         log.info("directory: {}".format(directory))
-        if directory and not self.addifis(directory):
-            args=["clone", self.bareclonearg, '.', directory] #this needs from-to
-            msg=_("Copying to {}; this may take some time."
-                        "").format(directory)
-            w=ui.Wait(program['root'],msg=msg)
-            log.info(self.do(args))
-            self.addremote(directory)
-            w.close()
+        if directory:
+            if not self.addifis(directory):
+                args=["clone", self.bareclonearg, '.', directory] #this needs from-to
+                msg=_("Copying to {}; this may take some time."
+                            "").format(directory)
+                w=ui.Wait(program['root'],msg=msg)
+                log.info(self.do(args))
+                self.addremote(directory)
+                w.close()
+            else:
+                log.info(_("Found a related repository; adding to settings."))
+        else:
+            log.info(_("No directory given; not cloning."))
     def log(self):
         args=["log"]
         log.info(self.do(args))
