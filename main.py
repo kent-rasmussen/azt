@@ -146,7 +146,8 @@ class FileChooser(object):
         ui.Label(window.frame, image=program['theme'].photo['small'],
                 text=text, font='title', column=1, row=1, ipadx=20)
         window.wait_window(window)
-        return self.name
+        if not self.name: #If not set, for any reason
+            return 1
     def clonefromUSB(self):
         def makenewrepo(repoclass,mediadir):
             repo=repoclass(mediadir)
@@ -289,6 +290,11 @@ class FileChooser(object):
                             column=1, row=2)
         w.waitdone()
         w.wait_window(w)
+        if not hasattr(self,'demolang') or not self.demolang:
+            log.info("User exited without selecting a language.")
+            return
+        else:
+            log.info("User selected a language: {}.".format(self.demolang))
         log.info("Done waiting")
         self.stripcawldb()
         ww=ui.Wait(program['root'],_("Making Demo Database \n(will restart)"))
@@ -376,7 +382,9 @@ class FileChooser(object):
         if type(self.name) is not list and not file.exists(self.name):
                 self.name=None #don't return a file that isn't there
         if not self.name or type(self.name) is list: #nothing or a selection
-            self.askwhichlift(self.name)
+            r=self.askwhichlift(self.name)
+        if r:
+            sysshutdown()
         if (not self.name or not file.exists(self.name)) and (
                             not program['root'].exitFlag.istrue()):
             self.getfilename() #if the above doesn't result in a file, do again.
