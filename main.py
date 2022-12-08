@@ -14313,14 +14313,6 @@ if __name__ == "__main__":
         program['aztdir'] = thisexe.parent
     #This isn't helpful where things are copied to disk later:
     mt=datetime.datetime.fromtimestamp(thisexe.stat().st_mtime)
-    try:
-        with file.getdiredurl(program['aztdir'],'.git/HEAD').open(mode='r') as f:
-            branchURL=file.getfile(f.read()) #f contains a git branch URL
-            branch=branchURL.name.strip()
-            if branch != 'main':
-                program['version'] += " ({})".format(branch)
-    except FileNotFoundError:
-        log.info(".git/HEAD File Not Found; assuming this is the main branch.")
     """Not translating yet"""
     transdir=file.gettranslationdirin(program['aztdir'])
     i18n={}
