@@ -14156,7 +14156,8 @@ def stouttostr(x):
         log.error("I can't tell the terminal's encoding, sorry!")
     else:
         try:
-            return x.decode(sys.stdout.encoding).strip()
+            return x.decode(sys.stdout.encoding,
+                            errors='backslashreplace').strip()
         except Exception as e:
             #if the computer doesn't know what encoding it is actually using,
             # this should give us some info to debug.
