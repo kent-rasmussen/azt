@@ -13463,7 +13463,7 @@ class GitReadOnly(Git):
             r=Repository.push(self,remotes=remotes,branch=branches[i])
         else:
             r=Repository.pull(self,remotes=remotes,branch=branches[i])
-        return
+        return r
         """I'm going to ned to stash and stash apply here, I think"""
         remotes=self.findpresentremotes() #do once
         if not remotes:
