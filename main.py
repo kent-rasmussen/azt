@@ -1777,7 +1777,7 @@ class Settings(object):
         except AttributeError:
             log.info(_('Looks like there is no Imperative field in the database'))
             self.imperativename=None
-    def askaboutpolygraphs(self):
+    def askaboutpolygraphs(self,onboot=False):
         def nochanges():
             log.info("Trying to make no changes")
             if foundchanges() and not pgw.exitFlag.istrue():
@@ -1815,7 +1815,10 @@ class Settings(object):
                             return True
             log.info("No changes found to polygraph settings, continuing.")
         oktext=_("OK")
-        nochangetext=_("Exit {} with no changes".format(program['name']))
+        if onboot:
+            nochangetext=_("Exit {} with no changes".format(program['name']))
+        else:
+            nochangetext=_("Exit with no changes")
         log.info("Asking about Digraphs and Trigraphs!")
         titlet=_("A→Z+T Digraphs and Trigraphs")
         pgw=ui.Window(self.taskchooser,title=titlet)
