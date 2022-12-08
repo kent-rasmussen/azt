@@ -383,8 +383,8 @@ class FileChooser(object):
                 self.name=None #don't return a file that isn't there
         if not self.name or type(self.name) is list: #nothing or a selection
             r=self.askwhichlift(self.name)
-        if r:
-            sysshutdown()
+            if r:
+                sysshutdown()
         if (not self.name or not file.exists(self.name)) and (
                             not program['root'].exitFlag.istrue()):
             self.getfilename() #if the above doesn't result in a file, do again.
