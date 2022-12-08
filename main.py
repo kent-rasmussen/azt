@@ -14133,6 +14133,16 @@ def sysrestart(event=None):
         #                     except Exception as e:
         #                         log.info("Failed ({}); giving up.".format(e))
     sys.exit()
+def internetconnectionproblemin(x):
+    problems=[
+            "No route to host",
+            "unable to access",
+            "Could not resolve host",
+            "Could not read from remote repository."
+            ]
+    for p in problems:
+        if p in x:
+            return True
 def stouttostr(x):
     # This fn is necessary (and problematic) because not all computers seem to
     # reply to subprocess.check_output with the same kind of data. I have even
@@ -14169,16 +14179,10 @@ def updateazt(**kwargs): #should only be parent, for errorroot
             o=e.output
         t=stouttostr(o)
         log.info("git output: {} ({})".format(t,type(t)))
-        if (type(t) is str and "Already up to date." in t) or (
-            type(t) is not str and b"Already up to date." in t):
+        if "Already up to date." in t:
             button=False
-        elif type(t) is str and ("No route to host" in t or
-                                    "unable to access" in t or
-                                    "Could not resolve host" in t) or (
-            type(t) is not str and (b"No route to host" in t or
-                                        b"unable to access" in t or
-                                        b"Could not resolve host" in t)):
-            t=str(t)+_('\n(Check your internet connection and try again)')
+        elif internetconnectionproblemin(t):
+            t=t+_('\n(Check your internet connection and try again)')
             button=(_("Try Again"),tryagain)
         else:
             t='\n'.join(t.split('\n')[:10]
