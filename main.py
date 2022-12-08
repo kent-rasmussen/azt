@@ -13246,14 +13246,17 @@ class Repository(object):
             "".format(self.repotypename,re))
         self.usernameargs=self.argstoputuserids(r,re)
     def addremote(self,remote):
-        #This doesn't return a value
+        #This may take in paths, but needs to compare strings
         remotes=self.remoteurls()
+        # log.info("remote: {}; type: {}".format(remote,type(remote)))
+        # log.info("remotes: {}; types: {}".format(remotes.values(),
+        #                                     type(list(remotes.values())[-1])))
         if not remote or str(remote) in remotes.values(): # compare str w str
             return
         for key in ["Thing"+str(i) for i in range(1,20)]:
             if key not in remotes: #don't overwrite keys
                 log.info("Setting {} key with {} value".format(key,remote))
-                remotes[key]=remote
+                remotes[key]=str(remote)
                 self.remoteurls(remotes) #save
                 log.info("URL Settings now {}".format(self.remoteurls()))
                 return
