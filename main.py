@@ -13072,9 +13072,7 @@ class Repository(object):
                                             stderr=subprocess.STDOUT,
                                             shell=False)
         except subprocess.CalledProcessError as e:
-            output=e.output.decode(sys.stdout.encoding,
-                                    errors='backslashreplace'
-                                    ).strip()
+            output=stouttostr(e.output)
             if iwascalledby not in ["getusernameargs","pull","log"]:
                 # if not output:
                 #     output=e
@@ -13128,16 +13126,16 @@ class Repository(object):
             except (RuntimeError,AssertionError):
                 log.info(text)
             return
-        try:
-            # if iwascalledby == 'getfiles':
-            #     log.info("Putting out this info in {} encoding".format(sys.stdout.encoding))
-            t=output.decode(sys.stdout.encoding,errors='backslashreplace').strip()
-            # if iwascalledby == 'getfiles':
-            #     log.info("Looks like that worked")
-        except:
-            # if iwascalledby == 'getfiles':
-            #     log.info("Looks like that didn't work")
-            t=output
+        t=stouttostr(output)
+        # try:
+        #     # if iwascalledby == 'getfiles':
+        #     #     log.info("Putting out this info in {} encoding".format(sys.stdout.encoding))
+        #     # if iwascalledby == 'getfiles':
+        #     #     log.info("Looks like that worked")
+        # except:
+        #     # if iwascalledby == 'getfiles':
+        #     #     log.info("Looks like that didn't work")
+        #     t=output
         #These give massive output!
         if t and iwascalledby not in ['diff','getfiles','commithashes']:
             log.info("{} {} {}: {}".format(self.repotypename,
@@ -13924,7 +13922,7 @@ def findexecutable(exe):
     # log.info("Looking for {} on {}...".format(exe,os))
     try:
         exeURL=subprocess.check_output([which,exeOS], shell=False)
-        program[exe]=exeURL.decode(sys.stdout.encoding).strip()
+        program[exe]=stouttostr(exeURL)
     except subprocess.CalledProcessError as e:
         log.info("Executable {} search output: {}".format(exe,e.output))
     except Exception as e:
@@ -13957,9 +13955,7 @@ def praatversioncheck():
     praatvargs=[program['praat'], "--version"]
     versionraw=subprocess.check_output(praatvargs, shell=False)
     try:
-        version=pkg_resources.parse_version(
-                versionraw.decode(sys.stdout.encoding).strip()
-                                        )
+        version=pkg_resources.parse_version(stouttostr(versionraw))
     except:
         version=versionraw
     # This is the version at which we don't need sendpraat anymore
@@ -14007,17 +14003,13 @@ def pythonmodules():
         try:
             o=subprocess.check_output(pyargs,shell=False,
                                         stderr=subprocess.STDOUT)
-            o=o.decode(sys.stdout.encoding,
-                                    errors='backslashreplace'
-                                    ).strip()
+            o=stouttostr(o)
             if not o:
                 log.info("looks like it was successful; so I'm going to reboot "
                             "in a bit. ({})".format(o))
                 installedsomething=True
         except subprocess.CalledProcessError as e:
-            o=e.output.decode(sys.stdout.encoding,
-                                    errors='backslashreplace'
-                                    ).strip()
+            o=stouttostr(e.output)
             if 'Could not find a version' in o:
                 del pyargs[npyargs-1] #pull no-index
                 log.info("Running `{}`".format(' '.join(pyargs)))
@@ -14027,9 +14019,6 @@ def pythonmodules():
         log.info(o) #just give bytes, if encoding isn't correct
     if installedsomething:
         sysrestart()
-        # try:
-        #     log.info(o.decode(sys.stdout.encoding).strip())
-        # except:
 def praatopen(file,newpraat=False,event=None):
     """sendpraat is now looked for only where praat version is before
     'Praat 6.2.04 (December 18 2021)', when new functionality was added to
@@ -14048,7 +14037,7 @@ def praatopen(file,newpraat=False,event=None):
         except subprocess.CalledProcessError as e:
             o=e.output
         try:
-            t=o.decode(sys.stdout.encoding).strip()
+            t=stouttostr(o)
         except:
             t=o
         if t == "sendpraat: Program praat not running.":
@@ -14175,14 +14164,10 @@ def updateazt(**kwargs): #should only be parent, for errorroot
         try:
             o=subprocess.check_output(gitargs,shell=False,
                                         stderr=subprocess.STDOUT)
-            # o=e.decode(sys.stdout.encoding).strip()
             # log.info("git output: {}".format(o))
         except subprocess.CalledProcessError as e:
             o=e.output
-        try:
-            t=o.decode(sys.stdout.encoding).strip()
-        except:
-            t=o
+        t=stouttostr(o)
         log.info("git output: {} ({})".format(t,type(t)))
         if (type(t) is str and "Already up to date." in t) or (
             type(t) is not str and b"Already up to date." in t):
