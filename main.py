@@ -3012,7 +3012,7 @@ class TaskDressing(object):
                 "right of the main {0} window."
                 "\nEither window allows you to run reports."
                 "").format(program['name'])
-        url='https://github.com/kent-rasmussen/azt/blob/main/docs/TASKS.md'
+        url='{}/TASKS.md'.format(program['docsurl'])
         webtext=_("For more information on {} tasks, please check out the "
                 "documentation at {} ").format(program['name'],url)
         ui.Label(window.frame, image=self.frame.theme.photo['icon'],
@@ -4428,8 +4428,7 @@ class TaskChooser(TaskDressing,ui.Window):
         self.restart()
     def asktoconvertlxtolc(self):
         title=_("Convert lexeme field data to citation form fields?")
-        url="https://github.com/kent-rasmussen/azt/blob/main/docs/"
-        "CITATIONFORMS.md"
+        url="{}/CITATIONFORMS.md".format(program['docsurl'])
         w=ui.Window(self,title=title,exit=False)
         lexemesdone=list(self.db.nentrieswlexemedata.values())#[self.settings.analang]
         citationsdone=list(self.db.nentrieswcitationdata.values())#[self.settings.analang]
@@ -14212,8 +14211,7 @@ def mainproblem():
             row=0,column=0
             )
     if exceptiononload:
-        durl=('https://github.com/kent-rasmussen/azt/blob/main/docs/INSTALL.md'
-                '#dependencies')
+        durl='{}/INSTALL.md#dependencies'.format(program['docsurl'])
         m=ui.Label(errorw.frame,text=_("\nPlease see {}").format(durl),
             justify='left', font='instructions',
             row=1,column=0
