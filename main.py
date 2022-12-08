@@ -12736,15 +12736,18 @@ class Repository(object):
         return r
     def add(self,file):
         #This function must be used to see changes
+        log.info("self.bare: {}".format(self.bare))
         if not self.bare:
-            args=["add", str(file)]
-            self.do(args)
             if not self.alreadythere(file):
                 log.info(_("Adding {}, which is not already there.").format(file))
                 self.files+=[file] #keep this up to date
                 # self.getfiles() #this was more work
             else:
                 log.info(_("Adding {}, which is already there.").format(file))
+            args=["add", str(file)]
+            self.do(args)
+        else:
+            log.info("Not adding {} to bare repo {}".format(file,self.url))
     def commitconfirm(self,diff): #don't run the diff again...
         def ok(event=None):
             self.commitconfirmed=nowruntime()
