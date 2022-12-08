@@ -16,9 +16,11 @@ except:
     def _(x):
         return x
 def getfile(filename):
-    return pathlib.Path(filename)
+    if filename:
+        return pathlib.Path(filename)
 def getfilenamefrompath(filename):
-    return pathlib.Path(filename).name
+    if filename:
+        return pathlib.Path(filename).name
 def fullpathname(filename):
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
