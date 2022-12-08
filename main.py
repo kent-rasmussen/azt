@@ -709,6 +709,9 @@ class Menus(ui.Menu):
         self.cascade(self,_("Help"),'helpmenu')
         helpitems=[(_("About"), self.parent.helpabout)]
         if program['git']:
+            if not program['repo'].findpresentremotes(firsttry=False):
+                helpitems+=[(_("Set up A→Z+T source on USB"),
+                                program['repo'].addUSBremote)]
             helpitems+=[(_("Update A→Z+T (Internet)"), updateazt)]
             helpitems+=[(_("Update A→Z+T (USB)"), self.parent.updateaztlocal)]
             if program['repo'].branchname() == 'main':
@@ -13245,6 +13248,9 @@ class Repository(object):
             log.info("No {} useremail found; using '{}'"
             "".format(self.repotypename,re))
         self.usernameargs=self.argstoputuserids(r,re)
+    def addUSBremote(self):
+        # This should be a directory (or parent) with existing repo
+        self.addremote(self.clonetobaredirname())
     def addremote(self,remote):
         #This may take in paths, but needs to compare strings
         remotes=self.remoteurls()
