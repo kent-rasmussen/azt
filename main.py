@@ -14354,7 +14354,7 @@ if __name__ == "__main__":
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
         pythonmodules()
-        # sysrestart()
+        sysrestart()
         # mainproblem()
     else:
         try:
