@@ -14354,8 +14354,8 @@ if __name__ == "__main__":
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
         pythonmodules()
-        sysrestart()
-        # mainproblem()
+        # sysrestart()
+        mainproblem()
     else:
         try:
             import profile
