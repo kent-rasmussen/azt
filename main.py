@@ -1780,13 +1780,11 @@ class Settings(object):
     def askaboutpolygraphs(self,onboot=False):
         def nochanges():
             log.info("Trying to make no changes")
-            if foundchanges() and not pgw.exitFlag.istrue():
-                log.info("Found changes; exiting.")
+            if not pgw.exitFlag.istrue():
                 pgw.destroy()
-                self.parent.destroy()
-                exit()
-            elif not pgw.exitFlag.istrue():
-                pgw.destroy()
+            if foundchanges():
+                log.info("Found changes, but not storing them; returning 1.")
+                return 1
         def makechanges():
             log.info("Changes called for; like it or not, redoing analysis.")
             pgw.destroy()
@@ -1906,7 +1904,7 @@ class Settings(object):
                     column=0, row=row, sticky='e',padx=15)
         pgw.wait_window(pgw)
         if not self.taskchooser.exitFlag.istrue():
-            nochanges() #this is the default exit behavior
+            return nochanges() #this is the default exit behavior
     def polygraphcheck(self):
         log.info("Checking for Digraphs and Trigraphs!")
         # log.info("Language settings: {}".format(self.db.s))
@@ -1929,8 +1927,12 @@ class Settings(object):
                     #         "".format(pg,pclass,sclass,self.polygraphs))
                     if pg not in self.polygraphs[lang][pclass]:
                         log.info("{} ({}/{}) has no Di/Trigraph setting; "
-                        "prompting user or info.".format(pg,pclass,sclass))
-                        self.askaboutpolygraphs()
+                        "prompting user for info.".format(pg,pclass,sclass))
+                        if self.askaboutpolygraphs(onboot=True):
+                            log.info(_("Asked about polgraphs, but user "
+                                        "exited, so exiting {}"
+                                        ).format(program['name']))
+                            self.taskchooser.mainwindowis.on_quit()
                         return
         log.info("Di/Trigraph settings seem complete; moving on.")
     def checkinterpretations(self):
