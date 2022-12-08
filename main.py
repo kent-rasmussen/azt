@@ -14327,6 +14327,17 @@ if __name__ == "__main__":
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
     interfacelang(interfacelang()) #translation works from here
+    findexecutable('git')
+    program['repo']=GitReadOnly(program['aztdir']) #this needs root for errors
+    try:
+        branch=program['repo'].branch
+    except AttributeError:
+        branch='main'
+        log.info("Repo has no branch attribute; assuming main branch.")
+    if branch != 'main':
+        program['version'] += " ({})".format(branch)
+    program['docsurl']=('https://github.com/kent-rasmussen/azt/blob/{}/docs'
+        '').format(branch)
     log.info(_("Running {} v{} (main.py updated to {})").format(
                                     program['name'],program['version'],mt))
     log.info(_("Called with arguments ({}) {} / {}").format(sys.executable,
@@ -14345,7 +14356,7 @@ if __name__ == "__main__":
     log.info(_("Loglevel is {}; started at {}").format(loglevel,
                                         program['start_time'].isoformat()))
     #'sendpraat' now in 'praat', if useful
-    for exe in ['praat','hg','ffmpeg','lame','git','python','python3']:
+    for exe in ['praat','hg','ffmpeg','lame','python','python3']:
         findexecutable(exe)
     if program['python3']: #be sure we're using python v3
         program['python']=program.pop('python3')
