@@ -13907,13 +13907,15 @@ def praatversioncheck():
         log.info("Praat version less than {}".format(justpraatversion))
         return False
 def pythonmodules():
-    import distutils.util
     log.info("Installing python dependencies")
-    if platform.platform() == 'Linux':
+    if platform.system() == 'Linux':
         log.info("If you have errors containing ˋportaudioˊ above, you should "
             "install pyaudio with your package manager.")
-    log.info("FYI, looking for this platform: {}".format(
-                distutils.util.get_platform().replace('.','_').replace('-','_')))
+    log.info("FYI, looking for this platform: {}_{}".format(
+                                                        platform.system(),
+                                                        platform.processor()))
+    # The above is there to see what version python will be looking for, and
+    # why it didn't find what's there. It doesn't input to any of the following.
     installfolder='modulestoinstall/'
     installedsomething=False
     if not program['python']:
