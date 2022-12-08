@@ -1819,10 +1819,15 @@ class Settings(object):
             nochangetext=_("Exit with no changes")
         log.info("Asking about Digraphs and Trigraphs!")
         titlet=_("A→Z+T Digraphs and Trigraphs")
-        pgw=ui.Window(self.taskchooser,title=titlet)
-        t=_("Select which of the following graph sequences found in your data "
-                "refer to a single sound (digraph or trigraph) in {}.".format(
-            unlist([self.languagenames[y] for y in self.db.analangs])))
+        #From wherever this is opened, it should withdraw and deiconize that
+        pgw=ui.Window(self.taskchooser.mainwindowis,title=titlet,exit=False)
+        t=_("Which of the following letter sequences "
+            "refer to a single sound?")
+        lnames=[self.languagenames[y] for y in self.db.analangs]
+        if len(lnames)>1:
+            t+=_(" (Answer for each of {}.)".format(unlist(lnames)))
+        else:
+            t+=_(" (in {})".format(unlist(lnames)))
         row=0
         title=ui.Label(pgw.frame,text=titlet, font='title',
                         column=0, row=row
@@ -1836,23 +1841,28 @@ class Settings(object):
                         column=0, row=row
                         )
         instr.wrap()
-        t=_("If your data contains a digraph or trigraph that isn't listed "
+        t=_("If you expect one that isn't listed "
             "here, please click here to Email me, and I can add it.")
         row+=1
         t2=ui.Label(pgw.frame,text=t,column=0, row=row)
+        eurl='mailto:{}?subject=New trigraph or digraph to add (today)'.format(
+                                                            program['Email'])
         t2.bind("<Button-1>", lambda e: openweburl(eurl))
-        t=_("Clicking ‘{}’ will restart {} and trigger another syllable "
+        t=_("Making changes will restart {} and trigger another syllable "
             "profile analysis. \nIf you don't want that, click ‘{}’."
             # "\nEither way, you won't get past this window until you answer "
             # "this question."
-            "\nIf you just started this database, and are unsure what to do, "
-            "you are probably OK to leave them all selected."
-            "\nYou can always come back here and make changes as you need."
-            "".format(oktext,program['name'],nochangetext))
+            # "\nIf you just started this database, and are unsure what to do, "
+            # "you are probably OK to leave them all selected."
+            # "\nYou can always come back here and make changes as you need."
+            "".format(program['name'],nochangetext))
         row+=1
         t3=ui.Label(pgw.frame,text=t,column=0, row=row)
-        eurl='mailto:{}?subject=New trigraph or digraph to add (today)'.format(
-                                                            program['Email'])
+        helpurl='{}/POLYGRAPHS.md'.format(program['docsurl'],program['Email'])
+        t=_("See {} for further instructions.").format(helpurl)
+        row+=1
+        t4=ui.Label(pgw.frame,text=t,column=0, row=row)
+        t4.bind("<Button-1>", lambda e: openweburl(helpurl))
         if not hasattr(self,'polygraphs'):
             self.polygraphs={}
         vars={}
