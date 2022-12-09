@@ -11461,17 +11461,7 @@ class Splash(ui.Window):
         self.h = self.winfo_reqheight()
         y=int(self.master.winfo_screenheight()/2 -(self.h/2))
         self.geometry('+%d+%d' % (x, y))
-        if program['repo'].branchname() == program['testversionname']:
-            menu=ui.Menu(self)
-            help=ui.Menu(self)
-            menu.add_cascade(label=_("Help"),menu=help)
-            help.add_command(
-                            label=_("Update A→Z+T"),
-                            # command=lambda x=self:updateazt(parent=x)
-                            command=updateazt
-                            )
-            self.config(menu=menu)
-        # self.draw() #if not needed first
+        self.labels['v'].bind('<Button-1>', lambda e,x=self:updateazt(parent=x))
 class Analysis(object):
     """Currently for tone, but sorting out values by group"""
     """The following two functions analyze the similarity of UF groups and
