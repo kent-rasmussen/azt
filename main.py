@@ -4073,11 +4073,6 @@ class TaskDressing(object):
         if not nowait:
             self.runwindow.wait(msg=msg)
     """Functions that everyone needs"""
-    def updateaztlocal(self,event=None):
-        if me:
-            r=program['repo'].share()
-        else:
-            r=program['repo'].pull()
     def updateazt(self,event=None):
         updateazt()
     def reverttomainazt(self,event=None):
@@ -11449,11 +11444,6 @@ class ToneGroupButtonFrame(ui.Frame):
         # """Should I do this outside the class?"""
         # self.grid(column=column, row=row, sticky=sticky)
 class Splash(ui.Window):
-    def updateaztlocal(self,event=None):
-        if me:
-            r=program['repo'].share()
-        else:
-            r=program['repo'].pull()
     def maketexts(self):
         self.labels['v']['text']=_("Version: {}".format(program['version']))
         self.labels['text']['text']=_("Your dictionary database is loading...\n"
@@ -11498,12 +11488,9 @@ class Splash(ui.Window):
             help=ui.Menu(self)
             menu.add_cascade(label=_("Help"),menu=help)
             help.add_command(
-                            label=_("Update A→Z+T (Internet)"),
-                            command=lambda x=self:updateazt(parent=x)
-                            )
-            help.add_command(
-                            label='    '+_("Update A→Z+T (USB)"),
-                            command=self.updateaztlocal
+                            label=_("Update A→Z+T"),
+                            # command=lambda x=self:updateazt(parent=x)
+                            command=updateazt
                             )
             self.config(menu=menu)
         # self.draw() #if not needed first
