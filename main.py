@@ -13431,6 +13431,10 @@ class Git(Repository):
         r=self.do(args)
         # log.info(r)
         return r
+    def getremotenames(self):
+        args=['remote']
+        r=self.do(args)
+        return r
     def getorigin(self):
         args=['remote', 'get-url', 'origin']
         r=self.do(args)
@@ -13449,6 +13453,7 @@ class Git(Repository):
         self.argstogetuseremail=['config', '--get', 'user.email']
         self.bareclonearg="--bare"
         self.nonbareclonearg=""
+        self.remotenames=self.getremotenames()
         super(Git, self).__init__(url)
 class GitReadOnly(Git):
     def share(self,event=None):
