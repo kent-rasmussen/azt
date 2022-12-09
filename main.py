@@ -716,9 +716,21 @@ class Menus(ui.Menu):
                     isinterneturl(program['repo'].getremotenameurl(i))
                     ]:
                 helpitems+=[(_("Set up A→Z+T source on USB"),
-            helpitems+=[(_("Update A→Z+T (Internet)"), updateazt)]
-            helpitems+=[(_("Update A→Z+T (USB)"), self.parent.updateaztlocal)]
                                 program['repo'].clonetoUSB)]
+            else:
+                log.info("No Set up USB menu: {}\n{}\n{}\n{}".format(
+                program['repo'].remoteurls().values(),
+                [i for d in program['repo'].remoteurls().values()
+                            for i in [d]],
+                [i for d in program['repo'].remoteurls().values()
+                            for i in [program['repo'].addifis(d)]
+                            if not isinterneturl(i)],
+                [i for d in program['repo'].remoteurls().values()
+                            for i in [program['repo'].addifis(d)]
+                            if i
+                            if not isinterneturl(i)]
+                ))
+            helpitems+=[(_("Update A→Z+T"), updateazt)]
             if program['repo'].branchname() == 'main':
                 helpitems+=[(_("Try A→Z+T test version"),
                                 self.parent.trytestazt)]
