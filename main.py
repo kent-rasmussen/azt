@@ -12763,8 +12763,8 @@ class ErrorNotice(ui.Window):
             self.wait_window(self)
 class Repository(object):
     """SuperClass for Repository classes"""
-    def checkout(self,reponame):
-        args=['checkout',reponame]
+    def checkout(self,branchname):
+        args=['checkout',branchname]
         r=self.do(args)
         log.info(r)
         # if r:
@@ -12918,13 +12918,13 @@ class Repository(object):
             log.info(_("Couldn't find a local drive to pull from via {}; "
                     "giving up").format(self.repotypename))
             return
+        if not branch:
+            branch=self.branchname()
         for remote in remotes:
-            args=["pull",remote,self.branchname()]
-            # if branch:
-            #     args+=[branch]
+            args=["pull",remote,branch+':'+branch]
             r=self.do(args)
-            # log.info(r)
-        return r #ok if we don't track results for each
+            # log.info("Pull return: {}".format(r))
+        return r #if we want results for each, do this once for each
     def push(self,remotes=None,branch=None,setupstream=False):
         if not remotes:
             remotes=self.findpresentremotes() #do once
@@ -12932,13 +12932,13 @@ class Repository(object):
             log.info(_("Couldn't find a local drive to push to via {}; "
                     "giving up").format(self.repotypename))
             return
+        if not branch:
+            branch=self.branchname()
         for remote in remotes:
             args=["push"]
             if setupstream:
                 args+=['--set-upstream']
-            args+=[remote,self.branchname()]
-            # if branch:
-            #     args+=[branch]
+            args+=[remote,branch+':'+branch]
             r=self.do(args)
             if r and "The current branch master has no upstream branch." in r:
                 r=self.push(remotes=[remote],
@@ -12985,11 +12985,15 @@ class Repository(object):
         log.info(error)
         self.removeremote(directory)
     def addifis(self,directory):
-        if directory and file.exists(directory) and self.isrelated(directory):
-            # log.info("Found related repository: {}".format(directory))
-            self.addremote(directory)
-            return [str(directory)] #this needs to add to lists, and iterate
-        return []
+        # N.B.: I think file.exists will always fail for internet repos
+        # For now, add them to git
+        if directory and file.exists(directory):
+            if self.isrelated(directory):
+                log.info("Found related repository: {}".format(directory))
+                self.addremote(directory)
+                return str(directory)
+            else:
+                self.removeremote(directory) #don't clutter settings
     def clonetobaredirname(self):
         d=file.getfile(file.getmediadirectory())
         if d:
@@ -13437,6 +13441,9 @@ class Git(Repository):
     def getremotenames(self):
         args=['remote']
         r=self.do(args)
+        if r:
+            r=r.split('\n')
+        log.info("Using these remotes: {}".format(r))
         return r
     def getremotenameurl(self,remotename):
         args=['remote', 'get-url', remotename]
