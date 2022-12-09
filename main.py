@@ -13472,10 +13472,19 @@ class GitReadOnly(Git):
     def share(self,event=None):
         """This method should only ever pull or push, depending on who
         is doing it"""
+        # this will mostly operate on all present sources (internet and USB),
+        # reporting failures as appropriate. I hope users will be OK with that
+        remotes=self.findpresentremotes() #do once
         if me: #no one else should push changes
-            r=Repository.push(self,remotes=remotes,branch=branches[i])
+            method=Repository.push
+            remotes=set(remotes)-set([self.origin]) #Don't push there
         else:
-            r=Repository.pull(self,remotes=remotes,branch=branches[i])
+            method=Repository.pull
+            self.addremote(file.getfile(program['url']).with_suffix('.git'))
+        r={}
+        for branch in ['main',program['testversionname']]:
+            for remote in remotes:
+                r[remote+'/'+branch]=method(self,branch=branch,remotes=[remote])
         return r
         """I'm going to ned to stash and stash apply here, I think"""
         remotes=self.findpresentremotes() #do once
