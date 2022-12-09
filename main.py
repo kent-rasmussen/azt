@@ -12708,6 +12708,9 @@ class ErrorNotice(ui.Window):
         ui.Window.withdraw(self)
     def __init__(self, text, **kwargs):
         # parent=None, title="Error!", wait=False, button=False,):
+        if not text:
+            log.error(_("ErrorNotice got no text?"))
+            return
         log.info("Making ErrorNotice: {}".format(text))
         # log.info("parent: {}".format(kwargs['parent']))
         # log.info("program: {}".format(program))
