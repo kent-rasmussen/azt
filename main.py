@@ -14150,7 +14150,12 @@ def internetconnectionproblemin(x):
     for p in problems:
         if p in x:
             return True
+def updated(x):
+    #put strings that indicate a repo was updated here
+    if not uptodate(x) and 'fatal: ' not in x:
+        return True
 def uptodate(x):
+    #These are repo already up to date messages
     u=['Everything up-to-date',
         "Already up to date."
         ]
