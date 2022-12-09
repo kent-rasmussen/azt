@@ -44,6 +44,13 @@ pause
 
 ECHO Installing Git 2.33.0.2
 ECHO You should be fine with all default options
+ECHO ATTENTION!!
+ECHO                     vvvvvvvvvvvvvvvvvvvvvvv
+ECHO Wait until you have finished installing Git before moving on with this script.
+ECHO                     ^^^^^^^^^^^^^^^^^^^^^^^
+ECHO     vvvvvvv
+ECHO You need it for the next step!
+ECHO     ^^^^^^^
 start Git-2.33.0.2-64-bit.exe
 
 pause
