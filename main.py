@@ -14150,6 +14150,12 @@ def internetconnectionproblemin(x):
     for p in problems:
         if p in x:
             return True
+def uptodate(x):
+    u=['Everything up-to-date',
+        "Already up to date."
+        ]
+    if [i for i in u if i in x if x]:
+            return True
 def stouttostr(x):
     # This fn is necessary (and problematic) because not all computers seem to
     # reply to subprocess.check_output with the same kind of data. I have even
@@ -14186,7 +14192,6 @@ def updateazt(**kwargs): #should only be parent, for errorroot
             o=e.output
         t=stouttostr(o)
         log.info("git output: {} ({})".format(t,type(t)))
-        if "Already up to date." in t:
             button=False
         elif internetconnectionproblemin(t):
             t=t+_('\n(Check your internet connection and try again)')
