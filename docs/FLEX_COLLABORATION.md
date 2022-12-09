@@ -20,7 +20,7 @@ So [A→Z+T] is trying to be something else. A tool to _store primary data_ in a
 
 ## Assumption #2: [A→Z+T] should interoperate seamlessly with [FLEx].
 
-Despite the fact that [FLEx] and [A→Z+T] are not trying to do the same thing, many people hope/expect them to read and write the same database seamlessly.  This isn't bad; they are both editing lexical data, and both claim to read and write [LIFT]. In fact, FLEx interoperability was one of my primary reasons for choosing [LIFT] as the [A→Z+T] database format. Whatever it's imperfections, it is _the best open and publicly available standard for storing and sharing lexical data._ But [A→Z+T] and [FLEx] don't use [LIFT] in the same way.
+Despite the fact that [FLEx] and [A→Z+T] are not trying to do the same thing, many people hope/expect them to read and write the same database seamlessly.  This isn't bad; they are both editing lexical data, and both claim to read and write [LIFT]. In fact, [FLEx] interoperability was one of my primary reasons for choosing [LIFT] as the [A→Z+T] database format. Whatever it's imperfections, it is _the best open and publicly available standard for storing and sharing lexical data._ But [A→Z+T] and [FLEx] don't use [LIFT] in the same way.
 
 [A→Z+T] stores data in examples, which contain the necessary segmental and pitch information, as well as the context where that surface form occurs. But these aren't the kind of examples one would normally put in a dictionary, so they look a bit weird in a [FLEx] database, and [FLEx] is not built to track them well (e.g., if you change a tone transcription, [A→Z+T] will know this, but [FLEx] may duplicate the example, rather than modifying it).
 
