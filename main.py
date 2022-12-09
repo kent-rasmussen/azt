@@ -13054,6 +13054,7 @@ class Repository(object):
         else:
             self.files=[]
     def do(self,args,**kwargs):
+        # log.info("do args: {}".format(args))
         cmd=[self.cmd,self.pwd] #-R
         if 'url' in kwargs and kwargs['url']:
             cmd.extend([str(kwargs['url'])])
@@ -13062,19 +13063,23 @@ class Repository(object):
         try:
             cmd.extend(self.usernameargs)
         except AttributeError as e:
-            log.info("usernameargs not found ({}); OK if initializing the repo."
-                    "\nYou may also get a 'fatal: not a git repository...' "
-                    "notice, if the repo isn't there yet. ".format(e))
+            if hasattr(self,'files'): #only complain if initialized
+                log.info("usernameargs not found ({})".format(e))
+                    # "; OK if initializing "
+                    # "the repo."
+                    # "\nYou may also get a 'fatal: not a git repository...' "
+                    # "notice, if the repo isn't there yet. "
         cmd.extend([a for a in args if a]) #don't give null args
-        # log.info("{} cmd args: {};{}".format(self.code,cmd))
+        # log.info("{} cmd args: {}".format(self.code,cmd))
         iwascalledby=callerfn()
         try:
             output=subprocess.check_output(cmd,
                                             stderr=subprocess.STDOUT,
                                             shell=False)
+            # log.info("Command output: \n{}; {}".format(output,type(output)))
         except subprocess.CalledProcessError as e:
             output=stouttostr(e.output)
-            log.info("Command error output: \n{}; {}".format(output,type(output)))
+            # log.info("Error output: \n{}; {}".format(output,type(output)))
             if me and (iwascalledby in ["pull"] and
                         'rejected' not in output and
                         self.code == 'git'):
@@ -13099,8 +13104,6 @@ class Repository(object):
             if iwascalledby in ["pull"]: #needed for logic and reporting
                 return output
             if iwascalledby not in ["getusernameargs","log"]:
-                # if not output:
-                #     output=e
                 txt=_("Call to {} ({}) gave error: \n{}").format(
                                                         self.repotypename,
                                                         ' '.join(
@@ -13133,15 +13136,6 @@ class Repository(object):
                 log.info(text)
             return
         t=stouttostr(output)
-        # try:
-        #     # if iwascalledby == 'getfiles':
-        #     #     log.info("Putting out this info in {} encoding".format(sys.stdout.encoding))
-        #     # if iwascalledby == 'getfiles':
-        #     #     log.info("Looks like that worked")
-        # except:
-        #     # if iwascalledby == 'getfiles':
-        #     #     log.info("Looks like that didn't work")
-        #     t=output
         #These give massive output!
         if t and iwascalledby not in ['diff','getfiles','commithashes']:
             log.info("{} {} {}: {}".format(self.repotypename,
