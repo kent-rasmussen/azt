@@ -14186,26 +14186,26 @@ def updateazt(**kwargs): #should only be parent, for errorroot
     def tryagain(event=None):
         updateazt(**kwargs)
     if 'git' in program:
-        program['repo'].share()
-        return
-        gitargs=[str(program['git']), "-C", str(program['aztdir']), "pull"]
-        try:
-            o=subprocess.check_output(gitargs,shell=False,
-                                        stderr=subprocess.STDOUT)
-            # log.info("git output: {}".format(o))
-        except subprocess.CalledProcessError as e:
-            o=e.output
-        t=stouttostr(o)
-        log.info("git output: {} ({})".format(t,type(t)))
-            button=False
-        elif internetconnectionproblemin(t):
+        r=program['repo'].share() #t is a dict of main and testing results
+        t='\n'.join([i for j in r.items() #each tuple
+                        for k in j #each tuple item
+                        if k #don't give empty items
+                        for i in [l for l in k.split('\n')# each tuple item line
+                                if 'hint: ' not in l][:10] #first 10 w/o hint
+                                ])
+        # log.info("git raw output: {} ({})".format(r,type(r)))
+        # log.info("git output: {} ({})".format(t,type(t)))
+        button=False
+        if internetconnectionproblemin(t):
             t=t+_('\n(Check your internet connection and try again)')
             button=(_("Try Again"),tryagain)
-        else:
-            t='\n'.join(t.split('\n')[:10]
-                        )+_('\n(Restart {} to use this update)').format(
-                                                            program['name'])
-            button=(_("Restart Now"),sysrestart) #This should be in task/chooser
+        elif not me:
+            if [i for i in r.values() if 'fatal: ' in i]: #any fatal problem
+                t+='\n'+_("(Problem! You will likely need help with this.)")
+            elif [i for i in r.values() if updated(i)]: #anything updated
+                t+='\n'+_("(Restart {} to use this update)").format(program['name'])
+        if [i for i in r.values() if not uptodate(i)]:
+            button=(_("Restart Now"),sysrestart)
         try:
             try:
                 title=_("Update (Git) output")
