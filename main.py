@@ -14193,6 +14193,9 @@ def updateazt(**kwargs): #should only be parent, for errorroot
                         for i in [l for l in k.split('\n')# each tuple item line
                                 if 'hint: ' not in l][:10] #first 10 w/o hint
                                 ])
+        else:
+            t=_("No results! Is there a {} source available?"
+                ).format(program['name'])
         # log.info("git raw output: {} ({})".format(r,type(r)))
         # log.info("git output: {} ({})".format(t,type(t)))
         button=False
