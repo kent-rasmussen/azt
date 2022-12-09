@@ -14187,7 +14187,8 @@ def updateazt(**kwargs): #should only be parent, for errorroot
         updateazt(**kwargs)
     if 'git' in program:
         r=program['repo'].share() #t is a dict of main and testing results
-        t='\n'.join([i for j in r.items() #each tuple
+        if r:
+            t='\n'.join([i for j in r.items() #each tuple
                         for k in j #each tuple item
                         if k #don't give empty items
                         for i in [l for l in k.split('\n')# each tuple item line
