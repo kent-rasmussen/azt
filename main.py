@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 """This file runs the actual GUI for lexical file manipulation/checking"""
-program={'name':'A→Z+T'}
-program['tkinter']=True
-program['production']=False #True for making screenshots (default theme)
-program['testing']=True #True eliminates Error screens and zipped logs, repos
-program['testing']=False
-program['demo']=True #sets me=False, production=True, testing=False
-program['demo']=False
-program['version']='0.9.8b' #This is a string...
-program['testversionname']='testing' #always have some real test branch here
-program['url']='https://github.com/kent-rasmussen/azt'
-program['Email']='kent_rasmussen@sil.org'
+program={'name':'A→Z+T',
+        'tkinter':True, #for some day
+        'production':False, #True for making screenshots (default theme)
+        'testing':False, #normal error screens and logs
+        'version':'0.9.8b', #This is a string...
+        'testversionname':'testing', #always have some real test branch here
+        'url':'https://github.com/kent-rasmussen/azt',
+        'Email':'kent_rasmussen@sil.org'
+        }
+# program['testing']=True # eliminates Error screens and zipped logs, repos
 exceptiononload=False
 import platform
 """Integers here are more fine grained than 'DEBUG'. I.e., 1-9 show you more
@@ -25,23 +24,20 @@ information than 'DEBUG' does):
 Other levels:'WARNING','ERROR','CRITICAL'
 """
 program['hostname']=platform.uname().node
-if program['hostname'] == 'karlap':
-    loglevel=6 #
-    if program['demo']:
-        me=False
-        program['production']=True #True for making screenshots (default theme)
-        program['testing']=False #True eliminates Error screens and zipped logs
-    else:
-        me=True
+import file
+if file.getfile(__file__).parent.parent.stem == 'raspy': # if program['hostname'] == 'karlap':
+    me=True
+    loglevel=6
 else:
-    loglevel='DEBUG'
     me=False
+    program['production']=True #True for making screenshots (default theme)
+    program['testing']=False #True eliminates Error screens and zipped logs
+    loglevel='DEBUG'
 import logsetup
 log=logsetup.getlog('root') #not ever a module
 logsetup.setlevel(loglevel)
 """My modules, which should log as above"""
 import lift
-import file
 # import profiles
 import setdefaults
 import xlp
