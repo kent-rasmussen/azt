@@ -709,27 +709,9 @@ class Menus(ui.Menu):
         self.cascade(self,_("Help"),'helpmenu')
         helpitems=[(_("About"), self.parent.helpabout)]
         if program['git']:
-            if not [i for d in program['repo'].remoteurls().values()
-                    for i in [program['repo'].addifis(d)]
-                    if i
-                    if not isinterneturl(i) and
-                    isinterneturl(program['repo'].getremotenameurl(i))
-                    ]:
+            if not program['repo'].localremotes():
                 helpitems+=[(_("Set up A→Z+T source on USB"),
                                 program['repo'].clonetoUSB)]
-            else:
-                log.info("No Set up USB menu: {}\n{}\n{}\n{}".format(
-                program['repo'].remoteurls().values(),
-                [i for d in program['repo'].remoteurls().values()
-                            for i in [d]],
-                [i for d in program['repo'].remoteurls().values()
-                            for i in [program['repo'].addifis(d)]
-                            if not isinterneturl(i)],
-                [i for d in program['repo'].remoteurls().values()
-                            for i in [program['repo'].addifis(d)]
-                            if i
-                            if not isinterneturl(i)]
-                ))
             helpitems+=[(_("Update A→Z+T"), updateazt)]
             if program['repo'].branchname() == 'main':
                 helpitems+=[(_("Try A→Z+T test version"),
@@ -13255,6 +13237,17 @@ class Repository(object):
                 self.remoteurls(remotes) #save
                 log.info("URL Settings now {}".format(self.remoteurls()))
                 return
+    def localremotes(self):
+        return [i for d in self.remoteurls().values()
+                for i in [self.addifis(d)]
+                if i
+                if not self.isinternet(i)]
+    def isinternet(self,remote):
+        log.info("self.remotenames: {}; remote: {}".format(self.remotenames,remote))
+        if remote in self.remotenames:
+            remote=self.getremotenameurl(remote)
+        if isinterneturl(remote):
+            return True
     def removeremote(self,remote):
         # This is one of two functions that touch self._remotes directly
         for k,v in self.remoteurls().items():
@@ -13469,15 +13462,14 @@ class GitReadOnly(Git):
         is doing it"""
         # this will mostly operate on all present sources (internet and USB),
         # reporting failures as appropriate. I hope users will be OK with that
-        remotes=self.findpresentremotes() #do once
         if me: #no one else should push changes
             method=Repository.push
-            remotes=[i for i in remotes #this should only push locally
-                    if not isinterneturl(i) and #url in settings
-                    isinterneturl(self.getremotenameurl(i))] # name in settings
+            remotes=self.localremotes() #don't publish to internet this way
         else:
             method=Repository.pull
+            #make sure we at least try the github remote:
             self.addremote(file.getfile(program['url']).with_suffix('.git'))
+            remotes=self.findpresentremotes()
         r={}
         for branch in ['main',program['testversionname']]:
             for remote in remotes:
