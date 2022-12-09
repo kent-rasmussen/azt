@@ -13,16 +13,6 @@ program={'name':'A→Z+T',
 # program['testing']=True # eliminates Error screens and zipped logs, repos
 exceptiononload=False
 import platform
-"""Integers here are more fine grained than 'DEBUG'. I.e., 1-9 show you more
-information than 'DEBUG' does):
-1. Information I probably never want to see.
-'DEBUG': Stuff that should probably not be shared with the user in the long
-    term (as it is distracting, too much, or hard to make use of), but
-    definitely should be put out all the time for now, in case of any errors.
-'INFO': information that will never likely be in the user's way, and may be
-    helpful.
-Other levels:'WARNING','ERROR','CRITICAL'
-"""
 program['hostname']=platform.uname().node
 import file
 if file.getfile(__file__).parent.parent.stem == 'raspy': # if program['hostname'] == 'karlap':
@@ -33,6 +23,16 @@ else:
     program['production']=True #True for making screenshots (default theme)
     program['testing']=False #True eliminates Error screens and zipped logs
     loglevel='DEBUG'
+"""Integers here are more fine grained than 'DEBUG'. I.e., 1-9 show you more
+information than 'DEBUG' does):
+1. Information I probably never want to see.
+'DEBUG': Stuff that should probably not be shared with the user in the long
+    term (as it is distracting, too much, or hard to make use of), but
+    definitely should be put out all the time for now, in case of any errors.
+'INFO': information that will never likely be in the user's way, and may be
+    helpful.
+Other levels:'WARNING','ERROR','CRITICAL'
+"""
 import logsetup
 log=logsetup.getlog('root') #not ever a module
 logsetup.setlevel(loglevel)
