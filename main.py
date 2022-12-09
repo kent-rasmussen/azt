@@ -13282,7 +13282,7 @@ class Repository(object):
         else:
             return getattr(self,'_remotes',{}).copy() #so I can iterate and change
     def addorigintoremotes(self):
-        self.addremote(self.origin())
+        self.addremote(self.origin)
     def branchname(self):
         repoheadfile='.'+self.code+'/'+self.branchnamefile
         log.info("Looking for {} branch name in {}".format(self.repotypename,
@@ -13301,6 +13301,7 @@ class Repository(object):
         #These are things that need an actual repository there
         self.bare=bool(self.isbare())
         log.info("Repo {} is bare: {}".format(self.url,self.bare))
+        self.origin=self.getorigin()
         self.getusernameargs()
         self.getfiles()
         self.ignorecheck()
@@ -13371,7 +13372,7 @@ class Mercurial(Repository):
     def isbare(self):
         # any return implies a working directory parent (not bare)
         return not self.do(['parent'])
-    def origin(self):
+    def getorigin(self):
         pass
     def __init__(self, url):
         self.code='hg'
@@ -13449,7 +13450,7 @@ class Git(Repository):
         r=self.do(args)
         # log.info(r)
         return r
-    def origin(self):
+    def getorigin(self):
         args=['remote', 'get-url', 'origin']
         r=self.do(args)
         if "error: No such remote 'origin'" not in r:
