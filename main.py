@@ -709,11 +709,16 @@ class Menus(ui.Menu):
         self.cascade(self,_("Help"),'helpmenu')
         helpitems=[(_("About"), self.parent.helpabout)]
         if program['git']:
-            if not program['repo'].findpresentremotes(firsttry=False):
+            if not [i for d in program['repo'].remoteurls().values()
+                    for i in [program['repo'].addifis(d)]
+                    if i
+                    if not isinterneturl(i) and
+                    isinterneturl(program['repo'].getremotenameurl(i))
+                    ]:
                 helpitems+=[(_("Set up A→Z+T source on USB"),
-                                program['repo'].addUSBremote)]
             helpitems+=[(_("Update A→Z+T (Internet)"), updateazt)]
             helpitems+=[(_("Update A→Z+T (USB)"), self.parent.updateaztlocal)]
+                                program['repo'].clonetoUSB)]
             if program['repo'].branchname() == 'main':
                 helpitems+=[(_("Try A→Z+T test version"),
                                 self.parent.trytestazt)]
@@ -4064,19 +4069,17 @@ class TaskDressing(object):
     def updateazt(self,event=None):
         updateazt()
     def reverttomainazt(self,event=None):
-        #This doesn't care which test version one is on
+        #This doesn't care which (test) version one is on
         r=program['repo'].reverttomain()
         log.info("reverttomainazt: {}".format(r))
-        if r:# == ("Switched to branch 'main'"
-                # "\nYour branch is up to date with 'origin/main'."):
+        if r:
             self.taskchooser.restart()
     def trytestazt(self,event=None):
         #This only goes to the test version at the top of this file
         self.updateazt()
         r=program['repo'].testversion()
         log.info("trytestazt: {}".format(r))
-        if r:# == "Your branch is up to date with 'origin/{}'.".format(
-                                                    # program['testversionname']):
+        if r:
             self.taskchooser.restart()
     def verifictioncode(self,**kwargs):
         check=kwargs.get('check',self.params.check())
@@ -12945,6 +12948,8 @@ class Repository(object):
             # log.info(r)
         return r #ok if we don't track results for each
     def isrelated(self,directory):
+        if directory in self.remotenames:
+            return True #This should always be
         #Git doesn't seem to care if repos are related, but I do...
         thatrepohashes=self.commithashes(directory)
         # log.info(thatrepohashes)
@@ -12999,8 +13004,8 @@ class Repository(object):
         # the related test will remove it if there AND NOT related.
         # Otherwise, we leave it for later, in case it just isn't there now.
         l.extend([d for d in remotesinsettings if self.addifis(d)])
-        if self.origin:
-            l.extend([self.origin])
+        if self.remotenames:
+            l.extend(self.remotenames)
         if l:
             # log.info("returning l:{}".format(l))
             return l
@@ -13101,7 +13106,7 @@ class Repository(object):
                     assert 'ot a git repository' not in output
                     assert "error: unknown option `cached'" not in output
                     assert "does not have any commits yet" not in output
-                    assert "error: No such remote 'origin'" not in output
+                    assert "error: No such remote " not in output
                     ErrorNotice(txt)
                 except (RuntimeError,AssertionError):
                     log.info(txt)
@@ -13262,8 +13267,6 @@ class Repository(object):
             log.info("You passed me a remotes value that isn't a dict?")
         else:
             return getattr(self,'_remotes',{}).copy() #so I can iterate and change
-    def addorigintoremotes(self):
-        self.addremote(self.origin)
     def branchname(self):
         repoheadfile='.'+self.code+'/'+self.branchnamefile
         log.info("Looking for {} branch name in {}".format(self.repotypename,
@@ -13282,7 +13285,7 @@ class Repository(object):
         #These are things that need an actual repository there
         self.bare=bool(self.isbare())
         log.info("Repo {} is bare: {}".format(self.url,self.bare))
-        self.origin=self.getorigin()
+        self.remotenames=self.getremotenames()
         self.getusernameargs()
         self.getfiles()
         self.ignorecheck()
@@ -13353,7 +13356,7 @@ class Mercurial(Repository):
     def isbare(self):
         # any return implies a working directory parent (not bare)
         return not self.do(['parent'])
-    def getorigin(self):
+    def getremotenames(self):
         pass
     def __init__(self, url):
         self.code='hg'
@@ -13435,10 +13438,10 @@ class Git(Repository):
         args=['remote']
         r=self.do(args)
         return r
-    def getorigin(self):
-        args=['remote', 'get-url', 'origin']
+    def getremotenameurl(self,remotename):
+        args=['remote', 'get-url', remotename]
         r=self.do(args)
-        if "error: No such remote 'origin'" not in r:
+        if "error: No such remote " not in r:
             return r
     def __init__(self, url):
         self.code='git'
@@ -13453,7 +13456,6 @@ class Git(Repository):
         self.argstogetuseremail=['config', '--get', 'user.email']
         self.bareclonearg="--bare"
         self.nonbareclonearg=""
-        self.remotenames=self.getremotenames()
         super(Git, self).__init__(url)
 class GitReadOnly(Git):
     def share(self,event=None):
@@ -13464,7 +13466,9 @@ class GitReadOnly(Git):
         remotes=self.findpresentremotes() #do once
         if me: #no one else should push changes
             method=Repository.push
-            remotes=set(remotes)-set([self.origin]) #Don't push there
+            remotes=[i for i in remotes #this should only push locally
+                    if not isinterneturl(i) and #url in settings
+                    isinterneturl(self.getremotenameurl(i))] # name in settings
         else:
             method=Repository.pull
             self.addremote(file.getfile(program['url']).with_suffix('.git'))
@@ -14145,6 +14149,13 @@ def internetconnectionproblemin(x):
             ]
     for p in problems:
         if p in x:
+            return True
+def isinterneturl(x):
+    u=['ssh:',
+        "https:",
+        "http:"
+        ]
+    if [i for i in u if i in x if x]:
             return True
 def updated(x):
     #put strings that indicate a repo was updated here
