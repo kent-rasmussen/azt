@@ -12994,41 +12994,23 @@ class Repository(object):
                 return d.joinpath(self.dirname).with_suffix('.'+self.code)
     def findpresentremotes(self,remote=None,firsttry=True):
         l=[]
-        # Add start 'new project from USB' to change database options.
-        # If settings has anything,
-        #     - act on plugged in
-        #     - or:
-        #         - remind to plug in: 'Retry'
-        #         - offer to clone: 'create USB backup'
-        # Otherwise, say "AZT can't find your language data backup"
-        #     - 'Continue without backup'
-        #     - 'create USB backup'
-        #
-        # addorigintoremotes should only have to happen once, but when?
-        # it should happen after the settings object is there, so it isn't
-        # overwritten by the settings file. So on init here is probably
-        # too early. For now, on each is inefficient, but OK.
-        self.addorigintoremotes()
         remotesinsettings=self.remoteurls().values()
-        for d in remotesinsettings:
-            # log.info("adding {} to {}".format(d,l))
-            l.extend(self.addifis(d)) #add to list only what is there now AND related
-            # the related test will remove it if there AND NOT related.
-            # Otherwise, we leave it for later, in case it just isn't there now.
+        #add to list only what is there now AND related
+        # the related test will remove it if there AND NOT related.
+        # Otherwise, we leave it for later, in case it just isn't there now.
+        l.extend([d for d in remotesinsettings if self.addifis(d)])
+        if self.origin:
+            l.extend([self.origin])
         if l:
+            # log.info("returning l:{}".format(l))
             return l
-        # If there are not remotes both in settings and present, say so, and
-        # offer the user options to address that (plug in, clone, ignore)
+        # If we're still here, offer the user one chance to plug in a drive.
         # but just do this once; don't annoy the user.
-        #pull 'me' once this is documented and reasonable to expect of users
         elif self.code == 'git' and firsttry: # and me:
-            # if repo URLs either aren't in the config or aren't connected,
-            # only ask for them once, in case the drive got unplugged.
             # Show this only once per run, if a user doesn't have settings
             if remotesinsettings or not self.directorydontask:
                 text=_("{} can't find your {} {} backup. "
                 "\nIf you have a USB drive for this, insert it now."
-                # "\nIf not, plug in a USB drive, and I will copy your data there."
                 "").format(program['name'], self.repotypename, self.description)
                 button=(_("Use attached USB"),self.clonetoUSB)
                 ErrorNotice(text,
@@ -13039,7 +13021,7 @@ class Repository(object):
                 #At this point, the user will have cloned or not already.
                 if self.remoteurls().values(): #this will have new clone value
                     return self.findpresentremotes(firsttry=False)
-                else: #if still nothing, just give up and don't ask again.
+                else: #if still nothing, don't ask again on this run.
                     self.directorydontask=True
     def root(self):
         args=["root"]
