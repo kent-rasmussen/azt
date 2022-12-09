@@ -14186,11 +14186,21 @@ def stouttostr(x):
                         ).format(sys.stdout.encoding, e))
             log.error(x)
     return x #not sure if this is a good idea, but this should probably raise...
-def updateazt(**kwargs): #should only be parent, for errorroot
+def updateazt(event=None,**kwargs): #should only be parent, for errorroot
     def tryagain(event=None):
         updateazt(**kwargs)
+    log.info(_("Updating {}").format(program['name']))
     if 'git' in program:
+        log.info("parent title: {}".format(kwargs['parent'].title()))
+        parent=kwargs.get('parent')
+        if not parent or not parent.winfo_exists(): #take kwarg if there
+            if 'chooser' in program:
+                kwargs['parent']=program['chooser'].mainwindowis
+            else:
+                kwargs['parent']=program['root']
+        w=ui.Wait(msg=_("Updating {}").format(program['name']), **kwargs)
         r=program['repo'].share() #t is a dict of main and testing results
+        w.close()
         if r:
             t='\n'.join([i for j in r.items() #each tuple
                         for k in j #each tuple item
@@ -14269,8 +14279,8 @@ def main():
     # root.winfo_class("azt")
     # log.info(root.winfo_class())
     """Translation starts here:"""
-    myapp = TaskChooser(root) #TaskChooser MainApplication
-    myapp.mainloop()
+    program['chooser'] = TaskChooser(root) #TaskChooser MainApplication
+    program['chooser'].mainloop()
     sysshutdown()
 def mainproblem():
     try:
