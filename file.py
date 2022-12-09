@@ -94,6 +94,8 @@ def gettransformsdir():
 def exists(file):
     if file and os.path.exists(file):
         return True
+    # else:
+    #     log.info("file {} doesn't exist!".format(file))
 def remove(file):
     if exists(file):
         os.remove(file)
