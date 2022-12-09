@@ -13074,7 +13074,31 @@ class Repository(object):
                                             shell=False)
         except subprocess.CalledProcessError as e:
             output=stouttostr(e.output)
-            if iwascalledby not in ["getusernameargs","pull","log"]:
+            log.info("Command error output: \n{}; {}".format(output,type(output)))
+            if me and (iwascalledby in ["pull"] and
+                        'rejected' not in output and
+                        self.code == 'git'):
+                log.info(_("Call to {} ({}) gave error: \n{}\nMerging.").format(
+                                                        self.repotypename,
+                                                        ' '.join(args),
+                                                        output))
+                if output and 'fatal' not in output:
+                    r=self.mergetool(**kwargs)
+                    if r and 'fatal' not in r:
+                        self.pull(**kwargs)
+            if "The current branch master has no upstream branch." in output:
+                log.info("iwascalledby {}, but don't have upstream."
+                            "".format(iwascalledby))
+                if iwascalledby not in ["push"]:
+                    try:
+                        assert self.code == 'git' #don't give hg notices here
+                        ErrorNotice(output)
+                    except (RuntimeError,AssertionError):
+                        log.info(output)
+                return output
+            if iwascalledby in ["pull"]: #needed for logic and reporting
+                return output
+            if iwascalledby not in ["getusernameargs","log"]:
                 # if not output:
                 #     output=e
                 txt=_("Call to {} ({}) gave error: \n{}").format(
@@ -13097,25 +13121,6 @@ class Repository(object):
                 except (RuntimeError,AssertionError):
                     log.info(txt)
                     return output
-            if me and iwascalledby in ["pull"] and self.code == 'git':
-                log.info(_("Call to {} ({}) gave error: \n{}\nMerging.").format(
-                                                        self.repotypename,
-                                                        ' '.join(args),
-                                                        output))
-                if output and 'fatal' not in output:
-                    r=self.mergetool(**kwargs)
-                    if r and 'fatal' not in r:
-                        self.pull(**kwargs)
-            if "The current branch master has no upstream branch." in output:
-                log.info("iwascalledby {}, but don't have upstream."
-                            "".format(iwascalledby))
-                if iwascalledby not in ["push"]:
-                    try:
-                        assert self.code == 'git' #don't give hg notices here
-                        ErrorNotice(output)
-                    except (RuntimeError,AssertionError):
-                        log.info(output)
-                return output
             return
         except Exception as e:
             text=_("Call to {} ({}) failed: {}").format(
