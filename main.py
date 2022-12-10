@@ -709,7 +709,7 @@ class Menus(ui.Menu):
                 helpitems+=[(_("Set up A→Z+T source on USB"),
                                 program['repo'].clonetoUSB)]
             helpitems+=[(_("Update A→Z+T"), updateazt)]
-            if program['repo'].branchname() == 'main':
+            if program['repo'].branch == 'main':
                 helpitems+=[(_("Try A→Z+T test version"),
                                 self.parent.trytestazt)]
             else:
@@ -12737,6 +12737,7 @@ class Repository(object):
         args=['checkout',branchname]
         r=self.do(args)
         log.info(r)
+        self.branchname() #because this changes
         # if r:
         #     r=self.pull()
         #     log.info(r)
@@ -12889,7 +12890,7 @@ class Repository(object):
                     "giving up").format(self.repotypename))
             return
         if not branch:
-            branch=self.branchname()
+            branch=self.branch
         for remote in remotes:
             args=["pull",remote,branch+':'+branch]
             r=self.do(args)
@@ -12903,7 +12904,7 @@ class Repository(object):
                     "giving up").format(self.repotypename))
             return
         if not branch:
-            branch=self.branchname()
+            branch=self.branch
         for remote in remotes:
             args=["push"]
             if setupstream:
@@ -12913,7 +12914,7 @@ class Repository(object):
             if r and "The current branch master has no upstream branch." in r:
                 r=self.push(remotes=[remote],
                             #always keep branch names aligned.
-                            branch=self.branchname(),
+                            branch=self.branch,
                             setupstream=True)
             # log.info(r)
         return r #ok if we don't track results for each
@@ -13263,7 +13264,7 @@ class Repository(object):
                 if c:
                     self.branch=c.split('/')[-1].strip()
                     log.info("Found branch: {}".format(self.branch))
-            return self.branch
+            # return self.branch
         except Exception as e:
             log.error(_("Problem finding branch name: {}").format(e))
     def setdescription(self):
@@ -13277,10 +13278,11 @@ class Repository(object):
         self.getusernameargs()
         self.getfiles()
         self.ignorecheck()
+        self.branchname()
         try:
             log.info("{} repository object initialized on branch {} at {} "
                     "for {}, with {} files."
-                    "".format(self.repotypename, self.branchname(), self.url,
+                    "".format(self.repotypename, self.branch, self.url,
                         self.description, len(self.files)))
         except FileNotFoundError:
             log.info("{} repository object initialized at {} "
@@ -13473,7 +13475,7 @@ class GitReadOnly(Git):
             return
         branches = ['main',program['testversionname']]
         fns = [self.testversion, self.reverttomain]
-        if self.branchname() != 'main':
+        if self.branch != 'main':
             branches.reverse()
             fns.reverse()
         try:
@@ -13488,14 +13490,14 @@ class GitReadOnly(Git):
     def reverttomain(self,event=None):
         r=self.checkout('main')
         log.info(r)
-        if self.branchname() == 'main':
+        if self.branch == 'main':
             return True
         else:
             ErrorNotice(r)
     def testversion(self,event=None):
         r=self.checkout(program['testversionname'])
         log.info(r)
-        if self.branchname() == program['testversionname']:
+        if self.branch == program['testversionname']:
             return True
         else:
             ErrorNotice(r)
