@@ -13454,6 +13454,8 @@ class Git(Repository):
         self.nonbareclonearg=""
         super(Git, self).__init__(url)
 class GitReadOnly(Git):
+    def exewarning(self):
+        pass #don't worry about it for this one
     def share(self,event=None):
         """This method should only ever pull or push, depending on who
         is doing it"""
