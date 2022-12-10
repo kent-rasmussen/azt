@@ -13155,7 +13155,7 @@ class Repository(object):
                  log.info(_("No {0} repo, nor {0} executable; moving on."
                             ).format(self.repotypename))
                  return
-        w=ui.Window(program['root'],title=title)
+        w=ui.Window(program.get('root',ui.Root()),title=title)
         w.withdraw()
         if self.repotypename == "Git":
              text+='\n'+_("(Git is used by A→Z+T to track changes in your data)")
