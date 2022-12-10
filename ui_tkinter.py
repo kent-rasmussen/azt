@@ -374,6 +374,8 @@ class Theme(object):
             if kwarg in kwargs:
                 setattr(self,kwarg,kwargs[kwarg])
     def __init__(self,program=None,name=None,**kwargs):
+        # I should allow a default theme here, so I can display GUI without
+        # any of this already done
         self.program=program
         self.name=name
         self.setscale()
