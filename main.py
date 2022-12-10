@@ -1253,7 +1253,8 @@ class Settings(object):
                     log.info(_("Found {} Repository!"
                                 ).format(repo[r].repotypename))
                     self.repo[r]=repo[r]
-                elif r == 'git': #don't worry about hg, if not there already
+                elif r == 'git' and 'git' in program and program['git']:
+                    #don't worry about hg, if not there already
                     log.info(_("No Git data repository found; creating."))
                     repo[r].init()
                     repo[r].add(self.liftfilename)
