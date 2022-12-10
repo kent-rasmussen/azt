@@ -13018,6 +13018,8 @@ class Repository(object):
             self.files=[]
     def do(self,args,**kwargs):
         # log.info("do args: {}".format(args))
+        if not hasattr(self,'branch'):
+            return #don't try to do things without an actual repo
         cmd=[self.cmd,self.pwd] #-R
         if 'url' in kwargs and kwargs['url']:
             cmd.extend([str(kwargs['url'])])
