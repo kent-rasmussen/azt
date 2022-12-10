@@ -726,6 +726,7 @@ class Root(Exitable,tkinter.Tk):
         self.renderer=Renderer()
         Exitable.__init__(self)
         UI.__init__(self)
+        self.withdraw() #this is almost always correct
 """These have parent (Childof), but no grid"""
 class Toplevel(Childof,Exitable,tkinter.Toplevel,UI): #NoParent
     """This and all Childof classes should have a parent, to inherit a common
