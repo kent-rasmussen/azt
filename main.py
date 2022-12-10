@@ -13256,13 +13256,16 @@ class Repository(object):
         repoheadfile='.'+self.code+'/'+self.branchnamefile
         log.info("Looking for {} branch name in {}".format(self.repotypename,
                                                             repoheadfile))
-        with file.getdiredurl(self.url,repoheadfile).open() as f:
-            c=f.read()
-            # log.info("Found repo head info {}".format(c))
-            if c:
-                self.branch=c.split('/')[-1].strip()
-                log.info("Found branch: {}".format(self.branch))
-        return self.branch
+        try:
+            with file.getdiredurl(self.url,repoheadfile).open() as f:
+                c=f.read()
+                # log.info("Found repo head info {}".format(c))
+                if c:
+                    self.branch=c.split('/')[-1].strip()
+                    log.info("Found branch: {}".format(self.branch))
+            return self.branch
+        except Exception as e:
+            log.error(_("Problem finding branch name: {}").format(e))
     def setdescription(self):
         self.description=_("language data")
     def populate(self):
