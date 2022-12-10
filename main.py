@@ -13145,10 +13145,14 @@ class Repository(object):
         return file.exists(f)
     def exewarning(self):
         title=_("Warning: {} Executable Missing!".format(self.repotypename))
-        text=_("You seem to be working on a repository of data ({0}), "
-                "\nwhich may be tracked by {1}, "
-                "\nbut you don't seem to have the {1} executable installed in "
-                "your computer's PATH.").format(self.url,self.repotypename)
+        text=_("You "
+                # "seem to be working on a repository of data ({0}), "
+                # "\nwhich may be tracked by {1}, "
+                # "\nbut "
+                "you don't seem to have the {} executable installed in "
+                "your computer's PATH.").format(
+                                                # self.url,
+                                                self.repotypename)
         if self.repotypename == "Mercurial":
              text+='\n'+_("(Mercurial is used by Chorus and languagedepot.org)")
              if not self.exists():
@@ -13158,7 +13162,9 @@ class Repository(object):
         w=ui.Window(program.get('root',ui.Root()),title=title)
         w.withdraw()
         if self.repotypename == "Git":
-             text+='\n'+_("(Git is used by A→Z+T to track changes in your data)")
+             text+='\n'+_("(Git is used by {0} to track changes in your "
+                        "data, and to keep {0} up to date)"
+                        ).format(program['name'])
         clickable=_("Please see {} for installation recommendations"
                     ).format(self.installpage)
         l=ui.Label(w.frame, text=text, column=0, row=0)
