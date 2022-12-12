@@ -56,7 +56,6 @@ class Theme(object):
     """docstring for Theme."""
     def setimages(self):
         # Program icon(s) (First should be transparent!)
-        log.info("Maybe scaling images; please wait...") #threading?
         self.scalings=[]
         try:
             scale=self.program['scale']
@@ -65,6 +64,7 @@ class Theme(object):
         self.photo={}
         #do these once:
         if scale-1: #x != y: #should be the same as scale != 1
+            log.info("Maybe scaling images; please wait...")
             scaledalreadydir='images/scaled/'+str(scale)+'/'
             file.makedir(file.fullpathname(scaledalreadydir)) #in case not there
         def mkimg(name,filename):
@@ -77,6 +77,11 @@ class Theme(object):
                 # log.info("Dirs: {}?={}".format(scaledalready,relurl))
                 if scaledalready != relurl: # should scale if off by >2% either way
                     # log.info("Scaling {}".format(relurl)) #Just do this once!
+                    try:
+                        assert self.fakeroot.winfo_exists()
+                    except:
+                        self.fakeroot=Root(program=self.program.copy(),noimagescaling=True)
+                        self.fakeroot.w=Wait(parent=self.fakeroot,msg="Scaling Images (Just this once)")
                     if not self.scalings:
                         maxscaled=100
                     else:
@@ -167,6 +172,11 @@ class Theme(object):
                 log.info("Image {} ({}) not compiled ({})".format(
                             name,filename,e
                             ))
+        try:
+            self.fakeroot.destroy()
+            self.fakeroot.w.close()
+        except:
+            pass
     def settheme(self):
         if not self.name:
             defaulttheme='greygreen'
@@ -382,14 +392,9 @@ class Theme(object):
         self.setthemes()
         if 'noimagescaling' in kwargs and kwargs['noimagescaling']:
             self.program['scale']=1
-            self.setimages()
         else:
             self.setscale()
-            r=Root(program=program.copy(),noimagescaling=True)
-            w=Wait(parent=r,msg="Scaling Images (Just this once)")
-            self.setimages()
-            r.destroy()
-            w.close()
+        self.setimages()
         self.setfonts()
         self.settheme()
         log.info("Using {} theme ({})".format(self.name,self.program))
