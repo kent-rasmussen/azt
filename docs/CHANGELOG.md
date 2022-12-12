@@ -2,7 +2,7 @@
 
 #UW priorities:
 - use of pictures (how to use open clipart?)
-- sortingby click and drag
+- sorting by click and drag
 - check recording and transcription tasks are working normally
 - ?other comparative wordlists
 
