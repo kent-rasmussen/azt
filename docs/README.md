@@ -1,8 +1,8 @@
 <a href="https://gitlocalize.com/repo/7965/fr?utm_source=badge"> <img src="https://gitlocalize.com/repo/7965/fr/badge.svg" /> </a>
 <a href="fr/README.md">Français</a>
-## Simplest install on [MS Windows](SIMPLEINSTALL.md) or [Linux](SIMPLEINSTALL_LINUX.md)
-## If you want consultant help, see also [this page](HELP_PREREQUISITES.md)
-## You can now [create a Demo database](DEMOS.md) to try out [A→Z+T].
+### Simplest install on [MS Windows](SIMPLEINSTALL.md) or [Linux](SIMPLEINSTALL_LINUX.md)
+### If you want consultant help, see also [this page](HELP_PREREQUISITES.md)
+### You can now [create a Demo database](DEMOS.md) to try out [A→Z+T].
 
 # A→Z+T ![CV](../images/AZT%20stacks6_icon.png "AZT")
 
@@ -12,7 +12,7 @@ You can collect a wordlist from scratch in [A→Z+T], if you don't already have 
 
 [A→Z+T] work results in a lexical database which is checked, backed up with sound files, and stored as [LIFT], an open XML format designed for sharing lexical data. So this database should be forward compatible with other tools that can read [LIFT], e.g., [WeSay] and [FLEx].
 
-## If you currently use FLEx, and want to understand what A→Z+T is and decide if you should use it, please see [this page](OWL_GUIDE.md).
+### If you currently use FLEx, and want to understand what [A→Z+T] is and decide if you should use it, please see [this page](OWL_GUIDE.md).
 
 <!-- It is designed to *supplement* (not replace) formal training, on the one hand, and *facilitate* a particular kind of language development on the other, so it may not do what you want —it certainly does not do everything. If you want to get as many people involved in the development of their own language as possible, in a manner that results in a checked lexical database backed up by sound files, then this tool is for you. -->
 ## Why
