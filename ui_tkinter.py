@@ -373,20 +373,24 @@ class Theme(object):
         for kwarg in ['ipady','ipadx','pady','padx']:
             if kwarg in kwargs:
                 setattr(self,kwarg,kwargs[kwarg])
-    def __init__(self,program=None,name=None,**kwargs):
+    def __init__(self,program={},name=None,**kwargs):
         # I should allow a default theme here, so I can display GUI without
         # any of this already done
         self.program=program
         self.name=name
-        self.setscale()
         self.setpads(**kwargs)
         self.setthemes()
+        if 'noimagescaling' in kwargs and kwargs['noimagescaling']:
+            self.program['scale']=1
+            self.setimages()
+        else:
+            self.setscale()
+            r=Root(program=program.copy(),noimagescaling=True)
+            w=Wait(parent=r,msg="Scaling Images (Just this once)")
+            self.setimages()
+            r.destroy()
+            w.close()
         self.setfonts()
-        # w=tkinter.Tk()
-        # l=tkinter.Label(parent=w,text="Scaling Images")
-        # l.grid(row=0,column=0)
-        self.setimages()
-        # w.destroy()
         self.settheme()
         log.info("Using {} theme ({})".format(self.name,self.program))
         super(Theme, self).__init__()
