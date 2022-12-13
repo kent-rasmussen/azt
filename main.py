@@ -11299,6 +11299,9 @@ class ToneGroupButtonFrame(ui.Frame):
                     column=1, row=0, sticky="ew",
                     **self.buttonkwargs()
                     )
+        if hasattr(self,'_illustration'):
+            b['image']=self._illustration
+            b['compound']="left"
     def playbutton(self):
         self.check.pyaudiocheck()
         self.check.soundsettingscheck()
@@ -11309,6 +11312,9 @@ class ToneGroupButtonFrame(ui.Frame):
                     column=1, row=0,
                     sticky="nesw",
                     **self.buttonkwargs())
+        if hasattr(self,'_illustration'):
+            b['image']=self._illustration
+            b['compound']="left"
         bttext=_("Click to hear this utterance")
         if program['praat']:
             bttext+='; '+_("right click to open in praat")
