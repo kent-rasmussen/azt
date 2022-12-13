@@ -3023,7 +3023,7 @@ if __name__ == '__main__':
     filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/cky/Mushere Exported AZT file.lift"
     # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift_backupBeforeLx2LcConversion"
-    filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift"
+    # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift"
     # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL_test.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/ETON_propre/Eton.lift"
@@ -3032,13 +3032,26 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/Eton.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
     lift=Lift(filename)
     # lift.convertlxtolc()
     # lift.convertdefntogloss()
     # lift.convertglosstocitation('ha',keep=True)
     # lift.write('userlogs/testwrite.lift')
     # lift.write('userlogs/SILCAWL_test.lift')
+    for s in lift.senseids:
+        i=lift.get('illustration', #showurl=True,
+                                senseid=s,
+                                ).get('href')
+        try:
+            i=i[0]
+        except Exception as e:
+            if 'list index out of range' in str(e):
+                continue
+            log.info("result: {}".format(e))
+        if i:
+            print(i)
+    log.info("done.")
     quit()
     # prettyprint(lift.nodes)
     senseids=[
