@@ -49,7 +49,8 @@ def getimagesdir(dirname):
         dir=pathlib.Path.joinpath(dirname,d)
         if getfilesofdirectory(dir):
             return dir
-    d=diropts[0] #if nothing anywhere, just go with this.
+    #if nothing anywhere, just go with first.
+    d=pathlib.Path.joinpath(dirname,diropts[0])
     if not os.path.exists(d):
         os.mkdir(d)
     return d
