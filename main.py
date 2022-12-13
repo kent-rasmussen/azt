@@ -1700,6 +1700,10 @@ class Settings(object):
                 #     t.join()
                 # self.repo[r].add(f)
             for ext in ['png','jpg','gif']:
+                # log.info("Image Directory: {}".format(self.imagesdir))
+                # log.info("Found image files: {}".format(nn([i for i in
+                # file.getfilesofdirectory(self.imagesdir,
+                #                         '*.'+ext)], oneperline=True)))
                 i=set([file.getreldirposix(self.repo[r].url,i)
                         for i in file.getfilesofdirectory(self.imagesdir,
                                                 '*.'+ext)]
