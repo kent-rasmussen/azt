@@ -1043,8 +1043,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                 ]
                 self.nfieldswsoundfiles[lang][field]=len(fieldswsoundfiles[lang]
                                                                         [field])
-                log.info("Found {} fieldswsoundfiles for {}".format(
-                            self.nfieldswsoundfiles[lang],lang))
+                log.info("Found {} fieldswsoundfiles for {}/{}".format(
+                            self.nfieldswsoundfiles[lang][field],field,lang))
         # log.info("Found {} fieldswsoundfiles".format(self.nfieldswsoundfiles))
     def getsenseswglosslangdata(self):
         #do each of these, then cull in the second one
