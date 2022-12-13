@@ -11302,6 +11302,8 @@ class ToneGroupButtonFrame(ui.Frame):
         self._text=framed.formatted(showtonegroup=self.kwargs['showtonegroup'])
         if hasattr(framed,'illustration'):
             self._illustration=framed.illustration
+        else:
+            self._illustration=None
         return 1
     def makebuttons(self):
         if self.kwargs['label']:
