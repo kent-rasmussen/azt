@@ -201,7 +201,10 @@ def getdirectory(title=None,home=None):
         return f
 def getfilesofdirectory(dir,regex='*'):
     # return pathlib.Path(dir).iterdir()
-    return pathlib.Path(dir).glob(regex)
+    l=[]
+    for i in pathlib.Path(dir).glob(regex):
+        l.extend([i])
+    return l # we don't want a generator here
 def getmediadirectory(mediatype=None):
     log.info("Looking for media directory")
     if platform.system() == 'Linux':
