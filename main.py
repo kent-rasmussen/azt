@@ -6544,6 +6544,9 @@ class Sort(object):
                                 column=0,row=0, sticky="w",
                                 pady=scaledpady
                                 )
+        if hasattr(framed,'illustration'):
+            self.sortitem['image']=framed.illustration
+            self.sortitem['compound']="left"
         self.sortitem.wrap()
         self.runwindow.waitdone()
         for b in self.buttonframe.groupbuttonlist:
@@ -10556,6 +10559,25 @@ class FramedData(object):
             return g
     def applynoframe(self):
         self.framed=self.forms
+    def getillustration(self):
+        if self.senseid:
+            i=self.parent.db.get('illustration',
+                                    senseid=self.senseid,
+                                    ).get('href')
+            log.info("Illustration: {}".format(i))
+            if i and i[0]:
+                log.info("Found link to illustration {}".format(i[0]))
+                try:
+                    f=file.getdiredrelURLposix(self.imagesdir,i[0])
+                    x=10
+                    y=30
+                    self.illustration=ui.image(file=f).zoom(x,x).subsample(y,y)
+                    tkinter.PhotoImage(
+                                        file = file.fullpathname(relurl)
+                                        )
+                    log.info("Found illustration {}".format(self.illustration))
+                except Exception as e:
+                    log.error("Exception making image: {}".format(e))
     def __init__(self, parent, **kwargs): #source,
         """Evaluate what is actually needed"""
         super(FramedData, self).__init__()
@@ -10568,6 +10590,7 @@ class FramedData(object):
             return
         # self.cvt=self.parent.taskchooser.params.cvt()
         self.updatelangs()
+        self.getillustration()
         self.forms=DictbyLang()
 class FramedDataSense(FramedData):
     """This populates an object with attributes to format data for display,
@@ -11277,6 +11300,8 @@ class ToneGroupButtonFrame(ui.Frame):
         else:
             self._filenameURL=None
         self._text=framed.formatted(showtonegroup=self.kwargs['showtonegroup'])
+        if hasattr(framed,'illustration'):
+            self._illustration=framed.illustration
         return 1
     def makebuttons(self):
         if self.kwargs['label']:
