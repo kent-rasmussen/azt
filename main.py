@@ -10568,13 +10568,11 @@ class FramedData(object):
             if i and i[0]:
                 log.info("Found link to illustration {}".format(i[0]))
                 try:
-                    f=file.getdiredrelURLposix(self.imagesdir,i[0])
-                    x=10
-                    y=30
-                    self.illustration=ui.image(file=f).zoom(x,x).subsample(y,y)
-                    tkinter.PhotoImage(
-                                        file = file.fullpathname(relurl)
-                                        )
+                    img=ui.Image(file.getdiredrelURLposix(self.imagesdir,i[0]))
+                    # will probably want the size adjustable
+                    # maybe resolution, too (take from theme?)
+                    img.scale(program['scale'],pixels=150,resolution=10)
+                    self.illustration=img.scaled
                     log.info("Found illustration {}".format(self.illustration))
                 except Exception as e:
                     log.error("Exception making image: {}".format(e))
