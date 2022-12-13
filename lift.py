@@ -2049,6 +2049,7 @@ class LiftURL():
             elif parents.index(target) < len(parents)-1:
                 # log.info("level {} not in {}; checking the next one...".format(
                 #                                             target,self.level))
+                continue
             else:
                 log.error("last level {} (of {}) not in {}; this is a problem!"
                             "".format(target,parents,self.level))
