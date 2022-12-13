@@ -6784,20 +6784,24 @@ class Sort(object):
             ipady=15*program['scale']
         if label==True:
             b=ui.Label(parent, text=text,
+                    column=column, row=row,
+                    sticky="ew",
+                    ipady=ipady,
                     **kwargs
-                    ).grid(column=column, row=row,
-                            sticky="ew",
-                            ipady=ipady)
+                    )
         else:
             bf=ui.Frame(parent, pady='0') #This will be killed by removesenseidfromgroup
             bf.grid(column=column, row=row, sticky='ew')
             b=ui.Button(bf, text=text, pady='0',
                     cmd=notok,
+                    column=column, row=0,
+                    sticky="ew",
+                    ipady=ipady, #Inside the buttons...
                     **kwargs
-                    ).grid(column=column, row=0,
-                            sticky="ew",
-                            ipady=ipady #Inside the buttons...
-                            )
+                    )
+        if hasattr(framed,'illustration'):
+            b['image']=framed.illustration
+            b['compound']="left"
     def join(self):
         log.info("Running join!")
         """This window shows up after sorting, or maybe after verification, to
