@@ -4225,6 +4225,7 @@ class TaskChooser(TaskDressing,ui.Window):
         """This function allows the user to select from any of tasks whose
         prerequisites are minimally satisfied."""
         # if self.reports:
+        self.withdraw()
         try:
                 self.frame.status.bigbutton.destroy()
         except AttributeError:
@@ -4280,6 +4281,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if self.showreports:
             self.showreports=False #just do this once each button click
             self.showingreports=True
+        self.deiconify()
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
         satisfied task"""
