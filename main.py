@@ -1664,8 +1664,8 @@ class Settings(object):
             present=set(self.repo[r].files)
             log.info("{} currently has {} files".format(r,len(present)))
             for f in maindirfiles:
-                log.info("{}".format([file.getreldirposix(self.repo[r].url,f)]))
-                log.info("working on {}".format(file.getreldirposix(self.repo[r].url,f)))
+                # log.info("{}".format([file.getreldirposix(self.repo[r].url,f)]))
+                # log.info("working on {}".format(file.getreldirposix(self.repo[r].url,f)))
                 log.info("working on {}".format(file.getfile(f)))
                 # f=file.getreldirposix(self.repo[r].url,f)
                 if file.exists(f):# They won't always be there
@@ -12787,7 +12787,7 @@ class Repository(object):
         return r
     def add(self,file):
         #This function must be used to see changes
-        log.info("self.bare: {}".format(self.bare))
+        # log.info("self.bare: {}".format(self.bare))
         if not self.bare:
             if not self.alreadythere(file):
                 log.info(_("Adding {}, which is not already there.").format(file))
@@ -13177,7 +13177,7 @@ class Repository(object):
         try: #in case the file doesn't exist yet
             with open(self.ignorefile) as f:
                 self.ignored=[i.rstrip() for i in f.readlines()]
-            log.info("self.ignored for {} now {}".format(self.code,self.ignored))
+            # log.info("self.ignored for {} now {}".format(self.code,self.ignored))
         except FileNotFoundError as e:
             log.info("Hope this is OK: {}".format(e))
     def exists(self,f=None):
