@@ -44,14 +44,15 @@ def gettranslationdirin(exedir):
     dir=pathlib.Path.joinpath(exedir,'translations')
     return dir
 def getimagesdir(dirname):
-    dir=pathlib.Path.joinpath(dirname,'images')
-    if not os.path.exists(dir):
-        os.mkdir(dir)
-    return dir
-def getimagesdiralternate(dirname):
-    dir=pathlib.Path.joinpath(dirname,'pictures') #WeSay uses this
-    if os.path.exists(dir):
-        return dir
+    diropts=['images','pictures']
+    for d in diropts:
+        dir=pathlib.Path.joinpath(dirname,d)
+        if getfilesofdirectory(dir):
+            return dir
+    d=diropts[0] #if nothing anywhere, just go with this.
+    if not os.path.exists(d):
+        os.mkdir(d)
+    return d
 def getaudiodir(dirname):
     dir=pathlib.Path.joinpath(dirname,'audio')
     log.debug("Looking for {}".format(dir))
