@@ -38,7 +38,6 @@ E=tkinter.E
 W=tkinter.W
 RIGHT=tkinter.RIGHT
 LEFT=tkinter.LEFT
-image=tkinter.PhotoImage
 """These classes have no dependencies"""
 class ObectwArgs(object):
     """ObectwArgs just allows us to throw away unused args and kwargs."""
