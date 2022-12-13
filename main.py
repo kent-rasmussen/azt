@@ -13207,8 +13207,10 @@ class Repository(object):
         w.lift()
     def getusernameargs(self):
         #This populates self.usernameargs, once per init.
+        re=None
         r=self.do(self.argstogetusername)
-        re=self.do(self.argstogetuseremail)
+        if hasattr(self,'argstogetuseremail'):
+            re=self.do(self.argstogetuseremail)
         if r:
             log.info("Using {} username '{}'".format(self.repotypename,r))
             if re:
