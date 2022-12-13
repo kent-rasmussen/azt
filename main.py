@@ -6469,7 +6469,8 @@ class Sort(object):
         log.info("Maybe verify (from maybesort)")
         groupstoverify=self.status.groups(toverify=True)
         if groupstoverify:
-            self.status.group(groupstoverify[0]) #just pick the first now
+            if self.status.group() not in groupstoverify:
+                self.status.group(groupstoverify[0]) #just pick the first now
             log.info("verify (from maybesort)")
             self.verify()
             self.did['verify']=True
