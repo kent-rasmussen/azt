@@ -1738,9 +1738,10 @@ def testapp():
     w=Window(r)
     Label(w,text="Seems to work!",font='title',
             row=0,column=0)# loglevel='Debug'
-    Label(w,text="At least this much",image=r.theme.photo['transparent'],
-            compound="bottom",
+    l=Label(w,text="At least this much",
             row=1,column=0)# loglevel='Debug'
+    l['image']=r.theme.photo['transparent'],
+    l['compound']="bottom",
     r.mainloop()
 if __name__ == '__main__':
     """To Test:"""
