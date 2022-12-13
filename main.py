@@ -13893,7 +13893,7 @@ def nn(x,perline=False,oneperline=False,twoperline=False):
             return '\n'.join([', '.join([str(v) for v in output[i*2:i*2 + 2]])
                         for i in range(int(len(output)/2)+1)])
         elif oneperline:
-            return '\n'.join(output)
+            return '\n'.join([str(i) for i in output])
         else:
             return ' '.join(output)
     else:
