@@ -129,7 +129,9 @@ def getdiredurl(dir,filename):
 def getdiredrelURL(reldir,filename):
     return pathlib.Path(reldir).joinpath(filename)
 def getdiredrelURLposix(reldir,filename):
-    return pathlib.Path(reldir).joinpath(filename).as_posix()
+    return pathlib.PurePath(reldir).joinpath(filename).as_posix()
+    # This doesn't help:
+    # return pathlib.PureWindowsPath(reldir).joinpath(filename).as_posix()
     # return pathlib.PurePath(reldir).joinpath(filename)
 def getlangnamepaths(filename, langs):
     output={}
