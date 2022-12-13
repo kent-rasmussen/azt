@@ -38,6 +38,16 @@ def escapeattr(x):
         return '\"'+x+'\"'
     else:
         return "'"+x+"'"    #b+="[@{}=\"{}\"]".format(attr,self.kwargs[attrs[attr]])
+# This doesn't seem to be able to work:
+# def removepicreldir(x):
+#     dirs=[
+#             r'pictures/',
+#             r'pictures\\'
+#             ]
+#     for d in dirs:
+#         if x.startswith(d):
+#             x=x.split(d)[-1]
+#     return x
 def split(delre,str):
     return re.split(delre,str)
 def countxiny(x,y):

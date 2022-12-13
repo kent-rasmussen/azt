@@ -1623,11 +1623,6 @@ class Settings(object):
         self.repocheck()
         self.settingsfilecheck()
         self.imagesdir=file.getimagesdir(self.directory)
-        pictures=file.getimagesdiralternate(self.directory)
-        if (not file.getfilesofdirectory(self.imagesdir) and
-                file.getfilesofdirectory(pictures)
-            ):
-            self.imagesdir=pictures #us this, if this is where they are.
         self.audiodir=file.getaudiodir(self.directory)
         # log.info('self.audiodir: {}'.format(self.audiodir))
         self.reportsdir=file.getreportdir(self.directory)
@@ -4225,6 +4220,7 @@ class TaskChooser(TaskDressing,ui.Window):
         """This function allows the user to select from any of tasks whose
         prerequisites are minimally satisfied."""
         # if self.reports:
+        self.withdraw()
         try:
                 self.frame.status.bigbutton.destroy()
         except AttributeError:
@@ -4280,6 +4276,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if self.showreports:
             self.showreports=False #just do this once each button click
             self.showingreports=True
+        self.deiconify()
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
         satisfied task"""
@@ -6472,7 +6469,8 @@ class Sort(object):
         log.info("Maybe verify (from maybesort)")
         groupstoverify=self.status.groups(toverify=True)
         if groupstoverify:
-            self.status.group(groupstoverify[0]) #just pick the first now
+            if self.status.group() not in groupstoverify:
+                self.status.group(groupstoverify[0]) #just pick the first now
             log.info("verify (from maybesort)")
             self.verify()
             self.did['verify']=True
@@ -6542,6 +6540,9 @@ class Sort(object):
                                 column=0,row=0, sticky="w",
                                 pady=scaledpady
                                 )
+        if hasattr(framed,'illustration'):
+            self.sortitem['image']=framed.illustration
+            self.sortitem['compound']="left"
         self.sortitem.wrap()
         self.runwindow.waitdone()
         for b in self.buttonframe.groupbuttonlist:
@@ -6783,20 +6784,24 @@ class Sort(object):
             ipady=15*program['scale']
         if label==True:
             b=ui.Label(parent, text=text,
+                    column=column, row=row,
+                    sticky="ew",
+                    ipady=ipady,
                     **kwargs
-                    ).grid(column=column, row=row,
-                            sticky="ew",
-                            ipady=ipady)
+                    )
         else:
             bf=ui.Frame(parent, pady='0') #This will be killed by removesenseidfromgroup
             bf.grid(column=column, row=row, sticky='ew')
             b=ui.Button(bf, text=text, pady='0',
                     cmd=notok,
+                    column=column, row=0,
+                    sticky="ew",
+                    ipady=ipady, #Inside the buttons...
                     **kwargs
-                    ).grid(column=column, row=0,
-                            sticky="ew",
-                            ipady=ipady #Inside the buttons...
-                            )
+                    )
+        if hasattr(framed,'illustration'):
+            b['image']=framed.illustration
+            b['compound']="left"
     def join(self):
         log.info("Running join!")
         """This window shows up after sorting, or maybe after verification, to
@@ -10404,6 +10409,7 @@ class FramedDataDict(dict):
         self.audiolang=self.taskchooser.settings.audiolang
         self.audiodir=self.taskchooser.settings.audiodir
         self.glosslangs=self.taskchooser.settings.glosslangs
+        self.imagesdir=self.taskchooser.settings.imagesdir
         log.log(4,"analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def clearsense(self,senseid):
         try:
@@ -10507,6 +10513,7 @@ class FramedData(object):
         self.audiolang=self.parent.audiolang
         self.audiodir=self.parent.audiodir
         self.glosslangs=self.parent.glosslangs
+        self.imagesdir=self.parent.imagesdir
         log.log(4,"analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def gettonegroup(self):
         if hasattr(self,'tonegroups') and self.tonegroups:
@@ -10552,6 +10559,23 @@ class FramedData(object):
             return g
     def applynoframe(self):
         self.framed=self.forms
+    def getillustration(self):
+        if self.senseid:
+            i=self.parent.db.get('illustration',
+                                    senseid=self.senseid,
+                                    ).get('href')
+            log.info("Illustration: {}".format(i))
+            if i and i[0]:
+                log.info("Found link to illustration {}".format(i[0]))
+                try:
+                    img=ui.Image(file.getdiredrelURLposix(self.imagesdir,i[0]))
+                    # will probably want the size adjustable
+                    # maybe resolution, too (take from theme?)
+                    img.scale(program['scale'],pixels=150,resolution=10)
+                    self.illustration=img.scaled
+                    log.info("Found illustration {}".format(self.illustration))
+                except Exception as e:
+                    log.error("Exception making image: {}".format(e))
     def __init__(self, parent, **kwargs): #source,
         """Evaluate what is actually needed"""
         super(FramedData, self).__init__()
@@ -10564,6 +10588,7 @@ class FramedData(object):
             return
         # self.cvt=self.parent.taskchooser.params.cvt()
         self.updatelangs()
+        self.getillustration()
         self.forms=DictbyLang()
 class FramedDataSense(FramedData):
     """This populates an object with attributes to format data for display,
@@ -10594,7 +10619,6 @@ class FramedDataSense(FramedData):
         self.tonegroups=self.db.get('example/tonefield/form/text',
                     senseid=self.senseid, location=frame).get('text')
     def parsesense(self,db,senseid,check):
-        self.senseid=senseid #store for later
         # self.ps=unlist(db.ps(senseid=senseid)) #there should be just one
         # log.info("check: {}".format(check))
         # log.info("field: {}; ftype: {}".format(check['field'],ftype))
@@ -10634,6 +10658,7 @@ class FramedDataSense(FramedData):
         # log.info("self.group of parsesense: {}".format(self.group))
     def __init__(self, parent, senseid, check, **kwargs):
         """Evaluate what is actually needed"""
+        self.senseid=senseid #store for later
         super(FramedDataSense, self).__init__(parent)
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
         # else:
@@ -10943,7 +10968,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         if self.exitFlag.istrue():
             return #just don't die
         if self.task.settings.lowverticalspace:
-            log.info("using lowverticalspace for addgroupbutton")
+            # log.info("using lowverticalspace for addgroupbutton")
             scaledpady=0
         else:
             scaledpady=int(40*program['scale'])
@@ -11273,6 +11298,10 @@ class ToneGroupButtonFrame(ui.Frame):
         else:
             self._filenameURL=None
         self._text=framed.formatted(showtonegroup=self.kwargs['showtonegroup'])
+        if hasattr(framed,'illustration'):
+            self._illustration=framed.illustration
+        else:
+            self._illustration=None
         return 1
     def makebuttons(self):
         if self.kwargs['label']:
@@ -11295,6 +11324,9 @@ class ToneGroupButtonFrame(ui.Frame):
                     column=1, row=0, sticky="ew",
                     **self.buttonkwargs()
                     )
+        if hasattr(self,'_illustration'):
+            b['image']=self._illustration
+            b['compound']="left"
     def playbutton(self):
         self.check.pyaudiocheck()
         self.check.soundsettingscheck()
@@ -11305,6 +11337,9 @@ class ToneGroupButtonFrame(ui.Frame):
                     column=1, row=0,
                     sticky="nesw",
                     **self.buttonkwargs())
+        if hasattr(self,'_illustration'):
+            b['image']=self._illustration
+            b['compound']="left"
         bttext=_("Click to hear this utterance")
         if program['praat']:
             bttext+='; '+_("right click to open in praat")
@@ -11320,6 +11355,9 @@ class ToneGroupButtonFrame(ui.Frame):
         b=ui.Button(self, text=self._text, cmd=cmd,
                     column=1, row=0, sticky="ew",
                     **self.buttonkwargs())
+        if hasattr(self,'_illustration'):
+            b['image']=self._illustration
+            b['compound']="left"
         bt=ui.ToolTip(b,_("Pick this group ({})").format(self.group))
     def refresh(self):
         # if renew is True:
@@ -13203,8 +13241,10 @@ class Repository(object):
         w.lift()
     def getusernameargs(self):
         #This populates self.usernameargs, once per init.
+        re=None
         r=self.do(self.argstogetusername)
-        re=self.do(self.argstogetuseremail)
+        if hasattr(self,'argstogetuseremail'):
+            re=self.do(self.argstogetuseremail)
         if r:
             log.info("Using {} username '{}'".format(self.repotypename,r))
             if re:

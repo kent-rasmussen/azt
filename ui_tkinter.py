@@ -87,8 +87,6 @@ class Theme(object):
                     else:
                         maxscaled=int(sum(self.scalings)/len(self.scalings)+10)
                     for y in range(maxscaled,10,-5):
-                        # x and y here express a float as two integers, so 0.7 = 7/10, because
-                        # the zoom and subsample fns only work on integers
                         # Higher number is better resolution (x*y/y), more time to process
                         #10>50 High OK, since we do this just once now
                         #lower option if higher fails due to memory limitations
@@ -96,10 +94,10 @@ class Theme(object):
                         x=int(scale*y)
                         log.info("Scaling {} @{} resolution".format(relurl,y)) #Just do this once!
                         try:
-                            self.photo[name] = tkinter.PhotoImage(
-                                                file = file.fullpathname(relurl)
-                                                ).zoom(x,x
-                                                ).subsample(y,y)
+                            img = Image(file.fullpathname(relurl))
+                            # keep these at full size, for now
+                            img.scale(scale,pixels=self.maxhw(),resolution=y)
+                            self.photo[name]=img.scaled
                             self.photo[name].write(scaledalready)
                             self.scalings.append(y)
                             return #stop when the first/best works
@@ -109,7 +107,7 @@ class Theme(object):
                                 'for image buffer' in str(e)):
                                 continue
             # log.info("Using {}".format(relurl))
-            self.photo[name] = tkinter.PhotoImage(file = file.fullpathname(relurl))
+            self.photo[name] = Image(file.fullpathname(relurl))
         for name,filename in [ ('transparent','AZT stacks6.png'),
                             ('tall','AZT clear stacks tall.png'),
                             ('small','AZT stacks6_sm.png'),
@@ -703,6 +701,37 @@ class UI(ObectwArgs):
             # except tkinter.TclError as e:
             #     log.info("TclError {}".format(e))
         # super(UI, self).__init__(*args, **kwargs)
+class Image(tkinter.PhotoImage):
+    def biggerby(self,x):
+        #always do this one first, if doing both, to start from scratch
+        self.scaled=self.zoom(x,x)
+    def smallerby(self,x):
+        try:
+            self.scaled=self.scaled.subsample(x,x)
+        except AttributeError:
+            self.scaled=self.subsample(x,x)
+    def maxhw(self,scaled=False):
+        if scaled:
+            return max(self.scaled.width(),self.scaled.height())
+        else:
+            return max(self.width(),self.height())
+    def scale(self,scale,pixels=100,resolution=10):
+        # 'x' and 'resolution' here express a float as two integers,
+        # so r = 0.7 = 7/10, because the zoom and subsample fns
+        # only work on integers
+        s=pixels*scale #the number of pixels, scaled
+        r=s/self.maxhw() #the ratio we need to reduce actual pixels by
+        x=resolution*r
+        # log.info("scaled pixels: {} (of {})".format(s,pixels))
+        # log.info("ratio to scale image: {} (of {})".format(r,self.maxhw()))
+        # log.info("biggerby to do: {}".format(x))
+        self.biggerby(int(x))
+        # log.info("Image: {} ({})".format(self.scaled, self.maxhw(scaled=True)))
+        self.smallerby(int(resolution))
+        # log.info("Image: {} ({})".format(self.scaled, self.maxhw(scaled=True)))
+    def __init__(self,filename):
+        # self.name=filename
+        super(Image, self).__init__(file=filename)#,*args, **kwargs)
 class StringVar(tkinter.StringVar):
     def __init__(self, *args, **kwargs):
         super(tkinter.StringVar, self).__init__(*args, **kwargs)
@@ -1738,9 +1767,15 @@ def testapp():
     w=Window(r)
     Label(w,text="Seems to work!",font='title',
             row=0,column=0)# loglevel='Debug'
-    Label(w,text="At least this much",image=r.theme.photo['transparent'],
-            compound="bottom",
+    l=Label(w,text="At least this much",
             row=1,column=0)# loglevel='Debug'
+    log.info("Image dict: {}".format(r.theme.photo))
+    img=r.theme.photo['transparent']
+    log.info("Image: {} ({})".format(img, img.maxhw()))
+    img.scale(scale=1, pixels=100,resolution=10)
+    log.info("Image: {} ({})".format(img.scaled, img.maxhw(scaled=True)))
+    l['image']=img.scaled
+    l['compound']="bottom"
     r.mainloop()
 if __name__ == '__main__':
     """To Test:"""

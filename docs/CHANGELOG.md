@@ -1,7 +1,7 @@
 # A→Z+T Changelog
 
 #UW priorities:
-- use of pictures (how to use open clipart?)
+- use of pictures (how to use open clipart? UI for this?)
 - sorting by click and drag
 - check recording and transcription tasks are working normally
 - ?other comparative wordlists
