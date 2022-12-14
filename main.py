@@ -1247,7 +1247,7 @@ class StatusFrame(ui.Frame):
                     h=ui.Label(self.leaderboardtable,text=t)
                     h.grid(row=row,column=column,sticky='e')
                     if profile == curprofile and curcheck is None:
-                        h.config(background=h.theme['activebackground']) #highlight
+                        h.config(background=h.theme.activebackground) #highlight
                         tip=_("Current profile \n(no check set)")
                         ttb=ui.ToolTip(h,tip)
                 elif profile == 'next': # end of row headers
