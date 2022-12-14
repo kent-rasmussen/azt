@@ -326,59 +326,6 @@ class LiftChooser(ui.Window,HasMenus):
                             "Analyze on the next page.").format(program['name'])
                 # log.info(msg)
                 ErrorNotice(msg,wait=True)
-    def findrepolift(self,repo):
-        # log.info("Looking for just one LIFT file.")
-        l=[i for i in repo.files if str(i).endswith('.lift')]
-        if len(l) == 1:
-            log.info("Found just one LIFT file: {}".format(l))
-            return l[0]
-        else:
-            # I could, if this becomes a problem, return the shortest filename,
-            # or on that contains the ISO code, but I think this is sane enough
-            # for now —anyone with more than one *.lift file should know what
-            # they're doing
-            log.info(_("returned more or less than one lift file! ({})"
-                    ).format(l))
-    def newfilelocation(self,newfile):
-        #Do users care about this?
-        return #not for now
-        msg=_("Your new LIFT file is at {n}."
-                "\nIf you don't want it there, close {azt} and move the whole "
-                "{f} folder wherever you like."
-                "\nThen open {azt} and tell it where you put the LIFT file."
-                ).format(n=newfile,
-                        f=file.getfilenamedir(newfile),
-                        azt=program['name'])
-        # log.info(msg)
-        ErrorNotice(msg,title=_("New LIFT file location"),wait=True)
-    def loadCAWL(self):
-        stockCAWL=file.fullpathname('SILCAWL/SILCAWL.lift')
-        if file.exists(stockCAWL):
-            log.info("Found stock LIFT file: {}".format(stockCAWL))
-        try:
-            self.cawldb=lift.Lift(str(stockCAWL))
-            log.info("Parsed ET.")
-            log.info("Got ET Root.")
-        except Exception as e:
-            log.info("Error: {}".format(e))
-        except lift.BadParseError:
-            text=_("{} doesn't look like a well formed lift file; please "
-                    "try again.").format(stockCAWL)
-            ErrorNotice(text,wait=True)
-            return
-        log.info("Parsed stock LIFT file to tree/nodes.")
-        return self.cawldb
-    def stripcawldb(self):
-        for n in (self.cawldb.nodes.findall('entry/lexical-unit')+
-                    self.cawldb.nodes.findall('entry/citation')):
-            for f in n.findall('form'):
-                n.remove(f)
-        log.info("Stripped stock LIFT file.")
-    def submitdemolang(self,choice,window): #event=None):
-        log.info("picked {}, from {}".format(choice,self.cawldb.glosslangs))
-        if choice in self.cawldb.glosslangs:
-            self.demolang=choice
-            window.destroy()
     def makeCAWLdemo(self):
         title=_("Make a Demo LIFT Database")
         w=ui.Window(program['root'],title=title)
