@@ -375,6 +375,34 @@ class LiftChooser(ui.Window,HasMenus):
         self.newfilelocation(newfile)
         log.info("newfilelocation done")
         return str(newfile)
+    def loadCAWL(self):
+        stockCAWL=file.fullpathname('SILCAWL/SILCAWL.lift')
+        if file.exists(stockCAWL):
+            log.info("Found stock LIFT file: {}".format(stockCAWL))
+        try:
+            self.cawldb=lift.Lift(str(stockCAWL))
+            log.info("Parsed ET.")
+            log.info("Got ET Root.")
+        except Exception as e:
+            log.info("Error: {}".format(e))
+        except lift.BadParseError:
+            text=_("{} doesn't look like a well formed lift file; please "
+                    "try again.").format(stockCAWL)
+            ErrorNotice(text,wait=True)
+            return
+        log.info("Parsed stock LIFT file to tree/nodes.")
+        return self.cawldb
+    def stripcawldb(self):
+        for n in (self.cawldb.nodes.findall('entry/lexical-unit')+
+                    self.cawldb.nodes.findall('entry/citation')):
+            for f in n.findall('form'):
+                n.remove(f)
+        log.info("Stripped stock LIFT file.")
+    def submitdemolang(self,choice,window): #event=None):
+        log.info("picked {}, from {}".format(choice,self.cawldb.glosslangs))
+        if choice in self.cawldb.glosslangs:
+            self.demolang=choice
+            window.destroy()
     def copytonewfile(self,newfile):
         if 'Demo' in str(newfile):
             type="demo"
@@ -388,57 +416,91 @@ class LiftChooser(ui.Window,HasMenus):
         log.info("Tried to write {} LIFT file to {}".format(type,newfile))
         if file.exists(newfile):
             log.info("Wrote {} LIFT file to {}".format(type,newfile))
-    def startnewfile(self):
-        def done(event=None):
-            window.destroy()
-        window=ui.Window(program['root'],title=_("Start New LIFT Database"))
-        ethnologueurl="https://www.ethnologue.com/"
-        title=_("What is the Ethnologue (ISO 639-3) code?")#" of the language you "
-                # "want to study?")
-        text=_("(find your language on {}; the code is at the top of "
-                "the page) "
-                "\nThis code will be used throughout your database, so please "
-                "\ntake a moment and confirm that this is correct before "
-                "continuing.".format(ethnologueurl)
-                )
-        t=ui.Label(window.frame, text=title, font='title', column=0, row=0)
-        l=ui.Label(window.frame, text=text, column=0, row=1)
-        l.bind("<Button-1>", lambda e: openweburl(ethnologueurl))
-        l.wrap()
-        entryframe=ui.Frame(window.frame,row=2,column=0,sticky='nsew')
-        analang=ui.StringVar()
-        e=ui.EntryField(entryframe, textvariable=analang, font='readbig',
-                        width=5, row=0,column=0,sticky='w')
-        e.bind('<Return>',done)
-        e.focus_set()
-        ui.Button(entryframe, text='OK', cmd=done, font='title',
-                    row=0,column=1,sticky='e')
-        l.wait_window(window)
-        self.analang=analang.get()
-        if not self.analang:
-            return
-        if len(self.analang) != 3:
-            e=ErrorNotice("That doesn't look like an ethnologue code "
-                        "(just three letters)",wait=True)
-            return
-        dir=file.gethome()
-        newfile=file.getnewlifturl(dir,analang.get())
-        if not newfile:
-            ErrorNotice(_("Problem creating file; does the directory "
-                        "already exist?"),wait=True)
-            return
-        if file.exists(newfile):
-            ErrorNotice(_("The file {} already exists! {}").format(newfile),
-                                                                wait=True)
-            return
-        w=ui.Wait(parent=program['root'],msg=_("Setting up new LIFT file now."))
-        log.info("Beginning Copy of stock to new LIFT file.")
-        self.loadCAWL()
-        self.stripcawldb()
-        self.copytonewfile(newfile)
-        w.close()
-        self.newfilelocation(newfile)
-        return str(newfile)
+    def newfilelocation(self,newfile):
+        #Do users care about this?
+        return #not for now
+        msg=_("Your new LIFT file is at {n}."
+                "\nIf you don't want it there, close {azt} and move the whole "
+                "{f} folder wherever you like."
+                "\nThen open {azt} and tell it where you put the LIFT file."
+                ).format(n=newfile,
+                        f=file.getfilenamedir(newfile),
+                        azt=program['name'])
+        # log.info(msg)
+        ErrorNotice(msg,title=_("New LIFT file location"),wait=True)
+    def setfilename(self,choice,window, event=None):
+        self.withdraw()
+        if choice == 'New':
+            name=self.startnewfile()
+        elif choice == 'Other':
+            name=file.lift()
+        elif choice == 'Clone':
+            log.info("trying clone from USB")
+            name=self.clonefromUSB()
+        elif choice == 'Demo':
+            log.info("Making a CAWL demo database")
+            name=self.makeCAWLdemo()
+        else:
+            name=choice
+        log.info("self.name: {}".format(name))
+        self.deiconify()
+        if name:
+            self.filechooser.name=name
+            file.writefilename(name)
+            self.destroy()
+    def __init__(self,chooser,filenamelist):
+        self.filechooser=chooser
+        # self.taskchooser=program['chooser'] #needed for some commands
+        self.parent=program['root']
+        super(LiftChooser, self).__init__(self.parent)
+        self.title(_("Select LIFT Database"))
+        ui.ContextMenu(self)
+        text=_('What do you want to work on?') #LIFT database
+        ui.Label(self.frame, text=text, font='title', column=0, row=0)
+        optionlist=[('New',_("Start work on a new language"))]
+        optionlist+=[('Clone',_("Copy work from a USB drive"))]
+        if filenamelist:
+            optionlist+=[(f,f) for f in filenamelist] #keep everything a tuple
+            self.other=_("Select another database on my computer") #use later
+        else:
+            self.other=_("Select a database on my computer") #use later
+        optionlist+=[('Other',self.other)]
+        optionlist+=[('Demo',_("Make a demo database to try out {}"
+                                ).format(program['name']))]
+        buttonFrame1=ui.ScrollingButtonFrame(self.frame,
+                                optionlist=optionlist,
+                                command=self.setfilename,
+                                window=self,
+                                column=0, row=1,
+                                bsticky='ew',
+                                sticky=''
+                                )
+        # make mediadir look for *.git
+        ui.Label(self.frame, image=program['theme'].photo['small'],
+                text=text, font='title', column=1, row=1, ipadx=20)
+class FileChooser(object):
+    """This class selects the LIFT database we'll be working with, and does
+    some basic processing on it."""
+    def askwhichlift(self,filenamelist):
+        # put right click menu here
+        self.name=None # in case of exit
+        window=LiftChooser(self,filenamelist)
+        window.wait_window(window)
+        if not self.name: #If not set, for any reason
+            return 1
+    def findrepolift(self,repo):
+        # log.info("Looking for just one LIFT file.")
+        l=[i for i in repo.files if str(i).endswith('.lift')]
+        if len(l) == 1:
+            log.info("Found just one LIFT file: {}".format(l))
+            return l[0]
+        else:
+            # I could, if this becomes a problem, return the shortest filename,
+            # or on that contains the ISO code, but I think this is sane enough
+            # for now —anyone with more than one *.lift file should know what
+            # they're doing
+            log.info(_("returned more or less than one lift file! ({})"
+                    ).format(l))
     def getfilename(self):
         # This method pulls filename(s) from settings, else self.askwhichlift
         self.name=file.getfilename() #returns filename if there, else filenames
