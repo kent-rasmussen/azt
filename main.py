@@ -13158,7 +13158,7 @@ class Repository(object):
                     #these are states we don't want to bother the user with:
                     assert output #git config core.bare gives zero error output
                     assert 'ot a git repository' not in output
-                    assert "error: unknown option `cached'" not in output
+                    assert "unknown option" not in output
                     assert "does not have any commits yet" not in output
                     assert "error: No such remote " not in output
                     ErrorNotice(txt)
