@@ -125,25 +125,174 @@ class FileChooser(object):
         if filenamelist:
             optionlist+=[(f,f) for f in filenamelist] #keep everything a tuple
             self.other=_("Select another database on my computer") #use later
+class HasMenus():
+    def helpnewinterface(self):
+        title=(_("{} Dictionary and Orthography Checker"
+                "".format(program['name'])))
+        window=ui.Window(self, title=title)
+        text=_("{0} has a new interface, starting mid January 2022. You "
+                "should still be able to do everything you did before, though "
+                "you will probably get to each function a bit differently "
+                "—hopefully more intuitively."
+                "\nTasks are organized into Data Collection and Analysis, "
+                "and you can switch between them with the button in the upper "
+                "right of the main {0} window."
+                "\nEither window allows you to run reports."
+                "").format(program['name'])
+        url='{}/TASKS.md'.format(program['docsurl'])
+        webtext=_("For more information on {} tasks, please check out the "
+                "documentation at {} ").format(program['name'],url)
+        ui.Label(window.frame, image=self.frame.theme.photo['icon'],
+                text=title, font='title',compound="bottom",
+                row=0,column=0,sticky='we'
+                )
+        l=ui.Label(window.frame, text=text, padx=50,
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=1,column=0,pady=(50,0),sticky='we'
+                )
+        webl=ui.Label(window.frame, text=webtext, padx=50,
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=2,column=0,sticky='we'
+                )
+        webl.bind("<Button-1>", lambda e: openweburl(url))
+    def helpabout(self):
+        title=(_("{name} Dictionary and Orthography Checker"
+                "".format(name=program['name'])))
+        window=ui.Window(self, title=title)
+        ui.Label(window.frame,
+                text=_("version: {}").format(program['version']),
+                anchor='c',padx=50,
+                row=1,column=0,sticky='we'
+                        )
+        text=_("{name} is a computer program that accelerates community"
+                "-based language development by facilitating the sorting of a "
+                "beginning dictionary by vowels, consonants and tone.\n"
+                "It does this by presenting users with sets of words from a "
+                "LIFT dictionary database, one part of speech and syllable "
+                "profile at a time. These words are sorted into groups based "
+                "on consonants, vowels, and tone. \nTone frames are "
+                "customizable and stored in the database for each word, "
+                "allowing for a number of approaches to collecting this data. "
+                "A tone report aids the drafting of underlying categories by "
+                "grouping words based on sorting across tone frames. \n{name} then "
+                "allows the user to record a word in each of the frames where "
+                "it has been sorted, storing the recorded audio file in a "
+                "directory, with links to each file in the dictionary database."
+                " Recordings can be made up to 192khz/32float, according to "
+                "your recording equipment's capacity.").format(
+                                                    name=program['name'])
+        webtext=_("For help with this tool, please check out the documentation "
+                "at {url} ").format(url=program['url'])
+        mailtext=_("or write me at {}.").format(program['Email'])
+        ui.Label(window.frame, text=title,
+                font='title',anchor='c',padx=50,
+                row=0,column=0,sticky='we')
+        f=ui.ScrollingFrame(window.frame,
+                            row=2,column=0,sticky='we')
+        ui.Label(f.content, image=self.frame.theme.photo['small'],
+                text='',
+                row=0,column=0,sticky='we'
+                )
+        l=ui.Label(f.content, text=text, padx=50,
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=1,column=0,pady=(50,0),sticky='we'
+                )
+        webl=ui.Label(f.content, text=webtext, padx=50,#pady=50,
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=2,column=0,sticky='we'
+                )
+        maill=ui.Label(f.content, text=mailtext, padx=50,#pady=50,
+                wraplength=int(self.winfo_screenwidth()/2),
+                row=3,column=0,sticky='we'
+                )
+        webl.bind("<Button-1>", lambda e: openweburl(program['url']))
+        murl='mailto:{}?subject= A→Z+T question'.format(program['Email'])
+        maill.bind("<Button-1>", lambda e: openweburl(murl))
+    def reverttomainazt(self,event=None):
+        #This doesn't care which (test) version one is on
+        r=program['repo'].reverttomain()
+        log.info("reverttomainazt: {}".format(r))
+        if r:
+            self.taskchooser.restart()
+    def trytestazt(self,event=None):
+        #This only goes to the test version at the top of this file
+        self.updateazt()
+        r=program['repo'].testversion()
+        log.info("trytestazt: {}".format(r))
+        if r:
+            self.taskchooser.restart()
+    def _removemenus(self,event=None):
+        log.info(_("Hiding menus?"))
+        if hasattr(self,'menubar'):
+            self.menubar.destroy()
+            self.menu=False
+            self.setcontext()
+    def _setmenus(self,event=None):
+        # check=self.check
+        log.info(_("Showing menus"))
+        self.menubar=Menus(self)
+        self.config(menu=self.menubar)
+        self.menu=True
+        self.setcontext()
+        self.unbind_all('<Enter>')
+    def setcontext(self,context=None):
+        self.context.menuinit() #This is a ContextMenu() method
+        if not hasattr(self,'menu') or not self.menu:
+            self.context.menuitem(_("Show Menus"),self._setmenus)
         else:
-            self.other=_("Select a database on my computer") #use later
-        optionlist+=[('Other',self.other)]
-        optionlist+=[('Demo',_("Make a demo database to try out {}"
-                                ).format(program['name']))]
-        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                optionlist=optionlist,
-                                command=setfilename,
-                                window=window,
-                                column=0, row=1,
-                                bsticky='ew',
-                                sticky=''
-                                )
-        # make mediadir look for *.git
-        ui.Label(window.frame, image=program['theme'].photo['small'],
-                text=text, font='title', column=1, row=1, ipadx=20)
-        window.wait_window(window)
-        if not self.name: #If not set, for any reason
-            return 1
+            self.context.menuitem(_("Hide Menus"),self._removemenus)
+class LiftChooser(ui.Window,HasMenus):
+    def startnewfile(self):
+        def done(event=None):
+            window.destroy()
+        window=ui.Window(program['root'],title=_("Start New LIFT Database"))
+        ethnologueurl="https://www.ethnologue.com/"
+        title=_("What is the Ethnologue (ISO 639-3) code?")#" of the language you "
+                # "want to study?")
+        text=_("(find your language on {}; the code is at the top of "
+                "the page) "
+                "\nThis code will be used throughout your database, so please "
+                "\ntake a moment and confirm that this is correct before "
+                "continuing.".format(ethnologueurl)
+                )
+        t=ui.Label(window.frame, text=title, font='title', column=0, row=0)
+        l=ui.Label(window.frame, text=text, column=0, row=1)
+        l.bind("<Button-1>", lambda e: openweburl(ethnologueurl))
+        l.wrap()
+        entryframe=ui.Frame(window.frame,row=2,column=0,sticky='nsew')
+        analang=ui.StringVar()
+        e=ui.EntryField(entryframe, textvariable=analang, font='readbig',
+                        width=5, row=0,column=0,sticky='w')
+        e.bind('<Return>',done)
+        e.focus_set()
+        ui.Button(entryframe, text='OK', cmd=done, font='title',
+                    row=0,column=1,sticky='e')
+        l.wait_window(window)
+        self.analang=analang.get()
+        if not self.analang:
+            return
+        if len(self.analang) != 3:
+            e=ErrorNotice("That doesn't look like an ethnologue code "
+                        "(just three letters)",wait=True)
+            return
+        dir=file.gethome()
+        newfile=file.getnewlifturl(dir,analang.get())
+        if not newfile:
+            ErrorNotice(_("Problem creating file; does the directory "
+                        "already exist?"),wait=True)
+            return
+        if file.exists(newfile):
+            ErrorNotice(_("The file {} already exists! {}").format(newfile),
+                                                                wait=True)
+            return
+        w=ui.Wait(parent=program['root'],msg=_("Setting up new LIFT file now."))
+        log.info("Beginning Copy of stock to new LIFT file.")
+        self.loadCAWL()
+        self.stripcawldb()
+        self.copytonewfile(newfile)
+        w.close()
+        self.newfilelocation(newfile)
+        return str(newfile)
     def clonefromUSB(self):
         def makenewrepo(repoclass,mediadir):
             repo=repoclass(mediadir)
