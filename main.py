@@ -853,8 +853,10 @@ class Menus(ui.Menu):
                         cmd=m[1]
                         )
     def __init__(self, parent):
+        self.parent=parent #this should always be the window where they appear
         super(Menus, self).__init__(parent)
-        self.advanced()
+        if isinstance(parent,TaskDressing):
+            self.advanced()
         self.help()
 class StatusFrame(ui.Frame):
     """This contains all the info about what the user is currently working on,
