@@ -96,7 +96,7 @@ class Theme(object):
                         try:
                             img = Image(file.fullpathname(relurl))
                             # keep these at full size, for now
-                            img.scale(scale,pixels=self.maxhw(),resolution=y)
+                            img.scale(scale,pixels=img.maxhw(),resolution=y)
                             self.photo[name]=img.scaled
                             self.photo[name].write(scaledalready)
                             self.scalings.append(y)
