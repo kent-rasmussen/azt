@@ -1043,8 +1043,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                 ]
                 self.nfieldswsoundfiles[lang][field]=len(fieldswsoundfiles[lang]
                                                                         [field])
-                log.info("Found {} fieldswsoundfiles for {}".format(
-                            self.nfieldswsoundfiles[lang],lang))
+                log.info("Found {} fieldswsoundfiles for {}/{}".format(
+                            self.nfieldswsoundfiles[lang][field],field,lang))
         # log.info("Found {} fieldswsoundfiles".format(self.nfieldswsoundfiles))
     def getsenseswglosslangdata(self):
         #do each of these, then cull in the second one
@@ -1766,8 +1766,8 @@ class LiftURL():
     def build(self,tag,liftattr=None,myattr=None,attrs=None):
         buildanother=False
         noseparator=False
-        log.log(4,"building {}, @dict:{}, @{}={}, on top of {}".format(tag,
-                                attrs,liftattr,myattr, self.currentnodename()))
+        # log.info("building {}, @dict:{}, @{}={}, on top of {}".format(tag,
+        #                         attrs,liftattr,myattr, self.currentnodename()))
         b=tag
         if attrs is None:
             attrs={liftattr: myattr}
@@ -1970,6 +1970,10 @@ class LiftURL():
         if 'morphtype' in self.kwargs: #This is needed
             attrs={'name':"morphtypename",'value':'morphtype'}
             self.trait(attrs) # <trait name="morph-type" value="stem" />
+    def illustration(self):
+        # log.info("Making illustration")
+        self.baselevel()
+        self.build("illustration")
     def attrdonothing(self):
         pass
     def maybeshow(self,nodename,parent=None):
@@ -2026,17 +2030,26 @@ class LiftURL():
         while self.level.get(target,self.level['cur']+1) < self.level['cur']:
             self.parent()
     def baselevel(self):
+        # log.info("baselevel for {}".format(self.callerfn()))
+        # log.info("@{}".format(self.url))
         parents=self.parentsof(self.callerfn())
         for target in parents: #self.levelsokfor[self.callerfn()]: #targets: #targets should be ordered, with best first
-            target=target.split('/')[-1] #just the last level
+            target=target.split('/')[-1] #.split('[')[0] #just the last level tag
+            # log.info("tag of target: {}".format(target))
             if target in self.level and self.level[target] == self.level['cur']:
+                # log.info("level of target: {}".format(self.level[target]))
+                # log.info("current level: {}".format(self.level['cur']))
+                # log.info("levels: {}".format(self.level))
                 return #if we're on an acceptable level, just stop
             elif target in self.level:
+                # log.info("level of target (2): {}".format(self.level[target]))
+                # log.info("current level: {}".format(self.level['cur']))
                 self.levelup(target)
                 return
             elif parents.index(target) < len(parents)-1:
-                log.log(4,"level {} not in {}; checking the next one...".format(
-                                                            target,self.level))
+                # log.info("level {} not in {}; checking the next one...".format(
+                #                                             target,self.level))
+                continue
             else:
                 log.error("last level {} (of {}) not in {}; this is a problem!"
                             "".format(target,parents,self.level))
@@ -2406,7 +2419,7 @@ class LiftURL():
         self.children['entry']=['lexeme','morphtype','pronunciation','sense',
                                 'field',
                                 'citation','trait']
-        self.children['sense']=['ps','definition','gloss',
+        self.children['sense']=['ps','definition','gloss','illustration',
                                 'example','toneUFfield','cawlfield','field'
                                             ]
         self.children['ps']=['pssubclass','trait']
@@ -3010,7 +3023,7 @@ if __name__ == '__main__':
     filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/cky/Mushere Exported AZT file.lift"
     # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift_backupBeforeLx2LcConversion"
-    filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift"
+    # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift"
     # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL_test.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/ETON_propre/Eton.lift"
@@ -3019,13 +3032,26 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/Eton.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
     lift=Lift(filename)
     # lift.convertlxtolc()
     # lift.convertdefntogloss()
     # lift.convertglosstocitation('ha',keep=True)
     # lift.write('userlogs/testwrite.lift')
     # lift.write('userlogs/SILCAWL_test.lift')
+    for s in lift.senseids:
+        i=lift.get('illustration', #showurl=True,
+                                senseid=s,
+                                ).get('href')
+        try:
+            i=i[0]
+        except Exception as e:
+            if 'list index out of range' in str(e):
+                continue
+            log.info("result: {}".format(e))
+        if i:
+            print(i)
+    log.info("done.")
     quit()
     # prettyprint(lift.nodes)
     senseids=[

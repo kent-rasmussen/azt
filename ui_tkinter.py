@@ -56,7 +56,6 @@ class Theme(object):
     """docstring for Theme."""
     def setimages(self):
         # Program icon(s) (First should be transparent!)
-        log.info("Maybe scaling images; please wait...") #threading?
         self.scalings=[]
         try:
             scale=self.program['scale']
@@ -65,6 +64,7 @@ class Theme(object):
         self.photo={}
         #do these once:
         if scale-1: #x != y: #should be the same as scale != 1
+            log.info("Maybe scaling images; please wait...")
             scaledalreadydir='images/scaled/'+str(scale)+'/'
             file.makedir(file.fullpathname(scaledalreadydir)) #in case not there
         def mkimg(name,filename):
@@ -77,13 +77,16 @@ class Theme(object):
                 # log.info("Dirs: {}?={}".format(scaledalready,relurl))
                 if scaledalready != relurl: # should scale if off by >2% either way
                     # log.info("Scaling {}".format(relurl)) #Just do this once!
+                    try:
+                        assert self.fakeroot.winfo_exists()
+                    except:
+                        self.fakeroot=Root(program=self.program.copy(),noimagescaling=True)
+                        self.fakeroot.w=Wait(parent=self.fakeroot,msg="Scaling Images (Just this once)")
                     if not self.scalings:
                         maxscaled=100
                     else:
                         maxscaled=int(sum(self.scalings)/len(self.scalings)+10)
                     for y in range(maxscaled,10,-5):
-                        # x and y here express a float as two integers, so 0.7 = 7/10, because
-                        # the zoom and subsample fns only work on integers
                         # Higher number is better resolution (x*y/y), more time to process
                         #10>50 High OK, since we do this just once now
                         #lower option if higher fails due to memory limitations
@@ -91,10 +94,10 @@ class Theme(object):
                         x=int(scale*y)
                         log.info("Scaling {} @{} resolution".format(relurl,y)) #Just do this once!
                         try:
-                            self.photo[name] = tkinter.PhotoImage(
-                                                file = file.fullpathname(relurl)
-                                                ).zoom(x,x
-                                                ).subsample(y,y)
+                            img = Image(file.fullpathname(relurl))
+                            # keep these at full size, for now
+                            img.scale(scale,pixels=self.maxhw(),resolution=y)
+                            self.photo[name]=img.scaled
                             self.photo[name].write(scaledalready)
                             self.scalings.append(y)
                             return #stop when the first/best works
@@ -104,7 +107,7 @@ class Theme(object):
                                 'for image buffer' in str(e)):
                                 continue
             # log.info("Using {}".format(relurl))
-            self.photo[name] = tkinter.PhotoImage(file = file.fullpathname(relurl))
+            self.photo[name] = Image(file.fullpathname(relurl))
         for name,filename in [ ('transparent','AZT stacks6.png'),
                             ('tall','AZT clear stacks tall.png'),
                             ('small','AZT stacks6_sm.png'),
@@ -167,6 +170,11 @@ class Theme(object):
                 log.info("Image {} ({}) not compiled ({})".format(
                             name,filename,e
                             ))
+        try:
+            self.fakeroot.destroy()
+            self.fakeroot.w.close()
+        except:
+            pass
     def settheme(self):
         if not self.name:
             defaulttheme='greygreen'
@@ -373,14 +381,19 @@ class Theme(object):
         for kwarg in ['ipady','ipadx','pady','padx']:
             if kwarg in kwargs:
                 setattr(self,kwarg,kwargs[kwarg])
-    def __init__(self,program=None,name=None,**kwargs):
+    def __init__(self,program={},name=None,**kwargs):
+        # I should allow a default theme here, so I can display GUI without
+        # any of this already done
         self.program=program
         self.name=name
-        self.setscale()
         self.setpads(**kwargs)
         self.setthemes()
-        self.setfonts()
+        if 'noimagescaling' in kwargs and kwargs['noimagescaling']:
+            self.program['scale']=1
+        else:
+            self.setscale()
         self.setimages()
+        self.setfonts()
         self.settheme()
         log.info("Using {} theme ({})".format(self.name,self.program))
         super(Theme, self).__init__()
@@ -688,6 +701,37 @@ class UI(ObectwArgs):
             # except tkinter.TclError as e:
             #     log.info("TclError {}".format(e))
         # super(UI, self).__init__(*args, **kwargs)
+class Image(tkinter.PhotoImage):
+    def biggerby(self,x):
+        #always do this one first, if doing both, to start from scratch
+        self.scaled=self.zoom(x,x)
+    def smallerby(self,x):
+        try:
+            self.scaled=self.scaled.subsample(x,x)
+        except AttributeError:
+            self.scaled=self.subsample(x,x)
+    def maxhw(self,scaled=False):
+        if scaled:
+            return max(self.scaled.width(),self.scaled.height())
+        else:
+            return max(self.width(),self.height())
+    def scale(self,scale,pixels=100,resolution=10):
+        # 'x' and 'resolution' here express a float as two integers,
+        # so r = 0.7 = 7/10, because the zoom and subsample fns
+        # only work on integers
+        s=pixels*scale #the number of pixels, scaled
+        r=s/self.maxhw() #the ratio we need to reduce actual pixels by
+        x=resolution*r
+        # log.info("scaled pixels: {} (of {})".format(s,pixels))
+        # log.info("ratio to scale image: {} (of {})".format(r,self.maxhw()))
+        # log.info("biggerby to do: {}".format(x))
+        self.biggerby(int(x))
+        # log.info("Image: {} ({})".format(self.scaled, self.maxhw(scaled=True)))
+        self.smallerby(int(resolution))
+        # log.info("Image: {} ({})".format(self.scaled, self.maxhw(scaled=True)))
+    def __init__(self,filename):
+        # self.name=filename
+        super(Image, self).__init__(file=filename)#,*args, **kwargs)
 class StringVar(tkinter.StringVar):
     def __init__(self, *args, **kwargs):
         super(tkinter.StringVar, self).__init__(*args, **kwargs)
@@ -707,6 +751,7 @@ class Root(Exitable,tkinter.Tk):
         self.mainwindow=False
         self.exitFlag = ExitFlag()
         tkinter.Tk.__init__(self)
+        self.withdraw() #this is almost always correct
         if program:
             self.program=program
         else:
@@ -1599,7 +1644,7 @@ class Wait(Window): #tkinter.Toplevel?
         parent.withdraw()
         self['background']=parent['background']
         self.attributes("-topmost", True)
-        if hasattr(self,'program'):
+        if hasattr(self,'program') and 'name' in self.program:
             title=(_("Please Wait! {name} Dictionary and Orthography Checker "
                         "in Process").format(name=self.program['name']))
         else:
@@ -1722,9 +1767,15 @@ def testapp():
     w=Window(r)
     Label(w,text="Seems to work!",font='title',
             row=0,column=0)# loglevel='Debug'
-    Label(w,text="At least this much",image=r.theme.photo['transparent'],
-            compound="bottom",
+    l=Label(w,text="At least this much",
             row=1,column=0)# loglevel='Debug'
+    log.info("Image dict: {}".format(r.theme.photo))
+    img=r.theme.photo['transparent']
+    log.info("Image: {} ({})".format(img, img.maxhw()))
+    img.scale(scale=1, pixels=100,resolution=10)
+    log.info("Image: {} ({})".format(img.scaled, img.maxhw(scaled=True)))
+    l['image']=img.scaled
+    l['compound']="bottom"
     r.mainloop()
 if __name__ == '__main__':
     """To Test:"""

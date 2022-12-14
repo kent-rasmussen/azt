@@ -709,7 +709,7 @@ class Menus(ui.Menu):
                 helpitems+=[(_("Set up A→Z+T source on USB"),
                                 program['repo'].clonetoUSB)]
             helpitems+=[(_("Update A→Z+T"), updateazt)]
-            if program['repo'].branchname() == 'main':
+            if program['repo'].branch == 'main':
                 helpitems+=[(_("Try A→Z+T test version"),
                                 self.parent.trytestazt)]
             else:
@@ -793,17 +793,17 @@ class StatusFrame(ui.Frame):
             if l['code']==interfacelang():
                 interfacelanguagename=l['name']
         t=(_("Using {}").format(interfacelanguagename))
-        self.proselabel(t,cmd=self.taskchooser.getinterfacelang)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getinterfacelang)
         self.opts['row']+=1
     def analangline(self):
         analang=self.settings.params.analang()
         langname=self.settings.languagenames[analang]
         t=(_("Studying {}").format(langname))
         if (langname == _("Language with code [{}]").format(analang)):
-            self.proselabel(t,cmd=self.taskchooser.getanalangname,
+            self.proselabel(t,cmd=self.taskchooser.mainwindowis.getanalangname,
                                             tt=_("Set analysis language Name"))
         else:
-            self.proselabel(t,cmd=self.taskchooser.getanalang,
+            self.proselabel(t,cmd=self.taskchooser.mainwindowis.getanalang,
                                             tt=_("Change analysis language"))
         self.opts['row']+=1
     def glosslangline(self):
@@ -812,14 +812,16 @@ class StatusFrame(ui.Frame):
         line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
                         columnspan=3,sticky='w') #3 cols is the width of frame
         self.opts['row']+=1
-        self.proselabel(t,cmd=self.taskchooser.getglosslang,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getglosslang,
+                            parent=line)
         self.opts['columnplus']=1
         if len(self.settings.glosslangs) >1:
             lang2=self.settings.languagenames[self.settings.glosslangs.lang2()]
             t=(_("and {}").format(lang2))
         else:
             t=_("only")
-        self.proselabel(t,cmd=self.taskchooser.getglosslang2,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getglosslang2,
+                            parent=line)
         self.opts['columnplus']=0
     def fieldsline(self):
         for ps in [self.settings.nominalps, self.settings.verbalps]:
@@ -832,9 +834,9 @@ class StatusFrame(ui.Frame):
                             columnspan=3,sticky='w') #3 cols is the width of frame
             self.opts['row']+=1
             if ps == self.settings.nominalps:
-                cmd=self.taskchooser.getsecondformfieldN
+                cmd=self.taskchooser.mainwindowis.getsecondformfieldN
             else:
-                cmd=self.taskchooser.getsecondformfieldV
+                cmd=self.taskchooser.mainwindowis.getsecondformfieldV
             self.proselabel(t, cmd=cmd, parent=line)
     def sliceline(self):
         count=self.settings.slices.count()
@@ -842,10 +844,11 @@ class StatusFrame(ui.Frame):
                         columnspan=3,sticky='w')
         self.opts['row']+=1
         t=(_("Looking at {}").format(self.profile))
-        self.proselabel(t,cmd=self.taskchooser.getprofile,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getprofile,
+                            parent=line)
         self.opts['columnplus']=1
         t=(_("{} words ({})").format(self.ps,count))
-        self.proselabel(t,cmd=self.taskchooser.getps,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getps,parent=line)
         self.opts['columnplus']=0
     def cvtline(self):
         line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
@@ -853,7 +856,7 @@ class StatusFrame(ui.Frame):
         self.opts['row']+=1
         t=(_("Checking {},").format(
                                 self.settings.params.cvtdict()[self.cvt]['pl']))
-        self.proselabel(t,cmd=self.taskchooser.getcvt,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getcvt,parent=line)
         #this continues on the same line:
         if self.cvt == 'T':
             self.toneframe(line)
@@ -871,7 +874,8 @@ class StatusFrame(ui.Frame):
             # self.check=None
         else:
             t=(_("working on ‘{}’ tone frame").format(self.check))
-        self.proselabel(t,cmd=self.taskchooser.getcheck,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getcheck,
+                            parent=line)
     def tonegroup(self,line):
         self.opts['columnplus']=2
         check=self.settings.params.check()
@@ -885,16 +889,16 @@ class StatusFrame(ui.Frame):
         """Set appropriate conditions for each of these:"""
         if (not check or (check in self.settings.status.checks(wsorted=True) and
             profile in self.settings.status.profiles(wsorted=True))):
-            cmd=self.taskchooser.getgroupwsorted
+            cmd=self.taskchooser.mainwindowis.getgroupwsorted
         elif (not check or (check in self.settings.status.checks(tosort=True) and
             profile in self.settings.status.profiles(tosort=True))):
-            cmd=self.taskchooser.getgrouptosort
+            cmd=self.taskchooser.mainwindowis.getgrouptosort
         elif (check in self.settings.status.checks(toverify=True) and
             profile in self.settings.status.profiles(toverify=True)):
-            cmd=self.taskchooser.getgrouptoverify
+            cmd=self.taskchooser.mainwindowis.getgrouptoverify
         elif (check in self.settings.status.checks(torecord=True) and
             profile in self.settings.status.profiles(torecord=True)):
-            cmd=self.taskchooser.getgrouptorecord
+            cmd=self.taskchooser.mainwindowis.getgrouptorecord
         else:
             cmd=None
         log.info("check: {}; profile: {}; \n{}-{}; \n{}-{}; \n{}-{};"
@@ -912,7 +916,8 @@ class StatusFrame(ui.Frame):
     def cvcheck(self,line):
         self.opts['columnplus']=1
         t=(_("working on {}".format(self.settings.params.cvcheckname())))
-        self.proselabel(t,cmd=self.taskchooser.getcheck,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getcheck,
+                        parent=line)
         # self.opts['row']+=1
     def cvgroup(self,line):
         if self.settings.status.group():
@@ -920,7 +925,8 @@ class StatusFrame(ui.Frame):
         else:
             t=(_("(All groups)"))
         self.opts['columnplus']=2
-        self.proselabel(t,cmd=self.taskchooser.getgroup,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getgroup,
+                        parent=line)
         # self.opts['row']+=1
     def buttoncolumnsline(self):
         self.opts['row']+=1
@@ -930,16 +936,19 @@ class StatusFrame(ui.Frame):
             t=(_("Not using multiple button columns").format(self.check))
         # log.info(t)
         tt=_("Click here to change the number of columns used for sort buttons")
-        self.proselabel(t,cmd=self.taskchooser.getbuttoncolumns,tt=tt)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getbuttoncolumns,
+                        tt=tt)
     def maxes(self):
         line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
                         columnspan=3,sticky='w')
         self.opts['row']+=1
         t=(_("Max profiles: {}; ".format(self.settings.maxprofiles)))
-        self.proselabel(t,cmd=self.taskchooser.getmaxprofiles,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getmaxprofiles,
+                        parent=line)
         self.opts['columnplus']=1
         t=(_("Max lexical categories: {}".format(self.settings.maxpss)))
-        self.proselabel(t,cmd=self.taskchooser.getmaxpss,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getmaxpss,
+                        parent=line)
     def multicheckscope(self):
         if not hasattr(self.task,'cvtstodo'):
             self.task.cvtstodo=['V']
@@ -948,7 +957,8 @@ class StatusFrame(ui.Frame):
         self.opts['row']+=1
         log.info(self.task.cvtstodoprose())
         t=(_("Run all checks for {}").format(unlist(self.task.cvtstodoprose())))
-        self.proselabel(t,cmd=self.taskchooser.getmulticheckscope,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getmulticheckscope,
+                        parent=line)
     def redofinalbuttons(self):
         if hasattr(self,'bigbutton') and self.bigbutton.winfo_exists():
             self.bigbutton.destroy()
@@ -1020,8 +1030,8 @@ class StatusFrame(ui.Frame):
         lps.grid(row=0,column=2,ipadx=0,ipady=0)
         ttt=ui.ToolTip(lt,_("Change Check Type"))
         ttps=ui.ToolTip(lps,_("Change Part of Speech"))
-        lt.bind('<ButtonRelease-1>',self.taskchooser.getcvt)
-        lps.bind('<ButtonRelease-1>',self.taskchooser.getps)
+        lt.bind('<ButtonRelease-1>',self.taskchooser.mainwindowis.getcvt)
+        lps.bind('<ButtonRelease-1>',self.taskchooser.mainwindowis.getps)
     def makenoboard(self):
         log.info("No Progress board")
         try:
@@ -1253,7 +1263,8 @@ class Settings(object):
                     log.info(_("Found {} Repository!"
                                 ).format(repo[r].repotypename))
                     self.repo[r]=repo[r]
-                elif r == 'git': #don't worry about hg, if not there already
+                elif r == 'git' and 'git' in program and program['git']:
+                    #don't worry about hg, if not there already
                     log.info(_("No Git data repository found; creating."))
                     repo[r].init()
                     repo[r].add(self.liftfilename)
@@ -1622,11 +1633,6 @@ class Settings(object):
         self.repocheck()
         self.settingsfilecheck()
         self.imagesdir=file.getimagesdir(self.directory)
-        pictures=file.getimagesdiralternate(self.directory)
-        if (not file.getfilesofdirectory(self.imagesdir) and
-                file.getfilesofdirectory(pictures)
-            ):
-            self.imagesdir=pictures #us this, if this is where they are.
         self.audiodir=file.getaudiodir(self.directory)
         # log.info('self.audiodir: {}'.format(self.audiodir))
         self.reportsdir=file.getreportdir(self.directory)
@@ -1668,8 +1674,8 @@ class Settings(object):
             present=set(self.repo[r].files)
             log.info("{} currently has {} files".format(r,len(present)))
             for f in maindirfiles:
-                log.info("{}".format([file.getreldirposix(self.repo[r].url,f)]))
-                log.info("working on {}".format(file.getreldirposix(self.repo[r].url,f)))
+                # log.info("{}".format([file.getreldirposix(self.repo[r].url,f)]))
+                # log.info("working on {}".format(file.getreldirposix(self.repo[r].url,f)))
                 log.info("working on {}".format(file.getfile(f)))
                 # f=file.getreldirposix(self.repo[r].url,f)
                 if file.exists(f):# They won't always be there
@@ -1704,6 +1710,10 @@ class Settings(object):
                 #     t.join()
                 # self.repo[r].add(f)
             for ext in ['png','jpg','gif']:
+                # log.info("Image Directory: {}".format(self.imagesdir))
+                # log.info("Found image files: {}".format(nn([i for i in
+                # file.getfilesofdirectory(self.imagesdir,
+                #                         '*.'+ext)], oneperline=True)))
                 i=set([file.getreldirposix(self.repo[r].url,i)
                         for i in file.getfilesofdirectory(self.imagesdir,
                                                 '*.'+ext)]
@@ -4224,6 +4234,7 @@ class TaskChooser(TaskDressing,ui.Window):
         """This function allows the user to select from any of tasks whose
         prerequisites are minimally satisfied."""
         # if self.reports:
+        self.withdraw()
         try:
                 self.frame.status.bigbutton.destroy()
         except AttributeError:
@@ -4279,6 +4290,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if self.showreports:
             self.showreports=False #just do this once each button click
             self.showingreports=True
+        self.deiconify()
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
         satisfied task"""
@@ -6471,7 +6483,8 @@ class Sort(object):
         log.info("Maybe verify (from maybesort)")
         groupstoverify=self.status.groups(toverify=True)
         if groupstoverify:
-            self.status.group(groupstoverify[0]) #just pick the first now
+            if self.status.group() not in groupstoverify:
+                self.status.group(groupstoverify[0]) #just pick the first now
             log.info("verify (from maybesort)")
             self.verify()
             self.did['verify']=True
@@ -6541,6 +6554,9 @@ class Sort(object):
                                 column=0,row=0, sticky="w",
                                 pady=scaledpady
                                 )
+        if hasattr(framed,'illustration'):
+            self.sortitem['image']=framed.illustration
+            self.sortitem['compound']="left"
         self.sortitem.wrap()
         self.runwindow.waitdone()
         for b in self.buttonframe.groupbuttonlist:
@@ -6782,20 +6798,24 @@ class Sort(object):
             ipady=15*program['scale']
         if label==True:
             b=ui.Label(parent, text=text,
+                    column=column, row=row,
+                    sticky="ew",
+                    ipady=ipady,
                     **kwargs
-                    ).grid(column=column, row=row,
-                            sticky="ew",
-                            ipady=ipady)
+                    )
         else:
             bf=ui.Frame(parent, pady='0') #This will be killed by removesenseidfromgroup
             bf.grid(column=column, row=row, sticky='ew')
             b=ui.Button(bf, text=text, pady='0',
                     cmd=notok,
+                    column=column, row=0,
+                    sticky="ew",
+                    ipady=ipady, #Inside the buttons...
                     **kwargs
-                    ).grid(column=column, row=0,
-                            sticky="ew",
-                            ipady=ipady #Inside the buttons...
-                            )
+                    )
+        if hasattr(framed,'illustration'):
+            b['image']=framed.illustration
+            b['compound']="left"
     def join(self):
         log.info("Running join!")
         """This window shows up after sorting, or maybe after verification, to
@@ -10403,6 +10423,7 @@ class FramedDataDict(dict):
         self.audiolang=self.taskchooser.settings.audiolang
         self.audiodir=self.taskchooser.settings.audiodir
         self.glosslangs=self.taskchooser.settings.glosslangs
+        self.imagesdir=self.taskchooser.settings.imagesdir
         log.log(4,"analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def clearsense(self,senseid):
         try:
@@ -10506,6 +10527,7 @@ class FramedData(object):
         self.audiolang=self.parent.audiolang
         self.audiodir=self.parent.audiodir
         self.glosslangs=self.parent.glosslangs
+        self.imagesdir=self.parent.imagesdir
         log.log(4,"analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def gettonegroup(self):
         if hasattr(self,'tonegroups') and self.tonegroups:
@@ -10551,6 +10573,23 @@ class FramedData(object):
             return g
     def applynoframe(self):
         self.framed=self.forms
+    def getillustration(self):
+        if self.senseid:
+            i=self.parent.db.get('illustration',
+                                    senseid=self.senseid,
+                                    ).get('href')
+            log.info("Illustration: {}".format(i))
+            if i and i[0]:
+                log.info("Found link to illustration {}".format(i[0]))
+                try:
+                    img=ui.Image(file.getdiredrelURLposix(self.imagesdir,i[0]))
+                    # will probably want the size adjustable
+                    # maybe resolution, too (take from theme?)
+                    img.scale(program['scale'],pixels=150,resolution=10)
+                    self.illustration=img.scaled
+                    log.info("Found illustration {}".format(self.illustration))
+                except Exception as e:
+                    log.error("Exception making image: {}".format(e))
     def __init__(self, parent, **kwargs): #source,
         """Evaluate what is actually needed"""
         super(FramedData, self).__init__()
@@ -10563,6 +10602,7 @@ class FramedData(object):
             return
         # self.cvt=self.parent.taskchooser.params.cvt()
         self.updatelangs()
+        self.getillustration()
         self.forms=DictbyLang()
 class FramedDataSense(FramedData):
     """This populates an object with attributes to format data for display,
@@ -10593,7 +10633,6 @@ class FramedDataSense(FramedData):
         self.tonegroups=self.db.get('example/tonefield/form/text',
                     senseid=self.senseid, location=frame).get('text')
     def parsesense(self,db,senseid,check):
-        self.senseid=senseid #store for later
         # self.ps=unlist(db.ps(senseid=senseid)) #there should be just one
         # log.info("check: {}".format(check))
         # log.info("field: {}; ftype: {}".format(check['field'],ftype))
@@ -10633,6 +10672,7 @@ class FramedDataSense(FramedData):
         # log.info("self.group of parsesense: {}".format(self.group))
     def __init__(self, parent, senseid, check, **kwargs):
         """Evaluate what is actually needed"""
+        self.senseid=senseid #store for later
         super(FramedDataSense, self).__init__(parent)
         self.db=parent.db #kwargs.pop('db',None) #not needed for examples
         # else:
@@ -10942,7 +10982,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         if self.exitFlag.istrue():
             return #just don't die
         if self.task.settings.lowverticalspace:
-            log.info("using lowverticalspace for addgroupbutton")
+            # log.info("using lowverticalspace for addgroupbutton")
             scaledpady=0
         else:
             scaledpady=int(40*program['scale'])
@@ -11272,6 +11312,10 @@ class ToneGroupButtonFrame(ui.Frame):
         else:
             self._filenameURL=None
         self._text=framed.formatted(showtonegroup=self.kwargs['showtonegroup'])
+        if hasattr(framed,'illustration'):
+            self._illustration=framed.illustration
+        else:
+            self._illustration=None
         return 1
     def makebuttons(self):
         if self.kwargs['label']:
@@ -11294,6 +11338,9 @@ class ToneGroupButtonFrame(ui.Frame):
                     column=1, row=0, sticky="ew",
                     **self.buttonkwargs()
                     )
+        if hasattr(self,'_illustration'):
+            b['image']=self._illustration
+            b['compound']="left"
     def playbutton(self):
         self.check.pyaudiocheck()
         self.check.soundsettingscheck()
@@ -11304,6 +11351,9 @@ class ToneGroupButtonFrame(ui.Frame):
                     column=1, row=0,
                     sticky="nesw",
                     **self.buttonkwargs())
+        if hasattr(self,'_illustration'):
+            b['image']=self._illustration
+            b['compound']="left"
         bttext=_("Click to hear this utterance")
         if program['praat']:
             bttext+='; '+_("right click to open in praat")
@@ -11319,6 +11369,9 @@ class ToneGroupButtonFrame(ui.Frame):
         b=ui.Button(self, text=self._text, cmd=cmd,
                     column=1, row=0, sticky="ew",
                     **self.buttonkwargs())
+        if hasattr(self,'_illustration'):
+            b['image']=self._illustration
+            b['compound']="left"
         bt=ui.ToolTip(b,_("Pick this group ({})").format(self.group))
     def refresh(self):
         # if renew is True:
@@ -12737,13 +12790,14 @@ class Repository(object):
         args=['checkout',branchname]
         r=self.do(args)
         log.info(r)
+        self.branchname() #because this changes
         # if r:
         #     r=self.pull()
         #     log.info(r)
         return r
     def add(self,file):
         #This function must be used to see changes
-        log.info("self.bare: {}".format(self.bare))
+        # log.info("self.bare: {}".format(self.bare))
         if not self.bare:
             if not self.alreadythere(file):
                 log.info(_("Adding {}, which is not already there.").format(file))
@@ -12889,7 +12943,7 @@ class Repository(object):
                     "giving up").format(self.repotypename))
             return
         if not branch:
-            branch=self.branchname()
+            branch=self.branch
         for remote in remotes:
             args=["pull",remote,branch+':'+branch]
             r=self.do(args)
@@ -12903,7 +12957,7 @@ class Repository(object):
                     "giving up").format(self.repotypename))
             return
         if not branch:
-            branch=self.branchname()
+            branch=self.branch
         for remote in remotes:
             args=["push"]
             if setupstream:
@@ -12913,7 +12967,7 @@ class Repository(object):
             if r and "The current branch master has no upstream branch." in r:
                 r=self.push(remotes=[remote],
                             #always keep branch names aligned.
-                            branch=self.branchname(),
+                            branch=self.branch,
                             setupstream=True)
             # log.info(r)
         return r #ok if we don't track results for each
@@ -13016,6 +13070,8 @@ class Repository(object):
             self.files=[]
     def do(self,args,**kwargs):
         # log.info("do args: {}".format(args))
+        if not hasattr(self,'branch') and 'init' not in args:
+            return #don't try to do things without an actual repo
         cmd=[self.cmd,self.pwd] #-R
         if 'url' in kwargs and kwargs['url']:
             cmd.extend([str(kwargs['url'])])
@@ -13131,7 +13187,7 @@ class Repository(object):
         try: #in case the file doesn't exist yet
             with open(self.ignorefile) as f:
                 self.ignored=[i.rstrip() for i in f.readlines()]
-            log.info("self.ignored for {} now {}".format(self.code,self.ignored))
+            # log.info("self.ignored for {} now {}".format(self.code,self.ignored))
         except FileNotFoundError as e:
             log.info("Hope this is OK: {}".format(e))
     def exists(self,f=None):
@@ -13141,20 +13197,26 @@ class Repository(object):
         return file.exists(f)
     def exewarning(self):
         title=_("Warning: {} Executable Missing!".format(self.repotypename))
-        text=_("You seem to be working on a repository of data ({0}), "
-                "\nwhich may be tracked by {1}, "
-                "\nbut you don't seem to have the {1} executable installed in "
-                "your computer's PATH.").format(self.url,self.repotypename)
+        text=_("You "
+                # "seem to be working on a repository of data ({0}), "
+                # "\nwhich may be tracked by {1}, "
+                # "\nbut "
+                "you don't seem to have the {} executable installed in "
+                "your computer's PATH.").format(
+                                                # self.url,
+                                                self.repotypename)
         if self.repotypename == "Mercurial":
              text+='\n'+_("(Mercurial is used by Chorus and languagedepot.org)")
              if not self.exists():
                  log.info(_("No {0} repo, nor {0} executable; moving on."
                             ).format(self.repotypename))
                  return
-        w=ui.Window(program['root'],title=title)
+        w=ui.Window(program.get('root',ui.Root()),title=title)
         w.withdraw()
         if self.repotypename == "Git":
-             text+='\n'+_("(Git is used by A→Z+T to track changes in your data)")
+             text+='\n'+_("(Git is used by {0} to track changes in your "
+                        "data, and to keep {0} up to date)"
+                        ).format(program['name'])
         clickable=_("Please see {} for installation recommendations"
                     ).format(self.installpage)
         l=ui.Label(w.frame, text=text, column=0, row=0)
@@ -13193,8 +13255,10 @@ class Repository(object):
         w.lift()
     def getusernameargs(self):
         #This populates self.usernameargs, once per init.
+        re=None
         r=self.do(self.argstogetusername)
-        re=self.do(self.argstogetuseremail)
+        if hasattr(self,'argstogetuseremail'):
+            re=self.do(self.argstogetuseremail)
         if r:
             log.info("Using {} username '{}'".format(self.repotypename,r))
             if re:
@@ -13256,13 +13320,16 @@ class Repository(object):
         repoheadfile='.'+self.code+'/'+self.branchnamefile
         log.info("Looking for {} branch name in {}".format(self.repotypename,
                                                             repoheadfile))
-        with file.getdiredurl(self.url,repoheadfile).open() as f:
-            c=f.read()
-            # log.info("Found repo head info {}".format(c))
-            if c:
-                self.branch=c.split('/')[-1].strip()
-                log.info("Found branch: {}".format(self.branch))
-        return self.branch
+        try:
+            with file.getdiredurl(self.url,repoheadfile).open() as f:
+                c=f.read()
+                # log.info("Found repo head info {}".format(c))
+                if c:
+                    self.branch=c.split('/')[-1].strip()
+                    log.info("Found branch: {}".format(self.branch))
+            # return self.branch
+        except Exception as e:
+            log.error(_("Problem finding branch name: {}").format(e))
     def setdescription(self):
         self.description=_("language data")
     def populate(self):
@@ -13274,10 +13341,11 @@ class Repository(object):
         self.getusernameargs()
         self.getfiles()
         self.ignorecheck()
+        self.branchname()
         try:
             log.info("{} repository object initialized on branch {} at {} "
                     "for {}, with {} files."
-                    "".format(self.repotypename, self.branchname(), self.url,
+                    "".format(self.repotypename, self.branch, self.url,
                         self.description, len(self.files)))
         except FileNotFoundError:
             log.info("{} repository object initialized at {} "
@@ -13411,7 +13479,7 @@ class Git(Repository):
     def init(self):
         args=['init', '--initial-branch="main"']
         r=self.do(args)
-        log.info(r)
+        log.info("init: {}".format(r))
         self.populate() #because this won't have been done yet
         # git config branch.$branchname.mergeoptions "-X ignore-space-change"
     def lastcommitdate(self):
@@ -13446,6 +13514,8 @@ class Git(Repository):
         self.nonbareclonearg=""
         super(Git, self).__init__(url)
 class GitReadOnly(Git):
+    def exewarning(self):
+        pass #don't worry about it for this one
     def share(self,event=None):
         """This method should only ever pull or push, depending on who
         is doing it"""
@@ -13470,7 +13540,7 @@ class GitReadOnly(Git):
             return
         branches = ['main',program['testversionname']]
         fns = [self.testversion, self.reverttomain]
-        if self.branchname() != 'main':
+        if self.branch != 'main':
             branches.reverse()
             fns.reverse()
         try:
@@ -13485,14 +13555,14 @@ class GitReadOnly(Git):
     def reverttomain(self,event=None):
         r=self.checkout('main')
         log.info(r)
-        if self.branchname() == 'main':
+        if self.branch == 'main':
             return True
         else:
             ErrorNotice(r)
     def testversion(self,event=None):
         r=self.checkout(program['testversionname'])
         log.info(r)
-        if self.branchname() == program['testversionname']:
+        if self.branch == program['testversionname']:
             return True
         else:
             ErrorNotice(r)
@@ -13837,7 +13907,7 @@ def nn(x,perline=False,oneperline=False,twoperline=False):
             return '\n'.join([', '.join([str(v) for v in output[i*2:i*2 + 2]])
                         for i in range(int(len(output)/2)+1)])
         elif oneperline:
-            return '\n'.join(output)
+            return '\n'.join([str(i) for i in output])
         else:
             return ' '.join(output)
     else:
