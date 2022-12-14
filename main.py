@@ -793,17 +793,17 @@ class StatusFrame(ui.Frame):
             if l['code']==interfacelang():
                 interfacelanguagename=l['name']
         t=(_("Using {}").format(interfacelanguagename))
-        self.proselabel(t,cmd=self.taskchooser.getinterfacelang)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getinterfacelang)
         self.opts['row']+=1
     def analangline(self):
         analang=self.settings.params.analang()
         langname=self.settings.languagenames[analang]
         t=(_("Studying {}").format(langname))
         if (langname == _("Language with code [{}]").format(analang)):
-            self.proselabel(t,cmd=self.taskchooser.getanalangname,
+            self.proselabel(t,cmd=self.taskchooser.mainwindowis.getanalangname,
                                             tt=_("Set analysis language Name"))
         else:
-            self.proselabel(t,cmd=self.taskchooser.getanalang,
+            self.proselabel(t,cmd=self.taskchooser.mainwindowis.getanalang,
                                             tt=_("Change analysis language"))
         self.opts['row']+=1
     def glosslangline(self):
@@ -812,14 +812,16 @@ class StatusFrame(ui.Frame):
         line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
                         columnspan=3,sticky='w') #3 cols is the width of frame
         self.opts['row']+=1
-        self.proselabel(t,cmd=self.taskchooser.getglosslang,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getglosslang,
+                            parent=line)
         self.opts['columnplus']=1
         if len(self.settings.glosslangs) >1:
             lang2=self.settings.languagenames[self.settings.glosslangs.lang2()]
             t=(_("and {}").format(lang2))
         else:
             t=_("only")
-        self.proselabel(t,cmd=self.taskchooser.getglosslang2,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getglosslang2,
+                            parent=line)
         self.opts['columnplus']=0
     def fieldsline(self):
         for ps in [self.settings.nominalps, self.settings.verbalps]:
@@ -832,9 +834,9 @@ class StatusFrame(ui.Frame):
                             columnspan=3,sticky='w') #3 cols is the width of frame
             self.opts['row']+=1
             if ps == self.settings.nominalps:
-                cmd=self.taskchooser.getsecondformfieldN
+                cmd=self.taskchooser.mainwindowis.getsecondformfieldN
             else:
-                cmd=self.taskchooser.getsecondformfieldV
+                cmd=self.taskchooser.mainwindowis.getsecondformfieldV
             self.proselabel(t, cmd=cmd, parent=line)
     def sliceline(self):
         count=self.settings.slices.count()
@@ -842,10 +844,11 @@ class StatusFrame(ui.Frame):
                         columnspan=3,sticky='w')
         self.opts['row']+=1
         t=(_("Looking at {}").format(self.profile))
-        self.proselabel(t,cmd=self.taskchooser.getprofile,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getprofile,
+                            parent=line)
         self.opts['columnplus']=1
         t=(_("{} words ({})").format(self.ps,count))
-        self.proselabel(t,cmd=self.taskchooser.getps,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getps,parent=line)
         self.opts['columnplus']=0
     def cvtline(self):
         line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
@@ -853,7 +856,7 @@ class StatusFrame(ui.Frame):
         self.opts['row']+=1
         t=(_("Checking {},").format(
                                 self.settings.params.cvtdict()[self.cvt]['pl']))
-        self.proselabel(t,cmd=self.taskchooser.getcvt,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getcvt,parent=line)
         #this continues on the same line:
         if self.cvt == 'T':
             self.toneframe(line)
@@ -871,7 +874,8 @@ class StatusFrame(ui.Frame):
             # self.check=None
         else:
             t=(_("working on ‘{}’ tone frame").format(self.check))
-        self.proselabel(t,cmd=self.taskchooser.getcheck,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getcheck,
+                            parent=line)
     def tonegroup(self,line):
         self.opts['columnplus']=2
         check=self.settings.params.check()
@@ -885,16 +889,16 @@ class StatusFrame(ui.Frame):
         """Set appropriate conditions for each of these:"""
         if (not check or (check in self.settings.status.checks(wsorted=True) and
             profile in self.settings.status.profiles(wsorted=True))):
-            cmd=self.taskchooser.getgroupwsorted
+            cmd=self.taskchooser.mainwindowis.getgroupwsorted
         elif (not check or (check in self.settings.status.checks(tosort=True) and
             profile in self.settings.status.profiles(tosort=True))):
-            cmd=self.taskchooser.getgrouptosort
+            cmd=self.taskchooser.mainwindowis.getgrouptosort
         elif (check in self.settings.status.checks(toverify=True) and
             profile in self.settings.status.profiles(toverify=True)):
-            cmd=self.taskchooser.getgrouptoverify
+            cmd=self.taskchooser.mainwindowis.getgrouptoverify
         elif (check in self.settings.status.checks(torecord=True) and
             profile in self.settings.status.profiles(torecord=True)):
-            cmd=self.taskchooser.getgrouptorecord
+            cmd=self.taskchooser.mainwindowis.getgrouptorecord
         else:
             cmd=None
         log.info("check: {}; profile: {}; \n{}-{}; \n{}-{}; \n{}-{};"
@@ -912,7 +916,8 @@ class StatusFrame(ui.Frame):
     def cvcheck(self,line):
         self.opts['columnplus']=1
         t=(_("working on {}".format(self.settings.params.cvcheckname())))
-        self.proselabel(t,cmd=self.taskchooser.getcheck,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getcheck,
+                        parent=line)
         # self.opts['row']+=1
     def cvgroup(self,line):
         if self.settings.status.group():
@@ -920,7 +925,8 @@ class StatusFrame(ui.Frame):
         else:
             t=(_("(All groups)"))
         self.opts['columnplus']=2
-        self.proselabel(t,cmd=self.taskchooser.getgroup,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getgroup,
+                        parent=line)
         # self.opts['row']+=1
     def buttoncolumnsline(self):
         self.opts['row']+=1
@@ -930,16 +936,19 @@ class StatusFrame(ui.Frame):
             t=(_("Not using multiple button columns").format(self.check))
         # log.info(t)
         tt=_("Click here to change the number of columns used for sort buttons")
-        self.proselabel(t,cmd=self.taskchooser.getbuttoncolumns,tt=tt)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getbuttoncolumns,
+                        tt=tt)
     def maxes(self):
         line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
                         columnspan=3,sticky='w')
         self.opts['row']+=1
         t=(_("Max profiles: {}; ".format(self.settings.maxprofiles)))
-        self.proselabel(t,cmd=self.taskchooser.getmaxprofiles,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getmaxprofiles,
+                        parent=line)
         self.opts['columnplus']=1
         t=(_("Max lexical categories: {}".format(self.settings.maxpss)))
-        self.proselabel(t,cmd=self.taskchooser.getmaxpss,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getmaxpss,
+                        parent=line)
     def multicheckscope(self):
         if not hasattr(self.task,'cvtstodo'):
             self.task.cvtstodo=['V']
@@ -948,7 +957,8 @@ class StatusFrame(ui.Frame):
         self.opts['row']+=1
         log.info(self.task.cvtstodoprose())
         t=(_("Run all checks for {}").format(unlist(self.task.cvtstodoprose())))
-        self.proselabel(t,cmd=self.taskchooser.getmulticheckscope,parent=line)
+        self.proselabel(t,cmd=self.taskchooser.mainwindowis.getmulticheckscope,
+                        parent=line)
     def redofinalbuttons(self):
         if hasattr(self,'bigbutton') and self.bigbutton.winfo_exists():
             self.bigbutton.destroy()
@@ -1020,8 +1030,8 @@ class StatusFrame(ui.Frame):
         lps.grid(row=0,column=2,ipadx=0,ipady=0)
         ttt=ui.ToolTip(lt,_("Change Check Type"))
         ttps=ui.ToolTip(lps,_("Change Part of Speech"))
-        lt.bind('<ButtonRelease-1>',self.taskchooser.getcvt)
-        lps.bind('<ButtonRelease-1>',self.taskchooser.getps)
+        lt.bind('<ButtonRelease-1>',self.taskchooser.mainwindowis.getcvt)
+        lps.bind('<ButtonRelease-1>',self.taskchooser.mainwindowis.getps)
     def makenoboard(self):
         log.info("No Progress board")
         try:
