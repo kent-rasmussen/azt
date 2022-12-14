@@ -220,8 +220,7 @@ def getmediadirectory(mediatype=None):
                 ).format(mediatype)
     else:
         prompt=_("Please select where to find the media locally")
-    return getdirectory(prompt, media,
-                        )
+    return getdirectory(prompt, media)
 def lift():
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
     home=gethome()
