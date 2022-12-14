@@ -3039,7 +3039,7 @@ class Settings(object):
         # if self.taskchooser.donew['collectionlc']:
         #     self.ifcollectionlc()
         self.attrschanged=[]
-class TaskDressing(object):
+class TaskDressing(HasMenus,object):
     """This Class covers elements that belong to (or should be available to)
     all tasks, e.g., menus and button appearance."""
     def taskicon(self):
@@ -3076,18 +3076,6 @@ class TaskDressing(object):
     def _hidebuttons(self,event=None):
         self.mainlabelrelief(relief=None,refresh=True)
         self.setcontext()
-    def _removemenus(self,event=None):
-        if hasattr(self,'menubar'):
-            self.menubar.destroy()
-            self.menu=False
-            self.setcontext()
-    def _setmenus(self,event=None):
-        # check=self.check
-        self.menubar=Menus(self)
-        self.config(menu=self.menubar)
-        self.menu=True
-        self.setcontext()
-        self.unbind_all('<Enter>')
     def correlatemenus(self):
         log.info("Menus: {}; {} (chooser)".format(self.menu,self.taskchooser.menu))
         if hasattr(self,'task'):
@@ -3158,88 +3146,6 @@ class TaskDressing(object):
         w=w/2
         h=h/2
         self.parent.geometry("%dx%d+0+0" % (w, h))
-    def helpnewinterface(self):
-        title=(_("{} Dictionary and Orthography Checker"
-                "".format(program['name'])))
-        window=ui.Window(self, title=title)
-        text=_("{0} has a new interface, starting mid January 2022. You "
-                "should still be able to do everything you did before, though "
-                "you will probably get to each function a bit differently "
-                "—hopefully more intuitively."
-                "\nTasks are organized into Data Collection and Analysis, "
-                "and you can switch between them with the button in the upper "
-                "right of the main {0} window."
-                "\nEither window allows you to run reports."
-                "").format(program['name'])
-        url='{}/TASKS.md'.format(program['docsurl'])
-        webtext=_("For more information on {} tasks, please check out the "
-                "documentation at {} ").format(program['name'],url)
-        ui.Label(window.frame, image=self.frame.theme.photo['icon'],
-                text=title, font='title',compound="bottom",
-                row=0,column=0,sticky='we'
-                )
-        l=ui.Label(window.frame, text=text, padx=50,
-                wraplength=int(self.winfo_screenwidth()/2),
-                row=1,column=0,pady=(50,0),sticky='we'
-                )
-        webl=ui.Label(window.frame, text=webtext, padx=50,
-                wraplength=int(self.winfo_screenwidth()/2),
-                row=2,column=0,sticky='we'
-                )
-        webl.bind("<Button-1>", lambda e: openweburl(url))
-    def helpabout(self):
-        title=(_("{name} Dictionary and Orthography Checker"
-                "".format(name=program['name'])))
-        window=ui.Window(self, title=title)
-        ui.Label(window.frame,
-                text=_("version: {}").format(program['version']),
-                anchor='c',padx=50,
-                row=1,column=0,sticky='we'
-                        )
-        text=_("{name} is a computer program that accelerates community"
-                "-based language development by facilitating the sorting of a "
-                "beginning dictionary by vowels, consonants and tone.\n"
-                "It does this by presenting users with sets of words from a "
-                "LIFT dictionary database, one part of speech and syllable "
-                "profile at a time. These words are sorted into groups based "
-                "on consonants, vowels, and tone. \nTone frames are "
-                "customizable and stored in the database for each word, "
-                "allowing for a number of approaches to collecting this data. "
-                "A tone report aids the drafting of underlying categories by "
-                "grouping words based on sorting across tone frames. \n{name} then "
-                "allows the user to record a word in each of the frames where "
-                "it has been sorted, storing the recorded audio file in a "
-                "directory, with links to each file in the dictionary database."
-                " Recordings can be made up to 192khz/32float, according to "
-                "your recording equipment's capacity.").format(
-                                                    name=program['name'])
-        webtext=_("For help with this tool, please check out the documentation "
-                "at {url} ").format(url=program['url'])
-        mailtext=_("or write me at {}.").format(program['Email'])
-        ui.Label(window.frame, text=title,
-                font='title',anchor='c',padx=50,
-                row=0,column=0,sticky='we')
-        f=ui.ScrollingFrame(window.frame,
-                            row=2,column=0,sticky='we')
-        ui.Label(f.content, image=self.frame.theme.photo['small'],
-                text='',
-                row=0,column=0,sticky='we'
-                )
-        l=ui.Label(f.content, text=text, padx=50,
-                wraplength=int(self.winfo_screenwidth()/2),
-                row=1,column=0,pady=(50,0),sticky='we'
-                )
-        webl=ui.Label(f.content, text=webtext, padx=50,#pady=50,
-                wraplength=int(self.winfo_screenwidth()/2),
-                row=2,column=0,sticky='we'
-                )
-        maill=ui.Label(f.content, text=mailtext, padx=50,#pady=50,
-                wraplength=int(self.winfo_screenwidth()/2),
-                row=3,column=0,sticky='we'
-                )
-        webl.bind("<Button-1>", lambda e: openweburl(program['url']))
-        murl='mailto:{}?subject= A→Z+T question'.format(program['Email'])
-        maill.bind("<Button-1>", lambda e: openweburl(murl))
     def inherittaskattrs(self):
         for attr in ['file',
                     'db',
@@ -4194,19 +4100,6 @@ class TaskDressing(object):
     """Functions that everyone needs"""
     def updateazt(self,event=None):
         updateazt()
-    def reverttomainazt(self,event=None):
-        #This doesn't care which (test) version one is on
-        r=program['repo'].reverttomain()
-        log.info("reverttomainazt: {}".format(r))
-        if r:
-            self.taskchooser.restart()
-    def trytestazt(self,event=None):
-        #This only goes to the test version at the top of this file
-        self.updateazt()
-        r=program['repo'].testversion()
-        log.info("trytestazt: {}".format(r))
-        if r:
-            self.taskchooser.restart()
     def verifictioncode(self,**kwargs):
         check=kwargs.get('check',self.params.check())
         group=kwargs.get('group',self.status.group())
