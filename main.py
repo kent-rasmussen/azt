@@ -294,6 +294,8 @@ class LiftChooser(ui.Window,HasMenus):
         mediadir=file.getmediadirectory() #ask where it is
         homedir=file.gethome() #don't ask where to put it
         # log.info("Media dir: {}; home: {}".format(mediadir,homedir))
+        if not mediadir:
+            return
         if not file.exists(homedir): #this should never happen
             ErrorNotice(_("I can't find your home directory ({}); please "
                         "submit a bug report!").format(homedir))
