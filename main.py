@@ -13503,6 +13503,9 @@ class Git(Repository):
     def init(self):
         args=['init', '--initial-branch="main"']
         r=self.do(args)
+        if 'unknown option' in r:
+            args=['init']
+            r=self.do(args)
         log.info("init: {}".format(r))
         self.populate() #because this won't have been done yet
         # git config branch.$branchname.mergeoptions "-X ignore-space-change"
