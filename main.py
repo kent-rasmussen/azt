@@ -304,28 +304,29 @@ class LiftChooser(ui.Window,HasMenus):
         if not newrepo:
             log.info("trying with Mercurial")
             newrepo=makenewrepo(Mercurial,mediadir)
-        if newrepo: # if there, already exists
-            filename=self.findrepolift(newrepo) #find the lift file
-            # log.info("found filename {}".format(filename))
-            if filename: #this will be None, if no or multiple *.lift files
-                # log.info("using filename {}".format(filename))
-                newfile=newrepo.url.joinpath(filename) #make file a url
-                # log.info("using newfile {}".format(newfile))
-                if file.exists(newfile): #should always be there
-                    # log.info("notifying newfile {}".format(newfile))
-                    self.newfilelocation(newfile) #tell user where to find it
-                    # log.info("returning newfile {}".format(newfile))
-                    return newfile
-                else:
-                    log.error(_("looks like there was a problem finding "
-                                "your new file. ({})").format(newfile))
+        if not newrepo: # if there, already exists
+            log.error(_("Couldn't find a repository at {}").format(mediadir))
+        filename=self.findrepolift(newrepo) #find the lift file
+        # log.info("found filename {}".format(filename))
+        if filename: #this will be None, if no or multiple *.lift files
+            # log.info("using filename {}".format(filename))
+            newfile=newrepo.url.joinpath(filename) #make file a url
+            # log.info("using newfile {}".format(newfile))
+            if file.exists(newfile): #should always be there
+                # log.info("notifying newfile {}".format(newfile))
+                self.newfilelocation(newfile) #tell user where to find it
+                # log.info("returning newfile {}".format(newfile))
+                return newfile
             else:
-                msg=_("It looks like the repository was cloned, but "
-                            "I can't find just one lift file."
-                            "\nTell {} which file you want to "
-                            "Analyze on the next page.").format(program['name'])
-                # log.info(msg)
-                ErrorNotice(msg,wait=True)
+                log.error(_("looks like there was a problem finding "
+                            "your new file. ({})").format(newfile))
+        else:
+            msg=_("It looks like the repository was cloned, but "
+                        "I can't find just one lift file."
+                        "\nTell {} which file you want to "
+                        "Analyze on the next page.").format(program['name'])
+            # log.info(msg)
+            ErrorNotice(msg,wait=True)
     def makeCAWLdemo(self):
         title=_("Make a Demo LIFT Database")
         w=ui.Window(program['root'],title=title)
