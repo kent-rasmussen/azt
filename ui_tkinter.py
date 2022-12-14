@@ -1159,14 +1159,15 @@ class ContextMenu(Childof):
             self.menuinit()
             self.menu.add_command(label=msg,command=cmd)
     def dosetcontext(self):
+        # You need to have a setcontext() method for the
+        # parent of this context menu, to set menu
+        # items under appropriate conditions
+        # There is a default 'show menus only' one in HasMenus()
         try:
-            log.log(3,"setcontext: {}".format(self.parent.setcontext))
+            # log.info("setcontext: {}".format(self.parent.setcontext))
             self.parent.setcontext(context=self.context)
-        except:
-            log.error("You need to have a setcontext() method for the "
-                        "parent of this context menu ({}), to set menu "
-                        "items under appropriate conditions ({}): {}.".format(
-                            self.parent,self.context,self.parent.setcontext))
+        except Exception as e:
+            log.error(_("Exception in dosetcontext: {}").format(e))
     def do_popup(self,event):
         try:
             self.menu.tk_popup(event.x_root, event.y_root)
