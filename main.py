@@ -93,38 +93,6 @@ import subprocess
 import webbrowser
 import pkg_resources
 
-class FileChooser(object):
-    """This class selects the LIFT database we'll be working with, and does
-    some basic processing on it."""
-    def askwhichlift(self,filenamelist):
-        def setfilename(choice,window):
-            window.withdraw()
-            if choice == 'New':
-                self.name=self.startnewfile()
-            elif choice == 'Other':
-                self.name=file.lift()
-            elif choice == 'Clone':
-                log.info("trying clone from USB")
-                self.name=self.clonefromUSB()
-            elif choice == 'Demo':
-                log.info("Making a CAWL demo database")
-                self.name=self.makeCAWLdemo()
-            else:
-                self.name=choice
-            log.info("self.name: {}".format(self.name))
-            window.deiconify()
-            if self.name:
-                file.writefilename(self.name)
-                window.destroy()
-        self.name=None # in case of exit
-        window=ui.Window(program['root'],title=_("Select LIFT Database"))
-        text=_('What do you want to work on?') #LIFT database
-        ui.Label(window.frame, text=text, font='title', column=0, row=0)
-        optionlist=[('New',_("Start work on a new language"))]
-        optionlist+=[('Clone',_("Copy work from a USB drive"))]
-        if filenamelist:
-            optionlist+=[(f,f) for f in filenamelist] #keep everything a tuple
-            self.other=_("Select another database on my computer") #use later
 class HasMenus():
     def helpnewinterface(self):
         title=(_("{} Dictionary and Orthography Checker"
