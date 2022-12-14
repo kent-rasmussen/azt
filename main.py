@@ -14275,13 +14275,13 @@ def updateazt(event=None,**kwargs): #should only be parent, for errorroot
         updateazt(**kwargs)
     log.info(_("Updating {}").format(program['name']))
     if 'git' in program:
-        log.info("parent title: {}".format(kwargs['parent'].title()))
         parent=kwargs.get('parent')
         if not parent or not parent.winfo_exists(): #take kwarg if there
             if 'chooser' in program:
                 kwargs['parent']=program['chooser'].mainwindowis
             else:
                 kwargs['parent']=program['root']
+        log.info("parent title: {}".format(kwargs['parent'].title()))
         w=ui.Wait(msg=_("Updating {}").format(program['name']), **kwargs)
         r=program['repo'].share() #t is a dict of main and testing results
         w.close()
