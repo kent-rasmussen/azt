@@ -14390,6 +14390,9 @@ def main():
     program['chooser'].mainloop()
     sysshutdown()
 def mainproblem():
+    def reverttomain(event=None):
+        program['repo'].reverttomain()
+        revertb.destroy()
     try:
         log.info(_("Starting up help line..."))
         # _
@@ -14484,9 +14487,15 @@ def mainproblem():
                 cmd=lambda x=errorw:updateazt(parent=x),
                 row=0,column=0,
                 pady=20)
+        if program['repo'].branch != 'main':
+            revertb=ui.Button(f,
+                    text=_("Revert to \nmain branch \nof {}").format(program['name']),
+                    cmd=reverttomain,
+                    row=1,column=0,
+                    pady=20)
     ui.Button(f,text=_("Restart \n{}").format(program['name']),
                 cmd=sysrestart, #This should be in task/chooser
-                row=1,column=0,
+                row=2,column=0,
                 pady=20)
         # log.info(_("Done making update menu"))
     errorw.wait_window(errorw)
