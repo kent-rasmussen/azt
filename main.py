@@ -6718,7 +6718,8 @@ class Sort(object):
         groups=self.status.groups(toverify=True) #needed for progress
         group=self.status.group()
         # The title for this page changes by group, below.
-        self.getrunwindow(msg="preparing to verify group: {}".format(group))
+        self.getrunwindow(msg="preparing to verify {} group: {}".format(check,
+                                                                        group))
         oktext='These all have the same {}'.format(self.params.cvcheckname())
         instructions=_("Read down this list to verify they all have the same "
             "{0} sound. Click on any word with a different {0} sound to "
