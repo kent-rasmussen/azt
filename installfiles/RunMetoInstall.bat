@@ -5,11 +5,14 @@ ECHO ""
 ECHO ""
 ECHO A→Z+T Install batch file
 ECHO This script installs stuff —it must be run **As Administrator**!
-if %errorlevel%==1 goto NotAdmin
 ECHO Will download and install Python 3.6.8
 ECHO Will download and install Git 2.33.0.2
 ECHO Will clone/download A→Z+T source to azt directory on your desktop
 ECHO Will create a shortcut to run AZT
+ECHO Error Level is %errorlevel%
+whoami /groups | find "S-1-16-12288"
+if errorlevel 1 goto NotAdmin
+ECHO Looks like I'm running As Administrator.
 ECHO Using user profile %userprofile%
 ECHO not moving to "%userprofile%/Downloads"
 ECHO moving to %~dp0 (where you downloaded the script)
