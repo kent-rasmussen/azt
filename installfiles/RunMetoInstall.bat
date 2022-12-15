@@ -108,4 +108,6 @@ ECHO This doesn't seem to be running as administrator.
 ECHO Trying to start an admin command prompt. If that doesn't work, please
 ECHO run this bat file as administrator yourself.
 if runas /env /user:domain\Administrator %~0 (EHCO Worked!) ELSE (runas /env /user:Administrator %~0)
+echo Stopping here just in case you need to read anything above; we're done!
+Pause
 :end
