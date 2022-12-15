@@ -4813,10 +4813,7 @@ class Segments(object):
     def getlisttodo(self,**kwargs):
         """Whichever field is being asked for (self.nodetag), this fn returns
         which are left to do."""
-        self.dodone=True
-        if not hasattr(self,'dodoneonly'):
-            self.dodoneonly=False
-        if hasattr(self,'byslice') and self.byslice:
+        if self.byslice:
             log.info("Limiting segment work to this slice")
             all=[]
             for senseid in self.slices.senseids():
@@ -5081,7 +5078,9 @@ class Segments(object):
                         ftype=self.params.ftype(),
                         )
     def __init__(self, parent):
-        pass
+        self.byslice=False
+        self.dodone=True
+        self.dodoneonly=False #don't give me other words
 class WordCollection(Segments):
     """This task collects words, from the SIL CAWL, or one by one."""
     def promptstrings(self,lang):
@@ -5351,6 +5350,7 @@ class WordCollection(Segments):
         # self.navigationframe.grid_columnconfigure(1,weight=1)
         self.frame.grid_columnconfigure(1,weight=1)
     def __init__(self, parent):
+        Segments.__init__(self,parent)
         self.dodone=False
 class WordCollectionLexeme(TaskDressing,ui.Window,WordCollection):
     def tasktitle(self):
@@ -5484,6 +5484,7 @@ class Parse(TaskDressing,ui.Window,Segments):
         log.info("Initializing {}".format(self.tasktitle()))
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
+        Segments.__init__(self,parent)
         self.nodetag='citation'
         self.dodone=True #give me words with citation done
         self.checkeach=False #don't confirm each word
