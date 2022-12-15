@@ -5462,9 +5462,11 @@ class Parse(TaskDressing,ui.Window,Segments):
                 if self.runwindow.exitFlag.istrue():
                     return
                 text=_("Copy this citation to lexeme field?")
-                text+="\n"+str(forms['lc'].text)+' > '+str(forms['lx'].text)
-                text+='\n'+_("Nominal second form: ")+str(forms['pl'].text)
-                text+='\n'+_("Verbal second form: ")+str(forms['imp'].text)
+                text+="\n"+str(forms['lc'].text)+' > '+nn(forms['lx'].text)
+                if forms['pl']:
+                    text+='\n'+_("Nominal second form: ")+nn(forms['pl'].text)
+                if forms['imp']:
+                    text+='\n'+_("Verbal second form: ")+nn(forms['imp'].text)
                 # log.info("w1: {}".format(self))
                 # log.info("w2: {}".format(self.runwindow))
                 # log.info("w3: {}".format(self.runwindow.frame))
