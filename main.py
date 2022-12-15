@@ -5455,9 +5455,20 @@ class Parse(TaskDressing,ui.Window,Segments):
         else:
             self.wait(msg=_("Parsing automatically"))
         for entry in todo:
+            # At this point, we want to be agnostic of lexical category, as this
+            # is one thing the parsing process is to establish/confirm.
+            # So either we create both form fields, then delete the one we don't
+            # want, or we do this (at least enough to know the category),
+            # then create the fields.
             forms=dict()
             for i in tags:
-                forms[i]=lift.Entry.formtextnodeofentry(entry,tags[i],self.analang)
+                nomake=False
+                if not i.startswith('l'): #need to think of which second form to make...
+                    nomake=True #won't make an emptynode, if not there.
+                forms[i]=lift.Entry.formtextnodeofentry(entry,tags[i],
+                                                        self.analang,
+                                                        nomake=nomake
+                                                        )
             if self.checkeach:
                 if self.runwindow.exitFlag.istrue():
                     return
