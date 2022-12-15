@@ -10468,6 +10468,7 @@ class FramedDataDict(dict):
         self.audiodir=self.taskchooser.settings.audiodir
         self.glosslangs=self.taskchooser.settings.glosslangs
         self.imagesdir=self.taskchooser.settings.imagesdir
+        self.directory=self.taskchooser.settings.directory
         log.log(4,"analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def clearsense(self,senseid):
         try:
@@ -10572,6 +10573,7 @@ class FramedData(object):
         self.audiodir=self.parent.audiodir
         self.glosslangs=self.parent.glosslangs
         self.imagesdir=self.parent.imagesdir
+        self.directory=self.parent.directory
         log.log(4,"analang: {}; glosslangs: {}".format(self.analang,self.glosslangs))
     def gettonegroup(self):
         if hasattr(self,'tonegroups') and self.tonegroups:
