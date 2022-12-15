@@ -1,8 +1,8 @@
 ECHO OFF
-ECHO
-ECHO
-ECHO
-ECHO
+ECHO ""
+ECHO ""
+ECHO ""
+ECHO ""
 ECHO A→Z+T Install batch file
 ECHO This script installs stuff —it must be run **As Administrator**!
 if %errorlevel%==1 goto NotAdmin
