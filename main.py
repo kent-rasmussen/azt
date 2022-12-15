@@ -13486,7 +13486,7 @@ class Git(Repository):
                 'ui_lang.py',
                 '*~',
                 'userlogs/**',
-                '*test*wav',
+                'test*wav',
                 'excess/**',
                 'images/archive/**',
                 'images/scaled/**',
