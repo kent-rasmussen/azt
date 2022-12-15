@@ -112,6 +112,7 @@ ECHO praat6218_win64.zip is there!
 ECHO Downloading Praat 6218...
 powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.fon.hum.uva.nl/praat/praat6218_win64.zip' -OutFile 'praat6218_win64.zip'"
 )
+ECHO Program files in %ProgramFiles%
 ECHO installing Praat to %ProgramFiles%
 tar -xvf praat6218_win64.zip -C "%ProgramFiles%"
 setx path "%path%;%ProgramFiles%"
