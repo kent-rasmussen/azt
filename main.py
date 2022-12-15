@@ -10628,7 +10628,11 @@ class FramedData(object):
             if i and i[0]:
                 log.info("Found link to illustration {}".format(i[0]))
                 try:
-                    img=ui.Image(file.getdiredrelURLposix(self.imagesdir,i[0]))
+                    for d in [self.imagesdir,self.directory]:
+                        url=file.getdiredrelURLposix(d,i[0])
+                        if file.exists(url):
+                            break
+                    img=ui.Image(url)
                     # will probably want the size adjustable
                     # maybe resolution, too (take from theme?)
                     img.scale(program['scale'],pixels=150,resolution=10)
