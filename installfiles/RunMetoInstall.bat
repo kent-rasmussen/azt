@@ -66,7 +66,7 @@ start Git-2.33.0.2-64-bit.exe
 
 pause
 
-ECHO Cloning A→Z+T source to azt directory on your desktop
+ECHO Cloning A→Z+T source to '%userprofile%/desktop/azt'
 cd /d "%userprofile%/desktop"
 FOR /F "tokens=* USEBACKQ" %%F IN (`git`) DO (
 SET GitExe=%%F
