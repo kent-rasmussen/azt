@@ -4824,14 +4824,15 @@ class Segments(object):
             all=self.db.get('entry',**kwargs
                         # showurl=True
                         ).get()
-        if self.dodone and not self.dodoneonly:
+        if self.dodone and not self.dodoneonly: #i.e., all data
             return all
         done=[i for i in all
             if lift.Entry.formtextnodeofentry(i,self.nodetag,self.analang).text
                 ]
-        if self.dodone:
+        if self.dodone: #i.e., dodoneonly
             return done
-        todo=[x for x in all if x not in done]
+        # At this point, done isn't wanted
+        todo=[x for x in all if x not in done] #set-set may be better
         log.info("To do: ({}) {}".format(len(todo),todo))
         return todo
     def getwords(self):
@@ -5500,7 +5501,7 @@ class Parse(TaskDressing,ui.Window,Segments):
         Segments.__init__(self,parent)
         self.nodetag='citation'
         self.dodone=True #give me words with citation done
-        self.checkeach=False #don't confirm each word
+        self.checkeach=False #don't confirm each word (default)
         self.dodoneonly=True #don't give me other words
 class ParseWords(Parse):
     def tasktitle(self):
