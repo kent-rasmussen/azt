@@ -5,6 +5,7 @@ ECHO
 ECHO
 ECHO A→Z+T Install batch file
 ECHO This script installs stuff —it must be run **As Administrator**!
+if %errorlevel%==1 goto NotAdmin
 ECHO Will download and install Python 3.6.8
 ECHO Will download and install Git 2.33.0.2
 ECHO Will clone/download A→Z+T source to azt directory on your desktop
@@ -101,3 +102,10 @@ start Mercurial-6.0-x64.exe
 
 echo Stopping here just in case you need to read anything above; we're done!
 Pause
+goto end
+:NotAdmin
+ECHO This doesn't seem to be running as administrator.
+ECHO Trying to start an admin command prompt. If that doesn't work, please
+ECHO run this bat file as administrator yourself.
+if runas /env /user:domain\Administrator %~0 (EHCO Worked!) ELSE (runas /env /user:Administrator %~0)
+:end
