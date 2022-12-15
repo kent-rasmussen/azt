@@ -10,8 +10,10 @@ ECHO Will download and install Python 3.6.8
 ECHO Will download and install Git 2.33.0.2
 ECHO Will clone/download A→Z+T source to azt directory on your desktop
 ECHO Will create a shortcut to run AZT
-
-cd /d "%userprofile%/Downloads"
+ECHO Using user profile %userprofile%
+ECHO not moving to "%userprofile%/Downloads"
+ECHO moving to %~dp0 (where you downloaded the script)
+cd /d %~dp0
 
 ECHO Downloading Python 3.6.8 (31830944; 30M)...
 ECHO Check that your internet is on and
