@@ -1,7 +1,11 @@
 <a href="fr/WORKSHOPS.md">Français</a>
 # Asset Based Language Development Workshops
 This series of workshops is designed to facilitate motivated communities to develop their own orthographies, with minimal technical support from outside the community. These workshops will depend almost entirely on local funding and logistics; SIL will contribute linguistic expertise as needed, and provide evaluation and feedback to the communities.
+
+Workshops would each be organized over three days, where teams are oriented to the next task and begin working on it in a context where questions can be answered and resolved locally. After the three day workshop, teams would finish the task in their home area.
+
 For each workshop, SIL's commitment to helping a given community will depend on that community having fulfilled the prerequisites for that workshop. If the prerequisites are not fulfilled by the time a given workshop happens, that community would be welcome to join that workshop the next time it is offered —assuming they have the prerequisites done by then.
+
 If you want any of these workshops in your home area, please consider inviting a neighboring language team to join you. You may want to consider sharing the burden of hosting between one workshop and another.
 
 ## Prerequisites
