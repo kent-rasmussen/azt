@@ -10622,7 +10622,7 @@ class FramedData(object):
             i=self.parent.db.get('illustration',
                                     senseid=self.senseid,
                                     ).get('href')
-            log.info("Illustration: {}".format(i))
+            # log.info("Illustration: {}".format(i))
             if i and i[0]:
                 log.info("Found link to illustration {}".format(i[0]))
                 try:
@@ -10631,7 +10631,7 @@ class FramedData(object):
                     # maybe resolution, too (take from theme?)
                     img.scale(program['scale'],pixels=150,resolution=10)
                     self.illustration=img.scaled
-                    log.info("Found illustration {}".format(self.illustration))
+                    # log.info("Found illustration {}".format(self.illustration))
                 except Exception as e:
                     log.error("Exception making image: {}".format(e))
     def __init__(self, parent, **kwargs): #source,
