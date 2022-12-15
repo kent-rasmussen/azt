@@ -3795,6 +3795,10 @@ class TaskDressing(HasMenus,object):
             output+=[self.params.cvtdict()[cvt]['pl']]
         return output
     def secondfieldnames(self):
+        if self.settings.nominalps not in self.settings.secondformfield:
+            self.getsecondformfieldN()
+        if self.settings.verbalps not in self.settings.secondformfield:
+            self.getsecondformfieldV()
         return (self.settings.secondformfield[self.settings.verbalps],
                 self.settings.secondformfield[self.settings.nominalps])
     def getbuttoncolumns(self,event=None):
