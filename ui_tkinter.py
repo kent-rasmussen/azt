@@ -571,7 +571,9 @@ class Exitable(object):
             self.exittoroot()
             self.killall()
         else:
-            if hasattr(self,'parent') and not isinstance(self.parent,Root):
+            if (hasattr(self,'parent') and
+                    self.parent.winfo_exists() and
+                    not isinstance(self.parent,Root)):
                 # log.info("Going to deiconify {}".format(self.parent))
                 self.parent.deiconify()
             # log.info("Going to cleanup {}".format(self))
