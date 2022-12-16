@@ -327,6 +327,19 @@ class LiftChooser(ui.Window,HasMenus):
                         "Analyze on the next page.").format(program['name'])
             # log.info(msg)
             ErrorNotice(msg,wait=True)
+    def findrepolift(self,repo):
+        # log.info("Looking for just one LIFT file.")
+        l=[i for i in repo.files if str(i).endswith('.lift')]
+        if len(l) == 1:
+            log.info("Found just one LIFT file: {}".format(l))
+            return l[0]
+        else:
+            # I could, if this becomes a problem, return the shortest filename,
+            # or on that contains the ISO code, but I think this is sane enough
+            # for now —anyone with more than one *.lift file should know what
+            # they're doing
+            log.info(_("returned more or less than one lift file! ({})"
+                    ).format(l))
     def makeCAWLdemo(self):
         title=_("Make a Demo LIFT Database")
         w=ui.Window(program['root'],title=title)
@@ -488,19 +501,6 @@ class FileChooser(object):
         window.wait_window(window)
         if not self.name: #If not set, for any reason
             return 1
-    def findrepolift(self,repo):
-        # log.info("Looking for just one LIFT file.")
-        l=[i for i in repo.files if str(i).endswith('.lift')]
-        if len(l) == 1:
-            log.info("Found just one LIFT file: {}".format(l))
-            return l[0]
-        else:
-            # I could, if this becomes a problem, return the shortest filename,
-            # or on that contains the ISO code, but I think this is sane enough
-            # for now —anyone with more than one *.lift file should know what
-            # they're doing
-            log.info(_("returned more or less than one lift file! ({})"
-                    ).format(l))
     def getfilename(self):
         # This method pulls filename(s) from settings, else self.askwhichlift
         self.name=file.getfilename() #returns filename if there, else filenames
