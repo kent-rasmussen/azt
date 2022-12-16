@@ -1210,14 +1210,17 @@ class StatusFrame(ui.Frame):
         allchecks=list(dict.fromkeys(allchecks))
         profiles=['colheader']+profiles+['next']
         ungroups=0
-        tv=_("verified")
-        tu=_("unsorted data")
-        t="+ = {} \n! = {}".format(tv,tu)
-        h=ui.Label(self.leaderboardtable,text=t,font="small")
-        h.grid(row=row,column=0,sticky='e')
-        h.bind('<ButtonRelease-1>', refresh)
-        htip=_("Refresh table, \nsave settings")
-        th=ui.ToolTip(h,htip)
+        unsortedtext='[X]'
+        if not self.settings.hidegroupnames:
+            tv=_("verified")
+            tu=_("unsorted data")
+            # t="+ = {} \n! = {}".format(tv,tu)
+            t="+ = {} \n{} = {}".format(tv,unsortedtext,tu)
+            h=ui.Label(self.leaderboardtable,text=t,font="small")
+            h.grid(row=row,column=0,sticky='e')
+            h.bind('<ButtonRelease-1>', refresh)
+            htip=_("Refresh table, \nsave settings")
+            th=ui.ToolTip(h,htip)
         r=list(self.settings.status[cvt][ps])
         log.debug("Table rows possible: {}".format(r))
         for profile in profiles:
