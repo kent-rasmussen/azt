@@ -3213,6 +3213,7 @@ class TaskDressing(HasMenus,object):
                 'mainrelief':self.mainrelief,
                 'hidegroupnames':self.settings.hidegroupnames,
                 'self.fontthemesmall':self.fontthemesmall,
+                'buttonkwargs':self.dobuttonkwargs(),
                 'iflang':self.settings.interfacelangwrapper(),
                 'analang':self.params.analang(),
                 'glang1':self.glosslangs.lang1(),
@@ -5260,8 +5261,8 @@ class WordCollection(Segments):
                     "SILCAWL").format(len(modded))
             if len(modded)<100:
                 text+=": ({})".format(modded)
-            self.taskchooser.whatsdone()
-            self.taskchooser.makedefaulttask()
+            self.taskchooser.getcawlmissing()
+            self.dobuttonkwargs()
         else:
             title=_("Error trying to add SILCAWL entries")
             text=_("We seem to have not added or modded any entries, which "
