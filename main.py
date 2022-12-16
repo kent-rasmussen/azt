@@ -12839,17 +12839,21 @@ class ErrorNotice(ui.Window):
         parent=kwargs.get('parent',program.get('root',ui.Root))
         # log.info("parent: {}".format(kwargs['parent']))
         title=kwargs.get('title',_("Error!"))
-        wait=kwargs.get('wait',False)
-        button=kwargs.get('button',False)
+        wait=kwargs.get('wait')
+        button=kwargs.get('button')
+        image=kwargs.get('image')
         super(ErrorNotice, self).__init__(parent,title=title)
         self.title = title
         self.text = text
-        l=ui.Label(self.frame, text=text, row=0, column=0, ipadx=25)
+        l=ui.Label(self.frame, text=text, row=0, column=1, ipadx=25)
         l.wrap()
         if button and type(button) is tuple:
             b=ui.Button(self.frame, text=button[0],
                     cmd=None,
-                    row=1, column=0, sticky='e')
+                    row=1, column=1, sticky='e')
+            if image:
+                b['image']=self.theme.photo[image]
+                b['compound']='left'
             b.bind('<ButtonRelease>',self.withdraw)
             b.bind('<ButtonRelease>',button[1],add='+')
             b.bind('<ButtonRelease>',self.destroy,add='+')
@@ -13122,7 +13126,9 @@ class Repository(object):
                             title=_("No {} USB backup found"
                                     ).format(self.description),
                             button=button,
-                            wait=True)
+                            image='USBdrive',
+                            wait=True
+                            )
                 #At this point, the user will have cloned or not already.
                 if self.remoteurls().values(): #this will have new clone value
                     return self.findpresentremotes(firsttry=False)
