@@ -2327,7 +2327,7 @@ class Settings(object):
         """This depends on self.sextracted, from getprofiles, so should only
         run when that changes."""
         scount={}
-        for ps in self.db.pss[self.analang]:
+        for ps in self.sextracted: # was self.db.pss[self.analang]:
             scount[ps]={}
             for s in self.rx:
                 try:
