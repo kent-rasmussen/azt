@@ -618,6 +618,7 @@ class BeepGenerator(object):
         self.setparameters()
         # self.play()
 if __name__ == "__main__":
+    """Set volume, somehow!!"""
     b=BeepGenerator()
     b.compile()
     b.play()
