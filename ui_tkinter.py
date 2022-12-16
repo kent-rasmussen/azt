@@ -1587,6 +1587,7 @@ class ToolTip(object):
         self.widget.bind("<Enter>", self.enter)
         self.widget.bind("<Leave>", self.leave)
         self.widget.bind("<ButtonPress>", self.leave)
+        self.widget.bind("<Destroy>", self.hidetip)
         self.id = None
         self.tw = None
     def enter(self, event=None):
@@ -1631,7 +1632,7 @@ class ToolTip(object):
         label['background']="#ffffff"
         label.pack(ipadx=1)
         self.widget.bind("<Leave>", self.leave)
-    def hidetip(self):
+    def hidetip(self, event=None):
         tw = self.tw
         self.tw= None
         if tw:
