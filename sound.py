@@ -127,7 +127,7 @@ class SoundSettings(object):
                         devinfo['maxOutputChannels']))
                 self.cards['out'][i]={}
             self.cards['dict'][i]=devinfo['name']
-        for card in self.cards['in']:
+        for card in self.cards['in'].copy():
             self.cards['in'][card]={}
             for fs in self.hypothetical['fss']:
                 self.cards['in'][card][fs]=list()
@@ -146,7 +146,7 @@ class SoundSettings(object):
                     del self.cards['in'][card][fs]
             if self.cards['in'][card] == {}:
                 del self.cards['in'][card]
-        for card in self.cards['out']:
+        for card in self.cards['out'].copy():
             self.cards['out'][card]={}
             for fs in self.hypothetical['fss']:
                 self.cards['out'][card][fs]=list()
