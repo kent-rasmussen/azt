@@ -7356,7 +7356,7 @@ class Sound(object):
             self.mikecheck() #if not, get them
             return
     def makelabelsnrecordingbuttons(self,parent,sense):
-        log.info("Making buttons for {} (in {})".format(sense['nodetoshow'],sense))
+        # log.info("Making buttons for {} (in {})".format(sense['nodetoshow'],sense))
         framed=self.taskchooser.datadict.getframeddata(sense['nodetoshow'])
         t=framed.formatted(noframe=True)
         for g in sense['glosses']:
@@ -10569,7 +10569,7 @@ class FramedData(object):
     def audio(self):
         if self.audiolang in self.forms:
             self.filename=self.forms[self.audiolang][self.ftype]
-            log.info("Found link to audio file {}".format(self.filename))
+            # log.info("Found link to audio file {}".format(self.filename))
             return self.filename
     def audiofileisthere(self):
         """This tests the presence of the sound file, which is referred to
