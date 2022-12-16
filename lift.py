@@ -706,7 +706,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         there."""
         showurl=kwargs.get('showurl',False)
         write=kwargs.get('write',True)
-        log.info("Adding {} value to {} location".format(url,node))
+        # log.info("Adding {} value to {} location".format(url,node))
         possibles=node.findall("form[@lang='{lang}']/text".format(lang=lang))
         for possible in possibles:
             # log.info("Checking possible: {} (index: {})".format(possible,
@@ -2222,18 +2222,18 @@ class LiftURL():
         Once the level of the lineage head is decided, the rest of the lineage
         is added."""
         # Now operate on the head of the target lineage
-        log.log(4,"URL (before {} target): {}".format(self.target,self.drafturl()))
+        # log.info("URL (before {} target): {}".format(self.target,self.drafturl()))
         if self.getalias(self.targethead) not in self.level: #If the target hasn't been made yet.
-            log.log(4,self.url)
+            # log.info(self.url)
             i=self.currentnodename()
-            log.log(4,"URL base: {}; i: {}".format(self.basename,i))
+            # log.info("URL base: {}; i: {}".format(self.basename,i))
             if i is None: #if it is, skip down in any case.
                 i=self.basename
-            log.log(4,"URL bit list: {}; i: {}".format(self.url,i))
+            # log.info("URL bit list: {}; i: {}".format(self.url,i))
             if type(i) == list:
                 i=i[0] #This should be a string
             f=self.getfamilyof(i,x=[])
-            log.log(4,"Target: {}; {} family: {}".format(self.targethead,i,f))
+            # log.info("Target: {}; {} family: {}".format(self.targethead,i,f))
             if self.targethead in f:
                 self.showtargetinhighestdecendance(i) #should get targethead
                     # return #only do this for the first you find (last placed).
@@ -2241,21 +2241,21 @@ class LiftURL():
                 self.showtargetinlowestancestry(i)
             # Either way, we finish by making the target tail, and leveling up.
         if self.targettail is not None:
-            log.log(4,"Adding targettail {} to url: {}".format(self.targettail,
+            # log.info("Adding targettail {} to url: {}".format(self.targettail,
             self.drafturl()))
             for b in self.targettail:
-                log.log(4,"Adding targetbit {} to url: {}".format(b,self.drafturl()))
+                # log.info("Adding targetbit {} to url: {}".format(b,self.drafturl()))
                 n=self.targetbits.index(b)
                 bp=self.tagonly(self.targetbits[n-1]) #.split('[')[0]#just the node, not attrs
                 afterbp=self.drafturl().split(self.unalias(bp))
-                log.log(4,"b: {}; bp: {}; afterbp: {}".format(b,bp,afterbp))
-                log.log(4,"showing target element {}: {} (of {})".format(n,b,bp))
+                # log.info("b: {}; bp: {}; afterbp: {}".format(b,bp,afterbp))
+                # log.info("showing target element {}: {} (of {})".format(n,b,bp))
                 if (len(afterbp) <=1 #nothing after parent
                         or self.unalias(b) not in afterbp[-1] #this item not after parent
                         or (b in self.level and
                             bp in self.level and
                             self.level[b]!=self.level[bp]+1)): #this not child of parent
-                    log.log(4,"showing target element {}: {} (of {})".format(n,b,bp))
+                    # log.info("showing target element {}: {} (of {})".format(n,b,bp))
                     self.levelup(bp)
                     self.show(b,parent=bp)
         self.levelup(self.targetbits[-1])#leave last in target, whatever else
