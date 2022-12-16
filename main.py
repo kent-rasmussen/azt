@@ -13864,8 +13864,8 @@ def indenteddict(indict):
             # config[s][j]='\n'.join(['{'+i+':'+str(v[j][i])+'}'
             #                             for i in v[j].keys()])
             if True in [isinstance(i, dict) for i in indict[j].values()]:
-                log.info("printing double indented dict for {}: {} "
-                            "keys".format(j,indict[j].keys()))
+                # log.info("printing double indented dict for {}: {} "
+                #             "keys".format(j,indict[j].keys()))
                 outdict[j]='{'+',\n'.join(
                     [quote(k)+":{"+',\n\t'.join(
                                         [quote(i)+":"+quote(indict[j][k][i])
