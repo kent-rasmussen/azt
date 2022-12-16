@@ -1306,11 +1306,19 @@ class StatusFrame(ui.Frame):
                         if profile == curprofile and check == curcheck:
                             tb.configure(background=tb['activebackground'])
                             tb.configure(command=donothing)
-                            tip=_("Current settings \nprofile: ‘{}’; \ncheck: ‘{}’"
-                                "".format(profile,check))
-                        else:
-                            tip=_("Change to \nprofile: ‘{}’; \ncheck: ‘{}’"
-                                "".format(profile,check))
+                        tips=[]
+                        if tosort:
+                            tips.extend([_("Words to sort!")])
+                            if self.settings.hidegroupnames:
+                                tb.configure(highlightthickness=3)
+                                tb.configure(highlightbackground=tb.theme.white)
+
+                        if nunverified:
+                            tips.extend([_("{} groups to verify!"
+                                        ).format(nunverified)])
+                        if not tips:
+                            tips.extend([_("Sorted and verified!")])
+                        tip='\n'.join(tips)
                         tb.grid(row=row,column=column,ipadx=0,ipady=0,
                                                                 sticky='nesw')
                         ttb=ui.ToolTip(tb,tip)
