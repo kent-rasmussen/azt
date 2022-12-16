@@ -136,10 +136,12 @@ class SoundSettings(object):
                         ifs=self.pyaudio.is_format_supported(rate=fs,
                             input_device=card,input_channels=1,
                             input_format=sf)
-                    except ValueError as e:
-                        ifs=False
-                    if ifs:
                         self.cards['in'][card][fs].append(sf)
+                    except ValueError as e:
+                        log.info("Config not supported; no worries: rate={}; "
+                            "output_device={}; "
+                            "output_channels=1, "
+                            "output_format={} ({})".format(fs,card,sf,e))
                 if self.cards['in'][card][fs] == []:
                     del self.cards['in'][card][fs]
             if self.cards['in'][card] == {}:
@@ -153,10 +155,12 @@ class SoundSettings(object):
                         ifs=self.pyaudio.is_format_supported(rate=fs,
                             output_device=card,output_channels=1,
                             output_format=sf)
-                    except ValueError as e:
-                        pass
-                    if ifs == True:
                         self.cards['out'][card][fs].append(sf)
+                    except ValueError as e:
+                        log.info("Config not supported; no worries: rate={}; "
+                            "output_device={}; "
+                            "output_channels=1, "
+                            "output_format={} ({})".format(fs,card,sf,e))
                 if self.cards['out'][card][fs] == []:
                     del self.cards['out'][card][fs]
             if self.cards['out'][card] == {}:
