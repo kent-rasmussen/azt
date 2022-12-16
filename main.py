@@ -3121,7 +3121,8 @@ class TaskDressing(HasMenus,object):
             self.context.menuitem(_("Smaller Fonts"),self.setfontssmaller)
         else:
             self.context.menuitem(_("Larger Fonts"),self.setfontsdefault)
-        if hasattr(self,'hidegroupnames') and self.hidegroupnames:
+        if hasattr(self.settings,
+                    'hidegroupnames') and self.settings.hidegroupnames:
             self.context.menuitem(_("Show group names"),self.showgroupnames)
         else:
             self.context.menuitem(_("Hide group names"),self.hidegroupnames)
