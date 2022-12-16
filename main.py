@@ -4792,9 +4792,6 @@ class TaskChooser(TaskDressing,ui.Window):
         """Can whatsdone be joined with makedefaulttask? they appear together
         elsewhere."""
         self.whatsdone()
-        if hasattr(self.file,'analang'): #i.e., new file
-            self.analang=self.file.analang #I need to keep this alive until objects are done
-        self.makesettings()
         self.splash.maketexts() #update for translation change
         TaskDressing.__init__(self,parent) #I think this should be after settings
         if not self.settings.writeeverynwrites: #0/None are not sensible values
@@ -12054,6 +12051,7 @@ class StatusDict(dict):
     def nextprofile(self, event=None, **kwargs):
         """This function is here (not in slices) in order for it to be sensitive
         to different kinds of profiles, via **kwargs"""
+        # log.info("Running nextprofile")
         kwargs=grouptype(**kwargs)
         # self.makeprofileok()
         profiles=self.profiles(**kwargs)
