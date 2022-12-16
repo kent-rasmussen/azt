@@ -7390,7 +7390,6 @@ class Record(Sound,TaskDressing,ui.Window):
             log.info('no runwindow frame; quitting!')
             return
         self.runwindow.resetframe()
-        self.runwindow.wait()
         ps=self.slices.ps()
         profile=self.slices.profile()
         count=self.slices.count()
