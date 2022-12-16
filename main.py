@@ -3102,9 +3102,11 @@ class TaskDressing(HasMenus,object):
         self.setcontext()
         self.tableiteration+=1
     def hidegroupnames(self):
+        # log.info("Hiding group names")
         self.settings.set('hidegroupnames', True, refresh=True)
         self.setcontext()
     def showgroupnames(self):
+        # log.info("Showing group names")
         self.settings.set('hidegroupnames', False, refresh=True)
         self.setcontext()
     def setcontext(self,context=None):
