@@ -52,7 +52,10 @@ class Transcriber(ui.Frame):
         def longer():
             self.beeps.longer()
             self.labelcompiled=False
-        w=ui.Window(self, title=_("Configure Tone Beeps"))
+        p=self.parent
+        while not isinstance(p,ui.Window): # windows need window parents
+            p=p.parent
+        w=ui.Window(p, title=_("Configure Tone Beeps"))
         w.attributes("-topmost", True)
         ui.Button(w.frame,text=_("pitch up"),cmd=higher,
                         row=0,column=0)
