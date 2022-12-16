@@ -1207,7 +1207,10 @@ class StatusFrame(ui.Frame):
         for profile in profiles:
             if profile in self.settings.status[cvt][ps]:
                 allchecks+=self.settings.status[cvt][ps][profile].keys()
-        allchecks=list(dict.fromkeys(allchecks))
+        allchecks=list(dict.fromkeys(allchecks)) #could unsort slices priority
+        if self.cvt != 'T': #don't resort tone frames
+            allchecks.sort(key=len,reverse=True) #longest first
+        profiles.sort(key=lambda x:(x.count(self.cvt),len(x)))
         profiles=['colheader']+profiles+['next']
         ungroups=0
         unsortedtext='[X]'
