@@ -12384,6 +12384,7 @@ class StatusDict(dict):
     def updatechecksbycvt(self,**kwargs):
         """This just pulls the correct list from the dict, and updates params"""
         """It doesn't allow for input, as other fns do"""
+        # log.info("Running updatechecksbycvt")
         cvt=kwargs.get('cvt',self._checkparameters.cvt())
         if cvt not in self._checksdict:
             self._checksdict[cvt]={}
@@ -12400,6 +12401,7 @@ class StatusDict(dict):
             if profile not in self._checksdict[cvt]:
                 self.renewchecks(**kwargs) #should be able to find something
             self._checks=self._checksdict[cvt][profile]
+        # log.info("Returning these checks: {}".format(self._checks))
         return self._checks
     def renewchecks(self,**kwargs):
         """This should only need to be done on a boot, when a new tone frame
@@ -12407,6 +12409,7 @@ class StatusDict(dict):
         """This depends on cvt and profile, for CV checks"""
         """replaces self.checkspossible"""
         """replaces setnamesbyprofile"""
+        # log.info("Running renewchecks")
         cvt=kwargs.get('cvt',self._checkparameters.cvt())
         # t=self._checkparameters.cvt()
         if not cvt:
