@@ -1280,20 +1280,29 @@ class StatusFrame(ui.Frame):
                         total=node['groups']
                         tosort=node['tosort']
                         totalwverified=[]
+                        nunverified=len(set(total)-set(done))
                         for g in total:
                             if g in done:
                                 g='+'+g #these should be strings
+                                # g='?'+g #these should be strings
+                                # g='<'+g+'>' #these should be strings
                             totalwverified+=[g]
                         donenum=groupfn(done)
                         totalnum=groupfn(total)
-                        if (self.settings.hidegroupnames or
+                        if not totalnum and self.settings.hidegroupnames:
+                            donenum=""
+                        elif not totalnum and tosort: #these should go together
+                            donenum=unsortedtext #don't say '0'
+                        elif (self.settings.hidegroupnames or
                             (type(totalnum) is int and type(donenum) is int)):
-                            donenum="+{}/{}".format(donenum,totalnum)
+                            # donenum="{}/{}".format(donenum,totalnum)
+                            donenum=totalnum
                         else:
                             donenum=nn(totalwverified,oneperline=True)
-                        # This should only be needed on a new database
-                        if tosort == True and donenum != '':
-                            donenum='!'+str(donenum) #mark data to sort
+                        if (tosort and
+                            totalnum and
+                            not self.settings.hidegroupnames):
+                            donenum=str(donenum)+'\n'+unsortedtext
                         tb=ui.Button(self.leaderboardtable,
                                 relief='flat',
                                 bd=0, #border
