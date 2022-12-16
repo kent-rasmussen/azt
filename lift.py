@@ -2242,7 +2242,7 @@ class LiftURL():
             # Either way, we finish by making the target tail, and leveling up.
         if self.targettail is not None:
             # log.info("Adding targettail {} to url: {}".format(self.targettail,
-            self.drafturl()))
+            #                                                 self.drafturl()))
             for b in self.targettail:
                 # log.info("Adding targetbit {} to url: {}".format(b,self.drafturl()))
                 n=self.targetbits.index(b)
