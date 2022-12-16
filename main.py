@@ -1254,7 +1254,6 @@ class StatusFrame(ui.Frame):
                                                     ):
                                 cmd=self.task.addframe
                             else:
-                                cmd=lambda todo=True:self.settings.status.nextcheck(todo)
                             bch=ui.Button(self.leaderboardtable,text=check,
                                         relief='flat',
                                         cmd=cmd,
