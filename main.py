@@ -12437,11 +12437,7 @@ class StatusDict(dict):
                 # log.info("Check codes to date: {}".format(
                 #                                 self._checksdict[cvt][profile]
                 #                                         ))
-            self._checksdict[cvt][profile].sort(
-                                            key=lambda x:len(x[0]),reverse=True)
-            # log.info("Check codes found: {}".format(
-            #                                     self._checksdict[cvt][profile]
-            #                                         ))
+            self._checksdict[cvt][profile].sort(key=len,reverse=True)
     def node(self,**kwargs):
         """This will fail if fed None values"""
         kwargs=self.checkslicetypecurrent(**kwargs)
