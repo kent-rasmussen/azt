@@ -3181,6 +3181,7 @@ class TaskDressing(HasMenus,object):
     def makestatusframe(self,dict=None):
         dictnow={
                 'mainrelief':self.mainrelief,
+                'hidegroupnames':self.settings.hidegroupnames,
                 'self.fontthemesmall':self.fontthemesmall,
                 'iflang':self.settings.interfacelangwrapper(),
                 'analang':self.params.analang(),
