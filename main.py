@@ -1230,8 +1230,11 @@ class StatusFrame(ui.Frame):
                     #Make row header
                     t="{} ({})".format(profile,
                                 len(self.settings.profilesbysense[ps][profile]))
-                    h=ui.Label(self.leaderboardtable,text=t)
-                    h.grid(row=row,column=column,sticky='e')
+                    h=ui.Label(self.leaderboardtable,text=t,
+                                row=row,
+                                column=column,
+                                sticky='e',
+                                padx=10)
                     if profile == curprofile and curcheck is None:
                         h.config(background=h.theme.activebackground) #highlight
                         tip=_("Current profile \n(no check set)")
