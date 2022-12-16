@@ -133,6 +133,7 @@ class Theme(object):
                             ('iconCRepcomp','Z Report Comprehensive_icon.png'),
                             ('iconCVRepcomp','ZA Report Comprehensive_icon.png'),
                             ('iconVCCVRepcomp','AZZA Report Comprehensive_icon.png'),
+                            ('USBdrive','USB drive.png'),
                             ('T','T alone clear6.png'),
                             ('C','Z alone clear6.png'),
                             ('V','A alone clear6.png'),
