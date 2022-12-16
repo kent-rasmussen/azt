@@ -12432,8 +12432,7 @@ class StatusDict(dict):
                     continue
                 """This is a list of (code, name) tuples"""
                 syltuples=self._checkparameters._checknames[cvt][i+1] #range+1 = syl
-                self._checksdict[cvt][profile].extend(
-                                                    [t[0] for t in syltuples])
+                self._checksdict[cvt][profile].extend([t[0] for t in syltuples])
                 # log.info("Check codes to date: {}".format(
                 #                                 self._checksdict[cvt][profile]
                 #                                         ))
