@@ -179,7 +179,7 @@ if __name__ == "__main__":
     except:
         def _(x):
             return x
-    w=ui.Root()
+    w=ui.Window(ui.Root())
     w.title('Transcriber')
     # soundsettings=sound.SoundSettings()
     Transcriber(w,initval='˥˥ ˩˩ ˧˧',column=0,row=0,
