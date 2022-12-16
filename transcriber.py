@@ -52,7 +52,10 @@ class Transcriber(ui.Frame):
         def longer():
             self.beeps.longer()
             self.labelcompiled=False
-        w=ui.Window(self, title=_("Configure Tone Beeps"))
+        p=self.parent
+        while not isinstance(p,ui.Window): # windows need window parents
+            p=p.parent
+        w=ui.Window(p, title=_("Configure Tone Beeps"))
         w.attributes("-topmost", True)
         ui.Button(w.frame,text=_("pitch up"),cmd=higher,
                         row=0,column=0)
@@ -155,7 +158,7 @@ class Transcriber(ui.Frame):
                                     row=0,column=0,sticky='new',
                                     font='readbig')
         self.formfield.bind('<KeyRelease>', self.updatelabels) #apply function after key
-        self.formfieldplay= ui.Button(fieldframe,text=_('>'),
+        self.formfieldplay= ui.Button(fieldframe,text=_('‣'),
                             cmd=lambda:self.playbeeps(self.newname.get()),
                             font='tiny',
                             sticky='ns',
@@ -176,7 +179,7 @@ if __name__ == "__main__":
     except:
         def _(x):
             return x
-    w=ui.Root()
+    w=ui.Window(ui.Root())
     w.title('Transcriber')
     # soundsettings=sound.SoundSettings()
     Transcriber(w,initval='˥˥ ˩˩ ˧˧',column=0,row=0,
@@ -273,7 +276,7 @@ if __name__ == "__main__":
     # # x['Sdg']=['rh','wh','ll','rr',
     # #             'rw','lw' #gnd
     # #             ]
-    # 
+    #
     # ]
     )#,soundsettings=soundsettings)
     w.mainloop()

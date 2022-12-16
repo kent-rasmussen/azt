@@ -127,7 +127,7 @@ class SoundSettings(object):
                         devinfo['maxOutputChannels']))
                 self.cards['out'][i]={}
             self.cards['dict'][i]=devinfo['name']
-        for card in self.cards['in']:
+        for card in self.cards['in'].copy():
             self.cards['in'][card]={}
             for fs in self.hypothetical['fss']:
                 self.cards['in'][card][fs]=list()
@@ -136,15 +136,17 @@ class SoundSettings(object):
                         ifs=self.pyaudio.is_format_supported(rate=fs,
                             input_device=card,input_channels=1,
                             input_format=sf)
-                    except ValueError as e:
-                        ifs=False
-                    if ifs:
                         self.cards['in'][card][fs].append(sf)
+                    except ValueError as e:
+                        log.info("Config not supported; no worries: rate={}; "
+                            "output_device={}; "
+                            "output_channels=1, "
+                            "output_format={} ({})".format(fs,card,sf,e))
                 if self.cards['in'][card][fs] == []:
                     del self.cards['in'][card][fs]
             if self.cards['in'][card] == {}:
                 del self.cards['in'][card]
-        for card in self.cards['out']:
+        for card in self.cards['out'].copy():
             self.cards['out'][card]={}
             for fs in self.hypothetical['fss']:
                 self.cards['out'][card][fs]=list()
@@ -153,10 +155,12 @@ class SoundSettings(object):
                         ifs=self.pyaudio.is_format_supported(rate=fs,
                             output_device=card,output_channels=1,
                             output_format=sf)
-                    except ValueError as e:
-                        pass
-                    if ifs == True:
                         self.cards['out'][card][fs].append(sf)
+                    except ValueError as e:
+                        log.info("Config not supported; no worries: rate={}; "
+                            "output_device={}; "
+                            "output_channels=1, "
+                            "output_format={} ({})".format(fs,card,sf,e))
                 if self.cards['out'][card][fs] == []:
                     del self.cards['out'][card][fs]
             if self.cards['out'][card] == {}:
@@ -204,6 +208,7 @@ class SoundSettings(object):
         self.sethypothetical()
         self.getactual()
         self.defaults() #pick best of actuals
+        self.check()
         # self.printactuals()
         self.chunk=1024
         self.channels=1 #Always record in mono
@@ -572,7 +577,7 @@ class BeepGenerator(object):
                     #             fromhz,tohz,len(syl)-contour,nframes,done))
                     if not done:
                         self.wavdata=numpy.append(self.wavdata,numpy.sin(
-                                2*numpy.pi*(numpy.arange(#0,100,
+                                0.8*numpy.pi*(numpy.arange(#0,100,
                                                     nframes,dtype=numpy.float32
                                                         )*hz)/self.bitrate #/(len(syl)-contour))
                                             )
@@ -614,6 +619,7 @@ class BeepGenerator(object):
         self.setparameters()
         # self.play()
 if __name__ == "__main__":
+    """Set volume, somehow!!"""
     b=BeepGenerator()
     b.compile()
     b.play()
