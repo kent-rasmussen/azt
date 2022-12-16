@@ -2820,8 +2820,22 @@ class Settings(object):
         self.refreshattributechanges()
         if window:
             window.destroy()
+    def setnextprofile(self):
+        r=self.status.nextprofile()
+        if r:
+            firstcheck=self.status.updatechecksbycvt()[0]
+            if self.params.check() != firstcheck:
+                self.params.check(firstcheck)
+                self.attrschanged.append('check')
+            self.attrschanged.append('profile')
+            self.refreshattributechanges()
     def setprofile(self,choice,window):
         self.slices.profile(choice)
+        #in case checks changed:
+        firstcheck=self.status.updatechecksbycvt()[0]
+        if self.params.check() != firstcheck:
+            self.params.check(firstcheck)
+            self.attrschanged.append('check')
         self.attrschanged.append('profile')
         self.refreshattributechanges()
         window.destroy()
@@ -2863,6 +2877,10 @@ class Settings(object):
             log.debug("group_comparison: {}".format(self.group_comparison))
         self.set('group_comparison',choice,window,refresh=False)
         log.debug("group_comparison: {}".format(self.group_comparison))
+    def setnextcheck(self,**kwargs):
+        self.status.nextcheck(**kwargs)
+        self.attrschanged.append('check')
+        self.refreshattributechanges()
     def setcheck(self,choice,window=None):
         self.params.check(choice)
         self.attrschanged.append('check')
