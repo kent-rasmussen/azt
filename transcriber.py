@@ -276,7 +276,7 @@ if __name__ == "__main__":
     # # x['Sdg']=['rh','wh','ll','rr',
     # #             'rw','lw' #gnd
     # #             ]
-    # 
+    #
     # ]
     )#,soundsettings=soundsettings)
     w.mainloop()
