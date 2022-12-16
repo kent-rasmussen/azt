@@ -1781,6 +1781,7 @@ def testapp():
     log.info("Image: {} ({})".format(img.scaled, img.maxhw(scaled=True)))
     l['image']=img.scaled
     l['compound']="bottom"
+    ToolTip(l,"this image has a tooltip")
     r.mainloop()
 if __name__ == '__main__':
     """To Test:"""
