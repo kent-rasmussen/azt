@@ -1228,7 +1228,9 @@ class StatusFrame(ui.Frame):
                     if self.settings.status[cvt][ps][profile] == {}:
                         continue
                     #Make row header
-                    t="{} ({})".format(profile,
+                    t=profile
+                    if not self.settings.hidegroupnames:
+                        t+=" ({})".format(
                                 len(self.settings.profilesbysense[ps][profile]))
                     h=ui.Label(self.leaderboardtable,text=t,
                                 row=row,
