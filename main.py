@@ -1176,7 +1176,7 @@ class StatusFrame(ui.Frame):
                     # log.info("Integer {} fine".format(i))
                 except:
                     # log.info("Problem with integer {}".format(i))
-                    if not self.settings.hidegroupnames:
+                    if self.settings.showdetails:
                         return nn(x,oneperline=True) #if any noninteger, all.
             return len(x) #to show counts only
         def updateprofilencheck(profile,check):
@@ -1215,7 +1215,7 @@ class StatusFrame(ui.Frame):
         profiles=['colheader']+profiles+['next']
         ungroups=0
         unsortedtext='[X]'
-        if not self.settings.hidegroupnames:
+        if self.settings.showdetails:
             tv=_("verified")
             tu=_("unsorted data")
             # t="+ = {} \n! = {}".format(tv,tu)
@@ -1236,7 +1236,7 @@ class StatusFrame(ui.Frame):
                         continue
                     #Make row header
                     t=profile
-                    if not self.settings.hidegroupnames:
+                    if self.settings.showdetails:
                         t+=" ({})".format(
                                 len(self.settings.profilesbysense[ps][profile]))
                     h=ui.Label(self.leaderboardtable,text=t,
@@ -1302,19 +1302,19 @@ class StatusFrame(ui.Frame):
                             totalwverified+=[g]
                         donenum=groupfn(done)
                         totalnum=groupfn(total)
-                        if not totalnum and self.settings.hidegroupnames:
-                            donenum=""
-                        elif not totalnum and tosort: #these should go together
+                        if (not totalnum and
+                                tosort and
+                                self.settings.showdetails): #these should go together
                             donenum=unsortedtext #don't say '0'
-                        elif (self.settings.hidegroupnames or
+                        elif not totalnum and tosort:
+                            donenum=""
+                        elif (not self.settings.showdetails or
                             (type(totalnum) is int and type(donenum) is int)):
                             # donenum="{}/{}".format(donenum,totalnum)
                             donenum=totalnum
                         else:
                             donenum=nn(totalwverified,oneperline=True)
-                        if (tosort and
-                            totalnum and
-                            not self.settings.hidegroupnames):
+                        if (tosort and totalnum and self.settings.showdetails):
                             donenum=str(donenum)+'\n'+unsortedtext
                         tb=ui.Button(self.leaderboardtable,
                                 relief='flat',
@@ -1331,7 +1331,7 @@ class StatusFrame(ui.Frame):
                         tips=[]
                         if tosort:
                             tips.extend([_("Words to sort!")])
-                            if self.settings.hidegroupnames:
+                            if not self.settings.showdetails:
                                 tb.configure(highlightthickness=3)
                                 tb.configure(highlightbackground=tb.theme.white)
 
@@ -1436,7 +1436,7 @@ class Settings(object):
                                 'examplespergrouptorecord',
                                 'adnlangnames',
                                 'maxpss',
-                                'hidegroupnames',
+                                'showdetails',
                                 'maxprofiles',
                                 'menu',
                                 'mainrelief',
@@ -1756,7 +1756,7 @@ class Settings(object):
                         'distinguish':[],
                         'interpret':[],
                         'adnlangnames':[],
-                        'hidegroupnames':[],
+                        'showdetails':[],
                         'maxprofiles':[]
                         }
     def cleardefaults(self,field=None):
@@ -3135,13 +3135,13 @@ class TaskDressing(HasMenus,object):
         self.fontthemesmall=True
         self.setcontext()
         self.tableiteration+=1
-    def hidegroupnames(self):
+    def hidedetails(self):
         # log.info("Hiding group names")
-        self.settings.set('hidegroupnames', True, refresh=True)
+        self.settings.set('showdetails', False, refresh=True)
         self.setcontext()
-    def showgroupnames(self):
+    def showdetails(self):
         # log.info("Showing group names")
-        self.settings.set('hidegroupnames', False, refresh=True)
+        self.settings.set('showdetails', True, refresh=True)
         self.setcontext()
     def setcontext(self,context=None):
         self.context.menuinit() #This is a ContextMenu() method
@@ -3158,10 +3158,10 @@ class TaskDressing(HasMenus,object):
         else:
             self.context.menuitem(_("Larger Fonts"),self.setfontsdefault)
         if hasattr(self.settings,
-                    'hidegroupnames') and self.settings.hidegroupnames:
-            self.context.menuitem(_("Show group names"),self.showgroupnames)
+                    'showdetails') and self.settings.showdetails:
+            self.context.menuitem(_("Hide details"),self.hidedetails)
         else:
-            self.context.menuitem(_("Hide group names"),self.hidegroupnames)
+            self.context.menuitem(_("Show details"),self.showdetails)
     def maketitle(self):
         title=_("{} Dictionary and Orthography Checker: {}").format(
                                             program['name'],self.tasktitle())
@@ -3191,7 +3191,7 @@ class TaskDressing(HasMenus,object):
                     # 'menu',
                     'mainrelief','fontthemesmall',
                     'buttoncolumns',
-                    'hidegroupnames'
+                    'showdetails'
                     # 'glosslangs',
                     # 'analang',
                     # 'audiolang',
@@ -3218,7 +3218,7 @@ class TaskDressing(HasMenus,object):
     def makestatusframe(self,dict=None):
         dictnow={
                 'mainrelief':self.mainrelief,
-                'hidegroupnames':self.settings.hidegroupnames,
+                'showdetails':self.settings.showdetails, #attr, not task.method
                 'self.fontthemesmall':self.fontthemesmall,
                 'buttonkwargs':self.dobuttonkwargs(),
                 'iflang':self.settings.interfacelangwrapper(),
@@ -4206,7 +4206,7 @@ class TaskDressing(HasMenus,object):
         for k in ['settings',
                     # 'menu',
                     'mainrelief','fontthemesmall',
-                    'hidegroupnames']:
+                    'showdetails']:
             if not hasattr(self,k):
                     setattr(self,k,False)
         if self.taskchooser.ifcollectionlcsettingsdone:
