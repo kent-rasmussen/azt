@@ -179,10 +179,12 @@ if __name__ == "__main__":
     except:
         def _(x):
             return x
-    w=ui.Window(ui.Root())
-    w.title('Transcriber')
-    # soundsettings=sound.SoundSettings()
-    Transcriber(w,initval='˥˥ ˩˩ ˧˧',column=0,row=0,
+    r=ui.Root()
+    # w=ui.Window(ui.Root(),exit=False)
+    r.title('Transcriber')
+    # w.title('Transcriber')
+    Transcriber(r,initval='˥˥ ˩˩ ˧˧',column=1,row=1)
+    r.deiconify()# soundsettings=sound.SoundSettings()
     # chars=[
     # # c['pvd'][2]=[
     # 'bh','dh','gh','gb',
@@ -278,5 +280,5 @@ if __name__ == "__main__":
     # #             ]
     #
     # ]
-    )#,soundsettings=soundsettings)
-    w.mainloop()
+    # )#,soundsettings=soundsettings)
+    r.mainloop()
