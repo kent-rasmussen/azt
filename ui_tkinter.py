@@ -851,6 +851,7 @@ class Text(Childof,ObectwArgs):
                 del kwargs[opt]
         return kwargs
     def __init__(self,parent,**kwargs):
+        Childof.__init__(self,parent)
         self.textkwargs=['text','image','font','norender']
         self.text=kwargs.pop('text','')
         # self.renderings=parent.renderings
