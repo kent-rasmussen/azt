@@ -7139,7 +7139,8 @@ class Sound(object):
             self.pyaudio=sound.AudioInterface()
     def getsoundcardindex(self,event=None):
         log.info("Asking for input sound card...")
-        window=ui.Window(self, title=_('Select Input Sound Card'))
+        window=ui.Window(self.soundsettingswindow,
+                    title=_('Select Input Sound Card'))
         ui.Label(window.frame, text=_('What sound card do you '
                                     'want to record sound with with?')
                 ).grid(column=0, row=0)
@@ -7155,7 +7156,8 @@ class Sound(object):
                                     )
     def getsoundcardoutindex(self,event=None):
         log.info("Asking for output sound card...")
-        window=ui.Window(self, title=_('Select Output Sound Card'))
+        window=ui.Window(self.soundsettingswindow,
+                title=_('Select Output Sound Card'))
         ui.Label(window.frame, text=_('What sound card do you '
                                     'want to play sound with?')
                 ).grid(column=0, row=0)
@@ -7171,7 +7173,8 @@ class Sound(object):
                                     )
     def getsoundformat(self,event=None):
         log.info("Asking for audio format...")
-        window=ui.Window(self, title=_('Select Audio Format'))
+        window=ui.Window(self.soundsettingswindow,
+                        title=_('Select Audio Format'))
         ui.Label(window.frame, text=_('What audio format do you '
                                     'want to work with?')
                 ).grid(column=0, row=0)
@@ -7188,7 +7191,8 @@ class Sound(object):
                                     )
     def getsoundhz(self,event=None):
         log.info("Asking for sampling frequency...")
-        window=ui.Window(self, title=_('Select Sampling Frequency'))
+        window=ui.Window(self.soundsettingswindow,
+                        title=_('Select Sampling Frequency'))
         ui.Label(window.frame, text=_('What sampling frequency you '
                                     'want to work with?')
                 ).grid(column=0, row=0)
