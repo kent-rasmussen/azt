@@ -210,6 +210,8 @@ class HasMenus():
         else:
             self.context.menuitem(_("Hide Menus"),self._removemenus)
 class LiftChooser(ui.Window,HasMenus):
+    """this class allows the user to select a LIFT file, including options
+    to start a new one (live or demo), or copy from USB."""
     def startnewfile(self):
         def done(event=None):
             window.destroy()
@@ -475,8 +477,8 @@ class LiftChooser(ui.Window,HasMenus):
         ui.Label(self.frame, image=program['theme'].photo['small'],
                 text=text, font='title', column=1, row=1, ipadx=20)
 class FileChooser(object):
-    """This class selects the LIFT database we'll be working with, and does
-    some basic processing on it."""
+    """This class loads the LIFT database from settings, or asks if not there.
+    """
     def askwhichlift(self,filenamelist):
         # put right click menu here
         self.name=None # in case of exit
@@ -484,8 +486,7 @@ class FileChooser(object):
         window.wait_window(window)
         if not self.name: #If not set, for any reason
             return 1
-    def getfilename(self):
-        # This method pulls filename(s) from settings, else self.askwhichlift
+    def __init__(self):
         self.name=file.getfilename() #returns filename if there, else filenames
         if type(self.name) is not list and not file.exists(self.name):
                 self.name=None #don't return a file that isn't there
@@ -499,6 +500,8 @@ class FileChooser(object):
             return
         if self.name and 'Demo' in self.name:
             file.writefilename() #Don't just keep loading this; select next time
+class FileParser(object):
+    """This class parses the LIFT file, once we know which it is."""
     def loaddatabase(self):
         try:
             self.db=lift.Lift(str(self.name))
@@ -556,9 +559,9 @@ class FileChooser(object):
         self.db.languagecodes=self.db.analangs+self.db.glosslangs
         self.db.languagepaths=file.getlangnamepaths(self.name,
                                                     self.db.languagecodes)
-    def __init__(self):
-        super(FileChooser, self).__init__()
-        self.getfilename()
+    def __init__(self,name):
+        super(FileParser, self).__init__()
+        self.name=name
         self.loaddatabase()
         if program['root'].exitFlag.istrue():
             return
@@ -3002,10 +3005,10 @@ class Settings(object):
         self.makeeverythingok()
         self.settingsobjects() #needs params, glosslangs, slices
         self.moveattrstoobjects() #catch what wasn't done before
-    def __init__(self,taskchooser,liftfileobject):
+    def __init__(self,taskchooser):
         self.taskchooser=taskchooser
-        self.liftfilename=liftfileobject.name
-        self.db=liftfileobject.db
+        self.liftfilename=taskchooser.filename
+        self.db=taskchooser.db
         self.getdirectories() #incl settingsfilecheck and repocheck
         self.setinvalidcharacters()
         # self.settingsfilecheck()
@@ -4209,17 +4212,6 @@ class TaskChooser(TaskDressing,ui.Window):
         self.frame.status.bigbutton.destroy()
         self.showreports=True
         self.gettask()
-    def getfile(self):
-        # def getit(attr):
-        #     if hasattr(self.file,attr):
-        #         setattr(self,attr,getattr(self.file,attr))
-        file=self.file=FileChooser()
-        # I want to access these attributes directly
-        for attr in ['s','db']:
-            if hasattr(self.file,attr):
-                setattr(self,attr,getattr(self.file,attr))
-    def makesettings(self):
-        self.settings=Settings(self,self.file) #give object, for name and db
     def makedatadict(self):
         self.datadict=FramedDataDict(self) #needs self.toneframes
     def makeexampledict(self):
@@ -4465,7 +4457,7 @@ class TaskChooser(TaskDressing,ui.Window):
         #         ]bum
     def convertlxtolc(self,window):
         window.destroy()
-        backup=self.file.name+"_backupBeforeLx2LcConversion"
+        backup=self.filename+"_backupBeforeLx2LcConversion"
         self.db.write(backup)
         self.db.convertlxtolc()
         # self.db.write(self.file.name+str(now()))
@@ -4476,7 +4468,7 @@ class TaskChooser(TaskDressing,ui.Window):
                     "({2}) to confirm this did what you wanted, before "
                     "opening {0} again. In case there are any issues, the "
                     "log file is also saved in {3}").format(program['name'],
-                                                self.file.name,
+                                                self.filename,
                                                 backup,
                                                 conversionlogfile),
                     title=_("Conversion Done!"),
@@ -4638,9 +4630,9 @@ class TaskChooser(TaskDressing,ui.Window):
                         self.doneenough['torecord']=True
                 # log.info("Finished looking at [{}]{} field: {}".format(l,f,self.doneenough))
         # log.info("nfieldswosoundfiles by lang: {}".format(sortsnotrecorded))
-        for lang in self.file.db.nentrieswlexemedata:
-            remaining=self.file.db.nentrieswcitationdata[lang
-                                        ]-self.file.db.nentrieswlexemedata[lang]
+        for lang in self.db.nentrieswlexemedata:
+            remaining=self.db.nentrieswcitationdata[lang
+                                        ]-self.db.nentrieswlexemedata[lang]
             if not remaining:
                 self.donew['parsedlx']=True
             if remaining < 100:
@@ -4666,7 +4658,7 @@ class TaskChooser(TaskDressing,ui.Window):
         log.info("You're done enough with: {}".format(self.doneenough))
     def restart(self,filename=None):
         log.info("Restarting from TaskChooser")
-        file.writefilename(self.file.name)
+        file.writefilename(self.filename)
         if hasattr(self,'warning') and self.warning.winfo_exists():
             self.warning.destroy()
         # log.info("towrite: {}; writing: {}".format(self.towrite,self.writing))
@@ -4692,7 +4684,7 @@ class TaskChooser(TaskDressing,ui.Window):
     def changedatabase(self):
         log.debug("Preparing to change database name.")
         self.task.withdraw()
-        curname = self.file.name
+        curname = self.filename
         log.info(_("Current database: {}").format(curname))
         self.file.askwhichlift(file.getfilenames())
         # text=_("{} will now exit; restart to work with the new database."
@@ -4783,15 +4775,17 @@ class TaskChooser(TaskDressing,ui.Window):
         ui.Window.__init__(self,parent)
         self.setmainwindow(self)
         self.splash = Splash(self)
-        self.getfile()
+        self.filename=FileChooser().name
         if program['root'].exitFlag.istrue():
             return
         self.splash.draw()
+        self.db=FileParser(self.filename).db
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
         """Can whatsdone be joined with makedefaulttask? they appear together
         elsewhere."""
         self.whatsdone()
+        self.settings=Settings(self)
         self.splash.maketexts() #update for translation change
         TaskDressing.__init__(self,parent) #I think this should be after settings
         if not self.settings.writeeverynwrites: #0/None are not sensible values
