@@ -1173,11 +1173,11 @@ class StatusFrame(ui.Frame):
             for i in x:
                 try:
                     int(i)
-                    log.log(3,"Integer {} fine".format(i))
+                    # log.info("Integer {} fine".format(i))
                 except:
-                    log.log(3,"Problem with integer {}".format(i))
+                    # log.info("Problem with integer {}".format(i))
                     if not self.settings.hidegroupnames:
-                        return nn(x,oneperline=True) #if any is not an integer, all.
+                        return nn(x,oneperline=True) #if any noninteger, all.
             return len(x) #to show counts only
         def updateprofilencheck(profile,check):
             self.settings.slices.profile(profile)
