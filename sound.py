@@ -576,7 +576,7 @@ class BeepGenerator(object):
                     #             fromhz,tohz,len(syl)-contour,nframes,done))
                     if not done:
                         self.wavdata=numpy.append(self.wavdata,numpy.sin(
-                                2*numpy.pi*(numpy.arange(#0,100,
+                                0.8*numpy.pi*(numpy.arange(#0,100,
                                                     nframes,dtype=numpy.float32
                                                         )*hz)/self.bitrate #/(len(syl)-contour))
                                             )
