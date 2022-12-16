@@ -7400,62 +7400,73 @@ class Record(Sound,TaskDressing,ui.Window):
         log.info(text)
         instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
         instr.grid(row=0,column=0,sticky='w')
-        buttonframes=ui.ScrollingFrame(self.runwindow.frame)
-        buttonframes.grid(row=1,column=0,sticky='w')
-        row=0
-        done=list()
-        for senseid in self.slices.senseids(ps=ps,profile=profile):
-            sense={}
-            sense['column']=0
-            sense['row']=row
-            sense['senseid']=senseid
-            sense['guid']=firstoflist(self.db.get('entry',
-                                        senseid=senseid).get('guid'))
-            if sense['guid'] in done: #only the first of multiple senses
-                continue
-            else:
-                done.append(sense['guid'])
-            """These following two have been shifted down a level, and will
-            now return a list of form elements, each. Something will need to be
-            adjusted here..."""
-            sense['lxnode']=firstoflist(self.db.get('lexeme',
-                                                guid=sense['guid'],
-                                                lang=self.analang).get())
-            sense['lcnode']=firstoflist(self.db.get('citation',
-                                                guid=sense['guid'],
-                                                lang=self.analang).get())
-            sense['glosses']=[]
-            for lang in self.glosslangs:
-                sense['glosses'].append(firstoflist(self.db.glossordefn(
-                                                guid=sense['guid'],
-                                                glosslang=lang
-                                                ),othersOK=True))
-            if self.settings.pluralname is not None:
-                sense['plnode']=firstoflist(self.db.fieldnode(
-                                guid=sense['guid'],
-                                lang=self.analang,
-                                ftype=self.settings.pluralname)
-                                            )
-            if self.settings.imperativename is not None:
-                sense['impnode']=firstoflist(self.db.fieldnode(
-                                guid=sense['guid'],
-                                lang=self.analang,
-                                ftype=self.settings.imperativename)
-                                            )
-            if sense['lcnode'] is not None:
-                sense['nodetoshow']=sense['lcnode']
-            else:
-                sense['nodetoshow']=sense['lxnode']
-            self.makelabelsnrecordingbuttons(buttonframes.content,sense)
-            for node in ['plnode','impnode']:
-                if (node in sense) and (sense[node] is not None):
-                    sense['column']+=2
-                    sense['nodetoshow']=sense[node]
-                    self.makelabelsnrecordingbuttons(buttonframes.content,
-                                                    sense)
-            row+=1
-        self.runwindow.waitdone()
-        self.runwindow.wait_window(self.runwindow.frame)
+        senseids=self.slices.senseids(ps=ps,profile=profile)
+        nperpage=10
+        pages=[senseids[i:i+nperpage] for i in range(0,len(senseids),nperpage)]
+        log.info("pages: {}".format(pages))
+        for page in pages:
+            self.runwindow.wait()
+            buttonframes=ui.ScrollingFrame(self.runwindow.frame,
+                                            row=1,column=0,sticky='w')
+            row=0
+            done=list()
+            for senseid in page:
+                sense={}
+                sense['column']=0
+                sense['row']=row
+                sense['senseid']=senseid
+                sense['guid']=firstoflist(self.db.get('entry',
+                                            senseid=senseid).get('guid'))
+                if sense['guid'] in done: #only the first of multiple senses
+                    continue
+                else:
+                    done.append(sense['guid'])
+                """These following two have been shifted down a level, and will
+                now return a list of form elements, each. Something will need to be
+                adjusted here..."""
+                sense['lxnode']=firstoflist(self.db.get('lexeme',
+                                                    guid=sense['guid'],
+                                                    lang=self.analang).get())
+                sense['lcnode']=firstoflist(self.db.get('citation',
+                                                    guid=sense['guid'],
+                                                    lang=self.analang).get())
+                sense['glosses']=[]
+                for lang in self.glosslangs:
+                    sense['glosses'].append(firstoflist(self.db.glossordefn(
+                                                    guid=sense['guid'],
+                                                    glosslang=lang
+                                                    ),othersOK=True))
+                if self.settings.pluralname is not None:
+                    sense['plnode']=firstoflist(self.db.fieldnode(
+                                    guid=sense['guid'],
+                                    lang=self.analang,
+                                    ftype=self.settings.pluralname)
+                                                )
+                if self.settings.imperativename is not None:
+                    sense['impnode']=firstoflist(self.db.fieldnode(
+                                    guid=sense['guid'],
+                                    lang=self.analang,
+                                    ftype=self.settings.imperativename)
+                                                )
+                if sense['lcnode'] is not None:
+                    sense['nodetoshow']=sense['lcnode']
+                else:
+                    sense['nodetoshow']=sense['lxnode']
+                self.makelabelsnrecordingbuttons(buttonframes.content,sense)
+                for node in ['plnode','impnode']:
+                    if (node in sense) and (sense[node] is not None):
+                        sense['column']+=2
+                        sense['nodetoshow']=sense[node]
+                        self.makelabelsnrecordingbuttons(buttonframes.content,
+                                                        sense)
+                row+=1
+            ui.Button(buttonframes.content,column=1,row=row,
+                        text=_("Next {} words").format(nperpage),
+                        cmd=buttonframes.destroy)
+            self.runwindow.waitdone()
+            buttonframes.wait_window(buttonframes)
+        if not self.runwindow.exitFlag.istrue():
+            self.runwindow.wait_window(self.runwindow.frame)
     def showentryformstorecord(self,justone=False):
         # Save these values before iterating over them
         #Convert to iterate over local variables
