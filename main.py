@@ -255,7 +255,7 @@ class LiftChooser(ui.Window,HasMenus):
             return
         w=ui.Wait(parent=program['root'],msg=_("Setting up new LIFT file now."))
         log.info("Beginning Copy of stock to new LIFT file.")
-        self.loadCAWL()
+        self.cawldb=loadCAWL()
         self.stripcawldb()
         self.copytonewfile(newfile)
         w.close()
@@ -349,7 +349,7 @@ class LiftChooser(ui.Window,HasMenus):
         inst=_("Which language would you like to study, in this demonstration "
                 "of what {} can do?").format(program['name'])
         t=ui.Label(w.frame, text=inst, row=1, column=0, columnspan=2)
-        self.loadCAWL()
+        self.cawldb=loadCAWL()
         Settings.langnames(self,self.cawldb.glosslangs)
         opts=[(i,self.languagenames[i]) for i in self.cawldb.glosslangs]
         log.info("Options: {}".format(opts))
@@ -388,23 +388,6 @@ class LiftChooser(ui.Window,HasMenus):
         self.newfilelocation(newfile)
         log.info("newfilelocation done")
         return str(newfile)
-    def loadCAWL(self):
-        stockCAWL=file.fullpathname('SILCAWL/SILCAWL.lift')
-        if file.exists(stockCAWL):
-            log.info("Found stock LIFT file: {}".format(stockCAWL))
-        try:
-            self.cawldb=lift.Lift(str(stockCAWL))
-            log.info("Parsed ET.")
-            log.info("Got ET Root.")
-        except Exception as e:
-            log.info("Error: {}".format(e))
-        except lift.BadParseError:
-            text=_("{} doesn't look like a well formed lift file; please "
-                    "try again.").format(stockCAWL)
-            ErrorNotice(text,wait=True)
-            return
-        log.info("Parsed stock LIFT file to tree/nodes.")
-        return self.cawldb
     def stripcawldb(self):
         for n in (self.cawldb.nodes.findall('entry/lexical-unit')+
                     self.cawldb.nodes.findall('entry/citation')):
@@ -5205,8 +5188,7 @@ class WordCollection(Segments):
         text=_("Adding CAWL entries to fill out, in established database.")
         self.wait(msg=text)
         log.info(text)
-        self.file.loadCAWL()
-        self.cawldb=self.file.cawldb
+        self.cawldb=loadCAWL()
         added=[]
         modded=[]
         for n in self.taskchooser.cawlmissing:
@@ -14017,6 +13999,23 @@ def getinterfacelangs():
             {'code':'en','name':'English'},
             {'code':'fub','name':'Fulfulde'}
             ]
+def loadCAWL():
+    stockCAWL=file.fullpathname('SILCAWL/SILCAWL.lift')
+    if file.exists(stockCAWL):
+        log.info("Found stock LIFT file: {}".format(stockCAWL))
+    try:
+        cawldb=lift.Lift(str(stockCAWL))
+        log.info("Parsed ET.")
+        log.info("Got ET Root.")
+    except Exception as e:
+        log.info("Error: {}".format(e))
+    except lift.BadParseError:
+        text=_("{} doesn't look like a well formed lift file; please "
+                "try again.").format(stockCAWL)
+        ErrorNotice(text,wait=True)
+        return
+    log.info("Parsed stock LIFT file to tree/nodes.")
+    return cawldb
 def pathseparate(path):
     os=platform.system()
     if os == "Windows":
