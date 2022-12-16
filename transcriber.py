@@ -155,7 +155,7 @@ class Transcriber(ui.Frame):
                                     row=0,column=0,sticky='new',
                                     font='readbig')
         self.formfield.bind('<KeyRelease>', self.updatelabels) #apply function after key
-        self.formfieldplay= ui.Button(fieldframe,text=_('>'),
+        self.formfieldplay= ui.Button(fieldframe,text=_('‣'),
                             cmd=lambda:self.playbeeps(self.newname.get()),
                             font='tiny',
                             sticky='ns',
