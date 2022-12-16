@@ -11220,30 +11220,38 @@ class RecordButtonFrame(ui.Frame):
         else:
             self.makerecordbutton()
     def makerecordbutton(self):
-        self.b=ui.Button(self,text=_('Record'),command=self.function)
+        self.b=ui.Button(self, command=self.function,
+                        image='record',
+                        ipadx=20, ipady=15
+                        )
         self.b.grid(row=0, column=0,sticky='w')
         self.b.bind('<ButtonPress-1>', self._start)
         self.b.bind('<ButtonRelease-1>', self._stop)
+        self.bt=ui.ToolTip(self.b,_("press-speak-release"))
     def _play(self,event=None):
         log.debug("Asking PA to play now")
         self.player=sound.SoundFilePlayer(self.filenameURL,self.pa,
                                                                 self.settings)
         tryrun(self.player.play)
     def makeplaybutton(self):
-        self.p=ui.Button(self,text=_('Play'),command=self._play)
+        self.p=ui.Button(self, text='‣', command=self._play,
+                        font='readbig',
+                        ipadx=20, ipady=0
+                        )
         #Not using these for now
         # self.p.bind('<ButtonPress>', self._play)
         # self.p.bind('<ButtonRelease>', self.function)
         self.p.grid(row=0, column=1,sticky='w')
-        pttext=_("Click to hear this utterance")
+        pttext=_("Click to hear")
         if program['praat']:
             pttext+='; '+_("right click to open in praat")
             self.p.bind('<Button-3>',lambda x: praatopen(self.filenameURL))
         self.pt=ui.ToolTip(self.p,pttext)
     def makedeletebutton(self):
-        self.r=ui.Button(self,text=_('Redo'),command=self.function)
-        self.r.grid(row=0, column=2,sticky='w')
+        self.r=ui.Button(self,text='×',font='read',command=self.function,
+                        row=0, column=2, sticky='nsw')
         self.r.bind('<ButtonRelease-1>', self._redo)
+        self.rt=ui.ToolTip(self.r,_("Try again"))
         self.r.update_idletasks()
     def function(self):
         pass
