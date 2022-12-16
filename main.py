@@ -3643,8 +3643,8 @@ class TaskDressing(HasMenus,object):
             profiles=dict.fromkeys(profiles)
             if not profiles:
                 log.error("No profiles of {} type found!".format(kwargs))
-            log.info("count types: {}, {}".format(type(profilecounts),
-                                                    type(profilecountsAdHoc)))
+            # log.info("count types: {}, {}".format(type(profilecounts),
+            #                                         type(profilecountsAdHoc)))
             ui.Label(window.frame, text=_('What ({}) syllable profile do you '
                                     'want to work with?'.format(ps))
                                     ).grid(column=0, row=0)
