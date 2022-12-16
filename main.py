@@ -1206,6 +1206,7 @@ class StatusFrame(ui.Frame):
         allchecks=[]
         for profile in profiles:
             if profile in self.settings.status[cvt][ps]:
+                #make sure the table has all columns needed for any profile
                 allchecks+=self.settings.status[cvt][ps][profile].keys()
         allchecks=list(dict.fromkeys(allchecks)) #could unsort slices priority
         if self.cvt != 'T': #don't resort tone frames
