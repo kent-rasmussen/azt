@@ -1238,7 +1238,7 @@ class StatusFrame(ui.Frame):
                         ttb=ui.ToolTip(h,tip)
                 elif profile == 'next': # end of row headers
                     brh=ui.Button(self.leaderboardtable,text=profile,
-                            relief='flat',cmd=self.settings.status.nextprofile)
+                            relief='flat',cmd=self.settings.setnextprofile)
                     brh.grid(row=row,column=column,sticky='e')
                     brht=ui.ToolTip(brh,_("Go to the next syllable profile"))
                 for check in allchecks+['next']:
