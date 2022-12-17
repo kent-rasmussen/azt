@@ -107,7 +107,7 @@ class SoundSettings(object):
         return exit
     def next(self):
         return self.next_sf()
-    def getactual(self):
+    def getactual(self,test=False):
         self.cards={'in':{},'out':{},'dict':{}}
         hostinfo = self.pyaudio.get_host_api_info_by_index(0)
         numdevices = hostinfo.get('deviceCount')
@@ -133,9 +133,11 @@ class SoundSettings(object):
                 self.cards['in'][card][fs]=list()
                 for sf in self.hypothetical['sample_formats']:
                     try:
-                        ifs=self.pyaudio.is_format_supported(rate=fs,
-                            input_device=card,input_channels=1,
-                            input_format=sf)
+                        if test:
+                            ifs=self.pyaudio.is_format_supported(rate=fs,
+                                                            input_device=card,
+                                                            input_channels=1,
+                                                            input_format=sf)
                         self.cards['in'][card][fs].append(sf)
                     except ValueError as e:
                         log.info("Config not supported; no worries: rate={}; "
@@ -152,9 +154,11 @@ class SoundSettings(object):
                 self.cards['out'][card][fs]=list()
                 for sf in self.hypothetical['sample_formats']:
                     try:
-                        ifs=self.pyaudio.is_format_supported(rate=fs,
-                            output_device=card,output_channels=1,
-                            output_format=sf)
+                        if test:
+                            ifs=self.pyaudio.is_format_supported(rate=fs,
+                                                            output_device=card,
+                                                            output_channels=1,
+                                                            output_format=sf)
                         self.cards['out'][card][fs].append(sf)
                     except ValueError as e:
                         log.info("Config not supported; no worries: rate={}; "
