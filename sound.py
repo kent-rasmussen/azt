@@ -66,6 +66,8 @@ class SoundSettings(object):
         self.fs=max(self.cards['in'][self.audio_card_in])
     def default_sf(self):
         self.sample_format=min(self.cards['in'][self.audio_card_in][self.fs])
+    def max_sf(self):
+        self.sample_format=max(self.cards['in'][self.audio_card_in][self.fs])
     def defaults(self):
         self.default_in()
         self.default_out()
