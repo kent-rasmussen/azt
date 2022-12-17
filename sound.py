@@ -79,6 +79,17 @@ class SoundSettings(object):
             return 1
         else:
             self.audio_card_in=ins[insi+1]
+            log.debug("next_card_in {} (of {})".format(self.audio_card_in,ins))
+            self.default_fs()
+            self.default_sf()
+    def next_card_out(self):
+        outs=sorted(self.cards['out'].keys())
+        outsi=outs.index(self.audio_card_out)
+        if outsi == len(outs)-1:
+            return 1
+        else:
+            self.audio_card_out=outs[outsi+1]
+            log.debug("next_card_out {} (of {})".format(self.audio_card_out,outs))
             self.default_fs()
             self.default_sf()
     def next_fs(self):
