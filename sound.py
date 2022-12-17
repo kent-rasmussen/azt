@@ -80,7 +80,6 @@ class SoundSettings(object):
         self.default_sf()
     def next_card_in(self):
         ins=sorted(self.cards['in'].keys())
-        log.debug("next_card_in (of {})".format(ins))
         insi=ins.index(self.audio_card_in)
         if insi == len(ins)-1:
             return 1
