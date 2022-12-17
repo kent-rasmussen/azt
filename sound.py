@@ -211,7 +211,7 @@ class SoundSettings(object):
                                             pyaudio.paInt16:'16 bit integer',
                                             # pyaudio.paInt8:'8 bit integer'
                                             }
-    def check(self):
+    def makedefaultifnot(self):
         if (self.audio_card_in not in self.cards['in']
                 or self.audio_card_in not in self.cards['dict']
                 ):
@@ -225,6 +225,47 @@ class SoundSettings(object):
                 or self.audio_card_out not in self.cards['dict']
                 ):
             self.default_out()
+    def check(self):
+        log.info(_("Testing speaker settings:"))
+        self.next_card_out()
+        self.next_card_out()
+        self.next_card_out()
+        self.max_sf()
+        try:
+            ifs=self.pyaudio.is_format_supported(rate=self.fs,
+                                            output_device=self.audio_card_out,
+                                            output_channels=1,
+                                            output_format=self.sample_format)
+        except ValueError as e:
+            if 'Device unavailable' in e:
+                self.next_card_out()
+                self.check()
+            log.info("Config not supported; no worries: rate={}; "
+                "output_device={}; "
+                "output_channels=1, "
+                "output_format={} ({})".format(fs,card,sf,e))
+        log.info(_("Testing microphone settings:"))
+        self.next_card_in()
+        self.next_card_in()
+        self.next_card_in()
+        self.next_card_in()
+        try:
+            ifs=self.pyaudio.is_format_supported(rate=self.fs,
+                                                input_device=self.audio_card_in,
+                                                input_channels=1,
+                                                input_format=self.sample_format)
+        except ValueError as e:
+            if 'Device unavailable' in e:
+                self.next_card_in()
+                self.check()
+            if 'Invalid sample rate' in e:
+                self.next_sf()
+                # self.next_fs()
+                self.check()
+                log.info("Config not supported; no worries: rate={}; "
+                "output_device={}; "
+                "output_channels=1, "
+                "output_format={} ({})".format(fs,card,sf,e))
     def __init__(self,pyaudio):
         self.pyaudio=pyaudio
         self.sethypothetical()
