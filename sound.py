@@ -661,11 +661,6 @@ if __name__ == "__main__":
     # print(pyaudio.paInt8)
     import time
     import timeit
-    try: #Allow this module to be used without translation
-        _
-    except:
-        def _(x):
-            return x
     pa = AudioInterface()
     times=100
     # class Test:
