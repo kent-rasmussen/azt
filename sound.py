@@ -616,7 +616,8 @@ class BeepGenerator(object):
                             # )
                         )
             f.close()
-        self.wavdata = self.wavdata.astype(numpy.float32).tostring()
+        self.wavdata = self.wavdata.astype(numpy.float32).tobytes()
+        # self.wavdata = self.wavdata.astype(numpy.float32).tostring()
     def __init__(self,pyAudio=None,settings=None):
         if not pyAudio:
             self.p = AudioInterface()     #initialize pyaudio
