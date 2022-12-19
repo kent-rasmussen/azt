@@ -675,7 +675,6 @@ msgid "Go to the next check"
 msgstr "Continuer à la prochaine cadre de tons"
 
 #: /home/kentr/IT/azt/repo_trans/main.py:1333
-#, fuzzy
 msgid "Words to sort!"
 msgstr "Mots à trier!"
 
