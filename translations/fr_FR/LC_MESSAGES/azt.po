@@ -645,8 +645,8 @@ msgid "verified"
 msgstr "verrifié"
 
 #: /home/kentr/IT/azt/repo_trans/main.py:1220
-msgid "unsorted data"
-msgstr "données non triées"
+msgid "unsorted"
+msgstr "non triées"
 
 #: /home/kentr/IT/azt/repo_trans/main.py:1226
 msgid ""
@@ -681,11 +681,11 @@ msgstr "Mots à trier!"
 
 #: /home/kentr/IT/azt/repo_trans/main.py:1339
 msgid "{} groups to verify!"
-msgstr ""
+msgstr "{} groupes à verifier!"
 
 #: /home/kentr/IT/azt/repo_trans/main.py:1342
 msgid "Sorted and verified!"
-msgstr ""
+msgstr "Trié et verifié!"
 
 #: /home/kentr/IT/azt/repo_trans/main.py:1349
 msgid "You have more groups verified than there are, in {} cells"
