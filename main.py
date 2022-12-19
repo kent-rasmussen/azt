@@ -7842,7 +7842,7 @@ class Report(object):
                             )
             if not hasattr(xlpr,'node'):
                 log.info(_("Not repeating report that looks already started."))
-                if kwargs['usegui']:
+                if kwargs.get('usegui'):
                     self.waitdone()
                 return
         title=_('Introduction to {} {}').format(ps,profile)
@@ -7941,7 +7941,9 @@ class Report(object):
                         )))
             if not l:
                 l=[_('<no frames with a sort value>')]
-            text=_('Values by frame: {}'.format('\t'.join(l)))
+            # spaces>nbsp in key:value, only between k:v pairs
+            text=_('Values by frame: {}'
+                    ).format('; '.join([i.replace(' ',' ') for i in l]))
             log.info(text)
             p1=xlp.Paragraph(s1,text)
             output(window,r,text)
@@ -8228,9 +8230,9 @@ class Report(object):
             reporttype+='-'+self.params.check()
         if isinstance(self,Tone) and not isinstance(self,Segments): #not byUF
             if self.bylocation:
-                reporttype='Tone-bylocation'
+                reporttype+='Tone-bylocation'
             else:
-                reporttype='Tone'
+                reporttype+='Tone'
         elif self.byUFgroup:
                 reporttype+='byUFgroup'
         bits=[str(self.reportbasefilename),rx.id(reporttype),"ReportXLP"]
@@ -10563,7 +10565,9 @@ class FramedDataDict(dict):
             # log.info("FramedData from {} made with forms {}".format(source,
             #                                                         d.forms))
         elif d:
-            pass
+            if (element and not d.audiofileisthere() and
+                    isinstance(self.parent.taskchooser.mainwindowis,Record)):
+                d.makeaudiofilename()
             # log.info("FramedData used from ealier ({},with forms {})".format(
             #                                                     source,d.forms))
         else:
@@ -10786,7 +10790,8 @@ class FramedDataElement(FramedData):
     recording into the form[@audiolang] node of that node."""
     def makeaudiofilename(self):
         self.audio()
-        if self.audiofileisthere():
+        if (self.audiofileisthere() and
+                isinstance(self.parent.taskchooser.mainwindowis,Record)):
             return
         """First check if *any* glosslang has data"""
         self.gloss=None
@@ -13980,8 +13985,10 @@ def firstoflist(l,othersOK=False,all=False,ignore=[None]):
         return
     if all: #don't worry about othersOK yet
         if len(l) > 1:
-            ox=[t(v) for v in l[:len(l)-2]] #Should probably always give text
-            l=ox+[_(' and ').join([t(v) for v in l[len(l)-2:] if v not in ignore])]
+            ox=[t(v) for v in l[:len(l)-2] if v] #Should probably always give text
+            l=ox+[_(' and ').join([t(v) for v in l[len(l)-2:]
+                                        if v not in ignore
+                                        if v])]
                 # for i in range(int(len(output)/2))]
         else:
             l[0]=t(l[0]) #for lists of a single element

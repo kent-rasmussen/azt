@@ -1132,14 +1132,8 @@ class Window(Toplevel):
         # self.dogrid()
 class ContextMenu(Childof):
     def updatebindings(self):
-        def bindthisncheck(w):
-            log.log(2,"{};{}".format(w,w.winfo_children()))
-            if type(w) is not tkinter.Canvas: #ScrollingFrame:
-                w.bind('<Enter>', self._bind_to_makemenus)
-            for child in w.winfo_children():
-                bindthisncheck(child)
+        self.parent.bind('<Motion>', self._bind_to_makemenus)
         self.parent.bind('<Leave>', self._unbind_to_makemenus) #parent only
-        bindthisncheck(self.parent)
     def undo_popup(self,event=None):
         if hasattr(self,'menu'):
             log.log(2,"undo_popup Checking for ContextMenu.menu: {}".format(
