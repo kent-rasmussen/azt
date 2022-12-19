@@ -13129,6 +13129,9 @@ class Repository(object):
             else:
                 return d.joinpath(self.dirname).with_suffix('.'+self.code)
     def findpresentremotes(self,remote=None,firsttry=True):
+        def clonetoUSB():
+            self.clonetoUSB()
+            e.destroy() #don't make the user do this; move one when clone done
         l=[]
         remotesinsettings=self.remoteurls().values()
         #add to list only what is there now AND related
@@ -13148,8 +13151,13 @@ class Repository(object):
                 text=_("{} can't find your {} {} backup. "
                 "\nIf you have a USB drive for this, insert it now."
                 "").format(program['name'], self.repotypename, self.description)
-                button=(_("Use attached USB"),self.clonetoUSB)
-                ErrorNotice(text,
+                # clonetoUSB here will ask for a directory to put it, but won't
+                # clone if the target would be there, related or not.
+                # Either way, we check again for present remotes, so the cost
+                # of clicking this button (instead of 'exit') when you have a
+                # drive already set up is an extra file dialog —hopefully OK.
+                button=(_("Set up new USB"),clonetoUSB)
+                e=ErrorNotice(text,
                             title=_("No {} USB backup found"
                                     ).format(self.description),
                             button=button,
