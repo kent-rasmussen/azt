@@ -1336,7 +1336,6 @@ class StatusFrame(ui.Frame):
                             if not self.settings.showdetails:
                                 tb.configure(highlightthickness=3)
                                 tb.configure(highlightbackground=tb.theme.white)
-
                         if nunverified:
                             tips.extend([_("{} groups to verify!"
                                         ).format(nunverified)])
