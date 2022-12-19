@@ -8125,9 +8125,9 @@ class Report(object):
             reporttype+='-'+self.params.check()
         if isinstance(self,Tone) and not isinstance(self,Segments): #not byUF
             if self.bylocation:
-                reporttype='Tone-bylocation'
+                reporttype+='Tone-bylocation'
             else:
-                reporttype='Tone'
+                reporttype+='Tone'
         elif self.byUFgroup:
                 reporttype+='byUFgroup'
         bits=[str(self.reportbasefilename),rx.id(reporttype),"ReportXLP"]
