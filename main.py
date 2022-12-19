@@ -7837,7 +7837,8 @@ class Report(object):
             if not l:
                 l=[_('<no frames with a sort value>')]
             # spaces>nbsp in key:value, only between k:v pairs
-            text=_('Values by frame: {}'.format('; '.join(l.replace(' ',' '))))
+            text=_('Values by frame: {}'
+                    ).format('; '.join([i.replace(' ',' ') for i in l]))
             log.info(text)
             p1=xlp.Paragraph(s1,text)
             output(window,r,text)
