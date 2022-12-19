@@ -1129,25 +1129,24 @@ class StatusFrame(ui.Frame):
         titleframe=ui.Frame(self.leaderboard)
         titleframe.grid(row=0,column=0,sticky='n')
         cvtdict=self.settings.params.cvtdict()
-        if not self.mainrelief:
-            lt=ui.Label(titleframe, text=_(cvtdict[self.cvt]['sg']),
-                                                    font='title')
-        else:
-            lt=ui.Button(titleframe, text=_(cvtdict[self.cvt]['sg']),
-                                font='title',relief=self.mainrelief)
-        lt.grid(row=0,column=0,sticky='nwe')
+        # if not self.mainrelief:
+        #     lt=ui.Label(titleframe, text=_(cvtdict[self.cvt]['sg']),
+        #                                             font='title')
+        # else:
+        #     lt=ui.Button(titleframe, text=_(cvtdict[self.cvt]['sg']),
+        #                         font='title',relief=self.mainrelief)
+        # lt.grid(row=0,column=0,sticky='nwe')
+        # ttt=ui.ToolTip(lt,_("Change Check Type"))
+        # lt.bind('<ButtonRelease-1>',self.taskchooser.mainwindowis.getcvt)
         ui.Label(titleframe, text=_('Progress for'), font='title'
             ).grid(row=0,column=1,sticky='nwe',padx=10)
-        # ps=self.settings.slices.ps()
         if not self.mainrelief:
             lps=ui.Label(titleframe,text=self.ps,anchor='c',font='title')
         else:
             lps=ui.Button(titleframe,text=self.ps, anchor='c',
                             relief=self.mainrelief, font='title')
         lps.grid(row=0,column=2,ipadx=0,ipady=0)
-        ttt=ui.ToolTip(lt,_("Change Check Type"))
         ttps=ui.ToolTip(lps,_("Change Part of Speech"))
-        lt.bind('<ButtonRelease-1>',self.taskchooser.mainwindowis.getcvt)
         lps.bind('<ButtonRelease-1>',self.taskchooser.mainwindowis.getps)
     def makenoboard(self):
         log.info("No Progress board")
@@ -1275,10 +1274,12 @@ class StatusFrame(ui.Frame):
                                         row=row,column=column,sticky='s')
                             bcht=ui.ToolTip(bch,_("Go to the next check"))
                         else:
-                            ui.Label(self.leaderboardtable,
+                            l=ui.Label(self.leaderboardtable,
                                     text=rx.linebreakwords(check),
                                     font='reportheader',
                                     row=row,column=column,sticky='s',ipadx=5)
+                            l.bind('<ButtonRelease-1>',
+                                        self.taskchooser.mainwindowis.getcvt)
                     elif profile == 'next':
                         continue
                     elif check in self.settings.status.checks(cvt=cvt,ps=ps,
