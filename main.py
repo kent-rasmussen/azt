@@ -1268,7 +1268,7 @@ class StatusFrame(ui.Frame):
                             else:
                                 cmd=lambda todo=True:self.settings.setnextcheck(
                                                                     todo=todo)
-                            bch=ui.Button(self.leaderboardtable,text=check,
+                            bch=ui.Button(self.leaderboardtable,text=_(check),
                                         relief='flat',
                                         cmd=cmd,
                                         font='reportheader',
