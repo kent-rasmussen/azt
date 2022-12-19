@@ -10458,7 +10458,9 @@ class FramedDataDict(dict):
             # log.info("FramedData from {} made with forms {}".format(source,
             #                                                         d.forms))
         elif d:
-            pass
+            if (element and not d.audiofileisthere() and
+                    isinstance(self.parent.taskchooser.mainwindowis,Record)):
+                d.makeaudiofilename()
             # log.info("FramedData used from ealier ({},with forms {})".format(
             #                                                     source,d.forms))
         else:
@@ -10657,7 +10659,8 @@ class FramedDataElement(FramedData):
     recording into the form[@audiolang] node of that node."""
     def makeaudiofilename(self):
         self.audio()
-        if self.audiofileisthere():
+        if (self.audiofileisthere() and
+                isinstance(self.parent.taskchooser.mainwindowis,Record)):
             return
         """First check if *any* glosslang has data"""
         self.gloss=None
