@@ -48,13 +48,6 @@ I **strongly** recommend using a version controlled repository (e.g., mercurial,
 More details on how to do this in [A→Z+T] are available [here](COLLABORATION_AND_BACKUP.md).
 
 
-### Tone Frame Design
-In order to sort tone data in [A→Z+T], you have to have tone frames defined. There is a tool in [A→Z+T] to help you **define** your tone frames, but help **designing** your tone frames is beyond the scope of [A→Z+T]. How to design good tone frames is covered in a field methods course in some graduate linguistics programs, and you have find further help in Keith Snider's Tone Analysis for Field Linguists (2018). I have also made two short videos that show good frames [here](../../releases/download/v0.8.6.1/NounToneFrames.bvm.mp4) and [here](../../releases/download/v0.8.6.1/VerbToneFrames.bvm.mp4). If this is not enough for you, you should get help from a linguist that can do this with you. It involves syntactic analysis for each of the grammatical categories that you will study.
-
-If you must work in the absence of someone to help you design your tone frames, you can always define a frame and use it, and see what you get. If you do this, please understand that you may be doing more work than you need to —though this may be preferable to having to wait for a trained linguist to get started (see my further recommendations [here](HELP_PREREQUISITES.md#field-work-develop-draft-tone-frames)).
-
-Once you **design** frames you want to use, see [below](USAGE.md#tone-frames) for technical notes on how to **define** the frame in [A→Z+T].
-
 ## Error Tracking
 Once [A→Z+T] is running normally, it will create a log with more information that you probably want), in a file called `log_<date>.txt`. If something unexpected happens, that file should contain information that will help understand what happened and why. That is recreated on each [A→Z+T] startup, though, so add a meaningful name and send it to me before running [A→Z+T] again.
 
@@ -131,24 +124,6 @@ On the upper left of the main window, relevant settings are indicated:
  - type of check (i.e., C, V, or T) and current stage/frame
 
 There are no [Menus](MENUS.md) by default.
-
-### Tone Frames
-If you don't have any tone frames set up yet, you will be asked to do so when you try to sort on tone. You can also do that in the Advanced menu, for as many frames as you want to define. Note the *name* is important, as this is how you will refer to this frame in A→Z+T, and how it will be identified in your database in the future (unless and until you change that). So if you're testing the plural form, something like "Pl" or "Plural", or "Pluriel" might be appropriate --but this is just a name, so make it distinct but useful to your workflow.
-
-I hope the `Add Tone Frame` window is otherwise clear, though two points are in order:
-1. I have seen at least one MS Windows system, where keyboarding that takes multiple keystrokes to produce a character (like 'n'+'>' → 'ŋ') showed up as '?' in the entry field. If this happens, *do* *not* ignore it, as this will be on every window, and added to your database examples. Rather, type the correct characters into another program (e.g., a text editor), then cut and paste into this field, and it should appear correctly.
-2. The frame calculator is not particularly smart; **it only puts content before and after the form and gloss(es)** for each word, so you need to give it that information. If that information (in the form or gloss) alternates in agreement or harmony with the lexicon word forms, you should think through how you want to resolve potential clashes. The two main options are
-
-- including all options in the frame:
-    - `pl form: '__s/z/ɪz'` (with all forms given for each word in that frame)
-- or allowing for ungrammaticality:
-    - `pl form: '__s'` (knowing that dʒədʒ+pl will come out 'dʒədʒs', not 'dʒədʒɪz')
-
-The user will have the option to skip a word that doesn't work in a frame. This was put there for syntactic or semantic clashes, but could be used to exclude phonologically weird frame combinations, too.
-
-Once you have the form and gloss content in the appropriate boxes, click on 'see it on a word from the dictionary', and you will get the frame as you have defined it applied to some word (in the filter you have currently set). You can try this on a number of words; **continue to click that button**, to see how it will look on different entries. There is no easy way to change this frame after you define it (other than deleting them all and starting from scratch), so I encourage you to take your time before moving on. When you are happy with the frame, click on "use this tone frame".
-
-If you absolutely regret a tone frame you have set up, all your frames are stored in `<lift filename>_ToneFrames.py` next to your [LIFT] file. Be careful editing this, though; you may need to redefine all your frames if you corrupt this file (This would be a great time to ask for help if you don't absolutely certainly know what you're doing).
 
 ### Tone Frame Groups ![Tone Frame Groups](../images/T%20alone%20clear6_icon.png "ToneFrameGroups")
 [A→Z+T] by default labels the groups into which you sort your data by frame with numbers. This is because, at least initially, the fact that it is its own thing (all one thing, and unlike the other groups) is more important than any description of the group, however objective it may be.
