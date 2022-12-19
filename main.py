@@ -1216,7 +1216,7 @@ class StatusFrame(ui.Frame):
         unsortedtext='[X]'
         if self.settings.showdetails:
             tv=_("verified")
-            tu=_("unsorted data")
+            tu=_("unsorted")
             # t="+ = {} \n! = {}".format(tv,tu)
             t="+ = {} \n{} = {}".format(tv,unsortedtext,tu)
             h=ui.Label(self.leaderboardtable,text=t,font="small")
