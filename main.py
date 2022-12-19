@@ -7737,7 +7737,7 @@ class Report(object):
                             )
             if not hasattr(xlpr,'node'):
                 log.info(_("Not repeating report that looks already started."))
-                if kwargs['usegui']:
+                if kwargs.get('usegui'):
                     self.waitdone()
                 return
         title=_('Introduction to {} {}').format(ps,profile)
