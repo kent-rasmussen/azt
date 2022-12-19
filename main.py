@@ -13807,8 +13807,10 @@ def firstoflist(l,othersOK=False,all=False,ignore=[None]):
         return
     if all: #don't worry about othersOK yet
         if len(l) > 1:
-            ox=[t(v) for v in l[:len(l)-2]] #Should probably always give text
-            l=ox+[_(' and ').join([t(v) for v in l[len(l)-2:] if v not in ignore])]
+            ox=[t(v) for v in l[:len(l)-2] if v] #Should probably always give text
+            l=ox+[_(' and ').join([t(v) for v in l[len(l)-2:]
+                                        if v not in ignore
+                                        if v])]
                 # for i in range(int(len(output)/2))]
         else:
             l[0]=t(l[0]) #for lists of a single element
