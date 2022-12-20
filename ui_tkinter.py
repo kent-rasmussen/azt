@@ -645,11 +645,12 @@ class Childof(object):
         """This function brings these attributes from the parent, to inherit
         from the root window, through all windows, frames, and scrolling frames, etc
         """
+        # log.info("inheriting")
         if not parent and hasattr(self,'parent') and self.parent:
             parent=self.parent
         elif parent:
             self.parent=parent
-        if attr is None:
+        if not attr:
             attrs=['theme',
                     # 'fonts', #in theme
                     # 'debug',
@@ -662,6 +663,8 @@ class Childof(object):
         for attr in attrs:
             if hasattr(parent,attr):
                 setattr(self,attr,getattr(parent,attr))
+                # log.info("inheriting {} from parent {} (to {})"
+                #         "".format(attr,type(parent),type(self)))
             else:
                 log.debug("parent {} (of {}) doesn't have attr {}, skipping inheritance"
                         "".format(parent,type(self),attr))
@@ -921,6 +924,7 @@ class Frame(Gridded,Childof,tkinter.Frame):
         self.dogrid()
 class Label(Gridded,Text,tkinter.Label): #,tkinter.Label
     def __init__(self, parent, **kwargs):
+        log.info("Label Parent: {}".format(type(parent)))
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
         Childof.__init__(self,parent)
@@ -951,6 +955,7 @@ class Button(Gridded,Text,tkinter.Button):
         pass
     def __init__(self, parent, choice=None, window=None, command=None, **kwargs):
         """Usta include column=0, row=1, norender=False,"""
+        log.info("Button Parent: {}".format(type(parent)))
         # log.info("button kwargs: {}".format(kwargs))
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
