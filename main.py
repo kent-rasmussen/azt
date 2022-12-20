@@ -14211,6 +14211,8 @@ def pythonmodules():
                     '--no-index' #This stops it from looking online
                     ]
         npyargs=len(pyargs)
+        # if install[0] == 'pyaudio':
+        #     install[0]+='==0.2.13'
         pyargs.extend(install)
         log.info("Running `{}`".format(' '.join(pyargs)))
         try:
