@@ -924,7 +924,7 @@ class Frame(Gridded,Childof,tkinter.Frame):
         self.dogrid()
 class Label(Gridded,Text,tkinter.Label): #,tkinter.Label
     def __init__(self, parent, **kwargs):
-        log.info("Label Parent: {}".format(type(parent)))
+        # log.info("Label Parent: {}".format(type(parent)))
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
         Childof.__init__(self,parent)
@@ -955,7 +955,7 @@ class Button(Gridded,Text,tkinter.Button):
         pass
     def __init__(self, parent, choice=None, window=None, command=None, **kwargs):
         """Usta include column=0, row=1, norender=False,"""
-        log.info("Button Parent: {}".format(type(parent)))
+        # log.info("Button Parent: {}".format(type(parent)))
         # log.info("button kwargs: {}".format(kwargs))
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
