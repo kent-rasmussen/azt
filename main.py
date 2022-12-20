@@ -11830,6 +11830,7 @@ class SliceDict(dict):
         if not ps:
             ps=self.ps()
         if ps:
+            # log.info("returning profiles: {}".format(self._profiles[ps]))
             return self._profiles[ps]
     def profile(self,profile=None):
         if profile is not None and profile in self.profiles(self._ps):
@@ -11857,11 +11858,14 @@ class SliceDict(dict):
         try:
             s=self._slicepriority=[x for x in self._valid.items()]
             s.sort(key=lambda x: int(x[1]),reverse=True)
+            # log.info("self._slicepriority: {}".format(self._slicepriority))
             # log.debug("self._valid: {}".format(self._valid))
             for ps in dict.fromkeys([x[1] for x in self._valid]):
                 s=self._sliceprioritybyps[ps]=[x for x in self._valid.items()
                                                             if x[0][1] == ps]
                 s.sort(key=lambda x: int(x[1]),reverse=True)
+                # log.info("self._sliceprioritybyps[{}]: {}"
+                #             "".format(ps,self._sliceprioritybyps[ps]))
         except Exception as e:
             log.error("Most likely a non-integer found when looking for an "
                         "integer in {} (error: {})".format(s,e))
@@ -11885,12 +11889,18 @@ class SliceDict(dict):
         else:
             log.error("You asked for valid ps data, but that ps isn't there.")
     def validate(self):
+        #These are keyed by (profile,ps) tuples
         self._valid={}
         self._validbyps={}
+        # log.info("slices: {} ({})".format(len(self),list(self)[:10]))
         for k in [x for x in self if x[0] != 'Invalid']:
             self._valid[k]=self[k]
+        # log.info("slices valid: {} ({})".format(len(self._valid),
+        #                                         list(self._valid)[:10]))
         for ps in dict.fromkeys([x[1] for x in self._valid]):
             self._validbyps[ps]=[x for x in self._valid if x[1] == ps]
+        # log.info("slices validbyps: {} ({})".format(len(self._validbyps),
+        #                                             list(self._validbyps)[:10]))
         # log.info("valid: {}".format(self._valid))
         # log.info("validbyps: {}".format(self._validbyps))
     def inslice(self,senseids):
