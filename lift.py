@@ -1059,7 +1059,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nsenseswglossdata={}
         for lang in self.glosslangs:
             senseswglossdata[lang]=[
-                    i for i in self.nodes.findall('entry')
+                    i for i in self.nodes.findall('entry/sense')
                     if textornone(Entry.formtextnodeofentry(i,'gloss',lang,
                                                             nomake=True))
                             ]
@@ -1076,7 +1076,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nsenseswdefndata={}
         for lang in self.glosslangs:
             senseswdefndata[lang]=[
-                    i for i in self.nodes.findall('entry')
+                    i for i in self.nodes.findall('entry/sense')
                     if textornone(Entry.formtextnodeofentry(i,'definition',lang,
                                                             nomake=True))
                             ]
@@ -1663,17 +1663,17 @@ class Entry(object): # what does "object do here?"
     def formtextnodeofentry(self,tag,lang,**kwargs):
         # this gives the form/text node, from which one can easily extract .text
         # hence, the limiting by lang
-        if self.tag != 'entry':
+        # a 'tag' node needs to be the immediate child of a self.tag node
+        if tag in ['definition','gloss'] and self.tag == 'sense':
+            # log.info("Operating on sense fields")
+            pass
+        elif self.tag != 'entry':
             import inspect
             log.info(_("This method needs to operate on entries; fix caller {}!"
                     ).format(
                     inspect.getouterframes(inspect.currentframe())[2].function))
             return
-        if tag in ['definition','gloss']:
-            p=self.findall('sense')[0] #parent of node to create
-        else:
-            p=self
-        nodes=p.findall(tag) # This should typically be a single item list
+        nodes=self.findall(tag) # This should typically be a single item list
         for node in nodes:
             if tag == 'gloss': # But not in this case
                 formtexts=node.findall('.[@lang="{}"]/text'.format(lang))
