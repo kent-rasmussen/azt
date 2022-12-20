@@ -18,6 +18,7 @@ If you get stuck on the splash screen, click on the version number to update.
 Don't worry, you can still update easily. In a terminal (in MS Windows, type in the search box: `cmd`):
 - navigate to the azt tfolder (in MS Windows, type `cd /d %userprofile%/desktop/azt`)
 - type `git pull`
+
 [A→Z+T]:  https://github.com/kent-rasmussen/azt
 [WeSay]:  https://software.sil.org/wesay/
 [FLEx]: https://software.sil.org/fieldworks/
