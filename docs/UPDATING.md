@@ -15,9 +15,11 @@ There is an update button on the error page, so you easily check for an update b
 If you get stuck on the splash screen, click on the version number to update.
 
 ## If A→Z+T doesn't show you a user interface
-Don't worry, you can still update easily. In a terminal (in MS Windows, type in the search box: `cmd`):
+Don't worry, you can still update easily, assuming you cloned [A→Z+T] when you installed (as recommended). In a terminal (in MS Windows, type in the search box: `cmd`):
 - navigate to the azt tfolder (in MS Windows, copy/paste `cd /d %userprofile%/desktop/azt`)
 - type `git pull`
+
+If you didn't clone A→Z+T, you will need to download it again.
 
 [A→Z+T]:  https://github.com/kent-rasmussen/azt
 [WeSay]:  https://software.sil.org/wesay/
