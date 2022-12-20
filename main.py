@@ -1355,7 +1355,7 @@ class StatusFrame(ui.Frame):
         self.parent=parent
         self.settings=taskchooser.settings
         self.taskchooser=taskchooser
-        self.task=task
+        self.task=task #this is the window that called it; task or chooser
         self.mainrelief=kwargs.pop('relief',None) #not for frame
         kwargs['padx']=25
         super(StatusFrame, self).__init__(parent, **kwargs)
