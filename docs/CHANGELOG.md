@@ -18,6 +18,7 @@
 - Catch up on translation
 - make singleton reports run not in background, or give user more helpful info, if analysis isn't done.
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
+- make showoriginalorthographyinreports a UI switch
 
 # Version 0.9.8
 - initial Git integration should now be smooth, with initial clone and init, both for data and a flash drive
