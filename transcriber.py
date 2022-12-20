@@ -53,7 +53,7 @@ class Transcriber(ui.Frame):
             self.beeps.longer()
             self.labelcompiled=False
         p=self.parent
-        while not isinstance(p,ui.Window): # windows need window parents
+        while not (isinstance(p,ui.Window) or isinstance(p,ui.Root)): # windows need window parents
             p=p.parent
         w=ui.Window(p, title=_("Configure Tone Beeps"))
         w.attributes("-topmost", True)
