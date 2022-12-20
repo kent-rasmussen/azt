@@ -1195,7 +1195,7 @@ class StatusFrame(ui.Frame):
         #put in a footer for next profile/frame
         cvt=self.settings.params.cvt()
         ps=self.settings.slices.ps()
-        profiles=self.settings.slices.profiles()
+        profiles=self.settings.slices.profiles()[:] #just sort here
         curprofile=self.settings.slices.profile()
         curcheck=self.settings.params.check()
         try:
