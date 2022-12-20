@@ -1,8 +1,8 @@
 # A→Z+T Changelog
 
 #UW priorities:
-- use of pictures (how to use open clipart?)
-- sortingby click and drag
+- use of pictures (how to use open clipart? UI for this?)
+- sorting by click and drag
 - check recording and transcription tasks are working normally
 - ?other comparative wordlists
 
@@ -16,6 +16,8 @@
   - Clarity for user wrt what is data (i.e. lc, pl, imp), and what is analysis (i.e., lx, ps) —in the presentation of the task itself, and in the documentation
 - Migration to working on the appropriate form, synchronizing across frame definitions, etc.
 - Catch up on translation
+- make singleton reports run not in background, or give user more helpful info, if analysis isn't done.
+- ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 
 # Version 0.9.8
 - initial Git integration should now be smooth, with initial clone and init, both for data and a flash drive

@@ -285,7 +285,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # prettyprint(textnode)
         # prettyprint(fieldnode)
         l=self.evaluatenode(textnode) #this is the python evaluation of textnode
-        log.info("l (before): {}>".format(l))
+        # log.info("l (before): {}>".format(l))
         # prettyprint(textnode)
         changed=False
         i=len(l)
@@ -299,7 +299,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             l.insert(i,add) #put where removed from, if done.
             changed=True
         textnode.text=str(l)
-        log.info("l (after): {}> (changed: {})".format(l,changed))
+        # log.info("l (after): {}> (changed: {})".format(l,changed))
         # prettyprint(textnode)
         if changed:
             self.updatemoddatetime(senseid=senseid,write=kwargs.get('write'))
@@ -318,7 +318,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         values=[]
         if l is not None:
             for field in l:
-                log.info("field value: {}".format(field))
+                # log.info("field value: {}".format(field))
                 if frame in field:
                     values.append(field)
         return values
@@ -706,14 +706,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         there."""
         showurl=kwargs.get('showurl',False)
         write=kwargs.get('write',True)
-        log.info("Adding {} value to {} location".format(url,node))
+        # log.info("Adding {} value to {} location".format(url,node))
         possibles=node.findall("form[@lang='{lang}']/text".format(lang=lang))
         for possible in possibles:
-            log.debug("Checking possible: {} (index: {})".format(possible,
-                                                    possibles.index(possible)))
+            # log.info("Checking possible: {} (index: {})".format(possible,
+            #                                         possibles.index(possible)))
             if hasattr(possible,'text'):
                 if possible.text == url:
-                    log.debug("This one is already here; not adding.")
+                    # log.info("This one is already here; not adding.")
                     return
         form=Node(node,'form',attrib={'lang':lang})
         t=form.maketextnode(text=url)
@@ -1043,8 +1043,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                 ]
                 self.nfieldswsoundfiles[lang][field]=len(fieldswsoundfiles[lang]
                                                                         [field])
-                log.info("Found {} fieldswsoundfiles for {}".format(
-                            self.nfieldswsoundfiles[lang],lang))
+                log.info("Found {} fieldswsoundfiles for {}/{}".format(
+                            self.nfieldswsoundfiles[lang][field],field,lang))
         # log.info("Found {} fieldswsoundfiles".format(self.nfieldswsoundfiles))
     def getsenseswglosslangdata(self):
         #do each of these, then cull in the second one
@@ -1059,7 +1059,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nsenseswglossdata={}
         for lang in self.glosslangs:
             senseswglossdata[lang]=[
-                    i for i in self.nodes.findall('entry')
+                    i for i in self.nodes.findall('entry/sense')
                     if textornone(Entry.formtextnodeofentry(i,'gloss',lang,
                                                             nomake=True))
                             ]
@@ -1076,7 +1076,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nsenseswdefndata={}
         for lang in self.glosslangs:
             senseswdefndata[lang]=[
-                    i for i in self.nodes.findall('entry')
+                    i for i in self.nodes.findall('entry/sense')
                     if textornone(Entry.formtextnodeofentry(i,'definition',lang,
                                                             nomake=True))
                             ]
@@ -1663,17 +1663,17 @@ class Entry(object): # what does "object do here?"
     def formtextnodeofentry(self,tag,lang,**kwargs):
         # this gives the form/text node, from which one can easily extract .text
         # hence, the limiting by lang
-        if self.tag != 'entry':
+        # a 'tag' node needs to be the immediate child of a self.tag node
+        if tag in ['definition','gloss'] and self.tag == 'sense':
+            # log.info("Operating on sense fields")
+            pass
+        elif self.tag != 'entry':
             import inspect
             log.info(_("This method needs to operate on entries; fix caller {}!"
                     ).format(
                     inspect.getouterframes(inspect.currentframe())[2].function))
             return
-        if tag in ['definition','gloss']:
-            p=self.findall('sense')[0] #parent of node to create
-        else:
-            p=self
-        nodes=p.findall(tag) # This should typically be a single item list
+        nodes=self.findall(tag) # This should typically be a single item list
         for node in nodes:
             if tag == 'gloss': # But not in this case
                 formtexts=node.findall('.[@lang="{}"]/text'.format(lang))
@@ -1690,7 +1690,7 @@ class Entry(object): # what does "object do here?"
             return Node.makeformnode(nodes[0],lang,gimmetext=True)
         else: #build from scratch (incl if gloss found, but wo matching lang).
             tag,attrib=rx.splitxpath(tag)
-            tagnode=Node(p,tag,attrib)
+            tagnode=Node(self,tag,attrib)
             # prettyprint(tagnode)
             if tag == 'gloss': #no form node here
                 tagnode.set('lang',lang)
@@ -1766,8 +1766,8 @@ class LiftURL():
     def build(self,tag,liftattr=None,myattr=None,attrs=None):
         buildanother=False
         noseparator=False
-        log.log(4,"building {}, @dict:{}, @{}={}, on top of {}".format(tag,
-                                attrs,liftattr,myattr, self.currentnodename()))
+        # log.info("building {}, @dict:{}, @{}={}, on top of {}".format(tag,
+        #                         attrs,liftattr,myattr, self.currentnodename()))
         b=tag
         if attrs is None:
             attrs={liftattr: myattr}
@@ -1970,6 +1970,10 @@ class LiftURL():
         if 'morphtype' in self.kwargs: #This is needed
             attrs={'name':"morphtypename",'value':'morphtype'}
             self.trait(attrs) # <trait name="morph-type" value="stem" />
+    def illustration(self):
+        # log.info("Making illustration")
+        self.baselevel()
+        self.build("illustration")
     def attrdonothing(self):
         pass
     def maybeshow(self,nodename,parent=None):
@@ -2026,17 +2030,26 @@ class LiftURL():
         while self.level.get(target,self.level['cur']+1) < self.level['cur']:
             self.parent()
     def baselevel(self):
+        # log.info("baselevel for {}".format(self.callerfn()))
+        # log.info("@{}".format(self.url))
         parents=self.parentsof(self.callerfn())
         for target in parents: #self.levelsokfor[self.callerfn()]: #targets: #targets should be ordered, with best first
-            target=target.split('/')[-1] #just the last level
+            target=target.split('/')[-1] #.split('[')[0] #just the last level tag
+            # log.info("tag of target: {}".format(target))
             if target in self.level and self.level[target] == self.level['cur']:
+                # log.info("level of target: {}".format(self.level[target]))
+                # log.info("current level: {}".format(self.level['cur']))
+                # log.info("levels: {}".format(self.level))
                 return #if we're on an acceptable level, just stop
             elif target in self.level:
+                # log.info("level of target (2): {}".format(self.level[target]))
+                # log.info("current level: {}".format(self.level['cur']))
                 self.levelup(target)
                 return
             elif parents.index(target) < len(parents)-1:
-                log.log(4,"level {} not in {}; checking the next one...".format(
-                                                            target,self.level))
+                # log.info("level {} not in {}; checking the next one...".format(
+                #                                             target,self.level))
+                continue
             else:
                 log.error("last level {} (of {}) not in {}; this is a problem!"
                             "".format(target,parents,self.level))
@@ -2209,18 +2222,18 @@ class LiftURL():
         Once the level of the lineage head is decided, the rest of the lineage
         is added."""
         # Now operate on the head of the target lineage
-        log.log(4,"URL (before {} target): {}".format(self.target,self.drafturl()))
+        # log.info("URL (before {} target): {}".format(self.target,self.drafturl()))
         if self.getalias(self.targethead) not in self.level: #If the target hasn't been made yet.
-            log.log(4,self.url)
+            # log.info(self.url)
             i=self.currentnodename()
-            log.log(4,"URL base: {}; i: {}".format(self.basename,i))
+            # log.info("URL base: {}; i: {}".format(self.basename,i))
             if i is None: #if it is, skip down in any case.
                 i=self.basename
-            log.log(4,"URL bit list: {}; i: {}".format(self.url,i))
+            # log.info("URL bit list: {}; i: {}".format(self.url,i))
             if type(i) == list:
                 i=i[0] #This should be a string
             f=self.getfamilyof(i,x=[])
-            log.log(4,"Target: {}; {} family: {}".format(self.targethead,i,f))
+            # log.info("Target: {}; {} family: {}".format(self.targethead,i,f))
             if self.targethead in f:
                 self.showtargetinhighestdecendance(i) #should get targethead
                     # return #only do this for the first you find (last placed).
@@ -2228,21 +2241,21 @@ class LiftURL():
                 self.showtargetinlowestancestry(i)
             # Either way, we finish by making the target tail, and leveling up.
         if self.targettail is not None:
-            log.log(4,"Adding targettail {} to url: {}".format(self.targettail,
-            self.drafturl()))
+            # log.info("Adding targettail {} to url: {}".format(self.targettail,
+            #                                                 self.drafturl()))
             for b in self.targettail:
-                log.log(4,"Adding targetbit {} to url: {}".format(b,self.drafturl()))
+                # log.info("Adding targetbit {} to url: {}".format(b,self.drafturl()))
                 n=self.targetbits.index(b)
                 bp=self.tagonly(self.targetbits[n-1]) #.split('[')[0]#just the node, not attrs
                 afterbp=self.drafturl().split(self.unalias(bp))
-                log.log(4,"b: {}; bp: {}; afterbp: {}".format(b,bp,afterbp))
-                log.log(4,"showing target element {}: {} (of {})".format(n,b,bp))
+                # log.info("b: {}; bp: {}; afterbp: {}".format(b,bp,afterbp))
+                # log.info("showing target element {}: {} (of {})".format(n,b,bp))
                 if (len(afterbp) <=1 #nothing after parent
                         or self.unalias(b) not in afterbp[-1] #this item not after parent
                         or (b in self.level and
                             bp in self.level and
                             self.level[b]!=self.level[bp]+1)): #this not child of parent
-                    log.log(4,"showing target element {}: {} (of {})".format(n,b,bp))
+                    # log.info("showing target element {}: {} (of {})".format(n,b,bp))
                     self.levelup(bp)
                     self.show(b,parent=bp)
         self.levelup(self.targetbits[-1])#leave last in target, whatever else
@@ -2406,7 +2419,7 @@ class LiftURL():
         self.children['entry']=['lexeme','morphtype','pronunciation','sense',
                                 'field',
                                 'citation','trait']
-        self.children['sense']=['ps','definition','gloss',
+        self.children['sense']=['ps','definition','gloss','illustration',
                                 'example','toneUFfield','cawlfield','field'
                                             ]
         self.children['ps']=['pssubclass','trait']
@@ -3010,7 +3023,7 @@ if __name__ == '__main__':
     filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/cky/Mushere Exported AZT file.lift"
     # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift_backupBeforeLx2LcConversion"
-    filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift"
+    # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift"
     # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL_test.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/ETON_propre/Eton.lift"
@@ -3026,6 +3039,19 @@ if __name__ == '__main__':
     # lift.convertglosstocitation('ha',keep=True)
     # lift.write('userlogs/testwrite.lift')
     # lift.write('userlogs/SILCAWL_test.lift')
+    for s in lift.senseids:
+        i=lift.get('illustration', #showurl=True,
+                                senseid=s,
+                                ).get('href')
+        try:
+            i=i[0]
+        except Exception as e:
+            if 'list index out of range' in str(e):
+                continue
+            log.info("result: {}".format(e))
+        if i:
+            print(i)
+    log.info("done.")
     quit()
     # prettyprint(lift.nodes)
     senseids=[

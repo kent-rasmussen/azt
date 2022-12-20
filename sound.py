@@ -18,6 +18,11 @@ except ModuleNotFoundError:
     log.error("This isn't going to work, but you can hopefully reboot after"
             "installing Numpy.")
     raise
+try:
+    _
+except:
+    def _(x):
+        return x
 class AudioInterface(pyaudio.PyAudio):
     def stop(self):
         self.terminate()
@@ -66,6 +71,8 @@ class SoundSettings(object):
         self.fs=max(self.cards['in'][self.audio_card_in])
     def default_sf(self):
         self.sample_format=min(self.cards['in'][self.audio_card_in][self.fs])
+    def max_sf(self):
+        self.sample_format=max(self.cards['in'][self.audio_card_in][self.fs])
     def defaults(self):
         self.default_in()
         self.default_out()
@@ -73,12 +80,22 @@ class SoundSettings(object):
         self.default_sf()
     def next_card_in(self):
         ins=sorted(self.cards['in'].keys())
-        log.debug("next_card_in (of {})".format(ins))
         insi=ins.index(self.audio_card_in)
         if insi == len(ins)-1:
             return 1
         else:
             self.audio_card_in=ins[insi+1]
+            log.debug("next_card_in {} (of {})".format(self.audio_card_in,ins))
+            self.default_fs()
+            self.default_sf()
+    def next_card_out(self):
+        outs=sorted(self.cards['out'].keys())
+        outsi=outs.index(self.audio_card_out)
+        if outsi == len(outs)-1:
+            return 1
+        else:
+            self.audio_card_out=outs[outsi+1]
+            log.debug("next_card_out {} (of {})".format(self.audio_card_out,outs))
             self.default_fs()
             self.default_sf()
     def next_fs(self):
@@ -107,7 +124,7 @@ class SoundSettings(object):
         return exit
     def next(self):
         return self.next_sf()
-    def getactual(self):
+    def getactual(self,test=False):
         self.cards={'in':{},'out':{},'dict':{}}
         hostinfo = self.pyaudio.get_host_api_info_by_index(0)
         numdevices = hostinfo.get('deviceCount')
@@ -127,36 +144,44 @@ class SoundSettings(object):
                         devinfo['maxOutputChannels']))
                 self.cards['out'][i]={}
             self.cards['dict'][i]=devinfo['name']
-        for card in self.cards['in']:
+        for card in self.cards['in'].copy():
             self.cards['in'][card]={}
             for fs in self.hypothetical['fss']:
                 self.cards['in'][card][fs]=list()
                 for sf in self.hypothetical['sample_formats']:
                     try:
-                        ifs=self.pyaudio.is_format_supported(rate=fs,
-                            input_device=card,input_channels=1,
-                            input_format=sf)
-                    except ValueError as e:
-                        ifs=False
-                    if ifs:
+                        if test:
+                            ifs=self.pyaudio.is_format_supported(rate=fs,
+                                                            input_device=card,
+                                                            input_channels=1,
+                                                            input_format=sf)
                         self.cards['in'][card][fs].append(sf)
+                    except ValueError as e:
+                        log.info("Config not supported; no worries: rate={}; "
+                            "output_device={}; "
+                            "output_channels=1, "
+                            "output_format={} ({})".format(fs,card,sf,e))
                 if self.cards['in'][card][fs] == []:
                     del self.cards['in'][card][fs]
             if self.cards['in'][card] == {}:
                 del self.cards['in'][card]
-        for card in self.cards['out']:
+        for card in self.cards['out'].copy():
             self.cards['out'][card]={}
             for fs in self.hypothetical['fss']:
                 self.cards['out'][card][fs]=list()
                 for sf in self.hypothetical['sample_formats']:
                     try:
-                        ifs=self.pyaudio.is_format_supported(rate=fs,
-                            output_device=card,output_channels=1,
-                            output_format=sf)
-                    except ValueError as e:
-                        pass
-                    if ifs == True:
+                        if test:
+                            ifs=self.pyaudio.is_format_supported(rate=fs,
+                                                            output_device=card,
+                                                            output_channels=1,
+                                                            output_format=sf)
                         self.cards['out'][card][fs].append(sf)
+                    except ValueError as e:
+                        log.info("Config not supported; no worries: rate={}; "
+                            "output_device={}; "
+                            "output_channels=1, "
+                            "output_format={} ({})".format(fs,card,sf,e))
                 if self.cards['out'][card][fs] == []:
                     del self.cards['out'][card][fs]
             if self.cards['out'][card] == {}:
@@ -185,7 +210,7 @@ class SoundSettings(object):
                                             pyaudio.paInt16:'16 bit integer',
                                             # pyaudio.paInt8:'8 bit integer'
                                             }
-    def check(self):
+    def makedefaultifnot(self):
         if (self.audio_card_in not in self.cards['in']
                 or self.audio_card_in not in self.cards['dict']
                 ):
@@ -199,11 +224,53 @@ class SoundSettings(object):
                 or self.audio_card_out not in self.cards['dict']
                 ):
             self.default_out()
+    def check(self):
+        log.info(_("Testing speaker settings:"))
+        self.next_card_out()
+        self.next_card_out()
+        self.next_card_out()
+        self.max_sf()
+        try:
+            ifs=self.pyaudio.is_format_supported(rate=self.fs,
+                                            output_device=self.audio_card_out,
+                                            output_channels=1,
+                                            output_format=self.sample_format)
+        except ValueError as e:
+            if 'Device unavailable' in e:
+                self.next_card_out()
+                self.check()
+            log.info("Config not supported; no worries: rate={}; "
+                "output_device={}; "
+                "output_channels=1, "
+                "output_format={} ({})".format(fs,card,sf,e))
+        log.info(_("Testing microphone settings:"))
+        self.next_card_in()
+        self.next_card_in()
+        self.next_card_in()
+        self.next_card_in()
+        try:
+            ifs=self.pyaudio.is_format_supported(rate=self.fs,
+                                                input_device=self.audio_card_in,
+                                                input_channels=1,
+                                                input_format=self.sample_format)
+        except ValueError as e:
+            if 'Device unavailable' in e:
+                self.next_card_in()
+                self.check()
+            if 'Invalid sample rate' in e:
+                self.next_sf()
+                # self.next_fs()
+                self.check()
+                log.info("Config not supported; no worries: rate={}; "
+                "output_device={}; "
+                "output_channels=1, "
+                "output_format={} ({})".format(fs,card,sf,e))
     def __init__(self,pyaudio):
         self.pyaudio=pyaudio
         self.sethypothetical()
         self.getactual()
         self.defaults() #pick best of actuals
+        self.check()
         # self.printactuals()
         self.chunk=1024
         self.channels=1 #Always record in mono
@@ -572,7 +639,7 @@ class BeepGenerator(object):
                     #             fromhz,tohz,len(syl)-contour,nframes,done))
                     if not done:
                         self.wavdata=numpy.append(self.wavdata,numpy.sin(
-                                2*numpy.pi*(numpy.arange(#0,100,
+                                0.8*numpy.pi*(numpy.arange(#0,100,
                                                     nframes,dtype=numpy.float32
                                                         )*hz)/self.bitrate #/(len(syl)-contour))
                                             )
@@ -589,7 +656,8 @@ class BeepGenerator(object):
                             # )
                         )
             f.close()
-        self.wavdata = self.wavdata.astype(numpy.float32).tostring()
+        self.wavdata = self.wavdata.astype(numpy.float32).tobytes()
+        # self.wavdata = self.wavdata.astype(numpy.float32).tostring()
     def __init__(self,pyAudio=None,settings=None):
         if not pyAudio:
             self.p = AudioInterface()     #initialize pyaudio
@@ -614,6 +682,7 @@ class BeepGenerator(object):
         self.setparameters()
         # self.play()
 if __name__ == "__main__":
+    """Set volume, somehow!!"""
     b=BeepGenerator()
     b.compile()
     b.play()
@@ -632,11 +701,6 @@ if __name__ == "__main__":
     # print(pyaudio.paInt8)
     import time
     import timeit
-    try: #Allow this module to be used without translation
-        _
-    except:
-        def _(x):
-            return x
     pa = AudioInterface()
     times=100
     # class Test:

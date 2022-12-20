@@ -18,37 +18,17 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
 ## Install [A→Z+T]
 - Run [this file](RunMetoInstall.bat?raw=true) (or use the simple instructions [here](SIMPLEINSTALL.md)). If you have any problems with the batch file, please let me know, and consider moving to the [simple instructions](SIMPLEINSTALL.md). If you use the simple instructions, please work all the way down this page, and do everything on it. Don't stop unless you really can't continue. If you get stuck, please [Email me](<mailto:kent_rasmussen@sil.org?subject=Please help with [A→Z+T] Installation>) with specific questions or problems.
 
-## Field Work: Develop draft tone frames
-- See [Tone Frame Design](USAGE.md#tone-frame-design) for a description of this task.
-- Work with one speaker, as this can be a lot of work, and doesn't typically require group discussion.
-- You want at least four frames, such that
-  - Each frame gives a different tonal melody than the other frames:
-    - High tone immediately before the word
-    - High tone immediately after the word
-    - Low tone immediately before the word
-    - Low tone immediately after the word
-  - each frame can be used with almost all words in the class for which they were designed (i.e., noun or verb).
-- This may take several hours, or longer.
-- If you don't already understand what this entails, you will need help from a linguist near you.
-- If you think you _do_ already understand what this entails, please watch [these videos](https://github.com/kent-rasmussen/azt/wiki/Designing-Tone-Frames), just so we're on the same page.
-
-## Define Your Tone Frames in [A→Z+T]
-- Instructions are [here](USAGE.md#tone-frames).
-- Do more extensive testing of your tone frames, again with one speaker.
-  - You can test a frame with more words, more quickly, by doing some sorting in [A→Z+T].
-  - confirm that word-frame combinations look OK, and
-  - confirm that most words work in each of the frames. If a frame has many words that don't work in it, you should probably replace it.
-  - ATTENTION: to **confirm your tone frames** will give you what you need for tone analysis, do one syllable profile of about 25 words in each of your proposed frames, for each of nouns and verbs. Record all that data, then send this data to me (see [Collaborate and Get Help](#collaborate-and-get-help), below) **_before_ doing a lot more sorting**.
+#Develop and Define Tone Frames in process (to do)
 
 ## Collect data in [A→Z+T]
 - **Organize a meeting** of more (3+) speakers, for them to sort and record data together in A→Z+T. You can organize this as you like, but expect at **least two weeks** of full time work for everyone.
 - At the meeting:
-  - **Sort** data in [A→Z+T]: 
-    - As you sort, 
+  - **Sort** data in [A→Z+T]:
+    - As you sort,
       - each surface group should have **just one** pitch melody for the whole utterance, for each word in the group.
         -  if not, remove the different ones on the "Verify" page.
       - each surface group should have a **different** pitch melody than _every other group_.
-        - Take the time to compare **each group** with _every other group_! 
+        - Take the time to compare **each group** with _every other group_!
         - if some are the same, join them on the "Review Groups" page.
       - keep going, around and around, until the each group is just one thing, and each is different from each other.
     - Start with:
@@ -56,14 +36,14 @@ I want to help as many people as I can get the most out of A→Z+T, and move for
       - largest 2-3 syllable profiles for Verbs in each of four **tonally different** frames
       - There is a lot more sorting you can do, but this should be the right place to start, and will be a good beginning to understand your tone system.
       - **Tonally different**: if you don't know what this means, plan on getting help from a linguist near you, or sorting on at least eight frames (You should have this sorted out above, before starting a workshop).
-    
+
   - **Record** all sorted data in [A→Z+T]
-    - Please pay attention to 
+    - Please pay attention to
       - **speak as naturally as possible**, without unnecessary pauses. Pauses may break your recording into multiple phonological phrases, making your recordings useless for tone study.
-        - if the syntactic context of a frame requires a significant pause (>150ms), you should probably use a different frame. 
+        - if the syntactic context of a frame requires a significant pause (>150ms), you should probably use a different frame.
       - include **the whole utterance** in the recording (don't clip the first or last syllable)
-      - **not** include **extra space** before or after the utterance 
-        - In case this last one sounds petty, extra space in the recording wastes computer space, internet bandwidth, and time in listening. For instance, if you have utterances that are one (1) second long, but you record three (3) seconds for each, then you are taking up three times as much space as you need, all of which needs to be stored on a computer, and shared across the internet. And you are asking your listener (me, other collaborators, a dictionary user) to spend that extra time listening to each file without reason. Two seconds wasted may not seem like much, but across thousands of recordings, it adds up. 
+      - **not** include **extra space** before or after the utterance
+        - In case this last one sounds petty, extra space in the recording wastes computer space, internet bandwidth, and time in listening. For instance, if you have utterances that are one (1) second long, but you record three (3) seconds for each, then you are taking up three times as much space as you need, all of which needs to be stored on a computer, and shared across the internet. And you are asking your listener (me, other collaborators, a dictionary user) to spend that extra time listening to each file without reason. Two seconds wasted may not seem like much, but across thousands of recordings, it adds up.
   - **Record** citation forms for at least the above (largest 2-3 syllable profiles for Nouns and Verbs)
 
 ## Collaborate and Get Help

@@ -52,7 +52,10 @@ class Transcriber(ui.Frame):
         def longer():
             self.beeps.longer()
             self.labelcompiled=False
-        w=ui.Window(self, title=_("Configure Tone Beeps"))
+        p=self.parent
+        while not (isinstance(p,ui.Window) or isinstance(p,ui.Root)): # windows need window parents
+            p=p.parent
+        w=ui.Window(p, title=_("Configure Tone Beeps"))
         w.attributes("-topmost", True)
         ui.Button(w.frame,text=_("pitch up"),cmd=higher,
                         row=0,column=0)
@@ -155,7 +158,7 @@ class Transcriber(ui.Frame):
                                     row=0,column=0,sticky='new',
                                     font='readbig')
         self.formfield.bind('<KeyRelease>', self.updatelabels) #apply function after key
-        self.formfieldplay= ui.Button(fieldframe,text=_('>'),
+        self.formfieldplay= ui.Button(fieldframe,text=_('‣'),
                             cmd=lambda:self.playbeeps(self.newname.get()),
                             font='tiny',
                             sticky='ns',
@@ -176,104 +179,8 @@ if __name__ == "__main__":
     except:
         def _(x):
             return x
-    w=ui.Root()
-    w.title('Transcriber')
-    # soundsettings=sound.SoundSettings()
-    Transcriber(w,initval='˥˥ ˩˩ ˧˧',column=0,row=0,
-    # chars=[
-    # # c['pvd'][2]=[
-    # 'bh','dh','gh','gb',
-    # 'bb','dd','gg', #French
-    # 'gw','dw', 'ɗw', #gnd
-    # 'mb','nd','ŋg',
-    # #             ]
-    # # c['pvd'][3]=[
-    # 'ndw', 'ŋgw', #gnd
-    #             # ]
-    # # c['pvd'][1]=[
-    # 'b','B','d','g','ɡ',
-    # # ] #,'G' messes with profiles
-    # # c['p']={}
-    # # c['p'][2]=[
-    # 'kk','kp','cc','pp','pt','tt','ck',
-    #             'kw','tw',
-    #             # ] #gnd
-    # # c['p'][1]=[
-    # 'p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k','q',
-    # # ]
-    # # c['fvd']={}
-    # # c['fvd'][2]=[
-    # 'bh','vh','zh',
-    # # ]
-    # # c['fvd'][1]=[
-    # 'j','J','v','z','Z','ʒ','ð','ɣ',
-    # # ] #problems w x?
-    # # c['f']={}
-    # # c['f'][3]=[
-    # 'sch',
-    # # ]
-    # # c['f'][2]=[
-    # 'ch','ph','sh','hh','pf','bv','ff','sc','ss','th',
-    #             'hw', #gnd
-    #             # ]
-    # #Assuming x is voiceless, per IPA and most useage...
-    # # c['f'][1]=[
-    # 'F','f','s','ʃ','θ','x','h',
-    # # ] #not 'S'
-    # # c['avd']={}
-    # # c['avd'][2]=[
-    # 'dj','dz','dʒ',
-    # # ]
-    # # c['avd'][3]=[
-    # 'ndz','dzw',
-    # # ] #gnd
-    # # c['avd'][4]=[
-    # 'ndzw',
-    # # ] #gnd
-    # # c['a']={}
-    # # c['a'][3]=[
-    # 'chk','tch',
-    # # ]
-    # # c['a'][2]=[
-    # 'ts','tʃ',
-    # # ]
-    # # c['lfvd']={}
-    # # c['lfvd'][3]=[
-    # 'zlw',
-    # # ]
-    # # c['lfvd'][2]=[
-    # 'zl',
-    # # ]
-    # # c['lfvd'][1]=[
-    # 'ɮ',
-    # # ]
-    # # c['lf']={}
-    # # c['lf'][3]=[
-    # 'slw',
-    # # ]
-    # # c['lf'][2]=[
-    # 'sl',
-    # # ]
-    # # c['lf'][1]=[
-    # 'ɬ',
-    # # ]
-    # # c['pn']={}
-    # 'ᵐb','ᵐp','ᵐv','ᵐf','ⁿd','ⁿt','ᵑg','ⁿg','ᵑg','ⁿk','ᵑk',
-    # 'ⁿj','ⁿs','ⁿz',
-    #             # ]
-    # # x={} #dict to put all hypothetical segements in, by category
-    # # x['G']=[
-    # 'ẅ','y','Y','w','W',
-    # # ]
-    # # x['N']=['m','M','n','ŋ','ɲ','ɱ'] #'N', messed with profiles
-    # # x['Ndg']=['mm','ŋŋ','ny','gn','nn']
-    # # x['Ntg']=["ng'"]
-    # # """Non-Nasal/Glide Sonorants"""
-    # # x['S']=['l','r']
-    # # x['Sdg']=['rh','wh','ll','rr',
-    # #             'rw','lw' #gnd
-    # #             ]
-    # 
-    # ]
-    )#,soundsettings=soundsettings)
-    w.mainloop()
+    r=ui.Root()
+    r.title('Transcriber')
+    Transcriber(r,initval='˥˥ ˩˩ ˧˧',column=1,row=1)
+    r.deiconify()# soundsettings=sound.SoundSettings()
+    r.mainloop()

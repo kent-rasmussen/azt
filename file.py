@@ -44,14 +44,16 @@ def gettranslationdirin(exedir):
     dir=pathlib.Path.joinpath(exedir,'translations')
     return dir
 def getimagesdir(dirname):
-    dir=pathlib.Path.joinpath(dirname,'images')
-    if not os.path.exists(dir):
-        os.mkdir(dir)
-    return dir
-def getimagesdiralternate(dirname):
-    dir=pathlib.Path.joinpath(dirname,'pictures') #WeSay uses this
-    if os.path.exists(dir):
-        return dir
+    diropts=['images','pictures']
+    for d in diropts:
+        dir=pathlib.Path.joinpath(dirname,d)
+        if getfilesofdirectory(dir):
+            return dir
+    #if nothing anywhere, just go with first.
+    d=pathlib.Path.joinpath(dirname,diropts[0])
+    if not os.path.exists(d):
+        os.mkdir(d)
+    return d
 def getaudiodir(dirname):
     dir=pathlib.Path.joinpath(dirname,'audio')
     log.debug("Looking for {}".format(dir))
@@ -128,7 +130,9 @@ def getdiredurl(dir,filename):
 def getdiredrelURL(reldir,filename):
     return pathlib.Path(reldir).joinpath(filename)
 def getdiredrelURLposix(reldir,filename):
-    return pathlib.Path(reldir).joinpath(filename).as_posix()
+    return pathlib.PurePath(reldir).joinpath(filename).as_posix()
+    # This doesn't help:
+    # return pathlib.PureWindowsPath(reldir).joinpath(filename).as_posix()
     # return pathlib.PurePath(reldir).joinpath(filename)
 def getlangnamepaths(filename, langs):
     output={}
@@ -200,7 +204,10 @@ def getdirectory(title=None,home=None):
         return f
 def getfilesofdirectory(dir,regex='*'):
     # return pathlib.Path(dir).iterdir()
-    return pathlib.Path(dir).glob(regex)
+    l=[]
+    for i in pathlib.Path(dir).glob(regex):
+        l.extend([i])
+    return l # we don't want a generator here
 def getmediadirectory(mediatype=None):
     log.info("Looking for media directory")
     if platform.system() == 'Linux':
@@ -213,8 +220,7 @@ def getmediadirectory(mediatype=None):
                 ).format(mediatype)
     else:
         prompt=_("Please select where to find the media locally")
-    return getdirectory(prompt, media,
-                        )
+    return getdirectory(prompt, media)
 def lift():
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
     home=gethome()

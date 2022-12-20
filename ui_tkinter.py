@@ -56,7 +56,6 @@ class Theme(object):
     """docstring for Theme."""
     def setimages(self):
         # Program icon(s) (First should be transparent!)
-        log.info("Maybe scaling images; please wait...") #threading?
         self.scalings=[]
         try:
             scale=self.program['scale']
@@ -65,6 +64,7 @@ class Theme(object):
         self.photo={}
         #do these once:
         if scale-1: #x != y: #should be the same as scale != 1
+            log.info("Maybe scaling images; please wait...")
             scaledalreadydir='images/scaled/'+str(scale)+'/'
             file.makedir(file.fullpathname(scaledalreadydir)) #in case not there
         def mkimg(name,filename):
@@ -77,13 +77,16 @@ class Theme(object):
                 # log.info("Dirs: {}?={}".format(scaledalready,relurl))
                 if scaledalready != relurl: # should scale if off by >2% either way
                     # log.info("Scaling {}".format(relurl)) #Just do this once!
+                    try:
+                        assert self.fakeroot.winfo_exists()
+                    except:
+                        self.fakeroot=Root(program=self.program.copy(),noimagescaling=True)
+                        self.fakeroot.w=Wait(parent=self.fakeroot,msg="Scaling Images (Just this once)")
                     if not self.scalings:
                         maxscaled=100
                     else:
                         maxscaled=int(sum(self.scalings)/len(self.scalings)+10)
                     for y in range(maxscaled,10,-5):
-                        # x and y here express a float as two integers, so 0.7 = 7/10, because
-                        # the zoom and subsample fns only work on integers
                         # Higher number is better resolution (x*y/y), more time to process
                         #10>50 High OK, since we do this just once now
                         #lower option if higher fails due to memory limitations
@@ -91,10 +94,10 @@ class Theme(object):
                         x=int(scale*y)
                         log.info("Scaling {} @{} resolution".format(relurl,y)) #Just do this once!
                         try:
-                            self.photo[name] = tkinter.PhotoImage(
-                                                file = file.fullpathname(relurl)
-                                                ).zoom(x,x
-                                                ).subsample(y,y)
+                            img = Image(file.fullpathname(relurl))
+                            # keep these at full size, for now
+                            img.scale(scale,pixels=img.maxhw(),resolution=y)
+                            self.photo[name]=img.scaled
                             self.photo[name].write(scaledalready)
                             self.scalings.append(y)
                             return #stop when the first/best works
@@ -104,7 +107,7 @@ class Theme(object):
                                 'for image buffer' in str(e)):
                                 continue
             # log.info("Using {}".format(relurl))
-            self.photo[name] = tkinter.PhotoImage(file = file.fullpathname(relurl))
+            self.photo[name] = Image(file.fullpathname(relurl))
         for name,filename in [ ('transparent','AZT stacks6.png'),
                             ('tall','AZT clear stacks tall.png'),
                             ('small','AZT stacks6_sm.png'),
@@ -130,6 +133,7 @@ class Theme(object):
                             ('iconCRepcomp','Z Report Comprehensive_icon.png'),
                             ('iconCVRepcomp','ZA Report Comprehensive_icon.png'),
                             ('iconVCCVRepcomp','AZZA Report Comprehensive_icon.png'),
+                            ('USBdrive','USB drive.png'),
                             ('T','T alone clear6.png'),
                             ('C','Z alone clear6.png'),
                             ('V','A alone clear6.png'),
@@ -167,6 +171,11 @@ class Theme(object):
                 log.info("Image {} ({}) not compiled ({})".format(
                             name,filename,e
                             ))
+        try:
+            self.fakeroot.destroy()
+            self.fakeroot.w.close()
+        except:
+            pass
     def settheme(self):
         if not self.name:
             defaulttheme='greygreen'
@@ -373,14 +382,19 @@ class Theme(object):
         for kwarg in ['ipady','ipadx','pady','padx']:
             if kwarg in kwargs:
                 setattr(self,kwarg,kwargs[kwarg])
-    def __init__(self,program=None,name=None,**kwargs):
+    def __init__(self,program={},name=None,**kwargs):
+        # I should allow a default theme here, so I can display GUI without
+        # any of this already done
         self.program=program
         self.name=name
-        self.setscale()
         self.setpads(**kwargs)
         self.setthemes()
-        self.setfonts()
+        if 'noimagescaling' in kwargs and kwargs['noimagescaling']:
+            self.program['scale']=1
+        else:
+            self.setscale()
         self.setimages()
+        self.setfonts()
         self.settheme()
         log.info("Using {} theme ({})".format(self.name,self.program))
         super(Theme, self).__init__()
@@ -557,7 +571,9 @@ class Exitable(object):
             self.exittoroot()
             self.killall()
         else:
-            if hasattr(self,'parent') and not isinstance(self.parent,Root):
+            if (hasattr(self,'parent') and
+                    self.parent.winfo_exists() and
+                    not isinstance(self.parent,Root)):
                 # log.info("Going to deiconify {}".format(self.parent))
                 self.parent.deiconify()
             # log.info("Going to cleanup {}".format(self))
@@ -629,11 +645,12 @@ class Childof(object):
         """This function brings these attributes from the parent, to inherit
         from the root window, through all windows, frames, and scrolling frames, etc
         """
+        # log.info("inheriting")
         if not parent and hasattr(self,'parent') and self.parent:
             parent=self.parent
         elif parent:
             self.parent=parent
-        if attr is None:
+        if not attr:
             attrs=['theme',
                     # 'fonts', #in theme
                     # 'debug',
@@ -646,6 +663,8 @@ class Childof(object):
         for attr in attrs:
             if hasattr(parent,attr):
                 setattr(self,attr,getattr(parent,attr))
+                # log.info("inheriting {} from parent {} (to {})"
+                #         "".format(attr,type(parent),type(self)))
             else:
                 log.debug("parent {} (of {}) doesn't have attr {}, skipping inheritance"
                         "".format(parent,type(self),attr))
@@ -688,6 +707,37 @@ class UI(ObectwArgs):
             # except tkinter.TclError as e:
             #     log.info("TclError {}".format(e))
         # super(UI, self).__init__(*args, **kwargs)
+class Image(tkinter.PhotoImage):
+    def biggerby(self,x):
+        #always do this one first, if doing both, to start from scratch
+        self.scaled=self.zoom(x,x)
+    def smallerby(self,x):
+        try:
+            self.scaled=self.scaled.subsample(x,x)
+        except AttributeError:
+            self.scaled=self.subsample(x,x)
+    def maxhw(self,scaled=False):
+        if scaled:
+            return max(self.scaled.width(),self.scaled.height())
+        else:
+            return max(self.width(),self.height())
+    def scale(self,scale,pixels=100,resolution=10):
+        # 'x' and 'resolution' here express a float as two integers,
+        # so r = 0.7 = 7/10, because the zoom and subsample fns
+        # only work on integers
+        s=pixels*scale #the number of pixels, scaled
+        r=s/self.maxhw() #the ratio we need to reduce actual pixels by
+        x=resolution*r
+        # log.info("scaled pixels: {} (of {})".format(s,pixels))
+        # log.info("ratio to scale image: {} (of {})".format(r,self.maxhw()))
+        # log.info("biggerby to do: {}".format(x))
+        self.biggerby(int(x))
+        # log.info("Image: {} ({})".format(self.scaled, self.maxhw(scaled=True)))
+        self.smallerby(int(resolution))
+        # log.info("Image: {} ({})".format(self.scaled, self.maxhw(scaled=True)))
+    def __init__(self,filename):
+        # self.name=filename
+        super(Image, self).__init__(file=filename)#,*args, **kwargs)
 class StringVar(tkinter.StringVar):
     def __init__(self, *args, **kwargs):
         super(tkinter.StringVar, self).__init__(*args, **kwargs)
@@ -707,6 +757,7 @@ class Root(Exitable,tkinter.Tk):
         self.mainwindow=False
         self.exitFlag = ExitFlag()
         tkinter.Tk.__init__(self)
+        self.withdraw() #this is almost always correct
         if program:
             self.program=program
         else:
@@ -805,6 +856,7 @@ class Text(Childof,ObectwArgs):
                 del kwargs[opt]
         return kwargs
     def __init__(self,parent,**kwargs):
+        Childof.__init__(self,parent)
         self.textkwargs=['text','image','font','norender']
         self.text=kwargs.pop('text','')
         # self.renderings=parent.renderings
@@ -827,6 +879,8 @@ class Text(Childof,ObectwArgs):
         # self.wraplength=kwargs.get('wraplength',defaultwr) #also for ButtonLabel
         self.norender=kwargs.pop('norender',False)
         self.image=kwargs.pop('image',None)
+        if self.image in self.theme.photo:
+            self.image=self.theme.photo[self.image]
         d=set(["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"])
         sticks=set(['˥','˦','˧','˨','˩',' '])
         if (hasattr(self.text, '__iter__')
@@ -870,6 +924,7 @@ class Frame(Gridded,Childof,tkinter.Frame):
         self.dogrid()
 class Label(Gridded,Text,tkinter.Label): #,tkinter.Label
     def __init__(self, parent, **kwargs):
+        # log.info("Label Parent: {}".format(type(parent)))
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
         Childof.__init__(self,parent)
@@ -900,6 +955,7 @@ class Button(Gridded,Text,tkinter.Button):
         pass
     def __init__(self, parent, choice=None, window=None, command=None, **kwargs):
         """Usta include column=0, row=1, norender=False,"""
+        # log.info("Button Parent: {}".format(type(parent)))
         # log.info("button kwargs: {}".format(kwargs))
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
@@ -1108,14 +1164,15 @@ class ContextMenu(Childof):
             self.menuinit()
             self.menu.add_command(label=msg,command=cmd)
     def dosetcontext(self):
+        # You need to have a setcontext() method for the
+        # parent of this context menu, to set menu
+        # items under appropriate conditions
+        # There is a default 'show menus only' one in HasMenus()
         try:
-            log.log(3,"setcontext: {}".format(self.parent.setcontext))
+            # log.info("setcontext: {}".format(self.parent.setcontext))
             self.parent.setcontext(context=self.context)
-        except:
-            log.error("You need to have a setcontext() method for the "
-                        "parent of this context menu ({}), to set menu "
-                        "items under appropriate conditions ({}): {}.".format(
-                            self.parent,self.context,self.parent.setcontext))
+        except Exception as e:
+            log.error(_("Exception in dosetcontext: {}").format(e))
     def do_popup(self,event):
         try:
             self.menu.tk_popup(event.x_root, event.y_root)
@@ -1531,6 +1588,7 @@ class ToolTip(object):
         self.widget.bind("<Enter>", self.enter)
         self.widget.bind("<Leave>", self.leave)
         self.widget.bind("<ButtonPress>", self.leave)
+        self.widget.bind("<Destroy>", self.hidetip)
         self.id = None
         self.tw = None
     def enter(self, event=None):
@@ -1575,7 +1633,7 @@ class ToolTip(object):
         label['background']="#ffffff"
         label.pack(ipadx=1)
         self.widget.bind("<Leave>", self.leave)
-    def hidetip(self):
+    def hidetip(self, event=None):
         tw = self.tw
         self.tw= None
         if tw:
@@ -1593,7 +1651,7 @@ class Wait(Window): #tkinter.Toplevel?
         parent.withdraw()
         self['background']=parent['background']
         self.attributes("-topmost", True)
-        if hasattr(self,'program'):
+        if hasattr(self,'program') and 'name' in self.program:
             title=(_("Please Wait! {name} Dictionary and Orthography Checker "
                         "in Process").format(name=self.program['name']))
         else:
@@ -1716,9 +1774,16 @@ def testapp():
     w=Window(r)
     Label(w,text="Seems to work!",font='title',
             row=0,column=0)# loglevel='Debug'
-    Label(w,text="At least this much",image=r.theme.photo['transparent'],
-            compound="bottom",
+    l=Label(w,text="At least this much",
             row=1,column=0)# loglevel='Debug'
+    log.info("Image dict: {}".format(r.theme.photo))
+    img=r.theme.photo['transparent']
+    log.info("Image: {} ({})".format(img, img.maxhw()))
+    img.scale(scale=1, pixels=100,resolution=10)
+    log.info("Image: {} ({})".format(img.scaled, img.maxhw(scaled=True)))
+    l['image']=img.scaled
+    l['compound']="bottom"
+    ToolTip(l,"this image has a tooltip")
     r.mainloop()
 if __name__ == '__main__':
     """To Test:"""
