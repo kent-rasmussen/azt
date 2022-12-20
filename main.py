@@ -14226,9 +14226,16 @@ def pythonmodules():
             if 'Could not find a version' in o:
                 del pyargs[npyargs-1] #pull no-index
                 log.info("Running `{}`".format(' '.join(pyargs)))
-                o=subprocess.check_output(pyargs,shell=False,
+                try:
+                    o=subprocess.check_output(pyargs,shell=False,
                                             stderr=subprocess.STDOUT)
-
+                    o=stouttostr(o)
+                    if not o:
+                        log.info("looks like it was at last successful; so "
+                                "I'm going to reboot in a bit. ({})".format(o))
+                        installedsomething=True
+                except subprocess.CalledProcessError as e:
+                    o=stouttostr(e.output)
         log.info(o) #just give bytes, if encoding isn't correct
     if installedsomething:
         sysrestart()
