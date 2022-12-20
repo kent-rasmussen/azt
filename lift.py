@@ -1690,7 +1690,7 @@ class Entry(object): # what does "object do here?"
             return Node.makeformnode(nodes[0],lang,gimmetext=True)
         else: #build from scratch (incl if gloss found, but wo matching lang).
             tag,attrib=rx.splitxpath(tag)
-            tagnode=Node(p,tag,attrib)
+            tagnode=Node(self,tag,attrib)
             # prettyprint(tagnode)
             if tag == 'gloss': #no form node here
                 tagnode.set('lang',lang)
