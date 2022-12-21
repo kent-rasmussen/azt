@@ -14452,8 +14452,8 @@ def updateazt(event=None,**kwargs): #should only be parent, for errorroot
             elif [i for i in r.values() if updated(i)]: #anything updated
                 t+='\n'+_("(Restart {} to use this update)"
                         ).format(program['name'])
-        if [i for i in r.values() if not uptodate(i)]:
-            button=(_("Restart Now"),sysrestart)
+            if [i for i in r.values() if not uptodate(i)]:
+                button=(_("Restart Now"),sysrestart)
         try:
             try:
                 title=_("Update (Git) output")
