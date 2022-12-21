@@ -13667,8 +13667,9 @@ class GitReadOnly(Git):
         else:
             method=Repository.pull
             #make sure we at least try the github remote:
-            self.addremote(file.getfile(program['url']).with_suffix('.git'))
             remotes=self.findpresentremotes(firsttry=False) #don't ask
+            homeurl=program['url']+'.git'
+            remotes.extend([homeurl])
         r={}
         log.info("remotes: {}".format(remotes))
         for branch in ['main',program['testversionname']]:
