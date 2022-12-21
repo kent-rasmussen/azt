@@ -8226,14 +8226,14 @@ class Report(object):
             reporttype=' '.join([ps,profile])
         if isinstance(self,Multicheck):
             reporttype+=' '+'-'.join(self.cvtstodo)
-        else:
+        elif not isinstance(self,Tone) or isinstance(self,Segments):
             reporttype+='-'+self.params.check()
-        if isinstance(self,Tone) and not isinstance(self,Segments): #not byUF
+        else:
             if self.bylocation:
                 reporttype+='Tone-bylocation'
             else:
                 reporttype+='Tone'
-        elif self.byUFgroup:
+        if self.byUFgroup:
                 reporttype+='byUFgroup'
         bits=[str(self.reportbasefilename),rx.id(reporttype),"ReportXLP"]
         if not default:
