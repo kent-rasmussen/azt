@@ -240,7 +240,7 @@ status.renewchecks has to run after adding tone frames
 - move config files to aztconfig directory?
 - look at how to generalize tone sorting, joining, etc. process.
 - bring new documentation pages:
-    - What A→Z+T will and won't do for you
+    - What A-Z+T will and won't do for you
     - The Cyclical process of analysis
         - incremental
         - complete cycles

@@ -8,7 +8,7 @@
 
 ## Buts
 
-- Installez A→Z+T et familiarisez l'équipe avec le projet en gros, l'interface A→Z+T et la tâche de collecte de mots.
+- Installez A-Z+T et familiarisez l'équipe avec le projet en gros, l'interface A-Z+T et la tâche de collecte de mots.
 - Décidez des formes de citation pour les noms et les verbes.
 - Lancez l'équipe sur la tâche de Collecte de mots.
 - Lancez l'équipe sur la tâche Enregistrer les mots.

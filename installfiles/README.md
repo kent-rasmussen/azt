@@ -1,6 +1,6 @@
-#Install a shortcut to A→Z+T in Ubuntu Linux
+#Install a shortcut to A-Z+T in Ubuntu Linux
 
-The azt.desktop file in this folder can likely enable a system shortcut to A→Z+T; place it in `$HOME/.local/share/applications/`, e.g.,
+The azt.desktop file in this folder can likely enable a system shortcut to A-Z+T; place it in `$HOME/.local/share/applications/`, e.g.,
 - `cp $HOME/path/to/installfiles/azt.desktop $HOME/.local/share/applications/`
 
 Make sure it is executable, and that the paths in the file point to where your files are (main.py and images folder). Once you have modified it to fit your paths, validate the file format:

@@ -582,7 +582,7 @@ msgstr ""
 #: /home/kentr/bin/raspy/doc/dictionarychecker/main_lift.py:3168
 #: /home/kentr/bin/raspy/doc/dictionarychecker/main_lift.py:3313
 #: /home/kentr/bin/raspy/doc/dictionarychecker/main_lift.py:3662
-msgid "A→Z+T Dictionary and Orthography Checker"
+msgid "A-Z+T Dictionary and Orthography Checker"
 msgstr ""
 
 #: /home/kentr/bin/raspy/doc/dictionarychecker/main_lift.py:3170
