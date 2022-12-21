@@ -443,7 +443,7 @@ class LiftChooser(ui.Window,HasMenus):
         log.info("self.name: {}".format(name))
         self.deiconify()
         if name:
-            self.filechooser.name=name
+            self.name=self.filechooser.name=name
             file.writefilename(name)
             self.destroy()
     def __init__(self,chooser,filenamelist):
@@ -4718,7 +4718,10 @@ class TaskChooser(TaskDressing,ui.Window):
         self.task.withdraw()
         curname = self.filename
         log.info(_("Current database: {}").format(curname))
-        self.file.askwhichlift(file.getfilenames())
+        window=LiftChooser(self,file.getfilenames())
+        window.wait_window(window)
+        if hasattr(self,'name') and self.name:
+            self.filename=self.name
         # text=_("{} will now exit; restart to work with the new database."
         #         "".format(program['name']))
         # ErrorNotice(text,title=_("Change Database"),wait=True)
@@ -4726,8 +4729,8 @@ class TaskChooser(TaskDressing,ui.Window):
         # subprocess.call?
         # __name__
         # main()
-        log.info(_("Current database: {}").format(self.file.name))
-        if self.file.name and curname != self.file.name:
+        log.info(_("Current database: {}").format(self.filename))
+        if self.filename and curname != self.filename:
             log.info(_("User selected a new database; restarting with it."))
             self.restart()
         else:
