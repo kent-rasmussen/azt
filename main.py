@@ -13186,6 +13186,7 @@ class Repository(object):
                     return self.findpresentremotes(firsttry=False)
                 else: #if still nothing, don't ask again on this run.
                     self.directorydontask=True
+                    return []
     def root(self):
         args=["root"]
         self.root=self.do(args)
