@@ -13151,14 +13151,16 @@ class Repository(object):
             e.destroy() #don't make the user do this; move one when clone done
         l=[]
         remotesinsettings=self.remoteurls().values()
+        log.info("remotesinsettings: {}".format(remotesinsettings))
         #add to list only what is there now AND related
         # the related test will remove it if there AND NOT related.
         # Otherwise, we leave it for later, in case it just isn't there now.
         l.extend([d for d in remotesinsettings if self.addifis(d)])
         if self.remotenames:
+            log.info("self.remotenames: {}".format(self.remotenames))
             l.extend(self.remotenames)
         if l:
-            # log.info("returning l:{}".format(l))
+            log.info("returning l:{}".format(l))
             return l
         # If we're still here, offer the user one chance to plug in a drive.
         # but just do this once; don't annoy the user.
@@ -13186,7 +13188,11 @@ class Repository(object):
                     return self.findpresentremotes(firsttry=False)
                 else: #if still nothing, don't ask again on this run.
                     self.directorydontask=True
-                    return []
+                    return [] #must return an interable, in any case
+            else:
+                return []
+        else:
+            return []
     def root(self):
         args=["root"]
         self.root=self.do(args)
@@ -13662,8 +13668,9 @@ class GitReadOnly(Git):
             method=Repository.pull
             #make sure we at least try the github remote:
             self.addremote(file.getfile(program['url']).with_suffix('.git'))
-            remotes=self.findpresentremotes()
+            remotes=self.findpresentremotes(firsttry=False) #don't ask
         r={}
+        log.info("remotes: {}".format(remotes))
         for branch in ['main',program['testversionname']]:
             for remote in remotes:
                 r[remote+'/'+branch]=method(self,branch=branch,remotes=[remote])
