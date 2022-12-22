@@ -1986,7 +1986,7 @@ class Settings(object):
             nochangetext=_("Exit with no changes")
         log.info("Asking about Digraphs and Trigraphs!")
         titlet=_("{} Digraphs and Trigraphs").format(program['name'])
-        #From wherever this is opened, it should withdraw and deiconize that
+        #From wherever this is opened, it should withdraw and deiconify that
         pgw=ui.Window(self.taskchooser.mainwindowis,title=titlet,exit=False)
         t=_("Which of the following letter sequences "
             "refer to a single sound?")
@@ -5626,7 +5626,7 @@ class ToneFrameDrafter(ui.Window):
             self.promptwindow()
             if isinstance(self.forms['name'],ui.StringVar):
                 log.info("StringVar found, form not entered. Exiting.")
-                self.destroy()
+                self.on_quit()
             # log.info(self.forms)
             # log.info(self.exitFlag.istrue())
             return
@@ -5968,7 +5968,7 @@ class ToneFrameDrafter(ui.Window):
         self.task.status.renewchecks() #renew (not update), because of new frame
         self.settings.storesettingsfile(setting='toneframes')
         self.settings.setcheck(checktoadd) #assume we will use this now
-        self.task.deiconize()
+        self.task.deiconify()
         self.destroy()
     def gimmesenseid(self,**kwargs):
         idsbyps=self.slices.senseids(ps=self.ps)
