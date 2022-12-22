@@ -348,7 +348,7 @@ class LiftChooser(ui.Window,HasMenus):
         w=ui.Window(program['root'],title=title)
         w.wait(_("Loading Demo Template"))
         w.mainwindow=False
-        t=ui.Label(w.frame, text=title, row=0, column=0)
+        t=ui.Label(w.frame, text=title, font='title', row=0, column=0)
         inst=_("Which language would you like to study, in this demonstration "
                 "of what {} can do?").format(program['name'])
         t=ui.Label(w.frame, text=inst, row=1, column=0, columnspan=2)
