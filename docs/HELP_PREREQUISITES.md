@@ -16,6 +16,15 @@ I want to help as many people as I can get the most out of A-Z+T, and move forwa
   - If **you have a database but not in LIFT** (i.e., in FLEx, or a spreadsheet, or an electronic or paper document), then you must get help converting it. Some conversions are easier than other (e.g., from FLEx); others are very difficult (e.g., typing from a handwritten notebook). Of particular interest:
     - use Unicode only (no legacy fonts anywhere)
     - NFD (decomposed characters, but let's talk, if you must use NFC for some reason)
+    - Check for consistency of part of speech marking
+      - Think in terms of distribution, what syntactic frames/environments a morpheme goes in.
+      - Check smaller parts of speech, to confirm that each is a paradigm, and everything you will want to compare is in the same ps.
+      - Separate things like subj and obj pronouns, if they don't fit in the same syntactic space. Subcategorize, if you want to think of it that way.
+    - Convert definition only senses to have glosses, as well.
+    - Make citation forms, even if the same as lexeme forms. This should be pronounceable, and the right place to put a recorded form. Also, if you analyze a form later, you keep the full, pronounceable form (with recording) undisturbed.
+    - If you have examples which are marked for a location field, not which locations you are using, so you don't reuse them as tone frame names. Otherwise, you could end up overwriting them (unlikely, I hope, but possible)
+    - If you have a sense/field@type=tone currently in use, move or rename it (must!) This is where tone ur draft info is kept.
+
   - If **you don't already have a database**, and don't already use FLEx, ~~download WeSay and follow [the WeSay from Scratch directions](WESAY_FROM_SCRATCH.md) to set up your project in WeSay set up your project there.~~ start a new project in A-Z+T (you will need your language's ISO code)
   - Take a look at the [practical prerequisites](USAGE.md#practical-prerequisites) for your database, and see that yours has what it needs.
     - If you ~~followed the `WeSay from Scratch` directions~~ started your project in A-Z+T as above, you should be OK.
@@ -52,6 +61,7 @@ I want to help as many people as I can get the most out of A-Z+T, and move forwa
   - **Record** citation forms for at least the above (largest 2-3 syllable profiles for Nouns and Verbs)
 
 ## Collaborate and Get Help
+- Read bugs.MD, and be ready to send in reports
 - Once you have data you want feedback on, give me permission to read your languagedepot.org repository (Settings/Members/New Member), and [send me your questions](<mailto:kent_rasmussen@sil.org?subject=Please%20help%20with%20A-Z+T>)!
 
 [A-Z+T]:  https://github.com/kent-rasmussen/azt
