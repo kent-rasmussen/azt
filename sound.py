@@ -211,16 +211,20 @@ class SoundSettings(object):
                                             # pyaudio.paInt8:'8 bit integer'
                                             }
     def makedefaultifnot(self):
-        if (self.audio_card_in not in self.cards['in']
+        if (not hasattr(self,'audio_card_in')
+                or self.audio_card_in not in self.cards['in']
                 or self.audio_card_in not in self.cards['dict']
                 ):
             self.default_in()
-        if self.fs not in self.cards['in'][self.audio_card_in]:
+        if (not hasattr(self,'fs') or
+                self.fs not in self.cards['in'][self.audio_card_in]):
             self.default_fs()
-        if self.sample_format not in self.cards['in'][self.audio_card_in][
-                                                                    self.fs]:
+        if (not hasattr(self,'sample_format') or
+                self.sample_format not in self.cards['in'][self.audio_card_in][
+                                                                    self.fs]):
             self.default_sf()
-        if (self.audio_card_out not in self.cards['out']
+        if (not hasattr(self,'audio_card_out')
+                or self.audio_card_out not in self.cards['out']
                 or self.audio_card_out not in self.cards['dict']
                 ):
             self.default_out()
