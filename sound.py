@@ -236,13 +236,15 @@ class SoundSettings(object):
                                             output_channels=1,
                                             output_format=self.sample_format)
         except ValueError as e:
-            if 'Device unavailable' in e:
+            log.info("{}; {}".format(e,type(e)))
+            if 'Device unavailable' in e.args[0]:
                 self.next_card_out()
                 self.check()
             log.info("Config not supported; no worries: rate={}; "
                 "output_device={}; "
                 "output_channels=1, "
-                "output_format={} ({})".format(fs,card,sf,e))
+                "output_format={} ({})".format(self.fs,self.audio_card_out,
+                                                self.sample_format,e))
         log.info(_("Testing microphone settings:"))
         self.next_card_in()
         self.next_card_in()
@@ -254,17 +256,19 @@ class SoundSettings(object):
                                                 input_channels=1,
                                                 input_format=self.sample_format)
         except ValueError as e:
-            if 'Device unavailable' in e:
+            log.info("{}; {}".format(e,type(e)))
+            if 'Device unavailable' in e.args[0]:
                 self.next_card_in()
                 self.check()
-            if 'Invalid sample rate' in e:
+            if 'Invalid sample rate' in e.args[0]:
                 self.next_sf()
                 # self.next_fs()
                 self.check()
                 log.info("Config not supported; no worries: rate={}; "
                 "output_device={}; "
                 "output_channels=1, "
-                "output_format={} ({})".format(fs,card,sf,e))
+                "output_format={} ({})".format(self.fs,self.audio_card_in,
+                                                self.sample_format,e))
     def __init__(self,pyaudio):
         self.pyaudio=pyaudio
         self.sethypothetical()
@@ -395,7 +399,9 @@ class SoundFilePlayer(object):
                     # raise
                 try:
                     self.data = self.wf.readframes(self.chunk)
-                except:
+                except OSError as e:
+                    if "Output underflowed" in e.arg[0]:
+                        self.streamopen(rate,channels)
                     log.exception("Unexpected exception trying to read "
                                 "frames %s {}".format(sys.exc_info()[0]))
                     log.info("The above may indicate a systemic problem!")
