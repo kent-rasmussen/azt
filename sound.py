@@ -270,7 +270,8 @@ class SoundSettings(object):
         self.pyaudio=pyaudio
         self.sethypothetical()
         self.getactual()
-        self.defaults() #pick best of actuals
+        self.makedefaultifnot()
+        # self.defaults() #pick best of actuals
         self.check()
         # self.printactuals()
         self.chunk=1024
@@ -340,7 +341,7 @@ class SoundFilePlayer(object):
             log.info("Stream didn't stop and close; was it open? {}".format(e))
     def getformat(self):
         format=self.pa.get_format_from_width(self.wf.getsampwidth())
-        return format
+        return max(format,2)
     def play(self,event=None):
         log.debug("I'm playing the recording now ({})".format(self.filenameURL))
         self.streamclose() #just in case
