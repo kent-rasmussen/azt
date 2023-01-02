@@ -230,10 +230,7 @@ class SoundSettings(object):
             self.default_out()
     def check(self):
         log.info(_("Testing speaker settings:"))
-        self.next_card_out()
-        self.next_card_out()
-        self.next_card_out()
-        self.max_sf()
+        # self.max_sf()
         try:
             ifs=self.pyaudio.is_format_supported(rate=self.fs,
                                             output_device=self.audio_card_out,
@@ -250,10 +247,6 @@ class SoundSettings(object):
                 "output_format={} ({})".format(self.fs,self.audio_card_out,
                                                 self.sample_format,e))
         log.info(_("Testing microphone settings:"))
-        self.next_card_in()
-        self.next_card_in()
-        self.next_card_in()
-        self.next_card_in()
         try:
             ifs=self.pyaudio.is_format_supported(rate=self.fs,
                                                 input_device=self.audio_card_in,
