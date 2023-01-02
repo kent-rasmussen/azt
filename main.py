@@ -7222,6 +7222,7 @@ class Sound(object):
         self.taskchooser.gettask()
         self.on_quit()
     def soundcheckrefresh(self,dict=None):
+        self.soundsettings.makedefaultifnot()
         dictnow={
                 'audio_card_in':self.soundsettings.audio_card_in,
                 'fs':self.soundsettings.fs,
@@ -7238,6 +7239,7 @@ class Sound(object):
                                 self.soundcheckrefresh,
                                 dictnow)
             return
+        log.info("sound settings dict: {}".format(dict))
         self.soundsettingswindow.resetframe()
         self.soundsettingswindow.scroll=ui.ScrollingFrame(
                                                 self.soundsettingswindow.frame,
@@ -7356,6 +7358,7 @@ class Sound(object):
         #just make sure settings are there
         self.soundsettingscheck()
         self.soundsettings=self.settings.soundsettings
+        self.soundsettings.check()
         if not self.exitFlag.istrue() and self.missingsoundattr():
             self.mikecheck() #if not, get them
             return
