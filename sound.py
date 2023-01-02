@@ -605,7 +605,7 @@ class BeepGenerator(object):
         ' ':0,
         ' ':0
         }
-    def compile(self,pitches='˦˧˨ ˩˩ ˥˥˥'):#' ˦˧˨˩'):
+    def compile(self,pitches='˥˥ ˩˩ ˧˩'):#' ˦˧˨˩'):
         self.wavdata=numpy.zeros(int(self.secpersylbreak*self.bitrate))
         words=str(pitches).split(' ')
         # log.info("words: {}".format(words))
