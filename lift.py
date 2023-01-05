@@ -14,7 +14,7 @@ log.info("Importing lift.py")
 # except:
 log.info("using xml.etree to parse XML")
 lxml=False
-from xml.etree import ElementTree as ET
+from xmletfns import * # from xml.etree import ElementTree as ET
 import xmlfns
 import sys
 import pathlib
