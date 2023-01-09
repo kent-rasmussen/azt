@@ -993,6 +993,35 @@ class Label(Gridded,Text,tkinter.Label): #,tkinter.Label
             self.wrap()
         UI.__init__(self)
         self.dogrid()
+class Message(Gridded,Text,tkinter.Message): #,tkinter.Label
+    """I'm not sure if this will ever have value, but here it is."""
+    def __init__(self, parent, **kwargs):
+        # log.info("Label Parent: {}".format(type(parent)))
+        Gridded.__init__(self,**kwargs)
+        kwargs=self.lessgridkwargs(**kwargs)
+        Childof.__init__(self,parent)
+        Text.__init__(self,parent,**kwargs)
+        kwargs=self.lesstextkwargs(**kwargs)
+        """These shouldn't need to be here..."""
+        # log.info("{}; {}; {}; {}; {}".format(
+        #                         parent,
+        #                         self.text,
+        #                         self.image,
+        #                         self.font,
+        #                         kwargs
+        #                         )
+        #         )
+        tkinter.Message.__init__(self,
+                                parent,
+                                text=self.text,
+                                image=self.image,
+                                font=self.font,
+                                **kwargs)
+        i=self.grid_info()
+        if i and self.text:
+            self.wrap()
+        UI.__init__(self)
+        self.dogrid()
 class Button(Gridded,Text,tkinter.Button):
     def nofn(self):
         pass
