@@ -39,6 +39,7 @@ log=logsetup.getlog('root') #not ever a module
 logsetup.setlevel(loglevel)
 """My modules, which should log as above"""
 import lift
+import parser
 # import profiles
 import setdefaults
 import xlp
@@ -1081,6 +1082,24 @@ class StatusFrame(ui.Frame):
         t=(_("Run all checks for {}").format(unlist(self.task.cvtstodoprose())))
         self.proselabel(t,cmd=self.task.getmulticheckscope,
                         parent=line)
+    def parserlevels(self):
+        try:
+            ls=self.task.parser.levels() # we need this anyway, and a parser test
+        except AttributeError as e:
+            log.info(e)
+            return
+        line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
+                        columnspan=3,sticky='w')
+        self.opts['row']+=1
+        t=(_("Parse with confirmation at {}").format(ls[self.task.parser.ask]))
+        self.proselabel(t,cmd=self.task.getparserasklevel,
+                        parent=line)
+        line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
+                        columnspan=3,sticky='w')
+        self.opts['row']+=1
+        t=(_("Parse automatically at {}").format(ls[self.task.parser.auto]))
+        self.proselabel(t,cmd=self.task.getparserautolevel,
+                        parent=line)
     def redofinalbuttons(self):
         if hasattr(self,'bigbutton') and self.bigbutton.winfo_exists():
             self.bigbutton.destroy()
@@ -1371,7 +1390,8 @@ class StatusFrame(ui.Frame):
         if isinstance(self.task,Segments):
             self.fieldsline()
         if (hasattr(self.settings,'slices') and
-                not isinstance(self.task,TaskChooser)):
+                not isinstance(self.task,TaskChooser) and
+                not isinstance(self.task,Parse)):
             self.cvt=self.settings.params.cvt()
             self.ps=self.settings.slices.ps()
             self.profile=self.settings.slices.profile()
@@ -1387,6 +1407,8 @@ class StatusFrame(ui.Frame):
                 self.cvtline()
             if isinstance(self.task,Sort):
                 self.buttoncolumnsline()
+        if isinstance(self.task,Parse):
+            self.parserlevels()
         self.maybeboard()
         self.finalbuttons()
 class Settings(object):
@@ -2936,6 +2958,12 @@ class Settings(object):
         self.attrschanged.append('glosslangs')
         self.refreshattributechanges()
         window.destroy()
+    def setparserasklevel(self,choice,window):
+        self.taskchooser.parser.asklevel(choice)
+        window.destroy()
+    def setparserautolevel(self,choice,window):
+        self.taskchooser.parser.autolevel(choice)
+        window.destroy()
     def setps(self,choice,window):
         self.slices.ps(choice)
         self.attrschanged.append('ps')
@@ -3247,6 +3275,11 @@ class TaskDressing(HasMenus,object):
                 })
             if isinstance(self.task,Multicheck):
                 dictnow.update({'cvtstodo':self.task.cvtstodo})
+        if hasattr(self,'parser'):
+            dictnow.update({
+                'parserasklevel':self.parser.ask,
+                'parserautolevel':self.parser.auto,
+                })
         """Call this just once. If nothing changed, wait; if changes, run,
         then run again."""
         if dict == dictnow:
@@ -3642,6 +3675,47 @@ class TaskDressing(HasMenus,object):
                                     column=0, row=1
                                     )
         return window
+    def getparserlevels(self,event=None):
+        try:
+            levels=self.parser.levels()
+            levels=[(k,levels[k]) for k in levels]
+            levels.sort(key=lambda x:x[0],reverse=True)
+            return levels
+        except AttributeError as e:
+            log.info("Evidently there isn't a parser running ({})".format(e))
+            return
+    def getparserasklevel(self,event=None):
+        log.info("Asking for parserasklevel...")
+        levels=self.getparserlevels()
+        if not levels:
+            return
+        window=ui.Window(self, title=_('Select Parser Ask Level'))
+        ui.Label(window.frame, text=_('What level of parsing match do you want '
+                                    'the parser to confirm with you?'),
+                                    column=0, row=0)
+        buttonFrame1=ui.ScrollingButtonFrame(
+                                window.frame,
+                                optionlist=levels,
+                                command=self.settings.setparserasklevel,
+                                window=window,
+                                column=0, row=1
+                                            )
+    def getparserautolevel(self,event=None):
+        log.info("Asking for parserautolevel...")
+        levels=self.getparserlevels()
+        if not levels:
+            return
+        window=ui.Window(self, title=_('Select Parser Auto Level'))
+        ui.Label(window.frame, text=_('What level of parsing match do you want '
+                                    'the parser to do automatically?'),
+                                    column=0, row=0)
+        buttonFrame1=ui.ScrollingButtonFrame(
+                                window.frame,
+                                optionlist=levels,
+                                command=self.settings.setparserautolevel,
+                                window=window,
+                                column=0, row=1
+                                            )
     def getps(self,event=None):
         log.info("Asking for ps...")
         # self.refreshattributechanges()
@@ -4809,7 +4883,7 @@ class TaskChooser(TaskDressing,ui.Window):
         for r in self.settings.repo.values():
             r.share()
     def __init__(self,parent):
-        # self.testdefault=Parse
+        self.testdefault=ParseTwoForms
         self.towrite=False
         self.writing=False
         self.datacollection=True # everyone starts here?
@@ -5540,15 +5614,156 @@ class Parse(TaskDressing,ui.Window,Segments):
         else:
             self.maybewrite()
             self.waitdone()
+    def userconfirmation(self,*args):
+        # Return True or False only
+        def do(x):
+            w.destroy()
+            self.userresponse.value=x
+        level, lx, lc, sf, ps, afxs = args
+        w=ui.Window(self,noexit=True)
+        w.title(_("Confirm this combination of affixes?"))
+        self.userresponse.value=False
+        gloss=nn([
+                    i for j in [self.db.gloss(senseid=self.senseid,glosslang=l)
+                                for l in self.glosslangs]
+                        for i in j
+                    ])
+        text=_("This parse looks good ({}): "
+                "\n{} {}"
+                "\n{} {}"
+                "\n{} ({} root: {})"
+                ).format(self.parser.levels()[level],
+                        lc,afxs[0],sf,afxs[1]
+                        lx,ps,gloss,
+                        )
+        ui.Label(w.frame,text=text,justify='l',
+                    row=0,column=0,columnspan=2)
+        ui.Button(w.frame,
+                    text=_("Yes!"),
+                    command=lambda x=True: do(x),
+                    row=1,column=0)
+        ui.Button(w.frame,
+                    text=_("No!"),
+                    command=lambda x=False: do(x),
+                    row=1,column=1)
+        self.waitpause()
+        w.wait_window(w)
+        if w.exitFlag.istrue():
+            # log.info("Exited parse!")
+            self.waitdone()
+        else:
+            self.waitunpause()
+            return self.userresponse.value
+    def parse(self,senseid):
+        kwargs={'senseid':senseid,
+                'entry':ifone(self.db.nodes.findall('entry/sense[@id="{}"]/..'
+                                            ''.format(senseid))),
+                }
+        self.parser.parseentry(**kwargs)
+        r=self.parser.threeforms()
+        # log.info("reponse: {} ({})".format(r,type(r)))
+        if r and not isinstance(r,tuple):
+            log.info("Auto parsed {} with three forms".format(senseid))
+        elif r and self.userconfirmation(*r):
+            # return level, lx, lc, sf, self.ps, afxs #from self.parser.threeforms
+            log.info("r={}".format(r))
+            log.info("sending {}".format(r[4:]))
+            log.info("sending {}; {}".format(*r[4:]))
+            self.parser.addaffixset(*r[4:])#self.ps,afxs)
+            self.parser.pssubclassvalue(r[-1])
+        elif not self.exitFlag.istrue():
+            r=self.parser.twoforms()
+            if r and not isinstance(r,tuple):
+                log.info("Auto parsed {} with two forms".format(senseid))
+            elif r and self.userconfirmation(*r):
+                self.parser.doparsetolx(r[1],*r[3:]) #pass root, too
+            elif not self.exitFlag.istrue():
+                # log.info("Not yet")
+                return
+                self.parser.oneform()
+        self.parsen+=1
+        if self.parser.auto < 4:
+            log.info("adding {}".format(affixes))
+        self.maybewrite()
+        # log.info("added to make ({}) {}".format(affixes[0],
+            #                                         self.affixes[affixes[0]]))
+    def senseidstoparse(self,senseids=None,all=False,n=-1): #n/limit=-1#1000
+        if not senseids:
+            senseids=self.db.senseids[:n]
+        if all:
+            return senseids #if provided, assume all
+        else:
+            try:
+                return set(senseids)-set(self.parsecatalog.parsed)
+            except AttributeError:
+                return set(senseids)
+    def getparses(self,**kwargs):
+        self.parsen=0
+        # for senseid in set(self.db.senseids)-set(self.parsecatalog.parsed):
+        #     self.parse(senseid)
+        self.wait("Parsing (ask: {} auto: {})".format(self.parser.ask,
+                                                        self.parser.auto
+                                                    ))
+        senseids=self.senseidstoparse(**kwargs)
+        todo=len(senseids)
+        for n,self.senseid in enumerate(senseids):
+            self.parse(self.senseid) #this can add to lists
+            if self.iswaiting():
+                self.waitprogress(100*n//todo)
+            else:
+                break
+        self.waitdone()
+        log.info("total parses tried: {}".format(self.parsen))
+        self.parsecatalog.report()
+    def getparse(self,senseid):
+        if senseid not in self.parsed:
+            self.parse(senseid) #this can add to lists
+    def nextparserasklevel(self):
+        auto=self.parser.auto
+        ask=self.parser.ask
+        if ask:
+            ask-=1 #start a new level with user confirmations
+        log.info("Moving to parser levels auto: {} ask: {}".format(auto,ask))
+        self.parser.setlevels(auto=auto,ask=ask)
+    def nextparserautolevel(self):
+        auto=self.parser.auto
+        ask=self.parser.ask
+        if auto:
+            auto-=1 #catch up automation (stop asking at this level)
+        log.info("Moving to parser levels auto: {} ask: {}".format(auto,ask))
+        self.parser.setlevels(auto=auto,ask=ask)
     def __init__(self, parent): #frame, filename=None
         log.info("Initializing {}".format(self.tasktitle()))
         ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         Segments.__init__(self,parent)
+        self.secondformfield=self.taskchooser.settings.secondformfield
+        self.nominalps=self.taskchooser.settings.nominalps
+        self.verbalps=self.taskchooser.settings.verbalps
+        if hasattr(parent,'parsecatalog'):
+            self.parsecatalog=parent.parsecatalog
+        else:
+            self.pss=self.db.pss
+            self.parsecatalog=parent.parsecatalog=parser.Catalog(self)
+            # self.wait("Loading Affixes")
+            # collector=parser.AffixCollector(self.parsecatalog,self.db)
+            # # for i in collector.do():
+            # for i in collector.getfromlift():
+            #     self.waitprogress(i)
+            # collector.done()
+            # self.waitdone()
+        if hasattr(parent,'parser'):
+            self.parser=parent.parser
+        else:
+            self.parser=parent.parser=parser.Engine(self.parsecatalog,self)
+            #These should come from settings
+            self.parser.autolevel(5) #no auto
+            self.parser.asklevel(4)
         self.nodetag='citation'
         self.dodone=True #give me words with citation done
         self.checkeach=False #don't confirm each word (default)
         self.dodoneonly=True #don't give me other words
+        self.userresponse=Object()
 class ParseTwoForms(Parse):
     def dobuttonkwargs(self):
         fn=self.getparses
