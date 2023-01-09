@@ -560,18 +560,18 @@ class FileParser(object):
         self.db.languagecodes=self.db.analangs+self.db.glosslangs
         self.db.languagepaths=file.getlangnamepaths(self.name,
                                                     self.db.languagecodes)
-    def __init__(self,name,splash):
+    def __init__(self,name):
         super(FileParser, self).__init__()
         self.name=name
-        splash.progress(15)
+        # splash.progress(15)
         self.loaddatabase()
-        splash.progress(25)
+        # splash.progress(25)
         if program['root'].exitFlag.istrue():
             return
         self.dailybackup()
-        splash.progress(35)
+        # splash.progress(35)
         self.senseidtriage() #sets: self.senseidswanyps self.senseidswops self.senseidsinvalid self.senseidsvalid
-        splash.progress(45)
+        # splash.progress(45)
         self.getwritingsystemsinfo()
 class Menus(ui.Menu):
     """this is the overall menu set, from which each will be selected."""
