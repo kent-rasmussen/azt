@@ -16,6 +16,7 @@ import platform
 program['hostname']=platform.uname().node
 import file
 if file.getfile(__file__).parent.parent.stem == 'raspy': # if program['hostname'] == 'karlap':
+    program['testing']=True #eliminates Error screens and zipped logs
     me=True
     loglevel=6
 else:
