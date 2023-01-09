@@ -1240,7 +1240,7 @@ class ButtonFrame(Frame):
         optionlist=kwargs.pop('optionlist')
         command=kwargs.pop('command')
         window=kwargs.pop('window',None)
-        log.info("Buttonframe option list: {} ({})".format(optionlist,command))
+        # log.info("Buttonframe option list: {} ({})".format(optionlist,command))
         Frame.__init__(self,parent,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
         # for kwarg in ['row', 'column']: #done with these
@@ -1259,10 +1259,11 @@ class ButtonFrame(Frame):
             """Assuming from here on that the first list item represents
             the format of the whole list; hope that's true!"""
         elif optionlist[0] is dict:
-            print("looks like options are already in dictionary format.")
+            # log.info("looks like options are already in dictionary format.")
+            pass
         elif (type(optionlist[0]) is str) or (type(optionlist[0]) is int):
             """when optionlist is a list of strings/codes/integers"""
-            print("looks like options are just a list of codes; making dict.")
+            # log.info("looks like options are just codes; making dict.")
             if None in optionlist:
                 log.error(_("Having None as a list is fine, but you need to "
                 "put it in a tuple, with a second argument to display, so "
@@ -1274,16 +1275,14 @@ class ButtonFrame(Frame):
                                 ) for i in range(0, len(optionlist))]
         elif type(optionlist[0]) is tuple:
             if type(optionlist[0][1]) is str:
-                """when optionlist is a list of binary tuples (codes,names)"""
-                print("looks like options are just a list of (codes,names) "
-                        "tuples; making dict.")
+                # log.info("looks like options are just a list of (codes,names) "
+                #         "tuples; making dict.")
                 optionlist = [({'code':optionlist[i][0],
                                 'name':optionlist[i][1]}
                                 ) for i in range(0, len(optionlist))]
             elif type(optionlist[0][1]) is int:
-                """when optionlist is a list of binary tuples (codes,counts)"""
-                print("looks like options are just a list of (codes,counts) "
-                        "tuples; making dict.")
+                # log.info("looks like options are just a list of (codes,counts) "
+                #         "tuples; making dict.")
                 optionlist = [({'code':optionlist[i][0],
                                 'description':optionlist[i][1]}
                                 ) for i in range(0, len(optionlist))]
@@ -1298,7 +1297,6 @@ class ButtonFrame(Frame):
             if choice['name'] == ["Null"]:
                 command=newvowel #come up with something better here..…
             if 'description' in choice:
-                # print(choice['name'],str(choice['description']))
                 text=choice['name']+' ('+str(choice['description'])+')'
             else:
                 text=choice['name']
