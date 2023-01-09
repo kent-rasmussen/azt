@@ -5966,7 +5966,7 @@ class ToneFrameDrafter(ui.Window):
         self.task.status.renewchecks() #renew (not update), because of new frame
         self.settings.storesettingsfile(setting='toneframes')
         self.settings.setcheck(checktoadd) #assume we will use this now
-        self.task.deiconize()
+        self.task.deiconify()
         self.destroy()
     def gimmesenseid(self,**kwargs):
         idsbyps=self.slices.senseids(ps=self.ps)
