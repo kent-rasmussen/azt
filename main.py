@@ -4720,7 +4720,10 @@ class TaskChooser(TaskDressing,ui.Window):
         sysrestart()
     def changedatabase(self):
         log.debug("Preparing to change database name.")
-        self.task.withdraw()
+        try:
+            self.task.withdraw() #so users don't do stuff while waiting
+        except (AttributeError,tkinter.TclError):
+            log.info("There doesn't seem to be a task to hide; moving on.")
         curname = self.filename
         log.info(_("Current database: {}").format(curname))
         window=LiftChooser(self,file.getfilenames())
