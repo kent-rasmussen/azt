@@ -5549,6 +5549,28 @@ class Parse(TaskDressing,ui.Window,Segments):
         self.dodone=True #give me words with citation done
         self.checkeach=False #don't confirm each word (default)
         self.dodoneonly=True #don't give me other words
+class ParseTwoForms(Parse):
+    def dobuttonkwargs(self):
+        fn=self.getparses
+        text=_("Parse!")
+        tttext=_("This task tries to parse words which already have two forms.")
+        return {'text':text,
+                'fn':fn,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['Word'],
+                'sticky':'ew',
+                'tttext':tttext
+                }
+    def tasktitle(self):
+        return _("Parse second forms")
+    def tooltip(self):
+        return _("This task will help you parse your whole dictionary, "
+                "based on at least two forms already in each entry.")
+    def __init__(self, parent): #frame, filename=None
+        Parse.__init__(self,parent)
+        self.checkeach=True #confirm each word
 class ParseWords(Parse):
     def tasktitle(self):
         return _("Parse Whole Dictionary, word by word")
