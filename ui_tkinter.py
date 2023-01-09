@@ -1699,8 +1699,8 @@ class Wait(Window): #tkinter.Toplevel?
         self.title(title)
         text=_("Please Wait...")
         self.l=Label(self.outsideframe, text=text,
-                font='title',anchor='c')
-        self.l.grid(row=0,column=0,sticky='we')
+                font='title',anchor='c',
+                row=0,column=0,sticky='we')
         if msg is not None:
             self.l1=Label(self.outsideframe, text=msg,
                 font='default',anchor='c',row=1,column=0,sticky='we')
@@ -1708,8 +1708,7 @@ class Wait(Window): #tkinter.Toplevel?
         self.l2=Label(self.outsideframe,
                         image=self.theme.photo['small'],
                         text='',
-                        )
-        self.l2.grid(row=2,column=0,sticky='we',padx=50,pady=50)
+                        row=2,column=0,sticky='we',padx=50,pady=50)
         self.deiconify() #show after the window is built
         #for some reason this has to follow the above, or you get a blank window
         self.update_idletasks() #updates just geometry
