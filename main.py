@@ -1671,11 +1671,12 @@ class Settings(object):
                 setattr(o,s,v)
         return d
     def storesettingsfile(self,setting='defaults',noobjects=False):
+        #There are too many calls to this; why?
         filename=self.settingsfile(setting)
         config=ConfigParser()
         config['default']={}
         d=self.makesettingsdict(setting=setting)
-        log.info("storing settings file {}".format(setting))
+        # log.info("storing settings file {}".format(setting))
         for s in [i for i in d if i not in [None,'None']]:
             v=d[s]
             # log.info("Ready to store {} type data: {}".format(type(v),v))
