@@ -586,8 +586,12 @@ class Exitable(object):
             if (hasattr(self,'parent') and
                     self.parent.winfo_exists() and
                     not isinstance(self.parent,Root)):
+                if not self.parent.iswaiting():
+                    self.parent.deiconify()
+                # else:
+                #     self.parent.waitunpause()
+                    # self.ww.paused=True
                 # log.info("Going to deiconify {}".format(self.parent))
-                self.parent.deiconify()
             # log.info("Going to cleanup {}".format(self))
             self.cleanup()
             self.destroy() #do this for everything
@@ -686,11 +690,21 @@ class Childof(object):
 class UI(ObectwArgs):
     """docstring for UI, after tkinter widgets are initted."""
     def wait(self,msg=None):
-        if hasattr(self,'ww') and self.ww.winfo_exists() == True:
+        if self.iswaiting():
             log.debug("There is already a wait window: {}".format(self.ww))
             return
         self.withdraw()
         self.ww=Wait(self,msg)
+    def iswaiting(self):
+        return hasattr(self,'ww') and self.ww.winfo_exists()
+    def waitprogress(self,x):
+        self.ww.progress(x)
+    def waitpause(self):
+        self.ww.withdraw()
+        self.ww.paused=True
+    def waitunpause(self):
+        self.ww.deiconify()
+        self.ww.paused=False
     def waitdone(self):
         try:
             self.ww.close()
