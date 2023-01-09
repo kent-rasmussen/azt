@@ -560,14 +560,18 @@ class FileParser(object):
         self.db.languagecodes=self.db.analangs+self.db.glosslangs
         self.db.languagepaths=file.getlangnamepaths(self.name,
                                                     self.db.languagecodes)
-    def __init__(self,name):
+    def __init__(self,name,splash):
         super(FileParser, self).__init__()
         self.name=name
+        splash.progress(15)
         self.loaddatabase()
+        splash.progress(25)
         if program['root'].exitFlag.istrue():
             return
         self.dailybackup()
+        splash.progress(35)
         self.senseidtriage() #sets: self.senseidswanyps self.senseidswops self.senseidsinvalid self.senseidsvalid
+        splash.progress(45)
         self.getwritingsystemsinfo()
 class Menus(ui.Menu):
     """this is the overall menu set, from which each will be selected."""
@@ -4816,17 +4820,21 @@ class TaskChooser(TaskDressing,ui.Window):
             return
         self.splash.draw()
         self.db=FileParser(self.filename).db
+        self.splash.progress(55)
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
         """Can whatsdone be joined with makedefaulttask? they appear together
         elsewhere."""
         self.whatsdone()
+        self.splash.progress(65)
         self.settings=Settings(self)
+        self.splash.progress(80)
         self.splash.maketexts() #update for translation change
         TaskDressing.__init__(self,parent) #I think this should be after settings
         if not self.settings.writeeverynwrites: #0/None are not sensible values
             self.settings.writeeverynwrites=1
             self.settings.storesettingsfile()
+        self.splash.progress(90)
         self.usbcheck()
         self.writeable=0 #start the count
         if program['nosound']:
@@ -4836,10 +4844,11 @@ class TaskChooser(TaskDressing,ui.Window):
                 "to record or play audio!"
                 ).format(program['name'])
             ErrorNotice(e)
+        self.splash.progress(100)
+        self.splash.destroy()
         self.makedefaulttask() #normal default
         # self.gettask() # let the user pick
         """Do I want this? Rather give errors..."""
-        self.splash.destroy()
 class Segments(object):
     """docstring for Segments."""
     def getlisttodo(self,**kwargs):
