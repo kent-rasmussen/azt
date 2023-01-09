@@ -1809,12 +1809,21 @@ def nfd(x):
     #This makes decomposed characters. e.g., vowel + accent (not used yet)
     return unicodedata.normalize('NFD', str(x))
 def testapp():
-    r=Root()
+    def progress(event):
+        import time
+        for i in range(101):
+            for p in bars:
+                if p[1]<2:
+                    bars[p].current(100-i)
+                else:
+                    bars[p].current(i)
+            time.sleep(.02)
+    r=Root(theme='Kim')
     r.withdraw()
     w=Window(r)
-    Label(w,text="Seems to work!",font='title',
+    Label(w.outsideframe,text="Seems to work!",font='title',
             row=0,column=0)# loglevel='Debug'
-    l=Label(w,text="At least this much",
+    l=Label(w.outsideframe,text="At least this much",
             row=1,column=0)# loglevel='Debug'
     log.info("Image dict: {}".format(r.theme.photo))
     img=r.theme.photo['transparent']
@@ -1824,6 +1833,42 @@ def testapp():
     l['image']=img.scaled
     l['compound']="bottom"
     ToolTip(l,"this image has a tooltip")
+    for c,cls in enumerate([Message,Label]):
+        cname=cls.__name__
+        cls(w.outsideframe,text="This is a {}".format(cname),row=2, column=c)
+        # cls(w.outsideframe,text="This is a long {}".format(cname),row=3, column=c)
+        cls(w.outsideframe,text="This is a very long {}".format(cname),row=4, column=c)
+        # cls(w.outsideframe,text="This is a very very long {}".format(cname),row=5, column=c)
+        # cls(w.outsideframe,text="This is a very very very very long {}"
+        #             "".format(cname),row=6, column=c)
+        # cls(w.outsideframe,text="This is a very very very very "
+        #             "very very very very "
+        #             "very very very very "
+        #             "very very very very "
+        #             "very very very very "
+        #             "very very very very "
+        #             "very very very very "
+        #             "very very very very "
+        #             "long {}".format(cname),row=7, column=c)
+    # m=tkinter.Label(w.outsideframe,text="This is a Label", row=3, column=0)
+    bars={}
+    for orient in ['horizontal','vertical']:
+        for row in [0,2]:
+            if orient=='horizontal':
+                col=1
+                colspan=1
+                rowspan=1
+            else:
+                col=row
+                row=1
+                colspan=1
+                rowspan=1
+            bars[(orient,row+col)]=Progressbar(w, orient=orient,
+                                            mode='determinate',
+                                            row=row, column=col,
+                                            columnspan=colspan,
+                                            rowspan=rowspan,sticky='nesw')
+    w.bind('<ButtonRelease>',progress)
     r.mainloop()
 if __name__ == '__main__':
     """To Test:"""
