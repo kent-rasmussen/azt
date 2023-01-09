@@ -4824,6 +4824,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if program['root'].exitFlag.istrue():
             return
         self.splash.draw()
+        self.splash.progress(25)
         self.db=FileParser(self.filename).db
         self.splash.progress(55)
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
