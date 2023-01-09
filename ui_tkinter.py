@@ -11,6 +11,7 @@ import unicodedata
 import tkinter #as gui
 import tkinter.font
 import tkinter.scrolledtext
+import tkinter.ttk
 import file #for image pathnames
 from random import randint #for theme selection
 try:
@@ -200,6 +201,17 @@ class Theme(object):
             exit()
         for k in self.themes[self.name]:
             setattr(self,k,self.themes[self.name][k])
+        self.themettk = tkinter.ttk.Style()
+        self.themettk.theme_use('clam')
+        self.themettk.configure("Progressbar",
+                                troughcolor=self.activebackground,
+                                background=self.background,
+                                # bordercolor=self.background,
+                                # darkcolor=self.background,
+                                # lightcolor=self.background
+                                )
+    # kwargs['troughcolor']=self.theme.background
+    # kwargs['background']=self.theme.activebackground
     def setthemes(self):
         self.themes={'lightgreen':{
                             'background':'#c6ffb3',
@@ -805,6 +817,23 @@ class Menu(Childof,tkinter.Menu): #not Text
                                 **kwargs)
         UI.__init__(self)
         self['background']=self.theme.menubackground
+class Progressbar(Gridded,Childof,tkinter.ttk.Progressbar):
+    def current(self,value):
+        if 0 <= value <= 100:
+            self['value']=value
+        self.update_idletasks() #updates just geometry
+    def __init__(self, parent, **kwargs):
+        # log.info("Initializing Progressbar object")
+        Gridded.__init__(self,**kwargs)
+        kwargs=self.lessgridkwargs(**kwargs)
+        Childof.__init__(self,parent)
+        if 'orient' not in kwargs:
+            kwargs['orient']='horizontal' #or 'vertical'
+        if 'mode' not in kwargs:
+            kwargs['mode']='determinate' #or 'indeterminate'
+        tkinter.ttk.Progressbar.__init__(self,parent,**kwargs)
+        UI.__init__(self)
+        self.dogrid()
 class Text(Childof,ObectwArgs):
     """This converts kwargs 'text', 'image' and 'font' into attributes which are
     default where not specified, and rendered where appropriate for the
@@ -1644,9 +1673,20 @@ class Wait(Window): #tkinter.Toplevel?
         self.update_idletasks()
         if not isinstance(self.parent,Root): #Dont' show a root window
             self.parent.deiconify()
-        self.destroy()
+        self.on_quit()
+    def progress(self,value):
+        # between 0 and 100
+        try:
+            self.progressbar.current(value)
+        except AttributeError:
+            self.progressbar=Progressbar(self.outsideframe,
+                                    orient='horizontal',
+                                    mode='determinate', #or 'indeterminate'
+                                    row=3,column=0)
+            self.progress(value)
     def __init__(self, parent, msg=None):
         super(Wait, self).__init__(parent,exit=False)
+        self.paused=False
         self.withdraw() #don't show until we're done making it
         parent.withdraw()
         self['background']=parent['background']
