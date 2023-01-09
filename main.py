@@ -1988,7 +1988,7 @@ class Settings(object):
             nochangetext=_("Exit with no changes")
         log.info("Asking about Digraphs and Trigraphs!")
         titlet=_("A→Z+T Digraphs and Trigraphs")
-        #From wherever this is opened, it should withdraw and deiconize that
+        #From wherever this is opened, it should withdraw and deiconify that
         pgw=ui.Window(self.taskchooser.mainwindowis,title=titlet,exit=False)
         t=_("Which of the following letter sequences "
             "refer to a single sound?")
