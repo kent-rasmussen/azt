@@ -5560,7 +5560,7 @@ class ParseSlice(Parse):
         return _("Parse One Slice")
     def tooltip(self):
         return _("This task will help you parse your citation forms, "
-                "for one slice of the dictionary at a time.")
+                "for one slice(?PS??!?) of the dictionary at a time.")
     def __init__(self, parent): #frame, filename=None
         Parse.__init__(self,parent)
         self.byslice=True #give me words in a selected slice (make this selectable?)
