@@ -11596,6 +11596,8 @@ class Splash(ui.Window):
     def draw(self):
         self.deiconify() #show after placement
         self.update()
+    def progress(self,value):
+        self.progressbar.current(value)
     def __init__(self, parent):
         parent.withdraw()
         super(Splash, self).__init__(parent,exit=0)
@@ -11617,6 +11619,10 @@ class Splash(ui.Window):
                     }
         self.maketexts()
         self.title(self.labels['titletext']['text'])
+        self.progressbar=ui.Progressbar(self.frame,
+                                orient='horizontal',
+                                mode='determinate', #or 'indeterminate'
+                                row=4,column=0)
         self.w = self.winfo_reqwidth()
         x=int(self.master.winfo_screenwidth()/2-(self.w/2))
         self.h = self.winfo_reqheight()
