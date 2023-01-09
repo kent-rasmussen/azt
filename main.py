@@ -13990,6 +13990,9 @@ def isinteger(x):
         return True
     except (ValueError,TypeError):
         return False
+def ifone(l,nt=None):
+    if l and not len(l)-1:
+        return l[0]
 def unlist(l,ignore=[None]):
     if l and isinstance(l[0],lift.ET.Element):
          log.error("unlist should only be used on text (not node) lists ({})"
