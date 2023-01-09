@@ -4449,11 +4449,12 @@ class TaskChooser(TaskDressing,ui.Window):
                 tasks.append(TranscribeT)
             if self.ifcollectionlcsettingsdone and self.doneenough['analysis']:
                 tasks.append(JoinUFgroups)
-            if me:
+            if self.ifcollectionlcsettingsdone or me:
                 tasks.append(Parse)
-                tasks.append(ParseWords)
-                tasks.append(ParseSlice)
-                tasks.append(ParseSliceWords)
+                tasks.append(ParseTwoForms)
+                # tasks.append(ParseWords)
+                # tasks.append(ParseSlice)
+                # tasks.append(ParseSliceWords)
                 tasks.append(ReportConsultantCheck)
         # tasks.append(WordCollectionCitation),
         # tasks.append(WordCollectionPlImp),
