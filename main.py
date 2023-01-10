@@ -1100,6 +1100,16 @@ class StatusFrame(ui.Frame):
         t=(_("Parse automatically at {}").format(ls[self.task.parser.auto]))
         self.proselabel(t,cmd=self.task.getparserautolevel,
                         parent=line)
+    def senseidtodo(self):
+        line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
+                        columnspan=3,sticky='w')
+        self.opts['row']+=1
+        t=self.task
+        if t.senseidtodo:
+            txt=_("Parsing {}").format(t.datadict[t.senseidtodo].formatted())
+        else:
+            txt=_("Parsing all words")
+        self.proselabel(txt,cmd=t.getsenseidtodo,parent=line)
     def redofinalbuttons(self):
         if hasattr(self,'bigbutton') and self.bigbutton.winfo_exists():
             self.bigbutton.destroy()
@@ -1409,6 +1419,7 @@ class StatusFrame(ui.Frame):
                 self.buttoncolumnsline()
         if isinstance(self.task,Parse):
             self.parserlevels()
+            self.senseidtodo()
         self.maybeboard()
         self.finalbuttons()
 class Settings(object):
@@ -3275,10 +3286,11 @@ class TaskDressing(HasMenus,object):
                 })
             if isinstance(self.task,Multicheck):
                 dictnow.update({'cvtstodo':self.task.cvtstodo})
-        if hasattr(self,'parser'):
+        if hasattr(self,'parser') and isinstance(self.task,Parse):
             dictnow.update({
                 'parserasklevel':self.parser.ask,
                 'parserautolevel':self.parser.auto,
+                'senseid':self.task.senseidtodo,
                 })
         """Call this just once. If nothing changed, wait; if changes, run,
         then run again."""
@@ -3771,6 +3783,26 @@ class TaskDressing(HasMenus,object):
                                     column=0, row=0
                                     )
             window.wait_window(window)
+    def setsenseidtodo(self,choice,window):
+        self.senseidtodo=choice
+        window.destroy()
+    def getsenseidtodo(self,event=None):
+        log.info("Asking for senseid...")
+        list=[(k,self.task.datadict[k].formatted()) for k in self.task.datadict]
+        if not list:
+            log.info("No senseids; sort something?")
+            return
+        list.sort(key=lambda x:x[1])
+        list=[(None,_("All words"))]+list
+        window=ui.Window(self, title=_('Select Lexical Item'))
+        ui.Label(window.frame, text=_('What sense do you want to work with?'),
+                            column=0, row=0)
+        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                                            optionlist=list,
+                                            command=self.setsenseidtodo,
+                                            window=window,
+                                            column=0, row=1
+                                            )
     def getsecondformfieldN(self,event=None):
         ps=self.settings.nominalps
         opts=self.settings.plopts
@@ -5549,7 +5581,7 @@ class Parse(TaskDressing,ui.Window,Segments):
                 'tttext':tttext
                 }
     def tasktitle(self):
-        return _("Parse Whole Dictionary")
+        return _("Parse Words")
     def doparse(self):
         def copylc2lx(event=None):
             self.runwindow.resetframe()
@@ -5688,6 +5720,8 @@ class Parse(TaskDressing,ui.Window,Segments):
         # log.info("added to make ({}) {}".format(affixes[0],
             #                                         self.affixes[affixes[0]]))
     def senseidstoparse(self,senseids=None,all=False,n=-1): #n/limit=-1#1000
+        if self.senseidtodo:
+            return [self.senseidtodo]
         if not senseids:
             senseids=self.db.senseids[:n]
         if all:
@@ -5734,6 +5768,7 @@ class Parse(TaskDressing,ui.Window,Segments):
         self.parser.setlevels(auto=auto,ask=ask)
     def __init__(self, parent): #frame, filename=None
         log.info("Initializing {}".format(self.tasktitle()))
+        self.senseidtodo=None
         ui.Window.__init__(self,parent)
         self.withdraw()
         TaskDressing.__init__(self,parent)
