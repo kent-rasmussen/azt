@@ -5,7 +5,7 @@ program={'name':'A→Z+T',
         'tkinter':True, #for some day
         'production':False, #True for making screenshots (default theme)
         'testing':False, #normal error screens and logs
-        'version':'0.9.8b', #This is a string...
+        'version':'0.9.9', #This is a string...
         'testversionname':'testing', #always have some real test branch here
         'url':'https://github.com/kent-rasmussen/azt',
         'Email':'kent_rasmussen@sil.org'
@@ -4525,7 +4525,6 @@ class TaskChooser(TaskDressing,ui.Window):
                 tasks.append(JoinUFgroups)
             if self.ifcollectionlcsettingsdone or me:
                 tasks.append(Parse)
-                tasks.append(ParseTwoForms)
                 # tasks.append(ParseWords)
                 # tasks.append(ParseSlice)
                 # tasks.append(ParseSliceWords)
@@ -4883,7 +4882,7 @@ class TaskChooser(TaskDressing,ui.Window):
         for r in self.settings.repo.values():
             r.share()
     def __init__(self,parent):
-        self.testdefault=ParseTwoForms
+        self.testdefault=Parse
         self.towrite=False
         self.writing=False
         self.datacollection=True # everyone starts here?
@@ -5533,12 +5532,13 @@ class Parse(TaskDressing,ui.Window,Segments):
         return program['theme'].photo['iconWord']
     def tooltip(self):
         return _("This task will help you parse your citation forms, "
-                "automatically, for the whole dictionary at once.")
+                "automatically and with confirmation.")
     def dobuttonkwargs(self):
-        fn=self.doparse
-        text=_("Parse Citation Forms")
-        tttext=_("For now, this just lets you copy citation form info to "
-                "The lexeme field.")
+        fn=self.getparses
+        text=_("Parse!")
+        tttext=_("{} tries to do as much as possible automatically, and "
+                "according to the level you have set for confirmation."
+                ).format(program['name'])
         return {'text':text,
                 'fn':fn,
                 # column=0,
@@ -5623,7 +5623,7 @@ class Parse(TaskDressing,ui.Window,Segments):
         w=ui.Window(self,noexit=True)
         w.title(_("Confirm this combination of affixes?"))
         self.userresponse.value=False
-        gloss=nn([
+        gloss=", ".join([
                     i for j in [self.db.gloss(senseid=self.senseid,glosslang=l)
                                 for l in self.glosslangs]
                         for i in j
@@ -5631,10 +5631,10 @@ class Parse(TaskDressing,ui.Window,Segments):
         text=_("This parse looks good ({}): "
                 "\n{} {}"
                 "\n{} {}"
-                "\n{} ({} root: {})"
+                "\n{} root: {} ({})"
                 ).format(self.parser.levels()[level],
-                        lc,afxs[0],sf,afxs[1]
-                        lx,ps,gloss,
+                        lc,afxs[0],sf,afxs[1],
+                        ps,lx,gloss,
                         )
         ui.Label(w.frame,text=text,justify='l',
                     row=0,column=0,columnspan=2)
@@ -5735,6 +5735,7 @@ class Parse(TaskDressing,ui.Window,Segments):
     def __init__(self, parent): #frame, filename=None
         log.info("Initializing {}".format(self.tasktitle()))
         ui.Window.__init__(self,parent)
+        self.withdraw()
         TaskDressing.__init__(self,parent)
         Segments.__init__(self,parent)
         self.secondformfield=self.taskchooser.settings.secondformfield
@@ -5764,28 +5765,7 @@ class Parse(TaskDressing,ui.Window,Segments):
         self.checkeach=False #don't confirm each word (default)
         self.dodoneonly=True #don't give me other words
         self.userresponse=Object()
-class ParseTwoForms(Parse):
-    def dobuttonkwargs(self):
-        fn=self.getparses
-        text=_("Parse!")
-        tttext=_("This task tries to parse words which already have two forms.")
-        return {'text':text,
-                'fn':fn,
-                # column=0,
-                'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['Word'],
-                'sticky':'ew',
-                'tttext':tttext
-                }
-    def tasktitle(self):
-        return _("Parse second forms")
-    def tooltip(self):
-        return _("This task will help you parse your whole dictionary, "
-                "based on at least two forms already in each entry.")
-    def __init__(self, parent): #frame, filename=None
-        Parse.__init__(self,parent)
-        self.checkeach=True #confirm each word
+        self.deiconify()
 class ParseWords(Parse):
     def tasktitle(self):
         return _("Parse Whole Dictionary, word by word")
