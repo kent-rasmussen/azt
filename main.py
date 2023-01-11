@@ -75,7 +75,6 @@ if program['tkinter']==True:
 """else:
     import kivy
 """
-import ast
 import time
 import wave
 # #for some day...
