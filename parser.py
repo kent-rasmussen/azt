@@ -99,14 +99,14 @@ class Catalog(object):
     def affixesbyform(self):
         try:
             self.lcaffixes={
-                            ps:[i[0] for i in self.affixes[ps]]
-                            for ps in self.affixes
-                            if self.affixes[ps]
+                        ps:collections.Counter([i[0] for i in self.affixes[ps]])
+                        for ps in self.affixes
+                        if self.affixes[ps]
             }
             self.sfaffixes={
-                            ps:[i[1] for i in self.affixes[ps]]
-                            for ps in self.affixes
-                            if self.affixes[ps]
+                        ps:collections.Counter([i[1] for i in self.affixes[ps]])
+                        for ps in self.affixes
+                        if self.affixes[ps]
             }
         except AttributeError as e:
             if "'Catalog' object has no attribute 'affixes'" in e.args[0]:
