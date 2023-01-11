@@ -714,25 +714,49 @@ if __name__ == "__main__":
             'ca9d097b-38b6-4273-8863-31e18bc24c0f',
             '898b311a-2157-42df-885f-b259a903ef89'
             ]
+    senseidsoneform=[
+                    "a4fec312-db00-4bc6-ad36-c28a89b67c0c",
+                    'ce49b092-f6b4-4198-910a-aeb6f933e77f',
+                    # '4813f41d-9ea7-4944-8df0-3a0a308e6e0c',
+                    # '942e7b83-2541-444a-8814-2127b083a62e',
+                    # 'd94c260c-0414-4dac-aa3a-b887417dc1e9',
+                    # '73a5a776-e8c9-445f-b20e-aeeb3020a5f6',
+
+                    # 'ee1a083a-52fb-4205-861b-56b4d0e54f8a',
+                    # 'e60fae62-af97-424a-91d7-791d89455c0a',
+                    # '3a2e70b8-fe93-4468-87fa-f4997237df7c',
+                    # 'aa7ba7fc-95ce-414b-b17f-d744de154418',
+                    # '049c0d09-7c24-487e-afcd-f49fb2c227fa',
+                    # '1a3bdac7-9066-450e-93e8-f783d0cbbab7',
+                    # '6a5e1a48-c646-4ad3-9e50-a333b800af32',
+                    # '957474fb-2073-4688-a724-102c3076d4a5',
+                    # '16004c65-72c8-4616-88c7-01da30ee6f8a',
+                    # '8f6ceaed-a335-4dbe-9086-3d30700e2891',
+                    # '4001bae1-7ec6-4111-83ca-13ea8986b986',
+                    ]
     catalog=Catalog(db)
+    # afxc=AffixCollector(catalog,db,loadfromlift=True) #don't run this if you don't want automatic parsing
     afxc=AffixCollector(catalog,db) #don't run this if you don't want automatic parsing
-    afxc.getfromlift()
+    for i in afxc.getfromlift():
+        pass
+    afxc.done()
     # now()
     db.write('userlogs/Test_getparses{}.lift'.format(0))
-    catalog.report()
-    exit()
+    # catalog.report()
     parser=Engine(catalog)
     parser.autolevel(5)
-    parser.asklevel(4)
-    try:
-        senseids=set(db.senseids)-set(catalog.parsed)
-    except AttributeError:
-        senseids=set(db.senseids)
-    for senseid in senseids:
+    parser.asklevel(0)
+    for senseid in senseidsoneform:
         kwargs={'senseid':senseid,
                 'entry':ifone(db.nodes.findall('entry/sense[@id="{}"]/..'
                                                     ''.format(senseid))),
                 }
         parser.parseentry(**kwargs)
+        parser.oneform()
+    # try:
+    #     senseids=set(db.senseids)-set(catalog.parsed)
+    # except AttributeError:
+    #     senseids=set(db.senseids)
     db.write('userlogs/Test_getparses1.lift')
     now()
+    exit()
