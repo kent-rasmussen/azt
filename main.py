@@ -5766,6 +5766,20 @@ class Parse(TaskDressing,ui.Window,Segments):
             auto-=1 #catch up automation (stop asking at this level)
         log.info("Moving to parser levels auto: {} ask: {}".format(auto,ask))
         self.parser.setlevels(auto=auto,ask=ask)
+    def initparsecatalog(self):
+        # This method allows us to restart the affix database if needed,
+        # like if there is a bad affix making bad autoparses...
+        self.pss=self.db.pss
+        self.parsecatalog=self.parent.parsecatalog=parser.Catalog(self)
+        collector=parser.AffixCollector(self.parsecatalog,self.db)
+        if self.loadfromlift:
+            self.wait("Loading Affixes")
+            # for i in collector.do():
+            for i in collector.getfromlift():
+                log.info("Progress: {}".format(i))
+                self.waitprogress(i)
+            collector.done()
+            self.waitdone()
     def __init__(self, parent): #frame, filename=None
         log.info("Initializing {}".format(self.tasktitle()))
         self.senseidtodo=None
@@ -5776,18 +5790,11 @@ class Parse(TaskDressing,ui.Window,Segments):
         self.secondformfield=self.taskchooser.settings.secondformfield
         self.nominalps=self.taskchooser.settings.nominalps
         self.verbalps=self.taskchooser.settings.verbalps
+        self.loadfromlift=True
         if hasattr(parent,'parsecatalog'):
             self.parsecatalog=parent.parsecatalog
         else:
-            self.pss=self.db.pss
-            self.parsecatalog=parent.parsecatalog=parser.Catalog(self)
-            # self.wait("Loading Affixes")
-            # collector=parser.AffixCollector(self.parsecatalog,self.db)
-            # # for i in collector.do():
-            # for i in collector.getfromlift():
-            #     self.waitprogress(i)
-            # collector.done()
-            # self.waitdone()
+            self.initparsecatalog()
         if hasattr(parent,'parser'):
             self.parser=parent.parser
         else:
