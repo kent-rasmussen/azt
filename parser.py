@@ -70,14 +70,18 @@ class AffixCollector(object):
         # log.info("total badps: {}".format(len(catalog.badps)))
         self.catalog.affixesbyform()
         self.catalog.report()
-    def __init__(self,catalog,db):
+    def __init__(self,catalog,db,**kwargs):
+        self.parsen=0
         self.parser=Engine(catalog)
         self.dbnodes=db.nodes
         self.senseids=db.senseids
         self.pss=db.pss
         self.catalog=catalog
         log.info("Looking in LIFT file for data")
-        self.getfromlift() #how much time does this take?
+        if kwargs.get('loadfromlift'):
+            for i in self.getfromlift():
+                print(i)
+        self.done()
         # self.do()
 class Catalog(object):
     """This needs to either call a UI for user response, or provide the UI an
