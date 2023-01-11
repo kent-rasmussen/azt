@@ -203,10 +203,14 @@ class Engine(object):
             pass
         return q
     def texts(self):
-        return (textof(self.lxnode),
+        try:
+            return (textof(self.lxnode),
                 textof(self.lcnode),
                 textof(self.plnode),
                 textof(self.impnode))
+        except AttributeError as e:
+            log.info("missing node on {} ({})".format(self.senseid,e.args[0]))
+            raise
     def addaffixset(self,ps,afxtuple):
         self.catalog.addaffixset((ps,afxtuple))
         self.catalog.addparsed(self.senseid)
