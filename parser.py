@@ -210,6 +210,8 @@ class Engine(object):
     def addaffixset(self,ps,afxtuple):
         self.catalog.addaffixset((ps,afxtuple))
         self.catalog.addparsed(self.senseid)
+        if self.auto < 4:
+            log.info("adding {}".format(afxtuple))
     def doparsetolx(self,root,ps,afxtuple):
         #This stores root, ps, and affixes, once decided on
         textof(self.lxnode,root)
