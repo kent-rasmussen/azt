@@ -604,6 +604,7 @@ class Engine(object):
         if not (self.auto < 4 or self.ask < 4 or self.pscheck()):
             log.info("Returning because self.auto ({}) < 4 or "
                     "self.ask ({}) < 4 or pscheck: {}"
+                    "".format(self.auto,self.ask,self.pscheck()))
             return # stop here if collecting affixes & w/o ps or non-NV ps
         # log.info("self.secondformfield: {}".format(self.secondformfield))
         # log.info("ps: {}".format(self.ps))
