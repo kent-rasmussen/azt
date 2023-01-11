@@ -39,19 +39,30 @@ class AffixCollector(object):
     def getfromlift(self):
         log.info("looking in LIFT file for data")
         self.parsen=0
-        log.info("looking in {}".format(self.pss))
-        log.info("Checking pss {}".format(self.pss))
-        for ps in self.pss:
-            log.info("Checking ps {}".format(ps))
+        # log.info("looking in {}".format(self.dbnodes.findall("entry/sense/"
+        #                             "trait[@name='{}-infl-class']"
+        #                             "".format(self.pss[self.catalog.analang][0])
+        #                                 )))
+        # log.info("Checking pss {}".format(self.pss))
+        pstodo=len(self.pss[self.catalog.analang])
+        for n,ps in enumerate(self.pss[self.catalog.analang]):
+            # log.info("Checking ps {}".format(ps))
             results=self.dbnodes.findall("entry/sense/"
                                         "trait[@name='{}-infl-class']"
                                         "".format(ps)
                                         )
-            log.info("found results {}".format(results))
-            for r in results:
-                addaffixset(ps,r.get('value'))
+            sensenodes=self.dbnodes.findall("entry/sense/"
+                                        "trait[@name='{}-infl-class']/.."
+                                        "".format(ps)
+                                        )
+            # log.info("found results {}; {}".format(results,sensenodes))
+            for sensenode in sensenodes:
+                self.catalog.addparsed(sensenode.get('id'))
+            rtodo=len(results)
+            for nr,r in enumerate(results):
+                self.catalog.addaffixset((ps,ofromstr(r.get('value'))))
                 self.parsen+=1
-                yield self.progress()
+                yield 100*(n//pstodo)+100*(nr//rtodo//pstodo)
     def done(self):
         log.info("total parses tried: {}".format(self.parsen))
         # log.info("total parsed: {}".format(len(catalog.parsed)))
