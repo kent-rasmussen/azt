@@ -333,7 +333,7 @@ class Engine(object):
         bestn=self.bestrootbyps(nroots,self.nominalps,lc,pl)
         bestv=self.bestrootbyps(vroots,self.verbalps,lc,imp)
         if max(bestn[0], bestv[0]) < self.ask:
-            log.info("Neither Noun ({}) nor Verb ({}) is good enough ({})"
+            log.info("Neither Noun ({}) nor Verb ({}) is good enough (ask: {})"
                     "".format(bestn[0], bestv[0], self.ask))
             return # We won't do this one anyway; give up now.
         noun=verb=False #figure this out next
