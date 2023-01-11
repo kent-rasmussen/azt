@@ -11975,7 +11975,7 @@ class Analysis(object):
             name=self.ps+'_'+self.profile+'_'+str(x)
             # self.groups[name]={}
             # self.groups[name]['values']=ast.literal_eval(k) #return str to dict
-            self.valuesbygroupcheck[name]=ast.literal_eval(k) #return str to dict
+            self.valuesbygroupcheck[name]=ofromstr(k) #return str to dict
             # self.groups[name]['senseids']=unnamed[k]
             self.senseidsbygroup[name]=unnamed[k]
             for senseid in unnamed[k]:
