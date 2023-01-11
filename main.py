@@ -5686,6 +5686,34 @@ class Parse(TaskDressing,ui.Window,Segments):
         else:
             self.waitunpause()
             return self.userresponse.value
+    def selectsffromlist(self,l):
+        # l=(sf,ps,root,sfafx)
+        # log.info("full option list: {}".format(l))
+        ln=[(i,', '.join([str(j) for j in i])) for i in l if i[1] == self.nominalps]
+        ln+=[('ON',_("Other Noun"))]
+        # log.info("noun option list: {}".format(ln))
+        lv=[(i,', '.join([str(j) for j in i])) for i in l if i[1] == self.verbalps]
+        lv+=[('OV',_("Other Verb"))]
+        # log.info("verb option list: {}".format(lv))
+        w=ui.Window(self)
+        w.title(_("Select second form"))
+        if ln:
+            noun=ui.Frame(w.frame, row=1, column=0)
+            ui.Label(noun,"Select {} form".format(self.secondformfield[nominalps]),
+                    row=0,column=0)
+            bfn=ui.ScrollingButtonFrame(noun, optionlist=ln, window=w,
+                                        command=self.parser.dooneformparse,
+                                        row=1, column=0
+                                        )
+        if lv:
+            verb=ui.Frame(w.frame, row=1, column=1)
+            ui.Label(noun,"Select {} form".format(self.secondformfield[verbalps]),
+                    row=0,column=0))
+            bfv=ui.ScrollingButtonFrame(verb, optionlist=lv, window=w,
+                                        command=self.parser.dooneformparse,
+                                        row=1, column=0
+                                        )
+        w.wait_window(w)
     def parse(self,senseid):
         kwargs={'senseid':senseid,
                 'entry':ifone(self.db.nodes.findall('entry/sense[@id="{}"]/..'
@@ -5705,17 +5733,30 @@ class Parse(TaskDressing,ui.Window,Segments):
             self.parser.pssubclassvalue(r[-1])
         elif not self.exitFlag.istrue():
             r=self.parser.twoforms()
+            # return level, lx, lc, sf, self.ps, afxs #from self.parser.twoforms
             if r and not isinstance(r,tuple):
                 log.info("Auto parsed {} with two forms".format(senseid))
             elif r and self.userconfirmation(*r):
-                self.parser.doparsetolx(r[1],*r[3:]) #pass root, too
+                self.parser.doparsetolx(r[1],*r[4:]) #pass root, too
             elif not self.exitFlag.istrue():
-                # log.info("Not yet")
-                return
-                self.parser.oneform()
+                log.info("Asking for second form selected")
+                r=self.parser.oneform()
+                if r and not isinstance(r,list):
+                    log.info("?Auto parsed {} with one forms".format(senseid))
+                elif r:
+                    r=self.selectsffromlist(r)
+                    if r and not isinstance(r,tuple):
+                        if r == 'ON':
+                            log.info("asking for other noun segments")
+                        elif r == 'OV':
+                            log.info("asking for other verb segments")
+                        else:
+                            log.info("Not sure what I'm doing")
+                    # self.parser.doparsetolx(r[1],*r[4:]) #pass root, too
+                elif not self.exitFlag.istrue():
+                    log.info("Asking for second form typed")
+
         self.parsen+=1
-        if self.parser.auto < 4:
-            log.info("adding {}".format(affixes))
         self.maybewrite()
         # log.info("added to make ({}) {}".format(affixes[0],
             #                                         self.affixes[affixes[0]]))
@@ -5787,6 +5828,7 @@ class Parse(TaskDressing,ui.Window,Segments):
         self.withdraw()
         TaskDressing.__init__(self,parent)
         Segments.__init__(self,parent)
+        self.parent=parent
         self.secondformfield=self.taskchooser.settings.secondformfield
         self.nominalps=self.taskchooser.settings.nominalps
         self.verbalps=self.taskchooser.settings.verbalps
