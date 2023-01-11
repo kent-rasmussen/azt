@@ -17,6 +17,8 @@ except:
         return x
 import xmletfns
 import lift
+import rx
+from utilities import *
 class AffixCollector(object):
     """This class does just one thing: call parse to collect affixes
     automatically to populate the catalog."""
@@ -491,19 +493,61 @@ class Engine(object):
         else:
             log.info("Looks like a form is missing, or {} isn't a subset of {}"
                         "({};{})".format(lx,lc,pl,imp))
+    def dooneformparse(self,x,window):
+        # x is (sf,ps,root,sfafx)
+        log.info("User selected {}".format(x))
+        if not type(x) is tuple:
+            log.info("Not a tuple; hope that's OK.")
+            return
+        self.doparsetolx(x[2],x[1],x[3])
+        if x[1] == self.nominalps:
+            textof(self.plnode,x[0])
+        elif x[1] == self.verbalps:
+            textof(self.impnode,x[0])
+        else:
+            log.error("Parsed but neither noun nor verb?")
+        window.on_quit()
     def oneform(self):
-        log.info("This is where we set up request for the second form")
-        # full lc, starts with, endswith?
-        return #for now
+        # log.info("This is where we set up request for the second form")
+        lx, lc, pl, imp = self.texts()
+        # if not lc and not pl and not imp:
+        #     # log.info("senseid: {}".format(self.senseid))
+        #     log.info(self.senseid)
+        log.info("lx: {}, lc: {}, pl: {}, imp: {}".format(*self.texts()))
+        if lx and not lc: #switch them, both in node and in local variables
+            lc=textof(self.lcnode,lx)
+            lx=textof(self.lxnode,'')
+        if not lc:
+            log.info("No citation form!")
+            return
+        possibilities=[]
         for ps in [self.nominalps, self.verbalps]:
             for lcafxs in self.catalog.lcaffixes[ps]:
-                if lc.startswith(lcafx[0]) and lc.endswith(lcafx[1]):
+                if lc.startswith(lcafxs[0]) and lc.endswith(lcafxs[1]):
+                    root=rx.sub('^'+lcafxs[0],'',
+                                rx.sub(lcafxs[1]+'$','',lc,1)
+                                                    ,1)
+                    # log.info("root: {} ({}; {})".format(root,ps,lcafxs))
+                    collected=[]
                     for afxs in self.catalog.affixes[ps]:
                         if afxs[0] == lcafxs:
                             sfafx=afxs[1]
+                            sf=root.join(sfafx)
+                            # log.info("sf: {} ({}; {}, {})"
+                            #         "".format(sf,ps,root,sfafx))
+                            possibilities+=[(sf,ps,root,sfafx)]
+                            collected+=[sfafx]
                             # store This pair as priority
-                    for afxs in self.catalog.sfaffixes[ps]:
-                        pass# store these as secondary
+                    for sfafxs in self.catalog.sfaffixes[ps]:
+                        if sfafxs not in collected:
+                            sf=root.join(sfafxs)
+                            # log.info("sf2: {} ({}; {}, {})"
+                            #         "".format(sf,ps,root,sfafxs))
+                            possibilities+=[(sf,ps,root,sfafx)]
+                            collected+=[sfafx]
+                            # store these as secondary
+        log.info(possibilities)
+        return possibilities
     def missingnodecheck(self):
         nodes=['lx','lc']
         if self.ps == self.nominalps:
@@ -557,7 +601,9 @@ class Engine(object):
         # log.info("psnode: {}".format(psnode))
         self.psvalue() #this may set None value, to be set later
         self.pssubclassvalue()
-        if not (self.auto < 4 or self.pscheck()):
+        if not (self.auto < 4 or self.ask < 4 or self.pscheck()):
+            log.info("Returning because self.auto ({}) < 4 or "
+                    "self.ask ({}) < 4 or pscheck: {}"
             return # stop here if collecting affixes & w/o ps or non-NV ps
         # log.info("self.secondformfield: {}".format(self.secondformfield))
         # log.info("ps: {}".format(self.ps))
