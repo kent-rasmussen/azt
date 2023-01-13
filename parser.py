@@ -466,7 +466,7 @@ class Engine(object):
         # - lx is a subset of each of the other two forms
         # N.B.: this being complete and consistent does not mean that it is
         # correct —hence the next line to skip this to manually parse these
-        if self.auto > 4 and self.ask > 4: #for manual reparsing of what looks obvious
+        if min(self.auto, self.ask) > 4: #for manual reparsing of what looks obvious
             # log.info("No auto parsing this run")
             return
         lx, lc, pl, imp = self.texts()
@@ -627,11 +627,11 @@ class Engine(object):
         # log.info("psnode: {}".format(psnode))
         self.psvalue() #this may set None value, to be set later
         self.pssubclassvalue()
-        if not (self.auto < 4 or self.ask < 4 or self.pscheck()):
-            log.info("Returning because self.auto ({}) < 4 or "
-                    "self.ask ({}) < 4 or pscheck: {}"
-                    "".format(self.auto,self.ask,self.pscheck()))
-            return # stop here if collecting affixes & w/o ps or non-NV ps
+        # if not (min(self.auto,self.ask) < 4 or self.pscheck()):
+        #     log.info("Returning because self.auto ({}) < 4 or "
+        #             "self.ask ({}) < 4 or pscheck: {}"
+        #             "".format(self.auto,self.ask,self.pscheck()))
+        #     return 1# stop here if collecting affixes & w/o ps or non-NV ps
         # log.info("self.secondformfield: {}".format(self.secondformfield))
         # log.info("ps: {}".format(self.ps))
         # log.info("Looking for "
