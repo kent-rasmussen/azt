@@ -5752,6 +5752,41 @@ class Parse(TaskDressing,ui.Window,Segments):
             r=self.asksegments(ps)
             if not r: #i.e., returned OK
                 break
+    def asksegments(self,ps):
+        def do(event=None):
+            parser.psnode.text=ps
+            if ps == self.nominalps:
+                sf=parser.plnode.text=segments.get()
+            elif ps == self.verbalps:
+                sf=parser.impnode.text=segments.get()
+            w.on_quit()
+        def next(event=None):
+            segments.set("")
+            w.on_quit()
+        log.info("asking for second form segments for ps: {} ({}; {})"
+                "".format(ps,self.parser.senseid,self.parsen))
+        sfname=self.secondformfield[ps]
+        self.waitpause()
+        w=ui.Window(self)
+        w.title(_("Type second form"))
+        ui.Label(w.frame,
+                text="What {} form goes with ‘{}’ ({})?"
+                    "".format(sfname,self.parser.lcnode.text,self.getgloss()),
+                font='title',
+                row=0,column=0)
+        segments=ui.StringVar()
+        ui.EntryField(w.frame,textvariable=segments,
+                        row=1,column=0)
+        ui.Button(w.frame,text=_("OK"),cmd=do,
+                        row=2,column=0)
+        ui.Button(w.frame,text=_("Not a {}").format(ps),cmd=next,
+                        row=2,column=1)
+        w.wait_window(w)
+        if w.exitFlag.istrue():
+            self.exited=True
+        self.waitunpause()
+        if not segments.get():
+            return 1
         if r and not isinstance(r,tuple):
             log.info("Auto parsed {} with three forms".format(senseid))
         elif r and self.userconfirmation(*r):
