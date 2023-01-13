@@ -216,6 +216,8 @@ class Engine(object):
                 textof(self.plnode),
                 textof(self.impnode))
         except AttributeError as e:
+            # if "'Engine' object has no attribute 'lxnode'" in e.args[0]:
+
             log.info("missing node on {} ({})".format(self.senseid,e.args[0]))
             raise
     def addaffixset(self,ps,afxtuple):
