@@ -4355,6 +4355,7 @@ class TaskChooser(TaskDressing,ui.Window):
     def choosereports(self):
         self.frame.status.bigbutton.destroy()
         self.showreports=True
+        self.setmainwindow(self)
         self.gettask()
     def makedatadict(self):
         self.datadict=FramedDataDict(self) #needs self.toneframes
