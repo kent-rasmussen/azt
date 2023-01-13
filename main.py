@@ -5807,11 +5807,12 @@ class Parse(TaskDressing,ui.Window,Segments):
         senseids=self.senseidstoparse(**kwargs)
         todo=len(senseids)
         for n,self.senseid in enumerate(senseids):
-            self.parse(self.senseid) #this can add to lists
-            if self.iswaiting():
-                self.waitprogress(100*n//todo)
-            else:
-                break
+            if not self.exited:
+                self.parse() #this can add to lists
+                if self.iswaiting():
+                    self.waitprogress(100*n//todo)
+                else:
+                    break
         self.waitdone()
         log.info("total parses tried: {}".format(self.parsen))
         self.parsecatalog.report()
