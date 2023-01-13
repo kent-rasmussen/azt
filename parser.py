@@ -547,31 +547,47 @@ class Engine(object):
             log.info("No citation form!")
             return
         possibilities=[]
-        for ps in [self.nominalps, self.verbalps]:
-            for lcafxs in self.catalog.lcaffixes[ps]:
-                if lc.startswith(lcafxs[0]) and lc.endswith(lcafxs[1]):
-                    root=rx.sub('^'+lcafxs[0],'',
-                                rx.sub(lcafxs[1]+'$','',lc,1)
-                                                    ,1)
-                    # log.info("root: {} ({}; {})".format(root,ps,lcafxs))
-                    collected=[]
-                    for afxs in self.catalog.affixes[ps]:
-                        if afxs[0] == lcafxs:
-                            sfafx=afxs[1]
-                            sf=root.join(sfafx)
-                            # log.info("sf: {} ({}; {}, {})"
-                            #         "".format(sf,ps,root,sfafx))
-                            possibilities+=[(sf,ps,root,sfafx)]
-                            collected+=[sfafx]
-                            # store This pair as priority
-                    for sfafxs in self.catalog.sfaffixes[ps]:
-                        if sfafxs not in collected:
-                            sf=root.join(sfafxs)
-                            # log.info("sf2: {} ({}; {}, {})"
-                            #         "".format(sf,ps,root,sfafxs))
-                            possibilities+=[(sf,ps,root,sfafx)]
-                            collected+=[sfafx]
-                            # store these as secondary
+        try:
+            for ps in [self.nominalps, self.verbalps]:
+                for lcafxs in self.catalog.lcaffixes[ps]:
+                    log.info("lcafxs: {} ({})".format(lcafxs,type(lcafxs)))
+                    if lc.startswith(lcafxs[0]) and lc.endswith(lcafxs[1]):
+                        root=rx.sub('^'+lcafxs[0],'',
+                                    rx.sub(lcafxs[1]+'$','',lc,1)
+                                                        ,1)
+                        # log.info("root: {} ({}; {})".format(root,ps,lcafxs))
+                        collected=[]
+                        for afxs in self.catalog.affixes[ps]:
+                            if afxs[0] == lcafxs:
+                                sfafxs=afxs[1]
+                                sf=root.join(sfafxs)
+                                # log.info("sf: {} ({}; {}, {})"
+                                #         "".format(sf,ps,root,sfafx))
+                                possibilities+=[(sf,ps,root,sfafxs)]
+                                collected+=[sfafxs]
+                                # store This pair as priority
+                        for sfafxs in self.catalog.sfaffixes[ps]:
+                            if sfafxs not in collected:
+                                sf=root.join(sfafxs)
+                                # log.info("sf2: {} ({}; {}, {})"
+                                #         "".format(sf,ps,root,sfafxs))
+                                possibilities+=[(sf,ps,root,lcafxs,sfafxs)]
+                                collected+=[sfafxs]
+                                # store these as secondary
+        except AttributeError as e:
+            if "'Catalog' object has no attribute '" in e.args[0]:
+                log.info("Missing affix attribute; moving on ({})".format(e))
+                possibilities=[]
+            else:
+                log.error("Not sure what happened: {}".format(e))
+                # log.info("ps: {}; lcafxs: {}; sfafxs: {}"
+                #             "".format(ps,lcafxs,sfafxs))
+                raise
+        except Exception as e:
+            log.error("Not sure what happened: {}".format(e))
+            # log.info("ps: {}; lcafxs: {}".format(ps,lcafxs))
+            # log.info("sfafxs: {}".format(sfafxs))
+            raise
         log.info(possibilities)
         return possibilities
     def missingnodecheck(self):
