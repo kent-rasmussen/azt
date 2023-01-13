@@ -520,12 +520,12 @@ class Engine(object):
             log.info("Looks like a form is missing, or {} isn't a subset of {}"
                         "({};{})".format(lx,lc,pl,imp))
     def dooneformparse(self,x,window):
-        # x is (sf,ps,root,sfafx)
+        # x is (sf,ps,root,lcafxs,sfafxs)
         log.info("User selected {}".format(x))
         if not type(x) is tuple:
             log.info("Not a tuple; hope that's OK.")
             return
-        self.doparsetolx(x[2],x[1],x[3])
+        self.doparsetolx(x[2],x[1],(x[3],x[4]))
         if x[1] == self.nominalps:
             textof(self.plnode,x[0])
         elif x[1] == self.verbalps:
