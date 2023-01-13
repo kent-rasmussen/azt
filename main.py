@@ -5747,6 +5747,11 @@ class Parse(TaskDressing,ui.Window,Segments):
         self.parser.parseentry(**kwargs)
         r=self.parser.threeforms()
         # log.info("reponse: {} ({})".format(r,type(r)))
+    def asksegmentsnops(self):
+        for ps in [self.nominalps, self.verbalps]:
+            r=self.asksegments(ps)
+            if not r: #i.e., returned OK
+                break
         if r and not isinstance(r,tuple):
             log.info("Auto parsed {} with three forms".format(senseid))
         elif r and self.userconfirmation(*r):
