@@ -5713,17 +5713,21 @@ class Parse(TaskDressing,ui.Window,Segments):
         w=ui.Window(self)
         w.title(_("Select second form"))
         if ln:
-            noun=ui.Frame(w.frame, row=1, column=0)
-            ui.Label(noun,"Select {} form".format(self.secondformfield[nominalps]),
+            noun=ui.Frame(w.frame, row=1, column=0, sticky='n')
+            ui.Label(noun,
+                    text="Select {} form".format(
+                                        self.secondformfield[self.nominalps]),
                     row=0,column=0)
             bfn=ui.ScrollingButtonFrame(noun, optionlist=ln, window=w,
                                         command=self.parser.dooneformparse,
                                         row=1, column=0
                                         )
         if lv:
-            verb=ui.Frame(w.frame, row=1, column=1)
-            ui.Label(noun,"Select {} form".format(self.secondformfield[verbalps]),
-                    row=0,column=0))
+            verb=ui.Frame(w.frame, row=1, column=1, sticky='n')
+            ui.Label(verb,
+                    text="Select {} form".format(
+                                        self.secondformfield[self.verbalps]),
+                    row=0,column=0)
             bfv=ui.ScrollingButtonFrame(verb, optionlist=lv, window=w,
                                         command=self.parser.dooneformparse,
                                         row=1, column=0
