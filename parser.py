@@ -62,7 +62,10 @@ class AffixCollector(object):
             for nr,r in enumerate(results):
                 self.catalog.addaffixset((ps,ofromstr(r.get('value'))))
                 self.parsen+=1
-                yield 100*(n//pstodo)+100*(nr//rtodo//pstodo)
+                # log.info("ps progress: {} ({}/{})".format(100*n/pstodo,n,pstodo))
+                # log.info("results progress: {} ({}/{})"
+                #         "".format(100*nr/rtodo/pstodo,nr,rtodo))
+                yield int((100*n/pstodo)+(100*(nr/rtodo/pstodo)))
     def done(self):
         log.info("total parses tried: {}".format(self.parsen))
         # log.info("total parsed: {}".format(len(catalog.parsed)))
