@@ -5807,34 +5807,49 @@ class Parse(TaskDressing,ui.Window,Segments):
             log.info("sending {}; {}".format(*r[4:]))
             self.parser.addaffixset(*r[4:])#self.ps,afxs)
             self.parser.pssubclassvalue(r[-1])
-        elif not self.exitFlag.istrue():
-            if r and not isinstance(r,tuple):
-            elif not self.exitFlag.istrue():
-                log.info("Asking for second form selected")
-                r=self.parser.oneform()
-                if r and not isinstance(r,list):
-                    log.info("?Auto parsed {} with one forms".format(senseid))
-                elif r:
-                    r=self.selectsffromlist(r)
-                    if r and not isinstance(r,tuple):
-                        if r == 'ON':
-                            log.info("asking for other noun segments")
-                        elif r == 'OV':
-                            log.info("asking for other verb segments")
-                        else:
-                            log.info("Not sure what I'm doing")
-                    # self.parser.doparsetolx(r[1],*r[4:]) #pass root, too
-                elif not self.exitFlag.istrue():
-                    log.info("Asking for second form typed")
-
+            return
+        return r
     def parse(self,):
         kwargs={'senseid':self.senseid,
                 'entry':ifone(self.db.nodes.findall('entry/sense[@id="{}"]/..'
                                             ''.format(self.senseid))),
                 }
         badps=self.parser.parseentry(**kwargs)
+        r=True #i.e., do the next fn
+        if min(self.parser.auto, self.parser.ask) <= 4 and not badps:
             r=self.trythreeforms()
+        # badps is OK here, but don't do twoforms if threeforms worked
+        if r and not isinstance(r,tuple) and not self.exitFlag.istrue():
             self.trytwoforms()
+        # if not self.exitFlag.istrue():
+        log.info("Asking for second form selected")
+        if self.exited:
+            log.info("User exited before oneform, returning")
+            return
+        r=self.parser.oneform()
+        if self.exited:
+            log.info("User exited oneform, returning")
+            return
+        if r and not isinstance(r,list):
+            log.info("?Auto parsed {} with one forms".format(self.senseid))
+        elif r:
+            self.selectsffromlist(r)
+            log.info("Done selecting from {}".format(r))
+            if self.parser.on:
+                # log.info("asking for other noun segments")
+                self.asksegments(self.nominalps)
+            elif self.parser.ov:
+                # log.info("asking for other verb segments")
+                self.asksegments(self.verbalps)
+            if self.exited:
+                log.info("User exited selectsffromlist, returning")
+                return
+            else:
+                log.info("User seems to have selected a second form")
+            # self.parser.doparsetolx(r[1],*r[4:]) #pass root, too
+        elif not self.exited and not self.exitFlag.istrue():
+            # log.info("Asking for second form typed")
+            self.asksegmentsnops()
         self.parsen+=1
         self.maybewrite()
         # log.info("added to make ({}) {}".format(affixes[0],
