@@ -44,8 +44,8 @@ class AffixCollector(object):
         #                             "".format(self.pss[self.catalog.analang][0])
         #                                 )))
         # log.info("Checking pss {}".format(self.pss))
-        pstodo=len(self.pss[self.catalog.analang])
-        for n,ps in enumerate(self.pss[self.catalog.analang]):
+        pstodo=len(self.pss[self.catalog.analang]) #do less common first
+        for n,ps in enumerate(self.pss[self.catalog.analang][::-1]):
             # log.info("Checking ps {}".format(ps))
             results=self.dbnodes.findall("entry/sense/"
                                         "trait[@name='{}-infl-class']"
