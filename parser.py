@@ -615,6 +615,7 @@ class Engine(object):
                 delattr(self,attr)
             except AttributeError:
                 pass
+        self.on=self.ov=False
         # if self.auto < 4:
         #     log.info("Called with args {};{}".format(entry, senseid))
         # self.affixes=None # everyone needs this
