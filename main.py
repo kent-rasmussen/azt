@@ -5687,6 +5687,7 @@ class Parse(TaskDressing,ui.Window,Segments):
         if w.exitFlag.istrue():
             # log.info("Exited parse!")
             self.waitdone()
+            self.exited=True
         else:
             self.waitunpause()
             return self.userresponse.value
@@ -5704,6 +5705,9 @@ class Parse(TaskDressing,ui.Window,Segments):
                 rootafxs=[l[2]]
             return "{} ({} root: {})".format(*l[:2],' '.join(rootafxs))
         # log.info("full option list: {}".format(l))
+        if self.exitFlag.istrue():
+            return
+        self.waitpause()
         ln=[(i,formattuple(i)) for i in l if i[1] == self.nominalps]
         ln+=[('ON',_("Other Noun"))]
         # log.info("noun option list: {}".format(ln))
@@ -5739,6 +5743,9 @@ class Parse(TaskDressing,ui.Window,Segments):
                                         row=1, column=0
                                         )
         w.wait_window(w)
+        if w.exitFlag.istrue():
+            self.exited=True
+        self.waitunpause()
     def asksegmentsnops(self):
         for ps in [self.nominalps, self.verbalps]:
             r=self.asksegments(ps)
