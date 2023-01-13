@@ -5648,6 +5648,12 @@ class Parse(TaskDressing,ui.Window,Segments):
         else:
             self.maybewrite()
             self.waitdone()
+    def getgloss(self):
+        return ", ".join([
+                    i for j in [self.db.gloss(senseid=self.senseid,glosslang=l)
+                                for l in self.glosslangs]
+                        for i in j
+                    ])
     def userconfirmation(self,*args):
         # Return True or False only
         def do(x):
@@ -5657,11 +5663,7 @@ class Parse(TaskDressing,ui.Window,Segments):
         w=ui.Window(self,noexit=True)
         w.title(_("Confirm this combination of affixes?"))
         self.userresponse.value=False
-        gloss=", ".join([
-                    i for j in [self.db.gloss(senseid=self.senseid,glosslang=l)
-                                for l in self.glosslangs]
-                        for i in j
-                    ])
+        gloss=self.getgloss()
         text=_("This parse looks good ({}): "
                 "\n{} {}"
                 "\n{} {}"
