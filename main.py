@@ -5739,14 +5739,6 @@ class Parse(TaskDressing,ui.Window,Segments):
                                         row=1, column=0
                                         )
         w.wait_window(w)
-    def parse(self,senseid):
-        kwargs={'senseid':senseid,
-                'entry':ifone(self.db.nodes.findall('entry/sense[@id="{}"]/..'
-                                            ''.format(senseid))),
-                }
-        self.parser.parseentry(**kwargs)
-        r=self.parser.threeforms()
-        # log.info("reponse: {} ({})".format(r,type(r)))
     def asksegmentsnops(self):
         for ps in [self.nominalps, self.verbalps]:
             r=self.asksegments(ps)
@@ -5787,9 +5779,28 @@ class Parse(TaskDressing,ui.Window,Segments):
         self.waitunpause()
         if not segments.get():
             return 1
+    def trytwoforms(self):
+        r=self.parser.twoforms()
+        # return level, lx, lc, sf, self.ps, afxs #from self.parser.twoforms
         if r and not isinstance(r,tuple):
-            log.info("Auto parsed {} with three forms".format(senseid))
+            log.info("Auto parsed {} with two forms".format(self.senseid))
+            return
         elif r and self.userconfirmation(*r):
+            if self.exited:
+                return r
+            self.parser.doparsetolx(r[1],*r[4:]) #pass root, too
+            return
+        return r
+    def trythreeforms(self):
+        r=self.parser.threeforms() #r=1 if skipped
+        # log.info("reponse: {} ({})".format(r,type(r)))
+        if not r:
+            log.info("Auto parsed {} with three forms (returned {})"
+                    "".format(self.senseid,r))
+            return
+        elif r and isinstance(r,tuple) and self.userconfirmation(*r):
+            if self.exited:
+                return
             # return level, lx, lc, sf, self.ps, afxs #from self.parser.threeforms
             log.info("r={}".format(r))
             log.info("sending {}".format(r[4:]))
@@ -5797,12 +5808,7 @@ class Parse(TaskDressing,ui.Window,Segments):
             self.parser.addaffixset(*r[4:])#self.ps,afxs)
             self.parser.pssubclassvalue(r[-1])
         elif not self.exitFlag.istrue():
-            r=self.parser.twoforms()
-            # return level, lx, lc, sf, self.ps, afxs #from self.parser.twoforms
             if r and not isinstance(r,tuple):
-                log.info("Auto parsed {} with two forms".format(senseid))
-            elif r and self.userconfirmation(*r):
-                self.parser.doparsetolx(r[1],*r[4:]) #pass root, too
             elif not self.exitFlag.istrue():
                 log.info("Asking for second form selected")
                 r=self.parser.oneform()
@@ -5821,6 +5827,14 @@ class Parse(TaskDressing,ui.Window,Segments):
                 elif not self.exitFlag.istrue():
                     log.info("Asking for second form typed")
 
+    def parse(self,):
+        kwargs={'senseid':self.senseid,
+                'entry':ifone(self.db.nodes.findall('entry/sense[@id="{}"]/..'
+                                            ''.format(self.senseid))),
+                }
+        badps=self.parser.parseentry(**kwargs)
+            r=self.trythreeforms()
+            self.trytwoforms()
         self.parsen+=1
         self.maybewrite()
         # log.info("added to make ({}) {}".format(affixes[0],
