@@ -523,7 +523,13 @@ class Engine(object):
         # x is (sf,ps,root,lcafxs,sfafxs)
         log.info("User selected {}".format(x))
         if not type(x) is tuple:
-            log.info("Not a tuple; hope that's OK.")
+            if x=='ON':
+                self.on=True
+            elif x=='OV':
+                self.ov=True
+            else:
+                log.info("Not a tuple, nor known: ({}, {})".format(x,type(x)))
+            window.on_quit()
             return
         self.doparsetolx(x[2],x[1],(x[3],x[4]))
         if x[1] == self.nominalps:
