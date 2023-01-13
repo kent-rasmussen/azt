@@ -5912,7 +5912,7 @@ class Parse(TaskDressing,ui.Window,Segments):
             self.wait("Loading Affixes")
             # for i in collector.do():
             for i in collector.getfromlift():
-                log.info("Progress: {}".format(i))
+                # log.info("Progress: {}".format(i))
                 self.waitprogress(i)
             collector.done()
             self.waitdone()
