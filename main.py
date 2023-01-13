@@ -5868,6 +5868,7 @@ class Parse(TaskDressing,ui.Window,Segments):
                 return set(senseids)
     def getparses(self,**kwargs):
         self.parsen=0
+        self.exited=False
         # for senseid in set(self.db.senseids)-set(self.parsecatalog.parsed):
         #     self.parse(senseid)
         self.wait("Parsing (ask: {} auto: {})".format(self.parser.ask,
