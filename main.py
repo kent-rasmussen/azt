@@ -5692,11 +5692,22 @@ class Parse(TaskDressing,ui.Window,Segments):
             return self.userresponse.value
     def selectsffromlist(self,l):
         # l=(sf,ps,root,sfafx)
+        def formattuple(l):
+            pfx,sfx=l[-1]
+            if pfx:
+                pfx+='-'
+            if sfx:
+                sfx='-'+sfx
+            if pfx or sfx:
+                rootafxs=[l[2],'affixes:',pfx,sfx]
+            else:
+                rootafxs=[l[2]]
+            return "{} ({} root: {})".format(*l[:2],' '.join(rootafxs))
         # log.info("full option list: {}".format(l))
-        ln=[(i,', '.join([str(j) for j in i])) for i in l if i[1] == self.nominalps]
+        ln=[(i,formattuple(i)) for i in l if i[1] == self.nominalps]
         ln+=[('ON',_("Other Noun"))]
         # log.info("noun option list: {}".format(ln))
-        lv=[(i,', '.join([str(j) for j in i])) for i in l if i[1] == self.verbalps]
+        lv=[(i,formattuple(i)) for i in l if i[1] == self.verbalps]
         lv+=[('OV',_("Other Verb"))]
         # log.info("verb option list: {}".format(lv))
         w=ui.Window(self)
