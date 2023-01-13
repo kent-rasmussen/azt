@@ -5712,6 +5712,12 @@ class Parse(TaskDressing,ui.Window,Segments):
         # log.info("verb option list: {}".format(lv))
         w=ui.Window(self)
         w.title(_("Select second form"))
+        t=ui.Label(w.frame,
+                    text="What form goes with ‘{}’ ({})?"
+                        "".format(self.parser.lcnode.text,self.getgloss()),
+                    font='title',
+                    row=0,column=0,columnspan=2)
+        t.wrap()
         if ln:
             noun=ui.Frame(w.frame, row=1, column=0, sticky='n')
             ui.Label(noun,
