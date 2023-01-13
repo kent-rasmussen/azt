@@ -8396,9 +8396,12 @@ class Report(object):
                         ).format(kwargs))
     def getresults(self,**kwargs):
         def iterateUFgroups(parent,**kwargs):
+            checks=[kwargs['check']]
+            #Use this to distinguish "=" checks from "≠" checks, in that order
             if 'x' in kwargs['check'] and kwargs['cvt'] not in ['CV','VC']: #CV has no C=V...
-                kwargs['check']=rx.sub('x','=',kwargs['check'],count=1)
-            self.docheckreport(parent,**kwargs) #this needs parent
+                checks=[rx.sub('x','=',kwargs['check'],count=1)]+checks
+            for kwargs['check'] in checks:
+                self.docheckreport(parent,**kwargs) #this needs parent
             self.coocurrencetables(xlpr)
         log.info("getresults starting with kwargs {}".format(kwargs))
         usegui=kwargs['usegui']=kwargs.get('usegui',True)
