@@ -5692,7 +5692,6 @@ class Parse(TaskDressing,ui.Window,Segments):
             self.waitunpause()
             return self.userresponse.value
     def selectsffromlist(self,l):
-        # l=(sf,ps,root,sfafx)
         def formattuple(l):
             pfx,sfx=l[-1]
             if pfx:
@@ -5704,6 +5703,7 @@ class Parse(TaskDressing,ui.Window,Segments):
             else:
                 rootafxs=[l[2]]
             return "{} ({} root: {})".format(*l[:2],' '.join(rootafxs))
+        # l=(sf,ps,root,lcafxs,sfafxs)
         # log.info("full option list: {}".format(l))
         if self.exitFlag.istrue():
             return
