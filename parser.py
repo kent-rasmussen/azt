@@ -600,9 +600,9 @@ class Engine(object):
             return
         self.doparsetolx(x[2],x[1],(x[3],x[4]))
         if x[1] == self.nominalps:
-            textof(self.plnode,x[0])
+            self.nodetextvalue('pl',x[0])
         elif x[1] == self.verbalps:
-            textof(self.impnode,x[0])
+            self.nodetextvalue('imp',x[0])
         else:
             log.error("Parsed but neither noun nor verb?")
         window.destroy() #actually a canary button
