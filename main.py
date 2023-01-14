@@ -5815,10 +5815,10 @@ class Parse(TaskDressing,ui.Window,Segments):
             return
         elif r and self.userconfirmation(*r):
             if self.exited:
-                return r
+                return 1
             self.parser.doparsetolx(r[1],*r[4:]) #pass root, too
             return
-        return r
+        return 1 #do not return empty list, bool = False
     def trythreeforms(self):
         r=self.parser.threeforms() #r=1 if skipped
         # log.info("reponse: {} ({})".format(r,type(r)))
