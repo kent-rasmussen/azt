@@ -282,6 +282,73 @@ class Engine(object):
                     log.info("left empty psnode (senseid: {})".format(self.senseid))
             else:
                 log.info("psnode error! senseid: {}; {}".format(self.senseid,e))
+    def addnode(self,tag):
+        #This just makes the node; value is put/picked up later
+        if tag == 'pl':
+            tagged='field'
+            attrs={'type':self.fieldnames[self.nominalps]}
+        elif tag == 'imp':
+            tagged='field'
+            attrs={'type':self.fieldnames[self.verbalps]}
+        elif tag == 'lx':
+            tagged='lexical-unit'
+            attrs={}
+        elif tag == 'lc':
+            tagged='citation'
+            attrs={}
+        else:
+            log.error("Which tag? ({})".format(tag))
+            return
+        n=lift.Node(self.entry,tagged,attrs)
+        setattr(self,tag+'node',n.makeformnode(self.analang,gimmetext=True))
+        log.info("created {} node senseid: {}".format(tag,self.senseid))
+        lift.prettyprint(n)
+        nodename=tag+'node'
+        log.info("{} node value: {} ({})".format(tag,n,type(n)))
+        # exit()
+    def getnode(self,tag):
+        # This retrieves nodes that are in LIFT.
+        if tag == 'pl':
+            tagged='field[@type="{}"]'.format(self.fieldnames[self.nominalps])
+        elif tag == 'imp':
+            tagged='field[@type="{}"]'.format(self.fieldnames[self.verbalps])
+        elif tag == 'lx':
+            tagged='lexical-unit'
+        elif tag == 'lc':
+            tagged='citation'
+        else:
+            log.error("Which tag? ({})".format(tag))
+            return
+        setattr(self,tag+'node',ifone(self.entry.findall(
+                                    '{}/form[@lang="{}"]/text'
+                                    ''.format(tagged,self.analang))))
+        log.info("Got {} node".format(tag))
+    def nodetextvalue(self,tag,text=None):
+        if tag not in ['lx','lc','pl','imp']:
+            log.error("Sorry, dunno what tag this is: {}".format(tag))
+        nodename=tag+'node'
+        try: # text nodes always evaluate False, as they have no child nodes
+            node=getattr(self,nodename)
+            log.info("{} node value: {} ({})".format(tag,node,type(node)))
+            assert hasattr(self,tag+'node')
+            if text:
+                node.text=text
+            setattr(self,tag,node.text) #set this, too
+        except AttributeError as e:
+            if "object has no attribute '{}node'".format(tag) in e.args[0]:
+                self.getnode(tag)
+                self.nodetextvalue(tag,text)
+            elif "'NoneType' object has no attribute" in e.args[0]:
+                if text or tag in ['lx','lc']:
+                    # Make one here, if value supplied or primary fields
+                    self.addnode(tag)
+                    self.nodetextvalue(tag,text)
+                else:
+                    setattr(self,tag,None) #set this, too
+                    self.ps=None #Make this testable, in any case
+                    log.info("left empty {} node ({})".format(tag,self.senseid))
+            else:
+                log.info("{} node error! ({}; {})".format(tag,self.senseid,e))
     def getfields(self):
         #This sets ps if only one second form field found
         lx, lc, pl, imp = self.texts()
@@ -610,20 +677,6 @@ class Engine(object):
         for node in nodes:
             if not lift.iselement(getattr(self,node+'node')):
                 log.info("Missing {} node!".format(node))
-    def getnode(self,node,tag):
-        #use this when the node must exist
-        # log.info("Looking for exactly one {} node ({})".format(tag,node))
-        node=ifone(node)
-        if lift.iselement(node):
-            # log.info("Found exactly one {} xml node".format(tag))
-            return node
-        elif tag == 'lx':
-            n=lift.Node(self.sense,'lexical-unit')
-            n.makeformnode(self.analang)
-        elif tag == 'lc':
-            n=lift.Node(self.sense,'citation')
-            n.makeformnode(self.analang)
-        return n
     def pscheck(self):
         # Return False if any problem
         if not self.ps: #any value is OK
@@ -634,7 +687,8 @@ class Engine(object):
         else:
             return True #not (self.nops or self.badps)
     def parseentry(self, entry, senseid):
-        for attr in ['ps','psnode', 'pssubclass', 'pssubclassnode']:
+        attrs=['lx','lc','ps','pl','imp']
+        for attr in attrs+[i+'node' for i in attrs]:
             try:
                 delattr(self,attr)
             except AttributeError:
@@ -659,29 +713,8 @@ class Engine(object):
         #     return 1# stop here if collecting affixes & w/o ps or non-NV ps
         # log.info("self.secondformfield: {}".format(self.secondformfield))
         # log.info("ps: {}".format(self.ps))
-        # log.info("Looking for "
-        #                                     'lexical-unit/'
-        #                                     'form[@lang="{}"]/'
-        #                                     'text'.format(self.analang))
-        self.lxnode=self.getnode(self.entry.findall('lexical-unit/'
-                                            'form[@lang="{}"]/'
-                                            'text'.format(self.analang)),'lx')
-        self.lcnode=self.getnode(self.entry.findall('citation/'
-                                                'form[@lang="{}"]/'
-                                                'text'
-                                                ''.format(self.analang)),'lc')
-        self.plnode=ifone(self.entry.findall(
-                                    'field[@type="{}"]/'
-                                    'form[@lang="{}"]/text'
-                                    ''.format(self.fieldnames[self.nominalps],
-                                                self.analang)
-                                    ),'pl')
-        self.impnode=ifone(self.entry.findall(
-                                    'field[@type="{}"]/'
-                                    'form[@lang="{}"]/text'
-                                    ''.format(self.fieldnames[self.verbalps],
-                                                self.analang)
-                                    ),'imp')
+        for tag  in ['lx','lc','pl','imp']:
+            self.nodetextvalue(tag)
     def asklevel(self,l=None):
         ls=self.levels()
         if isinstance(l,int) and l in ls:
