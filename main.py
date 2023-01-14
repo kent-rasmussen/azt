@@ -5812,6 +5812,22 @@ class Parse(TaskDressing,ui.Window,Segments):
             return 1
         elif not self.exited:
             self.trytwoforms()
+    def tryoneform(self):
+        log.info("Asking for second form selected")
+        r=self.parser.oneform()
+        if r:
+            self.selectsffromlist(r)
+            log.info("Done selecting from {}".format(r))
+        else:
+            return 1 #no forms to select from, or exited; move on
+        if self.parser.on:
+            # log.info("asking for other noun segments")
+            self.asksegments(self.nominalps)
+        elif self.parser.ov:
+            # log.info("asking for other verb segments")
+            self.asksegments(self.verbalps)
+        if not self.exited:
+            log.info("User seems to have selected a second form, or neither")
     def trytwoforms(self):
         r=self.parser.twoforms()
         # return level, lx, lc, sf, self.ps, afxs #from self.parser.twoforms
@@ -5856,35 +5872,13 @@ class Parse(TaskDressing,ui.Window,Segments):
             log.info("User exited before trytwoforms, returning")
             return
         # badps is OK here, but don't do twoforms if threeforms worked
-        if r and not isinstance(r,tuple) and not self.exitFlag.istrue():
-            self.trytwoforms()
-        # if not self.exitFlag.istrue():
-        log.info("Asking for second form selected")
-        if self.exited:
-            log.info("User exited before oneform, returning")
-            return
-        r=self.parser.oneform()
-        if self.exited:
-            log.info("User exited oneform, returning")
-            return
-        if r and not isinstance(r,list):
-            log.info("?Auto parsed {} with one forms".format(self.senseid))
-        elif r:
-            self.selectsffromlist(r)
-            log.info("Done selecting from {}".format(r))
-            if self.parser.on:
-                # log.info("asking for other noun segments")
-                self.asksegments(self.nominalps)
-            elif self.parser.ov:
-                # log.info("asking for other verb segments")
-                self.asksegments(self.verbalps)
-            if self.exited:
-                log.info("User exited selectsffromlist, returning")
-                return
-            else:
-                log.info("User seems to have selected a second form, or neither")
-            # self.parser.doparsetolx(r[1],*r[4:]) #pass root, too
-        elif not self.exited and not self.exitFlag.istrue():
+        if r and not self.exited:
+            r=self.trytwoforms()
+            # log.info("trytwoforms returned {}".format(r))
+        if r and not self.exited: #and still here
+            r=self.tryoneform()
+            # log.info("tryoneform returned {}".format(r))
+        if r and not self.exited:
             # log.info("Asking for second form typed")
             self.asksegmentsnops()
         if not self.exited:
