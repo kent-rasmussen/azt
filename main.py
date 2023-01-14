@@ -5657,8 +5657,8 @@ class Parse(TaskDressing,ui.Window,Segments):
     def userconfirmation(self,*args):
         # Return True or False only
         def do(x):
-            w.destroy()
             self.userresponse.value=x
+            l.destroy()
         level, lx, lc, sf, ps, afxs = args
         w=ui.Window(self,noexit=True)
         w.title(_("Confirm this combination of affixes?"))
@@ -5672,7 +5672,7 @@ class Parse(TaskDressing,ui.Window,Segments):
                         lc,afxs[0],sf,afxs[1],
                         ps,lx,gloss,
                         )
-        ui.Label(w.frame,text=text,justify='l',
+        l=ui.Label(w.frame,text=text,justify='l',
                     row=0,column=0,columnspan=2)
         ui.Button(w.frame,
                     text=_("Yes!"),
@@ -5683,12 +5683,13 @@ class Parse(TaskDressing,ui.Window,Segments):
                     command=lambda x=False: do(x),
                     row=1,column=1)
         self.waitpause()
-        w.wait_window(w)
+        w.wait_window(l) #canary on label, not window
         if w.exitFlag.istrue():
             # log.info("Exited parse!")
             self.waitdone()
             self.exited=True
         else:
+            w.on_quit()
             self.waitunpause()
             return self.userresponse.value
     def selectsffromlist(self,l):
