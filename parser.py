@@ -524,6 +524,7 @@ class Engine(object):
                     "".format(self.auto,self.ask,best[0],lx,lc,pl,imp,
                                 self.ps,self.senseid))
     def threeforms(self):
+        # Return 1 if not done (incl. skipped)
         # some day, this should be smarter, to handle reduplication and other
         # cases that might split on the root into more than two pieces
         #
@@ -535,7 +536,7 @@ class Engine(object):
         # correct —hence the next line to skip this to manually parse these
         if min(self.auto, self.ask) > 4: #for manual reparsing of what looks obvious
             # log.info("No auto parsing this run")
-            return
+            return 1
         lx, lc, pl, imp = self.texts()
         afxs=None
         if lx and lc and (pl or imp) and self.ps:
