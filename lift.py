@@ -3038,6 +3038,13 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
     lift=Lift(filename)
+    e=Entry(lift,guid='db99ff0c-de93-4727-9d09-e5ef4a8b0557')
+    n=Node(e,'cistation',{'langsy':'none'})
+    n.makeformnode('ńdk')
+    prettyprint(n)
+    if n:
+        print (n.text)
+    exit()
     # lift.convertlxtolc()
     # lift.convertdefntogloss()
     # lift.convertglosstocitation('ha',keep=True)
