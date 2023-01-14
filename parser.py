@@ -529,7 +529,7 @@ class Engine(object):
                 self.ov=True
             else:
                 log.info("Not a tuple, nor known: ({}, {})".format(x,type(x)))
-            window.on_quit()
+            window.destroy() #actually a canary button
             return
         self.doparsetolx(x[2],x[1],(x[3],x[4]))
         if x[1] == self.nominalps:
@@ -538,7 +538,7 @@ class Engine(object):
             textof(self.impnode,x[0])
         else:
             log.error("Parsed but neither noun nor verb?")
-        window.on_quit()
+        window.destroy() #actually a canary button
     def oneform(self):
         # log.info("This is where we set up request for the second form")
         lx, lc, pl, imp = self.texts()
