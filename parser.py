@@ -555,6 +555,8 @@ class Engine(object):
         possibilities=[]
         try:
             for ps in [self.nominalps, self.verbalps]:
+                if not ps in self.catalog.affixes: # move on now
+                    continue
                 for lcafxs in self.catalog.lcaffixes[ps]:
                     log.info("lcafxs: {} ({})".format(lcafxs,type(lcafxs)))
                     if lc.startswith(lcafxs[0]) and lc.endswith(lcafxs[1]):
