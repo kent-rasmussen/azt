@@ -5760,7 +5760,7 @@ class Parse(TaskDressing,ui.Window,Segments):
     def asksegmentsnops(self):
         for ps in [self.nominalps, self.verbalps]:
             r=self.asksegments(ps)
-            if not r: #i.e., returned OK
+            if not r or self.exited: #i.e., returned OK
                 break
     def asksegments(self,ps):
         def do(event=None):
