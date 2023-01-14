@@ -5842,6 +5842,7 @@ class Parse(TaskDressing,ui.Window,Segments):
                                             ''.format(self.senseid))),
                 }
         badps=self.parser.parseentry(**kwargs)
+        log.info("lx: {}, lc: {}, pl: {}, imp: {}".format(*self.parser.texts()))
         r=True #i.e., do the next fn
         if min(self.parser.auto, self.parser.ask) <= 4 and not badps:
             r=self.trythreeforms()

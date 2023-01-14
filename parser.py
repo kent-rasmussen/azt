@@ -614,7 +614,7 @@ class Engine(object):
         # if not lc and not pl and not imp:
         #     # log.info("senseid: {}".format(self.senseid))
         #     log.info(self.senseid)
-        log.info("lx: {}, lc: {}, pl: {}, imp: {}".format(*self.texts()))
+        # log.info("lx: {}, lc: {}, pl: {}, imp: {}".format(*self.texts()))
         if lx and not lc: #switch them, both in node and in local variables
             lc=textof(self.lcnode,lx)
             lx=textof(self.lxnode,'')
