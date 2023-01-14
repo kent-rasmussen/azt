@@ -5776,8 +5776,8 @@ class Parse(TaskDressing,ui.Window,Segments):
             segments.set("")
             b.destroy()
             # w.on_quit()
-        log.info("asking for second form segments for ps: {} ({}; {})"
-                "".format(ps,self.parser.senseid,self.parsen))
+        log.info("asking for second form segments for ‘{}’ ps: {} ({}; {})"
+                "".format(self.parser.lc,ps,self.parser.senseid,self.parsen))
         sfname=self.secondformfield[ps]
         self.waitpause()
         w=ui.Window(self)
