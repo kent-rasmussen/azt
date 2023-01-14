@@ -5969,7 +5969,7 @@ class Parse(TaskDressing,ui.Window,Segments):
             self.parser=parent.parser=parser.Engine(self.parsecatalog,self)
             #These should come from settings
             self.parser.autolevel(5) #no auto
-            self.parser.asklevel(4)
+            self.parser.asklevel(0)
         self.nodetag='citation'
         self.dodone=True #give me words with citation done
         self.checkeach=False #don't confirm each word (default)
