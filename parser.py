@@ -188,15 +188,15 @@ class Engine(object):
         q=0
         try:
             if lcafxs in self.catalog.lcaffixes[ps]:
-                log.info("lc reconstructs with {}+{} (already there)"
-                        "".format(roothyp,lcafxs))
+                # log.info("lc reconstructs with {}+{} (already there)"
+                #         "".format(roothyp,lcafxs))
                 q+=1
         except (AttributeError,KeyError):
             pass
         try:
             if sfafxs in self.catalog.sfaffixes[ps]:
-                log.info("sf reconstructs with {}+{} (already there)"
-                    "".format(roothyp,sfafxs))
+                # log.info("sf reconstructs with {}+{} (already there)"
+                #     "".format(roothyp,sfafxs))
                 q+=1
         except (AttributeError,KeyError):
             pass
@@ -279,7 +279,7 @@ class Engine(object):
                     self.psvalue(ps)
                 else:
                     self.ps=None #Make this testable, in any case
-                    log.info("left empty psnode (senseid: {})".format(self.senseid))
+                    # log.info("left empty psnode (senseid: {})".format(self.senseid))
             else:
                 log.info("psnode error! senseid: {}; {}".format(self.senseid,e))
     def addnode(self,tag):
@@ -304,7 +304,7 @@ class Engine(object):
         log.info("created {} node senseid: {}".format(tag,self.senseid))
         lift.prettyprint(n)
         nodename=tag+'node'
-        log.info("{} node value: {} ({})".format(tag,n,type(n)))
+        # log.info("{} node value: {} ({})".format(tag,n,type(n)))
         # exit()
     def getnode(self,tag):
         # This retrieves nodes that are in LIFT.
@@ -322,14 +322,14 @@ class Engine(object):
         setattr(self,tag+'node',ifone(self.entry.findall(
                                     '{}/form[@lang="{}"]/text'
                                     ''.format(tagged,self.analang))))
-        log.info("Got {} node".format(tag))
+        # log.info("Got {} node".format(tag))
     def nodetextvalue(self,tag,text=None):
         if tag not in ['lx','lc','pl','imp']:
             log.error("Sorry, dunno what tag this is: {}".format(tag))
         nodename=tag+'node'
         try: # text nodes always evaluate False, as they have no child nodes
             node=getattr(self,nodename)
-            log.info("{} node value: {} ({})".format(tag,node,type(node)))
+            # log.info("{} node value: {} ({})".format(tag,node,type(node)))
             assert hasattr(self,tag+'node')
             if text:
                 node.text=text
@@ -346,7 +346,7 @@ class Engine(object):
                 else:
                     setattr(self,tag,None) #set this, too
                     self.ps=None #Make this testable, in any case
-                    log.info("left empty {} node ({})".format(tag,self.senseid))
+                    # log.info("left empty {} node ({})".format(tag,self.senseid))
             else:
                 log.info("{} node error! ({}; {})".format(tag,self.senseid,e))
     def getfields(self):
