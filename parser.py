@@ -474,7 +474,7 @@ class Engine(object):
             raise
         sfafxs=tuple(sf.split(best[1]))
         lcafxs=tuple(lc.split(best[1]))
-        log.info(best)
+        # log.info("Best match: {}".format(best))
         if best[0] == 4:
             log.info("Excellent match; "
                     "Found root {} in lc: {} and sf: {}, "
