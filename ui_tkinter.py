@@ -577,7 +577,7 @@ class Exitable(object):
         on exit, the logic to stop needs to be elsewhere, e.g.,
         `if self.exitFlag.istrue(): return`"""
         if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
-            print("Setting window exit flag True!")
+            log.info("Setting window ({}) exit flag True!".format(self))
             self.exitFlag.true()
         if self.mainwindow: #exit afterwards if main window
             self.exittoroot()
