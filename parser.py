@@ -571,7 +571,7 @@ class Engine(object):
                                 sf=root.join(sfafxs)
                                 # log.info("sf: {} ({}; {}, {})"
                                 #         "".format(sf,ps,root,sfafx))
-                                possibilities+=[(sf,ps,root,sfafxs)]
+                                possibilities+=[(sf,ps,root,lcafxs,sfafxs)]
                                 collected+=[sfafxs]
                                 # store This pair as priority
                         for sfafxs in self.catalog.sfaffixes[ps]:
