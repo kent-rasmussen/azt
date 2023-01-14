@@ -5798,6 +5798,8 @@ class Parse(TaskDressing,ui.Window,Segments):
         self.waitunpause()
         if not segments.get():
             return 1
+        elif not self.exited:
+            self.trytwoforms()
     def trytwoforms(self):
         r=self.parser.twoforms()
         # return level, lx, lc, sf, self.ps, afxs #from self.parser.twoforms
