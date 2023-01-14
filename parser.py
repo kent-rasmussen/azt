@@ -393,14 +393,14 @@ class Engine(object):
     def twoforms(self):
         if self.ask > 4:
             log.info("Asking for the impossible!")
-            return
+            return 1
         lx, lc, pl, imp = self.texts()
         if lx and not lc: #switch them, both in node and in local variables
             lc=textof(self.lcnode,lx)
             lx=textof(self.lxnode,'')
         if not (lc and (pl or imp)): #this only parses nouns and verbs
             log.info("Missing forms! (lc:{}; pl:{} imp:{})".format(lc, pl, imp))
-            return
+            return 1
         # log.info("Two There! (lc:{}; pl:{} imp:{}): Parse!".format(lc, pl, imp))
         # These return an empty list for empty sf
         nroots=roothypgenerator(lc,pl)
@@ -417,12 +417,12 @@ class Engine(object):
         if max(bestn[0], bestv[0]) < self.ask:
             log.info("Neither Noun ({}) nor Verb ({}) is good enough (ask: {})"
                     "".format(bestn[0], bestv[0], self.ask))
-            return # We won't do this one anyway; give up now.
+            return 1 # We won't do this one anyway; give up now.
         noun=verb=False #figure this out next
         if not (bestn[1] or bestv[1]):
             log.info("No nroot of value ({}:{}): {}".format(lc,pl,nroots))
             log.info("No vroot of value ({}:{}): {}".format(lc,imp,vroots))
-            return #no found affixes built either form, do manually
+            return 1 #no found affixes built either form, do manually
         if bestn[1] and bestv[1]:
             # This shouldn't happen often: both forms have lc lcs which build
             # at least one form with a known affix
@@ -449,7 +449,7 @@ class Engine(object):
                 else:
                     log.info("Noun=verb ({}/{})".format(bestn,bestv))
                     self.reportpsproblemtouser()
-                    return
+                    return 1
         elif bestn[1]:
             self.psvalue(self.nominalps)
             noun=True
@@ -510,7 +510,7 @@ class Engine(object):
             log.info("Level {} match, parsing automatically (auto: {})"
                     "".format(best[0],self.auto))
             self.doparsetolx(best[1],ps,(lcafxs, sfafxs))
-            return 1
+            return
         elif best[0] >= self.ask:
         # and self.askusertoconfirmaffixcombo(
         #                                 lc, sf, best[1], ps, (lcafxs, sfafxs)
@@ -523,6 +523,7 @@ class Engine(object):
             log.info("{}/{} skipping ({}) lx:{}; lc:{}; sf:{}; imp:{}; ps:{} {}"
                     "".format(self.auto,self.ask,best[0],lx,lc,pl,imp,
                                 self.ps,self.senseid))
+            return 1
     def threeforms(self):
         # Return 1 if not done (incl. skipped)
         # some day, this should be smarter, to handle reduplication and other
