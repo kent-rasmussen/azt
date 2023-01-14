@@ -109,6 +109,17 @@ def texmllike(x):
         x=x.replace(y,repls[y])
     x=re.sub('\\\\textless{}(([\?!/]|tex:)[^\\\\]*)\\\\textgreater{}',"<\\1>",x)
     return x
+def glossdeftoform(x):
+    if isinstance(x,str):
+        x=re.sub('\(.*\)','',x)
+        x=re.sub(',.*','',x)
+        x=re.sub('^ *','',x)
+        x=re.sub(' .*','',x)
+        # x=re.sub('^(([^() ]+)( [^() ]+){,2})(.*)*$','\\1',x) #up to three words, no parens
+        # x=re.sub(',$','',x)
+        # x=re.sub(', ',',',x)
+        # x=re.sub(' ','.',x)
+        return x
 def glossifydefn(x):
     if isinstance(x,str):
         x=re.sub('^(([^() ]+)( [^() ]+){,2})(.*)*$','\\1',x) #up to three words, no parens
