@@ -5845,6 +5845,9 @@ class Parse(TaskDressing,ui.Window,Segments):
         r=True #i.e., do the next fn
         if min(self.parser.auto, self.parser.ask) <= 4 and not badps:
             r=self.trythreeforms()
+        if self.exited:
+            log.info("User exited before trytwoforms, returning")
+            return
         # badps is OK here, but don't do twoforms if threeforms worked
         if r and not isinstance(r,tuple) and not self.exitFlag.istrue():
             self.trytwoforms()
