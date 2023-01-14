@@ -5764,11 +5764,12 @@ class Parse(TaskDressing,ui.Window,Segments):
                 break
     def asksegments(self,ps):
         def do(event=None):
-            parser.psnode.text=ps
+            self.parser.psvalue(ps)
             if ps == self.nominalps:
-                sf=parser.plnode.text=segments.get()
+                tag='pl'
             elif ps == self.verbalps:
-                sf=parser.impnode.text=segments.get()
+                tag='imp'
+            self.parser.nodetextvalue(tag,segments.get())
             b.destroy()
         def next(event=None):
             segments.set("")
