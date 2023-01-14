@@ -1593,7 +1593,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             "".format(kwargs['from'],fft.text,
                                         kwargs['to'],to.text,ffl))
                     if not to.text: #don't overwrite info
-                        to.text=fft.text
+                        if (kwargs['from'] in ['definition','gloss'] and
+                                kwargs['to'] == 'citation'):
+                            to.text=rx.glossdeftoform(fft.text)
+                        else:
+                            to.text=fft.text
                     if to.text == fft.text and not kwargs.get('keep'):
                         fft.text='' #clear if redundant before or after move
     def convertdefntogloss(self,**kwargs):
