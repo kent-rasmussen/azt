@@ -5887,10 +5887,9 @@ class Parse(TaskDressing,ui.Window,Segments):
         elif not self.exited and not self.exitFlag.istrue():
             # log.info("Asking for second form typed")
             self.asksegmentsnops()
-        self.parsen+=1
-        self.maybewrite()
-        # log.info("added to make ({}) {}".format(affixes[0],
-            #                                         self.affixes[affixes[0]]))
+        if not self.exited:
+            self.parsen+=1
+            self.maybewrite()
     def senseidstoparse(self,senseids=None,all=False,n=-1): #n/limit=-1#1000
         if self.senseidtodo:
             return [self.senseidtodo]
