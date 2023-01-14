@@ -5735,7 +5735,7 @@ class Parse(TaskDressing,ui.Window,Segments):
                     text="Select {} form".format(
                                         self.secondformfield[self.nominalps]),
                     row=0,column=0)
-            bfn=ui.ScrollingButtonFrame(noun, optionlist=ln, window=w,
+            bfn=ui.ScrollingButtonFrame(noun, optionlist=ln, window=t,
                                         command=self.parser.dooneformparse,
                                         row=1, column=0
                                         )
@@ -5745,16 +5745,17 @@ class Parse(TaskDressing,ui.Window,Segments):
                     text="Select {} form".format(
                                         self.secondformfield[self.verbalps]),
                     row=0,column=0)
-            bfv=ui.ScrollingButtonFrame(verb, optionlist=lv, window=w,
+            bfv=ui.ScrollingButtonFrame(verb, optionlist=lv, window=t,
                                         command=self.parser.dooneformparse,
                                         row=1, column=0
                                         )
-        w.wait_window(w)
         neitherb=ui.Button(w.frame, text=_("Neither"),
                         command=neither,
                         row=1, column=2, sticky='n')
+        w.wait_window(t)
         if w.exitFlag.istrue():
             self.exited=True
+        w.on_quit()
         self.waitunpause()
     def asksegmentsnops(self):
         for ps in [self.nominalps, self.verbalps]:
@@ -5768,10 +5769,11 @@ class Parse(TaskDressing,ui.Window,Segments):
                 sf=parser.plnode.text=segments.get()
             elif ps == self.verbalps:
                 sf=parser.impnode.text=segments.get()
-            w.on_quit()
+            b.destroy()
         def next(event=None):
             segments.set("")
-            w.on_quit()
+            b.destroy()
+            # w.on_quit()
         log.info("asking for second form segments for ps: {} ({}; {})"
                 "".format(ps,self.parser.senseid,self.parsen))
         sfname=self.secondformfield[ps]
@@ -5786,8 +5788,8 @@ class Parse(TaskDressing,ui.Window,Segments):
         segments=ui.StringVar()
         ui.EntryField(w.frame,textvariable=segments,
                         row=1,column=0)
-        ui.Button(w.frame,text=_("OK"),cmd=do,
-                        row=2,column=0)
+        b=ui.Button(w.frame,text=_("OK"),cmd=do,
+                        row=2,column=0, sticky='e')
         ui.Button(w.frame,text=_("Not a {}").format(ps),cmd=next,
                         row=2,column=1)
         w.wait_window(w)
