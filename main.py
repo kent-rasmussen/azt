@@ -5780,22 +5780,27 @@ class Parse(TaskDressing,ui.Window,Segments):
         self.waitpause()
         w=ui.Window(self)
         w.title(_("Type second form"))
-        ui.Label(w.frame,
+        l=ui.Label(w.frame,
                 text="What {} form goes with ‘{}’ ({})?"
                     "".format(sfname,self.parser.lcnode.text,self.getgloss()),
                 font='title',
-                row=0,column=0)
+                row=0,column=0,columnspan=2)
+        l.wrap()
         segments=ui.StringVar()
-        ui.EntryField(w.frame,textvariable=segments,
+        segments.set(self.parser.lcnode.text)
+        e=ui.EntryField(w.frame,textvariable=segments,
                         row=1,column=0)
         b=ui.Button(w.frame,text=_("OK"),cmd=do,
                         row=2,column=0, sticky='e')
         ui.Button(w.frame,text=_("Not a {}").format(ps),cmd=next,
-                        row=2,column=1)
-        w.wait_window(w)
+                        row=2,column=1, sticky='e')
+        e.focus_set()
+        e.bind('<Return>',do)
+        w.wait_window(b)
         if w.exitFlag.istrue():
             self.exited=True
         self.waitunpause()
+        w.on_quit()
         if not segments.get():
             return 1
         elif not self.exited:
