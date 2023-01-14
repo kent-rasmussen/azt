@@ -627,7 +627,7 @@ class Engine(object):
                 if not ps in self.catalog.affixes: # move on now
                     continue
                 for lcafxs in self.catalog.lcaffixes[ps]:
-                    log.info("lcafxs: {} ({})".format(lcafxs,type(lcafxs)))
+                    # log.info("lcafxs: {} ({})".format(lcafxs,type(lcafxs)))
                     if lc.startswith(lcafxs[0]) and lc.endswith(lcafxs[1]):
                         root=rx.sub('^'+lcafxs[0],'',
                                     rx.sub(lcafxs[1]+'$','',lc,1)
@@ -665,7 +665,7 @@ class Engine(object):
             # log.info("ps: {}; lcafxs: {}".format(ps,lcafxs))
             # log.info("sfafxs: {}".format(sfafxs))
             raise
-        log.info(possibilities)
+        # log.info("oneform possibilities output: {}".format(possibilities))
         return possibilities
     def missingnodecheck(self):
         nodes=['lx','lc']
