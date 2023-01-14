@@ -5660,6 +5660,8 @@ class Parse(TaskDressing,ui.Window,Segments):
             self.userresponse.value=x
             l.destroy()
         level, lx, lc, sf, ps, afxs = args
+        if self.exitFlag.istrue():
+            return
         w=ui.Window(self,noexit=True)
         w.title(_("Confirm this combination of affixes?"))
         self.userresponse.value=False
@@ -5777,6 +5779,8 @@ class Parse(TaskDressing,ui.Window,Segments):
             segments.set("")
             b.destroy()
             # w.on_quit()
+        if self.exitFlag.istrue():
+            return
         log.info("asking for second form segments for ‘{}’ ps: {} ({}; {})"
                 "".format(self.parser.lc,ps,self.parser.senseid,self.parsen))
         sfname=self.secondformfield[ps]
