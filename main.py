@@ -5691,6 +5691,7 @@ class Parse(TaskDressing,ui.Window,Segments):
         else:
             w.on_quit()
             self.waitunpause()
+            # log.info("User responded {}".format(self.userresponse.value))
             return self.userresponse.value
     def selectsffromlist(self,l):
         def formattuple(l):
