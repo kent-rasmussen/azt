@@ -717,7 +717,7 @@ def textof(node,value=None):
 def ifonetattr(l,nt=None):
     if l and not len(l)-1:
         return l[0].text
-def ifone(l,nt=None):
+def ifone(l):
     if l and not len(l)-1:
         return l[0]
 def roothypgenerator(a,b):
