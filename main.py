@@ -5689,6 +5689,8 @@ class Parse(TaskDressing,ui.Window,Segments):
                     row=2,column=0,columnspan=2)
         self.waitpause()
         w.wait_window(l) #canary on label, not window
+        # log.info("exit flag for w({}):{}; self({}):{}"
+        #         "".format(w,w.exitFlag,self,self.exitFlag))
         if w.exitFlag.istrue():
             # log.info("Exited parse!")
             self.waitdone()
