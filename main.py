@@ -5703,6 +5703,9 @@ class Parse(TaskDressing,ui.Window,Segments):
             else:
                 rootafxs=[l[2]]
             return "{} ({} root: {})".format(*l[:2],' '.join(rootafxs))
+        def neither():
+            self.parsen-=1 #just to keep the count correct, as this looks parsed
+            t.destroy()
         # l=(sf,ps,root,lcafxs,sfafxs)
         # log.info("full option list: {}".format(l))
         if self.exitFlag.istrue():
@@ -5743,6 +5746,9 @@ class Parse(TaskDressing,ui.Window,Segments):
                                         row=1, column=0
                                         )
         w.wait_window(w)
+        neitherb=ui.Button(w.frame, text=_("Neither"),
+                        command=neither,
+                        row=1, column=2, sticky='n')
         if w.exitFlag.istrue():
             self.exited=True
         self.waitunpause()
