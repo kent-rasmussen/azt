@@ -5855,6 +5855,9 @@ class Parse(TaskDressing,ui.Window,Segments):
             return
         return r
     def parse(self,):
+        # These functions return nothing when the parse goes through, 1 when
+        # not done. If the user exits, self.exited is set
+        r=True #i.e., do the next fn
         kwargs={'senseid':self.senseid,
                 'entry':ifone(self.db.nodes.findall('entry/sense[@id="{}"]/..'
                                             ''.format(self.senseid))),
