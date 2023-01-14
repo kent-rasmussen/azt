@@ -5858,7 +5858,7 @@ class Parse(TaskDressing,ui.Window,Segments):
                 log.info("User exited selectsffromlist, returning")
                 return
             else:
-                log.info("User seems to have selected a second form")
+                log.info("User seems to have selected a second form, or neither")
             # self.parser.doparsetolx(r[1],*r[4:]) #pass root, too
         elif not self.exited and not self.exitFlag.istrue():
             # log.info("Asking for second form typed")
