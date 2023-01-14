@@ -4709,11 +4709,11 @@ class TaskChooser(TaskDressing,ui.Window):
         log.info("lexemesdone by lang: {}".format(lexemesdone))
         log.info("citationsdone by lang: {}".format(citationsdone))
         #There should never be more lexemes than citation forms.
-        for l in lexemesdone:
-            if l not in citationsdone or citationsdone[l] < lexemesdone[l]:
-                w=self.asktoconvertlxtolc()
-                w.wait_window(w) # wait for this answer before moving on
-                break #just ask this once
+        # for l in lexemesdone:
+        #     if l not in citationsdone or citationsdone[l] < lexemesdone[l]:
+        #         w=self.asktoconvertlxtolc()
+        #         w.wait_window(w) # wait for this answer before moving on
+        #         break #just ask this once
         self.getcawlmissing()
         log.info("nfields in db: {}".format(self.db.nfields))
         log.info("wannotations in db: {}".format(self.db.nfieldswannotations))
