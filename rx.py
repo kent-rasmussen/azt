@@ -330,6 +330,8 @@ if __name__ == '__main__':
     splitxpath(y)
     y="field[@type='{}'][@value^='{}']".format(impname,1)
     splitxpath(y)
+    x='be quench, extinguish'
+    print(glossdeftoform(x))
     # s='ááààééèèííììóóòòúúùù'
     # s2=makeprecomposed(s)
     # print(s,s2)
