@@ -551,11 +551,12 @@ class Engine(object):
             log.info("Atumatic parse on three forms with ps (auto: {})"
                     "".format(self.auto))
             self.addaffixset(self.ps,afxs)
-            return 1
+            return
         elif afxs and 4 >= self.ask:
             log.info("Match with three forms with ps, asking for confirmation "
                     "(ask: {})".format(self.ask))
             return 4, lx, lc, sf, self.ps, afxs
+        return 1
     def doifallbutps(self, lx, lc, pl, imp):
         """This is for when you have three forms, but no known affix combos,
         nor ps marked. probably not very useful.
