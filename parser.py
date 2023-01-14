@@ -227,6 +227,7 @@ class Engine(object):
             log.info("adding {}".format(afxtuple))
     def doparsetolx(self,root,ps,afxtuple):
         #This stores root, ps, and affixes, once decided on
+        log.info("executing doparsetolx")
         textof(self.lxnode,root)
         self.psvalue(ps)
         self.pssubclassvalue(afxtuple)
