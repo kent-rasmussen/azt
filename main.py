@@ -5831,7 +5831,7 @@ class Parse(TaskDressing,ui.Window,Segments):
     def trytwoforms(self):
         r=self.parser.twoforms()
         # return level, lx, lc, sf, self.ps, afxs #from self.parser.twoforms
-        if r and not isinstance(r,tuple):
+        if not r:
             log.info("Auto parsed {} with two forms".format(self.senseid))
             return
         elif r and isinstance(r,tuple) and self.userconfirmation(*r):
@@ -5839,7 +5839,8 @@ class Parse(TaskDressing,ui.Window,Segments):
             return
         return 1 #do not return empty list, bool = False
     def trythreeforms(self):
-        r=self.parser.threeforms() #r=1 if skipped
+        r=self.parser.threeforms()
+        #This gives r= tuple to check, or 1 if skipped. no UI = no self.exit set
         # log.info("reponse: {} ({})".format(r,type(r)))
         if not r:
             log.info("Auto parsed {} with three forms (returned {})"
