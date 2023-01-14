@@ -5712,16 +5712,20 @@ class Parse(TaskDressing,ui.Window,Segments):
             return
         self.waitpause()
         ln=[(i,formattuple(i)) for i in l if i[1] == self.nominalps]
-        ln+=[('ON',_("Other Noun"))]
+        ln+=[('ON',_("Another {}").format(self.secondformfield[self.nominalps]))]
         # log.info("noun option list: {}".format(ln))
         lv=[(i,formattuple(i)) for i in l if i[1] == self.verbalps]
-        lv+=[('OV',_("Other Verb"))]
+        lv+=[('OV',_("Another {}").format(self.secondformfield[self.verbalps]))]
         # log.info("verb option list: {}".format(lv))
         w=ui.Window(self)
         w.title(_("Select second form"))
         t=ui.Label(w.frame,
-                    text="What form goes with ‘{}’ ({})?"
-                        "".format(self.parser.lcnode.text,self.getgloss()),
+                    text="What is the {} or {} of ‘{}’ ({})?"
+                        "".format(
+                        self.secondformfield[self.nominalps],
+                        self.secondformfield[self.verbalps],
+                        self.parser.lcnode.text,self.getgloss()
+                                ),
                     font='title',
                     row=0,column=0,columnspan=2)
         t.wrap()
