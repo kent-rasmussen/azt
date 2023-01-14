@@ -5834,9 +5834,7 @@ class Parse(TaskDressing,ui.Window,Segments):
         if r and not isinstance(r,tuple):
             log.info("Auto parsed {} with two forms".format(self.senseid))
             return
-        elif r and self.userconfirmation(*r):
-            if self.exited:
-                return 1
+        elif r and isinstance(r,tuple) and self.userconfirmation(*r):
             self.parser.doparsetolx(r[1],*r[4:]) #pass root, too
             return
         return 1 #do not return empty list, bool = False
@@ -5848,8 +5846,6 @@ class Parse(TaskDressing,ui.Window,Segments):
                     "".format(self.senseid,r))
             return
         elif r and isinstance(r,tuple) and self.userconfirmation(*r):
-            if self.exited:
-                return
             # return level, lx, lc, sf, self.ps, afxs #from self.parser.threeforms
             log.info("r={}".format(r))
             log.info("sending {}".format(r[4:]))
@@ -5865,12 +5861,8 @@ class Parse(TaskDressing,ui.Window,Segments):
                 }
         badps=self.parser.parseentry(**kwargs)
         log.info("lx: {}, lc: {}, pl: {}, imp: {}".format(*self.parser.texts()))
-        r=True #i.e., do the next fn
         if min(self.parser.auto, self.parser.ask) <= 4 and not badps:
             r=self.trythreeforms()
-        if self.exited:
-            log.info("User exited before trytwoforms, returning")
-            return
         # badps is OK here, but don't do twoforms if threeforms worked
         if r and not self.exited:
             r=self.trytwoforms()
