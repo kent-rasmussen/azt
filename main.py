@@ -5684,6 +5684,9 @@ class Parse(TaskDressing,ui.Window,Segments):
                     text=_("No!"),
                     command=lambda x=False: do(x),
                     row=1,column=1)
+        ui.Label(w.frame,text=self.currentformnotice(),
+                    font='small',justify='l',
+                    row=2,column=0,columnspan=2)
         self.waitpause()
         w.wait_window(l) #canary on label, not window
         if w.exitFlag.istrue():
@@ -5756,6 +5759,9 @@ class Parse(TaskDressing,ui.Window,Segments):
         neitherb=ui.Button(w.frame, text=_("Neither"),
                         command=neither,
                         row=1, column=2, sticky='n')
+        ui.Label(w.frame,text=self.currentformnotice(),
+                    font='small',justify='l',
+                    row=2,column=0,columnspan=3)
         w.wait_window(t)
         if w.exitFlag.istrue():
             self.exited=True
@@ -5766,6 +5772,13 @@ class Parse(TaskDressing,ui.Window,Segments):
             r=self.asksegments(ps)
             if not r or self.exited: #i.e., returned OK
                 break
+    def currentformnotice(self):
+        return _("currently: {} ({ps} root), {}, {} ({pl}), {} ({imp})"
+                ).format(*self.parser.texts(),
+                        ps=self.parser.ps,
+                        pl=self.secondformfield[self.nominalps],
+                        imp=self.secondformfield[self.verbalps]
+                        )
     def asksegments(self,ps):
         def do(event=None):
             self.parser.psvalue(ps)
@@ -5801,6 +5814,9 @@ class Parse(TaskDressing,ui.Window,Segments):
                         row=2,column=0, sticky='e')
         ui.Button(w.frame,text=_("Not a {}").format(ps),cmd=next,
                         row=2,column=1, sticky='e')
+        ui.Label(w.frame,text=self.currentformnotice(),
+                    font='small',justify='l',
+                    row=3,column=0,columnspan=2)
         e.focus_set()
         e.bind('<Return>',do)
         w.wait_window(b)
