@@ -1650,7 +1650,7 @@ class Node(ET.Element):
     def __init__(self, parent, tag, attrib={}, **kwargs):
         super(Node, self).__init__(tag, attrib, **kwargs)
         parent.append(self)
-class Entry(object): # what does "object do here?"
+class Entry(ET.Element): # what does "object do here?"
     """I think the right path forward is to make this the base thing searched,
     with senses in that, and examples in that. each should have a class method
     to find things, including parents (which would maybe just be stored in
@@ -1716,7 +1716,7 @@ class Entry(object): # what does "object do here?"
         # self.lexeme=db.get('lexeme',guid=guid) #don't use this!
         self.lc=db.citationorlexeme(guid=guid,lang=self.analang)
         self.glosses=[]
-        for g in self.glosslangs:
+        for g in self.db.glosslangs:
             self.glosses.append(db.glossordefn(guid=guid,lang=g))
         # self.citation=get.citation(self,self.analang)
         # self.gloss=get.obentrydefn(self, self.db.glosslang) #entry.get.gloss(self, self.db.glosslang, guid)
@@ -1724,10 +1724,10 @@ class Entry(object): # what does "object do here?"
         # self.plural=db.get('plural',guid=guid)
         # log.info("Looking for pronunciation field locations...")
         self.tone={}
-        for location in self.db.get('pronunciationfieldlocation',guid=guid,
-            fieldtype='tone'):
-            # log.info(' '.join('Found:', location))
-            self.tone[location]=db.get('pronunciationfieldvalue',guid=guid,location=location,fieldtype='tone')
+        # for location in self.db.get('pronunciationfieldlocation',guid=guid,
+        #     fieldtype='tone'):
+        #     # log.info(' '.join('Found:', location))
+        #     self.tone[location]=db.get('pronunciationfieldvalue',guid=guid,location=location,fieldtype='tone')
         """These depend on check analysis, should move..."""
         #self.plural=db.get('fieldvalue',guid=guid,lang=self.analang,fieldtype=db.pluralname)
         #self.imperative=db.get('fieldvalue',guid=guid,lang=self.analang,fieldtype=db.imperativename)
