@@ -3124,7 +3124,7 @@ class Settings(object):
         # if self.taskchooser.donew['collectionlc']:
         #     self.ifcollectionlc()
         self.attrschanged=[]
-class TaskDressing(HasMenus,object):
+class TaskDressing(HasMenus,ui.Window):
     """This Class covers elements that belong to (or should be available to)
     all tasks, e.g., menus and button appearance."""
     def taskicon(self):
@@ -4306,9 +4306,6 @@ class TaskDressing(HasMenus,object):
                 parent.status.task(self)
         """Whenever this runs, it's the main window."""
         self.taskchooser.mainwindowis=self
-        self.mainwindow=True
-        self.withdraw() #made visible by chooser when complete
-        self.maketitle()
         """At some point, I need to think through which attributes are needed,
         and if I can get them all into objects, read/writeable with files."""
         """These are raw attributes from file"""
@@ -4329,6 +4326,11 @@ class TaskDressing(HasMenus,object):
                     setattr(self,k,False)
         if self.taskchooser.ifcollectionlcsettingsdone:
             self.makecvtok()
+        # Make the actual window
+        ui.Window.__init__(self,parent)
+        self.mainwindow=True
+        self.withdraw() #made visible by chooser when complete
+        self.maketitle()
         ui.ContextMenu(self)
         self.tableiteration=0
         self.makestatusframe()
@@ -4336,7 +4338,7 @@ class TaskDressing(HasMenus,object):
         self.correlatemenus()
         # back=ui.Button(self.outsideframe,text=_("Tasks"),cmd=self.taskchooser)
         # self.setfontsdefault()
-class TaskChooser(TaskDressing,ui.Window):
+class TaskChooser(TaskDressing):
     """This class stores the hierarchy of tasks to do in A→Z+T, plus the
     minimum and optimum prerequisites for each. Based on these, it presents
     to the user a default (highest in hierarchy without optimum fulfilled)
@@ -4931,7 +4933,6 @@ class TaskChooser(TaskDressing,ui.Window):
         self.showingreports=False
         self.ifcollectionlcsettingsdone=False
         self.interfacelangs=getinterfacelangs()
-        ui.Window.__init__(self,parent)
         self.setmainwindow(self)
         self.splash = Splash(self)
         self.filename=FileChooser(self).name
@@ -5513,20 +5514,19 @@ class WordCollection(Segments):
     def __init__(self, parent):
         Segments.__init__(self,parent)
         self.dodone=False
-class WordCollectionLexeme(TaskDressing,ui.Window,WordCollection):
+class WordCollectionLexeme(TaskDressing,WordCollection):
     def tasktitle(self):
         return _("Word Collection for Lexeme Forms")
     def __init__(self, parent): #frame, filename=None
         """This should never really be used, though I made it first, so I've
         left it"""
-        ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         WordCollection.__init__(self,parent)
         log.info("Initializing {}".format(self.tasktitle()))
         #Status frame is 0,0
         self.nodetag='lexical-unit'
         self.getwords()
-class WordCollectionCitation(TaskDressing,ui.Window,WordCollection):
+class WordCollectionCitation(TaskDressing,WordCollection):
     def taskicon(self):
         return program['theme'].photo['iconWord']
     def tooltip(self):
@@ -5560,14 +5560,13 @@ class WordCollectionCitation(TaskDressing,ui.Window,WordCollection):
     def tasktitle(self):
         return _("Add Words") # for Citation Forms
     def __init__(self, parent): #frame, filename=None
-        ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         WordCollection.__init__(self,parent)
         log.info("Initializing {}".format(self.tasktitle()))
         #Status frame is 0,0
         self.nodetag='citation' #lift.Entry.citationformnodeofentry
         self.getwords()
-class Parse(TaskDressing,ui.Window,Segments):
+class Parse(TaskDressing,Segments):
     """docstring for Parse."""
     def taskicon(self):
         return program['theme'].photo['iconWord']
@@ -5971,7 +5970,6 @@ class Parse(TaskDressing,ui.Window,Segments):
     def __init__(self, parent): #frame, filename=None
         log.info("Initializing {}".format(self.tasktitle()))
         self.senseidtodo=None
-        ui.Window.__init__(self,parent)
         self.withdraw()
         TaskDressing.__init__(self,parent)
         Segments.__init__(self,parent)
@@ -6064,7 +6062,7 @@ class ParseSliceWords(ParseSlice):
     def __init__(self, parent): #frame, filename=None
         ParseSlice.__init__(self,parent)
         self.checkeach=True #confirm each word
-class Placeholder(TaskDressing,ui.Window):
+class Placeholder(TaskDressing):
     """Fake check, placeholder for now."""
     def taskicon(self):
         return program['theme'].photo['icon']
@@ -6092,7 +6090,6 @@ class Placeholder(TaskDressing,ui.Window):
     def tasktitle(self):
         return _("Placeholder Check2")
     def __init__(self, parent): #frame, filename=None
-        ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         log.info("Initializing {}".format(self.tasktitle()))
         for r in range(5):
@@ -7887,7 +7884,7 @@ class Sound(object):
         lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
     def __init__(self):
         self.soundcheck()
-class Record(Sound,TaskDressing,ui.Window):
+class Record(Sound,TaskDressing):
     """This holds all the Sound methods specific for Recording."""
     def showentryformstorecordpage(self):
         #The info we're going for is stored above sense, hence guid.
@@ -8155,7 +8152,6 @@ class Record(Sound,TaskDressing,ui.Window):
                     command=next).grid(row=1,column=0)
         self.donewpyaudio()
     def __init__(self,parent):
-        ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         Sound.__init__(self)
         self.mikecheck() #only ask for settings check if recording
@@ -9389,10 +9385,9 @@ class Background(object):
                 "".format(self.do.__name__))
         self.do=lambda fn=self.do:self.background(fn)
         self.frame.status.redofinalbuttons() #because the fns changed
-class SortCV(Sort,Segments,TaskDressing,ui.Window):
+class SortCV(Sort,Segments,TaskDressing):
     """docstring for SortCV."""
     def __init__(self, parent):
-        ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         Sort.__init__(self, parent)
         Segments.__init__(self,parent)
@@ -9630,7 +9625,7 @@ class SortCV(Sort,Segments,TaskDressing,ui.Window):
                 #entry.newform = re.sub(check.subcheck, choice, entry.lexeme, count=1)
         print(entry.newform)
         window.destroy()
-class SortV(Sort,Segments,TaskDressing,ui.Window):
+class SortV(Sort,Segments,TaskDressing):
     def taskicon(self):
         return program['theme'].photo['iconV']
     def tasktitle(self):
@@ -9647,14 +9642,14 @@ class SortV(Sort,Segments,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def __init__(self, parent):
-        ui.Window.__init__(self,parent)
+        # ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         self.params.cvt('V')
         Sort.__init__(self, parent)
         Segments.__init__(self,parent)
         # super(SortV, self).__init__()
         # Sort.__init__(self)
-class SortC(Sort,Segments,TaskDressing,ui.Window):
+class SortC(Sort,Segments,TaskDressing):
     def taskicon(self):
         return program['theme'].photo['iconC']
     def tasktitle(self):
@@ -9671,14 +9666,13 @@ class SortC(Sort,Segments,TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def __init__(self, parent):
-        ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         self.params.cvt('C')
         Sort.__init__(self, parent)
         Segments.__init__(self,parent)
         # super(SortC, parent).__init__()
         # Sort.__init__(self)
-class SortT(Sort,Tone,TaskDressing,ui.Window):
+class SortT(Sort,Tone,TaskDressing):
     def taskicon(self):
         return program['theme'].photo['iconT']
     def tasktitle(self):
@@ -9696,7 +9690,6 @@ class SortT(Sort,Tone,TaskDressing,ui.Window):
                 }
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self)
-        ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         self.params.cvt('T')
         Sort.__init__(self, parent)
@@ -9726,7 +9719,7 @@ class SortT(Sort,Tone,TaskDressing,ui.Window):
         self.guidstosort.append(guid)
         self.guidssorted.remove(guid)
     """Doing stuff"""
-class Transcribe(Sound,Sort,TaskDressing,ui.Window):
+class Transcribe(Sound,Sort,TaskDressing):
     def updateerror(self,event=None):
         self.errorlabel['text'] = ''
     def switchgroups(self,comparison=None):
@@ -10108,7 +10101,6 @@ class Transcribe(Sound,Sort,TaskDressing,ui.Window):
         """Store these variables above, finish with (destroying window with
         local variables):"""
     def __init__(self,parent): #frame, filename=None
-        ui.Window.__init__(self, parent)
         TaskDressing.__init__(self, parent)
         parent.settings.makeeverythingok()
         self.mistake=False #track when a user has made a mistake
@@ -10226,7 +10218,7 @@ class TranscribeT(Transcribe,Tone):
         self.glyphspossible=None
         Transcribe.__init__(self,parent)
         self.params.cvt('T')
-class JoinUFgroups(Tone,TaskDressing,ui.Window):
+class JoinUFgroups(Tone,TaskDressing):
     """docstring for JoinUFgroups."""
     def tasktitle(self):
         return _("Join Underlying Form Groups")
@@ -10399,7 +10391,6 @@ class JoinUFgroups(Tone,TaskDressing,ui.Window):
         self.runwindow.wait_window(scroll)
     def __init__(self, parent):
         Tone.__init__(self)
-        ui.Window.__init__(self, parent)
         TaskDressing.__init__(self, parent)
 class RecordCitation(Record,Segments):
     def tooltip(self):
@@ -10439,7 +10430,7 @@ class RecordCitationT(Record,Tone):
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self)
         Record.__init__(self,parent)
-class ReportCitation(Report,Segments,TaskDressing,ui.Window):
+class ReportCitation(Report,Segments,TaskDressing):
     """docstring for ReportCitation."""
     def tasktitle(self):
         return _("Alphabet Report (Not background)") # on One Data Slice
@@ -10491,7 +10482,6 @@ class ReportCitation(Report,Segments,TaskDressing,ui.Window):
         self.getresults()
     def __init__(self, parent): #frame, filename=None
         Segments.__init__(self,parent)
-        ui.Window.__init__(self,parent)
         self.do=self.getresults
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
@@ -10568,7 +10558,7 @@ class ReportCitationMultislice(MultisliceS,ReportCitation):
         ReportCitation.__init__(self,parent)
         self.cvtstodo=['V','C','CV']
         MultisliceS.__init__(self)
-class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
+class ReportConsultantCheck(Report,Tone,TaskDressing):
     """docstring for ReportCitationT."""
     def tasktitle(self):
         return _("Consultant Check")
@@ -10589,10 +10579,9 @@ class ReportConsultantCheck(Report,Tone,TaskDressing,ui.Window):
                 }
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self)
-        ui.Window.__init__(self,parent)
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
-class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
+class ReportCitationT(Report,Tone,TaskDressing):
     """docstring for ReportCitationT."""
     def tasktitle(self):
         return _("Tone Report (not backgrounded)")
@@ -10612,7 +10601,6 @@ class ReportCitationT(Report,Tone,TaskDressing,ui.Window):
                 }
     def __init__(self, parent):
         Tone.__init__(self)
-        ui.Window.__init__(self,parent)
         self.do=self.tonegroupreport
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
