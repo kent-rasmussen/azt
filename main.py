@@ -3289,7 +3289,7 @@ class TaskDressing(HasMenus,ui.Window):
                 'group':self.status.group(),
                 'tableiteration':self.tableiteration,
                 })
-            if isinstance(self.task,Multicheck):
+            if isinstance(self,Multicheck):
                 dictnow.update({'cvtstodo':self.task.cvtstodo})
         if hasattr(self,'parser') and isinstance(self.task,Parse):
             dictnow.update({
