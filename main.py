@@ -3266,6 +3266,9 @@ class TaskDressing(HasMenus,ui.Window):
         if isinstance(self,Segments) and (self.settings.params.cvt()
                                                     not in ['V','C','CV']):
             self.settings.setcvt('V')
+    def trystatusframelater(self,dict):
+        self.settings.setrefreshdelay()
+        self.parent.after(self.settings.refreshdelay,self.makestatusframe,dict)
     def makestatusframe(self,dict=None):
         dictnow={
                 'mainrelief':self.mainrelief,
@@ -3300,10 +3303,7 @@ class TaskDressing(HasMenus,ui.Window):
         """Call this just once. If nothing changed, wait; if changes, run,
         then run again."""
         if dict == dictnow:
-            self.settings.setrefreshdelay()
-            self.parent.after(self.settings.refreshdelay,
-                                self.makestatusframe,
-                                dictnow)
+            self.trystatusframelater(dictnow)
             return
         # log.info("Dict changes; checking attributes and updating the UI. ({})"
         #                                                     "".format(dictnow))
