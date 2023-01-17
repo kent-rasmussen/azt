@@ -4548,8 +4548,6 @@ class TaskChooser(TaskDressing,ui.Window):
                 tasks.append(SortT)
                 if self.doneenough['sortT']:
                     tasks.append(RecordCitationT)
-            if program['testing'] and hasattr(self,'testdefault'):
-                tasks.append(self.testdefault)
             # if self.donew['parsedlx']:
             #     tasks.append(SortRoots)
         else: #i.e., analysis tasks
@@ -4568,6 +4566,10 @@ class TaskChooser(TaskDressing,ui.Window):
                 # tasks.append(ParseSlice)
                 # tasks.append(ParseSliceWords)
                 tasks.append(ReportConsultantCheck)
+        if (program['testing'] and hasattr(self,'testdefault') and
+                self.testdefault not in tasks):
+            if self.showreports == isinstance(self.testdefault,Report):
+                tasks.append(self.testdefault)
         # tasks.append(WordCollectionCitation),
         # tasks.append(WordCollectionPlImp),
         # tasks.append(ParseA), # input pl/imp, gives lx and ps
