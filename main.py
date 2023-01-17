@@ -6006,6 +6006,46 @@ class ParseWords(Parse):
     def __init__(self, parent): #frame, filename=None
         ParseSlice.__init__(self,parent)
         self.checkeach=True #confirm each word
+class WordCollectnParse(WordCollection,Parse):
+    """This task collects words, from the SIL CAWL, or one by one.
+    First in citation form, then pl or imperativewith Parse"""
+    def taskicon(self):
+        return program['theme'].photo['iconWord']
+    def tooltip(self):
+        return _("This task helps you collect words in citation form.")
+    def dobuttonkwargs(self):
+        if self.taskchooser.cawlmissing:
+            fn=self.addCAWLentries
+            text=_("Add remaining CAWL entries")
+            tttext=_("This will add entries from the Comparative African "
+                    "Wordlist (CAWL) which aren't already in your database "
+                    "(you are missing {} CAWL tags). If the appropriate "
+                    "glosses are found in your database, CAWL tags will be "
+                    "merged with those entries."
+                    "\nDepending on the number of entries, this may take "
+                    "awhile.").format(len(self.taskchooser.cawlmissing))
+        else:
+            text=_("Add a Word")#?
+            fn=self.addmorpheme#?
+            tttext=_("This adds any word, but is best used after filling out a "
+                    "wordlist, if the word you want to add isn't there "
+                    "already.")
+        return {'text':text,
+                'fn':fn,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['Word'],
+                'sticky':'ew',
+                'tttext':tttext
+                }
+    def tasktitle(self):
+        return _("Add and Parse Words") # for Citation Forms
+    def __init__(self, parent): #frame, filename=None
+        pass
+        #This should either be adapted to use parse or not by keyword, or have
+        # another method for addnParse
+        fn=self.getwords()#?
 class ParseSlice(Parse):
     def tasktitle(self):
         return _("Parse One Slice")
