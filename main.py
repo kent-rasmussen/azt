@@ -12105,7 +12105,11 @@ class Splash(ui.Window):
     def progress(self,value):
         self.progressbar.current(value)
     def __init__(self, parent):
-        parent.withdraw()
+        try:
+            parent.withdraw()
+            noparent=False
+        except AttributeError:
+            parent=program['root']
         super(Splash, self).__init__(parent,exit=0)
         self.withdraw() #don't show until placed
         self.labels={'titletext':ui.Label(self.frame, text='', pady=10,
