@@ -5725,7 +5725,11 @@ class Parse(TaskDressing,Segments):
                 rootafxs=[l[2]]
             return "{} ({} root: {})".format(*l[:2],' '.join(rootafxs))
         def neither():
-            self.parsen-=1 #just to keep the count correct, as this looks parsed
+            # These count askparsed; evaluated and moving on
+            self.parsecatalog.addneither(self.senseid)
+            #don't leave 'neither' with ps indication
+            self.parser.rmpsnode()
+            # self.parser.rmpssubclassnode() #leave this for posterity?
             t.destroy()
         # l=(sf,ps,root,lcafxs,sfafxs)
         # log.info("full option list: {}".format(l))
@@ -5809,7 +5813,8 @@ class Parse(TaskDressing,Segments):
         if self.exitFlag.istrue():
             return
         log.info("asking for second form segments for ‘{}’ ps: {} ({}; {})"
-                "".format(self.parser.lc,ps,self.parser.senseid,self.parsen))
+                "".format(self.parser.lc,ps,self.parser.senseid,
+                            self.parsecatalog.parsen()))
         sfname=self.secondformfield[ps]
         self.waitpause()
         w=ui.Window(self)
@@ -5908,7 +5913,7 @@ class Parse(TaskDressing,Segments):
             # log.info("Asking for second form typed")
             self.asksegmentsnops()
         if not self.exited:
-            self.parsen+=1
+            self.parsecatalog.addparsed(self.senseid)
             self.maybewrite()
     def senseidstoparse(self,senseids=None,all=False,n=-1): #n/limit=-1#1000
         if self.senseidtodo:
@@ -5923,7 +5928,7 @@ class Parse(TaskDressing,Segments):
             except AttributeError:
                 return set(senseids)
     def getparses(self,**kwargs):
-        self.parsen=0
+        log.info("parses already tried: {}".format(self.parsecatalog.parsen()))
         self.exited=False
         # for senseid in set(self.db.senseids)-set(self.parsecatalog.parsed):
         #     self.parse(senseid)
@@ -5940,7 +5945,7 @@ class Parse(TaskDressing,Segments):
                 else:
                     break
         self.waitdone()
-        log.info("total parses tried: {}".format(self.parsen))
+        log.info("total parses tried: {}".format(self.parsecatalog.parsen()))
         self.parsecatalog.report()
     def getparse(self,senseid):
         if senseid not in self.parsed:
@@ -5971,7 +5976,7 @@ class Parse(TaskDressing,Segments):
             for i in collector.getfromlift():
                 # log.info("Progress: {}".format(i))
                 self.waitprogress(i)
-            collector.done()
+            self.parsecatalog.report()
             self.waitdone()
     def showwhenready(self):
         try:
