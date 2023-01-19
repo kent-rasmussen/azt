@@ -291,6 +291,18 @@ class Engine(object):
                     # log.info("left empty psnode (senseid: {})".format(self.senseid))
             else:
                 log.info("psnode error! senseid: {}; {}".format(self.senseid,e))
+    def rmpsnode(self):
+        if self.psnode in self.sense:
+            self.sense.remove(self.psnode)
+        else:
+            log.info("psnode {} not found in sense {} ({})".format(self.psnode,
+                                                    self.sense,self.senseid))
+    def rmpssubclassnode(self):
+        if self.pssubclassnode in self.sense:
+            self.sense.remove(self.pssubclassnode)
+        else:
+            log.info("psnode {} not found in sense {} ({})".format(self.psnode,
+                                                    self.sense,self.senseid))
     def addnode(self,tag):
         #This just makes the node; value is put/picked up later
         if tag == 'pl':
