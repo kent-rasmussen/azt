@@ -23,22 +23,20 @@ class AffixCollector(object):
     """This class does just one thing: call parse to collect affixes
     automatically to populate the catalog."""
     def progress(self):
-        return 100*self.parsen//len(self.senseids)
+        return 100*self.catalog.parsen()//self.nsenseids
     def parse(self,senseid):
         kwargs={'senseid':senseid,
                 'entry':ifone(self.dbnodes.findall('entry/sense[@id="{}"]/..'
                                             ''.format(senseid))),
                 }
         self.parser.parseentry(**kwargs)
-        self.parsen+=1
+        self.catalog.addparsed(kwargs['senseid'])
     def do(self):
-        self.parsen=0
         for senseid in self.senseids:
             self.parse(senseid) #this can add to lists
             yield self.progress()
     def getfromlift(self):
         log.info("looking in LIFT file for data")
-        self.parsen=0
         # log.info("looking in {}".format(self.dbnodes.findall("entry/sense/"
         #                             "trait[@name='{}-infl-class']"
         #                             "".format(self.pss[self.catalog.analang][0])
@@ -61,35 +59,28 @@ class AffixCollector(object):
             rtodo=len(results)
             for nr,r in enumerate(results):
                 self.catalog.addaffixset((ps,ofromstr(r.get('value'))))
-                self.parsen+=1
                 # log.info("ps progress: {} ({}/{})".format(100*n/pstodo,n,pstodo))
                 # log.info("results progress: {} ({}/{})"
                 #         "".format(100*nr/rtodo/pstodo,nr,rtodo))
                 yield int((100*n/pstodo)+(100*(nr/rtodo/pstodo)))
-    def done(self):
-        log.info("total parses tried: {}".format(self.parsen))
-        # log.info("total parsed: {}".format(len(catalog.parsed)))
-        # log.info("total nops: {}".format(len(catalog.nops)))
-        # log.info("total badps: {}".format(len(catalog.badps)))
-        self.catalog.affixesbyform()
-        self.catalog.report()
     def __init__(self,catalog,db,**kwargs):
-        self.parsen=0
         self.parser=Engine(catalog)
         self.dbnodes=db.nodes
         self.senseids=db.senseids
+        self.nsenseids=len(db.senseids) #don't keep calculating this
         self.pss=db.pss
         self.catalog=catalog
         log.info("Looking in LIFT file for data")
         if kwargs.get('loadfromlift'):
             for i in self.getfromlift():
                 print(i)
-        self.done()
+        self.catalog.report()
         # self.do()
 class Catalog(object):
     """This needs to either call a UI for user response, or provide the UI an
     interface to provide prompt data, and receive the response."""
     def report(self):
+        self.affixesbyform()
         try:
             for a in ['affixes','lcaffixes','sfaffixes']:#self.affixattrs()[3:]:
                 log.info("{}: {}".format(a,
@@ -99,7 +90,11 @@ class Catalog(object):
         except AttributeError as e:
             log.info("apparently missing affixes ({})".format(e))
         try:
-            for l in ['nops','badps','parsed']:
+            for l in ['nops','badps','parsed','neither']:
+                #output this to special files, not log:
+                f = open(l+'.txt', 'w', encoding='utf-8') # to append, "a"
+                f.write('\n'.join(l))
+                f.close()
                 log.info("{} count: {}".format(l,len(getattr(self,l))))
         except AttributeError as e:
             log.info("apparently missing affixes ({})".format(e))
@@ -118,6 +113,10 @@ class Catalog(object):
         except AttributeError as e:
             if "'Catalog' object has no attribute 'affixes'" in e.args[0]:
                 log.info("evidently there have been no parses so far.")
+    def parsen(self):
+        return len(self.parsed)
+    def neithern(self):
+        return len(self.neither)
     def addnops(self,senseid):
         try:
             self.nops+=[senseid]
@@ -133,6 +132,11 @@ class Catalog(object):
             self.parsed+=[senseid]
         except AttributeError:
             self.parsed=[senseid]
+    def addneither(self,senseid):
+        try:
+            self.neither+=[senseid]
+        except AttributeError:
+            self.neither=[senseid]
     def addaffixset(self,affixes):
         try:
             self.affixes[affixes[0]].update([affixes[1]])
@@ -827,7 +831,7 @@ if __name__ == "__main__":
     afxc=AffixCollector(catalog,db) #don't run this if you don't want automatic parsing
     for i in afxc.getfromlift():
         pass
-    afxc.done()
+    catalog.report()
     # now()
     db.write('userlogs/Test_getparses{}.lift'.format(0))
     # catalog.report()
