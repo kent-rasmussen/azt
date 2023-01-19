@@ -3066,6 +3066,8 @@ class Settings(object):
         if (hasattr(self.taskchooser.mainwindowis,'runwindow') and
                 self.taskchooser.mainwindowis.runwindow.winfo_exists()):
             self.refreshdelay=10000 #ten seconds if working in another window
+        elif isinstance(self,Parse) and not hasattr(self,'parser'):
+            self.refreshdelay=1 #1 msecond if waiting for parser settings
         else:
             self.refreshdelay=1000 #one second if not working in another window
     def ifcollectionlc(self):
@@ -3294,12 +3296,16 @@ class TaskDressing(HasMenus,ui.Window):
                 })
             if isinstance(self,Multicheck):
                 dictnow.update({'cvtstodo':self.task.cvtstodo})
-        if hasattr(self,'parser') and isinstance(self.task,Parse):
-            dictnow.update({
-                'parserasklevel':self.parser.ask,
-                'parserautolevel':self.parser.auto,
-                'senseid':self.task.senseidtodo,
-                })
+        if isinstance(self,Parse):
+            if not hasattr(self,'parser'):
+                self.trystatusframelater(dictnow)
+                return
+            else:
+                dictnow.update({
+                    'parserasklevel':self.parser.ask,
+                    'parserautolevel':self.parser.auto,
+                    'senseid':self.task.senseidtodo,
+                    })
         """Call this just once. If nothing changed, wait; if changes, run,
         then run again."""
         if dict == dictnow:
