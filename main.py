@@ -12102,8 +12102,9 @@ class Splash(ui.Window):
                                         "Checker").format(name=program['name']))
         self.update_idletasks()
     def draw(self):
+        # self.update_idletasks()
+        # self.update()
         self.deiconify() #show after placement
-        self.update()
     def progress(self,value):
         self.progressbar.current(value)
     def __init__(self, parent):
