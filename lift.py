@@ -1651,10 +1651,19 @@ class Node(ET.Element):
                         if i.findall('text') and
                         [j for j in i.findall('text') if j.text]
                     ]
-    def __init__(self, parent, tag, attrib={}, **kwargs):
+    def __init__(self, parent, node, **kwargs):
+        children=[i for i in parent]
+        self.index=children.index(node)
+        tag=node.tag
+        attrib=node.attrib
         super(Node, self).__init__(tag, attrib, **kwargs)
-        parent.append(self)
 class Entry(ET.Element): # what does "object do here?"
+        self.parent=parent
+        for child in node:
+            self.append(child)
+        # parent.append(self) #or
+        parent.remove(node)
+        parent.insert(self.index,self)
     """I think the right path forward is to make this the base thing searched,
     with senses in that, and examples in that. each should have a class method
     to find things, including parents (which would maybe just be stored in
