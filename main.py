@@ -5916,9 +5916,22 @@ class Parse(TaskDressing,Segments):
         if not self.exited:
             self.parsecatalog.addparsed(self.senseid)
             self.maybewrite()
+    def initsenseidtodo(self):
+        try:
+            r=self.senseidtodo
+            self.senseidtodo=None
+        except AttributeError:
+            if hasattr(self,'senseidtodo'):
+                log.info("self.senseidtodo: {}".format(self.senseidtodo))
+            r=self.senseidtodo=None
+        if r:
+            return [r] #only return this once.
+        else:
+            return [] #list, either way
     def senseidstoparse(self,senseids=None,all=False,n=-1): #n/limit=-1#1000
-        if self.senseidtodo:
-            return [self.senseidtodo]
+        s=self.initsenseidtodo()# This returns and resets
+        if s:
+            return s
         if not senseids:
             senseids=self.db.senseids[:n]
         if all:
@@ -5989,7 +6002,7 @@ class Parse(TaskDressing,Segments):
             self.after(1,self.showwhenready)
     def __init__(self, parent): #frame, filename=None
         log.info("Initializing {}".format(self.tasktitle()))
-        self.senseidtodo=None
+        self.initsenseidtodo()
         Segments.__init__(self,parent)
         self.parent=parent
         TaskDressing.__init__(self,parent)
