@@ -5985,10 +5985,9 @@ class Parse(TaskDressing,Segments):
     def __init__(self, parent): #frame, filename=None
         log.info("Initializing {}".format(self.tasktitle()))
         self.senseidtodo=None
-        self.withdraw()
-        TaskDressing.__init__(self,parent)
         Segments.__init__(self,parent)
         self.parent=parent
+        TaskDressing.__init__(self,parent)
         self.secondformfield=self.taskchooser.settings.secondformfield
         self.nominalps=self.taskchooser.settings.nominalps
         self.verbalps=self.taskchooser.settings.verbalps
@@ -6009,7 +6008,7 @@ class Parse(TaskDressing,Segments):
         self.checkeach=False #don't confirm each word (default)
         self.dodoneonly=True #don't give me other words
         self.userresponse=Object()
-        self.deiconify()
+        self.showwhenready()
 class ParseWords(Parse):
     def tasktitle(self):
         return _("Parse Whole Dictionary, word by word")
