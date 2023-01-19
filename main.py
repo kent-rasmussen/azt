@@ -4938,6 +4938,7 @@ class TaskChooser(TaskDressing):
         self.splash.progress(25)
         self.db=FileParser(self.filename).db
         self.splash.progress(55)
+        self.setmainwindow(self)
         self.settings=Settings(self)
         self.splash.progress(65)
         self.whatsdone()
