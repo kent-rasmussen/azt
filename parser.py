@@ -239,9 +239,13 @@ class Engine(object):
         self.catalog.affixesbyform()
     def pssubclassvalue(self,subclass=None):
         try: # self.psnode would always evaluate False, as it has no child nodes
-            if self.ps and subclass: #test ps first, to fail first of not there
-                self.pssubclassnode.set('value',subclass)
-            self.pssubclass=self.pssubclassnode.get('value')
+            if self.ps:
+                if self.ps not in self.pssubclassnode.get('name'):
+                    delattr(self,'pssubclassnode') #get rid of old attr/node
+                    # consider removing old node from lift, though not necessary
+                if subclass:
+                    self.pssubclassnode.set('value',subclass)
+                self.pssubclass=self.pssubclassnode.get('value')
             return
         except AttributeError as e:
             if "object has no attribute 'ps'" in e.args[0]:
