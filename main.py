@@ -5974,6 +5974,14 @@ class Parse(TaskDressing,Segments):
                 self.waitprogress(i)
             collector.done()
             self.waitdone()
+    def showwhenready(self):
+        try:
+            assert self.frame.status.winfo_exists()
+            log.info("showing")
+            self.deiconify()
+        except:
+            log.info("not showing")
+            self.after(1,self.showwhenready)
     def __init__(self, parent): #frame, filename=None
         log.info("Initializing {}".format(self.tasktitle()))
         self.senseidtodo=None
