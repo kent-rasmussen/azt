@@ -1712,7 +1712,8 @@ class ToolTip(object):
 class Wait(Window): #tkinter.Toplevel?
     def close(self):
         self.update_idletasks()
-        if not isinstance(self.parent,Root): #Dont' show a root window
+        if not isinstance(self.parent,Root) and self.parentwasvisible:
+            #Don't show a root window, nor one that was hidden before
             self.parent.deiconify()
         self.on_quit()
     def progress(self,value):
@@ -1729,6 +1730,7 @@ class Wait(Window): #tkinter.Toplevel?
         super(Wait, self).__init__(parent,exit=False)
         self.paused=False
         self.withdraw() #don't show until we're done making it
+        self.parentwasvisible=parent.winfo_viewable()
         parent.withdraw()
         self['background']=parent['background']
         self.attributes("-topmost", True)
