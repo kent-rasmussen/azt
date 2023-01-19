@@ -1911,6 +1911,7 @@ def testapp():
                                             columnspan=colspan,
                                             rowspan=rowspan,sticky='nesw')
     w.bind('<ButtonRelease>',progress)
+    parent.winfo_viewable()
     r.mainloop()
 if __name__ == '__main__':
     """To Test:"""
