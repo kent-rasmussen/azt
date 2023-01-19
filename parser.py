@@ -323,7 +323,6 @@ class Engine(object):
         n=lift.Node(self.entry,tagged,attrs)
         setattr(self,tag+'node',n.makeformnode(self.analang,gimmetext=True))
         log.info("created {} node senseid: {}".format(tag,self.senseid))
-        lift.prettyprint(n)
         nodename=tag+'node'
         # log.info("{} node value: {} ({})".format(tag,n,type(n)))
         # exit()
