@@ -4493,7 +4493,7 @@ class TaskChooser(TaskDressing):
         except AttributeError:
             log.info(_("No task, apparently; not destroying."))
         self.task=taskclass(self) #filename
-        if not self.task.exitFlag.istrue():
+        if not self.task.exitFlag.istrue():# and not isinstance(self.task,Parse):
             self.task.deiconify()
     def unsetmainwindow(self):
         """self.mainwindowis tracks who the mainwindow is for the chooser,
