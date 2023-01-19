@@ -4933,29 +4933,30 @@ class TaskChooser(TaskDressing):
         self.showingreports=False
         self.ifcollectionlcsettingsdone=False
         self.interfacelangs=getinterfacelangs()
-        self.setmainwindow(self)
-        self.splash = Splash(self)
         self.filename=FileChooser(self).name
-        if program['root'].exitFlag.istrue():
-            return
+        self.splash = Splash(self)
         self.splash.draw()
         self.splash.progress(25)
         self.db=FileParser(self.filename).db
         self.splash.progress(55)
+        self.settings=Settings(self)
+        self.splash.progress(65)
+        self.whatsdone()
+        self.splash.progress(80)
+        TaskDressing.__init__(self,parent) #I think this should be after settings
+        # self.withdraw()
+        self.splash.progress(90)
+        self.setmainwindow(self)
+        if program['root'].exitFlag.istrue():
+            return
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
         """Can whatsdone be joined with makedefaulttask? they appear together
         elsewhere."""
-        self.whatsdone()
-        self.splash.progress(65)
-        self.settings=Settings(self)
-        self.splash.progress(80)
         self.splash.maketexts() #update for translation change
-        TaskDressing.__init__(self,parent) #I think this should be after settings
         if not self.settings.writeeverynwrites: #0/None are not sensible values
             self.settings.writeeverynwrites=1
             self.settings.storesettingsfile()
-        self.splash.progress(90)
         self.usbcheck()
         self.writeable=0 #start the count
         if program['nosound']:
