@@ -1383,7 +1383,7 @@ class StatusFrame(ui.Frame):
                 self.multicheckscope()
             elif not isinstance(self.task,ReportCitationT):
                 self.cvtline()
-            if isinstance(self.task,Sort):
+            if isinstance(self.task,Sort) and not isinstance(self.task,Transcribe):
                 self.buttoncolumnsline()
         self.maybeboard()
         self.finalbuttons()
