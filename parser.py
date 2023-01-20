@@ -93,7 +93,7 @@ class Catalog(object):
             for l in ['nops','badps','parsed','neither']:
                 #output this to special files, not log:
                 f = open(l+'.txt', 'w', encoding='utf-8') # to append, "a"
-                f.write('\n'.join(l))
+                f.write('\n'.join(getattr(self,l)))
                 f.close()
                 log.info("{} count: {}".format(l,len(getattr(self,l))))
         except AttributeError as e:
