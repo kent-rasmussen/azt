@@ -114,7 +114,10 @@ class Catalog(object):
             if "'Catalog' object has no attribute 'affixes'" in e.args[0]:
                 log.info("evidently there have been no parses so far.")
     def parsen(self):
-        return len(self.parsed)
+        try:
+            return len(self.parsed)
+        except AttributeError:
+            return 0
     def neithern(self):
         return len(self.neither)
     def addnops(self,senseid):
