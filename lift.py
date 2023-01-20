@@ -1661,6 +1661,8 @@ class Entry(ET.Element): # what does "object do here?"
         self.parent=parent
         for child in node:
             self.append(child)
+        for attr in ['text', 'tail']:
+            setattr(self,attr,getattr(node,attr))
         # parent.append(self) #or
         parent.remove(node)
         parent.insert(self.index,self)
