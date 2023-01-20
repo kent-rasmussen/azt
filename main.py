@@ -2288,15 +2288,17 @@ class Settings(object):
         self.profilesbysense={}
         self.profilesbysense['Invalid']=[]
         self.profilesbysense['analang']=self.analang
+        self.profilesbysense['ftype']=self.params.ftype()
         self.profiledguids=[]
         self.profiledsenseids=[]
         self.formstosearch={}
-        self.sextracted={} #Will store matching segments here
-        for ps in self.db.pss[self.analang]:
-            self.sextracted[ps]={}
-            for s in self.rx:
-                self.sextracted[ps][s]={}
+        # self.sextracted={} #Will store matching segments here
+        for ps in self.db.pss[self.analang]: #45s on English db
+            # self.sextracted[ps]={}
+            # for s in self.rx:
+            #     self.sextracted[ps][s]={}
             self.getprofilesbyps(ps)
+        # self.getprofilesbyentry()
         #Convert to iterate over local variables
         """Do I want this? better to keep the adhoc groups separate"""
         """We will *never* have slices set up by this time; read from file."""
@@ -2357,7 +2359,17 @@ class Settings(object):
                 try:
                     self.sextracted[ps][s][i]+=1 #self.rx[s].subn('',form)[1] #just the count
                 except KeyError:
-                    self.sextracted[ps][s][i]=1
+                    try:
+                        self.sextracted[ps][s]={i:1}
+                    except KeyError:
+                        try:
+                            self.sextracted[ps]={s:{i:1}}
+                        except KeyError:
+                            try:
+                                self.sextracted={ps:{s:{i:1}}}
+                            except Exception as e:
+                                log.error("Ouch! No idea what happened! ({})"
+                                            "".format(e))
         for polyn in range(4,0,-1): #find and sub longer forms first
             for s in set(self.profilelegit) & set(self.rx.keys()):
                 if polyn in self.rx[s]:
