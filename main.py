@@ -2182,7 +2182,9 @@ class Settings(object):
         if (not hasattr(self,'profilesbysense') or
                 self.profilesbysense == {} or
                 'analang' not in self.profilesbysense or #old schema
-                self.profilesbysense['analang'] != self.analang
+                'ftype' not in self.profilesbysense or #old schema
+                self.profilesbysense['analang'] != self.analang or
+                self.profilesbysense['ftype'] != self.params.ftype()
                 ):
             t=nowruntime()
             log.info("Starting profile analysis at {}".format(now()))
