@@ -712,7 +712,7 @@ class Engine(object):
             self.catalog.addbadps(self.senseid)
         else:
             return True #not (self.nops or self.badps)
-    def parseentry(self, entry, senseid):
+    def parseentry(self, entry, senseid=None, sense=None):
         attrs=['lx','lc','ps','pl','imp']
         for attr in attrs+[i+'node' for i in attrs]:
             try:
@@ -725,9 +725,19 @@ class Engine(object):
         # self.affixes=None # everyone needs this
         self.entry=entry
         # log.info("entry: {}".format(self.entry))
-        self.senseid=senseid #save for later
-        self.sense=ifone(self.entry.findall('sense[@id="{}"]'
-                                                    ''.format(senseid)))
+        if sense:
+            self.sense=sense
+            self.senseid=sense.id #save for later
+        elif senseid:
+            self.senseid=senseid #save for later
+            self.sense=ifone(
+                    #This is not a lift.Entry!
+                    # self.entry.findall('sense[@id="{}"]'.format(senseid))
+                            [i for i in self.entry.senses if i.id == senseid]
+                            )
+        else:
+            self.sense=self.entry.senses[0]
+            self.senseid=self.sense.id #save for later
         # log.info("sense: {}".format(self.sense))
         # log.info("psnode: {}".format(psnode))
         self.psvalue() #this may set None value, to be set later
