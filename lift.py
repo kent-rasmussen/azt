@@ -959,7 +959,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             for ps in [i for i in pssanylang if i]:
                 self.getsenseidsbyps(ps)
     def getsenseids(self):
-        self.senseids=self.get('sense').get('senseid')
+        self.senseids=[i.id for i in self.senses]
         self.nsenseids=len(self.senseids)
     def getentrieswanalangdata(self):
         #do each of these, then cull
@@ -987,10 +987,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nentrieswcitationdata={}
         for lang in self.analangs:
             self.entrieswcitationdata[lang]=[
-                    i for i in self.nodes.findall('entry')
+                    i for i in self.entries
+                    # i for i in self.nodes.findall('entry')
                     # This creates the node, if not there; textornone forces
                     # a boolean interpretable response:
-                    if textornone(Entry.formtextnodeofentry(i,'citation',lang))
+                    if i.lc.textvaluebylang(lang)
+                    # if textornone(Entry.formtextnodeofentry(i,'citation',lang))
                             ]
             self.nentrieswcitationdata[lang]=len(self.entrieswcitationdata[lang])
     def getentrieswlexemedata(self):
@@ -998,10 +1000,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nentrieswlexemedata={}
         for lang in self.analangs:
             self.entrieswlexemedata[lang]=[
-                i for i in self.nodes.findall('entry')
+                i for i in self.entries
                 # This creates the node, if not there; textornone forces
                 # a boolean interpretable response:
-                if textornone(Entry.formtextnodeofentry(i,'lexical-unit',lang))
+                if i.lx.textvaluebylang(lang)
                             ]
             self.nentrieswlexemedata[lang]=len(self.entrieswlexemedata[lang])
     def getfieldswsoundfiles(self):
@@ -1073,18 +1075,24 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def getsenseswglossdata(self):
         senseswglossdata={}
         self.nsenseswglossdata={}
-        for lang in self.glosslangs:
-            senseswglossdata[lang]=[
-                    i for i in self.nodes.findall('entry/sense')
-                    if textornone(Entry.formtextnodeofentry(i,'gloss',lang,
-                                                            nomake=True))
-                            ]
-            self.nsenseswglossdata[lang]=len(senseswglossdata[lang])
-            if lang in self.analangs:
-                if (self.nsenseswglossdata[lang] < self.nguids/100):
-                    log.info("Glosslang ˋ{}ˊ appears in less than "
-                            "1% of entries: {}"
-                            "".format(lang,[i.get('id')
+        senseswglossdata={lang:[
+                    i for i in self.senses
+                    if lang in i.glosses
+                    if [j.textvalue() for j in i.glosses[lang] if j.textvalue()]
+                                ]
+                    for lang in set([g
+                                        for s in self.senses
+                                        for g in s.glosses
+                                    ])
+                            }
+        self.nsenseswglossdata={lang:len(senseswglossdata[lang])
+                                    for lang in senseswglossdata
+                                }
+        for lang in self.nsenseswglossdata:
+            if (self.nsenseswglossdata[lang] < self.nguids/100):
+                log.info("Glosslang ˋ{}ˊ appears in less than "
+                        "1% of entries: {}"
+                        "".format(lang,[i.get('id')
                                             for i in senseswglossdata[lang]]
                                     ))
     def getsenseswdefndata(self):
@@ -1092,9 +1100,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nsenseswdefndata={}
         for lang in self.glosslangs:
             senseswdefndata[lang]=[
-                    i for i in self.nodes.findall('entry/sense')
-                    if textornone(Entry.formtextnodeofentry(i,'definition',lang,
-                                                            nomake=True))
+                    i for i in self.senses
+                    if i.definition.textvaluebylang(lang)
                             ]
             self.nsenseswdefndata[lang]=len(senseswdefndata[lang])
             if lang in self.analangs:
@@ -1531,7 +1538,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     "segment.")
                 log.info("--those may not be covered by your regexes.")
     def ps(self,**kwargs): #get POS values, limited as you like
-        return self.get('ps',**kwargs).get('value')
+        if kwargs:
+            return self.get('ps',**kwargs).get('value')
+        else:
+            return [i.psvalue() for i in self.senses]
     def getpssbylang(self,analang=None): #get all POS values in the LIFT file
         ordered={}
         if analang: #if one specified (after not initially found with data)
@@ -1552,19 +1562,16 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def copylctolx(self):
         # This is a copy operation, leaving lc in place
         for e in self.getentrynode(**kwargs):
-            lcs=e.findall('citation') # I need form node, not text node
-            log.info("Looking at entry w/guid: {}".format(e.get("guid")))
-            for lc in lcs:
-                log.info("Found {}".format(Node.childrenwtext(lc)))
-                for lcf in Node.childrenwtext(lc):
-                    lcfl=lcf.get('lang')
-                    lcft=lcf.find('text')
+            log.info("Looking at entry w/guid: {}".format(e.guid))
+            log.info("Found {}".format(e.lc.forms))
+            for lang in e.lc.forms:
                     # log.info("Copying {} from lang {}".format(lcft.text,lcfl))
-                    """This finds or creates, by lang:"""
-                    lx=Entry.formtextnodeofentry(e,'lexical-unit',lcfl) #This gives text node
-                    log.info("Copying citation ‘{}’ to lexeme (was {}) for "
-                            "lang {}".format(lcft.text,lx.text,lcfl))
-                    lx.text=lcft.text #overwrite in any case
+                """This finds or creates, by lang:"""
+                lx=e.lx.textvaluebylang(lang)
+                lc=e.lc.textvaluebylang(lang)
+                log.info("Copying citation ‘{}’ to lexeme (was {}) for "
+                        "lang {}".format(lc,lx,lang))
+                e.lx.textvaluebylang(lang,lc) #overwrite in any case
                     # if not lx.text: #don't overwrite info
                     #     lcft.text='' #don't clear
     def convertlxtolc(self,**kwargs):
@@ -1573,63 +1580,105 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         kwargs['from']='lexical-unit'
         kwargs['to']='citation'
         self.convertxtoy(**kwargs)
+    def convert1xto1y(self,entry,lang=None,**kwargs):
+        if kwargs['fromtag'] in ['definition','gloss']:
+            parent=entry.senses[0] #just take first one, for now
+        else: #parent of node to find may be sense or entry
+            parent=entry
+        log.info("Found entry parent node {}".format(parent))
+        if kwargs['fromtag'] == 'gloss':
+            froms=parent.glosses
+        if kwargs['fromtag'] == 'definition':
+            froms=[parent.definition] #just one
+        else:
+            froms=parent.findall(kwargs['fromtag']) # I need form node, not text node
+        log.info("Found {} entry {} fields".format(len(froms),
+                                                    kwargs['fromtag']))
+        for f in froms:
+            log.info("Looking at {} {} of entry w/guid: {}"
+                    "".format(getattr(f,'lang',''),f.tag,entry.get("guid")))
+            if lang:
+                if f.tag in ['definition','gloss'] and f.lang != lang:
+                    continue
+                elif f.tag in ['definition','gloss']:
+                    nodes=[f]
+                else:
+                    nodes=[i for i in Node.childrenwtext(f)
+                                if i.get('lang') == lang]
+            else:
+                nodes=Node.childrenwtext(f)
+            log.info("Found {}".format(nodes))
+            for ff in nodes:
+                log.info("Working on {}".format(ff))
+                ffl=ff.lang
+                try:
+                    fft=ff.textvaluebylang(lang)
+                except AttributeError:
+                    fft=ff.textvalue()
+                # log.info("Moving {} {} from lang {}".format(ff.tag,fft.text,ffl))
+                log.info("Moving {} {} from lang {}".format(ff.tag,fft,ffl))
+                """This finds or creates, by lang:""" #This gives text node
+                # For now, assuming everything goes to entry:
+                if kwargs['totag'] == 'citation':
+                    to=entry.lc
+                elif kwargs['totag'] == 'gloss':
+                    to=entry.glosses[ffl][0]
+                else:
+                    log.info("convert1xto1y no totag: {}".format(kwargs['totag']))
+                    raise
+                try:
+                    totext=to.textvaluebylang(lang)
+                except AttributeError:
+                    totext=to.textvalue()
+                log.info("Moving {}/{} ‘{}’ to {}/{} (was {}) for lang {}"
+                        "".format(kwargs['fromtag'],f.tag,fft,
+                                    kwargs['totag'],to.tag,totext,ffl))
+                if not totext:#,value
+                    if f.tag == 'definition' and to.tag == 'citation':
+                        to.textvaluebylang(lang,rx.glossdeftoform(fft))
+                        # to.text=rx.glossdeftoform(fft.text)
+                    if f.tag == 'gloss' and to.tag == 'citation':
+                        to.textvaluebylang(lang,rx.glossdeftoform(fft))
+                        # to.text=rx.glossdeftoform(fft.text)
+                    else:
+                        to.text=fft.text
+                if (to.textvaluebylang(lang) == fft and not kwargs.get('keep')):
+                    fft.textvaluebylang('')
+                if (f.tag in ['definition','gloss'] and
+                            to.tag == 'citation'):
+                    return # just do one
     def convertxtoy(self,lang=None,**kwargs):
-        for e in self.getentrynode(**kwargs):
-            log.info("Looking at entry {}".format(e.get('guid')))
-            if kwargs['from'] in ['definition','gloss']:
-                p=e.findall('sense')[0]
-            else: #parent of node to find may be sense or entry
-                p=e
-            froms=p.findall(kwargs['from']) # I need form node, not text node
-            log.info("Found entry parent node {}".format(p))
-            log.info("Found {} entry {} fields".format(len(froms),kwargs['from']))
+        # convert to Entry
+        log.info("kwargs: {}".format(kwargs))
+        #don't pass these to getentrynode
+        f=kwargs.pop('fromtag')
+        t=kwargs.pop('totag')
+        k=kwargs.pop('keep',False)
+        log.info("kwargs: {}".format(kwargs))
+        if 'entries' in kwargs:
+            entries=kwargs['entries']
+        else:
+            entries=self.getentrynode(**kwargs) #if no kwargs, all lift.Entries
+        log.info("Looking at {} entries ({})".format(len(entries),entries))
+        for e in entries:
+            log.info("Looking at entry {} ({})".format(e.get('guid'),lang))
+            self.convert1xto1y(e,lang,fromtag=f,totag=t,keep=k)
             # if e.get('guid') == '29febd49-9f74-4f6b-8256-21f81d6ba0f2':
             #     prettyprint(e)
-            #     exit()
-            for f in froms:
-                log.info("Looking at entry w/guid: {}".format(e.get("guid")))
-                if lang:
-                    if f.tag == 'gloss' and f.get('lang') != lang:
-                        continue
-                    elif f.tag == 'gloss':
-                        nodes=[f]
-                    else:
-                        nodes=[i for i in Node.childrenwtext(f)
-                                    if i.get('lang') == lang]
-                else:
-                    nodes=Node.childrenwtext(f)
-                log.info("Found {}".format(nodes))
-                for ff in nodes:
-                    ffl=ff.get('lang')
-                    fft=ff.find('text')
-                    # log.info("Moving {} from lang {}".format(lxft.text,lxfl))
-                    """This finds or creates, by lang:"""
-                    to=Entry.formtextnodeofentry(e,kwargs['to'],ffl) #This gives text node
-                    log.info("Moving {} ‘{}’ to {} (was {}) for lang {}"
-                            "".format(kwargs['from'],fft.text,
-                                        kwargs['to'],to.text,ffl))
-                    if not to.text: #don't overwrite info
-                        if (kwargs['from'] in ['definition','gloss'] and
-                                kwargs['to'] == 'citation'):
-                            to.text=rx.glossdeftoform(fft.text)
-                        else:
-                            to.text=fft.text
-                    if to.text == fft.text and not kwargs.get('keep'):
-                        fft.text='' #clear if redundant before or after move
+            # exit()
     def convertdefntogloss(self,**kwargs):
         # This is a move operation, removing 'from' when done, unless 'to'
         # is both there and different
-        kwargs['from']='definition'
-        kwargs['to']='gloss'
+        kwargs['fromtag']='definition'
+        kwargs['totag']='gloss'
         self.convertxtoy(**kwargs)
     def convertglosstocitation(self,lang,**kwargs):
         # This is a move operation, removing 'from' when done, unless 'to'
         # is both there and different
         #This should only ever happen for one lang at a time, to make a demo db
-        kwargs['from']='gloss'
-        kwargs['to']='citation'
-        kwargs['lang']=lang
-        self.convertxtoy(**kwargs)
+        kwargs['fromtag']='gloss'
+        kwargs['totag']='citation'
+        self.convertxtoy(lang,**kwargs)
 
 class EmptyTextNodePlaceholder(object):
     """Just be able to return self.text when asked."""
