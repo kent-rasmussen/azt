@@ -5473,11 +5473,12 @@ class WordCollection(Segments):
             self.backword()
     def storethisword(self):
         try:
-            self.lxtextnode.text=self.lxvar.get()
+            self.entry.lc.textvaluebylang(self.analang,self.var.get())
             self.maybewrite() #only if above is successful
         except AttributeError as e:
             log.info("Not storing word: {}".format(e))
     def getword(self):
+        self.taskchooser.withdraw()# not sure why necessary
         try:
             self.wordframe.destroy()
         except Exception as e:
@@ -5505,28 +5506,26 @@ class WordCollection(Segments):
         ui.Label(self.wordframe, text=text, row=0, column=0)
         progress="({}/{})".format(self.index+1,self.nentries)
         ui.Label(self.wordframe, text=progress, row=1, column=3, font='small')
-        entry=self.entries[self.index]
+        self.entry=self.entries[self.index]
         glosses={}
         for g in self.glosslangs:
-            glosses[g]=', '.join(self.db.get('gloss/text', node=entry,
+            glosses[g]=', '.join(self.db.get('gloss/text', node=self.entry,
                                     glosslang=g).get('text'))
         # glossframe=ui.Frame(self.wordframe, row=1, column=0)
         glossesthere=' — '.join([glosses[i] for i in glosses if i])
         if not glossesthere:
             log.info("entry {} doesn't have glosses; not showing."
-                    "".format(entry.get('id')))
+                    "".format(self.entry.get('id')))
             return 'noglosses'
         l=ui.Label(self.wordframe, text=glossesthere, font='read',
                 row=1, column=0, columnspan=3, sticky='ew')
         l.wrap()
-        self.lxtextnode=lift.Entry.formtextnodeofentry(entry,self.nodetag,
-                                                            self.analang)
         # log.info("lxtextnode: {}".format(self.lxtextnode))
-        self.lxvar=ui.StringVar(value=self.lxtextnode.text)
+        self.var=ui.StringVar(value=self.entry.lc.textvaluebylang(self.analang))
         # get('entry',path=['lexeme'],analang=self.analang,
         #                 showurl=True).get()
         # lxvar=ui.StringVar()
-        lxenter=ui.EntryField(self.wordframe,textvariable=self.lxvar,
+        lxenter=ui.EntryField(self.wordframe,textvariable=self.var,
                                 row=2,column=0,columnspan=3)
         lxenter.focus_set()
         lxenter.bind('<Return>',self.nextword)
