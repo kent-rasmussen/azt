@@ -1722,21 +1722,311 @@ class Node(ET.Element):
                         if i.findall('text') and
                         [j for j in i.findall('text') if j.text]
                     ]
-    def __init__(self, parent, node, **kwargs):
-        children=[i for i in parent]
-        self.index=children.index(node)
-        tag=node.tag
-        attrib=node.attrib
-        super(Node, self).__init__(tag, attrib, **kwargs)
-class Entry(ET.Element): # what does "object do here?"
+    def checkforsecondchild(self,tag):
+        """This is only for non-Multiple, single occurrence fields"""
+        if len(self.findall(tag)) > 1:
+            log.error("{} node in entry {} has multiple forms for {} tag. "
+                    "This is not legal LIFT; please fix this!"
+                    "".format(self.tag,self.entry.guid,tag))
+    def tagattrib(self,node,**kwargs):
+        if isinstance(node,ET.Element):
+            self.index=[i for i in self.parent].index(node)
+            tag=node.tag
+            attrib=node.attrib
+        else: #i.e., if making a node from scratch
+            try:
+                tag=kwargs.pop('tag') #don't pass these twice
+                attrib=kwargs.pop('attrib',{})
+            except KeyError:
+                log.error("When making a node, add tag and attrib (dict) "
+                            "to kwargs")
+                raise
+        return tag,attrib
+    def nodecheck(self,node,**kwargs):
+        if not isinstance(node,ET.Element):
+            node=Node(self.parent,**kwargs)
+        return node
+    def __init__(self, parent, node=None, **kwargs):
         self.parent=parent
-        for child in node:
-            self.append(child)
-        for attr in ['text', 'tail']:
-            setattr(self,attr,getattr(node,attr))
-        # parent.append(self) #or
-        parent.remove(node)
-        parent.insert(self.index,self)
+        if not 'tag' in kwargs:
+            node=self.nodecheck(node,**kwargs)
+        tag,attrib=self.tagattrib(node,**kwargs) #this pulls from either
+        # log.info("Calling with tag: {}, attrib: {}, kwargs: {}".format(
+        #                                                 tag, attrib, kwargs
+        #                                                     ))
+        super(Node, self).__init__(tag, attrib) # **kwargs gives extra attrs
+        try:
+            assert isinstance(node,ET.Element)
+            for child in node:
+                self.append(child)
+            for attr in ['text', 'tail']:
+                setattr(self,attr,getattr(node,attr))
+            parent.remove(node)
+            parent.insert(self.index,self)
+        except:
+            parent.append(self) #or
+class Text(Node):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='text'
+        super(Text, self).__init__(parent, node, **kwargs)
+class Annotation(Node):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['annotation']='text'
+        super(Annotation, self).__init__(parent, node, **kwargs)
+class ValueNode(Node):
+    def value(self,value=None):
+        if value:
+            self.set('value',value)
+        return self.get('value')
+    def __init__(self, parent, node=None, **kwargs):
+        super(ValueNode, self).__init__(parent, node, **kwargs)
+class Trait(ValueNode):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='trait'
+        super(Trait, self).__init__(parent, node, **kwargs)
+class Ps(ValueNode):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='grammatical-info'
+        super(Ps, self).__init__(parent, node, **kwargs)
+class Form(Node):
+    def gettext(self):
+        self.textnode=Text(self,self.find('text'))
+    def getannotation(self):
+        self.annonodes=[Annotation(self,i) for i in self
+                                            if i.tag == 'annotation']
+    def annotationvalue(self,value=None):
+        if value:
+            self.annonodes.text=value
+        else:
+            return self.annonodes.text
+    def textvalue(self,value=None):
+        if value:
+            self.textnode.text=value
+        else:
+            return self.textnode.text
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='form'
+        super(Form, self).__init__(parent, node, **kwargs)
+        self.gettext()
+        self.lang=self.get("lang")
+class FormParent(Node):
+    def textvaluebylang(self,lang,value=None):
+        try:
+            return self.forms[lang].textvalue(value)
+        except KeyError:
+            if value is not None: #only make if we're populating it, allow ''
+                self.forms[lang]=Form(self,self.makeformnode(lang,text=value))
+            else:
+                return None
+    def checkforsecondchildanylang(self,lang):
+        if len(self.findall('form')) > 1:
+            log.error("{} node in entry {} has multiple forms. "
+                    "While this is legal LIFT, it is probably an error, and "
+                    "will lead to unexpected behavior."
+                    "".format(self.tag,self.parent.entry.guid,lang))
+    def checkforsecondchildbylang(self,lang):
+        if len(self.findall('form[@lang="{}"]'.format(lang))) > 1:
+            log.error("{} node in entry {} has multiple forms for ‘{}’ lang. "
+                    "While this is legal LIFT, it is probably an error, and "
+                    "will lead to unexpected behavior."
+                    "".format(self.tag,self.parent.entry.guid,lang))
+    def getforms(self):
+        self.forms={
+                    lang:Form(self,self.find('form[@lang="{}"]'.format(lang)))
+                        for lang in [i.get('lang')
+                                    for i in self.findall('form')]
+                        if lang
+                    }
+        for lang in self.forms:
+            self.checkforsecondchildbylang(lang)
+    def __init__(self, parent, node=None, **kwargs):
+        super(FormParent, self).__init__(parent, node, **kwargs)
+        self.ftype=self.tag
+class Gloss(Form):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='gloss'
+        super(Gloss, self).__init__(parent, node, **kwargs)
+        self.lang=self.get("lang")
+class Field(FormParent):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='field'
+        if 'type' in kwargs:
+            try:
+                type=kwargs.pop('type')
+                kwargs['attrib']['type']=type
+            except KeyError:
+                kwargs['attrib']={'type':type}
+        super(Field, self).__init__(parent, node, **kwargs)
+        self.ftype=self.get('type')
+        self.getforms()
+class Definition(FormParent):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='definition'
+        super(Definition, self).__init__(parent, node, **kwargs)
+        self.getforms()
+class Lexeme(FormParent):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='lexical-unit'
+        super(Lexeme, self).__init__(parent, node, **kwargs)
+        self.getforms()
+class Citation(FormParent):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='citation'
+        super(Citation, self).__init__(parent, node, **kwargs)
+        self.getforms()
+class FieldParent(object):
+    """This is needed because some fields are under Entry, others under sense"""
+    def checkforsecondfieldbytype(self,type):
+        if len(self.findall('field[@type="{}"]'.format(type))) > 1:
+            log.error("{} node in entry {} has multiple fields of ‘{}’ type. "
+                    "While this is legal LIFT, it is probably an error, and "
+                    "will lead to unexpected behavior."
+                    "".format(self.tag,self.entry.guid,type))
+            return 1
+    def getfields(self):
+        self.fields={
+                    type:Field(self,self.find('field[@type="{}"]'.format(type)))
+                        for type in [i.get('type')
+                                    for i in self.findall('field')]
+                        if type
+                    }
+        for type in self.fields:
+            self.checkforsecondfieldbytype(type)
+    def __init__(self):
+        self.getfields()
+class Example(Node,FieldParent):
+    def getlocation(self):
+        """this shouldn't be modified ever, at least for now."""
+        if self.checkforsecondfieldbytype('location'):
+            log.error("Multiple location fields found; not processing.")
+            return
+        try:
+            # prettyprint(self.fields['location'])
+            # log.info(len(self.fields['location'].forms))
+            if len(self.fields['location'].forms) == 1:
+                for k,v in self.fields['location'].forms.items():
+                    self.location=v.textvalue()
+            elif not self.fields['location'].forms:
+                log.error("No example location found!")# i.find('field[@type="{}"]/form/text'.format(location)'
+            else:
+                log.error("more than one value for an example location! ({};{})"
+                            "".format(self.fields['location'].forms,
+                                    self.entry.guid))# i.find('field[@type="{}"]/form/text'.format(location)'
+        except KeyError:
+            log.info("No location field found.")
+        if not hasattr(self,'location'): # don't fail this test
+            self.location=None
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='example'
+        super(Example, self).__init__(parent, node, **kwargs)
+        self.entry=parent.entry #make a common reference point for sense/entry
+        self.sense=parent
+        FieldParent.__init__(self)
+        self.getlocation()
+class Sense(Node,FieldParent):
+    def checkforsecondchildbylang(self,lang):
+        """This is just for glosses, which behave as form nodes in LIFT"""
+        if len(self.findall('gloss[@lang="{}"]'.format(lang))) > 1:
+            log.error("{} node in entry {} has multiple forms for {} lang. "
+                    "While this is legal LIFT, it is probably an error, and "
+                    "will lead to unexpected behavior."
+                    "".format(self.tag,self.parent.guid,lang))
+    def checkforsecondchildbyloc(self,loc):
+        exs=[i for i in self.findall('example/field[@type="location"]/'
+                                    'form/text[.="{}"]'.format(loc))
+            ]
+        # log.info("Examples: {}".format(exs))
+        if len(exs) > 1:
+            log.error("{} node in entry {} has multiple examples with "
+                    "{} location. "
+                    "While this is legal LIFT, it is probably an error, and "
+                    "will lead to unexpected behavior."
+                    "".format(self.tag,self.parent.guid,loc))
+    def getglosses(self):
+        self.glosses={
+                    lang:[Gloss(self,i) for i in self
+                        if i.tag == 'gloss' and lang==i.get('lang')
+                        ]
+                            for lang in [i.get('lang') for i in self]
+                            if lang
+                    }
+        #multiple gloss entries seem to be a thing, so don't complain
+        # for lang in self.glosses:
+        #     self.checkforsecondchildbylang(lang)
+        # log.info("Found {} gloss(es)".format(len(self.glosses)))
+        # log.info("Found gloss(es): {}".format(self.glosses))
+    def getdefinitions(self):
+        self.definition=Definition(self,self.find('definition'))
+        self.checkforsecondchild('definition')
+    def getexamples(self):
+        examples=[Example(self,i) for i in self
+                                            if i and i.tag == 'example'
+                            ]
+        self.examples={loc:Example(self,self.find(
+                                    'example/field[@type="location"]/'
+                                    'form/text[.="{}"]/../../..'.format(loc)))
+                            for loc in [i.text for i in self.findall(
+                                        'example/field[@type="location"]/'
+                                        'form/text')
+                                        ]
+                            if loc
+                        }
+        for loc in self.examples:
+            self.checkforsecondchildbyloc(loc)
+    def getpssubclass(self):
+        self.pssubclass=Trait(self,self.find('trait[@name="{}-infl-class"]'
+                                    ''.format(self.psvalue())))
+    def pssubclassvalue(self,value=None):
+        try:
+            assert isinstance(self.pssubclass,ET.Element)
+            if value:
+                self.pssubclass.value(value)
+        except AssertionError:
+            if value:
+                self.pssubclass=Trait(self,
+                                    name="{}-infl-class".format(self.psvalue()),
+                                    value=value)
+            else:
+                return None
+        return self.pssubclass.value()
+    def rmpsnode(self):
+        if isinstance(self.ps,ET.Element):
+            self.remove(self.ps)
+        else:
+            log.info("psnode {} not found in sense {} ({})".format(self.ps,
+                                                    self,self.id))
+    def rmpssubclassnode(self):
+        if isinstance(self.pssubclass,ET.Element):
+            self.remove(self.pssubclass)
+        else:
+            log.info("pssubclass {} not found in sense {} ({})"
+                    "".format(self.pssubclass,self,self.id))
+    def getps(self):
+        self.ps=Ps(self,self.find('grammatical-info'))
+    def psvalue(self,value=None):
+        try:
+            assert isinstance(self.ps,ET.Element)
+            if value:
+                self.ps.value(value)
+            # else:
+        except AssertionError:
+            if value:
+                self.ps=Ps(self, value=value)
+            else:
+                return None
+        return self.ps.get('value')
+    def __init__(self, parent, node):
+        super(Sense, self).__init__(parent, node)
+        self.entry=parent #make a common reference point for sense/entry
+        self.id=self.get('id')
+        self.getps()
+        self.getpssubclass()
+        self.getglosses()
+        self.getdefinitions()
+        self.getexamples()
+        FieldParent.__init__(self)
+        # log.info([i.textvalue() for i in self.glosses['en']])
+class Entry(Node,FieldParent): # what does "object do here?"
     """I think the right path forward is to make this the base thing searched,
     with senses in that, and examples in that. each should have a class method
     to find things, including parents (which would maybe just be stored in
@@ -1746,64 +2036,52 @@ class Entry(ET.Element): # what does "object do here?"
     """
     #import lift.put as put #class put:
     #import get #class put:
-    def formtextnodeofentry(self,tag,lang,**kwargs):
-        # this gives the form/text node, from which one can easily extract .text
-        # hence, the limiting by lang
-        # a 'tag' node needs to be the immediate child of a self.tag node
-        if tag in ['definition','gloss'] and self.tag == 'sense':
-            # log.info("Operating on sense fields")
-            pass
-        elif self.tag != 'entry':
-            import inspect
-            log.info(_("This method needs to operate on entries; fix caller {}!"
-                    ).format(
-                    inspect.getouterframes(inspect.currentframe())[2].function))
-            return
-        nodes=self.findall(tag) # This should typically be a single item list
-        for node in nodes:
-            if tag == 'gloss': # But not in this case
-                formtexts=node.findall('.[@lang="{}"]/text'.format(lang))
-            else:
-                formtexts=node.findall('form[@lang="{}"]/text'.format(lang))
-            if formtexts:
-                return formtexts[0]
-        # If no matching form/lang combo found, check for a node to make new one
-        # This doesn't apply to gloss, as they are one per lang, without form
-        # nodes. If gloss is found w/matching lang, we already returned above
-        if kwargs.get('nomake'):
-            return
-        if nodes and tag != 'gloss':
-            return Node.makeformnode(nodes[0],lang,gimmetext=True)
-        else: #build from scratch (incl if gloss found, but wo matching lang).
-            tag,attrib=rx.splitxpath(tag)
-            tagnode=Node(self,tag,attrib)
-            # prettyprint(tagnode)
-            if tag == 'gloss': #no form node here
-                tagnode.set('lang',lang)
-                return tagnode.maketextnode(gimmetext=True)
-            else:
-                return tagnode.makeformnode(lang,gimmetext=True)
-    def __init__(self, db, guid=None, *args, **kwargs):
-        if guid is None:
-            log.info("Sorry, I was kidding about that; I really do need the entry's guid.")
-            exit()
+    def getsenses(self):
+        self.senses=[Sense(self,i) for i in self if i.tag == 'sense']
+        # log.info("Found {} sense(s)".format(len(self.senses)))
+        # log.info("Found sense(s): {}".format(self.senses))
+    def getlx(self):
+        self.lx=Lexeme(self,self.find('lexical-unit'))
+        self.checkforsecondchild('lexical-unit')
+    def getlc(self):
+        self.lc=Citation(self,self.find('citation'))
+        self.checkforsecondchild('citation')
+    def plvalue(self,ftype,lang,value=None):
+        try:
+            assert self.pl.get('type') == ftype
+        except (AttributeError, AssertionError):
+            self.pl=Field(self,type=ftype)
+            # prettyprint(self.pl)
+            self.checkforsecondfieldbytype(ftype)
+            self.getfields() #needed?
+        return self.pl.textvaluebylang(lang,value)
+    def impvalue(self,ftype,lang,value=None):
+        try:
+            assert self.imp.get('type') == ftype
+        except (AttributeError, AssertionError):
+            self.imp=Field(self,type=ftype)
+            # prettyprint(self.imp)
+            self.checkforsecondfieldbytype(ftype)
+            self.getfields() #needed?
+        return self.imp.textvaluebylang(lang,value)
+    def __init__(self, parent, node):
         #self.language=globalvariables.xyz #Do I want this here? It doesn't really add anything.. How can I check internal language? If there are more writing systems, do I want to find them?
         #self.ps=lift_get.ps(self.guid) #do this is lift_get Entry class, inherit from there.
-        self.guid=guid
-        self.db=db #Do I want this?
+        super(Entry, self).__init__(parent, node)
+        self.entry=self #make a common reference point for sense/entry
+        self.guid=self.get('guid')
+        self.getsenses()
+        self.getlx()
+        self.getlc()
+        FieldParent.__init__(self)
         """Probably should rework this... How to get entry fields?"""
         # self.nodes=self.db.nodes.find(f"entry[@guid='{self.guid}']") #get.nodes(self)
         #log.info(self.nodes.get('guid'))
         #probably should trim all of these..…
         """These depend on check analysis, should move..."""
-        self.analang=self.db.analangs[0]
         """get(self,attribute,guid=None,analang=None,glosslang=None,lang=None,
         ps=None,form=None,fieldtype=None,location=None,showurl=False)"""
         # self.lexeme=db.get('lexeme',guid=guid) #don't use this!
-        self.lc=db.citationorlexeme(guid=guid,lang=self.analang)
-        self.glosses=[]
-        for g in self.db.glosslangs:
-            self.glosses.append(db.glossordefn(guid=guid,lang=g))
         # self.citation=get.citation(self,self.analang)
         # self.gloss=get.obentrydefn(self, self.db.glosslang) #entry.get.gloss(self, self.db.glosslang, guid)
         # self.gloss2=get.gloss(self, self.db.glosslang2, guid)
@@ -1818,8 +2096,8 @@ class Entry(ET.Element): # what does "object do here?"
         #self.plural=db.get('fieldvalue',guid=guid,lang=self.analang,fieldtype=db.pluralname)
         #self.imperative=db.get('fieldvalue',guid=guid,lang=self.analang,fieldtype=db.imperativename)
         # self.imperative=db.get('imperative',guid=guid)
-        self.ps=db.get('ps',guid=guid)
-        self.illustration=db.get('illustration',guid=guid)
+        # self.ps=db.get('ps',guid=guid)
+        # self.illustration=db.get('illustration',guid=guid)
 class Language(object):
     def __init__(self, xyz):
         """define consonants and vowels here?regex's belong where?"""
