@@ -50,7 +50,7 @@ class BadParseError(Error):
 class Lift(object): #fns called outside of this class call self.nodes here.
     """The job of this class is to expose the LIFT XML as python object
     attributes. Nothing more, not thing else, should be done here."""
-    def __init__(self, filename):
+    def __init__(self, filename, tostrip=False):
         self.debug=False
         self.filename=filename #lift_file.liftstr()
         self.logfile=filename+".changes"
@@ -60,15 +60,21 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             self.read() #load and parse the XML file. (Should this go to check?)
         except:
             raise BadParseError(self.filename)
+        self.getglosslangs() #sets: self.glosslangs
+        if tostrip:
+            return #we're done, if this is a template read
         backupbits=[filename,'_',
                     datetime.datetime.utcnow().isoformat()[:-16], #once/day
                     '.txt']
         self.backupfilename=''.join(backupbits)
+        """I should skip some checks in certain cases, like working with the
+        CAWL template"""
+        self.getentries()
+        self.getsenses()
         self.getguids() #sets: self.guids and self.nguids
         #the following should probably replaced by getsenseidsbyps everywhere
         self.getsenseids() #sets: self.senseids and self.nsenseids
         """These three get all possible langs by type"""
-        self.getglosslangs() #sets: self.glosslangs
         self.getanalangs() #sets: self.analangs, self.audiolangs
         self.legacylangconvert() #update from any old language forms to xyz-x-py
         self.getentrieswanalangdata() #sets: self.(n)entriesw(lexeme|citation)data
