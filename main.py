@@ -5595,100 +5595,13 @@ class WordCollectionCitation(TaskDressing,WordCollection):
         #Status frame is 0,0
         self.nodetag='citation' #lift.Entry.citationformnodeofentry
         self.getwords()
-class Parse(TaskDressing,Segments):
+class Parse(Segments):
     """docstring for Parse."""
-    def taskicon(self):
-        return program['theme'].photo['iconWord']
-    def tooltip(self):
-        return _("This task will help you parse your citation forms, "
-                "automatically and with confirmation.")
-    def dobuttonkwargs(self):
-        fn=self.getparses
-        text=_("Parse!")
-        tttext=_("{} tries to do as much as possible automatically, and "
-                "according to the level you have set for confirmation."
-                ).format(program['name'])
-        return {'text':text,
-                'fn':fn,
-                # column=0,
-                'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['Word'],
-                'sticky':'ew',
-                'tttext':tttext
-                }
-    def tasktitle(self):
-        return _("Parse Words")
-    def doparse(self):
-        def copylc2lx(event=None):
-            self.runwindow.resetframe()
-            forms['lx'].text=forms['lc'].text
-            self.maybewrite()
-            log.info("copylc2lx done")
-        def skiplc(event=None):
-            self.runwindow.resetframe()
-        log.info("taskchooser: {}".format(self.taskchooser))
-        log.info("task: {}".format(self.task))
-        todo=self.getlisttodo()
-        plname,impname=self.secondfieldnames()
-        tags={'lc': 'citation',
-                'lx': 'lexical-unit',
-                'pl': 'field[@type="{}"]'.format(plname), #not necessarily pl
-                'imp': 'field[@type="{}"]'.format(impname)
-                }
-        if self.checkeach:
-            self.getrunwindow(nowait=True)
-            # self.runwindow.resetframe()
-            self.runwindow.title(self.tasktitle())
-            ui.Label(self.runwindow.outsideframe,text=_("Parsing!"),row=0,column=0,
-            columnspan=3)
-        else:
-            self.wait(msg=_("Parsing automatically"))
-        for entry in todo:
-            # At this point, we want to be agnostic of lexical category, as this
-            # is one thing the parsing process is to establish/confirm.
-            # So either we create both form fields, then delete the one we don't
-            # want, or we do this (at least enough to know the category),
-            # then create the fields.
-            forms=dict()
-            for i in tags:
-                nomake=False
-                if not i.startswith('l'): #need to think of which second form to make...
-                    nomake=True #won't make an emptynode, if not there.
-                forms[i]=lift.Entry.formtextnodeofentry(entry,tags[i],
-                                                        self.analang,
-                                                        nomake=nomake
-                                                        )
-            if self.checkeach:
-                if self.runwindow.exitFlag.istrue():
-                    return
-                text=_("Copy this citation to lexeme field?")
-                text+="\n"+str(forms['lc'].text)+' > '+nn(forms['lx'].text)
-                if forms['pl']:
-                    text+='\n'+_("Nominal second form: ")+nn(forms['pl'].text)
-                if forms['imp']:
-                    text+='\n'+_("Verbal second form: ")+nn(forms['imp'].text)
-                # log.info("w1: {}".format(self))
-                # log.info("w2: {}".format(self.runwindow))
-                # log.info("w3: {}".format(self.runwindow.frame))
-                ask=ui.Button(self.runwindow.frame, text=text, cmd=copylc2lx,
-                            row=0, column=0)
-                skip=ui.Button(self.runwindow.frame, text=_("Skip"), cmd=skiplc,
-                            row=0, column=1)
-                self.wait_window(self.runwindow.frame)
-            else:
-                forms['lx'].text=forms['lc'].text
-        if self.checkeach:
-            self.runwindow.destroy()
-        else:
-            self.maybewrite()
-            self.waitdone()
     def getgloss(self):
-        return ", ".join([
-                    i for j in [self.db.gloss(senseid=self.senseid,glosslang=l)
-                                for l in self.glosslangs]
+        return ", ".join([i.textvalue() for j in [self.parser.sense.glosses[l]
+                                                    for l in self.glosslangs]
                         for i in j
-                    ])
+                        ])
     def userconfirmation(self,*args):
         # Return True or False only
         def do(x):
@@ -5722,7 +5635,8 @@ class Parse(TaskDressing,Segments):
         ui.Label(w.frame,text=self.currentformnotice(),
                     font='small',justify='l',
                     row=2,column=0,columnspan=2)
-        self.waitpause()
+        if self.iswaiting():
+            self.waitpause()
         w.wait_window(l) #canary on label, not window
         # log.info("exit flag for w({}):{}; self({}):{}"
         #         "".format(w,w.exitFlag,self,self.exitFlag))
@@ -5731,8 +5645,10 @@ class Parse(TaskDressing,Segments):
             self.waitdone()
             self.exited=True
         else:
-            w.on_quit()
-            self.waitunpause()
+            # w.on_quit()
+            w.destroy()
+            if self.iswaiting():
+                self.waitunpause()
             # log.info("User responded {}".format(self.userresponse.value))
             return self.userresponse.value
     def selectsffromlist(self,l):
@@ -5749,16 +5665,17 @@ class Parse(TaskDressing,Segments):
             return "{} ({} root: {})".format(*l[:2],' '.join(rootafxs))
         def neither():
             # These count askparsed; evaluated and moving on
-            self.parsecatalog.addneither(self.senseid)
+            self.parsecatalog.addneither(self.parser.sense.id)
             #don't leave 'neither' with ps indication
-            self.parser.rmpsnode()
+            self.parser.sense.rmpsnode()
             # self.parser.rmpssubclassnode() #leave this for posterity?
             t.destroy()
         # l=(sf,ps,root,lcafxs,sfafxs)
         # log.info("full option list: {}".format(l))
         if self.exitFlag.istrue():
             return
-        self.waitpause()
+        if self.iswaiting():
+            self.waitpause()
         ln=[(i,formattuple(i)) for i in l if i[1] == self.nominalps]
         ln+=[('ON',_("Another {}").format(self.secondformfield[self.nominalps]))]
         # log.info("noun option list: {}".format(ln))
@@ -5772,7 +5689,8 @@ class Parse(TaskDressing,Segments):
                         "".format(
                         self.secondformfield[self.nominalps],
                         self.secondformfield[self.verbalps],
-                        self.parser.lcnode.text,self.getgloss()
+                        self.parser.entry.lc.textvaluebylang(self.analang),
+                        self.getgloss()
                                 ),
                     font='title',
                     row=0,column=0,columnspan=2)
@@ -5806,8 +5724,10 @@ class Parse(TaskDressing,Segments):
         w.wait_window(t)
         if w.exitFlag.istrue():
             self.exited=True
-        w.on_quit()
-        self.waitunpause()
+        # w.on_quit()
+        w.destroy()
+        if self.iswaiting():
+            self.waitunpause()
     def asksegmentsnops(self):
         for ps in [self.nominalps, self.verbalps]:
             r=self.asksegments(ps)
@@ -5816,18 +5736,27 @@ class Parse(TaskDressing,Segments):
     def currentformnotice(self):
         return _("currently: {} ({ps} root), {}, {} ({pl}), {} ({imp})"
                 ).format(*self.parser.texts(),
-                        ps=self.parser.ps,
+                        ps=self.parser.sense.psvalue(),
                         pl=self.secondformfield[self.nominalps],
                         imp=self.secondformfield[self.verbalps]
                         )
     def asksegments(self,ps):
         def do(event=None):
-            self.parser.psvalue(ps)
+            self.parser.sense.psvalue(ps)
             if ps == self.nominalps:
-                tag='pl'
+                # tag='pl'
+                fn=self.parser.entry.plvalue
             elif ps == self.verbalps:
-                tag='imp'
-            self.parser.nodetextvalue(tag,segments.get())
+                # tag='imp'
+                fn=self.parser.entry.impvalue
+            # lift.prettyprint(self.parser.entry.imp)
+            # lift.prettyprint(self.parser.entry.pl)
+            # log.info("value: {}".format(segments.get()))
+            # lift.prettyprint(self.parser.entry.imp)
+            # lift.prettyprint(self.parser.entry.pl)
+            fn(self.secondformfield[ps],self.analang,segments.get())
+            # log.info("v: {}".format(fn(self.secondformfield[ps],self.analang)))
+            # self.parser.nodetextvalue(tag,segments.get())
             b.destroy()
         def next(event=None):
             segments.set("")
@@ -5836,20 +5765,24 @@ class Parse(TaskDressing,Segments):
         if self.exitFlag.istrue():
             return
         log.info("asking for second form segments for ‘{}’ ps: {} ({}; {})"
-                "".format(self.parser.lc,ps,self.parser.senseid,
+                "".format(self.parser.entry.lc.textvaluebylang(self.analang),
+                            ps,self.parser.senseid,
                             self.parsecatalog.parsen()))
         sfname=self.secondformfield[ps]
-        self.waitpause()
+        if self.iswaiting():
+            self.waitpause()
         w=ui.Window(self)
         w.title(_("Type second form"))
         l=ui.Label(w.frame,
                 text="What {} form goes with ‘{}’ ({})?"
-                    "".format(sfname,self.parser.lcnode.text,self.getgloss()),
+                    "".format(sfname,
+                            self.parser.entry.lc.textvaluebylang(self.analang),
+                            self.getgloss()),
                 font='title',
                 row=0,column=0,columnspan=2)
         l.wrap()
         segments=ui.StringVar()
-        segments.set(self.parser.lcnode.text)
+        segments.set(self.parser.entry.lc.textvaluebylang(self.analang))
         e=ui.EntryField(w.frame,textvariable=segments,
                         row=1,column=0)
         b=ui.Button(w.frame,text=_("OK"),cmd=do,
@@ -5864,8 +5797,10 @@ class Parse(TaskDressing,Segments):
         w.wait_window(b)
         if w.exitFlag.istrue():
             self.exited=True
-        self.waitunpause()
-        w.on_quit()
+        if self.iswaiting():
+            self.waitunpause()
+        # w.on_quit()
+        w.destroy()
         if not segments.get():
             return 1
         elif not self.exited:
@@ -5910,21 +5845,26 @@ class Parse(TaskDressing,Segments):
             log.info("sending {}".format(r[4:]))
             log.info("sending {}; {}".format(*r[4:]))
             self.parser.addaffixset(*r[4:])#self.ps,afxs)
-            self.parser.pssubclassvalue(r[-1])
+            self.parser.sense.pssubclassvalue(r[-1])
             return
         return r
-    def parse(self):
+    def parse(self,**kwargs):
         # These functions return nothing when the parse goes through, 1 when
         # not done. If the user exits, self.exited is set
+        self.exited=False
         r=True #i.e., do the next fn
-        kwargs={'senseid':self.senseid,
+        if not kwargs:
+            kwargs={'senseid':self.senseid,
                 'entry':ifone(self.db.nodes.findall('entry/sense[@id="{}"]/..'
                                             ''.format(self.senseid))),
                 }
-        badps=self.parser.parseentry(**kwargs)
-        self.taskchooser.datadict.getframeddata(kwargs['senseid'])
+        self.parser.parseentry(**kwargs)
+        try:
+            self.taskchooser.datadict.getframeddata(kwargs['senseid'])
+        except KeyError: #migrate to this
+            self.taskchooser.datadict.getframeddata(kwargs['entry'].senses[0].id)
         log.info("lx: {}, lc: {}, pl: {}, imp: {}".format(*self.parser.texts()))
-        if min(self.parser.auto, self.parser.ask) <= 4 and not badps:
+        if min(self.parser.auto, self.parser.ask) <= 4:# and not badps:
             r=self.trythreeforms()
         # badps is OK here, but don't do twoforms if threeforms worked
         if r and not self.exited:
@@ -5937,8 +5877,14 @@ class Parse(TaskDressing,Segments):
             # log.info("Asking for second form typed")
             self.asksegmentsnops()
         if not self.exited:
-            self.parsecatalog.addparsed(self.senseid)
+            try:
+                self.parsecatalog.addparsed(self.senseid)
+            except: #upgrade to this
+                self.parsecatalog.addparsed(kwargs['entry'].senses[0].id)
             self.maybewrite()
+        if self.parent.iswaiting():
+            self.parent.waitdone()
+        self.parent.deiconify()
     def initsenseidtodo(self):
         try:
             r=self.senseidtodo
@@ -5966,7 +5912,6 @@ class Parse(TaskDressing,Segments):
                 return set(senseids)
     def getparses(self,**kwargs):
         log.info("parses already tried: {}".format(self.parsecatalog.parsen()))
-        self.exited=False
         # for senseid in set(self.db.senseids)-set(self.parsecatalog.parsed):
         #     self.parse(senseid)
         self.wait("Parsing (ask: {} auto: {})".format(self.parser.ask,
@@ -5975,14 +5920,15 @@ class Parse(TaskDressing,Segments):
         senseids=self.senseidstoparse(**kwargs)
         todo=len(senseids)
         for n,self.senseid in enumerate(senseids):
-            if not self.exited:
-                self.parse() #this can add to lists
-                if self.iswaiting():
-                    self.waitprogress(100*n//todo)
-                else:
-                    break
+            self.parse() #this can add to lists
+            if self.exited:
+                break
+            if self.iswaiting():
+                self.waitprogress(100*n//todo)
+            # else:
+            #     break
         self.waitdone()
-        log.info("total parses tried: {}".format(self.parsecatalog.parsen()))
+        # log.info("total parses tried: {}".format(self.parsecatalog.parsen()))
         self.parsecatalog.report()
     def getparse(self,senseid):
         if senseid not in self.parsed:
@@ -6024,11 +5970,9 @@ class Parse(TaskDressing,Segments):
             log.info("not showing")
             self.after(1,self.showwhenready)
     def __init__(self, parent): #frame, filename=None
-        log.info("Initializing {}".format(self.tasktitle()))
         self.initsenseidtodo()
         Segments.__init__(self,parent)
         self.parent=parent
-        TaskDressing.__init__(self,parent)
         self.secondformfield=self.taskchooser.settings.secondformfield
         self.nominalps=self.taskchooser.settings.nominalps
         self.verbalps=self.taskchooser.settings.verbalps
@@ -6050,22 +5994,41 @@ class Parse(TaskDressing,Segments):
         self.dodoneonly=True #don't give me other words
         self.userresponse=Object()
         self.showwhenready()
-class ParseWords(Parse):
-    def tasktitle(self):
-        return _("Parse Whole Dictionary, word by word")
+class ParseWords(Parse,TaskDressing):
+    def taskicon(self):
+        return program['theme'].photo['iconWord']
     def tooltip(self):
-        return _("This task will help you parse your whole dictionary, "
-                "word by word.")
+        return _("This task will help you parse your citation forms, "
+                "automatically and with confirmation.")
+    def dobuttonkwargs(self):
+        fn=self.getparses
+        text=_("Parse!")
+        tttext=_("{} tries to do as much as possible automatically, and "
+                "according to the level you have set for confirmation."
+                ).format(program['name'])
+        return {'text':text,
+                'fn':fn,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':self.taskchooser.theme.photo['Word'],
+                'sticky':'ew',
+                'tttext':tttext
+                }
+    def tasktitle(self):
+        return _("Parse Words")
     def __init__(self, parent): #frame, filename=None
-        ParseSlice.__init__(self,parent)
-        self.checkeach=True #confirm each word
-class WordCollectnParse(WordCollection,Parse):
+        log.info("Initializing {}".format(self.tasktitle()))
+        TaskDressing.__init__(self,parent)
+        Parse.__init__(self,parent)
+        # self.checkeach=True #confirm each word
+class WordCollectnParse(WordCollection,Parse,TaskDressing):
     """This task collects words, from the SIL CAWL, or one by one.
     First in citation form, then pl or imperativewith Parse"""
     def taskicon(self):
         return program['theme'].photo['iconWord']
     def tooltip(self):
-        return _("This task helps you collect words in citation form.")
+        return _("This task helps you collect and parse words.")
     def dobuttonkwargs(self):
         if self.taskchooser.cawlmissing:
             fn=self.addCAWLentries
@@ -6094,8 +6057,27 @@ class WordCollectnParse(WordCollection,Parse):
                 }
     def tasktitle(self):
         return _("Add and Parse Words") # for Citation Forms
-    def __init__(self, parent): #frame, filename=None
-        pass
+    def storethisword(self):
+        try:
+            v=self.var.get()
+            if v:
+                self.withdraw()
+                self.entry.lc.textvaluebylang(self.analang,v)
+                self.parse(entry=self.entry)
+            # self.maybewrite() #only if above is successful
+        except AttributeError as e:
+            log.info("Not storing word: {}".format(e))
+        self.deiconify()
+    def submitform(event=None):
+        self.runwindow.form[lang]=self.runwindow.form[lang].get()
+        self.runwindow.frame2.destroy()
+    def __init__(self, parent):
+        log.info("Initializing {}".format(self.tasktitle()))
+        self.nodetag='citation'
+        TaskDressing.__init__(self,parent)
+        Parse.__init__(self,parent)
+        WordCollection.__init__(self,parent)
+        self.taskchooser.withdraw()
         #This should either be adapted to use parse or not by keyword, or have
         # another method for addnParse
         fn=self.getwords()#?
