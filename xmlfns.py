@@ -5,6 +5,8 @@ def indent(elem, level=0):
     """from http://effbot.org/zone/element-lib.htm#prettyprint"""
     i = "\n" + level*" "*indentspaces
     if len(elem):
+        # print("elem: {}".format(elem))
+        # print("elem.text: {}".format(elem.text))
         if not elem.text or not elem.text.strip():
             elem.text = i + " "*indentspaces
         if not elem.tail or not elem.tail.strip():

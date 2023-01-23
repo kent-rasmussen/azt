@@ -11,6 +11,7 @@ import unicodedata
 import tkinter #as gui
 import tkinter.font
 import tkinter.scrolledtext
+import tkinter.ttk
 import file #for image pathnames
 from random import randint #for theme selection
 try:
@@ -200,6 +201,17 @@ class Theme(object):
             exit()
         for k in self.themes[self.name]:
             setattr(self,k,self.themes[self.name][k])
+        self.themettk = tkinter.ttk.Style()
+        self.themettk.theme_use('clam')
+        self.themettk.configure("Progressbar",
+                                troughcolor=self.activebackground,
+                                background=self.background,
+                                # bordercolor=self.background,
+                                # darkcolor=self.background,
+                                # lightcolor=self.background
+                                )
+    # kwargs['troughcolor']=self.theme.background
+    # kwargs['background']=self.theme.activebackground
     def setthemes(self):
         self.themes={'lightgreen':{
                             'background':'#c6ffb3',
@@ -565,7 +577,7 @@ class Exitable(object):
         on exit, the logic to stop needs to be elsewhere, e.g.,
         `if self.exitFlag.istrue(): return`"""
         if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
-            print("Setting window exit flag True!")
+            log.info("Setting window ({}) exit flag True!".format(self))
             self.exitFlag.true()
         if self.mainwindow: #exit afterwards if main window
             self.exittoroot()
@@ -574,8 +586,12 @@ class Exitable(object):
             if (hasattr(self,'parent') and
                     self.parent.winfo_exists() and
                     not isinstance(self.parent,Root)):
+                if not self.parent.iswaiting():
+                    self.parent.deiconify()
+                # else:
+                #     self.parent.waitunpause()
+                    # self.ww.paused=True
                 # log.info("Going to deiconify {}".format(self.parent))
-                self.parent.deiconify()
             # log.info("Going to cleanup {}".format(self))
             self.cleanup()
             self.destroy() #do this for everything
@@ -645,11 +661,12 @@ class Childof(object):
         """This function brings these attributes from the parent, to inherit
         from the root window, through all windows, frames, and scrolling frames, etc
         """
+        # log.info("inheriting")
         if not parent and hasattr(self,'parent') and self.parent:
             parent=self.parent
         elif parent:
             self.parent=parent
-        if attr is None:
+        if not attr:
             attrs=['theme',
                     # 'fonts', #in theme
                     # 'debug',
@@ -662,6 +679,8 @@ class Childof(object):
         for attr in attrs:
             if hasattr(parent,attr):
                 setattr(self,attr,getattr(parent,attr))
+                # log.info("inheriting {} from parent {} (to {})"
+                #         "".format(attr,type(parent),type(self)))
             else:
                 log.debug("parent {} (of {}) doesn't have attr {}, skipping inheritance"
                         "".format(parent,type(self),attr))
@@ -671,11 +690,21 @@ class Childof(object):
 class UI(ObectwArgs):
     """docstring for UI, after tkinter widgets are initted."""
     def wait(self,msg=None):
-        if hasattr(self,'ww') and self.ww.winfo_exists() == True:
+        if self.iswaiting():
             log.debug("There is already a wait window: {}".format(self.ww))
             return
         self.withdraw()
         self.ww=Wait(self,msg)
+    def iswaiting(self):
+        return hasattr(self,'ww') and self.ww.winfo_exists()
+    def waitprogress(self,x):
+        self.ww.progress(x)
+    def waitpause(self):
+        self.ww.withdraw()
+        self.ww.paused=True
+    def waitunpause(self):
+        self.ww.deiconify()
+        self.ww.paused=False
     def waitdone(self):
         try:
             self.ww.close()
@@ -802,6 +831,23 @@ class Menu(Childof,tkinter.Menu): #not Text
                                 **kwargs)
         UI.__init__(self)
         self['background']=self.theme.menubackground
+class Progressbar(Gridded,Childof,tkinter.ttk.Progressbar):
+    def current(self,value):
+        if 0 <= value <= 100:
+            self['value']=value
+        self.update_idletasks() #updates just geometry
+    def __init__(self, parent, **kwargs):
+        # log.info("Initializing Progressbar object")
+        Gridded.__init__(self,**kwargs)
+        kwargs=self.lessgridkwargs(**kwargs)
+        Childof.__init__(self,parent)
+        if 'orient' not in kwargs:
+            kwargs['orient']='horizontal' #or 'vertical'
+        if 'mode' not in kwargs:
+            kwargs['mode']='determinate' #or 'indeterminate'
+        tkinter.ttk.Progressbar.__init__(self,parent,**kwargs)
+        UI.__init__(self)
+        self.dogrid()
 class Text(Childof,ObectwArgs):
     """This converts kwargs 'text', 'image' and 'font' into attributes which are
     default where not specified, and rendered where appropriate for the
@@ -921,6 +967,7 @@ class Frame(Gridded,Childof,tkinter.Frame):
         self.dogrid()
 class Label(Gridded,Text,tkinter.Label): #,tkinter.Label
     def __init__(self, parent, **kwargs):
+        # log.info("Label Parent: {}".format(type(parent)))
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
         Childof.__init__(self,parent)
@@ -946,11 +993,41 @@ class Label(Gridded,Text,tkinter.Label): #,tkinter.Label
             self.wrap()
         UI.__init__(self)
         self.dogrid()
+class Message(Gridded,Text,tkinter.Message): #,tkinter.Label
+    """I'm not sure if this will ever have value, but here it is."""
+    def __init__(self, parent, **kwargs):
+        # log.info("Label Parent: {}".format(type(parent)))
+        Gridded.__init__(self,**kwargs)
+        kwargs=self.lessgridkwargs(**kwargs)
+        Childof.__init__(self,parent)
+        Text.__init__(self,parent,**kwargs)
+        kwargs=self.lesstextkwargs(**kwargs)
+        """These shouldn't need to be here..."""
+        # log.info("{}; {}; {}; {}; {}".format(
+        #                         parent,
+        #                         self.text,
+        #                         self.image,
+        #                         self.font,
+        #                         kwargs
+        #                         )
+        #         )
+        tkinter.Message.__init__(self,
+                                parent,
+                                text=self.text,
+                                image=self.image,
+                                font=self.font,
+                                **kwargs)
+        i=self.grid_info()
+        if i and self.text:
+            self.wrap()
+        UI.__init__(self)
+        self.dogrid()
 class Button(Gridded,Text,tkinter.Button):
     def nofn(self):
         pass
     def __init__(self, parent, choice=None, window=None, command=None, **kwargs):
         """Usta include column=0, row=1, norender=False,"""
+        # log.info("Button Parent: {}".format(type(parent)))
         # log.info("button kwargs: {}".format(kwargs))
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
@@ -1132,14 +1209,8 @@ class Window(Toplevel):
         # self.dogrid()
 class ContextMenu(Childof):
     def updatebindings(self):
-        def bindthisncheck(w):
-            log.log(2,"{};{}".format(w,w.winfo_children()))
-            if type(w) is not tkinter.Canvas: #ScrollingFrame:
-                w.bind('<Enter>', self._bind_to_makemenus)
-            for child in w.winfo_children():
-                bindthisncheck(child)
+        self.parent.bind('<Motion>', self._bind_to_makemenus)
         self.parent.bind('<Leave>', self._unbind_to_makemenus) #parent only
-        bindthisncheck(self.parent)
     def undo_popup(self,event=None):
         if hasattr(self,'menu'):
             log.log(2,"undo_popup Checking for ContextMenu.menu: {}".format(
@@ -1212,7 +1283,7 @@ class ButtonFrame(Frame):
         optionlist=kwargs.pop('optionlist')
         command=kwargs.pop('command')
         window=kwargs.pop('window',None)
-        log.info("Buttonframe option list: {} ({})".format(optionlist,command))
+        # log.info("Buttonframe option list: {} ({})".format(optionlist,command))
         Frame.__init__(self,parent,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
         # for kwarg in ['row', 'column']: #done with these
@@ -1231,10 +1302,11 @@ class ButtonFrame(Frame):
             """Assuming from here on that the first list item represents
             the format of the whole list; hope that's true!"""
         elif optionlist[0] is dict:
-            print("looks like options are already in dictionary format.")
+            # log.info("looks like options are already in dictionary format.")
+            pass
         elif (type(optionlist[0]) is str) or (type(optionlist[0]) is int):
             """when optionlist is a list of strings/codes/integers"""
-            print("looks like options are just a list of codes; making dict.")
+            # log.info("looks like options are just codes; making dict.")
             if None in optionlist:
                 log.error(_("Having None as a list is fine, but you need to "
                 "put it in a tuple, with a second argument to display, so "
@@ -1246,16 +1318,14 @@ class ButtonFrame(Frame):
                                 ) for i in range(0, len(optionlist))]
         elif type(optionlist[0]) is tuple:
             if type(optionlist[0][1]) is str:
-                """when optionlist is a list of binary tuples (codes,names)"""
-                print("looks like options are just a list of (codes,names) "
-                        "tuples; making dict.")
+                # log.info("looks like options are just a list of (codes,names) "
+                #         "tuples; making dict.")
                 optionlist = [({'code':optionlist[i][0],
                                 'name':optionlist[i][1]}
                                 ) for i in range(0, len(optionlist))]
             elif type(optionlist[0][1]) is int:
-                """when optionlist is a list of binary tuples (codes,counts)"""
-                print("looks like options are just a list of (codes,counts) "
-                        "tuples; making dict.")
+                # log.info("looks like options are just a list of (codes,counts) "
+                #         "tuples; making dict.")
                 optionlist = [({'code':optionlist[i][0],
                                 'description':optionlist[i][1]}
                                 ) for i in range(0, len(optionlist))]
@@ -1270,7 +1340,6 @@ class ButtonFrame(Frame):
             if choice['name'] == ["Null"]:
                 command=newvowel #come up with something better here..…
             if 'description' in choice:
-                # print(choice['name'],str(choice['description']))
                 text=choice['name']+' ('+str(choice['description'])+')'
             else:
                 text=choice['name']
@@ -1643,12 +1712,25 @@ class ToolTip(object):
 class Wait(Window): #tkinter.Toplevel?
     def close(self):
         self.update_idletasks()
-        if not isinstance(self.parent,Root): #Dont' show a root window
+        if not isinstance(self.parent,Root) and self.parentwasvisible:
+            #Don't show a root window, nor one that was hidden before
             self.parent.deiconify()
-        self.destroy()
+        self.on_quit()
+    def progress(self,value):
+        # between 0 and 100
+        try:
+            self.progressbar.current(value)
+        except AttributeError:
+            self.progressbar=Progressbar(self.outsideframe,
+                                    orient='horizontal',
+                                    mode='determinate', #or 'indeterminate'
+                                    row=3,column=0)
+            self.progress(value)
     def __init__(self, parent, msg=None):
         super(Wait, self).__init__(parent,exit=False)
+        self.paused=False
         self.withdraw() #don't show until we're done making it
+        self.parentwasvisible=parent.winfo_viewable()
         parent.withdraw()
         self['background']=parent['background']
         self.attributes("-topmost", True)
@@ -1660,8 +1742,8 @@ class Wait(Window): #tkinter.Toplevel?
         self.title(title)
         text=_("Please Wait...")
         self.l=Label(self.outsideframe, text=text,
-                font='title',anchor='c')
-        self.l.grid(row=0,column=0,sticky='we')
+                font='title',anchor='c',
+                row=0,column=0,sticky='we')
         if msg is not None:
             self.l1=Label(self.outsideframe, text=msg,
                 font='default',anchor='c',row=1,column=0,sticky='we')
@@ -1669,8 +1751,7 @@ class Wait(Window): #tkinter.Toplevel?
         self.l2=Label(self.outsideframe,
                         image=self.theme.photo['small'],
                         text='',
-                        )
-        self.l2.grid(row=2,column=0,sticky='we',padx=50,pady=50)
+                        row=2,column=0,sticky='we',padx=50,pady=50)
         self.deiconify() #show after the window is built
         #for some reason this has to follow the above, or you get a blank window
         self.update_idletasks() #updates just geometry
@@ -1770,12 +1851,21 @@ def nfd(x):
     #This makes decomposed characters. e.g., vowel + accent (not used yet)
     return unicodedata.normalize('NFD', str(x))
 def testapp():
-    r=Root()
+    def progress(event):
+        import time
+        for i in range(101):
+            for p in bars:
+                if p[1]<2:
+                    bars[p].current(100-i)
+                else:
+                    bars[p].current(i)
+            time.sleep(.02)
+    r=Root(theme='Kim')
     r.withdraw()
     w=Window(r)
-    Label(w,text="Seems to work!",font='title',
+    Label(w.outsideframe,text="Seems to work!",font='title',
             row=0,column=0)# loglevel='Debug'
-    l=Label(w,text="At least this much",
+    l=Label(w.outsideframe,text="At least this much",
             row=1,column=0)# loglevel='Debug'
     log.info("Image dict: {}".format(r.theme.photo))
     img=r.theme.photo['transparent']
@@ -1785,6 +1875,43 @@ def testapp():
     l['image']=img.scaled
     l['compound']="bottom"
     ToolTip(l,"this image has a tooltip")
+    for c,cls in enumerate([Message,Label]):
+        cname=cls.__name__
+        cls(w.outsideframe,text="This is a {}".format(cname),row=2, column=c)
+        # cls(w.outsideframe,text="This is a long {}".format(cname),row=3, column=c)
+        cls(w.outsideframe,text="This is a very long {}".format(cname),row=4, column=c)
+        # cls(w.outsideframe,text="This is a very very long {}".format(cname),row=5, column=c)
+        # cls(w.outsideframe,text="This is a very very very very long {}"
+        #             "".format(cname),row=6, column=c)
+        # cls(w.outsideframe,text="This is a very very very very "
+        #             "very very very very "
+        #             "very very very very "
+        #             "very very very very "
+        #             "very very very very "
+        #             "very very very very "
+        #             "very very very very "
+        #             "very very very very "
+        #             "long {}".format(cname),row=7, column=c)
+    # m=tkinter.Label(w.outsideframe,text="This is a Label", row=3, column=0)
+    bars={}
+    for orient in ['horizontal','vertical']:
+        for row in [0,2]:
+            if orient=='horizontal':
+                col=1
+                colspan=1
+                rowspan=1
+            else:
+                col=row
+                row=1
+                colspan=1
+                rowspan=1
+            bars[(orient,row+col)]=Progressbar(w, orient=orient,
+                                            mode='determinate',
+                                            row=row, column=col,
+                                            columnspan=colspan,
+                                            rowspan=rowspan,sticky='nesw')
+    w.bind('<ButtonRelease>',progress)
+    parent.winfo_viewable()
     r.mainloop()
 if __name__ == '__main__':
     """To Test:"""

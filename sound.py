@@ -237,7 +237,7 @@ class SoundSettings(object):
                                             output_channels=1,
                                             output_format=self.sample_format)
         except ValueError as e:
-            log.info("{}; {}".format(e,type(e)))
+            # log.info("{}; {}".format(e,type(e)))
             if 'Device unavailable' in e.args[0]:
                 self.next_card_out()
                 self.check()
