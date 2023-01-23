@@ -5012,14 +5012,15 @@ class Segments(object):
                                 # showurl=True
                                 ).get()
         else:
-            all=self.db.get('entry',**kwargs
-                        # showurl=True
-                        ).get()
+            all=self.db.entries
         if self.dodone and not self.dodoneonly: #i.e., all data
             return all
-        done=[i for i in all
-            if lift.Entry.formtextnodeofentry(i,self.nodetag,self.analang).text
-                ]
+        if self.nodetag == 'citation':
+            done=[i for i in all if i.lc.textvaluebylang(self.analang)]
+        if self.nodetag == 'lexical-unit':
+            done=[i for i in all if i.lx.textvaluebylang(self.analang)]
+        else: #don't use this...
+            log.info("set up getlisttodo with nodetag {}".format(self.nodetag))
         if self.dodone: #i.e., dodoneonly
             return done
         # At this point, done isn't wanted
