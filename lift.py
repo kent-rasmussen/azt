@@ -3388,7 +3388,7 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bse/SIL CAWL Wushi.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/cky/Mushere Exported AZT file.lift"
     # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift_backupBeforeLx2LcConversion"
     # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift"
@@ -3400,262 +3400,56 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/Eton.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/Demo_gnd/gnd.lift"
+    # filename="/home/kentr/bin/raspy/azt/SILCAWL/SILCAWL.lift"
     lift=Lift(filename)
-    e=Entry(lift,guid='db99ff0c-de93-4727-9d09-e5ef4a8b0557')
-    n=Node(e,'cistation',{'langsy':'none'})
-    n.makeformnode('ńdk')
-    prettyprint(n)
-    if n:
-        print (n.text)
+    print(time.time())
+    entry=lift.getentrynode()[10]
+    def writetofile(name):
+        f = open(str(name)+'.txt', 'w', encoding='utf-8') # to append, "a"
+        f.write(prettyprint(lift.nodes))
+        f.close()
+    # entry.convertxtoy()
+    kwargs={}
+    kwargs['fromtag']='gloss'
+    kwargs['totag']='citation'
+    kwargs['lang']='en'
+    kwargs['keep']=True
+    kwargs['entries']=[entry]
+    prettyprint(entry)
+    lift.convertxtoy(**kwargs)
+    prettyprint(entry)
     exit()
-    # lift.convertlxtolc()
-    # lift.convertdefntogloss()
-    # lift.convertglosstocitation('ha',keep=True)
-    # lift.write('userlogs/testwrite.lift')
-    # lift.write('userlogs/SILCAWL_test.lift')
-    for s in lift.senseids:
-        i=lift.get('illustration', #showurl=True,
-                                senseid=s,
-                                ).get('href')
-        try:
-            i=i[0]
-        except Exception as e:
-            if 'list index out of range' in str(e):
-                continue
-            log.info("result: {}".format(e))
-        if i:
-            print(i)
-    log.info("done.")
-    quit()
-    # prettyprint(lift.nodes)
-    senseids=[
-            # "begin_7c6fe6a9-9918-48a8-bc3a-e88e61efa8fa",
-            # 'widen_fceb550d-fc99-40af-a288-0433add4f15',
-            # 'flatten_9fb3d2b4-bc9e-4451-b475-36ee10316e40',
-            # 'swallow_af9c3f8f-71e6-4b9a-805c-f6a148dcab8c',
-            # 'frighten_ecffd944-2861-495f-ae38-e7e9cdad45db',
-            # 'prevent_929504ce-35bb-48fe-ae95-8674a97e625f'
-            'db99ff0c-de93-4727-9d09-e5ef4a8b0557',
-            # 'blink_0e76e781-33e7-4e1d-b957-7d08bd18ade1'
-            ]
-    guids=['dd3c93bb-0019-4dce-8d7d-21c1cb8a6d4d',
-        '09926cec-8be1-4f66-964e-4fdd8fa75fdc',
-        '2902d6b3-89be-4723-a0bb-97925a905e7f',
-        '9ba02d67-3a44-4b7f-8f39-ea8e510df402',
-        'eece7037-3d55-45c7-b765-95546e5fccc6']
-    locations=['Progressive','Isolation']#,'Progressive','Isolation']
-    glosslang='en'
-    pss=["Verb"]#,"Noun"]
-    analang='bfj'
-    analang='en'
-    audiolang='en-Zxxx-x-audio'
-    check='V1'
-    kwargs={
-            'senseid':
-            "lip_39e4b942-0bf6-4494-aa9b-7f5163feb2bc",
-            # "sickle_db1c9e16-7fd7-46fa-a21c-27981588cf41",
-            # 'db99ff0c-de93-4727-9d09-e5ef4a8b0557',
-            # 'glosslang': 'fr'
-            'annotationname':check,
-            'ftype':'lc',
-            'showurl':True}
-    ftype='Plural'
-    ftype='lc'
-    group=1
-    t=[]
-    senseid='d99536c2-a7dd-49a2-afe0-1669dc20551e'
-    # pr=lift.get('pronunciation',path=['annotation'],**kwargs).get('value')
-
-    # print(pr)
-    # for kwargs['node'] in lift.fieldnode(**kwargs):
-    #     t.extend(lift.get('annotation',**kwargs).get('value'))
-    # print(t)
-    location='Isolation'
-    analang='gnd'
-    """Not looking for: Using URL entry/sense[
-            @id='d99536c2-a7dd-49a2-afe0-1669dc20551e']/../sense[
-            @id='d99536c2-a7dd-49a2-afe0-1669dc20551e']/example/field[
-            @type='location']/form[text='Isolation']/text/../../../form[
-            @lang='gnd'][text='location']/text"""
-    """why is location taken as a text value??!? maybe it should be cleared
-    once used?"""
-    senseids=lift.get('sense',
-                        # field='tone',
-                        toneUFvalue='Nom_CVCVC_1',
-                        # tonevalue=group,
-                        # path=['example'],
-                        showurl=True
-                        ).get('senseid')
-    print(senseids)
-    for senseid in senseids:
-        value=lift.get("sense/field/form/text",
-                path=["toneUFfield"],
-                senseid=senseid,
-                showurl=True).get('text')
-        log.info("{}: {}".format(senseid,value))
-    exit()
-    lf=lift.fieldtext(ftype='ph')
-    # ,location=check,
-    #                     tonevalue=group,
-    #                     path=['example'],
-    #                     showurl=True
-    #                     ).get('senseid')
-    # lf=lift.get('example/locationfield/',
-    #         what='text',
-    #         showurl=True
-    #         ).get('text')
-    print(lf)
-    # allfieldnames=[i.get('type') for i in lift.nodes.findall(".//field")]
-    # # log.info(allfieldnames)
-    # fieldnames=[i for i in set(allfieldnames) if i and 'verification' in i]
-    # for fieldname in fieldnames:
-    #     vf=lift.nodes.findall(".//field[@type='{}']".format(fieldname))
-    #     for f in vf:
-    #         prettyprint(f)
-    exit()
-    for ps in pss:
-        kwargs={ftype+'annotationname':'V1',
-                ftype+'annotationvalue':'a'
-                }
-        senseids=lift.get("sense", location=check, path=['tonefield'],
-                            tonevalue=group,showurl=True
-                            ).get('senseid')
-        print(senseids)
-        senseids=lift.get("sense", location=check, #path=['tonefield'],
-                            tonevalue=group,showurl=True
-                            ).get('senseid')
-        print(senseids)
-        # senseids=lift.get("sense", **kwargs, showurl=True #location=check, tonevalue=group,
-        #                 # path=['tonefield']
-        #                     ).get('senseid')
-        # # senseids=lift.get("sense", #path=['field'],
-        #                 # ftype='lc',
-        #                 lcannotationname='V1',
-        #                 lcannotationvalue=1,
-        #                 showurl=True
-        #                 ).get('senseid')
-        # ft=lift.fieldtext(#senseid=senseid,
-        #                 ftype=ftype,
-        #                 # lang=analang,
-        #                 analang=analang,
-        #                 # lang=audiolang,
-        #                 **kwargs
-        #                 )
-        print(senseids)
-        # for n,v in [('C1','b'),('C2','g'),('V1','i'),]:
-        #     lift.annotatefield(ftype='lc', #senseid=senseid,
-        #                         name=n, value=v, analang='fr',showurl=True,
-        #                         **kwargs)
-        # prettyprint(lift.fieldnode(ftype='lc',**kwargs))
-        # for i in f:
-        #     prettyprint(i)
-        # f=lift.fieldvalue(ftype='Imp', annotationname="V1", showurl=True, **kwargs)
-        # print('value:',f)
-    exit()
-    def test():
-        for fieldvalue in [2,2]:
-            for location in locations:
-            # # for guid in guids:
-                for senseid in ['prevent_929504ce-35bb-48fe-ae95-8674a97e625f']:
-                    url=lift.get('sense/tonefield/form/text',#/field/form/text',
-                                                # path=['location','tonefield'], #get this one first
-                                                senseid=senseid,
-                                                fieldtype='tone',location=location,
-                                                tonevalue=fieldvalue,
-                                                showurl=True# what='node'
-                                                ) #'text'
-                    url=exfieldvalue=url.get('text')
-                    # for e in exfieldvalue:
-                    #     log.info("exfieldvalue: {}".format(e))
-                    # url_sense=lift.retarget(url,"sense")
-                    # Bind lift object to each url object; or can we store
-                    # this in a way that allows for non-recursive storage
-                    # only of the url object by the lift object?
-                    # ids=url_sense.get('senseid')
-                    # # log.info("senseids: {}".format(ids))
-                    # for id in [x for x in ids if x is not None]:
-                    #     log.info("senseid: {}".format(id))
-                    # url_entry=lift.retarget(url,"entry")
-                    # idsentry=url_entry.get('guid')
-                    # for id in [x for x in idsentry if x is not None]:
-                    #     log.info("guid: {}".format(id))
-
-        return
-    oldtonevalue=2
-    g='snore'
-    lang='en'
-    cawls=lift.get('cawlfield/form/text').get('node')
-    prettyprint(cawls)
-    exit()
-    log.info("CAWL ({}): {}".format(len(cawls),cawls))
-    # for cv in [56,145,1234]:
-    for senseid in lift.senseids[:3]:
-        e=lift.get('entry', senseid=senseid,
-                            # cawlvalue="{:04}".format(cv),
-                            showurl=True
-                            ).get('node')[0] #certain to be there
-        log.info(e)
-            # for i in e:
-        eps=lift.get('sense/ps',node=e,showurl=True).get('node')[0]
-        log.info(eps)
-        cvalue=eps.get('value')
-        log.info(cvalue)
-        eps.set('value',cvalue+'_mod')
-        prettyprint(e)
-    # missing=[]
-    # for i in range(1700):
-    #     if "{:04}".format(i+1) not in cawls:
-    #         missing.append(i+1)
-    # log.info("CAWL entries missing ({}): {}".format(len(missing),missing))
-    exit()
-    e=lift.get('entry',gloss=g,glosslang=lang,
-                            #ftype='SILCAWL',
-                            # cawlvalue="{:04}".format(n+1),
-                            showurl=True
-                            ).get('node')
-    if e:
-        log.info(e)
-    else:
-        log.info("No entry! ({})".format(e))
-    exit()
-    for n in range(1705):
-        sense=lift.get('entry',path=['cawlfield'],#ftype='SILCAWL',
-                        cawlvalue="{:04}".format(n+1),
-                        showurl=True
-                        ).get('node')
-        if sense:
-            log.info("{} found!".format(n))
-        else:
-            log.info("{} not found!".format(n))
-    exit()
-    for senseid in senseids:
-        for location in locations:# b=lift.get('sense',fieldtype='tone',location=locations[0],
-        #             tonevalue=subcheck,showurl=True).get('senseid')
-            b=lift.get("sense/toneUFfield/form/text", #toneUFfield
-                senseid=senseid,
-                # tonevalue=oldtonevalue,
-                toneUFvalue='1',#to clear just "NA" values
-                # location=location,
-                showurl=True).get('node')
-            # lift.get("example/translation/form/text", senseid=senseid, glosslang='fr',
-            #                 location=location,showurl=True).get('text')
-            for bi in b:
-                print(bi.text)
-                bi.text=1234
-            # b=lift.get("example/tonefield/form/text",
-            #     senseid=senseid, #tonevalue=oldtonevalue, #to clear just "NA" values
-            #     location=location,showurl=True).get('text')
-            # print(b)
-            # c=lift.get("example/form/text", senseid=senseid, analang='en',
-            #                 location=location,showurl=True).get('text')
-            # print(c)
-            # for bi in b:
-            #     bt=bi.find('form/text')
-            #     print(bt.text)
-        # lift.get("sense", location=locations[0], tonevalue=subcheck,
-        #                 path=['tonefield'],showurl=True).get('senseid')
-    exit()
-    """Careful with this!"""
-    # lift.write()
+    for sense in [i for i in lift.senses
+                # if i.id=='give_a3f4a573-8930-403f-b669-0704f8d0aae1']:
+                if i.id=='72ad850a-d049-4bdc-b6ee-cd58403f4b71']:
+        prettyprint(sense.examples)
+        example=sense.examples['Pluriel L_']
+        # for example in [i for i in sense.examples if i.location == 'Pluriel L_']:
+        prettyprint(example)
+        log.info(example.fields['tone'].textvaluebylang('fr'))
+        example.fields['tone'].textvaluebylang('fr','1Billion')
+        log.info(example.fields['tone'].textvaluebylang('en'))
+        log.info(example.fields['tone'].textvaluebylang('fr'))
+        prettyprint(example)
+        # prettyprint(sense.fields['SILCAWL'])
+        # log.info(sense.fields['SILCAWL'].textvaluebylang('en'))
+        # sense.fields['SILCAWL'].textvaluebylang('en','1Billion')
+        # log.info(sense.fields['SILCAWL'].textvaluebylang('en'))
+        # prettyprint(sense.fields['SILCAWL'])
+    # for entry in [i for i in lift.entries
+    #             if i.guid=='a9c35962-cc25-48fd-9400-3af37e8fe783']:
+    #     prettyprint(entry.lx)
+    #     log.info(entry.lx.textvaluebylang('en'))
+    #     entry.lx.textvaluebylang('en','twenty')
+    #     log.info(entry.lx.textvaluebylang('en'))
+    #     prettyprint(entry.lx)
+    lift.write('0.txt')
+    n=0
+    # for entry in lift.getentrynode():
+    #     n+=1
+    #     Entry(lift.nodes,entry)
+    # lift.write('1.txt')
+    print(time.time())
     exit()
