@@ -2223,6 +2223,9 @@ class Settings(object):
             if not self.formstosearch[ps][oldform]:
                 del self.formstosearch[ps][oldform] #don't leave form wo senseid
                 log.info("Deleted key of empty list")
+    def getprofileofentry(self,entry):
+        getattr(entry,ftype).textvaluebylang(self.analang)
+        #CONTINUE HERE
     def getprofileofsense(self,senseid,ps):
         #Convert to iterate over local variables
         forms=self.db.citationorlexeme(senseid=senseid,
@@ -2282,6 +2285,10 @@ class Settings(object):
                                             profile))
         t.join()
         return n
+    def getprofilesbyentry(self):
+        for entry in self.db.entries:
+            for sense in entry.senses:
+                sense.lx.textvaluebylang(self.analang)
     def getprofiles(self):
         #This is for analysis from scratch
         self.profileswdatabyentry={}
