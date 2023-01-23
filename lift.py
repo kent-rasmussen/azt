@@ -2845,16 +2845,20 @@ def prettyprint(node):
         log.info("didn't prettyprint {}".format(node))
         return
     t=0
+    lines=[]
     def do(node,t):
-            log.info("{}{} {}: {}".format('\t'*t,node.tag,node.attrib,
-                "" if node.text is None
+            line="{}{} {}: {}".format('\t'*t,node.tag,node.attrib,
+                    "" if node.text is None
                     or set(['\n','\t',' ']).issuperset(node.text)
-                    else node.text))
+                    else node.text)
+            lines.append(line)
+            log.info(line)
             t=t+1
             for child in node:
                 do(child,t)
             t=t-1
     do(node,t)
+    return '\n'.join(lines)
 def setlistsofanykey(dict):
     #This reduces a dictionary with lists as values to one list, without dups
     return set([i for l in dict for i in dict[l]])
