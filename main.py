@@ -12557,7 +12557,7 @@ class SliceDict(dict):
         self._adhoc=adhoc
         self.analang=profilesbysense['analang']
         self._profilesbysense={k:v for k,v in profilesbysense.items()
-                                                if k != 'analang'}
+                                                if k not in ['analang','ftype']}
         if not self._profilesbysense:
             ErrorNotice(_("There doesn't seem to be any profile data, but "
                         "you asked for a slice dictionary. This is a problem; "
