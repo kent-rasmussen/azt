@@ -4566,6 +4566,7 @@ class TaskChooser(TaskDressing):
         elif self.datacollection:
             tasks=[
                     WordCollectionCitation,
+                    WordCollectnParse
                     # WordCollectionLexeme
                     ]
             if self.doneenough['collectionlc']:
@@ -4589,7 +4590,7 @@ class TaskChooser(TaskDressing):
             if self.ifcollectionlcsettingsdone and self.doneenough['analysis']:
                 tasks.append(JoinUFgroups)
             if self.ifcollectionlcsettingsdone or me:
-                tasks.append(Parse)
+                tasks.append(ParseWords)
                 # tasks.append(ParseWords)
                 # tasks.append(ParseSlice)
                 # tasks.append(ParseSliceWords)
@@ -4951,7 +4952,7 @@ class TaskChooser(TaskDressing):
         for r in self.settings.repo.values():
             r.share()
     def __init__(self,parent):
-        self.testdefault=Parse
+        self.testdefault=ParseWords
         self.towrite=False
         self.writing=False
         self.datacollection=True # everyone starts here?
