@@ -2370,14 +2370,13 @@ class Settings(object):
                     try:
                         self.sextracted[ps][s]={i:1}
                     except KeyError:
-                        try:
-                            self.sextracted[ps]={s:{i:1}}
-                        except KeyError:
-                            try:
-                                self.sextracted={ps:{s:{i:1}}}
-                            except Exception as e:
-                                log.error("Ouch! No idea what happened! ({})"
-                                            "".format(e))
+                        self.sextracted[ps]={s:{i:1}}
+                except AttributeError:
+                    try:
+                        self.sextracted={ps:{s:{i:1}}}
+                    except Exception as e:
+                        log.error("Ouch! No idea what happened! ({})"
+                                    "".format(e))
         for polyn in range(4,0,-1): #find and sub longer forms first
             for s in set(self.profilelegit) & set(self.rx.keys()):
                 if polyn in self.rx[s]:
@@ -2401,8 +2400,9 @@ class Settings(object):
                         for x in self.sextracted[ps][s]],key=lambda x:x[1],
                                                                 reverse=True)
                 except KeyError as e:
-                    log.info(_("{} KeyError reading {}-{} from sextracted"
-                                "").format(e,ps,s))
+                    pass
+                    # log.info(_("{} KeyError reading {}-{} from sextracted"
+                    #             "").format(e,ps,s))
         self.slices.scount(scount) #send to object
     def notifyuserofextrasegments(self):
         if not hasattr(self,'analang'):
