@@ -5318,7 +5318,7 @@ class WordCollection(Segments):
                                     row=1,column=0,
                                     sticky='')
         formfield.focus_set()
-        formfield.bind('<Return>',submitform)
+        formfield.bind('<Return>',self.submitform)
         formfield.rendered.grid(row=2,column=0,sticky='new')
         sub_btn=ui.Button(self.runwindow.frame2,text = strings['ok'],
                             command = submitform,
