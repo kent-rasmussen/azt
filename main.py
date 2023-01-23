@@ -378,6 +378,7 @@ class LiftChooser(ui.Window,HasMenus):
         log.info("Done waiting")
         self.stripcawldb()
         ww=ui.Wait(program['root'],_("Making Demo Database \n(will restart)"))
+        self.cawldb.getentries()
         self.cawldb.convertglosstocitation(self.demolang,keep=keep.get())
         homedir=file.gethome() #don't ask where to put it
         log.info(homedir)
@@ -14649,16 +14650,17 @@ def loadCAWL():
     if file.exists(stockCAWL):
         log.info("Found stock LIFT file: {}".format(stockCAWL))
     try:
-        cawldb=lift.Lift(str(stockCAWL))
+        # cawldb=lift.Lift(str(stockCAWL))
+        cawldb=lift.Lift(str(stockCAWL),tostrip=True)
         log.info("Parsed ET.")
         log.info("Got ET Root.")
-    except Exception as e:
-        log.info("Error: {}".format(e))
     except lift.BadParseError:
         text=_("{} doesn't look like a well formed lift file; please "
                 "try again.").format(stockCAWL)
         ErrorNotice(text,wait=True)
         return
+    except Exception as e:
+        log.info("Error: {}".format(e))
     log.info("Parsed stock LIFT file to tree/nodes.")
     return cawldb
 def pathseparate(path):
