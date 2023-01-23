@@ -394,7 +394,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # log.info("senses: {}".format(self.senses))
         # log.info("nsenses: {}".format(len(self.senses)))
     def getentrynode(self,**kwargs):
-        return self.get('entry',**kwargs).get()
+        if not kwargs:
+            return self.entries #these are class Entry
+        else:
+            return self.get('entry',**kwargs).get() #these are not
     def getsensenode(self,**kwargs):
         # log.info("senseid: {}".format(senseid))
         x=self.get('sense',**kwargs,
