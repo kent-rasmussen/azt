@@ -218,10 +218,13 @@ class Engine(object):
         return q
     def texts(self):
         try:
-            return (textof(self.lxnode),
-                textof(self.lcnode),
-                textof(self.plnode),
-                textof(self.impnode))
+            return (
+                self.entry.lx.textvaluebylang(self.analang),
+                self.entry.lc.textvaluebylang(self.analang),
+                self.entry.plvalue(self.fieldnames[self.nominalps],
+                                                            self.analang),
+                self.entry.impvalue(self.fieldnames[self.verbalps],
+                                                            self.analang))
         except AttributeError as e:
             # if "'Engine' object has no attribute 'lxnode'" in e.args[0]:
 
@@ -235,9 +238,9 @@ class Engine(object):
     def doparsetolx(self,root,ps,afxtuple):
         #This stores root, ps, and affixes, once decided on
         log.info("executing doparsetolx")
-        textof(self.lxnode,root)
-        self.psvalue(ps)
-        self.pssubclassvalue(afxtuple)
+        self.entry.lx.textvaluebylang(self.analang,root)
+        self.sense.psvalue(ps)
+        self.sense.pssubclassvalue(afxtuple)
         self.addaffixset(ps,afxtuple)
         self.catalog.affixesbyform()
     def pssubclassvalue(self,subclass=None):
@@ -378,11 +381,11 @@ class Engine(object):
         sf = None
         if pl and not imp:
             log.info("looks like a noun; parsing plural")
-            self.psvalue(self.nominalps)
+            self.sense.psvalue(self.nominalps)
             sf = pl
         elif imp and not pl:
             log.info("looks like a verb; parsing imperative")
-            self.psvalue(self.verbalps)
+            self.sense.psvalue(self.verbalps)
             sf = imp
         elif imp and pl:
             log.info("This entry has both plural and imperative??")
@@ -419,8 +422,8 @@ class Engine(object):
             return 1
         lx, lc, pl, imp = self.texts()
         if lx and not lc: #switch them, both in node and in local variables
-            lc=textof(self.lcnode,lx)
-            lx=textof(self.lxnode,'')
+            self.parser.entry.lc.textvaluebylang(self.analang,lx)
+            self.parser.entry.lx.textvaluebylang(self.analang,'')
         if not (lc and (pl or imp)): #this only parses nouns and verbs
             log.info("Missing forms! (lc:{}; pl:{} imp:{})".format(lc, pl, imp))
             return 1
@@ -474,10 +477,10 @@ class Engine(object):
                     self.reportpsproblemtouser()
                     return 1
         elif bestn[1]:
-            self.psvalue(self.nominalps)
+            self.sense.psvalue(self.nominalps)
             noun=True
         elif bestv[1]:
-            self.psvalue(self.verbalps)
+            self.sense.psvalue(self.verbalps)
             verb=True
         else:
             log.error("Logical problem! n:{}; v:{} ({})"
@@ -600,10 +603,10 @@ class Engine(object):
                         "imp:{}): Ready to mark ps and get affixes."
                         "".format(lx, lc, pl, imp))
                 if afn:
-                    self.psvalue(self.nominalps)
+                    self.sense.psvalue(self.nominalps)
                     self.catalog.addaffixset(afn)
                 elif afv:
-                    self.psvalue(self.verbalps)
+                    self.sense.psvalue(self.verbalps)
                     self.catalog.addaffixset(afv)
                 return 1 #The only successful parse exit point
             else:
@@ -626,9 +629,9 @@ class Engine(object):
             return
         self.doparsetolx(x[2],x[1],(x[3],x[4]))
         if x[1] == self.nominalps:
-            self.nodetextvalue('pl',x[0])
+            self.entry.plvalue(x[1],self.analang,x[0])
         elif x[1] == self.verbalps:
-            self.nodetextvalue('imp',x[0])
+            self.entry.impvalue(x[1],self.analang,x[0])
         else:
             log.error("Parsed but neither noun nor verb?")
         window.destroy() #actually a canary button
@@ -640,8 +643,8 @@ class Engine(object):
         #     log.info(self.senseid)
         # log.info("lx: {}, lc: {}, pl: {}, imp: {}".format(*self.texts()))
         if lx and not lc: #switch them, both in node and in local variables
-            lc=textof(self.lcnode,lx)
-            lx=textof(self.lxnode,'')
+            self.parser.entry.lc.textvaluebylang(self.analang,lx)
+            self.parser.entry.lx.textvaluebylang(self.analang,'')
         if not lc:
             log.info("No citation form!")
             return
@@ -713,12 +716,6 @@ class Engine(object):
         else:
             return True #not (self.nops or self.badps)
     def parseentry(self, entry, senseid=None, sense=None):
-        attrs=['lx','lc','ps','pl','imp']
-        for attr in attrs+[i+'node' for i in attrs]:
-            try:
-                delattr(self,attr)
-            except AttributeError:
-                pass
         self.on=self.ov=False
         # if self.auto < 4:
         #     log.info("Called with args {};{}".format(entry, senseid))
@@ -740,8 +737,6 @@ class Engine(object):
             self.senseid=self.sense.id #save for later
         # log.info("sense: {}".format(self.sense))
         # log.info("psnode: {}".format(psnode))
-        self.psvalue() #this may set None value, to be set later
-        self.pssubclassvalue()
         # if not (min(self.auto,self.ask) < 4 or self.pscheck()):
         #     log.info("Returning because self.auto ({}) < 4 or "
         #             "self.ask ({}) < 4 or pscheck: {}"
@@ -749,8 +744,6 @@ class Engine(object):
         #     return 1# stop here if collecting affixes & w/o ps or non-NV ps
         # log.info("self.secondformfield: {}".format(self.secondformfield))
         # log.info("ps: {}".format(self.ps))
-        for tag  in ['lx','lc','pl','imp']:
-            self.nodetextvalue(tag)
     def asklevel(self,l=None):
         ls=self.levels()
         if isinstance(l,int) and l in ls:
