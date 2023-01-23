@@ -1688,23 +1688,29 @@ class EmptyTextNodePlaceholder(object):
 
 class Node(ET.Element):
     def makefieldnode(self,type,lang,text=None,gimmetext=False):
-        n=Node(self,'field',attrib={'type':type})
+        n=Node(self,tag='field',attrib={'type':type})
         nn=n.makeformnode(lang,text,gimmetext=gimmetext)
         if gimmetext:
             return nn
+        else:
+            return n
     def makeformnode(self,lang,text=None,gimmetext=False):
-        n=Node(self,'form',attrib={'lang':lang})
-        nn=n.maketextnode(text,gimmetext=gimmetext) #Node(n,'text')
+        n=Form(self,attrib={'lang':lang})
+        if text:
+            n.textvalue(text)
         if gimmetext:
-            return nn
+            return n.textnode
+        else:
+            return n
     def maketextnode(self,text=None,gimmetext=False):
-        n=Node(self,'text')
-        if text is not None:
+        n=Text(self)
+        if text is not None: # allow '' to clear
             n.text=str(text)
         if gimmetext:
             return n
     def maketraitnode(self,type,value,gimmenode=False):
-        n=Node(self,'trait',attrib={'name':type, 'value':str(value)})
+        """obsolete!"""
+        n=Node(self,tag='trait',attrib={'name':type, 'value':str(value)})
         if gimmenode:
             return n
     def childrenwtext(self):
