@@ -5004,7 +5004,7 @@ class Segments(object):
     def getlisttodo(self,**kwargs):
         """Whichever field is being asked for (self.nodetag), this fn returns
         which are left to do."""
-        if self.byslice:
+        if not isinstance(self,WordCollection) and self.byslice:
             log.info("Limiting segment work to this slice")
             all=[]
             for senseid in self.slices.senseids():
