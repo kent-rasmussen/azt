@@ -127,6 +127,8 @@ def getdiredurl(dir,filename):
     if type(dir) is str:
         dir=getfile(dir)
     return pathlib.Path.joinpath(dir,filename)
+def getdiredrelURI(reldir,filename):
+    return pathlib.Path(reldir).joinpath(filename).as_uri()
 def getdiredrelURL(reldir,filename):
     return pathlib.Path(reldir).joinpath(filename)
 def getdiredrelURLposix(reldir,filename):
