@@ -5501,7 +5501,10 @@ class WordCollection(Segments):
                     if k.textvalue()
                 ]
         log.info("Glosses: {}".format(glosses))
-        url='https://openclipart.org/search/?query='+'+'.join(glosses)
+        terms={'per_page':50,
+                "query"='+'+'.join(glosses)
+            }
+        url='https://openclipart.org/search/?'
         openweburl(url)
     def getword(self):
         self.taskchooser.withdraw()# not sure why necessary
