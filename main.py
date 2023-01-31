@@ -5533,10 +5533,15 @@ class WordCollection(Segments):
         progress="({}/{})".format(self.index+1,self.nentries)
         ui.Label(self.wordframe, text=progress, row=1, column=3, font='small')
         self.entry=self.entries[self.index]
+        self.sense=self.entry.senses[0]
         glosses={}
         for g in self.glosslangs:
-            glosses[g]=', '.join(self.db.get('gloss/text', node=self.entry,
-                                    glosslang=g).get('text'))
+            glosses[g]=', '.join(
+                                i.textvalue() for i in self.sense.glosses[g]
+                                if i.textvalue()
+                                # self.db.get('gloss/text', node=self.entry,
+                                # glosslang=g).get('text')
+                                )
         # glossframe=ui.Frame(self.wordframe, row=1, column=0)
         glossesthere=' — '.join([glosses[i] for i in glosses if i])
         if not glossesthere:
