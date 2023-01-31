@@ -803,8 +803,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """this parses the lift file into an entire ElementTree tree,
         for reading or writing the LIFT file."""
         log.info("Reading LIFT file: {}".format(self.filename))
-        self.tree=ET.parse(self.filename)
-        self.nodes=self.tree.getroot()
+        self.tree,self.nodes=readxml(self.filename)
+        # self.tree=ET.parse(self.filename)
+        # self.nodes=self.tree.getroot()
         log.info("Done reading LIFT file.")
         """This returns the root node of an ElementTree tree (the entire
         tree as nodes), to edit the XML."""
@@ -1679,13 +1680,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         kwargs['fromtag']='gloss'
         kwargs['totag']='citation'
         self.convertxtoy(lang,**kwargs)
-
 class EmptyTextNodePlaceholder(object):
     """Just be able to return self.text when asked."""
     def __init__(self):
         # super(EmptyTextNodePlaceholder, self).__init__()
         self.text = None
-
 class Node(ET.Element):
     def makefieldnode(self,type,lang,text=None,gimmetext=False):
         n=Node(self,tag='field',attrib={'type':type})
@@ -2838,27 +2837,6 @@ def textornone(x):
         return x.text
     except AttributeError:
         return x
-def prettyprint(node):
-    # This fn is for seeing the Element contents before writing them (in case of
-    # ElementTree errors that aren't otherwise understandable).
-    if not isinstance(node,ET.Element):
-        log.info("didn't prettyprint {}".format(node))
-        return
-    t=0
-    lines=[]
-    def do(node,t):
-            line="{}{} {}: {}".format('\t'*t,node.tag,node.attrib,
-                    "" if node.text is None
-                    or set(['\n','\t',' ']).issuperset(node.text)
-                    else node.text)
-            lines.append(line)
-            log.info(line)
-            t=t+1
-            for child in node:
-                do(child,t)
-            t=t-1
-    do(node,t)
-    return '\n'.join(lines)
 def setlistsofanykey(dict):
     #This reduces a dictionary with lists as values to one list, without dups
     return set([i for l in dict for i in dict[l]])
