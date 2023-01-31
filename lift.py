@@ -1923,6 +1923,10 @@ class Example(Node,FieldParent):
         self.sense=parent
         FieldParent.__init__(self)
         self.getlocation()
+class Illustration(Node):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='illustration'
+        super(Illustration, self).__init__(parent, node, **kwargs)
 class Sense(Node,FieldParent):
     def checkforsecondchildbylang(self,lang):
         """This is just for glosses, which behave as form nodes in LIFT"""
@@ -2015,6 +2019,19 @@ class Sense(Node,FieldParent):
             else:
                 return None
         return self.ps.get('value')
+    def getillustration(self):
+        self.illustration=Illustration(self,self.find('illustration'))
+    def illustrationvalue(self,value=None):
+        try:
+            assert isinstance(self.illustration,ET.Element)
+            if value:
+                self.illustration.value(value)
+        except AssertionError:
+            if value:
+                self.illustration=Illustration(self, value=value)
+            else:
+                return None
+        return self.illustration.get('href')
     def __init__(self, parent, node):
         super(Sense, self).__init__(parent, node)
         self.entry=parent #make a common reference point for sense/entry

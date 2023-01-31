@@ -5480,6 +5480,29 @@ class WordCollection(Segments):
             self.maybewrite() #only if above is successful
         except AttributeError as e:
             log.info("Not storing word: {}".format(e))
+    def getimage(self):
+        i=self.sense.illustrationvalue()
+        try:
+            img=ui.Image(i)
+            # will probably want the size adjustable
+            # maybe resolution, too (take from theme?)
+        except tkinter.TclError as e:
+            log.info("Image error: {}".format(e))
+            img=self.theme.photo['NoImage']
+        img.scale(program['scale'],pixels=150,resolution=10)
+        return img.scaled
+    def getopenclipart(self,event=None):
+        glosses=[rx.glossdeftoform(i)
+                    # for g in set(self.glosslangs)&set(['en','fr'])
+                    # for k in self.sense.glosses[g]
+                    for k in self.sense.glosses['en']
+                    for i in k.textvalue().split(',')
+                    # for i in j
+                    if k.textvalue()
+                ]
+        log.info("Glosses: {}".format(glosses))
+        url='https://openclipart.org/search/?query='+'+'.join(glosses)
+        openweburl(url)
     def getword(self):
         self.taskchooser.withdraw()# not sure why necessary
         try:
@@ -5522,6 +5545,12 @@ class WordCollection(Segments):
             return 'noglosses'
         l=ui.Label(self.wordframe, text=glossesthere, font='read',
                 row=1, column=0, columnspan=3, sticky='ew')
+        p=ui.Label(self.wordframe, text='',
+                row=2, column=0, columnspan=3, sticky='ew')
+        # illustration=self.entry.illustrationvalue()
+        p['image']=self.getimage()
+        p['compound']="bottom" #must be bottom, center, left, none, right, or top
+        p.bind('<ButtonRelease-1>',self.getopenclipart)
         l.wrap()
         # log.info("lxtextnode: {}".format(self.lxtextnode))
         self.var=ui.StringVar(value=self.entry.lc.textvaluebylang(self.analang))
@@ -5529,7 +5558,7 @@ class WordCollection(Segments):
         #                 showurl=True).get()
         # lxvar=ui.StringVar()
         lxenter=ui.EntryField(self.wordframe,textvariable=self.var,
-                                row=2,column=0,columnspan=3)
+                                row=3,column=0,columnspan=3)
         lxenter.focus_set()
         lxenter.bind('<Return>',self.nextword)
         # self.navigationframe=ui.Frame(self.frame, row=2, column=1,

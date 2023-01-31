@@ -163,7 +163,8 @@ class Theme(object):
                             ('record','Microphone alone_sm.png'),
                             ('change','Change Circle_sm.png'),
                             ('checkedbox','checked.png'),
-                            ('uncheckedbox','unchecked.png')
+                            ('uncheckedbox','unchecked.png'),
+                            ('NoImage','openclipart.com/Image-Not-Found.png'),
                         ]:
             try:
                 #hyperthread here!
