@@ -1869,7 +1869,8 @@ def testapp():
     l=Label(w.outsideframe,text="At least this much",
             row=1,column=0)# loglevel='Debug'
     log.info("Image dict: {}".format(r.theme.photo))
-    img=r.theme.photo['transparent']
+    # img=r.theme.photo['transparent']
+    img=r.theme.photo['NoImage']
     log.info("Image: {} ({})".format(img, img.maxhw()))
     img.scale(scale=1, pixels=100,resolution=10)
     log.info("Image: {} ({})".format(img.scaled, img.maxhw(scaled=True)))
@@ -1912,7 +1913,7 @@ def testapp():
                                             columnspan=colspan,
                                             rowspan=rowspan,sticky='nesw')
     w.bind('<ButtonRelease>',progress)
-    parent.winfo_viewable()
+    # parent.winfo_viewable()
     r.mainloop()
 if __name__ == '__main__':
     """To Test:"""
