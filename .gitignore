@@ -42,3 +42,4 @@ reports/**
 *.git
 *.ini
 *lift.*
+secrets.py

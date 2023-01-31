@@ -40,6 +40,7 @@ logsetup.setlevel(loglevel)
 """My modules, which should log as above"""
 import lift
 import parser
+import openclipart
 # import profiles
 import setdefaults
 import xlp
