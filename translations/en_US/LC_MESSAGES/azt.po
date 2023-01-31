@@ -511,7 +511,7 @@ msgid ""
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:2534
-msgid "Quit A→Z+T"
+msgid "Quit A-Z+T"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:2541

@@ -1,4 +1,4 @@
-# Simple and Straightforward Instructions for Installing A→Z+T on Ubuntu Linux
+# Simple and Straightforward Instructions for Installing A-Z+T on Ubuntu Linux
 
 ## (or just run [this script](../installfiles/RunMetoInstall_Linux.sh?raw=true) —you will be asked for your sudo password to install packages.)
 This document offers instructions with **exactly one set of options**; to explore more options, see [INSTALL](INSTALL.md).
@@ -24,10 +24,10 @@ If that doesn't return any results, run the following command:
 
 If that throws an error, you may need to first install the [SIL packages repository](https://packages.sil.org/)
 
-## Download A→Z+T
+## Download A-Z+T
 Run this command: `cd;git clone https://github.com/kent-rasmussen/azt.git`.
 
-## Set up A→Z+T for normal use
+## Set up A-Z+T for normal use
 1. Download [this file](installfiles/azt.desktop?raw=true). If asked, save it to your "Downloads" folder.
 2. Run the following commands:
 - `cp $HOME/Downloads/azt.desktop $HOME/.local/share/applications/`
@@ -36,17 +36,17 @@ Run this command: `cd;git clone https://github.com/kent-rasmussen/azt.git`.
 - `gio set $HOME/.local/share/applications/azt.desktop metadata::trusted true`
 - `chmod a+x $HOME/.local/share/applications/azt.desktop`
 - `ln $HOME/.local/share/applications/azt.desktop $HOME/Desktop/`
-3. Click on the link on your desktop to run A→Z+T
-4. **Celebrate your accomplishment; you're done installing A→Z+T!**
-5. Read [TASKS](TASKS.md) for a quick orientation to A→Z+T, or find more info in [USAGE](USAGE.md).
+3. Click on the link on your desktop to run A-Z+T
+4. **Celebrate your accomplishment; you're done installing A-Z+T!**
+5. Read [TASKS](TASKS.md) for a quick orientation to A-Z+T, or find more info in [USAGE](USAGE.md).
 6. Send me information on any [bugs](BUGS.md) you find, so I can help you and improve the program for others.
 
-## Additional Important Steps to get the most out of A→Z+T
+## Additional Important Steps to get the most out of A-Z+T
 ### Install Mercurial for better collaboration
 run this command: `sudo apt-get install mercurial`
 
 ### Be ready to make and edit reports
 Ask someone to help you install the XMLmind XML Editor (XXE) (see [INSTALL](INSTALL.md)).
 
-### Update A→Z+T (to be sure you're using the most recent version)
+### Update A-Z+T (to be sure you're using the most recent version)
 Run the command `cd $HOME/azt;git pull;cd -`.

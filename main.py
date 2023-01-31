@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 """This file runs the actual GUI for lexical file manipulation/checking"""
-program={'name':'A→Z+T',
+program={'name':'A-Z+T',
         'tkinter':True, #for some day
         'production':False, #True for making screenshots (default theme)
         'testing':False, #normal error screens and logs
@@ -176,7 +176,8 @@ class HasMenus():
                 row=3,column=0,sticky='we'
                 )
         webl.bind("<Button-1>", lambda e: openweburl(program['url']))
-        murl='mailto:{}?subject= A→Z+T question'.format(program['Email'])
+        murl='mailto:{}?subject= {} question'.format(program['Email'],
+                                                    program['name'])
         maill.bind("<Button-1>", lambda e: openweburl(murl))
     def reverttomainazt(self,event=None):
         #This doesn't care which (test) version one is on
@@ -349,7 +350,7 @@ class LiftChooser(ui.Window,HasMenus):
         w=ui.Window(program['root'],title=title)
         w.wait(_("Loading Demo Template"))
         w.mainwindow=False
-        t=ui.Label(w.frame, text=title, row=0, column=0)
+        t=ui.Label(w.frame, text=title, font='title', row=0, column=0)
         inst=_("Which language would you like to study, in this demonstration "
                 "of what {} can do?").format(program['name'])
         t=ui.Label(w.frame, text=inst, row=1, column=0, columnspan=2)
@@ -833,14 +834,16 @@ class Menus(ui.Menu):
         helpitems=[(_("About"), self.parent.helpabout)]
         if program['git']:
             if not program['repo'].localremotes():
-                helpitems+=[(_("Set up A→Z+T source on USB"),
+                helpitems+=[(_("Set up {} source on USB"
+                                ).format(program['name']),
                                 program['repo'].clonetoUSB)]
-            helpitems+=[(_("Update A→Z+T"), updateazt)]
+            helpitems+=[(_("Update {}").format(program['name']), updateazt)]
             if program['repo'].branch == 'main':
-                helpitems+=[(_("Try A→Z+T test version"),
+                helpitems+=[(_("Try {} test version").format(program['name']),
                                 self.parent.trytestazt)]
             else:
-                helpitems+=[(_("Revert to A→Z+T main version"),
+                helpitems+=[(_("Revert to {} main version"
+                                ).format(program['name']),
                                 self.parent.reverttomainazt)]
         helpitems+=[("What's with the New Interface?",
                         self.parent.helpnewinterface)
@@ -1421,7 +1424,7 @@ class StatusFrame(ui.Frame):
                 self.multicheckscope()
             elif not isinstance(self.task,ReportCitationT):
                 self.cvtline()
-            if isinstance(self.task,Sort):
+            if isinstance(self.task,Sort) and not isinstance(self.task,Transcribe):
                 self.buttoncolumnsline()
         if isinstance(self.task,Parse):
             self.parserlevels()
@@ -2026,7 +2029,7 @@ class Settings(object):
         else:
             nochangetext=_("Exit with no changes")
         log.info("Asking about Digraphs and Trigraphs!")
-        titlet=_("A→Z+T Digraphs and Trigraphs")
+        titlet=_("{} Digraphs and Trigraphs").format(program['name'])
         #From wherever this is opened, it should withdraw and deiconify that
         pgw=ui.Window(self.taskchooser.mainwindowis,title=titlet,exit=False)
         t=_("Which of the following letter sequences "
@@ -4042,7 +4045,7 @@ class TaskDressing(HasMenus,ui.Window):
                 "frames, click ‘Exit’ to continue.".format(btext))
                 cmd=self.task.addframe
             else:
-                btext=_("Return to A→Z+T, to fix settings")
+                btext=_("Return to {}, to fix settings").format(program['name'])
                 text=_("I can't find any checks for type {}, ps {}, profile {}."
                         " Probably that means there is a problem with your "
                         " settings, or with your syllable profile analysis"
@@ -6161,7 +6164,7 @@ class ToneFrameDrafter(ui.Window):
             self.promptwindow()
             if isinstance(self.forms['name'],ui.StringVar):
                 log.info("StringVar found, form not entered. Exiting.")
-                self.destroy()
+                self.on_quit()
             # log.info(self.forms)
             # log.info(self.exitFlag.istrue())
             return
@@ -8786,7 +8789,9 @@ class Report(object):
             bits.append('mod')
         reportfileXLP='_'.join(bits)+".xml"
         xlpreport=xlp.Report(reportfileXLP,reporttype,
-                        self.settings.languagenames[self.analang])
+                        self.settings.languagenames[self.analang],
+                        program # who is calling this report?
+                        )
         # langsalreadythere=[]
         if hasattr(xlpreport,'node'): #otherwise, this will fail
             for lang in set([self.analang]+self.glosslangs)-set([None]):
@@ -15115,7 +15120,8 @@ def mainproblem():
             )
     lcontents=logsetup.contents(50)
     addr=program['Email']
-    eurl='mailto:{}?subject=Please help with A→Z+T installation'.format(addr)
+    eurl='mailto:{}?subject=Please help with {} installation'.format(addr,
+                                                                program['name'])
     eurl+=('&body=Please replace this text with a description of what you '
             'just tried.'.format(file))
     eurl+=("%0d%0aIf the log below doesn't include the text 'Traceback (most "

@@ -16,7 +16,11 @@ except:
     def _(x):
         return x
 class Report(object):
-    def __init__(self,filename,report,langname):
+    def __init__(self,filename,report,langname,program):
+        #use program, if only for it's name
+        if 'name' not in program:
+            log.error("the program argument to xlp.Report needs a 'name' key")
+            exit()
         self.start_time=time.time()
         self.filename=filename
         self.tmpfile=self.filename+'.tmp'
@@ -28,13 +32,15 @@ class Report(object):
         self.stylesheetdir=file.getstylesheetdir(filename)
         # self.tree=ET.ElementTree(ET.Element('lingPaper'))
         self.node=ET.Element('lingPaper') #self.tree.getroot()
-        self.title="{} A→Z+T output report for {}".format(report,langname)
+        self.title="{} {} output report for {}".format(report,
+                                                        program['name'],
+                                                        langname)
         log.info("Starting XLingPaper report file at {} with title '{}'".format(
                                                         filename,self.title))
         self.authors=[{'name':'Kent Rasmussen',
                         'affiliation':'SIL Cameroun',
                         'Email':'kent_rasmussen@sil.org'},
-                        {'name':'A→Z+T',
+                        {'name':program['name'],
                         'Email': 'https://github.com/kent-rasmussen/azt'}
                         ]
         self.langlist=list()

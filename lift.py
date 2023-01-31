@@ -876,7 +876,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         lcl=self.get('citation/form').get('lang')
         pronl=self.get('pronunciation/form').get('lang')
         langsbycount=collections.Counter(lxl+lcl+pronl)
-        self.analangs=[i[0] for i in langsbycount.most_common()]
+        self.analangs=[i[0] for i in langsbycount.most_common()
+                        if i[0] != 'x-unk'] #I assume will never analyze this
         log.info(_("Possible analysis language codes found: {}".format(
                                                                 self.analangs)))
         for glang in set(['fr','en']) & set(self.analangs):

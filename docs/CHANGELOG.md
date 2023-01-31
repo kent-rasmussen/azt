@@ -1,4 +1,4 @@
-# A→Z+T Changelog
+# A-Z+T Changelog
 
 #UW priorities:
 - use of pictures (how to use open clipart? UI for this?)
@@ -26,7 +26,7 @@
 
 # Version 0.9.7
 - Substantial reworking of reports, which all now run in the background, and with improved initial placement of tables.
-- Git integration works, both for updating A→Z+T and for language data. If your data is in a git repository, A→Z+T can make automatic commits for you, as well as pull and push from/to a respository on flash drive for sharing.
+- Git integration works, both for updating A-Z+T and for language data. If your data is in a git repository, A-Z+T can make automatic commits for you, as well as pull and push from/to a respository on flash drive for sharing.
 
 # Version 0.9.4
 ## Zulgo workshop tweaks
@@ -36,7 +36,7 @@
 
 # Version 0.9.3
   - Consonant and vowel sorting and renaming done, **except for renames that change Syllable profiles**
-    - If you change syllable profiles (e.g., change o>ou, or iy>i), your results will not be predictable. I recommend if you do this, immediately restart A→Z+T, and redo a syllable profile analysis. I am working to account for this, but am not done yet.
+    - If you change syllable profiles (e.g., change o>ou, or iy>i), your results will not be predictable. I recommend if you do this, immediately restart A-Z+T, and redo a syllable profile analysis. I am working to account for this, but am not done yet.
 
 # Version 0.9.2
 - Windows batch file now
@@ -345,7 +345,7 @@
 - User can now distinguish C,N,N#,G, and S as desired, NC and CG can be that, C or CC.
 
 ## UI
-- Added page to instruct A→Z+T how to distinguish certain segment classes
+- Added page to instruct A-Z+T how to distinguish certain segment classes
 - removed redo profile analysis from easy temptation
 - Second gloss now showing for lc/lx recording page
 - C/V check now just outputs filter by ps-profile; buttons no longer cause a crash.

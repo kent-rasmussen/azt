@@ -1,8 +1,8 @@
-# Updating [A→Z+T]
+# Updating [A-Z+T]
 
-[A→Z+T] is in constant development, both in bug fixes and in new features. To take advantage of these fixes and features, you should make sure you are using the most recent published version.
+[A-Z+T] is in constant development, both in bug fixes and in new features. To take advantage of these fixes and features, you should make sure you are using the most recent published version.
 
-To update [A→Z+T],
+To update [A-Z+T],
 - First, make sure the [menus are shown](MENUS.md)
 - Then select `Help`, then `Update [A→Z+T]`.
   - if you are in a workshop with me, or someone else who has updated [A→Z+T] source on a USB drive, and it is plugged it, it will pull from that.
