@@ -40,7 +40,7 @@ def getxmlns(nodes):
         n=r.get("xmlns:xi")
         if n:
             xmlns+=n
-    print(xmlns)
+    return xmlns
 def iterateforincludes(node,ns,results=[]):
     results+=node.findall("xi:include",ns)
     # log.info("{} ({}): {}".format(node,len(results),results))
