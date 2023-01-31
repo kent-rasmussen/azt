@@ -2041,6 +2041,7 @@ class Sense(Node,FieldParent):
         self.getglosses()
         self.getdefinitions()
         self.getexamples()
+        self.getillustration()
         FieldParent.__init__(self)
         # log.info([i.textvalue() for i in self.glosses['en']])
 class Entry(Node,FieldParent): # what does "object do here?"
