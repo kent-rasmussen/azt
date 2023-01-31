@@ -5506,7 +5506,7 @@ class WordCollection(Segments):
             }
         terms=rx.urlencode(kwargs)
         url='https://openclipart.org/search/?'+terms
-        openweburl(url)
+        openweburl(url) #should set up download here.
     def getword(self):
         self.taskchooser.withdraw()# not sure why necessary
         try:
