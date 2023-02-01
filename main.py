@@ -11383,7 +11383,7 @@ class FramedDataElement(FramedData):
         self.gloss=None
         for lang in self.glosslangs:
             if lang in self.forms:
-                self.gloss=self.forms[lang]
+                self.gloss=self.forms[lang][self.ftype] #for now
                 break #glosslangs are prioritized; take the first one you find.
         """This is for nodes that don't include glosses (lc/lx/pl/imp fields)"""
         if not self.gloss and self.senseid:
@@ -11463,9 +11463,12 @@ class FramedDataElement(FramedData):
                         optargs.insert(3,fieldlocopt) #put after self.node.tag
                         log.log(3,optargs)
                         wavfilename=''
-                        argsthere=[x for x in optargs if x is not None]
+                        argsthere=[x for x in optargs if x]
                         for arg in argsthere:
-                            wavfilename+=arg
+                            try:
+                                wavfilename+=arg
+                            except Exception as e:
+                                log.error("arg error: {} ({})".format(e,arg))
                             if argsthere.index(arg) < len(argsthere)-1:
                                 wavfilename+='_'
                         if legacy == '_': #There was a schema that had an extra '_'.
