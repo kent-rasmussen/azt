@@ -2033,8 +2033,10 @@ class Sense(Node,FieldParent):
             else:
                 return None
         return self.illustration.get('href')
-    def __init__(self, parent, node):
-        super(Sense, self).__init__(parent, node)
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='sense'
+        super(Sense, self).__init__(parent, node, **kwargs)
+        FieldParent.__init__(self)
         self.entry=parent #make a common reference point for sense/entry
         self.id=self.get('id')
         self.getps()
@@ -2043,18 +2045,11 @@ class Sense(Node,FieldParent):
         self.getdefinitions()
         self.getexamples()
         self.getillustration()
-        FieldParent.__init__(self)
         # log.info([i.textvalue() for i in self.glosses['en']])
 class Entry(Node,FieldParent): # what does "object do here?"
-    """I think the right path forward is to make this the base thing searched,
-    with senses in that, and examples in that. each should have a class method
-    to find things, including parents (which would maybe just be stored in
-    attributes)
-    I might only need to convert these three levels to Node class instances;
-    other items could be left alone.
+    """I have only converted nodes to classes as needed; other items
+    have been left alone.
     """
-    #import lift.put as put #class put:
-    #import get #class put:
     def getsenses(self):
         self.senses=[Sense(self,i) for i in self if i.tag == 'sense']
         # log.info("Found {} sense(s)".format(len(self.senses)))
@@ -2083,10 +2078,10 @@ class Entry(Node,FieldParent): # what does "object do here?"
             self.checkforsecondfieldbytype(ftype)
             self.getfields() #needed?
         return self.imp.textvaluebylang(lang,value)
-    def __init__(self, parent, node):
-        #self.language=globalvariables.xyz #Do I want this here? It doesn't really add anything.. How can I check internal language? If there are more writing systems, do I want to find them?
-        #self.ps=lift_get.ps(self.guid) #do this is lift_get Entry class, inherit from there.
-        super(Entry, self).__init__(parent, node)
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='entry'
+        self.annotationlang=kwargs.pop('annotationlang','en')
+        super(Entry, self).__init__(parent, node, **kwargs)
         self.entry=self #make a common reference point for sense/entry
         self.guid=self.get('guid')
         self.getsenses()
