@@ -1872,6 +1872,14 @@ class Gloss(Form):
         kwargs['tag']='gloss'
         super(Gloss, self).__init__(parent, node, **kwargs)
         self.lang=self.get("lang")
+class Translation(FormParent):
+    """From Docs: Each translation is of a single type and contains all the
+    translations of that type into multiple languages and writing systems."""
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='translation'
+        # kwargs['attrib']={'type':'Frame translation'}
+        super(Translation, self).__init__(parent, node, **kwargs)
+        self.set('type','Frame translation')
 class Field(FormParent):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='field'
@@ -1923,7 +1931,7 @@ class FieldParent(object):
             log.error("There is already a {} field here! ({})".format(type,
                                                                 self.fields))
             return
-        self.fields.update({type:Field(self)})
+        self.fields.update({type:Field(self,type=type)})
         # without lang here, annotationlang is used; value=None does nothing
         self.fields[type].textvaluebylang(lang=lang,value=value)
     def __init__(self):
@@ -1931,37 +1939,46 @@ class FieldParent(object):
         if not hasattr(self,'annotationlang'):
             self.annotationlang=self.parent.annotationlang
         self.getfields()
-class Example(Node,FieldParent):
-    def getlocation(self):
-        """this shouldn't be modified ever, at least for now."""
-        if self.checkforsecondfieldbytype('location'):
-            log.error("Multiple location fields found; not processing.")
-            return
-        try:
-            # prettyprint(self.fields['location'])
-            # log.info(len(self.fields['location'].forms))
-            if len(self.fields['location'].forms) == 1:
-                for k,v in self.fields['location'].forms.items():
-                    self.location=v.textvalue()
-            elif not self.fields['location'].forms:
-                log.error("No example location found!")# i.find('field[@type="{}"]/form/text'.format(location)'
-            else: #some day we will account for loc names in multiple languages
-                log.error("more than one value for an example location! ({};{})"
-                            "".format(self.fields['location'].forms,
-                                    self.entry.guid))# i.find('field[@type="{}"]/form/text'.format(location)'
-        except KeyError:
-            log.info("No location field found.")
-        if not hasattr(self,'location'): # don't fail this test
-            self.location=None
+class Example(FormParent,FieldParent):
+    def locationvalue(self,loc=None):
+        try: # without lang here, annotationlang is used; value=None returns
+            curloc=self.fields['location'].textvaluebylang()
+            if loc and curloc:
+                log.error("Received loc {}, but value already present! ({})"
+                        "".format(loc,curloc))
+                loc=None #don't overwrite
+            assert isinstance(self.fields['location'],ET.Element)
+            return self.fields['location'].textvaluebylang(value=loc)
+        except (KeyError,AssertionError) as e:
+            log.error("Something missing: {}".format(e))
+            if loc: #don't make field if not setting value
+                self.newfield('location',value=loc) #use annotationlang
+            else:
+                return None
     def tonevalue(self,value=None):
         try:
             assert isinstance(self.fields['tone'],ET.Element)
             return self.fields['tone'].textvaluebylang(value) # w/wo value
-        except AssertionError:
+        except (KeyError,AssertionError):
             if value: #don't make field if not setting value
                 self.newfield('tone',value=value) #use annotationlang
             else:
                 return None
+    def translationvalue(self,lang=None,value=None):
+        try:
+            assert isinstance(self.translation,ET.Element)
+            return self.translation.textvaluebylang(lang,value) # w/wo value
+        except AssertionError:
+            if value: #don't make field if not setting value
+                t=Translation(self)
+                t.textvaluebylang(lang,value)
+            else:
+                return None
+    def setsource(self):
+        # only do this on sorting!
+        self.set('source','AZT sort on {}'.format(getnow()))
+    def getsource(self):
+        self.get('source')
     def gettranslations(self):
         #There may be other @types of translation nodes; we use this one.
         self.translation=Translation(self,self.find(
@@ -1973,8 +1990,9 @@ class Example(Node,FieldParent):
         self.entry=parent.entry #make a common reference point for sense/entry
         self.sense=parent
         FieldParent.__init__(self) #tone and location values
-        FormParent.__init__(self) #language forms
-        self.getlocation()
+        # These two are collected by FieldParent:
+        self.checkforsecondfieldbytype('location')
+        self.checkforsecondfieldbytype('tone')
         self.gettranslations()
 class Illustration(Node):
     def __init__(self, parent, node=None, **kwargs):
@@ -1992,10 +2010,10 @@ class Sense(Node,FieldParent):
         for loc in self.examples:
             exs=[i for i in self.findall('example/field[@type="location"]/'
                                     'form/text[.="{}"]'.format(loc))
-            ]
-        # log.info("Examples: {}".format(exs))
-        if len(exs) > 1:
-            log.error("{} node in entry {} has multiple examples with "
+                ]
+            # log.info("Examples: {}".format(exs))
+            if len(exs) > 1:
+                log.error("{} node in entry {} has multiple examples with "
                     "{} location. "
                     "While this is legal LIFT, it is probably an error, and "
                     "will lead to unexpected behavior."
@@ -2016,6 +2034,18 @@ class Sense(Node,FieldParent):
     def getdefinitions(self):
         self.definition=Definition(self,self.find('definition'))
         self.checkforsecondchild('definition')
+    def newexample(self,loc,formvalue,lang,transvalue,translang,tonevalue):
+        if loc in self.examples:
+            log.error("There is already a {} example here! ({})".format(loc,
+                                                                self.examples))
+            return
+        self.examples.update({loc:Example(self)})
+        # without lang here, annotationlang is used; value=None does nothing
+        self.examples[loc].textvaluebylang(lang=lang,value=formvalue) #form
+        self.examples[loc].tonevalue(tonevalue)
+        self.examples[loc].locationvalue(loc)
+        self.examples[loc].translationvalue(translang,transvalue)
+        self.examples[loc].setsource()
     def getexamples(self):
         examples=[Example(self,i) for i in self
                                             if i and i.tag == 'example'
