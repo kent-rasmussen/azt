@@ -1492,11 +1492,12 @@ class Settings(object):
         else:
             log.error("No file name for setting {}!".format(setting))
     def loadandconvertlegacysettingsfile(self,setting='defaults'):
+        #This should be removed at some point
         savefile=self.settingsfile(setting)
         legacy=savefile.with_suffix('.py')
         log.info("Going to make {} into {}".format(legacy,savefile))
         if setting == 'soundsettings':
-            self.makesoundsettings()
+            self.soundsettings=sound.SoundSettings()
             o=self.soundsettings
         else:
             o=self
@@ -1551,6 +1552,8 @@ class Settings(object):
                 exit()
         log.info("Settings file {} converted to {}, with each value verified."
                 "".format(legacy,savefile))
+        if setting == 'soundsettings':
+            self.soundsettings.pyaudio.stop() # when done here
     def settingsfilecheck(self):
         """We need the namebase variable to make filenames for files
         that will be imported as python modules. To do that, they need
@@ -1716,7 +1719,7 @@ class Settings(object):
             elif 'default' in config and section in config['default']:
                 d[section]=ofromstr(config['default'][section])
         self.readsettingsdict(d)
-        if self.interfacelang:
+        if hasattr(self,'interfacelang'):
             interfacelang(self.interfacelang)
             self.taskchooser.mainwindowis.maketitle()
     def initdefaults(self):
