@@ -1819,6 +1819,9 @@ class Form(Node):
         self.gettext()
         self.lang=self.get("lang")
 class FormParent(Node):
+    def textvaluedict(self):
+        return {lang:self.forms[lang]
+                for lang in self.forms}
     def textvaluebylang(self,lang=None,value=None):
         # this allows forms to be specified for any lang, so long as there is
         # just one. Ultimately, we should specify which language these fields
