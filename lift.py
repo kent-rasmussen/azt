@@ -1899,10 +1899,12 @@ class Lexeme(FormParent):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='lexical-unit'
         super(Lexeme, self).__init__(parent, node, **kwargs)
+        self.ftype='lx'
 class Citation(FormParent):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='citation'
         super(Citation, self).__init__(parent, node, **kwargs)
+        self.ftype='lc'
 class FieldParent(object):
     """This is needed because some fields are under Entry, others under sense"""
     def checkforsecondfieldbytype(self,type,tag=None):
