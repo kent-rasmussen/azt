@@ -2066,8 +2066,7 @@ class Sense(Node,FieldParent):
     def pssubclassvalue(self,value=None):
         try:
             assert isinstance(self.pssubclass,ET.Element)
-            if value:
-                self.pssubclass.value(value)
+            return self.pssubclass.value(value)
         except AssertionError:
             if value:
                 self.pssubclass=Trait(self,
@@ -2075,7 +2074,6 @@ class Sense(Node,FieldParent):
                                     value=value)
             else:
                 return None
-        return self.pssubclass.value()
     def rmpsnode(self):
         if isinstance(self.ps,ET.Element):
             self.remove(self.ps)
