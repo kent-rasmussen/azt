@@ -3509,7 +3509,8 @@ if __name__ == '__main__':
                 ]:
         # if sense.examples:
             sense.newexample(loc,formvalue,lang,transvalue,translang,tonevalue)
-            prettyprint(sense.examples[loc])
+            # prettyprint(sense.examples[loc])
+            print(sense.examples[loc].forms)
         # example=sense.examples['Pluriel L_']
         # # for example in [i for i in sense.examples if i.location == 'Pluriel L_']:
         # prettyprint(example)
