@@ -7993,6 +7993,8 @@ class Record(Sound,TaskDressing):
         pages=[senseids[i:i+nperpage] for i in range(0,len(senseids),nperpage)]
         log.info("pages: {}".format(pages))
         for page in pages:
+            if self.runwindow.exitFlag.istrue():
+                return
             self.runwindow.wait()
             buttonframes=ui.ScrollingFrame(self.runwindow.frame,
                                             row=1,column=0,sticky='w')
