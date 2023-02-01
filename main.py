@@ -6327,9 +6327,11 @@ class ToneFrameDrafter(ui.Window):
         opts=[
                 ('lc', _("Citation form")),
                 ('lx', _("Lexeme form")),
-                (self.settings.pluralname, _("Plural form")),
-                (self.settings.imperativename, _("Infinitive form")),
-        ]
+                ]
+        if self.ps == self.settings.nominalps:
+            opts.append((self.settings.pluralname, _("Plural form")))
+        elif self.ps == self.settings.verbalps:
+            opts.append((self.settings.imperativename, _("Infinitive form")))
         return [(i,j) for (i,j) in opts if i]
     def getfieldtype(self,event=None):
         w=ui.Window(self,
