@@ -1864,6 +1864,7 @@ class FormParent(Node):
             self.checkforsecondchildbylang(lang)
     def __init__(self, parent, node=None, **kwargs):
         super(FormParent, self).__init__(parent, node, **kwargs)
+        self.getforms()
         self.ftype=self.tag
         self.annotationlang=parent.annotationlang
 class Gloss(Form):
@@ -1882,22 +1883,18 @@ class Field(FormParent):
                 kwargs['attrib']={'type':type}
         super(Field, self).__init__(parent, node, **kwargs)
         self.ftype=self.get('type')
-        self.getforms()
 class Definition(FormParent):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='definition'
         super(Definition, self).__init__(parent, node, **kwargs)
-        self.getforms()
 class Lexeme(FormParent):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='lexical-unit'
         super(Lexeme, self).__init__(parent, node, **kwargs)
-        self.getforms()
 class Citation(FormParent):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='citation'
         super(Citation, self).__init__(parent, node, **kwargs)
-        self.getforms()
 class FieldParent(object):
     """This is needed because some fields are under Entry, others under sense"""
     def checkforsecondfieldbytype(self,type):
