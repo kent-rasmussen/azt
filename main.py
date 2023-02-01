@@ -5506,7 +5506,7 @@ class WordCollection(Segments):
         kwargs={'per_page':50,
                 "query":' '.join(glosses)
             }
-        terms=rx.urlencode(kwargs)
+        terms=urls.urlencode(kwargs)
         url='https://openclipart.org/search/?'+terms
         openweburl(url) #should set up download here.
     def getword(self):
