@@ -10991,7 +10991,9 @@ class ExampleDict(dict):
                 "({}-{}, {} {})"
                 "".format(self.slices.ps(),self.slices.profile(),check,group))
             return
-        return list(senseidsinslice)
+        # return list(senseidsinslice)
+        # return senses, not senseids
+        return [v for k,v in self.db.sensedict.items() if k in senseidsinslice]
     def hasglosses(self,framed):
         log.info("hasglosses framed: {}".format(framed))
         if framed.glosses():
@@ -11123,23 +11125,24 @@ class FramedDataDict(dict):
         sense=element=False
         """Is source a valid senseid in the database?"""
         if source:
-            if self.db.get('sense', senseid=source).get():
+            if source in self.db.sensedict:
+                source=self.db.sensedict[source]
+            # if self.db.get('sense', senseid=source).get():
                 # log.info("sense?: {}".format(self.db.get('sense', senseid=source).get()))
                 sense=True
-            if isinstance(source,lift.ET.Element):
+            elif isinstance(source,lift.ET.Element):
                 element=True
             # log.info("sense: {}, element: {}".format(sense,element))
         elif senseid and check and self.taskchooser.params.cvt() == 'T':
             """If neither or None is given, try to build it from kwargs"""
             """If these aren't there, these will correctly fail w/KeyError."""
-            source=firstoflist(self.db.get('example',
-                                            # showurl=True,
-                                            senseid=senseid,
-                                            location=check
-                                            ).get('node'))
+            if isinstance(senseid,lift.Sense):
+                source=senseid.examples[check]
+            else:
+                source=self.db.sensedict[senseid].examples[check]
             element=True
         elif senseid and check:
-            source=senseid
+            source=self.db.sensedict[source]
             sense=True
         # log.info("sense: {}, element: {} (after build)".format(sense,element))
         d=self.isthere(source)
@@ -11321,7 +11324,10 @@ class FramedDataSense(FramedData):
         # self.ps=unlist(db.ps(senseid=senseid)) #there should be just one
         # log.info("check: {}".format(check))
         # log.info("field: {}; ftype: {}".format(check['field'],ftype))
-        if check and 'field' in check and check['field'] != self.ftype:
+        try:
+            assert check['field'] == self.ftype
+        except:
+        # if check and 'field' in check and check['field'] != self.ftype:
             log.error("Check ‘{}’ is for field ‘{}’, but you are looking for "
                         "field ‘{}’".format(check,check['field'],self.ftype))
         # log.info("self.forms: {}".format(self.forms))
