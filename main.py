@@ -7818,7 +7818,9 @@ class Sound(object):
                 }
         """Call this just once. If nothing changed, wait; if changes, run,
         then run again."""
-        if self.soundsettingswindow.exitFlag.istrue():
+        if self.soundsettingswindow.exitFlag.istrue() or self.exitFlag.istrue():
+            self.soundsettingswindow.on_quit()
+            self.on_quit()
             return
         if dict == dictnow:
             self.settings.setrefreshdelay()
