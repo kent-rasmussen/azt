@@ -4956,7 +4956,8 @@ class TaskChooser(TaskDressing):
         for r in self.settings.repo.values():
             r.share()
     def __init__(self,parent):
-        self.testdefault=WordCollectnParse
+        self.testdefault=RecordCitation
+        # self.testdefault=WordCollectnParse
         self.towrite=False
         self.writing=False
         self.datacollection=True # everyone starts here?
