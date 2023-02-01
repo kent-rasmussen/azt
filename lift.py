@@ -390,8 +390,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.entries=[Entry(self.nodes,i,annotationlang=self.annotationlang)
                             for i in self.nodes
                             if i.tag == 'entry']
+        self.entrydict={i.guid:i for i in self.entries}
     def getsenses(self):
         self.senses=[i for j in self.entries for i in j.senses]
+        self.sensedict={i.id:i for i in self.senses}
         # log.info("senses: {}".format(self.senses))
         # log.info("nsenses: {}".format(len(self.senses)))
     def getentrynode(self,**kwargs):
