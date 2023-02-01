@@ -1506,7 +1506,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 for a in ann:
                     a.set('value',anndict['value'])
                 if not ann:
-                    a=Node(form, tag='annotation', anndict)
+                    a=Node(form, tag='annotation', **anndict)
     def extrasegments(self):
         for lang in self.analangs:
             self.segmentsnotinregexes[lang]={}
