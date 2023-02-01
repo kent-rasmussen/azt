@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # coding=UTF-8
-import urllib.request
-import urllib.parse
+import urls
 import secrets
 
 class Client(object):

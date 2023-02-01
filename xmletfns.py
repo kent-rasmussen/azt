@@ -6,6 +6,8 @@ log=logsetup.getlog(__name__)
 import file
 import urllib
 
+def readxmltext(text):
+    return ET.fromstring(text)
 def readxml(filename):
     tree=ET.parse(filename)
     nodes=tree.getroot()
