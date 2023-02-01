@@ -1897,12 +1897,14 @@ class Citation(FormParent):
         super(Citation, self).__init__(parent, node, **kwargs)
 class FieldParent(object):
     """This is needed because some fields are under Entry, others under sense"""
-    def checkforsecondfieldbytype(self,type):
-        if len(self.findall('field[@type="{}"]'.format(type))) > 1:
-            log.error("{} node in entry {} has multiple fields of ‘{}’ type. "
+    def checkforsecondfieldbytype(self,type,tag=None):
+        if not tag:
+            tag='field'
+        if len(self.findall('{}[@type="{}"]'.format(tag,type))) > 1:
+            log.error("{} node in entry {} has multiple {} nodes of ‘{}’ type. "
                     "While this is legal LIFT, it is probably an error, and "
                     "will lead to unexpected behavior."
-                    "".format(self.tag,self.entry.guid,type))
+                    "".format(self.tag,self.entry.guid,tag,type))
             return 1
     def getfields(self):
         self.fields={
