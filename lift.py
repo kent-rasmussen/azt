@@ -381,7 +381,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         t=None #this default will give no text node value
         if not isinstance(vft,ET.Element): #only then add fields
             # log.info("Empty vft; adding verification field")
-            vf=Node(sensenode, 'field',
+            vf=Node(sensenode, tag='field',
                             attrib={'type':"{} {} verification".format(vtype,
                                                                         ftype)})
             vft=vf.makeformnode(lang=self.pylang(analang),text=t,gimmetext=True)
@@ -499,7 +499,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             p.makeformnode(analang,forms[analang])
             """Until I have reason to do otherwise, I'm going to assume these
             fields are being filled in in the glosslang language."""
-            fieldgloss=Node(p,'translation',attrib={'type':'Frame translation'})
+            fieldgloss=Node(p,tag='translation',attrib={'type':'Frame translation'})
             for lang in glosslangs:
                 if lang in forms:
                     fieldgloss.makeformnode(lang,forms[lang])
@@ -698,7 +698,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     ).get()
         if t == []:
             # log.info("No sense level tone field found, making")
-            p=Node(node[0],'field',attrib={'type':'tone'})
+            p=Node(node[0],tag='field',attrib={'type':'tone'})
             p.makeformnode(analang,text=group)
         else:
             # log.info("Sense level tone field found ({}), using".format(
@@ -731,7 +731,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 if possible.text == url:
                     # log.info("This one is already here; not adding.")
                     return
-        form=Node(node,'form',attrib={'lang':lang})
+        form=Node(node,tag='form',attrib={'lang':lang})
         t=form.maketextnode(text=url)
         # prettyprint(node)
         """Can't really do this without knowing what entry or sense I'm in..."""
@@ -740,7 +740,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def addmodcitationfields(self,entry,langform,lang):
         citation=entry.find('citation')
         if citation is None:
-            citation=Node(entry, 'citation')
+            citation=Node(entry, tag='citation')
             citation.makeformnode(lang=lang,text=langform)
     def addpronunciationfields(self,**kwargs):
         """This fuction will add an XML node to the lift tree, like a new
@@ -759,7 +759,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         fieldtype=kwargs.get('fieldtype','tone')
         fieldvalue=kwargs.get('fieldvalue')
         location=kwargs.get('location')
-        p=Node(node, 'pronunciation')
+        p=Node(node, tag='pronunciation')
         p.makeformnode(lang=analang,text=forms[analang])
         p.makefieldnode(type=fieldtype,lang=glosslangs[0],text=fieldvalue)
         for lang in glosslangs:
@@ -1506,7 +1506,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 for a in ann:
                     a.set('value',anndict['value'])
                 if not ann:
-                    a=Node(form, 'annotation', anndict)
+                    a=Node(form, tag='annotation', anndict)
     def extrasegments(self):
         for lang in self.analangs:
             self.segmentsnotinregexes[lang]={}
