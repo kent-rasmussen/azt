@@ -1962,13 +1962,20 @@ class Example(Node,FieldParent):
                 self.newfield('tone',value=value) #use annotationlang
             else:
                 return None
+    def gettranslations(self):
+        #There may be other @types of translation nodes; we use this one.
+        self.translation=Translation(self,self.find(
+                                    'translation[@type="Frame translation"]'))
+        self.checkforsecondfieldbytype("Frame translation",tag='translation')
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='example'
         super(Example, self).__init__(parent, node, **kwargs)
         self.entry=parent.entry #make a common reference point for sense/entry
         self.sense=parent
-        FieldParent.__init__(self)
+        FieldParent.__init__(self) #tone and location values
+        FormParent.__init__(self) #language forms
         self.getlocation()
+        self.gettranslations()
 class Illustration(Node):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='illustration'
