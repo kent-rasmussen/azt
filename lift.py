@@ -908,6 +908,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         d=self.get('definition/form').get('lang')
         self.glosslangs=[i[0] for i in collections.Counter(g+d).most_common()]
         log.info(_("gloss languages found: {}".format(self.glosslangs)))
+        self.annotationlang=self.glosslangs[0]
+        log.info(_("Using first gloss language for new annotations: {}".format(
+                                                        self.annotationlang)))
     def getfieldnames(self,guid=None,lang=None): # all field types in a given entry
         self.fieldnames={}
         langs=set(self.get('entry/field/form',
@@ -1816,7 +1819,21 @@ class Form(Node):
         self.gettext()
         self.lang=self.get("lang")
 class FormParent(Node):
-    def textvaluebylang(self,lang,value=None):
+    def textvaluebylang(self,lang=None,value=None):
+        # this allows forms to be specified for any lang, so long as there is
+        # just one. Ultimately, we should specify which language these fields
+        # should be encoded in, and what to do when the UI lang is different.
+        # right now, this is most relevant for tone and location fields, which
+        # are not really language specific (though may be specified in one lang
+        # or another)
+        if not lang:
+            if len(self.forms) == 1: # Just one? use it
+                lang=self.forms.keys()[0]
+            elif len(self.forms) == 0: # Adding? use default
+                lang=self.annotationlang
+            else:
+                log.error("textvaluebylang got no lang kwarg, but multiple "
+                        "langs present: {}".format(self.forms))
         try:
             return self.forms[lang].textvalue(value)
         except KeyError:
@@ -1848,6 +1865,7 @@ class FormParent(Node):
     def __init__(self, parent, node=None, **kwargs):
         super(FormParent, self).__init__(parent, node, **kwargs)
         self.ftype=self.tag
+        self.annotationlang=parent.annotationlang
 class Gloss(Form):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='gloss'
@@ -1898,7 +1916,21 @@ class FieldParent(object):
                     }
         for type in self.fields:
             self.checkforsecondfieldbytype(type)
+    def newfield(self,type,lang=None,value=None):
+        if not value:
+            log.info("We normally shouldn't create empty fields: {}/{}".format(
+                                                                lang, value))
+        if type in self.fields:
+            log.error("There is already a {} field here! ({})".format(type,
+                                                                self.fields))
+            return
+        self.fields.update({type:Field(self)})
+        # without lang here, annotationlang is used; value=None does nothing
+        self.fields[type].textvaluebylang(lang=lang,value=value)
     def __init__(self):
+        # log.info("Initializing field parent for {}".format(self))
+        if not hasattr(self,'annotationlang'):
+            self.annotationlang=self.parent.annotationlang
         self.getfields()
 class Example(Node,FieldParent):
     def getlocation(self):
@@ -1914,7 +1946,7 @@ class Example(Node,FieldParent):
                     self.location=v.textvalue()
             elif not self.fields['location'].forms:
                 log.error("No example location found!")# i.find('field[@type="{}"]/form/text'.format(location)'
-            else:
+            else: #some day we will account for loc names in multiple languages
                 log.error("more than one value for an example location! ({};{})"
                             "".format(self.fields['location'].forms,
                                     self.entry.guid))# i.find('field[@type="{}"]/form/text'.format(location)'
@@ -1922,6 +1954,14 @@ class Example(Node,FieldParent):
             log.info("No location field found.")
         if not hasattr(self,'location'): # don't fail this test
             self.location=None
+    def tonevalue(self,value=None):
+        try:
+            assert isinstance(self.fields['tone'],ET.Element)
+            return self.fields['tone'].textvaluebylang(value) # w/wo value
+        except AssertionError:
+            if value: #don't make field if not setting value
+                self.newfield('tone',value=value) #use annotationlang
+            else:
                 return None
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='example'
