@@ -1847,11 +1847,12 @@ class FormParent(Node):
                     "While this is legal LIFT, it is probably an error, and "
                     "will lead to unexpected behavior."
                     "".format(self.tag,self.parent.entry.guid,lang))
-    def checkforsecondchildbylang(self,lang):
-        if len(self.findall('form[@lang="{}"]'.format(lang))) > 1:
-            log.error("{} node in entry {} has multiple forms for ‘{}’ lang. "
-                    "While this is legal LIFT, it is probably an error, and "
-                    "will lead to unexpected behavior."
+    def checkforsecondchildbylang(self):
+        for lang in self.forms:
+            if len(self.findall('form[@lang="{}"]'.format(lang))) > 1:
+                log.error("{} node in entry {} has multiple forms "
+                    "for ‘{}’ lang. While this is legal LIFT, it is almost "
+                    "certainly an error, and will lead to unexpected behavior."
                     "".format(self.tag,self.parent.entry.guid,lang))
     def getforms(self):
         self.forms={
@@ -1860,8 +1861,7 @@ class FormParent(Node):
                                     for i in self.findall('form')]
                         if lang
                     }
-        for lang in self.forms:
-            self.checkforsecondchildbylang(lang)
+        self.checkforsecondchildbylang()
     def __init__(self, parent, node=None, **kwargs):
         super(FormParent, self).__init__(parent, node, **kwargs)
         self.getforms()
