@@ -1981,8 +1981,6 @@ class Illustration(Node):
         kwargs['tag']='illustration'
         super(Illustration, self).__init__(parent, node, **kwargs)
 class Sense(Node,FieldParent):
-    def checkforsecondchildbyloc(self,loc):
-        exs=[i for i in self.findall('example/field[@type="location"]/'
     # def checkforsecondchildbylang(self,lang):
     #     """This is just for glosses, which behave as form nodes in LIFT"""
     #     if len(self.findall('gloss[@lang="{}"]'.format(lang))) > 1:
@@ -1990,6 +1988,9 @@ class Sense(Node,FieldParent):
     #                 "While this is legal LIFT, it is probably an error, and "
     #                 "will lead to unexpected behavior."
     #                 "".format(self.tag,self.parent.guid,lang))
+    def checkforsecondchildbyloc(self):
+        for loc in self.examples:
+            exs=[i for i in self.findall('example/field[@type="location"]/'
                                     'form/text[.="{}"]'.format(loc))
             ]
         # log.info("Examples: {}".format(exs))
@@ -2028,8 +2029,7 @@ class Sense(Node,FieldParent):
                                         ]
                             if loc
                         }
-        for loc in self.examples:
-            self.checkforsecondchildbyloc(loc)
+        self.checkforsecondchildbyloc()
     def getpssubclass(self):
         self.pssubclass=Trait(self,self.find('trait[@name="{}-infl-class"]'
                                     ''.format(self.psvalue())))
