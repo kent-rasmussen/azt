@@ -1834,7 +1834,7 @@ class FormParent(Node):
         # or another)
         if not lang:
             if len(self.forms) == 1: # Just one? use it
-                lang=self.forms.keys()[0]
+                lang=list(self.forms.keys())[0]
             elif len(self.forms) == 0: # Adding? use default
                 lang=self.annotationlang
             else:
