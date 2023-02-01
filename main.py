@@ -11488,46 +11488,28 @@ class FramedDataElement(FramedData):
         return filenames
     def parseelement(self,node):
         self.node=node #We don't have access to this here
-        for i in node: # Example, lc, lx, pl, and imp
-            if i.tag == 'form': #language forms, not glosses, etc, below.
-                self.forms.getformfromnode(i)
-            elif (((i.tag == 'translation') and
-                (i.get('type') == 'Frame translation')) or
-                ((i.tag == 'gloss'))):
-                for ii in i:
-                    if (ii.tag == 'form'):
-                        self.forms.getformfromnode(ii) #glosses
-            elif ((i.tag == 'field') and (i.get('type') == 'location')):
-                self.check=unlist([j.text for j in i.findall('form/text')])
-            elif ((i.tag == 'field') and (i.get('type') == 'tone')):
-                self.tonegroups=[j.text for j in i.findall('form/text')]
-        if node.tag == 'citation':
-            self.ftype='lc'
-        elif node.tag == 'lexeme': #used?
-            self.ftype='lx'
-        elif node.tag == 'field':
-            self.ftype=node.get('type')
-        elif self.ps in self.frames and (self.check in self.frames[self.ps] and
-                                'field' in self.frames[self.ps][self.check]):
-            self.ftype=self.frames[self.ps][self.check]['field']
-        else:
-            log.error("Couldn't get filed type. Frames: {}".format(self.frames))
-            log.error("Node tag:{}; type: {}; ps: {}; check: {}; analang: {}; audiolang: {}"
-                    "".format(
-                            node.tag,
-                            node.get('type'),
-                            getattr(self,'ps',"AttrNotFound"),
-                            getattr(self,'check',"AttrNotFound"),
-                            getattr(self,'analang',"AttrNotFound"),
-                            getattr(self,'audiolang',"AttrNotFound")
-                                )
-                    )
-        for lang in [self.analang, self.audiolang]:
-            if lang in self.forms:
-                try:
-                    self.forms[lang][self.ftype]=self.forms[lang]
-                except TypeError:
-                    self.forms[lang]={self.ftype:self.forms[lang]}
+        self.forms=node.textvaluedict() #dict of values
+        if isinstance(node,lift.Example):
+            self.glosses=node.translation.textvaluedict() #dict of values
+            # self.glosses=node.translationvalue() #one value by lang
+            self.check=node.locationvalue()
+            self.tonegroups=node.tonevalue()
+            try:
+                self.ftype=self.frames[self.ps][self.check]['field']
+            except KeyError:
+                log.info("Trouble finding ftype for {} ({})".format(self.check,
+                                                        self.frames[self.ps]))
+        else: #dict with list of objects to dict w/joined list of values
+            self.glosses={(k,', '.join([i.textvalue() for i in v]))
+                        for k,v in node.parent.sense.glosses.items()}
+            self.ftype=node.ftype
+        """Is this needed? for what?"""
+        # for lang in [self.analang, self.audiolang]:
+        #     if lang in self.forms:
+        #         try:
+        #             self.forms[lang][self.ftype]=self.forms[lang]
+        #         except TypeError:
+        #             self.forms[lang]={self.ftype:self.forms[lang]}
     def __init__(self, parent, node, senseid=None, **kwargs):
         if not isinstance(node,lift.ET.Element):
             log.error("You should pass an element ({}) to FramedDataExample!"
