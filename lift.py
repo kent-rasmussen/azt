@@ -3477,34 +3477,43 @@ if __name__ == '__main__':
     # filename="/home/kentr/bin/raspy/azt/SILCAWL/SILCAWL.lift"
     lift=Lift(filename)
     print(time.time())
-    entry=lift.getentrynode()[10]
+    # entry=lift.getentrynode()[10]
     def writetofile(name):
         f = open(str(name)+'.txt', 'w', encoding='utf-8') # to append, "a"
         f.write(prettyprint(lift.nodes))
         f.close()
     # entry.convertxtoy()
-    kwargs={}
-    kwargs['fromtag']='gloss'
-    kwargs['totag']='citation'
-    kwargs['lang']='en'
-    kwargs['keep']=True
-    kwargs['entries']=[entry]
-    prettyprint(entry)
-    lift.convertxtoy(**kwargs)
-    prettyprint(entry)
-    exit()
+    # kwargs={}
+    # kwargs['fromtag']='gloss'
+    # kwargs['totag']='citation'
+    # kwargs['lang']='en'
+    # kwargs['keep']=True
+    # kwargs['entries']=[entry]
+    # prettyprint(entry)
+    # lift.convertxtoy(**kwargs)
+    # prettyprint(entry)
+    # exit()
+    loc="Imperative"
+    formvalue="give!"
+    lang="en"
+    transvalue="donnez!"
+    translang='fr'
+    tonevalue='16'
     for sense in [i for i in lift.senses
-                # if i.id=='give_a3f4a573-8930-403f-b669-0704f8d0aae1']:
-                if i.id=='72ad850a-d049-4bdc-b6ee-cd58403f4b71']:
-        prettyprint(sense.examples)
-        example=sense.examples['Pluriel L_']
-        # for example in [i for i in sense.examples if i.location == 'Pluriel L_']:
-        prettyprint(example)
-        log.info(example.fields['tone'].textvaluebylang('fr'))
-        example.fields['tone'].textvaluebylang('fr','1Billion')
-        log.info(example.fields['tone'].textvaluebylang('en'))
-        log.info(example.fields['tone'].textvaluebylang('fr'))
-        prettyprint(example)
+                if i.id=='give_a3f4a573-8930-403f-b669-0704f8d0aae1'
+                # if i.id=='72ad850a-d049-4bdc-b6ee-cd58403f4b71'
+                ]:
+        # if sense.examples:
+            sense.newexample(loc,formvalue,lang,transvalue,translang,tonevalue)
+            prettyprint(sense.examples[loc])
+        # example=sense.examples['Pluriel L_']
+        # # for example in [i for i in sense.examples if i.location == 'Pluriel L_']:
+        # prettyprint(example)
+        # log.info(example.fields['tone'].textvaluebylang('fr'))
+        # example.fields['tone'].textvaluebylang('fr','1Billion')
+        # log.info(example.fields['tone'].textvaluebylang('en'))
+        # log.info(example.fields['tone'].textvaluebylang('fr'))
+        # prettyprint(example)
         # prettyprint(sense.fields['SILCAWL'])
         # log.info(sense.fields['SILCAWL'].textvaluebylang('en'))
         # sense.fields['SILCAWL'].textvaluebylang('en','1Billion')
