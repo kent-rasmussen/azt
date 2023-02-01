@@ -1803,9 +1803,10 @@ class Form(Node):
     def gettext(self):
         self.textnode=Text(self,self.find('text'))
     def getannotation(self):
-        self.annonodes=[Annotation(self,i) for i in self
-                                            if i.tag == 'annotation']
-    def annotationvalue(self,value=None):
+        self.annonodes={i.get('name'):Annotation(self,i) for i in self
+                                            if i.tag == 'annotation'
+                        }
+    def annotationvalue(self,name,value=None):
         if value:
             self.annonodes.text=value
         else:
