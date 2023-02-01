@@ -7937,7 +7937,8 @@ class Sound(object):
                                 title=_('Select Sound Card Settings'))
         self.soundsettingswindow.protocol("WM_DELETE_WINDOW", self.quittask)
         self.soundcheckrefresh()
-        self.soundsettingswindow.wait_window(self.soundsettingswindow)
+        if not self.soundsettingswindow.exitFlag.istrue():
+            self.soundsettingswindow.wait_window(self.soundsettingswindow)
         self.donewpyaudio()
         if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
             self.soundsettingswindow.destroy()
