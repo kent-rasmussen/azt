@@ -387,8 +387,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             vft=vf.makeformnode(lang=self.pylang(analang),text=t,gimmetext=True)
         return vft,vf,sensenode #textnode, fieldnode, sensenode
     def getentries(self):
-        self.entries=[Entry(self.nodes,i) for i in self.nodes
-                                            if i.tag == 'entry']
+        self.entries=[Entry(self.nodes,i,annotationlang=self.annotationlang)
+                            for i in self.nodes
+                            if i.tag == 'entry']
     def getsenses(self):
         self.senses=[i for j in self.entries for i in j.senses]
         # log.info("senses: {}".format(self.senses))
