@@ -1786,6 +1786,11 @@ class Trait(ValueNode):
         kwargs['tag']='trait'
         super(Trait, self).__init__(parent, node, **kwargs)
 class Ps(ValueNode):
+    def myvalue(self,value=None):
+        if value:
+            self.set('value',value)
+        else:
+            return self.get('value')
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='grammatical-info'
         super(Ps, self).__init__(parent, node, **kwargs)
@@ -1917,6 +1922,7 @@ class Example(Node,FieldParent):
             log.info("No location field found.")
         if not hasattr(self,'location'): # don't fail this test
             self.location=None
+                return None
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='example'
         super(Example, self).__init__(parent, node, **kwargs)
@@ -2011,15 +2017,12 @@ class Sense(Node,FieldParent):
     def psvalue(self,value=None):
         try:
             assert isinstance(self.ps,ET.Element)
-            if value:
-                self.ps.value(value)
-            # else:
+            return self.ps.myvalue(value)
         except AssertionError:
             if value:
                 self.ps=Ps(self, value=value)
             else:
                 return None
-        return self.ps.get('value')
     def getillustration(self):
         self.illustration=Illustration(self,self.find('illustration'))
     def illustrationvalue(self,value=None):
