@@ -96,8 +96,8 @@ class SoundSettings(object):
         else:
             self.audio_card_out=outs[outsi+1]
             log.debug("next_card_out {} (of {})".format(self.audio_card_out,outs))
-            self.default_fs()
-            self.default_sf()
+            # self.default_fs()
+            # self.default_sf()
     def next_fs(self):
         log.debug("next_fs")
         exit=False
