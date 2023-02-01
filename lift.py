@@ -2061,8 +2061,9 @@ class Sense(Node,FieldParent):
                         }
         self.checkforsecondchildbyloc()
     def getpssubclass(self):
-        self.pssubclass=Trait(self,self.find('trait[@name="{}-infl-class"]'
-                                    ''.format(self.psvalue())))
+        for n in self.findall('trait[@name="{}-infl-class"]'
+                                ''.format(self.psvalue())):
+            self.pssubclass=Trait(self,n) #only if found
     def pssubclassvalue(self,value=None):
         try:
             assert isinstance(self.pssubclass,ET.Element)
