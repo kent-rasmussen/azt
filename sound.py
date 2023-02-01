@@ -265,7 +265,9 @@ class SoundSettings(object):
                 "output_device={}; "
                 "output_channels=1, "
                 "output_format={} ({})".format(fs,card,sf,e))
-    def __init__(self,pyaudio):
+    def __init__(self,pyaudio=None):
+        if not pyaudio:
+            pyaudio = AudioInterface()
         self.pyaudio=pyaudio
         self.sethypothetical()
         self.getactual()
