@@ -32,8 +32,8 @@ ECHO:
 ECHO ATTENTION!!
 ECHO            vvvvvvvvvvvvvvvvvvv
 ECHO Be sure to check "add to PATH" in the dialog BEFORE you click "Install Now"
-ECHO "           ^^^^^^^^^^^^^^^^^^^"
-ECHO "ALSO:"
+ECHO            ^^^^^^^^^^^^^^^^^^^^
+ECHO ALSO:
 ECHO        vvvvvvvvvvvvvvvvvv                      vvvvvvvvvvvvvvvvvvvvvvvv
 ECHO At the end of the install, be sure to click on "remove path limitation"
 ECHO "       ^^^^^^^^^^^^^^^^^^                      ^^^^^^^^^^^^^^^^^^^^^^^^"
@@ -47,7 +47,7 @@ start python-3.6.8-amd64.exe
 If exist Git-2.33.0.2-64-bit.exe (
 ECHO Git-2.33.0.2-64-bit.exe is there!
 ) ELSE (
-ECHO "Downloading Git 2.33.0.2 (50101024; 48M)..."
+ECHO Downloading Git 2.33.0.2 (50101024; 48M^)...
 ECHO Check that your internet is on and
 pause
 powershell.exe -noprofile -command "Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/Git-2.33.0.2-64-bit.exe' -OutFile 'Git-2.33.0.2-64-bit.exe'"
