@@ -32,11 +32,11 @@ ECHO:
 ECHO ATTENTION!!
 ECHO            vvvvvvvvvvvvvvvvvvv
 ECHO Be sure to check "add to PATH" in the dialog BEFORE you click "Install Now"
-ECHO            ^^^^^^^^^^^^^^^^^^^^
+ECHO            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ECHO ALSO:
 ECHO        vvvvvvvvvvvvvvvvvv                      vvvvvvvvvvvvvvvvvvvvvvvv
 ECHO At the end of the install, be sure to click on "remove path limitation"
-ECHO "       ^^^^^^^^^^^^^^^^^^                      ^^^^^^^^^^^^^^^^^^^^^^^^"
+ECHO        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ECHO If you forget to do either of these, you should run python-3.6.8-amd64.exe
 ECHO again manually (maybe select "Fix install") to set these options.
 ECHO:
