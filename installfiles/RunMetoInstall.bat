@@ -1,8 +1,8 @@
 ECHO OFF
-ECHO ""
-ECHO ""
-ECHO ""
-ECHO ""
+ECHO:
+ECHO:
+ECHO:
+ECHO:
 ECHO A-Z+T Install batch file
 ECHO This script installs stuff --it must be run **As Administrator**!
 ECHO Will download and install Python 3.6.8
@@ -74,8 +74,13 @@ cd /d "%userprofile%/desktop"
 FOR /F "tokens=* USEBACKQ" %%F IN (`where git`) DO (
 SET GitExe=%%F
 )
-ECHO "Running ""%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprofile%/desktop/azt"""
-powershell.exe -noprofile -ExecutionPolicy Bypass -command """%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprofile%/desktop/azt"""
+$str={
+""%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprofile%/desktop/azt"""
+}
+ECHO Running $str
+REM ""%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprofile%/desktop/azt"""
+powershell.exe -noprofile -ExecutionPolicy Bypass -command $str
+REM """%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprofile%/desktop/azt"""
 ECHO making links to AZT and Transcriber tool...
 mklink "%userprofile%/desktop/A>Z+T" "%userprofile%/desktop/azt/main.py"
 mklink "%userprofile%/desktop/Transcriber" "%userprofile%/desktop/azt/transcriber.py"
