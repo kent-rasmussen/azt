@@ -948,33 +948,30 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         log.info(_("Using first gloss language for new annotations: {}".format(
                                                         self.annotationlang)))
     def getfieldnames(self,guid=None,lang=None): # all field types in a given entry
-        self.fieldnames={}
-        langs=set(self.get('entry/field/form',
-                # lang=lang,
-                # showurl=True
-                ).get('lang'))
-        # log.info("Found these entry field languages: {}".format(langs))
-        for lang in langs:
-            # log.info("Looking for entry fields coded by lang [{}]".format(lang))
-            self.fieldnames[lang]=list(dict.fromkeys(self.get('entry/field',
-                                                lang=lang,
-                                                # showurl=True
-                                                ).get('type')))
+        self.fieldnames={l:set([k
+                                    for i in self.entries
+                                    for k in i.fields
+                                    if l in i.fields[k].forms
+                                    ])
+                                for l in self.analangs+self.glosslangs
+                                if [k for i in self.entries #no set()
+                                    for k in i.fields
+                                    if l in i.fields[k].forms
+                                    ]
+                                }
         log.info('Fields found in Entries: {}'.format(self.fieldnames))
     def getsensefieldnames(self,guid=None,lang=None): # all field types in a given entry
-        #This presumes there is a form@lang!
-        self.sensefieldnames={}
-        langs=set(self.get('entry/sense/field/form',
-                # lang=lang,
-                # showurl=True
-                ).get('lang'))
-        # log.info("Found these sense field languages: {}".format(langs))
-        for lang in langs:
-            self.sensefieldnames[lang]=list(dict.fromkeys(
-                    self.get('entry/sense/field',
-                            lang=lang,
-                            # showurl=True
-                            ).get('type')))
+        self.sensefieldnames={l:set([k
+                                    for i in self.senses
+                                    for k in i.fields
+                                    if l in i.fields[k].forms
+                                    ])
+                                for l in self.analangs+self.glosslangs
+                                if [k for i in self.senses #no set()
+                                    for k in i.fields
+                                    if l in i.fields[k].forms
+                                    ]
+                                }
         log.info('Fields found in Senses: {}'.format(self.sensefieldnames))
     def getlocations(self,guid=None,lang=None): # all field locations in a given entry
         self.locations=list(dict.fromkeys(self.get('example/locationfield/form/text',
