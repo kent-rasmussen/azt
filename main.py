@@ -7542,7 +7542,7 @@ class Sort(object):
         groupvars={}
         b={}
         for group in groups:
-            b[group]=ToneGroupButtonFrame(self.sortitem, self, self.exs, group,
+            b[group]=SortGroupButtonFrame(self.sortitem, self, self.exs, group,
                                     showtonegroup=True,
                                     labelizeonselect=True
                                     )
@@ -10025,7 +10025,7 @@ class Transcribe(Sound,Sort,TaskDressing):
                                                 self.group_comparison))
             t=_('Compare with another group ({})').format(
                                                 self.group_comparison)
-            self.compframe.bf2=ToneGroupButtonFrame(self.compframe.compframeb,
+            self.compframe.bf2=SortGroupButtonFrame(self.compframe.compframeb,
                                     self, self.exs,
                                     self.group_comparison,
                                     showtonegroup=True,
@@ -10176,7 +10176,7 @@ class Transcribe(Sound,Sort,TaskDressing):
         examplesframe=ui.Frame(self.runwindow.frame,
                                 row=4,column=0,sticky=''
                                 )
-        b=ToneGroupButtonFrame(examplesframe, self, self.exs,
+        b=SortGroupButtonFrame(examplesframe, self, self.exs,
                                 self.group,
                                 showtonegroup=True,
                                 # canary=entryview,
@@ -11673,7 +11673,7 @@ class SortButtonFrame(ui.ScrollingFrame):
             scaledpady=0
         else:
             scaledpady=int(40*program['scale'])
-        b=ToneGroupButtonFrame(self.groupbuttons, self, self.exs,
+        b=SortGroupButtonFrame(self.groupbuttons, self, self.exs,
                                 group,
                                 showtonegroup=True,
                                 alwaysrefreshable=True,
@@ -11928,7 +11928,7 @@ class RecordButtonFrame(ui.Frame):
                 ).grid(row=0,column=0)
             return
         self.makebuttons()
-class ToneGroupButtonFrame(ui.Frame):
+class SortGroupButtonFrame(ui.Frame):
     def again(self):
         """Do I want this? something less drastic?"""
         for child in self.winfo_children():
@@ -12154,7 +12154,7 @@ class ToneGroupButtonFrame(ui.Frame):
             kwargs['wsoundfile']=True
         #set this for buttons:
         if self.check.task.settings.lowverticalspace:
-            log.info("using lowverticalspace for ToneGroupButtonFrame")
+            log.info("using lowverticalspace for SortGroupButtonFrame")
             maxpad=0
         else:
             maxpad=15
@@ -12164,7 +12164,7 @@ class ToneGroupButtonFrame(ui.Frame):
         kwargs['padx']=kwargs.pop('bpadx',defaults.get('bpadx',0))
         self.kwargs=kwargs
         self._var=ui.BooleanVar()
-        super(ToneGroupButtonFrame,self).__init__(parent, **frameargs)
+        super(SortGroupButtonFrame,self).__init__(parent, **frameargs)
         if self.getexample(**kwargs):
             self.makebuttons()
         # """Should I do this outside the class?"""
