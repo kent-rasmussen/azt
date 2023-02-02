@@ -515,7 +515,6 @@ class FileChooser(object):
                     sysshutdown()
         if (not self.name or not file.exists(self.name)) and (
                             not program['root'].exitFlag.istrue()):
-            self.getfilename() #if the above doesn't result in a file, do again.
             return
         if self.name and 'Demo' in self.name:
             file.writefilename() #Don't just keep loading this; select next time
