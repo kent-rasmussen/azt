@@ -501,9 +501,17 @@ class FileChooser(object):
         if type(self.name) is not list and not file.exists(self.name):
                 self.name=None #don't return a file that isn't there
         if not self.name or type(self.name) is list: #nothing or a selection
-            r=self.askwhichlift(self.name)
-            if r:
-                sysshutdown()
+            if (self.name and program['testing']
+                    and hasattr(self.taskchooser,'testlift')
+                    and self.taskchooser.testlift):
+                for f in self.name:
+                    if self.taskchooser.testlift in f:
+                        self.name=f
+                        break
+            else:
+                r=self.askwhichlift(self.name)
+                if r:
+                    sysshutdown()
         if (not self.name or not file.exists(self.name)) and (
                             not program['root'].exitFlag.istrue()):
             self.getfilename() #if the above doesn't result in a file, do again.
@@ -4957,6 +4965,7 @@ class TaskChooser(TaskDressing):
             r.share()
     def __init__(self,parent):
         self.testdefault=RecordCitation
+        self.testlift='Demo_en'
         # self.testdefault=WordCollectnParse
         self.towrite=False
         self.writing=False
