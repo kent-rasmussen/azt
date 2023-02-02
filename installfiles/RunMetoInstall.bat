@@ -74,7 +74,7 @@ cd /d "%userprofile%/desktop"
 FOR /F "tokens=* USEBACKQ" %%F IN (`where git`) DO (
 SET GitExe=%%F
 )
-ECHO "Running %GitExe% clone 'https://github.com/kent-rasmussen/azt.git' '%userprofile%/desktop/azt'"
+ECHO 'Running "%GitExe%" clone "https://github.com/kent-rasmussen/azt.git" "%userprofile%/desktop/azt"'
 powershell.exe -noprofile -ExecutionPolicy Bypass -command '"%GitExe%" clone "https://github.com/kent-rasmussen/azt.git" "%userprofile%/desktop/azt"'
 ECHO making links to AZT and Transcriber tool...
 mklink "%userprofile%/desktop/A>Z+T" "%userprofile%/desktop/azt/main.py"
