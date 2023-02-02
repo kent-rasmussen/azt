@@ -175,8 +175,7 @@ def getfilenames():
         log.info("Returning filenames: {}".format(lift_url.filenames))
         return [i for i in lift_url.filenames if exists(i)]
 def getfilename():
-    """This returns a single filename, if there, else a list if there, else
-    it asks for user input."""
+    """This returns a single filename, if there, else a list if there"""
     try:
         import lift_url
     except:
