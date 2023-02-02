@@ -28,20 +28,20 @@ powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.python.org/ft
 )
 
 ECHO Installing Python 3.6.8
-ECHO
+ECHO ""
 ECHO ATTENTION!!
 ECHO            vvvvvvvvvvvvvvvvvvv
 ECHO Be sure to check "add to PATH" in the dialog BEFORE you click "Install Now"
 ECHO            ^^^^^^^^^^^^^^^^^^^
-ECHO ALSO:
+ECHO "ALSO:"
 ECHO        vvvvvvvvvvvvvvvvvv                      vvvvvvvvvvvvvvvvvvvvvvvv
 ECHO At the end of the install, be sure to click on "remove path limitation"
 ECHO        ^^^^^^^^^^^^^^^^^^                      ^^^^^^^^^^^^^^^^^^^^^^^^
 ECHO If you forget to do either of these, you should run python-3.6.8-amd64.exe
 ECHO again manually (maybe select "Fix install") to set these options.
-ECHO
+ECHO ""
 ECHO Otherwise, you should be fine with all default options
-ECHO
+ECHO ""
 start python-3.6.8-amd64.exe
 
 If exist Git-2.33.0.2-64-bit.exe (
@@ -71,7 +71,7 @@ pause
 
 ECHO Cloning A-Z+T source to '%userprofile%/desktop/azt'
 cd /d "%userprofile%/desktop"
-FOR /F "tokens=* USEBACKQ" %%F IN (`git`) DO (
+FOR /F "tokens=* USEBACKQ" %%F IN (`where git`) DO (
 SET GitExe=%%F
 )
 ECHO "Running %GitExe% clone 'https://github.com/kent-rasmussen/azt.git' '%userprofile%/desktop/azt'"
