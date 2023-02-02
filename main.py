@@ -497,7 +497,7 @@ class FileChooser(object):
         if not self.name: #If not set, for any reason
             return 1
     def __init__(self,parent):
-        self.parent=parent #allow reference to splash
+        self.parent=self.taskchooser=parent #allow reference to splash
         self.name=file.getfilename() #returns filename if there, else filenames
         if type(self.name) is not list and not file.exists(self.name):
                 self.name=None #don't return a file that isn't there
