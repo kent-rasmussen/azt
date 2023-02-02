@@ -71,6 +71,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         CAWL template"""
         self.getentries()
         self.getsenses()
+        self.sliceentries()
+        self.slicesenses()
         self.getguids() #sets: self.guids and self.nguids
         #the following should probably replaced by getsenseidsbyps everywhere
         self.getsenseids() #sets: self.senseids and self.nsenseids
@@ -390,10 +392,42 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.entries=[Entry(self.nodes,i,annotationlang=self.annotationlang)
                             for i in self.nodes
                             if i.tag == 'entry']
+    def sliceentries(self):
         self.entrydict={i.guid:i for i in self.entries}
+        #These next two can be converted to by profile in main.py
+        self.entriesbylx={l:{i.lx.textvaluebylang(l):i}
+                            for i in self.entries
+                            for l in i.lx.forms
+                        }
+        self.entriesbylc={l:{i.lc.textvaluebylang(l):i}
+                            for i in self.entries
+                            for l in i.lc.forms
+                        }
+        self.entriesbypl={l:{i.pl.textvaluebylang(l):i}
+                            for i in self.entries
+                            if hasattr(i,'pl')
+                            for l in i.pl.forms
+                        }
+        self.entriesbyimp={l:{i.imp.textvaluebylang(l):i}
+                            for i in self.entries
+                            if hasattr(i,'imp')
+                            for l in i.imp.forms
+                        }
+        self.entriesbyftype={f:{l:{i.fields[f].textvaluebylang(lang=l):i}}
+                            for i in self.entries
+                            for f in i.fields
+                            for l in i.fields[f].forms
+                            }
     def getsenses(self):
         self.senses=[i for j in self.entries for i in j.senses]
+    def slicesenses(self):
         self.sensedict={i.id:i for i in self.senses}
+        self.sensesbyps={i.psvalue():i for i in self.senses}
+        self.sensesbyftype={f:{l:{i.fields[f].textvaluebylang(l):i}}
+                            for i in self.senses
+                            for f in i.fields
+                            for l in i.fields[f].forms
+                            }
         # log.info("senses: {}".format(self.senses))
         # log.info("nsenses: {}".format(len(self.senses)))
     def getentrynode(self,**kwargs):
