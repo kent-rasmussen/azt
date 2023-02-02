@@ -3541,10 +3541,26 @@ if __name__ == '__main__':
                 if i.id=='give_a3f4a573-8930-403f-b669-0704f8d0aae1'
                 # if i.id=='72ad850a-d049-4bdc-b6ee-cd58403f4b71'
                 ]:
+        sense.newfield('Plural','en','Bigs')
+        sense.newfield('Imperative','en','Bigger')
+        sense.newfield('Plural','fr','Grands')
+
+    for entry in [i for i in lift.entries][:1]:
+
         # if sense.examples:
-            sense.newexample(loc,formvalue,lang,transvalue,translang,tonevalue)
-            # prettyprint(sense.examples[loc])
-            print(sense.examples[loc].forms)
+            # sense.newexample(loc,formvalue,lang,transvalue,translang,tonevalue)
+            entry.newfield('Plural','en','Bigs')
+            entry.newfield('Imperative','en','Bigger')
+            entry.newfield('Plural','fr','Grands')
+    for entry in [i for i in lift.entries][1:2]:
+
+        # if sense.examples:
+            # sense.newexample(loc,formvalue,lang,transvalue,translang,tonevalue)
+            entry.newfield('Plural','en','Bigs')
+            # entry.newfield('Imperative','en','Bigger')
+            # entry.newfield('Plural','fr','Grands')
+            # prettyprint(sense)
+            # print(sense.examples[loc].forms)
         # example=sense.examples['Pluriel L_']
         # # for example in [i for i in sense.examples if i.location == 'Pluriel L_']:
         # prettyprint(example)
@@ -3558,7 +3574,16 @@ if __name__ == '__main__':
         # sense.fields['SILCAWL'].textvaluebylang('en','1Billion')
         # log.info(sense.fields['SILCAWL'].textvaluebylang('en'))
         # prettyprint(sense.fields['SILCAWL'])
+    # for f in lift.getfieldnames():
+    lift.sliceentries()
+    lift.slicesenses()
+    lift.getfieldnames() #sets self.fieldnames (of entry)
+    lift.getsensefieldnames()
+    print(lift.fieldnames)
+    print(lift.sensefieldnames)
+    print(lift.entriesbyftype)
     # for entry in [i for i in lift.entries
+    print(lift.sensesbyftype)
     #             if i.guid=='a9c35962-cc25-48fd-9400-3af37e8fe783']:
     #     prettyprint(entry.lx)
     #     log.info(entry.lx.textvaluebylang('en'))
