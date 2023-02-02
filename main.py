@@ -44,6 +44,7 @@ import openclipart
 # import profiles
 import setdefaults
 import xlp
+import urls
 from utilities import *
 try:
     import sound
