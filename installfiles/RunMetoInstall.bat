@@ -28,20 +28,20 @@ powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.python.org/ft
 )
 
 ECHO Installing Python 3.6.8
-ECHO ""
+ECHO:
 ECHO ATTENTION!!
 ECHO            vvvvvvvvvvvvvvvvvvv
 ECHO Be sure to check "add to PATH" in the dialog BEFORE you click "Install Now"
-ECHO            ^^^^^^^^^^^^^^^^^^^
+ECHO "           ^^^^^^^^^^^^^^^^^^^"
 ECHO "ALSO:"
 ECHO        vvvvvvvvvvvvvvvvvv                      vvvvvvvvvvvvvvvvvvvvvvvv
 ECHO At the end of the install, be sure to click on "remove path limitation"
-ECHO        ^^^^^^^^^^^^^^^^^^                      ^^^^^^^^^^^^^^^^^^^^^^^^
+ECHO "       ^^^^^^^^^^^^^^^^^^                      ^^^^^^^^^^^^^^^^^^^^^^^^"
 ECHO If you forget to do either of these, you should run python-3.6.8-amd64.exe
 ECHO again manually (maybe select "Fix install") to set these options.
-ECHO ""
+ECHO:
 ECHO Otherwise, you should be fine with all default options
-ECHO ""
+ECHO:
 start python-3.6.8-amd64.exe
 
 If exist Git-2.33.0.2-64-bit.exe (
@@ -61,10 +61,10 @@ ECHO You should be fine with all default options
 ECHO ATTENTION!!
 ECHO                     vvvvvvvvvvvvvvvvvvvvvvv
 ECHO Wait until you have finished installing Git before moving on with this script.
-ECHO                     ^^^^^^^^^^^^^^^^^^^^^^^
+ECHO "                    ^^^^^^^^^^^^^^^^^^^^^^^"
 ECHO     vvvvvvv
 ECHO You need it for the next step!
-ECHO     ^^^^^^^
+ECHO "    ^^^^^^^"
 start Git-2.33.0.2-64-bit.exe
 
 pause
