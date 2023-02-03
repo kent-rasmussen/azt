@@ -12902,14 +12902,17 @@ class ErrorNotice(ui.Window):
                     row=0, column=1,
                     columnspan=2,
                     ipadx=25)
+        if image:
+            if isinstance(image, ui.Image):
+                l['image']=image.scaled
+            elif isinstance(image,str):
+                l['image']=self.theme.photo[image]
+            l['compound']='left'
         l.wrap()
         if button and type(button) is tuple:
             b=ui.Button(self.frame, text=button[0],
                     cmd=None,
                     row=1, column=1, sticky='e')
-            if image:
-                b['image']=self.theme.photo[image]
-                b['compound']='left'
             b.bind('<ButtonRelease>',self.withdraw)
             b.bind('<ButtonRelease>',button[1],add='+')
             b.bind('<ButtonRelease>',self.destroy,add='+')
