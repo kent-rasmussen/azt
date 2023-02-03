@@ -12894,10 +12894,13 @@ class ErrorNotice(ui.Window):
         wait=kwargs.get('wait')
         button=kwargs.get('button')
         image=kwargs.get('image')
-        super(ErrorNotice, self).__init__(parent,title=title)
+        super(ErrorNotice, self).__init__(parent,title=title,exit=False)
         self.title = title
         self.text = text
-        l=ui.Label(self.frame, text=text, row=0, column=1, ipadx=25)
+        l=ui.Label(self.frame, text=text,
+                    row=0, column=1,
+                    columnspan=2,
+                    ipadx=25)
         l.wrap()
         if button and type(button) is tuple:
             b=ui.Button(self.frame, text=button[0],
@@ -12909,6 +12912,9 @@ class ErrorNotice(ui.Window):
             b.bind('<ButtonRelease>',self.withdraw)
             b.bind('<ButtonRelease>',button[1],add='+')
             b.bind('<ButtonRelease>',self.destroy,add='+')
+        b=ui.Button(self.frame, text=_("OK"),
+                cmd=self.on_quit,
+                row=1, column=2, sticky='nse')
         self.attributes("-topmost", True)
         if wait:
             self.wait_window(self)
