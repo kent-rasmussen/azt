@@ -1842,6 +1842,11 @@ class Form(Node):
             self.annonodes.text=value
         else:
             return self.annonodes.text
+    def textquoted(self):
+        r="‘"+self.textnode.text+"’"
+        if self.parent.ftype not in ['lc']: #lx?
+            r+="("+ftype+")"
+        return r
     def textvalue(self,value=None):
         if value:
             self.textnode.text=value
@@ -1856,6 +1861,11 @@ class FormParent(Node):
     def textvaluedict(self):
         return {lang:self.forms[lang]
                 for lang in self.forms}
+    def textquotedbylang(self,lang):
+        try:
+            return self.forms[lang].textquoted()
+        except KeyError:
+            return None
     def textvaluebylang(self,lang=None,value=None):
         # this allows forms to be specified for any lang, so long as there is
         # just one. Ultimately, we should specify which language these fields
