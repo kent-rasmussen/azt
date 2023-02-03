@@ -13106,7 +13106,11 @@ class Repository(object):
             # log.info(r)
         return r #ok if we don't track results for each
     def isrelated(self,directory):
-        if directory in self.remotenames:
+        # log.info("Checking if {} \n\tis related to {}".format(directory,
+        #                                                         self.url))
+        # log.info(self.remotenames)
+        if self.remotenames and directory in self.remotenames:
+            log.info("Found {} in settings; assuming related".format(directory))
             return True #This should always be
         #Git doesn't seem to care if repos are related, but I do...
         thatrepohashes=self.commithashes(directory)
