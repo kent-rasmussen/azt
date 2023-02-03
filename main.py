@@ -13160,9 +13160,9 @@ class Repository(object):
             else:
                 return d.joinpath(self.dirname).with_suffix('.'+self.code)
     def findpresentremotes(self,remote=None,firsttry=True):
-        def clonetoUSB():
+        def clonetoUSB(event=None):
+            # log.info("Trying to event clonetoUSB")
             self.clonetoUSB()
-            e.destroy() #don't make the user do this; move on when clone done
         l=[]
         remotesinsettings=self.remoteurls().values()
         log.info("remotesinsettings: {}".format(remotesinsettings))
