@@ -738,6 +738,7 @@ class Image(tkinter.PhotoImage):
     def __init__(self,filename):
         # self.name=filename
         super(Image, self).__init__(file=filename)#,*args, **kwargs)
+        self.biggerby(1)
 class StringVar(tkinter.StringVar):
     def __init__(self, *args, **kwargs):
         super(tkinter.StringVar, self).__init__(*args, **kwargs)
