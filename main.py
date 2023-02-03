@@ -4802,9 +4802,11 @@ class TaskChooser(TaskDressing,ui.Window):
                     "get picked up later...")
             self.towrite=True
     def usbcheck(self):
+        self.splash.withdraw()
         for r in self.settings.repo.values():
             # log.info("checking repo {} for USB drive".format(r))
             r.share()
+        self.splash.draw()
     def __init__(self,parent):
         # self.testdefault=Parse
         self.towrite=False
