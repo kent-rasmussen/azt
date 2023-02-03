@@ -10577,7 +10577,7 @@ class FramedDataDict(dict):
             #                                                         d.forms))
         elif d:
             if (element and not d.audiofileisthere() and
-                    isinstance(self.parent.taskchooser.mainwindowis,Record)):
+                    isinstance(self.taskchooser.mainwindowis,Record)):
                 d.makeaudiofilename()
             # log.info("FramedData used from ealier ({},with forms {})".format(
             #                                                     source,d.forms))
