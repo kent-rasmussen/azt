@@ -13035,7 +13035,7 @@ class Repository(object):
                 self.addremote(directory)
                 w.close()
             else:
-                log.info(_("Found a related repository; adding to settings."))
+                log.info(_("Found a related repository; added to settings."))
         else:
             log.info(_("No directory given; not cloning."))
     def log(self):
