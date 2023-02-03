@@ -13622,7 +13622,7 @@ class Git(Repository):
         return ['-c', 'user.name={}'.format(username),
                 '-c', 'user.email={}'.format(str(email))]
     def init(self):
-        args=['init', '--initial-branch="main"']
+        args=['init', '--initial-branch=main']
         r=self.do(args)
         if 'unknown option' in r:
             args=['init']
