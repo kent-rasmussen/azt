@@ -13191,18 +13191,24 @@ class Repository(object):
         elif self.code == 'git' and firsttry: # and me:
             # Show this only once per run, if a user doesn't have settings
             if remotesinsettings or not self.directorydontask:
-                text=_("{} can't find your {} {} backup. "
-                "\nIf you have a USB drive for this, insert it now."
-                "").format(program['name'], self.repotypename, self.description)
+                text=_(
+                # "{} can't find your {} {} backup. "
+                # "If you have a USB drive for your {} {} backup, insert it now."
+                "Please insert your {} USB now." #, if you have it
+                "").format(
+                # program['name'],
+                # self.repotypename, 
+                self.description)
                 # clonetoUSB here will ask for a directory to put it, but won't
                 # clone if the target would be there, related or not.
                 # Either way, we check again for present remotes, so the cost
                 # of clicking this button (instead of 'exit') when you have a
                 # drive already set up is an extra file dialog —hopefully OK.
-                button=(_("Set up new USB"),clonetoUSB)
+                button=(_("Create new USB"),clonetoUSB)
                 e=ErrorNotice(text,
-                            title=_("No {} USB backup found"
-                                    ).format(self.description),
+                            title=_("No {} {} USB backup found"
+                                    ).format(self.repotypename,
+                                            self.description),
                             button=button,
                             image='USBdrive',
                             wait=True
