@@ -4803,6 +4803,7 @@ class TaskChooser(TaskDressing,ui.Window):
             self.towrite=True
     def usbcheck(self):
         for r in self.settings.repo.values():
+            # log.info("checking repo {} for USB drive".format(r))
             r.share()
     def __init__(self,parent):
         # self.testdefault=Parse
@@ -13150,6 +13151,7 @@ class Repository(object):
         # N.B.: I think file.exists will always fail for internet repos
         # For now, add them to git
         if directory and file.exists(directory):
+            # log.info("Found existing directory: {}".format(directory))
             if self.isrelated(directory):
                 log.info("Found related repository: {}".format(directory))
                 self.addremote(directory)
@@ -13169,16 +13171,17 @@ class Repository(object):
             self.clonetoUSB()
         l=[]
         remotesinsettings=self.remoteurls().values()
-        log.info("remotesinsettings: {}".format(remotesinsettings))
+        # log.info("remotesinsettings: {}".format(remotesinsettings))
         #add to list only what is there now AND related
         # the related test will remove it if there AND NOT related.
         # Otherwise, we leave it for later, in case it just isn't there now.
         l.extend([d for d in remotesinsettings if self.addifis(d)])
         if self.remotenames:
-            log.info("self.remotenames: {}".format(self.remotenames))
+            # log.info("self.remotenames: {}".format(self.remotenames))
             l.extend(self.remotenames)
+        # log.info("remotesinsettings there: {}".format(l))
         if l:
-            log.info("returning l:{}".format(l))
+            log.info("returning remotes:{}".format(l))
             return l
         # If we're still here, offer the user one chance to plug in a drive.
         # but just do this once; don't annoy the user.
@@ -13201,6 +13204,8 @@ class Repository(object):
                             image='USBdrive',
                             wait=True
                             )
+                # log.info(self.remoteurls())
+                # log.info(self.remoteurls().values())
                 #At this point, the user will have cloned or not already.
                 if self.remoteurls().values(): #this will have new clone value
                     return self.findpresentremotes(firsttry=False)
@@ -13465,6 +13470,7 @@ class Repository(object):
         # This is one of two functions that touch self._remotes directly
         # This returns a copy of the dict, so don't operate on it directly.
         # Rather, read and write using this function.
+        # log.info("returning remote urls: {}".format(getattr(self,'_remotes',{})))
         if remotes and type(remotes) is dict:
             self._remotes=remotes
         elif remotes:
