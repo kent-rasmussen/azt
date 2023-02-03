@@ -2033,6 +2033,14 @@ class Example(FormParent,FieldParent):
         self.translation=Translation(self,self.find(
                                     'translation[@type="Frame translation"]'))
         self.checkforsecondfieldbytype("Frame translation",tag='translation')
+    def formatted(self,analang,glosslangs,showtonegroup=False):
+        l=[]
+        if showtonegroup:
+            l.append(self.tonevalue())
+        l.append(self.textvaluebylang(analang))
+        for lang in glosslangs:
+            l.append(self.textquotedbylang(lang))
+        return ' '.join([i for i in l if i]) #put it all together
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='example'
         super(Example, self).__init__(parent, node, **kwargs)
@@ -2160,6 +2168,23 @@ class Sense(Node,FieldParent):
             else:
                 return None
         return self.illustration.get('href')
+    def formatted(self,analang,glosslangs,ftype='lc',frame=None):
+        if frame and not frame['field'] == ftype:
+            log.error("ftype mismatch! ({}/{})".format(frame['field'],ftype))
+            return
+        l=[]
+        if showtonegroup:
+            l.append(self.tonevalue())
+        t=getattr(self.entry,ftype).textvaluebylang(analang)
+        if frame:
+            t=rx.framerx.sub(t,frame[analang])
+        l.append(t)
+        for lang in glosslangs:
+            g=self.textquotedbylang(lang)
+            if frame:
+                g=rx.framerx.sub(g,frame[lang])
+            l.append(g)
+        return ' '.join([i for i in l if i]) #put it all together
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='sense'
         super(Sense, self).__init__(parent, node, **kwargs)
