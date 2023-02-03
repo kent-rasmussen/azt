@@ -13156,7 +13156,7 @@ class Repository(object):
     def findpresentremotes(self,remote=None,firsttry=True):
         def clonetoUSB():
             self.clonetoUSB()
-            e.destroy() #don't make the user do this; move one when clone done
+            e.destroy() #don't make the user do this; move on when clone done
         l=[]
         remotesinsettings=self.remoteurls().values()
         log.info("remotesinsettings: {}".format(remotesinsettings))
@@ -13684,7 +13684,7 @@ class GitReadOnly(Git):
             for remote in remotes:
                 r[remote+'/'+branch]=method(self,branch=branch,remotes=[remote])
         return r
-        """I'm going to ned to stash and stash apply here, I think"""
+        """I'm going to need to stash and stash apply here, I think"""
         remotes=self.findpresentremotes() #do once
         if not remotes:
             return
