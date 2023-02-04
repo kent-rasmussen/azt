@@ -2076,6 +2076,8 @@ class Sense(Node,FieldParent):
                     "will lead to unexpected behavior."
                     "".format(self.tag,self.parent.guid,loc))
     def getglosses(self):
+        """This differs from a FormParent, in that self.glosses contains
+        a list of objects"""
         self.glosses={
                     lang:[Gloss(self,i) for i in self
                         if i.tag == 'gloss' and lang==i.get('lang')
