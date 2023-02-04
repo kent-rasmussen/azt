@@ -2170,7 +2170,7 @@ class Sense(Node,FieldParent):
             else:
                 return None
         return self.illustration.get('href')
-    def formatted(self,analang,glosslangs,ftype='lc',frame=None):
+    def formatted(self,analang,glosslangs,ftype='lc',frame=0,showtonegroup=0):
         if frame and not frame['field'] == ftype:
             log.error("ftype mismatch! ({}/{})".format(frame['field'],ftype))
             return
