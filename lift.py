@@ -2181,11 +2181,12 @@ class Sense(Node,FieldParent):
         if frame:
             t=rx.framerx.sub(t,frame[analang])
         l.append(t)
-        for lang in glosslangs:
-            g=self.textquotedbylang(lang)
-            if frame:
-                g=rx.framerx.sub(g,frame[lang])
-            l.append(g)
+        for lang in [i for i in glosslangs if i in self.glosses]:
+            for gloss in self.glosses[lang]: #because this is a list
+                g=gloss.textquoted()
+                if frame:
+                    g=rx.framerx.sub(g,frame[lang])
+                l.append(g)
         return ' '.join([i for i in l if i]) #put it all together
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='sense'
@@ -2195,6 +2196,9 @@ class Sense(Node,FieldParent):
         self.id=self.get('id')
         self.getps()
         self.getpssubclass()
+        self.ftypes={'lx': self.entry.lx,
+                    'lc': self.entry.lc
+                    }
         self.getglosses()
         self.getdefinitions()
         self.getexamples()
