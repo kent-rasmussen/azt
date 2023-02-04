@@ -2252,9 +2252,9 @@ class Entry(Node,FieldParent): # what does "object do here?"
         super(Entry, self).__init__(parent, node, **kwargs)
         self.entry=self #make a common reference point for sense/entry
         self.guid=self.get('guid')
-        self.getsenses()
         self.getlx()
         self.getlc()
+        self.getsenses() #this needs lx and lc already
         FieldParent.__init__(self)
         """Probably should rework this... How to get entry fields?"""
         # self.nodes=self.db.nodes.find(f"entry[@guid='{self.guid}']") #get.nodes(self)
