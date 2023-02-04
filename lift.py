@@ -2222,19 +2222,29 @@ class Entry(Node,FieldParent): # what does "object do here?"
         try:
             assert self.pl.get('type') == ftype
         except (AttributeError, AssertionError):
-            self.pl=Field(self,type=ftype)
-            # prettyprint(self.pl)
-            self.checkforsecondfieldbytype(ftype)
-            self.getfields() #needed?
+            if value:
+                self.pl=Field(self,type=ftype)
+                for sense in self.senses:
+                    sense.ftypes['pl']=self.pl
+                # prettyprint(self.pl)
+                self.checkforsecondfieldbytype(ftype)
+                self.getfields() #needed?
+            else:
+                return None
         return self.pl.textvaluebylang(lang,value)
     def impvalue(self,ftype,lang,value=None):
         try:
             assert self.imp.get('type') == ftype
         except (AttributeError, AssertionError):
-            self.imp=Field(self,type=ftype)
-            # prettyprint(self.imp)
-            self.checkforsecondfieldbytype(ftype)
-            self.getfields() #needed?
+            if value:
+                self.imp=Field(self,type=ftype)
+                for sense in self.senses:
+                    sense.ftypes['imp']=self.imp
+                # prettyprint(self.imp)
+                self.checkforsecondfieldbytype(ftype)
+                self.getfields() #needed?
+            else:
+                return None
         return self.imp.textvaluebylang(lang,value)
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='entry'
