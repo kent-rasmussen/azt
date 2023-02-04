@@ -1844,7 +1844,7 @@ class Form(Node):
             return self.annonodes.text
     def textquoted(self):
         r="‘"+self.textnode.text+"’"
-        if self.parent.ftype not in ['lc']: #lx?
+        if hasattr(self.parent,'ftype') and self.parent.ftype not in ['lc']: #lx?
             r+="("+ftype+")"
         return r
     def textvalue(self,value=None):
