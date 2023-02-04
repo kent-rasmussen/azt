@@ -3566,86 +3566,21 @@ if __name__ == '__main__':
     # filename="/home/kentr/bin/raspy/azt/SILCAWL/SILCAWL.lift"
     lift=Lift(filename)
     print(time.time())
-    # entry=lift.getentrynode()[10]
     def writetofile(name):
         f = open(str(name)+'.txt', 'w', encoding='utf-8') # to append, "a"
         f.write(prettyprint(lift.nodes))
         f.close()
-    # entry.convertxtoy()
-    # kwargs={}
-    # kwargs['fromtag']='gloss'
-    # kwargs['totag']='citation'
-    # kwargs['lang']='en'
-    # kwargs['keep']=True
-    # kwargs['entries']=[entry]
-    # prettyprint(entry)
-    # lift.convertxtoy(**kwargs)
-    # prettyprint(entry)
-    # exit()
     loc="Imperative"
     formvalue="give!"
     lang="en"
     transvalue="donnez!"
     translang='fr'
     tonevalue='16'
-    for sense in [i for i in lift.senses
-                if i.id=='give_a3f4a573-8930-403f-b669-0704f8d0aae1'
-                # if i.id=='72ad850a-d049-4bdc-b6ee-cd58403f4b71'
-                ]:
-        sense.newfield('Plural','en','Bigs')
-        sense.newfield('Imperative','en','Bigger')
-        sense.newfield('Plural','fr','Grands')
-
-    for entry in [i for i in lift.entries][:1]:
-
-        # if sense.examples:
-            # sense.newexample(loc,formvalue,lang,transvalue,translang,tonevalue)
-            entry.newfield('Plural','en','Bigs')
-            entry.newfield('Imperative','en','Bigger')
-            entry.newfield('Plural','fr','Grands')
-    for entry in [i for i in lift.entries][1:2]:
-
-        # if sense.examples:
-            # sense.newexample(loc,formvalue,lang,transvalue,translang,tonevalue)
-            entry.newfield('Plural','en','Bigs')
-            # entry.newfield('Imperative','en','Bigger')
-            # entry.newfield('Plural','fr','Grands')
-            # prettyprint(sense)
-            # print(sense.examples[loc].forms)
-        # example=sense.examples['Pluriel L_']
-        # # for example in [i for i in sense.examples if i.location == 'Pluriel L_']:
-        # prettyprint(example)
-        # log.info(example.fields['tone'].textvaluebylang('fr'))
-        # example.fields['tone'].textvaluebylang('fr','1Billion')
-        # log.info(example.fields['tone'].textvaluebylang('en'))
-        # log.info(example.fields['tone'].textvaluebylang('fr'))
-        # prettyprint(example)
-        # prettyprint(sense.fields['SILCAWL'])
-        # log.info(sense.fields['SILCAWL'].textvaluebylang('en'))
-        # sense.fields['SILCAWL'].textvaluebylang('en','1Billion')
-        # log.info(sense.fields['SILCAWL'].textvaluebylang('en'))
-        # prettyprint(sense.fields['SILCAWL'])
-    # for f in lift.getfieldnames():
-    lift.sliceentries()
-    lift.slicesenses()
-    lift.getfieldnames() #sets self.fieldnames (of entry)
-    lift.getsensefieldnames()
-    print(lift.fieldnames)
-    print(lift.sensefieldnames)
-    print(lift.entriesbyftype)
-    # for entry in [i for i in lift.entries
-    print(lift.sensesbyftype)
-    #             if i.guid=='a9c35962-cc25-48fd-9400-3af37e8fe783']:
-    #     prettyprint(entry.lx)
-    #     log.info(entry.lx.textvaluebylang('en'))
-    #     entry.lx.textvaluebylang('en','twenty')
-    #     log.info(entry.lx.textvaluebylang('en'))
-    #     prettyprint(entry.lx)
+    for sense in lift.senses:
+        print(
+            sense.formatted('en',lift.glosslangs,ftype='lc',frame=None)
+        )
     lift.write('0.txt')
     n=0
-    # for entry in lift.getentrynode():
-    #     n+=1
-    #     Entry(lift.nodes,entry)
-    # lift.write('1.txt')
     print(time.time())
     exit()
