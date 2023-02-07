@@ -1,6 +1,6 @@
 <a href="https://gitlocalize.com/repo/7965/fr?utm_source=badge"> <img src="https://gitlocalize.com/repo/7965/fr/badge.svg" /> </a>
 <a href="fr/README.md">Français</a>
-### Simplest install on [MS Windows](SIMPLEINSTALL.md) ([script](../../installfiles/RunMetoInstall.bat?raw=true)) or [Linux](SIMPLEINSTALL_LINUX.md) ([script](../../installfiles/RunMetoInstall_Linux.sh?raw=true))
+### Simplest install on [MS Windows](SIMPLEINSTALL.md) ([script](../installfiles/RunMetoInstall.bat?raw=true)) or [Linux](SIMPLEINSTALL_LINUX.md) ([script](../installfiles/RunMetoInstall_Linux.sh?raw=true))
 ### If you want consultant help, see also [this page](HELP_PREREQUISITES.md)
 ### You can now [create a Demo database](DEMOS.md) to try out [A-Z+T].
 
