@@ -74,6 +74,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.sliceentries()
         self.slicesenses()
         self.getguids() #sets: self.guids and self.nguids
+        self.getpss() #all ps values, in a prioritized list
         #the following should probably replaced by getsenseidsbyps everywhere
         self.getsenseids() #sets: self.senseids and self.nsenseids
         """These three get all possible langs by type"""
@@ -95,7 +96,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                         self.nsenseswglossdata,
                         self.nsenseswdefndata,
                         ))
-        self.pss=self.getpssbylang() #dict keyed by lang
         #This may be superfluous:
         self.getsenseidsbyps() #sets: self.senseidsbyps and self.nsenseidsbyps
         """This is very costly on boot time, so this one line is not used:"""
@@ -398,6 +398,15 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.entriesbylx={l:{i.lx.textvaluebylang(l):i}
                             for i in self.entries
                             for l in i.lx.forms
+    def slicebyps(self):
+        self.entriesbyps={ps:[i for i in self.entries
+                                if i.sense.psvalue() == ps
+                                ]
+                            for ps in self.pss
+                            }
+        self.sensesbyps={ps:[i for i in self.senses if i.psvalue() == ps]
+                            for ps in self.pss
+                            }
                         }
         self.entriesbylc={l:{i.lc.textvaluebylang(l):i}
                             for i in self.entries
@@ -994,8 +1003,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             log.info("Found {} senses with lexical category {}".format(
                                                     self.nsenseidsbyps[ps],ps))
         else:
-            pssanylang=setlistsofanykey(self.pss)
-            for ps in [i for i in pssanylang if i]:
+            for ps in [i for i in self.pss if i]:
                 self.getsenseidsbyps(ps)
     def getsenseids(self):
         self.senseids=[i.id for i in self.senses]
@@ -1576,6 +1584,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     "complex segments which should be counted as a single "
                     "segment.")
                 log.info("--those may not be covered by your regexes.")
+    def getpss(self):
+        self.pss=[i[0] for i in collections.Counter(
+                                            [i.psvalue() for i in self.senses]
+                                                    ).most_common() if i[0]]
     def ps(self,**kwargs): #get POS values, limited as you like
         if kwargs:
             return self.get('ps',**kwargs).get('value')

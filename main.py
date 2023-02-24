@@ -1936,9 +1936,11 @@ class Settings(object):
         log.info("trackuntrackedfiles finished.")
     def pss(self):
         log.info("checking these lexical category names for plausible noun "
-                "and verb names: {}".format(self.db.pss[self.analang]))
-        topn=2
-        for ps in self.db.pss[self.analang][:topn]:
+                "and verb names: {}".format(program['db'].pss))
+        topn=3 #just in case N and V aren't the first two, finish with top
+        log.info("Looking at pss {}".format(program['db'].pss))
+        for ps in reversed(program['db'].pss[:topn]):
+            log.info("Looking at ps {}".format(ps))
             if ps in ['N','n','Noun','noun',
                     'Nom','nom',
                     'S','s','Sustantivo','sustantivo'
@@ -1963,7 +1965,7 @@ class Settings(object):
         except AttributeError:
             log.info("Problem with finding a nominal and verbal lexical "
             "category (looked in first two of [{}])"
-            "".format(self.db.pss[self.analang]))
+            "".format(program['db'].pss))
         if self.secondformfield:
             if self.nominalps in self.secondformfield:
                 self.pluralname=self.secondformfield[self.nominalps]
@@ -2313,7 +2315,7 @@ class Settings(object):
         self.profiledsenseids=[]
         self.formstosearch={}
         # self.sextracted={} #Will store matching segments here
-        for ps in self.db.pss[self.analang]: #45s on English db
+        for ps in program['db'].pss: #45s on English db
             # self.sextracted[ps]={}
             # for s in self.rx:
             #     self.sextracted[ps][s]={}
@@ -2577,7 +2579,7 @@ class Settings(object):
         w=ui.Wait(parent=program['root'],msg=_("Reloading status data"))
         self.storesettingsfile()
         pss=self.slices.pss() #this depends on nothing
-        pss=self.db.pss[self.params.analang()]
+        pss=program['db'].pss
         #This limits reload to what is there (i.e., only V, if only V has been done)
         # cvts=[i for i in self.params.cvts() if i in self.status]
         cvts=self.params.cvts()
@@ -2692,7 +2694,6 @@ class Settings(object):
                 e=ErrorNotice(errortext,title=_("Error!"),wait=True)
                 file.writefilename() #just clear the default; let user move on
                 sysrestart()
-            self.db.pss=self.db.getpssbylang(self.analang) #redo this, specify
             # return
         elif nlangs == 1:
             self.analang=self.db.analangs[0]
@@ -3134,7 +3135,7 @@ class Settings(object):
         """I think I need this before setting up regexs"""
         if hasattr(self.taskchooser,'analang'): #i.e., new file
             self.analang=self.taskchooser.analang #I need to keep this alive until objects are done
-            self.db.pss=self.db.getpssbylang(self.analang) #redo this, specify
+            program['db'].getpss() #redo this, specify
         else:
             self.guessanalang() #needed for regexs
         if not self.analang:
@@ -3780,9 +3781,9 @@ class TaskDressing(HasMenus,ui.Window):
                                     'want to work with (Part of speech)?')
                 ).grid(column=0, row=0)
         if hasattr(self,'additionalps') and self.settings.additionalps is not None:
-            pss=self.db.pss[self.analang]+self.settings.additionalps #these should be lists
+            pss=program['db'].pss+program['settings'].additionalps #these should be lists
         else:
-            pss=self.db.pss[self.analang]
+            pss=program['db'].pss
         buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                             optionlist=pss,
                                             command=self.settings.setps,
@@ -4444,8 +4445,9 @@ class TaskChooser(TaskDressing):
     def guidtriagebyps(self):
         log.info("Doing guid triage by ps... This also takes awhile?...")
         self.guidsvalidbyps={}
-        for ps in self.db.pss[self.analang]:
-            self.guidsvalidbyps[ps]=self.db.get('guidbyps',ps=ps)
+        """use program['db'].entriesbyps or program['db'].sensesbyps"""
+        for ps in program['db'].pss:
+            self.guidsvalidbyps[ps]=program['db'].get('guidbyps',ps=ps)
     def gettask(self,event=None):
         """This function allows the user to select from any of tasks whose
         prerequisites are minimally satisfied."""
