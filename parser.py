@@ -595,13 +595,9 @@ class Engine(object):
             self.senseid=sense.id #save for later
         elif senseid:
             self.senseid=senseid #save for later
-            self.sense=ifone(
-                    #This is not a lift.Entry!
-                    # self.entry.findall('sense[@id="{}"]'.format(senseid))
-                            [i for i in self.entry.senses if i.id == senseid]
-                            )
+            self.sense=entry.sense
         else:
-            self.sense=self.entry.senses[0]
+            self.sense=self.entry.sense
             self.senseid=self.sense.id #save for later
         # log.info("sense: {}".format(self.sense))
         # log.info("psnode: {}".format(psnode))
