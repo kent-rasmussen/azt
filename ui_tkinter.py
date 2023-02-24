@@ -165,6 +165,7 @@ class Theme(object):
                             ('checkedbox','checked.png'),
                             ('uncheckedbox','unchecked.png'),
                             ('NoImage','openclipart.com/Image-Not-Found.png'),
+                            ('Order!','openclipart.com/order!.png'),
                         ]:
             try:
                 #hyperthread here!
