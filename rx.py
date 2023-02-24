@@ -306,6 +306,7 @@ def nX(segmentsin,segmentsout,n):
     nS='('+priors+'('+notS+')*)('+sin['all']+')'
     # for n,i in enumerate([sin,sout,oneS,notS,nS]):
     #     print(n,i)
+    # log.info("Compiling X{} regex {}".format(n,nS))
     return make(nS, compile=True)
 def fromCV(CVs, sdict, distinguish, word=False, compile=False): #check, lang
     """ this inputs regex variable (regexCV), a tuple of two parts:
