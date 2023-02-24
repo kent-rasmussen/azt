@@ -767,7 +767,16 @@ class Image(tkinter.PhotoImage):
         # log.info("Image: {} ({})".format(self.scaled, self.maxhw(scaled=True)))
     def __init__(self,filename):
         # self.name=filename
-        super(Image, self).__init__(file=filename)#,*args, **kwargs)
+        try:
+            super(Image, self).__init__(file=filename)#,*args, **kwargs)
+        except tkinter.TclError as e:
+            # log.info("Error: {} ({})".format(e.args,type(e)))
+            if "couldn't recognize data in image file" in e.args[0]:
+                raise #this is processed elsewhere
+            elif 'value for "-file" missing' in e.args[0]:
+                raise #this is processed elsewhere
+            else:
+                log.info("Image error: {}".format(e))
 class StringVar(tkinter.StringVar):
     def __init__(self, *args, **kwargs):
         super(tkinter.StringVar, self).__init__(*args, **kwargs)
