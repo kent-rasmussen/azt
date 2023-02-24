@@ -109,9 +109,13 @@ def texmllike(x):
         x=x.replace(y,repls[y])
     x=re.sub('\\\\textless{}(([\?!/]|tex:)[^\\\\]*)\\\\textgreater{}',"<\\1>",x)
     return x
-def glossdeftoform(x):
+def noparens(x): #sometimes I just want this
     if isinstance(x,str):
-        x=re.sub('\(.*\)','',x)
+        return re.sub('\(.*\)','',x)
+def glossdeftoform(x):
+    x=noparens(x)
+    if isinstance(x,str):
+        # x=re.sub('\(.*\)','',x)
         x=re.sub(',.*','',x)
         x=re.sub('^ *','',x)
         x=re.sub(' .*','',x)
