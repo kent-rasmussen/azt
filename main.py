@@ -19,6 +19,8 @@ if file.getfile(__file__).parent.parent.stem == 'raspy': # if program['hostname'
     program['testing']=True #eliminates Error screens and zipped logs
     me=True
     loglevel=6
+    program['testlift']='eng' #portion of filename
+    # program['testlift']='Demo_en' #portion of filename
     # program['testtask']='SortV' #Will convert from string to class later
 else:
     me=False
@@ -504,10 +506,9 @@ class FileChooser(object):
                 self.name=None #don't return a file that isn't there
         if not self.name or type(self.name) is list: #nothing or a selection
             if (self.name and program['testing']
-                    and hasattr(self.taskchooser,'testlift')
-                    and self.taskchooser.testlift):
+                            and 'testlift' in program and program['testlift']):
                 for f in self.name:
-                    if self.taskchooser.testlift in f:
+                    if program['testlift'] in f:
                         self.name=f
                         break
             else:
@@ -4967,9 +4968,6 @@ class TaskChooser(TaskDressing):
         for r in self.settings.repo.values():
             r.share()
     def __init__(self,parent):
-        self.testdefault=RecordCitation
-        self.testlift='Demo_en'
-        # self.testdefault=WordCollectnParse
         self.towrite=False
         self.writing=False
         self.datacollection=True # everyone starts here?
