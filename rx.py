@@ -78,6 +78,25 @@ def tonerxs():
     return (re.compile('[˥˦˧˨˩]+', re.UNICODE),
             re.compile(' ', re.UNICODE),
             re.compile(' ', re.UNICODE))
+def update(t,regexdict,check,value,matches=[]):
+    tori=t
+    for c in reversed(check.split('=')):
+        log.info("subbing {} for {} in {}, using {}".format(value,c,t,
+                                                    regexdict[c]))
+        # log.info("found {}".format(regexdict[c].search(t)))
+        match=regexdict[c].search(t)
+        if match:
+            matches.append(match.groups()[-1])
+            t=match.expand('\\g<1>'+value)+t[match.end():]
+    log.info("updated {} > {}".format(tori,t))
+    for match in matches:
+        if len(match)>1:
+            log.info(_("NOTICE: we just matched (to remove) a set of "
+            "symbols representing one sound ({}). Until you are done "
+            "with it, we will leave it there, so both forms will be "
+            "found. Once you are done with it, remove it from the "
+            "polygraph settings.").format(match))
+    return t
 def texmllike(x):
     """This attempts to implement TeXMLLikeCharacterConversion.java from
     XLingPaper"""
