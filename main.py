@@ -66,7 +66,7 @@ import itertools
 import importlib.util
 import collections
 from random import randint
-if program['tkinter']==True:
+if program['tkinter']:
     try:
         import tkinter #as gui
         import tkinter.font
