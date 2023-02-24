@@ -19,6 +19,7 @@ if file.getfile(__file__).parent.parent.stem == 'raspy': # if program['hostname'
     program['testing']=True #eliminates Error screens and zipped logs
     me=True
     loglevel=6
+    # program['testtask']='SortV' #Will convert from string to class later
 else:
     me=False
     program['production']=True #True for making screenshots (default theme)
@@ -4521,8 +4522,8 @@ class TaskChooser(TaskDressing):
         optionlist=[i for i in optionlist if not issubclass(i[0],Sound)]
         # log.info("getting default from option list {}".format(
         #                                             [i[1] for i in optionlist]))
-        if program['testing'] and hasattr(self,'testdefault'):
-            self.maketask(self.testdefault)
+        if program['testing'] and 'testtask' in program:
+            self.maketask(program['testtask'])
         else:
             self.maketask(optionlist[-1][0]) #last item, the code
     def maketask(self,taskclass): #,filename=None
@@ -4609,10 +4610,10 @@ class TaskChooser(TaskDressing):
                 # tasks.append(ParseSlice)
                 # tasks.append(ParseSliceWords)
                 tasks.append(ReportConsultantCheck)
-        if (program['testing'] and hasattr(self,'testdefault') and
-                self.testdefault not in tasks):
-            if self.showreports == isinstance(self.testdefault,Report):
-                tasks.append(self.testdefault)
+        if (program['testing'] and 'testtask' in program and
+                program['testtask'] not in tasks):
+            if self.showreports == isinstance(program['testtask'],Report):
+                tasks.append(program['testtask'])
         # tasks.append(WordCollectionCitation),
         # tasks.append(WordCollectionPlImp),
         # tasks.append(ParseA), # input pl/imp, gives lx and ps
@@ -15291,6 +15292,10 @@ if __name__ == "__main__":
         program['python']=program.pop('python3')
     if not program['python']:
         program['python']=sys.executable
+    if 'testtask' in program and type(program['testtask']) is str:
+        log.info("Converting string ‘{}’ to class".format(program['testtask']))
+        program['testtask']=getattr(sys.modules[__name__],
+                                        program['testtask'])
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
         pythonmodules()
