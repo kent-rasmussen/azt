@@ -752,8 +752,11 @@ class Image(tkinter.PhotoImage):
         # 'x' and 'resolution' here express a float as two integers,
         # so r = 0.7 = 7/10, because the zoom and subsample fns
         # only work on integers
-        s=pixels*scale #the number of pixels, scaled
-        r=s/self.maxhw() #the ratio we need to reduce actual pixels by
+        if pixels:
+            s=pixels*scale #the number of pixels, scaled
+            r=s/self.maxhw() #the ratio we need to reduce actual pixels by
+        else:
+            r=1 #don't scale for pixels=0
         x=resolution*r
         # log.info("scaled pixels: {} (of {})".format(s,pixels))
         # log.info("ratio to scale image: {} (of {})".format(r,self.maxhw()))
