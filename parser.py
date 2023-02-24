@@ -39,11 +39,11 @@ class AffixCollector(object):
         log.info("looking in LIFT file for data")
         # log.info("looking in {}".format(self.dbnodes.findall("entry/sense/"
         #                             "trait[@name='{}-infl-class']"
-        #                             "".format(self.pss[self.catalog.analang][0])
+        #                             "".format(self.pss[0])
         #                                 )))
         # log.info("Checking pss {}".format(self.pss))
-        pstodo=len(self.pss[self.catalog.analang]) #do less common first:
-        for n,ps in enumerate(self.pss[self.catalog.analang][::-1]):
+        pstodo=len(self.pss) #do less common first:
+        for n,ps in enumerate(self.pss[::-1]):
             # log.info("Checking ps {}".format(ps))
             results=self.dbnodes.findall("entry/sense/"
                                         "trait[@name='{}-infl-class']"
