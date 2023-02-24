@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 # coding=UTF-8
+import ast
+def stringtoobject(x):
+    try:
+        return ast.literal_eval(x)
+    except (SyntaxError,ValueError): #if the literal eval doesn't work, it's a string
+        return x #in case string is just string
 def indent(elem, level=0):
     indentspaces=4
     """from http://effbot.org/zone/element-lib.htm#prettyprint"""
