@@ -66,6 +66,7 @@ def stripquotes(x):
 """passthrough fns"""
 def sub(*args,**kwargs):
     # pattern, repl, string, count=0, flags=0
+    # log.info("Running re.sub with args: {} and kwargs: {}".format(args,kwargs))
     return re.sub(*args,**kwargs)
 def compile(x):
     return re.compile(x, re.UNICODE)
@@ -229,6 +230,8 @@ def s(sdict, stype, polyn=0, word=False, compile=False): #settings lang=None
         graphemeset=[i for i in graphemeset if len(i) == polyn]
     output=slisttoalternations(graphemeset,group=True)
     if compile:
+        # log.info("Compiling {}[{}] regex {} (word={})"
+        #         "".format(stype,polyn,output,word))
         return make(output, word=word, compile=compile)
     else:
         return output
