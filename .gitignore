@@ -8,6 +8,7 @@ test*wav
 excess/
 images/archive
 images/scaled
+images/openclipart.org/*/*
 xcf
 backupBeforeLx2LcConversion
 .txt
