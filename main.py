@@ -189,14 +189,14 @@ class HasMenus():
         r=program['repo'].reverttomain()
         log.info("reverttomainazt: {}".format(r))
         if r:
-            self.taskchooser.restart()
+            program['taskchooser'].restart()
     def trytestazt(self,event=None):
         #This only goes to the test version at the top of this file
         self.updateazt()
         r=program['repo'].testversion()
         log.info("trytestazt: {}".format(r))
         if r:
-            self.taskchooser.restart()
+            program['taskchooser'].restart()
     def _removemenus(self,event=None):
         log.info(_("Hiding menus?"))
         if hasattr(self,'menubar'):
@@ -459,7 +459,6 @@ class LiftChooser(ui.Window,HasMenus):
                 self.filechooser.parent.splash.deiconify()
     def __init__(self,chooser,filenamelist):
         self.filechooser=chooser
-        # self.taskchooser=program['chooser'] #needed for some commands
         self.parent=program['root']
         super(LiftChooser, self).__init__(self.parent)
         self.title(_("Select LIFT Database"))
@@ -499,8 +498,7 @@ class FileChooser(object):
         window.wait_window(window)
         if not self.name: #If not set, for any reason
             return 1
-    def __init__(self,parent):
-        self.parent=self.taskchooser=parent #allow reference to splash
+    def __init__(self):
         self.name=file.getfilename() #returns filename if there, else filenames
         if type(self.name) is not list and not file.exists(self.name):
                 self.name=None #don't return a file that isn't there
@@ -524,7 +522,8 @@ class FileParser(object):
     """This class parses the LIFT file, once we know which it is."""
     def loaddatabase(self):
         try:
-            self.db=lift.Lift(str(self.name))
+            #This program key will only be available after this finishes
+            program['db']=lift.Lift(str(self.name))
         except lift.BadParseError:
             text=_("{} doesn't look like a well formed lift file; please "
                     "try again.").format(self.name)
@@ -545,22 +544,22 @@ class FileParser(object):
             file.writefilename()
             raise
     def dailybackup(self):
-        if not file.exists(self.db.backupfilename):
-            self.db.write(self.db.backupfilename)
+        if not file.exists(program['db'].backupfilename):
+            program['db'].write(program['db'].backupfilename)
         else:
             print(_("Apparently we've run this before today; not backing "
             "up again."))
     def senseidtriage(self):
-        self.senseids=self.db.senseids
+        self.senseids=program['db'].senseids
         self.senseidsinvalid=[] #nothing, for now...
         print(len(self.senseidsinvalid),'senses with invalid data found.')
-        self.db.senseidsinvalid=self.senseidsinvalid
+        program['db'].senseidsinvalid=self.senseidsinvalid
         self.senseidsvalid=[]
         for senseid in self.senseids:
             if senseid not in self.senseidsinvalid:
                 self.senseidsvalid+=[senseid]
         print(len(self.senseidsvalid),'senses with valid data remaining.')
-        self.senseidswanyps=self.db.get('sense',path=['ps'],
+        self.senseidswanyps=program['db'].get('sense',path=['ps'],
                                         # showurl=True
                                         ).get('senseid') #any ps value works here.
         print(len(self.senseidswanyps),'senses with ps data found.')
@@ -571,14 +570,14 @@ class FileParser(object):
                 self.senseidsvalidwps+=[senseid]
             else:
                 self.senseidsvalidwops+=[senseid]
-        self.db.senseidsvalidwps=self.senseidsvalidwps #This is what we'll search
+        program['db'].senseidsvalidwps=self.senseidsvalidwps #This is what we'll search
         print(len(self.senseidsvalidwops),'senses with valid data but no ps data.')
         print(len(self.senseidsvalidwps),'senses with valid data and ps data.')
     def getwritingsystemsinfo(self):
         """This doesn't actually do anything yet, as we can't parse ldml."""
-        self.db.languagecodes=self.db.analangs+self.db.glosslangs
-        self.db.languagepaths=file.getlangnamepaths(self.name,
-                                                    self.db.languagecodes)
+        program['db'].languagecodes=program['db'].analangs+program['db'].glosslangs
+        program['db'].languagepaths=file.getlangnamepaths(self.name,
+                                                    program['db'].languagecodes)
     def __init__(self,name):
         super(FileParser, self).__init__()
         self.name=name
@@ -723,19 +722,19 @@ class Menus(ui.Menu):
     def advanced(self):
         self.cascade(self,_("Advanced"),'advancedmenu')
         options=[(_("Change to another Database (Restart)"),
-                            self.parent.taskchooser.changedatabase),
+                            program['taskchooser'].changedatabase),
                 (_("Digraph and Trigraph settings"),
-                            self.parent.settings.askaboutpolygraphs),
+                            program['settings'].askaboutpolygraphs),
                 (_("Segment Interpretation Settings"),
                             self.parent.setSdistinctions),
                 (_("Syllable Profile Analysis (Restart)"),
-                            self.parent.settings.reloadprofiledata),
+                            program['settings'].reloadprofiledata),
                 (_("Remake Status file (All: several minutes)"),
-                            self.parent.settings.reloadstatusdata),
+                            program['settings'].reloadstatusdata),
                 (_("Remake Status file (just this category)"),
-                            self.parent.settings.reloadstatusdatabycvtps),
+                            program['settings'].reloadstatusdatabycvtps),
                 (_("Remake Status file (just this profile)"),
-                        self.parent.settings.reloadstatusdatabycvtpsprofile),
+                        program['settings'].reloadstatusdatabycvtpsprofile),
                 ]
         for m in options:
             self.command(self.advancedmenu,
@@ -752,7 +751,7 @@ class Menus(ui.Menu):
                 self.parent.mikecheck),]
         if isinstance(self.parent,Record):
             options+=[(_("Number of Examples to Record"),
-                    self.parent.taskchooser.getexamplespergrouptorecord),]
+                    program['taskchooser'].getexamplespergrouptorecord),]
             # self.record()
         for m in options:
             self.command(self.advancedmenu,
@@ -762,7 +761,7 @@ class Menus(ui.Menu):
     def record(self):
         self.advancedmenu.add_separator()
         options=[(_("Number of Examples to Record"),
-                self.parent.taskchooser.getexamplespergrouptorecord),]
+                program['taskchooser'].getexamplespergrouptorecord),]
         for m in options:
             self.command(self.advancedmenu,
                     label=_(m[0]),
@@ -927,20 +926,20 @@ class StatusFrame(ui.Frame):
         if ttt:
             tt=ui.ToolTip(b,ttt)
         return b
-    """These functions point to self.taskchooser functions, betcause we don't
+    """These functions point to program['taskchooser'] functions, betcause we don't
     know who this frame's parent is"""
     def makeproseframe(self):
         self.proseframe=ui.Frame(self,row=0,column=0)
     def interfacelangline(self):
-        for l in self.taskchooser.interfacelangs:
+        for l in program['taskchooser'].interfacelangs:
             if l['code']==interfacelang():
                 interfacelanguagename=l['name']
         t=(_("Using {}").format(interfacelanguagename))
         self.proselabel(t,cmd=self.task.getinterfacelang)
         self.opts['row']+=1
     def analangline(self):
-        analang=self.settings.params.analang()
-        langname=self.settings.languagenames[analang]
+        analang=program['params'].analang()
+        langname=program['settings'].languagenames[analang]
         t=(_("Studying {}").format(langname))
         if (langname == _("Language with code [{}]").format(analang)):
             self.proselabel(t,cmd=self.task.getanalangname,
@@ -950,7 +949,7 @@ class StatusFrame(ui.Frame):
                                             tt=_("Change analysis language"))
         self.opts['row']+=1
     def glosslangline(self):
-        lang1=self.settings.languagenames[self.settings.glosslangs.lang1()]
+        lang1=program['settings'].languagenames[program['settings'].glosslangs.lang1()]
         t=(_("Meanings in {}").format(lang1))
         line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
                         columnspan=3,sticky='w') #3 cols is the width of frame
@@ -958,8 +957,8 @@ class StatusFrame(ui.Frame):
         self.proselabel(t,cmd=self.task.getglosslang,
                             parent=line)
         self.opts['columnplus']=1
-        if len(self.settings.glosslangs) >1:
-            lang2=self.settings.languagenames[self.settings.glosslangs.lang2()]
+        if len(program['settings'].glosslangs) >1:
+            lang2=program['settings'].languagenames[program['settings'].glosslangs.lang2()]
             t=(_("and {}").format(lang2))
         else:
             t=_("only")
@@ -967,22 +966,25 @@ class StatusFrame(ui.Frame):
                             parent=line)
         self.opts['columnplus']=0
     def fieldsline(self):
-        for ps in [self.settings.nominalps, self.settings.verbalps]:
-            if ps in self.settings.secondformfield:
-                field=self.settings.secondformfield[ps]
+        log.info("Starting fieldsline w/self {} ({})".format(self,type(self)))
+        log.info("Starting fieldsline w/task {} ({})".format(self.task,
+                                                            type(self.task)))
+        for ps in [program['settings'].nominalps, program['settings'].verbalps]:
+            if ps in program['settings'].secondformfield:
+                field=program['settings'].secondformfield[ps]
             else:
                 field='<unset>'
             t=(_("Using second form field ‘{}’ ({})").format(field,ps))
             line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
                             columnspan=3,sticky='w') #3 cols is the width of frame
             self.opts['row']+=1
-            if ps == self.settings.nominalps:
+            if ps == program['settings'].nominalps:
                 cmd=self.task.getsecondformfieldN
             else:
                 cmd=self.task.getsecondformfieldV
             self.proselabel(t, cmd=cmd, parent=line)
     def sliceline(self):
-        count=self.settings.slices.count()
+        count=program['slices'].count()
         line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
                         columnspan=3,sticky='w')
         self.opts['row']+=1
@@ -998,7 +1000,7 @@ class StatusFrame(ui.Frame):
                         columnspan=3,sticky='w')
         self.opts['row']+=1
         t=(_("Checking {},").format(
-                                self.settings.params.cvtdict()[self.cvt]['pl']))
+                                program['params'].cvtdict()[self.cvt]['pl']))
         self.proselabel(t,cmd=self.task.getcvt,parent=line)
         #this continues on the same line:
         if self.cvt == 'T':
@@ -1021,50 +1023,50 @@ class StatusFrame(ui.Frame):
                             parent=line)
     def tonegroup(self,line):
         self.opts['columnplus']=2
-        check=self.settings.params.check()
-        group=self.settings.status.group()
-        profile=self.settings.slices.profile()
+        check=program['params'].check()
+        group=program['status'].group()
+        profile=program['slices'].profile()
         if None in [check, group]:
             t=_("(no framed group)")
         else:
             t=(_("(framed group: ‘{}’)").format(group))
         log.info("cvt: {}; check: {}".format(self.cvt,self.check))
         """Set appropriate conditions for each of these:"""
-        if (not check or (check in self.settings.status.checks(wsorted=True) and
-            profile in self.settings.status.profiles(wsorted=True))):
+        if (not check or (check in program['status'].checks(wsorted=True) and
+            profile in program['status'].profiles(wsorted=True))):
             cmd=self.task.getgroupwsorted
-        elif (not check or (check in self.settings.status.checks(tosort=True) and
-            profile in self.settings.status.profiles(tosort=True))):
+        elif (not check or (check in program['status'].checks(tosort=True) and
+            profile in program['status'].profiles(tosort=True))):
             cmd=self.task.getgrouptosort
-        elif (check in self.settings.status.checks(toverify=True) and
-            profile in self.settings.status.profiles(toverify=True)):
+        elif (check in program['status'].checks(toverify=True) and
+            profile in program['status'].profiles(toverify=True)):
             cmd=self.task.getgrouptoverify
-        elif (check in self.settings.status.checks(torecord=True) and
-            profile in self.settings.status.profiles(torecord=True)):
+        elif (check in program['status'].checks(torecord=True) and
+            profile in program['status'].profiles(torecord=True)):
             cmd=self.task.getgrouptorecord
         else:
             cmd=None
         log.info("check: {}; profile: {}; \n{}-{}; \n{}-{}; \n{}-{};"
                     "".format(check,profile,
-                                self.settings.status.checks(wsorted=True),
-                                self.settings.status.profiles(wsorted=True),
-                                self.settings.status.checks(tosort=True),
-                                self.settings.status.profiles(tosort=True),
-                                self.settings.status.checks(toverify=True),
-                                self.settings.status.profiles(toverify=True),
-                                self.settings.status.checks(torecord=True),
-                                self.settings.status.profiles(torecord=True)))
+                                program['status'].checks(wsorted=True),
+                                program['status'].profiles(wsorted=True),
+                                program['status'].checks(tosort=True),
+                                program['status'].profiles(tosort=True),
+                                program['status'].checks(toverify=True),
+                                program['status'].profiles(toverify=True),
+                                program['status'].checks(torecord=True),
+                                program['status'].profiles(torecord=True)))
         self.proselabel(t,cmd=cmd,parent=line)
         self.opts['columnplus']=0
     def cvcheck(self,line):
         self.opts['columnplus']=1
-        t=(_("working on {}".format(self.settings.params.cvcheckname())))
+        t=(_("working on {}".format(program['params'].cvcheckname())))
         self.proselabel(t,cmd=self.task.getcheck,
                         parent=line)
         # self.opts['row']+=1
     def cvgroup(self,line):
-        if self.settings.status.group():
-            t=(_("= {}".format(self.settings.status.group())))
+        if program['status'].group():
+            t=(_("= {}".format(program['status'].group())))
         else:
             t=(_("(All groups)"))
         self.opts['columnplus']=2
@@ -1073,8 +1075,8 @@ class StatusFrame(ui.Frame):
         # self.opts['row']+=1
     def buttoncolumnsline(self):
         self.opts['row']+=1
-        if self.settings.buttoncolumns:
-            t=(_("Using {} button columns").format(self.settings.buttoncolumns))
+        if program['settings'].buttoncolumns:
+            t=(_("Using {} button columns").format(program['settings'].buttoncolumns))
         else:
             t=(_("Not using multiple button columns").format(self.check))
         # log.info(t)
@@ -1085,11 +1087,11 @@ class StatusFrame(ui.Frame):
         line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
                         columnspan=3,sticky='w')
         self.opts['row']+=1
-        t=(_("Max profiles: {}; ".format(self.settings.maxprofiles)))
+        t=(_("Max profiles: {}; ".format(program['settings'].maxprofiles)))
         self.proselabel(t,cmd=self.task.getmaxprofiles,
                         parent=line)
         self.opts['columnplus']=1
-        t=(_("Max lexical categories: {}".format(self.settings.maxpss)))
+        t=(_("Max lexical categories: {}".format(program['settings'].maxpss)))
         self.proselabel(t,cmd=self.task.getmaxpss,
                         parent=line)
     def multicheckscope(self):
@@ -1157,32 +1159,32 @@ class StatusFrame(ui.Frame):
         if (
             isinstance(self.task,Record) or
             isinstance(self.task,JoinUFgroups) or
-            not self.taskchooser.doneenough['collectionlc']):
+            not program['taskchooser'].doneenough['collectionlc']):
             self.makenoboard()
             return
-        profileori=self.settings.slices.profile()
-        self.settings.status.cull() #remove nodes with no data
-        if self.cvt in self.settings.status:
-            if self.ps in self.settings.status[self.cvt]: #because we cull, this == data is there.
+        profileori=program['slices'].profile()
+        program['status'].cull() #remove nodes with no data
+        if self.cvt in program['status']:
+            if self.ps in program['status'][self.cvt]: #because we cull, this == data is there.
                 if self.cvt == 'T':
-                    if self.ps in self.settings.toneframes:
+                    if self.ps in program['settings'].toneframes:
                         self.makeprogresstable()
                         return
                     else:
                         log.info("Ps {} not in toneframes ({})".format(self.ps,
-                                self.settings.toneframes))
+                                program['settings'].toneframes))
                 else:
                     log.info("Found CV verifications")
                     self.makeprogresstable()
                     return
         else:
             log.info("cvt {} not in status {}".format(self.cvt,
-                                                        self.settings.status))
+                                                            program['status']))
         self.makenoboard()
     def boardtitle(self):
         titleframe=ui.Frame(self.leaderboard)
         titleframe.grid(row=0,column=0,sticky='n')
-        cvtdict=self.settings.params.cvtdict()
+        cvtdict=program['params'].cvtdict()
         # if not self.mainrelief:
         #     lt=ui.Label(titleframe, text=_(cvtdict[self.cvt]['sg']),
         #                                             font='title')
@@ -1191,7 +1193,7 @@ class StatusFrame(ui.Frame):
         #                         font='title',relief=self.mainrelief)
         # lt.grid(row=0,column=0,sticky='nwe')
         # ttt=ui.ToolTip(lt,_("Change Check Type"))
-        # lt.bind('<ButtonRelease-1>',self.taskchooser.mainwindowis.getcvt)
+        # lt.bind('<ButtonRelease-1>',program['taskchooser'].mainwindowis.getcvt)
         ui.Label(titleframe, text=_('Progress for'), font='title'
             ).grid(row=0,column=1,sticky='nwe',padx=10)
         if not self.mainrelief:
@@ -1229,15 +1231,15 @@ class StatusFrame(ui.Frame):
                     # log.info("Integer {} fine".format(i))
                 except:
                     # log.info("Problem with integer {}".format(i))
-                    if self.settings.showdetails:
+                    if program['settings'].showdetails:
                         return nn(x,oneperline=True) #if any noninteger, all.
             return len(x) #to show counts only
         def updateprofilencheck(profile,check):
-            self.settings.slices.profile(profile)
-            self.settings.params.check(check)
+            program['slices'].profile(profile)
+            program['params'].check(check)
             #run this in any case, rather than running it not at all, or twice
         def refresh(event=None):
-            self.settings.storesettingsfile()
+            program['settings'].storesettingsfile()
             self.task.tableiteration+=1
         self.boardtitle()
         # leaderheader=Frame(self.leaderboard) #someday, make this not scroll...
@@ -1247,20 +1249,20 @@ class StatusFrame(ui.Frame):
         self.leaderboardtable=leaderscroll.content
         row=0
         #put in a footer for next profile/frame
-        cvt=self.settings.params.cvt()
-        ps=self.settings.slices.ps()
-        profiles=self.settings.slices.profiles()[:] #just sort here
-        curprofile=self.settings.slices.profile()
-        curcheck=self.settings.params.check()
+        cvt=program['params'].cvt()
+        ps=program['slices'].ps()
+        profiles=program['slices'].profiles()[:] #just sort here
+        curprofile=program['slices'].profile()
+        curcheck=program['params'].check()
         try:
-            frames=list(self.settings.toneframes[ps].keys())
+            frames=list(program['settings'].toneframes[ps].keys())
         except KeyError:
             frames=list()
         allchecks=[]
         for profile in profiles:
-            if profile in self.settings.status[cvt][ps]:
+            if profile in program['status'][cvt][ps]:
                 #make sure the table has all columns needed for any profile
-                allchecks+=self.settings.status[cvt][ps][profile].keys()
+                allchecks+=program['status'][cvt][ps][profile].keys()
         allchecks=list(dict.fromkeys(allchecks)) #could unsort slices priority
         if self.cvt != 'T': #don't resort tone frames
             allchecks.sort(key=len,reverse=True) #longest first
@@ -1268,7 +1270,7 @@ class StatusFrame(ui.Frame):
         profiles=['colheader']+profiles+['next']
         ungroups=0
         unsortedtext='[X]'
-        if self.settings.showdetails:
+        if program['settings'].showdetails:
             tv=_("verified")
             tu=_("unsorted")
             # t="+ = {} \n! = {}".format(tv,tu)
@@ -1278,20 +1280,20 @@ class StatusFrame(ui.Frame):
             h.bind('<ButtonRelease-1>', refresh)
             htip=_("Refresh table, \nsave settings")
             th=ui.ToolTip(h,htip)
-        r=list(self.settings.status[cvt][ps])
+        r=list(program['status'][cvt][ps])
         log.debug("Table rows possible: {}".format(r))
         for profile in profiles:
             column=0
-            if profile in ['colheader','next']+list(self.settings.status[cvt][
+            if profile in ['colheader','next']+list(program['status'][cvt][
                                                             ps].keys()):
-                if profile in self.settings.status[cvt][ps]:
-                    if self.settings.status[cvt][ps][profile] == {}:
+                if profile in program['status'][cvt][ps]:
+                    if program['status'][cvt][ps][profile] == {}:
                         continue
                     #Make row header
                     t=profile
-                    if self.settings.showdetails:
+                    if program['settings'].showdetails:
                         t+=" ({})".format(
-                                len(self.settings.profilesbysense[ps][profile]))
+                                len(program['settings'].profilesbysense[ps][profile]))
                     h=ui.Label(self.leaderboardtable,text=t,
                                 row=row,
                                 column=column,
@@ -1304,23 +1306,23 @@ class StatusFrame(ui.Frame):
                 elif profile == 'next': # end of row headers
                     brh=ui.Button(self.leaderboardtable,text=_(profile),
                             font='reportheader',
-                            relief='flat',cmd=self.settings.setnextprofile)
+                            relief='flat',cmd=program['settings'].setnextprofile)
                     brh.grid(row=row,column=column,sticky='e')
                     brht=ui.ToolTip(brh,_("Go to the next syllable profile"))
                 for check in allchecks+['next']:
                     column+=1
                     if profile == 'colheader':
                         if check == 'next': # end of column headers
-                            # log.info("todo: {}".format(self.settings.status.checks(todo=True)))
-                            # log.info("tosort: {}".format(self.settings.status.checks(tosort=True)))
-                            # log.info("toverify: {}".format(self.settings.status.checks(toverify=True)))
-                            # log.info("tojoin: {}".format(self.settings.status.checks(tojoin=True)))
+                            # log.info("todo: {}".format(program['status'].checks(todo=True)))
+                            # log.info("tosort: {}".format(program['status'].checks(tosort=True)))
+                            # log.info("toverify: {}".format(program['status'].checks(toverify=True)))
+                            # log.info("tojoin: {}".format(program['status'].checks(tojoin=True)))
                             if cvt == 'T' and not (
-                                    self.settings.status.checks(todo=True)
+                                    program['status'].checks(todo=True)
                                                     ):
                                 cmd=self.task.addframe
                             else:
-                                cmd=lambda todo=True:self.settings.setnextcheck(
+                                cmd=lambda todo=True:program['settings'].setnextcheck(
                                                                     todo=todo)
                             bch=ui.Button(self.leaderboardtable,text=_(check),
                                         relief='flat',
@@ -1337,9 +1339,9 @@ class StatusFrame(ui.Frame):
                                         self.task.getcvt)
                     elif profile == 'next':
                         continue
-                    elif check in self.settings.status.checks(cvt=cvt,ps=ps,
+                    elif check in program['status'].checks(cvt=cvt,ps=ps,
                                                             profile=profile):
-                        node=self.settings.status.node(cvt=cvt,ps=ps,
+                        node=program['status'].node(cvt=cvt,ps=ps,
                                                         profile=profile,
                                                         check=check)
                         if len(node['done']) > len(node['groups']):
@@ -1360,17 +1362,17 @@ class StatusFrame(ui.Frame):
                         totalnum=groupfn(total)
                         if (not totalnum and
                                 tosort and
-                                self.settings.showdetails): #these should go together
+                                program['settings'].showdetails): #these should go together
                             donenum=unsortedtext #don't say '0'
                         elif not totalnum and tosort:
                             donenum=""
-                        elif (not self.settings.showdetails or
+                        elif (not program['settings'].showdetails or
                             (type(totalnum) is int and type(donenum) is int)):
                             # donenum="{}/{}".format(donenum,totalnum)
                             donenum=totalnum
                         else:
                             donenum=nn(totalwverified,oneperline=True)
-                        if (tosort and totalnum and self.settings.showdetails):
+                        if (tosort and totalnum and program['settings'].showdetails):
                             donenum=str(donenum)+'\n'+unsortedtext
                         tb=ui.Button(self.leaderboardtable,
                                 relief='flat',
@@ -1387,7 +1389,7 @@ class StatusFrame(ui.Frame):
                         tips=[]
                         if tosort:
                             tips.extend([_("Words to sort!")])
-                            if not self.settings.showdetails:
+                            if not program['settings'].showdetails:
                                 tb.configure(highlightthickness=3)
                                 tb.configure(highlightbackground=tb.theme.white)
                         if nunverified:
@@ -1404,11 +1406,9 @@ class StatusFrame(ui.Frame):
             log.error(_("You have more groups verified than there are, in {} "
                         "cells".format(ungroups)))
         # self.frame.update()
-    def __init__(self, parent, taskchooser, task, **kwargs):
+    def __init__(self, parent, task, **kwargs):
         self.setopts()
         self.parent=parent
-        self.settings=taskchooser.settings
-        self.taskchooser=taskchooser
         self.task=task #this is the window that called it; task or chooser
         self.mainrelief=kwargs.pop('relief',None) #not for frame
         kwargs['padx']=25
@@ -1419,14 +1419,14 @@ class StatusFrame(ui.Frame):
         self.glosslangline()
         if isinstance(self.task,Segments):
             self.fieldsline()
-        if (hasattr(self.settings,'slices') and
+        if ('slices' in program and
                 not isinstance(self.task,TaskChooser) and
                 not isinstance(self.task,Parse)):
-            self.cvt=self.settings.params.cvt()
-            self.ps=self.settings.slices.ps()
-            self.profile=self.settings.slices.profile()
-            self.check=self.settings.params.check()
-            self.checks=self.settings.status.checks()
+            self.cvt=program['params'].cvt()
+            self.ps=program['slices'].ps()
+            self.profile=program['slices'].profile()
+            self.check=program['params'].check()
+            self.checks=program['status'].checks()
             if isinstance(self.task,Multislice): #any cvt
                 self.maxes()
             else:
@@ -1450,7 +1450,7 @@ class Settings(object):
             self.set('interfacelang',choice,window) #set variable for the future
             self.storesettingsfile() #>xyz.CheckDefaults.py
             #because otherwise, this stays as is...
-            self.taskchooser.mainwindowis.maketitle()
+            program['taskchooser'].mainwindowis.maketitle()
         else:
             return interfacelang()
     def repocheck(self):
@@ -1650,19 +1650,19 @@ class Settings(object):
         """These should each push and pull values to/from objects"""
         self.fndict=fns={}
         try: #these objects may not exist yet
-            fns['cvt']=self.params.cvt
-            fns['check']=self.params.check
-            fns['analang']=self.params.analang
+            fns['cvt']=program['params'].cvt
+            fns['check']=program['params'].check
+            fns['analang']=program['params'].analang
             fns['glosslang']=self.glosslangs.lang1
             fns['glosslang2']=self.glosslangs.lang2
             fns['glosslangs']=self.glosslangs.langs
             fns['aztrepourls']=program['repo'].remoteurls
             fns['giturls']=self.repo['git'].remoteurls
             fns['hgurls']=self.repo['hg'].remoteurls
-            fns['ps']=self.slices.ps
-            fns['profile']=self.slices.profile
+            fns['ps']=program['slices'].ps
+            fns['profile']=program['slices'].profile
             # except this one, which pretends to set but doesn't (throws arg away)
-            fns['profilecounts']=self.slices.slicepriority
+            fns['profilecounts']=program['slices'].slicepriority
         except Exception as e:
             log.error("Only finished settingsobjects up to {} ({})".format(fns.keys(),e))
             return []
@@ -1848,7 +1848,7 @@ class Settings(object):
         # log.info('self.reportsdir: {}'.format(self.reportsdir))
         # log.info('self.reportbasefilename: {}'.format(self.reportbasefilename))
         # log.info('self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
-        # setdefaults.langs(self.db) #This will be done again, on resets
+        # setdefaults.langs(program['db']) #This will be done again, on resets
     def trackuntrackedfiles(self):
         # return #until this doesn't cause problems
         # This method is here to pick up files that are there, but not tracked,
@@ -1975,9 +1975,9 @@ class Settings(object):
                 self.imperativename=self.secondformfield[self.verbalps]
     def fields(self):
         """I think this is lift specific; may move it to defaults, if not."""
-        # log.info(self.db.fieldnames)
+        # log.info(program['db'].fieldnames)
         try:
-            fieldnames=self.db.fieldnames[self.analang]
+            fieldnames=program['db'].fieldnames[self.analang]
         except KeyError:
             fieldnames=[]
         self.secondformfield={}
@@ -2016,7 +2016,7 @@ class Settings(object):
                 log.info("User asked for changes to polygraph settings, but "
                         "no changes found.")
                 return
-            for lang in self.db.analangs:
+            for lang in program['db'].analangs:
                 for pc in vars[lang]:
                     for pg in vars[lang][pc]:
                         self.polygraphs[lang][pc][pg]=vars[lang][pc][pg].get()
@@ -2044,10 +2044,10 @@ class Settings(object):
         log.info("Asking about Digraphs and Trigraphs!")
         titlet=_("{} Digraphs and Trigraphs").format(program['name'])
         #From wherever this is opened, it should withdraw and deiconify that
-        pgw=ui.Window(self.taskchooser.mainwindowis,title=titlet,exit=False)
+        pgw=ui.Window(program['taskchooser'].mainwindowis,title=titlet,exit=False)
         t=_("Which of the following letter sequences "
             "refer to a single sound?")
-        lnames=[self.languagenames[y] for y in self.db.analangs]
+        lnames=[self.languagenames[y] for y in program['db'].analangs]
         if len(lnames)>1:
             t+=_(" (Answer for each of {}.)".format(unlist(lnames)))
         else:
@@ -2094,7 +2094,7 @@ class Settings(object):
         scroll=ui.ScrollingFrame(pgw.frame, row=row, column=0)
         srow=0
         ncols=4 # increase this for wider window
-        for lang in self.db.analangs:
+        for lang in program['db'].analangs:
             if lang not in self.polygraphs:
                 self.polygraphs[lang]={}
             srow+=1
@@ -2102,15 +2102,15 @@ class Settings(object):
                                                         font='read')
             title.grid(column=0, row=srow, columnspan=ncols)
             vars[lang]={}
-            # log.info("sclasses: {}".format(self.db.s[lang]))
-            for sclass in [sc for sc in self.db.s[lang] #Vtg, Vdg, Ctg, Cdg, etc
+            # log.info("sclasses: {}".format(program['db'].s[lang]))
+            for sclass in [sc for sc in program['db'].s[lang] #Vtg, Vdg, Ctg, Cdg, etc
                                 if ('dg' in sc or 'tg' in sc or 'qg' in sc)]:
                 pclass=sclass.replace('dg','').replace('tg','').replace('qg','')
                 if pclass not in self.polygraphs[lang]:
                     self.polygraphs[lang][pclass]={}
                 if pclass not in vars[lang]:
                     vars[lang][pclass]={}
-                if len(self.db.s[lang][sclass])>0:
+                if len(program['db'].s[lang][sclass])>0:
                     srow+=1
                     header=ui.Label(scroll.content,
                     text=sclass.replace('dg',' (digraph)').replace(
@@ -2118,8 +2118,8 @@ class Settings(object):
                                         'qg',' (quatregraph)')+': ')
                     header.grid(column=0, row=srow)
                 col=1
-                # log.info("pgs: {}".format(self.db.s[lang][sclass]))
-                for pg in self.db.s[lang][sclass]:
+                # log.info("pgs: {}".format(program['db'].s[lang][sclass]))
+                for pg in program['db'].s[lang][sclass]:
                     vars[lang][pclass][pg] = ui.BooleanVar()
                     vars[lang][pclass][pg].set(
                                     self.polygraphs[lang][pclass].get(pg,True))
@@ -2137,26 +2137,26 @@ class Settings(object):
         b=ui.Button(pgw.frame,text=oktext,command=makechanges, width=15,
                     column=0, row=row, sticky='e',padx=15)
         pgw.wait_window(pgw)
-        if not self.taskchooser.exitFlag.istrue():
+        if not program['taskchooser'].exitFlag.istrue():
             return nochanges() #this is the default exit behavior
     def polygraphcheck(self):
         log.info("Checking for Digraphs and Trigraphs!")
-        # log.info("Language settings: {}".format(self.db.s))
+        # log.info("Language settings: {}".format(program['db'].s))
         if not hasattr(self,'polygraphs'):
             self.polygraphs={}
-        for lang in self.db.analangs:
-            if lang not in self.db.s:
+        for lang in program['db'].analangs:
+            if lang not in program['db'].s:
                 log.error(_("Language {} found without segment settings."
                             ).format(lang))
                 continue
             if lang not in self.polygraphs:
                 self.polygraphs[lang]={}
-            for sclass in [sc for sc in self.db.s[lang]
+            for sclass in [sc for sc in program['db'].s[lang]
                                     if ('dg' in sc or 'tg' in sc or 'qg' in sc)]:
                 pclass=sclass.replace('dg','').replace('tg','').replace('qg','')
                 if pclass not in self.polygraphs[lang]:
                     self.polygraphs[lang][pclass]={}
-                for pg in self.db.s[lang][sclass]:
+                for pg in program['db'].s[lang][sclass]:
                     # log.info("checking for {} ({}/{}) in {}"
                     #         "".format(pg,pclass,sclass,self.polygraphs))
                     if pg not in self.polygraphs[lang][pclass]:
@@ -2166,7 +2166,7 @@ class Settings(object):
                             log.info(_("Asked about polgraphs, but user "
                                         "exited, so exiting {}"
                                         ).format(program['name']))
-                            self.taskchooser.mainwindowis.on_quit()
+                            program['taskchooser'].mainwindowis.on_quit()
                         return
         log.info("Di/Trigraph settings seem complete; moving on.")
     def checkinterpretations(self):
@@ -2201,7 +2201,7 @@ class Settings(object):
                 'analang' not in self.profilesbysense or #old schema
                 'ftype' not in self.profilesbysense or #old schema
                 self.profilesbysense['analang'] != self.analang or
-                self.profilesbysense['ftype'] != self.params.ftype()
+                self.profilesbysense['ftype'] != program['params'].ftype()
                 ):
             t=nowruntime()
             log.info("Starting profile analysis at {}".format(now()))
@@ -2245,8 +2245,8 @@ class Settings(object):
         #CONTINUE HERE
     def getprofileofsense(self,senseid,ps):
         #Convert to iterate over local variables
-        forms=self.db.citationorlexeme(senseid=senseid,
-            analang=self.params.analang())
+        forms=program['db'].citationorlexeme(senseid=senseid,
+            analang=program['params'].analang())
         for form in forms:
             """This adds to self.sextracted, too"""
             profile=self.profileofform(form,ps=ps)
@@ -2257,30 +2257,30 @@ class Settings(object):
             self.addtoformstosearch(senseid, form, ps=ps)
         return firstoflist(forms),profile
     def getprofilesbypsprofilecheckgroup(self,**kwargs):
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        group=kwargs.get('group',self.status.group())
+        ps=kwargs.get('ps',program['slices'].ps())
+        profile=kwargs.get('profile',program['slices'].profile())
+        group=kwargs.get('group',program['status'].group())
         start_time=nowruntime()
         log.info("Processesing {} {} syllable profiles in {} sort group"
                 "".format(ps,profile,group))
         senseids=(set(getsenseidsincheckgroup())&
-                    set(self.slices.senseids(ps=ps,profile=profile)))
+                    set(program['slices'].senseids(ps=ps,profile=profile)))
         n=self._getprofiles(senseids,ps)
         log.info("Processed {} forms to syllable profile".format(x))
         logfinished(start_time)
     def getprofilesbypsprofile(self,**kwargs):
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
+        ps=kwargs.get('ps',program['slices'].ps())
+        profile=kwargs.get('profile',program['slices'].profile())
         start_time=nowruntime()
         log.info("Processesing {} {} syllable profiles".format(ps,profile))
-        senseids=self.slices.senseids(ps=ps,profile=profile)
+        senseids=program['slices'].senseids(ps=ps,profile=profile)
         n=self._getprofiles(senseids,ps)
         log.info("Processed {} forms to syllable profile".format(x))
         logfinished(start_time)
     def getprofilesbyps(self,ps):
         start_time=nowruntime()
         log.info("Processesing {} syllable profiles".format(ps))
-        senseids=self.db.senseidsbyps[ps]
+        senseids=program['db'].senseidsbyps[ps]
         n=self._getprofiles(senseids,ps)
         log.info("Processed {} forms to syllable profile".format(n))
         logfinished(start_time)
@@ -2303,7 +2303,7 @@ class Settings(object):
         t.join()
         return n
     def getprofilesbyentry(self):
-        for entry in self.db.entries:
+        for entry in program['db'].entries:
             for sense in entry.senses:
                 sense.lx.textvaluebylang(self.analang)
     def getprofiles(self):
@@ -2312,7 +2312,7 @@ class Settings(object):
         self.profilesbysense={}
         self.profilesbysense['Invalid']=[]
         self.profilesbysense['analang']=self.analang
-        self.profilesbysense['ftype']=self.params.ftype()
+        self.profilesbysense['ftype']=program['params'].ftype()
         self.profiledguids=[]
         self.profiledsenseids=[]
         self.formstosearch={}
@@ -2419,13 +2419,13 @@ class Settings(object):
                     pass
                     # log.info(_("{} KeyError reading {}-{} from sextracted"
                     #             "").format(e,ps,s))
-        self.slices.scount(scount) #send to object
+        program['slices'].scount(scount) #send to object
     def notifyuserofextrasegments(self):
         if not hasattr(self,'analang'):
-            self.analang=self.params.analang()
-        if self.analang not in self.db.segmentsnotinregexes:
+            self.analang=program['params'].analang()
+        if self.analang not in program['db'].segmentsnotinregexes:
             return
-        invalids=self.db.segmentsnotinregexes[self.analang]
+        invalids=program['db'].segmentsnotinregexes[self.analang]
         ninvalids=len(invalids)
         extras=list(dict.fromkeys(invalids).keys())
         if ninvalids >10 and self.analang != 'en':
@@ -2441,11 +2441,11 @@ class Settings(object):
         just pulls from the segment types in the lift database."""
         if not hasattr(self,'s'):
             self.s={}
-        for lang in self.db.analangs:
+        for lang in program['db'].analangs:
             if lang not in self.s:
                 self.s[lang]={}
             """These should always be there, no matter what"""
-            for sclass in [x for x in self.db.s[lang]
+            for sclass in [x for x in program['db'].s[lang]
                                         if 'dg' not in x
                                         and 'tg' not in x
                                         and 'qg' not in x
@@ -2457,7 +2457,7 @@ class Settings(object):
                     self.s[lang][sclass]=pgthere
                 else:
                     self.s[lang][sclass]=list()
-                self.s[lang][sclass]+=self.db.s[lang][sclass]
+                self.s[lang][sclass]+=program['db'].s[lang][sclass]
                 """These lines just add to a C list, for a later regex"""
             log.info("Segment lists for {} language: {}".format(lang,
                                                                 self.s[lang]))
@@ -2470,8 +2470,8 @@ class Settings(object):
         """This method is just to add a new grapheme while running, so we
         don't have to restart between C/V changes."""
         if not hasattr(self,'analang'): #in case running after startup
-            self.analang=self.params.analang()
-        cvt=self.params.cvt()
+            self.analang=program['params'].analang()
+        cvt=program['params'].cvt()
         if cvt in ['C', 'V'] and s not in self.s[self.analang][cvt]:
             self.s[self.analang][cvt]+=[s]
             # log.info("Compiling rx list: {}".format(self.s[self.analang][cvt]))
@@ -2534,21 +2534,21 @@ class Settings(object):
         if showpolygraphs:
             self.askaboutpolygraphs()
         self.storesettingsfile(setting='profiledata')
-        self.taskchooser.restart()
+        program['taskchooser'].restart()
     def reloadstatusdatabycvtpsprofile(self,**kwargs):
         # This reloads the status info only for current slice
         # These are specified in iteration, pulled from object if called direct
         start_time=nowruntime()
-        kwargs['cvt']=kwargs.get('cvt',self.params.cvt())
-        kwargs['ps']=kwargs.get('ps',self.slices.ps())
-        kwargs['profile']=kwargs.get('profile',self.slices.profile())
+        kwargs['cvt']=kwargs.get('cvt',program['params'].cvt())
+        kwargs['ps']=kwargs.get('ps',program['slices'].ps())
+        kwargs['profile']=kwargs.get('profile',program['slices'].profile())
         log.info("Refreshing {} {} {} status settings from LIFT"
                 "".format(kwargs['cvt'],kwargs['ps'],kwargs['profile']))
-        checks=self.status.checks(**kwargs)
+        checks=program['status'].checks(**kwargs)
         kwargs['store']=False #do below
         for kwargs['check'] in checks:
             # log.info("Working on {}".format(c))
-            self.status.build(**kwargs)
+            program['status'].build(**kwargs)
             """this just populates groups and the tosort boolean."""
             self.updatesortingstatus(**kwargs)
         logfinished(start_time)
@@ -2558,12 +2558,12 @@ class Settings(object):
         # if desired.
         # These are specified in iteration, pulled from object if called by menu
         start_time=nowruntime()
-        kwargs['cvt']=kwargs.get('cvt',self.params.cvt())
-        kwargs['ps']=kwargs.get('ps',self.slices.ps())
+        kwargs['cvt']=kwargs.get('cvt',program['params'].cvt())
+        kwargs['ps']=kwargs.get('ps',program['slices'].ps())
         log.info("Refreshing {} {} status settings from LIFT".format(
                                                                 kwargs['ps'],
                                                                 kwargs['cvt']))
-        profiles=self.slices.profiles(ps=kwargs['ps']) #This depends on ps only
+        profiles=program['slices'].profiles(ps=kwargs['ps']) #This depends on ps only
         for kwargs['profile'] in profiles:
             # log.info("Working on {}".format(p))
             self.reloadstatusdatabycvtpsprofile(**kwargs)
@@ -2580,38 +2580,37 @@ class Settings(object):
         log.info("Refreshing all status settings from LIFT")
         w=ui.Wait(parent=program['root'],msg=_("Reloading status data"))
         self.storesettingsfile()
-        pss=self.slices.pss() #this depends on nothing
+        pss=program['slices'].pss() #this depends on nothing
         pss=program['db'].pss
         #This limits reload to what is there (i.e., only V, if only V has been done)
-        # cvts=[i for i in self.params.cvts() if i in self.status]
-        cvts=self.params.cvts()
+        # cvts=[i for i in program['params'].cvts() if i in program['status']]
+        cvts=program['params'].cvts()
         if not cvts:
-            cvts=[i for i in self.params.cvts()]
+            cvts=[i for i in program['params'].cvts()]
         for cvt in [i for i in cvts if i != 'CV']: #this depends on nothing
             # log.info("Working on {}".format(t))
             for ps in pss:
                 # log.info("Working on {}".format(ps))
                 self.reloadstatusdatabycvtps(cvt=cvt,ps=ps,store=False)
         """Now remove what didn't get data"""
-        self.status.cull()
-        if None in self.status: #This should never be there
-            del self.status[None]
-        self.status.store()
+        program['status'].cull()
+        if None in program['status']: #This should never be there
+            del program['status'][None]
+        program['status'].store()
         logfinished(start_time)
         w.close()
     def categorizebygrouping(self,fn,senseid,**kwargs):
         #Don't complain if more than one found:
-        check=kwargs.get('check',self.params.check())
-        v=firstoflist(fn(self.status.task(),senseid,check),othersOK=True)
+        check=kwargs.get('check',program['params'].check())
         if v in ['','None',None]: #unlist() returns strings
             # log.info("Marking senseid {} tosort (v: {})".format(senseid,v))
             if not kwargs.get('cvt'): #default, not on iteration
-                self.status.marksenseidtosort(senseid)
+                program['status'].marksenseidtosort(sense.id)
             tosort=True
         else:
             # log.info("Marking senseid {} sorted (v: {})".format(senseid,v))
             if not kwargs.get('cvt'): #default, not on iteration
-                self.status.marksenseidsorted(senseid)
+                program['status'].marksenseidsorted(sense.id)
             if v not in ['NA','ALLOK']:
                 self._groups.append(v)
     def updatesortingstatus(self, store=True, **kwargs):
@@ -2622,13 +2621,14 @@ class Settings(object):
         """To get this from the object, use status.tosort(), todo() or done()"""
         # log.info("updatesortingstatus called with store={} and kwargs: {}"
         #         "".format(store,kwargs))
-        cvt=kwargs.get('cvt',self.params.cvt())
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        check=kwargs.get('check',self.params.check())
+        cvt=kwargs.get('cvt',program['params'].cvt())
+        ps=kwargs.get('ps',program['slices'].ps())
+        profile=kwargs.get('profile',program['slices'].profile())
+        check=kwargs.get('check',program['params'].check())
         kwargs['wsorted']=True #ever not?
-        senseids=self.slices.senseids(ps=ps,profile=profile)
-        self.status.renewsenseidstosort([],[]) #will repopulate
+        senseids=program['slices'].senseids(ps=ps,profile=profile)
+        log.info("Working on {} senseids: {}".format(len(senseids),senseids))
+        program['status'].renewsenseidstosort([],[]) #will repopulate
         self._groups=[]
         if cvt == 'T': #we need to be able to iterate over cvt, to rebuild
             fn=Tone.getgroupofsenseid
@@ -2647,23 +2647,23 @@ class Settings(object):
         """update 'tosort' status"""
         """update status groups"""
         sorted=set(self._groups)
-        self.status.groups(list(sorted),**kwargs)
-        verified=set(self.status.verified(**kwargs)) #read
+        program['status'].groups(list(sorted),**kwargs)
+        verified=set(program['status'].verified(**kwargs)) #read
         """This should pull verification status from LIFT, someday"""
-        self.status.verified(list(verified&sorted),**kwargs) #set
+        program['status'].verified(list(verified&sorted),**kwargs) #set
         log.info("updatesortingstatus results ({}): sorted: {}, verified: {}, "
                 "tosort: {}".format(kwargs,sorted,verified,
-                                    self.status.tosort(**kwargs)))
+                                    program['status'].tosort(**kwargs)))
         if store:
             # log.info("updatesortingstatus kwargs: {}".format(kwargs))
             self.storesettingsfile(setting='status')
     def guessanalang(self):
         #have this call set()?
         """if there's only one analysis language, use it."""
-        nlangs=len(self.db.analangs)
-        log.debug(_("Found {} analangs: {}".format(nlangs,self.db.analangs)))
-        lxwdata=self.db.nentrieswlexemedata
-        lcwdata=self.db.nentrieswcitationdata
+        nlangs=len(program['db'].analangs)
+        log.debug(_("Found {} analangs: {}".format(nlangs,program['db'].analangs)))
+        lxwdata=program['db'].nentrieswlexemedata
+        lcwdata=program['db'].nentrieswcitationdata
         lxwdatamax=lcwdatamax=None
         for lang in [l for l in lxwdata if lxwdata[l] > 0]:
             if not lxwdatamax or lxwdata[lxwdatamax] < lxwdata[lang]:
@@ -2684,7 +2684,7 @@ class Settings(object):
                             "and fix it!)").format(self.analang)
                 log.info(errortext)
             else:
-                self.taskchooser.splash.withdraw()
+                program['taskchooser'].splash.withdraw()
                 errortext+=_("\nFurthermore, your LIFT file doesn't seem to "
                             "indicate your language code: \n{} "
                             "\nchange that or add some data "
@@ -2698,91 +2698,91 @@ class Settings(object):
                 sysrestart()
             # return
         elif nlangs == 1:
-            self.analang=self.db.analangs[0]
+            self.analang=program['db'].analangs[0]
             log.debug(_('Only one analang in file; using it: ({})'.format(
-                                                        self.db.analangs[0])))
+                                                        program['db'].analangs[0])))
             """If there are more than two analangs in the database, check if one
             of the first two is three letters long, and the other isn't"""
         elif nlangs == 2:
-            if ((len(self.db.analangs[0]) == 3) and
-                (lcwdatamax == self.db.analangs[0] or
-                    lxwdatamax == self.db.analangs[0]) and
-                (len(self.db.analangs[1]) != 3)):
+            if ((len(program['db'].analangs[0]) == 3) and
+                (lcwdatamax == program['db'].analangs[0] or
+                    lxwdatamax == program['db'].analangs[0]) and
+                (len(program['db'].analangs[1]) != 3)):
                 log.debug(_('Looks like I found an iso code with data for '
-                                'analang! ({})'.format(self.db.analangs[0])))
-                self.analang=self.db.analangs[0] #assume this is the iso code
-                self.analangdefault=self.db.analangs[0] #In case it gets changed.
-            elif ((len(self.db.analangs[1]) == 3) and
-                (lcwdatamax == self.db.analangs[1] or
-                    lxwdatamax == self.db.analangs[1]) and
-                    (len(self.db.analangs[0]) != 3)):
+                                'analang! ({})'.format(program['db'].analangs[0])))
+                self.analang=program['db'].analangs[0] #assume this is the iso code
+                self.analangdefault=program['db'].analangs[0] #In case it gets changed.
+            elif ((len(program['db'].analangs[1]) == 3) and
+                (lcwdatamax == program['db'].analangs[1] or
+                    lxwdatamax == program['db'].analangs[1]) and
+                    (len(program['db'].analangs[0]) != 3)):
                 log.debug(_('Looks like I found an iso code with data for '
-                                'analang! ({})'.format(self.db.analangs[1])))
-                self.analang=self.db.analangs[1] #assume this is the iso code
-                self.analangdefault=self.db.analangs[1] #In case it gets changed.
-            elif lcwdatamax in self.db.analangs:
+                                'analang! ({})'.format(program['db'].analangs[1])))
+                self.analang=program['db'].analangs[1] #assume this is the iso code
+                self.analangdefault=program['db'].analangs[1] #In case it gets changed.
+            elif lcwdatamax in program['db'].analangs:
                 self.analang=lcwdatamax
                 log.debug('Neither analang looks like an iso code, taking the '
-                'one with most citation data: {}'.format(self.db.analangs))
-            elif lxwdatamax in self.db.analangs:
+                'one with most citation data: {}'.format(program['db'].analangs))
+            elif lxwdatamax in program['db'].analangs:
                 self.analang=lxwdatamax
                 log.debug('Neither analang looks like an iso code, taking the '
-                'one with most lexeme data: {}'.format(self.db.analangs))
+                'one with most lexeme data: {}'.format(program['db'].analangs))
             else:
-                self.analang=self.db.analangs[0]
+                self.analang=program['db'].analangs[0]
                 log.debug('Neither analang looks like an iso code, nor has much'
-                'data; taking the first one: {}'.format(self.db.analangs))
+                'data; taking the first one: {}'.format(program['db'].analangs))
         else: #for three or more analangs, take the first plausible iso code
-            if lcwdatamax in self.db.analangs and len(lcwdatamax) == 3:
+            if lcwdatamax in program['db'].analangs and len(lcwdatamax) == 3:
                 self.analang=lcwdatamax
                 log.debug('The language with the most citation data looks like '
-                'an iso code; using: {}'.format(self.db.analangs))
-            elif lcwdatamax == lxwdatamax and lxwdatamax in self.db.analangs:
+                'an iso code; using: {}'.format(program['db'].analangs))
+            elif lcwdatamax == lxwdatamax and lxwdatamax in program['db'].analangs:
                 self.analang=lxwdatamax
                 log.debug('The language with the most citation data is also '
                     'the language with the most lexeme data; using: {}'.format(
-                                                            self.db.analangs))
-            elif lxwdatamax in self.db.analangs and len(lxwdatamax) == 3:
+                                                            program['db'].analangs))
+            elif lxwdatamax in program['db'].analangs and len(lxwdatamax) == 3:
                 self.analang=lxwdatamax
                 log.debug('The language with the most lexeme data looks like '
-                'an iso code; using: {}'.format(self.db.analangs))
+                'an iso code; using: {}'.format(program['db'].analangs))
             else:
                 for n in range(1,nlangs+1): # end with first
-                    self.analang=self.db.analangs[-n]
+                    self.analang=program['db'].analangs[-n]
                     log.debug(_('trying {}').format(self.analang))
-                    if len(self.db.analangs[-n]) == 3:
+                    if len(program['db'].analangs[-n]) == 3:
                         log.debug(_('Looks like I found an iso code for '
-                                'analang! ({})'.format(self.db.analangs[n-1])))
+                                'analang! ({})'.format(program['db'].analangs[n-1])))
                         break #stop iterating, and keep this one.
         log.info("analang guessed: {} (If you don't like this, change it in "
                     "the menus)".format(self.analang))
     def guessaudiolang(self):
-        nlangs=len(self.db.audiolangs)
+        nlangs=len(program['db'].audiolangs)
         """if there's only one audio language, use it."""
         if nlangs == 0 and self.analang:
-            self.audiolang=lift.Lift.makeaudiolangname(self) #self.db.audiolangs[0]
+            self.audiolang=lift.Lift.makeaudiolangname(self) #program['db'].audiolangs[0]
         if nlangs == 1:
-            self.audiolang=self.db.audiolangs[0]
+            self.audiolang=program['db'].audiolangs[0]
         elif nlangs == 2:
-            if ((self.analang in self.db.audiolangs[0]) and
-                (self.analang not in self.db.audiolangs[1])):
-                self.audiolang=self.db.audiolangs[0]
+            if ((self.analang in program['db'].audiolangs[0]) and
+                (self.analang not in program['db'].audiolangs[1])):
+                self.audiolang=program['db'].audiolangs[0]
                 log.info("Analang in first of two audiolangs only, selecting "
                                             "{}".format(self.audiolang))
-            elif ((self.analang in self.db.audiolangs[1]) and
-                    (self.analang not in self.db.audiolangs[0])):
-                self.audiolang=self.db.audiolangs[1]
+            elif ((self.analang in program['db'].audiolangs[1]) and
+                    (self.analang not in program['db'].audiolangs[0])):
+                self.audiolang=program['db'].audiolangs[1]
                 log.info("Analang in second of two audiolangs only, selecting "
                                             "{}".format(self.audiolang))
-            elif ((self.analang in self.db.audiolangs[1]) and
-                    (self.analang in self.db.audiolangs[0])):
-                self.audiolang=sorted(self.db.audiolangs,key = len)[0]
+            elif ((self.analang in program['db'].audiolangs[1]) and
+                    (self.analang in program['db'].audiolangs[0])):
+                self.audiolang=sorted(program['db'].audiolangs,key = len)[0]
                 log.info("Analang in both of two audiolangs only, selecting "
                 "shorter: {}".format(self.audiolang))  #assume is more basic
         else: #for three or more analangs, take the first plausible iso code
             for n in range(nlangs):
-                if self.analang in self.db.analangs[n]:
-                    self.audiolang=self.db.audiolangs[n]
+                if self.analang in program['db'].analangs[n]:
+                    self.audiolang=program['db'].audiolangs[n]
                     return
     def makeglosslangs(self):
         if self.glosslangs:
@@ -2792,24 +2792,24 @@ class Settings(object):
     def checkglosslangs(self):
         if self.glosslangs:
             for lang in self.glosslangs:
-                if lang not in self.db.glosslangs:
+                if lang not in program['db'].glosslangs:
                     self.glosslangs.rm(lang)
         if not self.glosslangs:
             self.guessglosslangs()
     def guessglosslangs(self):
         """if there's only one gloss language, use it."""
-        if len(self.db.glosslangs) == 1:
+        if len(program['db'].glosslangs) == 1:
             log.info('Only one glosslang!')
-            self.glosslangs.lang1(self.db.glosslangs[0])
+            self.glosslangs.lang1(program['db'].glosslangs[0])
             """if there are two or more gloss languages, just pick the first
             two, and the user can select something else later (the gloss
             languages are not for CV profile analaysis, but for info after
             checking, when this can be reset."""
-        elif len(self.db.glosslangs) > 1:
-            self.glosslangs.lang1(self.db.glosslangs[0])
-            self.glosslangs.lang2(self.db.glosslangs[1])
+        elif len(program['db'].glosslangs) > 1:
+            self.glosslangs.lang1(program['db'].glosslangs[0])
+            self.glosslangs.lang2(program['db'].glosslangs[1])
         else:
-            print("Can't tell how many glosslangs!",len(self.db.glosslangs))
+            print("Can't tell how many glosslangs!",len(program['db'].glosslangs))
     def guesscvt(self):
         """For now, if cvt isn't set, start with Vowels."""
         self.set('cvt','V')
@@ -2819,20 +2819,20 @@ class Settings(object):
         """
         if not hasattr(self,'attrschanged'):
             return
-        if hasattr(self.taskchooser,'status'):
-            self.taskchooser.status.build()
-        t=self.taskchooser.params.cvt()
+        if 'status' in program:
+            program['status'].build()
+        t=program['params'].cvt()
         if 'cvt' in self.attrschanged:
-            self.taskchooser.status.updatechecksbycvt()
-            self.taskchooser.status.makecheckok()
+            program['status'].updatechecksbycvt()
+            program['status'].makecheckok()
             self.attrschanged.remove('cvt')
         if 'ps' in self.attrschanged:
             if t == 'T':
-                self.taskchooser.status.updatechecksbycvt()
+                program['taskchooser'].status.updatechecksbycvt()
             self.attrschanged.remove('ps')
         if 'profile' in self.attrschanged:
             if t != 'T':
-                self.taskchooser.status.updatechecksbycvt()
+                program['status'].updatechecksbycvt()
             self.attrschanged.remove('profile')
         if 'check' in self.attrschanged:
             self.attrschanged.remove('check')
@@ -2918,54 +2918,54 @@ class Settings(object):
         if window:
             window.destroy()
     def setnextprofile(self):
-        r=self.status.nextprofile()
+        r=program['status'].nextprofile()
         if r:
-            firstcheck=self.status.updatechecksbycvt()[0]
-            if self.params.check() != firstcheck:
-                self.params.check(firstcheck)
+            firstcheck=program['status'].updatechecksbycvt()[0]
+            if program['params'].check() != firstcheck:
+                program['params'].check(firstcheck)
                 self.attrschanged.append('check')
             self.attrschanged.append('profile')
             self.refreshattributechanges()
     def setprofile(self,choice,window):
-        self.slices.profile(choice)
+        program['slices'].profile(choice)
         #in case checks changed:
-        firstcheck=self.status.updatechecksbycvt()[0]
-        if self.params.check() != firstcheck:
-            self.params.check(firstcheck)
+        firstcheck=program['status'].updatechecksbycvt()[0]
+        if program['params'].check() != firstcheck:
+            program['params'].check(firstcheck)
             self.attrschanged.append('check')
         self.attrschanged.append('profile')
         self.refreshattributechanges()
         window.destroy()
     def setcvt(self,choice,window=None):
-        self.params.cvt(choice)
+        program['params'].cvt(choice)
         self.attrschanged.append('cvt')
         self.refreshattributechanges()
-        if (not hasattr(self.taskchooser,'task') or
-                not self.taskchooser.task.mainwindow):
+        if (not hasattr(program['taskchooser'],'task') or
+                not program['taskchooser'].task.mainwindow):
             log.info("No task, apparently, so not worried about changing cvt")
-        elif isinstance(self.taskchooser.task,Transcribe):
+        elif isinstance(program['taskchooser'].task,Transcribe):
             log.info("Switching Transcribe tasks")
             newtaskclass=getattr(sys.modules[__name__],'Transcribe'+choice)
-            self.status.makecheckok() #this is intentionally broad: *any* check
-            self.taskchooser.maketask(newtaskclass)
-        elif isinstance(self.taskchooser.task,Sort):
+            program['status'].makecheckok() #this is intentionally broad: *any* check
+            program['taskchooser'].maketask(newtaskclass)
+        elif isinstance(program['taskchooser'].task,Sort):
             # log.info("Switching Sort tasks")
             newtaskclass=getattr(sys.modules[__name__],'Sort'+choice)
-            self.status.makecheckok() #this is intentionally broad: *any* check
-            self.taskchooser.maketask(newtaskclass)
+            program['status'].makecheckok() #this is intentionally broad: *any* check
+            program['taskchooser'].maketask(newtaskclass)
         else:
             log.info("Not Sorting or Transcribing; chilling with cvt change.")
         if window:
             window.destroy()
     def setanalang(self,choice,window):
-        self.params.analang(choice)
+        program['params'].analang(choice)
         self.attrschanged.append('analang')
         self.refreshattributechanges()
         window.destroy()
         self.reloadprofiledata()
     def setgroup(self,choice,window):
         # log.debug("group: {}".format(choice))
-        self.status.group(choice)
+        program['status'].group(choice)
         # log.debug("group: {}".format(choice))
         window.destroy()
         # log.debug("group: {}".format(choice))
@@ -2975,17 +2975,17 @@ class Settings(object):
         self.set('group_comparison',choice,window,refresh=False)
         log.debug("group_comparison: {}".format(self.group_comparison))
     def setnextcheck(self,**kwargs):
-        self.status.nextcheck(**kwargs)
+        program['status'].nextcheck(**kwargs)
         self.attrschanged.append('check')
         self.refreshattributechanges()
     def setcheck(self,choice,window=None):
-        self.params.check(choice)
+        program['params'].check(choice)
         self.attrschanged.append('check')
         self.refreshattributechanges()
         if window:
             window.destroy()
     def setbuttoncolumns(self,choice,window=None):
-        self.buttoncolumns=self.taskchooser.mainwindowis.buttoncolumns=choice
+        self.buttoncolumns=program['taskchooser'].mainwindowis.buttoncolumns=choice
         if window:
             window.destroy()
     def setmaxprofiles(self,choice,window):
@@ -2995,7 +2995,7 @@ class Settings(object):
         self.maxpss=choice
         window.destroy()
     def setmulticheckscope(self,choice,window):
-        self.cvtstodo=self.taskchooser.task.cvtstodo=choice
+        self.cvtstodo=program['taskchooser'].task.cvtstodo=choice
         window.destroy()
     def setglosslang(self,choice,window):
         self.glosslangs.lang1(choice)
@@ -3011,13 +3011,13 @@ class Settings(object):
         self.refreshattributechanges()
         window.destroy()
     def setparserasklevel(self,choice,window):
-        self.taskchooser.parser.asklevel(choice)
+        program['taskchooser'].parser.asklevel(choice)
         window.destroy()
     def setparserautolevel(self,choice,window):
-        self.taskchooser.parser.autolevel(choice)
+        program['taskchooser'].parser.autolevel(choice)
         window.destroy()
     def setps(self,choice,window):
-        self.slices.ps(choice)
+        program['slices'].ps(choice)
         self.attrschanged.append('ps')
         self.refreshattributechanges()
         window.destroy()
@@ -3045,7 +3045,7 @@ class Settings(object):
         node=None
         self.languagenames={}
         if not langs:
-            langs=[self.analang]+self.db.analangs+self.db.glosslangs
+            langs=[self.analang]+program['db'].analangs+program['db'].glosslangs
         for xyz in langs:
             # log.info(' '.join('Looking for language name for',xyz))
             """This provides an ldml node"""
@@ -3090,17 +3090,17 @@ class Settings(object):
                 self.languagenames[xyz]=self.adnlangnames[xyz]
     def makeeverythingok(self):
         try:
-            self.status.makecvtok()
-            self.slices.makepsok()
-            self.slices.makeprofileok()
-            self.status.makecheckok() #this is intentionally broad: *any* check
-        except AttributeError as e:
+            program['status'].makecvtok()
+            program['slices'].makepsok()
+            program['slices'].makeprofileok()
+            program['status'].makecheckok() #this is intentionally broad: *any* check
+        except KeyError as e:
             log.info(_("Maybe status/slices aren't set up yet."))
-        # self.status.makegroupok(wsorted=True)
+        # program['status'].makegroupok(wsorted=True)
     def setrefreshdelay(self):
         """This sets the main window refresh delay, in miliseconds"""
-        if (hasattr(self.taskchooser.mainwindowis,'runwindow') and
-                self.taskchooser.mainwindowis.runwindow.winfo_exists()):
+        if (hasattr(program['taskchooser'].mainwindowis,'runwindow') and
+                program['taskchooser'].mainwindowis.runwindow.winfo_exists()):
             self.refreshdelay=10000 #ten seconds if working in another window
         elif isinstance(self,Parse) and not hasattr(self,'parser'):
             self.refreshdelay=1 #1 msecond if waiting for parser settings
@@ -3125,9 +3125,8 @@ class Settings(object):
         self.settingsobjects() #needs params, glosslangs, slices
         self.moveattrstoobjects() #catch what wasn't done before
     def __init__(self,taskchooser):
-        self.taskchooser=taskchooser
+        program['settings']=self
         self.liftfilename=taskchooser.filename
-        self.db=taskchooser.db
         self.getdirectories() #incl settingsfilecheck and repocheck
         self.setinvalidcharacters()
         # self.settingsfilecheck()
@@ -3178,14 +3177,14 @@ class TaskDressing(HasMenus,ui.Window):
                 text=_("Collect Data")
         elif isinstance(self,Report):
             text=_("Reports")
-            self.taskchooser.showreports=True
+            program['taskchooser'].showreports=True
         else:
             text=_("Tasks")
         if hasattr(self,'chooserbutton'):
             self.chooserbutton.destroy()
         self.chooserbutton=ui.Button(self.outsideframe,text=text,
                                     font='small',
-                                    cmd=self.taskchooser.gettask,
+                                    cmd=program['taskchooser'].gettask,
                                     row=0,column=2,
                                     sticky='ne')
     def mainlabelrelief(self,relief=None,refresh=False,event=None):
@@ -3200,10 +3199,10 @@ class TaskDressing(HasMenus,ui.Window):
         self.mainlabelrelief(relief=None,refresh=True)
         self.setcontext()
     def correlatemenus(self):
-        log.info("Menus: {}; {} (chooser)".format(self.menu,self.taskchooser.menu))
+        log.info("Menus: {}; {} (chooser)".format(self.menu,program['taskchooser'].menu))
         if hasattr(self,'task'):
             log.info("Menus: {}; {} (task)".format(self.menu,self.task.menu))
-        if self.menu != self.taskchooser.menu: #for tasks
+        if self.menu != program['taskchooser'].menu: #for tasks
             if self.menu:
                 self._removemenus()
             else:
@@ -3226,11 +3225,11 @@ class TaskDressing(HasMenus,ui.Window):
         self.tableiteration+=1
     def hidedetails(self):
         # log.info("Hiding group names")
-        self.settings.set('showdetails', False, refresh=True)
+        program['settings'].set('showdetails', False, refresh=True)
         self.setcontext()
     def showdetails(self):
         # log.info("Showing group names")
-        self.settings.set('showdetails', True, refresh=True)
+        program['settings'].set('showdetails', True, refresh=True)
         self.setcontext()
     def setcontext(self,context=None):
         self.context.menuinit() #This is a ContextMenu() method
@@ -3246,8 +3245,8 @@ class TaskDressing(HasMenus,ui.Window):
             self.context.menuitem(_("Smaller Fonts"),self.setfontssmaller)
         else:
             self.context.menuitem(_("Larger Fonts"),self.setfontsdefault)
-        if hasattr(self.settings,
-                    'showdetails') and self.settings.showdetails:
+        if hasattr(program['settings'],
+                    'showdetails') and program['settings'].showdetails:
             self.context.menuitem(_("Hide details"),self.hidedetails)
         else:
             self.context.menuitem(_("Show details"),self.showdetails)
@@ -3263,7 +3262,7 @@ class TaskDressing(HasMenus,ui.Window):
                 row=0, column=0, columnspan=2)
         tasks=_("Tasks")
         t.tt=ui.ToolTip(t,text=_("click ‘{}’ to change tasks").format(tasks))
-        # t.bind("<Button-1>",self.taskchooser.gettask)
+        # t.bind("<Button-1>",program['taskchooser'].gettask)
     def fullscreen(self):
         w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
         self.parent.geometry("%dx%d+0+0" % (w, h))
@@ -3293,41 +3292,41 @@ class TaskDressing(HasMenus,ui.Window):
                     'buttoncolumns',
                     'soundsettings'
                     ]:
-            if hasattr(self.settings,attr):
-                setattr(self,attr,getattr(self.settings,attr))
+            if hasattr(program['settings'],attr):
+                setattr(self,attr,getattr(program['settings'],attr))
             else:
-                log.info("Didn't find {} in {}".format(attr,self.settings))
+                log.info("Didn't find {} in {}".format(attr,program['settings']))
     def makecvtok(self):
-        log.info("cvt: {}".format(self.settings.params.cvt()))
-        if isinstance(self,Tone) and not self.settings.params.cvt() == 'T':
-            self.settings.setcvt('T')
-        if isinstance(self,Segments) and (self.settings.params.cvt()
+        log.info("cvt: {}".format(program['params'].cvt()))
+        if isinstance(self,Tone) and not program['params'].cvt() == 'T':
+            program['settings'].setcvt('T')
+        if isinstance(self,Segments) and (program['params'].cvt()
                                                     not in ['V','C','CV']):
-            self.settings.setcvt('V')
+            program['settings'].setcvt('V')
     def trystatusframelater(self,dict):
-        self.settings.setrefreshdelay()
-        self.parent.after(self.settings.refreshdelay,self.makestatusframe,dict)
+        program['settings'].setrefreshdelay()
+        self.parent.after(program['settings'].refreshdelay,self.makestatusframe,dict)
     def makestatusframe(self,dict=None):
         dictnow={
                 'mainrelief':self.mainrelief,
-                'showdetails':self.settings.showdetails, #attr, not task.method
+                'showdetails':program['settings'].showdetails, #attr, not task.method
                 'self.fontthemesmall':self.fontthemesmall,
                 'buttonkwargs':self.dobuttonkwargs(),
-                'iflang':self.settings.interfacelangwrapper(),
-                'analang':self.params.analang(),
+                'iflang':program['settings'].interfacelangwrapper(),
+                'analang':program['params'].analang(),
                 'glang1':self.glosslangs.lang1(),
                 'glang2':self.glosslangs.lang2(),
-                'secondformfield':str(self.settings.secondformfield),
-                'maxprofiles':self.settings.maxprofiles,
-                'maxpss':self.settings.maxpss
+                'secondformfield':str(program['settings'].secondformfield),
+                'maxprofiles':program['settings'].maxprofiles,
+                'maxpss':program['settings'].maxpss
                 }
         if hasattr(self,'slices'):
             dictnow.update({
-                'cvt':self.params.cvt(),
-                'check':self.params.check(),
-                'ps':self.slices.ps(),
-                'profile':self.slices.profile(),
-                'group':self.status.group(),
+                'cvt':program['params'].cvt(),
+                'check':program['params'].check(),
+                'ps':program['slices'].ps(),
+                'profile':program['slices'].profile(),
+                'group':program['status'].group(),
                 'tableiteration':self.tableiteration,
                 })
             if isinstance(self,Multicheck):
@@ -3349,18 +3348,18 @@ class TaskDressing(HasMenus,ui.Window):
             return
         # log.info("Dict changes; checking attributes and updating the UI. ({})"
         #                                                     "".format(dictnow))
-        if self.taskchooser.donew['collectionlc']:
-            self.settings.makeeverythingok()
+        if program['taskchooser'].donew['collectionlc']:
+            program['settings'].makeeverythingok()
         #This will probably need to be reworked
         if self.exitFlag.istrue():
             return
         if hasattr(self.frame,'status') and self.frame.status.winfo_exists():
             self.frame.status.destroy()
-        self.frame.status=StatusFrame(self.frame, self.taskchooser, self,
+        self.frame.status=StatusFrame(self.frame, self,
                                         relief=self.mainrelief,
                                         row=1, column=0, sticky='nw')
         self.frame.update_idletasks()
-        self.settings.storesettingsfile()
+        program['settings'].storesettingsfile()
         self.makestatusframe(dictnow)
     def setSdistinctions(self):
         def notice(changed):
@@ -3405,16 +3404,16 @@ class TaskDressing(HasMenus,ui.Window):
         def submitform():
             def undo(changed):
                 for s in changed:
-                    if s in self.settings.distinguish:
-                        if self.settings.distinguish[s]==changed[s][1]:
-                            self.settings.distinguish[s]=changed[s][0] #(oldvar,newvar):
+                    if s in program['settings'].distinguish:
+                        if program['settings'].distinguish[s]==changed[s][1]:
+                            program['settings'].distinguish[s]=changed[s][0] #(oldvar,newvar):
                         else:
                             log.error("Changed to value ({}) doesn't match "
                             "current setting for ‘{}’: {}".format(changed[s][1],
                                                         s,self.distinguish[s]))
-                    elif s in self.settings.interpret:
-                        if self.settings.interpret[s]==changed[s][1]:
-                            self.settings.interpret[s]=changed[s][0] #(oldvar,newvar):
+                    elif s in program['settings'].interpret:
+                        if program['settings'].interpret[s]==changed[s][1]:
+                            program['settings'].interpret[s]=changed[s][0] #(oldvar,newvar):
                         else:
                             log.error("Changed to value ({}) doesn't match "
                             "current setting for ‘{}’: {}".format(changed[s][1],
@@ -3436,8 +3435,8 @@ class TaskDressing(HasMenus,ui.Window):
                                     ).intersection(set(oldvar))) >0):
                                     changed[s]=(oldvar,newvar)
                             getattr(self,typ)[s]=newvar
-            log.debug('self.distinguish: {}'.format(self.settings.distinguish))
-            log.debug('self.interpret: {}'.format(self.settings.interpret))
+            log.debug('self.distinguish: {}'.format(program['settings'].distinguish))
+            log.debug('self.interpret: {}'.format(program['settings'].interpret))
             if changed:
                 log.info('There was a change; we need to redo the analysis now.')
                 log.info('The following changed (from,to): {}'.format(changed))
@@ -3473,20 +3472,20 @@ class TaskDressing(HasMenus,ui.Window):
                 bffrb.grid(row=1,column=1)
             options.next('r') #self.runwindow.options['row']+=1
         self.getrunwindow()
-        self.settings.checkinterpretations()
-        analang=self.params.analang()
+        program['settings'].checkinterpretations()
+        analang=program['params'].analang()
         options=Options(r=0,padx=50,pady=10,c=0,vars={},frames={})
-        for s in self.settings.distinguish: #Should be already set.
+        for s in program['settings'].distinguish: #Should be already set.
             options.vars[s] = ui.BooleanVar()
-            options.vars[s].set(self.settings.distinguish[s])
-        for s in self.settings.interpret: #This should already be set, even by default
+            options.vars[s].set(program['settings'].distinguish[s])
+        for s in program['settings'].interpret: #This should already be set, even by default
             options.vars[s] = ui.StringVar()
-            options.vars[s].set(self.settings.interpret[s])
+            options.vars[s].set(program['settings'].interpret[s])
         """Page title and instructions"""
         self.runwindow.title(_("Set Parameters for Segment Interpretation"))
         mwframe=self.runwindow.frame
         title=_("Interpret {} Segments"
-                ).format(self.settings.languagenames[analang])
+                ).format(program['settings'].languagenames[analang])
         titl=ui.Label(mwframe,text=title,font='title',
                 justify=ui.LEFT,anchor='c')
         titl.grid(row=options.get('r'), column=options.get('c'), #self.runwindow.options['column'],
@@ -3494,15 +3493,15 @@ class TaskDressing(HasMenus,ui.Window):
         options.next('r')
         text=_("Here you can view and set parameters that change how {} "
         "interprets {} segments \n(consonant and vowel glyphs/characters)"
-                ).format(program['name'],self.settings.languagenames[analang])
+                ).format(program['name'],program['settings'].languagenames[analang])
         instr=ui.Label(mwframe,text=text,justify=ui.LEFT,anchor='c')
         instr.grid(row=options.get('r'), column=options.get('c'),
                     sticky='ew', padx=options.padx, pady=options.pady)
         """The rest of the page"""
         self.runwindow.scroll=ui.ScrollingFrame(mwframe)
         self.runwindow.scroll.grid(row=2,column=0)
-        log.debug('self.distinguish: {}'.format(self.settings.distinguish))
-        log.debug('self.interpret: {}'.format(self.settings.interpret))
+        log.debug('self.distinguish: {}'.format(program['settings'].distinguish))
+        log.debug('self.interpret: {}'.format(program['settings'].interpret))
         """I considered offering these to the user conditionally, but I don't
         see a subset of them that would only be relevant when another is
         selected. For instance, a user may NOT want to distinguish all Nasals,
@@ -3534,8 +3533,8 @@ class TaskDressing(HasMenus,ui.Window):
         options.opts=[(True,'N#≠C#'),(False,'N#=C#')]
         buttonframeframe(self)
         options.s='D'
-        if analang in self.db.s and 'D' in self.db.s[analang]:
-            depressors=self.db.s[analang]['D']
+        if analang in program['db'].s and 'D' in program['db'].s[analang]:
+            depressors=program['db'].s[analang]['D']
         else:
             depressors=_("<none so far>")
         options.text=_('Do you want to distinguish '
@@ -3619,25 +3618,25 @@ class TaskDressing(HasMenus,ui.Window):
                                 'to address you in?').format(program['name'])
                 ).grid(column=0, row=0)
         buttonFrame1=ui.ButtonFrame(window.frame,
-                                optionlist=self.taskchooser.interfacelangs,
-                                command=self.settings.interfacelangwrapper,
+                                optionlist=program['taskchooser'].interfacelangs,
+                                command=program['settings'].interfacelangwrapper,
                                 window=window,
                                 column=0, row=1
                                 )
     def getanalangname(self,event=None):
         log.info("this sets the language name")
         def submit(event=None):
-            self.settings.languagenames[self.analang]=namevar.get()
-            if (not hasattr(self.settings,'adnlangnames') or
-                    not self.settings.adnlangnames):
-                self.settings.adnlangnames={}
+            program['settings'].languagenames[self.analang]=namevar.get()
+            if (not hasattr(program['settings'],'adnlangnames') or
+                    not program['settings'].adnlangnames):
+                program['settings'].adnlangnames={}
             if "Language with code [" not in namevar.get():
-                self.settings.adnlangnames[self.analang]=namevar.get()
+                program['settings'].adnlangnames[self.analang]=namevar.get()
                 # if self.analang in self.adnlangnames:
-            self.settings.storesettingsfile()
+            program['settings'].storesettingsfile()
             window.destroy()
         window=ui.Window(self,title=_('Enter Analysis Language Name'))
-        curname=self.settings.languagenames[self.analang]
+        curname=program['settings'].languagenames[self.analang]
         defaultname=_("Language with code [{}]").format(self.analang)
         t=_("How do you want to display the name of {}").format(curname)
         if curname != defaultname:
@@ -3652,29 +3651,29 @@ class TaskDressing(HasMenus,ui.Window):
         name.bind('<Return>',submit)
         ui.Button(window.frame,text='OK',cmd=submit,row=1,column=1,sticky='w')
     def getanalang(self,event=None):
-        if len(self.db.analangs) <2: #The user probably wants to change display.
+        if len(program['db'].analangs) <2: #The user probably wants to change display.
             self.getanalangname()
             return
         log.info("this sets the language")
         # fn=inspect.currentframe().f_code.co_name
         window=ui.Window(self,title=_('Select Analysis Language'))
-        if self.db.analangs is None :
+        if program['db'].analangs is None :
             ui.Label(window.frame,
                           text='Error: please set Lift file first! ('
-                          +str(self.db.filename)+')'
+                          +str(program['db'].filename)+')'
                           ).grid(column=0, row=0)
         else:
             ui.Label(window.frame,
                           text=_('What language do you want to analyze?')
                           ).grid(column=0, row=1)
             langs=list()
-            for lang in self.db.analangs:
+            for lang in program['db'].analangs:
                 langs.append({'code':lang,
-                                'name':self.settings.languagenames[lang]})
-                # print(lang, self.taskchooser.languagenames[lang])
+                                'name':program['settings'].languagenames[lang]})
+                # print(lang, program['taskchooser'].languagenames[lang])
             buttonFrame1=ui.ButtonFrame(window.frame,
                                      optionlist=langs,
-                                     command=self.settings.setanalang,
+                                     command=program['settings'].setanalang,
                                      window=window,
                                      column=0, row=4
                                      )
@@ -3683,12 +3682,12 @@ class TaskDressing(HasMenus,ui.Window):
         text=_('What Language do you want to use for glosses?')
         ui.Label(window.frame, text=text, column=0, row=1)
         langs=list()
-        for lang in self.db.glosslangs:
+        for lang in program['db'].glosslangs:
             langs.append({'code':lang,
-                            'name':self.settings.languagenames[lang]})
+                            'name':program['settings'].languagenames[lang]})
         buttonFrame1=ui.ButtonFrame(window.frame,
                                  optionlist=langs,
-                                 command=self.settings.setglosslang,
+                                 command=program['settings'].setglosslang,
                                  window=window,
                                  column=0, row=4
                                  )
@@ -3697,16 +3696,16 @@ class TaskDressing(HasMenus,ui.Window):
         text=_('What other language do you want to use for glosses?')
         ui.Label(window.frame, text=text, column=0, row=1)
         langs=list()
-        for lang in self.db.glosslangs:
-            if lang == self.settings.glosslangs[0]:
+        for lang in program['db'].glosslangs:
+            if lang == program['settings'].glosslangs[0]:
                 continue
             langs.append({'code':lang,
-                            'name':self.settings.languagenames[lang]})
+                            'name':program['settings'].languagenames[lang]})
         langs.append({'code':None, 'name':'just use '
-                +self.settings.languagenames[self.settings.glosslangs.lang1()]})
+                +program['settings'].languagenames[program['settings'].glosslangs.lang1()]})
         buttonFrame1=ui.ButtonFrame(window.frame,
                                     optionlist=langs,
-                                    command=self.settings.setglosslang2,
+                                    command=program['settings'].setglosslang2,
                                     window=window,
                                     column=0, row=4
                                     )
@@ -3715,7 +3714,7 @@ class TaskDressing(HasMenus,ui.Window):
         window=ui.Window(self,title=_('Select Check Type'))
         cvts=[]
         x=0
-        tdict=self.params.cvtdict()
+        tdict=program['params'].cvtdict()
         for cvt in tdict:
             if cvt == 'CV' and (isinstance(self.task,Sort) or
                                 isinstance(self.task,Transcribe)):
@@ -3729,7 +3728,7 @@ class TaskDressing(HasMenus,ui.Window):
             ).grid(column=0, row=0)
         buttonFrame1=ui.ButtonFrame(window.frame,
                                     optionlist=cvts,
-                                    command=self.settings.setcvt,
+                                    command=program['settings'].setcvt,
                                     window=window,
                                     column=0, row=1
                                     )
@@ -3755,7 +3754,7 @@ class TaskDressing(HasMenus,ui.Window):
         buttonFrame1=ui.ScrollingButtonFrame(
                                 window.frame,
                                 optionlist=levels,
-                                command=self.settings.setparserasklevel,
+                                command=program['settings'].setparserasklevel,
                                 window=window,
                                 column=0, row=1
                                             )
@@ -3771,7 +3770,7 @@ class TaskDressing(HasMenus,ui.Window):
         buttonFrame1=ui.ScrollingButtonFrame(
                                 window.frame,
                                 optionlist=levels,
-                                command=self.settings.setparserautolevel,
+                                command=program['settings'].setparserautolevel,
                                 window=window,
                                 column=0, row=1
                                             )
@@ -3782,13 +3781,13 @@ class TaskDressing(HasMenus,ui.Window):
         ui.Label(window.frame, text=_('What lexical category do you '
                                     'want to work with (Part of speech)?')
                 ).grid(column=0, row=0)
-        if hasattr(self,'additionalps') and self.settings.additionalps is not None:
+        if hasattr(self,'additionalps') and program['settings'].additionalps is not None:
             pss=program['db'].pss+program['settings'].additionalps #these should be lists
         else:
             pss=program['db'].pss
         buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                             optionlist=pss,
-                                            command=self.settings.setps,
+                                            command=program['settings'].setps,
                                             window=window,
                                             column=0, row=1
                                             )
@@ -3796,21 +3795,21 @@ class TaskDressing(HasMenus,ui.Window):
         log.info("Asking for profile...")
         # self.refreshattributechanges()
         window=ui.Window(self,title=_('Select Syllable Profile'))
-        ps=self.slices.ps()
-        if self.settings.profilesbysense[ps] is None: #likely never happen...
+        ps=program['slices'].ps()
+        if program['settings'].profilesbysense[ps] is None: #likely never happen...
             ui.Label(window.frame,
             text=_('Error: please set Grammatical category with profiles '
                     'first!')+' (not '+str(ps)+')'
             ).grid(column=0, row=0)
         else:
-            profilecounts=self.slices.valid()
-            profilecountsAdHoc=self.slices.adhoccounts()
-            profiles=self.status.profiles(**kwargs)
+            profilecounts=program['slices'].valid()
+            profilecountsAdHoc=program['slices'].adhoccounts()
+            profiles=program['status'].profiles(**kwargs)
             if profilecountsAdHoc:
-                adhocdict=self.slices.adhoc()
+                adhocdict=program['slices'].adhoc()
                 profilecounts.update(profilecountsAdHoc)
                 if ps in adhocdict:
-                    profiles+=self.slices.adhoc()[ps].keys()
+                    profiles+=program['slices'].adhoc()[ps].keys()
             profiles=dict.fromkeys(profiles)
             if not profiles:
                 log.error("No profiles of {} type found!".format(kwargs))
@@ -3825,7 +3824,7 @@ class TaskDressing(HasMenus,ui.Window):
             window.scroll.grid(column=0, row=1)
             buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
                                     optionlist=optionslist,
-                                    command=self.settings.setprofile,
+                                    command=program['settings'].setprofile,
                                     window=window,
                                     column=0, row=0
                                     )
@@ -3851,16 +3850,17 @@ class TaskDressing(HasMenus,ui.Window):
                                             column=0, row=1
                                             )
     def getsecondformfieldN(self,event=None):
-        ps=self.settings.nominalps
-        opts=self.settings.plopts
-        othername=self.settings.imperativename
-        setcmd=self.settings.setsecondformfieldN
+        ps=program['settings'].nominalps
+        opts=program['settings'].plopts
+        othername=program['settings'].imperativename
+        setcmd=program['settings'].setsecondformfieldN
         self.getsecondformfield(ps,opts,othername,setcmd)
     def getsecondformfieldV(self,event=None):
-        ps=self.settings.verbalps
-        opts=self.settings.impopts
-        othername=self.settings.pluralname
-        setcmd=self.settings.setsecondformfieldV
+        # log.info(".impopts: {}".format(program['settings'].impopts))
+        ps=program['settings'].verbalps
+        opts=program['settings'].impopts
+        othername=program['settings'].pluralname
+        setcmd=program['settings'].setsecondformfieldV
         self.getsecondformfield(ps,opts,othername,setcmd)
     def getcustomsecondformfield(self,ps,othername,setcmd):
         def updateerror(event=None):
@@ -3912,13 +3912,14 @@ class TaskDressing(HasMenus,ui.Window):
                                     # other=True
                                     )
         log.info("Asking for ‘{}’ second form field...".format(ps))
-        if not self.analang in self.db.fieldnames or not self.db.fieldnames[
-                                                                self.analang]:
+        if not self.analang in program['db'].fieldnames or not [
+        i for i in program['db'].fieldnames[self.analang] if i != othername]:
             # ErrorNotice(_("I don't see any appropriate fields; I'll give you "
             # "some commonly used ones to choose from."), wait=True)
             other=True
         else:
-            optionslist = self.db.fieldnames[self.analang]
+            # log.info("Fnes: {}".format(program['db'].fieldnames[self.analang]))
+            optionslist = program['db'].fieldnames[self.analang]
         title=_('Select Second Form Field for {}').format(ps)
         window=ui.Window(self,title=title)
         if other:
@@ -3962,7 +3963,7 @@ class TaskDressing(HasMenus,ui.Window):
             ui.Label(window.frame,
                     text=_('What kinds of checks to you want to run?')
                     ).grid(column=0, row=0)
-            cvts=[[i] for i in self.params.cvts()]
+            cvts=[[i] for i in program['params'].cvts()]
             cvts.remove(['T'])
             cvtsdone=cvts[:]
             # log.info("{};{}".format(len(cvts),cvts))
@@ -3973,7 +3974,7 @@ class TaskDressing(HasMenus,ui.Window):
                 # log.info("{};{}".format(len(cvtsdone),cvtsdone))
             cvtsdone+=[[i[0] for i in cvts]]
             options=[{'code':opt,
-                    'name':unlist([self.params.cvtdict()[i]['pl'] for i in opt])
+                    'name':unlist([program['params'].cvtdict()[i]['pl'] for i in opt])
                     }
                     for opt in cvtsdone
                     ]
@@ -3982,7 +3983,7 @@ class TaskDressing(HasMenus,ui.Window):
                     opt['name']+=' '+_("(only)")
             buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                     optionlist=options,
-                                    command=self.settings.setmulticheckscope,
+                                    command=program['settings'].setmulticheckscope,
                                     window=window,
                                     column=0, row=1
                                                 )
@@ -3991,15 +3992,15 @@ class TaskDressing(HasMenus,ui.Window):
             cvtstodo=self.cvtstodo
         output=[]
         for cvt in self.cvtstodo:
-            output+=[self.params.cvtdict()[cvt]['pl']]
+            output+=[program['params'].cvtdict()[cvt]['pl']]
         return output
     def secondfieldnames(self):
-        if self.settings.nominalps not in self.settings.secondformfield:
+        if program['settings'].nominalps not in program['settings'].secondformfield:
             self.getsecondformfieldN()
-        if self.settings.verbalps not in self.settings.secondformfield:
+        if program['settings'].verbalps not in program['settings'].secondformfield:
             self.getsecondformfieldV()
-        return (self.settings.secondformfield[self.settings.verbalps],
-                self.settings.secondformfield[self.settings.nominalps])
+        return (program['settings'].secondformfield[program['settings'].verbalps],
+                program['settings'].secondformfield[program['settings'].nominalps])
     def getbuttoncolumns(self,event=None):
         log.info("Asking for number of button columns...")
         window=ui.Window(self,title=_('Select Button Columns'))
@@ -4009,7 +4010,7 @@ class TaskDressing(HasMenus,ui.Window):
         optionslist = list(range(1,4))
         buttonFrame1=ui.ButtonFrame(window.frame,
                                 optionlist=optionslist,
-                                command=self.settings.setbuttoncolumns,
+                                command=program['settings'].setbuttoncolumns,
                                 window=window,
                                 column=0, row=1
                                 )
@@ -4022,7 +4023,7 @@ class TaskDressing(HasMenus,ui.Window):
         r=[x for x in range(1,10)]
         buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                 optionlist=r,
-                                command=self.settings.setmaxpss,
+                                command=program['settings'].setmaxpss,
                                 window=window,
                                 column=0, row=1
                                 )
@@ -4035,7 +4036,7 @@ class TaskDressing(HasMenus,ui.Window):
         r=[x for x in range(1,10)]
         buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                 optionlist=r,
-                                command=self.settings.setmaxprofiles,
+                                command=program['settings'].setmaxprofiles,
                                 window=window,
                                 column=0, row=1
                                 )
@@ -4044,10 +4045,10 @@ class TaskDressing(HasMenus,ui.Window):
         log.info("this sets the check")
         # fn=inspect.currentframe().f_code.co_name
         log.info("Getting the check name...")
-        checks=self.status.checks(**kwargs)
+        checks=program['status'].checks(**kwargs)
         window=ui.Window(self,title='Select Check')
         if not checks:
-            if self.params.cvt() == 'T':
+            if program['params'].cvt() == 'T':
                 btext=_("Define a New Tone Frame")
                 text=_("You don't seem to have any tone frames set up.\n"
                 "Click '{}' below to define a tone frame. \nPlease "
@@ -4071,43 +4072,43 @@ class TaskDressing(HasMenus,ui.Window):
             """I need to make this quit the whole program, immediately."""
             b.wait_window(window)
         elif guess is True:
-            self.status.makecheckok(tosort=tosort,wsorted=wsorted)
+            program['status'].makecheckok(tosort=tosort,wsorted=wsorted)
         else:
             log.info("Checks: {}".format(checks))
-            if self.params.cvt() == 'T':
+            if program['params'].cvt() == 'T':
                 checklist=checks
             else:
-                checklist=[(c,self.params.cvcheckname(c)) for c in checks]
+                checklist=[(c,program['params'].cvcheckname(c)) for c in checks]
             text=_('What check do you want to do?')
             ui.Label(window.frame, text=text).grid(column=0, row=0)
             buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                     optionlist=checklist,
-                                    command=self.settings.setcheck,
+                                    command=program['settings'].setcheck,
                                     window=window,
                                     column=0, row=4
                                     )
             count=len(buttonFrame1.bf.winfo_children())
-            if self.taskchooser is self:
+            if program['taskchooser'] is self:
                 task=self.mainwindowis
             else:
                 task=self
-            if self.params.cvt() == 'T':
+            if program['params'].cvt() == 'T':
                 newb=ui.Button(buttonFrame1.bf,
                             text=_("New Frame"),
                             cmd=lambda w=window: task.addframe(window=w),
                             row=count+1)
             buttonFrame1.wait_window(window)
         """Make sure we got a value"""
-        if self.params.check() not in checks:
+        if program['params'].check() not in checks:
             return 1
     def _getgroup(self,window,event=None, **kwargs):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getgroup"""
         log.info("_getgroup kwargs: {}".format(kwargs))
-        ps=kwargs.get('ps',self.slices.ps())
-        cvt=kwargs.get('cvt',self.params.cvt())
-        profile=kwargs.get('profile',self.slices.profile())
-        check=kwargs.get('check',self.params.check())
+        ps=kwargs.get('ps',program['slices'].ps())
+        cvt=kwargs.get('cvt',program['params'].cvt())
+        profile=kwargs.get('profile',program['slices'].profile())
+        check=kwargs.get('check',program['params'].check())
         if (cvt == 'T' and None in [cvt, ps, profile, check]):
             ErrorNotice(parent=window.frame,
                           text=_("You need to set "
@@ -4116,11 +4117,11 @@ class TaskDressing(HasMenus,ui.Window):
                           "\nSyllable Profile (currently {}), and "
                           "\nTone Frame (currently {})"
                           "\nBefore choosing a sort group!"
-                          "").format(self.params.cvtdict()[cvt]['sg'], ps,
+                          "").format(program['params'].cvtdict()[cvt]['sg'], ps,
                           profile, check), column=0, row=0)
             return 1
         kwargs=grouptype(**kwargs) #this just fills in False
-        groups=self.status.groups(cvt=cvt,**kwargs)
+        groups=program['status'].groups(cvt=cvt,**kwargs)
         if not groups:
             ErrorNotice(parent=window.frame,
                           text=_("It looks like you don't have {}-{} lexemes "
@@ -4128,40 +4129,40 @@ class TaskDressing(HasMenus,ui.Window):
                           "").format(ps,profile,check,kwargs, column=0, row=0))
             return
         if kwargs.get('intfirst') and kwargs.get('guess'):
-            l=[int(i) for i in self.status.groups(cvt=cvt,**kwargs)
+            l=[int(i) for i in program['status'].groups(cvt=cvt,**kwargs)
                                     if str(i).isdigit()]
             if l:
-                self.settings.setgroup(str(min(l)),window)
+                program['settings'].setgroup(str(min(l)),window)
             else:
-                self.settings.status.nextgroup(cvt=cvt,**kwargs)
+                program['status'].nextgroup(cvt=cvt,**kwargs)
                 window.destroy()
             return
         elif kwargs.get('guess') or (len(groups) == 1
                                         and not kwargs.get('comparison')):
-            self.settings.status.nextgroup(cvt=cvt,**kwargs)
+            program['status'].nextgroup(cvt=cvt,**kwargs)
             window.destroy()
             return
         if kwargs.get('comparison'):
             g2=groups[:]
-            g2.remove(self.status.group()) #group() is not cvt aware
+            g2.remove(program['status'].group()) #group() is not cvt aware
             if not g2:
                 window.destroy()
                 ErrorNotice(text=_("There don't seem to be any groups "
                             "to compare with!"))
                 return
             if len(g2) == 1:
-                self.settings.setgroup_comparison(g2[0],window)
+                program['settings'].setgroup_comparison(g2[0],window)
                 return
             buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                             optionlist=g2,
-                            command=self.settings.setgroup_comparison,
+                            command=program['settings'].setgroup_comparison,
                             window=window,
                             column=0, row=4
                             )
         else:
             ui.Label(window.frame,
                       text=_("What {} do you want to work with?").format(
-                                              self.params.cvtdict()[cvt]['sg']),
+                                      program['params'].cvtdict()[cvt]['sg']),
                       column=0, row=0)
             # window.scroll=ui.ScrollingFrame(window.frame)
             # window.scroll.grid(column=0, row=1)
@@ -4169,7 +4170,7 @@ class TaskDressing(HasMenus,ui.Window):
             # log.info("Groups: {}".format(groups))
             buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                      optionlist=groups+[(None,'All')],
-                                     command=self.settings.setgroup,
+                                     command=program['settings'].setgroup,
                                      window=window,
                                      column=0, row=4
                                      )
@@ -4180,8 +4181,8 @@ class TaskDressing(HasMenus,ui.Window):
         log.info("this sets the group")
         kwargs=grouptype(**kwargs) #if any should be True, set in wrappers above
         log.info("getgroup kwargs: {}".format(kwargs))
-        self.settings.refreshattributechanges()
-        cvt=kwargs.get('cvt',self.params.cvt())
+        program['settings'].refreshattributechanges()
+        cvt=kwargs.get('cvt',program['params'].cvt())
         if cvt == "V":
             w=ui.Window(self,title=_('Select Vowel'))
             self._getgroup(window=w,**kwargs)
@@ -4195,8 +4196,8 @@ class TaskDressing(HasMenus,ui.Window):
             CV=''
             for kwargs['cvt'] in ['C','V']:
                 self._getgroup(**kwargs)
-                CV+=self.status.group()
-            self.status.group(CV)
+                CV+=program['status'].group()
+            program['status'].group(CV)
             # cvt = "CV"
         elif cvt == "T":
             w=ui.Window(self,title=_('Select Framed Tone Group'))
@@ -4264,14 +4265,14 @@ class TaskDressing(HasMenus,ui.Window):
         l.wrap()
         buttonFrame1=ui.ButtonFrame(window.frame,
                             optionlist=self.npossible,
-                            command=self.settings.setexamplespergrouptorecord,
+                            command=program['settings'].setexamplespergrouptorecord,
                             window=window,
                             column=0, row=4
                                 )
         buttonFrame1.wait_window(window)
     def runwindowcleanup(self):
         log.info("Shutting down runwindow")
-        if self.exitFlag.istrue() and self.taskchooser.towrite:
+        if self.exitFlag.istrue() and program['taskchooser'].towrite:
             log.info("Final write to lift")
             self.maybewrite(definitely=True)
         else:
@@ -4304,16 +4305,16 @@ class TaskDressing(HasMenus,ui.Window):
     def updateazt(self,event=None):
         updateazt()
     def verifictioncode(self,**kwargs):
-        check=kwargs.get('check',self.params.check())
-        group=kwargs.get('group',self.status.group())
+        check=kwargs.get('check',program['params'].check())
+        group=kwargs.get('group',program['status'].group())
         # log.info("about to return {}={}".format(check,group))
         return check+'='+group
     def maybewrite(self,definitely=False):
-        self.taskchooser.maybewrite(definitely=definitely)
+        program['taskchooser'].maybewrite(definitely=definitely)
     def killall(self):
         log.info("Shutting down Task")
         try:
-            towrite=self.taskchooser.towrite
+            towrite=program['taskchooser'].towrite
         except AttributeError:
             towrite=self.towrite #if taskchooser; shouldn't happen, but in case.
         self.wait(msg=_("Closing down {} and storing changes").format(
@@ -4324,13 +4325,13 @@ class TaskDressing(HasMenus,ui.Window):
             self.maybewrite(definitely=True)
         else:
             log.info("No final write to lift")
-        self.settings.trackuntrackedfiles()
+        program['settings'].trackuntrackedfiles()
         self.waitdone() #Don't confuse user; there's more input to come, maybe
-        for r in self.settings.repo:
-            self.settings.repo[r].share()
+        for r in program['settings'].repo:
+            program['settings'].repo[r].share()
             log.info("Done maybe committing/pushing to {}".format(r))
         log.info("Saving settings for next time")
-        self.settings.storesettingsfile() #in case we added repos
+        program['settings'].storesettingsfile() #in case we added repos
         log.info("Settings saved")
         log.info("Killing window")
         ui.Window.killall(self) #Exitable
@@ -4340,25 +4341,25 @@ class TaskDressing(HasMenus,ui.Window):
         self.parent=parent
         self.menu=False #initialize once
         if isinstance(self,TaskChooser):
-            self.taskchooser=self
+            taskchooser=self
         else:
             self.task=self
-            self.taskchooser=self.parent
+            taskchooser=self.parent
             if parent.ifcollectionlcsettingsdone:
-                parent.status.task(self)
+                program['status'].task(self)
         """Whenever this runs, it's the main window."""
-        self.taskchooser.mainwindowis=self
+        taskchooser.mainwindowis=self
         """At some point, I need to think through which attributes are needed,
         and if I can get them all into objects, read/writeable with files."""
         """These are raw attributes from file"""
         """these are objects made by the task chooser"""
         self.inherittaskattrs()
         if hasattr(self,'task') and isinstance(self.task,Multicheck):
-            if hasattr(self.settings,'cvtstodo'):
-                self.cvtstodo=self.settings.cvtstodo
+            if hasattr(program['settings'],'cvtstodo'):
+                self.cvtstodo=program['settings'].cvtstodo
             else:
                 self.cvtstodo=['V']
-        self.analang=self.params.analang() # Every task gets this here
+        self.analang=program['params'].analang() # Every task gets this here
         # super(TaskDressing, self).__init__(parent)
         for k in ['settings',
                     # 'menu',
@@ -4366,7 +4367,7 @@ class TaskDressing(HasMenus,ui.Window):
                     'showdetails']:
             if not hasattr(self,k):
                     setattr(self,k,False)
-        if self.taskchooser.ifcollectionlcsettingsdone:
+        if taskchooser.ifcollectionlcsettingsdone:
             self.makecvtok()
         # Make the actual window
         ui.Window.__init__(self,parent)
@@ -4378,7 +4379,7 @@ class TaskDressing(HasMenus,ui.Window):
         self.makestatusframe()
         self._taskchooserbutton()
         self.correlatemenus()
-        # back=ui.Button(self.outsideframe,text=_("Tasks"),cmd=self.taskchooser)
+        # back=ui.Button(self.outsideframe,text=_("Tasks"),cmd=program['taskchooser'])
         # self.setfontsdefault()
 class TaskChooser(TaskDressing):
     """This class stores the hierarchy of tasks to do in A→Z+T, plus the
@@ -4398,7 +4399,7 @@ class TaskChooser(TaskDressing):
                 'fn':self.choosereports,
                 'font':'title',
                 'compound':'top', #image bottom, left, right, or top of text
-                'image':self.taskchooser.theme.photo['iconReportLogo'],
+                'image':program['theme'].photo['iconReportLogo'],
                 'sticky':'ew'
                 }
     def choosereports(self):
@@ -4406,26 +4407,24 @@ class TaskChooser(TaskDressing):
         self.showreports=True
         self.setmainwindow(self)
         self.gettask()
-    def makedatadict(self):
-        self.datadict=FramedDataDict(self) #needs self.toneframes
     def makeexampledict(self):
-        self.exs=ExampleDict(self.params,self.slices,self.db,self.datadict)
+        self.exs=ExampleDict()
     def guidtriage(self):
         # import time
         log.info("Doing guid triage and other variables —this takes awhile...")
         start_time=nowruntime()
-        self.guids=self.db.guids
+        self.guids=program['db'].guids
         self.guidsinvalid=[] #nothing, for now...
-        self.senseids=self.db.senseids
+        self.senseids=program['db'].senseids
         self.senseidsinvalid=[] #nothing, for now...
         print(len(self.guidsinvalid),'entries with invalid data found.')
-        self.db.guidsinvalid=self.guidsinvalid
+        program['db'].guidsinvalid=self.guidsinvalid
         self.guidsvalid=[]
         for guid in self.guids:
             if guid not in self.guidsinvalid:
                 self.guidsvalid+=[guid]
         print(len(self.guidsvalid),'entries with valid data remaining.')
-        self.guidswanyps=self.db.get('guidwanyps') #any ps value works here.
+        self.guidswanyps=program['db'].get('guidwanyps') #any ps value works here.
         print(len(self.guidswanyps),'entries with ps data found.')
         self.guidsvalidwops=[]
         self.guidsvalidwps=[]
@@ -4434,7 +4433,7 @@ class TaskChooser(TaskDressing):
                 self.guidsvalidwps+=[guid]
             else:
                 self.guidsvalidwops+=[guid]
-        self.db.guidsvalidwps=self.guidsvalidwps #This is what we'll search
+        program['db'].guidsvalidwps=self.guidsvalidwps #This is what we'll search
         print(len(self.guidsvalidwops),'entries with valid data but no ps data.')
         print(len(self.guidsvalidwps),'entries with valid data and ps data.')
         # for var in [self.guids, self.guidswanyps, self.guidsvalidwops, self.guidsvalidwps, self.guidsinvalid, self.guidsvalid]:
@@ -4514,7 +4513,7 @@ class TaskChooser(TaskDressing):
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
         satisfied task"""
-        if self.taskchooser.doneenough['collectionlc']:
+        if program['taskchooser'].doneenough['collectionlc']:
             self.ifcollectionlc()
         """The above is prerequisite to the below, so it is here. It could be
         elsewhere, but that led to numerous repetitions."""
@@ -4656,10 +4655,10 @@ class TaskChooser(TaskDressing):
     def convertlxtolc(self,window):
         window.destroy()
         backup=self.filename+"_backupBeforeLx2LcConversion"
-        self.db.write(backup)
-        self.db.convertlxtolc()
-        # self.db.write(self.file.name+str(now()))
-        self.db.write()
+        program['db'].write(backup)
+        program['db'].convertlxtolc()
+        # program['db'].write(self.file.name+str(now()))
+        program['db'].write()
         conversionlogfile=logsetup.writelzma()
         ErrorNotice(_("The conversion is done now, so {0} will quit. You may "
                     "want to inspect your current file ({1}) and the backup "
@@ -4676,8 +4675,8 @@ class TaskChooser(TaskDressing):
         title=_("Convert lexeme field data to citation form fields?")
         url="{}/CITATIONFORMS.md".format(program['docsurl'])
         w=ui.Window(self,title=title,exit=False)
-        lexemesdone=list(self.db.nentrieswlexemedata.values())#[self.settings.analang]
-        citationsdone=list(self.db.nentrieswcitationdata.values())#[self.settings.analang]
+        lexemesdone=list(program['db'].nentrieswlexemedata.values())#[program['settings'].analang]
+        citationsdone=list(program['db'].nentrieswcitationdata.values())#[program['settings'].analang]
         nbtext1=_("You have {} entries with lexeme data, and only {} with "
                 "citation data.").format(lexemesdone,citationsdone)
         instructions=_("Typically, dictionary work starts by collecting "
@@ -4725,7 +4724,7 @@ class TaskChooser(TaskDressing):
             l.wrap()
         return w
     def getcawlmissing(self):
-        cawls=self.db.get('cawlfield/form/text').get('text')
+        cawls=program['db'].get('cawlfield/form/text').get('text')
         # log.info("CAWL ({}): {}".format(len(cawls),cawls))
         self.cawlmissing=[]
         for i in range(1700):
@@ -4755,9 +4754,9 @@ class TaskChooser(TaskDressing):
                     ]:
             self.donew[taskreq]=False
             self.doneenough[taskreq]=False
-        nentries=self.db.nguids
-        lexemesdone=self.db.nentrieswlexemedata
-        citationsdone=self.db.nentrieswcitationdata
+        nentries=program['db'].nguids
+        lexemesdone=program['db'].nentrieswlexemedata
+        citationsdone=program['db'].nentrieswcitationdata
         log.info("lexemesdone by lang: {}".format(lexemesdone))
         log.info("citationsdone by lang: {}".format(citationsdone))
         #There should never be more lexemes than citation forms.
@@ -4767,14 +4766,14 @@ class TaskChooser(TaskDressing):
         #         w.wait_window(w) # wait for this answer before moving on
         #         break #just ask this once
         self.getcawlmissing()
-        log.info("nfields in db: {}".format(self.db.nfields))
-        log.info("wannotations in db: {}".format(self.db.nfieldswannotations))
-        sorts={k:v for (k,v) in self.db.nfields.items()
+        log.info("nfields in db: {}".format(program['db'].nfields))
+        log.info("wannotations in db: {}".format(program['db'].nfieldswannotations))
+        sorts={k:v for (k,v) in program['db'].nfields.items()
                                             if 'sense/example' in v}
-        sorts.update({k:v for (k,v) in self.db.nfieldswannotations.items()
+        sorts.update({k:v for (k,v) in program['db'].nfieldswannotations.items()
                                             if 'sense/example' not in v})
         # log.info("nfields by lang (updated): {}".format(sorts))
-        sortsrecorded=self.db.nfieldswsoundfiles
+        sortsrecorded=program['db'].nfieldswsoundfiles
         log.info("nfieldswsoundfiles by lang: {}".format(sortsrecorded))
         sortsnotrecorded={}
         if me:
@@ -4783,14 +4782,14 @@ class TaskChooser(TaskDressing):
             enough=25
         # log.info("looking at sorts now: {}".format(sorts))
         for l in sorts:
-            maybeals=[i for i in self.db.audiolangs if l in i]
+            maybeals=[i for i in program['db'].audiolangs if l in i]
             if maybeals:
                 al=maybeals[0]
                 log.info("Using audiolang {} for analang {}"
                             "".format(al,l))
             else:
                 log.info("Couldn't find plausible audiolang (among {}) "
-                        "for analang {}".format(self.db.audiolangs,l))
+                        "for analang {}".format(program['db'].audiolangs,l))
             if al not in sortsrecorded:
                 sortsrecorded[al]={}
             sortsnotrecorded[l]={}
@@ -4828,9 +4827,9 @@ class TaskChooser(TaskDressing):
                         self.doneenough['torecord']=True
                 # log.info("Finished looking at [{}]{} field: {}".format(l,f,self.doneenough))
         # log.info("nfieldswosoundfiles by lang: {}".format(sortsnotrecorded))
-        for lang in self.db.nentrieswlexemedata:
-            remaining=self.db.nentrieswcitationdata[lang
-                                        ]-self.db.nentrieswlexemedata[lang]
+        for lang in program['db'].nentrieswlexemedata:
+            remaining=program['db'].nentrieswcitationdata[lang
+                                        ]-program['db'].nentrieswlexemedata[lang]
             if not remaining:
                 self.donew['parsedlx']=True
             if remaining < 100:
@@ -4842,7 +4841,7 @@ class TaskChooser(TaskDressing):
             if me or citationsdone[lang] > 200: #was 705
                 self.doneenough['collectionlc']=True#I need to think through this
             # log.info("checking '{}'".format(f))
-        for f in [i for j in self.db.sensefieldnames.values() for i in j]:
+        for f in [i for j in program['db'].sensefieldnames.values() for i in j]:
             if 'verification' in f:
                 # log.info("Found ‘verification’ in ‘{}’".format(f))
                 #I need to tweak this, it should follow tone (only) reports:
@@ -4873,7 +4872,7 @@ class TaskChooser(TaskDressing):
             log.info("There doesn't seem to be a runwindow to hide; moving on.")
         while self.writing:
             # log.info("towrite: {}; writing: {}; taskwrite: {}".format(
-            #     self.towrite,self.writing,self.taskchooser.writing))
+            #     self.towrite,self.writing,program['taskchooser'].writing))
             log.info("Waiting to finish writing to lift")
             time.sleep(1)
             self.check_if_write_done() #because after() isn't working here...
@@ -4911,9 +4910,9 @@ class TaskChooser(TaskDressing):
         if not self.ifcollectionlcsettingsdone: #only do this once
             try:
                 log.info("Finishing setup for post-collection projects")
-                self.settings.ifcollectionlc()
+                program['settings'].ifcollectionlc()
                 self.inherittaskattrs()
-                self.makedatadict()
+                # self.makedatadict()
                 self.makeexampledict() #needed for makestatus, needs params,slices,data
                 self.maxprofiles=5 # how many profiles to check before moving on to another ps
                 self.maxpss=2 #don't automatically give more than two grammatical categories
@@ -4927,13 +4926,13 @@ class TaskChooser(TaskDressing):
     def timetowrite(self):
         """only write to file every self.writeeverynwrites times you might."""
         self.writeable+=1 #and tally here each time this is asked
-        return not self.writeable%self.settings.writeeverynwrites
+        return not self.writeable%program['settings'].writeeverynwrites
     def schedule_write_check(self):
         """Schedule `check_if_write_done()` function after five seconds."""
         log.info("Scheduling check")
         program['root'].after(2000, self.check_if_write_done)
         # log.info("Scheduled check")
-        # self.taskchooser.after(5000, self.check_if_write_done, t)
+        # program['taskchooser'].after(5000, self.check_if_write_done, t)
     def check_if_write_done(self):
         # If the thread has finished, allow another write.
         log.info("Checking if writing done to lift.")
@@ -4955,7 +4954,7 @@ class TaskChooser(TaskDressing):
         write=self.timetowrite() #just call this once!
         if (write and not self.writing) or definitely:
             self.towrite=False
-            self.writethread = threading.Thread(target=self.db.write)
+            self.writethread = threading.Thread(target=program['db'].write)
             self.writing=True
             log.info("Writing to lift...")
             self.writethread.start()
@@ -4965,9 +4964,10 @@ class TaskChooser(TaskDressing):
                     "get picked up later...")
             self.towrite=True
     def usbcheck(self):
-        for r in self.settings.repo.values():
+        for r in program['settings'].repo.values():
             r.share()
     def __init__(self,parent):
+        program['taskchooser']=self
         self.towrite=False
         self.writing=False
         self.datacollection=True # everyone starts here?
@@ -4975,14 +4975,14 @@ class TaskChooser(TaskDressing):
         self.showingreports=False
         self.ifcollectionlcsettingsdone=False
         self.interfacelangs=getinterfacelangs()
-        self.filename=FileChooser(self).name
+        self.filename=FileChooser().name
         self.splash = Splash(self)
         self.splash.draw()
         self.splash.progress(25)
-        self.db=FileParser(self.filename).db
+        FileParser(self.filename)
         self.splash.progress(55)
         self.setmainwindow(self)
-        self.settings=Settings(self)
+        Settings(self)
         self.splash.progress(65)
         self.whatsdone()
         self.splash.progress(80)
@@ -4997,9 +4997,9 @@ class TaskChooser(TaskDressing):
         """Can whatsdone be joined with makedefaulttask? they appear together
         elsewhere."""
         self.splash.maketexts() #update for translation change
-        if not self.settings.writeeverynwrites: #0/None are not sensible values
-            self.settings.writeeverynwrites=1
-            self.settings.storesettingsfile()
+        if not program['settings'].writeeverynwrites: #0/None are not sensible values
+            program['settings'].writeeverynwrites=1
+            program['settings'].storesettingsfile()
         self.usbcheck()
         self.writeable=0 #start the count
         if program['nosound']:
@@ -5053,11 +5053,11 @@ class Segments(object):
         """include profile (of those available for ps and check),
         and subcheck (e.g., a: CaC\2)."""
         """Provides self.regexCV and self.regex"""
-        cvt=kwargs.get('cvt',self.params.cvt())
-        # ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        check=kwargs.get('check',self.params.check())
-        group=kwargs.get('group',self.status.group())
+        cvt=kwargs.get('cvt',program['params'].cvt())
+        # ps=kwargs.get('ps',program['slices'].ps())
+        profile=kwargs.get('profile',program['slices'].profile())
+        check=kwargs.get('check',program['params'].check())
+        group=kwargs.get('group',program['status'].group())
         maxcount=rx.countxiny(cvt, profile)
         if profile is None:
             print("It doesn't look like you've picked a syllable profile yet.")
@@ -5114,8 +5114,8 @@ class Segments(object):
         #                                             check.replace('x','')))
         # log.info("self.regexCV (buildregex): {}".format(self.regexCV))
         """Final step: convert the CVx code to regex, and store in self."""
-        self.regex=rx.fromCV(self.regexCV, self.settings.s[self.analang],
-                            self.settings.distinguish,
+        self.regex=rx.fromCV(self.regexCV, program['settings'].s[self.analang],
+                            program['settings'].distinguish,
                             word=True, compile=True)
     def ifregexadd(self,regex,form,id):
         # This fn is just to make this threadable
@@ -5123,15 +5123,15 @@ class Segments(object):
             self.output+=id
     def formspsprofile(self,**kwargs):
         log.info("Asked for forms to search for a data slice (only do once!)")
-        ps=kwargs.get('ps',self.slices.ps())
-        d=self.settings.formstosearch[ps]
+        ps=kwargs.get('ps',program['slices'].ps())
+        d=program['settings'].formstosearch[ps]
         # log.info("Looking at {} entries".format(len(d)))
         return {k:d[k] for k in d
-                        if set(d[k]) & set(self.slices.senseids(**kwargs))}
+                        if set(d[k]) & set(program['slices'].senseids(**kwargs))}
     def senseidformsbyregex(self,regex,**kwargs):
         """This function takes in a compiled regex,
         and outputs a list/dictionary of senseid/{senseid:form} form."""
-        ps=kwargs.get('ps',self.slices.ps())
+        ps=kwargs.get('ps',program['slices'].ps())
         self.output=[]
         # log.info("Kwargs keys: {} (formstosearch n={})".format(kwargs.keys(),
         #                                 len(kwargs['formstosearch'])))
@@ -5158,17 +5158,18 @@ class Segments(object):
         # log.info("Found senses: {}".format(self.output))
         return self.output
     def presortgroups(self,**kwargs):
-        if self.status.presorted(**kwargs):
+        if program['status'].presorted(**kwargs):
             log.info(_("Presorting for this check/slice already done! ({})"
                         "").format(kwargs))
             return
-        cvt=kwargs.get('cvt',self.params.cvt())
-        ps=kwargs.get('ps',self.slices.ps())
-        profile=kwargs.get('profile',self.slices.profile())
-        check=kwargs.get('check',self.params.check())
+        log.info(_("Presorting"))
+        cvt=kwargs.get('cvt',program['params'].cvt())
+        ps=kwargs.get('ps',program['slices'].ps())
+        profile=kwargs.get('profile',program['slices'].profile())
+        check=kwargs.get('check',program['params'].check())
         senseids=[]
-        groups=self.status.groups(wsorted=True,**kwargs)
-        groups=self.status.groups(cvt=cvt)
+        groups=program['status'].groups(wsorted=True,**kwargs)
+        groups=program['status'].groups(cvt=cvt)
         #multiprocess from here?
         w=self.getrunwindow(msg=_("Presorting ({}={})").format(check,groups))
         # test this before implementing it:
@@ -5180,11 +5181,11 @@ class Segments(object):
             s=set(self.senseidformsbyregex(self.regex,ps=ps))
             if s: #senseids just for this group
                 self.presort(list(s),check,group)
-        self.status.presorted(True)
-        self.status.store() #after all the above
+        program['status'].presorted(True)
+        program['status'].store() #after all the above
         self.runwindow.waitdone()
     def presort(self,senseids,check,group):
-        ftype=self.params.ftype()
+        ftype=program['params'].ftype()
         for senseid in senseids:
             t = threading.Thread(target=self.marksortgroup,
                             args=(senseid,group),
@@ -5202,16 +5203,16 @@ class Segments(object):
         t=rx.update(t,program['settings'].rx,check,value)
         for c in reversed(check.split('=')):
             log.info("subbing {} for {} in {}, using {}".format(value,c,tori,
-                                                        self.settings.rx[c]))
-            log.info("found {}".format(self.settings.rx[c].search(t.text)))
-            match=self.settings.rx[c].search(t.text)
+                                                    program['settings'].rx[c]))
+            log.info("found {}".format(program['settings'].rx[c].search(t.text)))
+            match=program['settings'].rx[c].search(t.text)
             if match:
                 matches.append(match.groups()[-1])
                 t.text=match.expand('\\g<1>'+value)+t.text[match.end():]
-            # t.text=self.settings.rx[c].sub('\\g<1>'+value,t.text)
+            # t.text=program['settings'].rx[c].sub('\\g<1>'+value,t.text)
         log.info("updated {} > {}".format(tori,t.text))
         #now that we've potentially added a grapheme, see that it will be found.
-        self.settings.addtoCVrxs(value)
+        program['settings'].addtoCVrxs(value)
         #this should update polygraphs; if so, trigger reanalysis (instead of above)
     def updateformtoannotations(self,senseid,ftype,check=None,write=False):
         """This should take a sense and ftype (and maybe check, not sure)
@@ -5241,8 +5242,8 @@ class Segments(object):
                     self.settings.addtoformstosearch(senseid,t.text,tori)
                     log.info("Done with addtoformstosearch")
                 if len(value)>1:
-                    sc=self.params.cvt()
-                    self.settings.polygraphs[self.analang][sc][value]=True
+                    sc=program['params'].cvt()
+                    program['settings'].polygraphs[self.analang][sc][value]=True
             else:
                 write=False #in case it isn't already
         else: #update to all annotations
@@ -5267,7 +5268,7 @@ class Segments(object):
                             write=kwargs.get('write')
                             )
     def getsenseidsingroup(self,check,group):
-        ftype=self.params.ftype()
+        ftype=program['params'].ftype()
         fkwargs={
                 ftype+'annotationname':check,
                 ftype+'annotationvalue':group
@@ -13231,15 +13232,14 @@ class StatusDict(dict):
                     "".format(a,j,s,ok))
         log.info(annalysisoknotice)
         return ok, joinsinceanalysis, annalysisoknotice
-    def __init__(self,checkparameters,slicedict,toneframes,filename,dict):
+    def __init__(self,filename,dict):
         """To populate subchecks, use self.groups()"""
+        program['status']=self
         self._filename=filename
+        self._task=program.get('defaulttask',WordCollectnParse)
         super(StatusDict, self).__init__()
         for k in [i for i in dict if i is not None]:
             self[k]=dict[k]
-        self._checkparameters=checkparameters
-        self._slicedict=slicedict
-        self._toneframes=toneframes
         self._checksdict={}
         self._cvchecknames={}
 class CheckParameters(dict):
@@ -13303,17 +13303,25 @@ class CheckParameters(dict):
         elif not hasattr(self,'_analang'):
             self._analang=None
         return self._analang
+    def audiolang(self,audiolang=None):
+        if audiolang:
+            self._audiolang=audiolang
+        elif not hasattr(self,'_audiolang'):
+            self._audiolang=None
+        return self._audiolang
     def ftype(self,ftype=None):
         if ftype:
             self._ftype=ftype
         elif not hasattr(self,'_ftype'):
             self._ftype='lc'
         return self._ftype
-    def __init__(self,analang): # had, do I need check? to write?
+    def __init__(self,analang,audiolang): # had, do I need check? to write?
+        program['params']=self
         """replaces setnamesall"""
         """replaces self.checknamesall"""
         super(CheckParameters, self).__init__()
         self._analang=analang
+        self._audiolang=audiolang
         self._cvts={
                 'V':{'sg':_('Vowel'),'pl':_('Vowels')},
                 'C':{'sg':_('Consonant'),'pl':_('Consonants')},
@@ -15014,7 +15022,7 @@ def updateazt(event=None,**kwargs): #should only be parent, for errorroot
         parent=kwargs.get('parent')
         if not parent or not parent.winfo_exists(): #take kwarg if there
             if 'chooser' in program:
-                kwargs['parent']=program['chooser'].mainwindowis
+                kwargs['parent']=program['taskchooser'].mainwindowis
             else:
                 kwargs['parent']=program['root']
         log.info("parent title: {}".format(kwargs['parent'].title()))
@@ -15099,8 +15107,8 @@ def main():
     # root.winfo_class("azt")
     # log.info(root.winfo_class())
     """Translation starts here:"""
-    program['chooser'] = TaskChooser(root) #TaskChooser MainApplication
-    program['chooser'].mainloop()
+    t = TaskChooser(root) #TaskChooser MainApplication
+    t.mainloop()
     sysshutdown()
 def mainproblem():
     def reverttomain(event=None):
