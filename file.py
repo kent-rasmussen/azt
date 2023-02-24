@@ -222,10 +222,22 @@ def getmediadirectory(mediatype=None):
     else:
         prompt=_("Please select where to find the media locally")
     return getdirectory(prompt, media)
+def askopenfilename(**kwargs):
+    return filedialog.askopenfilename(**kwargs)
+    # initialdir = home,#"$HOME",#filetypes=[('LIFT','*.lift')],
+    #                                 title = _("Select LIFT Lexicon File"),
+    #                                 filetypes=[
+    #                                         # ("LIFT File",'.[Ll][Ii][Ff][Tt]','TEXT'),
+    #                                         # ("LIFT File",'.LIFT .lift','TEXT'),
+    #                                         ("LIFT File",'.LIFT','TEXT'),
+    #                                         ("LIFT File",'.lift','TEXT'),
+    #                                         # ("Git repository",'*.git'),
+    #                                         ]
+    #                                 )
 def lift():
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
     home=gethome()
-    filename=filedialog.askopenfilename(initialdir = home,#"$HOME",#filetypes=[('LIFT','*.lift')],
+    filename=askopenfilename(initialdir = home,#"$HOME",#filetypes=[('LIFT','*.lift')],
                                     title = _("Select LIFT Lexicon File"),
                                     filetypes=[
                                             # ("LIFT File",'.[Ll][Ii][Ff][Tt]','TEXT'),
