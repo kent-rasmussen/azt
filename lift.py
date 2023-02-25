@@ -3384,6 +3384,8 @@ class LiftURL():
         log.log(4,"Final URL: {}".format(self.url))
         # self.printurl()
 """Functions I'm using, but not in a class"""
+def quote(x):
+    return "‘"+str(x)+"’"
 def textornone(x):
     try:
         return x.text
