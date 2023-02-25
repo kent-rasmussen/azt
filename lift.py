@@ -2489,6 +2489,25 @@ class Sense(Node,FieldParent):
             l+=self.formattedgloss(lang,ftype,frame,quoted=True) #This is always a list
         # log.info("Returning forms: {}".format(l))
         return ' '.join([i for i in l if i]) #put it all together
+    def rmverificationvalue(self,profile,ftype,value):
+        v=self.verificationtextvalue(profile,ftype)
+        try:
+            v.remove(value)
+            self.verificationtextvalue(profile,ftype,None,v)
+        except Exception as e:
+            log.info("tried to remove what wasn't there? ({})".format(e))
+    def verificationtextvalue(self,profile,ftype,lang=None,value=None):
+        """value here is the list of verification codes, stored as a string"""
+        key='{} {} verification'.format(profile,ftype)
+        try:
+            assert key in self.fields
+        except AssertionError:
+            if value:
+                self.newfield(key,lang,value) #lang=None will give default
+            else:
+                return None
+        # This value is a list, but needs to be stored and retrieved as str text
+        return xmlfns.stringtoobject(self.fields[key].textvaluebylang(str(value)))
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='sense'
         super(Sense, self).__init__(parent, node, **kwargs)
