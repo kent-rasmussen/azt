@@ -1134,7 +1134,9 @@ class StatusFrame(ui.Frame):
         self.opts['row']+=1
         t=self.task
         if t.senseidtodo:
-            txt=_("Parsing {}").format(t.datadict[t.senseidtodo].formatted())
+            txt=_("Parsing {}").format(
+            t.db.sensedict[t.senseidtodo].formatted(t.analang,t.glosslangs)
+            )
         else:
             txt=_("Parsing all words")
         self.proselabel(txt,cmd=t.getsenseidtodo,parent=line)
@@ -2651,8 +2653,8 @@ class Settings(object):
             fn=Tone.getgroupofsenseid
         else:
             fn=Segments.getgroupofsenseid
-        for senseid in senseids:
             self.categorizebygrouping(fn,senseid,**kwargs)
+        for sense in [program['db'].sensedict[i] for i in senseids]:
         #     t = threading.Thread(target=self.categorizebygrouping,
         #                     args=(fn,senseid),
         #                     kwargs=kwargs)
@@ -3838,7 +3840,8 @@ class TaskDressing(HasMenus,ui.Window):
         window.destroy()
     def getsenseidtodo(self,event=None):
         log.info("Asking for senseid...")
-        list=[(k,self.task.datadict[k].formatted()) for k in self.task.datadict]
+            list.append((k,
+                program['db'].sensedict[k].formatted(self.analang,self.glosslangs)))
         if not list:
             log.info("No senseids; sort something?")
             return
@@ -5191,8 +5194,9 @@ class Segments(object):
     def presort(self,senseids,check,group):
         ftype=program['params'].ftype()
         for senseid in senseids:
+            sense=program['db'].sensedict[senseid]
             t = threading.Thread(target=self.marksortgroup,
-                            args=(senseid,group),
+                            args=(sense,group),
                             kwargs={'check':check,
                                     'ftype':ftype,
                                     # 'framed':framed,
@@ -5952,11 +5956,7 @@ class Parse(Segments):
                 'entry':ifone(program['db'].nodes.findall('entry/sense[@id="{}"]/..'
                                             ''.format(self.senseid))),
                 }
-        self.parser.parseentry(**kwargs)
-        try:
-            self.taskchooser.datadict.getframeddata(kwargs['senseid'])
-        except KeyError: #migrate to this
-            self.taskchooser.datadict.getframeddata(kwargs['entry'].senses[0].id)
+        self.parser.parseentry(**kwargs) #sets entry, sense, and senseid for parser
         log.info("lx: {}, lc: {}, pl: {}, imp: {}".format(*self.parser.texts()))
         if min(self.parser.auto, self.parser.ask) <= 4:# and not badps:
             r=self.trythreeforms()
@@ -6439,14 +6439,9 @@ class ToneFrameDrafter(ui.Window):
             before=self.forms[lang]['before']
             after=self.forms[lang]['after']
             checkdefntoadd[lang]=str(before+'__'+after)
-        self.task.toneframes.addframe(self.ps,checktoadd,checkdefntoadd)
-        framed=self.task.datadict.getframeddata(senseid)
-        framed.setframe(checktoadd,allframedlangs=True)
-        #At this point, remove this frame (in case we don't submit it)
-        del self.task.toneframes[self.ps][checktoadd]
-        """Display framed data"""
-        # tf={}
-        # tfd={}
+        formdict=self.gimmesenseformdictwftypengloss(checkdefntoadd)
+        #This should only pull from current ps
+        # log.info('formdict result: {}'.format(formdict))
         padx=50
         pady=10
         row=0
@@ -6459,9 +6454,18 @@ class ToneFrameDrafter(ui.Window):
                 row=row,column=0,
                 sticky='w',#columnspan=2,
                 padx=padx,pady=pady)
-        for lang in framed.forms.framed:#[self.analang]+self.lookingfor
+        if not formdict:
+            l1=ui.Label(self.exf,
+                    text=_("None!"),
+                    font='read',
+                    justify=ui.LEFT,anchor='w',
+                    row=row,column=0,
+                    sticky='w',
+                    padx=padx,pady=pady)
+            return
+        for lang,forms in formdict.items():
             row+=1
-            text=('[{}]: {}'.format(lang,framed.forms.framed[lang]))
+            text=('[{}]: {}'.format(lang,forms))#framed.forms.framed[lang]))
             l1=ui.Label(self.exf,
                     text=text,
                     font='read',
@@ -6488,36 +6492,33 @@ class ToneFrameDrafter(ui.Window):
         ui.Label(subframe, text=_("<= No changes after this! \nPlease check that "
                                 "the above looks good on several examples!"),
                                 justify='left', row=0, column=1, padx=15)
-        log.info('sub_btn:{}'.format(stext))
+        # log.info('sub_btn:{}'.format(stext))
+        sub_btn.update_idletasks()
     def promptstrings(self,lang=None,context=None):
         #None of this changes in editing. Is that what we want?
         if lang:
+            lname=program['settings'].languagenames[self.stripftypecode(lang)]
             text=_("Fill in the {} frame forms below.\n(include a "
                 "space to separate word forms)"
-                ).format(program['settings'].languagenames[lang])
-            if lang == self.analang:
+                ).format(lname)
+            if lang != self.stripftypecode(lang): #i.e., analang
                 kind=_('form')
                 ok=_('Use this form')
             else:
                 kind=_('gloss')
-                ok=_('Use this {} form {} the dictionary gloss'.format(
-                                program['settings'].languagenames[lang],
+                ok=_('Use this {} form {} the dictionary gloss'.format(lname,
                                 _(context)))
                 self.glosslangs.append(lang)
             if context == 'before':
                 text+='\n'+_("What text goes *before* \n<==the {} word *{}* "
-                        "\nin the frame?"
-                        ).format(program['settings'].languagenames[lang],kind)
+                        "\nin the frame?").format(lname,kind)
             elif context == 'after':
                 text+='\n'+_("What text goes *after* \nthe {} word *{}*==> "
-                        "\nin the frame?"
-                        ).format(program['settings'].languagenames[lang],kind)
+                        "\nin the frame?").format(lname,kind)
         else:
             text=_("What do you want to call this new {} tone frame for {}?"
-                    ).format(
-                            self.ps,
-                            program['settings'].languagenames[self.analang]
-                            )
+                    ).format(self.ps,
+                            program['settings'].languagenames[self.analang])
             ok=_("Use this name")
         return {'lang':lang, 'prompt':text, 'ok':ok}
     def promptwindow(self,lang=None,context=None,event=None):
@@ -6535,7 +6536,7 @@ class ToneFrameDrafter(ui.Window):
                 self.forms['name']=v.get()
             log.info("Forms: {}".format(self.forms))
             self.w.on_quit()
-            program['status']()
+            self.status()
         def clearNull(event=None):
             if v.get() == null:
                 v.set('')
@@ -6598,8 +6599,8 @@ class ToneFrameDrafter(ui.Window):
                                                 checktoadd,checkdefntoadd
                                                 ))
         # Having made and unset these, we now reset and write them to file.
-        self.task.toneframes.addframe(self.ps,checktoadd,checkdefntoadd)
-        self.task.status.renewchecks() #renew (not update), because of new frame
+        program['toneframes'].addframe(self.ps,checktoadd,checkdefntoadd)
+        program['status'].renewchecks() #renew (not update), because of new frame
         program['settings'].storesettingsfile(setting='toneframes')
         program['settings'].setcheck(checktoadd) #assume we will use this now
         self.task.deiconify()
@@ -6614,7 +6615,6 @@ class ToneFrameDrafter(ui.Window):
         log.info("checking for these langs: {}".format(self.db.glosslangs))
         log.info("Starting with these forms: {}".format(f))
         while '' in f.values():
-            senseid=self.gimmesenseid()
             try:
                 f[self.analang]=self.db.fieldtext(senseid=senseid,
                                                     lang=self.analang,
@@ -6622,6 +6622,11 @@ class ToneFrameDrafter(ui.Window):
                                                     )[0]
             except IndexError:
                 log.info("Looks like we didn't find a form.")
+            if tried > program['db'].nsenseids*1.5: #give up looking randomly
+                senseid=self.gimmesenseid(senseid,next=True)
+            else:
+                senseid=self.gimmesenseid()
+            sense=program['db'].sensedict[senseid]
             log.info(f[self.analang])
             if not f[self.analang]:
                 f[self.analang]=''
@@ -6829,6 +6834,7 @@ class Sort(object):
                                         analang=self.analang,
                                         add=add,rms=rmlist,
                                         write=False)
+            sense=program['db'].sensedict[senseid]
         if kwargs.get('write'):
             self.maybewrite() #for when not iterated over, or on last repeat
     def updatestatus(self,verified=False,**kwargs):
@@ -6944,8 +6950,7 @@ class Sort(object):
                 vars[idn].set(id)
             else:
                 vars[idn].set(0)
-            framed=self.taskchooser.datadict.getframeddata(id)
-            forms=framed.formatted(noframe=True)
+            forms=sense.formatted()
             log.debug("forms: {}".format(forms))
             ui.CheckButton(scroll.content, text = forms,
                                 variable = vars[allpssensids.index(id)],
@@ -7223,29 +7228,32 @@ class Sort(object):
         senseids=program['status'].senseidstosort()
         sorted=program['status'].senseidssorted()
         try:
-            senseid=senseids[0]
+            sense=program['db'].sensedict[senseids[0]]
         except IndexError:
             log.info("maybe ran out of senseids?")
             return
         progress=(str(self.thissort.index(senseid)+1)+'/'+str(len(self.thissort)))
-        framed=self.taskchooser.datadict.getframeddata(senseid)
-        framed.setframe(self.check)
         """After the first entry, sort by groups."""
         # log.debug('groups: {}'.format(program['status'].groups(wsorted=True)))
         if self.runwindow.exitFlag.istrue():
             return #1,1
         ui.Label(self.titles, text=progress, font='report', anchor='w'
                                         ).grid(column=1, row=0, sticky="ew")
-        text=framed.formatted()
+        if self.cvt == 'T' and self.check not in program['toneframes'][self.ps]:
+            text=_("Looking for tone check ‘{}’, but not in {} frames: {}"
+                        "").format(self.check,self.ps,program['toneframes'][self.ps])
+            log.error(text)
+        else:
+            text=sense.formatted(self.analang,self.glosslangs,program['params'].ftype(),
+                            program['toneframes'][self.ps].get(self.check))
         entryview=ui.Frame(self.runwindow.frame, column=1, row=1, sticky="new")
         self.sortitem=self.buttonframe.sortitem=ui.Label(entryview,
                                 text=text,font='readbig',
                                 column=0,row=0, sticky="w",
                                 pady=scaledpady
                                 )
-        if hasattr(framed,'illustration'):
-            self.sortitem['image']=framed.illustration
-            self.sortitem['compound']="left"
+        self.sortitem['image']=sense.illustrationvalue()
+        self.sortitem['compound']="left"
         self.sortitem.wrap()
         self.runwindow.waitdone()
         for b in self.buttonframe.groupbuttonlist:
@@ -7509,9 +7517,8 @@ class Sort(object):
                     ipady=ipady, #Inside the buttons...
                     **kwargs
                     )
-        if hasattr(framed,'illustration'):
-            b['image']=framed.illustration
-            b['compound']="left"
+        b['image']=sense.illustrationvalue()
+        b['compound']="left"
     def join(self):
         log.info("Running join!")
         """This window shows up after sorting, or maybe after verification, to
@@ -7655,9 +7662,9 @@ class Sort(object):
             text=_("Not Trying Again; set a tone frame first!")
             ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
             return
-        for senseid in senseids: #this is a ps-profile slice
-            self.removesenseidfromgroup(senseid)
             # self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
+            for sense in [program['db'].sensedict[i] for i in senseids]: #this is a ps-profile slice
+                self.removesensefromgroup(sense)
             #                 location=check,#ftype=ftype,
             #                 fieldvalue='', #just clear this
             #                 oldfieldvalue='NA', showurl=True #if this
@@ -7686,8 +7693,9 @@ class Sort(object):
         for senseid in senseids:
             """This updates the fieldvalue from 'fieldvalue' to
             'newfieldvalue'."""
+            sense=program['db'].sensedict[senseid]
             u = threading.Thread(target=self.marksortgroup,
-                                args=(senseid,newvalue),
+                                args=(sense,newvalue),
                                 kwargs={'check':check,
                                         'ftype':ftype,
                                         'nocheck': True, #don't verify from lift
@@ -8044,14 +8052,10 @@ class Record(Sound,TaskDressing):
                                             row=1,column=0,sticky='w')
             row=0
             done=list()
-            for senseid in page:
-                sense={}
-                sense['column']=0
-                sense['row']=row
-                sense['senseid']=senseid
-                sense['guid']=firstoflist(self.db.get('entry',
-                                            senseid=senseid).get('guid'))
-                if sense['guid'] in done: #only the first of multiple senses
+            for row,entry in enumerate([program['db'].sensedict[i].entry
+                                            for i in page]):
+                self.runwindow.column=0
+                if entry.guid in done: #only the first of multiple senses
                     continue
                 else:
                     done.append(sense['guid'])
@@ -8178,11 +8182,10 @@ class Record(Sound,TaskDressing):
                     )
                 progressl.grid(row=0,column=2,sticky='ne')
             """This is the title for each page: isolation form and glosses."""
-            titleframed=self.taskchooser.datadict.getframeddata(senseid,check=None)
-            if not titleframed or titleframed.forms[self.analang] is None:
+            text=sense.formatted(self.analang,self.glosslangs)
+            if not text:
                 entryframe.destroy() #is this ever needed?
                 continue
-            text=titleframed.formatted(noframe=True,showtonegroup=False)
             ui.Label(entryframe, anchor='w', font='read',
                     text=text).grid(row=row,
                                     column=0,sticky='w')
@@ -8197,20 +8200,15 @@ class Record(Sound,TaskDressing):
                     lift.examplehaslangform(example,program['settings'].audiolang) == True):
                     continue
                 """These should already be framed!"""
-                framed=self.taskchooser.datadict.getframeddata(example,senseid=senseid)
-                if (not framed or
-                        framed.framed == 'NA' or
-                        not framed.forms[self.analang]):
+                text=example.formatted(self.analang,self.glosslangs)
+                if not text:
                     #Don't show the whole dictionary of frames here:
-                    log.info("Not showing example with framed {}".format(
-                            {i:framed.__dict__[i] for i in framed.__dict__
-                                                        if i!='parent'}))
+                    log.info("Not showing example with text {}".format(text))
                     continue
                 row+=1
                 """If I end up pulling from example nodes elsewhere, I should
                 probably make this a function, like getframeddata"""
-                text=framed.formatted()
-                if not framed:
+                if not text:
                     exit()
                 rb=RecordButtonFrame(examplesframe,self,framed)
                 rb.grid(row=row,column=0,sticky='w')
@@ -8593,9 +8591,9 @@ class Report(object):
                                             ))
                     e1=xlp.Example(s1,id,heading=headtext)
                     for senseid in self.analysis.senseidsbygroup[group]:
+                        sense=program['db'].sensedict[senseid]
                         #This is for window/text output only, not in XLP file
-                        framed=self.taskchooser.datadict.getframeddata(senseid,check=None)
-                        text=framed.formatted(noframe=True,showtonegroup=False)
+                        text=sense.formatted(noframe=True,showtonegroup=False)
                         #This is put in XLP file:
                         examples=self.db.get('example',location=check,
                                                 senseid=senseid).get()
@@ -8608,10 +8606,7 @@ class Report(object):
             else:
                 for senseid in self.analysis.senseidsbygroup[group]:
                     #This is for window/text output only, not in XLP file
-                    framed=self.taskchooser.datadict.getframeddata(senseid,check=None)
-                    if not framed:
-                        continue
-                    text=framed.formatted(noframe=True, showtonegroup=False)
+                    sense=program['db'].sensedict[senseid]
                     #This is put in XLP file:
                     examples=self.db.get('example',senseid=senseid).get()
                     log.log(2,"{} examples found: {}".format(len(examples),
@@ -9024,9 +9019,9 @@ class Report(object):
                         self.basicreported[c]=matches
                         # log.info("First entries: {}".format(
                         #                     list(self.basicreported[c])[:5]))
-            for senseid in matches:
-                framed=self.taskchooser.datadict.getframeddata(senseid)
-                self.framedtoXLP(framed,parent=ex,ftype=ftype,listword=True) #showgroups?
+            for sense in [program['db'].sensedict[m] for m in matches]:
+                node=sense.ftypes[ftype]
+                self.nodetoXLP(node,parent=ex,listword=True) #showgroups?
                 if usegui and hasattr(self,'results'): #i.e., showing results in window
                     self.results.row+=1
                     col=0
@@ -12018,23 +12013,18 @@ class SortGroupButtonFrame(ui.Frame):
                         "".format(example))
                 return
         self.hasexample=True
-        self._n=example['n']
-        framed=example['framed']
-        if framed is None:
-            check=self.check.params.check()
-            log.error("Apparently the framed example for tone group {} in "
-                        "frame {} came back {}".format(group,check,example))
-            return
-        self._senseid=example['senseid']
-        if framed.audiofileisthere():
-            self._filenameURL=framed.filenameURL
+        """now example.audiofileURL"""
+        if node.audiofileisthere:
+            self._filenameURL=node.audiofileURL
         else:
             self._filenameURL=None
-        self._text=framed.formatted(showtonegroup=self.kwargs['showtonegroup'])
-        if hasattr(framed,'illustration'):
-            self._illustration=framed.illustration
-        else:
-            self._illustration=None
+        self._text=node.formatted(program['taskchooser'].analang,
+                                    program['taskchooser'].glosslangs,
+                                    ftype=program['params'].ftype(),
+                                    frame=program['toneframes'].get(
+                                                program['params'].check()),
+                                    showtonegroup=self.kwargs['showtonegroup'])
+        self._illustration=node.sense.illustrationvalue()
         return 1
     def makebuttons(self):
         if self.kwargs['label']:
@@ -12528,6 +12518,9 @@ class SliceDict(dict):
     def inslice(self,senseids):
         senseidstochange=set(self._senseids).intersection(senseids)
         return senseidstochange
+    def senses(self,ps=None,profile=None,**kwargs):
+        return [program['db'].sensedict[i]
+                for i in senseids(ps,profile,**kwargs)]
     def senseids(self,ps=None,profile=None,**kwargs): #don't die on other kwargs
         """This returns an up to date list of senseids in the curent slice
         (because changing ps or profile calls renewsenseids), or else the
