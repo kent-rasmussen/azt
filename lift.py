@@ -2351,7 +2351,8 @@ class Sense(Node,FieldParent):
                 return None
         return self.pssubclass.myvalue(value)
     def rmpsnode(self):
-        if isinstance(self.ps,ET.Element):
+        if (hasattr(self,'ps') and isinstance(self.ps,ET.Element)
+                                and self.ps in self):
             self.remove(self.ps)
         else:
             log.info("psnode {} not found in sense {} ({})".format(self.ps,
@@ -2362,15 +2363,13 @@ class Sense(Node,FieldParent):
         else:
             log.info("pssubclass {} not found in sense {} ({})"
                     "".format(self.pssubclass,self,self.id))
-    def getps(self):
-        self.ps=Ps(self,self.find('grammatical-info'))
     def psvalue(self,value=None):
         try:
             assert isinstance(self.ps,ET.Element)
-            return self.ps.myvalue(value)
-        except AssertionError:
-            if value:
-                self.ps=Ps(self, value=value)
+        except (AssertionError,AttributeError):
+            found=self.find('grammatical-info')
+            if isinstance(found,ET.Element) or value:
+                self.ps=Ps(self, found)
             else:
                 return None
     def getillustration(self):
