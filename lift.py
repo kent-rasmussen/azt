@@ -2266,13 +2266,6 @@ class Illustration(ValueNode):
         super(Illustration, self).__init__(parent, node, **kwargs)
         self.valuename='href'
 class Sense(Node,FieldParent):
-    # def checkforsecondchildbylang(self,lang):
-    #     """This is just for glosses, which behave as form nodes in LIFT"""
-    #     if len(self.findall('gloss[@lang="{}"]'.format(lang))) > 1:
-    #         log.error("{} node in entry {} has multiple forms for {} lang. "
-    #                 "While this is legal LIFT, it is probably an error, and "
-    #                 "will lead to unexpected behavior."
-    #                 "".format(self.tag,self.parent.guid,lang))
     def checkforsecondchildbyloc(self):
         for loc in self.examples:
             exs=[i for i in self.findall('example/field[@type="location"]/'
