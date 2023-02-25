@@ -2337,6 +2337,12 @@ class Sense(Node,FieldParent):
         for n in self.findall('trait[@name="{}-infl-class"]'
                                 ''.format(self.psvalue())):
             self.pssubclass=Trait(self,n) #only if found
+    def tonevaluebyframe(self,frame,value=None):
+        try:
+            return self.examples[frame].tonevalue(value)
+        except KeyError:
+            # log.info("There is no {} example in sense {}".format(frame,self.id))
+            pass
     def pssubclassvalue(self,value=None):
         try:
             assert isinstance(self.pssubclass,ET.Element)
