@@ -1833,8 +1833,14 @@ class Node(ET.Element):
         #     log.info("These kwargs are not being passed on: {}".format(kwargs))
         return tag,attrib
     def nodecheck(self,node,**kwargs):
+        """Is this working?"""
         if not isinstance(node,ET.Element):
-            node=Node(self.parent,**kwargs)
+            try:
+                node=Node(self.parent,**kwargs)
+            except RecursionError:
+                log.error("It looks like you need to add kwargs['tag'] for "
+                        "this class")
+                exit()
         return node
     def __init__(self, parent, node=None, **kwargs):
         self.parent=parent
@@ -1851,9 +1857,12 @@ class Node(ET.Element):
                 self.append(child)
             for attr in ['text', 'tail']:
                 setattr(self,attr,getattr(node,attr))
+            # log.info("removing old node (@{}): {}".format(self.index,node))
             parent.remove(node)
+            # log.info("replacing with new node: {}".format(self))
             parent.insert(self.index,self)
         except:
+            # log.info("adding new node: {}".format(self))
             parent.append(self) #or
 class Text(Node):
     def __init__(self, parent, node=None, **kwargs):
