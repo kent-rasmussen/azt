@@ -2208,6 +2208,8 @@ class Example(FormParent,FieldParent):
                 t.textvaluebylang(lang,value)
             else:
                 return None
+    def gloss(self,lang):
+        return self.translationvalue(lang)
     def lastAZTsort(self):
         try:
             assert isinstance(self.lastsort,ET.Element)
