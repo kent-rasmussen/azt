@@ -1165,44 +1165,36 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                     not self.nsenseswglossdata[lang]):
                 self.glosslangs.remove(lang) #do this just once
     def getsenseswglossdata(self):
-        senseswglossdata={}
-        self.nsenseswglossdata={}
         senseswglossdata={lang:[
-                    i for i in self.senses
-                    if lang in i.glosses
-                    if [j.textvalue() for j in i.glosses[lang] if j.textvalue()]
+                                i for i in self.senses
+                                if i.glossvaluesbylang(lang)
                                 ]
-                    for lang in set([g
-                                        for s in self.senses
-                                        for g in s.glosses
-                                    ])
+                                for lang in self.glosslangs
                             }
         self.nsenseswglossdata={lang:len(senseswglossdata[lang])
                                     for lang in senseswglossdata
                                 }
-        for lang in self.nsenseswglossdata:
-            if (self.nsenseswglossdata[lang] < self.nguids/100):
+        for lang in [l for l in self.nsenseswglossdata if
+                        0 < self.nsenseswglossdata[l] < self.nguids/100]:
                 log.info("Glosslang ˋ{}ˊ appears in less than "
-                        "1% of entries: {}"
-                        "".format(lang,[i.get('id')
-                                            for i in senseswglossdata[lang]]
+                        "1% ({}) of sense glosses: {}"
+                        "".format(lang,self.nsenseswglossdata[lang],
+                                [i.get('id') for i in senseswglossdata[lang]]
                                     ))
     def getsenseswdefndata(self):
-        senseswdefndata={}
-        self.nsenseswdefndata={}
-        for lang in self.glosslangs:
-            senseswdefndata[lang]=[
-                    i for i in self.senses
-                    if i.definition.textvaluebylang(lang)
-                            ]
-            self.nsenseswdefndata[lang]=len(senseswdefndata[lang])
-            if lang in self.analangs:
-                if self.nsenseswdefndata[lang] and (self.nsenseswdefndata[lang]
-                                                    < self.nguids/100):
-                    log.info("Glosslang ˋ{}ˊ appears in less than "
-                            "1% of entries: {}"
-                            "".format(lang,[i.get('id')
-                                            for i in senseswdefndata[lang]]
+        senseswdefndata={lang: [i for i in self.senses
+                                # for lang in self.glosslangs
+                                if i.definition.textvaluebylang(lang)
+                                ]
+                        for lang in self.glosslangs}
+        self.nsenseswdefndata={lang:len(senseswdefndata[lang])
+                                for lang in senseswdefndata}
+        for lang in [l for l in self.nsenseswdefndata if
+                        0 < self.nsenseswdefndata[l] < self.nguids/100]:
+                log.info("Glosslang ˋ{}ˊ appears in less than "
+                        "1% ({}) of sense definitions: {}"
+                        "".format(lang,self.nsenseswdefndata[lang],
+                                    [i.get('id') for i in senseswdefndata[lang]]
                                     ))
     def getguids(self):
         self.guids=self.get('entry').get('guid')
