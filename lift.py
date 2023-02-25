@@ -3947,10 +3947,57 @@ if __name__ == '__main__':
     transvalue="donnez!"
     translang='fr'
     tonevalue='16'
-    for sense in lift.senses:
-        print(
-            sense.formatted('en',lift.glosslangs,ftype='lc',frame=None)
-        )
+    frame={'field':'pl',
+		'en':'__s',
+		'swh':'__',
+		'fr':'__es'}
+    ftype='pl'
+    for entry in lift.entries:
+        # print(getattr(entry,ftype).formatted('en',['fr','shw'],
+        log.info(lift.pss)
+        log.info(entry.sense.cawln)
+        # entry.plvalue(ftype,'en',entry.lc.textvaluebylang('en')+'ś')
+        # print(entry.senses[0].ftypes[ftype].formatted('en',['fr','shw'],
+        #                         ftype=ftype,
+        #                         frame=frame
+        #                         )
+            # sense.formatteddictbylang('en',['fr','shw'])
+        # )
+        break
+    # for sense in lift.senses[1:]:
+    #     sense.entry.plvalue(ftype,'en',sense.textvaluebyftypelang('lc','en')+'ś')
+    #     print(sense.ftypes[ftype].formatted('en',['fr','shw'],
+    #                             ftype=ftype,
+    #                             frame=frame)
+    #         # sense.formatteddictbylang('en',['fr','shw'])
+    #     )
+    #     break
+    log.info(
+            lift.entries
+            # collections.Counter(
+                    # [i.psvalue() for i in lift.senses]
+                    # [i.sense.ps for i in lift.entries]
+                                    # ).most_common()
+            )
+    log.info(
+            lift.entriesbyps
+            # collections.Counter(
+                    # [i.psvalue() for i in lift.senses]
+                    # [i.sense.ps for i in lift.entries]
+                                    # ).most_common()
+            )
+    log.info(
+            lift.sensesbyps
+            # collections.Counter(
+                    # [i.psvalue() for i in lift.senses]
+                    # [i.sense.ps for i in lift.entries]
+                                    # ).most_common()
+            )
+    # for key in lift.entriesbylc['en']:
+    #     if key.startswith('h'):
+    #         for e in lift.entriesbylc['en'][key]:
+    #             prettyprint(e)
+    log.info("lift.sensesbyps: {}".format(lift.sensesbyps))
     lift.write('0.txt')
     n=0
     print(time.time())
