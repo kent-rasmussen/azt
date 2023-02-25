@@ -2539,6 +2539,7 @@ class Entry(Node,FieldParent): # what does "object do here?"
     """
     def getsenses(self):
         self.senses=[Sense(self,i) for i in self if i.tag == 'sense']
+        self.sense=self.senses[0] #for when I really just need one
         # log.info("Found {} sense(s)".format(len(self.senses)))
         # log.info("Found sense(s): {}".format(self.senses))
     def getlx(self):
@@ -2550,31 +2551,68 @@ class Entry(Node,FieldParent): # what does "object do here?"
     def plvalue(self,ftype,lang,value=None):
         try:
             assert self.pl.get('type') == ftype
-        except (AttributeError, AssertionError):
-            if value:
-                self.pl=Field(self,type=ftype)
+            # log.info("plural is correct type ({})".format(ftype))
+        except AssertionError:
+            log.error("Asked for ftype {}, but found pl which is {}"
+                    "".format(ftype,self.pl.get('type')))
+        except AttributeError:
+            # log.info("plural isn't already self.pl ({})".format(ftype))
+            found=self.find('field[@type="{}"]'.format(ftype))
+            if isinstance(found,ET.Element) or value:
+                # log.info("before making field")
+                self.pl=Field(self,found,type=ftype) #OK if None found
+                # log.info("after making field")
+                self.pl.getsense()
                 for sense in self.senses:
                     sense.ftypes['pl']=self.pl
-                # prettyprint(self.pl)
+                    sense.ftypes[ftype]=self.pl #make this accessible here, too
+                # prettyprint(self)
                 self.checkforsecondfieldbytype(ftype)
-                self.getfields() #needed?
             else:
                 return None
+        # log.info("plural to set and return: {} ({})".format(value,lang))
         return self.pl.textvaluebylang(lang,value)
     def impvalue(self,ftype,lang,value=None):
         try:
             assert self.imp.get('type') == ftype
-        except (AttributeError, AssertionError):
-            if value:
-                self.imp=Field(self,type=ftype)
+            # log.info("imperative is correct type ({})".format(ftype))
+        except AssertionError:
+            log.error("Asked for ftype {}, but found imp which is {}"
+                    "".format(ftype,self.imp.get('type')))
+        except AttributeError:
+            # log.info("imperative seems to not already be there ({})".format(ftype))
+            found=self.find('field[@type="{}"]'.format(ftype))
+            if found or value:
+                self.imp=Field(self,found,type=ftype)
+                self.imp.getsense()
                 for sense in self.senses:
                     sense.ftypes['imp']=self.imp
+                    sense.ftypes[ftype]=self.imp #make this accessible here, too
+                # prettyprint(self.imp)
+                self.checkforsecondfieldbytype(ftype)
+            else:
+                return None
+        return self.imp.textvaluebylang(lang,value)
+    def phvalue(self,ftype,lang,value=None):
+        try:
+            assert self.ph.get('type') == ftype
+            log.info("phonetic form is correct type ({})".format(ftype))
+        except AssertionError:
+            log.error("Asked for ftype {}, but found phonetic field which is {}"
+                    "".format(ftype,self.ph.get('type')))
+        except AttributeError:
+            if value:
+                # For now, this just takes the first one. We aren't using this.
+                self.ph=Pronunciation(self,self.find('pronunciation'))
+                self.ph.getsense()
+                for sense in self.senses:
+                    sense.ftypes['ph']=self.ph
                 # prettyprint(self.imp)
                 self.checkforsecondfieldbytype(ftype)
                 self.getfields() #needed?
             else:
                 return None
-        return self.imp.textvaluebylang(lang,value)
+        return self.ph.textvaluebylang(lang,value)
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='entry'
         self.annotationlang=kwargs.pop('annotationlang','en')
@@ -2584,6 +2622,8 @@ class Entry(Node,FieldParent): # what does "object do here?"
         self.getlx()
         self.getlc()
         self.getsenses() #this needs lx and lc already
+        self.lx.getsense() #this needs senses already
+        self.lc.getsense() #this needs senses already
         FieldParent.__init__(self)
         """Probably should rework this... How to get entry fields?"""
         # self.nodes=self.db.nodes.find(f"entry[@guid='{self.guid}']") #get.nodes(self)
