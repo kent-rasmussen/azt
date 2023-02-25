@@ -1629,7 +1629,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if kwargs:
             return self.get('ps',**kwargs).get('value')
         else:
-            return [i.psvalue() for i in self.senses]
+            return collections.Counter([i.psvalue() for i in self.senses])
     def getpssbylang(self,analang=None): #get all POS values in the LIFT file
         ordered={}
         if analang: #if one specified (after not initially found with data)
