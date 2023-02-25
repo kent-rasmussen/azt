@@ -2378,6 +2378,32 @@ class Sense(Node,FieldParent):
                 self.ps=Ps(self, found)
             else:
                 return None
+        return self.ps.myvalue(value)
+    def annotationvaluedictbyftypelang(self,ftype,lang):
+        try:
+            return self.ftypes[ftype].annotationvaluedictbylang(lang)
+        except KeyError:
+            log.info("No {} type to pull annotation dict from".format(ftype))
+    def nodebyftype(self,ftype):
+        try:
+            return self.ftypes[ftype]
+        except KeyError:
+            log.info("No {} type to pull ({})".format(ftype,self.ftypes))
+    def textvaluebyftypelang(self,ftype,lang,value=None):
+        try:
+            return self.ftypes[ftype].textvaluebylang(lang,value)
+        except KeyError:
+            log.info("No {} type ({})".format(ftype,self.ftypes))
+    def annotationvaluebyftypelang(self,ftype,lang,name,value=None):
+        try:
+            # log.info("annotationvaluebyftypelang returning {}".format(
+            #         self.ftypes[ftype].annotationvaluebylang(lang,name,value)))
+            return self.ftypes[ftype].annotationvaluebylang(lang,name,value)
+        except KeyError:
+            log.info("No {} type to pull annotation from".format(ftype))
+    def getcawlline(self):
+        if 'SILCAWL' in self.fields:
+            self.cawln=self.fields['SILCAWL'].textvaluebylang()
     def illustrationvalue(self,value=None):
         try:
             assert isinstance(self.illustration,ET.Element)
