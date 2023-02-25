@@ -2183,14 +2183,21 @@ class Example(FormParent,FieldParent):
             else:
                 return None
     def tonevalue(self,value=None):
+        # log.info(self.fields)
         try:
+            # Fields should already be picked up.
             assert isinstance(self.fields['tone'],ET.Element)
-            return self.fields['tone'].textvaluebylang(value) # w/wo value
-        except (KeyError,AssertionError):
+            log.info("Sending ‘{}’ from tonevalue".format(value))
+            return self.fields['tone'].textvaluebylang(value=value) # w/wo value
+        except (KeyError,AssertionError) as e:
             if value: #don't make field if not setting value
+                log.info("Adding tone value: {} ({})".format(value,e))
                 self.newfield('tone',value=value) #use annotationlang
             else:
+                log.info("No tone value found: {}".format(e))
                 return None
+        except AttributeError as e:
+            log.error("This should never happen! ({})".format(e))
     def translationvalue(self,lang=None,value=None):
         try:
             assert isinstance(self.translation,ET.Element)
