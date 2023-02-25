@@ -2143,10 +2143,9 @@ class FieldParent(object):
             return 1
     def getfields(self):
         self.fields={
-                    type:Field(self,self.find('field[@type="{}"]'.format(type)))
-                        for type in [i.get('type')
-                                    for i in self.findall('field')]
-                        if type
+                    node.get('type'):Field(self,node)
+                        for node in self.findall('field')
+                        if not isinstance(node,Node) #I.e., already brought in
                     }
         for type in self.fields:
             self.checkforsecondfieldbytype(type)
@@ -2166,6 +2165,7 @@ class FieldParent(object):
         if not hasattr(self,'annotationlang'):
             self.annotationlang=self.parent.annotationlang
         self.getfields()
+        # log.info("Initialized field parent for {}".format(self))
 class Example(FormParent,FieldParent):
     def locationvalue(self,loc=None):
         try: # without lang here, annotationlang is used; value=None returns
