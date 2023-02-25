@@ -48,6 +48,7 @@ import openclipart
 import setdefaults
 import xlp
 import urls
+import htmlfns
 from utilities import *
 try:
     import sound
@@ -5502,6 +5503,47 @@ class WordCollection(Segments):
         terms=urls.urlencode(kwargs)
         url='https://openclipart.org/search/?'+terms
         openweburl(url) #should set up download here.
+    def getopenclipart(self,event=None):
+        self.wait(msg="Dowloading images from OpenClipart.org\n{}"
+                        "".format(" ".join(self.glosses)))
+        log.info("Glosses: {}".format(self.glosses))
+        scraper=htmlfns.ImageScraper()
+        for gloss in self.glosses:
+            kwargs={'per_page':50,
+                    "query":gloss #just one word at a time is less restrictive
+                    }
+            terms=urls.urlencode(kwargs)
+            url='https://openclipart.org/search/?'+terms
+            html=htmlfns.getdecoded(url)
+            scraper.feed(html)
+            logo=[i for i in scraper.images
+                                    if 'openclipart-logo-2019.svg' in i['src']]
+            # log.info("scraper.images: ({})".format(scraper.images))
+            # log.info("logo: ({})".format(logo))
+            if logo and logo[0] in scraper.images:
+                # log.info("found logo! ({})".format(logo[0]))
+                scraper.images.remove(logo[0])
+        self.images=[]
+        for i in scraper.images:
+            if i not in self.images:
+                self.images.append(i)
+        log.info("Found {} images: {}".format(len(self.images),self.images))
+        if self.images:
+            file.makedir(self.selectiondir)
+        for i in self.images:
+            url=htmlfns.imgurl(i['src'])
+            num=i['src'].split('/')[-1]
+            i['filename']='_'.join([num,rx.urlok(i.get('alt','noalt'))])
+            log.info("{} ({})".format(url,i['filename']))
+            pic=htmlfns.getbinary(url, timeout=10)
+            # log.info("response data type: {}".format(type(response.data)))
+            i['fqdn']=file.getdiredurl(self.selectiondir,i['filename'])
+            with open(i['fqdn'],'wb') as d:
+                d.write(pic)
+            self.waitprogress(self.images.index(i)*100/len(self.images))
+        if me:
+            ErrorNotice(text="Found {} images!".format(len(self.images)))
+        self.waitdone()
     def getword(self):
         program['taskchooser'].withdraw()# not sure why necessary
         try:
