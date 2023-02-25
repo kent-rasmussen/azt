@@ -1934,7 +1934,7 @@ class Form(Node):
         self.lang=self.get("lang")
 class FormParent(Node):
     def textvaluedict(self):
-        return {lang:self.forms[lang]
+        return {lang:self.forms[lang].textvalue()
                 for lang in self.forms}
     def textquotedbylang(self,lang):
         try:
