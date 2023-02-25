@@ -2293,25 +2293,36 @@ class Sense(Node,FieldParent):
         #     self.checkforsecondchildbylang(lang)
         # log.info("Found {} gloss(es)".format(len(self.glosses)))
         # log.info("Found gloss(es): {}".format(self.glosses))
+    def glossvaluesbylang(self,lang):
+        try:
+            assert isinstance(self.glosses[lang][0],ET.Element)
+            return [i.gettext() for i in self.glosses[lang]]
+        except KeyError:
+            # log.info("No gloss for lang {}".format(lang))
+            pass
     def getdefinitions(self):
         self.definition=Definition(self,self.find('definition'))
         self.checkforsecondchild('definition')
-    def newexample(self,loc,formvalue,lang,transvalue,translang,tonevalue):
+    def newexample(self,loc,frame,analang,glosslangs,tonevalue):
         if loc in self.examples:
             log.error("There is already a {} example here! ({})".format(loc,
                                                                 self.examples))
             return
         self.examples.update({loc:Example(self)})
         # without lang here, annotationlang is used; value=None does nothing
-        self.examples[loc].textvaluebylang(lang=lang,value=formvalue) #form
+        formvalue=self.formattedform(analang,
+                                    # ftype, #shouldn't be needed
+                                    frame=frame)
+        self.examples[loc].textvaluebylang(lang=analang,value=formvalue) #form
         self.examples[loc].tonevalue(tonevalue)
         self.examples[loc].locationvalue(loc)
-        self.examples[loc].translationvalue(translang,transvalue)
-        self.examples[loc].setsource()
+        for g in glosslangs:
+            for f in self.formattedgloss(g,frame=frame)[:1]: #don't put multiples here
+                self.examples[loc].translationvalue(g,f)
+        self.examples[loc].setguid()
+        self.examples[loc].lastAZTsort()
+        prettyprint(self.examples[loc])
     def getexamples(self):
-        examples=[Example(self,i) for i in self
-                                            if i and i.tag == 'example'
-                            ]
         self.examples={loc:Example(self,self.find(
                                     'example/field[@type="location"]/'
                                     'form/text[.="{}"]/../../..'.format(loc)))
