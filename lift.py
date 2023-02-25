@@ -71,17 +71,18 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         CAWL template"""
         self.getentries()
         self.getsenses()
-        self.sliceentries()
-        self.slicesenses()
-        self.getguids() #sets: self.guids and self.nguids
-        self.getpss() #all ps values, in a prioritized list
-        #the following should probably replaced by getsenseidsbyps everywhere
-        self.getsenseids() #sets: self.senseids and self.nsenseids
-        """These three get all possible langs by type"""
         self.getanalangs() #sets: self.analangs, self.audiolangs
+        self.getpss() #all ps values, in a prioritized list
+        self.slicebyps()
+        self.slicebyid()
+        self.slicebylx()
+        self.slicebylc() #1.14s
+        #the following should probably replaced by getsenseidsbyps everywhere
+        """These three get all possible langs by type"""
         self.legacylangconvert() #update from any old language forms to xyz-x-py
         self.getentrieswanalangdata() #sets: self.(n)entriesw(lexeme|citation)data
         self.getsenseswglosslangdata() #sets: self.nsensesw(gloss|defn)data
+        #HERE
         self.getfieldnames() #sets self.fieldnames (of entry)
         self.getsensefieldnames() #sets self.sensefieldnames (fields of sense)
         self.legacyverificationconvert() #data to form nodes (no name changes)
@@ -282,6 +283,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                         # log.info("{}; {}".format(n.tag,n.attrib))
                         n.set('lang',self.pylang(lang))
     def modverificationnode(self,senseid,vtype,ftype,analang,**kwargs):
+        # use self.verificationtextvalue(profile,ftype,lang=None,value=None)
         """this node stores a python symbolic representation, specific to an
         analysis language"""
         showurl=kwargs.get('showurl')
@@ -318,6 +320,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # else:
         #     log.info("Not removing empty node")
     def getverificationnodevaluebyframe(self,senseid,vtype,ftype,analang,frame):
+        # use self.verificationtextvalue(profile,ftype,lang=None,value=None)
+        raise
         # log.info("{}; {}; {}; {}; {}".format(senseid,vtype,ftype,analang,frame))
         nodes=self.getverificationnode(senseid,vtype,ftype,analang)
         vft=nodes[0] #this is a text node
@@ -363,6 +367,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                     # time.time()-start_time)
                                                     ))
     def getverificationnode(self,senseid,vtype,ftype,analang):
+        raise
         sensenode=node=self.getsensenode(senseid=senseid)
         if node is None:
             log.info("Sorry, this didn't return a node: {}".format(senseid))
@@ -374,6 +379,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             "/text".format(vtype,ftype,pylang))
         return vft,vf,sensenode #textnode, fieldnode, sensenode
     def addverificationnode(self,senseid,vtype,ftype,analang):
+        # use self.verificationtextvalue(profile,ftype,lang=None,value=None)
+        raise
         # This no longer accounts for legacy fields, as those should be
         # converted at boot.
         vft,vf,sensenode=self.getverificationnode(senseid,vtype,ftype,analang)
@@ -392,13 +399,17 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.entries=[Entry(self.nodes,i,annotationlang=self.annotationlang)
                             for i in self.nodes
                             if i.tag == 'entry']
-    def sliceentries(self):
+    def getsenses(self):
+        self.senses=[i for j in self.entries for i in j.senses]
+    def slicebyid(self):
         self.entrydict={i.guid:i for i in self.entries}
-        #These next two can be converted to by profile in main.py
-        self.entriesbylx={l:{i.lx.textvaluebylang(l):i}
-                            for i in self.entries
-                            for l in i.lx.forms
+        self.sensedict={i.id:i for i in self.senses}
+        self.guids=self.entrydict.keys()
+        self.nguids=len(self.guids)
+        self.senseids=self.sensedict.keys()
+        self.nsenseids=len(self.guids)
     def slicebyps(self):
+        #This can be converted to by profile in main.py
         self.entriesbyps={ps:[i for i in self.entries
                                 if i.sense.psvalue() == ps
                                 ]
@@ -407,35 +418,63 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.sensesbyps={ps:[i for i in self.senses if i.psvalue() == ps]
                             for ps in self.pss
                             }
+    def slicebylx(self):
+        #This can be converted to by profile in main.py
+        self.entriesbylx={l:{t:[j for j in self.entries
+                                    if t == j.lx.textvaluebylang(l)
+                                ]
+                            for t in [i.lx.textvaluebylang(l)
+                                        for i in self.entries]
+                            if t #don't give None keys
+                            }
+                            for l in self.analangs
                         }
-        self.entriesbylc={l:{i.lc.textvaluebylang(l):i}
-                            for i in self.entries
-                            for l in i.lc.forms
+    def slicebylc(self):
+        #This can be converted to by profile in main.py
+        self.entriesbylc={l:{t:[j for j in self.entries
+                                    if t == j.lc.textvaluebylang(l)
+                                ]
+                            for t in [i.lc.textvaluebylang(l)
+                                        for i in self.entries]
+                            if t #don't give None keys
+                            }
+                            for l in self.analangs
                         }
-        self.entriesbypl={l:{i.pl.textvaluebylang(l):i}
-                            for i in self.entries
-                            if hasattr(i,'pl')
-                            for l in i.pl.forms
+    def slicebypl(self):
+        #This can be converted to by profile in main.py
+        self.entriesbypl={l:{t:[j for j in self.entries
+                                    if t == j.plvalue('Plural',l)
+                                ]
+                            for t in [i.plvalue('Plural',l)
+                                        for i in self.entries]
+                            }
+                            for l in self.analangs
                         }
+    def slicebyimp(self):
+        #This can be converted to by profile in main.py
         self.entriesbyimp={l:{i.imp.textvaluebylang(l):i}
                             for i in self.entries
                             if hasattr(i,'imp')
-                            for l in i.imp.forms
+                            for l in self.analangs
+                            if l in i.imp.forms
                         }
+    def slicebyftype(self):
         self.entriesbyftype={f:{l:{i.fields[f].textvaluebylang(lang=l):i}}
                             for i in self.entries
                             for f in i.fields
-                            for l in i.fields[f].forms
+                            for l in self.analangs
+                            if l in i.fields[f].forms
                             }
-    def getsenses(self):
-        self.senses=[i for j in self.entries for i in j.senses]
-    def slicesenses(self):
-        self.sensedict={i.id:i for i in self.senses}
-        self.sensesbyps={i.psvalue():i for i in self.senses}
-        self.sensesbyftype={f:{l:{i.fields[f].textvaluebylang(l):i}}
+        self.sensesbyftype={f:{l:{t:[i for i in self.senses
+                                    if f in i.fields
+                                    if t == i.fields[f].textvaluebylang(l)
+                                    ]
+                                }}
                             for i in self.senses
                             for f in i.fields
-                            for l in i.fields[f].forms
+                            for l in self.analangs
+                            if l in i.fields[f].forms
+                            for t in [i.fields[f].textvaluebylang(l)]
                             }
         # log.info("senses: {}".format(self.senses))
         # log.info("nsenses: {}".format(len(self.senses)))
