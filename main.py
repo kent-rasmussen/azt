@@ -983,6 +983,11 @@ class StatusFrame(ui.Frame):
                 cmd=self.task.getsecondformfieldN
             else:
                 cmd=self.task.getsecondformfieldV
+            if field == '<unset>' and (isinstance(self.task,Parse) or (
+                isinstance(self.task,WordCollection) and
+                self.type not in ['lx','lc'])):
+                cmd()
+                return #just do one at a time
             self.proselabel(t, cmd=cmd, parent=line)
     def sliceline(self):
         count=program['slices'].count()
