@@ -2340,14 +2340,16 @@ class Sense(Node,FieldParent):
     def pssubclassvalue(self,value=None):
         try:
             assert isinstance(self.pssubclass,ET.Element)
-            return self.pssubclass.value(value)
-        except AssertionError:
-            if value:
-                self.pssubclass=Trait(self,
-                                    name="{}-infl-class".format(self.psvalue()),
-                                    value=value)
+        except (AssertionError,AttributeError):
+            found=self.find('trait[@name="{}-infl-class"]'
+                            ''.format(self.psvalue()))
+            if isinstance(found,ET.Element) or value:
+                self.pssubclass=Trait(self,found,
+                                    name="{}-infl-class".format(self.psvalue()))
+                                    # value=value)
             else:
                 return None
+        return self.pssubclass.myvalue(value)
     def rmpsnode(self):
         if isinstance(self.ps,ET.Element):
             self.remove(self.ps)
