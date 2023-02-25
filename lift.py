@@ -2249,7 +2249,7 @@ class Example(FormParent,FieldParent):
         self.checkforsecondfieldbytype('location')
         self.checkforsecondfieldbytype('tone')
         self.gettranslations()
-class Illustration(Node):
+class Illustration(ValueNode):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='illustration'
         super(Illustration, self).__init__(parent, node, **kwargs)
