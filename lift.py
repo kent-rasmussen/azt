@@ -2512,18 +2512,27 @@ class Sense(Node,FieldParent):
         kwargs['tag']='sense'
         super(Sense, self).__init__(parent, node, **kwargs)
         FieldParent.__init__(self)
+        self.getcawlline()
         self.entry=parent #make a common reference point for sense/entry
+        self.sense=self
         self.id=self.get('id')
-        self.getps()
-        self.getpssubclass()
+        self.psvalue() #set if there
+        self.pssubclassvalue() #set if there
+        """ftypes for pl and imp are set on three other occasions:
+        1. Boot, if found on setting (for all entries)
+        2. on setting/changing field name (for all entries)
+        3. on creating a new field (for that entry)
+        Otherwise, do not expect these to be there!
+        """
         self.ftypes={'lx': self.entry.lx,
                     'lc': self.entry.lc
                     }
         self.getglosses()
         self.getdefinitions()
         self.getexamples()
-        self.getillustration()
+        self.illustrationvalue() #set if there
         # log.info([i.textvalue() for i in self.glosses['en']])
+        # log.info("Initialized sense for {}".format(self))
 class Entry(Node,FieldParent): # what does "object do here?"
     """I have only converted nodes to classes as needed; other items
     have been left alone.
