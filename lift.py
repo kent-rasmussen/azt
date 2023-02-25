@@ -2217,8 +2217,10 @@ class Example(FormParent,FieldParent):
             found=self.find('trait[@name="Latest A-Z+T Sort"]')
             self.lastsort=Trait(self, found, name="Latest A-Z+T Sort")
         return self.lastsort.myvalue(getnow())
+    def setguid(self):
         # only do this on sorting!
         self.set('source','AZT sorted first on {}'.format(getnow()))
+    def getguid(self):
         self.get('source')
     def gettranslations(self):
         #There may be other @types of translation nodes; we use this one.
