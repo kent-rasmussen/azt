@@ -1818,11 +1818,13 @@ class Node(ET.Element):
         if isinstance(node,ET.Element):
             self.index=[i for i in self.parent].index(node)
             tag=node.tag
+            kwargs.pop('tag','') #in case this is there, too.
             attrib=node.attrib
+            kwargs.pop('attrib','') #in case this is there, too.
         else: #i.e., if making a node from scratch
             try:
                 tag=kwargs.pop('tag') #don't pass these twice
-                attrib=kwargs.pop('attrib',{})
+                attrib=kwargs.pop('attrib',kwargs) #{})
             except KeyError:
                 log.error("When making a node, add tag and attrib (dict) "
                             "to kwargs")
