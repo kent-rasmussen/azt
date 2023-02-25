@@ -1915,12 +1915,14 @@ class Form(Node):
             #     return self.annotations[name].get('value')
             return None
     def textquoted(self):
-        r="‘"+self.textnode.text+"’"
-        if hasattr(self.parent,'ftype') and self.parent.ftype not in ['lc']: #lx?
-            r+="("+ftype+")"
+        r=quote(self.textnode.text)
+        shownot=['lc','example']#lx?
+        if hasattr(self.parent,'ftype') and self.parent.ftype not in shownot:
+            r+="("+self.parent.ftype+")"
         return r
     def textvalue(self,value=None):
-        if value:
+        if value is not None: #leave room to clear value with ''
+            # log.info("Setting textvalue to ‘{}’".format(value))
             self.textnode.text=value
         else:
             return self.textnode.text
@@ -1928,6 +1930,7 @@ class Form(Node):
         kwargs['tag']='form'
         super(Form, self).__init__(parent, node, **kwargs)
         self.gettext()
+        self.getannotations()
         self.lang=self.get("lang")
 class FormParent(Node):
     def textvaluedict(self):
