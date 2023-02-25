@@ -2264,6 +2264,7 @@ class Illustration(ValueNode):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='illustration'
         super(Illustration, self).__init__(parent, node, **kwargs)
+        self.valuename='href'
 class Sense(Node,FieldParent):
     # def checkforsecondchildbylang(self,lang):
     #     """This is just for glosses, which behave as form nodes in LIFT"""
