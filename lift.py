@@ -2025,6 +2025,72 @@ class FormParent(Node):
                         if lang
                     }
         self.checkforsecondchildbylang()
+    def langs(self):
+        return self.forms.keys()
+    def formattedbylang(self,lang,frame):
+        t=self.textvaluebylang(lang)
+        if t and frame:
+            t=rx.framerx.sub(t,frame[lang])
+        return t
+    def formatted(self,analang,glosslangs,ftype=None,frame=None,**kwargs):
+        # Don't die on showtonegroup
+        if (ftype and ftype != self.ftype) or (frame and 'field' in frame and
+                                                frame['field'] != self.ftype):
+            try:
+                log.error("Problem; asked for ftype {}, but working on {} node "
+                        "with {} frame"
+                        "".format(ftype,self.ftype,frame.get('field')))
+            except AttributeError:
+                log.error("Problem; asked for ftype {}, but working on {} node "
+                        "with no frame".format(ftype,self.ftype))
+            return
+        l=[self.formattedbylang(analang,frame)]
+        if not [i for i in l if i]:
+            log.info("No {} form found; just giving glosses".format(ftype))
+        try:
+            for lang in [i for i in glosslangs
+                            if i in self.sense.glosses]:
+                for g in self.sense.formattedgloss(lang,ftype,frame,quoted=True):
+                    #This is always a list
+                    if self.ftype == 'pl':
+                        g+=_(" (pl)")
+                    elif self.ftype == 'imp':
+                        g+="!"
+                    l.append(g)
+            return ' '.join([i for i in l if i]) #put it all together
+        except IndexError:
+            log.info(_("This entry doesn't seem to have a sense."))
+        except AttributeError:
+            log.info(_("This doesn't seem to be called on a child of entry "
+                    "({} child of {}), or the entry's first sense ({}) doesn't "
+                    "have gloss languages."
+                    ).format(type(self),type(self.parent),
+                            self.sense.id,
+                            self.sense.glosses.keys()))
+    def getsense(self):
+        if hasattr(self.parent,'senses') and self.parent.senses:
+            # we want a common reference point for glosses, first sense is OK
+            self.sense=self.parent.senses[0]
+        else:
+            log.info("This form can't find a sense ({}; parent: {})"
+                    "".format(type(self),type(self.parent)))
+            log.info("{}; {}".format(hasattr(self.parent,'senses'),
+                                    self.parent.senses))
+    def gloss(self,lang):
+        return ', '.join(self.parent.sense.formattedgloss(lang))
+    def hassoundfile(self,audiolang,audiodir,recheck=False):
+        """These attributes are not stored in lift; they depend on the work
+        environment, so are set on each use"""
+        if hasattr(self,'audiofileisthere') and not recheck:
+            return self.audiofileisthere
+        f=self.textvaluebylang(audiolang)
+        if f:#forms[self.params.audiolang()]
+            abs=file.getdiredurl(audiodir,f)
+            if file.exists(abs):
+                self.audiofileisthere=True
+                self.audiofileURL=abs
+                return True
+        self.audiofileisthere=False #If not in lift *and* file system
     def __init__(self, parent, node=None, **kwargs):
         super(FormParent, self).__init__(parent, node, **kwargs)
         self.getforms()
@@ -2046,14 +2112,10 @@ class Translation(FormParent):
 class Field(FormParent):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='field'
-        if 'type' in kwargs:
-            try:
-                type=kwargs.pop('type')
-                kwargs['attrib']['type']=type
-            except KeyError:
-                kwargs['attrib']={'type':type}
         super(Field, self).__init__(parent, node, **kwargs)
         self.ftype=self.get('type')
+        # log.info("Made field with type {}, texts {}".format(self.ftype,
+        #                                                 self.textvaluedict()))
 class Definition(FormParent):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='definition'
