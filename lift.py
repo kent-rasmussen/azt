@@ -1079,29 +1079,25 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                     ],
                                 ))
     def getentrieswcitationdata(self):
-        self.entrieswcitationdata={}
-        self.nentrieswcitationdata={}
-        for lang in self.analangs:
-            self.entrieswcitationdata[lang]=[
-                    i for i in self.entries
-                    # i for i in self.nodes.findall('entry')
-                    # This creates the node, if not there; textornone forces
-                    # a boolean interpretable response:
-                    if i.lc.textvaluebylang(lang)
-                    # if textornone(Entry.formtextnodeofentry(i,'citation',lang))
-                            ]
-            self.nentrieswcitationdata[lang]=len(self.entrieswcitationdata[lang])
+        self.entrieswcitationdata={lang:[
+                                    i for j in self.entriesbylc[lang].values()
+                                    for i in j
+                                        ]
+                                    for lang in self.analangs
+                                    }
+        self.nentrieswcitationdata={lang:len(self.entrieswcitationdata[lang])
+                                    for lang in self.entrieswcitationdata
+                                    }
     def getentrieswlexemedata(self):
-        self.entrieswlexemedata={}
-        self.nentrieswlexemedata={}
-        for lang in self.analangs:
-            self.entrieswlexemedata[lang]=[
-                i for i in self.entries
-                # This creates the node, if not there; textornone forces
-                # a boolean interpretable response:
-                if i.lx.textvaluebylang(lang)
-                            ]
-            self.nentrieswlexemedata[lang]=len(self.entrieswlexemedata[lang])
+        self.entrieswlexemedata={lang:[
+                                    i for j in self.entriesbylx[lang].values()
+                                    for i in j
+                                        ]
+                                    for lang in self.analangs
+                                    }
+        self.nentrieswlexemedata={lang:len(self.entrieswlexemedata[lang])
+                                    for lang in self.entrieswlexemedata
+                                    }
     def getfieldswsoundfiles(self):
         """This is NOT sensitive to sense level fields, which is where we store
         analysis and verification. This should just pick up entry form fields,
