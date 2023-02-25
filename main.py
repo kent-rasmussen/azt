@@ -1142,6 +1142,17 @@ class StatusFrame(ui.Frame):
         self.opts['row']+=1
         if hasattr(self.task,'dobuttonkwargs'):
             self.bigbutton=self.button(**self.task.dobuttonkwargs())
+    def makesecondfieldsOK(self):
+        for ps in [program['settings'].nominalps, program['settings'].verbalps]:
+            if ps not in program['settings'].secondformfield and (
+                isinstance(self.task,Parse) or (
+                    isinstance(self.task,WordCollection) and
+                    self.type not in ['lx','lc'])):
+                if ps == program['settings'].nominalps:
+                    self.task.getsecondformfieldN()
+                else:
+                    self.task.getsecondformfieldV()
+                return #just do one at a time
     """Right side"""
     def maybeboard(self):
         if hasattr(self,'leaderboard') and type(self.leaderboard) is ui.Frame:
