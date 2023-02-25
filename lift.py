@@ -2415,23 +2415,79 @@ class Sense(Node,FieldParent):
                 self.illustration=Illustration(self, found)
             else:
                 return None
-    def formatted(self,analang,glosslangs,ftype='lc',frame=0,showtonegroup=0):
+        return self.illustration.myvalue(value)
+    def formattedform(self,analang,ftype=None,frame=False):
+        if not ftype:
+            if frame:
+                ftype=frame['field']
+            else:
+                ftype='lc'
+        try:
+            return self.ftypes[ftype].formattedbylang(analang,frame)
+        except KeyError:
+            log.info("No {} type ({})".format(ftype,self.ftypes))
+    def formattedgloss(self,glosslang,ftype=None,frame=False,quoted=False):
+        # log.info("formattedgloss called with glosslang={}, ftype={}, frame={}, "
+        #         "quoted={}"
+        #         "".format(glosslang,ftype,frame,quoted))
+        t=[]
+        try:
+            for gloss in self.glosses[glosslang]: #unlist each gloss for one lang
+                # log.info("gloss forms starting: {}".format(t))
+                # log.info("gloss: {} ({})".format(gloss.textvalue(),glosslang))
+                g=gloss.textvalue()
+                if ftype:
+                    if ftype == 'imp':
+                        g+='!'
+                    elif ftype != 'lc':
+                        g+=' ('+ftype+')'
+                if frame:
+                    g=rx.framerx.sub(g,frame[glosslang])
+                if quoted:
+                    g=quote(g)
+                    # log.info("gloss form quoted: {}".format(g))
+                t.append(g)
+                # log.info("gloss forms formatted: {}".format(t))
+            # log.info("gloss forms returned: {}".format(t))
+            return t
+        except KeyError:
+            log.info("No glosslang {} in sense {}".format(glosslang,sense.id))
+    def formatteddictbylang(self,analang,glosslangs,ftype=None,frame=None):
+        if frame and ftype and not frame['field'] == ftype:
+            log.error("ftype mismatch! ({}/{})".format(frame['field'],ftype))
+            return
+        elif frame and not ftype:
+            ftype=frame['field']
+        log.info("Found glosses {}".format(self.glosses))
+        log.info("asked for glosslangs {}".format(glosslangs))
+        log.info("looking for langs {}".format([i for i in glosslangs
+                                                if i in self.glosses]))
+        d={lang:', '.join(self.formattedgloss(lang,ftype,frame,quoted=True))
+            for lang in [i for i in glosslangs if i in self.glosses]}
+        d[analang]=self.formattedform(analang,ftype,frame)
+
+        return d
+    def formattedexample(self,analang,glosslangs,loc,showtonegroup=False):
+        if loc in self.examples:
+            return self.examples[loc].formatted(analang,glosslangs,
+                                                showtonegroup)
+    def formatted(self,analang,glosslangs,ftype=0,frame=0): #,showtonegroup=0):
+        """This uses frame definition, not name"""
+        """As a format of the sense, there should be no tonegroup to show"""
         if frame and not frame['field'] == ftype:
             log.error("ftype mismatch! ({}/{})".format(frame['field'],ftype))
             return
+        elif frame and not ftype:
+            ftype=frame['field']
         l=[]
-        if showtonegroup:
-            l.append(self.tonevalue())
-        t=getattr(self.entry,ftype).textvaluebylang(analang)
-        if frame:
-            t=rx.framerx.sub(t,frame[analang])
+        # log.info("frame: {}".format(frame))
+        # log.info("1 forms: {}".format(l))
+        t=self.formattedform(analang,ftype,frame)
         l.append(t)
+        # log.info("2 forms: {}".format(l))
         for lang in [i for i in glosslangs if i in self.glosses]:
-            for gloss in self.glosses[lang]: #because this is a list
-                g=gloss.textquoted()
-                if frame:
-                    g=rx.framerx.sub(g,frame[lang])
-                l.append(g)
+            l+=self.formattedgloss(lang,ftype,frame,quoted=True) #This is always a list
+        # log.info("Returning forms: {}".format(l))
         return ' '.join([i for i in l if i]) #put it all together
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='sense'
