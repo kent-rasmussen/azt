@@ -2378,19 +2378,17 @@ class Sense(Node,FieldParent):
                 self.ps=Ps(self, found)
             else:
                 return None
-    def getillustration(self):
-        self.illustration=Illustration(self,self.find('illustration'))
     def illustrationvalue(self,value=None):
         try:
             assert isinstance(self.illustration,ET.Element)
-            if value:
-                self.illustration.value(value)
-        except AssertionError:
-            if value:
-                self.illustration=Illustration(self, value=value)
+            # if value:
+            #     self.illustration.myvalue(value)
+        except (AssertionError,AttributeError):
+            found=self.find('illustration')
+            if isinstance(found,ET.Element) or value:
+                self.illustration=Illustration(self, found)
             else:
                 return None
-        return self.illustration.get('href')
     def formatted(self,analang,glosslangs,ftype='lc',frame=0,showtonegroup=0):
         if frame and not frame['field'] == ftype:
             log.error("ftype mismatch! ({}/{})".format(frame['field'],ftype))
