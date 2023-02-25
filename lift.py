@@ -2227,10 +2227,14 @@ class Example(FormParent,FieldParent):
         self.translation=Translation(self,self.find(
                                     'translation[@type="Frame translation"]'))
         self.checkforsecondfieldbytype("Frame translation",tag='translation')
-    def formatted(self,analang,glosslangs,showtonegroup=False):
+    def formatted(self,analang,glosslangs,showtonegroup=False,**kwargs):
+        # **kwargs is so we don't die on ftype, frame args
         l=[]
         if showtonegroup:
-            l.append(self.tonevalue())
+            try:
+                int(self.tonevalue())  #only for named groups
+            except ValueError:
+                l.append(self.tonevalue())
         l.append(self.textvaluebylang(analang))
         for lang in glosslangs:
             l.append(self.textquotedbylang(lang))
