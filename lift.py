@@ -1959,13 +1959,51 @@ class FormParent(Node):
             else:
                 log.error("textvaluebylang got no lang kwarg, but multiple "
                         "langs present: {}".format(self.forms))
-        try:
-            return self.forms[lang].textvalue(value)
-        except KeyError:
+        if lang not in self.forms:
+            # log.info("Missing ‘{}’ lang in textvaluebylang".format(lang))
             if value is not None: #only make if we're populating it, allow ''
-                self.forms[lang]=Form(self,self.makeformnode(lang,text=value))
+                self.forms[lang]=Form(self,attrib={'lang':lang})
+                # prettyprint(self.forms[lang])
             else:
                 return None
+        # log.info("Sending ‘{}’ from textvaluebylang".format(value))
+        return self.forms[lang].textvalue(value)
+    def annotationvaluedictbylang(self,lang):
+        self.forms[lang].annotationvaluedict()
+    def annotationvaluebylang(self,lang,name,value=None):
+        # this allows forms to be specified for any lang, so long as there is
+        # just one. Ultimately, we should specify which language these fields
+        # should be encoded in, and what to do when the UI lang is different.
+        # right now, this is most relevant for tone and location fields, which
+        # are not really language specific (though may be specified in one lang
+        # or another)
+        # We might want this later:
+        # if not lang:
+        #     if len(self.forms) == 1: # Just one? use it
+        #         lang=list(self.forms.keys())[0]
+        #     elif len(self.forms) == 0: # Adding? use default
+        #         if 'verfication' in self.type:
+        #             lang=self.pylang(self.annotationlang)
+        #         else:
+        #             lang=self.annotationlang
+        #     else:
+        #         log.error("textvaluebylang got no lang kwarg, but multiple "
+        #                 "langs present: {}".format(self.forms))
+        try:
+            # log.info("annotationvaluebylang returning {}".format(
+            #                     self.forms[lang].annotationvalue(name,value)))
+            return self.forms[lang].annotationvalue(name,value)
+        except KeyError:
+            log.error("Can't annotate; no form for {} lang!".format(lang))
+        except Exception as e:
+            log.error("Exception! ({})".format(e))
+            # if value is not None: #only make if we're populating it, allow ''
+            #     self.forms[lang].annotations[name]=Annotation(self,name=name,
+            #                                                         value=value)
+            #     # Should never need this:
+            #     # self.forms[lang]=Form(self,self.makeformnode(lang,text=value))
+            # else:
+            #     return None
     def checkforsecondchildanylang(self,lang):
         if len(self.findall('form')) > 1:
             log.error("{} node in entry {} has multiple forms. "
