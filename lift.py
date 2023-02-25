@@ -1868,27 +1868,27 @@ class Text(Node):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='text'
         super(Text, self).__init__(parent, node, **kwargs)
-class Annotation(Node):
-    def __init__(self, parent, node=None, **kwargs):
-        kwargs['annotation']='text'
-        super(Annotation, self).__init__(parent, node, **kwargs)
 class ValueNode(Node):
-    def value(self,value=None):
+    def myvalue(self,value=None):
         if value:
-            self.set('value',value)
-        return self.get('value')
+            self.set(self.valuename,value)
+        elif value == '':
+            del self.attrib[self.valuename]
+        return self.get(self.valuename)
     def __init__(self, parent, node=None, **kwargs):
+        self.valuename='value' #default
         super(ValueNode, self).__init__(parent, node, **kwargs)
+class Annotation(ValueNode):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='annotation'
+        if 'attrib' in kwargs and 'name' not in kwargs['attrib']: #nodecheck elsewhere
+            log.error("No name for this annotation! ({})".format(kwargs))
+        super(Annotation, self).__init__(parent, node, **kwargs)
 class Trait(ValueNode):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='trait'
         super(Trait, self).__init__(parent, node, **kwargs)
 class Ps(ValueNode):
-    def myvalue(self,value=None):
-        if value:
-            self.set('value',value)
-        else:
-            return self.get('value')
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='grammatical-info'
         super(Ps, self).__init__(parent, node, **kwargs)
