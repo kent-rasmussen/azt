@@ -1829,6 +1829,8 @@ class Node(ET.Element):
                 log.error("When making a node, add tag and attrib (dict) "
                             "to kwargs")
                 raise
+        # if kwargs:
+        #     log.info("These kwargs are not being passed on: {}".format(kwargs))
         return tag,attrib
     def nodecheck(self,node,**kwargs):
         if not isinstance(node,ET.Element):
