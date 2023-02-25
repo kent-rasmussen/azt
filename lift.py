@@ -957,9 +957,19 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """These are ordered by frequency in the database"""
         self.audiolangs=[]
         self.analangs=[]
-        lxl=self.get('lexeme/form').get('lang')
-        lcl=self.get('citation/form').get('lang')
-        pronl=self.get('pronunciation/form').get('lang')
+        lxl=[j for k in [i.lx.langs()
+                        for i in self.entries]
+                    for j in k
+                    ]
+        lcl=[j for k in [i.lc.langs()
+                        for i in self.entries]
+                    for j in k
+                    ]
+        pronl=[j for k in [i.ph.langs()
+                        for i in self.entries
+                        if hasattr(i,'ph')]
+                    for j in k
+                    ]
         langsbycount=collections.Counter(lxl+lcl+pronl)
         self.analangs=[i[0] for i in langsbycount.most_common()
                         if i[0] != 'x-unk'] #I assume will never analyze this
