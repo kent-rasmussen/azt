@@ -2208,10 +2208,15 @@ class Example(FormParent,FieldParent):
                 t.textvaluebylang(lang,value)
             else:
                 return None
-    def setsource(self):
+    def lastAZTsort(self):
+        try:
+            assert isinstance(self.lastsort,ET.Element)
+        except (AssertionError,AttributeError):
+            found=self.find('trait[@name="Latest A-Z+T Sort"]')
+            self.lastsort=Trait(self, found, name="Latest A-Z+T Sort")
+        return self.lastsort.myvalue(getnow())
         # only do this on sorting!
-        self.set('source','AZT sort on {}'.format(getnow()))
-    def getsource(self):
+        self.set('source','AZT sorted first on {}'.format(getnow()))
         self.get('source')
     def gettranslations(self):
         #There may be other @types of translation nodes; we use this one.
