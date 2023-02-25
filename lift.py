@@ -1952,7 +1952,10 @@ class FormParent(Node):
             if len(self.forms) == 1: # Just one? use it
                 lang=list(self.forms.keys())[0]
             elif len(self.forms) == 0: # Adding? use default
-                lang=self.annotationlang
+                if 'verfication' in self.ftype:
+                    lang=self.pylang(self.annotationlang)
+                else:
+                    lang=self.annotationlang
             else:
                 log.error("textvaluebylang got no lang kwarg, but multiple "
                         "langs present: {}".format(self.forms))
