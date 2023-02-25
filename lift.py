@@ -1895,15 +1895,25 @@ class Ps(ValueNode):
 class Form(Node):
     def gettext(self):
         self.textnode=Text(self,self.find('text'))
-    def getannotation(self):
-        self.annonodes={i.get('name'):Annotation(self,i) for i in self
+    def getannotations(self):
+        self.annotations={i.get('name'):Annotation(self,i) for i in self
                                             if i.tag == 'annotation'
                         }
+    def annotationvaluedict(self):
+        return {name:self.annotations[name].annotationvalue(name)
+                for name in self.annotations}
     def annotationvalue(self,name,value=None):
-        if value:
-            self.annonodes.text=value
-        else:
-            return self.annonodes.text
+        try:
+            # log.info("annotationvalue returning {}"
+            #         "".format(self.annotations[name].myvalue(value)))
+            return self.annotations[name].myvalue(value)
+        except KeyError:
+            if value:
+                self.annotations[name]=Annotation(self,attrib={'name':name,
+                                                                'value':value})
+            # else:
+            #     return self.annotations[name].get('value')
+            return None
     def textquoted(self):
         r="‘"+self.textnode.text+"’"
         if hasattr(self.parent,'ftype') and self.parent.ftype not in ['lc']: #lx?
