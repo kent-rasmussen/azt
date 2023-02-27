@@ -12958,7 +12958,7 @@ class StatusDict(dict):
         if g is not None:
             self._recorded=g
         return self._recorded
-    def update(self,group=None,verified=False,write=True):
+    def update(self,group=None,verified=False,writestatus=True):
         """This function updates the status variable, not the lift file."""
         changed=False
         if group is None:
@@ -12975,7 +12975,7 @@ class StatusDict(dict):
             if group in n['done']:
                 n['done'].remove(group)
                 changed=True
-        if write and changed:
+        if writestatus and changed:
             self.store()
         # log.info("Verification after update: {}".format(self.verified()))
         return changed
@@ -13036,6 +13036,7 @@ class StatusDict(dict):
             sn['last']={}
         if update:
             sn['last'][task]=now()
+        if kwargs.get('write'):
             self.store()
         if task in sn['last']:
             return sn['last'][task]
