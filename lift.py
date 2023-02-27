@@ -2456,7 +2456,9 @@ class Sense(Node,FieldParent):
                     elif ftype != 'lc':
                         g+=' ('+ftype+')'
                 if frame:
+                    # log.info("gloss form to sub: {}".format(g))
                     g=rx.framerx.sub(g,frame[glosslang])
+                    # log.info("gloss form subbed: {}".format(g))
                 if quoted:
                     g=quote(g)
                     # log.info("gloss form quoted: {}".format(g))
