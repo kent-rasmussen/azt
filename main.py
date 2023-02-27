@@ -7543,7 +7543,7 @@ class Sort(object):
     def verify(self,menu=False):
         def updatestatus(v):
             log.info("Updating status with {}, {}, {}".format(check,group,v))
-            self.updatestatus(verified=v)
+            self.updatestatus(verified=v,writestatus=True)
             self.maybewrite()
         log.info("Running verify!")
         """Show entries each in a row, users mark those that are different, and we
