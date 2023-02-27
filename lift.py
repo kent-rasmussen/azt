@@ -2196,7 +2196,7 @@ class Example(FormParent,FieldParent):
         try:
             # Fields should already be picked up.
             assert isinstance(self.fields['tone'],ET.Element)
-            log.info("Sending ‘{}’ from tonevalue".format(value))
+            # log.info("Sending ‘{}’ from tonevalue".format(value))
             return self.fields['tone'].textvaluebylang(value=value) # w/wo value
         except (KeyError,AssertionError) as e:
             if value: #don't make field if not setting value
