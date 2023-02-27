@@ -12729,6 +12729,10 @@ class StatusDict(dict):
         """This will just store to file; reading will come from check."""
         log.info("Saving status dict to file")
         config=ConfigParser()
+        # config.read(self._filename,encoding='utf-8')
+        # if config != self:
+        #     log.info("config: {}".format(config.keys()))
+        #     log.info("self: {}".format(self.keys()))
         config['status']=indenteddict(self) #getattr(o,s)
         with open(self._filename, "w", encoding='utf-8') as file:
             config.write(file)
