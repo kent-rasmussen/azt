@@ -164,8 +164,8 @@ class Theme(object):
                             ('change','Change Circle_sm.png'),
                             ('checkedbox','checked.png'),
                             ('uncheckedbox','unchecked.png'),
-                            ('NoImage','openclipart.com/Image-Not-Found.png'),
-                            ('Order!','openclipart.com/order!.png'),
+                            ('NoImage','openclipart.org/Image-Not-Found.png'),
+                            ('Order!','openclipart.org/order!.png'),
                         ]:
             try:
                 #hyperthread here!
