@@ -7517,7 +7517,7 @@ class Sort(object):
             tosort=self.presenttosort()
             """thread here? No, this updates the UI, as well as writing data"""
             if not self.runwindow.exitFlag.istrue() and tosort:
-                self.buttonframe.sortselected(*tosort)
+                self.buttonframe.sortselected(tosort)
         if not self.runwindow.exitFlag.istrue():
             self.runwindow.resetframe()
     def reverify(self):
