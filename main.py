@@ -11971,22 +11971,22 @@ class SortGroupButtonFrame(ui.Frame):
         return self._var
     def getexample(self,**kwargs):
         kwargs=exampletype(**kwargs)
-        example=self.exs.getexample(self.group,**kwargs)
+        self._n,node=self.exs.getexample(self.group,**kwargs)
         self.hasexample=False
-        if not example or 'senseid' not in example:
+        if not node:# or 'senseid' not in example:
             if kwargs['wsoundfile']:
                 log.error("self.exs.getexample didn't return an example "
                                     "with a soundfile; trying for one without")
                 kwargs['wsoundfile']=False
-                example=self.exs.getexample(self.group,**kwargs)
-                if not example or 'senseid' not in example:
+                self._n,node=self.exs.getexample(self.group,**kwargs)
+                if not node:# or 'senseid' not in example:
                     log.error("self.exs.getexample didn't return an example "
                                         "with or without sound file; returning")
                     return
             else:
                 log.error("self.exs.getexample didn't return an example "
                         "(without needing a sound file); returning ({})"
-                        "".format(example))
+                        "".format(node))
                 return
         self.hasexample=True
         """now example.audiofileURL"""
@@ -12030,7 +12030,7 @@ class SortGroupButtonFrame(ui.Frame):
         self.check.pyaudiocheck()
         self.check.soundsettingscheck()
         self.player=sound.SoundFilePlayer(self._filenameURL,self.check.pyaudio,
-                                                    self.check.soundsettings)
+                                            program['settings'].soundsettings)
         b=ui.Button(self, text=self._text,
                     cmd=self.player.play,
                     column=1, row=0,
@@ -12097,6 +12097,7 @@ class SortGroupButtonFrame(ui.Frame):
             del bkwargs[arg]
         return bkwargs #only the kwargs appropriate for buttons
     def __init__(self, parent, check, exdict, group, **kwargs):
+        log.info("Initializing buttons for group {}".format(group))
         self.exs=exdict
         self.check=check #the task/check OR the scrollingframe! use self.check.task
         self.group=group
