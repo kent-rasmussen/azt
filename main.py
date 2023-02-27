@@ -6920,26 +6920,37 @@ class Tone(object):
     def updateformtoannotations(self,*args,**kwargs):
         #simpler than calling and uncalling..…
         pass
-    def setsenseidgroup(self,senseid,ftype,check,group,**kwargs):
+    def setsensegroup(self,sense,ftype,check,group,**kwargs):
         """here kwargs should include framed, if you want this to update the
         form information in the example"""
         # log.info("Setting tone sort group")
-        ftype=self.verifyframeftype(ftype,check)
         if not ftype:
-            log.error("No field type! see above errors!")
+            log.error("No field type!")
             return
-        self.db.addmodexamplefields( #This should only mod if already there
-                                senseid=senseid,
-                                analang=self.analang,
-                                fieldtype='tone',
-                                #frames should be ftype specific
-                                location=check,
-                                ftype=ftype, #needed to get correct form
-                                # framed=kwargs['framed'],
-                                fieldvalue=group,
-                                write=kwargs.get('write'),
-                                **kwargs #should only include framed, if desired
-                                )
+        try:
+            """Fine if check isn't there; will be caught with exception"""
+            f=sense.formattedform(self.analang,ftype,
+                                program['toneframes'][self.ps][check])
+            log.info("Setting form to {}".format(f))
+            sense.examples[check].textvaluebylang(
+                                    lang=self.analang,
+                                    value=f)
+            log.info("Setting tone sort group to ‘{}’".format(group))
+            sense.examples[check].tonevalue(group)
+            for g in (set(self.glosslangs)& #selected
+                        set(program['toneframes'][self.ps][check])& #defined
+                        set(sense.ftypes[ftype])): # form in lexicon
+                for f in sense.formattedgloss(g,
+                                        program['toneframes'][self.ps][check])[:1]:
+                    log.info("Setting {} translation to {}".format(g,f))
+                    sense.examples[check].translationvalue(g,f)
+            sense.examples[check].lastAZTsort()
+        except KeyError:
+            sense.newexample(check,
+                            program['toneframes'][self.ps][check],
+                            self.analang,
+                            self.glosslangs,
+                            group)
         # log.info("Done setting tone sort group")
     def getsenseidsinUFgroup(self,group):
         return program['db'].get('sense',
@@ -6970,6 +6981,19 @@ class Sort(object):
         check=kwargs.get('check',program['params'].check())
         group=kwargs.get('group',program['status'].group())
         return self.getsenseidsingroup(check, group)
+    def modverification(self,sense,profile,ftype,check,add=None):
+        values=sense.verificationtextvalue(profile,ftype)
+        if add and not values:
+            sense.verificationtextvalue(profile,ftype,value=add)
+        elif values:
+            for code in values[:]:
+                if add and check in code:
+                    log.info("Removing {}".format(code))
+                    values[values.index(code)]=add
+                    add=None #only once
+                elif check in code:
+                    values.remove(code)
+            sense.verificationtextvalue(profile,ftype,None, values) #default lang
     def updatestatuslift(self,verified=False,**kwargs):
         """This should be called only by update status, when there is an actual
         change in status to write to file."""
@@ -6990,19 +7014,9 @@ class Sort(object):
         log.info("Modding {} verification add {}, remove {}".format(profile,
                                                                     add,rms))
         """The above doesn't test for profile, so we restrict that next"""
-        for senseid in self.slices.inslice(senseids): #only for this ps-profile
-            rmlist=rms[:]+self.db.getverificationnodevaluebyframe(
-                                        senseid,vtype=profile,
-                                        ftype=ftype,
-                                        analang=self.analang,
-                                        frame=check)
-            log.info("Removing {}".format(rmlist))
-            self.db.modverificationnode(senseid,vtype=profile,
-                                        ftype=ftype,
-                                        analang=self.analang,
-                                        add=add,rms=rmlist,
-                                        write=False)
+        for senseid in program['slices'].inslice(senseids): #only for this ps-profile
             sense=program['db'].sensedict[senseid]
+            self.modverification(sense,profile,ftype,check,add)
         if kwargs.get('write'):
             self.maybewrite() #for when not iterated over, or on last repeat
     def updatestatus(self,verified=False,**kwargs):
@@ -7151,13 +7165,8 @@ class Sort(object):
                                             "".format(len(tgroups),tgroups))
             return
         rm=self.verifictioncode(check=check,group=group)
-        profile=kwargs.get('profile',self.slices.profile())
-        self.db.modverificationnode(senseid,
-                                    vtype=profile,
-                                    ftype=ftype,
-                                    analang=self.analang,
-                                    rms=[rm])
         profile=kwargs.get('profile',program['slices'].profile())
+        sense.rmverificationvalue(profile,ftype,rm)
         program['status'].last('sort',update=True)
         if write:
             self.maybewrite()
@@ -7241,17 +7250,11 @@ class Sort(object):
             else:
                 curvervalue=None
             if curvervalue == oldgroup: #only update if starting the same
-                rm=self.verifictioncode(check=check,group=oldgroup)
                 add=self.verifictioncode(check=check,group=group)
-                self.db.modverificationnode(
-                                            senseid=senseid,
-                                            vtype=profile,
-                                            ftype=ftype,
-                                            analang=self.analang,
-                                            add=add,
-                                            rms=[rm],
-                                            addifrmd=True
-                                            )
+                self.modverification(sense,profile,ftype,check,add)
+            elif not curvervalue:
+                log.error("Problem updating verification to {}; current value "
+                            "not there (should be {})".format(group, oldgroup))
             else: #not sure what to do here; maybe should throw bigger error?
                 log.error("Problem updating verification to {}; current value "
                             "({}) is there, but not the same as current sort "
