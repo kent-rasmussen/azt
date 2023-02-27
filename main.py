@@ -6393,10 +6393,14 @@ class ToneFrameDrafter(ui.Window):
                         'before':'',
                         'after':''
                         }
-        program['status']()
+        self.status()
     def skiplang(self,lang,event=None):
         del self.forms[lang]
-        program['status']()
+        self.status()
+    def analangftypecode(self):
+        return '_'.join([self.analang,self.forms['field']])
+    def stripftypecode(self,x):
+        return x.removesuffix('_'+self.forms['field'])
     def status(self):
         if self.exitFlag.istrue():
             return
@@ -6413,8 +6417,11 @@ class ToneFrameDrafter(ui.Window):
         if 'name' not in self.forms:
             log.info("Didn't find a name; prompting.")
             self.promptwindow()
-            if isinstance(self.forms['name'],ui.StringVar):
-                log.info("StringVar found, form not entered. Exiting.")
+            if ('name' not in self.forms or #not started
+                    isinstance(self.forms['name'],ui.StringVar) #i.e., not saved
+                    or not self.forms['name']): # empty
+                log.info("Name form not entered. Exiting. ({})"
+                        "".format(self.forms['name']))
                 self.on_quit()
             # log.info(self.forms)
             # log.info(self.exitFlag.istrue())
@@ -6425,7 +6432,7 @@ class ToneFrameDrafter(ui.Window):
         if text == '':
             text=_("Give a frame name!")
         nametext=_("Frame name:")
-        log.info(nametext)
+        # log.info("Frame name: {}".format(text))
         relief='raised' #flat, raised, sunken, groove, and ridge
         frameparams=ui.Frame(self.fds,columnspan=4,column=0,row=0,pady=50,
                             # highlightthickness=5,
@@ -6446,28 +6453,35 @@ class ToneFrameDrafter(ui.Window):
                             relief=relief,
                             column=1,row=0)
         ui.ToolTip(ftypelabel)
-        langs=[i for i in self.forms if self.forms[i]
-                                            and 'before' in self.forms[i]
-                                            and 'after' in self.forms[i]]
-        langsbeforeonly=[i for i in self.forms if self.forms[i]
-                                            and 'before' in self.forms[i]
-                                            and 'after' not in self.forms[i]]
-        langstodo=[i for i in self.langs if i not in langs+langsbeforeonly]
+        self.forms['field']
+        self.langs=[self.analangftypecode()]+program['db'].glosslangs
+                                    # [i for
+                                    # i in program['db'].glosslangs #in db
+                                    # # if i != self.analang
+                                    # ]
+        for l in [self.analangftypecode()]+program['settings'].glosslangs: #actually selected
+            try:
+                self.forms[l]['after']=self.forms[l].get('after','')
+            except KeyError: #i.e., if no l in self.forms
+                self.forms[l]={'after':''}
+            self.forms[l]['before']=self.forms[l].get('before','')
         # log.info("Langs done: {}".format(langs))
         # log.info("self.langs: {}".format(self.langs))
         # log.info("Langs in process: {}".format(langsbeforeonly))
         # log.info("Langs langstodo: {}".format(langstodo))
         nothing='______'#"<"+_("nothing")+">"
         for n,l in enumerate(self.langs):
-            langname=program['settings'].languagenames[l]
+            langname=program['settings'].languagenames[self.stripftypecode(l)]
             if l in self.forms:
                 log.info("Working on {}".format(langname))
-                tintro=_("Frame in {}:").format(langname)
-                if l != self.analang:
+                if l == self.stripftypecode(l):
+                    tintro=_("Gloss in {}:").format(langname)
                     b=ui.Button(self.fds,text='X',
                             cmd=lambda l=l:self.skiplang(l),
                             column=0,row=n+1,sticky='e')
                     b.tt=ui.ToolTip(b, _("Skip {}").format(langname))
+                else:
+                    tintro=_("{}:").format(langname)
                 ui.Label(self.fds,text=tintro,column=1,row=n+1)
                 lineframe=ui.Frame(self.fds,column=2,row=n+1)
                 if "Language " in langname:
@@ -6509,7 +6523,7 @@ class ToneFrameDrafter(ui.Window):
                                 column=3,row=0,padx=0,ipadx=0)
                 ui.ToolTip(button)
             else:
-                text=_("Add {0}").format(langname)
+                text=_("Add {0} gloss").format(langname)
                 button=ui.Button(self.fds,text=text,
                                 relief=relief,
                                 font='small',
@@ -6521,10 +6535,11 @@ class ToneFrameDrafter(ui.Window):
         text=_("Get Example")
         exemplify=ui.Button(self.fds,text=text,cmd=self.exemplified,
                             columnspan=2,column=0,row=n+2)
+        exemplify.update_idletasks()
     def setfieldtype(self,choice,window):
         self.forms['field']=choice
         window.on_quit()
-        program['status']()
+        self.status()
     def fieldtypename(self):
         return [i[1] for i in self.fieldtypes()
                     if i[0] == self.forms['field']][0]
@@ -6540,6 +6555,7 @@ class ToneFrameDrafter(ui.Window):
                 ('lc', _("Citation form")),
                 ('lx', _("Lexeme form")),
                 ]
+        """These should maybe be switched over to just pl and imp"""
         if self.ps == program['settings'].nominalps:
             opts.append((program['settings'].pluralname, _("Plural form")))
         elif self.ps == program['settings'].verbalps:
@@ -6572,23 +6588,11 @@ class ToneFrameDrafter(ui.Window):
                         row=0,column=0,
                         sticky='w')
             return
-        senseid=self.gimmesenseidwgloss() #don't give exs w/o all glosses
-        # log.info('gimmesenseid result: {}'.format(senseid))
-        """This will need to be updated to slices!"""
-        if senseid not in self.slices.senseids(ps=self.ps):
-            log.info('bad senseid; showing error')
-            lt=ui.Label(self.exf,
-                    text=senseid,
-                    font='read',
-                    justify=ui.LEFT,anchor='w',
-                    row=0,column=0,
-                    sticky='w',
-                    )
-            return
+        #don't give exs w/o all glosses
         """Define the new frame"""
         checkdefntoadd={'field':self.forms['field']}
         log.info("Ready to add frame with this form info: {}".format(self.forms))
-        log.info("Ready to add frame with this lookingfor info: {}".format(self.lookingfor))
+        # log.info("Ready to add frame with this lookingfor info: {}".format(self.lookingfor))
         for lang in [i for i in self.forms #self.lookingfor
                             if 'before' in self.forms[i]
                             if 'after' in self.forms[i]
@@ -6762,52 +6766,52 @@ class ToneFrameDrafter(ui.Window):
         program['settings'].setcheck(checktoadd) #assume we will use this now
         self.task.deiconify()
         self.destroy()
-    def gimmesenseid(self,**kwargs):
+    def gimmesenseid(self,senseid=None,next=False,**kwargs):
         idsbyps=program['slices'].senseids(ps=self.ps)
-        tried=0
-        f={}
-        self.lookingfor=[i for i in self.forms if i not in ['name','field']]
-        for lang in self.lookingfor:
-            f[lang]=''
-        log.info("checking for these langs: {}".format(self.db.glosslangs))
-        log.info("Starting with these forms: {}".format(f))
-        while '' in f.values():
+        if next and senseid:
+            log.info("trying {} sense {}/{}".format(self.ps,
+                                                idsbyps.index(senseid)+1,
+                                                len(idsbyps)))
             try:
-                f[self.analang]=self.db.fieldtext(senseid=senseid,
-                                                    lang=self.analang,
-                                                    ftype=self.forms['field'],
-                                                    )[0]
+                return idsbyps[idsbyps.index(senseid)+1]
             except IndexError:
-                log.info("Looks like we didn't find a form.")
+                return idsbyps[0]
+        else:
+            return idsbyps[randint(0, len(idsbyps)-1)]
+    def gimmesenseformdictwftypengloss(self,framedef,**kwargs):
+        tried=0
+        langs=[i for i in framedef if i not in ['name','field']]
+        glosslangs=[i for i in langs if i == self.stripftypecode(i)]
+        # log.info("checking for these langs: {}".format(langs))
+        # log.info("checking for this frame: {}".format(framedef))
+        ftype=framedef['field']
+        while not tried or None in f.values():
+            f={lang:None for lang in langs} #start each with a clean slate
             if tried > program['db'].nsenseids*1.5: #give up looking randomly
                 senseid=self.gimmesenseid(senseid,next=True)
             else:
                 senseid=self.gimmesenseid()
             sense=program['db'].sensedict[senseid]
-            log.info(f[self.analang])
-            if not f[self.analang]:
-                f[self.analang]=''
-            for lang in self.db.glosslangs:
-                try:
-                    f[lang]=self.db.glossordefn(senseid=senseid,
-                                                glosslang=lang,
-                                                # showurl=True
-                                                )[0]
-                    log.info("Found forms: {}".format(f))
-                except IndexError:
-                    log.info("Looks like we didn't find enough forms.")
+            f.update(sense.formatteddictbylang(self.analang, #This is xyz_ftype
+                                        glosslangs,
+                                        # program['settings'].glosslangs,
+                                        frame=framedef
+                                            ))
+            # log.info("Analang form found: {}".format(f[self.analang]))
             tried+=1
-            if tried> self.db.nsenseids*1.5:
-                errortext=_("I've tried (randomly) {} times, and not found one "
+            log.info("Values found: {}".format(f))
+            if tried> program['db'].nsenseids*3.5:
+                errortext=_("I've tried (randomly, then through each) {} "
+                "times, and not found one "
                 "of your {} senses with data in each of these languages: "
                 "{}. \nAre you asking for gloss "
                 "languages which actually have data in your database? \nOr, are "
                 "you missing gloss fields (i.e., you have only 'definition' "
                 "fields)?").format(tried,program['db'].nsenseids,langs)
                 log.error(errortext)
-                return errortext
-        log.debug("Found entry {} with glosses {}".format(senseid,f))
-        return senseid
+                return #errortext
+        log.debug("Found entry {} with glosses {}".format(sense.id,f))
+        return f
     def __init__(self,parent):
         ui.Window.__init__(self,parent)
         parent.withdraw()
@@ -6821,11 +6825,6 @@ class ToneFrameDrafter(ui.Window):
         # there might be reason to distinguish them in the frame definitions.
         # But until I figure out how i want to do that, each language should
         # just appear once.
-        self.langs=[self.analang]+[i for i in program['db'].glosslangs
-                                    if i != self.analang]
-        for l in [self.analang]+program['settings'].glosslangs: #actually selected
-            self.forms[l]={'after':''}
-            self.forms[l]['before']=''
         self.glosslangs=list()
         self.padx=50
         self.pady=10
@@ -6837,8 +6836,7 @@ class ToneFrameDrafter(ui.Window):
         ui.Label(self.frame,text=t,font='title',row=0,column=0)
         self.scroll=ui.ScrollingFrame(self.frame,row=1,column=0)
         self.content=self.scroll.content
-        log.info("drafting a tone frame for these langs: {}".format(self.langs))
-        program['status']()
+        self.status()
 class Tone(object):
     """This keeps stuff used for Tone checks."""
     def makeanalysis(self,**kwargs):
