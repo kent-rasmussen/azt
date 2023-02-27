@@ -4018,4 +4018,10 @@ if __name__ == '__main__':
     lift.write('0.txt')
     n=0
     print(time.time())
+    lift.slicebylx()
+    print(time.time())
+    lift.slicebylc()
+    print(time.time())
+    lift.slicebyps()
+    print(time.time())
     exit()
