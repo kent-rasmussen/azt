@@ -8199,6 +8199,7 @@ class Sound(object):
         return node.hassoundfile(program['params'].audiolang(),
                                 self.audiodir,recheck)
     def __init__(self):
+        self.audiodir=program['settings'].audiodir
         self.soundcheck()
 class Record(Sound,TaskDressing):
     """This holds all the Sound methods specific for Recording."""
@@ -8353,7 +8354,7 @@ class Record(Sound,TaskDressing):
             self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
             examplesframe=ui.Frame(self.runwindow.frame.scroll.content)
             examplesframe.grid(row=0,column=0,sticky='w')
-            examples.reverse()
+            # examples.reverse()
             for example in examples:
                 if (skip == True and
                     lift.examplehaslangform(example,program['settings'].audiolang) == True):
@@ -8523,7 +8524,6 @@ class Record(Sound,TaskDressing):
     def __init__(self,parent):
         TaskDressing.__init__(self,parent)
         Sound.__init__(self)
-        self.audiolang=program['settings'].audiolang
         self.mikecheck() #only ask for settings check if recording
 class Report(object):
     def consultantcheck(self):
