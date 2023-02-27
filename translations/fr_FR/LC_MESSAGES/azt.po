@@ -501,22 +501,22 @@ msgid "About"
 msgstr "À propos"
 
 #: /home/kentr/IT/azt/repo_trans/main.py:824
-msgid "Set up A→Z+T source on USB"
+msgid "Set up A-Z+T source on USB"
 msgstr ""
 
 #: /home/kentr/IT/azt/repo_trans/main.py:826
 #, fuzzy
-msgid "Update A→Z+T"
-msgstr "Quitter A→Z+T"
+msgid "Update A-Z+T"
+msgstr "Quitter A-Z+T"
 
 #: /home/kentr/IT/azt/repo_trans/main.py:828
-msgid "Try A→Z+T test version"
+msgid "Try A-Z+T test version"
 msgstr ""
 
 #: /home/kentr/IT/azt/repo_trans/main.py:831
 #, fuzzy
-msgid "Revert to A→Z+T main version"
-msgstr "Revenez à A→Z+T, pour fixer les paramètres"
+msgid "Revert to A-Z+T main version"
+msgstr "Revenez à A-Z+T, pour fixer les paramètres"
 
 #: /home/kentr/IT/azt/repo_trans/main.py:912
 msgid "Using {}"
@@ -752,8 +752,8 @@ msgid "Exit with no changes"
 msgstr "Quittez {} sans aucun changement"
 
 #: /home/kentr/IT/azt/repo_trans/main.py:1984
-msgid "A→Z+T Digraphs and Trigraphs"
-msgstr "Paramètres A→Z+T Digraphe et Trigraphe"
+msgid "A-Z+T Digraphs and Trigraphs"
+msgstr "Paramètres A-Z+T Digraphe et Trigraphe"
 
 #: /home/kentr/IT/azt/repo_trans/main.py:1987
 #, fuzzy
@@ -1377,8 +1377,8 @@ msgstr ""
 "pour continuer."
 
 #: /home/kentr/IT/azt/repo_trans/main.py:3900
-msgid "Return to A→Z+T, to fix settings"
-msgstr "Revenez à A→Z+T, pour fixer les paramètres"
+msgid "Return to A-Z+T, to fix settings"
+msgstr "Revenez à A-Z+T, pour fixer les paramètres"
 
 #: /home/kentr/IT/azt/repo_trans/main.py:3901
 msgid ""
@@ -4246,8 +4246,8 @@ msgstr "Impossible de trouver/importer lxml, donc pas de compiler le rapport."
 #~ msgid "Different than the above"
 #~ msgstr "Différent de ce qui précède"
 
-#~ msgid "A→Z+T Dictionary and Orthography Checker"
-#~ msgstr "A→Z+T Vérificateur de Dictionnaire et d'Orthographe"
+#~ msgid "A-Z+T Dictionary and Orthography Checker"
+#~ msgstr "A-Z+T Vérificateur de Dictionnaire et d'Orthographe"
 
 #~ msgid "Sorry, you don't seem to have selected a LIFT lexicon file."
 #~ msgstr ""

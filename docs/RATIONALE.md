@@ -4,7 +4,7 @@ Some methodologies (Kutsch Lojenga 1996) guide people through the discovery of t
 
 Other methodologies require the processing of large amounts of data transcribed by a formally trained linguist (Snider 2018, Marlo 2013). These provide better documentation, but they limit the kind and number of people who can be involved, particularly if the language community lacks trained linguists.
 
-To capitalize on the strengths of each of these approaches, [A→Z+T](https://github.com/kent-rasmussen/azt) is being developed to model pen and paper participatory methods on a computer, resulting in a checked lexical database with organized sound files to back up transcriptions. The tool constrains data collection by grammatical category and syllable profile (Snider 2014), while facilitating more cyclical and community based language development.
+To capitalize on the strengths of each of these approaches, [A-Z+T](https://github.com/kent-rasmussen/azt) is being developed to model pen and paper participatory methods on a computer, resulting in a checked lexical database with organized sound files to back up transcriptions. The tool constrains data collection by grammatical category and syllable profile (Snider 2014), while facilitating more cyclical and community based language development.
 
 ## References
 Kutsch Lojenga, Constance. 1996. Participatory Research in Linguistics. Notes on Linguistics 73(2). 13-27. Dallas, TX: SIL.

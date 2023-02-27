@@ -1,4 +1,4 @@
-# Starting from Scratch in WeSay for A→Z+T Work
+# Starting from Scratch in WeSay for A-Z+T Work
 
 ## Create Your WeSay Project
 - Open WeSay, and you will see the `WeSay Config tool`, if you don't already have a WeSay project on your computer. If you do, you may need to find the WeSay Config tool by searching on your computer.
@@ -10,14 +10,14 @@
 - In the `Tasks` tab, select the box next to `SIL-CAWL Word List`.
 - In the `Input Systems` tab:
   - Confirm your gloss language is there (e.g., English), or define it (E.g., French or anything else).
-  - If you want them, set up an IPA, or any other language writing systems (Note: A→Z+T will only be analyzing the orthographic writing system). Be sure to make them have different abbreviations, so you can tell them apart.
+  - If you want them, set up an IPA, or any other language writing systems (Note: A-Z+T will only be analyzing the orthographic writing system). Be sure to make them have different abbreviations, so you can tell them apart.
 - In the `Fields` tab:
   - For each of these, select the field on the left, and select which langauge(s) it should use on the right.
   - Select the box next to `Citation Form`, and make sure your orthographic writing system is the only one selected.
   - If you want to collect words using **French**, remove English from the `Definition` field (at least until your word collection is done).
   - Select the box next to `Gloss`, and make sure the correct gloss language is selected.
 - In the `Interface Language` tab, set WeSay's language, if you don't want it to talk to you in English.
-- In the `option lists` tab, if you want non-English lexical category labels, set them here. A→Z+T will use whatever labels you have in your data.
+- In the `option lists` tab, if you want non-English lexical category labels, set them here. A-Z+T will use whatever labels you have in your data.
 - Click on `Open in WeSay`, in the upper right.
 
 ## Start Collecting Data In WeSay:

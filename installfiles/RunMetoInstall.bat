@@ -3,11 +3,11 @@ ECHO ""
 ECHO ""
 ECHO ""
 ECHO ""
-ECHO A→Z+T Install batch file
+ECHO A-Z+T Install batch file
 ECHO This script installs stuff —it must be run **As Administrator**!
 ECHO Will download and install Python 3.6.8
 ECHO Will download and install Git 2.33.0.2
-ECHO Will clone/download A→Z+T source to azt directory on your desktop
+ECHO Will clone/download A-Z+T source to azt directory on your desktop
 ECHO Will create a shortcut to run AZT
 ECHO Error Level is %errorlevel%
 whoami /groups | find "S-1-16-12288"
@@ -69,7 +69,7 @@ start Git-2.33.0.2-64-bit.exe
 
 pause
 
-ECHO Cloning A→Z+T source to '%userprofile%/desktop/azt'
+ECHO Cloning A-Z+T source to '%userprofile%/desktop/azt'
 cd /d "%userprofile%/desktop"
 FOR /F "tokens=* USEBACKQ" %%F IN (`git`) DO (
 SET GitExe=%%F
@@ -91,7 +91,7 @@ ECHO oMyShortCut.Save
 ECHO Install done! (hopefully!)
 
 ECHO I'll pause now; cancel now to be finished, or press any key to continue
-ECHO to install XLingPaper, Praat and Mercurial, to get the most out of A→Z+T.
+ECHO to install XLingPaper, Praat and Mercurial, to get the most out of A-Z+T.
 pause
 
 cd /d "%userprofile%/Downloads"

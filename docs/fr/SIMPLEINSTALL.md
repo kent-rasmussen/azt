@@ -1,4 +1,4 @@
-# Instructions simples et directes pour l'installation de A→Z+T sur MS Windows
+# Instructions simples et directes pour l'installation de A-Z+T sur MS Windows
 
 ## (Ou exécutez simplement [ce script](RunMetoInstall.bat?raw=true) en tant qu'administrateur.)
 
@@ -8,10 +8,10 @@ Pour des instructions d'installation simples pour Ubuntu Linux, voir [SIMPLEINST
 
 Si l'un des éléments suivants échoue, veuillez [m'écrire](BUGS.md) , y compris vos journaux et copier/coller toutes les erreurs que vous trouvez dans l'e-mail ( [cette page](FINDERRORLOGS.md) peut vous aider à trouver vos journaux).
 
-Avant de pouvoir [configurer A→Z+T pour une utilisation normale](#set-up-azt-for-normal-use) , vous devez faire deux choses :
+Avant de pouvoir [configurer A-Z+T pour une utilisation normale](#set-up-azt-for-normal-use) , vous devez faire deux choses :
 
 1. [Installer Python](#install-python)
-2. [Installez Git et téléchargez A→Z+T](#install-git-and-download-azt)
+2. [Installez Git et téléchargez A-Z+T](#install-git-and-download-azt)
 
 ## Installer Python
 
@@ -19,7 +19,7 @@ Avant de pouvoir [configurer A→Z+T pour une utilisation normale](#set-up-azt-f
 
 ![Add Python to Path](images/Python_path.png "Ajouter Python au chemin")
 
-**Assurez-vous de cocher "ajouter au PATH"** pendant le processus d'installation. **Si vous ne le faites pas** , vous devrez probablement demander de l'aide à votre support informatique local pour ajouter Python à votre chemin. En attendant le téléchargement, vous pouvez démarrer sur [Install Git et Télécharger A→Z+T](#install-git-and-download-azt) ci-dessous
+**Assurez-vous de cocher "ajouter au PATH"** pendant le processus d'installation. **Si vous ne le faites pas** , vous devrez probablement demander de l'aide à votre support informatique local pour ajouter Python à votre chemin. En attendant le téléchargement, vous pouvez démarrer sur [Install Git et Télécharger A-Z+T](#install-git-and-download-azt) ci-dessous
 
 **Assurez-vous de cliquer sur "supprimer la limitation de chemin"** après ce qui précède, pour éviter certains problèmes avec des noms de fichiers plus longs.
 
@@ -29,33 +29,33 @@ Avant de pouvoir [configurer A→Z+T pour une utilisation normale](#set-up-azt-f
     - `python -m pip install Pillow lxml` (non requis ; si vous obtenez une erreur ici, ignorez-la simplement)
     - `python -m pip install patiencediff` (non requis à partir de janvier 2022 ; si vous obtenez une erreur ici, ignorez-la simplement)
 
-## Installez Git et téléchargez A→Z+T
+## Installez Git et téléchargez A-Z+T
 
 ### Installer Git ( [site Web](https://git-scm.com/download/win) )
 
 1. Téléchargez et installez Git à partir d' [ici](https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/Git-2.33.0.2-64-bit.exe)
 
-### Télécharger A→Z+T
+### Télécharger A-Z+T
 
 1. Sur votre bureau, cliquez avec le bouton droit de la souris sur `Git-Bash` pour obtenir un terminal (fenêtre noire).
-2. Dans le terminal `Git-Bash` , collez `git clone https://github.com/kent-rasmussen/azt.git` et appuyez sur Entrée. Cela vous donnera un dossier `azt` sur votre bureau, où les fichiers du programme A→Z+T resteront.
+2. Dans le terminal `Git-Bash` , collez `git clone https://github.com/kent-rasmussen/azt.git` et appuyez sur Entrée. Cela vous donnera un dossier `azt` sur votre bureau, où les fichiers du programme A-Z+T resteront.
 
 ## Polices
 
 Si vous n'avez pas encore [Charis SIL](https://software.sil.org/charis/) sur votre système, téléchargez et installez la version la plus récente à partir d' [ici](https://software.sil.org/downloads/r/charis/CharisSIL-6.001.zip) .
 
-## Configurer A→Z+T pour une utilisation normale
+## Configurer A-Z+T pour une utilisation normale
 
-Une fois que vous avez tout terminé sous [Installer Python](#install-python) and [Installer Git et Télécharger A→Z+T](#install-git-and-download-azt) :
+Une fois que vous avez tout terminé sous [Installer Python](#install-python) and [Installer Git et Télécharger A-Z+T](#install-git-and-download-azt) :
 
 1. Cliquez pour ouvrir le dossier `azt` sur votre bureau
 2. **Faites un clic droit** sur `main.py` (il peut apparaître comme `main` sur votre système) et sélectionnez "Envoyer vers... Bureau (créer un raccourci)".
-3. Cliquez sur le raccourci/lien pour exécuter A→Z+T (si vous n'obtenez rien d'autre qu'un scintillement noir, consultez [cette page](INSTALL_PROBLEMS.md) .)
-4. **Célébrez votre accomplissement; vous avez fini d'installer A→Z+T !**
-5. Lisez [USAGE](USAGE.md) pour savoir comment utiliser A→Z+T
+3. Cliquez sur le raccourci/lien pour exécuter A-Z+T (si vous n'obtenez rien d'autre qu'un scintillement noir, consultez [cette page](INSTALL_PROBLEMS.md) .)
+4. **Célébrez votre accomplissement; vous avez fini d'installer A-Z+T !**
+5. Lisez [USAGE](USAGE.md) pour savoir comment utiliser A-Z+T
 6. Envoyez-moi des informations sur les [bogues](BUGS.md) que vous trouvez, afin que je puisse vous aider et améliorer le programme pour les autres.
 
-## Étapes importantes supplémentaires pour tirer le meilleur parti de A→Z+T
+## Étapes importantes supplémentaires pour tirer le meilleur parti de A-Z+T
 
 ### Installez Mercurial pour une meilleure collaboration
 
@@ -69,4 +69,4 @@ Téléchargez et installez [ce fichier](https://www.mercurial-scm.org/release/wi
 
 Installez le package XLingPaper complet à partir d' [ici](https://software.sil.org/downloads/r/xlingpaper/XLingPaper3-10-1XXEPersonalEditionFullSetup.exe) .
 
-### Mettez à jour A→Z+T à partir du menu Aide, en supposant que vous avez suivi ces instructions.
+### Mettez à jour A-Z+T à partir du menu Aide, en supposant que vous avez suivi ces instructions.
