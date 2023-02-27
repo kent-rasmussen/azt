@@ -2674,11 +2674,12 @@ class Settings(object):
         program['status'].renewsenseidstosort([],[]) #will repopulate
         self._groups=[]
         if cvt == 'T': #we need to be able to iterate over cvt, to rebuild
-            fn=Tone.getgroupofsenseid
+            fn=Tone.getsensegroup
         else:
-            fn=Segments.getgroupofsenseid
-            self.categorizebygrouping(fn,senseid,**kwargs)
+            fn=Segments.getsensegroup
         for sense in [program['db'].sensedict[i] for i in senseids]:
+            log.info("Working on sense {}".format(sense.id))
+            self.categorizebygrouping(fn,sense,**kwargs)
         #     t = threading.Thread(target=self.categorizebygrouping,
         #                     args=(fn,senseid),
         #                     kwargs=kwargs)
@@ -5306,13 +5307,10 @@ class Segments(object):
                 ftype+'annotationvalue':group
                 }
         return self.db.get("sense", **fkwargs).get('senseid')
-    def getgroupofsenseid(self,senseid,check):
-        return self.db.fieldvalue(
-                        senseid=senseid,
-                        analang=self.analang,
-                        annotationname=check,
-                        ftype=self.params.ftype(),
-                        )
+    def getsensegroup(self,sense,check):
+        ftype=program['params'].ftype()
+        return sense.annotationvaluebyftypelang(ftype,self.analang,check)
+                                                # ftype,lang,name,value
     def __init__(self, parent):
         self.byslice=False
         self.dodone=True
@@ -6808,9 +6806,8 @@ class Tone(object):
                                     path=['example'],
                                     showurl=True
                             ).get('senseid')
-    def getgroupofsenseid(self,senseid,check):
-        return self.db.get("example/tonefield/form/text",
-                senseid=senseid, location=check).get('text')
+    def getsensegroup(self,sense,check):
+        return sense.tonevaluebyframe(check)
     def getUFgroupofsenseid(self,senseid):
         return program['db'].get("sense/field/form/text",
                             path=["toneUFfield"],
@@ -6992,8 +6989,8 @@ class Sort(object):
         sorting=kwargs.get('sorting',True) #Default to verify button
         log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
         #This should only *mod* if already there
-        self.setsenseidgroup(senseid,ftype,check,'',**kwargs)
-        tgroups=self.getgroupofsenseid(senseid,check)
+        self.setsensegroup(sense,ftype,check,'',**kwargs)
+        tgroups=self.getsensegroup(sense,check)
         log.info("Checking that removal worked")
         if tgroups in [[],'',['']]:
             log.info("Field removal succeeded! LIFT says '{}', = []."
@@ -7080,13 +7077,14 @@ class Sort(object):
         nocheck=kwargs.get('nocheck',False)
         guid=None
         if kwargs.get('updateverification'):
-            oldgroup=unlist(self.getgroupofsenseid(senseid,check))
-            curvervaluecodes=self.db.getverificationnodevaluebyframe(
-                                                        senseid=senseid,
-                                                        vtype=profile,
-                                                        ftype=ftype,
-                                                        analang=self.analang,
-                                                        frame=check)
+            """This does the one field storing a list of verified values
+            for all checks"""
+            oldgroup=self.getsensegroup(sense,check) #Segment or Tone
+            vals=sense.verificationtextvalue(profile,ftype)
+            if vals:
+                curvervaluecodes=[i for i in vals if check in vals]
+            else:
+                curvervaluecodes=[]
             if len(set(curvervaluecodes)) >1:
                 log.error("Too many values for verification node! ({})"
                             "".format(curvervaluecodes))
