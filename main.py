@@ -7140,21 +7140,22 @@ class Sort(object):
         vars=list()
         row=0
         scroll=ui.ScrollingFrame(self.runwindow.frame)
-        for id in allpssensids:
-            log.debug("id: {}; index: {}; row: {}".format(id,
-                                                    allpssensids.index(id),row))
-            idn=allpssensids.index(id)
+        for senseid in allpssensids:
+            log.debug("id: {}; index: {}; row: {}".format(senseid,
+                                                    allpssensids.index(senseid),
+                                                    row))
+            idn=allpssensids.index(senseid)
             vars.append(ui.StringVar())
             adhocslices=program['slices'].adhoc()
             if (ps in adhocslices and profile in adhocslices[ps] and
-                                                id in adhocslices[ps][profile]):
-                vars[idn].set(id)
+                                        senseid in adhocslices[ps][profile]):
+                vars[idn].set(senseid)
             else:
                 vars[idn].set(0)
             forms=sense.formatted()
             log.debug("forms: {}".format(forms))
             ui.CheckButton(scroll.content, text = forms,
-                                variable = vars[allpssensids.index(id)],
+                                variable = vars[allpssensids.index(senseid)],
                                 onvalue = id, offvalue = 0,
                                 ).grid(row=row,column=0,sticky='ew')
             row+=1
@@ -7435,7 +7436,8 @@ class Sort(object):
                         "").format(self.check,self.ps,program['toneframes'][self.ps])
             log.error(text)
         else:
-            text=sense.formatted(self.analang,self.glosslangs,program['params'].ftype(),
+            text=sense.formatted(self.analang,self.glosslangs,
+                            program['params'].ftype(),
                             program['toneframes'][self.ps].get(self.check))
         entryview=ui.Frame(self.runwindow.frame, column=1, row=1, sticky="new")
         self.sortitem=self.buttonframe.sortitem=ui.Label(entryview,
