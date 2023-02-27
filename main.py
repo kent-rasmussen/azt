@@ -12140,21 +12140,18 @@ class Analysis(object):
         # Collect check:value correspondences, by sense
         for group in self.senseidsbygroup:
             values[group]={}
-            for check in self.checks: #just make them all, delete empty later
-                values[group][check]=list()
-                for senseid in self.senseidsbygroup[group]:
-                    groupvalue=program['db'].get("example/tonefield/form/text",
-                                            senseid=senseid, location=check,
-                                            ).get('text')
-                    if groupvalue:
-                        if unlist(groupvalue) not in values[group][check]:
-                            values[group][check]+=groupvalue
-                log.log(3,"values[{}][{}]: {}".format(group,check,
-                                                    values[group][check]))
-                if not values[group][check]:
-                    log.info(_("Removing empty {} key from {} values"
-                                "").format(check,group))
-                    del values[group][check] #don't leave key:None pairs
+            for senseid in self.senseidsbygroup[group]:
+                sense=program['db'].sensedict[senseid]
+                for check in sense.examples:
+                    try:
+                        values[group][check].add(sense.tonevaluebyframe(check))
+                    except KeyError:
+                        values[group][check]=set([sense.tonevaluebyframe(check)])
+            #maybe need this:
+            for check in values[group]:
+                values[group][check]=[i for i in values[group][check] if i]
+            # log.info("values[{}][{}]: {}".format(group,check,
+            #                                     values[group][check]))
         # log.info("Done collecting groups by location/check for each UF group.")
     def senseidsbyUFsfromLIFT(self):
         """This returns a dict of {UFtonegroup:[senseids]}"""
