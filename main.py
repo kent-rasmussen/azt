@@ -3177,8 +3177,8 @@ class Settings(object):
         self.loadsettingsfile()
         self.loadsettingsfile(setting='profiledata')
         """I think I need this before setting up regexs"""
-        if hasattr(self.taskchooser,'analang'): #i.e., new file
-            self.analang=self.taskchooser.analang #I need to keep this alive until objects are done
+        if hasattr(taskchooser,'analang'): #i.e., new file
+            self.analang=taskchooser.analang #I need to keep this alive until objects are done
             program['db'].getpss() #redo this, specify
         else:
             self.guessanalang() #needed for regexs
