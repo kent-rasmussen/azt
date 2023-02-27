@@ -7046,7 +7046,7 @@ class Sort(object):
         r=program['status'].update(group=group,verified=verified,writestatus=wstatus)
         if r: #only do this if there is a change in status
             self.updatestatuslift(group=group,verified=verified,write=write)
-        return
+            return r
     def addmodadhocsort(self):
         def submitform():
             if profilevar.get() == "":
