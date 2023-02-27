@@ -14414,6 +14414,11 @@ def grouptype(**kwargs):
         kwargs[arg]=kwargs.get(arg,False)
     # log.info("Returning grouptype kwargs {}".format(kwargs))
     return kwargs
+def isnoninteger(x):
+    try:
+        int(x)
+    except (ValueError,TypeError):
+        return True
 def isinteger(x):
     try:
         int(x)
