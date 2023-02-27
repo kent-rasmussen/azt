@@ -3900,6 +3900,8 @@ class TaskDressing(HasMenus,ui.Window):
                                             window=window,
                                             column=0, row=1
                                             )
+        self.waitdone()
+        window.lift()
     def getsecondformfieldN(self,event=None):
         ps=program['settings'].nominalps
         opts=program['settings'].plopts
