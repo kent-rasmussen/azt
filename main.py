@@ -6920,21 +6920,6 @@ class Tone(object):
     def updateformtoannotations(self,*args,**kwargs):
         #simpler than calling and uncalling..…
         pass
-    def verifyframeftype(self,ftype,check):
-        # log.info("Checking frame type!")
-        try:
-            checkftype=self.status.toneframedefn()['field'] #this must match check!
-        except Exception as e:
-            log.error("Exception in verifyframeftype: {}".format(e))
-        # curftype=self.params.ftype()
-        if ftype != checkftype:
-            log.error("HEY! This is a problem. We're looking at {} check, "
-            "which is set for a field type {}, but our current field type is "
-            "{}. This should be fixed, and will cause problems!"
-            "".format(check,checkftype,ftype))
-            return
-        # log.info("Frame type looks OK {} = {}".format(checkftype,ftype))
-        return ftype
     def setsenseidgroup(self,senseid,ftype,check,group,**kwargs):
         """here kwargs should include framed, if you want this to update the
         form information in the example"""
