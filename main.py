@@ -456,8 +456,8 @@ class LiftChooser(ui.Window,HasMenus):
             self.name=self.filechooser.name=name
             file.writefilename(name)
             self.destroy()
-            if hasattr(self.filechooser.parent,'splash'):
-                self.filechooser.parent.splash.deiconify()
+            if hasattr(program['taskchooser'],'splash'):
+                program['taskchooser'].splash.deiconify()
     def __init__(self,chooser,filenamelist):
         self.filechooser=chooser
         self.parent=program['root']
@@ -487,8 +487,8 @@ class LiftChooser(ui.Window,HasMenus):
         # make mediadir look for *.git
         ui.Label(self.frame, image=program['theme'].photo['small'],
                 text=text, font='title', column=1, row=1, ipadx=20)
-        if hasattr(self.filechooser.parent,'splash'):
-            self.filechooser.parent.splash.withdraw()
+        if hasattr(program['taskchooser'],'splash'):
+            program['taskchooser'].splash.withdraw()
 class FileChooser(object):
     """This class loads the LIFT database from settings, or asks if not there.
     """
