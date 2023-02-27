@@ -2323,7 +2323,8 @@ class Settings(object):
         n=0
         todo=len(senseids)
         # log.info("RXs: {}".format(self.rx))
-        program['taskchooser'].wait(msg="getting profiles for {}".format(ps))
+        if todo>5:
+            program['taskchooser'].wait(msg="getting profiles for {}".format(ps))
         for senseid in senseids:
             n+=1
             if n%100:
@@ -2334,10 +2335,12 @@ class Settings(object):
                 form,profile=self.getprofileofsense(senseid,ps)
                 log.debug("{}: {}; {}".format(str(n)+'/'+str(todo),form,
                                             profile))
-            program['taskchooser'].waitprogress(n*100/todo)
+            if todo>5:
+                program['taskchooser'].waitprogress(n*100/todo)
         t.join()
+        if todo>5:
+            program['taskchooser'].waitdone()
         return n
-        program['taskchooser'].waitdone()
     def getprofilesbyentry(self):
         for entry in program['db'].entries:
             for sense in entry.senses:
