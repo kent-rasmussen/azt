@@ -780,6 +780,7 @@ class Image(tkinter.PhotoImage):
                 raise #this is processed elsewhere
             else:
                 log.info("Image error: {}".format(e))
+        self.biggerby(1)
 class StringVar(tkinter.StringVar):
     def __init__(self, *args, **kwargs):
         super(tkinter.StringVar, self).__init__(*args, **kwargs)

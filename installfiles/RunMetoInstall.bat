@@ -1,10 +1,10 @@
 ECHO OFF
-ECHO ""
-ECHO ""
-ECHO ""
-ECHO ""
+ECHO:
+ECHO:
+ECHO:
+ECHO:
 ECHO A-Z+T Install batch file
-ECHO This script installs stuff —it must be run **As Administrator**!
+ECHO This script installs stuff --it must be run **As Administrator**!
 ECHO Will download and install Python 3.6.8
 ECHO Will download and install Git 2.33.0.2
 ECHO Will clone/download A-Z+T source to azt directory on your desktop
@@ -21,33 +21,33 @@ cd /d %~dp0
 If exist python-3.6.8-amd64.exe (
 ECHO python-3.6.8-amd64.exe is there!
 ) ELSE (
-ECHO Downloading Python 3.6.8 (31830944; 30M)...
+ECHO "Downloading Python 3.6.8 (31830944; 30M)..."
 ECHO Check that your internet is on and
 pause
 powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.python.org/ftp/python/3.6.8/python-3.6.8-amd64.exe' -OutFile 'python-3.6.8-amd64.exe'"
 )
 
 ECHO Installing Python 3.6.8
-ECHO
+ECHO:
 ECHO ATTENTION!!
 ECHO            vvvvvvvvvvvvvvvvvvv
 ECHO Be sure to check "add to PATH" in the dialog BEFORE you click "Install Now"
-ECHO            ^^^^^^^^^^^^^^^^^^^
+ECHO            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ECHO ALSO:
 ECHO        vvvvvvvvvvvvvvvvvv                      vvvvvvvvvvvvvvvvvvvvvvvv
 ECHO At the end of the install, be sure to click on "remove path limitation"
-ECHO        ^^^^^^^^^^^^^^^^^^                      ^^^^^^^^^^^^^^^^^^^^^^^^
+ECHO        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ECHO If you forget to do either of these, you should run python-3.6.8-amd64.exe
 ECHO again manually (maybe select "Fix install") to set these options.
-ECHO
+ECHO:
 ECHO Otherwise, you should be fine with all default options
-ECHO
+ECHO:
 start python-3.6.8-amd64.exe
 
 If exist Git-2.33.0.2-64-bit.exe (
 ECHO Git-2.33.0.2-64-bit.exe is there!
 ) ELSE (
-ECHO Downloading Git 2.33.0.2 (50101024; 48M)...
+ECHO Downloading Git 2.33.0.2 (50101024; 48M^)...
 ECHO Check that your internet is on and
 pause
 powershell.exe -noprofile -command "Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/Git-2.33.0.2-64-bit.exe' -OutFile 'Git-2.33.0.2-64-bit.exe'"
@@ -61,21 +61,26 @@ ECHO You should be fine with all default options
 ECHO ATTENTION!!
 ECHO                     vvvvvvvvvvvvvvvvvvvvvvv
 ECHO Wait until you have finished installing Git before moving on with this script.
-ECHO                     ^^^^^^^^^^^^^^^^^^^^^^^
+ECHO                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ECHO     vvvvvvv
 ECHO You need it for the next step!
-ECHO     ^^^^^^^
+ECHO     ^^^^^^^^^^^^^^
 start Git-2.33.0.2-64-bit.exe
 
 pause
 
 ECHO Cloning A-Z+T source to '%userprofile%/desktop/azt'
 cd /d "%userprofile%/desktop"
-FOR /F "tokens=* USEBACKQ" %%F IN (`git`) DO (
+FOR /F "tokens=* USEBACKQ" %%F IN (`where git`) DO (
 SET GitExe=%%F
 )
-ECHO "Running %GitExe% clone 'https://github.com/kent-rasmussen/azt.git' '%userprofile%/desktop/azt'"
-powershell.exe -noprofile -ExecutionPolicy Bypass -command "%GitExe% clone 'https://github.com/kent-rasmussen/azt.git' '%userprofile%/desktop/azt'"
+$str={
+""%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprofile%/desktop/azt"""
+}
+ECHO Running $str
+REM ""%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprofile%/desktop/azt"""
+powershell.exe -noprofile -ExecutionPolicy Bypass -command $str
+REM """%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprofile%/desktop/azt"""
 ECHO making links to AZT and Transcriber tool...
 mklink "%userprofile%/desktop/A>Z+T" "%userprofile%/desktop/azt/main.py"
 mklink "%userprofile%/desktop/Transcriber" "%userprofile%/desktop/azt/transcriber.py"
@@ -88,7 +93,7 @@ ECHO OMyShortcut.TargetPath = "%windir%\notepad.exe"
 ECHO oMyShortCut.Hotkey = "ALT+CTRL+F"
 ECHO oMyShortCut.Save
 
-ECHO Install done! (hopefully!)
+ECHO "Install done! (hopefully!)"
 
 ECHO I'll pause now; cancel now to be finished, or press any key to continue
 ECHO to install XLingPaper, Praat and Mercurial, to get the most out of A-Z+T.

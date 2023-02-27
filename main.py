@@ -1566,11 +1566,12 @@ class Settings(object):
         else:
             log.error("No file name for setting {}!".format(setting))
     def loadandconvertlegacysettingsfile(self,setting='defaults'):
+        #This should be removed at some point
         savefile=self.settingsfile(setting)
         legacy=savefile.with_suffix('.py')
         log.info("Going to make {} into {}".format(legacy,savefile))
         if setting == 'soundsettings':
-            self.makesoundsettings()
+            self.soundsettings=sound.SoundSettings()
             o=self.soundsettings
         else:
             o=self
@@ -1625,6 +1626,8 @@ class Settings(object):
                 exit()
         log.info("Settings file {} converted to {}, with each value verified."
                 "".format(legacy,savefile))
+        if setting == 'soundsettings':
+            self.soundsettings.pyaudio.stop() # when done here
     def settingsfilecheck(self):
         """We need the namebase variable to make filenames for files
         that will be imported as python modules. To do that, they need
@@ -1798,7 +1801,7 @@ class Settings(object):
             elif 'default' in config and section in config['default']:
                 d[section]=ofromstr(config['default'][section])
         self.readsettingsdict(d)
-        if self.interfacelang:
+        if hasattr(self,'interfacelang'):
             interfacelang(self.interfacelang)
     def initdefaults(self):
         """Some of these defaults should be reset when setting another field.
@@ -5031,7 +5034,10 @@ class TaskChooser(TaskDressing,ui.Window):
             self.towrite=True
     def usbcheck(self):
         for r in program['settings'].repo.values():
+        self.splash.withdraw()
+            # log.info("checking repo {} for USB drive".format(r))
             r.share()
+        self.splash.draw()
     def __init__(self,parent):
         program['taskchooser']=self
         self.towrite=False
@@ -13329,21 +13335,30 @@ class ErrorNotice(ui.Window):
         wait=kwargs.get('wait')
         button=kwargs.get('button')
         image=kwargs.get('image')
-        super(ErrorNotice, self).__init__(parent,title=title)
+        super(ErrorNotice, self).__init__(parent,title=title,exit=False)
         self.title = title
         self.text = text
-        l=ui.Label(self.frame, text=text, row=0, column=1, ipadx=25)
+        l=ui.Label(self.frame, text=text,
+                    row=0, column=1,
+                    columnspan=2,
+                    ipadx=25)
+        if image:
+            if isinstance(image, ui.Image):
+                l['image']=image.scaled
+            elif isinstance(image,str):
+                l['image']=self.theme.photo[image]
+            l['compound']='left'
         l.wrap()
         if button and type(button) is tuple:
             b=ui.Button(self.frame, text=button[0],
                     cmd=None,
                     row=1, column=1, sticky='e')
-            if image:
-                b['image']=self.theme.photo[image]
-                b['compound']='left'
             b.bind('<ButtonRelease>',self.withdraw)
             b.bind('<ButtonRelease>',button[1],add='+')
             b.bind('<ButtonRelease>',self.destroy,add='+')
+        b=ui.Button(self.frame, text=_("OK"),
+                cmd=self.on_quit,
+                row=1, column=2, sticky='nse')
         self.attributes("-topmost", True)
         if wait:
             self.wait_window(self)
@@ -13464,7 +13479,7 @@ class Repository(object):
                 self.addremote(directory)
                 w.close()
             else:
-                log.info(_("Found a related repository; adding to settings."))
+                log.info(_("Found a related repository; added to settings."))
         else:
             log.info(_("No directory given; not cloning."))
     def log(self):
@@ -13535,7 +13550,11 @@ class Repository(object):
             # log.info(r)
         return r #ok if we don't track results for each
     def isrelated(self,directory):
-        if directory in self.remotenames:
+        # log.info("Checking if {} \n\tis related to {}".format(directory,
+        #                                                         self.url))
+        # log.info(self.remotenames)
+        if self.remotenames and directory in self.remotenames:
+            log.info("Found {} in settings; assuming related".format(directory))
             return True #This should always be
         #Git doesn't seem to care if repos are related, but I do...
         thatrepohashes=self.commithashes(directory)
@@ -13575,6 +13594,7 @@ class Repository(object):
         # N.B.: I think file.exists will always fail for internet repos
         # For now, add them to git
         if directory and file.exists(directory):
+            # log.info("Found existing directory: {}".format(directory))
             if self.isrelated(directory):
                 log.info("Found related repository: {}".format(directory))
                 self.addremote(directory)
@@ -13589,43 +13609,52 @@ class Repository(object):
             else:
                 return d.joinpath(self.dirname).with_suffix('.'+self.code)
     def findpresentremotes(self,remote=None,firsttry=True):
-        def clonetoUSB():
+        def clonetoUSB(event=None):
+            # log.info("Trying to event clonetoUSB")
             self.clonetoUSB()
-            e.destroy() #don't make the user do this; move one when clone done
         l=[]
         remotesinsettings=self.remoteurls().values()
-        log.info("remotesinsettings: {}".format(remotesinsettings))
+        # log.info("remotesinsettings: {}".format(remotesinsettings))
         #add to list only what is there now AND related
         # the related test will remove it if there AND NOT related.
         # Otherwise, we leave it for later, in case it just isn't there now.
         l.extend([d for d in remotesinsettings if self.addifis(d)])
         if self.remotenames:
-            log.info("self.remotenames: {}".format(self.remotenames))
+            # log.info("self.remotenames: {}".format(self.remotenames))
             l.extend(self.remotenames)
+        # log.info("remotesinsettings there: {}".format(l))
         if l:
-            log.info("returning l:{}".format(l))
+            log.info("returning remotes:{}".format(l))
             return l
         # If we're still here, offer the user one chance to plug in a drive.
         # but just do this once; don't annoy the user.
         elif self.code == 'git' and firsttry: # and me:
             # Show this only once per run, if a user doesn't have settings
             if remotesinsettings or not self.directorydontask:
-                text=_("{} can't find your {} {} backup. "
-                "\nIf you have a USB drive for this, insert it now."
-                "").format(program['name'], self.repotypename, self.description)
+                text=_(
+                # "{} can't find your {} {} backup. "
+                # "If you have a USB drive for your {} {} backup, insert it now."
+                "Please insert your {} USB now." #, if you have it
+                "").format(
+                # program['name'],
+                # self.repotypename,
+                self.description)
                 # clonetoUSB here will ask for a directory to put it, but won't
                 # clone if the target would be there, related or not.
                 # Either way, we check again for present remotes, so the cost
                 # of clicking this button (instead of 'exit') when you have a
                 # drive already set up is an extra file dialog —hopefully OK.
-                button=(_("Set up new USB"),clonetoUSB)
+                button=(_("Create new USB"),clonetoUSB)
                 e=ErrorNotice(text,
-                            title=_("No {} USB backup found"
-                                    ).format(self.description),
+                            title=_("No {} {} USB backup found"
+                                    ).format(self.repotypename,
+                                            self.description),
                             button=button,
                             image='USBdrive',
                             wait=True
                             )
+                # log.info(self.remoteurls())
+                # log.info(self.remoteurls().values())
                 #At this point, the user will have cloned or not already.
                 if self.remoteurls().values(): #this will have new clone value
                     return self.findpresentremotes(firsttry=False)
@@ -13890,6 +13919,7 @@ class Repository(object):
         # This is one of two functions that touch self._remotes directly
         # This returns a copy of the dict, so don't operate on it directly.
         # Rather, read and write using this function.
+        # log.info("returning remote urls: {}".format(getattr(self,'_remotes',{})))
         if remotes and type(remotes) is dict:
             self._remotes=remotes
         elif remotes:
@@ -14057,7 +14087,7 @@ class Git(Repository):
         return ['-c', 'user.name={}'.format(username),
                 '-c', 'user.email={}'.format(str(email))]
     def init(self):
-        args=['init', '--initial-branch="main"']
+        args=['init', '--initial-branch=main']
         r=self.do(args)
         if 'unknown option' in r:
             args=['init']
@@ -14119,7 +14149,7 @@ class GitReadOnly(Git):
             for remote in remotes:
                 r[remote+'/'+branch]=method(self,branch=branch,remotes=[remote])
         return r
-        """I'm going to ned to stash and stash apply here, I think"""
+        """I'm going to need to stash and stash apply here, I think"""
         remotes=self.findpresentremotes() #do once
         if not remotes:
             return
