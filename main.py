@@ -1972,9 +1972,9 @@ class Settings(object):
                     'Verbo','verbo'
                     ]:
                 self.verbalps=ps
-            else:
-                log.error("Not sure what to do with top {} ps {}".format(
-                                                                    topn,ps))
+            # else:
+            #     log.error("Not sure what to do with top {} ps {}".format(
+            #                                                         topn,ps))
         if not hasattr(self,'nominalps'):
                 self.nominalps='Noun'
         if not hasattr(self,'verbalps'):
