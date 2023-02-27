@@ -2444,15 +2444,15 @@ class Settings(object):
                             # log.info('made new ps key: {}:{}:{}'.format(ps,s,i))
                             # log.info('self.sextracted[{}]: ‘{}’'.format(ps,
                             #                                 self.sextracted[ps]))
-                    except AttributeError:
-                        try:
-                            self.sextracted={ps:{s:{i:1}}}
-                            # log.info('made sextracted attribute')
-                            # log.info('self.sextracted[{}]: ‘{}’'.format(ps,
-                            #                                 self.sextracted[ps]))
-                        except Exception as e:
-                            log.error("Ouch! No idea what happened! ({})"
-                                        "".format(e))
+                except AttributeError:
+                    try:
+                        self.sextracted={ps:{s:{i:1}}}
+                        # log.info('made sextracted attribute')
+                        # log.info('self.sextracted[{}]: ‘{}’'.format(ps,
+                        #                                 self.sextracted[ps]))
+                    except Exception as e:
+                        log.error("Ouch! No idea what happened! ({})"
+                                    "".format(e))
         for polyn in range(4,0,-1): #find and sub longer forms first
             for s in set(self.profilelegit) & set(self.rx.keys()):
                 if polyn in self.rx[s]:
