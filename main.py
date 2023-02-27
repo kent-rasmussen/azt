@@ -8022,6 +8022,14 @@ class Sound(object):
         if not self.exitFlag.istrue() and self.missingsoundattr():
             self.mikecheck() #if not, get them
             return
+    def audioexists(self,relfilename):
+        return file.exists(self.audioURL(relfilename))
+    def audioURL(self,relfilename):
+        return str(file.getdiredurl(self.audiodir,relfilename))
+    def hassoundfile(self,node,recheck=False):
+        """sets self.audiofileisthere and maybe self.audiofileURL"""
+        return node.hassoundfile(program['params'].audiolang(),
+                                self.audiodir,recheck)
     def __init__(self):
         self.soundcheck()
 class Record(Sound,TaskDressing):
@@ -8069,46 +8077,13 @@ class Record(Sound,TaskDressing):
                 if entry.guid in done: #only the first of multiple senses
                     continue
                 else:
-                    done.append(sense['guid'])
+                    done.append(entry.guid)
                 """These following two have been shifted down a level, and will
                 now return a list of form elements, each. Something will need to be
                 adjusted here..."""
-                sense['lxnode']=firstoflist(self.db.get('lexeme',
-                                                    guid=sense['guid'],
-                                                    lang=self.analang).get())
-                sense['lcnode']=firstoflist(self.db.get('citation',
-                                                    guid=sense['guid'],
-                                                    lang=self.analang).get())
-                sense['glosses']=[]
-                for lang in self.glosslangs:
-                    sense['glosses'].append(firstoflist(self.db.glossordefn(
-                                                    guid=sense['guid'],
-                                                    glosslang=lang
-                                                    ),othersOK=True))
-                if self.settings.pluralname is not None:
-                    sense['plnode']=firstoflist(self.db.fieldnode(
-                                    guid=sense['guid'],
-                                    lang=self.analang,
-                                    ftype=self.settings.pluralname)
-                                                )
-                if self.settings.imperativename is not None:
-                    sense['impnode']=firstoflist(self.db.fieldnode(
-                                    guid=sense['guid'],
-                                    lang=self.analang,
-                                    ftype=self.settings.imperativename)
-                                                )
-                if sense['lcnode'] is not None:
-                    sense['nodetoshow']=sense['lcnode']
-                else:
-                    sense['nodetoshow']=sense['lxnode']
-                self.makelabelsnrecordingbuttons(buttonframes.content,sense)
-                for node in ['plnode','impnode']:
-                    if (node in sense) and (sense[node] is not None):
-                        sense['column']+=2
-                        sense['nodetoshow']=sense[node]
-                        self.makelabelsnrecordingbuttons(buttonframes.content,
-                                                        sense)
-                row+=1
+                ftypes=['lc','pl','imp']
+                for node in [entry.sense.nodebyftype(f) for f in ftypes
+                                if entry.sense.nodebyftype(f)]:
             ui.Button(buttonframes.content,column=1,row=row,
                         text=_("Next {} words").format(nperpage),
                         cmd=buttonframes.destroy)
@@ -8351,6 +8326,27 @@ class Record(Sound,TaskDressing):
                         wavfilename=rx.urlok(wavfilename) #one character check
                         filenames+=[wavfilename+'.wav']
         return filenames
+    def makeaudiofilename(self,node):
+        """If node is already marked with woudn file attributes, we're done"""
+        if self.hassoundfile(node):
+            return
+        """Otherwise, generate prioritized list of name options"""
+        filenames=self.filenameoptions(node)
+        """if any of the generated filenames are there, stop at the first one"""
+        for f in filenames:
+            if self.audioexists(f):
+                log.info("Audiofile {} found at {}".format(f, self.audioURL(f)))
+                node.textvaluebylang(lang=program['params'].audiolang,value=f)
+                if self.hassoundfile(node,recheck=True):
+                    log.info("file {} linked in LIFT".format(node.audiofileURL))
+                break
+        """If none found, be ready to write with last/highest priority option"""
+        f=filenames[-1]
+        log.debug("No audio file found, but ready to record: "
+                    "{}; url:{}".format(f, self.audioURL(f)))
+        """Should be able to just send f"""
+        node.audiofilenametoput=f #don't write this until we actually record
+        node.audiofileURL=self.audioURL(f)
     def __init__(self,parent):
         TaskDressing.__init__(self,parent)
         Sound.__init__(self)
@@ -11494,45 +11490,6 @@ class FramedDataElement(FramedData):
     will only have form info. The rest should be added elsewhere
     (e.g., at the top of page/line). This is the class that allows for
     recording into the form[@audiolang] node of that node."""
-    def makeaudiofilename(self):
-        self.audio()
-        if (self.audiofileisthere() and
-                isinstance(self.parent.taskchooser.mainwindowis,Record)):
-            return
-        """First check if *any* glosslang has data"""
-        self.gloss=None
-        for lang in self.glosslangs:
-            if lang in self.forms:
-                self.gloss=self.forms[lang][self.ftype] #for now
-                break #glosslangs are prioritized; take the first one you find.
-        """This is for nodes that don't include glosses (lc/lx/pl/imp fields)"""
-        if not self.gloss and self.senseid:
-            for lang in self.glosslangs:
-                self.gloss=t(self.parent.db.get('gloss',
-                                            senseid=self.senseid,
-                                            glosslang=lang
-                                            ).get('text')
-                        )
-                if self.gloss:
-                    self.gloss+='_'+self.node.tag() #since not gloss of the form
-                    break
-        filenames=self.filenameoptions()
-        """if any of the generated filenames are there, stop at the first one"""
-        for self.filename in filenames:
-            if self.audiofileisthere():
-                break
-            # self.filenameURL=str(file.getdiredurl(self.audiodir,self.filename))
-            # log.debug("Looking for Audio file: {}; filename possibilities: {}; "
-            #     "url:{}".format(self.filename, filenames, self.filenameURL))
-            # if file.exists(self.filenameURL):
-            #     log.debug("Audiofile found! using name: {}; possibilities: {}; "
-            #         "url:{}".format(self.filename, filenames, self.filenameURL))
-            #     break
-        #if you don't find any files, the *last* values are used below
-        if not self.audiofileisthere(): #file.exists(self.filenameURL):
-            log.debug("No audio file found, but ready to record using name: "
-                        "{}; url:{}".format(self.filename, self.filenameURL))
-        return self.filename, self.filenameURL
     def parseelement(self,node):
         self.node=node #We don't have access to this here
         self.forms=node.textvaluedict() #dict of values
@@ -11748,8 +11705,13 @@ class SortButtonFrame(ui.ScrollingFrame):
                         ''.format(i))
         newgroup=max(values)+1
         groups.append(str(newgroup))
+        program['status'].groups(groups,wsorted=True)
+        program['status'].store()
+        # log.info("Groups (appended): {}".format(groups))
+        # log.info("Groups (appended): {}".format(program['status'].groups(wsorted=True)))
         return str(newgroup)
-    def sortselected(self,senseid,framed):
+    def sortselected(self,sense):
+        """Probably should just be sense"""
         selectedgroups=selected(self.groupvars)
         # log.info("selectedgroups: {}".format(selectedgroups))
         # for k in self.groupvars:
@@ -11762,7 +11724,8 @@ class SortButtonFrame(ui.ScrollingFrame):
         if groupselected in self.groupvars:
             self.groupvars[groupselected].set(False)
         else:
-            log.error("selected {}; not in {}".format(groupselected,self.groupvars))
+            log.error("selected {}; not in {}".format(groupselected,
+                                                        self.groupvars))
             return
         if groupselected:
             if groupselected in ["NONEOFTHEABOVE",'ok']:
@@ -11774,7 +11737,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                 run. At the beginning of a run, all used groups have buttons
                 created above.)"""
                 """Can't thread this; the button needs to find data"""
-                self.marksortgroup(senseid,group,framed=framed)
+                self.marksortgroup(sense,group)
                 self.addgroupbutton(group)
                 #adjust window for new button
                 self.windowsize()
@@ -11790,11 +11753,11 @@ class SortButtonFrame(ui.ScrollingFrame):
                                                             groupselected))
                 """This needs to *not* operate on "exit" button."""
                 """thread here?"""
-                # self.marksortgroup(senseid,framed,group=group,write=False)
                 t = threading.Thread(target=self.marksortgroup,
-                                    args=(senseid,group),
-                                    kwargs={'framed':framed,
-                                            'nocheck':True})
+                                    args=(sense,group),
+                                    kwargs={
+                                            'nocheck':True
+                                            })
                 t.start()
         else:
             log.debug('No group selected: {}'.format(groupselected))
@@ -11830,8 +11793,8 @@ class SortButtonFrame(ui.ScrollingFrame):
 class RecordButtonFrame(ui.Frame):
     def _start(self, event):
         log.log(3,"Asking PA to record now")
-        self.recorder=sound.SoundFileRecorder(self.filenameURL,self.pa,
-                                                                self.settings)
+        self.recorder=sound.SoundFileRecorder(self._filenameURL,self.pa,
+                                            program['settings'].soundsettings)
         log.debug("PA recorder made OK")
         self.recorder.start()
     def _stop(self, event):
@@ -11850,7 +11813,7 @@ class RecordButtonFrame(ui.Frame):
         self.makerecordbutton()
         self.r.destroy()
     def makebuttons(self):
-        if file.exists(self.filenameURL):
+        if file.exists(self._filenameURL):
             self.makeplaybutton()
             self.makedeletebutton()
             self.addlink()
@@ -11867,8 +11830,8 @@ class RecordButtonFrame(ui.Frame):
         self.bt=ui.ToolTip(self.b,_("press-speak-release"))
     def _play(self,event=None):
         log.debug("Asking PA to play now")
-        self.player=sound.SoundFilePlayer(self.filenameURL,self.pa,
-                                                                self.settings)
+        self.player=sound.SoundFilePlayer(self._filenameURL,self.pa,
+                                            program['settings'].soundsettings)
         tryrun(self.player.play)
     def makeplaybutton(self):
         self.p=ui.Button(self, text='‣', command=self._play,
@@ -11882,7 +11845,7 @@ class RecordButtonFrame(ui.Frame):
         pttext=_("Click to hear")
         if program['praat']:
             pttext+='; '+_("right click to open in praat")
-            self.p.bind('<Button-3>',lambda x: praatopen(self.filenameURL))
+            self.p.bind('<Button-3>',lambda x: praatopen(self._filenameURL))
         self.pt=ui.ToolTip(self.p,pttext)
     def makedeletebutton(self):
         self.r=ui.Button(self,text='×',font='read',command=self.function,
@@ -11895,12 +11858,13 @@ class RecordButtonFrame(ui.Frame):
     def addlink(self):
         if self.test:
             return
-        program['db'].addmediafields(self.node,self.filename,self.audiolang,
+        program['db'].addmediafields(self.node,self.filename,
+                                program['params'].audiolang,
                                 # ftype=ftype,
                                 write=False)
         self.task.maybewrite()
-        self.task.status.last('recording',update=True)
-    def __init__(self,parent,task,framed=None,**kwargs): #filenames
+        program['status'].last('recording',update=True)
+    def __init__(self,parent,task,node=None,**kwargs): #filenames
         """Uses node to make framed data, just for soundfile name"""
         """Without node, this just populates a sound file, with URL as
         provided. The LIFT link to that sound file should already be there."""
@@ -11914,21 +11878,23 @@ class RecordButtonFrame(ui.Frame):
         except:
             task.pyaudio=sound.AudioInterface()
         self.pa=task.pyaudio
-        if not hasattr(task.settings,'soundsettings'):
-            program['settings'].loadsoundsettings()
+        if not hasattr(program['settings'],'soundsettings'):
+            task.loadsoundsettings()
         self.callbackrecording=True
         self.chunk = 1024  # Record in chunks of 1024 samples (for block only)
         self.channels = 1 #Always record in mono
         self.test=kwargs.pop('test',None)
-        if framed and framed.framed != 'NA':
-            self.audiolang=framed.audiolang
-            self.filename=framed.filename
-            self.filenameURL=framed.filenameURL
-            self.node=framed.node
+        if node:# and framed.framed != 'NA':
+            task.makeaudiofilename(node) #should fill out the following
+            self.filename=node.textvaluebylang(program['params'].audiolang)
+            if not self.filename: #should have above or below
+                self.filename=node.audiofilenametoput
+            self._filenameURL=node.audiofileURL
+            self.node=node
         elif self.test:
             self.filename=self._filenameURL="test_{}_{}.wav".format(
-                                        self.soundsettings.fs, #soundsettings?
-                                        self.soundsettings.sample_format)
+                                program['settings'].soundsettings.fs,
+                                program['settings'].soundsettings.sample_format)
         else:
             t=_("No framed value, nor testing; can't continue...")
             log.error(t)
@@ -11944,9 +11910,10 @@ class RecordButtonFrame(ui.Frame):
                 relief='raised' #flat, raised, sunken, groove, and ridge
                 ).grid(row=0,column=0)
             return
-        if None in [self.settings.fs, self.settings.sample_format,
-                    self.settings.audio_card_in,
-                    self.settings.audio_card_out]:
+        if None in [program['settings'].soundsettings.fs,
+                    program['settings'].soundsettings.sample_format,
+                    program['settings'].soundsettings.audio_card_in,
+                    program['settings'].soundsettings.audio_card_out]:
             text=_("Set all sound card settings"
                     "\n(Do|Recording|Sound Card Settings)"
                     "\nand a record button will be here.")
