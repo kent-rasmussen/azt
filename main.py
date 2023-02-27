@@ -5048,39 +5048,6 @@ class TaskChooser(TaskDressing):
         """Do I want this? Rather give errors..."""
 class Segments(object):
     """docstring for Segments."""
-    def getlisttodo(self,**kwargs):
-        """Whichever field is being asked for (self.nodetag), this fn returns
-        which are left to do."""
-        if not isinstance(self,WordCollection) and self.byslice:
-            log.info("Limiting segment work to this slice")
-            all=[]
-            for senseid in self.slices.senseids():
-                all+=self.db.get('entry',senseid=senseid
-                                # showurl=True
-                                ).get()
-        else:
-            all=self.db.entries
-        if self.dodone and not self.dodoneonly: #i.e., all data
-            return all
-        if self.nodetag == 'citation':
-            done=[i for i in all if i.lc.textvaluebylang(self.analang)]
-        if self.nodetag == 'lexical-unit':
-            done=[i for i in all if i.lx.textvaluebylang(self.analang)]
-        else: #don't use this...
-            log.info("set up getlisttodo with nodetag {}".format(self.nodetag))
-        if self.dodone: #i.e., dodoneonly
-            return done
-        # At this point, done isn't wanted
-        todo=[x for x in all if x not in done] #set-set may be better
-        log.info("To do: ({}) {}".format(len(todo),todo))
-        return todo
-    def getwords(self):
-        self.entries=self.getlisttodo()
-        self.nentries=len(self.entries)
-        self.index=0
-        r=self.getword()
-        if r == 'noglosses':
-            self.nextword()
     def buildregex(self,**kwargs):
         """include profile (of those available for ps and check),
         and subcheck (e.g., a: CaC\2)."""
