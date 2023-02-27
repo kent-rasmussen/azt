@@ -2323,6 +2323,7 @@ class Settings(object):
         n=0
         todo=len(senseids)
         # log.info("RXs: {}".format(self.rx))
+        program['taskchooser'].wait(msg="getting profiles for {}".format(ps))
         for senseid in senseids:
             n+=1
             if n%100:
@@ -2333,8 +2334,10 @@ class Settings(object):
                 form,profile=self.getprofileofsense(senseid,ps)
                 log.debug("{}: {}; {}".format(str(n)+'/'+str(todo),form,
                                             profile))
+            program['taskchooser'].waitprogress(n*100/todo)
         t.join()
         return n
+        program['taskchooser'].waitdone()
     def getprofilesbyentry(self):
         for entry in program['db'].entries:
             for sense in entry.senses:
@@ -5033,8 +5036,8 @@ class TaskChooser(TaskDressing,ui.Window):
                     "get picked up later...")
             self.towrite=True
     def usbcheck(self):
-        for r in program['settings'].repo.values():
         self.splash.withdraw()
+        for r in program['settings'].repo.values():
             # log.info("checking repo {} for USB drive".format(r))
             r.share()
         self.splash.draw()
