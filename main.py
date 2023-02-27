@@ -4632,6 +4632,8 @@ class TaskChooser(TaskDressing):
         elif self.datacollection:
             tasks=[
                     WordCollectionCitation,
+                    WordCollectionPlural,
+                    WordCollectionImperative,
                     WordCollectnParse
                     # WordCollectionLexeme
                     ]
