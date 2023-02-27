@@ -7042,6 +7042,7 @@ class Sort(object):
         #This function updates the status variable, not the lift file.
         group=kwargs.get('group',program['status'].group())
         write=kwargs.get('write')
+        wstatus=kwargs.get('writestatus')
         r=program['status'].update(group=group,verified=verified,writestatus=wstatus)
         if r: #only do this if there is a change in status
             self.updatestatuslift(group=group,verified=verified,write=write)
