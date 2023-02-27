@@ -1933,6 +1933,10 @@ class Form(Node):
         self.getannotations()
         self.lang=self.get("lang")
 class FormParent(Node):
+    def langftypecode(self,lang):
+        return '_'.join([lang,self.ftype])
+    def stripftypecode(self,x):
+        return x.removesuffix('_'+self.ftype)
     def textvaluedict(self):
         return {lang:self.forms[lang].textvalue()
                 for lang in self.forms}
@@ -2028,9 +2032,14 @@ class FormParent(Node):
     def langs(self):
         return self.forms.keys()
     def formattedbylang(self,lang,frame):
+        """This function is safe to give formatted analang material, since it
+        is not used for glosses, which are Form nodes, not FormParent nodes"""
         t=self.textvaluebylang(lang)
         if t and frame:
-            t=rx.framerx.sub(t,frame[lang])
+            try: #process analang correctly, if distinct
+                t=rx.framerx.sub(t,frame[self.langftypecode(lang)])
+            except KeyError:
+                t=rx.framerx.sub(t,frame[lang])
         return t
     def formatted(self,analang,glosslangs,ftype=None,frame=None,**kwargs):
         # Don't die on showtonegroup
@@ -2430,6 +2439,11 @@ class Sense(Node,FieldParent):
         # log.info("formattedgloss called with glosslang={}, ftype={}, frame={}, "
         #         "quoted={}"
         #         "".format(glosslang,ftype,frame,quoted))
+        if not ftype:
+            if frame:
+                ftype=frame['field']
+            else:
+                ftype='lc'
         t=[]
         try:
             for gloss in self.glosses[glosslang]: #unlist each gloss for one lang
@@ -2464,8 +2478,9 @@ class Sense(Node,FieldParent):
                                                 if i in self.glosses]))
         d={lang:', '.join(self.formattedgloss(lang,ftype,frame,quoted=True))
             for lang in [i for i in glosslangs if i in self.glosses]}
-        d[analang]=self.formattedform(analang,ftype,frame)
-
+        #don't overwrite gloss in analang, if both there:
+        d[self.nodebyftype(ftype).langftypecode(analang)
+            ]=self.formattedform(analang,ftype,frame)
         return d
     def formattedexample(self,analang,glosslangs,loc,showtonegroup=False):
         if loc in self.examples:
