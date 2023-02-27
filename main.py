@@ -8022,28 +8022,17 @@ class Sound(object):
         if not self.exitFlag.istrue() and self.missingsoundattr():
             self.mikecheck() #if not, get them
             return
-    def makelabelsnrecordingbuttons(self,parent,sense):
-        # log.info("Making buttons for {} (in {})".format(sense['nodetoshow'],sense))
-        framed=self.taskchooser.datadict.getframeddata(sense['nodetoshow'])
-        t=framed.formatted(noframe=True)
-        for g in sense['glosses']:
-            if g:
-                t+='\t‘'+g
-                if ('plnode' in sense and
-                        sense['nodetoshow'] is sense['plnode']):
-                    t+=_(" (pl)")
-                if ('impnode' in sense and
-                        sense['nodetoshow'] is sense['impnode']):
-                    t+="!"
-                t+='’'
-        lxl=ui.Label(parent, text=t)
-        lcb=RecordButtonFrame(parent,self,framed)
-        lcb.grid(row=sense['row'],column=sense['column'],sticky='w')
-        lxl.grid(row=sense['row'],column=sense['column']+1,sticky='w')
     def __init__(self):
         self.soundcheck()
 class Record(Sound,TaskDressing):
     """This holds all the Sound methods specific for Recording."""
+    def makelabelsnrecordingbuttons(self,parent,node,r,c):
+        # log.info("Making buttons for {} (in {})".format(sense['nodetoshow'],sense))
+        t=node.formatted(self.analang,self.glosslangs)
+        lxl=ui.Label(parent, text=t)
+        lcb=RecordButtonFrame(parent,self,node)
+        lcb.grid(row=r,column=c,sticky='w')
+        lxl.grid(row=r,column=c+1,sticky='w')
     def showentryformstorecordpage(self):
         #The info we're going for is stored above sense, hence guid.
         if self.runwindow.exitFlag.istrue():
