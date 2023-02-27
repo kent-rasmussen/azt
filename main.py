@@ -5940,7 +5940,7 @@ class Parse(Segments):
         w=ui.Window(self)
         w.title(_("Select second form"))
         t=ui.Label(w.frame,
-                    text="What is the {} or {} of ‘{}’ ({})?"
+                    text="What is the {} or {} of \n‘{}’ ({})?"
                         "".format(
                         self.secondformfield[self.nominalps],
                         self.secondformfield[self.verbalps],
@@ -5952,27 +5952,56 @@ class Parse(Segments):
         t.wrap()
         if ln:
             noun=ui.Frame(w.frame, row=1, column=0, sticky='n')
+            image=self.getimage()
+            ui.Label(noun,text='',image=image,
+                    compound="bottom",
+                    sticky='e',
+                    ipadx=10,
+                    row=0,column=0)
+            ui.Label(noun,text='',image=image,
+                    compound="bottom",
+                    sticky='w',
+                    ipadx=10,
+                    row=0,column=1)
             ui.Label(noun,
                     text="Select {} form".format(
                                         self.secondformfield[self.nominalps]),
-                    row=0,column=0)
+                    row=1,column=0,
+                    columnspan=2)
             bfn=ui.ScrollingButtonFrame(noun, optionlist=ln, window=t,
                                         command=self.parser.dooneformparse,
-                                        row=1, column=0
+                                        row=2, column=0,
+                                        columnspan=2
                                         )
         if lv:
             verb=ui.Frame(w.frame, row=1, column=1, sticky='n')
+            image1=program['theme'].photo['Order!']
+            image1.scale(program['scale'],pixels=300,resolution=10) #300 wide
+            image2=self.getimage()
+            # log.info("image1.scaled: {} ({})".format(image1.scaled,type(image1.scaled)))
+            # log.info("image2: {} ({})".format(image2,type(image2)))
+            try:
+                image1.scaled.paste(image2)
+                bgl=ui.Label(verb,text='',image=image1.scaled,
+                    compound="center",
+                    sticky='ew',
+                    row=0,column=0)
+            except Exception as e:
+                log.info("Exception: {}".format(e))
+                # bgl.place(relx=0.5, rely=0.5, anchor='center')
+                ui.Label(verb,text='!',image=image2,
+                    compound="left",sticky='ew',font='title',
+                    row=0,column=0)
             ui.Label(verb,
                     text="Select {} form".format(
                                         self.secondformfield[self.verbalps]),
-                    row=0,column=0)
+                    row=1,column=0)
             bfv=ui.ScrollingButtonFrame(verb, optionlist=lv, window=t,
                                         command=self.parser.dooneformparse,
-                                        row=1, column=0
-                                        )
+                                        row=2, column=0)
         neitherb=ui.Button(w.frame, text=_("Neither"),
                         command=neither,
-                        row=1, column=2, sticky='n')
+                        row=1, column=2, sticky='ns')
         ui.Label(w.frame,text=self.currentformnotice(),
                     font='small',justify='l',
                     row=2,column=0,columnspan=3)
