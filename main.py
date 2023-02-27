@@ -11251,7 +11251,8 @@ class DictbyLang(dict):
 class ExampleDict(dict):
     """This function finds examples in the lexicon for a given tone value,
     in a given tone frame (from check); thus, only sorted data."""
-    def senseidsinslicegroup(self,group,check):
+    def sensesinslicegroup(self,group,check):
+        """Convert to senses before return"""
         #This returns all the senseids with a given tone value
         senseids=program['taskchooser'].task.getsenseidsingroup(check,group)
         if not senseids:
@@ -11269,13 +11270,6 @@ class ExampleDict(dict):
             return
         # return list(senseidsinslice)
         # return senses, not senseids
-    def hassoundfile(self,framed):
-        if framed.audiofileisthere():
-            self._outdict['audiofileisthere']=True
-            return True
-        else:
-            self._outdict['audiofileisthere']=False
-    def exampletypeok(self,senseid,check,**kwargs):
         return [v for k,v in program['db'].sensedict.items() if k in senseidsinslice]
     def hasglosses(self,node):
         # log.info("hasglosses sense: {}".format(sense.id))
@@ -11283,43 +11277,55 @@ class ExampleDict(dict):
             return node.translation.textvaluedict()
         except AttributeError:
             return node.sense.glosses
+    def hassoundfile(self,node):
+        """sets self.audiofileisthere and maybe self.audiofileURL"""
+        """You want to do this even if you don't need it, as this checks and
+        marks the example"""
+        return node.hassoundfile(program['params'].audiolang(),
+                                program['settings'].audiodir)
+    def exampletypeok(self,node,**kwargs):
         kwargs=exampletype(**kwargs)
-        if senseid is None:
-            return
-        framed=self.datadict.getframeddata(senseid=senseid,check=check)
-        if framed is None:
-            log.info("getframeddata didn't result in a frame! ({};{})".format(
-                                                                senseid,check))
+        if not node:
             return
         # log.info("exampletypeok framed: {}".format(framed))
-        if kwargs['wglosses'] and not self.hasglosses(framed):
-            log.info("Gloss check failed for {}".format(senseid))
+        if kwargs['wglosses'] and not self.hasglosses(node):
+            log.info("Gloss check failed for {}".format(node.sense.id))
             return
-        if kwargs['wsoundfile'] and not self.hassoundfile(framed):
-            log.info("Audio file check failed for {}".format(senseid))
+        if not self.hassoundfile(node) and kwargs['wsoundfile']:
+            log.info("Audio file check failed for {}".format(node.sense.id))
             return
-        self._outdict['senseid']=senseid
-        self._outdict['framed']=framed
         return True
     def getexample(self,group,**kwargs):
-        check=self.params.check()
-        senseids=self.senseidsinslicegroup(group,check)
-        if not senseids:
-            log.error("There don't seem to be any sensids in this "
-                    "check-tonegroup-slice, so I can't get you an example.")
-            return
         check=program['params'].check()
         ftype=program['params'].ftype()
+        if program['params'].cvt() == 'T': # example nodes
+            nodes=[v.examples[check] for k,v in program['db'].sensedict.items()
+                        if k in program['slices'].inslice(program['db'].sensedict)
+                        if check in v.examples
+                        if v.examples[check].tonevalue() == group
+                        ]
+        else: # Other FormParent nodes
+            nodes=[v.ftypes[ftype] for k,v in program['db'].sensedict.items()
+                        if k in program['slices'].inslice(program['db'].sensedict)
+                        if ftype in v.ftypes
+                        if v.ftypes[ftype].annotationvaluebylang(
+                                                    program['params'].analang(),
+                                                    check
+                                                                ) == group
+                    ]
+        if not nodes:
+            log.error("There don't seem to be any nodes in this "
+                    "check-group/ftype-slice.")
+            return 0,None
         # else:
         #     log.info("Found {} examples in the {} sort group for the {} check: "
         #             "{}.".format(len(senseids),group,check,senseids))
-        n=len(senseids)
-        self._outdict={'n': n}
+        n=len(nodes)
         tries=0
-        senseid=None #do this once, anyway...
+        node=None #do this once, anyway...
         """hasglosses sets the framed and senseid keys"""
         # log.debug("ExampleDict getexample kwargs: {}".format(kwargs))
-        while not self.exampletypeok(senseid,check,**kwargs) and tries<n*2:
+        while not self.exampletypeok(node,**kwargs) and tries<n*2:
             # (self.hasglosses(senseid) or noglossesok or tries>n*2):
             tries+=1
             # if tries == n*2: #do this just once
@@ -11330,49 +11336,49 @@ class ExampleDict(dict):
             log.debug("ExampleDict getexample kwargs: {}; tries: {}; n: {}"
                                             "".format(kwargs,tries,n))
             if group in self: #.exs:
-                if self[group] in senseids: #if stored value is in group
+                log.info("group in self")
+                if self[group] in nodes: #if stored value is in group
+                    log.info("self[group] in examples")
                     if not kwargs['renew']:
                         log.info("Using stored value for ‘{}’ group: ‘{}’"
                                 "".format(group, self[group]))
-                        senseid=self[group]
+                        node=self[group]
                         #don't do this if clause more than once
                         kwargs['renew']=True
                     else:
-                        i=senseids.index(self[group])
+                        log.info("renewing")
+                        i=nodes.index(self[group])
                         if not kwargs.get('goback'):
-                            if i == len(senseids)-1: #loop back on last
-                                senseid=senseids[0]
+                            log.info("not going back")
+                            if i == len(nodes)-1: #loop back on last
+                                node=nodes[0]
                             else:
-                                senseid=senseids[i+1]
+                                node=nodes[i+1]
                         else:
+                            log.info("going back")
                             if i == 0: #loop back on last
-                                senseid=senseids[len(senseids)-1]
+                                node=nodes[len(nodes)-1]
                             else:
-                                senseid=senseids[i-1]
+                                node=nodes[i-1]
                         log.info("Using next value for ‘{}’ group: ‘{}’"
                                 "".format(group, self[group]))
                 else:
-                    senseid=senseids[0] #randint(0, len(senseids))-1]
+                    log.info("self[group] not in examples")
+                    node=nodes[0] #randint(0, len(senseids))-1]
             elif n == 1:
-                senseid=senseids[0]
+                log.info("group not in self, one exemplaire")
+                node=nodes[0]
             else:
+                log.info("group not in self, multiple exemplaires")
                 log.debug("n: {}".format(n))
-                senseid=senseids[randint(0, n-1)]
-            self[group]=senseid #store for next iteration
+                node=nodes[randint(0, n-1)]
+            self[group]=node #store for next iteration
         if tries == n*2: #senseid is None: #not self.hasglosses(senseid):
             log.info("Apparently I tried for a senseid {} times, and couldn't "
             "find one matching your needs ({}) glosses (out of {} possible "
             "senses). This is probably a systematic problem to fix.".format(
                                                                 tries,kwargs,n))
         else:
-            self[group]=senseid #save for next time
-            return self._outdict
-    def __init__(self,params,slices,db,datadict):
-        self.params=params #needed?
-        self.slices=slices
-        self.db=db
-        self.datadict=datadict
-        super(ExampleDict, self).__init__()
 class FramedDataDict(dict):
     def refresh(self):
         self.clear()
@@ -11722,6 +11728,11 @@ class FramedDataElement(FramedData):
         """
         # log.info("FramedDataElement initalization done, with forms: {}"
         #             "".format(self.forms))
+            self[group]=node #save for next time
+            return len(nodes),node #self._outdict
+    def __init__(self):
+        # self.datadict=datadict
+        super(ExampleDict, self).__init__({})
 class MainApplication(ui.Window):
     def setmasterconfig(self): #,program
         """Configure variables for the root window (master)"""
