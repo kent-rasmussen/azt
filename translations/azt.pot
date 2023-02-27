@@ -454,7 +454,7 @@ msgid "Exit {} with no changes"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:1440
-msgid "A→Z+T Digraphs and Trigraphs"
+msgid "A-Z+T Digraphs and Trigraphs"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:1442
@@ -964,7 +964,7 @@ msgid ""
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:3073
-msgid "Return to A→Z+T, to fix settings"
+msgid "Return to A-Z+T, to fix settings"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:3074
@@ -975,7 +975,7 @@ msgid ""
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:3085
-msgid "Quit A→Z+T"
+msgid "Quit A-Z+T"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:3098

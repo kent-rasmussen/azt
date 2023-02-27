@@ -1,9 +1,9 @@
 # Ordered Task List
-[A→Z+T] is now organized into a series of discrete tasks, which are divided into the two groups below. [Reports][REPORTS.md] can be accessed through a button on either page.
+[A-Z+T] is now organized into a series of discrete tasks, which are divided into the two groups below. [Reports][REPORTS.md] can be accessed through a button on either page.
 
 There is a chooser to help you stay focused on data collection or analysis, and with a button (upper right) to switch between them.
 
-[A→Z+T] does a brief analysis of your database on startup, which shows what tasks you have started, and to what degree you have completed them. With this information, [A→Z+T] presents you with tasks appropriate to where you are in your work. For instance, until you are (at least almost) finished with collecting the Comparative African Word List (CAWL), that is the only task you will see.
+[A-Z+T] does a brief analysis of your database on startup, which shows what tasks you have started, and to what degree you have completed them. With this information, [A-Z+T] presents you with tasks appropriate to where you are in your work. For instance, until you are (at least almost) finished with collecting the Comparative African Word List (CAWL), that is the only task you will see.
 
 ## [Data Collection Tasks](TASKSCOLLECTION.md)
 
@@ -17,7 +17,7 @@ In [these tasks](TASKSANALYSIS.md), language data is being processed in some way
 
 These tasks currently include transcribing surface tone groups in a meaningful way (hopefully phonetically), running reports that correlate the various surface forms, and grouping those hypersplit underlying form drafts into more meaningful and more appropriately split groups. For more information on specific analysis tasks, see [this page](TASKSANALYSIS.md).
 
-[A→Z+T]:  https://github.com/kent-rasmussen/azt
+[A-Z+T]:  https://github.com/kent-rasmussen/azt
 [WeSay]:  https://software.sil.org/wesay/
 [FLEx]: https://software.sil.org/fieldworks/
 [LIFT]: https://code.google.com/archive/p/lift-standard/
