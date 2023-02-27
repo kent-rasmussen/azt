@@ -2528,9 +2528,9 @@ class Sense(Node,FieldParent):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='sense'
         super(Sense, self).__init__(parent, node, **kwargs)
+        self.entry=parent #make a common reference point for sense/entry
         FieldParent.__init__(self)
         self.getcawlline()
-        self.entry=parent #make a common reference point for sense/entry
         self.sense=self
         self.id=self.get('id')
         self.psvalue() #set if there
