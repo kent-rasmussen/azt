@@ -1642,7 +1642,7 @@ class Settings(object):
         self.adhocgroupsfile=basename.with_suffix(".AdHocGroups.dat")
         self.soundsettingsfile=basename.with_suffix(".SoundSettings.ini")
         self.settingsbyfile() #This just sets self.settings
-        for setting in self.settings:#[setting]
+        for setting in self.settings:
             savefile=self.settingsfile(setting)#self.settings[setting]['file']
             if not file.exists(savefile):
                 log.debug("{} doesn't exist!".format(savefile))
@@ -2455,7 +2455,7 @@ class Settings(object):
         """This depends on self.sextracted, from getprofiles, so should only
         run when that changes."""
         scount={}
-        for ps in self.sextracted: # was self.db.pss[self.analang]:
+        for ps in self.sextracted: # was program['db'].pss[self.analang]:
             scount[ps]={}
             for s in self.rx:
                 try:
@@ -2747,6 +2747,7 @@ class Settings(object):
                 e=ErrorNotice(errortext,title=_("Error!"),wait=True)
                 file.writefilename() #just clear the default; let user move on
                 sysrestart()
+            # program['db'].pss=program['db'].getpssbylang(self.analang) #redo this, specify
             # return
         elif nlangs == 1:
             self.analang=program['db'].analangs[0]
@@ -2879,7 +2880,7 @@ class Settings(object):
             self.attrschanged.remove('cvt')
         if 'ps' in self.attrschanged:
             if t == 'T':
-                program['taskchooser'].status.updatechecksbycvt()
+                program['status'].updatechecksbycvt()
             self.attrschanged.remove('ps')
         if 'profile' in self.attrschanged:
             if t != 'T':
@@ -2942,7 +2943,6 @@ class Settings(object):
         else:
             log.debug(_('No change: {} == {}'.format(attribute,choice)))
     def setsecondformfieldN(self,choice,window=None):
-        # ps=Noun# t=self.params.cvt()
         self.secondformfield[self.nominalps]=self.pluralname=choice
         self.attrschanged.append('secondformfield')
         for entry in program['db'].entries:
@@ -2951,7 +2951,6 @@ class Settings(object):
         if window:
             window.destroy()
     def setsecondformfieldV(self,choice,window=None):
-        # ps=Noun# t=self.params.cvt()
         self.secondformfield[self.verbalps]=self.imperativename=choice
         self.attrschanged.append('secondformfield')
         for entry in program['db'].entries:
@@ -3072,9 +3071,11 @@ class Settings(object):
         self.soundsettings.sample_format=choice
         window.destroy()
     def setsoundcardindex(self,choice,window):
+        # log.info("setsoundcardindex: {}".format(choice))
         self.soundsettings.audio_card_in=choice
         window.destroy()
     def setsoundcardoutindex(self,choice,window):
+        # log.info("setsoundcardoutindex: {}".format(choice))
         self.soundsettings.audio_card_out=choice
         window.destroy()
     def langnames(self,langs=None):
@@ -4888,7 +4889,7 @@ class TaskChooser(TaskDressing):
         for lang in citationsdone:
             if nentries-citationsdone[lang] < 50 and not len(self.cawlmissing):
                 self.donew['collectionlc']=True
-            if me or citationsdone[lang] > 200: #was 705
+            if citationsdone[lang] > 200: #was 705
                 self.doneenough['collectionlc']=True#I need to think through this
             # log.info("checking '{}'".format(f))
         for f in [i for j in program['db'].sensefieldnames.values() for i in j]:
@@ -7171,7 +7172,7 @@ class Sort(object):
         self.setsensegroup(sense,ftype,check,'',**kwargs)
         tgroups=self.getsensegroup(sense,check)
         log.info("Checking that removal worked")
-        if tgroups in [[],'',['']]:
+        if tgroups in [[],'',[''],None]:
             log.info("Field removal succeeded! LIFT says '{}', = []."
                                                             "".format(tgroups))
         elif len(tgroups) == 1:
@@ -7851,9 +7852,9 @@ class Sort(object):
             text=_("Not Trying Again; set a tone frame first!")
             ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
             return
-            # self.db.addmodexamplefields(senseid=senseid,fieldtype='tone',
             for sense in [program['db'].sensedict[i] for i in senseids]: #this is a ps-profile slice
                 self.removesensefromgroup(sense)
+            # program['db'].addmodexamplefields(senseid=senseid,fieldtype='tone',
             #                 location=check,#ftype=ftype,
             #                 fieldvalue='', #just clear this
             #                 oldfieldvalue='NA', showurl=True #if this
@@ -8252,8 +8253,10 @@ class Record(Sound,TaskDressing):
                 for node in [entry.sense.nodebyftype(f) for f in ftypes
                                 if entry.sense.nodebyftype(f)]:
                     self.runwindow.column+=2
+                    # sense['nodetoshow']=sense[node]
                     self.makelabelsnrecordingbuttons(buttonframes.content,node,
                         row,self.runwindow.column)
+                # row+=1
             ui.Button(buttonframes.content,column=1,row=row,
                         text=_("Next {} words").format(nperpage),
                         cmd=buttonframes.destroy)
@@ -8318,13 +8321,13 @@ class Record(Sound,TaskDressing):
             log.debug("Working on {} with skip: {}".format(sense.id,
                                                     self.runwindow.frame.skip))
             examples=list(sense.examples.values())
+            # program['db'].get('example',senseid=senseid).get()
             if examples == []:
                 log.debug(_("No examples! Add some, then come back."))
                 continue
             if ((self.runwindow.frame.skip == True) and
-                (lift.atleastoneexamplehaslangformmissing(
-                                                    examples,
-                                                    program['settings'].audiolang) == False)):
+                (lift.atleastoneexamplehaslangformmissing(examples,
+                                    program['settings'].audiolang) == False)):
                 continue
             row=0
             if self.runwindow.exitFlag.istrue():
@@ -8355,7 +8358,7 @@ class Record(Sound,TaskDressing):
                 if (skip == True and
                     lift.examplehaslangform(example,program['settings'].audiolang) == True):
                     continue
-                """These should already be framed!"""
+                # """These should already be framed!"""
                 text=example.formatted(self.analang,self.glosslangs)
                 if not text:
                     #Don't show the whole dictionary of frames here:
