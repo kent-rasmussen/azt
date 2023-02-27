@@ -4570,6 +4570,7 @@ class TaskChooser(TaskDressing):
         elsewhere, but that led to numerous repetitions."""
         optionlist=self.makeoptions()
         # task,title,icon
+        log.info("starting from option list {}".format(optionlist))
         optionlist=[i for i in optionlist if not issubclass(i[0],Sound)]
         # log.info("getting default from option list {}".format(
         #                                             [i[1] for i in optionlist]))
