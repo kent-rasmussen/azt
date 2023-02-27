@@ -14246,26 +14246,28 @@ def interfacelang(lang=None,magic=False):
                     code='en' #I think loc=None normally means English on macOS
                 if code in i18n:
                     return code
-def dictofchilddicts(self,remove=None):
+def dictofchilddicts(dict,remove=None):
     # This takes a dict[x][y] and returns a dict[y], with all unique values
     # listed for all dict[*][y].
+    # log.info("Working on dict {}".format(dict))
     o={}
-    for x in self:
-        for y in self[x]:
+    for x in dict:
+        for y in dict[x]:
             if y not in o:
                 o[y]=[]
-            if type(self[x][y]) is list:
-                for z in self[x][y]:
+            if isinstance(dict[x][y],list):
+                for z in dict[x][y]:
                     o[y].append(z)
             else:
-                o[y].append(self[x][y])
-    log.info("o:{}".format(o))
+                o[y].append(dict[x][y])
+    # log.info("o1:{}".format(o))
     for y in o:
         o[y]= list(dict.fromkeys(o[y]))
         if type(remove) is list:
             for a in remove:
                 if a in o[y]:
                     o[y].remove(a)
+    # log.info("o2:{}".format(o))
     return o
 def flatten(l):
     log.debug("list to flatten: {}".format(l))
