@@ -2396,22 +2396,46 @@ class Settings(object):
         # self.profilelegit=['#','̃','N','G','S','C','Ṽ','V','d','b']
         # log.info("Searching {} ordered as: {}".format(form,self.profilelegit))
         # log.info("Searching with these regexes: {}".format(self.rx))
+        # log.info('self.sextracted: ‘{}’'.format(self.sextracted))
         for s in set(self.profilelegit) & set(self.rx.keys()):
             # log.info('s: {}; rx: {}'.format(s, self.rx[s]))
-            for i in self.rx[s][0].findall(form): #find any polygraph
+            for i in self.rx[s][0].findall(form): #find any polygraph match
+                # log.info('found polygraph ‘{}’'.format(i))
                 try:
                     self.sextracted[ps][s][i]+=1 #self.rx[s].subn('',form)[1] #just the count
-                except KeyError:
+                    # log.info('added to polygraph key: {}'.format(i))
+                    # log.info('self.sextracted[{}]: ‘{}’'.format(ps,
+                    #                                     self.sextracted[ps]))
+                except KeyError as e:
                     try:
-                        self.sextracted[ps][s]={i:1}
-                    except KeyError:
-                        self.sextracted[ps]={s:{i:1}}
-                except AttributeError:
-                    try:
-                        self.sextracted={ps:{s:{i:1}}}
-                    except Exception as e:
-                        log.error("Ouch! No idea what happened! ({})"
-                                    "".format(e))
+                        # log.info('self.sextracted[{}]: ‘{}’'.format(ps,
+                        #                                 self.sextracted[ps]))
+                        self.sextracted[ps][s][i]=1
+                        # log.info('made new polygraph key: {}:{} ({})'.format(s,i,e))
+                        # log.info('self.sextracted[{}]: ‘{}’'.format(ps,
+                        #                                 self.sextracted[ps]))
+                    except KeyError as e:
+                        try:
+                            # log.info('self.sextracted[{}]: ‘{}’'.format(ps,
+                            #                                 self.sextracted[ps]))
+                            self.sextracted[ps][s]={i:1}
+                            # log.info('made new s key: {}:{} ({})'.format(s,i,e))
+                            # log.info('self.sextracted[{}]: ‘{}’'.format(ps,
+                            #                                 self.sextracted[ps]))
+                        except KeyError:
+                            self.sextracted[ps]={s:{i:1}}
+                            # log.info('made new ps key: {}:{}:{}'.format(ps,s,i))
+                            # log.info('self.sextracted[{}]: ‘{}’'.format(ps,
+                            #                                 self.sextracted[ps]))
+                    except AttributeError:
+                        try:
+                            self.sextracted={ps:{s:{i:1}}}
+                            # log.info('made sextracted attribute')
+                            # log.info('self.sextracted[{}]: ‘{}’'.format(ps,
+                            #                                 self.sextracted[ps]))
+                        except Exception as e:
+                            log.error("Ouch! No idea what happened! ({})"
+                                        "".format(e))
         for polyn in range(4,0,-1): #find and sub longer forms first
             for s in set(self.profilelegit) & set(self.rx.keys()):
                 if polyn in self.rx[s]:
