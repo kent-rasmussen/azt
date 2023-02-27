@@ -1746,8 +1746,15 @@ class Settings(object):
         #There are too many calls to this; why?
         filename=self.settingsfile(setting)
         config=ConfigParser()
-        config['default']={}
         d=self.makesettingsdict(setting=setting)
+        config.read(filename,encoding='utf-8')
+        # if d == config:
+        #     log.info("no settings change; not writing.")
+        #     return
+        # else:
+        #     log.info("Settings from file: {}".format(dict(config['default'])))
+        #     log.info("Settings currently: {}".format(d))
+        config['default']={}
         # log.info("storing settings file {}".format(setting))
         for s in [i for i in d if i not in [None,'None']]:
             v=d[s]
