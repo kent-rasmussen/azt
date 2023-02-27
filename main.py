@@ -456,8 +456,8 @@ class LiftChooser(ui.Window,HasMenus):
             self.name=self.filechooser.name=name
             file.writefilename(name)
             self.destroy()
-            if hasattr(self.filechooser.parent,'splash'):
-                self.filechooser.parent.splash.deiconify()
+            if hasattr(program['taskchooser'],'splash'):
+                program['taskchooser'].splash.deiconify()
     def __init__(self,chooser,filenamelist):
         self.filechooser=chooser
         self.parent=program['root']
