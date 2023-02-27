@@ -11281,11 +11281,6 @@ class ExampleDict(dict):
             return
         # return list(senseidsinslice)
         # return senses, not senseids
-    def hasglosses(self,framed):
-        log.info("hasglosses framed: {}".format(framed))
-        if framed.glosses():
-            self._outdict['framed']=framed
-            return True
     def hassoundfile(self,framed):
         if framed.audiofileisthere():
             self._outdict['audiofileisthere']=True
@@ -11294,6 +11289,12 @@ class ExampleDict(dict):
             self._outdict['audiofileisthere']=False
     def exampletypeok(self,senseid,check,**kwargs):
         return [v for k,v in program['db'].sensedict.items() if k in senseidsinslice]
+    def hasglosses(self,node):
+        # log.info("hasglosses sense: {}".format(sense.id))
+        try:
+            return node.translation.textvaluedict()
+        except AttributeError:
+            return node.sense.glosses
         kwargs=exampletype(**kwargs)
         if senseid is None:
             return
