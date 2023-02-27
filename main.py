@@ -12674,11 +12674,11 @@ class StatusDict(dict):
             self._groups=sn['groups']
             if g is not None:
                 self._groups=sn['groups']=g
-            return self._groups
+            return sorted(self._groups)
         if kwargs['toverify']:
-            return list(set(sn['groups'])-set(sn['done']))
+            return sorted(set(sn['groups'])-set(sn['done']))
         if kwargs['torecord']:
-            return list(set(sn['groups'])-set(sn['recorded']))
+            return sorted(set(sn['groups'])-set(sn['recorded']))
         else: #give theoretical possibilities (C or V only)
             """The following two are meaningless, without with kwargs above"""
             if kwargs['cvt'] in ['CV','VC','T']:
@@ -12692,7 +12692,7 @@ class StatusDict(dict):
                 for s in thispsdict:
                     if s != 'V':
                         todo.extend([i[0] for i in thispsdict[s]])
-            todo=list(set(todo)|set(sn['groups'])) #either way, add current groups
+            todo=sorted(set(todo)|set(sn['groups'])) #either way, add current groups
             # log.info("Returning groups: {}".format(todo))
             return todo
     def senseidstosort(self): #,ps=None,profile=None
