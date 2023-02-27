@@ -8438,21 +8438,15 @@ class Report(object):
         def examplestoXLP(examples,parent,senseid):
             counts['senses']+=1
             for example in examples:
-                framed=self.taskchooser.datadict.getframeddata(example,senseid)
                 # skip empty examples:
-                if not hasattr(framed,'forms') or self.analang not in framed.forms:
+                if self.analang not in example.forms:
                     continue
-                framed.gettonegroup() #wanted for id, not for display
-                for lang in [self.analang]+self.glosslangs:
-                    if lang in framed.forms and framed.forms[lang]: #If all None, don't.
-                        counts['examples']+=1
-                            counts['audio']+=1
-                        self.framedtoXLP(framed,parent=parent,ftype=ftype,
-                                                        listword=True,
-                                                        showgroups=showgroups)
-                        break #do it on first present lang, and do next ex
-        self.datadict.refresh() #get the most recent data
+                counts['examples']+=1
                 if program['settings'].audiolang in example.forms:
+                    counts['audio']+=1
+                self.nodetoXLP(example,parent=parent,
+                                                listword=True,
+                                                showgroups=showgroups)
         analysisOK,showgroups,timestamps=program['status'].isanalysisOK(**kwargs)
         silent=kwargs.get('silent',False)
         default=kwargs.get('default',True)
@@ -8663,9 +8657,9 @@ class Report(object):
                         #This is for window/text output only, not in XLP file
                         text=sense.formatted(noframe=True,showtonegroup=False)
                         #This is put in XLP file:
-                        examples=self.db.get('example',location=check,
-                                                senseid=senseid).get()
-                        examplestoXLP(examples,e1,senseid)
+                        if check in sense.examples:
+                            examples=[sense.examples[check]]
+                            examplestoXLP(examples,e1,senseid)
                         if text not in textout:
                             output(window,r,text)
                             textout.append(text)
@@ -8676,19 +8670,20 @@ class Report(object):
                     #This is for window/text output only, not in XLP file
                     sense=program['db'].sensedict[senseid]
                     #This is put in XLP file:
-                    examples=self.db.get('example',senseid=senseid).get()
-                    log.log(2,"{} examples found: {}".format(len(examples),
-                                                                    examples))
+                    examples=sense.examples
+                    log.info("{} exs found: {}".format(len(examples), examples))
                     if examples != []:
-                        id=self.idXLP(framed)+'_examples'
+                        id=self.idXLP(sense)+'_examples'
                         headtext=text.replace('\t',' ')
                         e1=xlp.Example(s1,id,heading=headtext)
                         log.info("Asking for the following {} examples from id "
                                 "{}: {}".format(len(examples),senseid,examples))
                         examplestoXLP(examples,e1,senseid)
                     else:
-                        self.framedtoXLP(framed,parent=s1,ftype=ftype,
-                                                        showgroups=showgroups)
+                        self.nodetoXLP(sense.ftypes[ftype],
+                                        parent=s1,
+                                        # ftype=ftype,
+                                        showgroups=showgroups)
                     output(window,r,text)
         sectitle=_('{} {} Data Summary').format(ps,profile)
         s2=xlp.Section(s1parent,title=sectitle)
@@ -8741,10 +8736,13 @@ class Report(object):
                     ).format(kwargs))
         time.sleep(0.2) #give it 200ms before checking if it returned already
         if not t.is_alive():
-            ErrorNotice(_("Looks like that didn't work; you may need "
-                            "to run a report first, or not do it in "
+            ErrorNotice(_("Looks like that didn't work; "
+                            "you may need "
+                            "to run a report first, or "
+                            "trying again not in "
                             "the background ({})."
                         ).format(kwargs))
+            fn(**kwargs)
     def getresults(self,**kwargs):
         def iterateUFgroups(parent,**kwargs):
             checks=[kwargs['check']]
@@ -8993,14 +8991,6 @@ class Report(object):
             #                             len(matches),
             #                             check))
             # log.info("Entries found ({}):".format(len(matches)))
-            # for m in list(matches)[:4]:
-            #     log.info(self.taskchooser.datadict.getframeddata(m).framed)
-            # # log.info("Entries removed ({}):".format(len(self.basicreported[check]&matches)))
-            # for m in list(self.basicreported[check]&matches)[:4]:
-            #     log.info(self.taskchooser.datadict.getframeddata(m).framed)
-            # # log.info("Entries remaining ({}):".format(len(matches-self.basicreported[check])))
-            # for m in list(matches-self.basicreported[check])[:4]:
-            #     log.info(self.taskchooser.datadict.getframeddata(m).framed)
             matches-=self.basicreported[check]
             # log.info("{} entries remaining.".format(len(matches)))
         ufg=kwargs['ufgroup']
@@ -9093,18 +9083,14 @@ class Report(object):
                 if usegui and hasattr(self,'results'): #i.e., showing results in window
                     self.results.row+=1
                     col=0
-                    for lang in [self.analang]+self.glosslangs:
+                    for t in [node.textvaluebylang(self.analang)]+[
+                                node.gloss(l) for l in self.glosslangs]:
                         col+=1
-                        if lang in framed.forms and framed.forms[lang]:
-                            if type(framed.forms[lang]) is dict:
-                                t=framed.forms[lang][ftype]
-                            else:
-                                t=framed.forms[lang]
-                            ui.Label(self.results.scroll.content,
-                                    text=t, font='read',
-                                    anchor='w',padx=10, row=self.results.row,
-                                    column=col,
-                                    sticky='w')
+                        ui.Label(self.results.scroll.content,
+                                text=t, font='read',
+                                anchor='w',padx=10, row=self.results.row,
+                                column=col,
+                                sticky='w')
     def wordsbypsprofilechecksubcheck(self,parent='NoXLPparent',**kwargs):
         """This function iterates across check and group values
         appropriate for the specified self.type, profile and check
@@ -9174,24 +9160,60 @@ class Report(object):
             log.info("Going to run subcheckp for groups {}".format(groups))
             for kwargs['group'] in groups:
                 self.wordsbypsprofilechecksubcheckp(parent,**kwargs)
-    def idXLP(self,framed):
+    def idXLP(self,node):
+        """node here is either a ftype node or example"""
         id='x' #string!
         bits=[
             program['params'].cvt(),
             program['slices'].ps(),
             program['slices'].profile(),
             ]
-        if hasattr(framed,'check'):
-            bits.append(framed.check)
-        if hasattr(framed,'tonegroup'):
-            bits.append(framed.tonegroup)
+        try:
+            bits.append(node.locationvalue()) #for examples
+            bits.append(node.tonevalue())
+        except AttributeError:
+            try:
+                bits.append(node.ftype) #for sense fields
+            except AttributeError:
+                bits.append(node.id) #for senses
         for lang in self.glosslangs:
-            if lang in framed.forms and framed.forms[lang] is not None:
-                bits+=framed.forms[lang]
+            if lang in node.parent.sense.glosses:
+                bits+=node.gloss(lang) #parent.sense.formattedgloss(glosslang)
         for x in bits:
             if x is not None:
                 id+=x
         return rx.id(id) #for either example or listword
+    def nodetoXLP(self,node,parent,listword=False,showgroups=True):
+        """This will likely only work when called by
+        wordsbypsprofilechecksubcheck; but is needed because it must return if
+        the word is found, leaving wordsbypsprofilechecksubcheck to continue"""
+        """parent is an example in the XLP report"""
+        """Node here should be a field/FormParent, including an example, but
+        NOT a sense (FieldParent)"""
+        id=self.idXLP(node)
+        if listword == True:
+            ex=xlp.ListWord(parent,id)
+        else:
+            exx=xlp.Example(parent,id) #the id goes here...
+            ex=xlp.Word(exx) #This doesn't have an id
+        audio=node.textvaluebylang(program['settings'].audiolang)
+        form=node.textvaluebylang(self.analang)
+        # log.info("Found form {} and audio {}".format(form,audio))
+        if audio:
+            # log.info("Found audio!")
+            url=file.getdiredrelURLposix(self.reporttoaudiorelURL,audio)
+            el=xlp.LinkedData(ex,self.analang,form,str(url))
+        else:
+            # log.info("Found audio not!")
+            el=xlp.LangData(ex,self.analang,form)
+        phonetic=node.parent.sense.textvaluebyftypelang('ph',self.analang)
+        if program['settings'].showoriginalorthographyinreports and phonetic:
+            elph=xlp.LangData(ex,self.analang,phonetic)
+        if hasattr(node,'tonevalue') and showgroups: #joined groups show each
+            elt=xlp.LangData(ex,self.analang,node.tonevalue())
+        for lang in self.glosslangs:
+            if lang in node.parent.sense.glosses:
+                xlp.Gloss(ex,lang,node.gloss(lang))
     def framedtoXLP(self,framed,parent,ftype,listword=False,showgroups=True):
         """This will likely only work when called by
         wordsbypsprofilechecksubcheck; but is needed because it must return if
