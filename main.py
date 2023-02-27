@@ -5317,6 +5317,59 @@ class Segments(object):
         self.dodoneonly=False #don't give me other words
 class WordCollection(Segments):
     """This task collects words, from the SIL CAWL, or one by one."""
+    def taskicon(self):
+        return program['theme'].photo['iconWord']
+    def dobuttonkwargs(self):
+        if program['taskchooser'].cawlmissing:
+            fn=self.addCAWLentries
+            text=_("Add remaining CAWL entries")
+            tttext=_("This will add entries from the Comparative African "
+                    "Wordlist (CAWL) which aren't already in your database "
+                    "(you are missing {} CAWL tags). If the appropriate "
+                    "glosses are found in your database, CAWL tags will be "
+                    "merged with those entries."
+                    "\nDepending on the number of entries, this may take "
+                    "awhile.").format(len(program['taskchooser'].cawlmissing))
+        else:
+            text=_("Add a Word")
+            fn=self.addmorpheme
+            tttext=_("This adds any word, but is best used after filling out a "
+                    "wordlist, if the word you want to add isn't there "
+                    "already.")
+        return {'text':text,
+                'fn':fn,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':program['taskchooser'].theme.photo['Word'],
+                'sticky':'ew',
+                'tttext':tttext
+                }
+    def getlisttodo(self,**kwargs):
+        """Whichever field is being asked for (self.nodetag), this fn returns
+        which are left to do."""
+        if hasattr(self,'byslice') and self.byslice:
+            log.info("Limiting segment work to this slice")
+            all=[program['db'].sensedict[i].entry for i in program['slices'].senseids()]
+        else:
+            all=program['db'].entries
+        if self.dodone and not self.dodoneonly: #i.e., all data
+            return all
+        done=[i for i in all
+                    if i.sense.textvaluebyftypelang(self.ftype,self.analang)]
+        if self.dodone: #i.e., dodoneonly
+            return done
+        # At this point, done isn't wanted
+        todo=[x for x in all if x not in done] #set-set may be better
+        log.info("To do: ({}) {}".format(len(todo),todo))
+        return todo
+    def getwords(self):
+        self.entries=self.getlisttodo()
+        self.nentries=len(self.entries)
+        self.index=0
+        r=self.getword()
+        if r == 'noglosses':
+            self.nextword(nostore=True)
     def promptstrings(self,lang):
         if lang == self.analang:
             text=_("What is the form of the new "
@@ -5484,17 +5537,20 @@ class WordCollection(Segments):
         self.waitdone()
         log.info(text)
         ErrorNotice(text,title=title)
-    def nextword(self,event=None):
+    def nextword(self,event=None,nostore=False):
         def cont():
             program['taskchooser'].whatsdone()
             program['taskchooser'].makedefaulttask()
             self.e.on_quit()
-        self.storethisword()
+        # log.info("running nextword (nostore = {})".format(nostore))
+        if not nostore:
+            # log.info("storing nextword (nostore = {})".format(nostore))
+            self.storethisword()
         if self.index < len(self.entries)-1:
             self.index+=1
             r=self.getword()
             if r == 'noglosses':
-                self.nextword()
+                self.nextword(nostore=nostore)
         else:
             oktext=_("Continue")
             t=_("Congratulations! \nIt looks like you got to the end of what "
@@ -5503,48 +5559,145 @@ class WordCollection(Segments):
             "\nor press ‘{}’ to go on to the next task.").format(oktext)
             self.e=ErrorNotice(t,title=_("Done!"))
             b=ui.Button(self.e.frame,text=oktext, cmd=cont, row=1, column=1)
-    def backword(self):
-        self.storethisword()
+    def backword(self,nostore=False):
+        if not nostore:
+            self.storethisword()
         if self.index == 0:
             self.index=len(self.entries)-1
         else:
             self.index-=1
         r=self.getword()
         if r == 'noglosses':
-            self.backword()
+            self.backword(nostore=nostore)
     def storethisword(self):
+        log.info("Trying to store {} ({})".format(self.var.get(),self.ftype))
         try:
-            self.entry.lc.textvaluebylang(self.analang,self.var.get())
+            if self.ftype in ['lc','lx']:
+                self.sense.textvaluebyftypelang(self.ftype,
+                                            self.analang,
+                                            self.var.get())
+            elif self.ftype == 'pl':
+                self.entry.plvalue(
+                        program['settings'].secondformfield[program['settings'].nominalps],
+                        self.analang,
+                        self.var.get())
+                # lift.prettyprint(self.entry.pl)
+            elif self.ftype == 'imp':
+                self.entry.impvalue(
+                        program['settings'].secondformfield[program['settings'].verbalps],
+                        self.analang,
+                        self.var.get())
+            # self.entry.lc.textvaluebylang(self.analang,self.var.get())
             self.maybewrite() #only if above is successful
+            # lift.prettyprint(self.entry)
+        # except KeyError:
         except AttributeError as e:
-            log.info("Not storing word: {}".format(e))
-    def getimage(self):
-        i=self.sense.illustrationvalue()
+            log.info("Not storing word (WordCollection): {}".format(e))
+    def getimage(self,url=None,pixels=150,resolution=10):
+        if url and file.exists(url):
+            i=url
+        else:
+            i=self.sense.illustrationvalue()
+            # self.imagesdir
+            for d in [program['settings'].imagesdir,program['settings'].directory]:
+                if i and d:
+                    di=file.getdiredurl(d,i)
+                    if file.exists(di):
+                        i=di
+                        break
+        # log.info("trying to make image @{}".format(self.sense.illustration.valuename))
+        # lift.prettyprint(self.sense.illustration)
         try:
+            # log.info("trying to make image {}".format(i))
             img=ui.Image(i)
             # will probably want the size adjustable
             # maybe resolution, too (take from theme?)
+            log.info("Image OK: {}".format(img))
         except tkinter.TclError as e:
-            log.info("Image error: {}".format(e))
+            if ('value for "-file" missing' in e.args[0] or
+                    "couldn't recognize data in image file" in e.args[0]):
+                log.info("ui.Image error: {}".format(e))
             img=self.theme.photo['NoImage']
-        img.scale(program['scale'],pixels=150,resolution=10)
+            log.info("Image null: {}".format(img))
+        if not (url and file.exists(url)):
+            self.img=img
+        log.info("Image: {}".format(img))
+        img.scale(program['scale'],pixels=pixels,resolution=resolution)
         return img.scaled
-    def getopenclipart(self,event=None):
-        glosses=[rx.glossdeftoform(i)
+    def getglosses(self):
+        self.glosses=[j #rx.glossdeftoform(i)
                     # for g in set(self.glosslangs)&set(['en','fr'])
                     # for k in self.sense.glosses[g]
                     for k in self.sense.glosses['en']
                     for i in k.textvalue().split(',')
+                    for j in rx.noparens(i).split()
                     # for i in j
                     if k.textvalue()
                 ]
-        log.info("Glosses: {}".format(glosses))
-        kwargs={'per_page':50,
-                "query":' '.join(glosses)
-            }
-        terms=urls.urlencode(kwargs)
-        url='https://openclipart.org/search/?'+terms
-        openweburl(url) #should set up download here.
+        self.selectiondir=''.join([
+                                    'images/openclipart.com/',
+                                    '_'.join([self.sense.cawln]+self.glosses)
+                                ])
+    def markimage(self,url,event=None):
+        log.info("Selected image {}".format(url))
+        self.selectionwindow.on_quit()
+        fn=self.imagename() #new file name
+        fqdn=file.getdiredurl(program['settings'].imagesdir,fn) #new url
+        with open(fqdn,'wb') as f:
+            with open(url,'rb') as u:
+                f.write(u.read())
+        self.sense.illustrationvalue(fn)
+        self.maybewrite()
+        self.wordframe.pic['image']=self.getimage()
+    def selectlocalimage(self):
+        log.info("Select a local image")
+        f=file.askopenfilename()
+        if f and file.exists(f):
+            self.markimage(f)
+    def showimagestoselect(self,files):
+        log.info("Select from these images: \n{}".format('\n'.join(
+                                                    [str(i) for i in files])))
+        self.selectionwindow=ui.Window(self)
+        title=_("Select a good image for {}".format(self.glossesthere))
+        self.selectionwindow.title(title)
+        t=ui.Label(self.selectionwindow.frame,text=title, font='title',
+                    row=0,column=0)
+        sf=ui.ScrollingFrame(self.selectionwindow.frame,row=1,column=0)
+        cols=4
+        for n,f in enumerate(files+['local']):
+            # log.info("Using row {}, col {}".format(n//cols,n%cols))
+            if f == 'local':
+                ui.Button(sf.content,text=_("local file"),
+                    cmd=self.selectlocalimage,
+                    row=n//cols,column=n%cols,sticky='nsew')
+            else:
+                img=self.getimage(f,pixels=0)
+                # img=ui.Image(f)
+                # log.info("image type1: {}".format(type(img)))
+                if img is not None:
+                    # log.info("image type2: {}".format(type(img)))
+                    ui.Button(sf.content, text='', image=img,
+                                cmd=lambda i=f:self.markimage(i),
+                                row=n//cols, column=n%cols, sticky='nsew')
+    def imagename(self):
+        affix='.png' #not sure why this isn't there already...
+        if self.sense.cawln:
+            return '_'.join([self.sense.cawln]+self.glosses)+affix
+        else:
+            return '_'.join([self.sense.id]+self.glosses)+affix
+    def getimagefiles(self):
+        if file.exists(self.selectiondir):
+            return file.getfilesofdirectory(self.selectiondir)
+    def selectimage(self,event=None):
+        self.getglosses()
+        files=self.getimagefiles()
+        if not files:
+            self.getopenclipart()
+        files=self.getimagefiles()
+        if not files: #still
+            self.selectlocalimage()
+            return #selection won't work at this point
+        self.showimagestoselect(files)# return to file, LIFT
     def getopenclipart(self,event=None):
         self.wait(msg="Dowloading images from OpenClipart.org\n{}"
                         "".format(" ".join(self.glosses)))
@@ -5592,6 +5745,8 @@ class WordCollection(Segments):
             self.wordframe.destroy()
         except Exception as e:
             log.info("Probably nothing (wordframe not made yet): {}".format(e))
+        if hasattr(self,'senseidtodo') and self.senseidtodo:
+            log.info("Senseid to do: {}".format(self.senseidtodo))
         self.wordframe=ui.Frame(self.frame,row=1,column=1,sticky='ew')
         if not self.entries:
             text=_("It looks like you're done filling out the empty "
@@ -5608,58 +5763,80 @@ class WordCollection(Segments):
             #             row=1, column=0, sticky='',
             #             wraplength=int(program['root'].wraplength*.6))
             return
+        # log.info("Entry check")
         text=_("Type the word in your language that goes with these meanings."
                 "\nGive a single word (not a phrase) wherever possible."
                 "\nJust type consonants and vowels; don't worry about tone "
                 "for now.").format(self.nentries)
         ui.Label(self.wordframe, text=text, row=0, column=0)
+        # log.info("label")
         progress="({}/{})".format(self.index+1,self.nentries)
+        # log.info("progress")
         ui.Label(self.wordframe, text=progress, row=1, column=3, font='small')
-        self.entry=self.entries[self.index]
-        self.sense=self.entry.senses[0]
+        # log.info("label2")
+        if hasattr(self,'senseidtodo') and self.senseidtodo:
+            self.entry=program['db'].sensedict[self.senseidtodo].entry
+            # log.info("entry1")
+            # return [program['db'].sensedict[i].entry for i in self.initsenseidtodo()]
+        else:
+            self.entry=self.entries[self.index]
+            # log.info("entry2")
+        log.info("self.entry:{}".format(self.entry))
+        self.sense=self.entry.sense
+        # log.info("self.sense:{}".format(self.sense))
         glosses={}
         for g in self.glosslangs:
-            glosses[g]=', '.join(
-                                i.textvalue() for i in self.sense.glosses[g]
-                                if i.textvalue()
-                                # self.db.get('gloss/text', node=self.entry,
-                                # glosslang=g).get('text')
-                                )
+            glosses[g]=', '.join(self.sense.formattedgloss(g,quoted=True))
         # glossframe=ui.Frame(self.wordframe, row=1, column=0)
-        glossesthere=' — '.join([glosses[i] for i in glosses if i])
-        if not glossesthere:
+        self.glossesthere=' — '.join([glosses[i] for i in glosses if i])
+        log.info("glosses there: {}".format(self.glossesthere))
+        if not self.glossesthere:
             log.info("entry {} doesn't have glosses; not showing."
                     "".format(self.entry.get('id')))
             return 'noglosses'
-        l=ui.Label(self.wordframe, text=glossesthere, font='read',
+        l=ui.Label(self.wordframe, text=self.glossesthere, font='read',
                 row=1, column=0, columnspan=3, sticky='ew')
-        p=ui.Label(self.wordframe, text='',
+        self.wordframe.pic=ui.Label(self.wordframe, text='',
                 row=2, column=0, columnspan=3, sticky='ew')
+        # log.info("labels")
         # illustration=self.entry.illustrationvalue()
-        p['image']=self.getimage()
-        p['compound']="bottom" #must be bottom, center, left, none, right, or top
-        p.bind('<ButtonRelease-1>',self.getopenclipart)
+        self.wordframe.pic['image']=self.getimage()
+        # log.info("image")
+        self.wordframe.pic['compound']="bottom" #must be bottom, center, left, none, right, or top
+        self.wordframe.pic.bind('<ButtonRelease-1>',self.selectimage)
         l.wrap()
         # log.info("lxtextnode: {}".format(self.lxtextnode))
-        self.var=ui.StringVar(value=self.entry.lc.textvaluebylang(self.analang))
+        # self.entry.lc.textvaluebylang(self.analang)
+        self.var=ui.StringVar(
+                value=self.sense.textvaluebyftypelang(self.ftype,self.analang)
+                            )
         # get('entry',path=['lexeme'],analang=self.analang,
         #                 showurl=True).get()
         # lxvar=ui.StringVar()
         lxenter=ui.EntryField(self.wordframe,textvariable=self.var,
-                                row=3,column=0,columnspan=3)
+                                row=3,column=0,columnspan=3,
+                                sticky='ew')
+        log.info(self.var.get())
         lxenter.focus_set()
+        # log.info("focus")
         lxenter.bind('<Return>',self.nextword)
         # self.navigationframe=ui.Frame(self.frame, row=2, column=1,
         #                                 columnspan=3, sticky='ew')
         back=ui.Button(self.wordframe,text=_("Back"),cmd=self.backword,
-        row=3, column=0, sticky='w',anchor='w',
+        row=4, column=0, sticky='w',anchor='w',
         )
+        # log.info("button1")
         # ui.Label(self.navigationframe,text=" ",row=0, column=1, sticky='ew')
         next=ui.Button(self.wordframe,text=_("Next"),cmd=self.nextword,
-        row=3, column=2, sticky='e',anchor='e',
+        row=4, column=2, sticky='e',anchor='e',
         )
+        # log.info("button2")
         # self.navigationframe.grid_columnconfigure(1,weight=1)
         self.frame.grid_columnconfigure(1,weight=1)
+        self.lift()
+        # log.info("reconfigure")
+        # self.wordframe.update_idletasks()
+        # log.info("update_idletasks")
     def __init__(self, parent):
         Segments.__init__(self,parent)
         self.dodone=False
