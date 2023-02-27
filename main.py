@@ -3875,6 +3875,8 @@ class TaskDressing(HasMenus,ui.Window):
     def setsenseidtodo(self,choice,window):
         self.senseidtodo=choice
         window.destroy()
+        if isinstance(self,WordCollection):
+            self.getword()
     def getsenseidtodo(self,event=None):
         msg=_("Preparing to ask for a sense...")
         log.info(msg)
