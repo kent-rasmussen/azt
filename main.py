@@ -3376,6 +3376,7 @@ class TaskDressing(HasMenus,ui.Window):
                 dictnow.update({'cvtstodo':self.task.cvtstodo})
         if isinstance(self,Parse):
             if not hasattr(self,'parser'):
+                log.info("No parser yet; waiting")
                 self.trystatusframelater(dictnow)
                 return
             else:
