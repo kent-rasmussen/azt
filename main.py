@@ -8290,6 +8290,67 @@ class Record(Sound,TaskDressing):
                     text=_("Continue to next syllable profile"),
                     command=next).grid(row=1,column=0)
         self.donewpyaudio()
+    def filenameoptions(self,node):
+        # This depends on self.analang and program['slices'].profile; otherwise, it
+        # could be moved to a FieldParent method
+        """This should generate possible filenames, with preferred (current
+        schema) last, as that will be used if none are found."""
+        ps=program['slices'].ps()
+        pslocopts=[ps]
+        # Except for data generated early in 2021, profile should not be there,
+        # because it can change with analysis. But we include here to pick up
+        # old files, in case they are there but not linked.
+        # First option (legacy):
+        # pslocopts.insert(0,ps+'_'+self.parent.taskchooser.slices.profile())
+        pslocopts.insert(0,ps+'_'+program['slices'].profile())
+        fieldlocopts=[None]
+        try:
+            l=node.locationvalue()
+            #the last option is taken, if none are found
+            pslocopts.insert(0,ps+'-'+l) #the first option.
+            fieldlocopts.append(l) #make this the last option.
+        except AttributeError:
+            log.info("doesn't look like an example node; not offering location")
+            pass
+                    # Yes, these allow for location to be present twice, but
+                # that should never be found, nor offered
+        filenames=[]
+        """We iterate over lots of filename schemas, to preserve legacy data.
+        This is only really needed (and so could be removed at some point) when
+        data has been recorded but no link is in place, for whatever reason.
+        If there is a link to a real sound file, that is covered above.
+        If there is no sound file, then the below will result in the default
+        (current) schema."""
+        # log.info("forms at this point: {}".format(self.forms))
+        for pslocopt in pslocopts:
+            for fieldlocopt in fieldlocopts: #for older name schema
+                for legacy in ['_', None]:
+                    for tags in [ None, 1 ]:
+                        args=[node.sense.id]
+                        if tags:
+                            args+=[node.tag]
+                            if node.tag == 'field':
+                                args+=[node.ftype]
+                        form=node.textvaluebylang(self.analang)
+                        if not form:
+                            log.error("No {} analang in {} (forms: {})".format(
+                                                        self.analang,
+                                                        node.sense.id,
+                                                        node.textvaluedict()))
+                            return
+                        args+=[form] #[self.ftype]]
+                        for l in self.glosslangs:
+                            args+=[node.gloss(l)]
+                        optargs=args[:]
+                        optargs.insert(0,pslocopt) #put first
+                        optargs.insert(3,fieldlocopt) #put after self.node.tag
+                        # log.info("optargs: {}".format(optargs))
+                        wavfilename='_'.join([x for x in optargs if x])
+                        if legacy == '_': #There was a schema that had an extra '_'.
+                            wavfilename+='_'
+                        wavfilename=rx.urlok(wavfilename) #one character check
+                        filenames+=[wavfilename+'.wav']
+        return filenames
     def __init__(self,parent):
         TaskDressing.__init__(self,parent)
         Sound.__init__(self)
@@ -11472,69 +11533,6 @@ class FramedDataElement(FramedData):
             log.debug("No audio file found, but ready to record using name: "
                         "{}; url:{}".format(self.filename, self.filenameURL))
         return self.filename, self.filenameURL
-    def filenameoptions(self):
-        """This should generate possible filenames, with preferred (current
-        schema) last, as that will be used if none are found."""
-        ps=self.parent.taskchooser.slices.ps()
-        pslocopts=[ps]
-        # Except for data generated early in 2021, profile should not be there,
-        # because it can change with analysis. But we include here to pick up
-        # old files, in case they are there but not linked.
-        # First option (legacy):
-        pslocopts.insert(0,ps+'_'+self.parent.taskchooser.slices.profile())
-        fieldlocopts=[None]
-        if (self.node.tag == 'example'):
-            l=self.node.find("field[@type='location']//text")
-            if hasattr(l,'text') and l.text is not None:
-                #the last option is taken, if none are found
-                pslocopts.insert(0,ps+'-'+l.text) #the first option.
-                fieldlocopts.append(l.text) #make this the last option.
-                # Yes, these allow for location to be present twice, but
-                # that should never be found, nor offered
-        filenames=[]
-        """We iterate over lots of filename schemas, to preserve legacy data.
-        This is only really needed (and so could be removed at some point) when
-        data has been recorded but no link is in place, for whatever reason.
-        If there is a link to a real sound file, that is covered above.
-        If there is no sound file, then the below will result in the default
-        (current) schema."""
-        # log.info("forms at this point: {}".format(self.forms))
-        for pslocopt in pslocopts:
-            for fieldlocopt in fieldlocopts: #for older name schema
-                for legacy in ['_', None]:
-                    for tags in [ None, 1 ]:
-                        args=[self.senseid]
-                        if tags is not None:
-                            args+=[self.node.tag]
-                            if self.node.tag == 'field':
-                                args+=[self.node.get("type")]
-                        if not self.analang in self.forms:
-                            log.error("No {} analang in {} (forms: {})".format(
-                                        self.analang,self.senseid,self.forms))
-                            return
-                        args+=[self.forms[self.analang][self.ftype]]
-                        if self.gloss: #could be None still, if no senseid given
-                            args+=[
-                                    self.gloss
-                                    ]
-                        optargs=args[:]
-                        optargs.insert(0,pslocopt) #put first
-                        optargs.insert(3,fieldlocopt) #put after self.node.tag
-                        log.log(3,optargs)
-                        wavfilename=''
-                        argsthere=[x for x in optargs if x]
-                        for arg in argsthere:
-                            try:
-                                wavfilename+=arg
-                            except Exception as e:
-                                log.error("arg error: {} ({})".format(e,arg))
-                            if argsthere.index(arg) < len(argsthere)-1:
-                                wavfilename+='_'
-                        if legacy == '_': #There was a schema that had an extra '_'.
-                            wavfilename+='_'
-                        wavfilename=rx.urlok(wavfilename) #one character check
-                        filenames+=[wavfilename+'.wav']
-        return filenames
     def parseelement(self,node):
         self.node=node #We don't have access to this here
         self.forms=node.textvaluedict() #dict of values
