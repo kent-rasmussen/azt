@@ -5203,10 +5203,12 @@ class Segments(object):
         groups=program['status'].groups(wsorted=True,**kwargs)
         groups=program['status'].groups(cvt=cvt)
         #multiprocess from here?
-        w=self.getrunwindow(msg=_("Presorting ({}={})").format(check,groups))
+        msg=_("Presorting ({}={})").format(check,groups)
+        log.info(msg)
+        w=self.getrunwindow(msg=msg)
         # test this before implementing it:
         # kwargs['formstosearch']=self.formsthisprofile(**kwargs)
-        for group in groups:
+        for group in [i for i in groups if isnoninteger(i)]:
             self.buildregex(group=group,cvt=cvt,profile=profile,check=check)
             # log.info("self.regex: {}; self.regexCV: {}".format(self.regex,
             #                                             self.regexCV))
@@ -5225,7 +5227,8 @@ class Segments(object):
                             kwargs={'check':check,
                                     'ftype':ftype,
                                     # 'framed':framed,
-                                    'nocheck':True})
+                                    'nocheck':False
+                                    })
             t.start()
         t.join()
         self.updatestatus(group=group) # marks the group unverified.
@@ -5247,32 +5250,29 @@ class Segments(object):
         #now that we've potentially added a grapheme, see that it will be found.
         program['settings'].addtoCVrxs(value)
         #this should update polygraphs; if so, trigger reanalysis (instead of above)
-    def updateformtoannotations(self,senseid,ftype,check=None,write=False):
+    def updateformtoannotations(self,sense,ftype,check=None,write=False):
         """This should take a sense and ftype (and maybe check, not sure)
         and update that form on the basis of the annotations made to date.
         This should be something that can be done for just one check, or all,
         and iterated across a few or many senseids.
         This might be best iterating across ftypes, to catch them all...
         that would likely need more smarts for affix and root distinction."""
-        fnode=firstoflist(self.db.fieldformnode(senseid=senseid,ftype=ftype,
-                                                analang=self.analang))
-        if fnode:
-            t=fnode.find('text')
-        else:
-            log.info("updateformtoannotations didn't return a node for "
-            "senseid={},ftype={},analang={}".format(senseid,ftype,self.analang))
+        formvalue=sense.textvaluebyftypelang(self.analang)
+        if not formvalue:
+            log.info("updateformtoannotations didn't return a form value for "
+                    "senseid={}, ftype={}, analang={}"
+                    "".format(sense.id,ftype,self.analang))
             return
         # log.info("fnode: {}; text: {}".format(fnode,t.text))
         if check: #just update to this annotation
-            value=firstoflist(self.db.fieldvalue(node=fnode,
-                                                annotationname=check))
+            value=sense.annotationvaluebyftypelang(self,ftype,self.analang,check)
             if value is not None:
-                tori=t.text[:]
-                self.updateformtextnodebycheck(t,check,value)
+                f=rx.update(formvalue,program['settings'].rx,check,value)
+                sense.textvaluebyftypelang(self.analang,f)
                 log.info("Done with updateformtextnodebycheck")
                 #This should update formstosearch:
-                if tori != t.text:
-                    self.settings.addtoformstosearch(senseid,t.text,tori)
+                if formvalue != f:
+                    program['settings'].addtoformstosearch(senseid,f,formvalue)
                     log.info("Done with addtoformstosearch")
                 if len(value)>1:
                     sc=program['params'].cvt()
@@ -5280,39 +5280,30 @@ class Segments(object):
             else:
                 write=False #in case it isn't already
         else: #update to all annotations
-            annodict={i.get('name'):i.get('value') for i in fnode
-                                                if i.tag == 'annotation'}
+            annodict=sense.annotationvaluedictbyftypelang(ftype,self.analang)
             # log.info("annodict: {}".format(annodict))
             for check,value in annodict.items():
-                self.updateformtextnodebycheck(t,check,value)
-        self.taskchooser.datadict.clearsense(senseid) #so this will refresh
+                f=rx.update(formvalue,program['settings'].rx,check,value)
+                sense.textvaluebyftypelang(self.analang,f)
+        program['taskchooser'].datadict.clearsense(senseid) #so this will refresh
         if write:
             self.maybewrite()
             self.storesettingsfile(setting='profiledata') #objectify this!
-    def setsenseidgroup(self,senseid,ftype,check,group,**kwargs):
+    def setsensegroup(self,sense,ftype,check,group,**kwargs):
         # log.info("Setting segment sort group")
-        self.db.annotatefield(
-                            senseid=senseid,
-                            analang=self.analang,
-                            name=check,
-                            ftype=ftype,
-                            value=group,
-                            # showurl=True,
-                            write=kwargs.get('write')
-                            )
+        sense.annotationvaluebyftypelang(ftype,self.analang,check,group)
     def getsenseidsingroup(self,check,group):
         ftype=program['params'].ftype()
         fkwargs={
                 ftype+'annotationname':check,
                 ftype+'annotationvalue':group
                 }
-        return self.db.get("sense", **fkwargs).get('senseid')
+        return program['db'].get("sense", **fkwargs).get('senseid')
     def getsensegroup(self,sense,check):
         ftype=program['params'].ftype()
         return sense.annotationvaluebyftypelang(ftype,self.analang,check)
                                                 # ftype,lang,name,value
     def __init__(self, parent):
-        self.byslice=False
         self.dodone=True
         self.dodoneonly=False #don't give me other words
 class WordCollection(Segments):
