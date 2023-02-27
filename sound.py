@@ -229,7 +229,7 @@ class SoundSettings(object):
                 ):
             self.default_out()
     def check(self):
-        log.info(_("Testing speaker settings:"))
+        # log.info(_("Testing speaker settings:"))
         # self.max_sf()
         try:
             ifs=self.pyaudio.is_format_supported(rate=self.fs,
@@ -246,14 +246,14 @@ class SoundSettings(object):
                 "output_channels=1, "
                 "output_format={} ({})".format(self.fs,self.audio_card_out,
                                                 self.sample_format,e))
-        log.info(_("Testing microphone settings:"))
+        # log.info(_("Testing microphone settings:"))
         try:
             ifs=self.pyaudio.is_format_supported(rate=self.fs,
                                                 input_device=self.audio_card_in,
                                                 input_channels=1,
                                                 input_format=self.sample_format)
         except ValueError as e:
-            log.info("{}; {}".format(e,type(e)))
+            # log.info("{}; {}".format(e,type(e)))
             if 'Device unavailable' in e.args[0]:
                 self.next_card_in()
                 self.check()
