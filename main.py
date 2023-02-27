@@ -2009,6 +2009,8 @@ class Settings(object):
                 self.secondformfield[self.nominalps]=self.pluralname=opt
         try:
             log.info(_('Plural field name: {}').format(self.pluralname))
+            for entry in program['db'].entries:
+                entry.plvalue(self.pluralname,self.analang) # get the right field!
         except AttributeError:
             log.info(_('Looks like there is no Plural field in the database'))
             self.pluralname=None
@@ -2017,6 +2019,8 @@ class Settings(object):
                 self.secondformfield[self.verbalps]=self.imperativename=opt
         try:
             log.info(_('Imperative field name: {}'.format(self.imperativename)))
+            for entry in program['db'].entries:
+                entry.impvalue(self.imperativename,self.analang) # get the right field!
         except AttributeError:
             log.info(_('Looks like there is no Imperative field in the database'))
             self.imperativename=None
@@ -2642,16 +2646,19 @@ class Settings(object):
         program['status'].store()
         logfinished(start_time)
         w.close()
-    def categorizebygrouping(self,fn,senseid,**kwargs):
+    def categorizebygrouping(self,fn,sense,**kwargs):
         #Don't complain if more than one found:
         check=kwargs.get('check',program['params'].check())
+        v=fn(
+            program['status'].task(),
+            sense,check)
         if v in ['','None',None]: #unlist() returns strings
-            # log.info("Marking senseid {} tosort (v: {})".format(senseid,v))
+            log.info("Marking senseid {} tosort (v: {})".format(sense.id,v))
             if not kwargs.get('cvt'): #default, not on iteration
                 program['status'].marksenseidtosort(sense.id)
             tosort=True
         else:
-            # log.info("Marking senseid {} sorted (v: {})".format(senseid,v))
+            log.info("Marking senseid {} sorted (v: {})".format(sense.id,v))
             if not kwargs.get('cvt'): #default, not on iteration
                 program['status'].marksenseidsorted(sense.id)
             if v not in ['NA','ALLOK']:
@@ -2938,6 +2945,8 @@ class Settings(object):
         # ps=Noun# t=self.params.cvt()
         self.secondformfield[self.nominalps]=self.pluralname=choice
         self.attrschanged.append('secondformfield')
+        for entry in program['db'].entries:
+            entry.plvalue(self.pluralname,program['params'].analang) # get the right field!
         self.refreshattributechanges()
         if window:
             window.destroy()
@@ -2945,6 +2954,8 @@ class Settings(object):
         # ps=Noun# t=self.params.cvt()
         self.secondformfield[self.verbalps]=self.imperativename=choice
         self.attrschanged.append('secondformfield')
+        for entry in program['db'].entries:
+            entry.impvalue(self.imperativename,program['params'].analang) # get the right field!
         self.refreshattributechanges()
         if window:
             window.destroy()
@@ -3864,9 +3875,16 @@ class TaskDressing(HasMenus,ui.Window):
         self.senseidtodo=choice
         window.destroy()
     def getsenseidtodo(self,event=None):
-        log.info("Asking for senseid...")
+        msg=_("Preparing to ask for a sense...")
+        log.info(msg)
+        self.wait(msg=msg)
+        senseids=program['db'].senseids
+        todo=len(senseids)
+        list=[]
+        for n,k in enumerate(senseids):
             list.append((k,
                 program['db'].sensedict[k].formatted(self.analang,self.glosslangs)))
+            self.waitprogress(n*100//todo)
         if not list:
             log.info("No senseids; sort something?")
             return
@@ -7148,7 +7166,7 @@ class Sort(object):
         ftype=kwargs.get('ftype',program['params'].ftype())
         write=kwargs.pop('write',True) #avoid duplicate
         sorting=kwargs.get('sorting',True) #Default to verify button
-        log.info(_("Removing senseid {} from subcheck {}".format(senseid,group)))
+        log.info(_("Removing senseid {} from subcheck {}".format(sense.id,group)))
         #This should only *mod* if already there
         self.setsensegroup(sense,ftype,check,'',**kwargs)
         tgroups=self.getsensegroup(sense,check)
@@ -7264,11 +7282,11 @@ class Sort(object):
                 "senseid: {} guid: {} (in main_lift.py)".format(
                     group,
                     check,
-                    senseid,
+                    sense.id,
                     guid))
-        self.setsenseidgroup(senseid,ftype,check,group,framed=framed)
+        self.setsensegroup(sense,ftype,check,group)
         if not nocheck:
-            newgroup=unlist(self.getgroupofsenseid(senseid,check))
+            newgroup=unlist(self.getsensegroup(sense,check))
             if newgroup != group:
                 log.error("Field addition failed! LIFT says {}, not {}.".format(
                                                     newgroup,group))
@@ -7276,10 +7294,10 @@ class Sort(object):
                 log.info("Field addition succeeded! LIFT says {}, which is {}."
                                         "".format(newgroup,group))
         if kwargs.get('updateforms'):
-            self.updateformtoannotations(senseid,ftype,check=check)
-        self.updatestatus(group=group,write=kwargs.get('write')) # marks the group unverified.
+            self.updateformtoannotations(sense,ftype,check=check)
         program['status'].last('sort',update=True) #this will always be a change
         program['status'].tojoin(True)
+        self.updatestatus(group=group,writestatus=True) # write just this once
         if kwargs.get('write'):
             self.maybewrite() #This is never iterated over; just one entry at a time.
         if not nocheck:
@@ -7404,7 +7422,7 @@ class Sort(object):
         except IndexError:
             log.info("maybe ran out of senseids?")
             return
-        progress=(str(self.thissort.index(senseid)+1)+'/'+str(len(self.thissort)))
+        progress=(str(self.thissort.index(sense.id)+1)+'/'+str(len(self.thissort)))
         """After the first entry, sort by groups."""
         # log.debug('groups: {}'.format(program['status'].groups(wsorted=True)))
         if self.runwindow.exitFlag.istrue():
@@ -7432,7 +7450,7 @@ class Sort(object):
             b.setcanary(self.sortitem)
         self.runwindow.wait_window(window=self.sortitem)
         if not self.runwindow.exitFlag.istrue():
-            return senseid,framed
+            return sense#.id,framed #where to from here?
     def sort(self):
         # This window/frame/function shows one entry at a time (with pic?)
         # for the user to select a tone group based on buttons defined below.
@@ -7560,10 +7578,8 @@ class Sort(object):
         if group in program['status'].verified():
             log.info("‘{}’ already verified, continuing.".format(group))
             return
-        senseids=self.exs.senseidsinslicegroup(group,check)
-        if not senseids: #then remove the group
-            groups=self.status.groups(wsorted=True) #from which to remove, put back
-            # log.info("Groups: {}".format(self.status.groups(toverify=True)))
+        senses=self.exs.sensesinslicegroup(group,check)
+        if not senses: #then remove the group
             groups=program['status'].groups(wsorted=True) #from which to remove, put back
             # log.info("Groups: {}".format(program['status'].groups(toverify=True)))
             verified=False
@@ -7579,9 +7595,9 @@ class Sort(object):
             log.info("Groups to verify: {}"
                         "".format(program['status'].groups(toverify=True)))
             return
-        elif len(senseids) == 1:
+        elif len(senses) == 1:
             log.info("Group ‘{}’ only has {} example; marking verified and "
-                    "continuing.".format(group,len(senseids)))
+                    "continuing.".format(group,len(senses)))
             updatestatus(True)
             return
         title=_("Verify {} Group ‘{}’ for ‘{}’ ({})").format(
@@ -7615,10 +7631,10 @@ class Sort(object):
                                     # columnspan=2,
                                     sticky='wsn')
         """put entry buttons here."""
-        for senseid in senseids:
-            if senseid is None: #needed?
+        for sense in senses:
+            if sense is None: #needed?
                 continue
-            self.verifybutton(self.sframe.content,senseid,
+            self.verifybutton(self.sframe.content,sense,
                                 row, column,
                                 label=False)
             if not self.buttoncolumns or (self.buttoncolumns and
@@ -7651,12 +7667,13 @@ class Sort(object):
         log.debug("User selected ‘{}’, moving on.".format(oktext))
         program['status'].last('verify',update=True)
         updatestatus(True)
-    def verifybutton(self,parent,senseid,row,column=0,label=False,**kwargs):
+    def verifybutton(self,parent,sense,row,column=0,label=False,**kwargs):
+        """This should maybe take examples as input, rather than senses"""
         # This must run one subcheck at a time. If the subcheck changes,
         # it will fail.
         # should move to specify location and fieldvalue in button lambda
         def notok():
-            self.removesenseidfromgroup(senseid,sorting=True,write=False)
+            self.removesensefromgroup(sense,sorting=True,write=False)
             self.maybewrite()
             bf.destroy()
         if 'font' not in kwargs:
@@ -8234,6 +8251,9 @@ class Record(Sound,TaskDressing):
                 ftypes=['lc','pl','imp']
                 for node in [entry.sense.nodebyftype(f) for f in ftypes
                                 if entry.sense.nodebyftype(f)]:
+                    self.runwindow.column+=2
+                    self.makelabelsnrecordingbuttons(buttonframes.content,node,
+                        row,self.runwindow.column)
             ui.Button(buttonframes.content,column=1,row=row,
                         text=_("Next {} words").format(nperpage),
                         cmd=buttonframes.destroy)
@@ -8294,10 +8314,10 @@ class Record(Sound,TaskDressing):
             skipb.bind('<ButtonRelease-1>', setskip)
         if senses is None:
             senses=program['settings'].entriestoshow
-        for senseid in senses:
-            log.debug("Working on {} with skip: {}".format(senseid,
+        for sense in senses:
+            log.debug("Working on {} with skip: {}".format(sense.id,
                                                     self.runwindow.frame.skip))
-            examples=program['db'].get('example',senseid=senseid).get()
+            examples=list(sense.examples.values())
             if examples == []:
                 log.debug(_("No examples! Add some, then come back."))
                 continue
@@ -8346,7 +8366,7 @@ class Record(Sound,TaskDressing):
                 probably make this a function, like getframeddata"""
                 if not text:
                     exit()
-                rb=RecordButtonFrame(examplesframe,self,framed)
+                rb=RecordButtonFrame(examplesframe,self,example)
                 rb.grid(row=row,column=0,sticky='w')
                 ui.Label(examplesframe, anchor='w',text=text
                                         ).grid(row=row, column=1, sticky='w')
@@ -8392,13 +8412,13 @@ class Record(Sound,TaskDressing):
             for ufgroup in torecord:
                 print(i,len(torecord[ufgroup]),ufgroup,torecord[ufgroup])
                 if len(torecord[ufgroup]) > i: #no done piles.
-                    senseid=[torecord[ufgroup][i]] #list of one
+                    sense=[program['db'].sensedict[torecord[ufgroup][i]]] #list of one
                 else:
                     print("Not enough examples, moving on:",i,ufgroup)
                     continue
                 log.info(_('Giving user the number {} example from tone '
                         'group {}'.format(i,ufgroup)))
-                exited=self.showsenseswithexamplestorecord(senseid,
+                exited=self.showsenseswithexamplestorecord(sense,
                             (ufgroup, i+1, self.examplespergrouptorecord),
                             skip=skip)
                 if exited == 'skip':
@@ -10212,9 +10232,9 @@ class Transcribe(Sound,Sort,TaskDressing):
                         "".format(ftype,check,group))
                 senseids=self.getsenseidsincheckgroup()
                 log.info("modding senseids {}".format(senseids))
-                for senseid in senseids:
+                for sense in [program['db'].sensedict[i] for i in senseids]:
                     u = threading.Thread(target=self.updateformtoannotations,
-                                        args=(senseid,ftype),
+                                        args=(sense,ftype),
                                         kwargs={'check':check})
                     # self.updateformtoannotations(senseid,ftype,check=check)
                     u.start()
