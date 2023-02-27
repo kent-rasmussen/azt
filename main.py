@@ -7972,7 +7972,7 @@ class Sound(object):
         for card in self.soundsettings.cards['in']:
             name=self.soundsettings.cards['dict'][card]
             l+=[(card, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
+        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                     optionlist=l,
                                     command=program['settings'].setsoundcardindex,
                                     window=window,
@@ -7989,7 +7989,7 @@ class Sound(object):
         for card in self.soundsettings.cards['out']:
             name=self.soundsettings.cards['dict'][card]
             l+=[(card, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
+        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                     optionlist=l,
                                     command=program['settings'].setsoundcardoutindex,
                                     window=window,
