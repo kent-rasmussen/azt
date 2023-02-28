@@ -2923,10 +2923,10 @@ class Settings(object):
         if hasattr(self,'sextracted'):
             self.getscounts()
     def maketoneframes(self):
-        ToneFrames(self.toneframes)
+        ToneFrames(getattr(self,'toneframes',{}))
     def makestatus(self):
         # log.info("Making status object with value {}".format(program['status']))
-        StatusDict(self.settingsfile('status'),self.status)
+        StatusDict(self.settingsfile('status'),getattr(self,'status',{}))
         # log.info("Made status object with value {}".format(program['status']))
     def set(self,attribute,choice,window=None,refresh=True):
         #Normally, pass the attribute through the button frame,
