@@ -12359,6 +12359,7 @@ class SliceDict(dict):
         if ps in self._profilesbysense and profile in self._profilesbysense[ps]:
             return [program['db'].sensedict[i]
                         for i in self._profilesbysense[ps][profile]]
+            # return list(self._profilesbysense[ps][profile]) #specified slice
         else:
             return []
     def senseids(self,**kwargs): #ps=None,profile=None,
