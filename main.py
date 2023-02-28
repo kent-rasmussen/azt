@@ -563,10 +563,11 @@ class FileParser(object):
             if senseid not in self.senseidsinvalid:
                 self.senseidsvalid+=[senseid]
         print(len(self.senseidsvalid),'senses with valid data remaining.')
-        self.senseidswanyps=program['db'].get('sense',path=['ps'],
-                                        # showurl=True
-                                        ).get('senseid') #any ps value works here.
-        print(len(self.senseidswanyps),'senses with ps data found.')
+        self.senseidswanyps=[i for k in program['db'].sensesbyps
+                            if k
+                            for i in program['db'].sensesbyps[k]
+                            ]
+        log.info('{} senses w/ ps data found.'.format(len(self.senseidswanyps)))
         self.senseidsvalidwops=[]
         self.senseidsvalidwps=[]
         for senseid in self.senseidsvalid:
