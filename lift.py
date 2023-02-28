@@ -2352,6 +2352,20 @@ class Sense(Node,FieldParent):
         except KeyError:
             # log.info("There is no {} example in sense {}".format(frame,self.id))
             pass
+    def uftonevalue(self,value=None):
+        try:
+            assert isinstance(self.fields['tone'],ET.Element)
+            log.info("found ET node")
+        except (AssertionError,KeyError):
+            found=self.find('field[type="tone"]')
+            log.info("found {}".format(found))
+            if isinstance(found,ET.Element) or value:
+                self.fields.update({'tone':Field(self,node=found,type='tone')})
+                # self.newfield('tone',value=value) #use annotationlang
+            else:
+                return None
+        # specify value as kwarg because not specifying lang
+        return self.fields['tone'].textvaluebylang(value=value)
     def pssubclassvalue(self,value=None):
         try:
             assert isinstance(self.pssubclass,ET.Element)
