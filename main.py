@@ -506,22 +506,27 @@ class FileChooser(object):
         self.name=file.getfilename() #returns filename if there, else filenames
         if type(self.name) is not list and not file.exists(self.name):
                 self.name=None #don't return a file that isn't there
-        if not self.name or type(self.name) is list: #nothing or a selection
+        if not self.name or isinstance(self.name,list): #nothing or a selection
             if (self.name and program['testing']
                             and 'testlift' in program and program['testlift']):
+                # log.info("self.name0: {}".format(self.name))
                 for f in self.name:
+                    # log.info("f: {} ({})".format(f,program['testlift']))
                     if program['testlift'] in f:
                         self.name=f
+                        # log.info("self.name0.5: {}".format(self.name))
                         break
-            else:
+            if isinstance(self.name,list):
+                # log.info("self.name1: {}".format(self.name))
                 r=self.askwhichlift(self.name)
                 if r:
                     sysshutdown()
+        # log.info("self.name: {}".format(self.name))
         if (not self.name or not file.exists(self.name)) and (
                             not program['root'].exitFlag.istrue()):
             return
         if self.name and 'Demo' in self.name:
-            file.writefilename() #Don't just keep loading this; select next time
+            file.writefilename() #clear this to select next time
 class FileParser(object):
     """This class parses the LIFT file, once we know which it is."""
     def loaddatabase(self):
