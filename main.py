@@ -873,6 +873,8 @@ class Menus(ui.Menu):
         if isinstance(parent,TaskDressing):
             self.advanced()
         self.help()
+        if me:
+            self.command(self,program['taskchooser'].filename,None)
 class StatusFrame(ui.Frame):
     """This contains all the info about what the user is currently working on,
     and buttons to change it."""
