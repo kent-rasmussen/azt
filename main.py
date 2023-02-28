@@ -1750,7 +1750,7 @@ class Settings(object):
         filename=self.settingsfile(setting)
         config=ConfigParser()
         d=self.makesettingsdict(setting=setting)
-        config.read(filename,encoding='utf-8')
+        # config.read(filename,encoding='utf-8')
         # if d == config:
         #     log.info("no settings change; not writing.")
         #     return
