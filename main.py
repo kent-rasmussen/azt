@@ -487,8 +487,11 @@ class LiftChooser(ui.Window,HasMenus):
         # make mediadir look for *.git
         ui.Label(self.frame, image=program['theme'].photo['small'],
                 text=text, font='title', column=1, row=1, ipadx=20)
-        if hasattr(program['taskchooser'],'splash'):
+        # if hasattr(program['taskchooser'],'splash'):
+        try:
             program['taskchooser'].splash.withdraw()
+        except:
+            pass
 class FileChooser(object):
     """This class loads the LIFT database from settings, or asks if not there.
     """
