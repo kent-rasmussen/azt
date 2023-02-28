@@ -2409,7 +2409,8 @@ class Sense(Node,FieldParent):
             #         self.ftypes[ftype].annotationvaluebylang(lang,name,value)))
             return self.ftypes[ftype].annotationvaluebylang(lang,name,value)
         except KeyError:
-            log.info("No {} type to pull annotation from".format(ftype))
+            # log.info("No {} type to pull annotation from".format(ftype))
+            pass
     def getcawlline(self):
         if 'SILCAWL' in self.fields:
             self.cawln=self.fields['SILCAWL'].textvaluebylang()
