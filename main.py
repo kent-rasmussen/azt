@@ -3389,6 +3389,7 @@ class TaskDressing(HasMenus,ui.Window):
         """Call this just once. If nothing changed, wait; if changes, run,
         then run again."""
         if dict == dictnow:
+            # log.info("No dict changes; no updating the UI: {}".format(dictnow))
             self.trystatusframelater(dictnow)
             return
         # log.info("Dict changes; checking attributes and updating the UI. ({})"
