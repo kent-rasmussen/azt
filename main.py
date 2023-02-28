@@ -5290,13 +5290,18 @@ class Segments(object):
     def setsensegroup(self,sense,ftype,check,group,**kwargs):
         # log.info("Setting segment sort group")
         sense.annotationvaluebyftypelang(ftype,self.analang,check,group)
-    def getsenseidsingroup(self,check,group):
+    def getsensesingroup(self,check,group):
         ftype=program['params'].ftype()
-        fkwargs={
-                ftype+'annotationname':check,
-                ftype+'annotationvalue':group
-                }
-        return program['db'].get("sense", **fkwargs).get('senseid')
+        lang=program['params'].analang()
+        return [
+                i for i in program['db'].senses
+                if i.ftypes[ftype].annotationvaluebylang(lang,check) == group
+                ]
+        # fkwargs={
+        #         ftype+'annotationname':check,
+        #         ftype+'annotationvalue':group
+        #         }
+        # return program['db'].get("sense", **fkwargs).get('senseid')
     def getsensegroup(self,sense,check):
         ftype=program['params'].ftype()
         return sense.annotationvaluebyftypelang(ftype,self.analang,check)
@@ -6140,7 +6145,7 @@ class Parse(Segments):
         r=self.parser.twoforms()
         # return level, lx, lc, sf, self.ps, afxs #from self.parser.twoforms
         if not r:
-            log.info("Auto parsed {} with two forms".format(self.senseid))
+            log.info("Auto parsed {} with two forms".format(self.sense.id))
             return
         elif r and isinstance(r,tuple) and self.userconfirmation(*r):
             self.parser.doparsetolx(r[1],*r[4:]) #pass root, too
@@ -6152,7 +6157,7 @@ class Parse(Segments):
         # log.info("reponse: {} ({})".format(r,type(r)))
         if not r:
             log.info("Auto parsed {} with three forms (returned {})"
-                    "".format(self.senseid,r))
+                    "".format(self.sense.id,r))
             return
         elif r and isinstance(r,tuple) and self.userconfirmation(*r):
             # return level, lx, lc, sf, self.ps, afxs #from self.parser.threeforms
@@ -6169,9 +6174,8 @@ class Parse(Segments):
         self.exited=False
         r=True #i.e., do the next fn
         if not kwargs:
-            kwargs={'senseid':self.senseid,
-                'entry':ifone(program['db'].nodes.findall('entry/sense[@id="{}"]/..'
-                                            ''.format(self.senseid))),
+            kwargs={
+                'sense':self.sense
                 }
         self.parser.parseentry(**kwargs) #sets entry, sense, and senseid for parser
         log.info("lx: {}, lc: {}, pl: {}, imp: {}".format(*self.parser.texts()))
@@ -6189,9 +6193,9 @@ class Parse(Segments):
             self.asksegmentsnops()
         if not self.exited:
             try:
-                self.parsecatalog.addparsed(self.senseid)
+                self.parsecatalog.addparsed(self.sense.id)
             except: #upgrade to this
-                self.parsecatalog.addparsed(kwargs['entry'].senses[0].id)
+                self.parsecatalog.addparsed(kwargs['entry'].sense.id)
             self.maybewrite()
         if self.parent.iswaiting():
             self.parent.waitdone()
@@ -6230,7 +6234,8 @@ class Parse(Segments):
                                                     ))
         senseids=self.senseidstoparse(**kwargs)
         todo=len(senseids)
-        for n,self.senseid in enumerate(senseids):
+        for n,self.sense in enumerate(
+                                [program['db'].sensedict[i] for i in senseids]):
             self.parse() #this can add to lists
             if self.exited:
                 break
@@ -6241,9 +6246,9 @@ class Parse(Segments):
         self.waitdone()
         # log.info("total parses tried: {}".format(self.parsecatalog.parsen()))
         self.parsecatalog.report()
-    def getparse(self,senseid):
-        if senseid not in self.parsed:
-            self.parse(senseid) #this can add to lists
+    # def getparse(self,senseid):
+    #     if senseid not in self.parsed:
+    #         self.parse(sense) #this can add to lists
     def nextparserasklevel(self):
         auto=self.parser.auto
         ask=self.parser.ask
@@ -6983,35 +6988,44 @@ class Tone(object):
                             self.glosslangs,
                             group)
         # log.info("Done setting tone sort group")
-    def getsenseidsinUFgroup(self,group):
-        return program['db'].get('sense',
-                            toneUFvalue=group,
-                            # path=['example'],
-                            # showurl=True
-                            ).get('senseid')
-    def getsenseidsingroup(self,check,group):
-        return program['db'].get('sense',location=check,
-                                    tonevalue=group,
-                                    path=['example'],
-                                    showurl=True
-                            ).get('senseid')
+    def getsensesinUFgroup(self,group):
+        return [
+                i for i in program['db'].senses
+                if i.uftonevalue() == group
+                ]
+        # return program['db'].get('sense',
+        #                     toneUFvalue=group,
+        #                     # path=['example'],
+        #                     # showurl=True
+        #                     ).get('senseid')
+    def getsensesingroup(self,check,group):
+        return [
+                i for i in program['db'].senses
+                if i.tonevaluebyframe(check) == group
+                ]
+        # return program['db'].get('sense',location=check,
+        #                             tonevalue=group,
+        #                             path=['example'],
+        #                             showurl=True
+        #                     ).get('senseid')
     def getsensegroup(self,sense,check):
         return sense.tonevaluebyframe(check)
-    def getUFgroupofsenseid(self,senseid):
-        return program['db'].get("sense/field/form/text",
-                            path=["toneUFfield"],
-                            senseid=senseid,
-                            # showurl=True
-                            ).get('text')
+    def getUFgroupofsense(self,sense):
+        return sense.uftonevalue()
+        # return program['db'].get("sense/field/form/text",
+        #                     path=["toneUFfield"],
+        #                     senseid=senseid,
+        #                     # showurl=True
+        #                     ).get('text')
     def __init__(self):
         pass
 class Sort(object):
     """This class takes methods common to all sort checks, and gives sort
     checks a common identity."""
-    def getsenseidsincheckgroup(self,**kwargs):
+    def getsensesincheckgroup(self,**kwargs):
         check=kwargs.get('check',program['params'].check())
         group=kwargs.get('group',program['status'].group())
-        return self.getsenseidsingroup(check, group)
+        return self.getsensesingroup(check, group)
     def modverification(self,sense,profile,ftype,check,add=None):
         values=sense.verificationtextvalue(profile,ftype)
         if add and not values:
@@ -7033,7 +7047,7 @@ class Sort(object):
         profile=kwargs.get('profile',program['slices'].profile())
         ftype=kwargs.get('ftype',program['params'].ftype())
         # profile=program['slices'].profile()
-        senseids=self.getsenseidsincheckgroup()
+        senses=self.getsensesincheckgroup()
         value=self.verifictioncode(check=check,group=group)
         # The above gives a check=group string, which should be escaped later
         if verified == True:
@@ -7843,7 +7857,7 @@ class Sort(object):
             log.debug(msg)
             """All the senses we're looking at, by ps/profile"""
             # log.info("Join about to run updatebygroupsenseid(*groupstojoin)")
-            self.updatebygroupsenseid(*groupstojoin)
+            self.updatebygroupsense(*groupstojoin)
             groups.remove(groupstojoin[0])
             write=False #for the first
             for group in groupstojoin: #not verified=True --since joined
@@ -7856,7 +7870,7 @@ class Sort(object):
     def tryNAgain(self):
         check=program['params'].check()
         if check in program['status'].checks():
-            senseids=self.getsenseidsincheckgroup(group='NA')
+            senses=self.getsensesincheckgroup(group='NA')
             # program['slices'].senseids()
             # ftype=program['toneframes'][check]['field'] #this must match check!
         else:
@@ -7867,22 +7881,22 @@ class Sort(object):
             text=_("Not Trying Again; set a tone frame first!")
             ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
             return
-            for sense in [program['db'].sensedict[i] for i in senseids]: #this is a ps-profile slice
-                self.removesensefromgroup(sense)
+        for sense in senses: #this is a ps-profile slice
+            self.removesensefromgroup(sense)
             # program['db'].addmodexamplefields(senseid=senseid,fieldtype='tone',
             #                 location=check,#ftype=ftype,
             #                 fieldvalue='', #just clear this
             #                 oldfieldvalue='NA', showurl=True #if this
             #                 )
         self.runcheck()
-    def updatebygroupsenseid(self,oldvalue,newvalue,updateforms=False):
+    def updatebygroupsense(self,oldvalue,newvalue,updateforms=False):
         """Generalize this for segments"""
         # This function updates the field value and verification status (which
         # contains the field value) in the lift file.
         # This is all the words in the database with the given
         # location:value correspondence (for a given ps/profile)
         check=program['params'].check()
-        lst2=self.getsenseidsingroup(check,oldvalue) #by annotations, for C/V
+        lst2=self.getsensesingroup(check,oldvalue) #by annotations, for C/V
         # We are agnostic of verification status of any given entry, so just
         # use this to change names, not to mark verification status (do that
         # with self.updatestatuslift())
@@ -7890,15 +7904,14 @@ class Sort(object):
         add=self.verifictioncode(check=check,group=newvalue)
         """The above doesn't test for profile, so we restrict that next"""
         profile=program['slices'].profile()
-        senseids=program['slices'].inslice(lst2)
+        senses=program['slices'].inslice(lst2)
         ftype=program['params'].ftype()
-        if not senseids:
-            log.info("No senseids for {}={}".format(check,oldvalue))
+        if not senses:
+            log.info("No senses for {}={}".format(check,oldvalue))
             return
-        for senseid in senseids:
+        for sense in senses:
             """This updates the fieldvalue from 'fieldvalue' to
             'newfieldvalue'."""
-            sense=program['db'].sensedict[senseid]
             u = threading.Thread(target=self.marksortgroup,
                                 args=(sense,newvalue),
                                 kwargs={'check':check,
@@ -10229,7 +10242,7 @@ class Transcribe(Sound,Sort,TaskDressing):
                     title=_("Syllable profile change?")
                     #Just state this and move on to making changes:
                     self.err=ErrorNotice(warning,parent=self,title=title)
-            self.updatebygroupsenseid(self.group,newvalue,updateforms=True)
+            self.updatebygroupsense(self.group,newvalue,updateforms=True)
             #NO: this should update formstosearch and profile data.
             # log.info("Doing renamegroup: {}>{}".format(self.group,newvalue))
             program['status'].renamegroup(self.group,newvalue) #status file, not LIFT
@@ -10248,9 +10261,9 @@ class Transcribe(Sound,Sort,TaskDressing):
                 check=program['params'].check()
                 log.info("updating for type {} check {}, group ‘{}’"
                         "".format(ftype,check,group))
-                senseids=self.getsenseidsincheckgroup()
+                senses=self.getsensesincheckgroup()
                 log.info("modding senseids {}".format(senseids))
-                for sense in [program['db'].sensedict[i] for i in senseids]:
+                for sense in senses:
                     u = threading.Thread(target=self.updateformtoannotations,
                                         args=(sense,ftype),
                                         kwargs={'check':check})
@@ -11263,15 +11276,15 @@ class ExampleDict(dict):
     def sensesinslicegroup(self,group,check):
         """Convert to senses before return"""
         #This returns all the senseids with a given tone value
-        senseids=program['taskchooser'].task.getsenseidsingroup(check,group)
-        if not senseids:
+        senses=program['taskchooser'].task.getsensesingroup(check,group)
+        if not senses:
             log.error("There don't seem to be any sensids in this check tone "
                 "group, so I can't get you an example. ({} {})"
                 "".format(check,group))
             return
         """The above doesn't test for profile, so we restrict that next"""
-        senseidsinslice=program['slices'].inslice(senseids)
-        if not senseidsinslice:
+        sensesinslice=program['slices'].inslice(senses)
+        if not sensesinslice:
             log.error("There don't seem to be any sensids from that check tone "
                 "group in this slice-group, so I can't get you an example. "
                 "({}-{}, {} {})"
@@ -11279,7 +11292,7 @@ class ExampleDict(dict):
             return
         # return list(senseidsinslice)
         # return senses, not senseids
-        return [v for k,v in program['db'].sensedict.items() if k in senseidsinslice]
+        return list(set(senses)&set(sensesinslice))
     def hasglosses(self,node):
         # log.info("hasglosses sense: {}".format(sense.id))
         try:
