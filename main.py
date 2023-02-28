@@ -12354,17 +12354,15 @@ class SliceDict(dict):
     def senses(self,ps=None,profile=None,**kwargs):
         return [program['db'].sensedict[i]
                 for i in senseids(ps,profile,**kwargs)]
-    def senseids(self,ps=None,profile=None,**kwargs): #don't die on other kwargs
+    def senseids(self,**kwargs): #ps=None,profile=None,
         """This returns an up to date list of senseids in the curent slice
         (because changing ps or profile calls renewsenseids), or else the
         specified slice"""
         # list(self._senseidsbyps[self._ps][self._profile])
         if not ps and not profile:
             return self._senseids #this is always the current slice
-        if not ps:
-            ps=self._ps
-        if not profile:
-            profile=self._profile
+        ps=kwargs.get('ps',self._ps)
+        profile=kwargs.get('profile',self._profile)
         if ps in self._profilesbysense and profile in self._profilesbysense[ps]:
             return list(self._profilesbysense[ps][profile]) #specified slice
         else:
@@ -12388,6 +12386,7 @@ class SliceDict(dict):
             self._senseids+=list(self._adhoc[self._ps][self._profile])
         except KeyError:
             log.info("assuming {} is a regular profile.".format(self._profile))
+        self._senses=[program['db'].sensedict[i] for i in self._senseids]
     def adhoc(self,ids=None, **kwargs):
         """If passed ids, add them. Otherwise, return dictionary."""
         if ids is not None:
