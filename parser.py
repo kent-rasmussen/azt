@@ -583,23 +583,28 @@ class Engine(object):
             self.catalog.addbadps(self.senseid)
         else:
             return True #not (self.nops or self.badps)
-    def parseentry(self, entry, senseid=None, sense=None):
+    def parseentry(self, sense, senseid=None, entry=None):
         self.on=self.ov=False
         # if self.auto < 4:
         #     log.info("Called with args {};{}".format(entry, senseid))
         # self.affixes=None # everyone needs this
-        self.entry=entry
-        # log.info("entry: {}".format(self.entry))
         if sense:
             self.sense=sense
             self.senseid=sense.id #save for later
+            self.entry=sense.entry
         elif senseid:
             self.senseid=senseid #save for later
             self.sense=entry.sense
-        else:
+            self.entry=sense.entry
+        elif entry:
+            self.entry=entry
             self.sense=self.entry.sense
             self.senseid=self.sense.id #save for later
+        else:
+            log.error("Need one of sense, senseid, or entry!")
+            return
         # log.info("sense: {}".format(self.sense))
+        # log.info("entry: {}".format(self.entry))
         # log.info("psnode: {}".format(psnode))
         # if not (min(self.auto,self.ask) < 4 or self.pscheck()):
         #     log.info("Returning because self.auto ({}) < 4 or "
