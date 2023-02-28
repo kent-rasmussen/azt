@@ -2285,69 +2285,45 @@ class Settings(object):
     def getprofileofentry(self,entry):
         getattr(entry,ftype).textvaluebylang(self.analang)
         #CONTINUE HERE
-    def getprofileofsense(self,senseid,ps):
+    def getprofileofsense(self,sense,ps):
         #Convert to iterate over local variables
-        forms=program['db'].citationorlexeme(senseid=senseid,
-            analang=program['params'].analang())
-        for form in forms:
-            """This adds to self.sextracted, too"""
-            profile=self.profileofform(form,ps=ps)
-            # log.info("getprofileofsense Profile: {}".format(profile))
-            if not set(self.profilelegit).issuperset(profile):
-                profile='Invalid'
-            self.addtoprofilesbysense(senseid, ps=ps, profile=profile)
-            self.addtoformstosearch(senseid, form, ps=ps)
-        return firstoflist(forms),profile
-    def getprofilesbypsprofilecheckgroup(self,**kwargs):
-        ps=kwargs.get('ps',program['slices'].ps())
-        profile=kwargs.get('profile',program['slices'].profile())
-        group=kwargs.get('group',program['status'].group())
-        start_time=nowruntime()
-        log.info("Processesing {} {} syllable profiles in {} sort group"
-                "".format(ps,profile,group))
-        senseids=(set(getsenseidsincheckgroup())&
-                    set(program['slices'].senseids(ps=ps,profile=profile)))
-        n=self._getprofiles(senseids,ps)
-        log.info("Processed {} forms to syllable profile".format(x))
-        logfinished(start_time)
-    def getprofilesbypsprofile(self,**kwargs):
-        ps=kwargs.get('ps',program['slices'].ps())
-        profile=kwargs.get('profile',program['slices'].profile())
-        start_time=nowruntime()
-        log.info("Processesing {} {} syllable profiles".format(ps,profile))
-        senseids=program['slices'].senseids(ps=ps,profile=profile)
-        n=self._getprofiles(senseids,ps)
-        log.info("Processed {} forms to syllable profile".format(x))
-        logfinished(start_time)
+        form=sense.textvaluebyftypelang('lc',program['params'].analang())
+        """This adds to self.sextracted, too"""
+        profile=self.profileofform(form,ps=ps)
+        # log.info("getprofileofsense Profile: {}".format(profile))
+        if not set(self.profilelegit).issuperset(profile):
+            profile='Invalid'
+        self.addtoprofilesbysense(sense.id, ps=ps, profile=profile)
+        self.addtoformstosearch(sense.id, form, ps=ps)
+        return form,profile
     def getprofilesbyps(self,ps):
         start_time=nowruntime()
         log.info("Processesing {} syllable profiles".format(ps))
-        senseids=program['db'].senseidsbyps[ps]
-        n=self._getprofiles(senseids,ps)
+        senses=program['db'].sensesbyps[ps]
+        self.sextracted[ps]={} #start over, don't add to if there
+        n=self._getprofiles(senses,ps)
         log.info("Processed {} forms to syllable profile".format(n))
         logfinished(start_time)
-    def getprofilesbysenseids(self,senseids,ps):
-        n=self._getprofiles(senseids,ps)
-    def _getprofiles(self,senseids,ps):
+    def _getprofiles(self,senses,ps):
         n=0
-        todo=len(senseids)
+        todo=len(senses)
         # log.info("RXs: {}".format(self.rx))
-        if todo>5:
+        if todo>50:
             program['taskchooser'].wait(msg="getting profiles for {}".format(ps))
-        for senseid in senseids:
+        for sense in senses:
             n+=1
             if n%100:
                 t = threading.Thread(target=self.getprofileofsense,
-                                    args=(senseid,ps))
+                                    args=(sense,ps))
                 t.start()
             else:
-                form,profile=self.getprofileofsense(senseid,ps)
+                form,profile=self.getprofileofsense(sense,ps)
                 log.debug("{}: {}; {}".format(str(n)+'/'+str(todo),form,
                                             profile))
-            if todo>5:
+            if todo>50:
                 program['taskchooser'].waitprogress(n*100/todo)
         t.join()
-        if todo>5:
+        if todo>50:
             program['taskchooser'].waitdone()
         return n
     def getprofilesbyentry(self):
@@ -2364,7 +2340,7 @@ class Settings(object):
         self.profiledguids=[]
         self.profiledsenseids=[]
         self.formstosearch={}
-        # self.sextracted={} #Will store matching segments here
+        self.sextracted={} #don't add to old data
         for ps in program['db'].pss: #45s on English db
             # self.sextracted[ps]={}
             # for s in self.rx:
