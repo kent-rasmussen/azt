@@ -11832,13 +11832,13 @@ class SortGroupButtonFrame(ui.Frame):
         kwargs=exampletype(**kwargs)
         self._n,node=self.exs.getexample(self.group,**kwargs)
         self.hasexample=False
-        if not node:# or 'senseid' not in example:
+        if not node:
             if kwargs['wsoundfile']:
                 log.error("self.exs.getexample didn't return an example "
                                     "with a soundfile; trying for one without")
                 kwargs['wsoundfile']=False
                 self._n,node=self.exs.getexample(self.group,**kwargs)
-                if not node:# or 'senseid' not in example:
+                if not node:
                     log.error("self.exs.getexample didn't return an example "
                                         "with or without sound file; returning")
                     return
