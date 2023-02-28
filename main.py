@@ -12348,9 +12348,12 @@ class SliceDict(dict):
         #                                             list(self._validbyps)[:10]))
         # log.info("valid: {}".format(self._valid))
         # log.info("validbyps: {}".format(self._validbyps))
-    def inslice(self,senseids):
-        senseidstochange=set(self._senseids).intersection(senseids)
-        return senseidstochange
+    def inslice(self,s):
+        if isinstance(s,lift.Sense):
+            return set(self._senses).intersection(s)
+        else:
+            senseidstochange=set(self._senseids).intersection(s)
+            return senseidstochange
     def senses(self,**kwargs): #ps=None,profile=None,
         if not ps and not profile:
             return self._senses #this is always the current slice
