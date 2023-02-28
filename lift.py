@@ -3988,6 +3988,10 @@ if __name__ == '__main__':
         # print(getattr(entry,ftype).formatted('en',['fr','shw'],
         log.info(lift.pss)
         log.info(entry.sense.cawln)
+        prettyprint(entry.sense)
+        log.info(entry.sense.uftonevalue("MyTone Value"))
+        log.info(entry.sense.uftonevalue())
+        prettyprint(entry.sense)
         # entry.plvalue(ftype,'en',entry.lc.textvaluebylang('en')+'ś')
         # print(entry.senses[0].ftypes[ftype].formatted('en',['fr','shw'],
         #                         ftype=ftype,
