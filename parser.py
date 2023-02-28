@@ -583,7 +583,7 @@ class Engine(object):
             self.catalog.addbadps(self.senseid)
         else:
             return True #not (self.nops or self.badps)
-    def parseentry(self, sense, senseid=None, entry=None):
+    def parseentry(self, sense=None, senseid=None, entry=None):
         """I should likely remove self.senseid, as redundant with self.sense.id"""
         self.on=self.ov=False
         # if self.auto < 4:
