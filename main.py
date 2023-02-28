@@ -12351,9 +12351,16 @@ class SliceDict(dict):
     def inslice(self,senseids):
         senseidstochange=set(self._senseids).intersection(senseids)
         return senseidstochange
-    def senses(self,ps=None,profile=None,**kwargs):
-        return [program['db'].sensedict[i]
-                for i in senseids(ps,profile,**kwargs)]
+    def senses(self,**kwargs): #ps=None,profile=None,
+        if not ps and not profile:
+            return self._senses #this is always the current slice
+        ps=kwargs.get('ps',self._ps)
+        profile=kwargs.get('profile',self._profile)
+        if ps in self._profilesbysense and profile in self._profilesbysense[ps]:
+            return [program['db'].sensedict[i]
+                        for i in self._profilesbysense[ps][profile]]
+        else:
+            return []
     def senseids(self,**kwargs): #ps=None,profile=None,
         """This returns an up to date list of senseids in the curent slice
         (because changing ps or profile calls renewsenseids), or else the
