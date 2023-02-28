@@ -1259,10 +1259,14 @@ class StatusFrame(ui.Frame):
                         return nn(x,oneperline=True) #if any noninteger, all.
             return len(x) #to show counts only
         def updateprofilencheck(profile,check):
+            # log.info("running updateprofilencheck({},{})".format(profile,check))
             program['slices'].profile(profile)
             program['params'].check(check)
+            # log.info("now {},{}".format(program['slices'].profile(),
+            #                             program['params'].check()))
             #run this in any case, rather than running it not at all, or twice
         def refresh(event=None):
+            # log.info("refreshing status table")
             program['settings'].storesettingsfile()
             self.task.tableiteration+=1
         self.boardtitle()
