@@ -3379,7 +3379,7 @@ class TaskDressing(HasMenus,ui.Window):
                 'maxprofiles':program['settings'].maxprofiles,
                 'maxpss':program['settings'].maxpss
                 }
-        if hasattr(self,'slices'):
+        if 'slices' in program:
             dictnow.update({
                 'cvt':program['params'].cvt(),
                 'check':program['params'].check(),
