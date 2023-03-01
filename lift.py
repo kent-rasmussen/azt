@@ -1673,15 +1673,15 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             parent=entry.senses[0] #just take first one, for now
         else: #parent of node to find may be sense or entry
             parent=entry
-        log.info("Found entry parent node {}".format(parent))
+        # log.info("Found entry parent node {}".format(parent))
         if kwargs['fromtag'] == 'gloss':
             froms=parent.glosses
         if kwargs['fromtag'] == 'definition':
             froms=[parent.definition] #just one
         else:
             froms=parent.findall(kwargs['fromtag']) # I need form node, not text node
-        log.info("Found {} entry {} fields".format(len(froms),
-                                                    kwargs['fromtag']))
+        # log.info("Found {} entry {} fields".format(len(froms),
+        #                                             kwargs['fromtag']))
         for f in froms:
             log.info("Looking at {} {} of entry w/guid: {}"
                     "".format(getattr(f,'lang',''),f.tag,entry.get("guid")))
@@ -1697,14 +1697,13 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 nodes=Node.childrenwtext(f)
             log.info("Found {}".format(nodes))
             for ff in nodes:
-                log.info("Working on {}".format(ff))
+                # log.info("Working on {}".format(ff))
                 ffl=ff.lang
                 try:
                     fft=ff.textvaluebylang(lang)
                 except AttributeError:
                     fft=ff.textvalue()
-                # log.info("Moving {} {} from lang {}".format(ff.tag,fft.text,ffl))
-                log.info("Moving {} {} from lang {}".format(ff.tag,fft,ffl))
+                # log.info("Moving {} {} from lang {}".format(ff.tag,fft,ffl))
                 """This finds or creates, by lang:""" #This gives text node
                 # For now, assuming everything goes to entry:
                 if kwargs['totag'] == 'citation':
@@ -1718,8 +1717,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     totext=to.textvaluebylang(lang)
                 except AttributeError:
                     totext=to.textvalue()
-                log.info("Moving {}/{} ‘{}’ to {}/{} (was {}) for lang {}"
-                        "".format(kwargs['fromtag'],f.tag,fft,
+                log.info("Moving {} {}/{} ‘{}’ to {}/{} (was {}) for lang {}"
+                        "".format(entry.get("guid"),kwargs['fromtag'],f.tag,fft,
                                     kwargs['totag'],to.tag,totext,ffl))
                 if not totext:#,value
                     if f.tag == 'definition' and to.tag == 'citation':
