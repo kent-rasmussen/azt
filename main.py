@@ -4458,7 +4458,7 @@ class TaskDressing(HasMenus,ui.Window):
         else:
             self.task=self
             taskchooser=self.parent
-            if parent.ifcollectionlcsettingsdone:
+            if program['taskchooser'].ifcollectionlcsettingsdone:
                 program['status'].task(self)
         """Whenever this runs, it's the main window."""
         taskchooser.mainwindowis=self
