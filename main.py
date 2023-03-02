@@ -2363,7 +2363,7 @@ class Settings(object):
         self.profileswdatabyentry={}
         self.profilesbysense={}
         self.profilesbysense['Invalid']=[]
-        self.profilesbysense['analang']=self.analang
+        self.profilesbysense['analang']=program['params'].analang
         self.profilesbysense['ftype']=program['params'].ftype()
         self.profiledguids=[]
         self.profiledsenseids=[]
@@ -2555,21 +2555,21 @@ class Settings(object):
             # log.info("Compiled rx list: {}".format(self.rx[cvt]))
     def compileCVrxforsclass(self,sclass):
         """This does sorting by length to make longest first"""
+        analang=program['params'].analang()
         if sclass not in self.rx:
             self.rx[sclass]={}
         for pn in range(4,-1,-1):
-            self.rx[sclass][pn]=rx.s(self.s[self.analang],sclass,
+            self.rx[sclass][pn]=rx.s(self.s[analang],sclass,
                                 polyn=pn, #limit by glyph length, 0=everything
                                 compile=True)
             if self.rx[sclass][pn] == rx.compile('()'):
                 # log.info("Empty Regex; removing.")
                 del self.rx[sclass][pn]
         # log.info("compileCVrxforsclass RXs: {}".format(self.rx))
-        sin=self.s[self.analang][sclass]
-        sout=[i for k,v in self.s[self.analang].items()
+        sin=self.s[analang][sclass]
+        sout=[i for k,v in self.s[analang].items()
                 if (k not in [sclass,'<','='] # no affix boundary or punctuation
-                     and (k in ['C','V'] or (k in self.distinguish and
-                                                self.distinguish[k])))
+                     and (k in ['C','V'] or self.distinguish.get(k)))
                 for i in v
                 ]
         # log.info("Looking for sclass {} in {}".format(sclass,self.s[self.analang]))
@@ -2580,10 +2580,11 @@ class Settings(object):
         self.rx={}
         #Each glyph variable found in the language gets a regex for each length,
         # plus 0 to find them all together – since we're looking for glyphs.
-        for sclass in list(self.s[self.analang])+['C']: #be sure to do C last
-            if self.s[self.analang][sclass] != []: #don't make if empty
-                if sclass in slcassesC and not self.distinguish[sclass]:
-                    self.s[self.analang]['C']+=self.s[self.analang][sclass]
+        analang=program['params'].analang()
+        for sclass in list(self.s[analang])+['C']: #be sure to do C last
+            if self.s[analang][sclass] != []: #don't make if empty
+                if sclass in slcassesC and not self.distinguish.get(sclass):
+                    self.s[analang]['C']+=self.s[analang][sclass]
                     continue
                 self.compileCVrxforsclass(sclass)
         #Compile preferred regexs here
