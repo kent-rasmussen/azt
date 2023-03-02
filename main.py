@@ -2369,6 +2369,7 @@ class Settings(object):
         self.profiledsenseids=[]
         self.formstosearch={}
         self.sextracted={} #don't add to old data
+        self.setupCVrxs() # self.rx (needs s)
         for ps in program['db'].pss: #45s on English db
             # self.sextracted[ps]={}
             # for s in self.rx:
@@ -2387,10 +2388,14 @@ class Settings(object):
                     try:
                         self.profilesbysense[ps][a]=self.adhocgroups[ps][a]
                     except KeyError: #in case the ps isn't already there
-                        self.profilesbysense[ps]={}
-                        self.profilesbysense[ps][a]=self.adhocgroups[ps][a]
+                        self.profilesbysense[ps]={a:self.adhocgroups[ps][a]}
                     # log.debug("resulting profilesbysense: {}".format(
                     #                         self.profilesbysense[ps][a]))
+        else:
+            self.adhocgroups={}
+        SliceDict(self.adhocgroups,self.profilesbysense) #self.profilecounts
+        if program['slices'].profile():
+            self.getscounts()
     def profileofformpreferred(self,form):
         """Simplify combinations where desired"""
         c=['N','S','G','ʔ','D']
@@ -2576,6 +2581,7 @@ class Settings(object):
         for n in range(1,7): #just get the Nth C or V, don't worry about polygraphs
             self.rx[sclass+str(n)]=rx.nX(sin,sout,n) #no polygraphs here
     def setupCVrxs(self):
+        self.slists()
         slcassesC=['N','S','G','ʔ','D']
         self.rx={}
         #Each glyph variable found in the language gets a regex for each length,
@@ -2939,17 +2945,12 @@ class Settings(object):
                                                         self.attrschanged))
     def makeparameters(self):
         CheckParameters(self.analang,self.audiolang)
-    def makeslicedict(self):
-        if not hasattr(self,'adhocgroups'): #I.e., not loaded from file
-            self.adhocgroups={}
-        SliceDict(self.adhocgroups,self.profilesbysense) #self.profilecounts
-        if hasattr(self,'sextracted'):
-            self.getscounts()
-    def maketoneframes(self):
-        ToneFrames(getattr(self,'toneframes',{}))
-    def makestatus(self):
+    def maketoneframes(self,dict={}):
+        ToneFrames(dict)
+        # ToneFrames(getattr(self,'toneframes',{}))
+    def makestatus(self,dict={}):
         # log.info("Making status object with value {}".format(program['status']))
-        StatusDict(self.settingsfile('status'),getattr(self,'status',{}))
+        StatusDict(self.settingsfile('status'),dict)
         # log.info("Made status object with value {}".format(program['status']))
     def set(self,attribute,choice,window=None,refresh=True):
         #Normally, pass the attribute through the button frame,
@@ -3183,17 +3184,10 @@ class Settings(object):
         self.notifyuserofextrasegments() #self.analang set by now
         self.polygraphcheck()
         self.checkinterpretations() #checks/sets values for self.distinguish
-        self.slists() #lift>check segment dicts: s[lang][segmenttype]
-        self.setupCVrxs() # self.rx (needs s)
         self.checkforprofileanalysis()
         """The line above may need to go after this block"""
-        self.loadsettingsfile(setting='status')
         self.loadsettingsfile(setting='adhocgroups')
-        self.loadsettingsfile(setting='toneframes')
         """Make these objects here only"""
-        self.makeslicedict() #needs params
-        self.maketoneframes()
-        self.makestatus() #needs params, slices, data, toneframes, exs
         self.makeeverythingok()
         self.settingsobjects() #needs params, glosslangs, slices
         self.moveattrstoobjects() #catch what wasn't done before
@@ -3229,6 +3223,9 @@ class Settings(object):
         self.trackuntrackedfiles()
         if not self.buttoncolumns:
             self.setbuttoncolumns(1)
+        # these two make the objects
+        self.loadsettingsfile(setting='status')
+        self.loadsettingsfile(setting='toneframes')
         """The following might be OK here, but need to be OK later, too."""
         # """The following should only be done after word collection"""
         # if self.taskchooser.donew['collectionlc']:
