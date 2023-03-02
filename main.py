@@ -1028,6 +1028,10 @@ class StatusFrame(ui.Frame):
             self.cvgroup(line)
     def toneframe(self,line):
         self.opts['columnplus']=1
+        # log.info("toneframes: {}".format(program['toneframes']))
+        # log.info("maketoneframes: {}".format(program['toneframes']))
+        # log.info("checks: {}; check: {}".format(getattr(self,'checks'),
+        #                                         getattr(self,'check')))
         if not self.checks:
             t=_("no tone frames defined.")
             # self.check=None
@@ -1047,7 +1051,7 @@ class StatusFrame(ui.Frame):
             t=_("(no framed group)")
         else:
             t=(_("(framed group: ‘{}’)").format(group))
-        log.info("cvt: {}; check: {}".format(self.cvt,self.check))
+        # log.info("cvt: {}; check: {}".format(self.cvt,self.check))
         """Set appropriate conditions for each of these:"""
         if (not check or (check in program['status'].checks(wsorted=True) and
             profile in program['status'].profiles(wsorted=True))):
