@@ -596,6 +596,7 @@ class Engine(object):
             self.entry=sense.entry
         elif senseid:
             self.senseid=senseid #save for later
+            log.error("given senseid, but can't really get sense")
             self.sense=entry.sense
             self.entry=sense.entry
         elif entry:
