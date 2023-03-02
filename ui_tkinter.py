@@ -1326,7 +1326,7 @@ class ButtonFrame(Frame):
             return
             """Assuming from here on that the first list item represents
             the format of the whole list; hope that's true!"""
-        elif optionlist[0] is dict:
+        elif type(optionlist[0]) is dict:
             # log.info("looks like options are already in dictionary format.")
             pass
         elif (type(optionlist[0]) is str) or (type(optionlist[0]) is int):
