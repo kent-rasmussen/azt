@@ -5106,6 +5106,7 @@ class TaskChooser(TaskDressing,ui.Window):
         self.whatsdone()
         self.splash.progress(80)
         TaskDressing.__init__(self,parent) #I think this should be after settings
+        program['settings'].getprofiles()
         # self.withdraw()
         self.splash.progress(90)
         self.setmainwindow(self)
