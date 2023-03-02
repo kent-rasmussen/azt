@@ -2336,7 +2336,7 @@ class Settings(object):
         n=0
         todo=len(senses)
         # log.info("RXs: {}".format(self.rx))
-        if todo>50:
+        if todo>750:
             program['taskchooser'].wait(msg="getting profiles for {}".format(ps))
         for sense in senses:
             n+=1
@@ -2348,10 +2348,10 @@ class Settings(object):
                 form,profile=self.getprofileofsense(sense,ps)
                 log.debug("{}: {}; {}".format(str(n)+'/'+str(todo),form,
                                             profile))
-            if todo>50:
+            if todo>750:
                 program['taskchooser'].waitprogress(n*100/todo)
         t.join()
-        if todo>50:
+        if todo>750:
             program['taskchooser'].waitdone()
         return n
     def getprofilesbyentry(self):
