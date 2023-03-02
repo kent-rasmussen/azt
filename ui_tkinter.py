@@ -1885,6 +1885,8 @@ def testapp():
                 else:
                     bars[p].current(i)
             time.sleep(.02)
+    def textchange(event):
+        l['text']="new text"
     r=Root(theme='Kim')
     r.withdraw()
     w=Window(r)
@@ -1936,7 +1938,8 @@ def testapp():
                                             row=row, column=col,
                                             columnspan=colspan,
                                             rowspan=rowspan,sticky='nesw')
-    w.bind('<ButtonRelease>',progress)
+    w.bind('<ButtonRelease>',textchange)
+    w.bind('<ButtonRelease>',progress,add=True)
     # parent.winfo_viewable()
     r.mainloop()
 if __name__ == '__main__':
