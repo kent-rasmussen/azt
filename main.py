@@ -5471,7 +5471,7 @@ class WordCollection(Segments):
                                     row=1,column=0,
                                     sticky='')
         formfield.focus_set()
-        formfield.bind('<Return>',self.submitform)
+        formfield.bind('<Return>',lambda event,l=lang:self.submitform(l))
         formfield.rendered.grid(row=2,column=0,sticky='new')
         sub_btn=ui.Button(self.runwindow.frame2,text = strings['ok'],
                             command = self.submitform,
@@ -6390,9 +6390,6 @@ class WordCollectnParse(WordCollection,Parse,TaskDressing):
         except AttributeError as e:
             log.info("Not storing word (WordCollectnParse): {}".format(e))
         self.deiconify()
-    def submitform(event=None):
-        self.runwindow.form[lang]=self.runwindow.form[lang].get()
-        self.runwindow.frame2.destroy()
     def __init__(self, parent):
         log.info("Initializing {}".format(self.tasktitle()))
         self.ftype=program['params'].ftype('lc') #always correct?
