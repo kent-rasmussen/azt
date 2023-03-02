@@ -1887,6 +1887,8 @@ def testapp():
             time.sleep(.02)
     def textchange(event):
         l['text']="new text"
+    def textadd(x):
+        l['text']+=str(x)
     r=Root(theme='Kim')
     r.withdraw()
     w=Window(r)
@@ -1940,6 +1942,12 @@ def testapp():
                                             rowspan=rowspan,sticky='nesw')
     w.bind('<ButtonRelease>',textchange)
     w.bind('<ButtonRelease>',progress,add=True)
+    w.bind('<Up>',lambda event,x='^':textadd(x),add=True)
+    w.bind('<Prior>',lambda event,x='^':textadd(x),add=True) #page up button
+    w.bind('<Down>',lambda event,x='v':textadd(x),add=True)
+    w.bind('<Next>',lambda event,x='v':textadd(x),add=True) #page down button
+    w.bind('<Left>',lambda event,x='<—':textadd(x),add=True)
+    w.bind('<Right>',lambda event,x='—>':textadd(x),add=True)
     # parent.winfo_viewable()
     r.mainloop()
 if __name__ == '__main__':
