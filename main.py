@@ -3390,7 +3390,7 @@ class TaskDressing(HasMenus,ui.Window):
                 dictnow.update({
                     'parserasklevel':self.parser.ask,
                     'parserautolevel':self.parser.auto,
-                    'senseid':self.task.senseidtodo,
+                    'senseid':self.task.sensetodo,
                     })
         """Call this just once. If nothing changed, wait; if changes, run,
         then run again."""
@@ -3881,37 +3881,64 @@ class TaskDressing(HasMenus,ui.Window):
                                     column=0, row=0
                                     )
             window.wait_window(window)
-    def setsenseidtodo(self,choice,window):
-        self.senseidtodo=choice
+    def setsensetodo(self,choice,window):
+        self.sense=self.sensetodo=choice
         window.destroy()
         if isinstance(self,WordCollection):
             self.getword()
-    def getsenseidtodo(self,event=None):
+    def getsensetodobyletter(self,choice,window,event=None):
+        window.on_quit()
         msg=_("Preparing to ask for a sense...")
         log.info(msg)
-        self.wait(msg=msg)
-        senseids=program['db'].senseids
-        todo=len(senseids)
-        list=[]
-        for n,k in enumerate(senseids):
-            list.append((k,
-                program['db'].sensedict[k].formatted(self.analang,self.glosslangs)))
-            self.waitprogress(n*100//todo)
-        if not list:
-            log.info("No senseids; sort something?")
-            return
+        senses=program['db'].senses
+        todo=len(senses)
+        list=[(k,k.formatted(self.analang,self.glosslangs))
+                for k in senses
+                if k.formatted(self.analang,self.glosslangs).startswith(choice)]
         list.sort(key=lambda x:x[1])
-        list=[(None,_("All words"))]+list
         window=ui.Window(self, title=_('Select Lexical Item'))
         ui.Label(window.frame, text=_('What sense do you want to work with?'),
                             column=0, row=0)
         buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                                             optionlist=list,
-                                            command=self.setsenseidtodo,
+                                            command=self.setsensetodo,
                                             window=window,
                                             column=0, row=1
                                             )
-        self.waitdone()
+        window.lift()
+    def getsensetodo(self,event=None):
+        msg=_("Preparing to ask for a sense letter...")
+        log.info(msg)
+        # self.wait(msg=msg)
+        senses=program['db'].senses
+        todo=len(senses)
+        kcounts=collections.Counter([k.formatted(self.analang,self.glosslangs)[0]
+                                            for k in senses]
+                                    ).most_common()
+        if len(kcounts)<15: #When few choices, use first two letters
+            kcounts=collections.Counter([k.formatted(self.analang,
+                                                    self.glosslangs)[:2]
+                                            for k in senses]
+                                    ).most_common()
+
+        letters=[{'code':k,'description':v} for k,v in kcounts]
+        # log.info("Counts: {}".format(kcounts))
+        # letters=list([(k,k,v) for k,v in kcounts])
+        log.info("letters: {}".format(letters))
+        if not letters:
+            log.info("No senseids; sort something?")
+            return
+        letters=[{'code':None,'description':_("All words")}
+        ]+letters
+        window=ui.Window(self, title=_('Select Lexical Item'))
+        ui.Label(window.frame, text=_('What letter does your sense start with?'),
+                            column=0, row=0)
+        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                                            optionlist=letters,
+                                            command=self.getsensetodobyletter,
+                                            window=window,
+                                            column=0, row=1
+                                            )
         window.lift()
     def getsecondformfieldN(self,event=None):
         ps=program['settings'].nominalps
@@ -6176,20 +6203,20 @@ class Parse(Segments):
         if self.parent.iswaiting():
             self.parent.waitdone()
         self.parent.deiconify()
-    def initsenseidtodo(self):
+    def initsensetodo(self):
         try:
-            r=self.senseidtodo
-            self.senseidtodo=None
+            r=self.sensetodo
+            self.sensetodo=None
         except AttributeError:
-            if hasattr(self,'senseidtodo'):
-                log.info("self.senseidtodo: {}".format(self.senseidtodo))
-            r=self.senseidtodo=None
+            if hasattr(self,'sensetodo'):
+                log.info("self.sensetodo: {}".format(self.sensetodo.id))
+            r=self.sensetodo=None
         if r:
             return [r] #only return this once.
         else:
             return [] #list, either way
     def senseidstoparse(self,senseids=None,all=False,n=-1): #n/limit=-1#1000
-        s=self.initsenseidtodo()# This returns and resets
+        s=self.initsensetodo()# This returns and resets
         if s:
             return s
         if not senseids:
@@ -6263,7 +6290,7 @@ class Parse(Segments):
             self.after(1,self.showwhenready)
     def __init__(self, parent): #frame, filename=None
         self.byslice=False
-        self.initsenseidtodo()
+        self.initsensetodo()
         Segments.__init__(self,parent)
         self.parent=parent
         self.secondformfield=program['settings'].secondformfield
@@ -6358,6 +6385,8 @@ class WordCollectnParse(WordCollection,Parse,TaskDressing):
                 self.withdraw()
                 self.entry.lc.textvaluebylang(self.analang,v)
                 self.parse(entry=self.entry)
+            if hasattr(self,'sensetodo') and self.sensetodo:
+                self.sensetodo=None
             # self.maybewrite() #only if above is successful
         except AttributeError as e:
             log.info("Not storing word (WordCollectnParse): {}".format(e))
@@ -6807,18 +6836,20 @@ class ToneFrameDrafter(ui.Window):
         program['settings'].setcheck(checktoadd) #assume we will use this now
         self.task.deiconify()
         self.destroy()
-    def gimmesenseid(self,senseid=None,next=False,**kwargs):
-        idsbyps=program['slices'].senseids(ps=self.ps)
-        if next and senseid:
-            log.info("trying {} sense {}/{}".format(self.ps,
-                                                idsbyps.index(senseid)+1,
-                                                len(idsbyps)))
+    def gimmesense(self,sense=None,next=False,**kwargs):
+        sensesbyps=program['db'].sensesbyps[self.ps]
+        if next and sense:
+            # log.info("trying {} sense {}/{}".format(self.ps,
+            #                                     sensesbyps.index(sense)+1,
+            #                                     len(sensesbyps)))
             try:
-                return idsbyps[idsbyps.index(senseid)+1]
+                return sensesbyps[sensesbyps.index(sense)+1]
             except IndexError:
-                return idsbyps[0]
+                return sensesbyps[0]
         else:
-            return idsbyps[randint(0, len(idsbyps)-1)]
+            sense=sensesbyps[randint(0, len(sensesbyps)-1)]
+            # log.info("returning random {} sense {}".format(self.ps,sense.id))
+            return sense
     def gimmesenseformdictwftypengloss(self,framedef,**kwargs):
         tried=0
         langs=[i for i in framedef if i not in ['name','field']]
@@ -6829,10 +6860,9 @@ class ToneFrameDrafter(ui.Window):
         while not tried or None in f.values():
             f={lang:None for lang in langs} #start each with a clean slate
             if tried > program['db'].nsenseids*1.5: #give up looking randomly
-                senseid=self.gimmesenseid(senseid,next=True)
+                sense=self.gimmesense(sense,next=True)
             else:
-                senseid=self.gimmesenseid()
-            sense=program['db'].sensedict[senseid]
+                sense=self.gimmesense()
             f.update(sense.formatteddictbylang(self.analang, #This is xyz_ftype
                                         glosslangs,
                                         # program['settings'].glosslangs,
