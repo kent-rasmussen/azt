@@ -434,7 +434,8 @@ class Engine(object):
             return 1
         lx, lc, pl, imp = self.texts()
         afxs=None
-        if lx and lc and (pl or imp) and self.ps:
+        # log.info("testing for self.ps (threeforms)")
+        if lx and lc and (pl or imp) and getattr(self,'ps',None):
             if lx in lc:
                 if self.ps == self.nominalps and pl and lx in pl:
                     afxs=(tuple(lc.split(lx)),tuple(pl.split(lx)))
