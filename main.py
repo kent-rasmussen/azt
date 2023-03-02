@@ -5438,7 +5438,7 @@ class WordCollection(Segments):
             self.runwindow.glosslangs.append(lang)
             skip = _('Skip {} gloss').format(program['settings'].languagenames[lang])
         return {'lang':lang, 'prompt':text, 'ok':ok, 'skip':skip}
-    def submitform(event=None):
+    def submitform(self,event=None):
         self.runwindow.form[lang]=self.runwindow.form[lang].get()
         self.runwindow.frame2.destroy()
     def promptwindow(self,lang):
@@ -5466,7 +5466,7 @@ class WordCollection(Segments):
         formfield.bind('<Return>',self.submitform)
         formfield.rendered.grid(row=2,column=0,sticky='new')
         sub_btn=ui.Button(self.runwindow.frame2,text = strings['ok'],
-                            command = submitform,
+                            command = self.submitform,
                             anchor ='c',row=2,column=0,sticky='')
         if strings['skip']:
             sub_btnNo=ui.Button(self.runwindow.frame2,
