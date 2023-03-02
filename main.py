@@ -1201,12 +1201,12 @@ class StatusFrame(ui.Frame):
         if self.cvt in program['status']:
             if self.ps in program['status'][self.cvt]: #because we cull, this == data is there.
                 if self.cvt == 'T':
-                    if self.ps in program['settings'].toneframes:
+                    if self.ps in program['toneframes']:
                         self.makeprogresstable()
                         return
                     else:
                         log.info("Ps {} not in toneframes ({})".format(self.ps,
-                                program['settings'].toneframes))
+                                program['toneframes']))
                 else:
                     log.info("Found CV verifications")
                     self.makeprogresstable()
@@ -1293,7 +1293,7 @@ class StatusFrame(ui.Frame):
         curprofile=program['slices'].profile()
         curcheck=program['params'].check()
         try:
-            frames=list(program['settings'].toneframes[ps].keys())
+            frames=list(program['toneframes'][ps].keys())
         except KeyError:
             frames=list()
         allchecks=[]
@@ -1697,6 +1697,8 @@ class Settings(object):
             fns['glosslang']=self.glosslangs.lang1
             fns['glosslang2']=self.glosslangs.lang2
             fns['glosslangs']=self.glosslangs.langs
+            # fns['toneframes']=program['toneframes']
+            # fns['status']=program['status']
             fns['aztrepourls']=program['repo'].remoteurls
             fns['giturls']=self.repo['git'].remoteurls
             fns['hgurls']=self.repo['hg'].remoteurls
@@ -1768,7 +1770,10 @@ class Settings(object):
         #There are too many calls to this; why?
         filename=self.settingsfile(setting)
         config=ConfigParser()
-        d=self.makesettingsdict(setting=setting)
+        if setting in ['status', 'toneframes']:
+            d=program[setting]
+        else:
+            d=self.makesettingsdict(setting=setting)
         # config.read(filename,encoding='utf-8')
         # if d == config:
         #     log.info("no settings change; not writing.")
@@ -1797,14 +1802,17 @@ class Settings(object):
         filename=self.settingsfile(setting)
         config=ConfigParser()
         config.read(filename,encoding='utf-8')
-        if len(config.sections()) == 0:
+        # log.info("{} sections: {}".format(setting,config.sections()))
+        if not config.sections() and setting not in ['status','toneframes']:
             if setting == "adhocgroups":
                 self.adhocgroups={}
             return
         # log.debug("Trying for {} settings in {}".format(setting, filename))
         d={}
-        for section in self.settings[setting]['attributes']:
-            if section in config:
+        for section in config: #self.settings[setting]['attributes']:
+            if 'default' in config and section in config['default']:
+                d[section]=ofromstr(config['default'][section])
+            else:
                 # log.debug("Trying for {} settings in {}".format(section, setting))
                 if len(config[section].values())>0:
                     # log.debug("Found Dictionary value for {}".format(section))
@@ -1817,9 +1825,16 @@ class Settings(object):
                     log.debug("Found String/list/other value for {}: {}".format(
                                                     section,config[section]))
                     d[section]=ofromstr(config[section])
-            elif 'default' in config and section in config['default']:
-                d[section]=ofromstr(config['default'][section])
-        self.readsettingsdict(d)
+        if setting == 'status':
+            # log.info("setting {} is {}".format(setting,d))
+            self.makestatus({k:d[k] for k in d if k != 'DEFAULT'})
+            log.info("makestatus: {}".format(program['status']))
+        elif setting == 'toneframes':
+            # log.info("setting {} is {}".format(setting,d))
+            self.maketoneframes({k:d[k] for k in d if k != 'DEFAULT'})
+            log.info("maketoneframes: {}".format(program['toneframes']))
+        else:
+            self.readsettingsdict(d)
         if hasattr(self,'interfacelang'):
             interfacelang(self.interfacelang)
     def initdefaults(self):
