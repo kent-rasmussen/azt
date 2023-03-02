@@ -13374,6 +13374,7 @@ class ConfigParser(configparser.ConfigParser):
 class ErrorNotice(ui.Window):
     """this is for things that I want the user to know, without having
     to find it in the logs."""
+    """kwarg button is a tuple: (text,command)"""
     def destroy(self, event=None):
         ui.Window.destroy(self)
     def withdraw(self, event=None):
