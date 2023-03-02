@@ -5655,7 +5655,7 @@ class WordCollection(Segments):
                     if k.textvalue()
                 ]
         self.selectiondir=''.join([
-                                    'images/openclipart.com/',
+                                    'images/openclipart.org/',
                                     '_'.join([self.sense.cawln]+self.glosses)
                                 ])
     def markimage(self,url,event=None):
