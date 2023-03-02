@@ -5765,8 +5765,8 @@ class WordCollection(Segments):
             self.wordframe.destroy()
         except Exception as e:
             log.info("Probably nothing (wordframe not made yet): {}".format(e))
-        if hasattr(self,'senseidtodo') and self.senseidtodo:
-            log.info("Senseid to do: {}".format(self.senseidtodo))
+        if hasattr(self,'sensetodo') and self.sensetodo:
+            log.info("Sense to do: {}".format(self.sensetodo))
         self.wordframe=ui.Frame(self.frame,row=1,column=1,sticky='ew')
         if not self.entries:
             text=_("It looks like you're done filling out the empty "
@@ -5794,8 +5794,8 @@ class WordCollection(Segments):
         # log.info("progress")
         ui.Label(self.wordframe, text=progress, row=1, column=3, font='small')
         # log.info("label2")
-        if hasattr(self,'senseidtodo') and self.senseidtodo:
-            self.entry=program['db'].sensedict[self.senseidtodo].entry
+        if hasattr(self,'sensetodo') and self.sensetodo:
+            self.entry=self.sensetodo.entry
             # log.info("entry1")
             # return [program['db'].sensedict[i].entry for i in self.initsenseidtodo()]
         else:
@@ -6841,6 +6841,7 @@ class ToneFrameDrafter(ui.Window):
         # Having made and unset these, we now reset and write them to file.
         program['toneframes'].addframe(self.ps,checktoadd,checkdefntoadd)
         program['status'].renewchecks() #renew (not update), because of new frame
+        # log.info("object: {}".format(program['toneframes']))
         program['settings'].storesettingsfile(setting='toneframes')
         program['settings'].setcheck(checktoadd) #assume we will use this now
         self.task.deiconify()
