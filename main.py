@@ -5427,9 +5427,8 @@ class WordCollection(Segments):
         self.instructions=ui.Label(self.wordsframe,
                                     text=self.getinstructions(),
                                     row=0, column=0)
+        self.dirfn=self.nextword
         r=self.getword()
-        if r == 'noglosses':
-            self.nextword(nostore=True)
     def promptstrings(self,lang):
         if lang == self.analang:
             text=_("What is the form of the new "
@@ -5598,31 +5597,23 @@ class WordCollection(Segments):
         log.info(text)
         ErrorNotice(text,title=title)
     def nextword(self,event=None,nostore=False):
-        def cont():
-            program['taskchooser'].whatsdone()
-            program['taskchooser'].makedefaulttask()
-            self.e.on_quit()
+        self.dirfn=self.nextword
         # log.info("running nextword (nostore = {})".format(nostore))
         if not nostore:
             # log.info("storing nextword (nostore = {})".format(nostore))
             self.storethisword()
         if self.index < len(self.entries)-1:
             self.index+=1
-            r=self.getword()
-            if r == 'noglosses':
-                self.nextword(nostore=nostore)
-        else:
-            oktext=_("Continue")
-    def backword(self,nostore=False):
+        self.getword()
+    def backword(self,nostore=True):
+        self.dirfn=self.backword
         if not nostore:
             self.storethisword()
         if self.index == 0:
             self.index=len(self.entries)-1
         else:
             self.index-=1
-        r=self.getword()
-        if r == 'noglosses':
-            self.backword(nostore=nostore)
+        self.getword()
     def storethisword(self):
         log.info("Trying to store {} ({})".format(self.var.get(),self.ftype))
         try:
@@ -5811,6 +5802,7 @@ class WordCollection(Segments):
         if not self.glossesthere:
             log.info("entry {} doesn't have glosses; not showing."
                     "".format(self.entry.get('id')))
+            self.dirfn(nostore=True)
             return 'noglosses'
         l=ui.Label(self.wordframe, text=self.glossesthere, font='read',
                 row=1, column=0, columnspan=3, sticky='ew')
