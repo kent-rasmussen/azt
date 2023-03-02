@@ -5594,37 +5594,6 @@ class WordCollection(Segments):
         # except KeyError:
         except AttributeError as e:
             log.info("Not storing word (WordCollection): {}".format(e))
-    def getimage(self,url=None,pixels=150,resolution=10):
-        if url and file.exists(url):
-            i=url
-        else:
-            i=self.sense.illustrationvalue()
-            # self.imagesdir
-            for d in [program['settings'].imagesdir,program['settings'].directory]:
-                if i and d:
-                    di=file.getdiredurl(d,i)
-                    if file.exists(di):
-                        i=di
-                        break
-        # log.info("trying to make image @{}".format(self.sense.illustration.valuename))
-        # lift.prettyprint(self.sense.illustration)
-        try:
-            # log.info("trying to make image {}".format(i))
-            img=ui.Image(i)
-            # will probably want the size adjustable
-            # maybe resolution, too (take from theme?)
-            log.info("Image OK: {}".format(img))
-        except tkinter.TclError as e:
-            if ('value for "-file" missing' in e.args[0] or
-                    "couldn't recognize data in image file" in e.args[0]):
-                log.info("ui.Image error: {}".format(e))
-            img=self.theme.photo['NoImage']
-            log.info("Image null: {}".format(img))
-        if not (url and file.exists(url)):
-            self.img=img
-        log.info("Image: {}".format(img))
-        img.scale(program['scale'],pixels=pixels,resolution=resolution)
-        return img.scaled
     def getglosses(self):
         self.glosses=[j #rx.glossdeftoform(i)
                     # for g in set(self.glosslangs)&set(['en','fr'])
@@ -12024,6 +11993,84 @@ class SortGroupButtonFrame(ui.Frame):
             self.makebuttons()
         # """Should I do this outside the class?"""
         # self.grid(column=column, row=row, sticky=sticky)
+class ImageFrame(ui.Frame):
+    def getimage(self):
+        specifiedurl=False
+        if self.url and file.exists(self.url):
+            i=self.url
+            specifiedurl=True
+        elif isinstance(self.sense,lift.Sense):
+            i=self.sense.illustrationvalue()
+            for d in [program['settings'].imagesdir,program['settings'].directory]:
+                if i and d:
+                    di=file.getdiredurl(d,i)
+                    if file.exists(di):
+                        i=di
+                        break
+        # log.info("trying to make image @{}".format(self.sense.illustration.valuename))
+        # lift.prettyprint(self.sense.illustration)
+        try:
+            # log.info("trying to make image {}".format(i))
+            img=ui.Image(i)
+            # will probably want the size adjustable
+            # maybe resolution, too (take from theme?)
+            log.info("Image OK: {}".format(img))
+        except tkinter.TclError as e:
+            if ('value for "-file" missing' in e.args[0] or
+                    "couldn't recognize data in image file" in e.args[0]):
+                log.info("ui.Image error: {}".format(e))
+            img=self.theme.photo['NoImage']
+            log.info("Image null: {}".format(img))
+        if not specifiedurl: #(self.url and file.exists(self.url)):
+            self.img=img
+        log.info("Image: {}".format(img))
+        img.scale(program['scale'],pixels=self.pixels,resolution=self.resolution)
+        self.image=img.scaled
+    def pluralframe(self):
+        ui.Label(self,text='',image=self.image,
+                compound="bottom",
+                sticky='e',
+                ipadx=10,
+                row=0,column=0)
+        ui.Label(self,text='',image=self.image,
+                compound="bottom",
+                sticky='w',
+                ipadx=10,
+                row=0,column=1)
+    def imperativeframe(self):
+        ui.Label(self,text='!',image=self.image,
+            compound="left",sticky='ew',font='title',
+            row=0,column=0)
+    def citationframe(self):
+        ui.Label(self,text='',image=self.image,
+            compound="bottom",sticky='e',#font='title',
+            anchor='c',
+            row=0,column=0,
+            borderwidth=5,relief='raised')
+    def reloadimage(self):
+        self.getimage()
+        for child in self.winfo_children():
+            if isinstance(child,ui.Label):
+                child['image']=self.image
+    def __init__(self, parent, sense=None, *args, **kwargs):
+        """Parent: where it goes; Sense: what it shows"""
+        if not isinstance(sense,lift.Sense) and 'url' not in kwargs:
+            log.error("ImageFrame called without sense or url!")
+            return
+        self.sense=sense
+        #These shouldn't go to frame:
+        self.url=kwargs.pop('url',None)
+        self.type=kwargs.pop('type',None)
+        self.pixels=kwargs.pop('pixels',150)
+        self.resolution=kwargs.pop('resolution',10)
+        super(ImageFrame, self).__init__(parent, *args, **kwargs)
+        self.getimage()
+        if self.type == 'pl':
+            self.pluralframe()
+        elif self.type == 'imp':
+            self.imperativeframe()
+        else:
+            self.citationframe()
 class Splash(ui.Window):
     def maketexts(self):
         self.labels['v']['text']=_("Version: {}".format(program['version']))
