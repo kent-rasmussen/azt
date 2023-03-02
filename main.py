@@ -5446,7 +5446,7 @@ class WordCollection(Segments):
             self.runwindow.glosslangs.append(lang)
             skip = _('Skip {} gloss').format(program['settings'].languagenames[lang])
         return {'lang':lang, 'prompt':text, 'ok':ok, 'skip':skip}
-    def submitform(self,event=None):
+    def submitform(self,lang):
         self.runwindow.form[lang]=self.runwindow.form[lang].get()
         self.runwindow.frame2.destroy()
     def promptwindow(self,lang):
