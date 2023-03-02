@@ -5659,6 +5659,7 @@ class WordCollection(Segments):
                                     '_'.join([self.sense.cawln]+self.glosses)
                                 ])
     def markimage(self,url,event=None):
+        """return to file, LIFT"""
         log.info("Selected image {}".format(url))
         self.selectionwindow.on_quit()
         fn=self.imagename() #new file name
@@ -5668,8 +5669,8 @@ class WordCollection(Segments):
                 f.write(u.read())
         self.sense.illustrationvalue(fn)
         self.maybewrite()
-        self.wordframe.pic['image']=self.getimage()
-    def selectlocalimage(self):
+        self.wordframe.pic.reloadimage()
+    def selectlocalimage(self,event=None):
         log.info("Select a local image")
         f=file.askopenfilename()
         if f and file.exists(f):
@@ -5691,14 +5692,14 @@ class WordCollection(Segments):
                     cmd=self.selectlocalimage,
                     row=n//cols,column=n%cols,sticky='nsew')
             else:
-                img=self.getimage(f,pixels=0)
+                i=ImageFrame(sf.content,url=f,pixels=0,
+                            row=n//cols, column=n%cols,
+                            sticky='nsew')
+                if i.image:
+                    i.bindchildren('<ButtonRelease-1>',
+                                    lambda event,x=f:self.markimage(x))
                 # img=ui.Image(f)
                 # log.info("image type1: {}".format(type(img)))
-                if img is not None:
-                    # log.info("image type2: {}".format(type(img)))
-                    ui.Button(sf.content, text='', image=img,
-                                cmd=lambda i=f:self.markimage(i),
-                                row=n//cols, column=n%cols, sticky='nsew')
     def imagename(self):
         affix='.png' #not sure why this isn't there already...
         if self.sense.cawln:
@@ -5714,10 +5715,8 @@ class WordCollection(Segments):
         if not files:
             self.getopenclipart()
         files=self.getimagefiles()
-        if not files: #still
-            self.selectlocalimage()
-            return #selection won't work at this point
-        self.showimagestoselect(files)# return to file, LIFT
+        if files: #still
+            self.showimagestoselect(files)
     def getopenclipart(self,event=None):
         self.wait(msg="Dowloading images from OpenClipart.org\n{}"
                         "".format(" ".join(self.glosses)))
@@ -5756,8 +5755,9 @@ class WordCollection(Segments):
             with open(i['fqdn'],'wb') as d:
                 d.write(pic)
             self.waitprogress(self.images.index(i)*100/len(self.images))
-        if me:
-            ErrorNotice(text="Found {} images!".format(len(self.images)))
+        if me or len(self.images) < 5:
+            ErrorNotice(text="Found {} images!".format(len(self.images)),
+                        button=(_("Select local image"),self.selectlocalimage))
         self.waitdone()
     def getword(self):
         program['taskchooser'].withdraw()# not sure why necessary
@@ -5816,14 +5816,12 @@ class WordCollection(Segments):
             return 'noglosses'
         l=ui.Label(self.wordframe, text=self.glossesthere, font='read',
                 row=1, column=0, columnspan=3, sticky='ew')
-        self.wordframe.pic=ui.Label(self.wordframe, text='',
-                row=2, column=0, columnspan=3, sticky='ew')
-        # log.info("labels")
-        # illustration=self.entry.illustrationvalue()
-        self.wordframe.pic['image']=self.getimage()
-        # log.info("image")
-        self.wordframe.pic['compound']="bottom" #must be bottom, center, left, none, right, or top
-        self.wordframe.pic.bind('<ButtonRelease-1>',self.selectimage)
+        self.wordframe.pic=ImageFrame(self.wordframe, self.sense,
+                    row=2, column=0,
+                    columnspan=3, sticky='ew',
+                    borderwidth=5,relief='raised')
+        """I don't want this on every ImageFrame, just here"""
+        self.wordframe.pic.bindchildren('<ButtonRelease-1>', self.selectimage)
         l.wrap()
         # log.info("lxtextnode: {}".format(self.lxtextnode))
         # self.entry.lc.textvaluebylang(self.analang)
@@ -6014,17 +6012,7 @@ class Parse(Segments):
         t.wrap()
         if ln:
             noun=ui.Frame(w.frame, row=1, column=0, sticky='n')
-            image=self.getimage()
-            ui.Label(noun,text='',image=image,
-                    compound="bottom",
-                    sticky='e',
-                    ipadx=10,
-                    row=0,column=0)
-            ui.Label(noun,text='',image=image,
-                    compound="bottom",
-                    sticky='w',
-                    ipadx=10,
-                    row=0,column=1)
+            ImageFrame(noun,self.sense,type='pl',row=0,column=0)
             ui.Label(noun,
                     text="Select {} form".format(
                                         self.secondformfield[self.nominalps]),
@@ -6037,12 +6025,12 @@ class Parse(Segments):
                                         )
         if lv:
             verb=ui.Frame(w.frame, row=1, column=1, sticky='n')
-            image1=program['theme'].photo['Order!']
-            image1.scale(program['scale'],pixels=300,resolution=10) #300 wide
-            image2=self.getimage()
-            # log.info("image1.scaled: {} ({})".format(image1.scaled,type(image1.scaled)))
-            # log.info("image2: {} ({})".format(image2,type(image2)))
             try:
+                image1=program['theme'].photo['Order!']
+                image1.scale(program['scale'],pixels=300,resolution=10) #300 wide
+                image2=self.getimage()
+                # log.info("image1.scaled: {} ({})".format(image1.scaled,type(image1.scaled)))
+                # log.info("image2: {} ({})".format(image2,type(image2)))
                 image1.scaled.paste(image2)
                 bgl=ui.Label(verb,text='',image=image1.scaled,
                     compound="center",
@@ -6051,9 +6039,7 @@ class Parse(Segments):
             except Exception as e:
                 log.info("Exception: {}".format(e))
                 # bgl.place(relx=0.5, rely=0.5, anchor='center')
-                ui.Label(verb,text='!',image=image2,
-                    compound="left",sticky='ew',font='title',
-                    row=0,column=0)
+                ImageFrame(verb,self.sense,type='imp',row=0,column=0)
             ui.Label(verb,
                     text="Select {} form".format(
                                         self.secondformfield[self.verbalps]),
