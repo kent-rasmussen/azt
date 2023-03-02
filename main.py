@@ -12287,17 +12287,19 @@ class SliceDict(dict):
         return self._scount
     def makepsok(self):
         pss=self.pss()
-        if not hasattr(self,'_ps') or self._ps not in pss:
-            if pss:
-                self.ps(pss[0])
-            else:
-                log.info("I don't have a ps to use; I hope that's OK!")
+        if not pss:
+            self._ps=None #only before data collection
+            log.info("I don't have a ps to use; I hope that's OK!")
+        elif not hasattr(self,'_ps') or self._ps not in pss:
+            self.ps(pss[0])
     def makeprofileok(self):
         if not hasattr(self,'_ps'):
             self.makepsok()
-        if not hasattr(self,'_ps'): #still
-            return
         profiles=self.profiles()
+        if not profiles:
+            self._profile=None #only before data collection
+            log.info("I don't have a profile to use; I hope that's OK!")
+            return
         try:
             profiles+=self.adhoc()[self._ps].keys()
         except KeyError:
@@ -12306,7 +12308,7 @@ class SliceDict(dict):
                 or self._profile not in profiles):
             self.profile(profiles[0])
     def pss(self):
-        return self._pss
+        return getattr(self,'_pss',[])
     def ps(self,ps=None):
         pss=self.pss()
         if ps and ps in pss:
@@ -12329,13 +12331,15 @@ class SliceDict(dict):
         if ps:
             # log.info("returning profiles: {}".format(self._profiles[ps]))
             return self._profiles[ps]
+        else:
+            return []
     def profile(self,profile=None):
-        if profile is not None and profile in self.profiles(self._ps):
+        if profile and profile in self.profiles(self._ps):
             self._profile=profile
             self.renewsenseids()
         else:
             # self.makeprofileok() #is this actually needed here? check elsewhere
-            return self._profile
+            return getattr(self,'_profile',None)
     def nextps(self):
         pss=self.pss()
         try:
