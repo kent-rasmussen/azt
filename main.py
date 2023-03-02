@@ -3358,7 +3358,9 @@ class TaskDressing(HasMenus,ui.Window):
             if hasattr(self.parent,attr):
                 setattr(self,attr,getattr(self.parent,attr))
         # Make these directly available:
-        for attr in ['params','slices','status','toneframes','glosslangs',
+        for attr in [
+                    # 'params','slices','status','toneframes',
+                    'glosslangs',
                     'buttoncolumns',
                     'soundsettings'
                     ]:
