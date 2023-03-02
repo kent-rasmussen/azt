@@ -12549,22 +12549,26 @@ class ToneFrames(dict):
                 self[ps]={}
             self[ps][name]=defn
     #def write
+    def source(self,dict=None):
+        if dict:
+            updated=False
+            for ps in dict:
+                self[ps]=dict[ps]
+                for name in self[ps]:
+                    try:
+                        if 'field' not in self[ps][name]:
+                            updated=True
+                            self[ps][name]['field']='lc'
+                    except TypeError as e:
+                        log.info("problem with frame at ps:{}, name:{} ({})"
+                                "".format(ps,name,e))
+            if updated:
+                log.info("updated toneframes for field; you should save it!")
+        return self
     def __init__(self, dict):
         program['toneframes']=self
         super(ToneFrames, self).__init__()
-        updated=False
-        for ps in dict:
-            self[ps]=dict[ps]
-            for name in self[ps]:
-                try:
-                    if 'field' not in self[ps][name]:
-                        updated=True
-                        self[ps][name]['field']='lc'
-                except TypeError as e:
-                    log.info("problem with frame at ps:{}, name:{} ({})"
-                            "".format(ps,name,e))
-        if updated:
-            log.info("updated toneframes for field; you should save it!")
+        self.source(dict)
 class StatusDict(dict):
     """This stores and returns current ps and profile only; there is no check
     here that the consequences of the change are done (done in check)."""
@@ -13147,14 +13151,18 @@ class StatusDict(dict):
                     "".format(a,j,s,ok))
         log.info(annalysisoknotice)
         return ok, joinsinceanalysis, annalysisoknotice
+    def source(self,dict=None):
+        if dict:
+            for k in [i for i in dict if i is not None]:
+                self[k]=dict[k]
+        return self
     def __init__(self,filename,dict):
         """To populate subchecks, use self.groups()"""
         program['status']=self
         self._filename=filename
         self._task=program.get('defaulttask',WordCollectnParse)
         super(StatusDict, self).__init__()
-        for k in [i for i in dict if i is not None]:
-            self[k]=dict[k]
+        self.source(dict)
         self._checksdict={}
         self._cvchecknames={}
 class CheckParameters(dict):
