@@ -606,6 +606,9 @@ class Engine(object):
         else:
             log.error("Need one of sense, senseid, or entry!")
             return
+        """Do I want to add this here? if so, must overright rigorously,
+        to avoid old values"""
+        self.ps=self.sense.pasvalue()
         # log.info("sense: {}".format(self.sense))
         # log.info("entry: {}".format(self.entry))
         # log.info("psnode: {}".format(psnode))
