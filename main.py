@@ -1477,7 +1477,7 @@ class StatusFrame(ui.Frame):
                 self.buttoncolumnsline()
         if isinstance(self.task,Parse):
             self.parserlevels()
-            self.senseidtodo()
+            self.sensetodo()
         self.maybeboard()
         self.finalbuttons()
 class Settings(object):
