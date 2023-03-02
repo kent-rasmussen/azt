@@ -12422,7 +12422,7 @@ class SliceDict(dict):
         (because changing ps or profile calls renewsenseids), or else the
         specified slice"""
         # list(self._senseidsbyps[self._ps][self._profile])
-        if not ps and not profile:
+        if 'ps' not in kwargs and 'profile' not in kwargs:
             return self._senseids #this is always the current slice
         ps=kwargs.get('ps',self._ps)
         profile=kwargs.get('profile',self._profile)
