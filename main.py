@@ -5414,10 +5414,19 @@ class WordCollection(Segments):
         todo=[x for x in all if x not in done] #set-set may be better
         log.info("To do: ({}) {}".format(len(todo),todo))
         return todo
+    def getinstructions(self):
+        return _("Type the word in your language that goes with these meanings."
+                "\nGive a single word (not a phrase) wherever possible."
+                "\nJust type consonants and vowels; don't worry about tone "
+                "for now.")
     def getwords(self):
         self.entries=self.getlisttodo()
         self.nentries=len(self.entries)
         self.index=0
+        self.wordsframe=ui.Frame(self.frame,row=1,column=1,sticky='ew')
+        self.instructions=ui.Label(self.wordsframe,
+                                    text=self.getinstructions(),
+                                    row=0, column=0)
         r=self.getword()
         if r == 'noglosses':
             self.nextword(nostore=True)
@@ -5604,12 +5613,6 @@ class WordCollection(Segments):
                 self.nextword(nostore=nostore)
         else:
             oktext=_("Continue")
-            t=_("Congratulations! \nIt looks like you got to the end of what "
-            "was left to collect. "
-            "\nYou can navigate through the words you just collected, "
-            "\nor press ‘{}’ to go on to the next task.").format(oktext)
-            self.e=ErrorNotice(t,title=_("Done!"))
-            b=ui.Button(self.e.frame,text=oktext, cmd=cont, row=1, column=1)
     def backword(self,nostore=False):
         if not nostore:
             self.storethisword()
@@ -5769,13 +5772,13 @@ class WordCollection(Segments):
             log.info("Sense to do: {}".format(self.sensetodo))
         self.wordframe=ui.Frame(self.frame,row=1,column=1,sticky='ew')
         if not self.entries:
+            self.instructions['text']=self.getinstructions() #in case changed
             text=_("It looks like you're done filling out the empty "
             "entries in your database! Congratulations! You can still add words "
             "through the button on the left ({})."
             "".format(self.dobuttonkwargs()['text']))
-            l=ui.Label(self.wordframe, text=text, row=0, column=0,
-                        wraplength=int(program['root'].wraplength*.6))
-            l.wrap()
+            self.instructions['text']=text
+            self.instructions.wrap()
             # nope=_("No, I haven't done the CAWL yet; "
             #         "\nplease add it to my database, "
             #         "\nso I can fill it out.")
@@ -5784,11 +5787,6 @@ class WordCollection(Segments):
             #             wraplength=int(program['root'].wraplength*.6))
             return
         # log.info("Entry check")
-        text=_("Type the word in your language that goes with these meanings."
-                "\nGive a single word (not a phrase) wherever possible."
-                "\nJust type consonants and vowels; don't worry about tone "
-                "for now.").format(self.nentries)
-        ui.Label(self.wordframe, text=text, row=0, column=0)
         # log.info("label")
         progress="({}/{})".format(self.index+1,self.nentries)
         # log.info("progress")
