@@ -1887,7 +1887,10 @@ class Settings(object):
         else:
             fields=self.defaultstoclear[field]
         for default in fields: #self.defaultstoclear[field]:
-            setattr(self, default, None)
+            if default in ['lowverticalspace']:
+                setattr(self, default, True)
+            else:
+                setattr(self, default, None)
     def settingsinit(self):
         log.info("Initializing settings.")
         # self.defaults is already there, from settingsfilecheck
