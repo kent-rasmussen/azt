@@ -638,6 +638,14 @@ class Gridded(ObectwArgs):
                 kwargs[opt]=kwargs['b'+opt]
                 del kwargs['b'+opt]
         return kwargs
+    def bindchildren(self,bind,command):
+        self.bind(bind,command)
+        for child in self.winfo_children():
+            try:
+                child.bindchildren(bind,command)
+            except Exception as e:
+                log.info("Exception in Gridded binding: {}".format(e))
+                pass
     def __init__(self, *args, **kwargs): #because this is used everywhere.
         """this removes gridding kwargs from the widget calls"""
         self.gridkwargs=['sticky',
