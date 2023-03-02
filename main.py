@@ -978,9 +978,9 @@ class StatusFrame(ui.Frame):
                             parent=line)
         self.opts['columnplus']=0
     def fieldsline(self):
-        log.info("Starting fieldsline w/self {} ({})".format(self,type(self)))
-        log.info("Starting fieldsline w/task {} ({})".format(self.task,
-                                                            type(self.task)))
+        # log.info("Starting fieldsline w/self {} ({})".format(self,type(self)))
+        # log.info("Starting fieldsline w/task {} ({})".format(self.task,
+        #                                                     type(self.task)))
         for ps in [program['settings'].nominalps, program['settings'].verbalps]:
             if ps in program['settings'].secondformfield:
                 field=program['settings'].secondformfield[ps]
