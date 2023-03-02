@@ -1143,18 +1143,18 @@ class StatusFrame(ui.Frame):
         t=(_("Parse automatically at {}").format(ls[self.task.parser.auto]))
         self.proselabel(t,cmd=self.task.getparserautolevel,
                         parent=line)
-    def senseidtodo(self):
+    def sensetodo(self):
         line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
                         columnspan=3,sticky='w')
         self.opts['row']+=1
         t=self.task
-        if t.senseidtodo:
+        if t.sensetodo:
             txt=_("Parsing {}").format(
-            t.db.sensedict[t.senseidtodo].formatted(t.analang,t.glosslangs)
+            t.sensetodo.formatted(t.analang,t.glosslangs)
             )
         else:
             txt=_("Parsing all words")
-        self.proselabel(txt,cmd=t.getsenseidtodo,parent=line)
+        self.proselabel(txt,cmd=t.getsensetodo,parent=line)
     def redofinalbuttons(self):
         if hasattr(self,'bigbutton') and self.bigbutton.winfo_exists():
             self.bigbutton.destroy()
