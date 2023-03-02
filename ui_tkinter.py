@@ -1356,7 +1356,7 @@ class ButtonFrame(Frame):
                                 ) for i in range(0, len(optionlist))]
         if not 'name' in optionlist[0]: #duplicate name from code.
             for i in range(0, len(optionlist)):
-                optionlist[i]['name']=optionlist[i]['code']
+                optionlist[i]['name']=str(optionlist[i]['code'])
         if gimmenull == True:
             optionlist.append(({code:"Null",name:"None of These"}))
         # log.info("These are the options going to the set of buttons: {}".format(
