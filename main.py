@@ -12866,7 +12866,7 @@ class StatusDict(dict):
         should be, too."""
         if not kwargs['cvt']:
             log.error("Sorry, no cvt defined! ({})".format(kwargs['cvt']))
-            raise
+            return
         if kwargs['cvt'] not in self:
             self[kwargs['cvt']]={}
             changed=True
