@@ -6203,9 +6203,12 @@ class Parse(Segments):
             except: #upgrade to this
                 self.parsecatalog.addparsed(kwargs['entry'].sense.id)
             self.maybewrite()
-        if self.parent.iswaiting():
-            self.parent.waitdone()
-        self.parent.deiconify()
+        # if self.parent.iswaiting():
+        #     self.parent.waitdone()
+        # self.parent.deiconify()
+        if self.iswaiting():
+            self.waitdone()
+        self.deiconify()
     def initsensetodo(self):
         try:
             r=self.sensetodo
