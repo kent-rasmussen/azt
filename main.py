@@ -6006,7 +6006,7 @@ class Parse(Segments):
         t.wrap()
         if ln:
             noun=ui.Frame(w.frame, row=1, column=0, sticky='n')
-            ImageFrame(noun,self.sense,type='pl',row=0,column=0)
+            ImageFrame(noun,self.sense,type='pl',row=0,column=0, sticky='')
             ui.Label(noun,
                     text="Select {} form".format(
                                         self.secondformfield[self.nominalps]),
@@ -6019,21 +6019,7 @@ class Parse(Segments):
                                         )
         if lv:
             verb=ui.Frame(w.frame, row=1, column=1, sticky='n')
-            try:
-                image1=program['theme'].photo['Order!']
-                image1.scale(program['scale'],pixels=300,resolution=10) #300 wide
-                image2=self.getimage()
-                # log.info("image1.scaled: {} ({})".format(image1.scaled,type(image1.scaled)))
-                # log.info("image2: {} ({})".format(image2,type(image2)))
-                image1.scaled.paste(image2)
-                bgl=ui.Label(verb,text='',image=image1.scaled,
-                    compound="center",
-                    sticky='ew',
-                    row=0,column=0)
-            except Exception as e:
-                log.info("Exception: {}".format(e))
-                # bgl.place(relx=0.5, rely=0.5, anchor='center')
-                ImageFrame(verb,self.sense,type='imp',row=0,column=0)
+            ImageFrame(verb,self.sense,type='imp',row=0,column=0, sticky='')
             ui.Label(verb,
                     text="Select {} form".format(
                                         self.secondformfield[self.verbalps]),
