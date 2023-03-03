@@ -5596,12 +5596,14 @@ class WordCollection(Segments):
         self.waitdone()
         log.info(text)
         ErrorNotice(text,title=title)
-    def nextword(self,event=None,nostore=False):
+    def nextword(self,nostore=False):
         self.dirfn=self.nextword
         # log.info("running nextword (nostore = {})".format(nostore))
         if not nostore:
             # log.info("storing nextword (nostore = {})".format(nostore))
             self.storethisword()
+        else:
+            log.info("Not storing {}, by request".format(self.sense.id))
         if self.index < len(self.entries)-1:
             self.index+=1
         self.getword()
@@ -5609,6 +5611,8 @@ class WordCollection(Segments):
         self.dirfn=self.backword
         if not nostore:
             self.storethisword()
+        else:
+            log.info("Not storing {}, by request".format(self.sense.id))
         if self.index == 0:
             self.index=len(self.entries)-1
         else:
