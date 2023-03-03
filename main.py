@@ -6388,9 +6388,10 @@ class WordCollectnParse(WordCollection,Parse,TaskDressing):
                 self.withdraw()
                 self.entry.lc.textvaluebylang(self.analang,v)
                 self.parse(entry=self.entry)
-            if hasattr(self,'sensetodo') and self.sensetodo:
-                self.sensetodo=None
-            # self.maybewrite() #only if above is successful
+            # if hasattr(self,'sensetodo') and self.sensetodo:
+            self.sensetodo=None
+            self.maybewrite() #only if above is successful
+            log.info("Storing word: {}".format(self.sense.id))
         except AttributeError as e:
             log.info("Not storing word (WordCollectnParse): {}".format(e))
         self.deiconify()
