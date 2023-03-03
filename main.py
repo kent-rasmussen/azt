@@ -12057,7 +12057,7 @@ class ImageFrame(ui.Frame):
             # log.info("Image null: {}".format(img))
         if not specifiedurl:
             self.img=img
-        log.info("Image: {}".format(img))
+        # log.info("Image: {}".format(img))
         img.scale(program['scale'],pixels=self.pixels,resolution=self.resolution)
         self.image=img.scaled
     def pluralframe(self):
