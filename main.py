@@ -5757,22 +5757,42 @@ class WordCollection(Segments):
             ErrorNotice(text="Found {} images!".format(len(self.images)),
                         button=(_("Select local image"),self.selectlocalimage))
         self.waitdone()
+    def dowordframe(self):
+        self.wordframe=ui.Frame(self.wordsframe,row=1,column=0,sticky='ew')
+        self.prog=ui.Label(self.wordframe, text='', row=1, column=3,
+                            font='small')
+        self.glossesline=ui.Label(self.wordframe, text='',
+                                    font='read',
+                                    row=1, column=0, columnspan=3, sticky='ew')
+        back=ui.Button(self.wordframe,text=_("Back"),cmd=self.backword,
+                        row=4, column=0, sticky='w',anchor='w')
+        next=ui.Button(self.wordframe,text=_("Next"),cmd=self.nextword,
+                        row=4, column=2, sticky='e',anchor='e')
+        self.var=ui.StringVar()
+        self.lxenter=ui.EntryField(self.wordframe,textvariable=self.var,
+                                row=3,column=0,columnspan=3,
+                                sticky='ew')
+        self.lxenter.bind('<Return>',self.nextword)
+        next.bind_all('<Up>',lambda event: self.backword(nostore=True))
+        next.bind_all('<Prior>',lambda event: self.backword(nostore=True))
+        next.bind_all('<Down>',lambda event: self.nextword(nostore=True))
+        next.bind_all('<Next>',lambda event: self.nextword(nostore=True))
     def getword(self):
         program['taskchooser'].withdraw()# not sure why necessary
-        try:
-            self.wordframe.destroy()
-        except Exception as e:
-            log.info("Probably nothing (wordframe not made yet): {}".format(e))
-        if hasattr(self,'sensetodo') and self.sensetodo:
             log.info("Sense to do: {}".format(self.sensetodo))
-        self.wordframe=ui.Frame(self.frame,row=1,column=1,sticky='ew')
-        if not self.entries:
             self.instructions['text']=self.getinstructions() #in case changed
+            if not isinstance(getattr(self,'wordframe',None),ui.Frame):
+                self.dowordframe()
+            else:
+                log.info("sensetodo marked, but wordframe there already.")
+        elif not self.entries:
             text=_("It looks like you're done filling out the empty "
             "entries in your database! Congratulations! You can still add words "
             "through the button on the left ({})."
             "".format(self.dobuttonkwargs()['text']))
             self.instructions['text']=text
+            if isinstance(getattr(self,'wordframe',None),ui.Frame):
+                self.wordframe.destroy()
             self.instructions.wrap()
             # nope=_("No, I haven't done the CAWL yet; "
             #         "\nplease add it to my database, "
@@ -5781,16 +5801,20 @@ class WordCollection(Segments):
             #             row=1, column=0, sticky='',
             #             wraplength=int(program['root'].wraplength*.6))
             return
+        elif not isinstance(getattr(self,'wordframe',None),ui.Frame):
+            self.dowordframe()
+        log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
+        log.info("wordframe: {}".format(getattr(self,'wordframe',None)))
         # log.info("Entry check")
         # log.info("label")
-        progress="({}/{})".format(self.index+1,self.nentries)
+        self.prog['text']="({}/{})".format(self.index+1,self.nentries)
         # log.info("progress")
-        ui.Label(self.wordframe, text=progress, row=1, column=3, font='small')
-        # log.info("label2")
-        if hasattr(self,'sensetodo') and self.sensetodo:
+        log.info("sensetodo: {}".format(self.sensetodo))
+        log.info("entries: {}".format(self.entries))
+        log.info("index: {}".format(self.index))
+        # self.sense=getattr(self,'sensetodo',None)
+        if getattr(self,'sensetodo',None): #above or below should always work
             self.entry=self.sensetodo.entry
-            # log.info("entry1")
-            # return [program['db'].sensedict[i].entry for i in self.initsenseidtodo()]
         else:
             self.entry=self.entries[self.index]
             # log.info("entry2")
@@ -5808,40 +5832,27 @@ class WordCollection(Segments):
                     "".format(self.entry.get('id')))
             self.dirfn(nostore=True)
             return 'noglosses'
-        l=ui.Label(self.wordframe, text=self.glossesthere, font='read',
-                row=1, column=0, columnspan=3, sticky='ew')
-        self.wordframe.pic=ImageFrame(self.wordframe, self.sense,
-                    row=2, column=0,
-                    columnspan=3, sticky='ew',
-                    borderwidth=5,relief='raised')
+        self.glossesline['text']=self.glossesthere
+        self.glossesline.wrap()
+        if isinstance(getattr(self.wordframe,'pic',None),ImageFrame):
+            self.wordframe.pic.changesense(self.sense)
+        else:
+            self.wordframe.pic=ImageFrame(self.wordframe, self.sense,
+                                            row=2, column=0,
+                                            columnspan=3, sticky='')
         """I don't want this on every ImageFrame, just here"""
         self.wordframe.pic.bindchildren('<ButtonRelease-1>', self.selectimage)
-        l.wrap()
         # log.info("lxtextnode: {}".format(self.lxtextnode))
         # self.entry.lc.textvaluebylang(self.analang)
-        self.var=ui.StringVar(
-                value=self.sense.textvaluebyftypelang(self.ftype,self.analang)
-                            )
+        self.var.set(self.sense.textvaluebyftypelang(self.ftype,self.analang))
         # get('entry',path=['lexeme'],analang=self.analang,
         #                 showurl=True).get()
         # lxvar=ui.StringVar()
-        lxenter=ui.EntryField(self.wordframe,textvariable=self.var,
-                                row=3,column=0,columnspan=3,
-                                sticky='ew')
-        log.info(self.var.get())
-        lxenter.focus_set()
+        # log.info(self.var.get())
+        self.lxenter.focus_set()
         # log.info("focus")
-        lxenter.bind('<Return>',self.nextword)
         # self.navigationframe=ui.Frame(self.frame, row=2, column=1,
         #                                 columnspan=3, sticky='ew')
-        back=ui.Button(self.wordframe,text=_("Back"),cmd=self.backword,
-        row=4, column=0, sticky='w',anchor='w',
-        )
-        # log.info("button1")
-        # ui.Label(self.navigationframe,text=" ",row=0, column=1, sticky='ew')
-        next=ui.Button(self.wordframe,text=_("Next"),cmd=self.nextword,
-        row=4, column=2, sticky='e',anchor='e',
-        )
         # log.info("button2")
         # self.navigationframe.grid_columnconfigure(1,weight=1)
         self.frame.grid_columnconfigure(1,weight=1)
