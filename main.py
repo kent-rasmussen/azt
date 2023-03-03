@@ -5748,11 +5748,14 @@ class WordCollection(Segments):
             num=i['src'].split('/')[-1]
             i['filename']='_'.join([num,rx.urlok(i.get('alt','noalt'))])
             log.info("{} ({})".format(url,i['filename']))
-            pic=htmlfns.getbinary(url, timeout=10)
-            # log.info("response data type: {}".format(type(response.data)))
-            i['fqdn']=file.getdiredurl(self.selectiondir,i['filename'])
-            with open(i['fqdn'],'wb') as d:
-                d.write(pic)
+            try:
+                pic=htmlfns.getbinary(url, timeout=10)
+                # log.info("response data type: {}".format(type(response.data)))
+                i['fqdn']=file.getdiredurl(self.selectiondir,i['filename'])
+                with open(i['fqdn'],'wb') as d:
+                    d.write(pic)
+            except urls.MaxRetryError as e:
+                log.error("Problem downloading image: {}".format(e))
             self.waitprogress(self.images.index(i)*100/len(self.images))
         if me or len(self.images) < 5:
             ErrorNotice(text="Found {} images!".format(len(self.images)),
