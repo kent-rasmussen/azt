@@ -5845,9 +5845,10 @@ class WordCollection(Segments):
         # log.info("button2")
         # self.navigationframe.grid_columnconfigure(1,weight=1)
         self.frame.grid_columnconfigure(1,weight=1)
+        self.deiconify()
         self.lift()
         # log.info("reconfigure")
-        # self.wordframe.update_idletasks()
+        self.wordframe.update_idletasks()
         # log.info("update_idletasks")
     def __init__(self, parent):
         Segments.__init__(self,parent)
