@@ -5779,6 +5779,7 @@ class WordCollection(Segments):
         next.bind_all('<Next>',lambda event: self.nextword(nostore=True))
     def getword(self):
         program['taskchooser'].withdraw()# not sure why necessary
+        if getattr(self,'sensetodo',None):
             log.info("Sense to do: {}".format(self.sensetodo))
             self.instructions['text']=self.getinstructions() #in case changed
             if not isinstance(getattr(self,'wordframe',None),ui.Frame):
