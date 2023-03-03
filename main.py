@@ -12069,15 +12069,27 @@ class ImageFrame(ui.Frame):
                 ipadx=10,
                 row=0,column=1)
     def imperativeframe(self):
-        ui.Label(self,text='!',image=self.image,
-            compound="left",sticky='ew',font='title',
-            row=0,column=0)
+        try:
+            image1=program['theme'].photo['Order!']
+            image1.scale(program['scale'],pixels=300,resolution=10) #300 wide
+            image2=self.image
+            # log.info("image1.scaled: {} ({})".format(image1.scaled,type(image1.scaled)))
+            # log.info("image2: {} ({})".format(image2,type(image2)))
+            image1.scaled.paste(image2)
+            bgl=ui.Label(verb,text='',image=image1.scaled,
+                compound="center",
+                sticky='ew',
+                row=0,column=0)
+        except:
+            ui.Label(self,text='!',image=self.image,
+                compound="left",sticky='ew',font='title',
+                row=0,column=0)
     def citationframe(self):
-        ui.Label(self,text='',image=self.image,
-            compound="bottom",sticky='e',#font='title',
-            anchor='c',
-            row=0,column=0,
-            borderwidth=5,relief='raised')
+        l=ui.Label(self,text='',image=self.image,
+            compound="center",sticky='ew',
+            anchor='center',
+            row=0,column=0)
+        # log.info(l.grid_info())
     def changesense(self,sense):
         if self.sense != sense:
             self.sense=sense
