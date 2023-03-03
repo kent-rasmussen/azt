@@ -3907,6 +3907,7 @@ class TaskDressing(HasMenus,ui.Window):
         self.sense=self.sensetodo=choice
         window.destroy()
         if isinstance(self,WordCollection):
+            self.withdraw()
             self.getword()
     def getsensetodobyletter(self,choice,window,event=None):
         window.on_quit()
