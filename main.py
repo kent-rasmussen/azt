@@ -6047,6 +6047,7 @@ class Parse(Segments):
         ui.Label(w.frame,text=self.currentformnotice(),
                     font='small',justify='l',
                     row=2,column=0,columnspan=3)
+        w.bind_all('<Escape>', lambda event:w.on_quit)
         w.wait_window(t)
         if w.exitFlag.istrue():
             self.exited=True
