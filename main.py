@@ -12078,6 +12078,10 @@ class ImageFrame(ui.Frame):
             anchor='c',
             row=0,column=0,
             borderwidth=5,relief='raised')
+    def changesense(self,sense):
+        if self.sense != sense:
+            self.sense=sense
+            self.reloadimage()
     def reloadimage(self):
         self.getimage()
         for child in self.winfo_children():
