@@ -12043,16 +12043,14 @@ class ImageFrame(ui.Frame):
         try:
             # log.info("trying to make image {}".format(i))
             img=ui.Image(i)
-            # will probably want the size adjustable
-            # maybe resolution, too (take from theme?)
-            log.info("Image OK: {}".format(img))
+            # log.info("Image OK: {}".format(img))
         except tkinter.TclError as e:
-            if ('value for "-file" missing' in e.args[0] or
-                    "couldn't recognize data in image file" in e.args[0]):
+            if ('value for "-file" missing' not in e.args[0] and
+                    "couldn't recognize data in image file" not in e.args[0]):
                 log.info("ui.Image error: {}".format(e))
             img=self.theme.photo['NoImage']
-            log.info("Image null: {}".format(img))
-        if not specifiedurl: #(self.url and file.exists(self.url)):
+            # log.info("Image null: {}".format(img))
+        if not specifiedurl:
             self.img=img
         log.info("Image: {}".format(img))
         img.scale(program['scale'],pixels=self.pixels,resolution=self.resolution)
