@@ -608,7 +608,7 @@ class Engine(object):
             return
         """Do I want to add this here? if so, must overright rigorously,
         to avoid old values"""
-        self.ps=self.sense.pasvalue()
+        self.ps=self.sense.psvalue()
         # log.info("sense: {}".format(self.sense))
         # log.info("entry: {}".format(self.entry))
         # log.info("psnode: {}".format(psnode))
