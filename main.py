@@ -5717,7 +5717,8 @@ class WordCollection(Segments):
             url=htmlfns.imgurl(i['src'])
             num=i['src'].split('/')[-1]
             i['filename']='_'.join([num,rx.urlok(i.get('alt','noalt'))])
-            log.info("{} ({})".format(url,i['filename']))
+            # log.info("{} ({})".format(url,i['filename']))
+            log.info("{}".format(i['filename']))
             try:
                 pic=htmlfns.getbinary(url, timeout=10)
                 # log.info("response data type: {}".format(type(response.data)))
