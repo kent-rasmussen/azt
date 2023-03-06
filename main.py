@@ -2355,17 +2355,21 @@ class Settings(object):
             for sense in entry.senses:
                 sense.lx.textvaluebylang(self.analang)
     def getprofiles(self):
+        """This is called after settings finished init/load from files"""
         #This is for analysis from scratch
         self.profileswdatabyentry={}
         self.profilesbysense={}
         self.profilesbysense['Invalid']=[]
-        self.profilesbysense['analang']=program['params'].analang
+        self.profilesbysense['analang']=program['params'].analang()
         self.profilesbysense['ftype']=program['params'].ftype()
         self.profiledguids=[]
         self.profiledsenseids=[]
         self.formstosearch={}
         self.sextracted={} #don't add to old data
-        self.setupCVrxs() # self.rx (needs s)
+        self.notifyuserofextrasegments() #analang set by now, depends db only
+        self.polygraphcheck() #depends only on self.polygraph
+        self.checkinterpretations() #checks/sets values for distinguish/interpret
+        self.setupCVrxs() # self.rx (calls slists, needs distinguish)
         for ps in program['db'].pss: #45s on English db
             # self.sextracted[ps]={}
             # for s in self.rx:
