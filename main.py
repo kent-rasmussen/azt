@@ -5557,7 +5557,7 @@ class WordCollection(Segments):
                     "SILCAWL").format(len(modded))
             if len(modded)<100:
                 text+=": ({})".format(modded)
-            self.taskchooser.getcawlmissing()
+            program['taskchooser'].getcawlmissing()
             self.dobuttonkwargs()
         else:
             title=_("Error trying to add SILCAWL entries")
