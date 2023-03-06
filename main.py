@@ -4006,28 +4006,22 @@ class TaskDressing(HasMenus,ui.Window):
                                     # other=True
                                     )
         log.info("Asking for ‘{}’ second form field...".format(ps))
-        if not self.analang in program['db'].fieldnames or not [
-        i for i in program['db'].fieldnames[self.analang] if i != othername]:
-            # ErrorNotice(_("I don't see any appropriate fields; I'll give you "
-            # "some commonly used ones to choose from."), wait=True)
-            other=True
-        else:
-            # log.info("Fnes: {}".format(program['db'].fieldnames[self.analang]))
-            optionslist = program['db'].fieldnames[self.analang]
+        try:
+            assert other == False
+            othernames=[i for i in program['db'].fieldnames[self.analang]
+                    if i != othername]
+        except (KeyError,AssertionError):
+            othernames=[]
         title=_('Select Second Form Field for {}').format(ps)
         window=ui.Window(self,title=title)
-        if other:
-            text=_("What database field name do you want to use for second "
-                    "forms for {} words?".format(ps))
-            optionslist=opts
-        else:
+        if othernames:
             text=_("What is the database field for second forms for ‘{}’ words?"
             "".format(ps))
-            try:
-                optionslist.remove(othername) #don't present other ps 2nd field
-            except ValueError:
-                log.info("Other second field ‘{}’ doesn't seem to be there: {}"
-                        "".format(othername,optionslist))
+            optionslist=othernames
+        else:
+            text=_("What database field name do you want to use for second "
+            "forms for {} words?".format(ps))
+            optionslist=opts
         ui.Label(window.frame, text=text, column=0, row=0)
         """What does this extra frame do?"""
         window.scroll=ui.Frame(window.frame)
@@ -4038,7 +4032,7 @@ class TaskDressing(HasMenus,ui.Window):
                 window=window,
                 column=0, row=0
                 )
-        if not other:
+        if othernames:
             otherbutton=ui.Button(buttonFrame1.content,
                             text=_("None of these; make a new field"),
                             column=0, row=1,
