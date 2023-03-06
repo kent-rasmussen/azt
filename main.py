@@ -2515,8 +2515,6 @@ class Settings(object):
                 "".format(analang,ninvalids,extras))
             title=_("More than Ten Invalid Characters Found!")
             self.warning=ErrorNotice(text,title=title)
-            # l=ui.Label(self.warning, text=t)
-            # l.grid(row=0, column=0)
     def slists(self):
         """This sets up the lists of segments, by types. For the moment, it
         just pulls from the segment types in the lift database."""
