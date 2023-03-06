@@ -3331,26 +3331,17 @@ class TaskDressing(HasMenus,ui.Window):
         self.parent.geometry("%dx%d+0+0" % (w, h))
     def inherittaskattrs(self):
         for attr in ['file',
-                    'db',
-                    'datadict','exs',
-                    'settings',
-                    # 'menu',
-                    'mainrelief','fontthemesmall',
+                    'mainrelief',
+                    'fontthemesmall',
                     'buttoncolumns',
                     'showdetails'
-                    # 'glosslangs',
-                    # 'analang',
-                    # 'audiolang',
-                    # 'profilesbysense'
                     ]:
             if hasattr(self.parent,attr):
                 setattr(self,attr,getattr(self.parent,attr))
         # Make these directly available:
         for attr in [
-                    # 'params','slices','status','toneframes',
                     'glosslangs',
                     'buttoncolumns',
-                    'soundsettings'
                     ]:
             if hasattr(program['settings'],attr):
                 setattr(self,attr,getattr(program['settings'],attr))
