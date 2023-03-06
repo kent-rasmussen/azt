@@ -2101,8 +2101,8 @@ class Settings(object):
                 for pc in vars[lang]:
                     for pg in vars[lang][pc]:
                         self.polygraphs[lang][pc][pg]=vars[lang][pc][pg].get()
-            # self.storesettingsfile(setting='profiledata') Done below!
-            self.reloadprofiledata()
+            self.storesettingsfile(setting='profiledata')
+            program['taskchooser'].restart()
         def foundchanges():
             for lang in vars:
                 if lang not in self.polygraphs:
@@ -2276,21 +2276,6 @@ class Settings(object):
         if self.interpret['VV']=='Vː' and self.distinguish['ː']==False:
             self.interpret['VV']='VV'
         log.log(2,"self.distinguish: {}".format(self.distinguish))
-    def checkforprofileanalysis(self):
-        if (not hasattr(self,'profilesbysense') or
-                self.profilesbysense == {} or
-                'analang' not in self.profilesbysense or #old schema
-                'ftype' not in self.profilesbysense or #old schema
-                self.profilesbysense['analang'] != self.analang or
-                self.profilesbysense['ftype'] != program['params'].ftype()
-                ):
-            t=nowruntime()
-            log.info("Starting profile analysis at {}".format(now()))
-            self.getprofiles() #creates self.profilesbysense nested dicts
-            # for var in ['rx','profilesbysense']:
-            #     log.debug("{}: {}".format(var,getattr(self,var)))
-            self.storesettingsfile(setting='profiledata')
-            logfinished(t)
     def addtoprofilesbysense(self,senseid,ps,profile):
         # log.info("kwargs: {}".format(kwargs))
         # This will die if ps and profile aren't in kwargs:
@@ -2622,13 +2607,6 @@ class Settings(object):
             else:
                 self.rx[c+'_']=rx.compile('(?<![CSGDNʔ])'+c) #not after C
             self.rx[c+'wd']=rx.compile(c+'(?=\Z)') # word final
-    def reloadprofiledata(self,showpolygraphs=False):
-        self.storesettingsfile() # why?
-        self.profilesbysense={}
-        if showpolygraphs:
-            self.askaboutpolygraphs()
-        self.storesettingsfile(setting='profiledata')
-        program['taskchooser'].restart()
     def reloadstatusdatabycvtpsprofile(self,**kwargs):
         # This reloads the status info only for current slice
         # These are specified in iteration, pulled from object if called direct
@@ -2979,7 +2957,8 @@ class Settings(object):
             self.cleardefaults(attribute)
             if attribute in ['analang',  #do the last two cause problems?
                                 'interpret','distinguish']:
-                self.reloadprofiledata()
+                # self.reloadprofiledata()
+                log.info("**Changed {}; should restart!**".format(attribute))
             elif refresh == True:
                 self.refreshattributechanges()
         else:
@@ -3045,7 +3024,7 @@ class Settings(object):
         self.attrschanged.append('analang')
         self.refreshattributechanges()
         window.destroy()
-        self.reloadprofiledata()
+        program['taskchooser'].restart()
     def setgroup(self,choice,window):
         # log.debug("group: {}".format(choice))
         program['status'].group(choice)
@@ -3529,7 +3508,8 @@ class TaskDressing(HasMenus,ui.Window):
                 r=notice(changed)
                 if r:
                     self.runwindow.destroy()
-                    self.reloadprofiledata()
+                    self.storesettingsfile(setting='profiledata')
+                    program['taskchooser'].restart()
                 else:
                     undo(changed)
             else:
@@ -8581,7 +8561,6 @@ class Record(Sound,TaskDressing):
         self.mikecheck() #only ask for settings check if recording
 class Report(object):
     def consultantcheck(self):
-        # program['settings'].reloadprofiledata()
         program['settings'].reloadstatusdata()
         self.bylocation=False
         self.tonegroupreportcomprehensive()
