@@ -2016,10 +2016,14 @@ class FormParent(Node):
     def checkforsecondchildbylang(self):
         for lang in self.forms:
             if len(self.findall('form[@lang="{}"]'.format(lang))) > 1:
-                log.error("{} node in entry {} has multiple forms "
+                try:
+                    num=self.find('field[@type="location"]/form/text').text
+                except:
+                    num="?"
+                log.error("{} node {} in entry {} has multiple forms "
                     "for ‘{}’ lang. While this is legal LIFT, it is almost "
                     "certainly an error, and will lead to unexpected behavior."
-                    "".format(self.tag,self.parent.entry.guid,lang))
+                    "".format(self.tag,num,self.parent.entry.guid,lang))
     def getforms(self):
         self.forms={
                     lang:Form(self,self.find('form[@lang="{}"]'.format(lang)))
