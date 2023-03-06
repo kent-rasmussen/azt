@@ -12122,14 +12122,14 @@ class ImageFrame(ui.Frame):
         self.sense=sense
         #These shouldn't go to frame:
         self.url=kwargs.pop('url',None)
-        self.type=kwargs.pop('type',None)
+        self.ftype=kwargs.pop('ftype',None)
         self.pixels=kwargs.pop('pixels',150)
         self.resolution=kwargs.pop('resolution',10)
         super(ImageFrame, self).__init__(parent, *args, **kwargs)
         self.getimage()
-        if self.type == 'pl':
+        if self.ftype == 'pl':
             self.pluralframe()
-        elif self.type == 'imp':
+        elif self.ftype == 'imp':
             self.imperativeframe()
         else:
             self.citationframe()
