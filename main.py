@@ -6145,7 +6145,7 @@ class Parse(Segments):
         elif not self.exited:
             self.trytwoforms()
     def tryoneform(self):
-        log.info("Asking for second form selected")
+        log.info("Asking for second form selected (parse w/one form)")
         r=self.parser.oneform()
         if r:
             self.selectsffromlist(r)
@@ -6161,6 +6161,7 @@ class Parse(Segments):
         if not self.exited:
             log.info("User seems to have selected a second form, or neither")
     def trytwoforms(self):
+        log.info("Trying for parse with two forms")
         r=self.parser.twoforms()
         # return level, lx, lc, sf, self.ps, afxs #from self.parser.twoforms
         if not r:
@@ -6171,6 +6172,7 @@ class Parse(Segments):
             return
         return 1 #do not return empty list, bool = False
     def trythreeforms(self):
+        log.info("Trying for parse with three forms")
         r=self.parser.threeforms()
         #This gives r= tuple to check, or 1 if skipped. no UI = no self.exit set
         # log.info("reponse: {} ({})".format(r,type(r)))
