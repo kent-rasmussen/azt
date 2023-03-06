@@ -2396,6 +2396,7 @@ class Settings(object):
         SliceDict(self.adhocgroups,self.profilesbysense) #self.profilecounts
         if program['slices'].profile():
             self.getscounts()
+        self.storesettingsfile(setting='profiledata')
     def profileofformpreferred(self,form):
         """Simplify combinations where desired"""
         c=['N','S','G','ʔ','D']
@@ -5339,7 +5340,6 @@ class Segments(object):
         program['taskchooser'].datadict.clearsense(senseid) #so this will refresh
         if write:
             self.maybewrite()
-            self.storesettingsfile(setting='profiledata') #objectify this!
     def setsensegroup(self,sense,ftype,check,group,**kwargs):
         # log.info("Setting segment sort group")
         sense.annotationvaluebyftypelang(ftype,self.analang,check,group)
@@ -7104,7 +7104,6 @@ class Sort(object):
             """Is this OK?!?"""
             program['slices'].updateslices() #This pulls from profilesbysense
             # self.makecountssorted() #we need these to show up in the counts.
-            program['settings'].storesettingsfile(setting='profiledata')#since we changed this.
             #so we don't have to do this again after each profile analysis
         self.getrunwindow()
         profile=program['slices'].profile()
