@@ -2530,12 +2530,13 @@ class Settings(object):
                                         and 'tg' not in x
                                         and 'qg' not in x
                                         ]: #Just populate each list now
-                if sclass in self.polygraphs[lang]:
+                try:
+                    assert sclass in self.polygraphs[lang]
                     pgthere=[k for k,v in self.polygraphs[lang][sclass].items() if v]
                     log.debug("Polygraphs for {} in {}: {}".format(lang,sclass,
                                                                     pgthere))
                     self.s[lang][sclass]=pgthere
-                else:
+                except (AssertionError,AttributeError):
                     self.s[lang][sclass]=list()
                 self.s[lang][sclass]+=program['db'].s[lang][sclass]
                 """These lines just add to a C list, for a later regex"""
