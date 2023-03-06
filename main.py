@@ -12058,12 +12058,14 @@ class ImageFrame(ui.Frame):
         try:
             # log.info("trying to make image {}".format(i))
             img=ui.Image(i)
+            self.hasimage=True
             # log.info("Image OK: {}".format(img))
         except tkinter.TclError as e:
             if ('value for "-file" missing' not in e.args[0] and
                     "couldn't recognize data in image file" not in e.args[0]):
                 log.info("ui.Image error: {}".format(e))
             img=self.theme.photo['NoImage']
+            self.hasimage=False
             # log.info("Image null: {}".format(img))
         if not specifiedurl:
             self.img=img
