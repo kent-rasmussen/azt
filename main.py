@@ -5775,60 +5775,43 @@ class WordCollection(Segments):
         next.bind_all('<Next>',lambda event: self.nextword(nostore=True))
     def getword(self):
         program['taskchooser'].withdraw()# not sure why necessary
+        # log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
+        # log.info("wordframe: {}".format(getattr(self,'wordframe',None)))
         if getattr(self,'sensetodo',None):
             log.info("Sense to do: {}".format(self.sensetodo))
             self.instructions['text']=self.getinstructions() #in case changed
-            if not isinstance(getattr(self,'wordframe',None),ui.Frame):
-                self.dowordframe()
-            else:
-                log.info("sensetodo marked, but wordframe there already.")
+            self.dowordframe()
         elif not self.entries:
             text=_("It looks like you're done filling out the empty "
             "entries in your database! Congratulations! You can still add words "
             "through the button on the left ({})."
             "".format(self.dobuttonkwargs()['text']))
+            self.killwordframe()
             self.instructions['text']=text
-            if isinstance(getattr(self,'wordframe',None),ui.Frame):
-                self.wordframe.destroy()
             self.instructions.wrap()
-            # nope=_("No, I haven't done the CAWL yet; "
-            #         "\nplease add it to my database, "
-            #         "\nso I can fill it out.")
-            # b=ui.Button(self.wordframe, text=nope, cmd=self.addCAWLentries,
-            #             row=1, column=0, sticky='',
-            #             wraplength=int(program['root'].wraplength*.6))
             return
-        elif not isinstance(getattr(self,'wordframe',None),ui.Frame):
+        else:
             self.dowordframe()
         log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
         log.info("wordframe: {}".format(getattr(self,'wordframe',None)))
-        # log.info("Entry check")
-        # log.info("label")
         self.prog['text']="({}/{})".format(self.index+1,self.nentries)
-        # log.info("progress")
         log.info("sensetodo: {}".format(self.sensetodo))
-        log.info("entries: {}".format(self.entries))
+        # log.info("entries: {}".format(self.entries))
         log.info("index: {}".format(self.index))
-        # self.sense=getattr(self,'sensetodo',None)
-        if getattr(self,'sensetodo',None): #above or below should always work
+        if getattr(self,'sensetodo',None):
             self.entry=self.sensetodo.entry
         else:
             self.entry=self.entries[self.index]
-            # log.info("entry2")
-        log.info("self.entry:{}".format(self.entry))
         self.sense=self.entry.sense
-        # log.info("self.sense:{}".format(self.sense))
         glosses={}
-        for g in self.glosslangs:
+        for g in set(self.glosslangs) & set(self.sense.glosses):
             glosses[g]=', '.join(self.sense.formattedgloss(g,quoted=True))
-        # glossframe=ui.Frame(self.wordframe, row=1, column=0)
         self.glossesthere=' — '.join([glosses[i] for i in glosses if i])
-        log.info("glosses there: {}".format(self.glossesthere))
+        # log.info("glosses there: {}".format(self.glossesthere))
         if not self.glossesthere:
             log.info("entry {} doesn't have glosses; not showing."
                     "".format(self.entry.get('id')))
             self.dirfn(nostore=True)
-            return 'noglosses'
         self.glossesline['text']=self.glossesthere
         self.glossesline.wrap()
         if isinstance(getattr(self.wordframe,'pic',None),ImageFrame):
@@ -5839,25 +5822,15 @@ class WordCollection(Segments):
                                             columnspan=3, sticky='')
         """I don't want this on every ImageFrame, just here"""
         self.wordframe.pic.bindchildren('<ButtonRelease-1>', self.selectimage)
-        # log.info("lxtextnode: {}".format(self.lxtextnode))
-        # self.entry.lc.textvaluebylang(self.analang)
-        self.var.set(self.sense.textvaluebyftypelang(self.ftype,self.analang))
-        # get('entry',path=['lexeme'],analang=self.analang,
-        #                 showurl=True).get()
-        # lxvar=ui.StringVar()
-        # log.info(self.var.get())
+        default=self.sense.textvaluebyftypelang(self.ftype,self.analang)
+        if not default:
+            default=''
+        self.var.set(default)
         self.lxenter.focus_set()
-        # log.info("focus")
-        # self.navigationframe=ui.Frame(self.frame, row=2, column=1,
-        #                                 columnspan=3, sticky='ew')
-        # log.info("button2")
-        # self.navigationframe.grid_columnconfigure(1,weight=1)
         self.frame.grid_columnconfigure(1,weight=1)
         self.deiconify()
         self.lift()
-        # log.info("reconfigure")
         self.wordframe.update_idletasks()
-        # log.info("update_idletasks")
     def __init__(self, parent):
         Segments.__init__(self,parent)
         self.dodone=False
