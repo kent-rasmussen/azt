@@ -2518,11 +2518,12 @@ class Settings(object):
     def slists(self):
         """This sets up the lists of segments, by types. For the moment, it
         just pulls from the segment types in the lift database."""
-        if not hasattr(self,'s'):
-            self.s={}
+        log.info("Found db.analangs: {}".format(program['db'].analangs))
+        log.info("Found params analang: {}".format(program['params'].analang()))
+        self.s={l:{} for l in set(program['db'].analangs+
+                                [program['params'].analang()])
+                }
         for lang in program['db'].analangs:
-            if lang not in self.s:
-                self.s[lang]={}
             """These should always be there, no matter what"""
             for sclass in [x for x in program['db'].s[lang]
                                         if 'dg' not in x
