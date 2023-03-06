@@ -737,8 +737,6 @@ class Menus(ui.Menu):
                             program['settings'].askaboutpolygraphs),
                 (_("Segment Interpretation Settings"),
                             self.parent.setSdistinctions),
-                (_("Syllable Profile Analysis (Restart)"),
-                            program['settings'].reloadprofiledata),
                 (_("Remake Status file (All: several minutes)"),
                             program['settings'].reloadstatusdata),
                 (_("Remake Status file (just this category)"),
