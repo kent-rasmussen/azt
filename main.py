@@ -3177,17 +3177,6 @@ class Settings(object):
             self.refreshdelay=1 #1 msecond if waiting for parser settings
         else:
             self.refreshdelay=1000 #one second if not working in another window
-    def ifcollectionlc(self):
-        self.notifyuserofextrasegments() #self.analang set by now
-        self.polygraphcheck()
-        self.checkinterpretations() #checks/sets values for self.distinguish
-        self.checkforprofileanalysis()
-        """The line above may need to go after this block"""
-        self.loadsettingsfile(setting='adhocgroups')
-        """Make these objects here only"""
-        self.makeeverythingok()
-        self.settingsobjects() #needs params, glosslangs, slices
-        self.moveattrstoobjects() #catch what wasn't done before
     def __init__(self,taskchooser):
         program['settings']=self
         self.liftfilename=taskchooser.filename
