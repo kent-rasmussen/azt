@@ -4496,7 +4496,7 @@ class TaskChooser(TaskDressing,ui.Window):
         self.setmainwindow(self)
         self.gettask()
     def makeexampledict(self):
-        self.exs=ExampleDict()
+        program['examples']=ExampleDict()
     def guidtriage(self):
         # import time
         log.info("Doing guid triage and other variables —this takes awhile...")
@@ -7595,7 +7595,7 @@ class Sort(object):
         if group in program['status'].verified():
             log.info("‘{}’ already verified, continuing.".format(group))
             return
-        senses=self.exs.sensesinslicegroup(group,check)
+        senses=program['examples'].sensesinslicegroup(group,check)
         if not senses: #then remove the group
             groups=program['status'].groups(wsorted=True) #from which to remove, put back
             # log.info("Groups: {}".format(program['status'].groups(toverify=True)))
@@ -7784,7 +7784,7 @@ class Sort(object):
         groupvars={}
         b={}
         for group in groups:
-            b[group]=SortGroupButtonFrame(self.sortitem, self, self.exs, group,
+            b[group]=SortGroupButtonFrame(self.sortitem, self, group,
                                     showtonegroup=True,
                                     labelizeonselect=True
                                     )
@@ -10329,7 +10329,7 @@ class Transcribe(Sound,Sort,TaskDressing):
             t=_('Compare with another group ({})').format(
                                                 self.group_comparison)
             self.compframe.bf2=SortGroupButtonFrame(self.compframe.compframeb,
-                                    self, self.exs,
+                                    self,
                                     self.group_comparison,
                                     showtonegroup=True,
                                     playable=True,
@@ -10479,7 +10479,7 @@ class Transcribe(Sound,Sort,TaskDressing):
         examplesframe=ui.Frame(self.runwindow.frame,
                                 row=4,column=0,sticky=''
                                 )
-        b=SortGroupButtonFrame(examplesframe, self, self.exs,
+        b=SortGroupButtonFrame(examplesframe, self,
                                 self.group,
                                 showtonegroup=True,
                                 # canary=entryview,
@@ -11390,7 +11390,6 @@ class ExampleDict(dict):
             self[group]=node #save for next time
             return len(nodes),node #self._outdict
     def __init__(self):
-        # self.datadict=datadict
         super(ExampleDict, self).__init__({})
 class MainApplication(ui.Window):
     def setmasterconfig(self): #,program
@@ -11510,7 +11509,7 @@ class SortButtonFrame(ui.ScrollingFrame):
             scaledpady=0
         else:
             scaledpady=int(40*program['scale'])
-        b=SortGroupButtonFrame(self.groupbuttons, self, self.exs,
+        b=SortGroupButtonFrame(self.groupbuttons, self,
                                 group,
                                 showtonegroup=True,
                                 alwaysrefreshable=True,
@@ -11622,7 +11621,6 @@ class SortButtonFrame(ui.ScrollingFrame):
         """We need a few things from the task (which are needed still?)"""
         self.task=task
         self.buttoncolumns=task.buttoncolumns
-        self.exs=task.exs
         self.marksortgroup=task.marksortgroup
         self.check=program['params'].check()
         self.maybewrite=program['taskchooser'].maybewrite
@@ -11939,9 +11937,9 @@ class SortGroupButtonFrame(ui.Frame):
         for arg in self.unbuttonargs:
             del bkwargs[arg]
         return bkwargs #only the kwargs appropriate for buttons
-    def __init__(self, parent, check, exdict, group, **kwargs):
+    def __init__(self, parent, check, group, **kwargs):
         log.info("Initializing buttons for group {}".format(group))
-        self.exs=exdict
+        self.exs=program['examples']
         self.check=check #the task/check OR the scrollingframe! use self.check.task
         self.group=group
         # self,parent,group,row,column=0,label=False,canary=None,canary2=None,
