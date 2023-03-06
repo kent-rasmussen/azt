@@ -3212,6 +3212,8 @@ class Settings(object):
         # these two make the objects
         self.loadsettingsfile(setting='status')
         self.loadsettingsfile(setting='toneframes')
+        self.loadsettingsfile(setting='adhocgroups')
+        self.makeeverythingok()
         """The following might be OK here, but need to be OK later, too."""
         # """The following should only be done after word collection"""
         # if self.taskchooser.donew['collectionlc']:
