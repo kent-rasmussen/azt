@@ -2503,17 +2503,16 @@ class Settings(object):
                     #             "").format(e,ps,s))
         program['slices'].scount(scount) #send to object
     def notifyuserofextrasegments(self):
-        if not hasattr(self,'analang'):
-            self.analang=program['params'].analang()
-        if self.analang not in program['db'].segmentsnotinregexes:
+        analang=program['params'].analang()
+        if analang not in program['db'].segmentsnotinregexes:
             return
-        invalids=program['db'].segmentsnotinregexes[self.analang]
+        invalids=program['db'].segmentsnotinregexes[analang]
         ninvalids=len(invalids)
         extras=list(dict.fromkeys(invalids).keys())
-        if ninvalids >10 and self.analang != 'en':
+        if ninvalids >10 and analang != 'en':
             text=_("Your {} database has the following symbols, which are "
                 "excluding {} words from being analyzed: \n{}"
-                "".format(self.analang,ninvalids,extras))
+                "".format(analang,ninvalids,extras))
             title=_("More than Ten Invalid Characters Found!")
             self.warning=ErrorNotice(text,title=title)
             # l=ui.Label(self.warning, text=t)
