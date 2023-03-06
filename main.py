@@ -5802,7 +5802,6 @@ class WordCollection(Segments):
         log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
         log.info("wordframe: {}".format(getattr(self,'wordframe',None)))
         self.prog['text']="({}/{})".format(self.index+1,self.nentries)
-        log.info("sensetodo: {}".format(self.sensetodo))
         # log.info("entries: {}".format(self.entries))
         log.info("index: {}".format(self.index))
         if getattr(self,'sensetodo',None):
@@ -5896,12 +5895,13 @@ class WordCollectionImperative(TaskDressing,WordCollection):
         self.getwords()
 class Parse(Segments):
     """docstring for Parse."""
-    def getgloss(self):
-        return ", ".join([i.textvalue() for j in [self.parser.sense.glosses[l]
-                                                    for l in self.glosslangs]
-                        for i in j
-                        ])
+    def getgloss(self,ftype=None):
+        return ", ".join([", ".join(self.parser.sense.formattedgloss(l,
+                                                            ftype=ftype,
+                                                            quoted=True))
+                        for l in self.glosslangs])
     def userconfirmation(self,*args):
+        log.info("asking for user confirmation")
         # Return True or False only
         def do(x):
             self.userresponse.value=x
@@ -5921,19 +5921,55 @@ class Parse(Segments):
                         lc,afxs[0],sf,afxs[1],
                         ps,lx,gloss,
                         )
-        l=ui.Label(w.frame,text=text,justify='l',
-                    row=0,column=0,columnspan=2)
-        ui.Button(w.frame,
+        glosslc=self.getgloss()
+        if ps == self.nominalps:
+            ftype='pl'
+        elif ps == self.verbalps:
+            ftype='imp'
+        glosssf=self.getgloss(ftype=ftype)
+        self.presentationframe=ui.Frame(w.frame,row=1,column=0,sticky='ew')
+        self.lcframe=ui.Frame(self.presentationframe,
+                                row=0,column=0,
+                                padx=10,
+                                sticky='ew')
+        lcmorphs=list(afxs[0])
+        lcmorphs.insert(1,lx)
+        l=ui.Label(self.lcframe,
+                text='-'.join([i for i in lcmorphs if i]),font='title',
+                row=0,column=0)
+        ImageFrame(self.lcframe,self.sense,
+                    row=1,column=0,sticky='')
+        ui.Label(self.lcframe,
+                text=glosslc,font='readbig',
+                row=2,column=0)
+        self.sfframe=ui.Frame(self.presentationframe,
+                                row=0,column=1,
+                                padx=10,
+                                sticky='ew')
+        sfmorphs=list(afxs[1])
+        sfmorphs.insert(1,lx)
+        ui.Label(self.sfframe,
+                text='-'.join([i for i in sfmorphs if i]),font='title',
+                row=0,column=1)
+        ImageFrame(self.sfframe,self.sense,ftype=ftype,
+                    row=1,column=1,sticky='')
+        ui.Label(self.sfframe,
+                text=glosssf,font='readbig',
+                row=2,column=1)
+        self.responseframe=ui.Frame(w.frame,row=2,column=0,sticky='ew')
+        ui.Button(self.responseframe,
                     text=_("Yes!"),
                     command=lambda x=True: do(x),
-                    row=1,column=0)
-        ui.Button(w.frame,
+                    row=0,column=0,sticky='ew')
+        ui.Button(self.responseframe,
                     text=_("No!"),
                     command=lambda x=False: do(x),
-                    row=1,column=1)
-        ui.Label(w.frame,text=self.currentformnotice(),
+                    row=0,column=1,sticky='ew')
+        self.noticeframe=ui.Frame(w.frame,row=3,column=0)
+        t=_("This parse looks good ({})\n").format(self.parser.levels()[level])
+        ui.Label(self.noticeframe,text=t+self.currentformnotice(),
                     font='small',justify='l',
-                    row=2,column=0,columnspan=2)
+                    row=0,column=0)
         if self.iswaiting():
             self.waitpause()
         w.wait_window(l) #canary on label, not window
@@ -5996,7 +6032,7 @@ class Parse(Segments):
         t.wrap()
         if ln:
             noun=ui.Frame(w.frame, row=1, column=0, sticky='n')
-            ImageFrame(noun,self.sense,type='pl',row=0,column=0, sticky='')
+            ImageFrame(noun,self.sense,ftype='pl',row=0,column=0, sticky='')
             ui.Label(noun,
                     text="Select {} form".format(
                                         self.secondformfield[self.nominalps]),
@@ -6009,7 +6045,7 @@ class Parse(Segments):
                                         )
         if lv:
             verb=ui.Frame(w.frame, row=1, column=1, sticky='n')
-            ImageFrame(verb,self.sense,type='imp',row=0,column=0, sticky='')
+            ImageFrame(verb,self.sense,ftype='imp',row=0,column=0, sticky='')
             ui.Label(verb,
                     text="Select {} form".format(
                                         self.secondformfield[self.verbalps]),
