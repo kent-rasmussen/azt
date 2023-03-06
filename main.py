@@ -2581,15 +2581,18 @@ class Settings(object):
         for n in range(1,7): #just get the Nth C or V, don't worry about polygraphs
             self.rx[sclass+str(n)]=rx.nX(sin,sout,n) #no polygraphs here
     def setupCVrxs(self):
-        self.slists()
-        slcassesC=['N','S','G','ʔ','D']
+        self.slists() #makes s; depends on polygraphs
+        sclassesC=['N','S','G','ʔ','D']
         self.rx={}
+        analang=program['params'].analang()
+        if not self.s[analang]:
+            return # this is pointless until there is data
         #Each glyph variable found in the language gets a regex for each length,
         # plus 0 to find them all together – since we're looking for glyphs.
-        analang=program['params'].analang()
         for sclass in list(self.s[analang])+['C']: #be sure to do C last
             if self.s[analang][sclass] != []: #don't make if empty
-                if sclass in slcassesC and not self.distinguish.get(sclass):
+                if sclass in sclassesC and (not hasattr(self,'distinguish')
+                        or not self.distinguish.get(sclass)):
                     self.s[analang]['C']+=self.s[analang][sclass]
                     continue
                 self.compileCVrxforsclass(sclass)
@@ -2597,7 +2600,7 @@ class Settings(object):
         for cc in ['CG','CS','NC','VN','VV']:
             ccc=cc.replace('C','[CSGDʔN]{1}')
             self.rx[cc]=rx.compile(ccc) #no polygraphs here
-        for c in slcassesC: #no polygraphs for these, since we're looking for
+        for c in sclassesC: #no polygraphs for these, since we're looking for
             # glyph variables, not glyphs.
             # (?!) – negative lookahead
             # (?=) – positive lookahead
