@@ -2487,7 +2487,7 @@ class Sense(Node,FieldParent):
             # log.info("gloss forms returned: {}".format(t))
             return t
         except KeyError:
-            log.info("No glosslang {} in sense {}".format(glosslang,sense.id))
+            log.info("No glosslang {} in sense {}".format(glosslang,self.id))
     def formatteddictbylang(self,analang,glosslangs,ftype=None,frame=None):
         if frame and ftype and not frame['field'] == ftype:
             log.error("ftype mismatch! ({}/{})".format(frame['field'],ftype))
