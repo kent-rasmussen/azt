@@ -1803,28 +1803,38 @@ class Settings(object):
         filename=self.settingsfile(setting)
         config=ConfigParser()
         config.read(filename,encoding='utf-8')
-        # log.info("{} sections: {}".format(setting,config.sections()))
+        log.debug("Trying for {} settings in {}".format(setting, filename))
         if not config.sections() and setting not in ['status','toneframes']:
             if setting == "adhocgroups":
                 self.adhocgroups={}
             return
-        # log.debug("Trying for {} settings in {}".format(setting, filename))
         d={}
+        log.info("Found {} sections: {}".format(setting,config.sections()))
         for section in config: #self.settings[setting]['attributes']:
-            if 'default' in config and section in config['default']:
-                d[section]=ofromstr(config['default'][section])
+            # log.info('\n'.join([': '.join([k,config[section][k]])
+            #                             for k in config[section]]))
+            if 'default' in config and section in ['default','DEFAULT']:
+                for k in config[section]:
+                    log.info("Moving {}.{}={} to object".format(section,k,
+                                                            config[section][k]))
+                    d[k]=ofromstr(config['default'][k])
+                # d[section]=ofromstr(config['default'][section])
             else:
+                log.info("working in non-default section {}".format(section))
                 # log.debug("Trying for {} settings in {}".format(section, setting))
                 if len(config[section].values())>0:
-                    # log.debug("Found Dictionary value for {}".format(section))
+                    # log.debug("Found Dictionary value for {} ({})".format(
+                    #                                 section,config[section]))
                     d[section]={}
                     for s in config[section]:
+                        # log.debug("Found value {}: {}"
+                        #             "".format(s,config[section][s]))
                         d[section][s]={}
                         """Make sure strings become python data"""
                         d[section][ofromstr(s)]=ofromstr(config[section][s])
                 else:
-                    log.debug("Found String/list/other value for {}: {}".format(
-                                                    section,config[section]))
+                    log.debug("Found String/list/other value for {}: ({})"
+                            "".format(section,len(config[section].values())))
                     d[section]=ofromstr(config[section])
         if setting == 'status':
             # log.info("setting {} is {}".format(setting,d))
