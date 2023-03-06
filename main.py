@@ -5383,7 +5383,7 @@ class WordCollection(Segments):
             return done
         # At this point, done isn't wanted
         todo=[x for x in all if x not in done] #set-set may be better
-        log.info("To do: ({}) {}".format(len(todo),todo))
+        log.info("To do: ({}) First 5: {}".format(len(todo),todo[:5]))
         return todo
     def getinstructions(self):
         return _("Type the word in your language that goes with these meanings."
