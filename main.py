@@ -5639,6 +5639,7 @@ class WordCollection(Segments):
         self.sense.illustrationvalue(fn)
         self.maybewrite()
         self.wordframe.pic.reloadimage()
+        self.updatereturnbind()
     def selectlocalimage(self,event=None):
         log.info("Select a local image")
         f=file.askopenfilename()
@@ -5768,11 +5769,17 @@ class WordCollection(Segments):
         self.lxenter=ui.EntryField(self.wordframe,textvariable=self.var,
                                 row=3,column=0,columnspan=3,
                                 sticky='ew')
-        self.lxenter.bind('<Return>',lambda event: self.nextword(nostore=False))
         next.bind_all('<Up>',lambda event: self.backword(nostore=True))
         next.bind_all('<Prior>',lambda event: self.backword(nostore=True))
         next.bind_all('<Down>',lambda event: self.nextword(nostore=True))
         next.bind_all('<Next>',lambda event: self.nextword(nostore=True))
+    def updatereturnbind(self):
+        try:
+            assert self.wordframe.pic.hasimage
+            self.lxenter.bind_all('<Return>',
+                                lambda event: self.nextword(nostore=False))
+        except AssertionError:
+            self.wordframe.pic.bind_all('<Return>', self.selectimage)
     def getword(self):
         program['taskchooser'].withdraw()# not sure why necessary
         # log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
@@ -5820,6 +5827,7 @@ class WordCollection(Segments):
             self.wordframe.pic=ImageFrame(self.wordframe, self.sense,
                                             row=2, column=0,
                                             columnspan=3, sticky='')
+        self.updatereturnbind()
         """I don't want this on every ImageFrame, just here"""
         self.wordframe.pic.bindchildren('<ButtonRelease-1>', self.selectimage)
         default=self.sense.textvaluebyftypelang(self.ftype,self.analang)
