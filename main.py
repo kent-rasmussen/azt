@@ -4601,8 +4601,6 @@ class TaskChooser(TaskDressing,ui.Window):
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
         satisfied task"""
-        if program['taskchooser'].doneenough['collectionlc']:
-            self.ifcollectionlc()
         """The above is prerequisite to the below, so it is here. It could be
         elsewhere, but that led to numerous repetitions."""
         optionlist=self.makeoptions()
@@ -5001,7 +4999,6 @@ class TaskChooser(TaskDressing,ui.Window):
         if not self.ifcollectionlcsettingsdone: #only do this once
             try:
                 log.info("Finishing setup for post-collection projects")
-                program['settings'].ifcollectionlc()
                 self.inherittaskattrs()
                 # self.makedatadict()
                 self.makeexampledict() #needed for makestatus, needs params,slices,data
