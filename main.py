@@ -1693,6 +1693,7 @@ class Settings(object):
         try: #these objects may not exist yet
             fns['cvt']=program['params'].cvt
             fns['check']=program['params'].check
+            fns['ftype']=program['params'].ftype
             fns['analang']=program['params'].analang
             fns['glosslang']=self.glosslangs.lang1
             fns['glosslang2']=self.glosslangs.lang2
