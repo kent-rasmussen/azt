@@ -5737,7 +5737,23 @@ class WordCollection(Segments):
             ErrorNotice(text,
                         button=(_("Select local image"),self.selectlocalimage))
         self.waitdone()
+    def killwordframe(self):
+        f=getattr(self,'wordframe',None)
+        if isinstance(f,ui.Frame) and f.winfo_exists():
+            # log.info("Destroying word frame")
+            f.destroy()
+            # log.info("Destroy done")
+        # else:
+        #     log.info("Not destroying word frame {}".format(isinstance(f,ui.Frame)))
+        #     log.info("word frame: {}".format(f))
+        #     if f:
+        #         log.info("word frame exists: {}".format(f.winfo_exists()))
     def dowordframe(self):
+        f=getattr(self,'wordframe',None)
+        if isinstance(f,ui.Frame) and f.winfo_exists():
+            # log.info("Skipping word frame; already exists!")
+            return
+        log.info("doing word frame")
         self.wordframe=ui.Frame(self.wordsframe,row=1,column=0,sticky='ew')
         self.prog=ui.Label(self.wordframe, text='', row=1, column=3,
                             font='small')
