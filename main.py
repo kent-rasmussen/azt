@@ -5768,7 +5768,7 @@ class WordCollection(Segments):
         self.lxenter=ui.EntryField(self.wordframe,textvariable=self.var,
                                 row=3,column=0,columnspan=3,
                                 sticky='ew')
-        self.lxenter.bind('<Return>',self.nextword)
+        self.lxenter.bind('<Return>',lambda event: self.nextword(nostore=False))
         next.bind_all('<Up>',lambda event: self.backword(nostore=True))
         next.bind_all('<Prior>',lambda event: self.backword(nostore=True))
         next.bind_all('<Down>',lambda event: self.nextword(nostore=True))
