@@ -2456,6 +2456,7 @@ class Sense(Node,FieldParent):
         except KeyError:
             log.info("No {} type ({})".format(ftype,self.ftypes))
     def formattedgloss(self,glosslang,ftype=None,frame=False,quoted=False):
+        """This outputs a list that can be joined as needed"""
         # log.info("formattedgloss called with glosslang={}, ftype={}, frame={}, "
         #         "quoted={}"
         #         "".format(glosslang,ftype,frame,quoted))
