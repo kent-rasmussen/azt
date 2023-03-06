@@ -5713,6 +5713,7 @@ class WordCollection(Segments):
         log.info("Found {} images: {}".format(len(self.images),self.images))
         if self.images:
             file.makedir(self.selectiondir)
+        problems=0
         for i in self.images:
             url=htmlfns.imgurl(i['src'])
             num=i['src'].split('/')[-1]
@@ -5727,9 +5728,13 @@ class WordCollection(Segments):
                     d.write(pic)
             except urls.MaxRetryError as e:
                 log.error("Problem downloading image: {}".format(e))
+                problems+=1
             self.waitprogress(self.images.index(i)*100/len(self.images))
         if me or len(self.images) < 5:
-            ErrorNotice(text="Found {} images!".format(len(self.images)),
+            text="Found {} images!".format(len(self.images))
+            if problems:
+                text+=_("\nProblems downloading {} images".format(problems))
+            ErrorNotice(text,
                         button=(_("Select local image"),self.selectlocalimage))
         self.waitdone()
     def dowordframe(self):
