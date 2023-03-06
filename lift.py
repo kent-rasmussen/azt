@@ -2427,6 +2427,8 @@ class Sense(Node,FieldParent):
     def getcawlline(self):
         if 'SILCAWL' in self.fields:
             self.cawln=self.fields['SILCAWL'].textvaluebylang()
+        else:
+            self.cawln=None
     def illustrationvalue(self,value=None):
         try:
             assert isinstance(self.illustration,ET.Element)
