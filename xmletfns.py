@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 from xml.etree import ElementTree as ET
-import logsetup
-log=logsetup.getlog(__name__)
+# import logsetup
+# log=logsetup.getlog(__name__)
 import file
 import urllib
 
