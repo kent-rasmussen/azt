@@ -1550,6 +1550,8 @@ class Settings(object):
             'profiledata':{
                                 'file':'profiledatafile',
                                 'attributes':[
+                                    'analang',
+                                    'ftype',
                                     'distinguish',
                                     'interpret',
                                     'polygraphs',
