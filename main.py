@@ -12662,9 +12662,13 @@ class StatusDict(dict):
     here that the consequences of the change are done (done in check)."""
     """I should think about what 'do' means here: sort? verify? record?"""
     def task(self,task=None):
+        #showing type here is just as good, since it's an object in any case
+        #printing the object fails if it is a window that hasn't inited yet
         if task:
+            log.info("Setting task {}".format(type(task)))
             self._task=task
         else:
+            log.info("Returning task {}".format(type(self._task)))
             return self._task
     def checktosort(self,**kwargs):
         check=kwargs.get('check',program['params'].check())
