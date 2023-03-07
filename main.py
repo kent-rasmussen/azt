@@ -10932,6 +10932,8 @@ class ReportCitation(Report,Segments,TaskDressing):
             ui.Label(window,text=text).grid(column=0, row=i)
             i+=1
             return
+        log.info(_('Ps-Profile-Check OK; doing getresults! ({}/{}/{})').format(
+                                                 ps,check,profile))
         self.getresults()
     def __init__(self, parent): #frame, filename=None
         Segments.__init__(self,parent)
