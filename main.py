@@ -256,6 +256,7 @@ class LiftChooser(ui.Window,HasMenus):
             return
         dir=file.gethome()
         newfile=file.getnewlifturl(dir,analang.get())
+        self.newdirname=newfile.parent
         if not newfile:
             ErrorNotice(_("Problem creating file; does the directory "
                         "already exist?"),wait=True)
@@ -264,12 +265,15 @@ class LiftChooser(ui.Window,HasMenus):
             ErrorNotice(_("The file {} already exists! {}").format(newfile),
                                                                 wait=True)
             return
-        w=ui.Wait(parent=program['root'],msg=_("Setting up new LIFT file now."))
+        self.wait=ui.Wait(parent=program['root'],msg=_("Setting up new LIFT file now."))
         log.info("Beginning Copy of stock to new LIFT file.")
         self.cawldb=loadCAWL()
         self.stripcawldb()
+        self.cawldb.getentries()
+        self.cawldb.getsenses()
+        self.fillcawldbimages()
         self.copytonewfile(newfile)
-        w.close()
+        self.wait.close()
         self.newfilelocation(newfile)
         return str(newfile)
     def clonefromUSB(self):
