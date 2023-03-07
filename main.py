@@ -13070,13 +13070,13 @@ class StatusDict(dict):
             log.error("No type is set; can't renew checks!")
         if cvt not in self._checksdict:
             self._checksdict[cvt]={}
+        profile=kwargs.get('profile',program['slices'].profile())
         if cvt == 'T':
             for ps in program['slices'].pss():
                 if ps in program['toneframes']:
                     self._checksdict[cvt][ps]=list(program['toneframes'][ps])
-        else:
+        elif profile:
             """This depends on profile only"""
-            profile=kwargs.get('profile',program['slices'].profile())
             n=profile.count(cvt)
             # log.debug('Found {} instances of {} in {}'.format(n,cvt,profile))
             self._checksdict[cvt][profile]=list()
@@ -13093,6 +13093,8 @@ class StatusDict(dict):
                 #                                 self._checksdict[cvt][profile]
                 #                                         ))
             self._checksdict[cvt][profile].sort(key=len,reverse=True)
+        else:
+            log.info("Not Tone and no profile; not returning a check")
     def node(self,**kwargs):
         """This will fail if fed None values"""
         kwargs=self.checkslicetypecurrent(**kwargs)
