@@ -5642,12 +5642,9 @@ class WordCollection(Segments):
         """return to file, LIFT"""
         log.info("Selected image {}".format(url))
         self.selectionwindow.on_quit()
-        fn=self.imagename() #new file name
-        fqdn=file.getdiredurl(program['settings'].imagesdir,fn) #new url
-        with open(fqdn,'wb') as f:
-            with open(url,'rb') as u:
-                f.write(u.read())
-        self.sense.illustrationvalue(fn)
+        filename=self.sense.imagename() #new file name
+        saveimagefile(url,filename)
+        self.sense.illustrationvalue(filename)
         self.maybewrite()
         self.wordframe.pic.reloadimage()
         self.updatereturnbind()
@@ -5681,15 +5678,9 @@ class WordCollection(Segments):
                                     lambda event,x=f:self.markimage(x))
                 # img=ui.Image(f)
                 # log.info("image type1: {}".format(type(img)))
-    def imagename(self):
-        affix='.png' #not sure why this isn't there already...
-        if self.sense.cawln:
-            return '_'.join([self.sense.cawln]+self.glosses)+affix
-        else:
-            return '_'.join([self.sense.id]+self.glosses)+affix
     def getimagefiles(self):
-        if file.exists(self.selectiondir):
-            return file.getfilesofdirectory(self.selectiondir)
+        if file.exists(self.sense.imgselectiondir):
+            return file.getfilesofdirectory(self.sense.imgselectiondir)
     def selectimage(self,event=None):
         self.getglosses()
         files=self.getimagefiles()
@@ -5698,12 +5689,16 @@ class WordCollection(Segments):
         files=self.getimagefiles()
         if files: #still
             self.showimagestoselect(files)
-    def getopenclipart(self,event=None):
+    def downloadallCAWLimages(self):
+        for self.sense in program['db'].senses:
+            if not file.exists(self.sense.imgselectiondir):
+                self.getopenclipart(nogui=True)
+    def getopenclipart(self,event=None,nogui=False):
         self.wait(msg="Dowloading images from OpenClipart.org\n{}"
-                        "".format(" ".join(self.glosses)))
-        log.info("Glosses: {}".format(self.glosses))
+                        "".format(" ".join(self.sense.collectionglosses)))
+        log.info("Glosses: {}".format(self.sense.collectionglosses))
         scraper=htmlfns.ImageScraper()
-        for gloss in self.glosses:
+        for gloss in self.sense.collectionglosses:
             kwargs={'per_page':50,
                     "query":gloss #just one word at a time is less restrictive
                     }
@@ -5724,7 +5719,7 @@ class WordCollection(Segments):
                 self.images.append(i)
         log.info("Found {} images: {}".format(len(self.images),self.images))
         if self.images:
-            file.makedir(self.selectiondir)
+            file.makedir(self.sense.imgselectiondir)
         problems=0
         for i in self.images:
             url=htmlfns.imgurl(i['src'])
@@ -5735,7 +5730,8 @@ class WordCollection(Segments):
             try:
                 pic=htmlfns.getbinary(url, timeout=10)
                 # log.info("response data type: {}".format(type(response.data)))
-                i['fqdn']=file.getdiredurl(self.selectiondir,i['filename'])
+                i['fqdn']=file.getdiredurl(self.sense.imgselectiondir,
+                                        i['filename'])
                 with open(i['fqdn'],'wb') as d:
                     d.write(pic)
             except urls.MaxRetryError as e:
