@@ -5676,8 +5676,6 @@ class WordCollection(Segments):
                 if i.image:
                     i.bindchildren('<ButtonRelease-1>',
                                     lambda event,x=f:self.markimage(x))
-                # img=ui.Image(f)
-                # log.info("image type1: {}".format(type(img)))
     def getimagefiles(self):
         if file.exists(self.sense.imgselectiondir):
             return file.getfilesofdirectory(self.sense.imgselectiondir)
