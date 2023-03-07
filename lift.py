@@ -2320,6 +2320,13 @@ class Sense(Node,FieldParent):
         #     self.checkforsecondchildbylang(lang)
         # log.info("Found {} gloss(es)".format(len(self.glosses)))
         # log.info("Found gloss(es): {}".format(self.glosses))
+    def imagename(self):
+        # log.info("Making image name")
+        affix='.png' #not sure why this isn't there already...
+        if self.cawln:
+            return '_'.join([self.cawln]+self.collectionglosses)+affix
+        else:
+            return '_'.join([self.id]+self.collectionglosses)+affix
     def glossvaluesbylang(self,lang):
         try:
             assert isinstance(self.glosses[lang][0],ET.Element)
