@@ -1765,7 +1765,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         #This should only ever happen for one lang at a time, to make a demo db
         for sense in self.senses:
             sense.textvaluebyftypelang('lc',lang,
-                                        sense.formattedgloss(lang)[0] #first item of list
+                                        rx.glossdeftoform(
+                                        sense.formattedgloss(lang)[0]  #first item of list
+                                                            )
                                         )
 class EmptyTextNodePlaceholder(object):
     """Just be able to return self.text when asked."""
