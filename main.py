@@ -5688,7 +5688,14 @@ class WordCollection(Segments):
                     }
             terms=urls.urlencode(kwargs)
             url='https://openclipart.org/search/?'+terms
-            html=htmlfns.getdecoded(url)
+            try:
+                html=htmlfns.getdecoded(url)
+            except urls.MaxRetryError as e:
+                msg=_("Problem downloading webpage; check your "
+                            "internet connection!\n\n{}".format(e))
+                log.error(msg)
+                ErrorNotice(msg)
+                return
             scraper.feed(html)
             logo=[i for i in scraper.images
                                     if 'openclipart-logo-2019.svg' in i['src']]
