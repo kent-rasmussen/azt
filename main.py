@@ -13024,8 +13024,8 @@ class StatusDict(dict):
                         if type(node) is list:
                             if not node:
                                 del self[t][ps][profile][check]
-                        elif node['groups'] == []:
-                            if node['done'] != []:
+                        elif 'groups' in node and node['groups'] == []:
+                            if 'done' in node and node['done'] != []:
                                 log.error("groups verified, but not present!")
                             del self[t][ps][profile][check]
                     if self[t][ps][profile] == {}:
