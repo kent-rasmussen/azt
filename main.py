@@ -9588,12 +9588,10 @@ class Report(object):
                 "which are found in {}s: {}".format(kwargs['ps'],profiles))
             p=xlp.Paragraph(s1,t)
             log.info(t)
-            print(t)
             for kwargs['profile'] in profiles:
                 kwargs['formstosearch']=self.formspsprofile(**kwargs)
                 t=_("{} {}s".format(kwargs['profile'],kwargs['ps']))
                 s2=xlp.Section(s1,t,level=2)
-                print(t)
                 log.info(t)
                 if self.byUFgroup:
                     self.makeanalysis(**kwargs)
