@@ -12053,35 +12053,44 @@ class SortGroupButtonFrame(ui.Frame):
         # """Should I do this outside the class?"""
         # self.grid(column=column, row=row, sticky=sticky)
 class ImageFrame(ui.Frame):
-    def getimage(self):
+    def getimage(self,reload=False):
         specifiedurl=False
+        compiled=False
         if self.url and file.exists(self.url):
             i=self.url
             specifiedurl=True
         elif isinstance(self.sense,lift.Sense):
-            i=self.sense.illustrationvalue()
-            for d in [program['settings'].imagesdir,program['settings'].directory]:
-                if i and d:
-                    di=file.getdiredurl(d,i)
-                    if file.exists(di):
-                        i=di
-                        break
+            if (hasattr(self.sense,'img')
+                    and isinstance(self.sense.img,ui.Image)
+                    and not reload):
+                log.info("Found Image, using")
+                img=self.sense.img
+                compiled=True
+            else:
+                i=self.sense.illustrationvalue()
+                for d in [program['settings'].imagesdir,program['settings'].directory]:
+                    if i and d:
+                        di=file.getdiredurl(d,i)
+                        if file.exists(di):
+                            i=di
+                            break
         # log.info("trying to make image @{}".format(self.sense.illustration.valuename))
         # lift.prettyprint(self.sense.illustration)
-        try:
-            # log.info("trying to make image {}".format(i))
-            img=ui.Image(i)
-            self.hasimage=True
-            # log.info("Image OK: {}".format(img))
-        except tkinter.TclError as e:
-            if ('value for "-file" missing' not in e.args[0] and
-                    "couldn't recognize data in image file" not in e.args[0]):
-                log.info("ui.Image error: {}".format(e))
-            img=self.theme.photo['NoImage']
-            self.hasimage=False
-            # log.info("Image null: {}".format(img))
-        if not specifiedurl:
-            self.img=img
+        if not compiled:
+            try:
+                # log.info("trying to make image {}".format(i))
+                img=ui.Image(i)
+                self.hasimage=True
+                # log.info("Image OK: {}".format(img))
+            except tkinter.TclError as e:
+                if ('value for "-file" missing' not in e.args[0] and
+                        "couldn't recognize data in image file" not in e.args[0]):
+                    log.info("ui.Image error: {}".format(e))
+                img=self.theme.photo['NoImage']
+                self.hasimage=False
+                # log.info("Image null: {}".format(img))
+            if not specifiedurl:
+                self.sense.img=img
         # log.info("Image: {}".format(img))
         img.scale(program['scale'],pixels=self.pixels,resolution=self.resolution)
         self.image=img.scaled
@@ -12123,7 +12132,6 @@ class ImageFrame(ui.Frame):
             self.sense=sense
             self.reloadimage()
     def reloadimage(self):
-        self.getimage()
         for child in self.winfo_children():
             if isinstance(child,ui.Label):
                 child['image']=self.image
