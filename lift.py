@@ -2301,6 +2301,20 @@ class Sense(Node,FieldParent):
                             for lang in [i.get('lang') for i in self]
                             if lang
                     }
+        self.collectionglosses=[j #rx.glossdeftoform(i)
+                    # for g in set(self.glosslangs)&set(['en','fr'])
+                    # for k in self.sense.glosses[g]
+                    for k in self.sense.glosses['en']
+                    for i in k.textvalue().split(',')
+                    for j in rx.noparens(i).split()
+                    # for i in j
+                    if k.textvalue()
+                ]
+        self.imgselectiondir=''.join([
+                                    'images/openclipart.org/',
+                                    '_'.join([self.sense.cawln]+
+                                                self.collectionglosses)
+                                ])
         #multiple gloss entries seem to be a thing, so don't complain
         # for lang in self.glosses:
         #     self.checkforsecondchildbylang(lang)
