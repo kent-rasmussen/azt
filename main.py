@@ -3375,7 +3375,7 @@ class TaskDressing(HasMenus,ui.Window):
         #For convenience:
         self.analang=program['params'].analang()
     def makecvtok(self):
-        log.info("cvt: {}".format(program['params'].cvt()))
+        # log.info("cvt: {}".format(program['params'].cvt()))
         if isinstance(self,Tone) and not program['params'].cvt() == 'T':
             program['settings'].setcvt('T')
         if isinstance(self,Segments) and (program['params'].cvt()
