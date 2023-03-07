@@ -5680,7 +5680,6 @@ class WordCollection(Segments):
         if file.exists(self.sense.imgselectiondir):
             return file.getfilesofdirectory(self.sense.imgselectiondir)
     def selectimage(self,event=None):
-        self.getglosses()
         files=self.getimagefiles()
         if not files:
             self.getopenclipart()
