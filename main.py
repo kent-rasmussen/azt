@@ -8766,9 +8766,10 @@ class Report(object):
                             default=default
                             )
             if not hasattr(xlpr,'node'):
-                log.info(_("Not repeating report that looks already started."))
-                if kwargs.get('usegui'):
+                log.info(_("Problem creating report; see previous messages."))
+                if kwargs['usegui']:
                     self.waitdone()
+                xlpr.cleanup()
                 return
         title=_('Introduction to {} {}').format(ps,profile)
         s1=xlp.Section(s1parent,title=title)
@@ -8998,11 +8999,13 @@ class Report(object):
                                         ,str(kwargs['check'])
                                         ,'ReportXLP.xml'])
         self.checkcounts={}
+        log.info("Starting XLP report with these kwargsː {}".format(kwargs))
         xlpr=self.xlpstart(**kwargs)
         if not hasattr(xlpr,'node'):
-            log.info(_("Not repeating report that looks already started."))
+            log.info(_("Problem creating report; see previous messages."))
             if kwargs['usegui']:
                 self.waitdone()
+            xlpr.cleanup()
             return
         """"Do I need this?"""
         print(_("Getting results of Search request"))
@@ -9553,9 +9556,10 @@ class Report(object):
         reporttype='Multislice '+'-'.join(self.cvtstodo)
         xlpr=self.xlpstart(**kwargs)
         if not hasattr(xlpr,'node'):
-            log.info(_("Not repeating report that looks already started."))
+            log.info(_("Problem creating report; see previous messages."))
             if kwargs['usegui']:
                 self.waitdone()
+            xlpr.cleanup()
             return
         si=xlp.Section(xlpr,"Introduction")
         p=xlp.Paragraph(si,instr)
