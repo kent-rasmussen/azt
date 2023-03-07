@@ -14735,6 +14735,17 @@ def loadCAWL():
         log.info("Error: {}".format(e))
     log.info("Parsed stock LIFT file to tree/nodes.")
     return cawldb
+def saveimagefile(url,filename,copyto=None):
+    # log.info("Preparing to write image to new file")
+    if not copyto:
+        copyto=program['settings'].imagesdir
+    fqdn=file.getdiredurl(copyto,filename) #new url
+    # log.info("Preparing to write image to {}".format(fqdn))
+    with open(fqdn,'wb') as f:
+        # log.info("opened new file")
+        with open(url,'rb') as u:
+            # log.info("opened old file")
+            f.write(u.read())
 def pathseparate(path):
     os=platform.system()
     if os == "Windows":
