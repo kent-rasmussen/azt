@@ -397,12 +397,6 @@ class LiftChooser(ui.Window,HasMenus):
                                     command=self.submitdemolang,
                                     window=w, sticky='',
                                     column=0, row=2)
-        cbuttontext=_("Keep this as gloss language")
-        keep=ui.BooleanVar()
-        cb=ui.CheckButton(w.frame, text = cbuttontext,
-                            variable = keep,
-                            onvalue = True, offvalue = False,
-                            column=1, row=2)
         w.waitdone()
         w.wait_window(w)
         if not hasattr(self,'demolang') or not self.demolang:
