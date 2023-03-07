@@ -12132,6 +12132,7 @@ class ImageFrame(ui.Frame):
             self.sense=sense
             self.reloadimage()
     def reloadimage(self):
+        self.getimage(reload=True)
         for child in self.winfo_children():
             if isinstance(child,ui.Label):
                 child['image']=self.image
