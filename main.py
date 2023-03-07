@@ -5638,10 +5638,11 @@ class WordCollection(Segments):
         # except KeyError:
         except AttributeError as e:
             log.info("Not storing word (WordCollection): {}".format(e))
-    def markimage(self,url,event=None):
+    def markimage(self,url,w=None):
         """return to file, LIFT"""
         log.info("Selected image {}".format(url))
-        self.selectionwindow.on_quit()
+        if w:
+            w.on_quit()
         filename=self.sense.imagename() #new file name
         saveimagefile(url,filename)
         self.sense.illustrationvalue(filename)
@@ -5675,7 +5676,8 @@ class WordCollection(Segments):
                             sticky='nsew')
                 if i.image:
                     i.bindchildren('<ButtonRelease-1>',
-                                    lambda event,x=f:self.markimage(x))
+                                    lambda event,x=f,w=self.selectionwindow:
+                                            self.markimage(x,w))
     def getimagefiles(self):
         if file.exists(self.sense.imgselectiondir):
             return file.getfilesofdirectory(self.sense.imgselectiondir)
