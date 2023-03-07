@@ -53,13 +53,15 @@ class Report(object):
         self.xlptypes()
         self.stylesheet()
         self.write()
-        file.remove(self.tmpfile)
+        self.cleanup()
         t=time.time()-self.start_time
         # m=int(t/60)
         # s=t%60
         log.info("Finished in {:1.0f} minutes, {:2.3f} seconds.".format(*divmod(t,60)))
         if me:
             self.compile() #This isn't working yet.
+    def cleanup(self):
+        file.remove(self.tmpfile)
     def write(self):
         """This writes changes to XML which can be read by XXE as XLP."""
         doctype=self.node.tag
