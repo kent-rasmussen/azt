@@ -6430,6 +6430,8 @@ class WordCollectnParse(WordCollection,Parse,TaskDressing):
         program['taskchooser'].withdraw()
         #This should either be adapted to use parse or not by keyword, or have
         # another method for addnParse
+        # if me:
+        #     self.downloadallCAWLimages()
         fn=self.getwords()#?
 class ParseSlice(Parse):
     def tasktitle(self):
