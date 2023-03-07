@@ -4460,8 +4460,7 @@ class TaskDressing(HasMenus,ui.Window):
         else:
             self.task=self
             taskchooser=self.parent
-            if program['taskchooser'].ifcollectionlcsettingsdone:
-                program['status'].task(self)
+            program['status'].task(self)
         """Whenever this runs, it's the main window."""
         taskchooser.mainwindowis=self
         """At some point, I need to think through which attributes are needed,
@@ -4482,8 +4481,7 @@ class TaskDressing(HasMenus,ui.Window):
                     'showdetails']:
             if not hasattr(self,k):
                     setattr(self,k,False)
-        if taskchooser.ifcollectionlcsettingsdone:
-            self.makecvtok()
+        self.makecvtok() #this just enforces a good cvt value
         # Make the actual window
         ui.Window.__init__(self,parent)
         self.mainwindow=True
@@ -4718,9 +4716,9 @@ class TaskChooser(TaskDressing,ui.Window):
             #this maybe should depend on recordedT:
             if self.doneenough['sortT']:
                 tasks.append(TranscribeT)
-            if self.ifcollectionlcsettingsdone and self.doneenough['analysis']:
+            if self.doneenough['analysis']:
                 tasks.append(JoinUFgroups)
-            if self.ifcollectionlcsettingsdone or me:
+            if me:
                 tasks.append(ParseWords)
                 # tasks.append(ParseWords)
                 # tasks.append(ParseSlice)
@@ -5021,23 +5019,6 @@ class TaskChooser(TaskDressing,ui.Window):
             log.info(_("User didn't select a new database; continuing."))
             self.task.deiconify()
         # self.restart(self.filename)
-    def ifcollectionlc(self):
-        log.info("Considering finishing setup for post-collection projects")
-        if not self.ifcollectionlcsettingsdone: #only do this once
-            try:
-                log.info("Finishing setup for post-collection projects")
-                self.inherittaskattrs()
-                # self.makedatadict()
-                self.makeexampledict() #needed for makestatus, needs params,slices,data
-                self.maxprofiles=5 # how many profiles to check before moving on to another ps
-                self.maxpss=2 #don't automatically give more than two grammatical categories
-                self.ifcollectionlcsettingsdone=True
-            except Exception as e:
-                log.error(_("There seems to be a problem loading your "
-                "database with post-word collection settings; I will remove "
-                "it as default so you can open another"))
-                file.writefilename()
-                raise
     def timetowrite(self):
         """only write to file every self.writeeverynwrites times you might."""
         self.writeable+=1 #and tally here each time this is asked
@@ -5091,7 +5072,6 @@ class TaskChooser(TaskDressing,ui.Window):
         self.datacollection=True # everyone starts here?
         self.showreports=False
         self.showingreports=False
-        self.ifcollectionlcsettingsdone=False
         self.interfacelangs=getinterfacelangs()
         self.filename=FileChooser().name
         self.splash = Splash(self)
@@ -5130,6 +5110,9 @@ class TaskChooser(TaskDressing,ui.Window):
             ErrorNotice(e)
         self.splash.progress(100)
         self.splash.destroy()
+        self.makeexampledict() #needed for makestatus, needs params,slices,data
+        self.maxprofiles=5 # how many profiles to check before moving on to another ps
+        self.maxpss=2 #don't automatically give more than two grammatical categories
         self.makedefaulttask() #normal default
         # self.gettask() # let the user pick
         """Do I want this? Rather give errors..."""
