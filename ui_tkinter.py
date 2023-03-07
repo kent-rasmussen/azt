@@ -1852,7 +1852,7 @@ def availablexy(self,w=None):
         is done on the toplevel widget, after the above recursive function is
         done across all the other widgets (so we just get window decoration)."""
         titlebarHeight = 50 #not working: self.winfo_rooty() - self.winfo_y()
-        borderSize= 0 #not working: self.winfo_rootx() - self.winfo_x()
+        borderSize= 50 #not working: self.winfo_rootx() - self.winfo_x()
         self.othercolwidth+=borderSize*2
         self.otherrowheight+=titlebarHeight+100
         self.maxheight=self.winfo_screenheight()-self.otherrowheight
