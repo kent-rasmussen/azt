@@ -6125,6 +6125,11 @@ class Parse(Segments):
                 font='title',
                 row=0,column=0,columnspan=2)
         l.wrap()
+        if ps == self.nominalps:
+            ftype='pl'
+        elif ps == self.verbalps:
+            ftype='imp'
+        ImageFrame(w.frame,self.parser.sense,ftype=ftype,row=0,column=2)
         segments=ui.StringVar()
         segments.set(self.parser.entry.lc.textvaluebylang(self.analang))
         e=ui.EntryField(w.frame,textvariable=segments,
