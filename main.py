@@ -5638,20 +5638,6 @@ class WordCollection(Segments):
         # except KeyError:
         except AttributeError as e:
             log.info("Not storing word (WordCollection): {}".format(e))
-    def getglosses(self):
-        self.glosses=[j #rx.glossdeftoform(i)
-                    # for g in set(self.glosslangs)&set(['en','fr'])
-                    # for k in self.sense.glosses[g]
-                    for k in self.sense.glosses['en']
-                    for i in k.textvalue().split(',')
-                    for j in rx.noparens(i).split()
-                    # for i in j
-                    if k.textvalue()
-                ]
-        self.selectiondir=''.join([
-                                    'images/openclipart.org/',
-                                    '_'.join([self.sense.cawln]+self.glosses)
-                                ])
     def markimage(self,url,event=None):
         """return to file, LIFT"""
         log.info("Selected image {}".format(url))
