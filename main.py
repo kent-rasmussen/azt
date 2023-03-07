@@ -13098,6 +13098,11 @@ class StatusDict(dict):
     def node(self,**kwargs):
         """This will fail if fed None values"""
         kwargs=self.checkslicetypecurrent(**kwargs)
+        if None in [kwargs['cvt'],kwargs['ps'],kwargs['profile'],
+                                                            kwargs['check']]:
+            log.error("None found in {} kwarg ({})".format([i for i in kwargs
+                                                            if not kwargs[i]],
+                                                            kwargs))
         self.dictcheck(**kwargs)
         return self[kwargs['cvt']][kwargs['ps']][kwargs['profile']][
                                                                 kwargs['check']]
