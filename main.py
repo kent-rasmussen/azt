@@ -3372,6 +3372,8 @@ class TaskDressing(HasMenus,ui.Window):
                 setattr(self,attr,getattr(program['settings'],attr))
             else:
                 log.info("Didn't find {} in {}".format(attr,program['settings']))
+        #For convenience:
+        self.analang=program['params'].analang()
     def makecvtok(self):
         log.info("cvt: {}".format(program['params'].cvt()))
         if isinstance(self,Tone) and not program['params'].cvt() == 'T':
