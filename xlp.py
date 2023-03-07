@@ -192,7 +192,6 @@ class Report(object):
         # }
         # Run this XeLaTeX form through xelatex.  The result is the PDF.
         #     DoTeXPDF (Linux/Mac) or DoTeXPDF.bat (Windows)
-
     def frontmatter(self):
         fm=ET.SubElement(self.node, 'frontMatter')
         ti=ET.SubElement(fm, 'title')
