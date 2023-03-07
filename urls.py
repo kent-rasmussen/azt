@@ -7,5 +7,6 @@ urlopen=request.urlopen
 import urllib3
 http = urllib3.PoolManager()
 MaxRetryError=urllib3.exceptions.MaxRetryError
+NewConnectionError=urllib3.exceptions.NewConnectionError
 # resp = http.request
 # urllib.request.Request
