@@ -355,6 +355,30 @@ class LiftChooser(ui.Window,HasMenus):
             # they're doing
             log.info(_("returned more or less than one lift file! ({})"
                     ).format(l))
+    def fillcawldbimages(self):
+        log.info("Filling in empty image fields where possible")
+        todo=self.cawldb.senses
+        # log.info("Filling in {} image fields".format(len(todo)))
+        # log.info("Writing to {}".format(file.getimagesdir(self.newdirname)))
+        for sense in todo:
+            # log.info("Working on line number {}".format(sense.cawln))
+            # log.info("Working on sense {}".format(sense.id))
+            # log.info("Working with image field {}".format(sense.illustrationvalue()))
+            # log.info("Working with image directory {}".format(sense.imgselectiondir))
+            # log.info("Image directory present: {}".format(file.exists(sense.imgselectiondir)))
+            # log.info("Working with image files {}".format(
+            #                                 file.getfilesofdirectory(sense.imgselectiondir)))
+            if sense.cawln and not sense.illustrationvalue():
+                # log.info("Found CAWL sense without image field")
+                if file.exists(sense.imgselectiondir):
+                    urls=file.getfilesofdirectory(sense.imgselectiondir)
+                    if urls:
+                        filename=sense.imagename() #new file name
+                        # log.info("Working with image filename {}".format(filename))
+                        saveimagefile(urls[0],filename,copyto=file.getimagesdir(self.newdirname)) #just take the first one
+                        sense.illustrationvalue(filename)
+                # log.info("Setting progress {}".format(todo.index(sense)*100/len(todo)))
+                self.wait.progress(todo.index(sense)*100/len(todo))
     def makeCAWLdemo(self):
         title=_("Make a Demo LIFT Database")
         w=ui.Window(program['root'],title=title)
