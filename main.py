@@ -8258,6 +8258,7 @@ class Sound(object):
                                 self.audiodir,recheck)
     def __init__(self):
         self.audiodir=program['settings'].audiodir
+        self.audiolang=program['params'].audiolang()
         self.soundcheck()
 class Record(Sound,TaskDressing):
     """This holds all the Sound methods specific for Recording."""
