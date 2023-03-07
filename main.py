@@ -12065,6 +12065,7 @@ class ImageFrame(ui.Frame):
                 log.info("Found Image, using")
                 img=self.sense.img
                 compiled=True
+                self.hasimage=True
             else:
                 i=self.sense.illustrationvalue()
                 for d in [program['settings'].imagesdir,program['settings'].directory]:
