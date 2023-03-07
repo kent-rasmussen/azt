@@ -5738,7 +5738,7 @@ class WordCollection(Segments):
                 log.error("Problem downloading image: {}".format(e))
                 problems+=1
             self.waitprogress(self.images.index(i)*100/len(self.images))
-        if me or len(self.images) < 5:
+        if (me and not nogui) or len(self.images) < 5:
             text="Found {} images!".format(len(self.images))
             if problems:
                 text+=_("\nProblems downloading {} images".format(problems))
