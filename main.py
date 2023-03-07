@@ -12576,7 +12576,7 @@ class SliceDict(dict):
         e+='\n'+"Invalid entries found: {}/{}".format(profilecountInvalid,
                                                         sum(self.values(),
                                                         profilecountInvalid))
-        if not len(wcounts):
+        if program['db'].analangs and not len(wcounts):
             e+='\n'+"This may be a problem with your analysis language: {}".format(
             program['params'].analang())
             e+='\n'+"Or a problem with your database."
