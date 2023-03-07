@@ -13298,9 +13298,12 @@ class CheckParameters(dict):
     def check(self,check=None,unset=False):
         """This needs to change/clear subchecks"""
         if unset or check:
+            log.info("Setting check {}".format(check))
             self._check=check
         elif not hasattr(self,'_check'):
+            log.info("Making check attribute ({})".format(check))
             self._check=None
+        # log.info("Returning check {}".format(self._check))
         return self._check
     def cvcheckname(self,code=None):
         if self.cvt() == 'T':
