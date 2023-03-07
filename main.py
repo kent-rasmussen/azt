@@ -9341,7 +9341,6 @@ class Report(object):
         kwargs['cvt']=kwargs.get('cvt',program['params'].cvt()) #only send on one
         ps=kwargs.get('ps',program['slices'].ps())
         kwargs['profile']=kwargs.get('profile',program['slices'].profile())
-        groups=program['status'].groups(**kwargs) #was cvt only
         #CV checks depend on profile, too
         if isinstance(self,Multicheck):
             checksunordered=program['status'].checks(**kwargs)
