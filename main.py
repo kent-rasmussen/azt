@@ -9796,6 +9796,8 @@ class Report(object):
             self.minwords=program['settings'].minimumwordstoreportUFgroup=3
         self.s=program['settings'].s
         self.byUFgroup=False
+        if not isinstance(self,Multicheck) and not program['params'].check():
+            self.getcheck()
 class Multislice(object):
     """This class just triggers which settings are visible to the user, and
     updates changes from child classes"""
