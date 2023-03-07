@@ -10146,7 +10146,7 @@ class SortT(Sort,Tone,TaskDressing):
         TaskDressing.__init__(self,parent)
         program['params'].cvt('T')
         Sort.__init__(self, parent)
-        log.info("status: {}".format(type(program['status'])))
+        # log.info("status: {}".format(type(program['status'])))
         # Not sure what this was for (XML?):
         self.pp=pprint.PrettyPrinter()
         """Are we OK without these?"""
