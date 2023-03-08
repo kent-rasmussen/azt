@@ -1860,6 +1860,18 @@ class Wait(Window): #tkinter.Toplevel?
 def now():
     return datetime.datetime.utcnow().isoformat()#[:-7]+'Z'
 def availablexy(self,w=None):
+    def padstoint(p):
+        """Pads can be expressed as integers or (before,after) tuples"""
+        if str(p) == '1m':
+            return 5
+        try:
+            r=int(str(p))*2
+        except:
+            log.info(p)
+            p=tuple(p)
+            r=int(p[0])+int(p[-1])
+        # log.info("Returning pad {}".format(r))
+        return r
     if w is None: #initialize a first run
         w=self
         self.otherrowheight=0
