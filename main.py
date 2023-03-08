@@ -12064,11 +12064,11 @@ class ImageFrame(ui.Frame):
             i=self.url
             specifiedurl=True
         elif isinstance(self.sense,lift.Sense):
-            if (hasattr(self.sense,'img')
-                    and isinstance(self.sense.img,ui.Image)
+            if (hasattr(self.sense,'image')
+                    and isinstance(self.sense.image,ui.Image)
                     and not reload):
                 log.info("Found Image, using")
-                img=self.sense.img
+                image=self.sense.image
                 compiled=True
                 self.hasimage=True
             else:
@@ -12084,21 +12084,21 @@ class ImageFrame(ui.Frame):
         if not compiled:
             try:
                 # log.info("trying to make image {}".format(i))
-                img=ui.Image(i)
+                image=ui.Image(i)
                 self.hasimage=True
                 # log.info("Image OK: {}".format(img))
             except tkinter.TclError as e:
                 if ('value for "-file" missing' not in e.args[0] and
                         "couldn't recognize data in image file" not in e.args[0]):
                     log.info("ui.Image error: {}".format(e))
-                img=self.theme.photo['NoImage']
+                image=self.theme.photo['NoImage']
                 self.hasimage=False
                 # log.info("Image null: {}".format(img))
             if not specifiedurl:
-                self.sense.img=img
+                self.sense.image=image
         # log.info("Image: {}".format(img))
-        img.scale(program['scale'],pixels=self.pixels,resolution=self.resolution)
-        self.image=img.scaled
+        scaledimage(image,pixels=self.pixels,resolution=self.resolution)
+        self.image=image.scaled #Imageframe.image = sense.image.scaled
     def pluralframe(self):
         ui.Label(self,text='',image=self.image,
                 compound="bottom",
