@@ -7494,9 +7494,13 @@ class Sort(object):
                         "").format(self.check,self.ps,program['toneframes'][self.ps])
             log.error(text)
         else:
+            frames=program['toneframes'].get(self.ps)
+            if frames:
+                frame=frames.get(self.check)
+            else:
+                frame=None # e.g., for segmental checks
             text=sense.formatted(self.analang,self.glosslangs,
-                            program['params'].ftype(),
-                            program['toneframes'][self.ps].get(self.check))
+                                program['params'].ftype(),frame)
         entryview=ui.Frame(self.runwindow.frame, column=1, row=1, sticky="new")
         self.sortitem=self.buttonframe.sortitem=ui.Label(entryview,
                                 text=text,font='readbig',
