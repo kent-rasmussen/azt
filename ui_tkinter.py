@@ -81,8 +81,12 @@ class Theme(object):
                     try:
                         assert self.fakeroot.winfo_exists()
                     except:
-                        self.fakeroot=Root(program=self.program.copy(),noimagescaling=True)
-                        self.fakeroot.w=Wait(parent=self.fakeroot,msg="Scaling Images (Just this once)")
+                        program=self.program.copy()
+                        program['theme']=None
+                        self.fakeroot=Root(program,
+                                            noimagescaling=True)
+                        self.fakeroot.ww=Wait(parent=self.fakeroot,
+                                        msg="Scaling Images (Just this once)")
                     if not self.scalings:
                         maxscaled=100
                     else:
@@ -802,8 +806,10 @@ class Root(Exitable,tkinter.Tk):
     #     self.theme=theme
     #     self['background']=self.theme.background
     #     self['bg']=self.theme.background
-    def __init__(self, theme=None, program=None, *args, **kwargs):
-        """Some roots aren't THE root, e.g., contextmenu. Furthermore, I'm
+    def __init__(self, program={}, *args, **kwargs):
+        """specify theme name in program['theme']"""
+        """bring in program here, send it to theme, everyone accesses scale from there."""
+        """"Some roots aren't THE root, e.g., contextmenu. Furthermore, I'm
         currently not showing the root, so the user will never exit it."""
         self.mainwindow=False
         self.exitFlag = ExitFlag()
@@ -1286,7 +1292,7 @@ class ContextMenu(Childof):
     def _unbind_to_makemenus(self,event):
         self.parent.unbind_all('<Button-3>')
     def getroot(self):
-        self.root=Root(self.theme) #tkinter.Tk()
+        self.root=Root(self.parent._root().program) #self.parent._root().program #tkinter.Tk()
         self.root.withdraw()
         self.root.parent=self.parent
         Childof.inherit(self.root,self.parent)
@@ -1875,7 +1881,7 @@ def nfc(x):
 def nfd(x):
     #This makes decomposed characters. e.g., vowel + accent (not used yet)
     return unicodedata.normalize('NFD', str(x))
-def testapp():
+def testapp(program):
     def progress(event):
         import time
         for i in range(101):
@@ -1889,7 +1895,7 @@ def testapp():
         l['text']="new text"
     def textadd(x):
         l['text']+=str(x)
-    r=Root(theme='Kim')
+    r=Root(program=program)
     r.withdraw()
     w=Window(r)
     Label(w.outsideframe,text="Seems to work!",font='title',
@@ -1951,6 +1957,11 @@ def testapp():
     # parent.winfo_viewable()
     r.mainloop()
 if __name__ == '__main__':
+    program={'name':'tkinter UI module',
+            'url':'https://github.com/kent-rasmussen/azt',
+            'Email':'kent_rasmussen@sil.org',
+            'theme':'Kim'
+            }
     """To Test:"""
     # loglevel='Debug'
-    testapp()
+    testapp(program)
