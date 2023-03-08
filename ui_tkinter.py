@@ -709,7 +709,8 @@ class Childof(object):
                     'wraplength',
                     # 'photo', #in theme
                     'renderer',
-                    'program','exitFlag']
+                    # 'program',
+                    'exitFlag']
         else:
             attrs=[attr]
         for attr in attrs:
@@ -837,10 +838,6 @@ class Root(Exitable,tkinter.Tk):
         self.exitFlag = ExitFlag()
         tkinter.Tk.__init__(self)
         self.withdraw() #this is almost always correct
-        if program:
-            self.program=program
-        else:
-            self.program={}
         if theme and not isinstance(theme,Theme) and type(theme) is str:
             self.theme=Theme(self.program,theme, **kwargs)
         elif theme and isinstance(theme,Theme):
@@ -1603,7 +1600,8 @@ class ScrollingFrame(Frame):
         """make the canvas inherit these values like a frame"""
         self.canvas['background']=parent['background']
         for attr in ['fonts','theme','debug','wraplength','photo','renderer',
-                'program','exitFlag']:
+                # 'program',
+                'exitFlag']:
             if hasattr(self.canvas.parent,attr):
                 setattr(self.canvas,attr,getattr(self.canvas.parent,attr))
         # inherit(self.canvas)
