@@ -77,11 +77,8 @@ class Theme(object):
         return text
     def setimages(self):
         # Program icon(s) (First should be transparent!)
+        scale=self.program['scale'] #just reading this here
         self.scalings=[]
-        try:
-            scale=self.program['scale']
-        except (NameError,AttributeError):
-            scale=1
         self.photo={}
         #do these once:
         if scale-1: #x != y: #should be the same as scale != 1
@@ -349,11 +346,8 @@ class Theme(object):
                             'white': 'white'}
                     }
     def setfonts(self,fonttheme='default'):
+        scale=self.program['scale'] #just reading this here
         log.info("Setting fonts with {} theme".format(fonttheme))
-        try:
-            scale=self.program['scale']
-        except (NameError,AttributeError):
-            scale=1
         if fonttheme == 'smaller':
             default=int(12*scale)
         else:
