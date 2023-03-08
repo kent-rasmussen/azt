@@ -105,12 +105,12 @@ def remove(file):
         os.remove(fullpathname(file))
     else:
         log.debug(_("Tried to remove {}, but I can't find it.").format(file))
-def makedir(dir):
+def makedir(dir,**kwargs):
     if type(dir) is str:
         dir=getfile(dir)
     if not exists(dir):
         dir.mkdir(parents=True)
-    else:
+    elif not kwargs.get('silent'):
         log.info("directory {} already exists!".format(dir))
 def getnewlifturl(dir,xyz):
     dir=pathlib.Path(dir)
