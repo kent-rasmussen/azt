@@ -749,16 +749,22 @@ class UI(ObectwArgs):
         except tkinter.TclError:
             pass
     def __init__(self): #because this is used everywhere.
-        if hasattr(self,'theme'):
-            for a in ['background','bg','troughcolor']:
-                if a in self.keys():
-                    self[a]=self.theme.background
-            for a in ['ipady','ipadx','pady','padx']:
-                if a in self.keys() and hasattr(self.theme,a):
-                    self[a]=getattr(self.theme,a)
-            for a in ['activebackground','selectcolor']:
-                if a in self.keys():
-                    self[a]=self.theme.activebackground
+        # log.info("UI self._root(): {} ({})".format(self._root(),type(self._root())))
+        # log.info("UI self._root() dir: {}".format(dir(self._root())))
+        # log.info("self.parent: {} ({})".format(self.parent,type(self.parent)))
+        # log.info("self.parent._root(): {} ({})".format(self.parent._root(),type(self.parent._root())))
+        # self.theme=self._root().program['theme']
+        # log.info("UI {}.theme({}).photo keys: {}".format(self,self.theme,
+        #                                                 list(self.theme.photo)))
+        for a in ['background','bg','troughcolor']:
+            if a in self.keys():
+                self[a]=self.theme.background
+        for a in ['ipady','ipadx','pady','padx']:
+            if a in self.keys() and hasattr(self.theme,a):
+                self[a]=getattr(self.theme,a)
+        for a in ['activebackground','selectcolor']:
+            if a in self.keys():
+                self[a]=self.theme.activebackground
             # try:
             #     self['background']=self.theme.background
             #     self['bg']=self.theme.background
