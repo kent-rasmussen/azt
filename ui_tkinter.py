@@ -87,8 +87,10 @@ class Theme(object):
             file.makedir(file.fullpathname(scaledalreadydir)) #in case not there
         def mkimg(name,filename):
             relurl=file.getdiredurl('images/',filename)
+            # log.info("scale: {}".format(scale))
             if scale-1: #x != y:
                 scaledalready=file.getdiredurl(scaledalreadydir,filename)
+                # log.info("Looking for {}".format(scaledalready))
                 if file.exists(file.fullpathname(scaledalready)):
                     # log.info("scaled image exists for {}".format(filename))
                     relurl=scaledalready
@@ -114,7 +116,7 @@ class Theme(object):
                         #lower option if higher fails due to memory limitations
                         # y=int(y)
                         x=int(scale*y)
-                        log.info("Scaling {} @{} resolution".format(relurl,y)) #Just do this once!
+                        # log.info("Scaling {} @{} resolution".format(relurl,y)) #Just do this once!
                         try:
                             img = Image(file.fullpathname(relurl))
                             # keep these at full size, for now
@@ -123,6 +125,8 @@ class Theme(object):
                                 self.photo[name]=img.scaled
                             else:
                                 self.photo[name]=img
+                            # log.info("scaledalready.parent: {}".format(scaledalready.parent))
+                            # log.info("parent: {}".format(scaledalreadydir != scaledalready.parent))
                             if scaledalready.parent != scaledalreadydir:
                                 file.makedir(scaledalready.parent,silent=True)
                             self.photo[name].write(scaledalready)
@@ -137,6 +141,7 @@ class Theme(object):
                                 continue
             # log.info("Using {}".format(relurl))
             self.photo[name] = Image(file.fullpathname(relurl))
+            log.info("Compiled {} {}".format(name,relurl))
         imagelist=[ ('transparent','AZT stacks6.png'),
                             ('tall','AZT clear stacks tall.png'),
                             ('small','AZT stacks6_sm.png'),
@@ -199,7 +204,7 @@ class Theme(object):
         self.startruntime()
         for n,(name,filename) in enumerate(imagelist):
             try:
-                #hyperthread here!
+                #Can't hyperthread here!
                 mkimg(name,filename)
             except Exception as e:
                 log.info("Image {} ({}) not compiled ({})".format(
@@ -250,8 +255,6 @@ class Theme(object):
                                 # darkcolor=self.background,
                                 # lightcolor=self.background
                                 )
-    # kwargs['troughcolor']=self.theme.background
-    # kwargs['background']=self.theme.activebackground
     def setthemes(self):
         self.themes={'lightgreen':{
                             'background':'#c6ffb3',
@@ -842,6 +845,7 @@ class Image(tkinter.PhotoImage):
         self.biggerby(int(x))
         # log.info("Image: {} ({})".format(self.scaled, self.maxhw(scaled=True)))
         self.smallerby(int(resolution))
+        # self[pixels]=self.scaled
         # log.info("Image: {} ({})".format(self.scaled, self.maxhw(scaled=True)))
     def __init__(self,filename):
         # self.name=filename
@@ -887,6 +891,9 @@ class Root(Exitable,tkinter.Tk):
         self.renderer=Renderer()
         Exitable.__init__(self)
         UI.__init__(self)
+        # log.info("self.theme.photo keys: {}".format(list(self.theme.photo)))
+        # log.info("self.theme({}).photo keys: {}".format(self.theme,list(self.theme.photo)))
+        log.info("Root initialized")
 """These have parent (Childof), but no grid"""
 class Toplevel(Childof,Exitable,tkinter.Toplevel,UI): #NoParent
     """This and all Childof classes should have a parent, to inherit a common
@@ -895,6 +902,8 @@ class Toplevel(Childof,Exitable,tkinter.Toplevel,UI): #NoParent
         self.mainwindow=False
         Childof.__init__(self,parent)
         tkinter.Toplevel.__init__(self)
+        # log.info("Toplevel._root(): {} ({})".format(self._root(),type(self._root())))
+        # log.info("Toplevel.parent._root(): {} ({})".format(self.parent._root(),type(self.parent._root())))
         Exitable.__init__(self)
         UI.__init__(self)
         self.protocol("WM_DELETE_WINDOW", lambda s=self: Window.on_quit(s))
@@ -1351,6 +1360,10 @@ class ContextMenu(Childof):
     def _unbind_to_makemenus(self,event):
         self.parent.unbind_all('<Button-3>')
     def getroot(self):
+        # log.info("parent: {}".format(self.parent))
+        # log.info("parent._root(): {}".format(self.parent._root()))
+        # log.info("parent._root().program: {}".format(self.parent._root().program))
+        # log.info("parent._root().program['theme']: {}".format(self.parent._root().program['theme']))
         self.root=Root(self.parent._root().program) #self.parent._root().program #tkinter.Tk()
         self.root.withdraw()
         self.root.parent=self.parent
