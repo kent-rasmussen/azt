@@ -422,11 +422,28 @@ class Theme(object):
         for kwarg in ['ipady','ipadx','pady','padx']:
             if kwarg in kwargs:
                 setattr(self,kwarg,kwargs[kwarg])
-    def __init__(self,program={},name=None,**kwargs):
+    def __init__(self,program,**kwargs):
+        self.program=program
+        """This can be accessed elsewhere in this module
+        through widget._root().theme.program"""
+        if kwargs.get('noimagescaling'):
+            self.originaltheme=self.program['theme']
+            self.name=None
+        else:
+            if 'theme' not in self.program:
+                self.name=None
+            elif isinstance(self.program['theme'],str):
+                self.name=self.program['theme']
+            elif isinstance(self.program['theme'],Theme):
+                log.error("Asked to make a theme attribute, with "
+                "program['theme']={} ({})".format(self.program['theme'],
+                                                type(self.program['theme'])))
+                log.error("Stopping theme creation here.")
+                return #only do the following only once per run
+        self.program['theme']=self #this theme needs to be in use, either way
+        # log.info("making theme with program {}".format(self.program))
         # I should allow a default theme here, so I can display GUI without
         # any of this already done
-        self.program=program
-        self.name=name
         self.setpads(**kwargs)
         self.setthemes()
         if kwargs.get('noimagescaling'):
@@ -438,6 +455,8 @@ class Theme(object):
         self.setimages()
         self.setfonts()
         super(Theme, self).__init__()
+        # log.info("self.photo keys: {}".format(list(self.photo)))
+        # log.info("Theme initialized: {}".format(self))
 class ExitFlag(object):
     def istrue(self):
         # log.debug("Returning {} exitflag".format(self.value))
