@@ -429,7 +429,7 @@ class Theme(object):
         self.name=name
         self.setpads(**kwargs)
         self.setthemes()
-        if 'noimagescaling' in kwargs and kwargs['noimagescaling']:
+        if kwargs.get('noimagescaling'):
             self.program['scale']=1
         else:
             self.setscale()
