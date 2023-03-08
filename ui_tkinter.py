@@ -200,8 +200,10 @@ class Theme(object):
             self.logfinished("Image compilation")
             self.fakeroot.destroy()
             self.fakeroot.w.close()
-        except:
             self.program['theme'].unbootstraptheme()
+        except Exception as e:
+            # log.info("Something happened: {}".format(e))
+            # raise
             pass
     def settheme(self):
         if not self.name:
