@@ -834,16 +834,17 @@ class Root(Exitable,tkinter.Tk):
         """bring in program here, send it to theme, everyone accesses scale from there."""
         """"Some roots aren't THE root, e.g., contextmenu. Furthermore, I'm
         currently not showing the root, so the user will never exit it."""
+        self.program=program
         self.mainwindow=False
         self.exitFlag = ExitFlag()
         tkinter.Tk.__init__(self)
         self.withdraw() #this is almost always correct
-        if theme and not isinstance(theme,Theme) and type(theme) is str:
-            self.theme=Theme(self.program,theme, **kwargs)
-        elif theme and isinstance(theme,Theme):
-            self.theme=theme
-        else:
-            self.theme=Theme(self.program, **kwargs) #OK if program==None
+        try:
+            assert not kwargs.get('noimagescaling') #otherwise, make copy theme
+            assert isinstance(self.program['theme'],Theme) #use what's there
+            self.theme=self.program['theme']
+        except (KeyError,AssertionError):
+            self.theme=Theme(self.program, **kwargs)
         self.renderer=Renderer()
         Exitable.__init__(self)
         UI.__init__(self)
