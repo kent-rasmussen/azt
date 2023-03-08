@@ -137,7 +137,7 @@ class Theme(object):
                                 continue
             # log.info("Using {}".format(relurl))
             self.photo[name] = Image(file.fullpathname(relurl))
-        for name,filename in [ ('transparent','AZT stacks6.png'),
+        imagelist=[ ('transparent','AZT stacks6.png'),
                             ('tall','AZT clear stacks tall.png'),
                             ('small','AZT stacks6_sm.png'),
                             ('icon','AZT stacks6_icon.png'),
@@ -194,8 +194,10 @@ class Theme(object):
                             ('uncheckedbox','unchecked.png'),
                             ('NoImage','openclipart.org/Image-Not-Found.png'),
                             ('Order!','openclipart.org/order!.png'),
-                        ]:
+                        ]
+        ntodo=len(imagelist)
         self.startruntime()
+        for n,(name,filename) in enumerate(imagelist):
             try:
                 #hyperthread here!
                 mkimg(name,filename)
@@ -203,6 +205,10 @@ class Theme(object):
                 log.info("Image {} ({}) not compiled ({})".format(
                             name,filename,e
                             ))
+            try:
+                self.fakeroot.ww.progress(n*100/ntodo)
+            except:
+                pass
         try:
             self.logfinished("Image compilation")
             self.fakeroot.destroy()
