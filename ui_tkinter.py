@@ -216,12 +216,11 @@ class Theme(object):
                 if platform.uname().node == 'CS-477':
                     self.name='pink'
                 if (platform.uname().node == 'karlap' and
-                        self.program and
-                        not self.program['production']):
+                        not self.program.get('production')):
                     self.name='Kim' #for my development
             except Exception as e:
                 log.info("Assuming I'm not working from main ({}).".format(e))
-        if self.name not in self.themes:
+        elif self.name not in self.themes:
             print("Sorry, that theme doesn't seem to be set up. Pick from "
             "these options:",self.themes.keys())
             exit()
