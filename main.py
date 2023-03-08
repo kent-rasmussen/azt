@@ -12072,13 +12072,7 @@ class ImageFrame(ui.Frame):
                 compiled=True
                 self.hasimage=True
             else:
-                i=self.sense.illustrationvalue()
-                for d in [program['settings'].imagesdir,program['settings'].directory]:
-                    if i and d:
-                        di=file.getdiredurl(d,i)
-                        if file.exists(di):
-                            i=di
-                            break
+                i=getimagelocationURI(self.sense)
         # log.info("trying to make image @{}".format(self.sense.illustration.valuename))
         # lift.prettyprint(self.sense.illustration)
         if not compiled:
