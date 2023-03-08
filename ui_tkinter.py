@@ -824,17 +824,16 @@ class BooleanVar(tkinter.BooleanVar):
         super(tkinter.BooleanVar, self).__init__(*args, **kwargs)
 """below here has UI"""
 class Root(Exitable,tkinter.Tk):
-    """docstring for Root."""
-    # def settheme(self,theme):
-    #     self.theme=theme
-    #     self['background']=self.theme.background
-    #     self['bg']=self.theme.background
+    """this is the root of the tkinter GUI."""
     def __init__(self, program={}, *args, **kwargs):
         """specify theme name in program['theme']"""
         """bring in program here, send it to theme, everyone accesses scale from there."""
         """"Some roots aren't THE root, e.g., contextmenu. Furthermore, I'm
         currently not showing the root, so the user will never exit it."""
+        # log.info("Root called with program dict {}".format(program))
         self.program=program
+        if 'root' not in self.program:
+            self.program['root']=self
         self.mainwindow=False
         self.exitFlag = ExitFlag()
         tkinter.Tk.__init__(self)
