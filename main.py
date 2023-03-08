@@ -15362,7 +15362,9 @@ if __name__ == "__main__":
                     multiprocessing.cpu_count())
     try:
         import psutil
-        text+=", at {}Mhz".format(psutil.cpu_freq(percpu=True))
+        text+=", at {}Mhz".format(collections.Counter(
+                                                    psutil.cpu_freq(percpu=True)
+                                                    ).most_common())
     except ModuleNotFoundError:
         log.info("No psutil; no cpu info.")
     log.info(text)
