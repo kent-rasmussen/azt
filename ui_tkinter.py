@@ -1896,18 +1896,23 @@ def testapp(program):
     def textadd(x):
         l['text']+=str(x)
     r=Root(program=program)
+    log.info("root is {}".format(r))
     r.withdraw()
     w=Window(r)
+    log.info("window is {}".format(w))
     Label(w.outsideframe,text="Seems to work!",font='title',
             row=0,column=0)# loglevel='Debug'
     l=Label(w.outsideframe,text="At least this much",
             row=1,column=0)# loglevel='Debug'
+    # log.info("l dir is {}".format(dir(l)))
+    log.info("l _root is {}".format(l._root()))
     log.info("Image dict: {}".format(r.theme.photo))
     # img=r.theme.photo['transparent']
     img=r.theme.photo['NoImage']
-    log.info("Image: {} ({})".format(img, img.maxhw()))
-    img.scale(scale=1, pixels=100,resolution=10)
-    log.info("Image: {} ({})".format(img.scaled, img.maxhw(scaled=True)))
+    log.info("Image: {} ({})".format(img, Image.maxhw(img)))
+    log.info("Image dir: {}".format(dir(img)))
+    img.scale(program['scale'],pixels=100,resolution=10)
+    log.info("Image: {} ({})".format(img.scaled, Image.maxhw(img,scaled=True)))
     l['image']=img.scaled
     l['compound']="bottom"
     ToolTip(l,"this image has a tooltip")
