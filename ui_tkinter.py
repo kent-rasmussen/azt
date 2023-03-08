@@ -433,10 +433,10 @@ class Theme(object):
             self.program['scale']=1
         else:
             self.setscale()
-        self.setimages()
-        self.setfonts()
         self.settheme()
         log.info("Using {} theme ({})".format(self.name,self.program))
+        self.setimages()
+        self.setfonts()
         super(Theme, self).__init__()
 class ExitFlag(object):
     def istrue(self):
