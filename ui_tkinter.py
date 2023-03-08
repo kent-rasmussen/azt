@@ -393,10 +393,10 @@ class Theme(object):
         overstrike - font strikeout (0 - none, 1 - strikeout)
         """
     def setscale(self):
-        #this computer: (this doesn't pick up changes, so just doing it here)
+        program=self.program #reading and setting here
         root=tkinter.Tk() #just to get these values
-        h = self.program['screenh'] = root.winfo_screenheight()
-        w = self.program['screenw'] = root.winfo_screenwidth()
+        h = program['screenh'] = root.winfo_screenheight()
+        w = program['screenw'] = root.winfo_screenwidth()
         wmm = root.winfo_screenmmwidth()
         hmm = root.winfo_screenmmheight()
         root.destroy()
@@ -410,15 +410,16 @@ class Theme(object):
         xmin=min(hx,wx,hmmx,wmmx)
         xmax=max(hx,wx,hmmx,wmmx)
         if xmax-1 > 1-xmin:
-            self.program['scale']=xmax
+            program['scale']=xmax
         else:
-            self.program['scale']=xmin
-        if self.program['scale'] < 1.02 and self.program['scale'] > 0.98:
+            program['scale']=xmin
+        if program['scale'] < 1.02 and program['scale'] > 0.98:
             log.info("Probably shouldn't scale in this case (scale: {})".format(
-                                                        self.program['scale']))
-            self.program['scale']=1
+                                                        program['scale']))
+            program['scale']=1
+        # program['scale']=0.75 #for testing
         log.info("Largest variance from 1:1 ratio: {} (this will be used to scale "
-                "stuff.)".format(self.program['scale']))
+                "stuff.)".format(program['scale']))
     def setpads(self,**kwargs):
         for kwarg in ['ipady','ipadx','pady','padx']:
             if kwarg in kwargs:
