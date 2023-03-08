@@ -15144,25 +15144,17 @@ def main():
     global program
     log.info("Running main function on {} ({})".format(platform.system(),
                                     platform.platform())) #Don't translate yet!
-    # program['theme']=ui.Theme(program,ipady=0)
+    # log.info("root program: {}".format(program))
     try:
-        root = program['root']=ui.Root(program=program,
-                                    # ipady=0,
-                                    # ipadx=10,
-                                    # pady=20,
-                                    # padx=30,
-                                    )
+        root = ui.Root(program=program)
     except tkinter.TclError as e:
         log.info("Evidently you can't make a root window? ({})".format(e))
         return
-    program['theme']=root.theme #ui.Theme(program)
-    log.info("Theme name: {}".format(program['theme'].name))
     # log.info("Theme ipady: {}".format(program['theme'].ipady))
     # log.info("Theme ipadx: {}".format(program['theme'].ipadx))
     # log.info("Theme pady: {}".format(program['theme'].pady))
     # log.info("Theme padx: {}".format(program['theme'].padx))
     lastcommit=program['repo'].lastcommitdate()
-    root.program=program
     root.wraplength=root.winfo_screenwidth()-300 #exit button
     root.wraplength=int(root.winfo_screenwidth()*.7) #exit button
     root.withdraw()
