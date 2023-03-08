@@ -211,8 +211,8 @@ class Theme(object):
                 pass
         try:
             self.logfinished("Image compilation")
+            self.fakeroot.ww.close()
             self.fakeroot.destroy()
-            self.fakeroot.w.close()
             self.program['theme'].unbootstraptheme()
         except Exception as e:
             # log.info("Something happened: {}".format(e))
