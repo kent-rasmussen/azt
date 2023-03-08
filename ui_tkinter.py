@@ -1915,18 +1915,32 @@ def availablexy(self,w=None):
                 sib.cols=set(range(sib.col,sib.colmax))
                 if wrows & sib.rows == set(): #the empty set
                     sib.reqheight=sib.winfo_reqheight()
-                    log.log(3,"sib {} reqheight: {}".format(sib,sib.reqheight))
+                    # log.info("sib {} reqheight: {}".format(sib,sib.reqheight))
+                    # log.info("sib {} pady: {}".format(sib,sib.pady))
+                    # log.info("sib {} pady: {}".format(sib,padstoint(sib.pady)))
                     """Give me the tallest cell in this row"""
                     if ((sib.row not in rowheight) or (sib.reqheight >
                                                             rowheight[sib.row])):
                         rowheight[sib.row]=sib.reqheight
+                        if 'pady' in sib.grid_info():
+                            # log.info(rowheight[sib.row])
+                            # log.info(sib.reqheight)
+                            rowheight[sib.row]+=padstoint(sib.pady)
+                            # log.info(rowheight[sib.row])
                 if wcols & sib.cols == set(): #the empty set
                     sib.reqwidth=sib.winfo_reqwidth()
-                    log.log(3,"sib {} width: {}".format(sib,sib.reqwidth))
+                    # log.info("sib {} width: {}".format(sib,sib.reqwidth))
+                    # log.info("sib {} padx: {}".format(sib,sib.padx))
+                    # log.info("sib {} padx: {}".format(sib,padstoint(sib.padx)))
                     """Give me the widest cell in this column"""
                     if ((sib.col not in colwidth) or (sib.reqwidth >
                                                             colwidth[sib.col])):
                         colwidth[sib.col]=sib.reqwidth
+                        if 'padx' in sib.grid_info():
+                            # log.info(colwidth[sib.col])
+                            # log.info(sib.reqwidth)
+                            colwidth[sib.col]+=padstoint(sib.padx)
+                            # log.info(colwidth[sib.col])
     for row in rowheight:
         self.otherrowheight+=rowheight[row]
     for col in colwidth:
