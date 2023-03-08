@@ -11892,7 +11892,11 @@ class SortGroupButtonFrame(ui.Frame):
                                     frame=program['toneframes'].get(
                                                 program['params'].check()),
                                     showtonegroup=self.kwargs['showtonegroup'])
-        self._illustration=node.sense.illustrationvalue()
+        if not (hasattr(node.sense,'image') and
+                    isinstance(node.sense.image,ui.Image)):
+            compilesenseimage(node.sense)
+        scaledimage(image,pixels=100,resolution=10)
+        self._illustration=node.sense.image.scaled
         return 1
     def makebuttons(self):
         if self.kwargs['label']:
