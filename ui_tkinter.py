@@ -14,13 +14,13 @@ import tkinter.scrolledtext
 import tkinter.ttk
 import file #for image pathnames
 from random import randint #for theme selection
-try:
 import datetime
+try: #translation
     _
 except:
     def _(x):
         return x
-try:
+try: #PIL
     import PIL.ImageFont
     import PIL.ImageTk
     import PIL.ImageDraw
