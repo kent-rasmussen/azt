@@ -972,7 +972,7 @@ class Text(Childof,ObectwArgs):
         # self.wraplength=kwargs.get('wraplength',defaultwr) #also for ButtonLabel
         self.norender=kwargs.pop('norender',False)
         self.image=kwargs.pop('image',None)
-        if self.image in self.theme.photo:
+        if isinstance(self.image,str) and self.image in self.theme.photo:
             self.image=self.theme.photo[self.image]
         d=set(["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"])
         sticks=set(['˥','˦','˧','˨','˩',' '])
