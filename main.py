@@ -3337,7 +3337,8 @@ class TaskDressing(HasMenus,ui.Window):
         title=_("{} Dictionary and Orthography Checker: {}").format(
                                             program['name'],self.tasktitle())
         if program['theme'].name != 'greygreen':
-            log.info("Using theme '{}'.".format(program['theme'].name))
+            log.info("Using theme ‘{}’ on {}.".format(program['theme'].name,
+                                                        self.tasktitle()))
             title+=_(' ('+program['theme'].name+')')
         self.title(title)
         t=ui.Label(self.frame, font='title',
