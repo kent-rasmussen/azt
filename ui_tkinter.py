@@ -15,6 +15,7 @@ import tkinter.ttk
 import file #for image pathnames
 from random import randint #for theme selection
 try:
+import datetime
     _
 except:
     def _(x):
@@ -55,6 +56,25 @@ class NoParent(object):
         super(NoParent, self).__init__(*args, **kwargs)
 class Theme(object):
     """docstring for Theme."""
+    def startruntime(self):
+        self.start_time=datetime.datetime.utcnow()
+        log.info("starting at {}".format(self.start_time))
+    def nowruntime(self):
+        #this returns a delta!
+        return datetime.datetime.utcnow()-self.start_time
+    def logfinished(self,msg=None):
+        log.info("logging finish now")
+        run_time=self.nowruntime()
+        # if type(start) is datetime.datetime: #only work with deltas
+        #     start-=self.start_time
+        if msg:
+            msg=str(msg)+' '
+        else:
+            msg=''
+        text=_("Finished {}at {} ({:1.0f}m, {:2.3f}s)"
+                "").format(msg,now(),*divmod((run_time).total_seconds(),60))
+        log.info(text)
+        return text
     def setimages(self):
         # Program icon(s) (First should be transparent!)
         self.scalings=[]
@@ -171,6 +191,7 @@ class Theme(object):
                             ('NoImage','openclipart.org/Image-Not-Found.png'),
                             ('Order!','openclipart.org/order!.png'),
                         ]:
+        self.startruntime()
             try:
                 #hyperthread here!
                 mkimg(name,filename)
@@ -179,6 +200,7 @@ class Theme(object):
                             name,filename,e
                             ))
         try:
+            self.logfinished("Image compilation")
             self.fakeroot.destroy()
             self.fakeroot.w.close()
         except:
@@ -1787,6 +1809,8 @@ class Wait(Window): #tkinter.Toplevel?
         #for some reason this has to follow the above, or you get a blank window
         self.update_idletasks() #updates just geometry
 """unclassed functions"""
+def now():
+    return datetime.datetime.utcnow().isoformat()#[:-7]+'Z'
 def availablexy(self,w=None):
     if w is None: #initialize a first run
         w=self
