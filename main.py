@@ -14778,6 +14778,17 @@ def saveimagefile(url,filename,copyto=None):
         with open(url,'rb') as u:
             # log.info("opened old file")
             f.write(u.read())
+def scaledimage(image,pixels=150,resolution=10):
+    image.scale(program['scale'],pixels=pixels,resolution=resolution)
+def getimagelocationURI(sense):
+    i=sense.illustrationvalue()
+    for d in [program['settings'].imagesdir,program['settings'].directory]:
+        if i and d:
+            di=file.getdiredurl(d,i)
+            if file.exists(di):
+                return di
+def compilesenseimage(sense):
+    sense.image=ui.Image(getimagelocationURI(sense))
 def pathseparate(path):
     os=platform.system()
     if os == "Windows":
