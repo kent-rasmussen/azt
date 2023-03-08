@@ -118,10 +118,17 @@ class Theme(object):
                         try:
                             img = Image(file.fullpathname(relurl))
                             # keep these at full size, for now
-                            img.scale(scale,pixels=img.maxhw(),resolution=y)
-                            self.photo[name]=img.scaled
+                            if 'openclipart.org' not in filename:
+                                img.scale(scale,pixels=img.maxhw(),resolution=y)
+                                self.photo[name]=img.scaled
+                            else:
+                                self.photo[name]=img
+                            if scaledalready.parent != scaledalreadydir:
+                                file.makedir(scaledalready.parent,silent=True)
                             self.photo[name].write(scaledalready)
                             self.scalings.append(y)
+                            log.info("Scaled {} {} @{} resolution".format(
+                                                                name,relurl,y))
                             return #stop when the first/best works
                         except tkinter.TclError as e:
                             # log.info(e)
