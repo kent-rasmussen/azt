@@ -1905,6 +1905,8 @@ def availablexy(self,w=None):
             if hasattr(w.parent,'grid_info') and 'row' in sib.grid_info():
                 sib.row=sib.grid_info()['row']
                 sib.col=sib.grid_info()['column']
+                sib.pady=sib.grid_info()['pady']
+                sib.padx=sib.grid_info()['padx']
                 # These are actual the row/col after the max in span,
                 # but this is what we want for range()
                 sib.rowmax=sib.row+sib.grid_info()['rowspan']
