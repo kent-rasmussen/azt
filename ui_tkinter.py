@@ -204,6 +204,7 @@ class Theme(object):
             self.fakeroot.destroy()
             self.fakeroot.w.close()
         except:
+            self.program['theme'].unbootstraptheme()
             pass
     def settheme(self):
         if not self.name:
@@ -422,6 +423,11 @@ class Theme(object):
         for kwarg in ['ipady','ipadx','pady','padx']:
             if kwarg in kwargs:
                 setattr(self,kwarg,kwargs[kwarg])
+    def unbootstraptheme(self):
+        """This is for when you have bootstrapped your main theme, to show some
+        UI while your theme is being made. Once it is made, revert here.
+        """
+        self.program['theme']=self.originaltheme
     def __init__(self,program,**kwargs):
         self.program=program
         """This can be accessed elsewhere in this module
