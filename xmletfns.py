@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 from xml.etree import ElementTree as ET
-# import logsetup
+import logsetup
 # log=logsetup.getlog(__name__)
 import file
 import urllib
@@ -15,6 +15,7 @@ def readxml(filename):
 def iselement(n):
     return isinstance(n,ET.Element)
 def prettyprint(node):
+    log=logsetup.getlog(__name__) #fn is imported as *, no not global log
     # This fn is for seeing the Element contents before writing them (in case of
     # ElementTree errors that aren't otherwise understandable).
     if not isinstance(node,ET.Element):
@@ -51,6 +52,7 @@ def iterateforincludes(node,ns,results=[]):
             iterateforincludes(child,ns,results)
     return results
 def getincluded(filename,iterated=False):
+    log=logsetup.getlog(__name__) #fn is imported as *, no not global log
     # Each new files starts here
     filename=urllib.parse.unquote(str(filename), encoding='utf-8', errors='replace')
     # log.info("Looking at filename {}".format(filename))
