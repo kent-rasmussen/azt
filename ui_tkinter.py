@@ -1867,7 +1867,7 @@ def availablexy(self,w=None):
         try:
             r=int(str(p))*2
         except:
-            log.info(p)
+            # log.info(p)
             p=tuple(p)
             r=int(p[0])+int(p[-1])
         # log.info("Returning pad {}".format(r))
