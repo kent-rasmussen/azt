@@ -7386,6 +7386,7 @@ class Sort(object):
         ftype=kwargs.get('ftype',program['params'].ftype())
         nocheck=kwargs.get('nocheck',False)
         guid=None
+        log.debug("marking sortgroup {}={} ({})".format(check,group,sense.id))
         if kwargs.get('updateverification'):
             """This does the one field storing a list of verified values
             for all checks"""
@@ -7397,12 +7398,6 @@ class Sort(object):
             if noconfirmation or self.confirmverificationgroup(sense, profile,
                                                                 ftype, check):
                 self.modverification(sense,profile,ftype,check,add)
-        log.debug("Adding {} value for {} check, "
-                "senseid: {} guid: {} (in main_lift.py)".format(
-                    group,
-                    check,
-                    sense.id,
-                    guid))
         self.setsensegroup(sense,ftype,check,group)
         if not nocheck:
             newgroup=unlist(self.getsensegroup(sense,check))
