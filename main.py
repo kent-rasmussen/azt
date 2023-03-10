@@ -2642,11 +2642,13 @@ class Settings(object):
     def reloadstatusdatabycvtpsprofile(self,**kwargs):
         # This reloads the status info only for current slice
         # These are specified in iteration, pulled from object if called direct
-        start_time=nowruntime()
+        if kwargs.get('reporttime'):
+            start_time=nowruntime()
         kwargs['cvt']=kwargs.get('cvt',program['params'].cvt())
         kwargs['ps']=kwargs.get('ps',program['slices'].ps())
         kwargs['profile']=kwargs.get('profile',program['slices'].profile())
-        log.info("Refreshing {} {} {} status settings from LIFT"
+        if kwargs.get('reporttime'):
+            log.info("Refreshing {} {} {} status settings from LIFT"
                 "".format(kwargs['cvt'],kwargs['ps'],kwargs['profile']))
         checks=program['status'].checks(**kwargs)
         kwargs['store']=False #do below
@@ -2655,13 +2657,15 @@ class Settings(object):
             program['status'].build(**kwargs)
             """this just populates groups and the tosort boolean."""
             self.updatesortingstatus(**kwargs)
-        logfinished(start_time)
+        if kwargs.get('reporttime'):
+            logfinished(start_time)
     def reloadstatusdatabycvtps(self,**kwargs):
         # This reloads the status info as relevant on a particular page (ps and
         # cvt), so it needs to be iterated over, or done for each page switch,
         # if desired.
         # These are specified in iteration, pulled from object if called by menu
-        start_time=nowruntime()
+        if kwargs.get('reporttime'):
+            start_time=nowruntime()
         kwargs['cvt']=kwargs.get('cvt',program['params'].cvt())
         kwargs['ps']=kwargs.get('ps',program['slices'].ps())
         log.info("Refreshing {} {} status settings from LIFT".format(
@@ -2673,7 +2677,8 @@ class Settings(object):
             self.reloadstatusdatabycvtpsprofile(**kwargs)
         if kwargs.get('store',True):
             self.storesettingsfile(setting='status')
-        logfinished(start_time)
+        if kwargs.get('reporttime'):
+            logfinished(start_time)
     def reloadstatusdata(self):
         # This fn is very inefficient, as it iterates over everything in
         # profilesbysense, creating status dictionaries for all of that, in
@@ -2691,11 +2696,15 @@ class Settings(object):
         cvts=program['params'].cvts()
         if not cvts:
             cvts=[i for i in program['params'].cvts()]
-        for cvt in [i for i in cvts if i != 'CV']: #this depends on nothing
+        kwargs={'store':False}
+        for kwargs['cvt'] in [i for i in cvts if i != 'CV']: #this depends on nothing
+            kwargs['reporttime']=True
             # log.info("Working on {}".format(t))
-            for ps in pss:
+            for n,kwargs['ps'] in enumerate(pss):
                 # log.info("Working on {}".format(ps))
-                self.reloadstatusdatabycvtps(cvt=cvt,ps=ps,store=False)
+                self.reloadstatusdatabycvtps(**kwargs)
+                if n:
+                    kwargs['reporttime']=False #only for first two pss
         """Now remove what didn't get data"""
         program['status'].cull()
         if None in program['status']: #This should never be there
