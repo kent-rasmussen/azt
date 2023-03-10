@@ -4429,7 +4429,7 @@ class TaskDressing(HasMenus,ui.Window):
     """Functions that everyone needs"""
     def updateazt(self,event=None):
         updateazt()
-    def verifictioncode(self,**kwargs):
+    def verificationcode(self,**kwargs):
         check=kwargs.get('check',program['params'].check())
         group=kwargs.get('group',program['status'].group())
         # log.info("about to return {}={}".format(check,group))
@@ -7089,7 +7089,7 @@ class Sort(object):
         ftype=kwargs.get('ftype',program['params'].ftype())
         # profile=program['slices'].profile()
         senses=self.getsensesincheckgroup()
-        value=self.verifictioncode(check=check,group=group)
+        value=self.verificationcode(check=check,group=group)
         # The above gives a check=group string, which should be escaped later
         if verified == True:
             add=value
@@ -7251,7 +7251,7 @@ class Sort(object):
             log.error("Found {} tone values: {}; Fix this!"
                                             "".format(len(tgroups),tgroups))
             return
-        rm=self.verifictioncode(check=check,group=group)
+        rm=self.verificationcode(check=check,group=group)
         profile=kwargs.get('profile',program['slices'].profile())
         sense.rmverificationvalue(profile,ftype,rm)
         program['status'].last('sort',update=True)
@@ -7337,7 +7337,7 @@ class Sort(object):
             else:
                 curvervalue=None
             if curvervalue == oldgroup: #only update if starting the same
-                add=self.verifictioncode(check=check,group=group)
+                add=self.verificationcode(check=check,group=group)
                 self.modverification(sense,profile,ftype,check,add)
             elif not curvervalue:
                 log.error("Problem updating verification to {}; current value "
@@ -7944,8 +7944,8 @@ class Sort(object):
         # We are agnostic of verification status of any given entry, so just
         # use this to change names, not to mark verification status (do that
         # with self.updatestatuslift())
-        rm=self.verifictioncode(check=check,group=oldvalue)
-        add=self.verifictioncode(check=check,group=newvalue)
+        rm=self.verificationcode(check=check,group=oldvalue)
+        add=self.verificationcode(check=check,group=newvalue)
         """The above doesn't test for profile, so we restrict that next"""
         profile=program['slices'].profile()
         senses=program['slices'].inslice(lst2)
