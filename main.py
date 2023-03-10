@@ -21,7 +21,7 @@ if file.getfile(__file__).parent.parent.stem == 'raspy': # if program['hostname'
     loglevel=6
     # program['testlift']='eng' #portion of filename
     program['testlift']='Demo_en' #portion of filename
-    program['testtask']='WordCollectnParse' #Will convert from string to class later
+    program['testtask']='SortV' #Will convert from string to class later
 else:
     me=False
     program['production']=True #True for making screenshots (default theme)
@@ -1797,6 +1797,7 @@ class Settings(object):
         filename=self.settingsfile(setting)
         config=ConfigParser()
         if setting in ['status', 'toneframes']:
+            # log.info("storesettingsfile for {}".format(setting))
             d=program[setting]
         else:
             d=self.makesettingsdict(setting=setting)
@@ -8718,6 +8719,7 @@ class Report(object):
         #default=True redoes the UF analysis (removing any joining/renaming)
         ftype=kwargs.get('ftype',program['params'].ftype())
         def examplestoXLP(examples,parent,senseid):
+            # log.info("examples : {} ({})".format(examples,type(examples)))
             counts['senses']+=1
             for example in examples:
                 # skip empty examples:
@@ -10256,7 +10258,7 @@ class Transcribe(Sound,Sort,TaskDressing):
     def updategroups(self):
         # Update locals group, groups, and othergroups from objects
         self.groups=program['status'].groups(wsorted=True)
-        log.info("self.groups: {}".format(self.groups))
+        # log.info("self.groups: {}".format(self.groups))
         self.groupsdone=program['status'].verified()
         self.group=program['status'].group()
         # log.info("group: {}, groups: {}".format(self.group,self.groups))
@@ -11445,12 +11447,12 @@ class ExampleDict(dict):
             #         exampletype['wsoundfile']=False
             #     else:
             #         break
-            log.debug("ExampleDict getexample kwargs: {}; tries: {}; n: {}"
-                                            "".format(kwargs,tries,n))
+            # log.debug("ExampleDict getexample kwargs: {}; tries: {}; n: {}"
+            #                                 "".format(kwargs,tries,n))
             if group in self: #.exs:
                 log.info("group in self")
                 if self[group] in nodes: #if stored value is in group
-                    log.info("self[group] in examples")
+                    # log.info("self[group] in examples")
                     if not kwargs['renew']:
                         log.info("Using stored value for ‘{}’ group: ‘{}’"
                                 "".format(group, self[group]))
@@ -11475,14 +11477,14 @@ class ExampleDict(dict):
                         log.info("Using next value for ‘{}’ group: ‘{}’"
                                 "".format(group, self[group]))
                 else:
-                    log.info("self[group] not in examples")
+                    # log.info("self[group] not in examples")
                     node=nodes[0] #randint(0, len(senseids))-1]
             elif n == 1:
                 # log.info("group not in self, one exemplaire")
                 node=nodes[0]
             else:
-                log.info("group not in self, multiple exemplaires")
-                log.debug("n: {}".format(n))
+                # log.info("group not in self, multiple exemplaires")
+                # log.info("n: {}".format(n))
                 node=nodes[randint(0, n-1)]
             self[group]=node #store for next iteration
         if tries == n*2: #senseid is None: #not self.hasglosses(senseid):
@@ -11648,8 +11650,9 @@ class SortButtonFrame(ui.ScrollingFrame):
             try:
                 values+=[int(i)]
             except:
-                log.info('Tone group {} cannot be interpreted as an integer!'
-                        ''.format(i))
+                # log.info('Tone group {} cannot be interpreted as an integer!'
+                #         ''.format(i))
+                pass
         newgroup=max(values)+1
         groups.append(str(newgroup))
         program['status'].groups(groups,wsorted=True)
@@ -11658,7 +11661,6 @@ class SortButtonFrame(ui.ScrollingFrame):
         # log.info("Groups (appended): {}".format(program['status'].groups(wsorted=True)))
         return str(newgroup)
     def sortselected(self,sense):
-        """Probably should just be sense"""
         selectedgroups=selected(self.groupvars)
         # log.info("selectedgroups: {}".format(selectedgroups))
         # for k in self.groupvars:
@@ -11699,7 +11701,6 @@ class SortButtonFrame(ui.ScrollingFrame):
                 log.debug('Group selected: {} ({})'.format(group,
                                                             groupselected))
                 """This needs to *not* operate on "exit" button."""
-                """thread here?"""
                 t = threading.Thread(target=self.marksortgroup,
                                     args=(sense,group),
                                     kwargs={
@@ -12097,7 +12098,7 @@ class SortGroupButtonFrame(ui.Frame):
             kwargs['wsoundfile']=True
         #set this for buttons:
         if program['settings'].lowverticalspace:
-            log.info("using lowverticalspace for SortGroupButtonFrame")
+            # log.info("using lowverticalspace for SortGroupButtonFrame")
             maxpad=0
         else:
             maxpad=15
@@ -12145,7 +12146,7 @@ class ImageFrame(ui.Frame):
                 # log.info("Image null: {}".format(img))
             if not specifiedurl:
                 self.sense.image=image
-        # log.info("Image: {}".format(img))
+        # log.info("Image: {} ({})".format(image,type(image)))
         scaledimage(image,pixels=self.pixels,resolution=self.resolution)
         self.image=image.scaled #Imageframe.image = sense.image.scaled
     def pluralframe(self):
@@ -12725,7 +12726,7 @@ class StatusDict(dict):
             log.info("Setting task {}".format(type(task)))
             self._task=task
         else:
-            log.info("Returning task {}".format(type(self._task)))
+            # log.info("Returning task {}".format(type(self._task)))
             return self._task
     def checktosort(self,**kwargs):
         check=kwargs.get('check',program['params'].check())
