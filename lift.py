@@ -2078,7 +2078,7 @@ class FormParent(Node):
     def getsense(self):
         if hasattr(self.parent,'senses') and self.parent.senses:
             # we want a common reference point for glosses, first sense is OK
-            self.sense=self.parent.senses[0]
+            self.sense=self.parent.sense
         else:
             log.info("This form can't find a sense ({}; parent: {})"
                     "".format(type(self),type(self.parent)))
