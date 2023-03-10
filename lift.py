@@ -2102,7 +2102,7 @@ class FormParent(Node):
     def __init__(self, parent, node=None, **kwargs):
         super(FormParent, self).__init__(parent, node, **kwargs)
         self.getforms()
-        self.ftype=self.tag
+        self.ftype=self.get('type',self.tag)
         self.annotationlang=parent.annotationlang
 class Gloss(Form):
     def __init__(self, parent, node=None, **kwargs):
