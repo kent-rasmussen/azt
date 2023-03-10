@@ -27,7 +27,8 @@ def prettyprint(node):
             line="{}{} {}: {}".format('\t'*t,node.tag,node.attrib,
                     "" if node.text is None
                     or set(['\n','\t',' ']).issuperset(node.text)
-                    else node.text)
+                    else str(node.text)+' ('+str(type(node.text))+')'
+                    )
             lines.append(line)
             log.info(line)
             t=t+1
