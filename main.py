@@ -11865,7 +11865,7 @@ class SortGroupButtonFrame(ui.Frame):
         self.sortnext()
         # remove()
     def unsort(self):
-        self.check.removesenseidfromgroup(self._senseid,sorting=False)
+        self.check.removesensefromgroup(self._sense,sorting=False)
         self.refresh()
     def setcanary(self,canary):
         if canary.winfo_exists():
@@ -11874,6 +11874,11 @@ class SortGroupButtonFrame(ui.Frame):
             log.error("Not setting non-existant canary {}; ".format(canary))
     def var(self):
         return self._var
+    def getsenseofnode(self,node):
+        if isinstance(node,lift.Example): #direct descendance
+            self._sense=node.sense
+        elif isinstance(node.parent,lift.Entry): #sibling of sense
+            self._sense=node.parent.sense
     def getexample(self,**kwargs):
         kwargs=exampletype(**kwargs)
         self._n,node=self.exs.getexample(self.group,**kwargs)
@@ -11899,6 +11904,7 @@ class SortGroupButtonFrame(ui.Frame):
             self._filenameURL=node.audiofileURL
         else:
             self._filenameURL=None
+        self.getsenseofnode(node)
         self._text=node.formatted(program['taskchooser'].analang,
                                     program['taskchooser'].glosslangs,
                                     ftype=program['params'].ftype(),
@@ -11911,7 +11917,7 @@ class SortGroupButtonFrame(ui.Frame):
         if self.kwargs['label']:
             self.labelbutton()
         elif self.kwargs['playable']:
-            if self._senseid and self._filenameURL:
+            if self._sense and self._filenameURL:
                 self.playbutton()
                 self._playable=True
             else: #Label if there is no sound file on any example.
