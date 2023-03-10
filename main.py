@@ -8948,7 +8948,7 @@ class Report(object):
                     #This is for window/text output only, not in XLP file
                     sense=program['db'].sensedict[senseid]
                     #This is put in XLP file:
-                    examples=sense.examples
+                    examples=list(sense.examples.values())
                     log.info("{} exs found: {}".format(len(examples), examples))
                     if examples != []:
                         id=self.idXLP(sense)+'_examples'
