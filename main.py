@@ -7516,7 +7516,7 @@ class Sort(object):
                                 column=0,row=0, sticky="w",
                                 pady=scaledpady
                                 )
-        self.sortitem['image']=sense.illustrationvalue()
+        self.sortitem['image']=getimageifthere(sense)
         self.sortitem['compound']="left"
         self.sortitem.wrap()
         self.runwindow.waitdone()
@@ -7780,7 +7780,7 @@ class Sort(object):
                     ipady=ipady, #Inside the buttons...
                     **kwargs
                     )
-        b['image']=sense.illustrationvalue()
+        b['image']=getimageifthere(sense)
         b['compound']="left"
     def join(self):
         log.info("Running join!")
@@ -11905,11 +11905,7 @@ class SortGroupButtonFrame(ui.Frame):
                                     frame=program['toneframes'].get(
                                                 program['params'].check()),
                                     showtonegroup=self.kwargs['showtonegroup'])
-        if not (hasattr(node.sense,'image') and
-                    isinstance(node.sense.image,ui.Image)):
-            compilesenseimage(node.sense)
-        scaledimage(image,pixels=100,resolution=10)
-        self._illustration=node.sense.image.scaled
+        self._illustration=getimageifthere(node.sense,pixels=100,resolution=10)
         return 1
     def makebuttons(self):
         if self.kwargs['label']:
@@ -12086,7 +12082,6 @@ class ImageFrame(ui.Frame):
                 self.hasimage=True
             else:
                 i=getimagelocationURI(self.sense)
-        # log.info("trying to make image @{}".format(self.sense.illustration.valuename))
         # lift.prettyprint(self.sense.illustration)
         if not compiled:
             try:
@@ -14795,7 +14790,31 @@ def getimagelocationURI(sense):
             if file.exists(di):
                 return di
 def compilesenseimage(sense):
-    sense.image=ui.Image(getimagelocationURI(sense))
+    """This needs to capture ui.Image errors like this:
+    except tkinter.TclError as e:
+        if ('value for "-file" missing' not in e.args[0] and
+                "couldn't recognize data in image file" not in e.args[0]):
+            log.info("ui.Image error: {}".format(e))
+    """
+    uri=getimagelocationURI(sense)
+    if uri:
+        sense.image=ui.Image(uri)
+    else:
+        sense.image=None
+def getimageifthere(sense,pixels=100,resolution=10):
+    if not (hasattr(sense,'image') and
+                isinstance(sense.image,ui.Image)):
+        try:
+            compilesenseimage(sense)
+        except tkinter.TclError as e:
+            if ('value for "-file" missing' not in e.args[0] and
+                    "couldn't recognize data in image file" not in e.args[0]):
+                log.info("ui.Image error: {}".format(e))
+    if sense.image:
+        scaledimage(sense.image,pixels=pixels,resolution=resolution)
+        return sense.image.scaled
+    # else:
+    #     self._illustration=None
 def pathseparate(path):
     os=platform.system()
     if os == "Windows":
