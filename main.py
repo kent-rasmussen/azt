@@ -7422,10 +7422,11 @@ class Sort(object):
         """This should look for one group to verify at a time, with sorting
         in between, then join and repeat"""
         def tosortupdate():
-            log.info("maybesort tosortbool:{}; tosort:{}; sorted:{}".format(
+            log.info("maybesort tosortbool:{}; tosort:{}; sorted (first 5):{}"
+                    "".format(
                                 program['status'].tosort(),
                                 program['status'].senseidstosort(),
-                                program['status'].senseidssorted()
+                                program['status'].senseidssorted()[:5]
                                 ))
         def exitstatuses():
             try:
@@ -7460,26 +7461,28 @@ class Sort(object):
             # exitstatuses()
             warnorcontinue()
             return
-        log.info("Going to verify the first of these groups now: {}".format(
-                                    program['status'].groups(toverify=True)))
-        log.info("Maybe verify (from maybesort)")
+        log.info("Maybe Verify (from maybesort)")
         groupstoverify=program['status'].groups(toverify=True)
         if groupstoverify:
+            log.info("verify (from maybesort)")
+            log.info("Going to verify the first of these groups now: {}".format(
+                                    program['status'].groups(toverify=True)))
             if program['status'].group() not in groupstoverify:
                 program['status'].group(groupstoverify[0]) #just pick the first now
-            log.info("verify (from maybesort)")
             self.verify()
             self.did['verify']=True
             # exitstatuses()
             warnorcontinue()
             return
+        log.info("Maybe Join (from maybesort)")
         if program['status'].tojoin():
             log.info("join (from maybesort)")
-            self.join()
-            self.did['join']=True
-            # exitstatuses()
-            warnorcontinue()
-            return
+            r=self.join() #0 here is done.
+            if r:
+                warnorcontinue()
+                return
+            else: #continue on
+                self.did['join']=True
         # exitstatuses()
         # At this point, there should be nothing to sort, verify or join, so we
         # move on to the next group.
