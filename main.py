@@ -7947,7 +7947,7 @@ class Sort(object):
             self.runwindow.wait(msg=msg)
             log.debug(msg)
             """All the senses we're looking at, by ps/profile"""
-            # log.info("Join about to run updatebygroupsenseid(*groupstojoin)")
+            # log.info("Join about to run updatebygroupsense(*groupstojoin)")
             self.updatebygroupsense(*groupstojoin)
             groups.remove(groupstojoin[0])
             write=False #for the first
