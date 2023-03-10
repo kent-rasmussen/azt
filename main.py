@@ -12919,7 +12919,8 @@ class StatusDict(dict):
         # if config != self:
         #     log.info("config: {}".format(config.keys()))
         #     log.info("self: {}".format(self.keys()))
-        config['status']=indenteddict(self) #getattr(o,s)
+        for k in self:
+            config[k]=indenteddict(self[k]) #getattr(o,s)
         with open(self._filename, "w", encoding='utf-8') as file:
             config.write(file)
     def dict(self): #needed?
