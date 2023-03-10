@@ -8562,7 +8562,7 @@ class Record(Sound,TaskDressing):
                             return
                         args+=[form] #[self.ftype]]
                         for l in self.glosslangs:
-                            args+=[node.gloss(l)]
+                            args+=[node.glossbylang(l)]
                         optargs=args[:]
                         optargs.insert(0,pslocopt) #put first
                         optargs.insert(3,fieldlocopt) #put after self.node.tag
@@ -9333,7 +9333,7 @@ class Report(object):
                     self.results.row+=1
                     col=0
                     for t in [node.textvaluebylang(self.analang)]+[
-                                node.gloss(l) for l in self.glosslangs]:
+                                node.glossbylang(l) for l in self.glosslangs]:
                         col+=1
                         ui.Label(self.results.scroll.content,
                                 text=t, font='read',
@@ -9425,8 +9425,9 @@ class Report(object):
             except AttributeError:
                 bits.append(node.id) #for senses
         for lang in self.glosslangs:
-            if lang in node.parent.sense.glosses:
-                bits+=node.gloss(lang) #parent.sense.formattedgloss(glosslang)
+            g=node.glossbylang(lang)
+            if g:
+                bits+=g
         for x in bits:
             if x is not None:
                 id+=x
@@ -9461,7 +9462,7 @@ class Report(object):
             elt=xlp.LangData(ex,self.analang,node.tonevalue())
         for lang in self.glosslangs:
             if lang in node.parent.sense.glosses:
-                xlp.Gloss(ex,lang,node.gloss(lang))
+                xlp.Gloss(ex,lang,node.glossbylang(lang))
     def framedtoXLP(self,framed,parent,ftype,listword=False,showgroups=True):
         """This will likely only work when called by
         wordsbypsprofilechecksubcheck; but is needed because it must return if
@@ -11440,7 +11441,7 @@ class ExampleDict(dict):
                     log.info("self[group] not in examples")
                     node=nodes[0] #randint(0, len(senseids))-1]
             elif n == 1:
-                log.info("group not in self, one exemplaire")
+                # log.info("group not in self, one exemplaire")
                 node=nodes[0]
             else:
                 log.info("group not in self, multiple exemplaires")
