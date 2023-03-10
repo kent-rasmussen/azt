@@ -12495,12 +12495,15 @@ class SliceDict(dict):
         #                                             list(self._validbyps)[:10]))
         # log.info("valid: {}".format(self._valid))
         # log.info("validbyps: {}".format(self._validbyps))
-    def inslice(self,s):
-        if isinstance(s,lift.Sense):
-            return set(self._senses).intersection(s)
+    def inslice(self,s=None):
+        if not s:
+            return set(self._senses)
+        elif isinstance(s,lift.Sense):
+            return set(self._senses).intersection(set([s]))
+        elif hasattr(s, '__iter__'):
+            return set(self._senses).intersection(set(s))
         else:
-            senseidstochange=set(self._senseids).intersection(s)
-            return senseidstochange
+            log.error("Not sure what happened here!")
     def senses(self,**kwargs): #ps=None,profile=None,
         if not kwargs:
             return self._senses #this is always the current slice
