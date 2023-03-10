@@ -2185,7 +2185,7 @@ class Example(FormParent,FieldParent):
             assert isinstance(self.fields['location'],ET.Element)
             return self.fields['location'].textvaluebylang(value=loc)
         except (KeyError,AssertionError) as e:
-            log.error("Something missing: {}".format(e))
+            log.error("Something missing (locationvalue): {}".format(e))
             if loc: #don't make field if not setting value
                 self.newfield('location',value=loc) #use annotationlang
             else:
