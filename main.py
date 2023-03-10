@@ -5276,8 +5276,6 @@ class Segments(object):
                             args=(sense,group),
                             kwargs={'check':check,
                                     'ftype':ftype,
-                                    # 'framed':framed,
-                                    'nocheck':False
                                     })
             t.start()
         t.join()
@@ -7383,7 +7381,6 @@ class Sort(object):
                         "".format(group, curvalue, curgroup))
     def marksortgroup(self,sense,group,**kwargs):
         # group=kwargs.get('group',program['status'].group())
-        # framed=kwargs.get('framed',None)
         check=kwargs.get('check',program['params'].check())
         profile=kwargs.get('profile',program['slices'].profile())
         ftype=kwargs.get('ftype',program['params'].ftype())
@@ -7580,7 +7577,7 @@ class Sort(object):
             b.setcanary(self.sortitem)
         self.runwindow.wait_window(window=self.sortitem)
         if not self.runwindow.exitFlag.istrue():
-            return sense#.id,framed #where to from here?
+            return sense
     def sort(self):
         # This window/frame/function shows one entry at a time (with pic?)
         # for the user to select a tone group based on buttons defined below.
