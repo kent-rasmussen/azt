@@ -261,12 +261,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             l=list()
         return l
     """Make this a class!!!"""
-    def pylanglegacy(self,analang):
-         return 'py-'+analang
-    def pylanglegacy2(self,analang):
-         return analang+'-py'
-    def pylang(self,analang):
-         return analang+'-x-py'
     def legacylangconvert(self):
         formnodes=self.nodes.findall(".//form")
         formlangs=set([i.get('lang') for i in formnodes])
@@ -274,14 +268,14 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         langs=set([i for i in langs if i])
         log.info("looking to convert pylangs for {}".format(langs))
         for lang in langs:
-            for flang in self.pylanglegacy(lang),self.pylanglegacy2(lang):
+            for flang in pylanglegacy(lang),pylanglegacy2(lang):
                 if flang in formlangs:
                     log.info("Found {}; converting to {}".format(flang,
-                                                        self.pylang(lang)))
+                                                        pylang(lang)))
                     for n in self.nodes.findall(".//form[@lang='{}']"
                                                 "".format(flang)):
                         # log.info("{}; {}".format(n.tag,n.attrib))
-                        n.set('lang',self.pylang(lang))
+                        n.set('lang',pylang(lang))
     def modverificationnode(self,senseid,vtype,ftype,analang,**kwargs):
         # use self.verificationtextvalue(profile,ftype,lang=None,value=None)
         """this node stores a python symbolic representation, specific to an
@@ -342,7 +336,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # This is used in cases where form@lang wasn't specified, so now we make
         # it up, and trust the user can fix if this is guessed wrong
         try:
-            lang=self.pylang(self.analang)
+            lang=pylang(self.analang)
         except AttributeError:
             return #if there is no analang, there are no legacy fields either
         #any verification field, anywhere:
@@ -372,7 +366,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if node is None:
             log.info("Sorry, this didn't return a node: {}".format(senseid))
             return
-        pylang=self.pylang(analang)
+        pylang=pylang(analang)
         vf=sensenode.find("field[@type='{} {} verification']/form[@lang='{}']"
                             "/text/../..".format(vtype,ftype,pylang))
         vft=sensenode.find("field[@type='{} {} verification']/form[@lang='{}']"
@@ -393,7 +387,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             vf=Node(sensenode, tag='field',
                             attrib={'type':"{} {} verification".format(vtype,
                                                                         ftype)})
-            vft=vf.makeformnode(lang=self.pylang(analang),text=t,gimmetext=True)
+            vft=vf.makeformnode(lang=pylang(analang),text=t,gimmetext=True)
         return vft,vf,sensenode #textnode, fieldnode, sensenode
     def getentries(self):
         self.entries=[Entry(self.nodes,i,annotationlang=self.annotationlang)
@@ -3446,6 +3440,12 @@ class LiftURL():
         log.log(4,"Final URL: {}".format(self.url))
         # self.printurl()
 """Functions I'm using, but not in a class"""
+def pylanglegacy(analang):
+     return 'py-'+analang
+def pylanglegacy2(analang):
+     return analang+'-py'
+def pylang(analang):
+     return analang+'-x-py'
 def quote(x):
     return "‘"+str(x)+"’"
 def textornone(x):
