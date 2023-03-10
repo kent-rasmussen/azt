@@ -2297,25 +2297,43 @@ class Sense(Node,FieldParent):
                             for lang in [i.get('lang') for i in self]
                             if lang
                     }
-        self.collectionglosses=[j #rx.glossdeftoform(i)
-                    # for g in set(self.glosslangs)&set(['en','fr'])
-                    # for k in self.sense.glosses[g]
-                    for k in self.sense.glosses['en']
-                    for i in k.textvalue().split(',')
-                    for j in rx.noparens(i).split()
-                    # for i in j
-                    if k.textvalue()
+        # log.info("Found {} gloss(es)".format(len(self.glosses)))
+        # log.info("Found gloss(es): {}".format(self.glosses))
+        # Openclipart only has English keywords:
+        self.collectionglosses=[j for k in self.sense.glosses.get('en',[])
+                                    for i in k.textvalue().split(',')
+                                    for j in rx.noparens(i).split()
+                                    if k.textvalue()
                 ]
-        self.imgselectiondir=''.join([
-                                    'images/openclipart.org/',
-                                    '_'.join([self.sense.cawln]+
-                                                self.collectionglosses)
-                                ])
+        rootimgdir='images/openclipart.org/'
+        #These first two depend on real directories being there
+        if self.cawln:
+            bits=[i for i in getfilesofdirectory(rootimgdir,
+                                            regex=self.cawln+'*')]
+        elif self.collectionglosses:
+            bits=[i for i in getfilesofdirectory(rootimgdir,
+                                    regex='*'+'_'.join(self.collectionglosses))]
+        if self.cawln and self.collectionglosses and not bits:
+            bits=[i for i in [self.cawln]+self.collectionglosses if i]
+            log.info("I didn't find a real directory present, but I'm ready "
+            "to write to {}".format(''.join([rootimgdir,'_'.join(bits)])))
+        else:
+            log.error("Neither CAWL line ({}) nor English glosses ({}) point "
+                        "to a real directory, so I can't tell which image "
+                        "directory to use for this sense ({}). "
+                        "Furthermore, I don't have both the line and glosses, "
+                        "so I can't construct a directory name to write to."
+                        "".format(self.cawln,self.collectionglosses,self.id))
+            self.imgselectiondir=None
+            return
+        """How to create this if it isn't??"""
+        self.imgselectiondir=''.join([ #This may not be a real directory
+                                    rootimgdir,
+                                    '_'.join(bits)
+                                    ])
         #multiple gloss entries seem to be a thing, so don't complain
         # for lang in self.glosses:
         #     self.checkforsecondchildbylang(lang)
-        # log.info("Found {} gloss(es)".format(len(self.glosses)))
-        # log.info("Found gloss(es): {}".format(self.glosses))
     def imagename(self):
         # log.info("Making image name")
         affix='.png' #not sure why this isn't there already...
