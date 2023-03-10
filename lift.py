@@ -1912,7 +1912,7 @@ class Form(Node):
             return None
     def textquoted(self):
         r=quote(self.textnode.text)
-        shownot=['lc','example']#lx?
+        shownot=['lc','example','Frame translation']#lx?
         if hasattr(self.parent,'ftype') and self.parent.ftype not in shownot:
             r+="("+self.parent.ftype+")"
         return r
