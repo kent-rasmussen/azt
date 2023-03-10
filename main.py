@@ -7351,6 +7351,36 @@ class Sort(object):
         program['settings'].updatesortingstatus() # Not just tone anymore
         self.resetsortbutton() #track what is done since each button press.
         self.maybesort()
+    def confirmverificationgroup(self,sense,profile,ftype,check):
+        log.info("Confirming that current group and verification code match "
+                    "before making changes.") 
+        curgroup=self.getsensegroup(sense,check) #Segment or Tone
+        vals=sense.verificationtextvalue(profile,ftype)
+        curvalues=[i.split('=')[-1]  #last (value), if multiple
+                    for i in sense.verificationtextvalue(profile,ftype)
+                    if check in i]
+        nvals=len(set(curvalues))
+        if nvals == 1:
+            curvalue=curvalues[0]
+        elif nvals >1:
+            log.error("Too many values for verification node; fix this!"
+                        " ({}; {}; {})".format(curvalues,vals,sense.id))
+            curvalue=None
+        elif nvals == 0:
+            log.error("No values for verification node! ({})"
+                        "".format(vals))
+            curvalue=None
+        if curvalue == curgroup: #only update if starting w/ same value
+            return True
+        elif not curvalue:
+            log.error("Problem updating verification to {}; current "
+                        "value not there (should be {})"
+                        "".format(group, curgroup))
+        else: #not sure what to do here; maybe  throw bigger error?
+            log.error("Problem updating verification to {}; current "
+                        "value ({}) is there, but not the same as "
+                        "current sort group ({})."
+                        "".format(group, curvalue, curgroup))
     def marksortgroup(self,sense,group,**kwargs):
         # group=kwargs.get('group',program['status'].group())
         # framed=kwargs.get('framed',None)
@@ -7362,31 +7392,14 @@ class Sort(object):
         if kwargs.get('updateverification'):
             """This does the one field storing a list of verified values
             for all checks"""
-            oldgroup=self.getsensegroup(sense,check) #Segment or Tone
-            vals=sense.verificationtextvalue(profile,ftype)
-            if vals:
-                curvervaluecodes=[i for i in vals if check in vals]
-            else:
-                curvervaluecodes=[]
-            if len(set(curvervaluecodes)) >1:
-                log.error("Too many values for verification node! ({})"
-                            "".format(curvervaluecodes))
-            firstcode=firstoflist(curvervaluecodes)
-            if firstcode:
-                curvervalue=firstcode.split('=')[-1] #last, if multiple
-            else:
-                curvervalue=None
-            if curvervalue == oldgroup: #only update if starting the same
-                add=self.verificationcode(check=check,group=group)
+            # Checking and verifying that the current group and verification
+            # values match may be excessive, as well as undesirable, without
+            # any other way to fix discrepancies
+            add=self.verificationcode(check=check,group=group)
+            noconfirmation=False #Should test w/wo this; time difference?
+            if noconfirmation or self.confirmverificationgroup(sense, profile,
+                                                                ftype, check):
                 self.modverification(sense,profile,ftype,check,add)
-            elif not curvervalue:
-                log.error("Problem updating verification to {}; current value "
-                            "not there (should be {})".format(group, oldgroup))
-            else: #not sure what to do here; maybe should throw bigger error?
-                log.error("Problem updating verification to {}; current value "
-                            "({}) is there, but not the same as current sort "
-                            "group ({})."
-                            "".format(group, curvervalue, oldgroup))
         log.debug("Adding {} value for {} check, "
                 "senseid: {} guid: {} (in main_lift.py)".format(
                     group,
