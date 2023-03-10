@@ -11450,6 +11450,7 @@ class ExampleDict(dict):
             "find one matching your needs ({}) glosses (out of {} possible "
             "senses). This is probably a systematic problem to fix.".format(
                                                                 tries,kwargs,n))
+            return 0,None
         else:
             self[group]=node #save for next time
             return len(nodes),node #self._outdict
