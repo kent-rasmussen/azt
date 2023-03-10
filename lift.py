@@ -2084,7 +2084,7 @@ class FormParent(Node):
                     "".format(type(self),type(self.parent)))
             log.info("{}; {}".format(hasattr(self.parent,'senses'),
                                     self.parent.senses))
-    def gloss(self,lang):
+    def glossbylang(self,lang):
         return ', '.join(self.parent.sense.formattedgloss(lang))
     def hassoundfile(self,audiolang,audiodir,recheck=False):
         """These attributes are not stored in lift; they depend on the work
@@ -2216,7 +2216,7 @@ class Example(FormParent,FieldParent):
                 t.textvaluebylang(lang,value)
             else:
                 return None
-    def gloss(self,lang):
+    def glossbylang(self,lang):
         return self.translationvalue(lang)
     def lastAZTsort(self):
         try:
@@ -2322,6 +2322,12 @@ class Sense(Node,FieldParent):
             return '_'.join([self.cawln]+self.collectionglosses)+affix
         else:
             return '_'.join([self.id]+self.collectionglosses)+affix
+    def glossbylang(self,lang):
+        """This returns just the first, to be compatible with
+        example.glossbylang"""
+        gs=self.glossvaluesbylang(lang)
+        if gs:
+            return gs[0]
     def glossvaluesbylang(self,lang):
         try:
             assert isinstance(self.glosses[lang][0],ET.Element)
