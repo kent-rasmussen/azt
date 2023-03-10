@@ -7000,6 +7000,7 @@ class Tone(object):
     def setsensegroup(self,sense,ftype,check,group,**kwargs):
         """here kwargs should include framed, if you want this to update the
         form information in the example"""
+        ps=sense.psvalue()
         # log.info("Setting tone sort group")
         if not ftype:
             log.error("No field type!")
@@ -7007,7 +7008,7 @@ class Tone(object):
         try:
             """Fine if check isn't there; will be caught with exception"""
             f=sense.formattedform(self.analang,ftype,
-                                program['toneframes'][self.ps][check])
+                                program['toneframes'][ps][check])
             log.info("Setting form to {}".format(f))
             sense.examples[check].textvaluebylang(
                                     lang=self.analang,
@@ -7015,16 +7016,16 @@ class Tone(object):
             log.info("Setting tone sort group to ‘{}’".format(group))
             sense.examples[check].tonevalue(group)
             for g in (set(self.glosslangs)& #selected
-                        set(program['toneframes'][self.ps][check])& #defined
+                        set(program['toneframes'][ps][check])& #defined
                         set(sense.ftypes[ftype])): # form in lexicon
                 for f in sense.formattedgloss(g,
-                                        program['toneframes'][self.ps][check])[:1]:
+                                        program['toneframes'][ps][check])[:1]:
                     log.info("Setting {} translation to {}".format(g,f))
                     sense.examples[check].translationvalue(g,f)
             sense.examples[check].lastAZTsort()
         except KeyError:
             sense.newexample(check,
-                            program['toneframes'][self.ps][check],
+                            program['toneframes'][ps][check],
                             self.analang,
                             self.glosslangs,
                             group)
@@ -7788,9 +7789,13 @@ class Sort(object):
             kwargs['anchor']='w'
         #This should be pulling from the example, as it is there already
         check=program['params'].check()
+        frames=program['toneframes'].get(self.ps)
+        if frames:
+            frame=frames.get(self.check)
+        else:
+            frame=None # e.g., for segmental checks
         text=sense.formatted(self.analang,self.glosslangs,
-                            ftype=program['params'].ftype(),
-                            frame=program['toneframes'][self.ps].get(check))
+                            program['params'].ftype(),frame)
         if program['settings'].lowverticalspace:
             ipady=0
         else:
