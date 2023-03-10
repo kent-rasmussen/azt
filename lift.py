@@ -1918,7 +1918,7 @@ class Form(Node):
         return r
     def textvalue(self,value=None):
         if value is not None: #leave room to clear value with ''
-            # log.info("Setting textvalue to ‘{}’".format(value))
+            # log.info("Setting textvalue to ‘{}’ ({})".format(value,type(value)))
             self.textnode.text=value
         else:
             return self.textnode.text
@@ -1982,7 +1982,8 @@ class FormParent(Node):
                 # prettyprint(self.forms[lang])
             else:
                 return None
-        # log.info("Sending ‘{}’ from textvaluebylang".format(value))
+        # if value:
+        #     log.info("Sending ‘{}’ ({}) from textvaluebylang".format(value,type(value)))
         return self.forms[lang].textvalue(value)
     def annotationvaluedictbylang(self,lang):
         self.forms[lang].annotationvaluedict()
