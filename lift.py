@@ -1929,6 +1929,35 @@ class Form(Node):
         self.getannotations()
         self.lang=self.get("lang")
 class FormParent(Node):
+    def getlang(self,lang=None,shortest=False):
+        # this allows forms to be specified for any lang, so long as there is
+        # just one. Ultimately, we should specify which language these fields
+        # should be encoded in, and what to do when the UI lang is different.
+        # right now, this is most relevant for tone and location fields, which
+        # are not really language specific (though may be specified in one lang
+        # or another)
+        if lang:
+            # log.info("using lang specified: {}".format(lang))
+            return lang
+        langs=list(self.langs())
+        if len(langs) == 1: # Just one? use it
+            lang=langs[0]
+            # log.info("using only present lang {}".format(lang))
+        elif len(langs) == 0: # Adding? use default
+            if 'verification' in self.ftype:
+                #should be analang, at least not audiolang or phonetic variant:
+                lang=pylang(self.parent.entry.lc.getlang(shortest=True))
+                # log.info("using verification pylang {}".format(lang))
+            else:
+                lang=self.annotationlang
+                # log.info("using annotationlang {}".format(lang))
+        elif shortest:
+            lang=min(langs,key=len)
+            # log.info("returning shortest lang ({}) of {}".format(lang,langs))
+        else:
+            log.error("textvaluebylang got no lang kwarg for {} node, but "
+                    "multiple langs present: {}".format(self.tag,langs))
+        return lang
     def langftypecode(self,lang):
         return '_'.join([lang,self.ftype])
     def stripftypecode(self,x):
@@ -1942,23 +1971,10 @@ class FormParent(Node):
         except KeyError:
             return None
     def textvaluebylang(self,lang=None,value=None):
-        # this allows forms to be specified for any lang, so long as there is
-        # just one. Ultimately, we should specify which language these fields
-        # should be encoded in, and what to do when the UI lang is different.
-        # right now, this is most relevant for tone and location fields, which
-        # are not really language specific (though may be specified in one lang
-        # or another)
+        # if value:
+        #     log.info("Working on {} ({})".format(self.tag,self.ftype))
         if not lang:
-            if len(self.forms) == 1: # Just one? use it
-                lang=list(self.forms.keys())[0]
-            elif len(self.forms) == 0: # Adding? use default
-                if 'verfication' in self.ftype:
-                    lang=self.pylang(self.annotationlang)
-                else:
-                    lang=self.annotationlang
-            else:
-                log.error("textvaluebylang got no lang kwarg, but multiple "
-                        "langs present: {}".format(self.forms))
+            lang=self.getlang(lang)
         if lang not in self.forms:
             # log.info("Missing ‘{}’ lang in textvaluebylang".format(lang))
             if value is not None: #only make if we're populating it, allow ''
@@ -1971,24 +1987,7 @@ class FormParent(Node):
     def annotationvaluedictbylang(self,lang):
         self.forms[lang].annotationvaluedict()
     def annotationvaluebylang(self,lang,name,value=None):
-        # this allows forms to be specified for any lang, so long as there is
-        # just one. Ultimately, we should specify which language these fields
-        # should be encoded in, and what to do when the UI lang is different.
-        # right now, this is most relevant for tone and location fields, which
-        # are not really language specific (though may be specified in one lang
-        # or another)
-        # We might want this later:
-        # if not lang:
-        #     if len(self.forms) == 1: # Just one? use it
-        #         lang=list(self.forms.keys())[0]
-        #     elif len(self.forms) == 0: # Adding? use default
-        #         if 'verfication' in self.type:
-        #             lang=self.pylang(self.annotationlang)
-        #         else:
-        #             lang=self.annotationlang
-        #     else:
-        #         log.error("textvaluebylang got no lang kwarg, but multiple "
-        #                 "langs present: {}".format(self.forms))
+        lang=self.getlang(lang) #This might be better more internally
         try:
             # log.info("annotationvaluebylang returning {}".format(
             #                     self.forms[lang].annotationvalue(name,value)))
