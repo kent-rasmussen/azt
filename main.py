@@ -12502,7 +12502,7 @@ class SliceDict(dict):
             senseidstochange=set(self._senseids).intersection(s)
             return senseidstochange
     def senses(self,**kwargs): #ps=None,profile=None,
-        if not ps and not profile:
+        if not kwargs:
             return self._senses #this is always the current slice
         ps=kwargs.get('ps',self._ps)
         profile=kwargs.get('profile',self._profile)
