@@ -4034,6 +4034,10 @@ if __name__ == '__main__':
 		'swh':'__',
 		'fr':'__es'}
     ftype='pl'
+    sense=lift.sensedict['daytime_b27c251c-090e-4427-aa86-22b745409f8d']
+    prettyprint(sense)
+    print(sense.entry.lc.getlang(shortest=True))
+    exit()
     for entry in lift.entries:
         # print(getattr(entry,ftype).formatted('en',['fr','shw'],
         log.info(lift.pss)
