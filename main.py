@@ -8781,7 +8781,7 @@ class Report(object):
                             )
             if not hasattr(xlpr,'node'):
                 log.info(_("Problem creating report; see previous messages."))
-                if kwargs['usegui']:
+                if kwargs.get('usegui'):
                     self.waitdone()
                 xlpr.cleanup()
                 return
@@ -9017,7 +9017,7 @@ class Report(object):
         xlpr=self.xlpstart(**kwargs)
         if not hasattr(xlpr,'node'):
             log.info(_("Problem creating report; see previous messages."))
-            if kwargs['usegui']:
+            if kwargs.get('usegui'):
                 self.waitdone()
             xlpr.cleanup()
             return
@@ -9560,7 +9560,7 @@ class Report(object):
                 "V1≠V2, those words will appear multiple times, e.g., for "
                 "both V1=x and V2=y.")
         kwargs['usegui']=usegui
-        if kwargs['usegui']: #i.e., showing results in window
+        if kwargs.get('usegui'): #i.e., showing results in window
             self.wait(msg=_("Running {}").format(self.tasktitle()))
         self.basicreportfile=''.join([str(self.reportbasefilename)
                                         ,'_',''.join(sorted(self.cvtstodo)[:2])
@@ -9571,7 +9571,7 @@ class Report(object):
         xlpr=self.xlpstart(**kwargs)
         if not hasattr(xlpr,'node'):
             log.info(_("Problem creating report; see previous messages."))
-            if kwargs['usegui']:
+            if kwargs.get('usegui'):
                 self.waitdone()
             xlpr.cleanup()
             return
@@ -9634,7 +9634,7 @@ class Report(object):
         xlpr.close(me=me)
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
-        if kwargs['usegui']:
+        if kwargs.get('usegui'):
             self.waitdone()
     def coocurrencetables(self,xlpr):
         t=_("Summary Co-ocurrence Tables")
