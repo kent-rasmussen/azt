@@ -2245,7 +2245,7 @@ class Example(FormParent,FieldParent):
                 l.append(self.tonevalue())
         l.append(self.textvaluebylang(analang))
         for lang in glosslangs:
-            l.append(self.textquotedbylang(lang))
+            l.append(self.translation.textquotedbylang(lang))
         return ' '.join([i for i in l if i]) #put it all together
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='example'
