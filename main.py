@@ -8933,7 +8933,7 @@ class Report(object):
                     for senseid in self.analysis.senseidsbygroup[group]:
                         sense=program['db'].sensedict[senseid]
                         #This is for window/text output only, not in XLP file
-                        text=sense.formatted(noframe=True,showtonegroup=False)
+                        text=sense.formatted(self.analang,self.glosslangs)
                         #This is put in XLP file:
                         if check in sense.examples:
                             examples=[sense.examples[check]]
