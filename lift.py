@@ -2551,24 +2551,39 @@ class Sense(Node,FieldParent):
         # log.info("Returning forms: {}".format(l))
         return ' '.join([i for i in l if i]) #put it all together
     def rmverificationvalue(self,profile,ftype,value):
+        #This treats value as a list object, wrapped by verificationtextvalue
         v=self.verificationtextvalue(profile,ftype)
         try:
             v.remove(value)
-            self.verificationtextvalue(profile,ftype,None,v)
+            self.verificationtextvalue(profile,ftype,value=v) #remove on []
         except Exception as e:
             log.info("tried to remove what wasn't there? ({})".format(e))
+    def rmverificationnode(self,profile,ftype):
+        key='{} {} verification'.format(profile,ftype)
+        self.remove(self.fields[key])
+        del self.fields[key]
     def verificationtextvalue(self,profile,ftype,lang=None,value=None):
         """value here is the list of verification codes, stored as a string"""
+        """Without lang arg, value must be sent as a kwarg."""
         key='{} {} verification'.format(profile,ftype)
+        if value: #don't do this for none or []
+            value=str(value)
+        elif value == []: #for empty list value, remove node
+            self.rmverificationnode(profile,ftype)
+            return [] #in case user needs a return
         try:
             assert key in self.fields
         except AssertionError:
             if value:
-                self.newfield(key,lang,value) #lang=None will give default
+                self.newfield(key,value=value) #lang=None will give default
             else:
-                return None
+                return [] #return empty list to fill
         # This value is a list, but needs to be stored and retrieved as str text
-        return xmlfns.stringtoobject(self.fields[key].textvaluebylang(str(value)))
+        # log.info("setting value {} ({})".format(value,type(value)))
+        if value:
+            log.info("setting value {} ({})".format(value,type(value)))
+        return xmlfns.stringtoobject(self.fields[key].textvaluebylang(
+                                                                value=value))
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='sense'
         super(Sense, self).__init__(parent, node, **kwargs)
