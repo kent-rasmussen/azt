@@ -2742,16 +2742,17 @@ class Settings(object):
         profile=kwargs.get('profile',program['slices'].profile())
         check=kwargs.get('check',program['params'].check())
         kwargs['wsorted']=True #ever not?
-        senseids=program['slices'].senseids(ps=ps,profile=profile)
-        log.info("Working on {} senseids: {}".format(len(senseids),senseids))
+        senses=program['slices'].senses(ps=ps,profile=profile)
+        log.info("Working on {} senseids (first 5): {}".format(len(senses),
+                                                    [i.id for i in senses[:5]]))
         program['status'].renewsenseidstosort([],[]) #will repopulate
         self._groups=[]
         if cvt == 'T': #we need to be able to iterate over cvt, to rebuild
             fn=Tone.getsensegroup
         else:
             fn=Segments.getsensegroup
-        for sense in [program['db'].sensedict[i] for i in senseids]:
-            log.info("Working on sense {}".format(sense.id))
+        for sense in senses:
+            # log.info("Working on sense {}".format(sense.id))
             self.categorizebygrouping(fn,sense,**kwargs)
         #     t = threading.Thread(target=self.categorizebygrouping,
         #                     args=(fn,senseid),
@@ -7130,8 +7131,7 @@ class Sort(object):
         log.info("Modding {} verification add {}, remove {}".format(profile,
                                                                     add,rms))
         """The above doesn't test for profile, so we restrict that next"""
-        for senseid in program['slices'].inslice(senseids): #only for this ps-profile
-            sense=program['db'].sensedict[senseid]
+        for sense in program['slices'].inslice(senses): #only for this ps-profile
             self.modverification(sense,profile,ftype,check,add)
         if kwargs.get('write'):
             self.maybewrite() #for when not iterated over, or on last repeat
