@@ -2359,7 +2359,8 @@ class Settings(object):
         todo=len(senses)
         # log.info("RXs: {}".format(self.rx))
         if todo>750:
-            program['taskchooser'].wait(msg="getting profiles for {}".format(ps))
+            msg="getting profiles for {} lexical category".format(ps)
+            program['taskchooser'].wait(msg)
         for sense in senses:
             n+=1
             if n%100:
