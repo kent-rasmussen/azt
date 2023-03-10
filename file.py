@@ -108,7 +108,7 @@ def remove(file):
 def makedir(dir,**kwargs):
     if type(dir) is str:
         dir=getfile(dir)
-    if not exists(dir):
+    if dir and not exists(dir):
         dir.mkdir(parents=True)
     elif not kwargs.get('silent'):
         log.info("directory {} already exists!".format(dir))
