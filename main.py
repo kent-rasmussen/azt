@@ -11333,7 +11333,11 @@ class ExampleDict(dict):
                 "".format(check,group))
             return
         """The above doesn't test for profile, so we restrict that next"""
+        log.info("senses ({}): {}".format(len(senses),
+                                            [i.id for i in senses][:5]))
         sensesinslice=program['slices'].inslice(senses)
+        log.info("sensesinslice ({}): {}".format(len(sensesinslice),
+                                            [i.id for i in sensesinslice][:5]))
         if not sensesinslice:
             log.error("There don't seem to be any sensids from that check tone "
                 "group in this slice-group, so I can't get you an example. "
