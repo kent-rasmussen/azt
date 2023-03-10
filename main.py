@@ -11386,8 +11386,8 @@ class ExampleDict(dict):
                                                                 ) == group
                     ]
         if not nodes:
-            log.error("There don't seem to be any nodes in this "
-                    "check-group/ftype-slice.")
+            log.error("There don't seem to be any nodes in this check({})-"
+                        "group({})/ftype({})-slice.".format(check,group,ftype))
             return 0,None
         # else:
         #     log.info("Found {} examples in the {} sort group for the {} check: "
