@@ -11371,19 +11371,17 @@ class ExampleDict(dict):
         check=program['params'].check()
         ftype=program['params'].ftype()
         if program['params'].cvt() == 'T': # example nodes
-            nodes=[v.examples[check] for k,v in program['db'].sensedict.items()
-                        if k in program['slices'].inslice(program['db'].sensedict)
-                        if check in v.examples
-                        if v.examples[check].tonevalue() == group
+            nodes=[s.examples[check] for s in program['slices'].inslice(
+                                                        program['db'].senses)
+                        if s.tonevaluebyframe(check) == group
                         ]
         else: # Other FormParent nodes
-            nodes=[v.ftypes[ftype] for k,v in program['db'].sensedict.items()
-                        if k in program['slices'].inslice(program['db'].sensedict)
-                        if ftype in v.ftypes
-                        if v.ftypes[ftype].annotationvaluebylang(
+            nodes=[s.ftypes[ftype] for s in program['slices'].inslice(
+                                                        program['db'].senses)
+                        if s.annotationvaluebyftypelang(ftype,
                                                     program['params'].analang(),
                                                     check
-                                                                ) == group
+                                                        ) == group
                     ]
         if not nodes:
             log.error("There don't seem to be any nodes in this check({})-"
