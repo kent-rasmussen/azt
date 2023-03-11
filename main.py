@@ -12127,6 +12127,108 @@ class SortGroupButtonFrame(ui.Frame):
             self.makebuttons()
         # """Should I do this outside the class?"""
         # self.grid(column=column, row=row, sticky=sticky)
+class AlphabetGroupButtonFrame(SortGroupButtonFrame):
+    """This is used to show examples for selection for an Alphabet chart.
+    These should always be playable (assuming there's a sound file)
+    This needs to interact with an instance (or subclass) of ExampleDict,
+    to track and store (to file!) examples (should do keyed by slice and check,
+    to preserve values across switching).
+    for each group (here), I should
+        have a list of slices with that group somewhere, and
+        be able to build quickly a list of checks with that group, given a slice
+    This provides a SortGroupButtonFrame, plus buttons to cycle (forward/back)
+        through a prioritized list of data slices
+        through a prioritized list of checks
+            always most restrictive first for a given slice
+    so unlike SortGroupButtonFrame, this class needs to depend locally on kwargs
+    for ps, profile, and check, in every function it uses. It should neither set
+    nor read 'current' values for these parameters, anywhere.
+    Tasks to do (first two may be combinable?):
+        Alphabet order
+            list of all C and V groups:
+                valid across all slices/checks
+                should have a mutable order, which defines the UI order
+                    UI (somewhere) should have buttons for reordering
+                saved to file (for use in report)
+                check for new additions each time the task is called
+                    initial order from settings file
+                    new items at the top of an already ordered list, for clarity
+        Example Selection
+        Alphabet Chart report task: should have settings for
+            how many columns (with calculated row and remainder visible)
+            title (modifyable from default)
+            some way to print to PDF
+            display status table that looks like Alpha chart,
+    """
+    def makebuttons(self):
+        self.setkwargs()
+        SortGroupButtonFrame.makebuttons(self)
+        self.slicebutton()
+    def setkwargs(self):
+        self.kwargs['ps']=self.slice[0]
+        self.kwargs['profile']=self.slice[1]
+        log.info("Setting kwargs to {}".format(kwargs))
+    def nextslice(self):
+        """This needs to check if self.group is anywhere in this slice"""
+        if self.slice in self.slices:
+            idx=self.slices.index(self.slice)
+            if idx != len(self.slices)-1:
+                self.slice=self.slices[idx+1]
+            else:
+                self.slice=self.slices[0]
+            self.refreshchecks()
+        self.getexample(**self.kwargs)
+        self.again()
+    def backslice(self):
+        if self.slice in self.slices:
+            idx=self.slices.index(self.slice)
+            if idx != 0:
+                self.slice=self.slices[-1]
+            self.refreshchecks()
+        self.getexample(**self.kwargs)
+        self.again()
+        self.getexample(**self.kwargs)
+        self.again()
+    def slicebutton(self):
+        tinyfontkwargs=self.buttonkwargs()
+        del tinyfontkwargs['font'] #so it will fit in the circle
+        bc=ui.Button(self, image=self.theme.photo['change'], #🔃 not in tck
+                        cmd=self.nextslice,
+                        text=str(self._n),
+                        compound='center',
+                        column=3, row=0,
+                        sticky="nsew",
+                        **tinyfontkwargs)
+        bc.bind('<ButtonRelease-3>',self.backslice)
+        bct=ui.ToolTip(bc,text=_("Change example word; Right click to back up"))
+    def checkbutton(self):
+        tinyfontkwargs=self.buttonkwargs()
+        del tinyfontkwargs['font'] #so it will fit in the circle
+        bc=ui.Button(self, image=self.theme.photo['change'], #🔃 not in tck
+                        cmd=self.nextslice,
+                        text=str(self._n),
+                        compound='center',
+                        column=3, row=0,
+                        sticky="nsew",
+                        **tinyfontkwargs)
+        bc.bind('<ButtonRelease-3>',self.backslice)
+        bct=ui.ToolTip(bc,text=_("Change example word; Right click to back up"))
+    def refreshchecks(self):
+        self.setkwargs()
+        self.checks=program['status'].updatechecksbycvt(**self.kwargs) #ps,profile
+        if self.check not in self.checks:
+            self.check=self.checks[0]
+    def __init__(self, parent, check, group, ps, profile, **kwargs):
+        kwargs['playable']=True
+        self.kwargs['alwaysrefreshable']=True
+        # kwargs.get('slice',)
+        self.group=group
+        self.slices=program['slices'].valid()
+        self.slice=(ps, profile)
+        self.check=check
+        self.refreshchecks()
+        log.info("Initiating AlphabetGroupButtonFrame: {}".format(self.slices))
+        super(AlphabetGroupButtonFrame, self).__init__(parent, check, group)
 class ImageFrame(ui.Frame):
     def getimage(self,reload=False):
         specifiedurl=False
