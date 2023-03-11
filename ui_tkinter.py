@@ -141,7 +141,7 @@ class Theme(object):
                                 continue
             # log.info("Using {}".format(relurl))
             self.photo[name] = Image(file.fullpathname(relurl))
-            log.info("Compiled {} {}".format(name,relurl))
+            # log.info("Compiled {} {}".format(name,relurl))
         imagelist=[ ('transparent','AZT stacks6.png'),
                             ('tall','AZT clear stacks tall.png'),
                             ('small','AZT stacks6_sm.png'),
