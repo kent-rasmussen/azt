@@ -24,16 +24,16 @@ class AffixCollector(object):
     automatically to populate the catalog."""
     def progress(self):
         return 100*self.catalog.parsen()//self.nsenseids
-    def parse(self,senseid):
-        kwargs={'senseid':senseid,
-                'entry':ifone(self.dbnodes.findall('entry/sense[@id="{}"]/..'
-                                            ''.format(senseid))),
+    def parse(self,sense):
+        kwargs={'sense':sense,
+                # 'entry':ifone(self.dbnodes.findall('entry/sense[@id="{}"]/..'
+                #                             ''.format(senseid))),
                 }
         self.parser.parseentry(**kwargs)
-        self.catalog.addparsed(kwargs['senseid'])
+        self.catalog.addparsed(kwargs['sense'])
     def do(self):
-        for senseid in self.senseids:
-            self.parse(senseid) #this can add to lists
+        for sense in self.senses:
+            self.parse(sense) #this can add to lists
             yield self.progress()
     def getfromlift(self):
         log.info("looking in LIFT file for data")
@@ -66,8 +66,8 @@ class AffixCollector(object):
     def __init__(self,catalog,db,**kwargs):
         self.parser=Engine(catalog)
         self.dbnodes=db.nodes
-        self.senseids=db.senseids
-        self.nsenseids=len(db.senseids) #don't keep calculating this
+        self.senses=db.senses
+        self.nsenses=len(db.senses) #don't keep calculating this
         self.pss=db.pss
         self.catalog=catalog
         log.info("Looking in LIFT file for data")
@@ -741,10 +741,6 @@ if __name__ == "__main__":
                 }
         parser.parseentry(**kwargs)
         parser.oneform()
-    # try:
-    #     senseids=set(db.senseids)-set(catalog.parsed)
-    # except AttributeError:
-    #     senseids=set(db.senseids)
     db.write('userlogs/Test_getparses1.lift')
     now()
     exit()

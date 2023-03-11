@@ -583,31 +583,6 @@ class FileParser(object):
         else:
             print(_("Apparently we've run this before today; not backing "
             "up again."))
-    def senseidtriage(self):
-        self.senseids=program['db'].senseids
-        self.senseidsinvalid=[] #nothing, for now...
-        print(len(self.senseidsinvalid),'senses with invalid data found.')
-        program['db'].senseidsinvalid=self.senseidsinvalid
-        self.senseidsvalid=[]
-        for senseid in self.senseids:
-            if senseid not in self.senseidsinvalid:
-                self.senseidsvalid+=[senseid]
-        print(len(self.senseidsvalid),'senses with valid data remaining.')
-        self.senseidswanyps=[i for k in program['db'].sensesbyps
-                            if k
-                            for i in program['db'].sensesbyps[k]
-                            ]
-        log.info('{} senses w/ ps data found.'.format(len(self.senseidswanyps)))
-        self.senseidsvalidwops=[]
-        self.senseidsvalidwps=[]
-        for senseid in self.senseidsvalid:
-            if senseid in self.senseidswanyps:
-                self.senseidsvalidwps+=[senseid]
-            else:
-                self.senseidsvalidwops+=[senseid]
-        program['db'].senseidsvalidwps=self.senseidsvalidwps #This is what we'll search
-        print(len(self.senseidsvalidwops),'senses with valid data but no ps data.')
-        print(len(self.senseidsvalidwps),'senses with valid data and ps data.')
     def getwritingsystemsinfo(self):
         """This doesn't actually do anything yet, as we can't parse ldml."""
         program['db'].languagecodes=program['db'].analangs+program['db'].glosslangs
@@ -623,7 +598,6 @@ class FileParser(object):
             return
         self.dailybackup()
         # splash.progress(35)
-        self.senseidtriage() #sets: self.senseidswanyps self.senseidswops self.senseidsinvalid self.senseidsvalid
         # splash.progress(45)
         self.getwritingsystemsinfo()
 class Menus(ui.Menu):
@@ -1494,7 +1468,9 @@ class StatusFrame(ui.Frame):
                 self.sliceline()
             if isinstance(self.task,Multicheck): #segments only
                 self.multicheckscope()
-            elif not isinstance(self.task,ReportCitationT):
+            elif not (isinstance(self.task,ReportCitationT) or
+                        isinstance(self.task,JoinUFgroups)
+                        ):
                 self.cvtline()
             if isinstance(self.task,Sort) and not isinstance(self.task,Transcribe):
                 self.buttoncolumnsline()
@@ -1583,8 +1559,6 @@ class Settings(object):
                                     # "profilecounts",
                                     "scount",
                                     "sextracted",
-                                    "profilesbysense",
-                                    "formstosearch"
                                     ]},
             'status':{
                                 'file':'statusfile',
@@ -2302,35 +2276,35 @@ class Settings(object):
         if self.interpret['VV']=='Vː' and self.distinguish['ː']==False:
             self.interpret['VV']='VV'
         log.log(2,"self.distinguish: {}".format(self.distinguish))
-    def addtoprofilesbysense(self,senseid,ps,profile):
+    def addtoprofilesbysense(self,sense,ps,profile):
         # log.info("kwargs: {}".format(kwargs))
         # This will die if ps and profile aren't in kwargs:
         try:
-            self.profilesbysense[ps][profile]+=[senseid]
+            self.profilesbysense[ps][profile]+=[sense]
         except KeyError:
             try:
-                self.profilesbysense[ps][profile]=[senseid]
+                self.profilesbysense[ps][profile]=[sense]
             except KeyError:
-                self.profilesbysense[ps]={}#[profile]=[senseid]
-                self.profilesbysense[ps][profile]=[senseid]
-    def addtoformstosearch(self,senseid,form,ps,oldform=None):
+                self.profilesbysense[ps]={profile:sense}
+                # self.profilesbysense[ps][profile]=[sense]
+    def addtoformstosearch(self,sense,form,ps,oldform=None):
         try:
-            if senseid not in self.formstosearch[ps][form]: #don't duplicate
-                self.formstosearch[ps][form].append(senseid)
+            if sense not in self.formstosearch[ps][form]: #don't duplicate
+                self.formstosearch[ps][form].append(sense)
         except KeyError: # either ps or form is missing, nothing to append to
             try: #if it's just form
-                self.formstosearch[ps][form]=[senseid]
+                self.formstosearch[ps][form]=[sense]
             except KeyError: #ps is missing, build from scratch
-                self.formstosearch[ps]={form:[senseid,]}
-        # log.info("Added {} id={}".format(form,senseid))
+                self.formstosearch[ps]={form:[sense,]}
+        # log.info("Added {} id={}".format(form,sense.id))
         if oldform:
             try:
-                self.formstosearch[ps][oldform].remove(senseid)
+                self.formstosearch[ps][oldform].remove(sense)
                 log.info("Removed {} ({})".format(form,self.formstosearch[ps][form]))
             except ValueError:
-                log.error(_("Apparently {} isn't under {}?".format(senseid,form)))
+                log.error(_("Apparently {} isn't under {}?".format(sense,form)))
             if not self.formstosearch[ps][oldform]:
-                del self.formstosearch[ps][oldform] #don't leave form wo senseid
+                del self.formstosearch[ps][oldform] #don't leave form wo sense
                 log.info("Deleted key of empty list")
     def getprofileofentry(self,entry):
         getattr(entry,ftype).textvaluebylang(self.analang)
@@ -2343,8 +2317,8 @@ class Settings(object):
         # log.info("getprofileofsense Profile: {}".format(profile))
         if not set(self.profilelegit).issuperset(profile):
             profile='Invalid'
-        self.addtoprofilesbysense(sense.id, ps=ps, profile=profile)
-        self.addtoformstosearch(sense.id, form, ps=ps)
+        self.addtoprofilesbysense(sense, ps=ps, profile=profile)
+        self.addtoformstosearch(sense, form, ps=ps)
         return form,profile
     def getprofilesbyps(self,ps):
         start_time=nowruntime()
@@ -2390,7 +2364,6 @@ class Settings(object):
         self.profilesbysense['analang']=program['params'].analang()
         self.profilesbysense['ftype']=program['params'].ftype()
         self.profiledguids=[]
-        self.profiledsenseids=[]
         self.formstosearch={}
         self.sextracted={} #don't add to old data
         self.notifyuserofextrasegments() #analang set by now, depends db only
@@ -2420,7 +2393,7 @@ class Settings(object):
                     #                         self.profilesbysense[ps][a]))
         else:
             self.adhocgroups={}
-        SliceDict(self.adhocgroups,self.profilesbysense) #self.profilecounts
+        SliceDict(self.adhocgroups,self.profilesbysense)
         if program['slices'].profile():
             self.getscounts()
         self.storesettingsfile(setting='profiledata')
@@ -2721,20 +2694,20 @@ class Settings(object):
             program['status'].task(),
             sense,check)
         if v in ['','None',None]: #unlist() returns strings
-            log.info("Marking senseid {} tosort (v: {})".format(sense.id,v))
+            log.info("Marking sense {} tosort (v: {})".format(sense.id,v))
             if not kwargs.get('cvt'): #default, not on iteration
-                program['status'].marksenseidtosort(sense.id)
+                program['status'].marksensetosort(sense)
             tosort=True
         else:
-            log.info("Marking senseid {} sorted (v: {})".format(sense.id,v))
+            log.info("Marking sense {} sorted (v: {})".format(sense.id,v))
             if not kwargs.get('cvt'): #default, not on iteration
-                program['status'].marksenseidsorted(sense.id)
+                program['status'].marksensesorted(sense.id)
             if v not in ['NA','ALLOK']:
                 self._groups.append(v)
     def updatesortingstatus(self, store=True, **kwargs):
         """This reads LIFT to create lists for sorting, populating lists of
         sorted and unsorted senses, as well as sorted (but not verified) groups.
-        So don't iterate over it. Instead, use checkforsenseidstosort to just
+        So don't iterate over it. Instead, use checkforsensestosort to just
         confirm tosort status"""
         """To get this from the object, use status.tosort(), todo() or done()"""
         # log.info("updatesortingstatus called with store={} and kwargs: {}"
@@ -2745,9 +2718,9 @@ class Settings(object):
         check=kwargs.get('check',program['params'].check())
         kwargs['wsorted']=True #ever not?
         senses=program['slices'].senses(ps=ps,profile=profile)
-        log.info("Working on {} senseids (first 5): {}".format(len(senses),
+        log.info("Working on {} sense.ids (first 5): {}".format(len(senses),
                                                     [i.id for i in senses[:5]]))
-        program['status'].renewsenseidstosort([],[]) #will repopulate
+        program['status'].renewsensestosort([],[]) #will repopulate
         self._groups=[]
         if cvt == 'T': #we need to be able to iterate over cvt, to rebuild
             fn=Tone.getsensegroup
@@ -2756,14 +2729,6 @@ class Settings(object):
         for sense in senses:
             # log.info("Working on sense {}".format(sense.id))
             self.categorizebygrouping(fn,sense,**kwargs)
-        #     t = threading.Thread(target=self.categorizebygrouping,
-        #                     args=(fn,senseid),
-        #                     kwargs=kwargs)
-        #     t.start()
-        # try:
-        #     t.join()
-        # except UnboundLocalError:
-        #     log.info("The threading didn't happen, or is done already")
         """update 'tosort' status"""
         """update status groups"""
         sorted=set(self._groups)
@@ -3431,7 +3396,7 @@ class TaskDressing(HasMenus,ui.Window):
                 dictnow.update({
                     'parserasklevel':self.parser.ask,
                     'parserautolevel':self.parser.auto,
-                    'senseid':self.task.sensetodo,
+                    'sense.id':self.task.sensetodo,
                     })
         """Call this just once. If nothing changed, wait; if changes, run,
         then run again."""
@@ -3969,7 +3934,7 @@ class TaskDressing(HasMenus,ui.Window):
         # letters=list([(k,k,v) for k,v in kcounts])
         log.info("letters: {}".format(letters))
         if not letters:
-            log.info("No senseids; sort something?")
+            log.info("No senses; sort something?")
             return
         letters=[{'code':None,'description':_("All words")}
         ]+letters
@@ -4535,14 +4500,12 @@ class TaskChooser(TaskDressing,ui.Window):
         self.gettask()
     def makeexampledict(self):
         program['examples']=ExampleDict()
-    def guidtriage(self):
+    def guidtriage(self): #obsolete
         # import time
         log.info("Doing guid triage and other variables —this takes awhile...")
         start_time=nowruntime()
         self.guids=program['db'].guids
         self.guidsinvalid=[] #nothing, for now...
-        self.senseids=program['db'].senseids
-        self.senseidsinvalid=[] #nothing, for now...
         print(len(self.guidsinvalid),'entries with invalid data found.')
         program['db'].guidsinvalid=self.guidsinvalid
         self.guidsvalid=[]
@@ -4569,7 +4532,7 @@ class TaskChooser(TaskDressing,ui.Window):
         #         guids+=[guid]
         # print(len(guids),guids)
         logfinished(start_time)
-    def guidtriagebyps(self):
+    def guidtriagebyps(self): #obsolete
         log.info("Doing guid triage by ps... This also takes awhile?...")
         self.guidsvalidbyps={}
         """use program['db'].entriesbyps or program['db'].sensesbyps"""
@@ -4706,10 +4669,9 @@ class TaskChooser(TaskDressing,ui.Window):
         elif self.datacollection:
             tasks=[
                     WordCollectionCitation,
-                    WordCollectionPlural,
-                    WordCollectionImperative,
+                    # WordCollectionPlural, #What is the value of this
+                    # WordCollectionImperative, #What is the value of this
                     WordCollectnParse
-                    # WordCollectionLexeme
                     ]
             if self.doneenough['collectionlc']:
                 tasks.append(RecordCitation)
@@ -4732,15 +4694,15 @@ class TaskChooser(TaskDressing,ui.Window):
             if self.doneenough['analysis']:
                 tasks.append(JoinUFgroups)
             if me:
-                tasks.append(ParseWords)
+                # tasks.append(ParseWords)
                 # tasks.append(ParseWords)
                 # tasks.append(ParseSlice)
                 # tasks.append(ParseSliceWords)
                 tasks.append(ReportConsultantCheck)
-        if (program['testing'] and 'testtask' in program and
-                program['testtask'] not in tasks):
-            if self.showreports == isinstance(program['testtask'],Report):
-                tasks.append(program['testtask'])
+        # if (program['testing'] and 'testtask' in program and
+        #         program['testtask'] not in tasks):
+        #     if self.showreports == isinstance(program['testtask'],Report):
+        #         tasks.append(program['testtask'])
         # tasks.append(WordCollectionCitation),
         # tasks.append(WordCollectionPlImp),
         # tasks.append(ParseA), # input pl/imp, gives lx and ps
@@ -5206,13 +5168,13 @@ class Segments(object):
     def formspsprofile(self,**kwargs):
         log.info("Asked for forms to search for a data slice (only do once!)")
         ps=kwargs.get('ps',program['slices'].ps())
-        d=program['settings'].formstosearch[ps]
+        d=program['settings'].formstosearch[ps] #{form:sense}
         # log.info("Looking at {} entries".format(len(d)))
         return {k:d[k] for k in d
-                        if set(d[k]) & set(program['slices'].senseids(**kwargs))}
-    def senseidformsbyregex(self,regex,**kwargs):
+                        if set(d[k]) & set(program['slices'].senses(**kwargs))}
+    def senseformsbyregex(self,regex,**kwargs):
         """This function takes in a compiled regex,
-        and outputs a list/dictionary of senseid/{senseid:form} form."""
+        and outputs a list of senses."""
         ps=kwargs.get('ps',program['slices'].ps())
         self.output=[]
         # log.info("Kwargs keys: {} (formstosearch n={})".format(kwargs.keys(),
@@ -5227,16 +5189,6 @@ class Segments(object):
                     if k and regex.search(k)
                     for j in v
                     ]
-        # for form,id in [i for i in dicttosearch.items() if i[0]]:
-        #     # log.info("Looking for form {}, with id {}".format(form,id))
-        #     t = threading.Thread(target=self.ifregexadd,
-        #                         args=(regex,form,id))
-        #     t.start()
-        # try:
-        #     t.join()
-        # except:
-        #     log.info("Looks like no forms in senseidstocheck: {}".format(
-        #                                                 dicttosearch))
         # log.info("Found senses: {}".format(self.output))
         return self.output
     def presortgroups(self,**kwargs):
@@ -5249,7 +5201,6 @@ class Segments(object):
         ps=kwargs.get('ps',program['slices'].ps())
         profile=kwargs.get('profile',program['slices'].profile())
         check=kwargs.get('check',program['params'].check())
-        senseids=[]
         groups=program['status'].groups(wsorted=True,**kwargs)
         groups=program['status'].groups(cvt=cvt)
         #multiprocess from here?
@@ -5262,16 +5213,15 @@ class Segments(object):
             self.buildregex(group=group,cvt=cvt,profile=profile,check=check)
             # log.info("self.regex: {}; self.regexCV: {}".format(self.regex,
             #                                             self.regexCV))
-            s=set(self.senseidformsbyregex(self.regex,ps=ps))
-            if s: #senseids just for this group
+            s=set(self.senseformsbyregex(self.regex,ps=ps))
+            if s: #senses just for this group
                 self.presort(list(s),check,group)
         program['status'].presorted(True)
         program['status'].store() #after all the above
         self.runwindow.waitdone()
-    def presort(self,senseids,check,group):
+    def presort(self,senses,check,group):
         ftype=program['params'].ftype()
-        for senseid in senseids:
-            sense=program['db'].sensedict[senseid]
+        for sense in senses:
             t = threading.Thread(target=self.marksortgroup,
                             args=(sense,group),
                             kwargs={'check':check,
@@ -5299,28 +5249,27 @@ class Segments(object):
         program['settings'].addtoCVrxs(value)
         #this should update polygraphs; if so, trigger reanalysis (instead of above)
     def updateformtoannotations(self,sense,ftype,check=None,write=False):
-        """This should take a sense and ftype (and maybe check, not sure)
-        and update that form on the basis of the annotations made to date.
-        This should be something that can be done for just one check, or all,
-        and iterated across a few or many senseids.
-        This might be best iterating across ftypes, to catch them all...
+        """This should take a sense, ftype and check, in normal usage.
+        If we want to upadate forms to *all* annotations, don't give check.
+        Iterate across a few or many senses.
+        Iterate also across ftypes, to catch them all...
         that would likely need more smarts for affix and root distinction."""
-        formvalue=sense.textvaluebyftypelang(self.analang)
+        formvalue=sense.textvaluebyftypelang(ftype,self.analang)
         if not formvalue:
             log.info("updateformtoannotations didn't return a form value for "
-                    "senseid={}, ftype={}, analang={}"
+                    "sense={}, ftype={}, analang={}"
                     "".format(sense.id,ftype,self.analang))
             return
         # log.info("fnode: {}; text: {}".format(fnode,t.text))
         if check: #just update to this annotation
-            value=sense.annotationvaluebyftypelang(self,ftype,self.analang,check)
-            if value is not None:
+            value=sense.annotationvaluebyftypelang(ftype,self.analang,check)
+            if value is not None: #should I act on ''?
                 f=rx.update(formvalue,program['settings'].rx,check,value)
-                sense.textvaluebyftypelang(self.analang,f)
+                sense.textvaluebyftypelang(ftype,self.analang,f)
                 log.info("Done with updateformtextnodebycheck")
                 #This should update formstosearch:
                 if formvalue != f:
-                    program['settings'].addtoformstosearch(senseid,f,formvalue)
+                    program['settings'].addtoformstosearch(sense,f,formvalue)
                     log.info("Done with addtoformstosearch")
                 if len(value)>1:
                     sc=program['params'].cvt()
@@ -5333,7 +5282,6 @@ class Segments(object):
             for check,value in annodict.items():
                 f=rx.update(formvalue,program['settings'].rx,check,value)
                 sense.textvaluebyftypelang(self.analang,f)
-        program['taskchooser'].datadict.clearsense(senseid) #so this will refresh
         if write:
             self.maybewrite()
     def setsensegroup(self,sense,ftype,check,group,**kwargs):
@@ -5346,15 +5294,9 @@ class Segments(object):
                 i for i in program['db'].senses
                 if i.ftypes[ftype].annotationvaluebylang(lang,check) == group
                 ]
-        # fkwargs={
-        #         ftype+'annotationname':check,
-        #         ftype+'annotationvalue':group
-        #         }
-        # return program['db'].get("sense", **fkwargs).get('senseid')
     def getsensegroup(self,sense,check):
-        ftype=program['params'].ftype()
+        ftype=program['params'].ftype() #not helpful for Tone.getsensegroup
         return sense.annotationvaluebyftypelang(ftype,self.analang,check)
-                                                # ftype,lang,name,value
     def __init__(self, parent):
         self.dodone=True
         self.dodoneonly=False #don't give me other words
@@ -5393,7 +5335,7 @@ class WordCollection(Segments):
         which are left to do."""
         if hasattr(self,'byslice') and self.byslice:
             log.info("Limiting segment work to this slice")
-            all=[program['db'].sensedict[i].entry for i in program['slices'].senseids()]
+            all=[i.entry for i in program['slices'].senses()]
         else:
             all=program['db'].entries
         if self.dodone and not self.dodoneonly: #i.e., all data
@@ -5501,21 +5443,16 @@ class WordCollection(Segments):
                 x=self.promptwindow(lang)
                 if x:
                     return
-        """get the new senseid back from this function, which generates it"""
+        """get the new sense back from this function, which generates it"""
         if not self.runwindow.exitFlag.istrue(): #don't do this if exited
             self.runwindow.withdraw() #or wait?
-            senseid=program['db'].addentry(ps='',analang=self.analang,
+            sense=program['db'].addentry(ps='',analang=self.analang,
                             glosslangs=self.runwindow.glosslangs,
                             form=self.runwindow.form)
             # Update profile information in the running instance, and in the file.
             self.runwindow.destroy()
             """The following are useless without ps information, so they will
             have to come later."""
-            # if program['taskchooser'].donew['collectionlc']:
-            #     program['settings'].getprofileofsense(senseid)
-            #     program['slices'].updateslices()
-            #     program['settings'].getscounts()
-            #     program['settings'].storesettingsfile(setting='profiledata') #since we changed this.
     def addCAWLentries(self):
         text=_("Adding CAWL entries to fill out, in established database.")
         self.wait(msg=text)
@@ -5695,7 +5632,7 @@ class WordCollection(Segments):
             if self.sense.imgselectiondir:
                 # logic to pull English terms from folder names
                 self.sense.collectionglosses=[i for i in
-                                        self.sense.imgselectiondir.split('_')
+                                        str(self.sense.imgselectiondir).split('/')[-1].split('_')
                                         if not isinteger(i)]
         self.wait(msg="Dowloading images from OpenClipart.org\n{}"
                         "".format(" ".join(self.sense.collectionglosses)))
@@ -6122,7 +6059,7 @@ class Parse(Segments):
             return
         log.info("asking for second form segments for ‘{}’ ps: {} ({}; {})"
                 "".format(self.parser.entry.lc.textvaluebylang(self.analang),
-                            ps,self.parser.senseid,
+                            ps,self.parser.sense.id,
                             self.parsecatalog.parsen()))
         sfname=self.secondformfield[ps]
         if self.iswaiting():
@@ -6220,7 +6157,7 @@ class Parse(Segments):
             kwargs={
                 'sense':self.sense
                 }
-        self.parser.parseentry(**kwargs) #sets entry, sense, and senseid for parser
+        self.parser.parseentry(**kwargs) #sets entry, sense, and sense.id for parser
         log.info("lx: {}, lc: {}, pl: {}, imp: {}".format(*self.parser.texts()))
         if min(self.parser.auto, self.parser.ask) <= 4:# and not badps:
             r=self.trythreeforms()
@@ -6258,30 +6195,27 @@ class Parse(Segments):
             return [r] #only return this once.
         else:
             return [] #list, either way
-    def senseidstoparse(self,senseids=None,all=False,n=-1): #n/limit=-1#1000
+    def sensestoparse(self,senses=None,all=False,n=-1): #n/limit=-1#1000
         s=self.initsensetodo()# This returns and resets
         if s:
             return s
-        if not senseids:
-            senseids=program['db'].senseids[:n]
+        if not senses:
+            senses=program['db'].senses[:n]
         if all:
-            return senseids #if provided, assume all
+            return senses #if provided, assume all
         else:
             try:
-                return set(senseids)-set(self.parsecatalog.parsed)
+                return set(senses)-set(self.parsecatalog.parsed)
             except AttributeError:
-                return set(senseids)
+                return set(senses)
     def getparses(self,**kwargs):
         log.info("parses already tried: {}".format(self.parsecatalog.parsen()))
-        # for senseid in set(program['db'].senseids)-set(self.parsecatalog.parsed):
-        #     self.parse(senseid)
         self.wait("Parsing (ask: {} auto: {})".format(self.parser.ask,
                                                         self.parser.auto
                                                     ))
-        senseids=self.senseidstoparse(**kwargs)
-        todo=len(senseids)
-        for n,self.sense in enumerate(
-                                [program['db'].sensedict[i] for i in senseids]):
+        senses=self.sensestoparse(**kwargs)
+        todo=len(senses)
+        for n,self.sense in enumerate(senses):
             self.parse() #this can add to lists
             if self.exited:
                 break
@@ -6292,9 +6226,6 @@ class Parse(Segments):
         self.waitdone()
         # log.info("total parses tried: {}".format(self.parsecatalog.parsen()))
         self.parsecatalog.report()
-    # def getparse(self,senseid):
-    #     if senseid not in self.parsed:
-    #         self.parse(sense) #this can add to lists
     def nextparserasklevel(self):
         auto=self.parser.auto
         ask=self.parser.ask
@@ -6903,7 +6834,7 @@ class ToneFrameDrafter(ui.Window):
         ftype=framedef['field']
         while not tried or None in f.values():
             f={lang:None for lang in langs} #start each with a clean slate
-            if tried > program['db'].nsenseids*1.5: #give up looking randomly
+            if tried > program['db'].nsenses*1.5: #give up looking randomly
                 sense=self.gimmesense(sense,next=True)
             else:
                 sense=self.gimmesense()
@@ -6915,14 +6846,14 @@ class ToneFrameDrafter(ui.Window):
             # log.info("Analang form found: {}".format(f[self.analang]))
             tried+=1
             log.info("Values found: {}".format(f))
-            if tried> program['db'].nsenseids*3.5:
+            if tried> program['db'].nsenses*3.5:
                 errortext=_("I've tried (randomly, then through each) {} "
                 "times, and not found one "
                 "of your {} senses with data in each of these languages: "
                 "{}. \nAre you asking for gloss "
                 "languages which actually have data in your database? \nOr, are "
                 "you missing gloss fields (i.e., you have only 'definition' "
-                "fields)?").format(tried,program['db'].nsenseids,langs)
+                "fields)?").format(tried,program['db'].nsenses,langs)
                 log.error(errortext)
                 return #errortext
         log.debug("Found entry {} with glosses {}".format(sense.id,f))
@@ -6960,10 +6891,10 @@ class Tone(object):
             self.analysis=Analysis(**kwargs)
         else:
             self.analysis.setslice(**kwargs)
-    def checkforsenseidstosort(self,cvt=None,ps=None,profile=None,check=None):
-        """This method just asks if any senseid in the given slice is unsorted.
+    def checkforsensestosort(self,cvt=None,ps=None,profile=None,check=None):
+        """This method just asks if any sense in the given slice is unsorted.
         It stops when it finds the first one."""
-        """use if sorting senseid lists aren't needed"""
+        """use if sorting sense lists aren't needed"""
         """This is redundant with updatesortingstatus()"""
         if cvt is None:
             cvt=program['slices'].cvt()
@@ -6973,20 +6904,18 @@ class Tone(object):
             profile=program['slices'].profile()
         if check is None:
             check=program['slices'].check()
-        senseids=program['slices'].senseids(ps=ps,profile=profile)
+        senses=program['slices'].senses(ps=ps,profile=profile)
         vts=False
-        for senseid in senseids:
-            v=unlist(program['db'].get("example/tonefield/form/text", senseid=senseid,
-                                                    location=check).get('text'))
-            if v not in ['',None]:
+        for sense in senses:
+            if sense.tonevaluebyframe(self,frame):
                 vts=True
-                break
+                break #This is just a True/False for the group, not lists
         program['status'].dictcheck(cvt=cvt,ps=ps,profile=profile,check=check)
-        program['status'].tosort(vts,cvt=cvt,ps=ps,profile=profile,check=check) #set
+        program['status'].tosort(vts,cvt=cvt,ps=ps,profile=profile,check=check)
     def settonevariablesiterable(self,cvt='T',ps=None,profile=None,check=None):
         """This is currently called in iteration, but doesn't refresh groups,
         so it probably isn't useful anymore."""
-        self.checkforsenseidstosort(cvt=cvt,ps=ps,profile=profile,check=check)
+        self.checkforsensestosort(cvt=cvt,ps=ps,profile=profile,check=check)
     def settonevariables(self):
         """This is currently called before sorting. This is a waste, if you're
         not going to sort afterwards –unless you need the groups."""
@@ -7007,15 +6936,21 @@ class Tone(object):
         #simpler than calling and uncalling..…
         pass
     def setsensegroup(self,sense,ftype,check,group,**kwargs):
-        """here kwargs should include framed, if you want this to update the
-        form information in the example"""
+        """ftype is needed here to get the correct form for frame substitution
+        more critically, Segments.setsensegroup requires it, so this keeps their
+        signatures the same
+        """
+        # """here kwargs should include framed, if you want this to update the
+        # form information in the example"""
         ps=sense.psvalue()
         # log.info("Setting tone sort group")
-        if not ftype:
-            log.error("No field type!")
-            return
+        # if not ftype:
+        #     log.error("No field type!")
+        #     return
         try:
             """Fine if check isn't there; will be caught with exception"""
+            # providing both ftype and frame isn't necessary, but allows check
+            # that they align:
             f=sense.formattedform(self.analang,ftype,
                                 program['toneframes'][ps][check])
             log.info("Setting form to {}".format(f))
@@ -7044,30 +6979,16 @@ class Tone(object):
                 i for i in program['db'].senses
                 if i.uftonevalue() == group
                 ]
-        # return program['db'].get('sense',
-        #                     toneUFvalue=group,
-        #                     # path=['example'],
-        #                     # showurl=True
-        #                     ).get('senseid')
     def getsensesingroup(self,check,group):
         return [
                 i for i in program['db'].senses
                 if i.tonevaluebyframe(check) == group
                 ]
-        # return program['db'].get('sense',location=check,
-        #                             tonevalue=group,
-        #                             path=['example'],
-        #                             showurl=True
-        #                     ).get('senseid')
     def getsensegroup(self,sense,check):
+        """This works without ftype, as each frame only has one"""
         return sense.tonevaluebyframe(check)
     def getUFgroupofsense(self,sense):
         return sense.uftonevalue()
-        # return program['db'].get("sense/field/form/text",
-        #                     path=["toneUFfield"],
-        #                     senseid=senseid,
-        #                     # showurl=True
-        #                     ).get('text')
     def __init__(self):
         pass
 class Sort(object):
@@ -7188,8 +7109,8 @@ class Sort(object):
         pady=10
         ui.Label(self.runwindow.frame,text=title,font='title',
                 ).grid(row=0,column=0,sticky='ew')
-        allpssensids=program['slices'].senseidsbyps(ps)
-        if len(allpssensids)>70:
+        allpssenses=program['slices'].sensesbyps(ps)
+        if len(allpssenses)>70:
             self.runwindow.waitdone()
             text=_("This is a large group ({})! Are you in the right "
                     "lexical category?".format(len(allpssensids)))
@@ -7245,22 +7166,20 @@ class Sort(object):
         vars=list()
         row=0
         scroll=ui.ScrollingFrame(self.runwindow.frame)
-        for senseid in allpssensids:
-            log.debug("id: {}; index: {}; row: {}".format(senseid,
-                                                    allpssensids.index(senseid),
-                                                    row))
-            idn=allpssensids.index(senseid)
+        for idn,sense in enumerate(allpssenses):
+            log.debug("id: {}; index: {}; row: {}".format(sense.id,idn,row))
+            # idn=allpssenses.index(sense)
             vars.append(ui.StringVar())
             adhocslices=program['slices'].adhoc()
             if (ps in adhocslices and profile in adhocslices[ps] and
-                                        senseid in adhocslices[ps][profile]):
-                vars[idn].set(senseid)
+                                        sense in adhocslices[ps][profile]):
+                vars[idn].set(sense)
             else:
                 vars[idn].set(0)
             forms=sense.formatted()
             log.debug("forms: {}".format(forms))
             ui.CheckButton(scroll.content, text = forms,
-                                variable = vars[allpssensids.index(senseid)],
+                                variable = vars[idn],
                                 onvalue = id, offvalue = 0,
                                 ).grid(row=row,column=0,sticky='ew')
             row+=1
@@ -7273,7 +7192,7 @@ class Sort(object):
         ftype=kwargs.get('ftype',program['params'].ftype())
         write=kwargs.pop('write',True) #avoid duplicate
         sorting=kwargs.get('sorting',True) #Default to verify button
-        log.info(_("Removing senseid {} from subcheck {}".format(sense.id,group)))
+        log.info(_("Removing sense {} from subcheck {}".format(sense.id,group)))
         #This should only *mod* if already there
         self.setsensegroup(sense,ftype,check,'',**kwargs)
         tgroups=self.getsensegroup(sense,check)
@@ -7296,7 +7215,7 @@ class Sort(object):
         if write:
             self.maybewrite()
         if sorting:
-            program['status'].marksenseidtosort(sense.id)
+            program['status'].marksensetosort(sense)
     def ncheck(self):
         r=program['status'].nextcheck(tosort=True)
         if not r:
@@ -7350,8 +7269,12 @@ class Sort(object):
         self.resetsortbutton() #track what is done since each button press.
         self.maybesort()
     def confirmverificationgroup(self,sense,profile,ftype,check):
+        """This does the one field storing a list of verified values
+        for all checks"""
+        """This results in NO group change where a group hasn't been confirmed!
+        """
         log.info("Confirming that current group and verification code match "
-                    "before making changes.") 
+                    "before making changes.")
         curgroup=self.getsensegroup(sense,check) #Segment or Tone
         vals=sense.verificationtextvalue(profile,ftype)
         curvalues=[i.split('=')[-1]  #last (value), if multiple
@@ -7388,19 +7311,19 @@ class Sort(object):
         guid=None
         log.debug("marking sortgroup {}={} ({})".format(check,group,sense.id))
         if kwargs.get('updateverification'):
-            """This does the one field storing a list of verified values
-            for all checks"""
+            add=self.verificationcode(check=check,group=group)
             # Checking and verifying that the current group and verification
             # values match may be excessive, as well as undesirable, without
-            # any other way to fix discrepancies
-            add=self.verificationcode(check=check,group=group)
-            noconfirmation=False #Should test w/wo this; time difference?
+            # any other way to fix discrepancies:
+            # noconfirmation=False #Should test w/wo this; time difference?
+            noconfirmation=True #Should test w/wo this; time difference?
             if noconfirmation or self.confirmverificationgroup(sense, profile,
                                                                 ftype, check):
                 self.modverification(sense,profile,ftype,check,add)
         self.setsensegroup(sense,ftype,check,group)
         if not nocheck:
-            newgroup=unlist(self.getsensegroup(sense,check))
+            # newgroup=unlist(self.getsensegroup(sense,check))
+            newgroup=self.getsensegroup(sense,check)
             if newgroup != group:
                 log.error("Field addition failed! LIFT says {}, not {}.".format(
                                                     newgroup,group))
@@ -7408,7 +7331,7 @@ class Sort(object):
                 log.info("Field addition succeeded! LIFT says {}, which is {}."
                                         "".format(newgroup,group))
         if kwargs.get('updateforms'):
-            self.updateformtoannotations(sense,ftype,check=check)
+            self.updateformtoannotations(sense,ftype,check)
         program['status'].last('sort',update=True) #this will always be a change
         program['status'].tojoin(True)
         self.updatestatus(group=group,writestatus=True) # write just this once
@@ -7441,8 +7364,8 @@ class Sort(object):
             log.info("maybesort tosortbool:{}; tosort:{}; sorted (first 5):{}"
                     "".format(
                                 program['status'].tosort(),
-                                program['status'].senseidstosort(),
-                                program['status'].senseidssorted()[:5]
+                                program['status'].sensestosort(),
+                                program['status'].sensessorted()[:5]
                                 ))
         def exitstatuses():
             try:
@@ -7532,14 +7455,14 @@ class Sort(object):
         scaledpady=int(50*program['scale'])
         groupselected=None
         """these just pull the current lists from the object"""
-        senseids=program['status'].senseidstosort()
-        sorted=program['status'].senseidssorted()
+        senses=program['status'].sensestosort()
+        sorted=program['status'].sensessorted()
         try:
-            sense=program['db'].sensedict[senseids[0]]
+            sense=senses[0]
         except IndexError:
-            log.info("maybe ran out of senseids?")
+            log.info("maybe ran out of senses?")
             return
-        progress=(str(self.thissort.index(sense.id)+1)+'/'+str(len(self.thissort)))
+        progress=(str(self.thissort.index(sense)+1)+'/'+str(len(self.thissort)))
         """After the first entry, sort by groups."""
         # log.debug('groups: {}'.format(program['status'].groups(wsorted=True)))
         if self.runwindow.exitFlag.istrue():
@@ -7597,9 +7520,9 @@ class Sort(object):
         the above is changed, this variable should be reset."""
         """Can't do this test suite unless there are unsorted entries..."""
         """things that don't change in this fn"""
-        self.thissort=program['status'].senseidstosort()[:] #current list
-        log.info("Going to sort these senseids: {}"
-                "".format(program['status'].senseidstosort()))
+        self.thissort=program['status'].sensestosort()[:] #current list
+        log.info("Going to sort these senses: {}"
+                "".format(program['status'].sensestosort()))
         groups=program['status'].groups(wsorted=True)
         log.info("Current groups: {}".format(groups))
         """Children of runwindow.frame"""
@@ -7633,7 +7556,7 @@ class Sort(object):
         """Stuff that changes by lexical entry
         The second frame, for the other two buttons, which also scroll"""
         while (program['status'].tosort() and
-                program['status'].senseidstosort() and
+                program['status'].sensestosort() and
                 not self.runwindow.exitFlag.istrue()):
             tosort=self.presenttosort()
             """thread here? No, this updates the UI, as well as writing data"""
@@ -7823,7 +7746,7 @@ class Sort(object):
                     **kwargs
                     )
         else:
-            bf=ui.Frame(parent, pady='0') #This will be killed by removesenseidfromgroup
+            bf=ui.Frame(parent, pady='0') #This will be killed by removesensefromgroup
             bf.grid(column=column, row=row, sticky='ew')
             b=ui.Button(bf, text=text, pady='0',
                     cmd=notok,
@@ -7967,8 +7890,6 @@ class Sort(object):
         check=program['params'].check()
         if check in program['status'].checks():
             senses=self.getsensesincheckgroup(group='NA')
-            # program['slices'].senseids()
-            # ftype=program['toneframes'][check]['field'] #this must match check!
         else:
             #Give an error window here
             log.error("Not Trying again; set a check first!")
@@ -7977,20 +7898,15 @@ class Sort(object):
             text=_("Not Trying Again; set a tone frame first!")
             ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
             return
-        for sense in senses: #this is a ps-profile slice
+        for sense in senses:
             self.removesensefromgroup(sense)
-            # program['db'].addmodexamplefields(senseid=senseid,fieldtype='tone',
-            #                 location=check,#ftype=ftype,
-            #                 fieldvalue='', #just clear this
-            #                 oldfieldvalue='NA', showurl=True #if this
-            #                 )
         self.runcheck()
     def updatebygroupsense(self,oldvalue,newvalue,updateforms=False):
         """Generalize this for segments"""
         # This function updates the field value and verification status (which
         # contains the field value) in the lift file.
         # This is all the words in the database with the given
-        # location:value correspondence (for a given ps/profile)
+        # check:value correspondence (for a given ps/profile)
         check=program['params'].check()
         lst2=self.getsensesingroup(check,oldvalue) #by annotations, for C/V
         # We are agnostic of verification status of any given entry, so just
@@ -8012,40 +7928,15 @@ class Sort(object):
                                 args=(sense,newvalue),
                                 kwargs={'check':check,
                                         'ftype':ftype,
-                                        'nocheck': True, #don't verify from lift
+                                        # remove for testing this fn:
+                                        # 'nocheck': True, #don't verify from lift
                                         'updateverification':True,
                                         'updateforms':updateforms})
-            # if updateforms:
-            #     # self.updateformtoannotations(senseid,ftype,check)
-            #     t = threading.Thread(target=self.updateformtoannotations,
-            #                     args=(senseid,ftype),
-            #                     kwargs={'check':check})
-            # v = threading.Thread(target=program['db'].modverificationnode,
-            #                     # args=(senseid,group),
-            #                     kwargs={'senseid':senseid,
-            #                             'vtype':profile,
-            #                             'analang':self.analang,
-            #                             'add':add,
-            #                             'rms':[rm],
-            #                             'addifrmd':True})
-            # for i in [u,v]:
-            #     i.start()
             u.start()
-            # self.setsenseidgroup(senseid,ftype,check,newvalue)
-            # self.updateformtoannotations(senseid,ftype,check)
-            # program['db'].modverificationnode(senseid=senseid,
-            #                 vtype=profile,
-            #                 analang=self.analang,
-            #                 add=add,rms=[rm],
-            #                 addifrmd=True)
-        # for i in [u,v]:
-        #     i.join()
         u.join()
         if updateforms:
-            #NO: this should update formstosearch and profile data.
-            #?
             program['settings'].reloadstatusdatabycvtpsprofile()
-        self.maybewrite() #once done iterating over senseids
+        self.maybewrite() #once done iterating over senses
     def __init__(self, parent):
         program['settings'].makeeverythingok()
         """I need some way to control for ftype"""
@@ -8353,9 +8244,9 @@ class Record(Sound,TaskDressing):
         log.info(text)
         instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
         instr.grid(row=0,column=0,sticky='w')
-        senseids=program['slices'].senseids(ps=ps,profile=profile)
+        senses=program['slices'].senses(ps=ps,profile=profile)
         nperpage=10
-        pages=[senseids[i:i+nperpage] for i in range(0,len(senseids),nperpage)]
+        pages=[senses[i:i+nperpage] for i in range(0,len(senses),nperpage)]
         log.info("pages: {}".format(pages))
         for page in pages:
             if self.runwindow.exitFlag.istrue():
@@ -8365,8 +8256,7 @@ class Record(Sound,TaskDressing):
                                             row=1,column=0,sticky='w')
             row=0
             done=list()
-            for row,entry in enumerate([program['db'].sensedict[i].entry
-                                            for i in page]):
+            for row,entry in enumerate([i.entry for i in page]):
                 self.runwindow.column=0
                 if entry.guid in done: #only the first of multiple senses
                     continue
@@ -8447,7 +8337,6 @@ class Record(Sound,TaskDressing):
             log.debug("Working on {} with skip: {}".format(sense.id,
                                                     self.runwindow.frame.skip))
             examples=list(sense.examples.values())
-            # program['db'].get('example',senseid=senseid).get()
             if examples == []:
                 log.debug(_("No examples! Add some, then come back."))
                 continue
@@ -8519,7 +8408,7 @@ class Record(Sound,TaskDressing):
             program['settings'].storesettingsfile()
         self.makeanalysis()
         self.analysis.donoUFanalysis()
-        torecord=self.analysis.senseidsbygroup
+        torecord=self.analysis.sensesbygroup
         ntorecord=len(torecord) #number of groups
         nexs=len([k for i in torecord for j in torecord[i] for k in j])
         nslice=program['slices'].count()
@@ -8732,18 +8621,17 @@ class Report(object):
         start_time=nowruntime()
         #default=True redoes the UF analysis (removing any joining/renaming)
         ftype=kwargs.get('ftype',program['params'].ftype())
-        def examplestoXLP(examples,parent,senseid):
+        def examplestoXLP(examples,parent):
             # log.info("examples : {} ({})".format(examples,type(examples)))
             counts['senses']+=1
-            for example in examples:
+            for example in [e for e in examples if self.analang in e.forms]:
                 # skip empty examples:
-                if self.analang not in example.forms:
-                    continue
+                # if self.analang not in example.forms:
+                #     continue
                 counts['examples']+=1
                 if program['settings'].audiolang in example.forms:
                     counts['audio']+=1
-                self.nodetoXLP(example,parent=parent,
-                                                listword=True,
+                self.nodetoXLP(example,parent=parent,listword=True,
                                                 showgroups=showgroups)
         analysisOK,showgroups,timestamps=program['status'].isanalysisOK(**kwargs)
         silent=kwargs.get('silent',False)
@@ -8810,8 +8698,14 @@ class Report(object):
                     "".format(self.analysis.comparisonUFs,
                             self.analysis.comparisonchecks))
         grouplist=[i for i in self.analysis.orderedUFs
-                if len(self.analysis.senseidsbygroup[i]) >= self.minwords
+                if len(self.analysis.sensesbygroup[i]) >= self.minwords
                 ]
+        dontshow=[i for i in self.analysis.orderedUFs
+                if len(self.analysis.sensesbygroup[i]) < self.minwords
+                ]
+        if dontshow:
+            log.info("Not showing groups with less than {} words: {}".format(
+                                                        self.minwords,dontshow))
         checks=self.analysis.orderedchecks
         r = open(self.tonereportfile, "w", encoding='utf-8')
         title=_("Tone Report")
@@ -8915,19 +8809,21 @@ class Report(object):
                         values=lambda x,y:nn(unlist(
                 self.analysis.valuesbygroupcheck[y][x],ignore=[None, 'NA']
                                             )),
-                        ycounts=lambda x:len(self.analysis.senseidsbygroup[x]),
+                        ycounts=lambda x:len(self.analysis.sensesbygroup[x]),
                         xcounts=lambda y:len(self.analysis.valuesbycheck[y]))
         #Can I break this for multithreading?
         for group in grouplist: #These already include ps-profile
             log.info("building report for {} ({}/{}, n={})".format(group,
                 grouplist.index(group)+1,len(grouplist),
-                len(self.analysis.senseidsbygroup[group])
+                len(self.analysis.sensesbygroup[group])
                 ))
             sectitle=_('\n{}'.format(str(group)))
             s1=xlp.Section(s1parent,title=sectitle)
             output(window,r,sectitle)
             l=list()
             for x in self.analysis.valuesbygroupcheck[group]:
+                values=self.analysis.valuesbygroupcheck[group][x]
+                # log.info("X Values: {} ({})".format(values,type(values)))
                 l.append("{}: {}".format(x,', '.join(
                     [i for i in self.analysis.valuesbygroupcheck[group][x]
                                                             if i is not None]
@@ -8945,29 +8841,27 @@ class Report(object):
                 #This is better than checks, just whats there for this group
                 for check in self.analysis.valuesbygroupcheck[group]:
                     id=rx.id('x'+sectitle+check)
+                    values=self.analysis.valuesbygroupcheck[group][check]
+                    # log.info("Values: {} ({})".format(values,type(values)))
                     headtext='{}: {}'.format(check,', '.join(
-                            [i for i in
-                            self.analysis.valuesbygroupcheck[group][check]
-                            if i is not None]
-                                            ))
+                                            [i for i in values if i is not None]
+                                                            ))
                     e1=xlp.Example(s1,id,heading=headtext)
-                    for senseid in self.analysis.senseidsbygroup[group]:
-                        sense=program['db'].sensedict[senseid]
+                    for sense in self.analysis.sensesbygroup[group]:
+                        # sense=program['db'].sensedict[sense]
                         #This is for window/text output only, not in XLP file
                         text=sense.formatted(self.analang,self.glosslangs)
                         #This is put in XLP file:
                         if check in sense.examples:
-                            examples=[sense.examples[check]]
-                            examplestoXLP(examples,e1,senseid)
+                            examples=[sense.examples[check]] #list just one here
+                            examplestoXLP(examples,e1)
                         if text not in textout:
                             output(window,r,text)
                             textout.append(text)
                     if not e1.node.find('listWord'):
                         s1.node.remove(e1.node) #Don't show examples w/o data
             else:
-                for senseid in self.analysis.senseidsbygroup[group]:
-                    #This is for window/text output only, not in XLP file
-                    sense=program['db'].sensedict[senseid]
+                for sense in self.analysis.sensesbygroup[group]:
                     #This is put in XLP file:
                     examples=list(sense.examples.values())
                     log.info("{} exs found: {}".format(len(examples), examples))
@@ -8976,12 +8870,11 @@ class Report(object):
                         headtext=text.replace('\t',' ')
                         e1=xlp.Example(s1,id,heading=headtext)
                         log.info("Asking for the following {} examples from id "
-                                "{}: {}".format(len(examples),senseid,examples))
-                        examplestoXLP(examples,e1,senseid)
+                                "{}: {}".format(len(examples),sense.id,examples))
+                        examplestoXLP(examples,e1)
                     else:
                         self.nodetoXLP(sense.ftypes[ftype],
                                         parent=s1,
-                                        # ftype=ftype,
                                         showgroups=showgroups)
                     output(window,r,text)
         sectitle=_('{} {} Data Summary').format(ps,profile)
@@ -9035,12 +8928,14 @@ class Report(object):
                     ).format(kwargs))
         time.sleep(0.2) #give it 200ms before checking if it returned already
         if not t.is_alive():
-            ErrorNotice(_("Looks like that didn't work; "
-                            "you may need "
-                            "to run a report first, or "
+            msg=_("Looks like that didn't work; "
+                            # "you may need "
+                            # "to run a report first, or "
                             "trying again not in "
                             "the background ({})."
-                        ).format(kwargs))
+                        ).format(kwargs)
+            log.info(msg)
+            # ErrorNotice(msg)
             fn(**kwargs)
     def getresults(self,**kwargs):
         def iterateUFgroups(parent,**kwargs):
@@ -9091,11 +8986,10 @@ class Report(object):
         if self.byUFgroup:
             self.makeanalysis()
             self.analysis.donoUFanalysis()
-            # torecord=analysis.senseidsbygroup
-            ufgroupsnsenseids=analysis.senseidsbygroup.items()
+            ufgroupsnsenses=analysis.sensesbygroup.items()
             kwargs['sectlevel']=4
             t=_("{} checks".format(program['params'].cvtdict()[kwargs['cvt']]['sg']))
-            for kwargs['ufgroup'],kwargs['ufsenseids'] in ufgroupsnsenseids:
+            for kwargs['ufgroup'],kwargs['ufsenses'] in ufgroupsnsenses:
                 if 'ufgroup' in kwargs:
                     log.info("Going to run {} report for UF group {}"
                             "".format(program['params'].cvtdict()[kwargs['cvt']]['sg'],
@@ -9106,29 +9000,11 @@ class Report(object):
         else:
             kwargs['ufgroup']=_("All")
             iterateUFgroups(si,**kwargs)
-            # These lines get all senseids, to test that we're not losing any, below
-        # This is the first of three blocks to uncomment (on line, then logs)
-        # self.regexCV=profile
-        # self.regex=rx.fromCV(self,lang=self.analang,
-        #                     word=True, compile=True)
-        # rxsenseidsinslice=self.senseidformsbyregex(self.regex)
-        # senseidsinslice=program['slices'].senseids()
-        # log.info("nrxsenseidsinslice: {}".format(len(rxsenseidsinslice)))
-        # log.info("nsenseidsinslice: {}".format(len(senseidsinslice)))
-        # senseidsnotsearchable=set(senseidsinslice)-set(rxsenseidsinslice)
-        # log.info("senseidsnotsearchable: {}".format(len(senseidsnotsearchable)))
-        # log.info("senseidsnotsearchable: {}".format(senseidsnotsearchable))
         xlpr.close(me=me)
         if usegui:
             self.runwindow.waitdone()
             if not hasattr(self,'results'): #i.e., showing results in window
                 self.runwindow.on_quit()
-        # Report on testing blocks above
-        # log.info("senseids remaining (rx): ({}) {}".format(
-        #                                                 len(rxsenseidsinslice),
-        #                                                 rxsenseidsinslice))
-        # log.info("senseids remaining: ({}) {}".format(len(senseidsinslice),
-        #                                                     senseidsinslice))
         n=0
         for ps in self.checkcounts:
             for profile in self.checkcounts[ps]:
@@ -9284,9 +9160,9 @@ class Report(object):
         #         self.regexCV,
         #         # self.regex
         #         )         )
-        matches=set(self.senseidformsbyregex(self.regex,**kwargs))
-        if 'ufsenseids' in kwargs:
-            matches=matches&set(kwargs['ufsenseids'])
+        matches=set(self.senseformsbyregex(self.regex,**kwargs))
+        if 'ufsenses' in kwargs:
+            matches=matches&set(kwargs['ufsenses'])
         if hasattr(self,'basicreported') and check in self.basicreported:
             # log.info("Removing {} entries already found from {} entries found "
             #         "by {} check".format(len(self.basicreported[check]),
@@ -9379,7 +9255,7 @@ class Report(object):
                         self.basicreported[c]=matches
                         # log.info("First entries: {}".format(
                         #                     list(self.basicreported[c])[:5]))
-            for sense in [program['db'].sensedict[m] for m in matches]:
+            for sense in matches:
                 node=sense.ftypes[ftype]
                 self.nodetoXLP(node,parent=ex,listword=True) #showgroups?
                 if usegui and hasattr(self,'results'): #i.e., showing results in window
@@ -9574,7 +9450,7 @@ class Report(object):
         for ps in self.profilesbysense:
             if ps in ['Invalid','analang']:
                 continue
-            print(ps, self.profilesbysense[ps])
+            print(ps, [i.id for i in self.profilesbysense[ps]])
     def psprofilestodo(self):
         if isinstance(self,Multislice):
             return {ps:program['slices'].profiles(ps=ps)[:program['settings'].maxprofiles]
@@ -9664,13 +9540,12 @@ class Report(object):
                 if self.byUFgroup:
                     self.makeanalysis(**kwargs)
                     self.analysis.donoUFanalysis()
-                    # torecord=analysis.senseidsbygroup
                     ufgroupsnids=[(i,j) for i,j in
-                                self.analysis.senseidsbygroup.items()
+                                self.analysis.sensesbygroup.items()
                                 #don't report small groups
                                 if len(j) >= self.minwords]
                     kwargs['sectlevel']=4
-                    for kwargs['ufgroup'],kwargs['ufsenseids'] in ufgroupsnids:
+                    for kwargs['ufgroup'],kwargs['ufsenses'] in ufgroupsnids:
                         if 'ufgroup' in kwargs:
                             log.info("Going to run report for UF group {}"
                                     "".format(kwargs['ufgroup']))
@@ -10221,9 +10096,9 @@ class SortT(Sort,Tone,TaskDressing):
         log.info("Done initializing check.")
         """Testing Zone"""
     def addtonefieldpron(self,guid,framed): #unused; leads to broken lift fn
-        senseid=None
+        sense=None
         program['db'].addpronunciationfields(
-                                    guid,senseid,self.analang,self.glosslangs,
+                                    guid,sense.id,self.analang,self.glosslangs,
                                     lang='en',
                                     forms=framed,
                                     fieldtype='tone',location=check,
@@ -10302,6 +10177,28 @@ class Transcribe(Sound,Sort,TaskDressing):
     def unsubmit(self,event=None):
         log.info("Undoing...")
         self.mistake=True
+    def polygraphwarn(self,newvalue):
+        if len(newvalue) != 1 or len(self.group) != 1:
+            warning=_("This name change (‘{}’ > ‘{}’) impacts your "
+                        "digraph and trigraph settings."
+                        ).format(self.group,newvalue)
+            if len(newvalue) > 1:
+                warning+=_("\n{} will add ‘{}’ to those settings."
+                            ).format(program['name'],newvalue)
+            if len(self.group) > 1:
+                warning+=_("\n{} will *not* remove ‘{}’ from "
+                            "those settings, because you may still be "
+                            "using it elsewhere."
+                            ).format(program['name'],self.group)
+            warning+=_("\n\n**If this isn't what you wanted, "
+                        "fix and confirm your digraph and "
+                        "trigraph settings in the menu "
+                        "\n(this will make {} restart and redo "
+                        "the syllable profile analysis)."
+                        ).format(program['name'])
+            title=_("Syllable profile change?")
+            #Just state this and move on to making changes:
+            self.err=ErrorNotice(warning,parent=self,title=title)
     def submitform(self):
         newvalue=self.transcriber.formfield.get()
         if newvalue == "":
@@ -10323,27 +10220,8 @@ class Transcribe(Sound,Sort,TaskDressing):
                 self.errorlabel['text'] = deja
                 return 1
             if program['params'].cvt() != 'T': #Warning only on segmental changes
-                if len(newvalue) != 1 or len(self.group) != 1:
-                    warning=_("This name change (‘{}’ > ‘{}’) impacts your "
-                                "digraph and trigraph settings."
-                                ).format(self.group,newvalue)
-                    if len(newvalue) > 1:
-                        warning+=_("\n{} will add ‘{}’ to those settings."
-                                    ).format(program['name'],newvalue)
-                    if len(self.group) > 1:
-                        warning+=_("\n{} will *not* remove ‘{}’ from "
-                                    "those settings, because you may still be "
-                                    "using it elsewhere."
-                                    ).format(program['name'],self.group)
-                    warning+=_("\n\n**If this isn't what you wanted, "
-                                "fix and confirm your digraph and "
-                                "trigraph settings in the menu "
-                                "\n(this will make {} restart and redo "
-                                "the syllable profile analysis)."
-                                ).format(program['name'])
-                    title=_("Syllable profile change?")
-                    #Just state this and move on to making changes:
-                    self.err=ErrorNotice(warning,parent=self,title=title)
+                self.polygraphwarn(newvalue)
+            """updateforms=True doesn't seem to be working for segments"""
             self.updatebygroupsense(self.group,newvalue,updateforms=True)
             #NO: this should update formstosearch and profile data.
             # log.info("Doing renamegroup: {}>{}".format(self.group,newvalue))
@@ -10364,17 +10242,15 @@ class Transcribe(Sound,Sort,TaskDressing):
                 log.info("updating for type {} check {}, group ‘{}’"
                         "".format(ftype,check,group))
                 senses=self.getsensesincheckgroup()
-                log.info("modding senseids {}".format(senseids))
+                log.info("modding senses {}".format([i.id for i in senses]))
                 for sense in senses:
                     u = threading.Thread(target=self.updateformtoannotations,
-                                        args=(sense,ftype),
-                                        kwargs={'check':check})
-                    # self.updateformtoannotations(senseid,ftype,check=check)
+                                        args=(sense,ftype,check),
+                                        # kwargs={'check':check}
+                                        )
                     u.start()
-                if senseids:
+                if senses:
                     u.join()
-                #NO: this should update formstosearch and profile data.
-                # program['settings'].reloadstatusdatabycvtpsprofile()
                 self.maybewrite()
         if hasattr(self,'group_comparison'):
             delattr(self,'group_comparison') # in either case
@@ -10779,13 +10655,12 @@ class JoinUFgroups(Tone,TaskDressing):
                 errorlabel['text'] = deja
                 return
             for group in groupsselected:
-                if group in self.analysis.senseidsbygroup: #selected ones only
+                if group in self.analysis.sensesbygroup: #selected ones only
                     log.debug("Changing values from {} to {} for the following "
-                            "senseids: {}".format(group,uf,
-                                        self.analysis.senseidsbygroup[group]))
-                    for senseid in self.analysis.senseidsbygroup[group]:
-                        program['db'].addtoneUF(senseid,uf,analang=self.analang,
-                        write=False)
+                            "sense.ids: {}".format(group,uf,
+                            [i.id for i in self.analysis.sensesbygroup[group]]))
+                    for sense in self.analysis.sensesbygroup[group]:
+                        sense.uftonevalue(uf)
             self.maybewrite()
             self.runwindow.destroy()
             program['status'].last('joinUF',update=True)
@@ -10890,7 +10765,7 @@ class JoinUFgroups(Tone,TaskDressing):
                             column=col,sticky='ew')
                 nheaders+=1
             groupvars.append(ui.StringVar())
-            n=len(self.analysis.senseidsbygroup[group])
+            n=len(self.analysis.sensesbygroup[group])
             buttontext=group+' ({})'.format(n)
             cb=ui.CheckButton(scroll.content, text = buttontext,
                                 variable = groupvars[idn],
@@ -11379,7 +11254,7 @@ class ExampleDict(dict):
     in a given tone frame (from check); thus, only sorted data."""
     def sensesinslicegroup(self,group,check):
         """Convert to senses before return"""
-        #This returns all the senseids with a given tone value
+        #This returns all the senses with a given tone value
         senses=program['taskchooser'].task.getsensesingroup(check,group)
         if not senses:
             log.error("There don't seem to be any sensids in this check tone "
@@ -11398,8 +11273,6 @@ class ExampleDict(dict):
                 "({}-{}, {} {})"
                 "".format(program['slices'].ps(),program['slices'].profile(),check,group))
             return
-        # return list(senseidsinslice)
-        # return senses, not senseids
         return list(set(senses)&set(sensesinslice))
     def hasglosses(self,node):
         # log.info("hasglosses sense: {}".format(sense.id))
@@ -11447,29 +11320,21 @@ class ExampleDict(dict):
             return 0,None
         # else:
         #     log.info("Found {} examples in the {} sort group for the {} check: "
-        #             "{}.".format(len(senseids),group,check,senseids))
+        #         "{}.".format(len(nodes),group,check,[i.id for i in nodes]))
         n=len(nodes)
         tries=0
         node=None #do this once, anyway...
-        """hasglosses sets the framed and senseid keys"""
+        """hasglosses sets the framed and sense keys"""
         # log.debug("ExampleDict getexample kwargs: {}".format(kwargs))
         while not self.exampletypeok(node,**kwargs) and tries<n*2:
-            # (self.hasglosses(senseid) or noglossesok or tries>n*2):
             tries+=1
-            # if tries == n*2: #do this just once
-            #     if exampletype['wsoundfile']:
-            #         exampletype['wsoundfile']=False
-            #     else:
-            #         break
-            # log.debug("ExampleDict getexample kwargs: {}; tries: {}; n: {}"
-            #                                 "".format(kwargs,tries,n))
-            if group in self: #.exs:
+            if group in self:
                 log.info("group in self")
                 if self[group] in nodes: #if stored value is in group
                     # log.info("self[group] in examples")
                     if not kwargs['renew']:
-                        log.info("Using stored value for ‘{}’ group: ‘{}’"
-                                "".format(group, self[group]))
+                        # log.info("Using stored value for ‘{}’ group: ‘{}’"
+                        #         "".format(group, self[group]))
                         node=self[group]
                         #don't do this if clause more than once
                         kwargs['renew']=True
@@ -11492,7 +11357,7 @@ class ExampleDict(dict):
                                 "".format(group, self[group]))
                 else:
                     # log.info("self[group] not in examples")
-                    node=nodes[0] #randint(0, len(senseids))-1]
+                    node=nodes[0]
             elif n == 1:
                 # log.info("group not in self, one exemplaire")
                 node=nodes[0]
@@ -11501,8 +11366,8 @@ class ExampleDict(dict):
                 # log.info("n: {}".format(n))
                 node=nodes[randint(0, n-1)]
             self[group]=node #store for next iteration
-        if tries == n*2: #senseid is None: #not self.hasglosses(senseid):
-            log.info("Apparently I tried for a senseid {} times, and couldn't "
+        if tries == n*2:
+            log.info("Apparently I tried for a sense {} times, and couldn't "
             "find one matching your needs ({}) glosses (out of {} possible "
             "senses). This is probably a systematic problem to fix.".format(
                                                                 tries,kwargs,n))
@@ -11718,13 +11583,14 @@ class SortButtonFrame(ui.ScrollingFrame):
                 t = threading.Thread(target=self.marksortgroup,
                                     args=(sense,group),
                                     kwargs={
+                                            # remove for testing this fn:
                                             'nocheck':True
                                             })
                 t.start()
         else:
             log.debug('No group selected: {}'.format(groupselected))
             return 1 # this should only happen on Exit
-        program['status'].marksenseidsorted(sense.id)
+        program['status'].marksensesorted(sense)
         self.maybewrite()
     def __init__(self, parent, task, groups, *args, **kwargs):
         super(SortButtonFrame, self).__init__(parent, *args, **kwargs)
@@ -11739,9 +11605,9 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.groupbuttonlist=list()
         # entryview=ui.Frame(self.runwindow.frame)
         """We need a few things from the task (which are needed still?)"""
-        self.task=task
-        self.buttoncolumns=task.buttoncolumns
-        self.marksortgroup=task.marksortgroup
+        self.task=program['status'].task()
+        self.buttoncolumns=program['status'].task().buttoncolumns
+        self.marksortgroup=program['status'].task().marksortgroup
         self.check=program['params'].check()
         self.maybewrite=program['taskchooser'].maybewrite
         # self.updatestatus=task.updatestatus
@@ -12219,7 +12085,8 @@ class AlphabetGroupButtonFrame(SortGroupButtonFrame):
         if self.check not in self.checks:
             self.check=self.checks[0]
     def __init__(self, parent, check, group, ps, profile, **kwargs):
-        kwargs['playable']=True
+        self.kwargs=kwargs
+        self.kwargs['playable']=True
         self.kwargs['alwaysrefreshable']=True
         # kwargs.get('slice',)
         self.group=group
@@ -12415,18 +12282,17 @@ class Analysis(object):
                                             flat=False)
         self.orderedchecks=flatten(self.comparisonchecks)
         log.debug("structured locations: {}".format(self.comparisonchecks))
-    def checkgroupsbysenseid(self):
-        """outputs dictionary keyed to [senseid][location]=group"""
-        self.senseiddict={}
-        for senseid in self.senseids:
-            self.senseiddict[senseid]={}
+    def checkgroupsbysense(self):
+        """outputs dictionary keyed to [sense][location]=group"""
+        self.sensedict={}
+        for sense in self.senses:
+            self.sensedict[sense]={}
             for check in self.checks:
-                group=program['db'].get("example/tonefield/form/text",
-                    senseid=senseid,location=check).get('text')
-                if group: #store location:group by senseid
-                    self.senseiddict[senseid][check]=group
-        # log.info("Done collecting groups by location for each senseid.")
-        return self.senseiddict #was output
+                group=sense.tonevaluebyframe(check)
+                if group: #store location:group by sense
+                    self.sensedict[sense][check]=[group]
+        # log.info("Done collecting groups by location for each sense.")
+        return self.sensedict
     def sorttoUFs(self):
         """Input is a dict keyed by location, valued with location:group dicts
         Returns groups by location:value correspondences."""
@@ -12434,45 +12300,41 @@ class Analysis(object):
         # surface forms (each pronunciation group in a given context) to the
         # underlying form (which behaves the same as others in its group,
         # across all contexts).
-        if not hasattr(self,'senseiddict'):
-            log.error("You have to run checkgroupsbysenseid first")
+        if not hasattr(self,'sensedict'):
+            log.error("You have to run checkgroupsbysense first")
             return
         unnamed={}
         # Collect all unique combinations of location:group pairings.
-        for senseid in self.senseiddict:
+        # log.info("sensedict: {}".format(self.sensedict))
+        for sense in self.sensedict:
             #sort into groups by dict values (combinations location:group pairs)
-            k=str(self.senseiddict[senseid])
+            k=str(self.sensedict[sense])
             try:
-                unnamed[k].append(senseid)
+                unnamed[k].append(sense)
             except KeyError:
-                unnamed[k]=[senseid]
+                unnamed[k]=[sense]
         # log.info("Done collecting combinations of groups values "
         #         "by location: {}".format(unnamed))
         # self.groups={}
         self.valuesbygroupcheck={}
-        self.senseidsbygroup={}
+        self.sensesbygroup={}
         ks=list(unnamed) #keep sorting order
         for k in ks:
             x=ks.index(k)+1
             name=self.ps+'_'+self.profile+'_'+str(x)
-            # self.groups[name]={}
-            # self.groups[name]['values']=ast.literal_eval(k) #return str to dict
             self.valuesbygroupcheck[name]=ofromstr(k) #return str to dict
-            # self.groups[name]['senseids']=unnamed[k]
-            self.senseidsbygroup[name]=unnamed[k]
-            for senseid in unnamed[k]:
-                program['db'].addtoneUF(senseid,name,analang=self.analang,
-                                    write=False)
-        # log.info("Done adding senseids to groups.")
+            self.sensesbygroup[name]=unnamed[k]
+            for sense in unnamed[k]:
+                sense.uftonevalue(name)
+        # log.info("Done adding senses to groups.")
         # return self.groups
     def tonegroupsbyUFcheckfromLIFT(self):
         #returns dictionary keyed by [group][location]=groupvalue
         values=self.valuesbygroupcheck={}
         # Collect check:value correspondences, by sense
-        for group in self.senseidsbygroup:
+        for group in self.sensesbygroup:
             values[group]={}
-            for senseid in self.senseidsbygroup[group]:
-                sense=program['db'].sensedict[senseid]
+            for sense in self.sensesbygroup[group]:
                 for check in sense.examples:
                     try:
                         values[group][check].add(sense.tonevaluebyframe(check))
@@ -12484,31 +12346,24 @@ class Analysis(object):
             # log.info("values[{}][{}]: {}".format(group,check,
             #                                     values[group][check]))
         # log.info("Done collecting groups by location/check for each UF group.")
-    def senseidsbyUFsfromLIFT(self):
-        """This returns a dict of {UFtonegroup:[senseids]}"""
+    def sensesbyUFsfromLIFT(self):
+        """This returns a dict of {UFtonegroup:[senses]}"""
         log.debug(_("Looking for sensids by UF tone groups for {}-{}").format(
                     self.profile, self.ps
                     ))
-        self.senseidsbygroup={}
-        """Still working on one ps-profile combo at a time."""
-        for senseid in self.senseids: #I should be able to make this a regex...
-            group=firstoflist(program['db'].get('sense/toneUFfield/form/text',
-                                                senseid=senseid).get('text'))
-            if group is not None:
-                try:
-                    self.senseidsbygroup[group].append(senseid)
-                except:
-                    self.senseidsbygroup[group]=[senseid]
-        return self.senseidsbygroup #?
+        self.sensesbygroup={g:[s for s in self.senses if s.uftonevalue() == g]
+                            for g in set([s.uftonevalue() for s in self.senses])
+                            if g}
+        return self.sensesbygroup
     def donoUFanalysis(self):
         log.info("Reading tone group analysis from UF tone fields")
-        self.senseidsbyUFsfromLIFT() # > self.senseidsbygroup
+        self.sensesbyUFsfromLIFT() # > self.sensesbygroup
         self.tonegroupsbyUFcheckfromLIFT() # > self.valuesbygroupcheck
         self.doanyway()
     def do(self):
         log.info("Starting tone group analysis from lift examples")
-        self.checkgroupsbysenseid() # > self.senseiddict
-        self.sorttoUFs() # > self.senseidsbygroup and self.valuesbygroupcheck
+        self.checkgroupsbysense() # > self.sensedict
+        self.sorttoUFs() # > self.sensesbygroup and self.valuesbygroupcheck
         program['db'].write()
         self.doanyway()
         program['status'].last('analysis',update=True)
@@ -12522,7 +12377,7 @@ class Analysis(object):
         self.ps=kwargs.get('ps',program['slices'].ps())
         self.profile=kwargs.get('profile',program['slices'].profile())
         self.checks=program['status'].checks(ps=self.ps,profile=self.profile)
-        self.senseids=program['slices'].senseids(ps=self.ps,profile=self.profile)
+        self.senses=program['slices'].senses(ps=self.ps,profile=self.profile)
     def __init__(self, **kwargs):
         super(Analysis, self).__init__()
         self.analang=program['params'].analang()
@@ -12570,7 +12425,7 @@ class SliceDict(dict):
             """This needs to renew checks, if t == 'T'"""
             self._ps=ps
             self.makeprofileok() #keyed by ps
-            self.renewsenseids()
+            self.renewsenses()
         elif ps:
             log.error("You asked to change to ps {}, which isn't in the list "
                         "of pss: {}".format(ps,pss))
@@ -12591,7 +12446,7 @@ class SliceDict(dict):
     def profile(self,profile=None):
         if profile and profile in self.profiles(self._ps):
             self._profile=profile
-            self.renewsenseids()
+            self.renewsenses()
         else:
             # self.makeprofileok() #is this actually needed here? check elsewhere
             return getattr(self,'_profile',None)
@@ -12659,13 +12514,14 @@ class SliceDict(dict):
         #                                             list(self._validbyps)[:10]))
         # log.info("valid: {}".format(self._valid))
         # log.info("validbyps: {}".format(self._validbyps))
-    def inslice(self,s=None):
+    def inslice(self,s=None,**kwargs):
+        senses=self.senses(**kwargs) #if no kwargs, returns current
         if not s:
-            return set(self._senses)
+            return set(senses)
         elif isinstance(s,lift.Sense):
-            return set(self._senses).intersection(set([s]))
+            return set(senses).intersection(set([s]))
         elif hasattr(s, '__iter__'):
-            return set(self._senses).intersection(set(s))
+            return set(senses).intersection(set(s))
         else:
             log.error("Not sure what happened here!")
     def senses(self,**kwargs): #ps=None,profile=None,
@@ -12674,44 +12530,27 @@ class SliceDict(dict):
         ps=kwargs.get('ps',self._ps)
         profile=kwargs.get('profile',self._profile)
         if ps in self._profilesbysense and profile in self._profilesbysense[ps]:
-            return [program['db'].sensedict[i]
-                        for i in self._profilesbysense[ps][profile]]
+            return self._profilesbysense[ps][profile]
             # return list(self._profilesbysense[ps][profile]) #specified slice
         else:
             return []
-    def senseids(self,**kwargs): #ps=None,profile=None,
-        """This returns an up to date list of senseids in the curent slice
-        (because changing ps or profile calls renewsenseids), or else the
-        specified slice"""
-        # list(self._senseidsbyps[self._ps][self._profile])
-        if 'ps' not in kwargs and 'profile' not in kwargs:
-            return self._senseids #this is always the current slice
-        ps=kwargs.get('ps',self._ps)
-        profile=kwargs.get('profile',self._profile)
-        if ps in self._profilesbysense and profile in self._profilesbysense[ps]:
-            return list(self._profilesbysense[ps][profile]) #specified slice
-        else:
-            return []
-    def senseidsbyps(self,ps):
-        return self._senseidsbyps[ps]
-    def makesenseidsbyps(self):
+    def makesensesbyps(self):
         """These are not distinguished by profile, just ps"""
-        self._senseidsbyps={}
+        self._sensesbyps={}
         for ps in self._profilesbysense:
-            self._senseidsbyps[ps]=[]
+            self._sensesbyps[ps]=[]
             for prof in self._profilesbysense[ps]:
-                self._senseidsbyps[ps]+=self._profilesbysense[ps][prof]
-    def renewsenseids(self):
-        self._senseids=[]
+                self._sensesbyps[ps]+=self._profilesbysense[ps][prof]
+    def renewsenses(self):
+        self._senses=[]
         try:
-            self._senseids+=list(self._profilesbysense[self._ps][self._profile])
+            self._senses+=list(self._profilesbysense[self._ps][self._profile])
         except KeyError:
             log.info("assuming {} is an ad hoc profile.".format(self._profile))
         try:
-            self._senseids+=list(self._adhoc[self._ps][self._profile])
+            self._senses+=list(self._adhoc[self._ps][self._profile])
         except KeyError:
             log.info("assuming {} is a regular profile.".format(self._profile))
-        self._senses=[program['db'].sensedict[i] for i in self._senseids]
     def adhoc(self,ids=None, **kwargs):
         """If passed ids, add them. Otherwise, return dictionary."""
         if ids is not None:
@@ -12731,7 +12570,7 @@ class SliceDict(dict):
         # return [x for x in self._adhoccounts if x[1] == ps]
         return self._adhoccounts #this should return a dictionary
     def updateadhoccounts(self):
-        """This iterates across self.profilesbysense to provide counts for each
+        """This iterates across self._adhoc to provide counts for each
         ps-profile combination (aggregated for profile='Invalid'??!?)
         it should only be called when creating/adding to self.profilesbysense"""
         profilecountInvalid=0
@@ -12759,15 +12598,15 @@ class SliceDict(dict):
                     wcounts.append((count, profile, ps))
         for i in sorted(wcounts,reverse=True):
             self[(i[1],i[2])]=i[0] #[(profile, ps)]=count
-        e="Found {} valid data slices: {}".format(len(wcounts),self.keys())
-        e+='\n'+"Invalid entries found: {}/{}".format(profilecountInvalid,
+        e=_("Found {} valid data slices: {}").format(len(wcounts),self.keys())
+        e+='\n'+_("Invalid entries found: {}/{}").format(profilecountInvalid,
                                                         sum(self.values(),
                                                         profilecountInvalid))
         if program['db'].analangs and not len(wcounts):
-            e+='\n'+"This may be a problem with your analysis language: {}".format(
-            program['params'].analang())
-            e+='\n'+"Or a problem with your database."
-            ErrorNotice(e,title="Data Problem!",wait=True)
+            e+='\n'+_("This may be a problem with your analysis language: {}"
+                    "").format(program['params'].analang())
+            e+='\n'+_("Or a problem with your database.")
+            ErrorNotice(e,title=_("Data Problem!"),wait=True)
         log.info(e)
     def __init__(self,adhoc,profilesbysense): #dict
         """The slice dictionary depends on check parameters (and not vice versa)
@@ -12793,10 +12632,10 @@ class SliceDict(dict):
         self.slicepriority()
         self.pspriority()
         self.profilepriority() #this is a dict with ps keys, so can do once.
-        self.makesenseidsbyps()
+        self.makesensesbyps()
         """This will be redone, but should be done now, too."""
         self.makeprofileok() #so the next won't fail
-        self.renewsenseids()
+        self.renewsenses()
 class ToneFrames(dict):
     def addframe(self,ps,name,defn):
         """This needs to change checks"""
@@ -13013,7 +12852,7 @@ class StatusDict(dict):
                 cs+=[kwargs['check']]
         # log.info("Checks with {}: {}".format(kwargs,cs))
         return cs
-    def groups(self,g=None, **kwargs): #was groupstodo
+    def groups(self,g=None, **kwargs):
         # log.info("groups kwargs: {}".format(kwargs))
         kwargs=grouptype(**kwargs)
         kwargs=self.checkslicetypecurrent(**kwargs)
@@ -13048,36 +12887,35 @@ class StatusDict(dict):
             todo=sorted(set(todo)|set(sn['groups'])) #either way, add current groups
             # log.info("Returning groups: {}".format(todo))
             return todo
-    def senseidstosort(self): #,ps=None,profile=None
-        return self._idstosort
-    def senseidssorted(self): #,ps=None,profile=None
-        return self._idssorted
-    def renewsenseidstosort(self,todo,done):
+    def sensestosort(self):
+        return self._sensestosort
+    def sensessorted(self):
+        return self._sensessorted
+    def renewsensestosort(self,todo,done):
         """This takes arguments to remove and rebuild these lists"""
-        """todo and done should be lists of senseids"""
+        """todo and done should be lists of senses"""
         """this takes as arguments lists extracted from LIFT by the check"""
-        if not hasattr(self,'_idssorted'):
-            self._idssorted=[]
-        if not hasattr(self,'_idstosort'):
-            self._idstosort=[]
-        self._idssorted.clear()
-        self._idssorted.extend(done)
-        self._idstosort.clear()
-        self._idstosort.extend(todo)
-    def marksenseidsorted(self,senseid,**kwargs):
-        self._idssorted.append(senseid)
-        if senseid in self._idstosort:
-            self._idstosort.remove(senseid)
-        if not self._idstosort:
+        if not hasattr(self,'_sensessorted'):
+            self._sensessorted=[]
+        if not hasattr(self,'_sensestosort'):
+            self._sensestosort=[]
+        self._sensessorted.clear()
+        self._sensessorted.extend(done)
+        self._sensestosort.clear()
+        self._sensestosort.extend(todo)
+    def marksensesorted(self,sense,**kwargs):
+        self._sensessorted.append(sense)
+        if sense in self._sensestosort:
+            self._sensestosort.remove(sense)
+        if not self._sensestosort:
             self.tosort(False,**kwargs) #this marks current, unless specified
-            # log.info("Tosort now {} (marksenseidsorted)".format(self.tosort()))
-    def marksenseidtosort(self,senseid,**kwargs):
-        # if not hasattr(self,'_idstosort') or not self._idstosort:
-        self._idstosort.append(senseid)
-        if senseid in self._idssorted:
-            self._idssorted.remove(senseid)
+            # log.info("Tosort now {} (marksensesorted)".format(self.tosort()))
+    def marksensetosort(self,sense,**kwargs):
+        self._sensestosort.append(sense)
+        if sense in self._sensessorted:
+            self._sensessorted.remove(sense)
         self.tosort(True,**kwargs) #this marks current, unless specified
-        # log.info("Tosort now {} (marksenseidtosort)".format(self.tosort()))
+        # log.info("Tosort now {} (marksensetosort)".format(self.tosort()))
     def store(self):
         """This will just store to file; reading will come from check."""
         log.info("Saving status dict to file")

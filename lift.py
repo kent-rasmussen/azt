@@ -1017,12 +1017,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                     for i in self.senses
                                     for k in i.fields
                                     if l in i.fields[k].forms
+                                    if k
                                     ])
-                                for l in self.analangs+self.glosslangs
-                                if [k for i in self.senses #no set()
-                                    for k in i.fields
-                                    if l in i.fields[k].forms
-                                    ]
+                                for i in self.senses
+                                for k in i.fields
+                                for l in i.fields[k].forms
                                 }
         log.info('Fields found in Senses: {}'.format(self.sensefieldnames))
     def getlocations(self,guid=None,lang=None): # all field locations in a given entry
@@ -2289,7 +2288,7 @@ class Sense(Node,FieldParent):
                     "".format(self.tag,self.parent.guid,loc))
     def getglosses(self):
         """This differs from a FormParent, in that self.glosses contains
-        a list of objects"""
+        a list of objects, as multiple gloss entries seem to be a thing"""
         self.glosses={
                     lang:[Gloss(self,i) for i in self
                         if i.tag == 'gloss' and lang==i.get('lang')
@@ -2304,19 +2303,28 @@ class Sense(Node,FieldParent):
                                     for i in k.textvalue().split(',')
                                     for j in rx.noparens(i).split()
                                     if k.textvalue()
-                ]
+                                ]
         rootimgdir='images/openclipart.org/'
         #These first two depend on real directories being there
         if self.cawln:
-            bits=[i for i in getfilesofdirectory(rootimgdir,
-                                            regex=self.cawln+'*')]
+            self.imgselectiondir=[i for i in file.getfilesofdirectory(
+                                                        rootimgdir,
+                                                        regex=self.cawln+'*')]
+            return
         elif self.collectionglosses:
-            bits=[i for i in getfilesofdirectory(rootimgdir,
+            self.imgselectiondir=[i for i in file.getfilesofdirectory(
+                                    rootimgdir,
                                     regex='*'+'_'.join(self.collectionglosses))]
-        if self.cawln and self.collectionglosses and not bits:
+            return
+        if self.cawln and self.collectionglosses and not self.imgselectiondir:
             bits=[i for i in [self.cawln]+self.collectionglosses if i]
             log.info("I didn't find a real directory present, but I'm ready "
             "to write to {}".format(''.join([rootimgdir,'_'.join(bits)])))
+            self.imgselectiondir=''.join([ #This may not be a real directory
+                                        rootimgdir,
+                                        '_'.join(bits)
+                                        ])
+            return
         else:
             log.error("Neither CAWL line ({}) nor English glosses ({}) point "
                         "to a real directory, so I can't tell which image "
@@ -2325,15 +2333,6 @@ class Sense(Node,FieldParent):
                         "so I can't construct a directory name to write to."
                         "".format(self.cawln,self.collectionglosses,self.id))
             self.imgselectiondir=None
-            return
-        """How to create this if it isn't??"""
-        self.imgselectiondir=''.join([ #This may not be a real directory
-                                    rootimgdir,
-                                    '_'.join(bits)
-                                    ])
-        #multiple gloss entries seem to be a thing, so don't complain
-        # for lang in self.glosses:
-        #     self.checkforsecondchildbylang(lang)
     def imagename(self):
         # log.info("Making image name")
         affix='.png' #not sure why this isn't there already...
@@ -2400,10 +2399,10 @@ class Sense(Node,FieldParent):
     def uftonevalue(self,value=None):
         try:
             assert isinstance(self.fields['tone'],ET.Element)
-            log.info("found ET node")
+            # log.info("found ET node")
         except (AssertionError,KeyError):
             found=self.find('field[type="tone"]')
-            log.info("found {}".format(found))
+            # log.info("found {}".format(found))
             if isinstance(found,ET.Element) or value:
                 self.fields.update({'tone':Field(self,node=found,type='tone')})
                 # self.newfield('tone',value=value) #use annotationlang
