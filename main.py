@@ -2285,7 +2285,7 @@ class Settings(object):
             try:
                 self.profilesbysense[ps][profile]=[sense]
             except KeyError:
-                self.profilesbysense[ps]={profile:sense}
+                self.profilesbysense[ps]={profile:[sense]}
                 # self.profilesbysense[ps][profile]=[sense]
     def addtoformstosearch(self,sense,form,ps,oldform=None):
         try:
