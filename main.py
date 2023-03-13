@@ -14175,6 +14175,9 @@ class GitReadOnly(Git):
             ErrorNotice(e)
     def reverttomain(self,event=None):
         r=self.checkout('main')
+        """need to also
+        git reset --hard origin/main
+        """
         log.info(r)
         if self.branch == 'main':
             return True
