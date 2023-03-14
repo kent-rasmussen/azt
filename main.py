@@ -189,13 +189,14 @@ class HasMenus():
         #This doesn't care which (test) version one is on
         r=program['repo'].reverttomain()
         log.info("reverttomainazt: {}".format(r))
+        self.updateazt()
         if r:
             program['taskchooser'].restart()
     def trytestazt(self,event=None):
         #This only goes to the test version at the top of this file
-        self.updateazt()
         r=program['repo'].testversion()
         log.info("trytestazt: {}".format(r))
+        self.updateazt()
         if r:
             program['taskchooser'].restart()
     def _removemenus(self,event=None):
@@ -14337,7 +14338,7 @@ class GitReadOnly(Git):
             remotes.extend([homeurl])
         r={}
         log.info("remotes: {}".format(remotes))
-        for branch in ['main',program['testversionname']]:
+        for branch in [self.branch]: #'main',program['testversionname']]:
             for remote in remotes:
                 r[remote+'/'+branch]=method(self,branch=branch,remotes=[remote])
         return r
@@ -14361,6 +14362,9 @@ class GitReadOnly(Git):
             ErrorNotice(e)
     def reverttomain(self,event=None):
         r=self.checkout('main')
+        """need to also
+        git reset --hard origin/main
+        """
         log.info(r)
         if self.branch == 'main':
             return True
