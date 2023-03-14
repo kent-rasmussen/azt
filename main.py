@@ -189,13 +189,14 @@ class HasMenus():
         #This doesn't care which (test) version one is on
         r=program['repo'].reverttomain()
         log.info("reverttomainazt: {}".format(r))
+        self.updateazt()
         if r:
             program['taskchooser'].restart()
     def trytestazt(self,event=None):
         #This only goes to the test version at the top of this file
-        self.updateazt()
         r=program['repo'].testversion()
         log.info("trytestazt: {}".format(r))
+        self.updateazt()
         if r:
             program['taskchooser'].restart()
     def _removemenus(self,event=None):
