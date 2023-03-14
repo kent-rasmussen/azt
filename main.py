@@ -14151,7 +14151,7 @@ class GitReadOnly(Git):
             remotes.extend([homeurl])
         r={}
         log.info("remotes: {}".format(remotes))
-        for branch in ['main',program['testversionname']]:
+        for branch in [self.branch]: #'main',program['testversionname']]:
             for remote in remotes:
                 r[remote+'/'+branch]=method(self,branch=branch,remotes=[remote])
         return r
