@@ -73,6 +73,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.getsenses()
         self.getanalangs() #sets: self.analangs, self.audiolangs
         self.getpss() #all ps values, in a prioritized list
+        self.slicebyerror()
         self.slicebyps()
         self.slicebyid()
         self.slicebylx()
@@ -414,6 +415,30 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.sensesbyps={ps:[i for i in self.senses if i.psvalue() == ps]
                             for ps in self.pss
                             }
+    def slicebyerror(self):
+        keys=set([(i.cawln,', '.join(i.collectionglosses)) for i in self.senses
+                    if not i.imgselectiondir
+                ])
+        errors={k:
+                    [i.id for i in self.senses
+                            if not i.imgselectiondir
+                            if i.cawln == k[0]
+                            if ', '.join(i.collectionglosses) == k[1]
+                    ]
+                for k in keys
+                }
+        # log.info("Errors ({}): {}".format(len(errors),errors))
+        if keys:
+            log.info("keys ({}): {}".format(len(keys),list(keys)[:min(len(keys)-1,5)]))
+        for cawl,glosses in list(errors)[:min(len(errors),5)]:
+            log.error("Neither CAWL line nor English glosses point "
+                "to a real directory, so I can't tell which image "
+                "directory to use for thes senses. "
+                "Furthermore, I don't have both the line and glosses, "
+                "so I can't construct a directory name to write to: "
+                "{}-{} ({}): {}"
+                "".format(cawl,glosses,len(errors[(cawl,glosses)]),
+                errors[(cawl,glosses)][:min(len(errors[(cawl,glosses)]),5)]))
     def slicebylx(self):
         #This can be converted to by profile in main.py
         self.entriesbylx={l:{t:[j for j in self.entries
@@ -2307,34 +2332,28 @@ class Sense(Node,FieldParent):
                                     if k.textvalue()
                                 ]
         rootimgdir='images/openclipart.org/'
+        self.imgselectiondir=None
         #These first two depend on real directories being there
         if self.cawln:
             self.imgselectiondir=[i for i in file.getfilesofdirectory(
                                                         rootimgdir,
                                                         regex=self.cawln+'*')]
-            return
         elif self.collectionglosses:
             self.imgselectiondir=[i for i in file.getfilesofdirectory(
                                     rootimgdir,
                                     regex='*'+'_'.join(self.collectionglosses))]
+        if self.imgselectiondir: #unlist if there
+            self.imgselectiondir=self.imgselectiondir[0]
             return
         if self.cawln and self.collectionglosses and not self.imgselectiondir:
             bits=[i for i in [self.cawln]+self.collectionglosses if i]
-            log.info("I didn't find a real directory present, but I'm ready "
-            "to write to {}".format(''.join([rootimgdir,'_'.join(bits)])))
+            # log.info("I didn't find a real directory present, but I'm ready "
+            # "to write to {}".format(''.join([rootimgdir,'_'.join(bits)])))
             self.imgselectiondir=''.join([ #This may not be a real directory
                                         rootimgdir,
                                         '_'.join(bits)
                                         ])
             return
-        else:
-            log.error("Neither CAWL line ({}) nor English glosses ({}) point "
-                        "to a real directory, so I can't tell which image "
-                        "directory to use for this sense ({}). "
-                        "Furthermore, I don't have both the line and glosses, "
-                        "so I can't construct a directory name to write to."
-                        "".format(self.cawln,self.collectionglosses,self.id))
-            self.imgselectiondir=None
     def imagename(self):
         # log.info("Making image name")
         affix='.png' #not sure why this isn't there already...

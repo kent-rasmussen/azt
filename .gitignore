@@ -42,5 +42,5 @@ reports/**
 *.ChorusRescuedFile
 *.git
 *.ini
-*lift.*
 secrets.py
+*.lift*txt

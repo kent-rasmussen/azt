@@ -5729,12 +5729,19 @@ class WordCollection(Segments):
         next.bind_all('<Down>',lambda event: self.nextword(nostore=True))
         next.bind_all('<Next>',lambda event: self.nextword(nostore=True))
     def updatereturnbind(self):
-        try:
-            assert self.wordframe.pic.hasimage
-            self.lxenter.bind_all('<Return>',
-                                lambda event: self.nextword(nostore=False))
-        except AssertionError:
-            self.wordframe.pic.bind_all('<Return>', self.selectimage)
+        log.info("Updating binding ({})".format(self.state()))
+        if self.state() == 'withdrawn':
+            self.unbind_all('<Return>')
+        else: #only bind to non-withdrawn window
+            try:
+                assert self.wordframe.pic.hasimage
+                self.lxenter.bind_all('<Return>',
+                                    lambda event: self.nextword(nostore=False))
+                log.info("Return now moves to next word")
+            except AssertionError:
+                self.wordframe.pic.bind_all('<Return>',
+                                                            self.selectimage)
+                log.info("Return now selects image")
     def getword(self):
         program['taskchooser'].withdraw()# not sure why necessary
         # log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
@@ -6358,6 +6365,7 @@ class WordCollectnParse(WordCollection,Parse,TaskDressing):
             v=self.var.get()
             if v:
                 self.withdraw()
+                self.updatereturnbind()
                 self.entry.lc.textvaluebylang(self.analang,v)
                 self.parse(entry=self.entry)
             # if hasattr(self,'sensetodo') and self.sensetodo:
@@ -14263,7 +14271,8 @@ class Git(Repository):
                 '*.ChorusRescuedFile',
                 '*.git',
                 '*.ini',
-                '*lift.*',
+                # '*lift.*',
+                '*.lift*txt',
                 ]
     def mergetool(self,**kwargs):
         args=['mergetool', '--tool=xmlmeld']

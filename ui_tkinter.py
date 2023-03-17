@@ -2060,6 +2060,13 @@ def testapp(program):
     w.bind('<Left>',lambda event,x='<—':textadd(x),add=True)
     w.bind('<Right>',lambda event,x='—>':textadd(x),add=True)
     # parent.winfo_viewable()
+    log.info(dir(w))
+    log.info(w.bindtags())
+    log.info(w.wm_state())
+    log.info(w.state())
+    # w.withdraw()
+    # log.info(w.wm_state())
+    # log.info(w.state())
     r.mainloop()
 if __name__ == '__main__':
     program={'name':'tkinter UI module',
