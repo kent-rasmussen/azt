@@ -119,7 +119,7 @@ class HasMenus():
         webtext=_("For more information on {} tasks, please check out the "
                 "documentation at {} ").format(program['name'],url)
         ui.Label(window.frame, image=self.frame.theme.photo['icon'],
-                text=title, font='title',compound="bottom",
+                text=title, font='title',compound='bottom',
                 row=0,column=0,sticky='we'
                 )
         l=ui.Label(window.frame, text=text, padx=50,
@@ -226,9 +226,8 @@ class LiftChooser(ui.Window,HasMenus):
         def done(event=None):
             window.destroy()
         window=ui.Window(program['root'],title=_("Start New LIFT Database"))
-        ethnologueurl="https://www.ethnologue.com/"
-        title=_("What is the Ethnologue (ISO 639-3) code?")#" of the language you "
-                # "want to study?")
+        ethnologueurl='https://www.ethnologue.com/'
+        title=_("What is the Ethnologue (ISO 639-3) code?")
         text=_("(find your language on {}; the code is at the top of "
                 "the page) "
                 "\nThis code will be used throughout your database, so please "
@@ -433,21 +432,21 @@ class LiftChooser(ui.Window,HasMenus):
                 n.remove(f)
         log.info("Stripped stock LIFT file.")
     def submitdemolang(self,choice,window): #event=None):
-        log.info("picked {}, from {}".format(choice,self.cawldb.glosslangs))
+        log.info(_("picked {}, from {}").format(choice,self.cawldb.glosslangs))
         if choice in self.cawldb.glosslangs:
             self.demolang=choice
             window.destroy()
     def copytonewfile(self,newfile):
         if 'Demo' in str(newfile):
-            type="demo"
+            type=_("demo")
         else:
-            type="empty"
-        log.info("Trying to write {} LIFT file to {}".format(type,newfile))
+            type=_("empty")
+        log.info(_("Trying to write {} LIFT file to {}").format(type,newfile))
         try:
             self.cawldb.write(str(newfile))
         except Exception as e:
             log.error("Exception: {}".format(e))
-        log.info("Tried to write {} LIFT file to {}".format(type,newfile))
+        log.info(_("Tried to write {} LIFT file to {}").format(type,newfile))
         if file.exists(newfile):
             log.info("Wrote {} LIFT file to {}".format(type,newfile))
     def newfilelocation(self,newfile):
@@ -1179,7 +1178,7 @@ class StatusFrame(ui.Frame):
             self.leaderboard.destroy()
         if hasattr(self,'noboard'): # and type(self.leaderboard) is ui.Frame:
             self.noboard.destroy()
-        self.leaderboard=ui.Frame(self,row=0,column=1,sticky="") #nesw
+        self.leaderboard=ui.Frame(self,row=0,column=1,sticky='') #nesw
         #Given the line above, much of the below can go, but not all?
         if (
             # isinstance(self.task,Report) or
@@ -1309,9 +1308,9 @@ class StatusFrame(ui.Frame):
         if program['settings'].showdetails:
             tv=_("verified")
             tu=_("unsorted")
-            # t="+ = {} \n! = {}".format(tv,tu)
-            t="+ = {} \n{} = {}".format(tv,unsortedtext,tu)
-            h=ui.Label(self.leaderboardtable,text=t,font="small")
+            # t='+ = {} \n! = {}'.format(tv,tu)
+            t='+ = {} \n{} = {}'.format(tv,unsortedtext,tu)
+            h=ui.Label(self.leaderboardtable,text=t,font='small')
             h.grid(row=row,column=0,sticky='e')
             h.bind('<ButtonRelease-1>', refresh)
             htip=_("Refresh table, \nsave settings")
@@ -1401,10 +1400,10 @@ class StatusFrame(ui.Frame):
                                 program['settings'].showdetails): #these should go together
                             donenum=unsortedtext #don't say '0'
                         elif not totalnum and tosort:
-                            donenum=""
+                            donenum=''
                         elif (not program['settings'].showdetails or
                             (type(totalnum) is int and type(donenum) is int)):
-                            # donenum="{}/{}".format(donenum,totalnum)
+                            # donenum='{}/{}'.format(donenum,totalnum)
                             donenum=totalnum
                         else:
                             donenum=nn(totalwverified,oneperline=True)
@@ -1557,9 +1556,9 @@ class Settings(object):
                                     'distinguish',
                                     'interpret',
                                     'polygraphs',
-                                    # "profilecounts",
-                                    "scount",
-                                    "sextracted",
+                                    # 'profilecounts',
+                                    'scount',
+                                    'sextracted',
                                     ]},
             'status':{
                                 'file':'statusfile',
@@ -1794,10 +1793,10 @@ class Settings(object):
                 config['default'][s]=str(v)
         if config['default'] == {}:
             del config['default']
-        header=("# This settings file was made on {} on {}".format(
+        header=(_("# This settings file was made on {} on {}").format(
                                                     now(),platform.uname().node)
                 )
-        with open(filename, "w", encoding='utf-8') as file:
+        with open(filename, 'w', encoding='utf-8') as file:
             file.write(header+'\n\n')
             config.write(file)
     def loadsettingsfile(self,setting='defaults'):
@@ -1806,7 +1805,7 @@ class Settings(object):
         config.read(filename,encoding='utf-8')
         log.debug("Trying for {} settings in {}".format(setting, filename))
         if not config.sections() and setting not in ['status','toneframes']:
-            if setting == "adhocgroups":
+            if setting == 'adhocgroups':
                 self.adhocgroups={}
             return
         d={}
@@ -1912,7 +1911,7 @@ class Settings(object):
         self.directory=file.getfilenamedir(self.liftfilename)
         if not file.exists(self.directory):
             log.info(_("Looks like there's a problem with your directory... {}"
-                    "\n{}".format(self.liftfilename,filemod)))
+                    '\n{}').format(self.liftfilename,filemod))
             exit()
         self.repocheck()
         self.settingsfilecheck()
@@ -2015,8 +2014,8 @@ class Settings(object):
                     #     u.join()
         log.info("trackuntrackedfiles finished.")
     def pss(self):
-        log.info("checking these lexical category names for plausible noun "
-                "and verb names: {}".format(program['db'].pss))
+        log.info(_("checking these lexical category names for plausible noun "
+                "and verb names: {}").format(program['db'].pss))
         topn=3 #just in case N and V aren't the first two, finish with top
         log.info("Looking at pss {}".format(program['db'].pss))
         for ps in reversed(program['db'].pss[:topn]):
@@ -2092,11 +2091,11 @@ class Settings(object):
                 log.info("Found changes, but not storing them; returning 1.")
                 return 1
         def makechanges():
-            log.info("Changes called for; like it or not, redoing analysis.")
+            log.info(_("Changes called for; like it or not, redoing analysis."))
             pgw.destroy()
             if not foundchanges():
-                log.info("User asked for changes to polygraph settings, but "
-                        "no changes found.")
+                log.info(_("User asked for changes to polygraph settings, but "
+                        "no changes found."))
                 return
             for lang in program['db'].analangs:
                 for pc in vars[lang]:
@@ -2242,8 +2241,8 @@ class Settings(object):
                     # log.info("checking for {} ({}/{}) in {}"
                     #         "".format(pg,pclass,sclass,self.polygraphs))
                     if pg not in self.polygraphs[lang][pclass]:
-                        log.info("{} ({}/{}) has no Di/Trigraph setting; "
-                        "prompting user for info.".format(pg,pclass,sclass))
+                        log.info(_("{} ({}/{}) has no Di/Trigraph setting; "
+                        "prompting user for info.").format(pg,pclass,sclass))
                         if self.askaboutpolygraphs(onboot=True):
                             log.info(_("Asked about polgraphs, but user "
                                         "exited, so exiting {}"
@@ -2257,7 +2256,7 @@ class Settings(object):
         if (not hasattr(self,'interpret')) or (self.interpret is None):
             self.interpret={}
         for var in ['G','Gwd','N','S','Swd','D','Dwd','Nwd','ʔ','ʔwd',
-                    "̀",'ː','<','=']:
+                    '̀','ː','<','=']:
             if ((var not in self.distinguish) or
                 (type(self.distinguish[var]) is not bool)):
                 self.distinguish[var]=False
@@ -2334,7 +2333,7 @@ class Settings(object):
         todo=len(senses)
         # log.info("RXs: {}".format(self.rx))
         if todo>750:
-            msg="getting profiles for {} lexical category".format(ps)
+            msg=_("getting profiles for {} lexical category").format(ps)
             program['taskchooser'].wait(msg)
         for sense in senses:
             n+=1
@@ -2425,7 +2424,7 @@ class Settings(object):
     def profileofform(self,form,ps):
         if not form or not ps:
             # log.info("Either no form ({}) or no ps ({}); returning".format(form,ps))
-            return "Invalid"
+            return 'Invalid'
         # log.debug("profiling {}...".format(form))
         formori=form
         """priority sort alphabets (need logic to set one or the other)"""
@@ -2841,8 +2840,8 @@ class Settings(object):
                         log.debug(_('Looks like I found an iso code for '
                                 'analang! ({})'.format(program['db'].analangs[n-1])))
                         break #stop iterating, and keep this one.
-        log.info("analang guessed: {} (If you don't like this, change it in "
-                    "the menus)".format(self.analang))
+        log.info(_("analang guessed: {} (If you don't like this, change it in "
+                    "the menus)").format(self.analang))
     def guessaudiolang(self):
         nlangs=len(program['db'].audiolangs)
         """if there's only one audio language, use it."""
@@ -2854,18 +2853,18 @@ class Settings(object):
             if ((self.analang in program['db'].audiolangs[0]) and
                 (self.analang not in program['db'].audiolangs[1])):
                 self.audiolang=program['db'].audiolangs[0]
-                log.info("Analang in first of two audiolangs only, selecting "
-                                            "{}".format(self.audiolang))
+                log.info(("Analang in first of two audiolangs only, selecting "
+                        )+self.audiolang)
             elif ((self.analang in program['db'].audiolangs[1]) and
                     (self.analang not in program['db'].audiolangs[0])):
                 self.audiolang=program['db'].audiolangs[1]
-                log.info("Analang in second of two audiolangs only, selecting "
-                                            "{}".format(self.audiolang))
+                log.info(_("Analang in second of two audiolangs only, selecting "
+                        )+self.audiolang)
             elif ((self.analang in program['db'].audiolangs[1]) and
                     (self.analang in program['db'].audiolangs[0])):
                 self.audiolang=sorted(program['db'].audiolangs,key = len)[0]
-                log.info("Analang in both of two audiolangs only, selecting "
-                "shorter: {}".format(self.audiolang))  #assume is more basic
+                log.info(_("Analang in both of two audiolangs only, selecting "
+                "shorter: {}").format(self.audiolang))  #assume is more basic
         else: #for three or more analangs, take the first plausible iso code
             for n in range(nlangs):
                 if self.analang in program['db'].analangs[n]:
@@ -3467,15 +3466,15 @@ class TaskDressing(HasMenus,ui.Window):
                         if program['settings'].distinguish[s]==changed[s][1]:
                             program['settings'].distinguish[s]=changed[s][0] #(oldvar,newvar):
                         else:
-                            log.error("Changed to value ({}) doesn't match "
-                            "current setting for ‘{}’: {}".format(changed[s][1],
+                            log.error(_("Changed to value ({}) doesn't match "
+                            "current setting for ‘{}’: {}").format(changed[s][1],
                                                         s,self.distinguish[s]))
                     elif s in program['settings'].interpret:
                         if program['settings'].interpret[s]==changed[s][1]:
                             program['settings'].interpret[s]=changed[s][0] #(oldvar,newvar):
                         else:
-                            log.error("Changed to value ({}) doesn't match "
-                            "current setting for ‘{}’: {}".format(changed[s][1],
+                            log.error(_("Changed to value ({}) doesn't match "
+                            "current setting for ‘{}’: {}").format(changed[s][1],
                                                         s,self.interpret[s]))
             r=True #only false if changes made, and user exits notice
             changed={}
@@ -3690,7 +3689,7 @@ class TaskDressing(HasMenus,ui.Window):
             if (not hasattr(program['settings'],'adnlangnames') or
                     not program['settings'].adnlangnames):
                 program['settings'].adnlangnames={}
-            if "Language with code [" not in namevar.get():
+            if 'Language with code [' not in namevar.get():
                 program['settings'].adnlangnames[self.analang]=namevar.get()
                 # if self.analang in self.adnlangnames:
             program['settings'].storesettingsfile()
@@ -4277,23 +4276,23 @@ class TaskDressing(HasMenus,ui.Window):
         log.info("getgroup kwargs: {}".format(kwargs))
         program['settings'].refreshattributechanges()
         cvt=kwargs.get('cvt',program['params'].cvt())
-        if cvt == "V":
+        if cvt == 'V':
             w=ui.Window(self,title=_('Select Vowel'))
             self._getgroup(window=w,**kwargs)
             # w.wait_window(window=w)
-        elif cvt == "C":
+        elif cvt == 'C':
             w=ui.Window(self,title=_('Select Consonant'))
             self._getgroup(w,**kwargs)
             # self.frame.wait_window(window=w)
-        elif cvt == "CV":
+        elif cvt == 'CV':
             w=ui.Window(self,title=_('Select Consonant/Vowel'))
             CV=''
             for kwargs['cvt'] in ['C','V']:
                 self._getgroup(**kwargs)
                 CV+=program['status'].group()
             program['status'].group(CV)
-            # cvt = "CV"
-        elif cvt == "T":
+            # cvt = 'CV'
+        elif cvt == 'T':
             w=ui.Window(self,title=_('Select Framed Tone Group'))
             self._getgroup(window=w,**kwargs) #guess=guess,
             # windowT.wait_window(window=windowT) #?!?
@@ -4317,10 +4316,10 @@ class TaskDressing(HasMenus,ui.Window):
     def getexamplespergrouptorecord(self):
         log.info("this sets the number of examples per group to record")
         self.npossible=[
-            {'code':1,'name':"1 - Bare minimum, just one per group"},
-            {'code':5,'name':"5 - Some, but not all, of most groups"},
-            {'code':100,'name':"100 - All examples in most databases"},
-            {'code':1000,'name':"1000 - All examples in VERY large databases"}
+            {'code':1,'name':_("1 - Bare minimum, just one per group")},
+            {'code':5,'name':_("5 - Some, but not all, of most groups")},
+            {'code':100,'name':_("100 - All examples in most databases")},
+            {'code':1000,'name':_("1000 - All examples in VERY large databases")}
                         ]
         title=_('Select Number of Examples per Group to Record')
         window=ui.Window(self, title=title)
@@ -4738,13 +4737,9 @@ class TaskChooser(TaskDressing,ui.Window):
         log.info("Tasks available ({}): {}".format(len(tasktuples),
                     [i[1] for i in tasktuples]))
         return tasktuples
-        # [(Check,"Citation Form Sorting in Tone Frames"),
-        #         (WordCollection,"Placeholder for future checks"),
-        #         (Placeholder,"Placeholder for future checks")
-        #         ]bum
     def convertlxtolc(self,window):
         window.destroy()
-        backup=self.filename+"_backupBeforeLx2LcConversion"
+        backup=self.filename+'_backupBeforeLx2LcConversion'
         program['db'].write(backup)
         program['db'].convertlxtolc()
         # program['db'].write(self.file.name+str(now()))
@@ -4763,7 +4758,7 @@ class TaskChooser(TaskDressing,ui.Window):
         self.restart()
     def asktoconvertlxtolc(self):
         title=_("Convert lexeme field data to citation form fields?")
-        url="{}/CITATIONFORMS.md".format(program['docsurl'])
+        url='{}/CITATIONFORMS.md'.format(program['docsurl'])
         w=ui.Window(self,title=title,exit=False)
         lexemesdone=list(program['db'].nentrieswlexemedata.values())#[program['settings'].analang]
         citationsdone=list(program['db'].nentrieswcitationdata.values())#[program['settings'].analang]
@@ -4809,7 +4804,7 @@ class TaskChooser(TaskDressing,ui.Window):
         info=ui.Label(w.frame, text=infot, font='default',
                     row=7, column=0, columnspan=2)
         info.tt=ui.ToolTip(info, text=_("go to {}").format(url))
-        info.bind("<Button-1>", lambda e: openweburl(url))
+        info.bind('<Button-1>', lambda e: openweburl(url))
         for l in [lt,nb,lq,lnb]:
             l.wrap()
         return w
@@ -4818,7 +4813,7 @@ class TaskChooser(TaskDressing,ui.Window):
         # log.info("CAWL ({}): {}".format(len(cawls),cawls))
         self.cawlmissing=[]
         for i in range(1700):
-            if "{:04}".format(i+1) not in cawls:
+            if '{:04}'.format(i+1) not in cawls:
                 self.cawlmissing.append(i+1)
         if len(self.cawlmissing) < 10:
             log.info("CAWL missing ({}): {}".format(len(self.cawlmissing),
@@ -4878,8 +4873,8 @@ class TaskChooser(TaskDressing,ui.Window):
                 log.info("Using audiolang {} for analang {}"
                             "".format(al,l))
             else:
-                log.info("Couldn't find plausible audiolang (among {}) "
-                        "for analang {}".format(program['db'].audiolangs,l))
+                log.info(_("Couldn't find plausible audiolang (among {}) "
+                        "for analang {}").format(program['db'].audiolangs,l))
             if al not in sortsrecorded:
                 sortsrecorded[al]={}
             sortsnotrecorded[l]={}
@@ -5032,8 +5027,8 @@ class TaskChooser(TaskDressing,ui.Window):
             self.writethread.start()
             self.schedule_write_check()
         elif write:
-            log.info("Already writing to lift; I trust this new mod will "
-                    "get picked up later...")
+            log.info(_("Already writing to lift; I trust this new mod will "
+                    "get picked up later..."))
             self.towrite=True
     def usbcheck(self):
         self.splash.withdraw()
@@ -5105,7 +5100,7 @@ class Segments(object):
         group=kwargs.get('group',program['status'].group())
         maxcount=rx.countxiny(cvt, profile)
         if profile is None:
-            print("It doesn't look like you've picked a syllable profile yet.")
+            log.info(_("You haven't picked a syllable profile yet."))
             return
         """Don't need this; only doing count=1 at a time. Let's start with
         the easier ones, with the first occurrance changed."""
@@ -5464,20 +5459,21 @@ class WordCollection(Segments):
         for n in program['taskchooser'].cawlmissing:
             log.info("Working on SILCAWL line #{:04}.".format(n))
             e=self.cawldb.get('entry', path=['cawlfield'],
-                                    cawlvalue="{:04}".format(n),
+                                    cawlvalue='{:04}'.format(n),
                                     ).get('node')[0] #certain to be there
             try:
                 eps=self.cawldb.get('sense/ps',node=e,
                                     # showurl=True
                                     ).get('node')[0]
+                #This is reading values from template, which are 'Noun' & 'Verb'
                 epsv=eps.get('value')
             except IndexError:
                 log.info("line {} w/o lexical category; leaving.".format(n))
                 eps=epsv=None
-            if epsv == "Noun":
+            if epsv == 'Noun': #don't translate!
                 log.info("Found a noun, using {}".format(program['settings'].nominalps))
                 eps.set('value',program['settings'].nominalps)
-            elif epsv == "Verb":
+            elif epsv == 'Verb': #don't translate!
                 log.info("Found a verb, using {}".format(program['settings'].verbalps))
                 eps.set('value',program['settings'].verbalps)
             else:
@@ -5493,8 +5489,8 @@ class WordCollection(Segments):
                 entry=program['db'].get('entry',gloss=g,glosslang=lang,
                                         ).get('node') #maybe []
                 if entry:
-                    log.info("Found gloss of SILCAWL line #{:04} ({}); "
-                            "adding info to that entry.".format(n,g))
+                    log.info(_("Found gloss of SILCAWL line #{:04} ({}); "
+                            "adding info to that entry.").format(n,g))
                     program['db'].fillentryAwB(entry[0],e)
                     modded.append(n)
                     break
@@ -5502,8 +5498,8 @@ class WordCollection(Segments):
                 tnodes=e.findall('lexical-unit/form/text')
                 for tn in tnodes:
                     tn.text=''
-                log.info("Gloss of SILCAWL line #{:04} ({}) not found; "
-                        "copying over that entry.".format(n,g))
+                log.info(_("Gloss of SILCAWL line #{:04} ({}) not found; "
+                        "copying over that entry.").format(n,g))
                 program['db'].nodes.append(e)
                 added.append(n)
         if added or modded:
@@ -5511,11 +5507,11 @@ class WordCollection(Segments):
             title=_("Entries Added!")
             text=_("Added {} entries from the SILCAWL").format(len(added))
             if len(added)<100:
-                text+=": ({})".format(added)
+                text+=': ({})'.format(added)
             text+=_("\nModded {} entries with new information from the "
                     "SILCAWL").format(len(modded))
             if len(modded)<100:
-                text+=": ({})".format(modded)
+                text+=': ({})'.format(modded)
             program['taskchooser'].getcawlmissing()
             self.dobuttonkwargs()
         else:
@@ -5635,13 +5631,13 @@ class WordCollection(Segments):
                 self.sense.collectionglosses=[i for i in
                                         str(self.sense.imgselectiondir).split('/')[-1].split('_')
                                         if not isinteger(i)]
-        self.wait(msg="Dowloading images from OpenClipart.org\n{}"
-                        "".format(" ".join(self.sense.collectionglosses)))
+        self.wait(msg=_("Dowloading images from OpenClipart.org\n{}"
+                        "").format(" ".join(self.sense.collectionglosses)))
         log.info("Glosses: {}".format(self.sense.collectionglosses))
         scraper=htmlfns.ImageScraper()
         for gloss in self.sense.collectionglosses:
             kwargs={'per_page':50,
-                    "query":gloss #just one word at a time is less restrictive
+                    'query':gloss #just one word at a time is less restrictive
                     }
             terms=urls.urlencode(kwargs)
             url='https://openclipart.org/search/?'+terms
@@ -5687,7 +5683,7 @@ class WordCollection(Segments):
                 problems+=1
             self.waitprogress(self.images.index(i)*100/len(self.images))
         if (me and not nogui) or len(self.images) < 5:
-            text="Found {} images!".format(len(self.images))
+            text=_("Found {} images!").format(len(self.images))
             if problems:
                 text+=_("\nProblems downloading {} images".format(problems))
             ErrorNotice(text,
@@ -5756,7 +5752,7 @@ class WordCollection(Segments):
             self.dowordframe()
         log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
         log.info("wordframe: {}".format(getattr(self,'wordframe',None)))
-        self.prog['text']="({}/{})".format(self.index+1,self.nentries)
+        self.prog['text']='({}/{})'.format(self.index+1,self.nentries)
         # log.info("entries: {}".format(self.entries))
         log.info("index: {}".format(self.index))
         if getattr(self,'sensetodo',None):
@@ -5851,7 +5847,7 @@ class WordCollectionImperative(TaskDressing,WordCollection):
 class Parse(Segments):
     """docstring for Parse."""
     def getgloss(self,ftype=None):
-        return ", ".join([", ".join(self.parser.sense.formattedgloss(l,
+        return ', '.join([', '.join(self.parser.sense.formattedgloss(l,
                                                             ftype=ftype,
                                                             quoted=True))
                         for l in self.glosslangs])
@@ -5867,15 +5863,15 @@ class Parse(Segments):
         w=ui.Window(self,noexit=True)
         w.title(_("Confirm this combination of affixes?"))
         self.userresponse.value=False
-        gloss=self.getgloss()
-        text=_("This parse looks good ({}): "
-                "\n{} {}"
-                "\n{} {}"
-                "\n{} root: {} ({})"
-                ).format(self.parser.levels()[level],
-                        lc,afxs[0],sf,afxs[1],
-                        ps,lx,gloss,
-                        )
+        # gloss=self.getgloss()
+        # text=_("Parse looks good ({}):").format(self.parser.levels()[level])
+        # text+=("\n{} {}"
+        #         "\n{} {}"
+        #         "\n{} {}: {} ({})"
+        #         ).format(#self.parser.levels()[level],
+        #                 lc,afxs[0],sf,afxs[1],
+        #                 ps,_("root"),lx,gloss,
+        #                 )
         glosslc=self.getgloss()
         if ps == self.nominalps:
             ftype='pl'
@@ -5975,8 +5971,8 @@ class Parse(Segments):
         w=ui.Window(self)
         w.title(_("Select second form"))
         t=ui.Label(w.frame,
-                    text="What is the {} or {} of \n‘{}’ ({})?"
-                        "".format(
+                    text=_("What is the {} or {} of \n‘{}’ ({})?"
+                        "").format(
                         self.secondformfield[self.nominalps],
                         self.secondformfield[self.verbalps],
                         self.parser.entry.lc.textvaluebylang(self.analang),
@@ -5989,7 +5985,7 @@ class Parse(Segments):
             noun=ui.Frame(w.frame, row=1, column=0, sticky='n')
             ImageFrame(noun,self.sense,ftype='pl',row=0,column=0, sticky='')
             ui.Label(noun,
-                    text="Select {} form".format(
+                    text=_("Select {} form").format(
                                         self.secondformfield[self.nominalps]),
                     row=1,column=0,
                     columnspan=2)
@@ -6002,7 +5998,7 @@ class Parse(Segments):
             verb=ui.Frame(w.frame, row=1, column=1, sticky='n')
             ImageFrame(verb,self.sense,ftype='imp',row=0,column=0, sticky='')
             ui.Label(verb,
-                    text="Select {} form".format(
+                    text=_("Select {} form").format(
                                         self.secondformfield[self.verbalps]),
                     row=1,column=0)
             bfv=ui.ScrollingButtonFrame(verb, optionlist=lv, window=t,
@@ -6028,8 +6024,9 @@ class Parse(Segments):
             if not r or self.exited: #i.e., returned OK
                 break
     def currentformnotice(self):
-        return _("currently: {} ({ps} root), {}, {} ({pl}), {} ({imp})"
+        return _("currently: ")+("{} ({ps} {root}), {}, {} ({pl}), {} ({imp})"
                 ).format(*self.parser.texts(),
+                        root=_("root"),
                         ps=self.parser.sense.psvalue(),
                         pl=self.secondformfield[self.nominalps],
                         imp=self.secondformfield[self.verbalps]
@@ -6068,8 +6065,8 @@ class Parse(Segments):
         w=ui.Window(self)
         w.title(_("Type second form"))
         l=ui.Label(w.frame,
-                text="What {} form goes with ‘{}’ ({})?"
-                    "".format(sfname,
+                text=_("What {} form goes with ‘{}’ ({})?"
+                    "").format(sfname,
                             self.parser.entry.lc.textvaluebylang(self.analang),
                             self.getgloss()),
                 font='title',
@@ -6211,7 +6208,7 @@ class Parse(Segments):
                 return set(senses)
     def getparses(self,**kwargs):
         log.info("parses already tried: {}".format(self.parsecatalog.parsen()))
-        self.wait("Parsing (ask: {} auto: {})".format(self.parser.ask,
+        self.wait(_("Parsing (ask: {} auto: {})").format(self.parser.ask,
                                                         self.parser.auto
                                                     ))
         senses=self.sensestoparse(**kwargs)
@@ -6248,7 +6245,7 @@ class Parse(Segments):
         self.parsecatalog=self.parent.parsecatalog=parser.Catalog(self)
         collector=parser.AffixCollector(self.parsecatalog,program['db'])
         if self.loadfromlift:
-            self.wait("Loading Affixes")
+            self.wait(_("Loading Affixes"))
             # for i in collector.do():
             for i in collector.getfromlift():
                 # log.info("Progress: {}".format(i))
@@ -6430,7 +6427,7 @@ class Placeholder(TaskDressing):
         log.info("Initializing {}".format(self.tasktitle()))
         for r in range(5):
             ui.Label(self.frame,
-                    text="This is a check placeholder.",
+                    text=_("This is a check placeholder."),
                     row=r, column=0)
 class ToneFrameDrafter(ui.Window):
     def addback(self,lang,event=None):
@@ -6514,7 +6511,7 @@ class ToneFrameDrafter(ui.Window):
         # log.info("self.langs: {}".format(self.langs))
         # log.info("Langs in process: {}".format(langsbeforeonly))
         # log.info("Langs langstodo: {}".format(langstodo))
-        nothing='______'#"<"+_("nothing")+">"
+        nothing='______'
         for n,l in enumerate(self.langs):
             langname=program['settings'].languagenames[self.stripftypecode(l)]
             if l in self.forms:
@@ -6535,7 +6532,7 @@ class ToneFrameDrafter(ui.Window):
                 li=ui.Label(self.fds,text=tintro,column=1,row=n+1)
                 li.tt=ui.ToolTip(li, ltttext)
                 lineframe=ui.Frame(self.fds,column=2,row=n+1)
-                if "Language " in langname:
+                if 'Language ' in langname:
                     tword=_("<word>")
                 else:
                     tword=_("<{0} word>").format(langname)
@@ -6548,8 +6545,8 @@ class ToneFrameDrafter(ui.Window):
                         self.forms[l]={'before':''}
                         text=nothing
                     except:
-                        text="<"+_("No {} frame info").format(
-                                program['settings'].languagenames[l])+">"
+                        text='<'+_("No {} frame info").format(
+                                program['settings'].languagenames[l])+'>'
                 button=ui.Button(lineframe,text=text,
                                 relief=relief,
                                 cmd=lambda l=l, context='before':
@@ -6762,9 +6759,9 @@ class ToneFrameDrafter(ui.Window):
                         sticky='ew',
                         padx=25,pady=25)
         if lang and context:
-            self.w.title("{} {}".format(context,lang))
+            self.w.title('{} {}'.format(context,lang))
         else:
-            self.w.title("New {} Tone frame for {}: Name the Frame".format(
+            self.w.title(_("New {} Tone frame for {}: Name the Frame").format(
                         self.ps,program['settings'].languagenames[self.analang]))
         self.withdraw() #Don't show status when asking for a value
         getform=ui.Label(self.w.frame,text=strings['prompt'],
@@ -7082,15 +7079,15 @@ class Sort(object):
             return r
     def addmodadhocsort(self):
         def submitform():
-            if profilevar.get() == "":
+            if profilevar.get() == '':
                 log.debug("Give a name for this adhoc sort group!")
                 return
             self.runwindow.destroy()
             ids=[]
             for var in [x for x in vars if len(x.get()) >1]:
-                log.log(2,"var {}: {}".format(vars.index(var),var.get()))
+                # log.info("var {}: {}".format(vars.index(var),var.get()))
                 ids.append(var.get())
-            log.log(2,"ids: {}".format(ids))
+            # log.info("ids: {}".format(ids))
             newprofile=profilevar.get()
             program['settings'].set('profile',newprofile,refresh=False)
             #Add to dictionaries before updating them below
@@ -7280,8 +7277,8 @@ class Sort(object):
         for all checks"""
         """This results in NO group change where a group hasn't been confirmed!
         """
-        log.info("Confirming that current group and verification code match "
-                    "before making changes.")
+        log.info(_("Confirming that current group and verification code match "
+                    "before making changes."))
         curgroup=self.getsensegroup(sense,check) #Segment or Tone
         vals=sense.verificationtextvalue(profile,ftype)
         curvalues=[i.split('=')[-1]  #last (value), if multiple
@@ -7475,7 +7472,7 @@ class Sort(object):
         if self.runwindow.exitFlag.istrue():
             return #1,1
         ui.Label(self.titles, text=progress, font='report', anchor='w'
-                                        ).grid(column=1, row=0, sticky="ew")
+                                        ).grid(column=1, row=0, sticky='ew')
         if self.cvt == 'T' and self.check not in program['toneframes'][self.ps]:
             text=_("Looking for tone check ‘{}’, but not in {} frames: {}"
                         "").format(self.check,self.ps,program['toneframes'][self.ps])
@@ -7488,14 +7485,14 @@ class Sort(object):
                 frame=None # e.g., for segmental checks
             text=sense.formatted(self.analang,self.glosslangs,
                                 program['params'].ftype(),frame)
-        entryview=ui.Frame(self.runwindow.frame, column=1, row=1, sticky="new")
+        entryview=ui.Frame(self.runwindow.frame, column=1, row=1, sticky='new')
         self.sortitem=self.buttonframe.sortitem=ui.Label(entryview,
                                 text=text,font='readbig',
-                                column=0,row=0, sticky="w",
+                                column=0,row=0, sticky='w',
                                 pady=scaledpady
                                 )
         self.sortitem['image']=getimageifthere(sense)
-        self.sortitem['compound']="left"
+        self.sortitem['compound']='left'
         self.sortitem.wrap()
         self.runwindow.waitdone()
         for b in self.buttonframe.groupbuttonlist:
@@ -7536,30 +7533,30 @@ class Sort(object):
         if self.exitFlag.istrue():
             return
         self.titles=ui.Frame(self.runwindow.frame, row=0, column=1,
-                                                    sticky="ew", columnspan=1)
+                                                    sticky='ew', columnspan=1)
         ui.Label(self.runwindow.frame, image=self.frame.theme.photo['sort'],
                         text='',
                         ).grid(row=1,column=0,rowspan=3,sticky='nw')
         # scroll=self.runwindow.frame.scroll=ui.ScrollingFrame(self.runwindow.frame)
-        # scroll.grid(row=2, column=1, sticky="new")
+        # scroll.grid(row=2, column=1, sticky='new')
         self.buttonframe=SortButtonFrame(self.runwindow.frame, self, groups,
-                                row=2, column=1, sticky="new")
+                                row=2, column=1, sticky='new')
         """Titles"""
         if self.cvt == 'T':
-            context='tone melody'
-            descripttext=("in ‘{}’ frame").format(self.check)
+            context=_("tone melody")
+            descripttext=_("in ‘{}’ frame").format(self.check)
         else:
             context=program['params'].cvcheckname(self.check)
-            descripttext=("by {}").format(self.check)
+            descripttext=_("by {}").format(self.check)
         title=_("Sort {} {} ({})").format(
                                         program['settings'].languagenames[self.analang],
                                         context,
                                         descripttext)
         ui.Label(self.titles, text=title,font='title',anchor='c',
-                                            column=0, row=0, sticky="ew")
+                                            column=0, row=0, sticky='ew')
         instructions=_("Select the one with the same {} as").format(context)
         ui.Label(self.titles, text=instructions, font='instructions',
-                anchor='c', column=0, row=1, sticky="ew")
+                anchor='c', column=0, row=1, sticky='ew')
         """Stuff that changes by lexical entry
         The second frame, for the other two buttons, which also scroll"""
         while (program['status'].tosort() and
@@ -7616,7 +7613,7 @@ class Sort(object):
         groups=program['status'].groups(toverify=True) #needed for progress
         group=program['status'].group()
         # The title for this page changes by group, below.
-        self.getrunwindow(msg="preparing to verify {} group: {}".format(check,
+        self.getrunwindow(msg=_("preparing to verify {} group: {}").format(check,
                                                                         group))
         oktext='These all have the same {}'.format(program['params'].cvcheckname())
         instructions=_("Read down this list to verify they all have the same "
@@ -7648,8 +7645,8 @@ class Sort(object):
                         "".format(program['status'].groups(toverify=True)))
             return
         elif len(senses) == 1:
-            log.info("Group ‘{}’ only has {} example; marking verified and "
-                    "continuing.".format(group,len(senses)))
+            log.info(_("Group ‘{}’ only has {} example; marking verified and "
+                    "continuing.").format(group,len(senses)))
             updatestatus(True)
             return
         title=_("Verify {} Group ‘{}’ for ‘{}’ ({})").format(
@@ -7659,8 +7656,8 @@ class Sort(object):
                                     program['params'].cvcheckname()
                                     )
         titles=ui.Frame(self.runwindow.frame,
-                        column=1, row=0, columnspan=1, sticky="w")
-        ui.Label(titles, text=title, font='title', column=0, row=0, sticky="w")
+                        column=1, row=0, columnspan=1, sticky='w')
+        ui.Label(titles, text=title, font='title', column=0, row=0, sticky='w')
         """Move this to bool vars, like for sort"""
         if hasattr(self,'groupselected'): #so it doesn't get in way later.
             delattr(self,'groupselected')
@@ -7669,9 +7666,9 @@ class Sort(object):
         if group in groups:
             progress=('('+str(groups.index(group)+1)+'/'+str(len(
                                                             groups))+')')
-            ui.Label(titles,text=progress,anchor='w',row=0,column=1,sticky="ew")
+            ui.Label(titles,text=progress,anchor='w',row=0,column=1,sticky='ew')
         i=ui.Label(titles, text=instructions,
-                row=1, column=0, columnspan=2, sticky="wns")
+                row=1, column=0, columnspan=2, sticky='wns')
         i.wrap()
         ui.Label(self.runwindow.frame, image=self.frame.theme.photo['verify'],
                         text='', row=1,column=0,
@@ -7701,14 +7698,14 @@ class Sort(object):
                     row=0
             # log.info("Next button at r:{}, c:{}".format(row,column))
         bf=ui.Frame(self.sframe.content)
-        bf.grid(row=max(row+1,self.buttoncolumns+1), column=0, sticky="ew",
+        bf.grid(row=max(row+1,self.buttoncolumns+1), column=0, sticky='ew',
                         columnspan=self.buttoncolumns+1) #Keep on own row
         b=ui.Button(bf, text=oktext,
                         cmd=bf.destroy,
-                        anchor="w",
+                        anchor='w',
                         font='instructions'
                         )
-        b.grid(column=0, row=0, sticky="ew")
+        b.grid(column=0, row=0, sticky='ew')
         if self.runwindow.exitFlag.istrue():
             return 1
         self.sframe.windowsize()
@@ -7748,7 +7745,7 @@ class Sort(object):
         if label==True:
             b=ui.Label(parent, text=text,
                     column=column, row=row,
-                    sticky="ew",
+                    sticky='ew',
                     ipady=ipady,
                     **kwargs
                     )
@@ -7758,12 +7755,12 @@ class Sort(object):
             b=ui.Button(bf, text=text, pady='0',
                     cmd=notok,
                     column=column, row=0,
-                    sticky="ew",
+                    sticky='ew',
                     ipady=ipady, #Inside the buttons...
                     **kwargs
                     )
         b['image']=getimageifthere(sense)
-        b['compound']="left"
+        b['compound']='left'
     def join(self):
         log.info("Running join!")
         """This window shows up after sorting, or maybe after verification, to
@@ -7800,15 +7797,15 @@ class Sort(object):
         self.runwindow.resetframe()
         self.runwindow.frame.titles=ui.Frame(self.runwindow.frame,
                                             column=1, row=0,
-                                            columnspan=1, sticky="ew"
+                                            columnspan=1, sticky='ew'
                                             )
         ltitle=ui.Label(self.runwindow.frame.titles, text=title,
                 font='title',
-                column=0, row=0, sticky="ew",
+                column=0, row=0, sticky='ew',
                 )
         i=ui.Label(self.runwindow.frame.titles,
                     text=introtext,
-                    row=1,column=0, sticky="w",
+                    row=1,column=0, sticky='w',
                     )
         i.wrap()
         ui.Label(self.runwindow.frame,
@@ -7846,11 +7843,11 @@ class Sort(object):
         while ngroupstojoin < 2:
             bok=ui.Button(self.sortitem, text=oktext,
                     cmd=self.sortitem.destroy,
-                    anchor="c",
+                    anchor='c',
                     font='instructions',
                     column=0,
                     row=max(row+1,self.buttoncolumns+1),
-                    sticky="ew")
+                    sticky='ew')
             for group in b:
                 b[group].setcanary(bok) #this must be done after bok exists
             log.info("making button!")
@@ -8359,7 +8356,7 @@ class Record(Sound,TaskDressing):
             if progress is not None:
                 progressl=ui.Label(self.runwindow.frame, anchor='e',
                     font='small',
-                    text="({} {}/{})".format(*progress)
+                    text='({} {}/{})'.format(*progress)
                     )
                 progressl.grid(row=0,column=2,sticky='ne')
             """This is the title for each page: isolation form and glosses."""
@@ -8537,8 +8534,8 @@ class Record(Sound,TaskDressing):
                 break
         """If none found, be ready to write with last/highest priority option"""
         f=filenames[-1]
-        log.debug("No audio file found, but ready to record: "
-                    "{}; url:{}".format(f, self.audioURL(f)))
+        log.debug(_("No audio file found, but ready to record: "
+                    )+"{}; {}:{}".format(f, _("url"), self.audioURL(f)))
         """Should be able to just send f"""
         node.audiofilenametoput=f #don't write this until we actually record
         node.audiofileURL=self.audioURL(f)
@@ -8614,14 +8611,14 @@ class Report(object):
         done=all[:]
         for k in unbackground:
             done.remove(k)
-        logfinished(start_time,msg="setting up background reports {}".format(done))
+        logfinished(start_time,msg=_("setting up background reports {}").format(done))
         log.info(_("Starting reports that didn't work in the background: {}").format(unbackground))
         for kwargs in unbackground:
             # log.info("reportmulti unbackground with kwargs {}".format(kwargs))
             self.wait(msg=kwargs)
             self.reportfn(**kwargs) #run what failed in background here
             self.waitdone()
-        logfinished(start_time,msg="all reports ({})".format(all))
+        logfinished(start_time,msg=_("all reports ({})").format(all))
     def tonegroupreport(self,usegui=True,**kwargs):
         """This should iterate over at least some profiles; top 2-3?
         those with 2-4 verified frames? Selectable with radio buttons?"""
@@ -8651,7 +8648,7 @@ class Report(object):
                 log.error("{} {} came up with no checks.".format(ps,profile))
                 return
             self.getprofile(wsorted=True)
-        startnotice=("Starting report {} {}".format(ps,profile))
+        startnotice=_("Starting report {} {}").format(ps,profile)
         log.info(startnotice)
         program['settings'].storesettingsfile()
         waitmsg=_("{} {} Tone Report in Process\n({})").format(ps,profile,
@@ -8661,10 +8658,10 @@ class Report(object):
         bits=[str(self.reportbasefilename),
                 rx.urlok(ps),
                 rx.urlok(profile),
-                "ToneReport"]
+                'ToneReport']
         if not default:
             bits.append('mod')
-        self.tonereportfile='_'.join(bits)+".txt"
+        self.tonereportfile='_'.join(bits)+'.txt'
         checks=program['status'].checks(wsorted=True,**kwargs)
         if not checks:
             error=_("Hey, sort some morphemes in at least one frame before "
@@ -8714,7 +8711,7 @@ class Report(object):
             log.info("Not showing groups with less than {} words: {}".format(
                                                         self.minwords,dontshow))
         checks=self.analysis.orderedchecks
-        r = open(self.tonereportfile, "w", encoding='utf-8')
+        r = open(self.tonereportfile, 'w', encoding='utf-8')
         title=_("Tone Report")
         if usegui:
             resultswindow.scroll=ui.ScrollingFrame(resultswindow.frame)
@@ -8770,7 +8767,7 @@ class Report(object):
             if usegui:
                 ui.Label(window,text=text,
                         font=window.theme.fonts['report'],
-                        row=window.row,column=0, sticky="w"
+                        row=window.row,column=0, sticky='w'
                         )
                 window.row+=1
         t=_("Summary of Frames by {} {} Draft Underlying Melody").format(ps,profile)
@@ -8876,8 +8873,9 @@ class Report(object):
                         id=self.idXLP(sense)+'_examples'
                         headtext=text.replace('\t',' ')
                         e1=xlp.Example(s1,id,heading=headtext)
-                        log.info("Asking for the following {} examples from id "
-                                "{}: {}".format(len(examples),sense.id,examples))
+                        log.info(_("Asking for the following {} examples from "
+                                    "id {}: {}"
+                                    ).format(len(examples),sense.id,examples))
                         examplestoXLP(examples,e1)
                     else:
                         self.nodetoXLP(sense.ftypes[ftype],
@@ -8889,11 +8887,11 @@ class Report(object):
         try:
             eps='{:.2}'.format(float(counts['examples']/counts['senses']))
         except ZeroDivisionError:
-            eps="Div/0"
+            eps=_("Div/0")
         try:
             audiopercent='{:.2%}'.format(float(counts['audio']/counts['examples']))
         except ZeroDivisionError:
-            audiopercent="Div/0%"
+            audiopercent=_("Div/0%")
         ptext=_("This report contains {} senses, {} examples, and "
                 "{} sound files. That is an average of {} examples/sense, and "
                 "{} of examples with sound files."
@@ -8903,7 +8901,7 @@ class Report(object):
         if 'xlpr' not in kwargs:
             xlpr.close(me=me)
         text=_("Finished in {} seconds.").format(nowruntime()-start_time)
-        text=logfinished(start_time,msg="report {} {}".format(ps,profile))
+        text=logfinished(start_time,msg=_("report {} {}").format(ps,profile))
         logfinished(start_time)
         output(window,r,text)
         text=_("(Report is also available at ({})").format(self.tonereportfile)
@@ -8978,8 +8976,8 @@ class Report(object):
             return
         """"Do I need this?"""
         print(_("Getting results of Search request"))
-        c1 = "Any"
-        c2 = "Any"
+        c1 = 'Any'
+        c2 = 'Any'
         """nn() here keeps None and {} from the output, takes one string,
         list, or tuple."""
         kwargs['formstosearch']=self.formspsprofile(**kwargs)
@@ -9001,7 +8999,7 @@ class Report(object):
                     log.info("Going to run {} report for UF group {}"
                             "".format(program['params'].cvtdict()[kwargs['cvt']]['sg'],
                                     kwargs['ufgroup']))
-                sid=" ".join([t,"for",kwargs['ufgroup']])
+                sid=' '.join([t,"for",kwargs['ufgroup']])
                 s2=xlp.Section(si,sid) #,level=2
                 iterateUFgroups(s2,**kwargs)
         else:
@@ -9121,7 +9119,7 @@ class Report(object):
         bits=[str(self.reportbasefilename),rx.id(reporttype),"ReportXLP"]
         if not default:
             bits.append('mod')
-        reportfileXLP='_'.join(bits)+".xml"
+        reportfileXLP='_'.join(bits)+'.xml'
         xlpreport=xlp.Report(reportfileXLP,reporttype,
                         program['settings'].languagenames[self.analang],
                         program # who is calling this report?
@@ -9142,7 +9140,7 @@ class Report(object):
         group=kwargs['group']=kwargs.get('group',program['status'].group())
         ftype=kwargs['ftype']=kwargs.get('ftype',program['params'].ftype())
         skipthisone=False
-        checkprose="{} {} {} {}={}".format(kwargs['ps'],
+        checkprose='{} {} {} {}={}'.format(kwargs['ps'],
                                     kwargs['profile'],
                                     kwargs['ufgroup'],
                                     kwargs['check'],
@@ -9479,7 +9477,7 @@ class Report(object):
                                                         kwargs['cvt']]['sg']))
                 # print(t)
                 log.info(t)
-                sid=" ".join([t,"for",kwargs['ufgroup'],kwargs['profile'],
+                sid=' '.join([t,"for",kwargs['ufgroup'],kwargs['profile'],
                             kwargs['ps']+'s'])
                 s34=xlp.Section(parent,sid,level=kwargs['sectlevel'])
                 maxcount=rx.countxiny(kwargs['cvt'], kwargs['profile'])
@@ -9514,7 +9512,7 @@ class Report(object):
             return
         si=xlp.Section(xlpr,"Introduction")
         p=xlp.Paragraph(si,instr)
-        sys.stdout = open(self.basicreportfile, "w", encoding='utf-8')
+        sys.stdout = open(self.basicreportfile, 'w', encoding='utf-8')
         print(instr)
         log.info(instr)
         #There is no runwindow here...
@@ -9556,7 +9554,7 @@ class Report(object):
                         if 'ufgroup' in kwargs:
                             log.info("Going to run report for UF group {}"
                                     "".format(kwargs['ufgroup']))
-                        sid=" ".join([t,"for",kwargs['ufgroup']])
+                        sid=' '.join([t,"for",kwargs['ufgroup']])
                         s3=xlp.Section(s2,sid,level=3)
                         iteratecvt(parent=s3,**kwargs)
                         # for check in self.checks: #self.checkcodesbyprofile:
@@ -9976,12 +9974,12 @@ class Transcribe(Sound,Sort,TaskDressing):
             self.err=ErrorNotice(warning,parent=self,title=title)
     def submitform(self):
         newvalue=self.transcriber.formfield.get()
-        if newvalue == "":
+        if newvalue == '':
             noname=_("Give a name for this group!")
             log.debug(noname)
             self.errorlabel['text'] = noname
             return 1
-        if newvalue == "∅": #proxy for no segments
+        if newvalue == '∅': #proxy for no segments
             newvalue=''
         if newvalue != self.group: #only make changes!
             showpolygraphs=False
@@ -10124,8 +10122,8 @@ class Transcribe(Sound,Sort,TaskDressing):
             log.info("Comparison ({}) same as subgroup ({}); not showing."
                         "".format(self.group_comparison,self.group))
         else:
-            log.info("This should never happen (renamegroup/"
-                        "comparisonbuttons)")
+            log.info(_("This should never happen (renamegroup/"
+                        "comparisonbuttons)"))
         self.sub_c['text']=t
     def makewindow(self):
         # log.info("Making transcribe window")
@@ -10149,8 +10147,8 @@ class Transcribe(Sound,Sort,TaskDressing):
                 log.info("I asked for a check name, but didn't get one.")
                 return
         if not program['status'].groups(wsorted=True):
-            log.error("I don't have any sorted data for check: {}, "
-                        "ps-profile: {}-{},".format(check,ps,profile))
+            log.error(_("I don't have any sorted data for check: {}, "
+                        "ps-profile: {}-{},").format(check,ps,profile))
             return
         groupsok=self.updategroups()
         if not groupsok:
@@ -10413,7 +10411,7 @@ class JoinUFgroups(Tone,TaskDressing):
         def submitform():
             clearerror()
             uf=named.get()
-            if uf == "":
+            if uf == '':
                 noname=_("Give a name for this UF tone group!")
                 log.debug(noname)
                 errorlabel['text'] = noname
@@ -10431,8 +10429,8 @@ class JoinUFgroups(Tone,TaskDressing):
                 return
             for group in groupsselected:
                 if group in self.analysis.sensesbygroup: #selected ones only
-                    log.debug("Changing values from {} to {} for the following "
-                            "sense.ids: {}".format(group,uf,
+                    log.debug(_("Changing values from {} to {} for the "
+                            "following sense.ids: {}").format(group,uf,
                             [i.id for i in self.analysis.sensesbygroup[group]]))
                     for sense in self.analysis.sensesbygroup[group]:
                         sense.uftonevalue(uf)
@@ -10441,7 +10439,7 @@ class JoinUFgroups(Tone,TaskDressing):
             program['status'].last('joinUF',update=True)
             self.tonegroupsjoinrename() #call again, in case needed
         self.makeanalysis()
-        def redo(timestamps="By manual request"):
+        def redo(timestamps=_("By manual request")):
             self.wait(_("Redoing Tone Analysis")+'\n'+timestamps)
             self.analysis.do()
             self.waitdone()
@@ -11142,9 +11140,9 @@ class ExampleDict(dict):
                 node=nodes[randint(0, n-1)]
             self[group]=node #store for next iteration
         if tries == n*2:
-            log.info("Apparently I tried for a sense {} times, and couldn't "
+            log.info(_("Apparently I tried for a sense {} times, and couldn't "
             "find one matching your needs ({}) glosses (out of {} possible "
-            "senses). This is probably a systematic problem to fix.".format(
+            "senses). This is probably a systematic problem to fix.").format(
                                                                 tries,kwargs,n))
             return 0,None
         else:
@@ -11179,10 +11177,10 @@ class SortButtonFrame(ui.ScrollingFrame):
             vardict['NONEOFTHEABOVE']=ui.BooleanVar()
             difb=ui.Button(bf, text=newgroup,
                         cmd=different,
-                        anchor="w",
+                        anchor='w',
                         font='instructions'
                         )
-            difb.grid(column=0, row=0, sticky="ew")
+            difb.grid(column=0, row=0, sticky='ew')
         row=0
         firstOK=_("This word is OK in this frame")
         newgroup=_("Different")
@@ -11192,16 +11190,16 @@ class SortButtonFrame(ui.ScrollingFrame):
         """This should just add a button, not reload the frame"""
         row+=10
         bf=ui.Frame(parent)
-        bf.grid(column=0, row=row, sticky="w")
+        bf.grid(column=0, row=row, sticky='w')
         if not program['status'].groups(wsorted=True):
             # log.info("Making None sorted yet button")
             vardict['ok']=ui.BooleanVar()
             okb=ui.Button(bf, text=firstOK,
                             cmd=firstok,
-                            anchor="w",
+                            anchor='w',
                             font='instructions'
                             )
-            okb.grid(column=0, row=0, sticky="ew")
+            okb.grid(column=0, row=0, sticky='ew')
         else:
             # log.info("Making different button")
             differentbutton()
@@ -11209,10 +11207,10 @@ class SortButtonFrame(ui.ScrollingFrame):
         # log.info("Making skip button")
         skipb=ui.Button(bf, text=skiptext,
                         cmd=skip,
-                        anchor="w",
+                        anchor='w',
                         font='instructions'
                         )
-        skipb.grid(column=0, row=1, sticky="ew")
+        skipb.grid(column=0, row=1, sticky='ew')
     def addgroupbutton(self,group):
         if self.exitFlag.istrue():
             return #just don't die
@@ -11322,7 +11320,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         super(SortButtonFrame, self).__init__(parent, *args, **kwargs)
         """Children of self.runwindow.frame.scroll.content"""
         self.groupbuttons=self.content.groups=ui.Frame(self.content,
-                                                row=0,column=0,sticky="ew")
+                                                row=0,column=0,sticky='ew')
         self.content.anotherskip=ui.Frame(self.content, row=1,column=0)
         """Children of self.runwindow.frame.scroll.content.groups"""
         self.groupbuttons.row=0 #rows for this frame
@@ -11445,7 +11443,7 @@ class RecordButtonFrame(ui.Frame):
             self._filenameURL=node.audiofileURL
             self.node=node
         elif self.test:
-            self.filename=self._filenameURL="test_{}_{}.wav".format(
+            self.filename=self._filenameURL='test_{}_{}.wav'.format(
                                 program['settings'].soundsettings.fs,
                                 program['settings'].soundsettings.sample_format)
         else:
@@ -11579,12 +11577,12 @@ class SortGroupButtonFrame(ui.Frame):
     """buttons"""
     def labelbutton(self):
         b=ui.Label(self, text=self._text,
-                    column=1, row=0, sticky="ew",
+                    column=1, row=0, sticky='ew',
                     **self.buttonkwargs()
                     )
         if hasattr(self,'_illustration'):
             b['image']=self._illustration
-            b['compound']="left"
+            b['compound']='left'
     def playbutton(self):
         self.check.pyaudiocheck()
         self.check.soundsettingscheck()
@@ -11593,11 +11591,11 @@ class SortGroupButtonFrame(ui.Frame):
         b=ui.Button(self, text=self._text,
                     cmd=self.player.play,
                     column=1, row=0,
-                    sticky="nesw",
+                    sticky='nesw',
                     **self.buttonkwargs())
         if hasattr(self,'_illustration'):
             b['image']=self._illustration
-            b['compound']="left"
+            b['compound']='left'
         bttext=_("Click to hear this utterance")
         if program['praat']:
             bttext+='; '+_("right click to open in praat")
@@ -11611,11 +11609,11 @@ class SortGroupButtonFrame(ui.Frame):
         else:
             cmd=self.selectnsortnext
         b=ui.Button(self, text=self._text, cmd=cmd,
-                    column=1, row=0, sticky="ew",
+                    column=1, row=0, sticky='ew',
                     **self.buttonkwargs())
         if hasattr(self,'_illustration'):
             b['image']=self._illustration
-            b['compound']="left"
+            b['compound']='left'
         bt=ui.ToolTip(b,_("Pick this group ({})").format(self.group))
     def refresh(self):
         # if renew is True:
@@ -11636,7 +11634,7 @@ class SortGroupButtonFrame(ui.Frame):
                         compound='center',
                         column=0,
                         row=0,
-                        sticky="nsew",
+                        sticky='nsew',
                         **tinyfontkwargs)
         bc.bind('<ButtonRelease-3>',self.backup)
         bct=ui.ToolTip(bc,text=_("Change example word; Right click to back up"))
@@ -11789,7 +11787,7 @@ class AlphabetGroupButtonFrame(SortGroupButtonFrame):
                         text=str(self._n),
                         compound='center',
                         column=3, row=0,
-                        sticky="nsew",
+                        sticky='nsew',
                         **tinyfontkwargs)
         bc.bind('<ButtonRelease-3>',self.backslice)
         bct=ui.ToolTip(bc,text=_("Change example word; Right click to back up"))
@@ -11801,7 +11799,7 @@ class AlphabetGroupButtonFrame(SortGroupButtonFrame):
                         text=str(self._n),
                         compound='center',
                         column=3, row=0,
-                        sticky="nsew",
+                        sticky='nsew',
                         **tinyfontkwargs)
         bc.bind('<ButtonRelease-3>',self.backslice)
         bct=ui.ToolTip(bc,text=_("Change example word; Right click to back up"))
@@ -11860,12 +11858,12 @@ class ImageFrame(ui.Frame):
         self.image=image.scaled #Imageframe.image = sense.image.scaled
     def pluralframe(self):
         ui.Label(self,text='',image=self.image,
-                compound="bottom",
+                compound='bottom',
                 sticky='e',
                 ipadx=10,
                 row=0,column=0)
         ui.Label(self,text='',image=self.image,
-                compound="bottom",
+                compound='bottom',
                 sticky='w',
                 ipadx=10,
                 row=0,column=1)
@@ -11878,16 +11876,16 @@ class ImageFrame(ui.Frame):
             # log.info("image2: {} ({})".format(image2,type(image2)))
             image1.scaled.paste(image2)
             bgl=ui.Label(verb,text='',image=image1.scaled,
-                compound="center",
+                compound='center',
                 sticky='ew',
                 row=0,column=0)
         except:
             ui.Label(self,text='!',image=self.image,
-                compound="left",sticky='ew',font='title',
+                compound='left',sticky='ew',font='title',
                 row=0,column=0)
     def citationframe(self):
         l=ui.Label(self,text='',image=self.image,
-            compound="center",sticky='ew',
+            compound='center',sticky='ew',
             anchor='center',
             row=0,column=0)
         # log.info(l.grid_info())
@@ -12153,8 +12151,8 @@ class SliceDict(dict):
             self.makeprofileok() #keyed by ps
             self.renewsenses()
         elif ps:
-            log.error("You asked to change to ps {}, which isn't in the list "
-                        "of pss: {}".format(ps,pss))
+            log.error(_("You asked to change to ps {}, which isn't in the list "
+                        "of pss: {}").format(ps,pss))
         elif hasattr(self,'_ps'):
             return self._ps
         else:
@@ -12652,7 +12650,7 @@ class StatusDict(dict):
         #     log.info("self: {}".format(self.keys()))
         for k in self:
             config[k]=indenteddict(self[k]) #getattr(o,s)
-        with open(self._filename, "w", encoding='utf-8') as file:
+        with open(self._filename, 'w', encoding='utf-8') as file:
             config.write(file)
     def dict(self): #needed?
         for k in self:
@@ -12821,9 +12819,9 @@ class StatusDict(dict):
             self._checksdict[cvt][profile]=list()
             for i in range(n): # get max checks and lesser
                 if i+1 >6:
-                    log.info("We aren't doing checks with more than 6 "
+                    log.info(_("We aren't doing checks with more than 6 "
                             "consonants or vowels ({} in {}); If you need "
-                            "that, please let me know.".format(i+1,profile))
+                            "that, please let me know.").format(i+1,profile))
                     continue
                 """This is a list of (code, name) tuples"""
                 syltuples=program['params']._checknames[cvt][i+1] #range+1 = syl
@@ -12983,10 +12981,10 @@ class StatusDict(dict):
             joinsinceanalysis=True #show groups on all non-default reports
         else:
             joinsinceanalysis=False
-        annalysisoknotice=("Last analysis at {};\n"
+        annalysisoknotice=_("Last analysis at {};\n"
                     "last join at {}\n"
                     "last sort at {}\n(analysisOK={})"
-                    "".format(a,j,s,ok))
+                    "").format(a,j,s,ok)
         log.info(annalysisoknotice)
         return ok, joinsinceanalysis, annalysisoknotice
     def source(self,dict=None):
@@ -13096,114 +13094,114 @@ class CheckParameters(dict):
                 'T':{'sg':_('Tone'),'pl':_('Tones')},
                 }
         self._checknames={
-            "T":{
-                1:[("T", _("Tone melody"))]},
-            "V":{
-                1:[("V1", _("First/only Vowel"))],
+            'T':{
+                1:[('T', _("Tone melody"))]},
+            'V':{
+                1:[('V1', _("First/only Vowel"))],
                 2:[
-                    ("V1=V2", _("Same First/only Two Vowels")),
-                    ("V1xV2", _("Correspondence of First/only Two Vowels")),
-                    ("V2", _("Second Vowel"))
+                    ('V1=V2', _("Same First/only Two Vowels")),
+                    ('V1xV2', _("Correspondence of First/only Two Vowels")),
+                    ('V2', _("Second Vowel"))
                     ],
                 3:[
-                    ("V1=V2=V3", _("Same First/only Three Vowels")),
-                    ("V3", _("Third Vowel")),
-                    ("V2=V3", _("Same Second Two Vowels")),
-                    ("V2xV3", _("Correspondence of Second Two Vowels"))
+                    ('V1=V2=V3', _("Same First/only Three Vowels")),
+                    ('V3', _("Third Vowel")),
+                    ('V2=V3', _("Same Second Two Vowels")),
+                    ('V2xV3', _("Correspondence of Second Two Vowels"))
                     ],
                 4:[
-                    ("V1=V2=V3=V4", "Same First/only Four Vowels"),
-                    ("V4", "Fourth Vowel")
+                    ('V1=V2=V3=V4', _("Same First/only Four Vowels")),
+                    ('V4', _("Fourth Vowel"))
                     ],
                 5:[
-                    ("V1=V2=V3=V4=V5", "Same First/only Five Vowels"),
-                    ("V5", "Fifth Vowel")
+                    ('V1=V2=V3=V4=V5', _("Same First/only Five Vowels")),
+                    ('V5', _("Fifth Vowel"))
                     ],
                 6:[
-                    ("V1=V2=V3=V4=V5=V6", "Same First/only Six Vowels"),
-                    ("V6", "Sixth Vowel")
+                    ('V1=V2=V3=V4=V5=V6', _("Same First/only Six Vowels")),
+                    ('V6', _("Sixth Vowel"))
                     ]
                 },
-            "C":{
-                1:[("C1", _("First/only Consonant"))],
+            'C':{
+                1:[('C1', _("First/only Consonant"))],
                 2:[
-                    ("C2", _("Second Consonant")),
-                    ("C1=C2",_("Same First/only Two Consonants")),
-                    ("C1xC2", _("Correspondence of First/only Two Consonants"))
+                    ('C2', _("Second Consonant")),
+                    ('C1=C2',_("Same First/only Two Consonants")),
+                    ('C1xC2', _("Correspondence of First/only Two Consonants"))
                     ],
                 3:[
-                    ("C2=C3",_("Same Second Two Consonants")),
-                    ("C2xC3", _("Correspondence of Second Two Consonants")),
-                    ("C3", _("Third Consonant")),
-                    ("C1=C2=C3",_("Same First Three Consonants"))
+                    ('C2=C3',_("Same Second Two Consonants")),
+                    ('C2xC3', _("Correspondence of Second Two Consonants")),
+                    ('C3', _("Third Consonant")),
+                    ('C1=C2=C3',_("Same First Three Consonants"))
                     ],
                 4:[
-                    ("C4", "Fourth Consonant"),
-                    ("C1=C2=C3=C4","Same First Four Consonants")
+                    ('C4', _("Fourth Consonant")),
+                    ('C1=C2=C3=C4',_("Same First Four Consonants"))
                     ],
                 5:[
-                    ("C5", "Fifth Consonant"),
-                    ("C1=C2=C3=C4=C5","Same First Five Consonants")
+                    ('C5', _("Fifth Consonant")),
+                    ('C1=C2=C3=C4=C5',_("Same First Five Consonants"))
                     ],
                 6:[
-                    ("C6", "Sixth Consonant"),
-                    ("C1=C2=C3=C4=C5=C6","Same First Six Consonants")
+                    ('C6', _("Sixth Consonant")),
+                    ('C1=C2=C3=C4=C5=C6',_("Same First Six Consonants"))
                     ]
                 },
-            "CV":{
+            'CV':{
                 1:[
-                    # ("#CV1", "Word-initial CV"),
-                    ("CxV1", _("Correspondence of first CV")),
-                    # ("CV1", "First/only CV")
+                    # ('#CV1', _("Word-initial CV")),
+                    ('CxV1', _("Correspondence of first CV")),
+                    # ('CV1', _("First/only CV)")
                     ],
                 2:[
-                    # ("CV2", "Second CV"),
-                    ("CxV2", _("Correspondence of second CV")),
-                    ("CV1=CV2",_("Same First/only Two CVs")),
-                    # ("CV2#", "Word-final CV")
+                    # ('CV2', _("Second CV")),
+                    ('CxV2', _("Correspondence of second CV")),
+                    ('CV1=CV2',_("Same First/only Two CVs")),
+                    # ('CV2#', _("Word-final CV"))
                     ],
                 3:[
-                    ("CxV3", _("Correspondence of third CV")),
-                    ("CV1=CV2=CV3",_("Same First/only Three CVs")),
-                    ("CV3", _("Third CV"))
+                    ('CxV3', _("Correspondence of third CV")),
+                    ('CV1=CV2=CV3',_("Same First/only Three CVs")),
+                    ('CV3', _("Third CV"))
                     ],
                 4:[
-                    ("CV1=CV2=CV3=CV4","Same First/only Four CVs"),
-                    ("CV4", "Fourth CV")
+                    ('CV1=CV2=CV3=CV4',_("Same First/only Four CVs")),
+                    ('CV4', ("Fourth CV"))
                     ],
                 5:[
-                    ("CV1=CV2=CV3=CV4=CV5","Same First/only Five CVs"),
-                    ("CV5", "Fifth CV")
+                    ('CV1=CV2=CV3=CV4=CV5',_("Same First/only Five CVs")),
+                    ('CV5', _("Fifth CV"))
                     ],
                 6:[
-                    ("CV1=CV2=CV3=CV4=CV5=CV6","Same First/only Six CVs"),
-                    ("CV6", "Sixth CV")
+                    ('CV1=CV2=CV3=CV4=CV5=CV6',_("Same First/only Six CVs")),
+                    ('CV6', _("Sixth CV"))
                     ]
                 },
-            "VC":{
+            'VC':{
                 1:[
-                    ("VxC1", _("Correspondence of first VC")),
+                    ('VxC1', _("Correspondence of first VC")),
                     ],
                 2:[
-                    ("VxC2", _("Correspondence of second VC")),
-                    # ("VC1=VC2",_("Same First/only Two VCs")),
+                    ('VxC2', _("Correspondence of second VC")),
+                    # ('VC1=VC2',_("Same First/only Two VCs")),
                     ],
                 3:[
-                    ("VxC3", _("Correspondence of third VC")),
-                    # ("VC1=VC2=VC3",_("Same First/only Three VCs")),
-                    # ("VC3", _("Third VC"))
+                    ('VxC3', _("Correspondence of third VC")),
+                    # ('VC1=VC2=VC3',_("Same First/only Three VCs")),
+                    # ('VC3', _("Third VC"))
                     ],
                 4:[
-                    ("CV1=CV2=CV3=CV4","Same First/only Four CVs"),
-                    ("CV4", "Fourth CV")
+                    ('CV1=CV2=CV3=CV4',_("Same First/only Four CVs")),
+                    ('CV4', _("Fourth CV"))
                     ],
                 5:[
-                    ("CV1=CV2=CV3=CV4=CV5","Same First/only Five CVs"),
-                    ("CV5", "Fifth CV")
+                    ('CV1=CV2=CV3=CV4=CV5',_("Same First/only Five CVs")),
+                    ('CV5', _("Fifth CV"))
                     ],
                 6:[
-                    ("CV1=CV2=CV3=CV4=CV5=CV6","Same First/only Six CVs"),
-                    ("CV6", "Sixth CV")
+                    ('CV1=CV2=CV3=CV4=CV5=CV6',_("Same First/only Six CVs")),
+                    ('CV6', _("Sixth CV"))
                     ]
                 },
         }
@@ -13229,7 +13227,6 @@ class ErrorNotice(ui.Window):
     def withdraw(self, event=None):
         ui.Window.withdraw(self)
     def __init__(self, text, **kwargs):
-        # parent=None, title="Error!", wait=False, button=False,):
         if not text:
             log.error(_("ErrorNotice got no text?"))
             return
@@ -13301,7 +13298,7 @@ class Repository(object):
                 # self.getfiles() #this was more work
             else:
                 log.info(_("Adding {}, which is already there.").format(file))
-            args=["add", str(file)]
+            args=['add', str(file)]
             self.do(args)
         else:
             log.info("Not adding {} to bare repo {}".format(file,self.url))
@@ -13322,10 +13319,9 @@ class Repository(object):
             log.info(_("Asked for commit confirm; returning auto False"))
             return False
         log.info(_("Asked for commit confirm; asking user"))
-        w=ui.Window(program['root'],title="Commit Confirm",exit=False)
-        text=_("Do you want to commit language data via {} now?\n{}"
-                ).format(self.repotypename,diff[:300])
-        # text="some other text"
+        w=ui.Window(program['root'],title=_("Commit Confirm"),exit=False)
+        text=_("Do you want to commit language data via {} now?"
+                ).format(self.repotypename)+'\n'+diff[:300]
         prompt=ui.Label(w,text=text,row=0,column=0,sticky='')
         bf=ui.Frame(w,row=1,column=0,sticky='')
         yes=ui.Button(bf,text=_("Yes"),command=ok,
@@ -13347,7 +13343,7 @@ class Repository(object):
             return True
         if not file and self.code == 'git':
             file='-a' # 'git commit -a' is equivalent to 'hg commit'.
-        args=["commit", '-m', "Autocommit from AZT", file]
+        args=['commit', '-m', 'Autocommit from AZT', file]
         #don't try to commit without changes; it clogs the log
         diff=self.diff()
         diffcached=self.diff(cached=True)
@@ -13362,21 +13358,21 @@ class Repository(object):
         return True
     def diff(self,cached=False):
         if not self.bare:
-            args=["diff"]
+            args=['diff']
             if cached:
                 args+=['--cached']
             args+=['--stat']
             return self.do(args)
         # log.info("{} diff returned {}".format(self.repotypename,r))
     def status(self):
-        args=["status"]
+        args=['status']
         log.info(self.do(args))
     def clonefromUSB(self,directory):
         log.info("Preparing to clone to {} from USB repo".format(directory))
         #this should be a pathlib object
         # log.info("Continuing to clone to {} from USB repo".format(directory))
         # this needs from-to args
-        args=["clone", self.nonbareclonearg, self.url, str(directory)]
+        args=['clone', self.nonbareclonearg, self.url, str(directory)]
         msg=_("Copying from {} to {}; this may take some time."
                     "").format(self.url, directory)
         log.info(msg)
@@ -13389,7 +13385,7 @@ class Repository(object):
         log.info("directory: {}".format(directory))
         if directory:
             if not self.addifis(directory):
-                args=["clone", self.bareclonearg, '.', directory] #this needs from-to
+                args=['clone', self.bareclonearg, '.', directory] #this needs from-to
                 msg=_("Copying to {}; this may take some time."
                             "").format(directory)
                 w=ui.Wait(program['root'],msg=msg)
@@ -13401,10 +13397,10 @@ class Repository(object):
         else:
             log.info(_("No directory given; not cloning."))
     def log(self):
-        args=["log"]
+        args=['log']
         log.info(self.do(args))
     def commithashes(self,url=None):
-        r=self.do(["log", "--format=%H"],url=url)
+        r=self.do(['log', '--format=%H'],url=url)
         if not url:
             url=self.url
         if r and 'fatal' not in r:
@@ -13441,7 +13437,7 @@ class Repository(object):
         if not branch:
             branch=self.branch
         for remote in remotes:
-            args=["pull",remote,branch+':'+branch]
+            args=['pull',remote,branch+':'+branch]
             r=self.do(args)
             # log.info("Pull return: {}".format(r))
         return r #if we want results for each, do this once for each
@@ -13455,12 +13451,12 @@ class Repository(object):
         if not branch:
             branch=self.branch
         for remote in remotes:
-            args=["push"]
+            args=['push']
             if setupstream:
                 args+=['--set-upstream']
             args+=[remote,branch+':'+branch]
             r=self.do(args)
-            if r and "The current branch master has no upstream branch." in r:
+            if r and 'The current branch master has no upstream branch.' in r:
                 r=self.push(remotes=[remote],
                             #always keep branch names aligned.
                             branch=self.branch,
@@ -13477,15 +13473,15 @@ class Repository(object):
         #Git doesn't seem to care if repos are related, but I do...
         thatrepohashes=self.commithashes(directory)
         # log.info(thatrepohashes)
-        if thatrepohashes and "fatal: not a git repository" in thatrepohashes:
+        if thatrepohashes and 'fatal: not a git repository' in thatrepohashes:
             return False
-        if thatrepohashes and "does not have any commits yet" in thatrepohashes:
+        if thatrepohashes and 'does not have any commits yet' in thatrepohashes:
             thatrepohashes=[]
         thisrepohashes=self.commithashes()
         # log.info(thisrepohashes)
-        if thisrepohashes and "fatal: not a git repository" in thisrepohashes:
+        if thisrepohashes and 'fatal: not a git repository' in thisrepohashes:
             return False
-        if thisrepohashes and "does not have any commits yet" in thisrepohashes:
+        if thisrepohashes and 'does not have any commits yet' in thisrepohashes:
             thisrepohashes=[]
         # with open(rx.urlok(self.url),'a') as f:
         #     for l in thisrepohashes:
@@ -13499,8 +13495,8 @@ class Repository(object):
         if len(commonhashes) >1: #just in case we find one...
             return True
         elif not len(thatrepohashes):
-            log.info("Repository at {} looks empty, so I'm assuming you "
-            "just initialized it".format(directory))
+            log.info(_("Repository at {} looks empty, so I'm assuming you "
+            "just initialized it").format(directory))
             log.info("This use case should probably go away!! Are we "
                 "initializing empty repos somewhere, or asking the user to?")
             return True
@@ -13584,7 +13580,7 @@ class Repository(object):
         else:
             return []
     def root(self):
-        args=["root"]
+        args=['root']
         self.root=self.do(args)
     def getfiles(self):
         args=self.leaveunicodealonesargs()
@@ -13624,7 +13620,7 @@ class Repository(object):
         except subprocess.CalledProcessError as e:
             output=stouttostr(e.output)
             # log.info("Error output: \n{}; {}".format(output,type(output)))
-            if me and (iwascalledby in ["pull"] and
+            if me and (iwascalledby in ['pull'] and
                         'rejected' not in output and
                         self.code == 'git'):
                 log.info(_("Call to {} ({}) gave error: \n{}\nMerging.").format(
@@ -13635,19 +13631,19 @@ class Repository(object):
                     r=self.mergetool(**kwargs)
                     if r and 'fatal' not in r:
                         self.pull(**kwargs)
-            if "The current branch master has no upstream branch." in output:
+            if 'The current branch master has no upstream branch.' in output:
                 log.info("iwascalledby {}, but don't have upstream."
                             "".format(iwascalledby))
-                if iwascalledby not in ["push"]:
+                if iwascalledby not in ['push']:
                     try:
                         assert self.code == 'git' #don't give hg notices here
                         ErrorNotice(output)
                     except (RuntimeError,AssertionError):
                         log.info(output)
                 return output
-            if iwascalledby in ["pull"]: #needed for logic and reporting
+            if iwascalledby in ['pull']: #needed for logic and reporting
                 return output
-            if iwascalledby not in ["getusernameargs","log"]:
+            if iwascalledby not in ['getusernameargs','log']:
                 txt=_("Call to {} ({}) gave error: \n{}").format(
                                                         self.repotypename,
                                                         ' '.join(
@@ -13661,9 +13657,9 @@ class Repository(object):
                     #these are states we don't want to bother the user with:
                     assert output #git config core.bare gives zero error output
                     assert 'ot a git repository' not in output
-                    assert "unknown option" not in output
-                    assert "does not have any commits yet" not in output
-                    assert "error: No such remote " not in output
+                    assert 'unknown option' not in output
+                    assert 'does not have any commits yet' not in output
+                    assert 'error: No such remote ' not in output
                     ErrorNotice(txt)
                 except (RuntimeError,AssertionError):
                     log.info(txt)
@@ -13732,7 +13728,7 @@ class Repository(object):
                 "your computer's PATH.").format(
                                                 # self.url,
                                                 self.repotypename)
-        if self.repotypename == "Mercurial":
+        if self.repotypename == 'Mercurial':
              text+='\n'+_("(Mercurial is used by Chorus and languagedepot.org)")
              if not self.exists():
                  log.info(_("No {0} repo, nor {0} executable; moving on."
@@ -13740,7 +13736,7 @@ class Repository(object):
                  return
         w=ui.Window(program.get('root',ui.Root()),title=title)
         w.withdraw()
-        if self.repotypename == "Git":
+        if self.repotypename == 'Git':
              text+='\n'+_("(Git is used by {0} to track changes in your "
                         "data, and to keep {0} up to date)"
                         ).format(program['name'])
@@ -13752,7 +13748,7 @@ class Repository(object):
         m.wrap()
         m.bind("<Button-1>", lambda e: openweburl(self.installpage))
         mtt=ui.ToolTip(m,_("Go to {}").format(self.installpage))
-        if self.thisos == "Windows":
+        if self.thisos == 'Windows':
             clickable1=_("(e.g., in Windows, install *this* file),"
                         ).format(self.wexeurl)
             clickable2=_("or see all your options at {}."
@@ -13766,7 +13762,7 @@ class Repository(object):
         # button=(_("Restart Now"),sysrestart) #This should be in task/chooser
         text=_("After you install {}, you should restart."
                 ).format(self.repotypename)
-        if self.repotypename == "Git":
+        if self.repotypename == 'Git':
             text+='\n'+_("You can keep using {} without installing {}, but "
                         "it is not recommended, and you will continue to see "
                         "this warning."
@@ -13810,7 +13806,7 @@ class Repository(object):
         #                                     type(list(remotes.values())[-1])))
         if not remote or str(remote) in remotes.values(): # compare str w str
             return
-        for key in ["Thing"+str(i) for i in range(1,20)]:
+        for key in ['Thing'+str(i) for i in range(1,20)]:
             if key not in remotes: #don't overwrite keys
                 log.info("Setting {} key with {} value".format(key,remote))
                 remotes[key]=str(remote)
@@ -13871,9 +13867,9 @@ class Repository(object):
         self.ignorecheck()
         self.branchname()
         try:
-            log.info("{} repository object initialized on branch {} at {} "
+            log.info(_("{} repository object initialized on branch {} at {} "
                     "for {}, with {} files."
-                    "".format(self.repotypename, self.branch, self.url,
+                    "").format(self.repotypename, self.branch, self.url,
                         self.description, len(self.files)))
         except FileNotFoundError:
             log.info("{} repository object initialized at {} "
@@ -13888,13 +13884,13 @@ class Repository(object):
         self.thisos=platform.system()
         self.directorydontask=False #set on init, track first request rejection
         # For testing:
-        # self.thisos="Windows"
-        if self.thisos == "Linux":
-            self.installpage=("https://github.com/kent-rasmussen/azt/blob/main/"
-                                "docs/SIMPLEINSTALL_LINUX.md")
+        # self.thisos='Windows'
+        if self.thisos == 'Linux':
+            self.installpage=('https://github.com/kent-rasmussen/azt/blob/main/'
+                                'docs/SIMPLEINSTALL_LINUX.md')
         elif self.thisos == 'Windows':
-            self.installpage=("https://github.com/kent-rasmussen/azt/blob/main/"
-                                "docs/SIMPLEINSTALL.md")
+            self.installpage=('https://github.com/kent-rasmussen/azt/blob/main/'
+                                'docs/SIMPLEINSTALL.md')
         self.cmd=program[self.code]
         self.deltadir=file.getdiredurl(self.url,'.'+self.code)
         self.setdescription()
@@ -13943,15 +13939,15 @@ class Mercurial(Repository):
         self.code='hg'
         self.branchnamefile='branch'
         # self.cmd=program['hg']
-        self.wdownloadsurl="https://www.mercurial-scm.org/wiki/Download"
-        self.wexename="Mercurial-6.0-x64.exe"
-        self.wexeurl=("https://www.mercurial-scm.org/release/windows/{}"
-                        "".format(self.wexename))
+        self.wdownloadsurl='https://www.mercurial-scm.org/wiki/Download'
+        self.wexename='Mercurial-6.0-x64.exe'
+        self.wexeurl=('https://www.mercurial-scm.org/release/windows/{}'
+                        ''.format(self.wexename))
         self.pwd='--cwd'
         self.lsfiles='files'
         self.argstogetusername=['config', 'ui.username']
-        self.bareclonearg="-U"
-        self.nonbareclonearg=""
+        self.bareclonearg='-U'
+        self.nonbareclonearg=''
         super(Mercurial, self).__init__(url)
         # These files are just ignored in git, but if Chorus put something
         # there, we want to know
@@ -14012,7 +14008,7 @@ class Git(Repository):
             r=self.do(args)
         log.info("init: {}".format(r))
         self.populate() #because this won't have been done yet
-        # git config branch.$branchname.mergeoptions "-X ignore-space-change"
+        # git config branch.$branchname.mergeoptions '-X ignore-space-change'
     def lastcommitdate(self):
         args=['log', '-1', '--format=%cd']
         r=self.do(args)
@@ -14028,21 +14024,21 @@ class Git(Repository):
     def getremotenameurl(self,remotename):
         args=['remote', 'get-url', remotename]
         r=self.do(args)
-        if "error: No such remote " not in r:
+        if 'error: No such remote ' not in r:
             return r
     def __init__(self, url):
         self.code='git'
         self.branchnamefile='HEAD'
-        self.wdownloadsurl="https://git-scm.com/download/win"
-        self.wexename="Git-2.33.0.2-64-bit.exe"
-        self.wexeurl=("https://github.com/git-for-windows/git/releases/"
-                        "download/v2.33.0.windows.2/{}".format(self.wexename))
+        self.wdownloadsurl='https://git-scm.com/download/win'
+        self.wexename='Git-2.33.0.2-64-bit.exe'
+        self.wexeurl=('https://github.com/git-for-windows/git/releases/'
+                        'download/v2.33.0.windows.2/{}').format(self.wexename)
         self.pwd='-C'
         self.lsfiles='ls-files'
         self.argstogetusername=['config', '--get', 'user.name']
         self.argstogetuseremail=['config', '--get', 'user.email']
-        self.bareclonearg="--bare"
-        self.nonbareclonearg=""
+        self.bareclonearg='--bare'
+        self.nonbareclonearg=''
         super(Git, self).__init__(url)
 class GitReadOnly(Git):
     def exewarning(self):
@@ -14186,10 +14182,10 @@ def interfacelang(lang=None,magic=False):
                 log.debug("Setting Default Interface language: {}".format(curlang))
                 i18n[curlang].install()
         else:
-            log.debug("Apparently we're trying to set the same interface "
-                                            "language: {}={}".format(lang,curlang))
+            log.debug(_("Apparently we're trying to set the same interface "
+                                        "language: {}={}").format(lang,curlang))
         log.debug(_("Translation seems to be working, using {}"
-                                                    "".format(interfacelang())))
+                                                    "").format(interfacelang()))
     else:
         for lang in i18n:
             try:
@@ -14328,8 +14324,8 @@ def indenteddict(indict):
                 # log.info("printing double indented dict for {}: {} "
                 #             "keys".format(j,indict[j].keys()))
                 outdict[j]='{'+',\n'.join(
-                    [quote(k)+":{"+',\n\t'.join(
-                                        [quote(i)+":"+quote(indict[j][k][i])
+                    [quote(k)+':{'+',\n\t'.join(
+                                        [quote(i)+':'+quote(indict[j][k][i])
                                             for i in indict[j][k]#.keys()
                                             # for k in indict[j].keys()
                                             if i #and i in indict[j][k].keys()
@@ -14343,14 +14339,12 @@ def indenteddict(indict):
                 # '\n\t\t'.join(str({i:v[j][k][i]
                 #                             for i in v[j][k]}))
             else:
-                log.info("printing indented dict for {} "
-                        "key".format(j))
-                outdict[j]='{'+',\n'.join([quote(i)+":"+quote(indict[j][i])
+                log.info(_("printing indented dict for {} key").format(j))
+                outdict[j]='{'+',\n'.join([quote(i)+':'+quote(indict[j][i])
                                         for i in indict[j]#.keys()
                                         if i])+'}'
         elif indict[j]:
-            # log.info("printing unindented dict for {} "
-            #         "key".format(j))
+            # log.info(_("printing unindented dict for {} key").format(j))
             outdict[j]=str(indict[j]) #don't quote booleans!
     return outdict
 def selected(groupvars):
@@ -14365,12 +14359,12 @@ def exampletype(**kwargs):
         kwargs[arg]=kwargs.get(arg,True)
     for arg in ['renew','wsoundfile']:
         kwargs[arg]=kwargs.get(arg,False)
-    log.log(4,"Returning exampletype kwargs {}".format(kwargs))
+    # log.info("Returning exampletype kwargs {}".format(kwargs))
     return kwargs
 def checkslicetype(**kwargs):
     for arg in ['cvt','ps','profile','check']:
         kwargs[arg]=kwargs.get(arg,None)
-    log.log(4,"Returning checkslicetype kwargs {}".format(kwargs))
+    # log.info("Returning checkslicetype kwargs {}".format(kwargs))
     return kwargs
 def grouptype(**kwargs):
     for arg in ['wsorted','tosort','toverify','tojoin','torecord','comparison',
@@ -14422,9 +14416,9 @@ def firstoflist(l,othersOK=False,all=False,ignore=[None]):
     elif len(l) == 1 or (othersOK == True):
         return l[0]
     elif othersOK == False: #(i.e., with `len(list) != 1`)
-        print('Sorry, something other than one list item found: {}'
+        log.info(_('Sorry, something other than one list item found: {}'
                 '\nDid you mean to use "othersOK=True"? Returning nothing!'
-                ''.format(l))
+                '').format(l))
 def t(element):
     if type(element) is str:
         return element
@@ -14434,16 +14428,17 @@ def t(element):
         try:
             return element.text
         except:
-            log.debug("Apparently you tried to pull text out of a non element, "
-            "and it's not a simple string, either: {}".format(element))
+            log.debug(_("Apparently you tried to pull text out of a non "
+                        "element, and it's not a simple string, either: {}"
+                        ).format(element))
 def nonspace(x):
     """Return a space instead of None (for the GUI)"""
     if x is not None:
         return x
     else:
-        return " "
+        return ' '
 def nn(x,perline=False,oneperline=False,twoperline=False):
-    """Don't print "None" in the UI..."""
+    """Don't print 'None' in the UI..."""
     if type(x) is list or type(x) is tuple:
         output=[]
         for y in x:
@@ -14466,11 +14461,11 @@ def propagate(self,attr):
     """
     log.info(self.winfo_children())
     for child in self.winfo_children():
-        log.log(2,"working on {}".format(child))
+        # log.info("working on {}".format(child))
         if hasattr(child,attr):
-            log.log(2,"Found {} value for {} attr, setting {} value".format(
-            getattr(child,attr),attr,getattr(self,attr)
-            ))
+            # log.info("Found {} value for {} attr, setting {} value".format(
+            #         getattr(child,attr),attr,getattr(self,attr)
+            #         ))
             setattr(child,attr,getattr(self,attr))
             propagate(child,attr=attr)
 def donothing():
@@ -14495,9 +14490,9 @@ def loadCAWL():
         cawldb=lift.Lift(str(stockCAWL),tostrip=True)
         log.info("Parsed ET.")
         log.info("Got ET Root.")
-    except lift.BadParseError:
+    except lift.BadParseError as e:
         text=_("{} doesn't look like a well formed lift file; please "
-                "try again.").format(stockCAWL)
+                "try again. ({})").format(stockCAWL,e)
         ErrorNotice(text,wait=True)
         return
     except Exception as e:
@@ -14552,9 +14547,9 @@ def getimageifthere(sense,pixels=100,resolution=10):
     #     self._illustration=None
 def pathseparate(path):
     os=platform.system()
-    if os == "Windows":
+    if os == 'Windows':
         sep=';'
-    elif os == "Linux":
+    elif os == 'Linux':
         sep=':'
     else:
         log.error("What operating system are you running? ({})".format(os))
@@ -14569,7 +14564,7 @@ def findpath():
         #CSIDL_DEFAULT_DESKTOP
         # CSIDL_DESKTOPDIRECTORY
         # CSIDL_DESKTOP
-        #subprocess.check_output(["echo","%PATH%"], **spargs)
+        #subprocess.check_output(['echo',"%PATH%"], **spargs)
         log.info("PATH is {}".format(path))
         return path
     except Exception as e:
@@ -14626,16 +14621,16 @@ def findexecutable(exe):
         log.info("Using shortest executable path: {}".format(program[exe]))
     if exe == 'praat' and program[exe] and not praatversioncheck():
         findexecutable('sendpraat') #only ask if it would be useful
-    # os.environ["PATH"] += os.pathsep + os.path.join(os.getcwd(), 'node')
+    # os.environ['PATH'] += os.pathsep + os.path.join(os.getcwd(), 'node')
 def praatversioncheck():
-    praatvargs=[program['praat'], "--version"]
+    praatvargs=[program['praat'], '--version']
     versionraw=subprocess.check_output(praatvargs, shell=False)
     try:
         version=pkg_resources.parse_version(stouttostr(versionraw))
     except:
         version=versionraw
     # This is the version at which we don't need sendpraat anymore
-    # and where "--hide-picture" becomes available.
+    # and where '--hide-picture' becomes available.
     justpraatversion=pkg_resources.parse_version(
                                             'Praat 6.2.04 (December 18 2021)')
     log.info("Found Praat version {}".format(str(version)))
@@ -14648,8 +14643,8 @@ def praatversioncheck():
 def pythonmodules():
     log.info("Installing python dependencies")
     if platform.system() == 'Linux':
-        log.info("If you have errors containing ˋportaudioˊ above, you should "
-            "install pyaudio with your package manager.")
+        log.info(_("If you have errors containing ˋportaudioˊ above, you should "
+            "install pyaudio with your package manager."))
     log.info("FYI, looking for this platform: {}_{}".format(
                                                         platform.system(),
                                                         platform.processor()))
@@ -14714,7 +14709,7 @@ def praatopen(file,newpraat=False,event=None):
     if not newpraat and 'sendpraat' in program and program['sendpraat']:
         """sendpraat sends the command to a running praat instance. If there
         isn't one, just open praat."""
-        praatargs=[program['sendpraat'], "praat", "Read from file... '{}'"
+        praatargs=[program['sendpraat'], 'praat', 'Read from file... "{}"'
                                                     "".format(file)]
         try:
             o=subprocess.check_output(praatargs,shell=False,
@@ -14725,16 +14720,16 @@ def praatopen(file,newpraat=False,event=None):
             t=stouttostr(o)
         except:
             t=o
-        if t == "sendpraat: Program praat not running.":
+        if t == 'sendpraat: Program praat not running.':
             praatopen(file,newpraat=True)
         else:
             log.info("praatoutput: {}".format(t))
     elif program['praat']:
         log.info(_("Trying to call Praat at {}...").format(program['praat']))
         if 'sendpraat' not in program: #don't care about exe, just version check
-            praatargs=[program['praat'], "--hide-picture","--open", file]
+            praatargs=[program['praat'], '--hide-picture','--open', file]
         else:
-            praatargs=[program['praat'], "--open", file]
+            praatargs=[program['praat'], '--open', file]
         subprocess.Popen(praatargs,shell=False) #not run; continue here
     else:
         log.info(_("Looks like I couln't find Praat..."))
@@ -14759,7 +14754,7 @@ def sysrestart(event=None):
     osys=platform.system()
     log.info("Hard shutting down now.")
     logsetup.shutdown()
-    if osys == "Linux":
+    if osys == 'Linux':
         os.execv(sys.argv[0], sys.argv)
         # log.info("Trying argv[0] with args {}, {} and {}".format(sys.executable,
         #                                                         sys.argv[0],
@@ -14805,25 +14800,25 @@ def sysrestart(event=None):
         #                 except Exception as e:
         #                     try:
         #                         log.info("Failed ({}); Trying subprocess.run "
-        #                                     "with executable".format(e))
+        #                                     'with executable'.format(e))
         #                         subprocess.run([sys.executable,*sys.argv])
         #                     except Exception as e:
         #                         log.info("Failed ({}); giving up.".format(e))
     sys.exit()
 def internetconnectionproblemin(x):
     problems=[
-            "No route to host",
-            "unable to access",
-            "Could not resolve host",
-            "Could not read from remote repository."
+            'No route to host',
+            'unable to access',
+            'Could not resolve host',
+            'Could not read from remote repository.'
             ]
     for p in problems:
         if p in x:
             return True
 def isinterneturl(x):
     u=['ssh:',
-        "https:",
-        "http:"
+        'https:',
+        'http:'
         ]
     if [i for i in u if i in x if x]:
             return True
@@ -14834,7 +14829,7 @@ def updated(x):
 def uptodate(x):
     #These are repo already up to date messages
     u=['Everything up-to-date',
-        "Already up to date."
+        'Already up to date.'
         ]
     if [i for i in u if i in x if x]:
             return True
@@ -14940,7 +14935,7 @@ def main():
         screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
         log.info("MS Windows screen size: {}".format(screensize))
     # log.info(root.winfo_class())
-    # root.className="azt"
+    # root.className='azt'
     # root.winfo_class("azt")
     # log.info(root.winfo_class())
     """Translation starts here:"""
@@ -14961,7 +14956,7 @@ def mainproblem():
     if program['testing'] and me:
         sys.exit()
         exit()
-    file=logsetup.writelzma()
+    file=str(logsetup.writelzma())
     try: #Make this work whether root has run/still runs or not.
         newtk=False
         program['root'].winfo_exists()
@@ -15010,12 +15005,13 @@ def mainproblem():
     addr=program['Email']
     eurl='mailto:{}?subject=Please help with {} installation'.format(addr,
                                                                 program['name'])
-    eurl+=('&body=Please replace this text with a description of what you '
-            'just tried.'.format(file))
-    eurl+=("%0d%0aIf the log below doesn't include the text 'Traceback (most "
-            "recent call last): ', or if it happened after a longer work "
-            "session, please attach "
-            "your compressed log file ({})".format(file))
+    eurl+='&body='
+    eurl+=_("Please replace this text with a description of what you just did.")
+    eurl+='%0d%0a'
+    eurl+=_("If the log below doesn't include the text '{}', or if it happened "
+            "after a longer work session, please attach "
+            "your compressed log file").format(
+            'Traceback (most recent call last): ')+' ('+(file)+')'
     eurl+='%0d%0a--log info--%0d%0a{}'.format('%0d%0a'.join(lcontents))
     n=ui.Label(errorw.frame,text=_("\n\nIf this information doesn't help "
         "you fix this, please click on this text to Email me your log (to {})"
@@ -15073,8 +15069,8 @@ def name(x):
         return name
     except:
         name=x.__class__.__name__ #If x is a class instance
-        return "class."+name
-if __name__ == "__main__":
+        return 'class.'+name
+if __name__ == '__main__':
     """These things need to be done outside of a function, as we need global
     variables."""
     # log.info("TaskChooser MRO: {}".format(TaskChooser.mro()))
@@ -15121,7 +15117,7 @@ if __name__ == "__main__":
                     multiprocessing.cpu_count())
     try:
         import psutil
-        text+=", at {}Mhz".format(collections.Counter(
+        text+=_(", at {}Mhz").format(collections.Counter(
                                                     psutil.cpu_freq(percpu=True)
                                                     ).most_common())
     except ModuleNotFoundError:
@@ -15182,7 +15178,7 @@ if __name__ == "__main__":
         m.mainloop()
     #tests()
     def test():
-        formsbycvs(C,V,"C1","V1")
+        formsbycvs(C,V,'C1','V1')
     def timetest():
                 times=1000000000
                 out1=timeit.timeit(test, number=times)
