@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-19 10:06+0100\n"
+"POT-Creation-Date: 2023-03-17 16:44+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Kent Rasmussen <kent_rasmussen@sil.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,59 +25,73 @@ msgstr ""
 msgid "Tried to remove {}, but I can't find it."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/file.py:201
+#: /home/kentr/IT/azt/repo_trans/file.py:202
 msgid "Select a new location for your LIFT Lexicon and other Files"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/file.py:219
+#: /home/kentr/IT/azt/repo_trans/file.py:220
 msgid "Please select where to find the {} media locally"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/file.py:222
+#: /home/kentr/IT/azt/repo_trans/file.py:223
 msgid "Please select where to find the media locally"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/file.py:228
+#: /home/kentr/IT/azt/repo_trans/file.py:241
 msgid "Select LIFT Lexicon File"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/lift.py:400
+#: /home/kentr/IT/azt/repo_trans/lift.py:522
 msgid "Adding values (in lift.py) : {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/lift.py:863
+#: /home/kentr/IT/azt/repo_trans/lift.py:997
 msgid "Possible analysis language codes found: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/lift.py:874
+#: /home/kentr/IT/azt/repo_trans/lift.py:1008
 msgid "Audio language {} found."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/lift.py:878
+#: /home/kentr/IT/azt/repo_trans/lift.py:1012
 msgid ""
 "No audio languages found in Database; creating one for each analysis "
 "language."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/lift.py:891
+#: /home/kentr/IT/azt/repo_trans/lift.py:1025
 msgid "gloss languages found: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/lift.py:1510
+#: /home/kentr/IT/azt/repo_trans/lift.py:1027
+msgid "Using first gloss language for new annotations: {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/lift.py:1637
 msgid ""
 "Your regular expressions look OK for {} (there are no segments in your {} "
 "data that are not in a regex). "
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/lift.py:1668
-msgid "This method needs to operate on entries; fix caller {}!"
+#: /home/kentr/IT/azt/repo_trans/lift.py:2091
+msgid " (pl)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:98
+#: /home/kentr/IT/azt/repo_trans/lift.py:2097
+msgid "This entry doesn't seem to have a sense."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/lift.py:2099
+msgid ""
+"This doesn't seem to be called on a child of entry ({} child of {}), or the "
+"entry's first sense ({}) doesn't have gloss languages."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:119
 msgid "{} Dictionary and Orthography Checker"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:101
+#: /home/kentr/IT/azt/repo_trans/main.py:122
 #, python-brace-format
 msgid ""
 "{0} has a new interface, starting mid January 2022. You should still be able "
@@ -88,811 +102,22 @@ msgid ""
 "Either window allows you to run reports."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:111
+#: /home/kentr/IT/azt/repo_trans/main.py:132
 msgid ""
 "For more information on {} tasks, please check out the documentation at {} "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:722
-msgid "Use this form"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:726
-msgid "What does {} ({}) mean in {}?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:730
-msgid "Use this {} gloss for {}"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:745
-msgid "Skip {} gloss"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:757
-msgid "Add Morpheme to Dictionary"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:758
-msgid "Add a {} {} morpheme to the dictionary"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:791
-msgid ""
-"Sorry, empty name! \n"
-"Please provide at least \n"
-"a frame name, to distinguish it \n"
-"from other frames."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:870
-msgid "Use {} tone frame"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:886 /home/kentr/bin/raspy/azt/main.py:2520
-msgid "Define a New Tone Frame"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:905
-msgid "Add {} Tone Frame"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:909
-msgid "What do you want to call the tone frame ?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:925
-msgid ""
-"Fill in the {} frame forms below.\n"
-"(include a space to separate word forms)"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:930
-msgid ""
-"Fill in the {} glossing here \n"
-"as appropriate for the morphosyntactic context.\n"
-"(include a space to separate word glosses)"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:935
-msgid ""
-"What text goes *before* \n"
-"<==the {} word *{}* \n"
-"in the frame?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:938
-msgid ""
-"What text goes *after* \n"
-"the {} word *{}*==> \n"
-"in the frame?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:973
-msgid "See the tone frame around a word from the dictionary"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:984
-msgid "Select Audio Format"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:985
-msgid "What audio format do you want to work with?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:995
-msgid "Select Sampling Frequency"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:996
-msgid "What sampling frequency you want to work with?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1009
-msgid "Select Sound Card"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1010
-msgid "What sound card do you want to work with?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1035
-msgid "No change: {} == {}"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1070
-msgid "Select Vowel"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1074
-msgid "Select Consonant"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1087
-msgid "Select Grammatical Category"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1088
-msgid "What grammatical category do you want to work with (Part of speech)?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1100
-msgid "Select Syllable Profile"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1103
-msgid "Error: please set Grammatical category with profiles first!"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1107
-msgid "What ({}) syllable profile do you want to work with?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1127
-msgid "Asking for check type"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1128
-msgid "Select Check Type"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1136
-msgid "What part of the sound system do you want to work with?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1246
-msgid "Vowel"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1246
-msgid "Vowels"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1247
-msgid "Consonant"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1247
-msgid "Consonants"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1248
-msgid "Consonant-Vowel combination"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1248
-msgid "Consonant-Vowel combinations"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1249
-msgid "Tone"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1249
-msgid "Tones"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1972
-msgid "Using {}"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1975
-msgid "Working on {}"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1991
-msgid "Meanings in {} and {}"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:1996
-msgid "Meanings in {} only"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2034
-msgid "Looking at {} {} words ({})"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2059
-msgid "Checking {}, no defined tone frame yet."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2063
-msgid "Checking {}, working on ‘{}’ tone frame"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2089
-msgid "Checking {}, working on {} = {}"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2091
-msgid "Checking {}, working on {}"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2097
-#: /home/kentr/bin/raspy/azt/main.py:2963
-msgid "Sort!"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2099
-msgid "Report!"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2106
-msgid "Record Sorted Examples"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2108
-msgid "Record Dictionary Words"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2136
-#: /home/kentr/bin/raspy/azt/main.py:4846
-msgid "Change"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2170
-msgid "Done"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2175
-msgid "Select Sound Card Settings"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2267
-msgid "{} Progress"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2271
-msgid "Nothing to see here..."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2283
-msgid "Tone Progress for {} Words"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2445
-msgid "Select Analysis Language"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2453
-msgid "What language do you want to analyze?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2466
-msgid "Select Gloss Language"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2474
-msgid "What Language do you want to use for glosses?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2489
-msgid "Error: please set Lift file first!"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2493
-msgid "What other language do you want to use for glosses?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2522
-msgid ""
-"You don't seem to have any tone frames set up.\n"
-"Click '{}' below to define a tone frame. \n"
-"Please pay attention to the instructions, and if \n"
-"there's anything you don't understand, or if you're not \n"
-"sure what a tone frame is, please ask for help. \n"
-"When you are done making frames, click 'Exit' to continue."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2534
-msgid "Quit A-Z+T"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2541
-msgid "What check do you want to do?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2558
-msgid "Select Number of Examples per Group to Record"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2560
-#, python-brace-format
-msgid ""
-"The {0} tone report splits sorted data into draft underlying tone melody "
-"groups, with distinct values for each of your tone frames. This exhaustively "
-"finds differences between groups of lexical senses, but often misses "
-"similarities between groups, which might be distinguished only because a "
-"single word was skipped or sorted incorrectly.\n"
-"\n"
-"Even before a linguist has been able to evaluate these groups, it may be "
-"helpful to record your sorted data. {0} can give you a window for each "
-"lexicon sense in a tone group, with a record button for each sorted sense-"
-"frame combination. \n"
-"\n"
-"Those windows will be presented to the user from one tone report group after "
-"another, until all groups have had one page presented. Then {0} will repeat "
-"this process, until it has done a number of rounds equal to the number "
-"selected below. \n"
-"\n"
-"If a group has fewer examples than this number, that group will be skipped "
-"once done. \n"
-"Picking a larger number could delay opening the recording window; picking a "
-"smaller number could mean data not getting recorded. Up to how many examples "
-"do you want to record for each group?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2626
-msgid "Error: please set Grammatical category first! "
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2751
-msgid "{}={}"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2894
-msgid ""
-"Sorry, there is already a group with that label; If you want to join the "
-"groups, give it a different name now, and join it after they are both "
-"verified ({} is already in {})"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2914
-msgid "Rename {} {} tone group ‘{}’ in ‘{}’ frame"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2922
-msgid ""
-"What the new name do you want to call this surface tone group? A label that "
-"describes the surface tone form in this context would be best, like "
-"‘[˥˥˥ ˨˨˨]’"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2937
-msgid "All tone groups in {} have been verified!"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2964
-msgid ""
-"Hey, you're not Done!\n"
-"Come back when you have time; restart where you left off by pressing '{}'"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3002
-msgid "Continue to next frame"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3006
-msgid "Define a new frame"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3011
-#: /home/kentr/bin/raspy/azt/main.py:3918
-msgid "Continue to next syllable profile"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3015
-msgid "Continue to next Grammatical Category"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3057
-msgid "Sort {} Tone (in ‘{}’ frame)"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3060
-msgid "Select the one with the same tone melody as"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3169
-msgid ""
-"Read down this list to verify they all have the same tone melody. Select any "
-"word with a different tone melody to remove it from the list."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3177
-msgid "Rename Group"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3191
-msgid "Verify {} Tone Group ‘{}’ (in ‘{}’ frame)"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3285
-msgid "Review Groups for {} Tone (in ‘{}’ frame)"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3289
-msgid "These are all different"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3290
-msgid ""
-"Congratulations! \n"
-"All your {} with profile {} are sorted into the groups exemplified below (in "
-"the ‘{}’ frame). Do any of these have the same tone melody? If so, click on "
-"the two groups. If not, click ‘{}’."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3525
-msgid "This word is OK in this frame"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3526
-msgid "Different"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3527
-msgid "Skip this word/phrase"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3640
-msgid "Run Window"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3646
-msgid "Run Check"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3650
-msgid "Error: please set language first!"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3656
-msgid "Error: please set Grammatical category first!"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3725
-msgid "Record {} {} Words: click ‘Record’, talk, and release ({} words)"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3799
-msgid "Next Group"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3808
-msgid "Words and phrases to record: click ‘Record’, talk, and release"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3813
-msgid "Sorry, there are no entries to show!"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3848
-msgid "No examples! Add some, then come back."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3873
-msgid "Done/Next"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3902
-msgid "Preparing to record examples from each tone group ({}) with index"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3905
-msgid "Giving user the number {} example from each tone group ({}) with index"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3915
-msgid "All done! Sort some more words, and come back."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3941
-msgid "Getting results of Search request"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:3947
-msgid "{} roots of form {} by {}"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4022
-msgid "No results!"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4023
-msgid "No results for "
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4129
-msgid "Tone Report"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4136
-msgid ""
-"This report follows an analysis of sortings of {} morphemes (roots or "
-"affixes) across the following frames: {}. {} stores these sortings in lift "
-"examples, which are output here, with any glossing and sound file links "
-"found in each lift sense example. Each group in this report is distinct from "
-"the others, in terms of its grouping across the multiple frames used. Sound "
-"files should be available through links, if the audio directory with those "
-"files is in the same directory as this file."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4147
-msgid ""
-"As a warning to the analyst who may not understand the implications of this "
-"*automated analysis*, you may have too few groupings here, particularly if "
-"you have sorted on fewer frames than necessary to distinguish all your "
-"underlying tone melodies. On the other hand, if your team has been overly "
-"precise, or if your database contains bad information (sorting information "
-"which is arbitrary or otherwise inappropriate for the language), then you "
-"likely have more groups here than you have underlying tone melodies. "
-"However, if you have avoided each of these two errors, this report should "
-"contain a decent draft of your underlying tone melody groups. It does not "
-"pretend to tell you what the values of those groups are, nor how those "
-"groups interact with morphology in interesting ways (hopefully you can do "
-"each of these better than a computer could)."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4169
-msgid ""
-"\n"
-"Group {}"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4183
-msgid "Values by frame: {}"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4214
-msgid "(Report is also available at ("
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4241
-msgid ""
-"The data in this report is given by most restrictive test first, followed by "
-"less restrictive tests (e.g., V1=V2 before V1 or V2). Additionally, each "
-"word only appears once per segment in a given position, so a word that "
-"occurs in a more restrictive environment will not appear in the later less "
-"restrictive environments. But where multiple examples of a segment type "
-"occur with different values, e.g., V1≠V2, those words will appear multiple "
-"times, e.g., for both V1=x and V2=y."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4271
-msgid ""
-"This report covers the following top {} syllable profiles: {}. This is of "
-"course configurable, but I assume you don't want everything."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4278
-msgid "{} data"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4282
-msgid ""
-"This section covers the following top {} syllable profiles which are found "
-"in {}s: {}"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4289
-msgid "{} {}s"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4294
-msgid "{} checks"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4342
-msgid "What is wrong with this word?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4345
-msgid "Two different vowels (V1≠V2)"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4346
-msgid "Vowels are the same, but the wrong vowel"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4361
-msgid "TITLE!"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4364
-msgid ""
-"It looks like the vowels are the same, but not the correct vowel; let's fix "
-"that."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4368
-msgid "What are the two vowels?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4375
-msgid "fixV1:Different data to be fixed! "
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4381
-msgid "It looks like the vowels aren't the same; let's fix that."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4385
-msgid "What is the first vowel? (C_CV)"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4394
-msgid "fixV2:Different data to be fixed! "
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4395
-msgid "What is the second vowel?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4411
-msgid "fixVs:Different vowels! "
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4422
-msgid "fixVs:Same Vowel, but wrong one! "
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4628
-#: /home/kentr/bin/raspy/azt/main.py:5097
-msgid "Exit"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4636
-msgid "Back"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4837
-msgid "Interface/computer language"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4839
-msgid "Analysis language"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4841
-msgid "Gloss language"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4843
-msgid "Another gloss language"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4845
-msgid "Languages"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4849
-msgid "Part of speech"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4853
-msgid "Syllable profile"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4854
-msgid "Choose"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4856
-msgid "Next"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4861
-msgid "Sound type (Consonant, Vowel, or Tone)"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4866
-msgid "Tone Frame"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4868
-msgid "Location in word"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4872
-msgid "Segment(s) to check"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4876
-msgid "Options"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4879
-msgid "Do"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4881
-msgid "Tone report"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4883
-msgid "Basic CV report (to file)"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4885
-msgid "Reports"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4887
-msgid "Sound Card Settings"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4889
-msgid "Record tone group examples"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4891
-msgid "Record dictionary words, largest group first"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4893
-msgid "Record examples for particular entries, 1 at at time"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4896
-msgid "Recording"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4897
-msgid "Join Groups"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4901
-msgid "Advanced"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4903
-msgid "Dictionary Morpheme"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4905
-msgid "Add Tone frame"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4908
-msgid "Previously skipped data"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4910
-#: /home/kentr/bin/raspy/azt/main.py:5357
-msgid "Redo"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4911
-msgid "Add other"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4913
-msgid "Syllable Profile Analysis (Restart)"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4916
-msgid "Segment Interpretation Settings"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4919
-msgid "Add/Modify Ad Hoc Sorting Group"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4922
-msgid "Select the Number of Examples per Group to Record"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4929
-msgid "About"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4931
-msgid "Help"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4935
-#: /home/kentr/bin/raspy/azt/main.py:5077
-#: /home/kentr/bin/raspy/azt/main.py:5548
+#: /home/kentr/IT/azt/repo_trans/main.py:148
+#: /home/kentr/IT/azt/repo_trans/main.py:11949
 #, python-brace-format
 msgid "{name} Dictionary and Orthography Checker"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:131
+#: /home/kentr/IT/azt/repo_trans/main.py:152
 msgid "version: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:135
+#: /home/kentr/IT/azt/repo_trans/main.py:156
 #, python-brace-format
 msgid ""
 "{name} is a computer program that accelerates community-based language "
@@ -911,119 +136,135 @@ msgid ""
 "192khz/32float, according to your recording equipment's capacity."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:152
+#: /home/kentr/IT/azt/repo_trans/main.py:173
 #, python-brace-format
 msgid "For help with this tool, please check out the documentation at {url} "
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:154
+#: /home/kentr/IT/azt/repo_trans/main.py:175
 msgid "or write me at {}."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:193
+#: /home/kentr/IT/azt/repo_trans/main.py:216
 msgid "Hiding menus?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:200
+#: /home/kentr/IT/azt/repo_trans/main.py:223
 msgid "Showing menus"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:209
-#: /home/kentr/IT/azt/repo_trans/main.py:3149
+#: /home/kentr/IT/azt/repo_trans/main.py:232
+#: /home/kentr/IT/azt/repo_trans/main.py:3310
 msgid "Show Menus"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:211
-#: /home/kentr/IT/azt/repo_trans/main.py:3151
+#: /home/kentr/IT/azt/repo_trans/main.py:234
+#: /home/kentr/IT/azt/repo_trans/main.py:3312
 msgid "Hide Menus"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:218
+#: /home/kentr/IT/azt/repo_trans/main.py:241
 msgid "Start New LIFT Database"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:220
+#: /home/kentr/IT/azt/repo_trans/main.py:243
 msgid "What is the Ethnologue (ISO 639-3) code?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:222
+#: /home/kentr/IT/azt/repo_trans/main.py:244
 msgid ""
 "(find your language on {}; the code is at the top of the page) \n"
 "This code will be used throughout your database, so please \n"
 "take a moment and confirm that this is correct before continuing."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:251
+#: /home/kentr/IT/azt/repo_trans/main.py:274
 msgid "Problem creating file; does the directory already exist?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:255
+#: /home/kentr/IT/azt/repo_trans/main.py:278
 msgid "The file {} already exists! {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:258
+#: /home/kentr/IT/azt/repo_trans/main.py:281
 msgid "Setting up new LIFT file now."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:271
+#: /home/kentr/IT/azt/repo_trans/main.py:297
 msgid "Found {} Repository! ({})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:280
+#: /home/kentr/IT/azt/repo_trans/main.py:306
 msgid ""
 "The directory {} already exists, so I'm not going to copy your data there.\n"
 "Do you already have your data on your computer? \n"
 "If so, click '{}' on the next screen."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:302
+#: /home/kentr/IT/azt/repo_trans/main.py:328
 msgid "I can't find your home directory ({}); please submit a bug report!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:310
+#: /home/kentr/IT/azt/repo_trans/main.py:336
 msgid "Couldn't find a repository at {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:323
+#: /home/kentr/IT/azt/repo_trans/main.py:349
 msgid "looks like there was a problem finding your new file. ({})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:326
+#: /home/kentr/IT/azt/repo_trans/main.py:352
 msgid ""
 "It looks like the repository was cloned, but I can't find just one lift "
 "file.\n"
 "Tell {} which file you want to Analyze on the next page."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:343
+#: /home/kentr/IT/azt/repo_trans/main.py:369
 msgid "returned more or less than one lift file! ({})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:346
+#: /home/kentr/IT/azt/repo_trans/main.py:396
 msgid "Make a Demo LIFT Database"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:348
+#: /home/kentr/IT/azt/repo_trans/main.py:398
 msgid "Loading Demo Template"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:351
+#: /home/kentr/IT/azt/repo_trans/main.py:401
 msgid ""
 "Which language would you like to study, in this demonstration of what {} can "
 "do?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:363
-msgid "Keep this as gloss language"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:378
+#: /home/kentr/IT/azt/repo_trans/main.py:423
 msgid ""
 "Making Demo Database \n"
 "(will restart)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:420
+#: /home/kentr/IT/azt/repo_trans/main.py:448
+msgid "picked {}, from {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:454
+msgid "demo"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:456
+msgid "empty"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:457
+msgid "Trying to write {} LIFT file to {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:462
+msgid "Tried to write {} LIFT file to {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:468
 #, python-brace-format
 msgid ""
 "Your new LIFT file is at {n}.\n"
@@ -1032,524 +273,554 @@ msgid ""
 "Then open {azt} and tell it where you put the LIFT file."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:428
+#: /home/kentr/IT/azt/repo_trans/main.py:476
 msgid "New LIFT file location"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:454
+#: /home/kentr/IT/azt/repo_trans/main.py:503
 msgid "Select LIFT Database"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:456
+#: /home/kentr/IT/azt/repo_trans/main.py:505
 msgid "What do you want to work on?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:458
+#: /home/kentr/IT/azt/repo_trans/main.py:507
 msgid "Start work on a new language"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:459
+#: /home/kentr/IT/azt/repo_trans/main.py:508
 msgid "Copy work from a USB drive"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:462
+#: /home/kentr/IT/azt/repo_trans/main.py:511
 msgid "Select another database on my computer"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:464
+#: /home/kentr/IT/azt/repo_trans/main.py:513
 msgid "Select a database on my computer"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:466
+#: /home/kentr/IT/azt/repo_trans/main.py:515
 msgid "Make a demo database to try out {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:509
-#: /home/kentr/IT/azt/repo_trans/main.py:14058
+#: /home/kentr/IT/azt/repo_trans/main.py:575
 msgid "{} doesn't look like a well formed lift file; please try again."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:520
+#: /home/kentr/IT/azt/repo_trans/main.py:586
 msgid ""
 "There seems to be a (non-XML) problem loading your database ({}); I will "
 "remove it as default so you can open another"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:531
+#: /home/kentr/IT/azt/repo_trans/main.py:597
 msgid "Apparently we've run this before today; not backing up again."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:581
-#: /home/kentr/IT/azt/repo_trans/main.py:7264
+#: /home/kentr/IT/azt/repo_trans/main.py:626
+#: /home/kentr/IT/azt/repo_trans/main.py:8133
 msgid "Change"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:589
+#: /home/kentr/IT/azt/repo_trans/main.py:634
 msgid "Languages"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:608
+#: /home/kentr/IT/azt/repo_trans/main.py:653
 msgid "Syllable profile"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:623
+#: /home/kentr/IT/azt/repo_trans/main.py:668
 msgid "Tone Frame"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:654
+#: /home/kentr/IT/azt/repo_trans/main.py:699
 msgid "Location in word"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:657
+#: /home/kentr/IT/azt/repo_trans/main.py:702
 msgid "Segment(s) to check"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:662
+#: /home/kentr/IT/azt/repo_trans/main.py:707
 msgid "Do"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:664
+#: /home/kentr/IT/azt/repo_trans/main.py:709
 msgid "Tone by sense"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:666
+#: /home/kentr/IT/azt/repo_trans/main.py:711
 msgid "Tone by location"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:669
+#: /home/kentr/IT/azt/repo_trans/main.py:714
 msgid "Tone by sense (comprehensive)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:672
+#: /home/kentr/IT/azt/repo_trans/main.py:717
 msgid "Initiate Consultant Check"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:674
+#: /home/kentr/IT/azt/repo_trans/main.py:719
 msgid "Basic Vowel report (to file)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:676
+#: /home/kentr/IT/azt/repo_trans/main.py:721
 msgid "Basic Consonant report (to file)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:678
+#: /home/kentr/IT/azt/repo_trans/main.py:723
 msgid "Basic report on Consonants and Vowels (to file)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:681
-#: /home/kentr/IT/azt/repo_trans/main.py:3091
-#: /home/kentr/IT/azt/repo_trans/main.py:4235
+#: /home/kentr/IT/azt/repo_trans/main.py:726
+#: /home/kentr/IT/azt/repo_trans/main.py:3252
+#: /home/kentr/IT/azt/repo_trans/main.py:4502
 msgid "Reports"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:684
+#: /home/kentr/IT/azt/repo_trans/main.py:729
 msgid "Sound Card Settings"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:686
+#: /home/kentr/IT/azt/repo_trans/main.py:731
 msgid "Record tone group examples"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:688
+#: /home/kentr/IT/azt/repo_trans/main.py:733
 msgid "Record dictionary words, largest group first"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:692
+#: /home/kentr/IT/azt/repo_trans/main.py:737
 msgid "Record examples for particular entries, 1 at at time"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:695
+#: /home/kentr/IT/azt/repo_trans/main.py:740
 msgid "Recording"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:696
-#: /home/kentr/IT/azt/repo_trans/main.py:756
+#: /home/kentr/IT/azt/repo_trans/main.py:741
+#: /home/kentr/IT/azt/repo_trans/main.py:799
 msgid "Join Groups"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:700
+#: /home/kentr/IT/azt/repo_trans/main.py:745
 msgid "Advanced"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:701
+#: /home/kentr/IT/azt/repo_trans/main.py:746
 msgid "Change to another Database (Restart)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:703
+#: /home/kentr/IT/azt/repo_trans/main.py:748
 msgid "Digraph and Trigraph settings"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:705
+#: /home/kentr/IT/azt/repo_trans/main.py:750
 msgid "Segment Interpretation Settings"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:707
-msgid "Syllable Profile Analysis (Restart)"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:709
+#: /home/kentr/IT/azt/repo_trans/main.py:752
 msgid "Remake Status file (All: several minutes)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:711
+#: /home/kentr/IT/azt/repo_trans/main.py:754
 msgid "Remake Status file (just this category)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:713
+#: /home/kentr/IT/azt/repo_trans/main.py:756
 msgid "Remake Status file (just this profile)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:727
+#: /home/kentr/IT/azt/repo_trans/main.py:770
 msgid "Sound Settings"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:730
-#: /home/kentr/IT/azt/repo_trans/main.py:740
+#: /home/kentr/IT/azt/repo_trans/main.py:773
+#: /home/kentr/IT/azt/repo_trans/main.py:783
 msgid "Number of Examples to Record"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:749
+#: /home/kentr/IT/azt/repo_trans/main.py:792
 msgid "Add/Modify Ad Hoc Sorting Group"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:752
+#: /home/kentr/IT/azt/repo_trans/main.py:795
 msgid "Add Tone frame"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:753
+#: /home/kentr/IT/azt/repo_trans/main.py:796
 msgid "Resort skipped data"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:754
+#: /home/kentr/IT/azt/repo_trans/main.py:797
 msgid "Reverify current framed group"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:820
+#: /home/kentr/IT/azt/repo_trans/main.py:863
 msgid "Help"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:821
+#: /home/kentr/IT/azt/repo_trans/main.py:864
 msgid "About"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:824
-msgid "Set up A→Z+T source on USB"
+#: /home/kentr/IT/azt/repo_trans/main.py:867
+msgid "Set up {} source on USB"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:826
-msgid "Update A→Z+T"
+#: /home/kentr/IT/azt/repo_trans/main.py:870
+msgid "Update {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:828
-msgid "Try A→Z+T test version"
+#: /home/kentr/IT/azt/repo_trans/main.py:872
+msgid "Try {} test version"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:831
-msgid "Revert to A→Z+T main version"
+#: /home/kentr/IT/azt/repo_trans/main.py:875
+msgid "Revert to {} main version"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:912
+#: /home/kentr/IT/azt/repo_trans/main.py:959
 msgid "Using {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:918
+#: /home/kentr/IT/azt/repo_trans/main.py:965
 msgid "Studying {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:919
-#: /home/kentr/IT/azt/repo_trans/main.py:2998
-#: /home/kentr/IT/azt/repo_trans/main.py:3542
+#: /home/kentr/IT/azt/repo_trans/main.py:966
+#: /home/kentr/IT/azt/repo_trans/main.py:3171
+#: /home/kentr/IT/azt/repo_trans/main.py:3712
 msgid "Language with code [{}]"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:921
+#: /home/kentr/IT/azt/repo_trans/main.py:968
 msgid "Set analysis language Name"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:924
+#: /home/kentr/IT/azt/repo_trans/main.py:971
 msgid "Change analysis language"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:928
+#: /home/kentr/IT/azt/repo_trans/main.py:975
 msgid "Meanings in {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:937
+#: /home/kentr/IT/azt/repo_trans/main.py:984
 msgid "and {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:939
+#: /home/kentr/IT/azt/repo_trans/main.py:986
 msgid "only"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:949
+#: /home/kentr/IT/azt/repo_trans/main.py:999
 msgid "Using second form field ‘{}’ ({})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:963
+#: /home/kentr/IT/azt/repo_trans/main.py:1018
 msgid "Looking at {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:967
+#: /home/kentr/IT/azt/repo_trans/main.py:1022
 msgid "{} words ({})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:974
+#: /home/kentr/IT/azt/repo_trans/main.py:1029
 msgid "Checking {},"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:987
+#: /home/kentr/IT/azt/repo_trans/main.py:1046
 msgid "no tone frames defined."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:990
+#: /home/kentr/IT/azt/repo_trans/main.py:1049
 msgid "no tone frame selected."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:993
+#: /home/kentr/IT/azt/repo_trans/main.py:1052
 msgid "working on ‘{}’ tone frame"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1002
+#: /home/kentr/IT/azt/repo_trans/main.py:1061
 msgid "(no framed group)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1004
+#: /home/kentr/IT/azt/repo_trans/main.py:1063
 msgid "(framed group: ‘{}’)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1035
+#: /home/kentr/IT/azt/repo_trans/main.py:1094
 msgid "working on {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1041
+#: /home/kentr/IT/azt/repo_trans/main.py:1100
 msgid "= {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1043
+#: /home/kentr/IT/azt/repo_trans/main.py:1102
 msgid "(All groups)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1051
+#: /home/kentr/IT/azt/repo_trans/main.py:1110
 msgid "Using {} button columns"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1053
+#: /home/kentr/IT/azt/repo_trans/main.py:1112
 msgid "Not using multiple button columns"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1055
+#: /home/kentr/IT/azt/repo_trans/main.py:1114
 msgid "Click here to change the number of columns used for sort buttons"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1062
+#: /home/kentr/IT/azt/repo_trans/main.py:1121
 msgid "Max profiles: {}; "
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1066
+#: /home/kentr/IT/azt/repo_trans/main.py:1125
 msgid "Max lexical categories: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1076
+#: /home/kentr/IT/azt/repo_trans/main.py:1135
 msgid "Run all checks for {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1139
+#: /home/kentr/IT/azt/repo_trans/main.py:1147
+msgid "Parse with confirmation at {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:1153
+msgid "Parse automatically at {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:1162
+msgid "Parsing {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:1166
+msgid "Parsing all words"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:1241
 msgid "Progress for"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1148
-msgid "Change Check Type"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:1149
+#: /home/kentr/IT/azt/repo_trans/main.py:1249
 msgid "Change Part of Speech"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1168
+#: /home/kentr/IT/azt/repo_trans/main.py:1267
 msgid "Nothing to see here..."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1219
+#: /home/kentr/IT/azt/repo_trans/main.py:1322
 msgid "verified"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1220
-msgid "unsorted data"
+#: /home/kentr/IT/azt/repo_trans/main.py:1323
+msgid "unsorted"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1226
+#: /home/kentr/IT/azt/repo_trans/main.py:1329
 msgid ""
 "Refresh table, \n"
 "save settings"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1249
+#: /home/kentr/IT/azt/repo_trans/main.py:1352
 msgid ""
 "Current profile \n"
 "(no check set)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1255
+#: /home/kentr/IT/azt/repo_trans/main.py:1359
 msgid "Go to the next syllable profile"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1276
+#: /home/kentr/IT/azt/repo_trans/main.py:1380
 msgid "Go to the next check"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1333
+#: /home/kentr/IT/azt/repo_trans/main.py:1439
 msgid "Words to sort!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1339
+#: /home/kentr/IT/azt/repo_trans/main.py:1444
 msgid "{} groups to verify!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1342
+#: /home/kentr/IT/azt/repo_trans/main.py:1447
 msgid "Sorted and verified!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1349
+#: /home/kentr/IT/azt/repo_trans/main.py:1454
 msgid "You have more groups verified than there are, in {} cells"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1398
+#: /home/kentr/IT/azt/repo_trans/main.py:1507
 msgid "Checking for a data repository"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1410
+#: /home/kentr/IT/azt/repo_trans/main.py:1519
 msgid "Found {} Repository!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1415
+#: /home/kentr/IT/azt/repo_trans/main.py:1524
 msgid "No Git data repository found; creating."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1777
+#: /home/kentr/IT/azt/repo_trans/main.py:1809
+msgid "# This settings file was made on {} on {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:1926
 msgid ""
 "Looks like there's a problem with your directory... {}\n"
 "{}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1805
+#: /home/kentr/IT/azt/repo_trans/main.py:1954
 msgid "Looking for untracked files to add to repositories"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1923
+#: /home/kentr/IT/azt/repo_trans/main.py:2030
+msgid ""
+"checking these lexical category names for plausible noun and verb names: {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:2074
 msgid "Fields found in lexicon: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1931
+#: /home/kentr/IT/azt/repo_trans/main.py:2082
 msgid "Plural field name: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1933
+#: /home/kentr/IT/azt/repo_trans/main.py:2086
 msgid "Looks like there is no Plural field in the database"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1939
+#: /home/kentr/IT/azt/repo_trans/main.py:2092
 msgid "Imperative field name: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1941
+#: /home/kentr/IT/azt/repo_trans/main.py:2096
 msgid "Looks like there is no Imperative field in the database"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1978
-#: /home/kentr/IT/azt/repo_trans/main.py:6258
-#: /home/kentr/IT/azt/repo_trans/main.py:6301
-#: /home/kentr/IT/azt/repo_trans/main.py:9834
+#: /home/kentr/IT/azt/repo_trans/main.py:2107
+msgid "Changes called for; like it or not, redoing analysis."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:2110
+msgid "User asked for changes to polygraph settings, but no changes found."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:2133
+#: /home/kentr/IT/azt/repo_trans/main.py:6104
+#: /home/kentr/IT/azt/repo_trans/main.py:7145
+#: /home/kentr/IT/azt/repo_trans/main.py:7188
+#: /home/kentr/IT/azt/repo_trans/main.py:10529
+#: /home/kentr/IT/azt/repo_trans/main.py:13295
 msgid "OK"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1980
+#: /home/kentr/IT/azt/repo_trans/main.py:2135
 msgid "Exit {} with no changes"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1982
+#: /home/kentr/IT/azt/repo_trans/main.py:2137
 msgid "Exit with no changes"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1984
-msgid "A→Z+T Digraphs and Trigraphs"
+#: /home/kentr/IT/azt/repo_trans/main.py:2139
+msgid "{} Digraphs and Trigraphs"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1987
+#: /home/kentr/IT/azt/repo_trans/main.py:2142
 msgid "Which of the following letter sequences refer to a single sound?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1991
+#: /home/kentr/IT/azt/repo_trans/main.py:2146
 msgid " (Answer for each of {}.)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:1993
+#: /home/kentr/IT/azt/repo_trans/main.py:2148
 msgid " (in {})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2007
+#: /home/kentr/IT/azt/repo_trans/main.py:2162
 msgid ""
 "If you expect one that isn't listed here, please click here to Email me, and "
 "I can add it."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2014
+#: /home/kentr/IT/azt/repo_trans/main.py:2169
 msgid ""
 "Making changes will restart {} and trigger another syllable profile "
 "analysis. \n"
 "If you don't want that, click ‘{}’."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2025
+#: /home/kentr/IT/azt/repo_trans/main.py:2180
 msgid "See {} for further instructions."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2088
+#: /home/kentr/IT/azt/repo_trans/main.py:2243
 msgid "Language {} found without segment settings."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2105
+#: /home/kentr/IT/azt/repo_trans/main.py:2257
+msgid "{} ({}/{}) has no Di/Trigraph setting; prompting user for info."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:2260
 msgid "Asked about polgraphs, but user exited, so exiting {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2176
+#: /home/kentr/IT/azt/repo_trans/main.py:2318
 msgid "Apparently {} isn't under {}?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2338
-msgid "{} KeyError reading {}-{} from sextracted"
+#: /home/kentr/IT/azt/repo_trans/main.py:2349
+msgid "getting profiles for {} lexical category"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2350
+#: /home/kentr/IT/azt/repo_trans/main.py:2526
 msgid ""
 "Your {} database has the following symbols, which are excluding {} words "
 "from being analyzed: \n"
 "{}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2353
+#: /home/kentr/IT/azt/repo_trans/main.py:2529
 msgid "More than Ten Invalid Characters Found!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2499
+#: /home/kentr/IT/azt/repo_trans/main.py:2678
 msgid "Reloading status data"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2582
+#: /home/kentr/IT/azt/repo_trans/main.py:2762
 msgid "Found {} analangs: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2595
+#: /home/kentr/IT/azt/repo_trans/main.py:2775
 msgid "There don't seem to be any language forms in your database!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2601
+#: /home/kentr/IT/azt/repo_trans/main.py:2781
 msgid ""
 "\n"
 "(guessing [{}]; if that's not correct, exit now and fix it!)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2606
+#: /home/kentr/IT/azt/repo_trans/main.py:2786
 msgid ""
 "\n"
 "Furthermore, your LIFT file doesn't seem to indicate your language code: \n"
@@ -1559,162 +830,174 @@ msgid ""
 "Or select a different database on the next screen."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2614
-#: /home/kentr/IT/azt/repo_trans/main.py:12866
+#: /home/kentr/IT/azt/repo_trans/main.py:2794
+#: /home/kentr/IT/azt/repo_trans/main.py:13270
 msgid "Error!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2621
+#: /home/kentr/IT/azt/repo_trans/main.py:2801
 msgid "Only one analang in file; using it: ({})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2630
-#: /home/kentr/IT/azt/repo_trans/main.py:2638
+#: /home/kentr/IT/azt/repo_trans/main.py:2810
+#: /home/kentr/IT/azt/repo_trans/main.py:2818
 msgid "Looks like I found an iso code with data for analang! ({})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2671
+#: /home/kentr/IT/azt/repo_trans/main.py:2851
 msgid "trying {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2673
+#: /home/kentr/IT/azt/repo_trans/main.py:2853
 msgid "Looks like I found an iso code for analang! ({})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2824
+#: /home/kentr/IT/azt/repo_trans/main.py:2856
+msgid "analang guessed: {} (If you don't like this, change it in the menus)"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:2874
+msgid "Analang in second of two audiolangs only, selecting "
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:2879
+msgid "Analang in both of two audiolangs only, selecting shorter: {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:2987
 msgid "No change: {} == {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2976
+#: /home/kentr/IT/azt/repo_trans/main.py:3149
 msgid "French"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2978
+#: /home/kentr/IT/azt/repo_trans/main.py:3151
 msgid "English"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2980
+#: /home/kentr/IT/azt/repo_trans/main.py:3153
 msgid "Spanish"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2982
+#: /home/kentr/IT/azt/repo_trans/main.py:3155
 msgid "Portuguese"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2984
+#: /home/kentr/IT/azt/repo_trans/main.py:3157
 msgid "Bahasa Indonesian"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2986
+#: /home/kentr/IT/azt/repo_trans/main.py:3159
 msgid "Hausa"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2988
+#: /home/kentr/IT/azt/repo_trans/main.py:3161
 msgid "Congo Swahili"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2990
+#: /home/kentr/IT/azt/repo_trans/main.py:3163
 msgid "Swahili"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2992
+#: /home/kentr/IT/azt/repo_trans/main.py:3165
 msgid "Zulgo"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2994
+#: /home/kentr/IT/azt/repo_trans/main.py:3167
 msgid "Fulfulde"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:2996
+#: /home/kentr/IT/azt/repo_trans/main.py:3169
 msgid "Chufie’"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3011
+#: /home/kentr/IT/azt/repo_trans/main.py:3184
 msgid "Maybe status/slices aren't set up yet."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3082
+#: /home/kentr/IT/azt/repo_trans/main.py:3243
 msgid "Unnamed {} Task ({})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3087
+#: /home/kentr/IT/azt/repo_trans/main.py:3248
 msgid "Analyze"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3089
+#: /home/kentr/IT/azt/repo_trans/main.py:3250
 msgid "Collect Data"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3094
-#: /home/kentr/IT/azt/repo_trans/main.py:3175
+#: /home/kentr/IT/azt/repo_trans/main.py:3255
+#: /home/kentr/IT/azt/repo_trans/main.py:3337
 msgid "Tasks"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3153
+#: /home/kentr/IT/azt/repo_trans/main.py:3314
 msgid "Show Buttons"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3155
+#: /home/kentr/IT/azt/repo_trans/main.py:3316
 msgid "Hide Buttons"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3157
+#: /home/kentr/IT/azt/repo_trans/main.py:3318
 msgid "Smaller Fonts"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3159
+#: /home/kentr/IT/azt/repo_trans/main.py:3320
 msgid "Larger Fonts"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3162
+#: /home/kentr/IT/azt/repo_trans/main.py:3323
 msgid "Hide details"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3164
+#: /home/kentr/IT/azt/repo_trans/main.py:3325
 msgid "Show details"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3166
+#: /home/kentr/IT/azt/repo_trans/main.py:3327
 msgid "{} Dictionary and Orthography Checker: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3170
+#: /home/kentr/IT/azt/repo_trans/main.py:3332
 msgid " ("
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3176
+#: /home/kentr/IT/azt/repo_trans/main.py:3338
 msgid "click ‘{}’ to change tasks"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3271
+#: /home/kentr/IT/azt/repo_trans/main.py:3440
 msgid "Important Notice!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3275
+#: /home/kentr/IT/azt/repo_trans/main.py:3444
 msgid ""
 "You are changing segment interpretation settings in a way that could cause "
 "you problems: "
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3280
+#: /home/kentr/IT/azt/repo_trans/main.py:3449
 msgid ""
 "\n"
 "=> You are no longer distinguishing {}."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3284
+#: /home/kentr/IT/azt/repo_trans/main.py:3453
 msgid ""
 "\n"
 "=> Your interpretation of {} changed."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3286
+#: /home/kentr/IT/azt/repo_trans/main.py:3455
 msgid ""
 "\n"
 "Here is the full info, in form setting: (from, to): {}."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3288
+#: /home/kentr/IT/azt/repo_trans/main.py:3457
 msgid ""
 "\n"
 "\n"
@@ -1723,272 +1006,312 @@ msgid ""
 "have mixed unrelated groups."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3297
+#: /home/kentr/IT/azt/repo_trans/main.py:3466
 msgid "Profiles to check: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3302
+#: /home/kentr/IT/azt/repo_trans/main.py:3471
 msgid "OK, go ahead"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3387
+#: /home/kentr/IT/azt/repo_trans/main.py:3482
+#: /home/kentr/IT/azt/repo_trans/main.py:3489
+msgid "Changed to value ({}) doesn't match current setting for ‘{}’: {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:3557
 msgid "Set Parameters for Segment Interpretation"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3389
+#: /home/kentr/IT/azt/repo_trans/main.py:3559
 msgid "Interpret {} Segments"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3396
+#: /home/kentr/IT/azt/repo_trans/main.py:3566
 msgid ""
 "Here you can view and set parameters that change how {} interprets {} "
 "segments \n"
 "(consonant and vowel glyphs/characters)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3414
+#: /home/kentr/IT/azt/repo_trans/main.py:3584
 msgid ""
 "Do you want to distinguish initial and medial glottal stops (ʔ) \n"
 "from other (simple/single) consonants?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3420
+#: /home/kentr/IT/azt/repo_trans/main.py:3590
 msgid ""
 "Do you want to distinguish Word Final glottal stops (ʔ#) \n"
 "from other word final consonants?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3426
+#: /home/kentr/IT/azt/repo_trans/main.py:3596
 msgid ""
 "Do you want to distinguish initial and medial Nasals (N) \n"
 "from other (simple/single) consonants?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3432
+#: /home/kentr/IT/azt/repo_trans/main.py:3602
 msgid ""
 "Do you want to distinguish Word Final Nasals (N#) \n"
 "from other word final consonants?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3441
+#: /home/kentr/IT/azt/repo_trans/main.py:3611
 msgid "<none so far>"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3442
+#: /home/kentr/IT/azt/repo_trans/main.py:3612
 msgid ""
 "Do you want to distinguish initial and medial likely depressor consonants "
 "(D={})\n"
 "from other (simple/single) consonants?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3450
+#: /home/kentr/IT/azt/repo_trans/main.py:3620
 msgid ""
 "Do you want to distinguish Word Final likely depressor consonants (D={})\n"
 "from other (simple/single) consonants?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3458
+#: /home/kentr/IT/azt/repo_trans/main.py:3628
 msgid ""
 "Do you want to distinguish initial and medial Glides (G) \n"
 "from other (simple/single) consonants?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3464
+#: /home/kentr/IT/azt/repo_trans/main.py:3634
 msgid ""
 "Do you want to distinguish Word Final Glides (G) \n"
 "from other (simple/single) consonants?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3470
+#: /home/kentr/IT/azt/repo_trans/main.py:3640
 msgid ""
 "Do you want to distinguish initial and medial Non-Nasal/Glide Sonorants "
 "(S) \n"
 "from other (simple/single) consonants?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3476
+#: /home/kentr/IT/azt/repo_trans/main.py:3646
 msgid ""
 "Do you want to distinguish Word Final Non-Nasal/Glide Sonorants (S) \n"
 "from other (simple/single) consonants?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3482
+#: /home/kentr/IT/azt/repo_trans/main.py:3652
 msgid ""
 "How do you want to interpret \n"
 "Nasal-Consonant (NC) sequences?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3490
+#: /home/kentr/IT/azt/repo_trans/main.py:3660
 msgid ""
 "How do you want to interpret \n"
 "Consonant-Glide (CG) sequences?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3497
+#: /home/kentr/IT/azt/repo_trans/main.py:3667
 msgid ""
 "How do you want to interpret \n"
 "Vowel-Nasal (VN) sequences?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3509
+#: /home/kentr/IT/azt/repo_trans/main.py:3679
 msgid ""
 "If you make changes, this button==> \n"
 "will restart the program to reanalyze your data, \n"
 "which will take some time."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3518
+#: /home/kentr/IT/azt/repo_trans/main.py:3688
 msgid "Select Interface Language"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3519
+#: /home/kentr/IT/azt/repo_trans/main.py:3689
 msgid "What language do you want {} to address you in?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3540
+#: /home/kentr/IT/azt/repo_trans/main.py:3710
 msgid "Enter Analysis Language Name"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3543
+#: /home/kentr/IT/azt/repo_trans/main.py:3713
 msgid "How do you want to display the name of {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3545
+#: /home/kentr/IT/azt/repo_trans/main.py:3715
 msgid ", with ISO 639-3 code [{}]"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3561
+#: /home/kentr/IT/azt/repo_trans/main.py:3731
 msgid "Select Analysis Language"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3569
+#: /home/kentr/IT/azt/repo_trans/main.py:3739
 msgid "What language do you want to analyze?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3583
+#: /home/kentr/IT/azt/repo_trans/main.py:3753
 msgid "Select Gloss Language"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3584
+#: /home/kentr/IT/azt/repo_trans/main.py:3754
 msgid "What Language do you want to use for glosses?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3598
+#: /home/kentr/IT/azt/repo_trans/main.py:3768
 msgid "What other language do you want to use for glosses?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3615
+#: /home/kentr/IT/azt/repo_trans/main.py:3785
 msgid "Asking for check cvt/type"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3616
+#: /home/kentr/IT/azt/repo_trans/main.py:3786
 msgid "Select Check Type"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3628
+#: /home/kentr/IT/azt/repo_trans/main.py:3798
 msgid "What part of the sound system do you want to work with?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3641
+#: /home/kentr/IT/azt/repo_trans/main.py:3822
+msgid "Select Parser Ask Level"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:3823
+msgid "What level of parsing match do you want the parser to confirm with you?"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:3838
+msgid "Select Parser Auto Level"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:3839
+msgid "What level of parsing match do you want the parser to do automatically?"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:3852
 msgid "Select Lexical Category"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3642
+#: /home/kentr/IT/azt/repo_trans/main.py:3853
 msgid "What lexical category do you want to work with (Part of speech)?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3658
+#: /home/kentr/IT/azt/repo_trans/main.py:3869
 msgid "Select Syllable Profile"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3662
+#: /home/kentr/IT/azt/repo_trans/main.py:3873
 msgid "Error: please set Grammatical category with profiles first!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3679
+#: /home/kentr/IT/azt/repo_trans/main.py:3890
 msgid "What ({}) syllable profile do you want to work with?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3712
+#: /home/kentr/IT/azt/repo_trans/main.py:3912
+msgid "Preparing to ask for a sense..."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:3920
+#: /home/kentr/IT/azt/repo_trans/main.py:3954
+msgid "Select Lexical Item"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:3921
+msgid "What sense do you want to work with?"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:3931
+msgid "Preparing to ask for a sense letter..."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:3952
+msgid "All words"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:3955
+msgid "What letter does your sense start with?"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:3984
 msgid "That name is already used!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3718
+#: /home/kentr/IT/azt/repo_trans/main.py:3990
 msgid "Make Custom Second Form Field for {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3722
+#: /home/kentr/IT/azt/repo_trans/main.py:3994
 msgid "What field name do you want to use for {} words?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3757
-msgid ""
-"I don't see any appropriate fields; I'll give you some commonly used ones to "
-"choose from."
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:3762
+#: /home/kentr/IT/azt/repo_trans/main.py:4033
 msgid "Select Second Form Field for {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3765
+#: /home/kentr/IT/azt/repo_trans/main.py:4036
+msgid "What is the database field for second forms for ‘{}’ words?"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:4040
 msgid ""
 "What database field name do you want to use for second forms for {} words?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3769
-msgid "What is the database field for second forms for ‘{}’ words?"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:3788
+#: /home/kentr/IT/azt/repo_trans/main.py:4055
 msgid "None of these; make a new field"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3794
+#: /home/kentr/IT/azt/repo_trans/main.py:4061
 msgid "None of these work; make my own field"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3801
+#: /home/kentr/IT/azt/repo_trans/main.py:4068
 msgid "Select Scope of Checks"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3803
+#: /home/kentr/IT/azt/repo_trans/main.py:4070
 msgid "What kinds of checks to you want to run?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3822
+#: /home/kentr/IT/azt/repo_trans/main.py:4089
 msgid "(only)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3845
+#: /home/kentr/IT/azt/repo_trans/main.py:4112
 msgid "Select Button Columns"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3846
+#: /home/kentr/IT/azt/repo_trans/main.py:4113
 msgid "How many columns do you want to use for the sort buttons?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3858
+#: /home/kentr/IT/azt/repo_trans/main.py:4125
 msgid "Select Maximum Number of Lexical Categories"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3860
+#: /home/kentr/IT/azt/repo_trans/main.py:4127
 msgid "How many lexical categories to report (2 = Noun and Verb) ?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3871
+#: /home/kentr/IT/azt/repo_trans/main.py:4138
 msgid "Select Maximum Number of Syllable Profiles"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3873
+#: /home/kentr/IT/azt/repo_trans/main.py:4140
 msgid "How many syllable profiles to report?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3891
+#: /home/kentr/IT/azt/repo_trans/main.py:4158
 msgid "Define a New Tone Frame"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3892
+#: /home/kentr/IT/azt/repo_trans/main.py:4159
 msgid ""
 "You don't seem to have any tone frames set up.\n"
 "Click '{}' below to define a tone frame. \n"
@@ -1998,26 +1321,26 @@ msgid ""
 "When you are done making frames, click ‘Exit’ to continue."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3900
-msgid "Return to A→Z+T, to fix settings"
+#: /home/kentr/IT/azt/repo_trans/main.py:4167
+msgid "Return to {}, to fix settings"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3901
+#: /home/kentr/IT/azt/repo_trans/main.py:4168
 msgid ""
 "I can't find any checks for type {}, ps {}, profile {}. Probably that means "
 "there is a problem with your  settings, or with your syllable profile "
 "analysis"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3921
+#: /home/kentr/IT/azt/repo_trans/main.py:4188
 msgid "What check do you want to do?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3936
+#: /home/kentr/IT/azt/repo_trans/main.py:4203
 msgid "New Frame"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3953
+#: /home/kentr/IT/azt/repo_trans/main.py:4220
 msgid ""
 "You need to set \n"
 "Check type (as Tone, currently {}) \n"
@@ -2027,41 +1350,57 @@ msgid ""
 "Before choosing a sort group!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3966
+#: /home/kentr/IT/azt/repo_trans/main.py:4233
 msgid ""
 "It looks like you don't have {}-{} lexemes grouped in the ‘{}’ check yet \n"
 "({})."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:3989
+#: /home/kentr/IT/azt/repo_trans/main.py:4256
 msgid "There don't seem to be any groups to compare with!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4003
+#: /home/kentr/IT/azt/repo_trans/main.py:4270
 msgid "What {} do you want to work with?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4026
+#: /home/kentr/IT/azt/repo_trans/main.py:4293
 msgid "Select Vowel"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4030
+#: /home/kentr/IT/azt/repo_trans/main.py:4297
 msgid "Select Consonant"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4034
+#: /home/kentr/IT/azt/repo_trans/main.py:4301
 msgid "Select Consonant/Vowel"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4042
+#: /home/kentr/IT/azt/repo_trans/main.py:4309
 msgid "Select Framed Tone Group"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4070
+#: /home/kentr/IT/azt/repo_trans/main.py:4332
+msgid "1 - Bare minimum, just one per group"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:4333
+msgid "5 - Some, but not all, of most groups"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:4334
+msgid "100 - All examples in most databases"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:4335
+msgid "1000 - All examples in VERY large databases"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:4337
 msgid "Select Number of Examples per Group to Record"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4072
+#: /home/kentr/IT/azt/repo_trans/main.py:4339
 #, python-brace-format
 msgid ""
 "The {0} tone report splits sorted data into draft underlying tone melody "
@@ -2079,31 +1418,31 @@ msgid ""
 "do you want to record for each group?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4127
+#: /home/kentr/IT/azt/repo_trans/main.py:4394
 msgid "Run Window"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4159
+#: /home/kentr/IT/azt/repo_trans/main.py:4426
 msgid "Closing down {} and storing changes"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4229
+#: /home/kentr/IT/azt/repo_trans/main.py:4496
 msgid "Run Reports"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4231
+#: /home/kentr/IT/azt/repo_trans/main.py:4498
 msgid "Data Collection Tasks"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4233
+#: /home/kentr/IT/azt/repo_trans/main.py:4500
 msgid "Analysis Tasks"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4372
+#: /home/kentr/IT/azt/repo_trans/main.py:4637
 msgid "No task, apparently; not destroying."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4497
+#: /home/kentr/IT/azt/repo_trans/main.py:4761
 #, python-brace-format
 msgid ""
 "The conversion is done now, so {0} will quit. You may want to inspect your "
@@ -2112,19 +1451,19 @@ msgid ""
 "saved in {3}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4505
+#: /home/kentr/IT/azt/repo_trans/main.py:4769
 msgid "Conversion Done!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4509
+#: /home/kentr/IT/azt/repo_trans/main.py:4773
 msgid "Convert lexeme field data to citation form fields?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4514
+#: /home/kentr/IT/azt/repo_trans/main.py:4778
 msgid "You have {} entries with lexeme data, and only {} with citation data."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4516
+#: /home/kentr/IT/azt/repo_trans/main.py:4780
 msgid ""
 "Typically, dictionary work starts by collecting citation forms, and later "
 "moves to analyzing those forms into lexemes (meaningful, but not necessarily "
@@ -2134,192 +1473,92 @@ msgid ""
 "the correct fields in your database."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4525
+#: /home/kentr/IT/azt/repo_trans/main.py:4789
 msgid ""
 "Do you want {} to move data from your lexeme fields to citation fields, for "
 "each entry with no citation field data?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4528
+#: /home/kentr/IT/azt/repo_trans/main.py:4792
 msgid "See {} for more information."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4529
+#: /home/kentr/IT/azt/repo_trans/main.py:4793
 msgid "Move lexeme field data to citation fields"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4530
+#: /home/kentr/IT/azt/repo_trans/main.py:4794
 msgid "No thanks; I'll manage this myself"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4531
+#: /home/kentr/IT/azt/repo_trans/main.py:4795
 msgid ""
 "N.B.: This is a fairly radical change to your database, so it would be wise "
 "to back up your data."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4533
+#: /home/kentr/IT/azt/repo_trans/main.py:4797
 msgid "You will need to do this yourself, either in FLEx, or with expert help."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4555
+#: /home/kentr/IT/azt/repo_trans/main.py:4819
 msgid "go to {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4719
-#: /home/kentr/IT/azt/repo_trans/main.py:4728
+#: /home/kentr/IT/azt/repo_trans/main.py:4889
+msgid "Couldn't find plausible audiolang (among {}) for analang {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:4986
+#: /home/kentr/IT/azt/repo_trans/main.py:4998
 msgid "Current database: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4730
+#: /home/kentr/IT/azt/repo_trans/main.py:5000
 msgid "User selected a new database; restarting with it."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4733
+#: /home/kentr/IT/azt/repo_trans/main.py:5003
 msgid "User didn't select a new database; continuing."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4749
+#: /home/kentr/IT/azt/repo_trans/main.py:5043
 msgid ""
-"There seems to be a problem loading your database with post-word collection "
-"settings; I will remove it as default so you can open another"
+"Already writing to lift; I trust this new mod will get picked up later..."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4828
+#: /home/kentr/IT/azt/repo_trans/main.py:5089
 msgid ""
 "You don't have the sound module installed. For best use of {},you should "
 "switch back to the main branch, connect to the internet, and restart. In the "
 "mean time. You won't be able to record or play audio!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4982
+#: /home/kentr/IT/azt/repo_trans/main.py:5116
+msgid "You haven't picked a syllable profile yet."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5205
 msgid "Presorting for this check/slice already done! ({})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:4993
+#: /home/kentr/IT/azt/repo_trans/main.py:5208
+msgid "Presorting"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5216
 msgid "Presorting ({}={})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5036
-msgid ""
-"NOTICE: we just matched (to remove) a set of symbols representing one sound "
-"({}). Until you are done with it, we will leave it there, so both forms will "
-"be found. Once you are done with it, remove it from the polygraph settings."
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5116
-msgid ""
-"What is the form of the new morpheme in {} \n"
-"(consonants and vowels only)?"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5119
-#: /home/kentr/IT/azt/repo_trans/main.py:5859
-msgid "Use this form"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5122
-msgid "What does ‘{}’ mean in {}?"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5125
-msgid "Use this {} gloss for ‘{}’"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5129
-msgid "Skip {} gloss"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5175
-msgid "Add Morpheme to Dictionary"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5176
-msgid "Add {} morpheme to the dictionary"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5210
-msgid "Adding CAWL entries to fill out, in established database."
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5263
-msgid "Entries Added!"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5264
-msgid "Added {} entries from the SILCAWL"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5267
-msgid ""
-"\n"
-"Modded {} entries with new information from the SILCAWL"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5274
-msgid "Error trying to add SILCAWL entries"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5275
-msgid ""
-"We seem to have not added or modded any entries, which shouldn't happen! "
-"(missing: {})"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5293
-msgid "Continue"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5294
-msgid ""
-"Congratulations! \n"
-"It looks like you got to the end of what was left to collect. \n"
-"You can navigate through the words you just collected, \n"
-"or press ‘{}’ to go on to the next task."
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5298
-#: /home/kentr/IT/azt/repo_trans/main.py:6596
-msgid "Done!"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5322
-msgid ""
-"It looks like you're done filling out the empty entries in your database! "
-"Congratulations! You can still add words through the button on the left ({})."
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5336
-msgid ""
-"Type the word in your language that goes with these meanings.\n"
-"Give a single word (not a phrase) wherever possible.\n"
-"Just type consonants and vowels; don't worry about tone for now."
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5370
-#: /home/kentr/IT/azt/repo_trans/ui_tkinter.py:1125
-msgid "Back"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5374
-msgid "Next"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5384
-msgid "Word Collection for Lexeme Forms"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5399
-msgid "This task helps you collect words in citation form."
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5403
-#: /home/kentr/IT/azt/repo_trans/main.py:5567
+#: /home/kentr/IT/azt/repo_trans/main.py:5319
+#: /home/kentr/IT/azt/repo_trans/main.py:6348
+#: /home/kentr/IT/azt/repo_trans/main.py:6427
 msgid "Add remaining CAWL entries"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5404
-#: /home/kentr/IT/azt/repo_trans/main.py:5568
+#: /home/kentr/IT/azt/repo_trans/main.py:5320
+#: /home/kentr/IT/azt/repo_trans/main.py:6349
+#: /home/kentr/IT/azt/repo_trans/main.py:6428
 msgid ""
 "This will add entries from the Comparative African Wordlist (CAWL) which "
 "aren't already in your database (you are missing {} CAWL tags). If the "
@@ -2328,165 +1567,389 @@ msgid ""
 "Depending on the number of entries, this may take awhile."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5412
+#: /home/kentr/IT/azt/repo_trans/main.py:5328
+#: /home/kentr/IT/azt/repo_trans/main.py:6357
 msgid "Add a Word"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5414
+#: /home/kentr/IT/azt/repo_trans/main.py:5330
+#: /home/kentr/IT/azt/repo_trans/main.py:6359
 msgid ""
 "This adds any word, but is best used after filling out a wordlist, if the "
 "word you want to add isn't there already."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5427
-msgid "Add Words"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5441
+#: /home/kentr/IT/azt/repo_trans/main.py:5361
 msgid ""
-"This task will help you parse your citation forms, automatically, for the "
-"whole dictionary at once."
+"Type the word in your language that goes with these meanings.\n"
+"Give a single word (not a phrase) wherever possible.\n"
+"Just type consonants and vowels; don't worry about tone for now."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5445
-msgid "Parse Citation Forms"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5446
+#: /home/kentr/IT/azt/repo_trans/main.py:5377
 msgid ""
-"For now, this just lets you copy citation form info to The lexeme field."
+"What is the form of the new morpheme in {} \n"
+"(consonants and vowels only)?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5458
-msgid "Parse Whole Dictionary"
+#: /home/kentr/IT/azt/repo_trans/main.py:5380
+#: /home/kentr/IT/azt/repo_trans/main.py:6736
+msgid "Use this form"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5480
-msgid "Parsing!"
+#: /home/kentr/IT/azt/repo_trans/main.py:5383
+msgid "What does ‘{}’ mean in {}?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5483
-msgid "Parsing automatically"
+#: /home/kentr/IT/azt/repo_trans/main.py:5386
+msgid "Use this {} gloss for ‘{}’"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5502
-msgid "Copy this citation to lexeme field?"
+#: /home/kentr/IT/azt/repo_trans/main.py:5390
+msgid "Skip {} gloss"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5436
+msgid "Add Morpheme to Dictionary"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5437
+msgid "Add {} morpheme to the dictionary"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5466
+msgid "Adding CAWL entries to fill out, in established database."
 msgstr ""
 
 #: /home/kentr/IT/azt/repo_trans/main.py:5505
-msgid "Nominal second form: "
+msgid "Found gloss of SILCAWL line #{:04} ({}); adding info to that entry."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5507
-msgid "Verbal second form: "
+#: /home/kentr/IT/azt/repo_trans/main.py:5514
+msgid "Gloss of SILCAWL line #{:04} ({}) not found; copying over that entry."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5513
-msgid "Skip"
+#: /home/kentr/IT/azt/repo_trans/main.py:5520
+msgid "Entries Added!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5534
-msgid "Parse Whole Dictionary, word by word"
+#: /home/kentr/IT/azt/repo_trans/main.py:5521
+msgid "Added {} entries from the SILCAWL"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5536
-msgid "This task will help you parse your whole dictionary, word by word."
+#: /home/kentr/IT/azt/repo_trans/main.py:5524
+msgid ""
+"\n"
+"Modded {} entries with new information from the SILCAWL"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5543
+#: /home/kentr/IT/azt/repo_trans/main.py:5531
+msgid "Error trying to add SILCAWL entries"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5532
+msgid ""
+"We seem to have not added or modded any entries, which shouldn't happen! "
+"(missing: {})"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5604
+msgid "Select a good image for {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5613
+msgid "local file"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5647
+msgid ""
+"Dowloading images from OpenClipart.org\n"
+"{}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5660
+msgid ""
+"Problem downloading webpage; check your internet connection!\n"
+"\n"
+"{}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5699
+msgid "Found {} images!"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5701
+msgid ""
+"\n"
+"Problems downloading {} images"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5703
+msgid "Select local image"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5728
+#: /home/kentr/IT/azt/repo_trans/ui_tkinter.py:1301
+msgid "Back"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5730
+msgid "Next"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5763
+msgid ""
+"It looks like you're done filling out the empty entries in your database! "
+"Congratulations! You can still add words through the button on the left ({})."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5817
+msgid "Don't use this task."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5819
+msgid "Word Collection for Lexeme Forms"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5831
+msgid "This task helps you collect words in citation form."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5833
+msgid "Add Words"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5843
+msgid "This task helps you collect plural word forms."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5845
+msgid "Add plural forms"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5856
+msgid "This task helps you collect imperative word forms."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5858
+msgid "Add imperative forms"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5884
+msgid "Confirm this combination of affixes?"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5932
+msgid "Yes!"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5936
+msgid "No!"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5940
+msgid "This parse looks good ({})\n"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5986
+#: /home/kentr/IT/azt/repo_trans/main.py:5989
+msgid "Another {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5992
+msgid "Select second form"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:5994
+msgid ""
+"What is the {} or {} of \n"
+"‘{}’ ({})?"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6008
+#: /home/kentr/IT/azt/repo_trans/main.py:6021
+msgid "Select {} form"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6027
+msgid "Neither"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6047
+msgid "currently: "
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6049
+msgid "root"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6086
+msgid "Type second form"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6088
+msgid "What {} form goes with ‘{}’ ({})?"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6106
+msgid "Not a {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6231
+msgid "Parsing (ask: {} auto: {})"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6268
+msgid "Loading Affixes"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6314
+msgid ""
+"This task will help you parse your citation forms, automatically and with "
+"confirmation."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6318
+msgid "Parse!"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6319
+msgid ""
+"{} tries to do as much as possible automatically, and according to the level "
+"you have set for confirmation."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6332
+msgid "Parse Words"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6344
+msgid "This task helps you collect and parse words."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6372
+msgid "Add and Parse Words"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6403
 msgid "Parse One Slice"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5545
-#: /home/kentr/IT/azt/repo_trans/main.py:5554
+#: /home/kentr/IT/azt/repo_trans/main.py:6405
+msgid ""
+"This task will help you parse your citation forms, for one slice(?PS??!?) of "
+"the dictionary at a time."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6412
+msgid "Parse One Slice, word by word"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6414
 msgid ""
 "This task will help you parse your citation forms, for one slice of the "
 "dictionary at a time."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5552
-msgid "Parse One Slice, word by word"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:5564
+#: /home/kentr/IT/azt/repo_trans/main.py:6424
 msgid "Tooltip here."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5585
+#: /home/kentr/IT/azt/repo_trans/main.py:6445
 msgid "Placeholder Check2"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5630
+#: /home/kentr/IT/azt/repo_trans/main.py:6451
+msgid "This is a check placeholder."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6497
 msgid "Give a frame name!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5631
+#: /home/kentr/IT/azt/repo_trans/main.py:6498
 msgid "Frame name:"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5643
+#: /home/kentr/IT/azt/repo_trans/main.py:6510
 msgid "Set the frame name for status table and reports"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5645
+#: /home/kentr/IT/azt/repo_trans/main.py:6512
 msgid "Field to frame:"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5669
-msgid "Frame in {}:"
+#: /home/kentr/IT/azt/repo_trans/main.py:6541
+msgid "Gloss in {}:"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5674
+#: /home/kentr/IT/azt/repo_trans/main.py:6543
+msgid "current gloss language"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6545
+msgid "additional gloss language"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6549
 msgid "Skip {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5678
+#: /home/kentr/IT/azt/repo_trans/main.py:6551
+msgid "{}:"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6552
+msgid "analysis language"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6557
 msgid "<word>"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5680
+#: /home/kentr/IT/azt/repo_trans/main.py:6559
 #, python-brace-format
 msgid "<{0} word>"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5690
+#: /home/kentr/IT/azt/repo_trans/main.py:6569
 msgid "No {} frame info"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5716
+#: /home/kentr/IT/azt/repo_trans/main.py:6595
 #, python-brace-format
-msgid "Add {0}"
+msgid "Add {0} gloss"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5722
+#: /home/kentr/IT/azt/repo_trans/main.py:6601
 msgid "Add {} values for this frame"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5725
+#: /home/kentr/IT/azt/repo_trans/main.py:6604
 msgid "Get Example"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5744
+#: /home/kentr/IT/azt/repo_trans/main.py:6624
 msgid "Citation form"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5745
+#: /home/kentr/IT/azt/repo_trans/main.py:6625
 msgid "Lexeme form"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5746
+#: /home/kentr/IT/azt/repo_trans/main.py:6629
 msgid "Plural form"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5747
-msgid "Infinitive form"
+#: /home/kentr/IT/azt/repo_trans/main.py:6631
+msgid "Imperative form"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5755
+#: /home/kentr/IT/azt/repo_trans/main.py:6638
 msgid "Select which field to frame"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5767
+#: /home/kentr/IT/azt/repo_trans/main.py:6650
 msgid ""
 "Sorry, empty name! \n"
 "Please provide at least \n"
@@ -2494,90 +1957,98 @@ msgid ""
 "from other frames."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5812
+#: /home/kentr/IT/azt/repo_trans/main.py:6678
 msgid "Examples for {} {} tone frame"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5840
+#: /home/kentr/IT/azt/repo_trans/main.py:6689
+msgid "None!"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6715
 msgid "Use {} tone frame"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5847
+#: /home/kentr/IT/azt/repo_trans/main.py:6722
 msgid ""
 "<= No changes after this! \n"
 "Please check that the above looks good on several examples!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5854
+#: /home/kentr/IT/azt/repo_trans/main.py:6731
 msgid ""
 "Fill in the {} frame forms below.\n"
 "(include a space to separate word forms)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5858
+#: /home/kentr/IT/azt/repo_trans/main.py:6735
 msgid "form"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5861
+#: /home/kentr/IT/azt/repo_trans/main.py:6738
 msgid "gloss"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5862
+#: /home/kentr/IT/azt/repo_trans/main.py:6739
 msgid "Use this {} form {} the dictionary gloss"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5867
+#: /home/kentr/IT/azt/repo_trans/main.py:6743
 msgid ""
 "What text goes *before* \n"
 "<==the {} word *{}* \n"
 "in the frame?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5871
+#: /home/kentr/IT/azt/repo_trans/main.py:6746
 msgid ""
 "What text goes *after* \n"
 "the {} word *{}*==> \n"
 "in the frame?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5875
+#: /home/kentr/IT/azt/repo_trans/main.py:6749
 msgid "What do you want to call this new {} tone frame for {}?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:5880
+#: /home/kentr/IT/azt/repo_trans/main.py:6752
 msgid "Use this name"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6000
+#: /home/kentr/IT/azt/repo_trans/main.py:6785
+msgid "New {} Tone frame for {}: Name the Frame"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:6875
 msgid ""
-"I've tried (randomly) {} times, and not found one of your {} senses with "
-"data in each of these languages: {}. \n"
+"I've tried (randomly, then through each) {} times, and not found one of your "
+"{} senses with data in each of these languages: {}. \n"
 "Are you asking for gloss languages which actually have data in your "
 "database? \n"
 "Or, are you missing gloss fields (i.e., you have only 'definition' fields)?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6034
+#: /home/kentr/IT/azt/repo_trans/main.py:6902
 msgid "Define a New {} Tone Frame for {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6037
+#: /home/kentr/IT/azt/repo_trans/main.py:6905
 msgid "Add {} Tone Frame for {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6241
+#: /home/kentr/IT/azt/repo_trans/main.py:7128
 msgid "New Ad Hoc Sort Group for {} Group"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6244
+#: /home/kentr/IT/azt/repo_trans/main.py:7131
 msgid "Modify Existing Ad Hoc Sort Group for {} Group"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6253
+#: /home/kentr/IT/azt/repo_trans/main.py:7140
 msgid "This is a large group ({})! Are you in the right lexical category?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6268
+#: /home/kentr/IT/azt/repo_trans/main.py:7155
 #, python-brace-format
 msgid ""
 "This page will allow you to set up your own sets of dictionary senses to "
@@ -2592,76 +2063,110 @@ msgid ""
 "profile, and try this window again."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6287
+#: /home/kentr/IT/azt/repo_trans/main.py:7174
 msgid "What do you want to call this group for sorting {} words?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6298
+#: /home/kentr/IT/azt/repo_trans/main.py:7185
 msgid "Select the {} words below that you want in this group, then click ==>"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6336
-msgid "Removing senseid {} from subcheck {}"
+#: /home/kentr/IT/azt/repo_trans/main.py:7220
+msgid "Removing sense {} from subcheck {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6492
-#: /home/kentr/IT/azt/repo_trans/main.py:7028
-#: /home/kentr/IT/azt/repo_trans/main.py:9128
-#: /home/kentr/IT/azt/repo_trans/main.py:9152
-#: /home/kentr/IT/azt/repo_trans/main.py:9176
+#: /home/kentr/IT/azt/repo_trans/main.py:7301
+msgid ""
+"Confirming that current group and verification code match before making "
+"changes."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:7369
+#: /home/kentr/IT/azt/repo_trans/main.py:7922
+#: /home/kentr/IT/azt/repo_trans/main.py:9826
+#: /home/kentr/IT/azt/repo_trans/main.py:9850
+#: /home/kentr/IT/azt/repo_trans/main.py:9873
 msgid "Sort!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6493
+#: /home/kentr/IT/azt/repo_trans/main.py:7370
 msgid ""
 "Hey, you're not done with {} {} words by {}!\n"
 "Come back when you have time; restart where you left off by pressing ‘{}’"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6580
+#: /home/kentr/IT/azt/repo_trans/main.py:7460
 msgid "check"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6585
+#: /home/kentr/IT/azt/repo_trans/main.py:7465
 msgid "profile"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6589
+#: /home/kentr/IT/azt/repo_trans/main.py:7469
 msgid "All ‘{}’ groups in the ‘{}’ {} are verified and distinct!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6595
+#: /home/kentr/IT/azt/repo_trans/main.py:7475
 msgid "Moving on to the next {}!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6682
+#: /home/kentr/IT/azt/repo_trans/main.py:7476
+msgid "Done!"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:7498
+msgid "Looking for tone check ‘{}’, but not in {} frames: {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:7567
+msgid "tone melody"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:7568
+msgid "in ‘{}’ frame"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:7571
+msgid "by {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:7572
 msgid "Sort {} {} ({})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6688
+#: /home/kentr/IT/azt/repo_trans/main.py:7578
 msgid "Select the one with the same {} as"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6750
+#: /home/kentr/IT/azt/repo_trans/main.py:7637
+msgid "preparing to verify {} group: {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:7640
 #, python-brace-format
 msgid ""
 "Read down this list to verify they all have the same {0} sound. Click on any "
 "word with a different {0} sound to remove it from the list."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6781
+#: /home/kentr/IT/azt/repo_trans/main.py:7669
+msgid "Group ‘{}’ only has {} example; marking verified and continuing."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:7673
 msgid "Verify {} Group ‘{}’ for ‘{}’ ({})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6910
+#: /home/kentr/IT/azt/repo_trans/main.py:7806
 msgid "Review Groups for {} Tone (in ‘{}’ frame)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6914
+#: /home/kentr/IT/azt/repo_trans/main.py:7810
 msgid "These are all different"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:6915
+#: /home/kentr/IT/azt/repo_trans/main.py:7811
 msgid ""
 "Congratulations! \n"
 "All your {} with profile ‘{}’ are sorted into the groups exemplified below "
@@ -2669,207 +2174,222 @@ msgid ""
 "groups to join. If not, just click ‘{ok}’."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7002
+#: /home/kentr/IT/azt/repo_trans/main.py:7898
 #, python-brace-format
 msgid ""
 "Now we're going to move group ‘{0}’ into ‘{1}’, marking ‘{1}’ unverified."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7029
+#: /home/kentr/IT/azt/repo_trans/main.py:7923
 msgid "Not Trying Again; set a tone frame first!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7143
+#: /home/kentr/IT/azt/repo_trans/main.py:8007
 msgid "Select Input Sound Card"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7144
+#: /home/kentr/IT/azt/repo_trans/main.py:8008
 msgid "What sound card do you want to record sound with with?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7160
+#: /home/kentr/IT/azt/repo_trans/main.py:8024
 msgid "Select Output Sound Card"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7161
+#: /home/kentr/IT/azt/repo_trans/main.py:8025
 msgid "What sound card do you want to play sound with?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7177
+#: /home/kentr/IT/azt/repo_trans/main.py:8041
 msgid "Select Audio Format"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7178
+#: /home/kentr/IT/azt/repo_trans/main.py:8042
 msgid "What audio format do you want to work with?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7195
+#: /home/kentr/IT/azt/repo_trans/main.py:8059
 msgid "Select Sampling Frequency"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7196
+#: /home/kentr/IT/azt/repo_trans/main.py:8060
 msgid "What sampling frequency you want to work with?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7248
+#: /home/kentr/IT/azt/repo_trans/main.py:8117
 msgid "Confirm Sound Card Settings"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7252
+#: /home/kentr/IT/azt/repo_trans/main.py:8121
 msgid "(click any to change)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7269
+#: /home/kentr/IT/azt/repo_trans/main.py:8138
 msgid "Microphone: ‘{}’"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7271
+#: /home/kentr/IT/azt/repo_trans/main.py:8140
 msgid "Speakers: ‘{}’"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7285
+#: /home/kentr/IT/azt/repo_trans/main.py:8154
 msgid ""
 "Plug in your microphone, and make sure ‘record’ and ‘play’ work well here, "
 "before recording real data!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7299
+#: /home/kentr/IT/azt/repo_trans/main.py:8168
 msgid "Play"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7300
+#: /home/kentr/IT/azt/repo_trans/main.py:8169
 msgid ""
 "If Praat is installed in your OS path, right click on ‘{}’ above to open in "
 "Praat."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7308
+#: /home/kentr/IT/azt/repo_trans/main.py:8177
 msgid "Done"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7315
+#: /home/kentr/IT/azt/repo_trans/main.py:8184
 msgid "Quit Task"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7348
+#: /home/kentr/IT/azt/repo_trans/main.py:8217
 msgid "Select Sound Card Settings"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7371
-msgid " (pl)"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:7396
+#: /home/kentr/IT/azt/repo_trans/main.py:8266
 msgid "Record {} {} Words: click ‘Record’, talk, and release ({} words)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7463
+#: /home/kentr/IT/azt/repo_trans/main.py:8302
 msgid "Next {} words"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7484
+#: /home/kentr/IT/azt/repo_trans/main.py:8323
 msgid "Next Group"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7504
+#: /home/kentr/IT/azt/repo_trans/main.py:8343
 msgid "Words and phrases to record: click ‘Record’, talk, and release"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7509
+#: /home/kentr/IT/azt/repo_trans/main.py:8348
 msgid "Sorry, there are no entries to show!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7515
+#: /home/kentr/IT/azt/repo_trans/main.py:8354
 msgid "Skip to next undone"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7527
+#: /home/kentr/IT/azt/repo_trans/main.py:8366
 msgid "No examples! Add some, then come back."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7585
+#: /home/kentr/IT/azt/repo_trans/main.py:8417
 msgid "Done/Next"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7611
+#: /home/kentr/IT/azt/repo_trans/main.py:8443
 msgid ""
 "How did we get no UR tone groups? {}-{}\n"
 "Have you run the tone report recently?\n"
 "Doing that for you now..."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7630
+#: /home/kentr/IT/azt/repo_trans/main.py:8462
 msgid "Giving user the number {} example from tone group {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7643
+#: /home/kentr/IT/azt/repo_trans/main.py:8475
 msgid "All done! Sort some more words, and come back."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7646
+#: /home/kentr/IT/azt/repo_trans/main.py:8478
 msgid "Continue to next syllable profile"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7710
-#: /home/kentr/IT/azt/repo_trans/main.py:8040
+#: /home/kentr/IT/azt/repo_trans/main.py:8558
+msgid "No audio file found, but ready to record: "
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:8559
+msgid "url"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:8622
+#: /home/kentr/IT/azt/repo_trans/main.py:8953
 msgid "Starting XLP background report with kwargs {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7715
-#: /home/kentr/IT/azt/repo_trans/main.py:8044
+#: /home/kentr/IT/azt/repo_trans/main.py:8627
 msgid ""
 "Looks like that didn't work; you may need to run a report first, or not do "
 "it in the background ({})."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7724
+#: /home/kentr/IT/azt/repo_trans/main.py:8635
+msgid "setting up background reports {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:8636
 msgid "Starting reports that didn't work in the background: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7769
+#: /home/kentr/IT/azt/repo_trans/main.py:8642
+msgid "all reports ({})"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:8672
+msgid "Starting report {} {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:8675
 msgid ""
 "{} {} Tone Report in Process\n"
 "({})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7782
+#: /home/kentr/IT/azt/repo_trans/main.py:8688
 msgid ""
 "Hey, sort some morphemes in at least one frame before trying to make a tone "
 "report!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7795
+#: /home/kentr/IT/azt/repo_trans/main.py:8701
 msgid "Looks like the analysis is good; moving on."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7798
+#: /home/kentr/IT/azt/repo_trans/main.py:8704
 msgid ""
 "Sorry, the analysis isn't good, and we're running in the background. That "
 "isn't going to work, so I'm stopping here."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7803
+#: /home/kentr/IT/azt/repo_trans/main.py:8709
 msgid ""
 "Looks like the analysis isn't good, but we're not in the background, so I'm "
 "doing a new analysis now."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7824
-#: /home/kentr/IT/azt/repo_trans/main.py:10110
+#: /home/kentr/IT/azt/repo_trans/main.py:8736
+#: /home/kentr/IT/azt/repo_trans/main.py:10803
 msgid "Tone Report"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7843
-#: /home/kentr/IT/azt/repo_trans/main.py:8071
-#: /home/kentr/IT/azt/repo_trans/main.py:8598
-msgid "Not repeating report that looks already started."
+#: /home/kentr/IT/azt/repo_trans/main.py:8755
+#: /home/kentr/IT/azt/repo_trans/main.py:8993
+#: /home/kentr/IT/azt/repo_trans/main.py:9529
+msgid "Problem creating report; see previous messages."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7847
+#: /home/kentr/IT/azt/repo_trans/main.py:8760
 msgid "Introduction to {} {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7849
+#: /home/kentr/IT/azt/repo_trans/main.py:8762
 msgid ""
 "This report follows an analysis of sortings of {} morphemes (roots or "
 "affixes) across the following frames: {}. {} stores these sortings in lift "
@@ -2880,7 +2400,7 @@ msgid ""
 "files is in the same directory as this file."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7859
+#: /home/kentr/IT/azt/repo_trans/main.py:8772
 msgid ""
 "As a warning to the analyst who may not understand the implications of this "
 "*automated analysis*, you may have too few groupings here, particularly if "
@@ -2896,17 +2416,17 @@ msgid ""
 "each of these better than a computer could)."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7881
+#: /home/kentr/IT/azt/repo_trans/main.py:8794
 msgid "Summary of Frames by {} {} Draft Underlying Melody"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7890
+#: /home/kentr/IT/azt/repo_trans/main.py:8803
 msgid ""
 "The following table shows correspondences across sortings by tone frames, "
 "with a row for each unique pairing. "
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7893
+#: /home/kentr/IT/azt/repo_trans/main.py:8806
 msgid ""
 "This is a default report, where {} intentionally splits these groups, so you "
 "can see wherever differences lie, even if those differences are likely "
@@ -2919,71 +2439,91 @@ msgid ""
 "And here are the structured similarity relationships for the Frames: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7910
+#: /home/kentr/IT/azt/repo_trans/main.py:8823
 msgid ""
 "This is a non-default report, where a user has changed the default (hyper-"
 "split) groups created by {}."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7932
+#: /home/kentr/IT/azt/repo_trans/main.py:8845
 msgid ""
 "\n"
 "{}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7942
+#: /home/kentr/IT/azt/repo_trans/main.py:8857
 msgid "<no frames with a sort value>"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7943
+#: /home/kentr/IT/azt/repo_trans/main.py:8859
 msgid "Values by frame: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:7993
+#: /home/kentr/IT/azt/repo_trans/main.py:8897
+msgid "Asking for the following {} examples from id {}: {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:8906
 msgid "{} {} Data Summary"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:8003
+#: /home/kentr/IT/azt/repo_trans/main.py:8911
+msgid "Div/0"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:8915
+msgid "Div/0%"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:8916
 msgid ""
 "This report contains {} senses, {} examples, and {} sound files. That is an "
 "average of {} examples/sense, and {} of examples with sound files."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:8011
+#: /home/kentr/IT/azt/repo_trans/main.py:8924
 msgid "Finished in {} seconds."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:8015
+#: /home/kentr/IT/azt/repo_trans/main.py:8925
+msgid "report {} {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:8928
 msgid "(Report is also available at ({})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:8076
+#: /home/kentr/IT/azt/repo_trans/main.py:8957
+msgid "Looks like that didn't work; trying again not in the background ({})."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:8999
 msgid "Getting results of Search request"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:8082
+#: /home/kentr/IT/azt/repo_trans/main.py:9005
 msgid "{} roots of form {} by {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:8095
-#: /home/kentr/IT/azt/repo_trans/main.py:8566
+#: /home/kentr/IT/azt/repo_trans/main.py:9017
+#: /home/kentr/IT/azt/repo_trans/main.py:9497
 msgid "{} checks"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:8105
-#: /home/kentr/IT/azt/repo_trans/main.py:8564
+#: /home/kentr/IT/azt/repo_trans/main.py:9027
+#: /home/kentr/IT/azt/repo_trans/main.py:9495
 msgid "All"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:8148
+#: /home/kentr/IT/azt/repo_trans/main.py:9052
 msgid "No results for {}/{} ({})!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:8267
+#: /home/kentr/IT/azt/repo_trans/main.py:9174
 msgid "Skipping check {} because it would break the regex"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:8578
+#: /home/kentr/IT/azt/repo_trans/main.py:9509
 msgid ""
 "The data in this report is given by most restrictive test first, followed by "
 "less restrictive tests (e.g., V1=V2 before V1 or V2). Additionally, each "
@@ -2994,164 +2534,100 @@ msgid ""
 "times, e.g., for both V1=x and V2=y."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:8589
+#: /home/kentr/IT/azt/repo_trans/main.py:9520
 msgid "Running {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:8612
+#: /home/kentr/IT/azt/repo_trans/main.py:9544
 msgid ""
 "This report covers the following top two Grammatical categories, with the "
 "top {} syllable profiles in each. This is of course configurable, but I "
 "assume you don't want everything."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:8621
+#: /home/kentr/IT/azt/repo_trans/main.py:9553
 msgid "{} data: (profiles: {})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:8625
+#: /home/kentr/IT/azt/repo_trans/main.py:9557
 msgid ""
 "This section covers the following top syllable profiles which are found in {}"
 "s: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:8632
+#: /home/kentr/IT/azt/repo_trans/main.py:9563
 msgid "{} {}s"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:8666
+#: /home/kentr/IT/azt/repo_trans/main.py:9595
 msgid "Summary Co-ocurrence Tables"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:8911
-msgid "What is wrong with this word?"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:8914
-msgid "Two different vowels (V1≠V2)"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:8915
-msgid "Vowels are the same, but the wrong vowel"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:8934
-msgid "TITLE!"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:8937
-msgid ""
-"It looks like the vowels are the same, but not the correct vowel; let's fix "
-"that."
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:8941
-msgid "What are the two vowels?"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:8951
-msgid "fixV1:Different data to be fixed! "
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:8957
-msgid "It looks like the vowels aren't the same; let's fix that."
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:8961
-msgid "What is the first vowel? (C_CV)"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:8973
-msgid "fixV2:Different data to be fixed! "
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:8974
-msgid "What is the second vowel?"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:8991
-msgid "fixVs:Different vowels! "
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:9002
-msgid "fixVs:Same Vowel, but wrong one! "
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:9124
+#: /home/kentr/IT/azt/repo_trans/main.py:9822
 msgid "Sort Vowels"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9126
+#: /home/kentr/IT/azt/repo_trans/main.py:9824
 msgid "This task helps you sort words in citation form by vowels."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9148
+#: /home/kentr/IT/azt/repo_trans/main.py:9846
 msgid "Sort Consonants"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9150
+#: /home/kentr/IT/azt/repo_trans/main.py:9848
 msgid "This task helps you sort words in citation form by consonants."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9172
+#: /home/kentr/IT/azt/repo_trans/main.py:9869
 msgid "Sort Tone"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9174
+#: /home/kentr/IT/azt/repo_trans/main.py:9871
 msgid "This task helps you sort words in citation form tone frames."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9223
+#: /home/kentr/IT/azt/repo_trans/main.py:9919
 msgid ""
 "Missing either group or comparison, without value specified; can't switch "
 "them."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9240
-#: /home/kentr/IT/azt/repo_trans/main.py:9401
+#: /home/kentr/IT/azt/repo_trans/main.py:9936
+#: /home/kentr/IT/azt/repo_trans/main.py:10098
 msgid "Sorry, pick a comparison first!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9253
+#: /home/kentr/IT/azt/repo_trans/main.py:9949
 msgid "No groups in that slice; try another!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9269
+#: /home/kentr/IT/azt/repo_trans/main.py:9965
 msgid ""
 "current group ({}) doesn't seem to be in list of groups: ({})\n"
 "\tThis may be because we're looking for data that isn't there, or maybe a "
 "setting is off."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9281
-msgid "Give a name for this group!"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:9291
-msgid ""
-"Sorry, there is already a group with that label; If you want to join the "
-"groups, give it a different name now, and join it later"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:9300
+#: /home/kentr/IT/azt/repo_trans/main.py:9976
 msgid ""
 "This name change (‘{}’ > ‘{}’) impacts your digraph and trigraph settings."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9304
+#: /home/kentr/IT/azt/repo_trans/main.py:9980
 msgid ""
 "\n"
 "{} will add ‘{}’ to those settings."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9307
+#: /home/kentr/IT/azt/repo_trans/main.py:9983
 msgid ""
 "\n"
 "{} will *not* remove ‘{}’ from those settings, because you may still be "
 "using it elsewhere."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9311
+#: /home/kentr/IT/azt/repo_trans/main.py:9987
 msgid ""
 "\n"
 "\n"
@@ -3160,149 +2636,175 @@ msgid ""
 "(this will make {} restart and redo the syllable profile analysis)."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9317
+#: /home/kentr/IT/azt/repo_trans/main.py:9993
 msgid "Syllable profile change?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9412
-#: /home/kentr/IT/azt/repo_trans/main.py:9586
+#: /home/kentr/IT/azt/repo_trans/main.py:9999
+msgid "Give a name for this group!"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:10009
+msgid ""
+"Sorry, there is already a group with that label; If you want to join the "
+"groups, give it a different name now, and join it later"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:10109
+#: /home/kentr/IT/azt/repo_trans/main.py:10283
 msgid "Compare with another group"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9418
+#: /home/kentr/IT/azt/repo_trans/main.py:10115
 msgid "Compare with another group ({})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9432
+#: /home/kentr/IT/azt/repo_trans/main.py:10129
 msgid "Switch Groups"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9436
+#: /home/kentr/IT/azt/repo_trans/main.py:10133
 msgid "This doesn't save the curent group"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9487
+#: /home/kentr/IT/azt/repo_trans/main.py:10146
+msgid "This should never happen (renamegroup/comparisonbuttons)"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:10171
+msgid "I don't have any sorted data for check: {}, ps-profile: {}-{},"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:10184
 msgid "Rename {} {} {} group ‘{}’ in ‘{}’ frame"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9495
+#: /home/kentr/IT/azt/repo_trans/main.py:10192
 msgid "What new name do you want to call this {} group?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9498
+#: /home/kentr/IT/azt/repo_trans/main.py:10195
 msgid ""
 "\n"
 "A label that describes the surface tone form in this context would be best, "
 "like ‘[˥˥˥ ˨˨˨]’"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9547
+#: /home/kentr/IT/azt/repo_trans/main.py:10244
 msgid "Use this name and go to:"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9553
+#: /home/kentr/IT/azt/repo_trans/main.py:10250
 msgid "main screen"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9554
+#: /home/kentr/IT/azt/repo_trans/main.py:10251
 msgid "next group"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9556
+#: /home/kentr/IT/azt/repo_trans/main.py:10253
 msgid "next tone frame"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9558
+#: /home/kentr/IT/azt/repo_trans/main.py:10255
 msgid "next check"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9559
+#: /home/kentr/IT/azt/repo_trans/main.py:10256
 msgid "next syllable profile"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9560
+#: /home/kentr/IT/azt/repo_trans/main.py:10257
 msgid "comparison group"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9606
+#: /home/kentr/IT/azt/repo_trans/main.py:10302
 msgid "Vowel Letters"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9608
+#: /home/kentr/IT/azt/repo_trans/main.py:10304
 msgid "This task helps you decide on your vowel letters."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9610
+#: /home/kentr/IT/azt/repo_trans/main.py:10306
 msgid "Transcribe Vowel Groups"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9643
+#: /home/kentr/IT/azt/repo_trans/main.py:10339
 msgid "Consonant Letters"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9645
+#: /home/kentr/IT/azt/repo_trans/main.py:10341
 msgid "This task helps you decide on your consonant letters."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9647
+#: /home/kentr/IT/azt/repo_trans/main.py:10343
 msgid "Transcribe Consonant Groups"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9697
+#: /home/kentr/IT/azt/repo_trans/main.py:10393
 msgid "Transcribe Tone"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9699
+#: /home/kentr/IT/azt/repo_trans/main.py:10395
 msgid ""
 "This task helps you transcribe your surface groups, giving them meaniningful "
 "names (e.g., [˥˥ ˨˨]) instead of numbers."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9702
+#: /home/kentr/IT/azt/repo_trans/main.py:10398
 msgid "Transcribe Surface Tone Groups"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9719
+#: /home/kentr/IT/azt/repo_trans/main.py:10415
 msgid "Join Underlying Form Groups"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9721
+#: /home/kentr/IT/azt/repo_trans/main.py:10417
 msgid ""
 "This task helps you join hypersplit UF groups, as well as giving them "
 "meaniningful names (e.g., High or Low)."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9724
+#: /home/kentr/IT/azt/repo_trans/main.py:10420
 msgid "Join draft UF Groups"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9740
+#: /home/kentr/IT/azt/repo_trans/main.py:10436
 msgid "Give a name for this UF tone group!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9750
+#: /home/kentr/IT/azt/repo_trans/main.py:10446
 msgid "That name is already there! (did you forget to include the ‘{}’ group?)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9769
+#: /home/kentr/IT/azt/repo_trans/main.py:10453
+msgid "Changing values from {} to {} for the following sense.ids: {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:10463
+msgid "By manual request"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:10464
 msgid "Redoing Tone Analysis"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9782
+#: /home/kentr/IT/azt/repo_trans/main.py:10477
 msgid "Preparing to join draft underlying form groups"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9785
+#: /home/kentr/IT/azt/repo_trans/main.py:10480
 msgid "Join/Rename Draft Underlying {}-{} tone groups"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9793
+#: /home/kentr/IT/azt/repo_trans/main.py:10488
 msgid ""
 "Redo the analysis;\n"
 "start these groups over"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9794
+#: /home/kentr/IT/azt/repo_trans/main.py:10489
 msgid ""
 "This page allows you to join the {}-{} draft underlying tone groups created "
 "for you by {}, \n"
@@ -3317,58 +2819,58 @@ msgid ""
 "more data."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9816
+#: /home/kentr/IT/azt/repo_trans/main.py:10511
 msgid "What do you want to call this UF tone group for {}-{} words?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9829
+#: /home/kentr/IT/azt/repo_trans/main.py:10524
 msgid "Select the groups below that you want in this {} group, then click ==>"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9836
+#: /home/kentr/IT/azt/repo_trans/main.py:10531
 msgid "Done —no change"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9848
+#: /home/kentr/IT/azt/repo_trans/main.py:10543
 msgid "No draft UF groups found for {} words!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9850
+#: /home/kentr/IT/azt/repo_trans/main.py:10545
 #, python-brace-format
 msgid ""
 "You don't seem to have any analyzed {0} groups to join/rename. Have you done "
 "a tone analyis for {0} words?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9893
+#: /home/kentr/IT/azt/repo_trans/main.py:10587
 msgid "This task helps you record words in isolation forms."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9895
+#: /home/kentr/IT/azt/repo_trans/main.py:10589
 msgid "Record Dictionary Words"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9903
+#: /home/kentr/IT/azt/repo_trans/main.py:10597
 msgid "Record Words"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9913
+#: /home/kentr/IT/azt/repo_trans/main.py:10607
 msgid "This task helps you record words in tone frames, in citation form."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9915
+#: /home/kentr/IT/azt/repo_trans/main.py:10609
 msgid "Record Words in Tone Frames"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9925
+#: /home/kentr/IT/azt/repo_trans/main.py:10619
 msgid "Record Tone"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9932
+#: /home/kentr/IT/azt/repo_trans/main.py:10626
 msgid "Alphabet Report (Not background)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9936
+#: /home/kentr/IT/azt/repo_trans/main.py:10630
 msgid ""
 "This report gives you reports for one lexical category, in one syllable "
 "profile. \n"
@@ -3378,55 +2880,59 @@ msgid ""
 "- Consonant-Vowel Correspondence"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9951
+#: /home/kentr/IT/azt/repo_trans/main.py:10645
 msgid "Run Check"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9962
+#: /home/kentr/IT/azt/repo_trans/main.py:10656
 msgid "Pick Consonants, Vowels, or CV for this report."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9973
+#: /home/kentr/IT/azt/repo_trans/main.py:10667
 msgid "Error: please set Ps-Profile first! ({}/{}/{})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9988
+#: /home/kentr/IT/azt/repo_trans/main.py:10672
+msgid "Ps-Profile-Check OK; doing getresults! ({}/{}/{})"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:10683
 msgid "Alphabet Report"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:9998
+#: /home/kentr/IT/azt/repo_trans/main.py:10693
 msgid "Alphabet Report (Multicheck)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10006
+#: /home/kentr/IT/azt/repo_trans/main.py:10701
 msgid "Alphabet Report (Multislice, Multicheck)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10014
+#: /home/kentr/IT/azt/repo_trans/main.py:10709
 msgid "Alphabet Report by Tone group (not background)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10021
+#: /home/kentr/IT/azt/repo_trans/main.py:10716
 msgid "Alphabet Report by Tone group (Multicheck)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10029
+#: /home/kentr/IT/azt/repo_trans/main.py:10724
 msgid "Alphabet Report by Tone Group (Multislice, Multicheck)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10037
+#: /home/kentr/IT/azt/repo_trans/main.py:10732
 msgid "Alphabet Report by Tone group"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10044
+#: /home/kentr/IT/azt/repo_trans/main.py:10739
 msgid "Multislice Alphabet Report"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10061
+#: /home/kentr/IT/azt/repo_trans/main.py:10756
 msgid "Consultant Check"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10065
+#: /home/kentr/IT/azt/repo_trans/main.py:10760
 msgid ""
 "This task automates work normally done before a consultant check: \n"
 "- reloads status data, and \n"
@@ -3435,132 +2941,141 @@ msgid ""
 "  - by lexeme sense."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10085
+#: /home/kentr/IT/azt/repo_trans/main.py:10779
 msgid "Tone Report (not backgrounded)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10089
+#: /home/kentr/IT/azt/repo_trans/main.py:10783
 msgid ""
 "This report gives you report for one lexical category, in one syllable "
 "profile. \n"
 "It does this for all data sorted in tone frames, organized by word."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10114
+#: /home/kentr/IT/azt/repo_trans/main.py:10807
 msgid ""
 "This report gives you report for one lexical category, in one syllable "
 "profile. \n"
 "It does this for all data sorted in tone frames."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10131
+#: /home/kentr/IT/azt/repo_trans/main.py:10824
 msgid "Tone Report (by frames, not backgrounded)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10133
-#: /home/kentr/IT/azt/repo_trans/main.py:10146
+#: /home/kentr/IT/azt/repo_trans/main.py:10826
+#: /home/kentr/IT/azt/repo_trans/main.py:10839
 msgid ""
 "This report gives you report for one lexical category, in one syllable "
 "profile. \n"
 "It does this for all data sorted in tone frames, organized by frame."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10142
+#: /home/kentr/IT/azt/repo_trans/main.py:10835
 msgid "Tone Report (by frames)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10163
-#: /home/kentr/IT/azt/repo_trans/main.py:10184
+#: /home/kentr/IT/azt/repo_trans/main.py:10856
+#: /home/kentr/IT/azt/repo_trans/main.py:10877
 msgid "Multislice Tone Report (not background)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10167
-#: /home/kentr/IT/azt/repo_trans/main.py:10188
-#: /home/kentr/IT/azt/repo_trans/main.py:10209
-#: /home/kentr/IT/azt/repo_trans/main.py:10230
+#: /home/kentr/IT/azt/repo_trans/main.py:10860
+#: /home/kentr/IT/azt/repo_trans/main.py:10881
+#: /home/kentr/IT/azt/repo_trans/main.py:10902
+#: /home/kentr/IT/azt/repo_trans/main.py:10923
 msgid ""
 "This report gives you reports across multiple lexical categories, and across "
 "multiple syllable profiles. \n"
 "It does this for all data sorted in tone frames, organized by word."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10205
+#: /home/kentr/IT/azt/repo_trans/main.py:10898
 msgid "Multislice Tone Report"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10226
+#: /home/kentr/IT/azt/repo_trans/main.py:10919
 msgid "Multislice Tone Report (by location)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:10297
+#: /home/kentr/IT/azt/repo_trans/main.py:10961
 msgid "Hey, you have no gloss languages set!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:11042
+#: /home/kentr/IT/azt/repo_trans/main.py:11164
+msgid ""
+"Apparently I tried for a sense {} times, and couldn't find one matching your "
+"needs ({}) glosses (out of {} possible senses). This is probably a "
+"systematic problem to fix."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:11206
 msgid "This word is OK in this frame"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:11043
+#: /home/kentr/IT/azt/repo_trans/main.py:11207
 msgid "Different"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:11044
+#: /home/kentr/IT/azt/repo_trans/main.py:11208
 msgid "Skip this item"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:11240
+#: /home/kentr/IT/azt/repo_trans/main.py:11402
 msgid "press-speak-release"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:11255
+#: /home/kentr/IT/azt/repo_trans/main.py:11417
 msgid "Click to hear"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:11257
-#: /home/kentr/IT/azt/repo_trans/main.py:11457
+#: /home/kentr/IT/azt/repo_trans/main.py:11419
+#: /home/kentr/IT/azt/repo_trans/main.py:11622
 msgid "right click to open in praat"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:11264
+#: /home/kentr/IT/azt/repo_trans/main.py:11426
 msgid "Try again"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:11308
+#: /home/kentr/IT/azt/repo_trans/main.py:11471
 msgid "No framed value, nor testing; can't continue..."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:11316
+#: /home/kentr/IT/azt/repo_trans/main.py:11479
 msgid "Set audio language to get record buttons!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:11325
+#: /home/kentr/IT/azt/repo_trans/main.py:11489
 msgid ""
 "Set all sound card settings\n"
 "(Do|Recording|Sound Card Settings)\n"
 "and a record button will be here."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:11455
+#: /home/kentr/IT/azt/repo_trans/main.py:11620
 msgid "Click to hear this utterance"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:11473
+#: /home/kentr/IT/azt/repo_trans/main.py:11638
 msgid "Pick this group ({})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:11496
+#: /home/kentr/IT/azt/repo_trans/main.py:11661
+#: /home/kentr/IT/azt/repo_trans/main.py:11814
+#: /home/kentr/IT/azt/repo_trans/main.py:11826
 msgid "Change example word; Right click to back up"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:11498
+#: /home/kentr/IT/azt/repo_trans/main.py:11663
 msgid "<= resort *this* *word*"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:11577
+#: /home/kentr/IT/azt/repo_trans/main.py:11943
 msgid "Version: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:11578
+#: /home/kentr/IT/azt/repo_trans/main.py:11944
 #, python-brace-format
 msgid ""
 "Your dictionary database is loading...\n"
@@ -3570,453 +3085,604 @@ msgid ""
 "consonants and tone. (more in help:about)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:11721
-msgid "Removing empty {} key from {} values"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:11727
+#: /home/kentr/IT/azt/repo_trans/main.py:12096
 msgid "Looking for sensids by UF tone groups for {}-{}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:12000
+#: /home/kentr/IT/azt/repo_trans/main.py:12175
+msgid "You asked to change to ps {}, which isn't in the list of pss: {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:12346
+msgid "Found {} valid data slices: {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:12347
+msgid "Invalid entries found: {}/{}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:12351
+msgid "This may be a problem with your analysis language: {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:12353
+msgid "Or a problem with your database."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:12354
+msgid "Data Problem!"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:12372
 msgid ""
 "There doesn't seem to be any profile data, but you asked for a slice "
 "dictionary. This is a problem; please report it!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:12705
-msgid "Vowel"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12705
-msgid "Vowels"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12706
-msgid "Consonant"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12706
-msgid "Consonants"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12707
-msgid "Consonant-Vowel combination"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12708
-msgid "Consonant-Vowel combinations"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12709
-msgid "Vowel-Consonant combination"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12710
-msgid "Vowel-Consonant combinations"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12711
-msgid "Tone"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12711
-msgid "Tones"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12715
-msgid "Tone melody"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12717
-msgid "First/only Vowel"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12719
-msgid "Same First/only Two Vowels"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12720
-msgid "Correspondence of First/only Two Vowels"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12721
-msgid "Second Vowel"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12724
-msgid "Same First/only Three Vowels"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12725
-msgid "Third Vowel"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12726
-msgid "Same Second Two Vowels"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12727
-msgid "Correspondence of Second Two Vowels"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12743
-msgid "First/only Consonant"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12745
-msgid "Second Consonant"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12746
-msgid "Same First/only Two Consonants"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12747
-msgid "Correspondence of First/only Two Consonants"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12750
-msgid "Same Second Two Consonants"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12751
-msgid "Correspondence of Second Two Consonants"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12752
-msgid "Third Consonant"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12753
-msgid "Same First Three Consonants"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12771
-msgid "Correspondence of first CV"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12776
-msgid "Correspondence of second CV"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12777
-msgid "Same First/only Two CVs"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12781
-msgid "Correspondence of third CV"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12782
-msgid "Same First/only Three CVs"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12783
-msgid "Third CV"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12800
-msgid "Correspondence of first VC"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12803
-msgid "Correspondence of second VC"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12807
-msgid "Correspondence of third VC"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12848
-msgid "ErrorNotice got no text?"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12861
-msgid "Couldn't find a parent; error message follows"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12904
-msgid "Adding {}, which is not already there."
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12908
-msgid "Adding {}, which is already there."
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12924
-msgid "Asked for commit confirm; returning auto True"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12927
-msgid "Asked for commit confirm; returning auto False"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12929
-msgid "Asked for commit confirm; asking user"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12931
+#: /home/kentr/IT/azt/repo_trans/main.py:12843
 msgid ""
-"Do you want to commit language data via {} now?\n"
-"{}"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12936
-msgid "Yes"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12939
-msgid "No"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12985
-msgid "Copying from {} to {}; this may take some time."
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/main.py:12998
-msgid "Copying to {}; this may take some time."
+"We aren't doing checks with more than 6 consonants or vowels ({} in {}); If "
+"you need that, please let me know."
 msgstr ""
 
 #: /home/kentr/IT/azt/repo_trans/main.py:13005
-msgid "Found a related repository; adding to settings."
+msgid ""
+"Last analysis at {};\n"
+"last join at {}\n"
+"last sort at {}\n"
+"(analysisOK={})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13007
+#: /home/kentr/IT/azt/repo_trans/main.py:13109
+msgid "Vowel"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13109
+msgid "Vowels"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13110
+msgid "Consonant"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13110
+msgid "Consonants"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13111
+msgid "Consonant-Vowel combination"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13112
+msgid "Consonant-Vowel combinations"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13113
+msgid "Vowel-Consonant combination"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13114
+msgid "Vowel-Consonant combinations"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13115
+msgid "Tone"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13115
+msgid "Tones"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13119
+msgid "Tone melody"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13121
+msgid "First/only Vowel"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13123
+msgid "Same First/only Two Vowels"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13124
+msgid "Correspondence of First/only Two Vowels"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13125
+msgid "Second Vowel"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13128
+msgid "Same First/only Three Vowels"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13129
+msgid "Third Vowel"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13130
+msgid "Same Second Two Vowels"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13131
+msgid "Correspondence of Second Two Vowels"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13134
+msgid "Same First/only Four Vowels"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13135
+msgid "Fourth Vowel"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13138
+msgid "Same First/only Five Vowels"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13139
+msgid "Fifth Vowel"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13142
+msgid "Same First/only Six Vowels"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13143
+msgid "Sixth Vowel"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13147
+msgid "First/only Consonant"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13149
+msgid "Second Consonant"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13150
+msgid "Same First/only Two Consonants"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13151
+msgid "Correspondence of First/only Two Consonants"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13154
+msgid "Same Second Two Consonants"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13155
+msgid "Correspondence of Second Two Consonants"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13156
+msgid "Third Consonant"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13157
+msgid "Same First Three Consonants"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13160
+msgid "Fourth Consonant"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13161
+msgid "Same First Four Consonants"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13164
+msgid "Fifth Consonant"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13165
+msgid "Same First Five Consonants"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13168
+msgid "Sixth Consonant"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13169
+msgid "Same First Six Consonants"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13175
+msgid "Correspondence of first CV"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13180
+msgid "Correspondence of second CV"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13181
+msgid "Same First/only Two CVs"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13185
+msgid "Correspondence of third CV"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13186
+msgid "Same First/only Three CVs"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13187
+msgid "Third CV"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13190
+#: /home/kentr/IT/azt/repo_trans/main.py:13216
+msgid "Same First/only Four CVs"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13194
+#: /home/kentr/IT/azt/repo_trans/main.py:13220
+msgid "Same First/only Five CVs"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13195
+#: /home/kentr/IT/azt/repo_trans/main.py:13221
+msgid "Fifth CV"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13198
+#: /home/kentr/IT/azt/repo_trans/main.py:13224
+msgid "Same First/only Six CVs"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13199
+#: /home/kentr/IT/azt/repo_trans/main.py:13225
+msgid "Sixth CV"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13204
+msgid "Correspondence of first VC"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13207
+msgid "Correspondence of second VC"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13211
+msgid "Correspondence of third VC"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13217
+msgid "Fourth CV"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13252
+msgid "ErrorNotice got no text?"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13265
+msgid "Couldn't find a parent; error message follows"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13317
+msgid "Adding {}, which is not already there."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13321
+msgid "Adding {}, which is already there."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13337
+msgid "Asked for commit confirm; returning auto True"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13340
+msgid "Asked for commit confirm; returning auto False"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13342
+msgid "Asked for commit confirm; asking user"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13343
+msgid "Commit Confirm"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13344
+msgid "Do you want to commit language data via {} now?"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13348
+msgid "Yes"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13351
+msgid "No"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13397
+msgid "Copying from {} to {}; this may take some time."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13410
+msgid "Copying to {}; this may take some time."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13417
+msgid "Found a related repository; added to settings."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13419
 msgid "No directory given; not cloning."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13043
+#: /home/kentr/IT/azt/repo_trans/main.py:13455
 msgid "Couldn't find a local drive to pull from via {}; giving up"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13057
+#: /home/kentr/IT/azt/repo_trans/main.py:13469
 msgid "Couldn't find a local drive to push to via {}; giving up"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13108
+#: /home/kentr/IT/azt/repo_trans/main.py:13519
+msgid "Repository at {} looks empty, so I'm assuming you just initialized it"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13524
 msgid ""
 "The directory {} doesn't seem to have a repository related to {}; removing."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13146
-msgid ""
-"{} can't find your {} {} backup. \n"
-"If you have a USB drive for this, insert it now."
+#: /home/kentr/IT/azt/repo_trans/main.py:13572
+msgid "Please insert your {} USB now."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13149
-msgid "Use attached USB"
+#: /home/kentr/IT/azt/repo_trans/main.py:13582
+msgid "Create new USB"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13151
-msgid "No {} USB backup found"
+#: /home/kentr/IT/azt/repo_trans/main.py:13584
+msgid "No {} {} USB backup found"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13206
+#: /home/kentr/IT/azt/repo_trans/main.py:13647
 msgid ""
 "Call to {} ({}) gave error: \n"
 "{}\n"
 "Merging."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13227
+#: /home/kentr/IT/azt/repo_trans/main.py:13668
 msgid ""
 "Call to {} ({}) gave error: \n"
 "{}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13249
+#: /home/kentr/IT/azt/repo_trans/main.py:13690
 msgid "Call to {} ({}) failed: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13302
+#: /home/kentr/IT/azt/repo_trans/main.py:13743
 msgid "Warning: {} Executable Missing!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13303
+#: /home/kentr/IT/azt/repo_trans/main.py:13744
 msgid ""
 "You you don't seem to have the {} executable installed in your computer's "
 "PATH."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13312
+#: /home/kentr/IT/azt/repo_trans/main.py:13753
 msgid "(Mercurial is used by Chorus and languagedepot.org)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13314
+#: /home/kentr/IT/azt/repo_trans/main.py:13755
 #, python-brace-format
 msgid "No {0} repo, nor {0} executable; moving on."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13320
+#: /home/kentr/IT/azt/repo_trans/main.py:13761
 #, python-brace-format
 msgid ""
 "(Git is used by {0} to track changes in your data, and to keep {0} up to "
 "date)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13323
+#: /home/kentr/IT/azt/repo_trans/main.py:13764
 msgid "Please see {} for installation recommendations"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13330
-#: /home/kentr/IT/azt/repo_trans/main.py:13341
+#: /home/kentr/IT/azt/repo_trans/main.py:13771
+#: /home/kentr/IT/azt/repo_trans/main.py:13782
 msgid "Go to {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13332
+#: /home/kentr/IT/azt/repo_trans/main.py:13773
 msgid "(e.g., in Windows, install *this* file),"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13334
+#: /home/kentr/IT/azt/repo_trans/main.py:13775
 msgid "or see all your options at {}."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13338
+#: /home/kentr/IT/azt/repo_trans/main.py:13779
 msgid "download {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13343
+#: /home/kentr/IT/azt/repo_trans/main.py:13784
 msgid "After you install {}, you should restart."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13346
+#: /home/kentr/IT/azt/repo_trans/main.py:13787
 msgid ""
 "You can keep using {} without installing {}, but it is not recommended, and "
 "you will continue to see this warning. And sooner or later that's going to "
 "get really annoying"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13353
-#: /home/kentr/IT/azt/repo_trans/main.py:14410
+#: /home/kentr/IT/azt/repo_trans/main.py:13794
+#: /home/kentr/IT/azt/repo_trans/main.py:14917
 msgid "Restart Now"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13355
+#: /home/kentr/IT/azt/repo_trans/main.py:13796
 msgid "Install {} first, then do this"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13435
+#: /home/kentr/IT/azt/repo_trans/main.py:13877
 msgid "Problem finding branch name: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13437
+#: /home/kentr/IT/azt/repo_trans/main.py:13879
 msgid "language data"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13503
+#: /home/kentr/IT/azt/repo_trans/main.py:13891
+msgid ""
+"{} repository object initialized on branch {} at {} for {}, with {} files."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:13945
 msgid ""
 "You have the following files ( in {}) that need to be resolved from Chorus "
 "merges:\n"
 " {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13507
+#: /home/kentr/IT/azt/repo_trans/main.py:13949
 msgid "Chorus Rescue files found!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13680
+#: /home/kentr/IT/azt/repo_trans/main.py:14128
 msgid "AZT source"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13689
+#: /home/kentr/IT/azt/repo_trans/main.py:14137
 msgid "Result Window"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13729
+#: /home/kentr/IT/azt/repo_trans/main.py:14177
+#: /home/kentr/IT/azt/repo_trans/ui_tkinter.py:74
 msgid "Finished {}at {} ({:1.0f}m, {:2.3f}s)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13761
+#: /home/kentr/IT/azt/repo_trans/main.py:14207
+msgid "Apparently we're trying to set the same interface language: {}={}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:14209
 msgid "Translation seems to be working, using {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:13975
+#: /home/kentr/IT/azt/repo_trans/main.py:14364
+msgid "printing indented dict for {} key"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:14431
 msgid " and "
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14116
+#: /home/kentr/IT/azt/repo_trans/main.py:14441
+msgid ""
+"Sorry, something other than one list item found: {}\n"
+"Did you mean to use \"othersOK=True\"? Returning nothing!"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:14453
+msgid ""
+"Apparently you tried to pull text out of a non element, and it's not a "
+"simple string, either: {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:14516
+msgid "{} doesn't look like a well formed lift file; please try again. ({})"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:14622
 msgid "Search for {} on {} failed: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14235
+#: /home/kentr/IT/azt/repo_trans/main.py:14668
+msgid ""
+"If you have errors containing ˋportaudioˊ above, you should install pyaudio "
+"with your package manager."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:14750
 msgid "Trying to call Praat at {}..."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14242
+#: /home/kentr/IT/azt/repo_trans/main.py:14757
 msgid "Looks like I couln't find Praat..."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14262
+#: /home/kentr/IT/azt/repo_trans/main.py:14769
 msgid ""
 "{} command error: {}\n"
 "({})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14264
+#: /home/kentr/IT/azt/repo_trans/main.py:14771
 msgid "{} command error!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14368
+#: /home/kentr/IT/azt/repo_trans/main.py:14875
 msgid "Can't decode this (in {}; {}):"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14375
-#: /home/kentr/IT/azt/repo_trans/main.py:14384
+#: /home/kentr/IT/azt/repo_trans/main.py:14882
+#: /home/kentr/IT/azt/repo_trans/main.py:14891
 msgid "Updating {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14395
+#: /home/kentr/IT/azt/repo_trans/main.py:14902
 msgid "No results! Is there a {} source available?"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14401
+#: /home/kentr/IT/azt/repo_trans/main.py:14908
 msgid ""
 "\n"
 "(Check your internet connection and try again)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14402
+#: /home/kentr/IT/azt/repo_trans/main.py:14909
 msgid "Try Again"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14405
+#: /home/kentr/IT/azt/repo_trans/main.py:14912
 msgid "(Problem! You will likely need help with this.)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14407
+#: /home/kentr/IT/azt/repo_trans/main.py:14914
 msgid "(Restart {} to use this update)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14413
+#: /home/kentr/IT/azt/repo_trans/main.py:14920
 msgid "Update (Git) output"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14473
-#: /home/kentr/IT/azt/repo_trans/main.py:14478
+#: /home/kentr/IT/azt/repo_trans/main.py:14972
+#: /home/kentr/IT/azt/repo_trans/main.py:14977
 msgid "Starting up help line..."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14495
+#: /home/kentr/IT/azt/repo_trans/main.py:14994
 msgid "Starting with new root"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14502
+#: /home/kentr/IT/azt/repo_trans/main.py:15001
 msgid "Serious Problem!"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14504
+#: /home/kentr/IT/azt/repo_trans/main.py:15003
 msgid "Hey! You found a problem! (details and solution below)"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14510
+#: /home/kentr/IT/azt/repo_trans/main.py:15009
 msgid ""
 "\n"
 "Please see {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14516
+#: /home/kentr/IT/azt/repo_trans/main.py:15015
 #, python-brace-format
 msgid ""
 "I have tried to install some Python dependencies for you. If everything but "
@@ -4026,7 +3692,17 @@ msgid ""
 "running {0} again; we need to download some stuff for this."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14537
+#: /home/kentr/IT/azt/repo_trans/main.py:15031
+msgid "Please replace this text with a description of what you just did."
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:15033
+msgid ""
+"If the log below doesn't include the text '{}', or if it happened after a "
+"longer work session, please attach your compressed log file"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:15038
 msgid ""
 "\n"
 "\n"
@@ -4034,48 +3710,83 @@ msgid ""
 "Email me your log (to {})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14543
+#: /home/kentr/IT/azt/repo_trans/main.py:15044
 msgid "The end of {} / {} are below:"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14562
+#: /home/kentr/IT/azt/repo_trans/main.py:15063
 msgid ""
 "Check for \n"
 "{} \n"
 "updates"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14568
+#: /home/kentr/IT/azt/repo_trans/main.py:15069
 msgid ""
 "Revert to \n"
 "main branch \n"
 "of {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14572
+#: /home/kentr/IT/azt/repo_trans/main.py:15073
 msgid ""
 "Restart \n"
 "{}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14631
+#: /home/kentr/IT/azt/repo_trans/main.py:15132
 msgid "Running {} v{} (main.py updated to {})"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14633
+#: /home/kentr/IT/azt/repo_trans/main.py:15134
 msgid "Called with arguments ({}) {} / {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14635
+#: /home/kentr/IT/azt/repo_trans/main.py:15136
 msgid "Working directory is {} on {}, running on {} cores"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14645
+#: /home/kentr/IT/azt/repo_trans/main.py:15142
+msgid ", at {}Mhz"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/main.py:15148
 msgid "Computer identifies as {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/main.py:14646
+#: /home/kentr/IT/azt/repo_trans/main.py:15149
 msgid "Loglevel is {}; started at {}"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/parser.py:181
+msgid "Never"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/parser.py:182
+msgid "Three fields parse with matching ps"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/parser.py:183
+msgid "Two fields, which don't parse"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/parser.py:184
+msgid "One field of two parses"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/parser.py:185
+msgid "Two fields each parse"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/parser.py:186
+msgid "Two fields parse together"
+msgstr ""
+
+#: /home/kentr/IT/azt/repo_trans/rx.py:94
+msgid ""
+"NOTICE: we just matched (to remove) a set of symbols representing one sound "
+"({}). Until you are done with it, we will leave it there, so both forms will "
+"be found. Once you are done with it, remove it from the polygraph settings."
 msgstr ""
 
 #: /home/kentr/IT/azt/repo_trans/transcriber.py:58
@@ -4132,41 +3843,37 @@ msgid ""
 "Right click to configure"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/ui_tkinter.py:1115
+#: /home/kentr/IT/azt/repo_trans/ui_tkinter.py:1291
 msgid "Exit"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/ui_tkinter.py:1176
+#: /home/kentr/IT/azt/repo_trans/ui_tkinter.py:1346
 msgid "Exception in dosetcontext: {}"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/ui_tkinter.py:1239
+#: /home/kentr/IT/azt/repo_trans/ui_tkinter.py:1414
 msgid ""
 "Having None as a list is fine, but you need to put it in a tuple, with a "
 "second argument to display, so users know what it means when they select it."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/ui_tkinter.py:1582
+#: /home/kentr/IT/azt/repo_trans/ui_tkinter.py:1755
 msgid "change this"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/ui_tkinter.py:1656
+#: /home/kentr/IT/azt/repo_trans/ui_tkinter.py:1841
 #, python-brace-format
 msgid "Please Wait! {name} Dictionary and Orthography Checker in Process"
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/ui_tkinter.py:1659
-msgid "Please Wait!"
-msgstr ""
-
-#: /home/kentr/IT/azt/repo_trans/ui_tkinter.py:1661
+#: /home/kentr/IT/azt/repo_trans/ui_tkinter.py:1844
 msgid "Please Wait..."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/xlp.py:24
+#: /home/kentr/IT/azt/repo_trans/xlp.py:28
 msgid "Report {} already in process; not doing again."
 msgstr ""
 
-#: /home/kentr/IT/azt/repo_trans/xlp.py:73
+#: /home/kentr/IT/azt/repo_trans/xlp.py:81
 msgid "Couldn't find/import lxml, so not compiling report."
 msgstr ""
