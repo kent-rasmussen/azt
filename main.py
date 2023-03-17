@@ -11152,55 +11152,6 @@ class ExampleDict(dict):
             return len(nodes),node #self._outdict
     def __init__(self):
         super(ExampleDict, self).__init__({})
-class MainApplication(ui.Window):
-    def setmasterconfig(self): #,program
-        """Configure variables for the root window (master)"""
-        for rc in [0,2]:
-            self.parent.grid_rowconfigure(rc, weight=3)
-            self.parent.grid_columnconfigure(rc, weight=3)
-    def __init__(self,parent,exit=0):
-        start_time=nowruntime() #this enables boot time evaluation
-        """Things that belong to a ui.Frame go after this:"""
-        super(MainApplication,self).__init__(parent,
-                exit=False
-                )
-        """Pick one of the following three screensizes (or don't):"""
-        # self.fullscreen()
-        # self.quarterscreen()
-        # self.master.minsize(1200,400)
-        """Do I want this?"""
-        # self.parent.maxsize(
-        #                     self.parent.winfo_screenwidth()-200,
-        #                     self.parent.winfo_screenheight()-200
-        #                     )
-        #Might be needed for M$ windows:root.state('zoomed')
-        # super().__init__(parent,class_="AZT")
-        self.withdraw()
-        """Set up the frame in this (mainapplication) frame. This will be
-        'placed' in the middle of the mainapplication frame, which is
-        gridded into the center of the root window. This configuration keeps
-        the frame with all the visual stuff in the middle of the window,
-        without letting the window shrink to really small."""
-        """Pick one of these two placements:"""
-        # self.frame.place(in_=self, anchor="c", relx=.5, rely=.5)
-        # self.frame.grid(column=0, row=0)
-        """This means make check with
-        this app as parent
-        the root window as base window, and
-        the root window as the master window, from which new windows should
-        inherit attributes
-        """
-        """Do any check tests here"""
-        """Make the rest of the mainApplication window"""
-        # e=(_("Exit"))
-        """Do this after we instantiate the check, so menus can run check
-        methods"""
-        # ui.ContextMenu(self)
-        # filechooser=FileChooser()
-        tasks=TaskChooser(self)
-        logfinished(start_time)
-        """finished loading so destroy splash"""
-        """Don't show window again until check is done"""
 class SortButtonFrame(ui.ScrollingFrame):
     """This is the frame of sort group buttons."""
     def getanotherskip(self,parent,vardict):
