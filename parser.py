@@ -178,12 +178,12 @@ class Engine(object):
     """
     def levels(self):
         return {
-        5: "This level is never satisfied",
-        4: "Three fields parse with matching ps",
-        0: "At least two fields, but no parses",
-        1: "One field of two fields parses",
-        2: "Two fields parse, but not together",
-        3: "Two fields parse together"
+        5: _("Never"),#"This level is never satisfied",
+        4: _("Three fields parse with matching ps"),
+        0: _("Two fields, which don't parse"),
+        1: _("One field of two parses"),
+        2: _("Two fields each parse"),
+        3: _("Two fields parse together")
         }
     def evaluateroothyp(self,roothyp,ps,lcafxs,sfafxs):
         # we look for individual matches here to go faster, but also
