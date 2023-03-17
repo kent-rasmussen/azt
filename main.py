@@ -6453,7 +6453,8 @@ class ToneFrameDrafter(ui.Window):
             self.fds.destroy()
             self.exf.destroy()
         except AttributeError:
-            log.info("Probably the first time running status.")
+            # log.info("First status frame, or no example yet ({}).".format(e))
+            pass
         self.fds=ui.Frame(self.content,row=1,column=0)
         if 'field' not in self.forms:
             d=program['params'].ftype()
@@ -6499,11 +6500,10 @@ class ToneFrameDrafter(ui.Window):
                             column=1,row=0)
         ui.ToolTip(ftypelabel)
         self.forms['field']
-        self.langs=[self.analangftypecode()]+program['db'].glosslangs
-                                    # [i for
-                                    # i in program['db'].glosslangs #in db
-                                    # # if i != self.analang
-                                    # ]
+        #order glosslangs first, then other options:
+        self.langs=[self.analangftypecode()]+program['settings'].glosslangs+[
+                                    l for l in program['db'].glosslangs
+                                    if l not in program['settings'].glosslangs]
         for l in [self.analangftypecode()]+program['settings'].glosslangs: #actually selected
             try:
                 self.forms[l]['after']=self.forms[l].get('after','')
@@ -6519,15 +6519,21 @@ class ToneFrameDrafter(ui.Window):
             langname=program['settings'].languagenames[self.stripftypecode(l)]
             if l in self.forms:
                 log.info("Working on {}".format(langname))
-                if l == self.stripftypecode(l):
+                if l == self.stripftypecode(l): #no change means gloss
                     tintro=_("Gloss in {}:").format(langname)
-                    b=ui.Button(self.fds,text='X',
-                            cmd=lambda l=l:self.skiplang(l),
-                            column=0,row=n+1,sticky='e')
-                    b.tt=ui.ToolTip(b, _("Skip {}").format(langname))
+                    if l in program['settings'].glosslangs:
+                        ltttext=_("current gloss language")
+                    else:
+                        ltttext=_("additional gloss language")
+                        b=ui.Button(self.fds,text='X',
+                                    cmd=lambda l=l:self.skiplang(l),
+                                    column=0,row=n+1,sticky='e')
+                        b.tt=ui.ToolTip(b, _("Skip {}").format(langname))
                 else:
                     tintro=_("{}:").format(langname)
-                ui.Label(self.fds,text=tintro,column=1,row=n+1)
+                    ltttext=_("analysis language")
+                li=ui.Label(self.fds,text=tintro,column=1,row=n+1)
+                li.tt=ui.ToolTip(li, ltttext)
                 lineframe=ui.Frame(self.fds,column=2,row=n+1)
                 if "Language " in langname:
                     tword=_("<word>")

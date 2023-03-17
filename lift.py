@@ -394,8 +394,10 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.entries=[Entry(self.nodes,i,annotationlang=self.annotationlang)
                             for i in self.nodes
                             if i.tag == 'entry']
+        self.nentries=len(self.entries)
     def getsenses(self):
         self.senses=[i for j in self.entries for i in j.senses]
+        self.nsenses=len(self.senses)
     def slicebyid(self):
         self.entrydict={i.guid:i for i in self.entries}
         self.sensedict={i.id:i for i in self.senses}
