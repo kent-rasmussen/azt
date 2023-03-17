@@ -73,7 +73,575 @@ msgstr ""
 msgid "This method needs to operate on entries; fix caller {}!"
 msgstr ""
 
+<<<<<<< HEAD
 #: /home/kentr/IT/azt/repo_trans/main.py:98
+=======
+#: /home/kentr/bin/raspy/azt/main.py:109
+msgid "What LIFT database do you want to work on?"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:111
+msgid "Start work on a new language"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:114
+msgid "Select another database on my computer"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:133 /home/kentr/bin/raspy/azt/main.py:212
+msgid "{} doesn't look like a well formed lift file; please try again."
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:158
+msgid "Start New LIFT Database"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:160
+msgid "What is the Ethnologue (ISO 639-3) code?"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:162
+msgid ""
+"(find your language on {}; the code is at the top of the page) \n"
+"This code will be used throughout your database, so please \n"
+"take a moment and confirm that this is correct before continuing."
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:191
+msgid "Problem creating file; does the directory already exist?"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:195
+msgid "The file {} already exists! {}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:226
+msgid "Apparently we've run this before today; not backing up again."
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:276 /home/kentr/bin/raspy/azt/main.py:4919
+msgid "Change"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:284
+msgid "Languages"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:303
+msgid "Syllable profile"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:318
+msgid "Tone Frame"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:349
+msgid "Location in word"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:352
+msgid "Segment(s) to check"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:357
+msgid "Do"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:359
+msgid "Tone by sense"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:361
+msgid "Tone by location"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:364
+msgid "Tone by sense (comprehensive)"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:367
+msgid "Initiate Consultant Check"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:369
+msgid "Basic Vowel report (to file)"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:371
+msgid "Basic Consonant report (to file)"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:373
+msgid "Basic report on Consonants and Vowels (to file)"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:376 /home/kentr/bin/raspy/azt/main.py:3403
+msgid "Reports"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:379
+msgid "Sound Card Settings"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:381
+msgid "Record tone group examples"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:383
+msgid "Record dictionary words, largest group first"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:387
+msgid "Record examples for particular entries, 1 at at time"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:390
+msgid "Recording"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:391 /home/kentr/bin/raspy/azt/main.py:434
+msgid "Join Groups"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:395
+msgid "Advanced"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:396
+msgid "Change to another Database (Restart)"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:398
+msgid "Digraph and Trigraph settings"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:400
+msgid "Segment Interpretation Settings"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:402
+msgid "Syllable Profile Analysis (Restart)"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:404
+msgid "Remake Status file (several minutes)"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:418
+msgid "Number of Examples to Record"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:427
+msgid "Add/Modify Ad Hoc Sorting Group"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:430
+msgid "Add Tone frame"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:431
+msgid "Resort skipped data"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:432
+msgid "Reverify current framed group"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:498
+msgid "Help"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:575
+msgid "Using {}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:581
+msgid "Studying {}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:582 /home/kentr/bin/raspy/azt/main.py:2211
+#: /home/kentr/bin/raspy/azt/main.py:2826
+msgid "Language with code [{}]"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:584
+msgid "Set analysis language Name"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:587
+msgid "Change analysis language"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:591
+msgid "Meanings in {}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:599
+msgid "and {}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:601
+msgid "only"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:610
+msgid "Using second form field ‘{}’ ({})"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:624
+msgid "Looking at {}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:627
+msgid "{} words ({})"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:634
+msgid "Checking {},"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:646
+msgid "no tone frames defined."
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:649
+msgid "no tone frame selected."
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:652
+msgid "working on ‘{}’ tone frame"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:660
+msgid "(no framed group)"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:662
+msgid "(framed group: ‘{}’)"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:693
+msgid "working on {}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:700
+msgid "Max profiles: {}; "
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:703
+msgid "Max lexical categories: {}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:748
+msgid "Progress for"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:757
+msgid "Change Check Type"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:758
+msgid "Change Part of Speech"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:774
+msgid "Nothing to see here..."
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:811
+msgid "verified"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:812
+msgid "unsorted data"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:817
+msgid ""
+"Refresh table, \n"
+"save settings"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:835
+msgid ""
+"Current profile \n"
+"(no frame set)"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:841
+msgid "Go to the next syllable profile"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:851
+msgid "Go to the next tone frame"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:894
+msgid ""
+"Current settings \n"
+"profile: ‘{}’; \n"
+"frame: ‘{}’"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:897
+msgid ""
+"Change to \n"
+"profile: ‘{}’; \n"
+"frame: ‘{}’"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:904
+msgid "You have more groups verified than there are, in {} cells"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:959
+msgid "Warning: Mercurial Repository without Executable"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:965
+msgid ""
+"You seem to be working on a repository of data ({}), \n"
+"which seems to be tracked by mercurial (used by Chorus and languagedepot."
+"org), \n"
+"but you don't seem to have the Mercurial executable installed in your "
+"computer's PATH."
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:970
+msgid "Please see {} for installation recommendations"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:972
+msgid "(e.g., in Windows, install *this* file),"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:973
+msgid "or see all your options at {}."
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:979 /home/kentr/bin/raspy/azt/main.py:987
+msgid "Go to {}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:983
+msgid "download {}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1339
+msgid ""
+"Looks like there's a problem with your directory... {}\n"
+"{}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1381
+msgid "Fields found in lexicon: {}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1388
+msgid "Plural field name: {}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1390
+msgid "Looks like there is no Plural field in the database"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1396
+msgid "Imperative field name: {}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1398
+msgid "Looks like there is no Imperative field in the database"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1437
+#: /home/kentr/bin/raspy/azt/main.py:4717
+#: /home/kentr/bin/raspy/azt/main.py:4760
+#: /home/kentr/bin/raspy/azt/main.py:7755
+msgid "OK"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1438
+msgid "Exit {} with no changes"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1440
+msgid "A-Z+T Digraphs and Trigraphs"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1442
+msgid ""
+"Select which of the following graph sequences found in your data refer to a "
+"single sound (digraph or trigraph) in {}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1458
+msgid ""
+"If your data contains a digraph or trigraph that isn't listed here, please "
+"click here to Email me, and I can add it."
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1463
+msgid ""
+"Clicking ‘{}’ will restart {} and trigger another syllable profile "
+"analysis. \n"
+"If you don't want that, click ‘{}’ ==>\n"
+"Either way, you won't get past this window until you answer This question."
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1713
+msgid "{} KeyError reading {}-{} from sextracted"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1725
+msgid ""
+"Your {} database has the following symbols, which are excluding {} words "
+"from being analyzed: \n"
+"{}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1728
+msgid "More than Ten Invalid Characters Found!"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1835
+msgid "Found {} analangs: {}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1837
+msgid "There don't seem to be any language forms in your database!"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1843
+msgid ""
+"\n"
+"(guessing [{}]; if that's not correct, exit now and fix it!)"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1846
+#: /home/kentr/bin/raspy/azt/main.py:10157
+msgid "Error!"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1850
+msgid "Only one analang in file; using it: ({})"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1857
+#: /home/kentr/bin/raspy/azt/main.py:1863
+#: /home/kentr/bin/raspy/azt/main.py:1875
+msgid "Looks like I found an iso code for analang! ({})"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2083
+msgid "No change: {} == {}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2189
+msgid "French"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2191
+msgid "English"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2193
+msgid "Spanish"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2195
+msgid "Portuguese"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2197
+msgid "Bahasa Indonesian"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2199
+msgid "Hausa"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2201
+msgid "Congo Swahili"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2203
+msgid "Swahili"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2205
+msgid "Zulgo"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2207
+msgid "Fulfulde"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2209
+msgid "Chufie’"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2224
+msgid "Maybe status/slices aren't set up yet."
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2286
+msgid "Unnamed {} Task ({})"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2293
+msgid "Analyze"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2295
+msgid "Collect Data"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2297
+msgid "Tasks"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2362
+msgid "Show Menus"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2364
+msgid "Hide Menus"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2366
+msgid "Show Buttons"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2368
+msgid "Hide Buttons"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2370
+msgid "Smaller Fonts"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2372
+msgid "Larger Fonts"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2374
+msgid "Show group names"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2376
+msgid "Hide group names"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2378
+msgid "{} Dictionary and Orthography Checker: {}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2382
+msgid " ("
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2396
+>>>>>>> c6081ce4b69af7a8dcc1269f90897849ad0ddc66
 msgid "{} Dictionary and Orthography Checker"
 msgstr ""
 
@@ -1209,8 +1777,13 @@ msgid ""
 "When you are done making frames, click ‘Exit’ to continue."
 msgstr ""
 
+<<<<<<< HEAD
 #: /home/kentr/IT/azt/repo_trans/main.py:3900
 msgid "Return to A→Z+T, to fix settings"
+=======
+#: /home/kentr/bin/raspy/azt/main.py:3073
+msgid "Return to A-Z+T, to fix settings"
+>>>>>>> c6081ce4b69af7a8dcc1269f90897849ad0ddc66
 msgstr ""
 
 #: /home/kentr/IT/azt/repo_trans/main.py:3901
@@ -1220,7 +1793,15 @@ msgid ""
 "analysis"
 msgstr ""
 
+<<<<<<< HEAD
 #: /home/kentr/IT/azt/repo_trans/main.py:3921
+=======
+#: /home/kentr/bin/raspy/azt/main.py:3085
+msgid "Quit A-Z+T"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:3098
+>>>>>>> c6081ce4b69af7a8dcc1269f90897849ad0ddc66
 msgid "What check do you want to do?"
 msgstr ""
 

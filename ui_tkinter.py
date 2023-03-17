@@ -11,14 +11,16 @@ import unicodedata
 import tkinter #as gui
 import tkinter.font
 import tkinter.scrolledtext
+import tkinter.ttk
 import file #for image pathnames
 from random import randint #for theme selection
-try:
+import datetime
+try: #translation
     _
 except:
     def _(x):
         return x
-try:
+try: #PIL
     import PIL.ImageFont
     import PIL.ImageTk
     import PIL.ImageDraw
@@ -54,43 +56,93 @@ class NoParent(object):
         super(NoParent, self).__init__(*args, **kwargs)
 class Theme(object):
     """docstring for Theme."""
+    def startruntime(self):
+        self.start_time=datetime.datetime.utcnow()
+        log.info("starting at {}".format(self.start_time))
+    def nowruntime(self):
+        #this returns a delta!
+        return datetime.datetime.utcnow()-self.start_time
+    def logfinished(self,msg=None):
+        log.info("logging finish now")
+        run_time=self.nowruntime()
+        # if type(start) is datetime.datetime: #only work with deltas
+        #     start-=self.start_time
+        if msg:
+            msg=str(msg)+' '
+        else:
+            msg=''
+        text=_("Finished {}at {} ({:1.0f}m, {:2.3f}s)"
+                "").format(msg,now(),*divmod((run_time).total_seconds(),60))
+        log.info(text)
+        return text
     def setimages(self):
         # Program icon(s) (First should be transparent!)
-        log.info("Maybe scaling images; please wait...") #threading?
-        try:
-            scale=self.program['scale']
-        except (NameError,AttributeError):
-            scale=1
-        # x and y here express a float as two integers, so 0.7 = 7/10, because
-        # the zoom and subsample fns only work on integers
-        # Higher number is better resolution (x*y/y), more time to process
-        y=50 #10 High OK, since we do this just once now
-        y=int(y)
-        x=int(scale*y)
+        scale=self.program['scale'] #just reading this here
+        self.scalings=[]
         self.photo={}
         #do these once:
-        if x != y: #should be the same as scale != 1
+        if scale-1: #x != y: #should be the same as scale != 1
+            log.info("Maybe scaling images; please wait...")
             scaledalreadydir='images/scaled/'+str(scale)+'/'
             file.makedir(file.fullpathname(scaledalreadydir)) #in case not there
         def mkimg(name,filename):
             relurl=file.getdiredurl('images/',filename)
-            if x != y:
+            # log.info("scale: {}".format(scale))
+            if scale-1: #x != y:
                 scaledalready=file.getdiredurl(scaledalreadydir,filename)
+                # log.info("Looking for {}".format(scaledalready))
                 if file.exists(file.fullpathname(scaledalready)):
                     # log.info("scaled image exists for {}".format(filename))
                     relurl=scaledalready
                 # log.info("Dirs: {}?={}".format(scaledalready,relurl))
                 if scaledalready != relurl: # should scale if off by >2% either way
-                    log.info("Scaling {}".format(relurl)) #Just do this once!
-                    self.photo[name] = tkinter.PhotoImage(
-                                                file = file.fullpathname(relurl)
-                                                ).zoom(x,x
-                                                ).subsample(y,y)
-                    self.photo[name].write(scaledalready)
-                    return
+                    # log.info("Scaling {}".format(relurl)) #Just do this once!
+                    try:
+                        assert self.fakeroot.winfo_exists()
+                    except:
+                        program=self.program.copy()
+                        program['theme']=None
+                        self.fakeroot=Root(program,
+                                            noimagescaling=True)
+                        self.fakeroot.ww=Wait(parent=self.fakeroot,
+                                        msg="Scaling Images (Just this once)")
+                    if not self.scalings:
+                        maxscaled=100
+                    else:
+                        maxscaled=int(sum(self.scalings)/len(self.scalings)+10)
+                    for y in range(maxscaled,10,-5):
+                        # Higher number is better resolution (x*y/y), more time to process
+                        #10>50 High OK, since we do this just once now
+                        #lower option if higher fails due to memory limitations
+                        # y=int(y)
+                        x=int(scale*y)
+                        # log.info("Scaling {} @{} resolution".format(relurl,y)) #Just do this once!
+                        try:
+                            img = Image(file.fullpathname(relurl))
+                            # keep these at full size, for now
+                            if 'openclipart.org' not in filename:
+                                img.scale(scale,pixels=img.maxhw(),resolution=y)
+                                self.photo[name]=img.scaled
+                            else:
+                                self.photo[name]=img
+                            # log.info("scaledalready.parent: {}".format(scaledalready.parent))
+                            # log.info("parent: {}".format(scaledalreadydir != scaledalready.parent))
+                            if scaledalready.parent != scaledalreadydir:
+                                file.makedir(scaledalready.parent,silent=True)
+                            self.photo[name].write(scaledalready)
+                            self.scalings.append(y)
+                            log.info("Scaled {} {} @{} resolution".format(
+                                                                name,relurl,y))
+                            return #stop when the first/best works
+                        except tkinter.TclError as e:
+                            # log.info(e)
+                            if ('not enough free memory '
+                                'for image buffer' in str(e)):
+                                continue
             # log.info("Using {}".format(relurl))
-            self.photo[name] = tkinter.PhotoImage(file = file.fullpathname(relurl))
-        for name,filename in [ ('transparent','AZT stacks6.png'),
+            self.photo[name] = Image(file.fullpathname(relurl))
+            # log.info("Compiled {} {}".format(name,relurl))
+        imagelist=[ ('transparent','AZT stacks6.png'),
                             ('tall','AZT clear stacks tall.png'),
                             ('small','AZT stacks6_sm.png'),
                             ('icon','AZT stacks6_icon.png'),
@@ -115,6 +167,7 @@ class Theme(object):
                             ('iconCRepcomp','Z Report Comprehensive_icon.png'),
                             ('iconCVRepcomp','ZA Report Comprehensive_icon.png'),
                             ('iconVCCVRepcomp','AZZA Report Comprehensive_icon.png'),
+                            ('USBdrive','USB drive.png'),
                             ('T','T alone clear6.png'),
                             ('C','Z alone clear6.png'),
                             ('V','A alone clear6.png'),
@@ -143,15 +196,33 @@ class Theme(object):
                             ('record','Microphone alone_sm.png'),
                             ('change','Change Circle_sm.png'),
                             ('checkedbox','checked.png'),
-                            ('uncheckedbox','unchecked.png')
-                        ]:
+                            ('uncheckedbox','unchecked.png'),
+                            ('NoImage','openclipart.org/Image-Not-Found.png'),
+                            ('Order!','openclipart.org/order!.png'),
+                        ]
+        ntodo=len(imagelist)
+        self.startruntime()
+        for n,(name,filename) in enumerate(imagelist):
             try:
-                #hyperthread here!
+                #Can't hyperthread here!
                 mkimg(name,filename)
             except Exception as e:
                 log.info("Image {} ({}) not compiled ({})".format(
                             name,filename,e
                             ))
+            try:
+                self.fakeroot.ww.progress(n*100/ntodo)
+            except:
+                pass
+        try:
+            self.logfinished("Image compilation")
+            self.fakeroot.ww.close()
+            self.fakeroot.destroy()
+            self.program['theme'].unbootstraptheme()
+        except Exception as e:
+            # log.info("Something happened: {}".format(e))
+            # raise
+            pass
     def settheme(self):
         if not self.name:
             defaulttheme='greygreen'
@@ -165,17 +236,25 @@ class Theme(object):
                 if platform.uname().node == 'CS-477':
                     self.name='pink'
                 if (platform.uname().node == 'karlap' and
-                        self.program and
-                        not self.program['production']):
+                        not self.program.get('production')):
                     self.name='Kim' #for my development
             except Exception as e:
                 log.info("Assuming I'm not working from main ({}).".format(e))
-        if self.name not in self.themes:
+        elif self.name not in self.themes:
             print("Sorry, that theme doesn't seem to be set up. Pick from "
             "these options:",self.themes.keys())
             exit()
         for k in self.themes[self.name]:
             setattr(self,k,self.themes[self.name][k])
+        self.themettk = tkinter.ttk.Style()
+        self.themettk.theme_use('clam')
+        self.themettk.configure("Progressbar",
+                                troughcolor=self.activebackground,
+                                background=self.background,
+                                # bordercolor=self.background,
+                                # darkcolor=self.background,
+                                # lightcolor=self.background
+                                )
     def setthemes(self):
         self.themes={'lightgreen':{
                             'background':'#c6ffb3',
@@ -284,11 +363,8 @@ class Theme(object):
                             'white': 'white'}
                     }
     def setfonts(self,fonttheme='default'):
+        scale=self.program['scale'] #just reading this here
         log.info("Setting fonts with {} theme".format(fonttheme))
-        try:
-            scale=self.program['scale']
-        except (NameError,AttributeError):
-            scale=1
         if fonttheme == 'smaller':
             default=int(12*scale)
         else:
@@ -328,10 +404,10 @@ class Theme(object):
         overstrike - font strikeout (0 - none, 1 - strikeout)
         """
     def setscale(self):
-        #this computer: (this doesn't pick up changes, so just doing it here)
+        program=self.program #reading and setting here
         root=tkinter.Tk() #just to get these values
-        h = self.program['screenh'] = root.winfo_screenheight()
-        w = self.program['screenw'] = root.winfo_screenwidth()
+        h = program['screenh'] = root.winfo_screenheight()
+        w = program['screenw'] = root.winfo_screenwidth()
         wmm = root.winfo_screenmmwidth()
         hmm = root.winfo_screenmmheight()
         root.destroy()
@@ -345,30 +421,60 @@ class Theme(object):
         xmin=min(hx,wx,hmmx,wmmx)
         xmax=max(hx,wx,hmmx,wmmx)
         if xmax-1 > 1-xmin:
-            self.program['scale']=xmax
+            program['scale']=xmax
         else:
-            self.program['scale']=xmin
-        if self.program['scale'] < 1.02 and self.program['scale'] > 0.98:
+            program['scale']=xmin
+        if program['scale'] < 1.02 and program['scale'] > 0.98:
             log.info("Probably shouldn't scale in this case (scale: {})".format(
-                                                        self.program['scale']))
-            self.program['scale']=1
+                                                        program['scale']))
+            program['scale']=1
+        # program['scale']=0.75 #for testing
         log.info("Largest variance from 1:1 ratio: {} (this will be used to scale "
-                "stuff.)".format(self.program['scale']))
+                "stuff.)".format(program['scale']))
     def setpads(self,**kwargs):
         for kwarg in ['ipady','ipadx','pady','padx']:
             if kwarg in kwargs:
                 setattr(self,kwarg,kwargs[kwarg])
-    def __init__(self,program=None,name=None,**kwargs):
+    def unbootstraptheme(self):
+        """This is for when you have bootstrapped your main theme, to show some
+        UI while your theme is being made. Once it is made, revert here.
+        """
+        self.program['theme']=self.originaltheme
+    def __init__(self,program,**kwargs):
         self.program=program
-        self.name=name
-        self.setscale()
+        """This can be accessed elsewhere in this module
+        through widget._root().theme.program"""
+        if kwargs.get('noimagescaling'):
+            self.originaltheme=self.program['theme']
+            self.name=None
+        else:
+            if 'theme' not in self.program:
+                self.name=None
+            elif isinstance(self.program['theme'],str):
+                self.name=self.program['theme']
+            elif isinstance(self.program['theme'],Theme):
+                log.error("Asked to make a theme attribute, with "
+                "program['theme']={} ({})".format(self.program['theme'],
+                                                type(self.program['theme'])))
+                log.error("Stopping theme creation here.")
+                return #only do the following only once per run
+        self.program['theme']=self #this theme needs to be in use, either way
+        # log.info("making theme with program {}".format(self.program))
+        # I should allow a default theme here, so I can display GUI without
+        # any of this already done
         self.setpads(**kwargs)
         self.setthemes()
-        self.setfonts()
-        self.setimages()
+        if kwargs.get('noimagescaling'):
+            self.program['scale']=1
+        else:
+            self.setscale()
         self.settheme()
         log.info("Using {} theme ({})".format(self.name,self.program))
+        self.setimages()
+        self.setfonts()
         super(Theme, self).__init__()
+        # log.info("self.photo keys: {}".format(list(self.photo)))
+        # log.info("Theme initialized: {}".format(self))
 class ExitFlag(object):
     def istrue(self):
         # log.debug("Returning {} exitflag".format(self.value))
@@ -523,6 +629,12 @@ class Exitable(object):
         sys.exit()
     def cleanup(self):
         pass
+    def exittoroot(self):
+        if hasattr(self,'parent') and not isinstance(self.parent,Root):
+            self.parent.exittoroot()
+            return
+        elif hasattr(self,'parent'):
+            self.parent.exitFlag.true()
     def on_quit(self):
         """Do this when a window closes, so any window functions can know
         to just stop, rather than trying to build graphic components and
@@ -530,11 +642,22 @@ class Exitable(object):
         on exit, the logic to stop needs to be elsewhere, e.g.,
         `if self.exitFlag.istrue(): return`"""
         if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
-            print("Setting window exit flag True!")
+            log.info("Setting window ({}) exit flag True!".format(self))
             self.exitFlag.true()
         if self.mainwindow: #exit afterwards if main window
+            self.exittoroot()
             self.killall()
         else:
+            if (hasattr(self,'parent') and
+                    self.parent.winfo_exists() and
+                    not isinstance(self.parent,Root)):
+                if not self.parent.iswaiting():
+                    self.parent.deiconify()
+                # else:
+                #     self.parent.waitunpause()
+                    # self.ww.paused=True
+                # log.info("Going to deiconify {}".format(self.parent))
+            # log.info("Going to cleanup {}".format(self))
             self.cleanup()
             self.destroy() #do this for everything
     def __init__(self):
@@ -568,7 +691,24 @@ class Gridded(ObectwArgs):
         for opt in self.gridkwargs:
             if opt in kwargs:
                 del kwargs[opt]
+            if 'b'+opt in kwargs:
+                del kwargs['b'+opt]
         return kwargs
+    def gridbkwargs(self,**kwargs):
+        # preserve some of these for buttons
+        for opt in self.gridkwargs:
+            if 'b'+opt in kwargs:
+                kwargs[opt]=kwargs['b'+opt]
+                del kwargs['b'+opt]
+        return kwargs
+    def bindchildren(self,bind,command):
+        self.bind(bind,command)
+        for child in self.winfo_children():
+            try:
+                child.bindchildren(bind,command)
+            except Exception as e:
+                log.info("Exception in Gridded binding: {}".format(e))
+                pass
     def __init__(self, *args, **kwargs): #because this is used everywhere.
         """this removes gridding kwargs from the widget calls"""
         self.gridkwargs=['sticky',
@@ -594,23 +734,27 @@ class Childof(object):
         """This function brings these attributes from the parent, to inherit
         from the root window, through all windows, frames, and scrolling frames, etc
         """
+        # log.info("inheriting")
         if not parent and hasattr(self,'parent') and self.parent:
             parent=self.parent
         elif parent:
             self.parent=parent
-        if attr is None:
+        if not attr:
             attrs=['theme',
                     # 'fonts', #in theme
                     # 'debug',
                     'wraplength',
                     # 'photo', #in theme
                     'renderer',
-                    'program','exitFlag']
+                    # 'program',
+                    'exitFlag']
         else:
             attrs=[attr]
         for attr in attrs:
             if hasattr(parent,attr):
                 setattr(self,attr,getattr(parent,attr))
+                # log.info("inheriting {} from parent {} (to {})"
+                #         "".format(attr,type(parent),type(self)))
             else:
                 log.debug("parent {} (of {}) doesn't have attr {}, skipping inheritance"
                         "".format(parent,type(self),attr))
@@ -620,11 +764,21 @@ class Childof(object):
 class UI(ObectwArgs):
     """docstring for UI, after tkinter widgets are initted."""
     def wait(self,msg=None):
-        if hasattr(self,'ww') and self.ww.winfo_exists() == True:
+        if self.iswaiting():
             log.debug("There is already a wait window: {}".format(self.ww))
             return
         self.withdraw()
         self.ww=Wait(self,msg)
+    def iswaiting(self):
+        return hasattr(self,'ww') and self.ww.winfo_exists()
+    def waitprogress(self,x):
+        self.ww.progress(x)
+    def waitpause(self):
+        self.ww.withdraw()
+        self.ww.paused=True
+    def waitunpause(self):
+        self.ww.deiconify()
+        self.ww.paused=False
     def waitdone(self):
         try:
             self.ww.close()
@@ -632,16 +786,22 @@ class UI(ObectwArgs):
         except tkinter.TclError:
             pass
     def __init__(self): #because this is used everywhere.
-        if hasattr(self,'theme'):
-            for a in ['background','bg','troughcolor']:
-                if a in self.keys():
-                    self[a]=self.theme.background
-            for a in ['ipady','ipadx','pady','padx']:
-                if a in self.keys() and hasattr(self.theme,a):
-                    self[a]=getattr(self.theme,a)
-            for a in ['activebackground','selectcolor']:
-                if a in self.keys():
-                    self[a]=self.theme.activebackground
+        # log.info("UI self._root(): {} ({})".format(self._root(),type(self._root())))
+        # log.info("UI self._root() dir: {}".format(dir(self._root())))
+        # log.info("self.parent: {} ({})".format(self.parent,type(self.parent)))
+        # log.info("self.parent._root(): {} ({})".format(self.parent._root(),type(self.parent._root())))
+        # self.theme=self._root().program['theme']
+        # log.info("UI {}.theme({}).photo keys: {}".format(self,self.theme,
+        #                                                 list(self.theme.photo)))
+        for a in ['background','bg','troughcolor']:
+            if a in self.keys():
+                self[a]=self.theme.background
+        for a in ['ipady','ipadx','pady','padx']:
+            if a in self.keys() and hasattr(self.theme,a):
+                self[a]=getattr(self.theme,a)
+        for a in ['activebackground','selectcolor']:
+            if a in self.keys():
+                self[a]=self.theme.activebackground
             # try:
             #     self['background']=self.theme.background
             #     self['bg']=self.theme.background
@@ -653,6 +813,53 @@ class UI(ObectwArgs):
             # except tkinter.TclError as e:
             #     log.info("TclError {}".format(e))
         # super(UI, self).__init__(*args, **kwargs)
+class Image(tkinter.PhotoImage):
+    def biggerby(self,x):
+        #always do this one first, if doing both, to start from scratch
+        self.scaled=self.zoom(x,x)
+    def smallerby(self,x):
+        try:
+            self.scaled=self.scaled.subsample(x,x)
+        except AttributeError:
+            self.scaled=self.subsample(x,x)
+    def maxhw(self,scaled=False):
+        if scaled:
+            return max(self.scaled.width(),self.scaled.height())
+        else:
+            return max(self.width(),self.height())
+    def scale(self,scale,pixels=100,resolution=10):
+        # log.info("Scaling with these args: scale {},pixels {}, resolution {}"
+        #         "".format(scale,pixels,resolution))
+        # 'x' and 'resolution' here express a float as two integers,
+        # so r = 0.7 = 7/10, because the zoom and subsample fns
+        # only work on integers
+        if pixels:
+            s=pixels*scale #the number of pixels, scaled
+            r=s/self.maxhw() #the ratio we need to reduce actual pixels by
+            # log.info("scaled pixels: {} (of {})".format(s,pixels))
+        else:
+            r=1 #don't scale for pixels=0
+        x=resolution*r
+        # log.info("ratio to scale image: {} (of {})".format(r,self.maxhw()))
+        # log.info("biggerby to do: {}".format(x))
+        self.biggerby(int(x))
+        # log.info("Image: {} ({})".format(self.scaled, self.maxhw(scaled=True)))
+        self.smallerby(int(resolution))
+        # self[pixels]=self.scaled
+        # log.info("Image: {} ({})".format(self.scaled, self.maxhw(scaled=True)))
+    def __init__(self,filename):
+        # self.name=filename
+        try:
+            super(Image, self).__init__(file=filename)#,*args, **kwargs)
+        except tkinter.TclError as e:
+            # log.info("Error: {} ({})".format(e.args,type(e)))
+            if "couldn't recognize data in image file" in e.args[0]:
+                raise #this is processed elsewhere
+            elif 'value for "-file" missing' in e.args[0]:
+                raise #this is processed elsewhere
+            else:
+                log.info("Image error: {}".format(e))
+        self.biggerby(1)
 class StringVar(tkinter.StringVar):
     def __init__(self, *args, **kwargs):
         super(tkinter.StringVar, self).__init__(*args, **kwargs)
@@ -661,30 +868,32 @@ class BooleanVar(tkinter.BooleanVar):
         super(tkinter.BooleanVar, self).__init__(*args, **kwargs)
 """below here has UI"""
 class Root(Exitable,tkinter.Tk):
-    """docstring for Root."""
-    # def settheme(self,theme):
-    #     self.theme=theme
-    #     self['background']=self.theme.background
-    #     self['bg']=self.theme.background
-    def __init__(self, theme=None, program=None, *args, **kwargs):
-        """Some roots aren't THE root, e.g., contextmenu. Furthermore, I'm
+    """this is the root of the tkinter GUI."""
+    def __init__(self, program={}, *args, **kwargs):
+        """specify theme name in program['theme']"""
+        """bring in program here, send it to theme, everyone accesses scale from there."""
+        """"Some roots aren't THE root, e.g., contextmenu. Furthermore, I'm
         currently not showing the root, so the user will never exit it."""
+        # log.info("Root called with program dict {}".format(program))
+        self.program=program
+        if 'root' not in self.program:
+            self.program['root']=self
         self.mainwindow=False
         self.exitFlag = ExitFlag()
         tkinter.Tk.__init__(self)
-        if program:
-            self.program=program
-        else:
-            self.program={}
-        if theme and not isinstance(theme,Theme) and type(theme) is str:
-            self.theme=Theme(self.program,theme, **kwargs)
-        elif theme and isinstance(theme,Theme):
-            self.theme=theme
-        else:
-            self.theme=Theme(self.program, **kwargs) #OK if program==None
+        self.withdraw() #this is almost always correct
+        try:
+            assert not kwargs.get('noimagescaling') #otherwise, make copy theme
+            assert isinstance(self.program['theme'],Theme) #use what's there
+            self.theme=self.program['theme']
+        except (KeyError,AssertionError):
+            self.theme=Theme(self.program, **kwargs)
         self.renderer=Renderer()
         Exitable.__init__(self)
         UI.__init__(self)
+        # log.info("self.theme.photo keys: {}".format(list(self.theme.photo)))
+        # log.info("self.theme({}).photo keys: {}".format(self.theme,list(self.theme.photo)))
+        log.info("Root initialized")
 """These have parent (Childof), but no grid"""
 class Toplevel(Childof,Exitable,tkinter.Toplevel,UI): #NoParent
     """This and all Childof classes should have a parent, to inherit a common
@@ -693,6 +902,8 @@ class Toplevel(Childof,Exitable,tkinter.Toplevel,UI): #NoParent
         self.mainwindow=False
         Childof.__init__(self,parent)
         tkinter.Toplevel.__init__(self)
+        # log.info("Toplevel._root(): {} ({})".format(self._root(),type(self._root())))
+        # log.info("Toplevel.parent._root(): {} ({})".format(self.parent._root(),type(self.parent._root())))
         Exitable.__init__(self)
         UI.__init__(self)
         self.protocol("WM_DELETE_WINDOW", lambda s=self: Window.on_quit(s))
@@ -719,6 +930,23 @@ class Menu(Childof,tkinter.Menu): #not Text
                                 **kwargs)
         UI.__init__(self)
         self['background']=self.theme.menubackground
+class Progressbar(Gridded,Childof,tkinter.ttk.Progressbar):
+    def current(self,value):
+        if 0 <= value <= 100:
+            self['value']=value
+        self.update_idletasks() #updates just geometry
+    def __init__(self, parent, **kwargs):
+        # log.info("Initializing Progressbar object")
+        Gridded.__init__(self,**kwargs)
+        kwargs=self.lessgridkwargs(**kwargs)
+        Childof.__init__(self,parent)
+        if 'orient' not in kwargs:
+            kwargs['orient']='horizontal' #or 'vertical'
+        if 'mode' not in kwargs:
+            kwargs['mode']='determinate' #or 'indeterminate'
+        tkinter.ttk.Progressbar.__init__(self,parent,**kwargs)
+        UI.__init__(self)
+        self.dogrid()
 class Text(Childof,ObectwArgs):
     """This converts kwargs 'text', 'image' and 'font' into attributes which are
     default where not specified, and rendered where appropriate for the
@@ -770,6 +998,7 @@ class Text(Childof,ObectwArgs):
                 del kwargs[opt]
         return kwargs
     def __init__(self,parent,**kwargs):
+        Childof.__init__(self,parent)
         self.textkwargs=['text','image','font','norender']
         self.text=kwargs.pop('text','')
         # self.renderings=parent.renderings
@@ -792,6 +1021,8 @@ class Text(Childof,ObectwArgs):
         # self.wraplength=kwargs.get('wraplength',defaultwr) #also for ButtonLabel
         self.norender=kwargs.pop('norender',False)
         self.image=kwargs.pop('image',None)
+        if isinstance(self.image,str) and self.image in self.theme.photo:
+            self.image=self.theme.photo[self.image]
         d=set(["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"])
         sticks=set(['˥','˦','˧','˨','˩',' '])
         if (hasattr(self.text, '__iter__')
@@ -835,13 +1066,51 @@ class Frame(Gridded,Childof,tkinter.Frame):
         self.dogrid()
 class Label(Gridded,Text,tkinter.Label): #,tkinter.Label
     def __init__(self, parent, **kwargs):
+        # log.info("Label Parent: {}".format(type(parent)))
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
         Childof.__init__(self,parent)
         Text.__init__(self,parent,**kwargs)
         kwargs=self.lesstextkwargs(**kwargs)
         """These shouldn't need to be here..."""
+        # log.info("{}; {}; {}; {}; {}".format(
+        #                         parent,
+        #                         self.text,
+        #                         self.image,
+        #                         self.font,
+        #                         kwargs
+        #                         )
+        #         )
         tkinter.Label.__init__(self,
+                                parent,
+                                text=self.text,
+                                image=self.image,
+                                font=self.font,
+                                **kwargs)
+        i=self.grid_info()
+        if i and self.text:
+            self.wrap()
+        UI.__init__(self)
+        self.dogrid()
+class Message(Gridded,Text,tkinter.Message): #,tkinter.Label
+    """I'm not sure if this will ever have value, but here it is."""
+    def __init__(self, parent, **kwargs):
+        # log.info("Label Parent: {}".format(type(parent)))
+        Gridded.__init__(self,**kwargs)
+        kwargs=self.lessgridkwargs(**kwargs)
+        Childof.__init__(self,parent)
+        Text.__init__(self,parent,**kwargs)
+        kwargs=self.lesstextkwargs(**kwargs)
+        """These shouldn't need to be here..."""
+        # log.info("{}; {}; {}; {}; {}".format(
+        #                         parent,
+        #                         self.text,
+        #                         self.image,
+        #                         self.font,
+        #                         kwargs
+        #                         )
+        #         )
+        tkinter.Message.__init__(self,
                                 parent,
                                 text=self.text,
                                 image=self.image,
@@ -857,12 +1126,14 @@ class Button(Gridded,Text,tkinter.Button):
         pass
     def __init__(self, parent, choice=None, window=None, command=None, **kwargs):
         """Usta include column=0, row=1, norender=False,"""
+        # log.info("Button Parent: {}".format(type(parent)))
         # log.info("button kwargs: {}".format(kwargs))
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
         Childof.__init__(self,parent)
         Text.__init__(self,parent,**kwargs)
         kwargs=self.lesstextkwargs(**kwargs)
+        kwargs=self.gridbkwargs(**kwargs)
         # `command` is my hacky command specification, with lots of args added.
         # cmd is just the command passing through.
         if 'cmd' in kwargs and kwargs['cmd'] is not None:
@@ -1037,14 +1308,8 @@ class Window(Toplevel):
         # self.dogrid()
 class ContextMenu(Childof):
     def updatebindings(self):
-        def bindthisncheck(w):
-            log.log(2,"{};{}".format(w,w.winfo_children()))
-            if type(w) is not tkinter.Canvas: #ScrollingFrame:
-                w.bind('<Enter>', self._bind_to_makemenus)
-            for child in w.winfo_children():
-                bindthisncheck(child)
+        self.parent.bind('<Motion>', self._bind_to_makemenus)
         self.parent.bind('<Leave>', self._unbind_to_makemenus) #parent only
-        bindthisncheck(self.parent)
     def undo_popup(self,event=None):
         if hasattr(self,'menu'):
             log.log(2,"undo_popup Checking for ContextMenu.menu: {}".format(
@@ -1070,14 +1335,15 @@ class ContextMenu(Childof):
             self.menuinit()
             self.menu.add_command(label=msg,command=cmd)
     def dosetcontext(self):
+        # You need to have a setcontext() method for the
+        # parent of this context menu, to set menu
+        # items under appropriate conditions
+        # There is a default 'show menus only' one in HasMenus()
         try:
-            log.log(3,"setcontext: {}".format(self.parent.setcontext))
+            # log.info("setcontext: {}".format(self.parent.setcontext))
             self.parent.setcontext(context=self.context)
-        except:
-            log.error("You need to have a setcontext() method for the "
-                        "parent of this context menu ({}), to set menu "
-                        "items under appropriate conditions ({}): {}.".format(
-                            self.parent,self.context,self.parent.setcontext))
+        except Exception as e:
+            log.error(_("Exception in dosetcontext: {}").format(e))
     def do_popup(self,event):
         try:
             self.menu.tk_popup(event.x_root, event.y_root)
@@ -1094,7 +1360,11 @@ class ContextMenu(Childof):
     def _unbind_to_makemenus(self,event):
         self.parent.unbind_all('<Button-3>')
     def getroot(self):
-        self.root=Root(self.theme) #tkinter.Tk()
+        # log.info("parent: {}".format(self.parent))
+        # log.info("parent._root(): {}".format(self.parent._root()))
+        # log.info("parent._root().program: {}".format(self.parent._root().program))
+        # log.info("parent._root().program['theme']: {}".format(self.parent._root().program['theme']))
+        self.root=Root(self.parent._root().program) #self.parent._root().program #tkinter.Tk()
         self.root.withdraw()
         self.root.parent=self.parent
         Childof.inherit(self.root,self.parent)
@@ -1116,7 +1386,7 @@ class ButtonFrame(Frame):
         optionlist=kwargs.pop('optionlist')
         command=kwargs.pop('command')
         window=kwargs.pop('window',None)
-        log.info("Buttonframe option list: {} ({})".format(optionlist,command))
+        # log.info("Buttonframe option list: {} ({})".format(optionlist,command))
         Frame.__init__(self,parent,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
         # for kwarg in ['row', 'column']: #done with these
@@ -1134,11 +1404,12 @@ class ButtonFrame(Frame):
             return
             """Assuming from here on that the first list item represents
             the format of the whole list; hope that's true!"""
-        elif optionlist[0] is dict:
-            print("looks like options are already in dictionary format.")
+        elif type(optionlist[0]) is dict:
+            # log.info("looks like options are already in dictionary format.")
+            pass
         elif (type(optionlist[0]) is str) or (type(optionlist[0]) is int):
             """when optionlist is a list of strings/codes/integers"""
-            print("looks like options are just a list of codes; making dict.")
+            # log.info("looks like options are just codes; making dict.")
             if None in optionlist:
                 log.error(_("Having None as a list is fine, but you need to "
                 "put it in a tuple, with a second argument to display, so "
@@ -1150,22 +1421,20 @@ class ButtonFrame(Frame):
                                 ) for i in range(0, len(optionlist))]
         elif type(optionlist[0]) is tuple:
             if type(optionlist[0][1]) is str:
-                """when optionlist is a list of binary tuples (codes,names)"""
-                print("looks like options are just a list of (codes,names) "
-                        "tuples; making dict.")
+                # log.info("looks like options are just a list of (codes,names) "
+                #         "tuples; making dict.")
                 optionlist = [({'code':optionlist[i][0],
                                 'name':optionlist[i][1]}
                                 ) for i in range(0, len(optionlist))]
             elif type(optionlist[0][1]) is int:
-                """when optionlist is a list of binary tuples (codes,counts)"""
-                print("looks like options are just a list of (codes,counts) "
-                        "tuples; making dict.")
+                # log.info("looks like options are just a list of (codes,counts) "
+                #         "tuples; making dict.")
                 optionlist = [({'code':optionlist[i][0],
                                 'description':optionlist[i][1]}
                                 ) for i in range(0, len(optionlist))]
         if not 'name' in optionlist[0]: #duplicate name from code.
             for i in range(0, len(optionlist)):
-                optionlist[i]['name']=optionlist[i]['code']
+                optionlist[i]['name']=str(optionlist[i]['code'])
         if gimmenull == True:
             optionlist.append(({code:"Null",name:"None of These"}))
         # log.info("These are the options going to the set of buttons: {}".format(
@@ -1174,7 +1443,6 @@ class ButtonFrame(Frame):
             if choice['name'] == ["Null"]:
                 command=newvowel #come up with something better here..…
             if 'description' in choice:
-                # print(choice['name'],str(choice['description']))
                 text=choice['name']+' ('+str(choice['description'])+')'
             else:
                 text=choice['name']
@@ -1385,7 +1653,8 @@ class ScrollingFrame(Frame):
         """make the canvas inherit these values like a frame"""
         self.canvas['background']=parent['background']
         for attr in ['fonts','theme','debug','wraplength','photo','renderer',
-                'program','exitFlag']:
+                # 'program',
+                'exitFlag']:
             if hasattr(self.canvas.parent,attr):
                 setattr(self.canvas,attr,getattr(self.canvas.parent,attr))
         # inherit(self.canvas)
@@ -1493,6 +1762,7 @@ class ToolTip(object):
         self.widget.bind("<Enter>", self.enter)
         self.widget.bind("<Leave>", self.leave)
         self.widget.bind("<ButtonPress>", self.leave)
+        self.widget.bind("<Destroy>", self.hidetip)
         self.id = None
         self.tw = None
     def enter(self, event=None):
@@ -1537,7 +1807,7 @@ class ToolTip(object):
         label['background']="#ffffff"
         label.pack(ipadx=1)
         self.widget.bind("<Leave>", self.leave)
-    def hidetip(self):
+    def hidetip(self, event=None):
         tw = self.tw
         self.tw= None
         if tw:
@@ -1546,25 +1816,35 @@ class ToolTip(object):
 class Wait(Window): #tkinter.Toplevel?
     def close(self):
         self.update_idletasks()
-        self.parent.deiconify() #this will show a root window, if Root is parent
-        self.destroy()
+        if not isinstance(self.parent,Root) and self.parentwasvisible:
+            #Don't show a root window, nor one that was hidden before
+            self.parent.deiconify()
+        self.on_quit()
+    def progress(self,value):
+        # between 0 and 100
+        try:
+            self.progressbar.current(value)
+        except AttributeError:
+            self.progressbar=Progressbar(self.outsideframe,
+                                    orient='horizontal',
+                                    mode='determinate', #or 'indeterminate'
+                                    row=3,column=0)
+            self.progress(value)
     def __init__(self, parent, msg=None):
-        global program
         super(Wait, self).__init__(parent,exit=False)
+        self.paused=False
         self.withdraw() #don't show until we're done making it
+        self.parentwasvisible=parent.winfo_viewable()
         parent.withdraw()
         self['background']=parent['background']
         self.attributes("-topmost", True)
-        if hasattr(self,'program'):
-            title=(_("Please Wait! {name} Dictionary and Orthography Checker "
-                        "in Process").format(name=self.program['name']))
-        else:
-            title=(_("Please Wait!"))
+        title=(_("Please Wait! {name} Dictionary and Orthography Checker "
+                "in Process").format(name=self._root().program['theme'].name))
         self.title(title)
         text=_("Please Wait...")
         self.l=Label(self.outsideframe, text=text,
-                font='title',anchor='c')
-        self.l.grid(row=0,column=0,sticky='we')
+                font='title',anchor='c',
+                row=0,column=0,sticky='we')
         if msg is not None:
             self.l1=Label(self.outsideframe, text=msg,
                 font='default',anchor='c',row=1,column=0,sticky='we')
@@ -1572,13 +1852,26 @@ class Wait(Window): #tkinter.Toplevel?
         self.l2=Label(self.outsideframe,
                         image=self.theme.photo['small'],
                         text='',
-                        )
-        self.l2.grid(row=2,column=0,sticky='we',padx=50,pady=50)
+                        row=2,column=0,sticky='we',padx=50,pady=50)
         self.deiconify() #show after the window is built
         #for some reason this has to follow the above, or you get a blank window
         self.update_idletasks() #updates just geometry
 """unclassed functions"""
+def now():
+    return datetime.datetime.utcnow().isoformat()#[:-7]+'Z'
 def availablexy(self,w=None):
+    def padstoint(p):
+        """Pads can be expressed as integers or (before,after) tuples"""
+        if str(p) == '1m':
+            return 5
+        try:
+            r=int(str(p))*2
+        except:
+            # log.info(p)
+            p=tuple(p)
+            r=int(p[0])+int(p[-1])
+        # log.info("Returning pad {}".format(r))
+        return r
     if w is None: #initialize a first run
         w=self
         self.otherrowheight=0
@@ -1612,6 +1905,8 @@ def availablexy(self,w=None):
             if hasattr(w.parent,'grid_info') and 'row' in sib.grid_info():
                 sib.row=sib.grid_info()['row']
                 sib.col=sib.grid_info()['column']
+                sib.pady=sib.grid_info()['pady']
+                sib.padx=sib.grid_info()['padx']
                 # These are actual the row/col after the max in span,
                 # but this is what we want for range()
                 sib.rowmax=sib.row+sib.grid_info()['rowspan']
@@ -1620,18 +1915,32 @@ def availablexy(self,w=None):
                 sib.cols=set(range(sib.col,sib.colmax))
                 if wrows & sib.rows == set(): #the empty set
                     sib.reqheight=sib.winfo_reqheight()
-                    log.log(3,"sib {} reqheight: {}".format(sib,sib.reqheight))
+                    # log.info("sib {} reqheight: {}".format(sib,sib.reqheight))
+                    # log.info("sib {} pady: {}".format(sib,sib.pady))
+                    # log.info("sib {} pady: {}".format(sib,padstoint(sib.pady)))
                     """Give me the tallest cell in this row"""
                     if ((sib.row not in rowheight) or (sib.reqheight >
                                                             rowheight[sib.row])):
                         rowheight[sib.row]=sib.reqheight
+                        if 'pady' in sib.grid_info():
+                            # log.info(rowheight[sib.row])
+                            # log.info(sib.reqheight)
+                            rowheight[sib.row]+=padstoint(sib.pady)
+                            # log.info(rowheight[sib.row])
                 if wcols & sib.cols == set(): #the empty set
                     sib.reqwidth=sib.winfo_reqwidth()
-                    log.log(3,"sib {} width: {}".format(sib,sib.reqwidth))
+                    # log.info("sib {} width: {}".format(sib,sib.reqwidth))
+                    # log.info("sib {} padx: {}".format(sib,sib.padx))
+                    # log.info("sib {} padx: {}".format(sib,padstoint(sib.padx)))
                     """Give me the widest cell in this column"""
                     if ((sib.col not in colwidth) or (sib.reqwidth >
                                                             colwidth[sib.col])):
                         colwidth[sib.col]=sib.reqwidth
+                        if 'padx' in sib.grid_info():
+                            # log.info(colwidth[sib.col])
+                            # log.info(sib.reqwidth)
+                            colwidth[sib.col]+=padstoint(sib.padx)
+                            # log.info(colwidth[sib.col])
     for row in rowheight:
         self.otherrowheight+=rowheight[row]
     for col in colwidth:
@@ -1649,7 +1958,7 @@ def availablexy(self,w=None):
         is done on the toplevel widget, after the above recursive function is
         done across all the other widgets (so we just get window decoration)."""
         titlebarHeight = 50 #not working: self.winfo_rooty() - self.winfo_y()
-        borderSize= 0 #not working: self.winfo_rootx() - self.winfo_x()
+        borderSize= 50 #not working: self.winfo_rootx() - self.winfo_x()
         self.othercolwidth+=borderSize*2
         self.otherrowheight+=titlebarHeight+100
         self.maxheight=self.winfo_screenheight()-self.otherrowheight
@@ -1672,17 +1981,113 @@ def nfc(x):
 def nfd(x):
     #This makes decomposed characters. e.g., vowel + accent (not used yet)
     return unicodedata.normalize('NFD', str(x))
-def testapp():
-    r=Root()
+def testapp(program):
+    def progress(event):
+        import time
+        for i in range(101):
+            for p in bars:
+                if p[1]<2:
+                    bars[p].current(100-i)
+                else:
+                    bars[p].current(i)
+            time.sleep(.02)
+    def textchange(event):
+        l['text']="new text"
+    def textadd(x):
+        l['text']+=str(x)
+    r=Root(program=program)
+    log.info("root is {}".format(r))
     r.withdraw()
     w=Window(r)
-    Label(w,text="Seems to work!",font='title',
-            row=0,column=0)# loglevel='Debug'
-    Label(w,text="At least this much",image=r.theme.photo['transparent'],
-            compound="bottom",
-            row=1,column=0)# loglevel='Debug'
+    log.info("window is {}".format(w))
+    sf=ScrollingFrame(w.outsideframe,row=0,column=0)
+    Label(sf.content,text="Seems to work!",font='title',
+            row=0,column=0,
+            borderwidth=1,relief='raised')
+    l=Label(sf.content,text="At least this much",
+            row=1,column=0,
+            borderwidth=1,relief='raised')
+    # log.info("l dir is {}".format(dir(l)))
+    log.info("l _root is {}".format(l._root()))
+    log.info("Image dict: {}".format(r.theme.photo))
+    # img=r.theme.photo['transparent']
+    img=r.theme.photo['NoImage']
+    log.info("Image: {} ({})".format(img, Image.maxhw(img)))
+    log.info("Image dir: {}".format(dir(img)))
+    img.scale(program['scale'],pixels=100,resolution=10)
+    log.info("Image: {} ({})".format(img.scaled, Image.maxhw(img,scaled=True)))
+    l['image']=img.scaled
+    l['compound']="bottom"
+    ToolTip(l,"this image has a tooltip")
+    for c,cls in enumerate([Message,Label]):
+        cname=cls.__name__
+        cls(sf.content,text="This is a {}".format(cname),row=2, column=c,
+                borderwidth=1,relief='raised')
+        # cls(w.outsideframe,text="This is a long {}".format(cname),row=3, column=c)
+        cls(sf.content,text="This is a very long {}".format(cname),row=4, column=c,
+                borderwidth=1,relief='raised')
+        cls(sf.content,text="This is a very very long {}".format(cname),
+            row=5, column=c,
+            borderwidth=1,relief='raised')
+        cls(sf.content,text="This is a very very very very long {}"
+                    "".format(cname),
+                    row=6, column=c,
+                    borderwidth=1,relief='raised')
+        lll=cls(sf.content,text="This is a very very very very "
+                    "very very very very "
+                    "very very very very "
+                    "very very very very "
+                    "very very very very "
+                    "very very very very "
+                    "very very very very "
+                    "very very very very "
+                    "long {}".format(cname),row=7, column=c,
+                    borderwidth=1,relief='raised')
+        if cls == Label:
+            # lll['wraplength']=20
+            lll.config(wraplength=120)
+            # lll.wrap()
+    # m=tkinter.Label(sf.content,text="This is a Label", row=3, column=0)
+    bars={}
+    for orient in ['horizontal','vertical']:
+        for row in [0,2]:
+            if orient=='horizontal':
+                col=1
+                colspan=1
+                rowspan=1
+            else:
+                col=row
+                row=1
+                colspan=1
+                rowspan=1
+            bars[(orient,row+col)]=Progressbar(w, orient=orient,
+                                            mode='determinate',
+                                            row=row, column=col,
+                                            columnspan=colspan,
+                                            rowspan=rowspan,sticky='nesw')
+    w.bind('<ButtonRelease-1>',textchange)
+    w.bind('<ButtonRelease-1>',progress,add=True)
+    w.bind('<Up>',lambda event,x='^':textadd(x),add=True)
+    w.bind('<Prior>',lambda event,x='^':textadd(x),add=True) #page up button
+    w.bind('<Down>',lambda event,x='v':textadd(x),add=True)
+    w.bind('<Next>',lambda event,x='v':textadd(x),add=True) #page down button
+    w.bind('<Left>',lambda event,x='<—':textadd(x),add=True)
+    w.bind('<Right>',lambda event,x='—>':textadd(x),add=True)
+    # parent.winfo_viewable()
+    log.info(dir(w))
+    log.info(w.bindtags())
+    log.info(w.wm_state())
+    log.info(w.state())
+    # w.withdraw()
+    # log.info(w.wm_state())
+    # log.info(w.state())
     r.mainloop()
 if __name__ == '__main__':
+    program={'name':'tkinter UI module',
+            'url':'https://github.com/kent-rasmussen/azt',
+            'Email':'kent_rasmussen@sil.org',
+            'theme':'Kim'
+            }
     """To Test:"""
     # loglevel='Debug'
-    testapp()
+    testapp(program)

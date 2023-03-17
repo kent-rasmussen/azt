@@ -16,9 +16,11 @@ except:
     def _(x):
         return x
 def getfile(filename):
-    return pathlib.Path(filename)
-def getfilename(filename):
-    return pathlib.Path(filename).name
+    if filename:
+        return pathlib.Path(filename)
+def getfilenamefrompath(filename):
+    if filename:
+        return pathlib.Path(filename).name
 def fullpathname(filename):
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
@@ -42,14 +44,16 @@ def gettranslationdirin(exedir):
     dir=pathlib.Path.joinpath(exedir,'translations')
     return dir
 def getimagesdir(dirname):
-    dir=pathlib.Path.joinpath(dirname,'images')
-    if not os.path.exists(dir):
-        os.mkdir(dir)
-    return dir
-def getimagesdiralternate(dirname):
-    dir=pathlib.Path.joinpath(dirname,'pictures') #WeSay uses this
-    if os.path.exists(dir):
-        return dir
+    diropts=['images','pictures']
+    for d in diropts:
+        dir=pathlib.Path.joinpath(dirname,d)
+        if getfilesofdirectory(dir):
+            return dir
+    #if nothing anywhere, just go with first.
+    d=pathlib.Path.joinpath(dirname,diropts[0])
+    if not os.path.exists(d):
+        os.mkdir(d)
+    return d
 def getaudiodir(dirname):
     dir=pathlib.Path.joinpath(dirname,'audio')
     log.debug("Looking for {}".format(dir))
@@ -67,6 +71,8 @@ def getreportdir(dirname):
 def getreldir(origin,dest):
     return os.path.relpath(dest,origin)
     # return getfile(dest).relative_to(getfile(origin))
+def getreldirposix(origin,dest):
+    return getfile(os.path.relpath(dest,origin))
 def getstylesheetdir(filename):
     dir=pathlib.Path.joinpath(getfilenamedir(filename),'xlpstylesheets')
     log.debug("Looking for {}".format(dir))
@@ -88,10 +94,10 @@ def gettransformsdir():
         # os.mkdir(dir)
     return dir
 def exists(file):
-    if os.path.exists(file):
+    if file and os.path.exists(file):
         return True
-    else:
-        return False
+    # else:
+    #     log.info("file {} doesn't exist!".format(file))
 def remove(file):
     if exists(file):
         os.remove(file)
@@ -99,12 +105,12 @@ def remove(file):
         os.remove(fullpathname(file))
     else:
         log.debug(_("Tried to remove {}, but I can't find it.").format(file))
-def makedir(dir):
+def makedir(dir,**kwargs):
     if type(dir) is str:
         dir=getfile(dir)
-    if not exists(dir):
+    if dir and not exists(dir):
         dir.mkdir(parents=True)
-    else:
+    elif not kwargs.get('silent'):
         log.info("directory {} already exists!".format(dir))
 def getnewlifturl(dir,xyz):
     dir=pathlib.Path(dir)
@@ -121,10 +127,14 @@ def getdiredurl(dir,filename):
     if type(dir) is str:
         dir=getfile(dir)
     return pathlib.Path.joinpath(dir,filename)
+def getdiredrelURI(reldir,filename):
+    return pathlib.Path(reldir).joinpath(filename).as_uri()
 def getdiredrelURL(reldir,filename):
     return pathlib.Path(reldir).joinpath(filename)
 def getdiredrelURLposix(reldir,filename):
-    return pathlib.Path(reldir).joinpath(filename).as_posix()
+    return pathlib.PurePath(reldir).joinpath(filename).as_posix()
+    # This doesn't help:
+    # return pathlib.PureWindowsPath(reldir).joinpath(filename).as_posix()
     # return pathlib.PurePath(reldir).joinpath(filename)
 def getlangnamepaths(filename, langs):
     output={}
@@ -135,11 +145,6 @@ def getlangnamepaths(filename, langs):
         log.log(1,filename)
     log.log(1,output)
     return output
-def getinterfacelangs():
-    return [{'code':'fr','name':'Français'},
-            {'code':'en','name':'English'},
-            {'code':'fub','name':'Fulfulde'}
-            ]
 def getinterfacelang():
     # I haven't figured out a way to translate the strings here, hope that's OK.
     # This is because this fn is called by the mainapplication class before
@@ -168,10 +173,9 @@ def getfilenames():
         log.debug("getfilename lift_url didn't import")
     if hasattr(lift_url,'filenames') and lift_url.filenames:
         log.info("Returning filenames: {}".format(lift_url.filenames))
-        return lift_url.filenames
+        return [i for i in lift_url.filenames if exists(i)]
 def getfilename():
-    """This returns a single filename, if there, else a list if there, else
-    it asks for user input."""
+    """This returns a single filename, if there, else a list if there"""
     try:
         import lift_url
     except:
@@ -190,9 +194,10 @@ def gethome():
     if platform.uname().node == 'karlap':
         home=pathlib.Path.joinpath(home, "Assignment","Tools","WeSay")
     return home
-def getdirectory(title=None):
+def getdirectory(title=None,home=None):
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
-    home=gethome()
+    if not home:
+        home=gethome()
     if not title:
         title=_("Select a new location for your LIFT Lexicon and other Files")
     f=filedialog.askdirectory(initialdir = home, title = title)
@@ -200,12 +205,48 @@ def getdirectory(title=None):
         return f
 def getfilesofdirectory(dir,regex='*'):
     # return pathlib.Path(dir).iterdir()
-    return pathlib.Path(dir).glob(regex)
+    l=[]
+    for i in pathlib.Path(dir).glob(regex):
+        l.extend([i])
+    return l # we don't want a generator here
+def getmediadirectory(mediatype=None):
+    log.info("Looking for media directory")
+    if platform.system() == 'Linux':
+        media=getdiredurl('/media/',os.getlogin())
+        log.info("media: {} ".format(media))
+    else:
+        media=None
+    if mediatype:
+        prompt=_("Please select where to find the {} media locally"
+                ).format(mediatype)
+    else:
+        prompt=_("Please select where to find the media locally")
+    return getdirectory(prompt, media)
+def askopenfilename(**kwargs):
+    return filedialog.askopenfilename(**kwargs)
+    # initialdir = home,#"$HOME",#filetypes=[('LIFT','*.lift')],
+    #                                 title = _("Select LIFT Lexicon File"),
+    #                                 filetypes=[
+    #                                         # ("LIFT File",'.[Ll][Ii][Ff][Tt]','TEXT'),
+    #                                         # ("LIFT File",'.LIFT .lift','TEXT'),
+    #                                         ("LIFT File",'.LIFT','TEXT'),
+    #                                         ("LIFT File",'.lift','TEXT'),
+    #                                         # ("Git repository",'*.git'),
+    #                                         ]
+    #                                 )
 def lift():
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
     home=gethome()
-    filename=filedialog.askopenfilename(initialdir = home,#"$HOME",#filetypes=[('LIFT','*.lift')],
-                                    title = _("Select LIFT Lexicon File"))
+    filename=askopenfilename(initialdir = home,#"$HOME",#filetypes=[('LIFT','*.lift')],
+                                    title = _("Select LIFT Lexicon File"),
+                                    filetypes=[
+                                            # ("LIFT File",'.[Ll][Ii][Ff][Tt]','TEXT'),
+                                            # ("LIFT File",'.LIFT .lift','TEXT'),
+                                            ("LIFT File",'.LIFT','TEXT'),
+                                            ("LIFT File",'.lift','TEXT'),
+                                            # ("Git repository",'*.git'),
+                                            ]
+                                    )
     if not filename:
         return
     if exists(filename):
@@ -226,7 +267,8 @@ def writefilename(filename=''):
     except:
         log.error("writefilename lift_url didn't import.")
         filenames=[]
-    if filename and filename not in filenames:
+    # log.info("filenames: {} ({})".format(filenames,filename))
+    if filename and str(filename) not in filenames:
         filenames.append(str(filename))
     file=pathlib.Path.joinpath(pathlib.Path(__file__).parent, "lift_url.py")
     f = open(file, 'w', encoding='utf-8') # to append, "a"
@@ -238,6 +280,7 @@ if __name__ == "__main__":
     import sys
     import datetime
     import shutil
+    from tkinter import ttk
     def usage():
         log.info("usage for one entry:")
         log.info(" python3 " + pathlib.Path(__file__).name + " <forms|ids|tones|prontones|glosses|gloss2s|plurals|pses|all|cards|lxnglosses> <lift file> <guid>")
@@ -256,7 +299,15 @@ if __name__ == "__main__":
         global wsfolder
         global xyz
         return str(pathlib.Path.joinpath(wsfolder, xyz))
-
+    # Create an instance of ttk
+    log.info(lift())
+    quit()
+    s = ttk.Style()
+    # log.info(
+    for t in s.theme_names():
+    # Use the window native theme
+        s.theme_use(t)
+        log.info(getmediadirectory(mediatype=t))
     # def baklift():
     #     global wsfolder
     #     global xyz

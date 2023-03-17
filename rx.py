@@ -9,6 +9,7 @@ logsetup.setlevel('DEBUG',log) #for this file
 """This is called from a number of places"""
 framerx=re.compile('__') #replace this w/data in frames.
 def urlok(x):
+    x=str(x) # just in case we pass a path object
     #These should each be tuple of
     # 1. a simple list of characters to strip,
     # 2. replacement
@@ -37,6 +38,16 @@ def escapeattr(x):
         return '\"'+x+'\"'
     else:
         return "'"+x+"'"    #b+="[@{}=\"{}\"]".format(attr,self.kwargs[attrs[attr]])
+# This doesn't seem to be able to work:
+# def removepicreldir(x):
+#     dirs=[
+#             r'pictures/',
+#             r'pictures\\'
+#             ]
+#     for d in dirs:
+#         if x.startswith(d):
+#             x=x.split(d)[-1]
+#     return x
 def split(delre,str):
     return re.split(delre,str)
 def countxiny(x,y):
@@ -55,6 +66,7 @@ def stripquotes(x):
 """passthrough fns"""
 def sub(*args,**kwargs):
     # pattern, repl, string, count=0, flags=0
+    # log.info("Running re.sub with args: {} and kwargs: {}".format(args,kwargs))
     return re.sub(*args,**kwargs)
 def compile(x):
     return re.compile(x, re.UNICODE)
@@ -66,6 +78,25 @@ def tonerxs():
     return (re.compile('[˥˦˧˨˩]+', re.UNICODE),
             re.compile(' ', re.UNICODE),
             re.compile(' ', re.UNICODE))
+def update(t,regexdict,check,value,matches=[]):
+    tori=t
+    for c in reversed(check.split('=')):
+        log.info("subbing {} for {} in {}, using {}".format(value,c,t,
+                                                    regexdict[c]))
+        # log.info("found {}".format(regexdict[c].search(t)))
+        match=regexdict[c].search(t)
+        if match:
+            matches.append(match.groups()[-1])
+            t=match.expand('\\g<1>'+value)+t[match.end():]
+    log.info("updated {} > {}".format(tori,t))
+    for match in matches:
+        if len(match)>1:
+            log.info(_("NOTICE: we just matched (to remove) a set of "
+            "symbols representing one sound ({}). Until you are done "
+            "with it, we will leave it there, so both forms will be "
+            "found. Once you are done with it, remove it from the "
+            "polygraph settings.").format(match))
+    return t
 def texmllike(x):
     """This attempts to implement TeXMLLikeCharacterConversion.java from
     XLingPaper"""
@@ -98,12 +129,28 @@ def texmllike(x):
         x=x.replace(y,repls[y])
     x=re.sub('\\\\textless{}(([\?!/]|tex:)[^\\\\]*)\\\\textgreater{}',"<\\1>",x)
     return x
+def noparens(x): #sometimes I just want this
+    if isinstance(x,str):
+        return re.sub('\(.*\)','',x)
+def glossdeftoform(x):
+    x=noparens(x)
+    if isinstance(x,str):
+        # x=re.sub('\(.*\)','',x)
+        x=re.sub(',.*','',x)
+        x=re.sub('^ *','',x)
+        x=re.sub(' .*','',x)
+        # x=re.sub('^(([^() ]+)( [^() ]+){,2})(.*)*$','\\1',x) #up to three words, no parens
+        # x=re.sub(',$','',x)
+        # x=re.sub(', ',',',x)
+        # x=re.sub(' ','.',x)
+        return x
 def glossifydefn(x):
-    x=re.sub('^(([^() ]+)( [^() ]+){,2})(.*)*$','\\1',x) #up to three words, no parens
-    x=re.sub(',$','',x)
-    x=re.sub(', ',',',x)
-    x=re.sub(' ','.',x)
-    return x
+    if isinstance(x,str):
+        x=re.sub('^(([^() ]+)( [^() ]+){,2})(.*)*$','\\1',x) #up to three words, no parens
+        x=re.sub(',$','',x)
+        x=re.sub(', ',',',x)
+        x=re.sub(' ','.',x)
+        return x
 def makeprecomposed(x):
     if x is None:
         return
@@ -202,6 +249,8 @@ def s(sdict, stype, polyn=0, word=False, compile=False): #settings lang=None
         graphemeset=[i for i in graphemeset if len(i) == polyn]
     output=slisttoalternations(graphemeset,group=True)
     if compile:
+        # log.info("Compiling {}[{}] regex {} (word={})"
+        #         "".format(stype,polyn,output,word))
         return make(output, word=word, compile=compile)
     else:
         return output
@@ -225,6 +274,8 @@ def nX(segmentsin,segmentsout,n):
     overlap=set(segmentsin) & set(segmentsout)
     if overlap:
         log.error("Your in/out segment lists overlap: {}".format(overlap))
+        # log.error("in: {}".format(segmentsin))
+        # log.error("out: {}".format(segmentsout))
     # for each of in/out, make a dict keyed by length, with value listing glyphs
     # with that length (automatically separate trigraphs, digraphs, etc)
     sindict={n:[i for i in segmentsin if len(i) == n]
@@ -255,6 +306,7 @@ def nX(segmentsin,segmentsout,n):
     nS='('+priors+'('+notS+')*)('+sin['all']+')'
     # for n,i in enumerate([sin,sout,oneS,notS,nS]):
     #     print(n,i)
+    # log.info("Compiling X{} regex {}".format(n,nS))
     return make(nS, compile=True)
 def fromCV(CVs, sdict, distinguish, word=False, compile=False): #check, lang
     """ this inputs regex variable (regexCV), a tuple of two parts:
@@ -295,16 +347,29 @@ def fromCV(CVs, sdict, distinguish, word=False, compile=False): #check, lang
         # log.info('x: {}; repl: {}'.format(x,CVrepl))
         # log.info('CVs: {}'.format(CVs))
     CVs=re.sub('\)([^(]+)\(',')(\\1)(',CVs) #?
-    log.info('Going to compile regex with CVs: {}'.format(CVs))
+    # log.info('Going to compile regex with CVs: {}'.format(CVs))
     return make(CVs, word=word, compile=compile)
 if __name__ == '__main__':
     x='ne [pas] plaire, ne pas agréer, ne pas'
+    ts=['bobongo','bobingo']
+    check='V1=V2=V3'
+    value='a'
+    r='(eau|ai|ey|oe|ow|ei|ou|au|oi|yi|ie|oa|ay|oo|ea|ee|ue|é|i|a|o|I|u|O|e)'
+    regexdict={'V1': make("((ckw|thw|tch|cc|pp|pt|tt|ck|tw|kw|ch|ph|sh|hh|ff|sc|ss|th|sw|hw|ts|sl|gh|bb|dd|gg|mb|nd|dw|gw|zl|yw|mm|ny|gn|nn|nw|rh|wh|ll|rr|lw|rw|p|P|t|c|k|q|f|s|x|h|b|B|d|g|j|v|z|y|w|m|n|l|r|')*)(eau|ou|ei|ai|yi|ea|ay|ee|ey|ie|oa|oo|ow|ue|oe|au|oi|a|e|i|o|u|I|O|é)",compile=True),
+                'V2': make("((((ckw|thw|tch|cc|pp|pt|tt|ck|tw|kw|ch|ph|sh|hh|ff|sc|ss|th|sw|hw|ts|sl|gh|bb|dd|gg|mb|nd|dw|gw|zl|yw|mm|ny|gn|nn|nw|rh|wh|ll|rr|lw|rw|p|P|t|c|k|q|f|s|x|h|b|B|d|g|j|v|z|y|w|m|n|l|r|')*(eau|ou|ei|ai|yi|ea|ay|ee|ey|ie|oa|oo|ow|ue|oe|au|oi|a|e|i|o|u|I|O|é)))(ckw|thw|tch|cc|pp|pt|tt|ck|tw|kw|ch|ph|sh|hh|ff|sc|ss|th|sw|hw|ts|sl|gh|bb|dd|gg|mb|nd|dw|gw|zl|yw|mm|ny|gn|nn|nw|rh|wh|ll|rr|lw|rw|p|P|t|c|k|q|f|s|x|h|b|B|d|g|j|v|z|y|w|m|n|l|r|')*)(eau|ou|ei|ai|yi|ea|ay|ee|ey|ie|oa|oo|ow|ue|oe|au|oi|a|e|i|o|u|I|O|é)",compile=True),
+                'V3': make("((((ckw|thw|tch|cc|pp|pt|tt|ck|tw|kw|ch|ph|sh|hh|ff|sc|ss|th|sw|hw|ts|sl|gh|bb|dd|gg|mb|nd|dw|gw|zl|yw|mm|ny|gn|nn|nw|rh|wh|ll|rr|lw|rw|p|P|t|c|k|q|f|s|x|h|b|B|d|g|j|v|z|y|w|m|n|l|r|')*(eau|ou|ei|ai|yi|ea|ay|ee|ey|ie|oa|oo|ow|ue|oe|au|oi|a|e|i|o|u|I|O|é))((ckw|thw|tch|cc|pp|pt|tt|ck|tw|kw|ch|ph|sh|hh|ff|sc|ss|th|sw|hw|ts|sl|gh|bb|dd|gg|mb|nd|dw|gw|zl|yw|mm|ny|gn|nn|nw|rh|wh|ll|rr|lw|rw|p|P|t|c|k|q|f|s|x|h|b|B|d|g|j|v|z|y|w|m|n|l|r|')*(eau|ou|ei|ai|yi|ea|ay|ee|ey|ie|oa|oo|ow|ue|oe|au|oi|a|e|i|o|u|I|O|é)))(ckw|thw|tch|cc|pp|pt|tt|ck|tw|kw|ch|ph|sh|hh|ff|sc|ss|th|sw|hw|ts|sl|gh|bb|dd|gg|mb|nd|dw|gw|zl|yw|mm|ny|gn|nn|nw|rh|wh|ll|rr|lw|rw|p|P|t|c|k|q|f|s|x|h|b|B|d|g|j|v|z|y|w|m|n|l|r|')*)(eau|ou|ei|ai|yi|ea|ay|ee|ey|ie|oa|oo|ow|ue|oe|au|oi|a|e|i|o|u|I|O|é)",compile=True),
+                'V':make(r,compile=True)
+                }
+    for t in ts:
+        print(update(t,regexdict,check,value))
     print(id(x))
     impname='Imperative'
     y='field[@type="{}"][@value^="{}"]'.format(impname,1)
     splitxpath(y)
     y="field[@type='{}'][@value^='{}']".format(impname,1)
     splitxpath(y)
+    x='be quench, extinguish'
+    print(glossdeftoform(x))
     # s='ááààééèèííììóóòòúúùù'
     # s2=makeprecomposed(s)
     # print(s,s2)

@@ -14,7 +14,7 @@ log.info("Importing lift.py")
 # except:
 log.info("using xml.etree to parse XML")
 lxml=False
-from xml.etree import ElementTree as ET
+from xmletfns import * # from xml.etree import ElementTree as ET
 import xmlfns
 import sys
 import pathlib
@@ -50,7 +50,7 @@ class BadParseError(Error):
 class Lift(object): #fns called outside of this class call self.nodes here.
     """The job of this class is to expose the LIFT XML as python object
     attributes. Nothing more, not thing else, should be done here."""
-    def __init__(self, filename):
+    def __init__(self, filename, tostrip=False):
         self.debug=False
         self.filename=filename #lift_file.liftstr()
         self.logfile=filename+".changes"
@@ -60,19 +60,30 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             self.read() #load and parse the XML file. (Should this go to check?)
         except:
             raise BadParseError(self.filename)
+        self.getglosslangs() #sets: self.glosslangs
+        if tostrip:
+            return #we're done, if this is a template read
         backupbits=[filename,'_',
                     datetime.datetime.utcnow().isoformat()[:-16], #once/day
                     '.txt']
         self.backupfilename=''.join(backupbits)
-        self.getguids() #sets: self.guids and self.nguids
-        #the following should probably replaced by getsenseidsbyps everywhere
-        self.getsenseids() #sets: self.senseids and self.nsenseids
-        """These three get all possible langs by type"""
-        self.getglosslangs() #sets: self.glosslangs
+        """I should skip some checks in certain cases, like working with the
+        CAWL template"""
+        self.getentries()
+        self.getsenses()
         self.getanalangs() #sets: self.analangs, self.audiolangs
+        self.getpss() #all ps values, in a prioritized list
+        self.slicebyerror()
+        self.slicebyps()
+        self.slicebyid()
+        self.slicebylx()
+        self.slicebylc() #1.14s
+        #the following should probably replaced by getsenseidsbyps everywhere
+        """These three get all possible langs by type"""
         self.legacylangconvert() #update from any old language forms to xyz-x-py
-        self.getentrieswlexemedata() #sets: self.entrieswlexemedata & self.nentrieswlexemedata
-        self.getentrieswcitationdata() #sets: self.entrieswcitationdata & self.nentrieswcitationdata
+        self.getentrieswanalangdata() #sets: self.(n)entriesw(lexeme|citation)data
+        self.getsenseswglosslangdata() #sets: self.nsensesw(gloss|defn)data
+        #HERE
         self.getfieldnames() #sets self.fieldnames (of entry)
         self.getsensefieldnames() #sets self.sensefieldnames (fields of sense)
         self.legacyverificationconvert() #data to form nodes (no name changes)
@@ -82,7 +93,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                     self.nentrieswlexemedata,
                                                     self.nentrieswcitationdata,
                                                     self.nsenseids))
-        self.pss=self.getpssbylang() #dict keyed by lang
+        log.info("Found gloss data counts: {}, definition counts: {}"
+                "".format(
+                        self.nsenseswglossdata,
+                        self.nsenseswdefndata,
+                        ))
         #This may be superfluous:
         self.getsenseidsbyps() #sets: self.senseidsbyps and self.nsenseidsbyps
         """This is very costly on boot time, so this one line is not used:"""
@@ -247,27 +262,23 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             l=list()
         return l
     """Make this a class!!!"""
-    def pylanglegacy(self,analang):
-         return 'py-'+analang
-    def pylanglegacy2(self,analang):
-         return analang+'-py'
-    def pylang(self,analang):
-         return analang+'-x-py'
     def legacylangconvert(self):
         formnodes=self.nodes.findall(".//form")
         formlangs=set([i.get('lang') for i in formnodes])
         langs=self.analangs+self.glosslangs
+        langs=set([i for i in langs if i])
         log.info("looking to convert pylangs for {}".format(langs))
         for lang in langs:
-            for flang in self.pylanglegacy(lang),self.pylanglegacy2(lang):
+            for flang in pylanglegacy(lang),pylanglegacy2(lang):
                 if flang in formlangs:
                     log.info("Found {}; converting to {}".format(flang,
-                                                        self.pylang(lang)))
+                                                        pylang(lang)))
                     for n in self.nodes.findall(".//form[@lang='{}']"
                                                 "".format(flang)):
                         # log.info("{}; {}".format(n.tag,n.attrib))
-                        n.set('lang',self.pylang(lang))
+                        n.set('lang',pylang(lang))
     def modverificationnode(self,senseid,vtype,ftype,analang,**kwargs):
+        # use self.verificationtextvalue(profile,ftype,lang=None,value=None)
         """this node stores a python symbolic representation, specific to an
         analysis language"""
         showurl=kwargs.get('showurl')
@@ -279,7 +290,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # prettyprint(textnode)
         # prettyprint(fieldnode)
         l=self.evaluatenode(textnode) #this is the python evaluation of textnode
-        log.info("l (before): {}>".format(l))
+        # log.info("l (before): {}>".format(l))
         # prettyprint(textnode)
         changed=False
         i=len(l)
@@ -293,7 +304,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             l.insert(i,add) #put where removed from, if done.
             changed=True
         textnode.text=str(l)
-        log.info("l (after): {}> (changed: {})".format(l,changed))
+        # log.info("l (after): {}> (changed: {})".format(l,changed))
         # prettyprint(textnode)
         if changed:
             self.updatemoddatetime(senseid=senseid,write=kwargs.get('write'))
@@ -304,6 +315,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # else:
         #     log.info("Not removing empty node")
     def getverificationnodevaluebyframe(self,senseid,vtype,ftype,analang,frame):
+        # use self.verificationtextvalue(profile,ftype,lang=None,value=None)
+        raise
         # log.info("{}; {}; {}; {}; {}".format(senseid,vtype,ftype,analang,frame))
         nodes=self.getverificationnode(senseid,vtype,ftype,analang)
         vft=nodes[0] #this is a text node
@@ -312,7 +325,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         values=[]
         if l is not None:
             for field in l:
-                log.info("field value: {}".format(field))
+                # log.info("field value: {}".format(field))
                 if frame in field:
                     values.append(field)
         return values
@@ -324,7 +337,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # This is used in cases where form@lang wasn't specified, so now we make
         # it up, and trust the user can fix if this is guessed wrong
         try:
-            lang=self.pylang(self.analang)
+            lang=pylang(self.analang)
         except AttributeError:
             return #if there is no analang, there are no legacy fields either
         #any verification field, anywhere:
@@ -349,17 +362,20 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                     # time.time()-start_time)
                                                     ))
     def getverificationnode(self,senseid,vtype,ftype,analang):
+        raise
         sensenode=node=self.getsensenode(senseid=senseid)
         if node is None:
             log.info("Sorry, this didn't return a node: {}".format(senseid))
             return
-        pylang=self.pylang(analang)
+        pylang=pylang(analang)
         vf=sensenode.find("field[@type='{} {} verification']/form[@lang='{}']"
                             "/text/../..".format(vtype,ftype,pylang))
         vft=sensenode.find("field[@type='{} {} verification']/form[@lang='{}']"
                             "/text".format(vtype,ftype,pylang))
         return vft,vf,sensenode #textnode, fieldnode, sensenode
     def addverificationnode(self,senseid,vtype,ftype,analang):
+        # use self.verificationtextvalue(profile,ftype,lang=None,value=None)
+        raise
         # This no longer accounts for legacy fields, as those should be
         # converted at boot.
         vft,vf,sensenode=self.getverificationnode(senseid,vtype,ftype,analang)
@@ -369,13 +385,125 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         t=None #this default will give no text node value
         if not isinstance(vft,ET.Element): #only then add fields
             # log.info("Empty vft; adding verification field")
-            vf=Node(sensenode, 'field',
+            vf=Node(sensenode, tag='field',
                             attrib={'type':"{} {} verification".format(vtype,
                                                                         ftype)})
-            vft=vf.makeformnode(lang=self.pylang(analang),text=t,gimmetext=True)
+            vft=vf.makeformnode(lang=pylang(analang),text=t,gimmetext=True)
         return vft,vf,sensenode #textnode, fieldnode, sensenode
+    def getentries(self):
+        self.entries=[Entry(self.nodes,i,annotationlang=self.annotationlang)
+                            for i in self.nodes
+                            if i.tag == 'entry']
+        self.nentries=len(self.entries)
+    def getsenses(self):
+        self.senses=[i for j in self.entries for i in j.senses]
+        self.nsenses=len(self.senses)
+    def slicebyid(self):
+        self.entrydict={i.guid:i for i in self.entries}
+        self.sensedict={i.id:i for i in self.senses}
+        self.guids=self.entrydict.keys()
+        self.nguids=len(self.guids)
+        self.senseids=self.sensedict.keys()
+        self.nsenseids=len(self.guids)
+    def slicebyps(self):
+        #This can be converted to by profile in main.py
+        self.entriesbyps={ps:[i for i in self.entries
+                                if i.sense.psvalue() == ps
+                                ]
+                            for ps in self.pss
+                            }
+        self.sensesbyps={ps:[i for i in self.senses if i.psvalue() == ps]
+                            for ps in self.pss
+                            }
+    def slicebyerror(self):
+        keys=set([(i.cawln,', '.join(i.collectionglosses)) for i in self.senses
+                    if not i.imgselectiondir
+                ])
+        errors={k:
+                    [i.id for i in self.senses
+                            if not i.imgselectiondir
+                            if i.cawln == k[0]
+                            if ', '.join(i.collectionglosses) == k[1]
+                    ]
+                for k in keys
+                }
+        # log.info("Errors ({}): {}".format(len(errors),errors))
+        if keys:
+            log.info("keys ({}): {}".format(len(keys),list(keys)[:min(len(keys)-1,5)]))
+        for cawl,glosses in list(errors)[:min(len(errors),5)]:
+            log.error("Neither CAWL line nor English glosses point "
+                "to a real directory, so I can't tell which image "
+                "directory to use for thes senses. "
+                "Furthermore, I don't have both the line and glosses, "
+                "so I can't construct a directory name to write to: "
+                "{}-{} ({}): {}"
+                "".format(cawl,glosses,len(errors[(cawl,glosses)]),
+                errors[(cawl,glosses)][:min(len(errors[(cawl,glosses)]),5)]))
+    def slicebylx(self):
+        #This can be converted to by profile in main.py
+        self.entriesbylx={l:{t:[j for j in self.entries
+                                    if t == j.lx.textvaluebylang(l)
+                                ]
+                            for t in [i.lx.textvaluebylang(l)
+                                        for i in self.entries]
+                            if t #don't give None keys
+                            }
+                            for l in self.analangs
+                        }
+    def slicebylc(self):
+        #This can be converted to by profile in main.py
+        self.entriesbylc={l:{t:[j for j in self.entries
+                                    if t == j.lc.textvaluebylang(l)
+                                ]
+                            for t in [i.lc.textvaluebylang(l)
+                                        for i in self.entries]
+                            if t #don't give None keys
+                            }
+                            for l in self.analangs
+                        }
+    def slicebypl(self):
+        #This can be converted to by profile in main.py
+        self.entriesbypl={l:{t:[j for j in self.entries
+                                    if t == j.plvalue('Plural',l)
+                                ]
+                            for t in [i.plvalue('Plural',l)
+                                        for i in self.entries]
+                            }
+                            for l in self.analangs
+                        }
+    def slicebyimp(self):
+        #This can be converted to by profile in main.py
+        self.entriesbyimp={l:{i.imp.textvaluebylang(l):i}
+                            for i in self.entries
+                            if hasattr(i,'imp')
+                            for l in self.analangs
+                            if l in i.imp.forms
+                        }
+    def slicebyftype(self):
+        self.entriesbyftype={f:{l:{i.fields[f].textvaluebylang(lang=l):i}}
+                            for i in self.entries
+                            for f in i.fields
+                            for l in self.analangs
+                            if l in i.fields[f].forms
+                            }
+        self.sensesbyftype={f:{l:{t:[i for i in self.senses
+                                    if f in i.fields
+                                    if t == i.fields[f].textvaluebylang(l)
+                                    ]
+                                }}
+                            for i in self.senses
+                            for f in i.fields
+                            for l in self.analangs
+                            if l in i.fields[f].forms
+                            for t in [i.fields[f].textvaluebylang(l)]
+                            }
+        # log.info("senses: {}".format(self.senses))
+        # log.info("nsenses: {}".format(len(self.senses)))
     def getentrynode(self,**kwargs):
-        return self.get('entry',**kwargs).get()
+        if not kwargs:
+            return self.entries #these are class Entry
+        else:
+            return self.get('entry',**kwargs).get() #these are not
     def getsensenode(self,**kwargs):
         # log.info("senseid: {}".format(senseid))
         x=self.get('sense',**kwargs,
@@ -477,7 +605,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             p.makeformnode(analang,forms[analang])
             """Until I have reason to do otherwise, I'm going to assume these
             fields are being filled in in the glosslang language."""
-            fieldgloss=Node(p,'translation',attrib={'type':'Frame translation'})
+            fieldgloss=Node(p,tag='translation',attrib={'type':'Frame translation'})
             for lang in glosslangs:
                 if lang in forms:
                     fieldgloss.makeformnode(lang,forms[lang])
@@ -676,7 +804,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     ).get()
         if t == []:
             # log.info("No sense level tone field found, making")
-            p=Node(node[0],'field',attrib={'type':'tone'})
+            p=Node(node[0],tag='field',attrib={'type':'tone'})
             p.makeformnode(analang,text=group)
         else:
             # log.info("Sense level tone field found ({}), using".format(
@@ -700,16 +828,16 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         there."""
         showurl=kwargs.get('showurl',False)
         write=kwargs.get('write',True)
-        log.info("Adding {} value to {} location".format(url,node))
+        # log.info("Adding {} value to {} location".format(url,node))
         possibles=node.findall("form[@lang='{lang}']/text".format(lang=lang))
         for possible in possibles:
-            log.debug("Checking possible: {} (index: {})".format(possible,
-                                                    possibles.index(possible)))
+            # log.info("Checking possible: {} (index: {})".format(possible,
+            #                                         possibles.index(possible)))
             if hasattr(possible,'text'):
                 if possible.text == url:
-                    log.debug("This one is already here; not adding.")
+                    # log.info("This one is already here; not adding.")
                     return
-        form=Node(node,'form',attrib={'lang':lang})
+        form=Node(node,tag='form',attrib={'lang':lang})
         t=form.maketextnode(text=url)
         # prettyprint(node)
         """Can't really do this without knowing what entry or sense I'm in..."""
@@ -718,7 +846,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def addmodcitationfields(self,entry,langform,lang):
         citation=entry.find('citation')
         if citation is None:
-            citation=Node(entry, 'citation')
+            citation=Node(entry, tag='citation')
             citation.makeformnode(lang=lang,text=langform)
     def addpronunciationfields(self,**kwargs):
         """This fuction will add an XML node to the lift tree, like a new
@@ -737,7 +865,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         fieldtype=kwargs.get('fieldtype','tone')
         fieldvalue=kwargs.get('fieldvalue')
         location=kwargs.get('location')
-        p=Node(node, 'pronunciation')
+        p=Node(node, tag='pronunciation')
         p.makeformnode(lang=analang,text=forms[analang])
         p.makefieldnode(type=fieldtype,lang=glosslangs[0],text=fieldvalue)
         for lang in glosslangs:
@@ -781,8 +909,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """this parses the lift file into an entire ElementTree tree,
         for reading or writing the LIFT file."""
         log.info("Reading LIFT file: {}".format(self.filename))
-        self.tree=ET.parse(self.filename)
-        self.nodes=self.tree.getroot()
+        self.tree,self.nodes=readxml(self.filename)
+        # self.tree=ET.parse(self.filename)
+        # self.nodes=self.tree.getroot()
         log.info("Done reading LIFT file.")
         """This returns the root node of an ElementTree tree (the entire
         tree as nodes), to edit the XML."""
@@ -849,11 +978,22 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """These are ordered by frequency in the database"""
         self.audiolangs=[]
         self.analangs=[]
-        lxl=self.get('lexeme/form').get('lang')
-        lcl=self.get('citation/form').get('lang')
-        pronl=self.get('pronunciation/form').get('lang')
+        lxl=[j for k in [i.lx.langs()
+                        for i in self.entries]
+                    for j in k
+                    ]
+        lcl=[j for k in [i.lc.langs()
+                        for i in self.entries]
+                    for j in k
+                    ]
+        pronl=[j for k in [i.ph.langs()
+                        for i in self.entries
+                        if hasattr(i,'ph')]
+                    for j in k
+                    ]
         langsbycount=collections.Counter(lxl+lcl+pronl)
-        self.analangs=[i[0] for i in langsbycount.most_common()]
+        self.analangs=[i[0] for i in langsbycount.most_common()
+                        if i[0] != 'x-unk'] #I assume will never analyze this
         log.info(_("Possible analysis language codes found: {}".format(
                                                                 self.analangs)))
         for glang in set(['fr','en']) & set(self.analangs):
@@ -883,34 +1023,33 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         d=self.get('definition/form').get('lang')
         self.glosslangs=[i[0] for i in collections.Counter(g+d).most_common()]
         log.info(_("gloss languages found: {}".format(self.glosslangs)))
+        self.annotationlang=self.glosslangs[0]
+        log.info(_("Using first gloss language for new annotations: {}".format(
+                                                        self.annotationlang)))
     def getfieldnames(self,guid=None,lang=None): # all field types in a given entry
-        self.fieldnames={}
-        langs=set(self.get('entry/field/form',
-                # lang=lang,
-                # showurl=True
-                ).get('lang'))
-        # log.info("Found these entry field languages: {}".format(langs))
-        for lang in langs:
-            # log.info("Looking for entry fields coded by lang [{}]".format(lang))
-            self.fieldnames[lang]=list(dict.fromkeys(self.get('entry/field',
-                                                lang=lang,
-                                                # showurl=True
-                                                ).get('type')))
+        self.fieldnames={l:set([k
+                                    for i in self.entries
+                                    for k in i.fields
+                                    if l in i.fields[k].forms
+                                    ])
+                                for l in self.analangs+self.glosslangs
+                                if [k for i in self.entries #no set()
+                                    for k in i.fields
+                                    if l in i.fields[k].forms
+                                    ]
+                                }
         log.info('Fields found in Entries: {}'.format(self.fieldnames))
     def getsensefieldnames(self,guid=None,lang=None): # all field types in a given entry
-        #This presumes there is a form@lang!
-        self.sensefieldnames={}
-        langs=set(self.get('entry/sense/field/form',
-                # lang=lang,
-                # showurl=True
-                ).get('lang'))
-        # log.info("Found these sense field languages: {}".format(langs))
-        for lang in langs:
-            self.sensefieldnames[lang]=list(dict.fromkeys(
-                    self.get('entry/sense/field',
-                            lang=lang,
-                            # showurl=True
-                            ).get('type')))
+        self.sensefieldnames={l:set([k
+                                    for i in self.senses
+                                    for k in i.fields
+                                    if l in i.fields[k].forms
+                                    if k
+                                    ])
+                                for i in self.senses
+                                for k in i.fields
+                                for l in i.fields[k].forms
+                                }
         log.info('Fields found in Senses: {}'.format(self.sensefieldnames))
     def getlocations(self,guid=None,lang=None): # all field locations in a given entry
         self.locations=list(dict.fromkeys(self.get('example/locationfield/form/text',
@@ -933,30 +1072,52 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             log.info("Found {} senses with lexical category {}".format(
                                                     self.nsenseidsbyps[ps],ps))
         else:
-            pssanylang=setlistsofanykey(self.pss)
-            for ps in pssanylang:
+            for ps in [i for i in self.pss if i]:
                 self.getsenseidsbyps(ps)
     def getsenseids(self):
-        self.senseids=self.get('sense').get('senseid')
+        self.senseids=[i.id for i in self.senses]
         self.nsenseids=len(self.senseids)
+    def getentrieswanalangdata(self):
+        #do each of these, then cull
+        self.getentrieswlexemedata() #sets: self.(n)entrieswlexemedata
+        self.getentrieswcitationdata() #sets: self.(n)entrieswcitationdata
+        for lang in self.analangs.copy():
+            if (not self.nentrieswlexemedata[lang] and
+                not self.nentrieswcitationdata[lang]):
+                self.analangs.remove(lang)
+            elif not (self.nentrieswlexemedata[lang] > self.nguids/100 or
+                        self.nentrieswcitationdata[lang] > self.nguids/100
+                    ):
+                log.info("Analysis language ˋ{}ˊ appears in in less than "
+                        "1% of entries ({}): {} "
+                        "".format(lang,
+                                    (self.nentrieswcitationdata[lang]+
+                                    self.nentrieswlexemedata[lang]),
+                                    [i.get('id')
+                                    for i in (self.entrieswlexemedata[lang]+
+                                            self.entrieswcitationdata[lang])
+                                    ],
+                                ))
     def getentrieswcitationdata(self):
-        self.entrieswcitationdata={}
-        self.nentrieswcitationdata={}
-        for lang in self.analangs:
-            self.entrieswcitationdata[lang]=[
-                    i for i in self.nodes.findall('entry')
-                    if textornone(Entry.formtextnodeofentry(i,'citation',lang))
-                            ]
-            self.nentrieswcitationdata[lang]=len(self.entrieswcitationdata[lang])
+        self.entrieswcitationdata={lang:[
+                                    i for j in self.entriesbylc[lang].values()
+                                    for i in j
+                                        ]
+                                    for lang in self.analangs
+                                    }
+        self.nentrieswcitationdata={lang:len(self.entrieswcitationdata[lang])
+                                    for lang in self.entrieswcitationdata
+                                    }
     def getentrieswlexemedata(self):
-        self.entrieswlexemedata={}
-        self.nentrieswlexemedata={}
-        for lang in self.analangs:
-            self.entrieswlexemedata[lang]=[
-                i for i in self.nodes.findall('entry')
-                if textornone(Entry.formtextnodeofentry(i,'lexical-unit',lang))
-                            ]
-            self.nentrieswlexemedata[lang]=len(self.entrieswlexemedata[lang])
+        self.entrieswlexemedata={lang:[
+                                    i for j in self.entriesbylx[lang].values()
+                                    for i in j
+                                        ]
+                                    for lang in self.analangs
+                                    }
+        self.nentrieswlexemedata={lang:len(self.entrieswlexemedata[lang])
+                                    for lang in self.entrieswlexemedata
+                                    }
     def getfieldswsoundfiles(self):
         """This is NOT sensitive to sense level fields, which is where we store
         analysis and verification. This should just pick up entry form fields,
@@ -967,6 +1128,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nfieldswannotations={}
         self.fields={}
         self.nfields={}
+        # for l in self.fieldnames:
+        #     del self.fieldnames[l] #for testing cases without fields!
         fieldopts={k:k for k in ['sense/example',
                                 'citation',
                                 'lexical-unit']}
@@ -1010,9 +1173,49 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                                 ]
                 self.nfieldswsoundfiles[lang][field]=len(fieldswsoundfiles[lang]
                                                                         [field])
-                log.info("Found {} fieldswsoundfiles for {}".format(
-                            self.nfieldswsoundfiles[lang],lang))
+                log.info("Found {} fieldswsoundfiles for {}/{}".format(
+                            self.nfieldswsoundfiles[lang][field],field,lang))
         # log.info("Found {} fieldswsoundfiles".format(self.nfieldswsoundfiles))
+    def getsenseswglosslangdata(self):
+        #do each of these, then cull in the second one
+        self.getsenseswglossdata() #sets: self.nentrieswglossdata
+        self.getsenseswdefndata() #sets: self.nentrieswdefndata
+        for lang in self.glosslangs.copy():
+            if not self.nsenseswdefndata[lang] and (
+                                    not self.nsenseswglossdata[lang]):
+                self.glosslangs.remove(lang) #do this just once
+    def getsenseswglossdata(self):
+        senseswglossdata={lang:[
+                                i for i in self.senses
+                                if i.glossvaluesbylang(lang)
+                                ]
+                                for lang in self.glosslangs
+                            }
+        self.nsenseswglossdata={lang:len(senseswglossdata[lang])
+                                    for lang in senseswglossdata
+                                }
+        for lang in [l for l in self.nsenseswglossdata if
+                        0 < self.nsenseswglossdata[l] < self.nguids/100]:
+                log.info("Glosslang ˋ{}ˊ appears in less than "
+                        "1% ({}) of sense glosses: {}"
+                        "".format(lang,self.nsenseswglossdata[lang],
+                                [i.get('id') for i in senseswglossdata[lang]]
+                                    ))
+    def getsenseswdefndata(self):
+        senseswdefndata={lang: [i for i in self.senses
+                                # for lang in self.glosslangs
+                                if i.definition.textvaluebylang(lang)
+                                ]
+                        for lang in self.glosslangs}
+        self.nsenseswdefndata={lang:len(senseswdefndata[lang])
+                                for lang in senseswdefndata}
+        for lang in [l for l in self.nsenseswdefndata if
+                        0 < self.nsenseswdefndata[l] < self.nguids/100]:
+                log.info("Glosslang ˋ{}ˊ appears in less than "
+                        "1% ({}) of sense definitions: {}"
+                        "".format(lang,self.nsenseswdefndata[lang],
+                                    [i.get('id') for i in senseswdefndata[lang]]
+                                    ))
     def getguids(self):
         self.guids=self.get('entry').get('guid')
         self.nguids=len(self.guids)
@@ -1103,41 +1306,49 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['pvd']={}
         c['pvd'][2]=['bh','dh','gh','gb',
                     'bb','dd','gg', #French
-                    'gw','dw', 'ɗw', #gnd
-                    'mb','nd','ŋg'
+                    # 'gw','dw', 'ɗw', #gnd
+                    'mb','nd','ŋg',
+                    'Mb', 'Bw', #tsh
                     ]
         c['pvd'][3]=[
-                    'ndw', 'ŋgw' #gnd
+                    # 'ndw', 'ŋgw' #gnd
                     ]
         c['pvd'][1]=['b','B','d','g','ɡ'] #,'G' messes with profiles
         c['p']={}
         c['p'][2]=['kk','kp','cc','pp','pt','tt','ck',
-                    'kw','tw'
+                    # 'kw','tw',
+                    'Pk','Pw' #tsh
                     ] #gnd
-        c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k','q']
+        c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k','q',
+                    'ç' #French
+                    ]
         c['fvd']={}
-        c['fvd'][2]=['bh','vh','zh']
+        c['fvd'][2]=['bh','vh','zh',
+                    # 'zw' #gnd
+                    ]
         c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ'] #problems w x?
         c['f']={}
         c['f'][3]=['sch']
         c['f'][2]=['ch','ph','sh','hh','pf','bv','ff','sc','ss','th',
-                    'hw' #gnd
+                    # 'hw','sw' #gnd
                     ]
         #Assuming x is voiceless, per IPA and most useage...
         c['f'][1]=['F','f','s','ʃ','θ','x','h'] #not 'S'
         c['avd']={}
         c['avd'][2]=['dj','dz','dʒ']
-        c['avd'][3]=['ndz','dzw'] #gnd
-        c['avd'][4]=['ndzw'] #gnd
+        c['avd'][3]=['ndz',
+                    # 'dzw' #gnd
+                    ]
+        # c['avd'][4]=['ndzw'] #gnd
         c['a']={}
         c['a'][3]=['chk','tch']
         c['a'][2]=['ts','tʃ']
         c['lfvd']={}
-        c['lfvd'][3]=['zlw']
+        # c['lfvd'][3]=['zlw']
         c['lfvd'][2]=['zl']
         c['lfvd'][1]=['ɮ']
         c['lf']={}
-        c['lf'][3]=['slw']
+        # c['lf'][3]=['slw']
         c['lf'][2]=['sl']
         c['lf'][1]=['ɬ']
         c['pn']={}
@@ -1145,41 +1356,41 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['pn'][2]=['ᵐb','ᵐp','ᵐv','ᵐf','ⁿd','ⁿt','ᵑg','ⁿg','ᵑg','ⁿk','ᵑk',
                     'ⁿj','ⁿs','ⁿz']
         x={} #dict to put all hypothetical segements in, by category
-        for nglyphs in [4,3,2,1]:
-            if nglyphs == 4:
-                consvar='Cqg'
-                dconsvar='Dqg'
-            elif nglyphs == 3:
-                consvar='Ctg'
-                dconsvar='Dtg'
-            elif nglyphs == 2:
-                consvar='Cdg'
-                dconsvar='Ddg'
-            elif nglyphs == 1:
+        c['G']={1:['ẅ','y','Y','w','W']}
+        c['N']={1:['m','M','n','ŋ','ɲ','ɱ']} #'N', messed with profiles
+        c['N'][2]=['mm','ŋŋ','ny','gn','nn']
+        c['N'][3]=["ng'"]
+        """Non-Nasal/Glide Sonorants"""
+        c['S']={1:['l','r']}
+        c['S'][2]=['rh','wh','ll','rr',
+                    # 'rw','lw' #gnd
+                    ]
+        for stype in c:
+            if stype in ['ʔ','G','N','S']: #'V'?
+                consvar=stype
+            elif 'vd' in stype:
+                consvar='D'
+            else:
                 consvar='C'
-                dconsvar='D'
-            x[consvar]=list() #to store valid consonants in
-            x[dconsvar]=list() #to store valid depressor consonants in
-            for stype in c:
-                if c[stype].get(nglyphs) is not None:
-                    if 'vd' in stype:
-                        x[dconsvar]+=c[stype][nglyphs]
-                    else:
-                        x[consvar]+=c[stype][nglyphs]
+            for nglyphs in [i for i in range(5) if i in c[stype]]:
+                for glyph in [i for i in c[stype][nglyphs]
+                                if not set(['w','ʷ'])&set(i)
+                                ]:
+                    try:
+                        c[stype][nglyphs+1]+=[glyph+'w']
+                    except KeyError:
+                        c[stype][nglyphs+1]=[glyph+'w']
+            for nglyphs,varsfx in [(4,'qg'),(3,'tg'),(2,'dg'),(1,'')]:
+                if c[stype].get(nglyphs):
+                    try:
+                        x[consvar+varsfx]+=c[stype][nglyphs]
+                    except KeyError:
+                        x[consvar+varsfx]=c[stype][nglyphs]
         x['ʔ']=['ʔ',
                 "ꞌ", #Latin Small Letter Saltillo
                 "'", #Tag Apostrophe
                 'ʼ'  #modifier letter apostrophe
                 ]
-        x['G']=['ẅ','y','Y','w','W']
-        x['N']=['m','M','n','ŋ','ɲ','ɱ'] #'N', messed with profiles
-        x['Ndg']=['mm','ŋŋ','ny','gn','nn']
-        x['Ntg']=["ng'"]
-        """Non-Nasal/Glide Sonorants"""
-        x['S']=['l','r']
-        x['Sdg']=['rh','wh','ll','rr',
-                    'rw','lw' #gnd
-                    ]
         x['V']=[
                 #decomposed first:
                 #tilde (decomposed):
@@ -1198,7 +1409,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 'Á', 'É', 'Í', 'Ó', 'Ú',
                 'â', 'ê', 'î', 'ô', 'û',
                 'Â', 'Ê', 'Î', 'Ô', 'Û',
-                'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
+                'ã', 'ẽ', 'ĩ', 'õ', 'ũ',
+                'œ','ë' #French
                 ]
         x['Vdg']=['ou','ei','ɨʉ','ai', #requested by bfj
                 'óu','éi','ɨ́ʉ','ái',
@@ -1219,7 +1431,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 ] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
         x['ː']=[":","ː"] # vowel length markers
         x['=']=['=','-'] #affix boundary markers
-        x['<']=['<','&lt;','&gt;','>','›','»','‹','«',''] #macron here?
+        x['<']=['<','&lt;','&gt;','>','›','»','‹','«','',
+                # ';','"','.' #pull these; they shouldn't appear in words
+                ] #macron here?
         # """We need to address long and idiosyncratic vowel orthographies,
         # especially for Cameroon. This should also include diacritics, together
         # or separately."""
@@ -1394,7 +1608,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 for a in ann:
                     a.set('value',anndict['value'])
                 if not ann:
-                    a=Node(form, 'annotation', anndict)
+                    a=Node(form, tag='annotation', **anndict)
     def extrasegments(self):
         for lang in self.analangs:
             self.segmentsnotinregexes[lang]={}
@@ -1427,8 +1641,15 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     "complex segments which should be counted as a single "
                     "segment.")
                 log.info("--those may not be covered by your regexes.")
+    def getpss(self):
+        self.pss=[i[0] for i in collections.Counter(
+                                            [i.psvalue() for i in self.senses]
+                                                    ).most_common() if i[0]]
     def ps(self,**kwargs): #get POS values, limited as you like
-        return self.get('ps',**kwargs).get('value')
+        if kwargs:
+            return self.get('ps',**kwargs).get('value')
+        else:
+            return collections.Counter([i.psvalue() for i in self.senses])
     def getpssbylang(self,analang=None): #get all POS values in the LIFT file
         ordered={}
         if analang: #if one specified (after not initially found with data)
@@ -1437,7 +1658,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             analangs=self.analangs
         for lang in analangs:
             counted = collections.Counter(self.ps(lang=lang))
-            ordered[lang] = [value for value, count in counted.most_common()]
+            ordered[lang] = [value for value, count in counted.most_common()
+                            if value] #don't include '' or None!
         log.info("Found these ps values, by frequency: {}".format(ordered))
         return ordered
     def getmorphtypes(self): #get all morph-type values in the LIFT file
@@ -1448,129 +1670,1100 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def copylctolx(self):
         # This is a copy operation, leaving lc in place
         for e in self.getentrynode(**kwargs):
-            lcs=e.findall('citation') # I need form node, not text node
-            log.info("Looking at entry w/guid: {}".format(e.get("guid")))
-            for lc in lcs:
-                log.info("Found {}".format(Node.childrenwtext(lc)))
-                for lcf in Node.childrenwtext(lc):
-                    lcfl=lcf.get('lang')
-                    lcft=lcf.find('text')
+            log.info("Looking at entry w/guid: {}".format(e.guid))
+            log.info("Found {}".format(e.lc.forms))
+            for lang in e.lc.forms:
                     # log.info("Copying {} from lang {}".format(lcft.text,lcfl))
-                    """This finds or creates, by lang:"""
-                    lx=Entry.formtextnodeofentry(e,'lexical-unit',lcfl) #This gives text node
-                    log.info("Copying citation ‘{}’ to lexeme (was {}) for "
-                            "lang {}".format(lcft.text,lx.text,lcfl))
-                    lx.text=lcft.text #overwrite in any case
+                """This finds or creates, by lang:"""
+                lx=e.lx.textvaluebylang(lang)
+                lc=e.lc.textvaluebylang(lang)
+                log.info("Copying citation ‘{}’ to lexeme (was {}) for "
+                        "lang {}".format(lc,lx,lang))
+                e.lx.textvaluebylang(lang,lc) #overwrite in any case
                     # if not lx.text: #don't overwrite info
                     #     lcft.text='' #don't clear
     def convertlxtolc(self,**kwargs):
-        # This is a move operation, removing lx when done
-        for e in self.getentrynode(**kwargs):
-            lxs=e.findall('lexical-unit') # I need form node, not text node
-            for lx in lxs:
-                log.info("Looking at entry w/guid: {}".format(e.get("guid")))
-                log.info("Found {}".format(Node.childrenwtext(lx)))
-                for lxf in Node.childrenwtext(lx):
-                    lxfl=lxf.get('lang')
-                    lxft=lxf.find('text')
-                    # log.info("Moving {} from lang {}".format(lxft.text,lxfl))
-                    """This finds or creates, by lang:"""
-                    lc=Entry.formtextnodeofentry(e,'citation',lxfl) #This gives text node
-                    log.info("Moving lexeme ‘{}’ to citation (was {}) for lang {}"
-                            "".format(lxft.text,lc.text,lxfl))
-                    if not lc.text: #don't overwrite info
-                        lc.text=lxft.text
-                        lxft.text='' #clear only on move
+        # This is a move operation, removing 'from' when done, unless 'to'
+        # is both there and different
+        kwargs['from']='lexical-unit'
+        kwargs['to']='citation'
+        self.convertxtoy(**kwargs)
+    def convert1xto1y(self,entry,lang=None,**kwargs):
+        if kwargs['fromtag'] in ['definition','gloss']:
+            parent=entry.senses[0] #just take first one, for now
+        else: #parent of node to find may be sense or entry
+            parent=entry
+        # log.info("Found entry parent node {}".format(parent))
+        if kwargs['fromtag'] == 'gloss':
+            froms=parent.glosses
+        if kwargs['fromtag'] == 'definition':
+            froms=[parent.definition] #just one
+        else:
+            froms=parent.findall(kwargs['fromtag']) # I need form node, not text node
+        # log.info("Found {} entry {} fields".format(len(froms),
+        #                                             kwargs['fromtag']))
+        for f in froms:
+            log.info("Looking at {} {} of entry w/guid: {}"
+                    "".format(getattr(f,'lang',''),f.tag,entry.get("guid")))
+            if lang:
+                if f.tag in ['definition','gloss'] and f.lang != lang:
+                    continue
+                elif f.tag in ['definition','gloss']:
+                    nodes=[f]
+                else:
+                    nodes=[i for i in Node.childrenwtext(f)
+                                if i.get('lang') == lang]
+            else:
+                nodes=Node.childrenwtext(f)
+            log.info("Found {}".format(nodes))
+            for ff in nodes:
+                # log.info("Working on {}".format(ff))
+                ffl=ff.lang
+                try:
+                    fft=ff.textvaluebylang(lang)
+                except AttributeError:
+                    fft=ff.textvalue()
+                # log.info("Moving {} {} from lang {}".format(ff.tag,fft,ffl))
+                """This finds or creates, by lang:""" #This gives text node
+                # For now, assuming everything goes to entry:
+                if kwargs['totag'] == 'citation':
+                    to=entry.lc
+                elif kwargs['totag'] == 'gloss':
+                    to=entry.glosses[ffl][0]
+                else:
+                    log.info("convert1xto1y no totag: {}".format(kwargs['totag']))
+                    raise
+                try:
+                    totext=to.textvaluebylang(lang)
+                except AttributeError:
+                    totext=to.textvalue()
+                log.info("Moving {} {}/{} ‘{}’ to {}/{} (was {}) for lang {}"
+                        "".format(entry.get("guid"),kwargs['fromtag'],f.tag,fft,
+                                    kwargs['totag'],to.tag,totext,ffl))
+                if not totext:#,value
+                    if f.tag == 'definition' and to.tag == 'citation':
+                        to.textvaluebylang(lang,rx.glossdeftoform(fft))
+                        # to.text=rx.glossdeftoform(fft.text)
+                    if f.tag == 'gloss' and to.tag == 'citation':
+                        to.textvaluebylang(lang,rx.glossdeftoform(fft))
+                        # to.text=rx.glossdeftoform(fft.text)
+                    else:
+                        to.text=fft.text
+                if (to.textvaluebylang(lang) == fft and not kwargs.get('keep')):
+                    fft.textvaluebylang('')
+                if (f.tag in ['definition','gloss'] and
+                            to.tag == 'citation'):
+                    return # just do one
+    def convertxtoy(self,lang=None,**kwargs):
+        # convert to Entry
+        log.info("kwargs: {}".format(kwargs))
+        #don't pass these to getentrynode
+        f=kwargs.pop('fromtag')
+        t=kwargs.pop('totag')
+        k=kwargs.pop('keep',False)
+        log.info("kwargs: {}".format(kwargs))
+        if 'entries' in kwargs:
+            entries=kwargs['entries']
+        else:
+            entries=self.getentrynode(**kwargs) #if no kwargs, all lift.Entries
+        log.info("Looking at {} entries ({})".format(len(entries),entries))
+        for e in entries:
+            log.info("Looking at entry {} ({})".format(e.get('guid'),lang))
+            self.convert1xto1y(e,lang,fromtag=f,totag=t,keep=k)
+            # if e.get('guid') == '29febd49-9f74-4f6b-8256-21f81d6ba0f2':
+            #     prettyprint(e)
+            # exit()
+    def convertdefntogloss(self,**kwargs):
+        # This is a move operation, removing 'from' when done, unless 'to'
+        # is both there and different
+        kwargs['fromtag']='definition'
+        kwargs['totag']='gloss'
+        self.convertxtoy(**kwargs)
+    def convertglosstocitation(self,lang,**kwargs):
+        # This is a move operation, removing 'from' when done, unless 'to'
+        # is both there and different
+        #This should only ever happen for one lang at a time, to make a demo db
+        for sense in self.senses:
+            sense.textvaluebyftypelang('lc',lang,
+                                        rx.glossdeftoform(
+                                        sense.formattedgloss(lang)[0]  #first item of list
+                                                            )
+                                        )
 class EmptyTextNodePlaceholder(object):
     """Just be able to return self.text when asked."""
     def __init__(self):
         # super(EmptyTextNodePlaceholder, self).__init__()
         self.text = None
-
 class Node(ET.Element):
     def makefieldnode(self,type,lang,text=None,gimmetext=False):
-        n=Node(self,'field',attrib={'type':type})
+        n=Node(self,tag='field',attrib={'type':type})
         nn=n.makeformnode(lang,text,gimmetext=gimmetext)
         if gimmetext:
             return nn
+        else:
+            return n
     def makeformnode(self,lang,text=None,gimmetext=False):
-        n=Node(self,'form',attrib={'lang':lang})
-        nn=n.maketextnode(text,gimmetext=gimmetext) #Node(n,'text')
+        n=Form(self,attrib={'lang':lang})
+        if text:
+            n.textvalue(text)
         if gimmetext:
-            return nn
+            return n.textnode
+        else:
+            return n
     def maketextnode(self,text=None,gimmetext=False):
-        n=Node(self,'text')
-        if text is not None:
+        n=Text(self)
+        if text is not None: # allow '' to clear
             n.text=str(text)
         if gimmetext:
             return n
     def maketraitnode(self,type,value,gimmenode=False):
-        n=Node(self,'trait',attrib={'name':type, 'value':str(value)})
+        """obsolete!"""
+        n=Node(self,tag='trait',attrib={'name':type, 'value':str(value)})
         if gimmenode:
             return n
     def childrenwtext(self):
-        return [i for i in self
-                    if i.findall('text') and
-                    [j for j in i.findall('text') if j.text]
-                ]
-    def __init__(self, parent, tag, attrib={}, **kwargs):
-        super(Node, self).__init__(tag, attrib, **kwargs)
-        parent.append(self)
-class Entry(object): # what does "object do here?"
-    #import lift.put as put #class put:
-    #import get #class put:
-    def formtextnodeofentry(self,tag,lang):
-        # this gives the form/text node, from which one can easily extract .text
-        # hence, the limiting by lang
-        nodes=self.findall(tag)
-        for node in nodes:
-            formtexts=node.findall('form[@lang="{}"]/text'.format(lang))
-            if formtexts:
-                return formtexts[0]
-        if nodes:
-            return Node.makeformnode(nodes[0],lang,gimmetext=True)
+        if self.tag == 'gloss':
+            if i.findall('text'):
+                return [self]
         else:
-            tag,attrib=rx.splitxpath(tag)
-            tagnode=Node(self,tag,attrib)
-            prettyprint(tagnode)
-            return tagnode.makeformnode(lang,gimmetext=True)
-    def __init__(self, db, guid=None, *args, **kwargs):
-        if guid is None:
-            log.info("Sorry, I was kidding about that; I really do need the entry's guid.")
-            exit()
-        #self.language=globalvariables.xyz #Do I want this here? It doesn't really add anything.. How can I check internal language? If there are more writing systems, do I want to find them?
-        #self.ps=lift_get.ps(self.guid) #do this is lift_get Entry class, inherit from there.
-        self.guid=guid
-        self.db=db #Do I want this?
+            return [i for i in self
+                        if i.findall('text') and
+                        [j for j in i.findall('text') if j.text]
+                    ]
+    def checkforsecondchild(self,tag):
+        """This is only for non-Multiple, single occurrence fields"""
+        if len(self.findall(tag)) > 1:
+            log.error("{} node in entry {} has multiple forms for {} tag. "
+                    "This is not legal LIFT; please fix this!"
+                    "".format(self.tag,self.entry.guid,tag))
+    def tagattrib(self,node,**kwargs):
+        if isinstance(node,ET.Element):
+            self.index=[i for i in self.parent].index(node)
+            tag=node.tag
+            kwargs.pop('tag','') #in case this is there, too.
+            attrib=node.attrib
+            kwargs.pop('attrib','') #in case this is there, too.
+        else: #i.e., if making a node from scratch
+            try:
+                tag=kwargs.pop('tag') #don't pass these twice
+                attrib=kwargs.pop('attrib',kwargs) #{})
+            except KeyError:
+                log.error("When making a node, add tag and attrib (dict) "
+                            "to kwargs")
+                raise
+        # if kwargs:
+        #     log.info("These kwargs are not being passed on: {}".format(kwargs))
+        return tag,attrib
+    def nodecheck(self,node,**kwargs):
+        """Is this working?"""
+        if not isinstance(node,ET.Element):
+            try:
+                node=Node(self.parent,**kwargs)
+            except RecursionError:
+                log.error("It looks like you need to add kwargs['tag'] for "
+                        "this class")
+                exit()
+        return node
+    def __init__(self, parent, node=None, **kwargs):
+        self.parent=parent
+        if not 'tag' in kwargs:
+            node=self.nodecheck(node,**kwargs)
+        tag,attrib=self.tagattrib(node,**kwargs) #this pulls from either
+        # log.info("Calling with tag: {}, attrib: {}, kwargs: {}".format(
+        #                                                 tag, attrib, kwargs
+        #                                                     ))
+        super(Node, self).__init__(tag, attrib) # **kwargs gives extra attrs
+        try:
+            assert isinstance(node,ET.Element)
+            for child in node:
+                self.append(child)
+            for attr in ['text', 'tail']:
+                setattr(self,attr,getattr(node,attr))
+            # log.info("removing old node (@{}): {}".format(self.index,node))
+            parent.remove(node)
+            # log.info("replacing with new node: {}".format(self))
+            parent.insert(self.index,self)
+        except:
+            # log.info("adding new node: {}".format(self))
+            parent.append(self) #or
+class Text(Node):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='text'
+        super(Text, self).__init__(parent, node, **kwargs)
+class ValueNode(Node):
+    def myvalue(self,value=None):
+        if value:
+            self.set(self.valuename,value)
+        elif value == '':
+            del self.attrib[self.valuename]
+        return self.get(self.valuename)
+    def __init__(self, parent, node=None, **kwargs):
+        self.valuename='value' #default
+        super(ValueNode, self).__init__(parent, node, **kwargs)
+class Annotation(ValueNode):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='annotation'
+        if 'attrib' in kwargs and 'name' not in kwargs['attrib']: #nodecheck elsewhere
+            log.error("No name for this annotation! ({})".format(kwargs))
+        super(Annotation, self).__init__(parent, node, **kwargs)
+class Trait(ValueNode):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='trait'
+        super(Trait, self).__init__(parent, node, **kwargs)
+class Ps(ValueNode):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='grammatical-info'
+        super(Ps, self).__init__(parent, node, **kwargs)
+class Form(Node):
+    def gettext(self):
+        self.textnode=Text(self,self.find('text'))
+    def getannotations(self):
+        self.annotations={i.get('name'):Annotation(self,i) for i in self
+                                            if i.tag == 'annotation'
+                        }
+    def annotationvaluedict(self):
+        return {name:self.annotations[name].annotationvalue(name)
+                for name in self.annotations}
+    def annotationvalue(self,name,value=None):
+        try:
+            # log.info("annotationvalue returning {}"
+            #         "".format(self.annotations[name].myvalue(value)))
+            return self.annotations[name].myvalue(value)
+        except KeyError:
+            if value:
+                self.annotations[name]=Annotation(self,attrib={'name':name,
+                                                                'value':value})
+            # else:
+            #     return self.annotations[name].get('value')
+            return None
+    def textquoted(self):
+        r=quote(self.textnode.text)
+        shownot=['lc','example','Frame translation']#lx?
+        if hasattr(self.parent,'ftype') and self.parent.ftype not in shownot:
+            r+="("+self.parent.ftype+")"
+        return r
+    def textvalue(self,value=None):
+        if value is not None: #leave room to clear value with ''
+            # log.info("Setting textvalue to ‘{}’ ({})".format(value,type(value)))
+            self.textnode.text=value
+        else:
+            return self.textnode.text
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='form'
+        super(Form, self).__init__(parent, node, **kwargs)
+        self.gettext()
+        self.getannotations()
+        self.lang=self.get("lang")
+class FormParent(Node):
+    def getlang(self,lang=None,shortest=False):
+        # this allows forms to be specified for any lang, so long as there is
+        # just one. Ultimately, we should specify which language these fields
+        # should be encoded in, and what to do when the UI lang is different.
+        # right now, this is most relevant for tone and location fields, which
+        # are not really language specific (though may be specified in one lang
+        # or another)
+        if lang:
+            # log.info("using lang specified: {}".format(lang))
+            return lang
+        langs=list(self.langs())
+        if len(langs) == 1: # Just one? use it
+            lang=langs[0]
+            # log.info("using only present lang {}".format(lang))
+        elif len(langs) == 0: # Adding? use default
+            if 'verification' in self.ftype:
+                #should be analang, at least not audiolang or phonetic variant:
+                lang=pylang(self.parent.entry.lc.getlang(shortest=True))
+                # log.info("using verification pylang {}".format(lang))
+            else:
+                lang=self.annotationlang
+                # log.info("using annotationlang {}".format(lang))
+        elif shortest:
+            lang=min(langs,key=len)
+            # log.info("returning shortest lang ({}) of {}".format(lang,langs))
+        else:
+            log.error("textvaluebylang got no lang kwarg for {} node, but "
+                    "multiple langs present: {}".format(self.tag,langs))
+        return lang
+    def langftypecode(self,lang):
+        return '_'.join([lang,self.ftype])
+    def stripftypecode(self,x):
+        return x.removesuffix('_'+self.ftype)
+    def textvaluedict(self):
+        return {lang:self.forms[lang].textvalue()
+                for lang in self.forms}
+    def textquotedbylang(self,lang):
+        try:
+            return self.forms[lang].textquoted()
+        except KeyError:
+            return None
+    def textvaluebylang(self,lang=None,value=None):
+        # if value:
+        #     log.info("Working on {} ({})".format(self.tag,self.ftype))
+        if not lang:
+            lang=self.getlang(lang)
+        if lang not in self.forms:
+            # log.info("Missing ‘{}’ lang in textvaluebylang".format(lang))
+            if value is not None: #only make if we're populating it, allow ''
+                self.forms[lang]=Form(self,attrib={'lang':lang})
+                # prettyprint(self.forms[lang])
+            else:
+                return None
+        # if value:
+        #     log.info("Sending ‘{}’ ({}) from textvaluebylang".format(value,type(value)))
+        return self.forms[lang].textvalue(value)
+    def annotationvaluedictbylang(self,lang):
+        self.forms[lang].annotationvaluedict()
+    def annotationvaluebylang(self,lang,name,value=None):
+        lang=self.getlang(lang) #This might be better more internally
+        try:
+            # log.info("annotationvaluebylang returning {}".format(
+            #                     self.forms[lang].annotationvalue(name,value)))
+            return self.forms[lang].annotationvalue(name,value)
+        except KeyError:
+            log.error("Can't annotate; no form for {} lang!".format(lang))
+        except Exception as e:
+            log.error("Exception! ({})".format(e))
+            # if value is not None: #only make if we're populating it, allow ''
+            #     self.forms[lang].annotations[name]=Annotation(self,name=name,
+            #                                                         value=value)
+            #     # Should never need this:
+            #     # self.forms[lang]=Form(self,self.makeformnode(lang,text=value))
+            # else:
+            #     return None
+    def checkforsecondchildanylang(self,lang):
+        if len(self.findall('form')) > 1:
+            log.error("{} node in entry {} has multiple forms. "
+                    "While this is legal LIFT, it is probably an error, and "
+                    "will lead to unexpected behavior."
+                    "".format(self.tag,self.parent.entry.guid,lang))
+    def checkforsecondchildbylang(self):
+        for lang in self.forms:
+            if len(self.findall('form[@lang="{}"]'.format(lang))) > 1:
+                try:
+                    num=self.find('field[@type="location"]/form/text').text
+                except:
+                    num="?"
+                log.error("{} node {} in entry {} has multiple forms "
+                    "for ‘{}’ lang. While this is legal LIFT, it is almost "
+                    "certainly an error, and will lead to unexpected behavior."
+                    "".format(self.tag,num,self.parent.entry.guid,lang))
+    def getforms(self):
+        self.forms={
+                    lang:Form(self,self.find('form[@lang="{}"]'.format(lang)))
+                        for lang in [i.get('lang')
+                                    for i in self.findall('form')]
+                        if lang
+                    }
+        self.checkforsecondchildbylang()
+    def langs(self):
+        return self.forms.keys()
+    def formattedbylang(self,lang,frame):
+        """This function is safe to give formatted analang material, since it
+        is not used for glosses, which are Form nodes, not FormParent nodes"""
+        t=self.textvaluebylang(lang)
+        if t and frame:
+            try: #process analang correctly, if distinct
+                t=rx.framerx.sub(t,frame[self.langftypecode(lang)])
+            except KeyError:
+                t=rx.framerx.sub(t,frame[lang])
+        return t
+    def formatted(self,analang,glosslangs,ftype=None,frame=None,**kwargs):
+        # Don't die on showtonegroup
+        if (ftype and ftype != self.ftype) or (frame and 'field' in frame and
+                                                frame['field'] != self.ftype):
+            try:
+                log.error("Problem; asked for ftype {}, but working on {} node "
+                        "with {} frame"
+                        "".format(ftype,self.ftype,frame.get('field')))
+            except AttributeError:
+                log.error("Problem; asked for ftype {}, but working on {} node "
+                        "with no frame".format(ftype,self.ftype))
+            return
+        l=[self.formattedbylang(analang,frame)]
+        if not [i for i in l if i]:
+            log.info("No {} form found; just giving glosses".format(ftype))
+        try:
+            for lang in [i for i in glosslangs
+                            if i in self.sense.glosses]:
+                for g in self.sense.formattedgloss(lang,ftype,frame,quoted=True):
+                    #This is always a list
+                    if self.ftype == 'pl':
+                        g+=_(" (pl)")
+                    elif self.ftype == 'imp':
+                        g+="!"
+                    l.append(g)
+            return ' '.join([i for i in l if i]) #put it all together
+        except IndexError:
+            log.info(_("This entry doesn't seem to have a sense."))
+        except AttributeError:
+            log.info(_("This doesn't seem to be called on a child of entry "
+                    "({} child of {}), or the entry's first sense ({}) doesn't "
+                    "have gloss languages."
+                    ).format(type(self),type(self.parent),
+                            self.sense.id,
+                            self.sense.glosses.keys()))
+    def getsense(self):
+        if hasattr(self.parent,'senses') and self.parent.senses:
+            # we want a common reference point for glosses, first sense is OK
+            self.sense=self.parent.sense
+        else:
+            log.info("This form can't find a sense ({}; parent: {})"
+                    "".format(type(self),type(self.parent)))
+            log.info("{}; {}".format(hasattr(self.parent,'senses'),
+                                    self.parent.senses))
+    def glossbylang(self,lang):
+        return ', '.join(self.parent.sense.formattedgloss(lang))
+    def hassoundfile(self,audiolang,audiodir,recheck=False):
+        """These attributes are not stored in lift; they depend on the work
+        environment, so are set on each use"""
+        if hasattr(self,'audiofileisthere') and not recheck:
+            return self.audiofileisthere
+        f=self.textvaluebylang(audiolang)
+        if f:#forms[self.params.audiolang()]
+            abs=file.getdiredurl(audiodir,f)
+            if file.exists(abs):
+                self.audiofileisthere=True
+                self.audiofileURL=abs
+                return True
+        self.audiofileisthere=False #If not in lift *and* file system
+    def __init__(self, parent, node=None, **kwargs):
+        super(FormParent, self).__init__(parent, node, **kwargs)
+        self.getforms()
+        self.ftype=self.get('type',self.tag)
+        self.annotationlang=parent.annotationlang
+class Gloss(Form):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='gloss'
+        super(Gloss, self).__init__(parent, node, **kwargs)
+        self.lang=self.get("lang")
+class Translation(FormParent):
+    """From Docs: Each translation is of a single type and contains all the
+    translations of that type into multiple languages and writing systems."""
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='translation'
+        # kwargs['attrib']={'type':'Frame translation'}
+        super(Translation, self).__init__(parent, node, **kwargs)
+        self.set('type','Frame translation')
+class Field(FormParent):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='field'
+        super(Field, self).__init__(parent, node, **kwargs)
+        self.ftype=self.get('type')
+        # log.info("Made field with type {}, texts {}".format(self.ftype,
+        #                                                 self.textvaluedict()))
+class Definition(FormParent):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='definition'
+        super(Definition, self).__init__(parent, node, **kwargs)
+class Lexeme(FormParent):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='lexical-unit'
+        super(Lexeme, self).__init__(parent, node, **kwargs)
+        self.ftype='lx'
+class Citation(FormParent):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='citation'
+        super(Citation, self).__init__(parent, node, **kwargs)
+        self.ftype='lc'
+class FieldParent(object):
+    """This is needed because some fields are under Entry, others under sense"""
+    def checkforsecondfieldbytype(self,type,tag=None):
+        if not tag:
+            tag='field'
+        if len(self.findall('{}[@type="{}"]'.format(tag,type))) > 1:
+            log.error("{} node in entry {} has multiple {} nodes of ‘{}’ type. "
+                    "While this is legal LIFT, it is probably an error, and "
+                    "will lead to unexpected behavior."
+                    "".format(self.tag,self.entry.guid,tag,type))
+            return 1
+    def getfields(self):
+        self.fields={
+                    node.get('type'):Field(self,node)
+                        for node in self.findall('field')
+                        if not isinstance(node,Node) #I.e., already brought in
+                    }
+        for type in self.fields:
+            self.checkforsecondfieldbytype(type)
+    def newfield(self,type,lang=None,value=None):
+        if not value:
+            log.info("We normally shouldn't create empty fields: {}/{}".format(
+                                                                lang, value))
+        if type in self.fields:
+            log.error("There is already a {} field here! ({})".format(type,
+                                                                self.fields))
+            return
+        self.fields.update({type:Field(self,type=type)})
+        # without lang here, annotationlang is used; value=None does nothing
+        self.fields[type].textvaluebylang(lang=lang,value=value)
+    def __init__(self):
+        # log.info("Initializing field parent for {}".format(self))
+        if not hasattr(self,'annotationlang'):
+            self.annotationlang=self.parent.annotationlang
+        self.getfields()
+        # log.info("Initialized field parent for {}".format(self))
+class Example(FormParent,FieldParent):
+    def locationvalue(self,loc=None):
+        try: # without lang here, annotationlang is used; value=None returns
+            curloc=self.fields['location'].textvaluebylang()
+            if loc and curloc:
+                log.error("Received loc {}, but value already present! ({})"
+                        "".format(loc,curloc))
+                loc=None #don't overwrite
+            assert isinstance(self.fields['location'],ET.Element)
+            return self.fields['location'].textvaluebylang(value=loc)
+        except (KeyError,AssertionError) as e:
+            log.error("Something missing (locationvalue): {}".format(e))
+            if loc: #don't make field if not setting value
+                self.newfield('location',value=loc) #use annotationlang
+            else:
+                return None
+    def tonevalue(self,value=None):
+        # log.info(self.fields)
+        try:
+            # Fields should already be picked up.
+            assert isinstance(self.fields['tone'],ET.Element)
+            # log.info("Sending ‘{}’ from tonevalue".format(value))
+            return self.fields['tone'].textvaluebylang(value=value) # w/wo value
+        except (KeyError,AssertionError) as e:
+            if value: #don't make field if not setting value
+                log.info("Adding tone value: {} ({})".format(value,e))
+                self.newfield('tone',value=value) #use annotationlang
+            else:
+                log.info("No tone value found: {}".format(e))
+                return None
+        except AttributeError as e:
+            log.error("This should never happen! ({})".format(e))
+    def translationvalue(self,lang=None,value=None):
+        try:
+            assert isinstance(self.translation,ET.Element)
+            return self.translation.textvaluebylang(lang,value) # w/wo value
+        except AssertionError:
+            if value: #don't make field if not setting value
+                t=Translation(self)
+                t.textvaluebylang(lang,value)
+            else:
+                return None
+    def glossbylang(self,lang):
+        return self.translationvalue(lang)
+    def lastAZTsort(self):
+        try:
+            assert isinstance(self.lastsort,ET.Element)
+        except (AssertionError,AttributeError):
+            found=self.find('trait[@name="Latest A-Z+T Sort"]')
+            self.lastsort=Trait(self, found, name="Latest A-Z+T Sort")
+        return self.lastsort.myvalue(getnow())
+    def setguid(self):
+        # only do this on sorting!
+        self.set('source','AZT sorted first on {}'.format(getnow()))
+    def getguid(self):
+        self.get('source')
+    def gettranslations(self):
+        #There may be other @types of translation nodes; we use this one.
+        self.translation=Translation(self,self.find(
+                                    'translation[@type="Frame translation"]'))
+        self.checkforsecondfieldbytype("Frame translation",tag='translation')
+    def formatted(self,analang,glosslangs,showtonegroup=False,**kwargs):
+        # **kwargs is so we don't die on ftype, frame args
+        l=[]
+        if showtonegroup:
+            try:
+                int(self.tonevalue())  #only for named groups
+            except ValueError:
+                l.append(self.tonevalue())
+        l.append(self.textvaluebylang(analang))
+        for lang in glosslangs:
+            l.append(self.translation.textquotedbylang(lang))
+        return ' '.join([i for i in l if i]) #put it all together
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='example'
+        super(Example, self).__init__(parent, node, **kwargs)
+        self.entry=parent.entry #make a common reference point for sense/entry
+        self.sense=parent
+        FieldParent.__init__(self) #tone and location values
+        # These two are collected by FieldParent:
+        self.checkforsecondfieldbytype('location')
+        self.checkforsecondfieldbytype('tone')
+        self.gettranslations()
+class Pronunciation(FormParent,FieldParent):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='pronunciation'
+        super(Pronunciation, self).__init__(parent, node, **kwargs)
+        self.entry=parent.entry #make a common reference point for sense/entry
+        self.sense=parent.sense
+        FieldParent.__init__(self) #tone and location values
+        # These two are collected by FieldParent:
+        self.checkforsecondfieldbytype('location')
+        self.checkforsecondfieldbytype('tone')
+        self.gettranslations()
+class Illustration(ValueNode):
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='illustration'
+        super(Illustration, self).__init__(parent, node, **kwargs)
+        self.valuename='href'
+class Sense(Node,FieldParent):
+    def checkforsecondchildbyloc(self):
+        for loc in self.examples:
+            exs=[i for i in self.findall('example/field[@type="location"]/'
+                                    'form/text[.="{}"]'.format(loc))
+                ]
+            # log.info("Examples: {}".format(exs))
+            if len(exs) > 1:
+                log.error("{} node in entry {} has multiple examples with "
+                    "{} location. "
+                    "While this is legal LIFT, it is probably an error, and "
+                    "will lead to unexpected behavior."
+                    "".format(self.tag,self.parent.guid,loc))
+    def getglosses(self):
+        """This differs from a FormParent, in that self.glosses contains
+        a list of objects, as multiple gloss entries seem to be a thing"""
+        self.glosses={
+                    lang:[Gloss(self,i) for i in self
+                        if i.tag == 'gloss' and lang==i.get('lang')
+                        ]
+                            for lang in [i.get('lang') for i in self]
+                            if lang
+                    }
+        # log.info("Found {} gloss(es)".format(len(self.glosses)))
+        # log.info("Found gloss(es): {}".format(self.glosses))
+        # Openclipart only has English keywords:
+        self.collectionglosses=[j for k in self.sense.glosses.get('en',[])
+                                    for i in k.textvalue().split(',')
+                                    for j in rx.noparens(i).split()
+                                    if k.textvalue()
+                                ]
+        rootimgdir='images/openclipart.org/'
+        self.imgselectiondir=None
+        #These first two depend on real directories being there
+        if self.cawln:
+            self.imgselectiondir=[i for i in file.getfilesofdirectory(
+                                                        rootimgdir,
+                                                        regex=self.cawln+'*')]
+        elif self.collectionglosses:
+            self.imgselectiondir=[i for i in file.getfilesofdirectory(
+                                    rootimgdir,
+                                    regex='*'+'_'.join(self.collectionglosses))]
+        if self.imgselectiondir: #unlist if there
+            self.imgselectiondir=self.imgselectiondir[0]
+            return
+        if self.cawln and self.collectionglosses and not self.imgselectiondir:
+            bits=[i for i in [self.cawln]+self.collectionglosses if i]
+            # log.info("I didn't find a real directory present, but I'm ready "
+            # "to write to {}".format(''.join([rootimgdir,'_'.join(bits)])))
+            self.imgselectiondir=''.join([ #This may not be a real directory
+                                        rootimgdir,
+                                        '_'.join(bits)
+                                        ])
+            return
+    def imagename(self):
+        # log.info("Making image name")
+        affix='.png' #not sure why this isn't there already...
+        if self.cawln:
+            return '_'.join([self.cawln]+self.collectionglosses)+affix
+        else:
+            return '_'.join([self.id]+self.collectionglosses)+affix
+    def glossbylang(self,lang):
+        """This returns just the first, to be compatible with
+        example.glossbylang"""
+        gs=self.glossvaluesbylang(lang)
+        if gs:
+            return gs[0]
+    def glossvaluesbylang(self,lang):
+        try:
+            assert isinstance(self.glosses[lang][0],ET.Element)
+            return [i.gettext() for i in self.glosses[lang]]
+        except KeyError:
+            # log.info("No gloss for lang {}".format(lang))
+            pass
+    def getdefinitions(self):
+        self.definition=Definition(self,self.find('definition'))
+        self.checkforsecondchild('definition')
+    def newexample(self,loc,frame,analang,glosslangs,tonevalue):
+        if loc in self.examples:
+            log.error("There is already a {} example here! ({})".format(loc,
+                                                                self.examples))
+            return
+        self.examples.update({loc:Example(self)})
+        # without lang here, annotationlang is used; value=None does nothing
+        formvalue=self.formattedform(analang,
+                                    # ftype, #shouldn't be needed
+                                    frame=frame)
+        self.examples[loc].textvaluebylang(lang=analang,value=formvalue) #form
+        self.examples[loc].tonevalue(tonevalue)
+        self.examples[loc].locationvalue(loc)
+        for g in glosslangs:
+            for f in self.formattedgloss(g,frame=frame)[:1]: #don't put multiples here
+                self.examples[loc].translationvalue(g,f)
+        self.examples[loc].setguid()
+        self.examples[loc].lastAZTsort()
+        prettyprint(self.examples[loc])
+    def getexamples(self):
+        self.examples={loc:Example(self,self.find(
+                                    'example/field[@type="location"]/'
+                                    'form/text[.="{}"]/../../..'.format(loc)))
+                            for loc in [i.text for i in self.findall(
+                                        'example/field[@type="location"]/'
+                                        'form/text')
+                                        ]
+                            if loc
+                        }
+        self.checkforsecondchildbyloc()
+    def getpssubclass(self):
+        for n in self.findall('trait[@name="{}-infl-class"]'
+                                ''.format(self.psvalue())):
+            self.pssubclass=Trait(self,n) #only if found
+    def tonevaluebyframe(self,frame,value=None):
+        try:
+            return self.examples[frame].tonevalue(value)
+        except KeyError:
+            # log.info("There is no {} example in sense {}".format(frame,self.id))
+            pass
+    def uftonevalue(self,value=None):
+        try:
+            assert isinstance(self.fields['tone'],ET.Element)
+            # log.info("found ET node")
+        except (AssertionError,KeyError):
+            found=self.find('field[type="tone"]')
+            # log.info("found {}".format(found))
+            if isinstance(found,ET.Element) or value:
+                self.fields.update({'tone':Field(self,node=found,type='tone')})
+                # self.newfield('tone',value=value) #use annotationlang
+            else:
+                return None
+        # specify value as kwarg because not specifying lang
+        return self.fields['tone'].textvaluebylang(value=value)
+    def pssubclassvalue(self,value=None):
+        try:
+            assert isinstance(self.pssubclass,ET.Element)
+        except (AssertionError,AttributeError):
+            found=self.find('trait[@name="{}-infl-class"]'
+                            ''.format(self.psvalue()))
+            if isinstance(found,ET.Element) or value:
+                self.pssubclass=Trait(self,found,
+                                    name="{}-infl-class".format(self.psvalue()))
+                                    # value=value)
+            else:
+                return None
+        return self.pssubclass.myvalue(value)
+    def rmpsnode(self):
+        if (hasattr(self,'ps') and isinstance(self.ps,ET.Element)
+                                and self.ps in self):
+            self.remove(self.ps)
+        else:
+            log.info("psnode {} not found in sense {} ({})".format(self.ps,
+                                                    self,self.id))
+    def rmpssubclassnode(self):
+        if isinstance(self.pssubclass,ET.Element):
+            self.remove(self.pssubclass)
+        else:
+            log.info("pssubclass {} not found in sense {} ({})"
+                    "".format(self.pssubclass,self,self.id))
+    def psvalue(self,value=None):
+        try:
+            assert isinstance(self.ps,ET.Element)
+        except (AssertionError,AttributeError):
+            found=self.find('grammatical-info')
+            if isinstance(found,ET.Element) or value:
+                self.ps=Ps(self, found)
+            else:
+                return None
+        return self.ps.myvalue(value)
+    def annotationvaluedictbyftypelang(self,ftype,lang):
+        try:
+            return self.ftypes[ftype].annotationvaluedictbylang(lang)
+        except KeyError:
+            log.info("No {} type to pull annotation dict from".format(ftype))
+    def nodebyftype(self,ftype):
+        try:
+            return self.ftypes[ftype]
+        except KeyError:
+            log.info("No {} type to pull ({})".format(ftype,self.ftypes))
+    def textvaluebyftypelang(self,ftype,lang,value=None):
+        try:
+            return self.ftypes[ftype].textvaluebylang(lang,value)
+        except KeyError:
+            log.info("No {} type ({})".format(ftype,self.ftypes))
+    def annotationvaluebyftypelang(self,ftype,lang,name,value=None):
+        try:
+            # log.info("annotationvaluebyftypelang returning {}".format(
+            #         self.ftypes[ftype].annotationvaluebylang(lang,name,value)))
+            return self.ftypes[ftype].annotationvaluebylang(lang,name,value)
+        except KeyError:
+            # log.info("No {} type to pull annotation from".format(ftype))
+            pass
+    def getcawlline(self):
+        if 'SILCAWL' in self.fields:
+            self.cawln=self.fields['SILCAWL'].textvaluebylang()
+        else:
+            self.cawln=None
+    def illustrationvalue(self,value=None):
+        try:
+            assert isinstance(self.illustration,ET.Element)
+            # if value:
+            #     self.illustration.myvalue(value)
+        except (AssertionError,AttributeError):
+            found=self.find('illustration')
+            if isinstance(found,ET.Element) or value:
+                self.illustration=Illustration(self, found)
+            else:
+                return None
+        return self.illustration.myvalue(value)
+    def formattedform(self,analang,ftype=None,frame=False):
+        if not ftype:
+            if frame:
+                ftype=frame['field']
+            else:
+                ftype='lc'
+        try:
+            return self.ftypes[ftype].formattedbylang(analang,frame)
+        except KeyError:
+            log.info("No {} type ({})".format(ftype,self.ftypes))
+    def formattedgloss(self,glosslang,ftype=None,frame=False,quoted=False):
+        """This outputs a list that can be joined as needed"""
+        # log.info("formattedgloss called with glosslang={}, ftype={}, frame={}, "
+        #         "quoted={}"
+        #         "".format(glosslang,ftype,frame,quoted))
+        if not ftype:
+            if frame:
+                ftype=frame['field']
+            else:
+                ftype='lc'
+        t=[]
+        try:
+            for gloss in self.glosses[glosslang]: #unlist each gloss for one lang
+                # log.info("gloss forms starting: {}".format(t))
+                # log.info("gloss: {} ({})".format(gloss.textvalue(),glosslang))
+                g=gloss.textvalue()
+                if ftype:
+                    if ftype == 'imp':
+                        g+='!'
+                    elif ftype != 'lc':
+                        g+=' ('+ftype+')'
+                if frame:
+                    # log.info("gloss form to sub: {}".format(g))
+                    g=rx.framerx.sub(g,frame[glosslang])
+                    # log.info("gloss form subbed: {}".format(g))
+                if quoted:
+                    g=quote(g)
+                    # log.info("gloss form quoted: {}".format(g))
+                t.append(g)
+                # log.info("gloss forms formatted: {}".format(t))
+            # log.info("gloss forms returned: {}".format(t))
+            return t
+        except KeyError:
+            log.info("No glosslang {} in sense {}".format(glosslang,self.id))
+    def formatteddictbylang(self,analang,glosslangs,ftype=None,frame=None):
+        if frame and ftype and not frame['field'] == ftype:
+            log.error("ftype mismatch! ({}/{})".format(frame['field'],ftype))
+            return
+        elif frame and not ftype:
+            ftype=frame['field']
+        log.info("Found glosses {}".format(self.glosses))
+        log.info("asked for glosslangs {}".format(glosslangs))
+        log.info("looking for langs {}".format([i for i in glosslangs
+                                                if i in self.glosses]))
+        d={lang:', '.join(self.formattedgloss(lang,ftype,frame,quoted=True))
+            for lang in [i for i in glosslangs if i in self.glosses]}
+        #don't overwrite gloss in analang, if both there:
+        d[self.nodebyftype(ftype).langftypecode(analang)
+            ]=self.formattedform(analang,ftype,frame)
+        return d
+    def formattedexample(self,analang,glosslangs,loc,showtonegroup=False):
+        if loc in self.examples:
+            return self.examples[loc].formatted(analang,glosslangs,
+                                                showtonegroup)
+    def formatted(self,analang,glosslangs,ftype=0,frame=0): #,showtonegroup=0):
+        """This uses frame definition, not name"""
+        """As a format of the sense, there should be no tonegroup to show"""
+        if frame and not frame['field'] == ftype:
+            log.error("ftype mismatch! ({}/{})".format(frame['field'],ftype))
+            return
+        elif frame and not ftype:
+            ftype=frame['field']
+        l=[]
+        # log.info("frame: {}".format(frame))
+        # log.info("1 forms: {}".format(l))
+        t=self.formattedform(analang,ftype,frame)
+        l.append(t)
+        # log.info("2 forms: {}".format(l))
+        for lang in [i for i in glosslangs if i in self.glosses]:
+            l+=self.formattedgloss(lang,ftype,frame,quoted=True) #This is always a list
+        # log.info("Returning forms: {}".format(l))
+        return ' '.join([i for i in l if i]) #put it all together
+    def rmverificationvalue(self,profile,ftype,value):
+        #This treats value as a list object, wrapped by verificationtextvalue
+        v=self.verificationtextvalue(profile,ftype)
+        try:
+            v.remove(value)
+            self.verificationtextvalue(profile,ftype,value=v) #remove on []
+        except Exception as e:
+            log.info("tried to remove what wasn't there? ({})".format(e))
+    def rmverificationnode(self,profile,ftype):
+        key='{} {} verification'.format(profile,ftype)
+        self.remove(self.fields[key])
+        del self.fields[key]
+    def verificationtextvalue(self,profile,ftype,lang=None,value=None):
+        """value here is the list of verification codes, stored as a string"""
+        """Without lang arg, value must be sent as a kwarg."""
+        key='{} {} verification'.format(profile,ftype)
+        if value: #don't do this for none or []
+            value=str(value)
+        elif value == []: #for empty list value, remove node
+            self.rmverificationnode(profile,ftype)
+            return [] #in case user needs a return
+        try:
+            assert key in self.fields
+        except AssertionError:
+            if value:
+                self.newfield(key,value=value) #lang=None will give default
+            else:
+                return [] #return empty list to fill
+        # This value is a list, but needs to be stored and retrieved as str text
+        # log.info("setting value {} ({})".format(value,type(value)))
+        if value:
+            log.info("setting value {} ({})".format(value,type(value)))
+        return xmlfns.stringtoobject(self.fields[key].textvaluebylang(
+                                                                value=value))
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='sense'
+        super(Sense, self).__init__(parent, node, **kwargs)
+        self.entry=parent #make a common reference point for sense/entry
+        FieldParent.__init__(self)
+        self.getcawlline()
+        self.sense=self
+        self.id=self.get('id')
+        self.psvalue() #set if there
+        self.pssubclassvalue() #set if there
+        """ftypes for pl and imp are set on three other occasions:
+        1. Boot, if found on setting (for all entries)
+        2. on setting/changing field name (for all entries)
+        3. on creating a new field (for that entry)
+        Otherwise, do not expect these to be there!
+        """
+        self.ftypes={'lx': self.entry.lx,
+                    'lc': self.entry.lc
+                    }
+        self.getglosses()
+        self.getdefinitions()
+        self.getexamples()
+        self.illustrationvalue() #set if there
+        # log.info([i.textvalue() for i in self.glosses['en']])
+        # log.info("Initialized sense for {}".format(self))
+class Entry(Node,FieldParent): # what does "object do here?"
+    """I have only converted nodes to classes as needed; other items
+    have been left alone.
+    """
+    def getsenses(self):
+        self.senses=[Sense(self,i) for i in self if i.tag == 'sense']
+        self.sense=self.senses[0] #for when I really just need one
+        # log.info("Found {} sense(s)".format(len(self.senses)))
+        # log.info("Found sense(s): {}".format(self.senses))
+    def getlx(self):
+        self.lx=Lexeme(self,self.find('lexical-unit'))
+        self.checkforsecondchild('lexical-unit')
+    def getlc(self):
+        self.lc=Citation(self,self.find('citation'))
+        self.checkforsecondchild('citation')
+    def plvalue(self,ftype,lang,value=None):
+        try:
+            assert self.pl.get('type') == ftype
+            # log.info("plural is correct type ({})".format(ftype))
+        except AssertionError:
+            log.error("Asked for ftype {}, but found pl which is {}"
+                    "".format(ftype,self.pl.get('type')))
+        except AttributeError:
+            # log.info("plural isn't already self.pl ({})".format(ftype))
+            found=self.find('field[@type="{}"]'.format(ftype))
+            if isinstance(found,ET.Element) or value:
+                # log.info("before making field")
+                self.pl=Field(self,found,type=ftype) #OK if None found
+                # log.info("after making field")
+                self.pl.getsense()
+                for sense in self.senses:
+                    sense.ftypes['pl']=self.pl
+                    sense.ftypes[ftype]=self.pl #make this accessible here, too
+                # prettyprint(self)
+                self.checkforsecondfieldbytype(ftype)
+            else:
+                return None
+        # log.info("plural to set and return: {} ({})".format(value,lang))
+        return self.pl.textvaluebylang(lang,value)
+    def impvalue(self,ftype,lang,value=None):
+        try:
+            assert self.imp.get('type') == ftype
+            # log.info("imperative is correct type ({})".format(ftype))
+        except AssertionError:
+            log.error("Asked for ftype {}, but found imp which is {}"
+                    "".format(ftype,self.imp.get('type')))
+        except AttributeError:
+            # log.info("imperative seems to not already be there ({})".format(ftype))
+            found=self.find('field[@type="{}"]'.format(ftype))
+            if found or value:
+                self.imp=Field(self,found,type=ftype)
+                self.imp.getsense()
+                for sense in self.senses:
+                    sense.ftypes['imp']=self.imp
+                    sense.ftypes[ftype]=self.imp #make this accessible here, too
+                # prettyprint(self.imp)
+                self.checkforsecondfieldbytype(ftype)
+            else:
+                return None
+        return self.imp.textvaluebylang(lang,value)
+    def phvalue(self,ftype,lang,value=None):
+        try:
+            assert self.ph.get('type') == ftype
+            log.info("phonetic form is correct type ({})".format(ftype))
+        except AssertionError:
+            log.error("Asked for ftype {}, but found phonetic field which is {}"
+                    "".format(ftype,self.ph.get('type')))
+        except AttributeError:
+            if value:
+                # For now, this just takes the first one. We aren't using this.
+                self.ph=Pronunciation(self,self.find('pronunciation'))
+                self.ph.getsense()
+                for sense in self.senses:
+                    sense.ftypes['ph']=self.ph
+                # prettyprint(self.imp)
+                self.checkforsecondfieldbytype(ftype)
+                self.getfields() #needed?
+            else:
+                return None
+        return self.ph.textvaluebylang(lang,value)
+    def __init__(self, parent, node=None, **kwargs):
+        kwargs['tag']='entry'
+        self.annotationlang=kwargs.pop('annotationlang','en')
+        super(Entry, self).__init__(parent, node, **kwargs)
+        self.entry=self #make a common reference point for sense/entry
+        self.guid=self.get('guid')
+        self.getlx()
+        self.getlc()
+        self.getsenses() #this needs lx and lc already
+        self.lx.getsense() #this needs senses already
+        self.lc.getsense() #this needs senses already
+        FieldParent.__init__(self)
         """Probably should rework this... How to get entry fields?"""
         # self.nodes=self.db.nodes.find(f"entry[@guid='{self.guid}']") #get.nodes(self)
         #log.info(self.nodes.get('guid'))
         #probably should trim all of these..…
         """These depend on check analysis, should move..."""
-        self.analang=self.db.analangs[0]
         """get(self,attribute,guid=None,analang=None,glosslang=None,lang=None,
         ps=None,form=None,fieldtype=None,location=None,showurl=False)"""
         # self.lexeme=db.get('lexeme',guid=guid) #don't use this!
-        self.lc=db.citationorlexeme(guid=guid,lang=self.analang)
-        self.glosses=[]
-        for g in self.glosslangs:
-            self.glosses.append(db.glossordefn(guid=guid,lang=g))
         # self.citation=get.citation(self,self.analang)
         # self.gloss=get.obentrydefn(self, self.db.glosslang) #entry.get.gloss(self, self.db.glosslang, guid)
         # self.gloss2=get.gloss(self, self.db.glosslang2, guid)
         # self.plural=db.get('plural',guid=guid)
         # log.info("Looking for pronunciation field locations...")
         self.tone={}
-        for location in self.db.get('pronunciationfieldlocation',guid=guid,
-            fieldtype='tone'):
-            # log.info(' '.join('Found:', location))
-            self.tone[location]=db.get('pronunciationfieldvalue',guid=guid,location=location,fieldtype='tone')
+        # for location in self.db.get('pronunciationfieldlocation',guid=guid,
+        #     fieldtype='tone'):
+        #     # log.info(' '.join('Found:', location))
+        #     self.tone[location]=db.get('pronunciationfieldvalue',guid=guid,location=location,fieldtype='tone')
         """These depend on check analysis, should move..."""
         #self.plural=db.get('fieldvalue',guid=guid,lang=self.analang,fieldtype=db.pluralname)
         #self.imperative=db.get('fieldvalue',guid=guid,lang=self.analang,fieldtype=db.imperativename)
         # self.imperative=db.get('imperative',guid=guid)
-        self.ps=db.get('ps',guid=guid)
-        self.illustration=db.get('illustration',guid=guid)
+        # self.ps=db.get('ps',guid=guid)
+        # self.illustration=db.get('illustration',guid=guid)
 class Language(object):
     def __init__(self, xyz):
         """define consonants and vowels here?regex's belong where?"""
@@ -1603,8 +2796,8 @@ class LiftURL():
     def build(self,tag,liftattr=None,myattr=None,attrs=None):
         buildanother=False
         noseparator=False
-        log.log(4,"building {}, @dict:{}, @{}={}, on top of {}".format(tag,
-                                attrs,liftattr,myattr, self.currentnodename()))
+        # log.info("building {}, @dict:{}, @{}={}, on top of {}".format(tag,
+        #                         attrs,liftattr,myattr, self.currentnodename()))
         b=tag
         if attrs is None:
             attrs={liftattr: myattr}
@@ -1807,6 +3000,10 @@ class LiftURL():
         if 'morphtype' in self.kwargs: #This is needed
             attrs={'name':"morphtypename",'value':'morphtype'}
             self.trait(attrs) # <trait name="morph-type" value="stem" />
+    def illustration(self):
+        # log.info("Making illustration")
+        self.baselevel()
+        self.build("illustration")
     def attrdonothing(self):
         pass
     def maybeshow(self,nodename,parent=None):
@@ -1863,17 +3060,26 @@ class LiftURL():
         while self.level.get(target,self.level['cur']+1) < self.level['cur']:
             self.parent()
     def baselevel(self):
+        # log.info("baselevel for {}".format(self.callerfn()))
+        # log.info("@{}".format(self.url))
         parents=self.parentsof(self.callerfn())
         for target in parents: #self.levelsokfor[self.callerfn()]: #targets: #targets should be ordered, with best first
-            target=target.split('/')[-1] #just the last level
+            target=target.split('/')[-1] #.split('[')[0] #just the last level tag
+            # log.info("tag of target: {}".format(target))
             if target in self.level and self.level[target] == self.level['cur']:
+                # log.info("level of target: {}".format(self.level[target]))
+                # log.info("current level: {}".format(self.level['cur']))
+                # log.info("levels: {}".format(self.level))
                 return #if we're on an acceptable level, just stop
             elif target in self.level:
+                # log.info("level of target (2): {}".format(self.level[target]))
+                # log.info("current level: {}".format(self.level['cur']))
                 self.levelup(target)
                 return
             elif parents.index(target) < len(parents)-1:
-                log.log(4,"level {} not in {}; checking the next one...".format(
-                                                            target,self.level))
+                # log.info("level {} not in {}; checking the next one...".format(
+                #                                             target,self.level))
+                continue
             else:
                 log.error("last level {} (of {}) not in {}; this is a problem!"
                             "".format(target,parents,self.level))
@@ -2046,18 +3252,18 @@ class LiftURL():
         Once the level of the lineage head is decided, the rest of the lineage
         is added."""
         # Now operate on the head of the target lineage
-        log.log(4,"URL (before {} target): {}".format(self.target,self.drafturl()))
+        # log.info("URL (before {} target): {}".format(self.target,self.drafturl()))
         if self.getalias(self.targethead) not in self.level: #If the target hasn't been made yet.
-            log.log(4,self.url)
+            # log.info(self.url)
             i=self.currentnodename()
-            log.log(4,"URL base: {}; i: {}".format(self.basename,i))
+            # log.info("URL base: {}; i: {}".format(self.basename,i))
             if i is None: #if it is, skip down in any case.
                 i=self.basename
-            log.log(4,"URL bit list: {}; i: {}".format(self.url,i))
+            # log.info("URL bit list: {}; i: {}".format(self.url,i))
             if type(i) == list:
                 i=i[0] #This should be a string
             f=self.getfamilyof(i,x=[])
-            log.log(4,"Target: {}; {} family: {}".format(self.targethead,i,f))
+            # log.info("Target: {}; {} family: {}".format(self.targethead,i,f))
             if self.targethead in f:
                 self.showtargetinhighestdecendance(i) #should get targethead
                     # return #only do this for the first you find (last placed).
@@ -2065,21 +3271,21 @@ class LiftURL():
                 self.showtargetinlowestancestry(i)
             # Either way, we finish by making the target tail, and leveling up.
         if self.targettail is not None:
-            log.log(4,"Adding targettail {} to url: {}".format(self.targettail,
-            self.drafturl()))
+            # log.info("Adding targettail {} to url: {}".format(self.targettail,
+            #                                                 self.drafturl()))
             for b in self.targettail:
-                log.log(4,"Adding targetbit {} to url: {}".format(b,self.drafturl()))
+                # log.info("Adding targetbit {} to url: {}".format(b,self.drafturl()))
                 n=self.targetbits.index(b)
                 bp=self.tagonly(self.targetbits[n-1]) #.split('[')[0]#just the node, not attrs
                 afterbp=self.drafturl().split(self.unalias(bp))
-                log.log(4,"b: {}; bp: {}; afterbp: {}".format(b,bp,afterbp))
-                log.log(4,"showing target element {}: {} (of {})".format(n,b,bp))
+                # log.info("b: {}; bp: {}; afterbp: {}".format(b,bp,afterbp))
+                # log.info("showing target element {}: {} (of {})".format(n,b,bp))
                 if (len(afterbp) <=1 #nothing after parent
                         or self.unalias(b) not in afterbp[-1] #this item not after parent
                         or (b in self.level and
                             bp in self.level and
                             self.level[b]!=self.level[bp]+1)): #this not child of parent
-                    log.log(4,"showing target element {}: {} (of {})".format(n,b,bp))
+                    # log.info("showing target element {}: {} (of {})".format(n,b,bp))
                     self.levelup(bp)
                     self.show(b,parent=bp)
         self.levelup(self.targetbits[-1])#leave last in target, whatever else
@@ -2243,7 +3449,7 @@ class LiftURL():
         self.children['entry']=['lexeme','morphtype','pronunciation','sense',
                                 'field',
                                 'citation','trait']
-        self.children['sense']=['ps','definition','gloss',
+        self.children['sense']=['ps','definition','gloss','illustration',
                                 'example','toneUFfield','cawlfield','field'
                                             ]
         self.children['ps']=['pssubclass','trait']
@@ -2293,28 +3499,19 @@ class LiftURL():
         log.log(4,"Final URL: {}".format(self.url))
         # self.printurl()
 """Functions I'm using, but not in a class"""
+def pylanglegacy(analang):
+     return 'py-'+analang
+def pylanglegacy2(analang):
+     return analang+'-py'
+def pylang(analang):
+     return analang+'-x-py'
+def quote(x):
+    return "‘"+str(x)+"’"
 def textornone(x):
     try:
         return x.text
     except AttributeError:
         return x
-def prettyprint(node):
-    # This fn is for seeing the Element contents before writing them (in case of
-    # ElementTree errors that aren't otherwise understandable).
-    if not isinstance(node,ET.Element):
-        log.info("didn't prettyprint {}".format(node))
-        return
-    t=0
-    def do(node,t):
-            log.info("{}{} {}: {}".format('\t'*t,node.tag,node.attrib,
-                "" if node.text is None
-                    or set(['\n','\t',' ']).issuperset(node.text)
-                    else node.text))
-            t=t+1
-            for child in node:
-                do(child,t)
-            t=t-1
-    do(node,t)
 def setlistsofanykey(dict):
     #This reduces a dictionary with lists as values to one list, without dups
     return set([i for l in dict for i in dict[l]])
@@ -2844,233 +4041,99 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bse/SIL CAWL Wushi.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/cky/Mushere Exported AZT file.lift"
+    # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift_backupBeforeLx2LcConversion"
+    # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift"
+    # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL_test.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/ETON_propre/Eton.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift_2021-12-06.txt"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/eto/Eton.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/eto/Eton.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/CAWL_demo/SILCAWL.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/Demo_gnd/gnd.lift"
+    # filename="/home/kentr/bin/raspy/azt/SILCAWL/SILCAWL.lift"
     lift=Lift(filename)
-    # prettyprint(lift.nodes)
-    senseids=[
-            # "begin_7c6fe6a9-9918-48a8-bc3a-e88e61efa8fa",
-            # 'widen_fceb550d-fc99-40af-a288-0433add4f15',
-            # 'flatten_9fb3d2b4-bc9e-4451-b475-36ee10316e40',
-            # 'swallow_af9c3f8f-71e6-4b9a-805c-f6a148dcab8c',
-            # 'frighten_ecffd944-2861-495f-ae38-e7e9cdad45db',
-            # 'prevent_929504ce-35bb-48fe-ae95-8674a97e625f'
-            'db99ff0c-de93-4727-9d09-e5ef4a8b0557',
-            # 'blink_0e76e781-33e7-4e1d-b957-7d08bd18ade1'
-            ]
-    guids=['dd3c93bb-0019-4dce-8d7d-21c1cb8a6d4d',
-        '09926cec-8be1-4f66-964e-4fdd8fa75fdc',
-        '2902d6b3-89be-4723-a0bb-97925a905e7f',
-        '9ba02d67-3a44-4b7f-8f39-ea8e510df402',
-        'eece7037-3d55-45c7-b765-95546e5fccc6']
-    locations=['Progressive','Isolation']#,'Progressive','Isolation']
-    glosslang='en'
-    pss=["Verb"]#,"Noun"]
-    analang='bfj'
-    analang='en'
-    audiolang='en-Zxxx-x-audio'
-    check='V1'
-    kwargs={
-            'senseid':
-            "lip_39e4b942-0bf6-4494-aa9b-7f5163feb2bc",
-            # "sickle_db1c9e16-7fd7-46fa-a21c-27981588cf41",
-            # 'db99ff0c-de93-4727-9d09-e5ef4a8b0557',
-            # 'glosslang': 'fr'
-            'annotationname':check,
-            'ftype':'lc',
-            'showurl':True}
-    ftype='Plural'
-    ftype='lc'
-    group=1
-    t=[]
-    senseid='d99536c2-a7dd-49a2-afe0-1669dc20551e'
-    # pr=lift.get('pronunciation',path=['annotation'],**kwargs).get('value')
-
-    # print(pr)
-    # for kwargs['node'] in lift.fieldnode(**kwargs):
-    #     t.extend(lift.get('annotation',**kwargs).get('value'))
-    # print(t)
-    location='Isolation'
-    analang='gnd'
-    """Not looking for: Using URL entry/sense[
-            @id='d99536c2-a7dd-49a2-afe0-1669dc20551e']/../sense[
-            @id='d99536c2-a7dd-49a2-afe0-1669dc20551e']/example/field[
-            @type='location']/form[text='Isolation']/text/../../../form[
-            @lang='gnd'][text='location']/text"""
-    """why is location taken as a text value??!? maybe it should be cleared
-    once used?"""
-    formvaluenode=lift.get("example/form/text", senseid=senseid,
-        analang=analang, location=location, showurl=True).get('node')
-    print(formvaluenode)
+    print(time.time())
+    def writetofile(name):
+        f = open(str(name)+'.txt', 'w', encoding='utf-8') # to append, "a"
+        f.write(prettyprint(lift.nodes))
+        f.close()
+    loc="Imperative"
+    formvalue="give!"
+    lang="en"
+    transvalue="donnez!"
+    translang='fr'
+    tonevalue='16'
+    frame={'field':'pl',
+		'en':'__s',
+		'swh':'__',
+		'fr':'__es'}
+    ftype='pl'
+    sense=lift.sensedict['daytime_b27c251c-090e-4427-aa86-22b745409f8d']
+    prettyprint(sense)
+    print(sense.entry.lc.getlang(shortest=True))
     exit()
-    lf=lift.fieldtext(ftype='ph')
-    # ,location=check,
-    #                     tonevalue=group,
-    #                     path=['example'],
-    #                     showurl=True
-    #                     ).get('senseid')
-    # lf=lift.get('example/locationfield/',
-    #         what='text',
-    #         showurl=True
-    #         ).get('text')
-    print(lf)
-    # allfieldnames=[i.get('type') for i in lift.nodes.findall(".//field")]
-    # # log.info(allfieldnames)
-    # fieldnames=[i for i in set(allfieldnames) if i and 'verification' in i]
-    # for fieldname in fieldnames:
-    #     vf=lift.nodes.findall(".//field[@type='{}']".format(fieldname))
-    #     for f in vf:
-    #         prettyprint(f)
-    exit()
-    for ps in pss:
-        kwargs={ftype+'annotationname':'V1',
-                ftype+'annotationvalue':'a'
-                }
-        senseids=lift.get("sense", location=check, path=['tonefield'],
-                            tonevalue=group,showurl=True
-                            ).get('senseid')
-        print(senseids)
-        senseids=lift.get("sense", location=check, #path=['tonefield'],
-                            tonevalue=group,showurl=True
-                            ).get('senseid')
-        print(senseids)
-        # senseids=lift.get("sense", **kwargs, showurl=True #location=check, tonevalue=group,
-        #                 # path=['tonefield']
-        #                     ).get('senseid')
-        # # senseids=lift.get("sense", #path=['field'],
-        #                 # ftype='lc',
-        #                 lcannotationname='V1',
-        #                 lcannotationvalue=1,
-        #                 showurl=True
-        #                 ).get('senseid')
-        # ft=lift.fieldtext(#senseid=senseid,
-        #                 ftype=ftype,
-        #                 # lang=analang,
-        #                 analang=analang,
-        #                 # lang=audiolang,
-        #                 **kwargs
-        #                 )
-        print(senseids)
-        # for n,v in [('C1','b'),('C2','g'),('V1','i'),]:
-        #     lift.annotatefield(ftype='lc', #senseid=senseid,
-        #                         name=n, value=v, analang='fr',showurl=True,
-        #                         **kwargs)
-        # prettyprint(lift.fieldnode(ftype='lc',**kwargs))
-        # for i in f:
-        #     prettyprint(i)
-        # f=lift.fieldvalue(ftype='Imp', annotationname="V1", showurl=True, **kwargs)
-        # print('value:',f)
-    exit()
-    def test():
-        for fieldvalue in [2,2]:
-            for location in locations:
-            # # for guid in guids:
-                for senseid in ['prevent_929504ce-35bb-48fe-ae95-8674a97e625f']:
-                    url=lift.get('sense/tonefield/form/text',#/field/form/text',
-                                                # path=['location','tonefield'], #get this one first
-                                                senseid=senseid,
-                                                fieldtype='tone',location=location,
-                                                tonevalue=fieldvalue,
-                                                showurl=True# what='node'
-                                                ) #'text'
-                    url=exfieldvalue=url.get('text')
-                    # for e in exfieldvalue:
-                    #     log.info("exfieldvalue: {}".format(e))
-                    # url_sense=lift.retarget(url,"sense")
-                    # Bind lift object to each url object; or can we store
-                    # this in a way that allows for non-recursive storage
-                    # only of the url object by the lift object?
-                    # ids=url_sense.get('senseid')
-                    # # log.info("senseids: {}".format(ids))
-                    # for id in [x for x in ids if x is not None]:
-                    #     log.info("senseid: {}".format(id))
-                    # url_entry=lift.retarget(url,"entry")
-                    # idsentry=url_entry.get('guid')
-                    # for id in [x for x in idsentry if x is not None]:
-                    #     log.info("guid: {}".format(id))
-
-        return
-    oldtonevalue=2
-    g='snore'
-    lang='en'
-    cawls=lift.get('cawlfield/form/text').get('node')
-    prettyprint(cawls)
-    exit()
-    log.info("CAWL ({}): {}".format(len(cawls),cawls))
-    # for cv in [56,145,1234]:
-    for senseid in lift.senseids[:3]:
-        e=lift.get('entry', senseid=senseid,
-                            # cawlvalue="{:04}".format(cv),
-                            showurl=True
-                            ).get('node')[0] #certain to be there
-        log.info(e)
-            # for i in e:
-        eps=lift.get('sense/ps',node=e,showurl=True).get('node')[0]
-        log.info(eps)
-        cvalue=eps.get('value')
-        log.info(cvalue)
-        eps.set('value',cvalue+'_mod')
-        prettyprint(e)
-    # missing=[]
-    # for i in range(1700):
-    #     if "{:04}".format(i+1) not in cawls:
-    #         missing.append(i+1)
-    # log.info("CAWL entries missing ({}): {}".format(len(missing),missing))
-    exit()
-    e=lift.get('entry',gloss=g,glosslang=lang,
-                            #ftype='SILCAWL',
-                            # cawlvalue="{:04}".format(n+1),
-                            showurl=True
-                            ).get('node')
-    if e:
-        log.info(e)
-    else:
-        log.info("No entry! ({})".format(e))
-    exit()
-    for n in range(1705):
-        sense=lift.get('entry',path=['cawlfield'],#ftype='SILCAWL',
-                        cawlvalue="{:04}".format(n+1),
-                        showurl=True
-                        ).get('node')
-        if sense:
-            log.info("{} found!".format(n))
-        else:
-            log.info("{} not found!".format(n))
-    exit()
-    for senseid in senseids:
-        for location in locations:# b=lift.get('sense',fieldtype='tone',location=locations[0],
-        #             tonevalue=subcheck,showurl=True).get('senseid')
-            b=lift.get("sense/toneUFfield/form/text", #toneUFfield
-                senseid=senseid,
-                # tonevalue=oldtonevalue,
-                toneUFvalue='1',#to clear just "NA" values
-                # location=location,
-                showurl=True).get('node')
-            # lift.get("example/translation/form/text", senseid=senseid, glosslang='fr',
-            #                 location=location,showurl=True).get('text')
-            for bi in b:
-                print(bi.text)
-                bi.text=1234
-            # b=lift.get("example/tonefield/form/text",
-            #     senseid=senseid, #tonevalue=oldtonevalue, #to clear just "NA" values
-            #     location=location,showurl=True).get('text')
-            # print(b)
-            # c=lift.get("example/form/text", senseid=senseid, analang='en',
-            #                 location=location,showurl=True).get('text')
-            # print(c)
-            # for bi in b:
-            #     bt=bi.find('form/text')
-            #     print(bt.text)
-        # lift.get("sense", location=locations[0], tonevalue=subcheck,
-        #                 path=['tonefield'],showurl=True).get('senseid')
-    exit()
-    """Careful with this!"""
-    # lift.write()
+    for entry in lift.entries:
+        # print(getattr(entry,ftype).formatted('en',['fr','shw'],
+        log.info(lift.pss)
+        log.info(entry.sense.cawln)
+        prettyprint(entry.sense)
+        log.info(entry.sense.uftonevalue("MyTone Value"))
+        log.info(entry.sense.uftonevalue())
+        prettyprint(entry.sense)
+        # entry.plvalue(ftype,'en',entry.lc.textvaluebylang('en')+'ś')
+        # print(entry.senses[0].ftypes[ftype].formatted('en',['fr','shw'],
+        #                         ftype=ftype,
+        #                         frame=frame
+        #                         )
+            # sense.formatteddictbylang('en',['fr','shw'])
+        # )
+        break
+    # for sense in lift.senses[1:]:
+    #     sense.entry.plvalue(ftype,'en',sense.textvaluebyftypelang('lc','en')+'ś')
+    #     print(sense.ftypes[ftype].formatted('en',['fr','shw'],
+    #                             ftype=ftype,
+    #                             frame=frame)
+    #         # sense.formatteddictbylang('en',['fr','shw'])
+    #     )
+    #     break
+    log.info(
+            lift.entries
+            # collections.Counter(
+                    # [i.psvalue() for i in lift.senses]
+                    # [i.sense.ps for i in lift.entries]
+                                    # ).most_common()
+            )
+    log.info(
+            lift.entriesbyps
+            # collections.Counter(
+                    # [i.psvalue() for i in lift.senses]
+                    # [i.sense.ps for i in lift.entries]
+                                    # ).most_common()
+            )
+    log.info(
+            lift.sensesbyps
+            # collections.Counter(
+                    # [i.psvalue() for i in lift.senses]
+                    # [i.sense.ps for i in lift.entries]
+                                    # ).most_common()
+            )
+    # for key in lift.entriesbylc['en']:
+    #     if key.startswith('h'):
+    #         for e in lift.entriesbylc['en'][key]:
+    #             prettyprint(e)
+    log.info("lift.sensesbyps: {}".format(lift.sensesbyps))
+    lift.write('0.txt')
+    n=0
+    print(time.time())
+    lift.slicebylx()
+    print(time.time())
+    lift.slicebylc()
+    print(time.time())
+    lift.slicebyps()
+    print(time.time())
     exit()

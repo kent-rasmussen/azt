@@ -16,19 +16,31 @@ except:
     def _(x):
         return x
 class Report(object):
-    def __init__(self,filename,report,langname):
+    def __init__(self,filename,report,langname,program):
+        #use program, if only for it's name
+        if 'name' not in program:
+            log.error("the program argument to xlp.Report needs a 'name' key")
+            exit()
         self.start_time=time.time()
         self.filename=filename
+        self.tmpfile=self.filename+'.tmp'
+        if file.exists(self.tmpfile):
+            log.info(_("Report {} already in process; not doing again."
+                    ).format(self.filename))
+            return
+        open(self.tmpfile, 'wb').close()
         self.stylesheetdir=file.getstylesheetdir(filename)
         # self.tree=ET.ElementTree(ET.Element('lingPaper'))
         self.node=ET.Element('lingPaper') #self.tree.getroot()
-        self.title="{} A→Z+T output report for {}".format(report,langname)
+        self.title="{} {} output report for {}".format(report,
+                                                        program['name'],
+                                                        langname)
         log.info("Starting XLingPaper report file at {} with title '{}'".format(
                                                         filename,self.title))
         self.authors=[{'name':'Kent Rasmussen',
                         'affiliation':'SIL Cameroun',
                         'Email':'kent_rasmussen@sil.org'},
-                        {'name':'A→Z+T',
+                        {'name':program['name'],
                         'Email': 'https://github.com/kent-rasmussen/azt'}
                         ]
         self.langlist=list()
@@ -41,12 +53,15 @@ class Report(object):
         self.xlptypes()
         self.stylesheet()
         self.write()
+        self.cleanup()
         t=time.time()-self.start_time
         # m=int(t/60)
         # s=t%60
         log.info("Finished in {:1.0f} minutes, {:2.3f} seconds.".format(*divmod(t,60)))
         if me:
             self.compile() #This isn't working yet.
+    def cleanup(self):
+        file.remove(self.tmpfile)
     def write(self):
         """This writes changes to XML which can be read by XXE as XLP."""
         doctype=self.node.tag
@@ -149,7 +164,11 @@ class Report(object):
         try:
             subprocess.run(xetexargs,shell=False) # was call
             # subprocess.call(xetexargs,shell=False) #does twice help?
-            exts=['out','aux','log']
+            exts=[
+                'tex',
+                'out','aux','log',
+                'xmla','xmlb','xmlc'
+                ]
             # exts+=['xmla','xmlb','xmlc','tex'] #once this is working...
             for ext in exts:
                 file.remove(outfile.replace('.xml', '.'+ext))
@@ -173,7 +192,6 @@ class Report(object):
         # }
         # Run this XeLaTeX form through xelatex.  The result is the PDF.
         #     DoTeXPDF (Linux/Mac) or DoTeXPDF.bat (Windows)
-
     def frontmatter(self):
         fm=ET.SubElement(self.node, 'frontMatter')
         ti=ET.SubElement(fm, 'title')
@@ -293,9 +311,15 @@ class Report(object):
         # >
 
 class Section(ET.Element):
-    def __init__(self,parent,title="No Section Title!",level=1,landscape=False):
+    def __init__(self,parent,title="No Section Title!",level=None,landscape=False):
         id=rx.id(title)
-        name='section'+str(level)
+        if level: #this shouldn't happen
+            self.level=level
+        elif hasattr(parent,'level'): #this should manage most cases
+            self.level=parent.level+1
+        else:
+            self.level=1
+        name='section'+str(self.level)
         attribs={'id':id}
         if landscape:
             attribs['showinlandscapemode']='yes'
@@ -323,17 +347,27 @@ class Table(ET.Element):
                 <tr><td/></tr>
             </table>
         </tablenumbered>"""
-    def __init__(self,parent,caption):
-        id=rx.id('nt'+caption)
-        self.numbered=ET.SubElement(parent.node,'tablenumbered',attrib={'id':id})
-        self.node=ET.SubElement(self.numbered,'table')
-        self.caption=ET.SubElement(self.node,'caption')
-        self.caption.text=caption
+    def destroy(self):
+        if hasattr(self,'numbered'):
+            self.parent.node.remove(self.numbered)
+        else:
+            self.parent.node.remove(self.node)
+    def __init__(self,parent,caption=None,numbered=True):
+        self.parent=parent
+        if numbered:
+            id=rx.id('nt'+caption)
+            self.numbered=ET.SubElement(parent.node,'tablenumbered',attrib={'id':id})
+            self.node=ET.SubElement(self.numbered,'table')
+        else:
+            self.node=ET.SubElement(parent.node,'table')
+        if caption:
+            self.caption=ET.SubElement(self.node,'caption')
+            self.caption.text=caption
 class Row(ET.Element):
     def __init__(self,parent):
         self.node=ET.SubElement(parent.node,'tr')
 class Cell(ET.Element):
-    def __init__(self,parent,content,header=False,linebreakwords=False):
+    def __init__(self,parent,content='',header=False,linebreakwords=False):
         if header == False:
             tag='td'
         elif header == True:
