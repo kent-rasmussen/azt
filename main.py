@@ -6453,7 +6453,8 @@ class ToneFrameDrafter(ui.Window):
             self.fds.destroy()
             self.exf.destroy()
         except AttributeError:
-            log.info("Probably the first time running status.")
+            # log.info("First status frame, or no example yet ({}).".format(e))
+            pass
         self.fds=ui.Frame(self.content,row=1,column=0)
         if 'field' not in self.forms:
             d=program['params'].ftype()
