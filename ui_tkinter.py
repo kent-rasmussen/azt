@@ -2000,10 +2000,13 @@ def testapp(program):
     r.withdraw()
     w=Window(r)
     log.info("window is {}".format(w))
-    Label(w.outsideframe,text="Seems to work!",font='title',
-            row=0,column=0)# loglevel='Debug'
-    l=Label(w.outsideframe,text="At least this much",
-            row=1,column=0)# loglevel='Debug'
+    sf=ScrollingFrame(w.outsideframe,row=0,column=0)
+    Label(sf.content,text="Seems to work!",font='title',
+            row=0,column=0,
+            borderwidth=1,relief='raised')
+    l=Label(sf.content,text="At least this much",
+            row=1,column=0,
+            borderwidth=1,relief='raised')
     # log.info("l dir is {}".format(dir(l)))
     log.info("l _root is {}".format(l._root()))
     log.info("Image dict: {}".format(r.theme.photo))
@@ -2018,22 +2021,33 @@ def testapp(program):
     ToolTip(l,"this image has a tooltip")
     for c,cls in enumerate([Message,Label]):
         cname=cls.__name__
-        cls(w.outsideframe,text="This is a {}".format(cname),row=2, column=c)
+        cls(sf.content,text="This is a {}".format(cname),row=2, column=c,
+                borderwidth=1,relief='raised')
         # cls(w.outsideframe,text="This is a long {}".format(cname),row=3, column=c)
-        cls(w.outsideframe,text="This is a very long {}".format(cname),row=4, column=c)
-        # cls(w.outsideframe,text="This is a very very long {}".format(cname),row=5, column=c)
-        # cls(w.outsideframe,text="This is a very very very very long {}"
-        #             "".format(cname),row=6, column=c)
-        # cls(w.outsideframe,text="This is a very very very very "
-        #             "very very very very "
-        #             "very very very very "
-        #             "very very very very "
-        #             "very very very very "
-        #             "very very very very "
-        #             "very very very very "
-        #             "very very very very "
-        #             "long {}".format(cname),row=7, column=c)
-    # m=tkinter.Label(w.outsideframe,text="This is a Label", row=3, column=0)
+        cls(sf.content,text="This is a very long {}".format(cname),row=4, column=c,
+                borderwidth=1,relief='raised')
+        cls(sf.content,text="This is a very very long {}".format(cname),
+            row=5, column=c,
+            borderwidth=1,relief='raised')
+        cls(sf.content,text="This is a very very very very long {}"
+                    "".format(cname),
+                    row=6, column=c,
+                    borderwidth=1,relief='raised')
+        lll=cls(sf.content,text="This is a very very very very "
+                    "very very very very "
+                    "very very very very "
+                    "very very very very "
+                    "very very very very "
+                    "very very very very "
+                    "very very very very "
+                    "very very very very "
+                    "long {}".format(cname),row=7, column=c,
+                    borderwidth=1,relief='raised')
+        if cls == Label:
+            # lll['wraplength']=20
+            lll.config(wraplength=120)
+            # lll.wrap()
+    # m=tkinter.Label(sf.content,text="This is a Label", row=3, column=0)
     bars={}
     for orient in ['horizontal','vertical']:
         for row in [0,2]:
@@ -2051,8 +2065,8 @@ def testapp(program):
                                             row=row, column=col,
                                             columnspan=colspan,
                                             rowspan=rowspan,sticky='nesw')
-    w.bind('<ButtonRelease>',textchange)
-    w.bind('<ButtonRelease>',progress,add=True)
+    w.bind('<ButtonRelease-1>',textchange)
+    w.bind('<ButtonRelease-1>',progress,add=True)
     w.bind('<Up>',lambda event,x='^':textadd(x),add=True)
     w.bind('<Prior>',lambda event,x='^':textadd(x),add=True) #page up button
     w.bind('<Down>',lambda event,x='v':textadd(x),add=True)
