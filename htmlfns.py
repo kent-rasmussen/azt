@@ -18,6 +18,41 @@ def getbinary(url, **kwargs):
 def getraw(url):
     return urls.http.request("GET", url)
 
+class TranslationScraper(html.parser.HTMLParser):
+    """Pulling this: <span jsname="FteS1d" class="jzUr5c" lang="fr">texte</span>
+    """
+    def handle_data(self,data):
+        if self.capture:
+            self.text[self.capturelang].append(data)
+        # t=self.get_starttag_text()
+        # if 'texte' in data:
+        #     log.info(data)
+        # if 'lang=' in t:
+        #     log.info("{}: {}".format(t,data))
+        #     if 'lang="{}"'.format(self.lang) in t:
+
+    def handle_starttag(self, tag, attrs):
+        # if tag == 'html':
+        #     log.info("starting html ({})".format(kwargs))
+        if tag == 'span' and [t[1] for t in attrs if t[0] =='lang']:
+            self.capture=True
+            self.capturelang=[t[1] for t in attrs if t[0] =='lang'][0]
+                # self.text[lang].append(self.get_starttag_text())
+        # elif tag == 'span':
+        #     print(attrs)
+        # elif [t for t in attrs if t[0] =='lang' and t[1] == self.lang]:
+        #     print(self.get_starttag_text())
+        # lang in attrs and attrs['lang'] == self.lang:
+    def handle_endtag(self,tag):
+        self.capture=False
+    def __init__(self,lang):
+        log.info('scraping')
+        self.lang=lang
+        self.capture=False
+        super().__init__()
+        self.text={lang:[],
+                    'en':[]
+                    }
 class ImageScraper(html.parser.HTMLParser):
     """Subclassing to do what I want"""
     """Pulling out this: <img src="/image/800px/301653" alt="Athlete's Foot">"""
@@ -40,26 +75,42 @@ def imgurl(x):
     site='https://openclipart.org'
     return site+x
 if __name__ == '__main__':
-    html=getraw('www.google.com')
-    scraper=ImageScraper()
+    import htmlfns #not normally used here
+    # html=getraw('www.google.com')
+    text='translation terms that I want to use'
+    kwargs={
+            'sl':'en', #search language
+            'tl':'fr',  #translate to language
+            'text':text,
+            'op':'translate', #operation?
+            }
+    terms=urls.urlencode(kwargs)
+    url='https://translate.google.com/?'+terms
+    log.info("Looking in {}".format(url))
+    html=htmlfns.getdecoded(url)
+    with open('googletrans.html','w') as f:
+        f.write(html)
+    # 'https://translate.google.com/?sl=en&tl=fr&text=translation&op=translate')
+    scraper=TranslationScraper(lang='fr')
     # html='<html><t>erg</t></html>' #<!doctype html>
     # log.info(html.data)
     # log.info(html.data.decode())
     scraper.feed(html)
-    log.info("Found {} images: {}".format(len(scraper.images),scraper.images))
-    dir='images/openclipart.com/'+'_'.join(glosses)
-    file.makedir(dir)
-    for i in [i for i in scraper.images
-                        if 'openclipart-logo-2019.svg' not in i]:#[1:5]:
-        url=imgurl(i['src'])
-        num=i['src'].split('/')[-1]
-        filename='_'.join([num,i['alt']])
-        log.info("{} ({})".format(url,filename))
-        response=getbinary(url)
-        log.info("response data type: {}".format(type(response)))
-        fqdn=file.getdiredurl(dir,filename)
-        with open(fqdn,'wb') as d:
-            d.write(response)
+    log.info("Found {} text elements: {}".format(len(scraper.text),scraper.text))
+    # log.info("Found {} images: {}".format(len(scraper.images),scraper.images))
+    # dir='images/openclipart.com/'+'_'.join(glosses)
+    # file.makedir(dir)
+    # for i in [i for i in scraper.images
+    #                     if 'openclipart-logo-2019.svg' not in i]:#[1:5]:
+    #     url=imgurl(i['src'])
+    #     num=i['src'].split('/')[-1]
+    #     filename='_'.join([num,i['alt']])
+    #     log.info("{} ({})".format(url,filename))
+    #     response=getbinary(url)
+    #     log.info("response data type: {}".format(type(response)))
+    #     fqdn=file.getdiredurl(dir,filename)
+    #     with open(fqdn,'wb') as d:
+    #         d.write(response)
 
     """Maybe for later"""
         # try:
