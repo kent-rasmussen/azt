@@ -5644,6 +5644,7 @@ class WordCollection(Segments):
             try:
                 html=htmlfns.getdecoded(url)
             except urls.MaxRetryError as e:
+                self.waitdone()
                 msg=_("Problem downloading webpage; check your "
                             "internet connection!\n\n{}".format(e))
                 log.error(msg)
