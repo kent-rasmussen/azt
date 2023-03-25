@@ -4671,10 +4671,10 @@ class TaskChooser(TaskDressing,ui.Window):
                     WordCollectionCitation,
                     # WordCollectionPlural, #What is the value of this
                     # WordCollectionImperative, #What is the value of this
-                    WordCollectnParse
+                    WordCollectnParse,
+                    RecordCitation
                     ]
             if self.doneenough['collectionlc']:
-                tasks.append(RecordCitation)
                 """Do these next"""
                 tasks.append(SortV)
                 tasks.append(SortC)
