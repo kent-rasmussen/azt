@@ -43,7 +43,11 @@ logsetup.setlevel(loglevel)
 """My modules, which should log as above"""
 import lift
 import parser
-import openclipart
+try:
+    import openclipart
+except Exception as e:
+    log.error("Problem importing urllib. Is it installed? {}".format(e))
+    exceptiononload=True
 # import profiles
 import setdefaults
 import xlp
@@ -14667,6 +14671,7 @@ def pythonmodules():
         sys.exit()
     installs=[
             # ['--upgrade', 'pip', 'setuptools', 'wheel'], #this is probably never needed
+            ['urllib3'],
             ['numpy'],
             ['pyaudio'],
             ['Pillow', 'lxml'],
