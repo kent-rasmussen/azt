@@ -5645,6 +5645,10 @@ class WordCollection(Segments):
                     }
             terms=urls.urlencode(kwargs)
             url='https://openclipart.org/search/?'+terms
+            # https://publicdomainvectors.org/en/search/head
+            # These two are more full-colored images, rather than line drawings:
+            # https://pixabay.com/images/search/head/
+            # https://pxhere.com/en/photos?q=head&search=had
             try:
                 html=htmlfns.getdecoded(url)
             except urls.MaxRetryError as e:
