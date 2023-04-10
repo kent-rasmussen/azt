@@ -3779,7 +3779,7 @@ class TaskDressing(HasMenus,ui.Window):
         x=0
         tdict=program['params'].cvtdict()
         for cvt in tdict:
-            if cvt == 'CV' and (isinstance(self.task,Sort) or
+            if cvt in ['CV','VC'] and (isinstance(self.task,Sort) or
                                 isinstance(self.task,Transcribe)):
                 continue
             cvts.append({})
