@@ -394,7 +394,11 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.entries=[Entry(self.nodes,i,annotationlang=self.annotationlang)
                             for i in self.nodes
                             if i.tag == 'entry']
+        # self.nentries=len(self.entries)
+        # log.info("nentries: {}".format(self.nentries))
+        self.entries=[i for i in self.entries if i.sense]
         self.nentries=len(self.entries)
+        # log.info("nentries: {}".format(self.nentries))
     def getsenses(self):
         self.senses=[i for j in self.entries for i in j.senses]
         self.nsenses=len(self.senses)
@@ -2654,7 +2658,12 @@ class Entry(Node,FieldParent): # what does "object do here?"
     """
     def getsenses(self):
         self.senses=[Sense(self,i) for i in self if i.tag == 'sense']
-        self.sense=self.senses[0] #for when I really just need one
+        try:
+            self.sense=self.senses[0] #for when I really just need one
+        except IndexError:
+            self.sense=None
+            log.info("Removing entry with no senses: {}".format(self.guid))
+            return 1
         # log.info("Found {} sense(s)".format(len(self.senses)))
         # log.info("Found sense(s): {}".format(self.senses))
     def getlx(self):
@@ -2736,7 +2745,9 @@ class Entry(Node,FieldParent): # what does "object do here?"
         self.guid=self.get('guid')
         self.getlx()
         self.getlc()
-        self.getsenses() #this needs lx and lc already
+        r=self.getsenses() #this needs lx and lc already
+        if r: #If no senses, stop here
+            return
         self.lx.getsense() #this needs senses already
         self.lc.getsense() #this needs senses already
         FieldParent.__init__(self)
