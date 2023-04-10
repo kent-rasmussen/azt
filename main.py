@@ -4266,7 +4266,7 @@ class TaskDressing(HasMenus,ui.Window):
             # groups+=[(None,'All')] #put this first, some day (now confuses ui)
             # log.info("Groups: {}".format(groups))
             buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                     optionlist=groups+[(None,_("All"))],
+                                     optionlist=[(None,_("All"))]+groups,
                                      command=program['settings'].setgroup,
                                      window=window,
                                      column=0, row=4

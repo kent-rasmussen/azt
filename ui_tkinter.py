@@ -1407,33 +1407,25 @@ class ButtonFrame(Frame):
         elif type(optionlist[0]) is dict:
             # log.info("looks like options are already in dictionary format.")
             pass
-        elif (type(optionlist[0]) is str) or (type(optionlist[0]) is int):
-            """when optionlist is a list of strings/codes/integers"""
-            # log.info("looks like options are just codes; making dict.")
+        else: #tuple, str or int
             if None in optionlist:
                 log.error(_("Having None as a list is fine, but you need to "
                 "put it in a tuple, with a second argument to display, so "
                 "users know what it means when they select it."))
                 return
-            optionlist = [({'code':optionlist[i][0], 'name':optionlist[i][1]}
-                            if type(optionlist[i]) is tuple
-                            else {'code':optionlist[i], 'name':optionlist[i]}
-                                ) for i in range(0, len(optionlist))]
-        elif type(optionlist[0]) is tuple:
-            if type(optionlist[0][1]) is str:
-                # log.info("looks like options are just a list of (codes,names) "
-                #         "tuples; making dict.")
-                optionlist = [({'code':optionlist[i][0],
+            log.info("first optionlist item: {}".format(optionlist[0]))
+            optionlist = [(
+                            {'code':optionlist[i], 'name':optionlist[i]}
+                            if type(optionlist[i]) is not tuple
+                            else {'code':optionlist[i][0],
                                 'name':optionlist[i][1]}
-                                ) for i in range(0, len(optionlist))]
-            elif type(optionlist[0][1]) is int:
-                # log.info("looks like options are just a list of (codes,counts) "
-                #         "tuples; making dict.")
-                optionlist = [({'code':optionlist[i][0],
+                            if type(optionlist[i][1]) is str
+                            else {'code':optionlist[i][0],
                                 'description':optionlist[i][1]}
-                                ) for i in range(0, len(optionlist))]
+                            ) for i in range(0, len(optionlist))]
         if not 'name' in optionlist[0]: #duplicate name from code.
             for i in range(0, len(optionlist)):
+                log.info("optionlist item: {}".format(optionlist[i]))
                 optionlist[i]['name']=str(optionlist[i]['code'])
         if gimmenull == True:
             optionlist.append(({code:"Null",name:"None of These"}))
