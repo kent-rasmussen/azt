@@ -13689,11 +13689,19 @@ class Repository(object):
                 log.info(text)
             return
         t=stouttostr(output)
-        #These give massive output!
-        if t and iwascalledby not in ['diff','getfiles','commithashes']:
+        if iwascalledby in ['commithashes', #never log these, even w/output
+                            'lastcommitdate',
+                            'lastcommitdaterelative'
+                            ]:
+            pass
+        elif t and iwascalledby not in ['diff', #These give massive output!
+                                        'getfiles',
+                                        ]:
             log.info("{} {} {}: {}".format(self.repotypename,
                                             iwascalledby,args[1:],t))
-        elif iwascalledby not in ['add','commit','commithashes']:
+        elif iwascalledby not in ['add', #these should log only w/output
+                                    'commit',
+                                    ]:
             log.info("{} {} {} OK".format(self.repotypename,
                                             iwascalledby,args[1:]))
         return t
@@ -14025,6 +14033,11 @@ class Git(Repository):
         # git config branch.$branchname.mergeoptions '-X ignore-space-change'
     def lastcommitdate(self):
         args=['log', '-1', '--format=%cd']
+        r=self.do(args)
+        # log.info(r)
+        return r
+    def lastcommitdaterelative(self):
+        args=['log', '-1', '--format=%ar']
         r=self.do(args)
         # log.info(r)
         return r
@@ -15122,8 +15135,10 @@ if __name__ == '__main__':
         program['version'] += " ({})".format(branch)
     program['docsurl']=('https://github.com/kent-rasmussen/azt/blob/{}/docs'
         '').format(branch)
-    log.info(_("Running {} v{} (main.py updated to {})").format(
-                                    program['name'],program['version'],mt))
+    mt=program['repo'].lastcommitdate()
+    mtrel=program['repo'].lastcommitdaterelative()
+    log.info(_("Running {} v{}, updated {} ({})").format(
+                                program['name'],program['version'],mtrel,mt))
     log.info(_("Called with arguments ({}) {} / {}").format(sys.executable,
                                                     sys.argv[0], sys.argv))
     text=_("Working directory is {} on {}, running on {} cores"
