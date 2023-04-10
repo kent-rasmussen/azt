@@ -1,18 +1,6 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 """This file runs the actual GUI for lexical file manipulation/checking"""
-<<<<<<< HEAD
-program={'name':'A→Z+T'}
-program['tkinter']=True
-program['production']=False #True for making screenshots (default theme)
-program['testing']=True #True eliminates Error screens and zipped logs
-program['demo']=True #sets me=False, production=True, testing=False
-# program['demo']=False
-program['version']='0.9.5' #This is a string...
-program['testversionname']='tweaks' #always have some real test branch here
-program['url']='https://github.com/kent-rasmussen/azt'
-program['Email']='kent_rasmussen@sil.org'
-=======
 program={'name':'A-Z+T',
         'tkinter':True, #for some day
         'production':False, #True for making screenshots (default theme)
@@ -23,7 +11,6 @@ program={'name':'A-Z+T',
         'Email':'kent_rasmussen@sil.org'
         }
 # program['testing']=True # eliminates Error screens and zipped logs, repos
->>>>>>> c6081ce4b69af7a8dcc1269f90897849ad0ddc66
 exceptiononload=False
 import platform
 program['hostname']=platform.uname().node
