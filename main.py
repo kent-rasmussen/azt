@@ -43,7 +43,11 @@ logsetup.setlevel(loglevel)
 """My modules, which should log as above"""
 import lift
 import parser
-import openclipart
+try:
+    import openclipart
+except Exception as e:
+    log.error("Problem importing urllib. Is it installed? {}".format(e))
+    exceptiononload=True
 # import profiles
 import setdefaults
 import xlp
@@ -4671,10 +4675,10 @@ class TaskChooser(TaskDressing,ui.Window):
                     WordCollectionCitation,
                     # WordCollectionPlural, #What is the value of this
                     # WordCollectionImperative, #What is the value of this
-                    WordCollectnParse
+                    WordCollectnParse,
+                    RecordCitation
                     ]
             if self.doneenough['collectionlc']:
-                tasks.append(RecordCitation)
                 """Do these next"""
                 tasks.append(SortV)
                 tasks.append(SortC)
@@ -5644,6 +5648,7 @@ class WordCollection(Segments):
             try:
                 html=htmlfns.getdecoded(url)
             except urls.MaxRetryError as e:
+                self.waitdone()
                 msg=_("Problem downloading webpage; check your "
                             "internet connection!\n\n{}".format(e))
                 log.error(msg)
@@ -14666,6 +14671,7 @@ def pythonmodules():
         sys.exit()
     installs=[
             # ['--upgrade', 'pip', 'setuptools', 'wheel'], #this is probably never needed
+            ['urllib3'],
             ['numpy'],
             ['pyaudio'],
             ['Pillow', 'lxml'],
