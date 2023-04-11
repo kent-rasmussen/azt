@@ -418,6 +418,10 @@ class LiftChooser(ui.Window,HasMenus):
         log.info(self.newdirname)
         file.makedir(self.newdirname)
         newfile=self.newdirname.joinpath('Demo_'+self.demolang+'.lift')
+        if file.exists(newfile):
+            self.wait.close()
+            ErrorNotice(_("File {} already exists!").format(newfile),wait=True)
+            return
         self.cawldb.getentries()
         self.cawldb.getsenses()
         self.cawldb.convertglosstocitation(self.demolang)
@@ -1915,7 +1919,7 @@ class Settings(object):
         self.directory=file.getfilenamedir(self.liftfilename)
         if not file.exists(self.directory):
             log.info(_("Looks like there's a problem with your directory... {}"
-                    '\n{}').format(self.liftfilename,filemod))
+                    '\n{}').format(self.liftfilename,self.directory))
             exit()
         self.repocheck()
         self.settingsfilecheck()
@@ -5160,7 +5164,7 @@ class Segments(object):
         """Final step: convert the CVx code to regex, and store in self."""
         self.regex=rx.fromCV(self.regexCV, program['settings'].s[self.analang],
                             program['settings'].distinguish,
-                            word=True, compile=True)
+                            word=True, compile=True, caseinsensitive=True)
     def ifregexadd(self,regex,form,id):
         # This fn is just to make this threadable
         if regex.search(form):
