@@ -7653,6 +7653,9 @@ class Sort(object):
         if group in program['status'].verified():
             log.info("‘{}’ already verified, continuing.".format(group))
             return
+        if program['params'].cvt() == 'T' and 'examples' not in program:
+            log.error(_("Not verifying tone examples which don't exist."))
+            return 1
         senses=program['examples'].sensesinslicegroup(group,check)
         if not senses: #then remove the group
             groups=program['status'].groups(wsorted=True) #from which to remove, put back
