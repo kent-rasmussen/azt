@@ -418,6 +418,10 @@ class LiftChooser(ui.Window,HasMenus):
         log.info(self.newdirname)
         file.makedir(self.newdirname)
         newfile=self.newdirname.joinpath('Demo_'+self.demolang+'.lift')
+        if file.exists(newfile):
+            self.wait.close()
+            ErrorNotice(_("File {} already exists!").format(newfile),wait=True)
+            return
         self.cawldb.getentries()
         self.cawldb.getsenses()
         self.cawldb.convertglosstocitation(self.demolang)
@@ -1915,7 +1919,7 @@ class Settings(object):
         self.directory=file.getfilenamedir(self.liftfilename)
         if not file.exists(self.directory):
             log.info(_("Looks like there's a problem with your directory... {}"
-                    '\n{}').format(self.liftfilename,filemod))
+                    '\n{}').format(self.liftfilename,self.directory))
             exit()
         self.repocheck()
         self.settingsfilecheck()
@@ -3779,7 +3783,7 @@ class TaskDressing(HasMenus,ui.Window):
         x=0
         tdict=program['params'].cvtdict()
         for cvt in tdict:
-            if cvt == 'CV' and (isinstance(self.task,Sort) or
+            if cvt in ['CV','VC'] and (isinstance(self.task,Sort) or
                                 isinstance(self.task,Transcribe)):
                 continue
             cvts.append({})
@@ -4266,7 +4270,7 @@ class TaskDressing(HasMenus,ui.Window):
             # groups+=[(None,'All')] #put this first, some day (now confuses ui)
             # log.info("Groups: {}".format(groups))
             buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                     optionlist=groups+[(None,'All')],
+                                     optionlist=[(None,_("All"))]+groups,
                                      command=program['settings'].setgroup,
                                      window=window,
                                      column=0, row=4
@@ -5160,7 +5164,7 @@ class Segments(object):
         """Final step: convert the CVx code to regex, and store in self."""
         self.regex=rx.fromCV(self.regexCV, program['settings'].s[self.analang],
                             program['settings'].distinguish,
-                            word=True, compile=True)
+                            word=True, compile=True, caseinsensitive=True)
     def ifregexadd(self,regex,form,id):
         # This fn is just to make this threadable
         if regex.search(form):
@@ -13693,11 +13697,19 @@ class Repository(object):
                 log.info(text)
             return
         t=stouttostr(output)
-        #These give massive output!
-        if t and iwascalledby not in ['diff','getfiles','commithashes']:
+        if iwascalledby in ['commithashes', #never log these, even w/output
+                            'lastcommitdate',
+                            'lastcommitdaterelative'
+                            ]:
+            pass
+        elif t and iwascalledby not in ['diff', #These give massive output!
+                                        'getfiles',
+                                        ]:
             log.info("{} {} {}: {}".format(self.repotypename,
                                             iwascalledby,args[1:],t))
-        elif iwascalledby not in ['add','commit','commithashes']:
+        elif iwascalledby not in ['add', #these should log only w/output
+                                    'commit',
+                                    ]:
             log.info("{} {} {} OK".format(self.repotypename,
                                             iwascalledby,args[1:]))
         return t
@@ -14029,6 +14041,11 @@ class Git(Repository):
         # git config branch.$branchname.mergeoptions '-X ignore-space-change'
     def lastcommitdate(self):
         args=['log', '-1', '--format=%cd']
+        r=self.do(args)
+        # log.info(r)
+        return r
+    def lastcommitdaterelative(self):
+        args=['log', '-1', '--format=%ar']
         r=self.do(args)
         # log.info(r)
         return r
@@ -15126,8 +15143,10 @@ if __name__ == '__main__':
         program['version'] += " ({})".format(branch)
     program['docsurl']=('https://github.com/kent-rasmussen/azt/blob/{}/docs'
         '').format(branch)
-    log.info(_("Running {} v{} (main.py updated to {})").format(
-                                    program['name'],program['version'],mt))
+    mt=program['repo'].lastcommitdate()
+    mtrel=program['repo'].lastcommitdaterelative()
+    log.info(_("Running {} v{}, updated {} ({})").format(
+                                program['name'],program['version'],mtrel,mt))
     log.info(_("Called with arguments ({}) {} / {}").format(sys.executable,
                                                     sys.argv[0], sys.argv))
     text=_("Working directory is {} on {}, running on {} cores"

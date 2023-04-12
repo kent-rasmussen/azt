@@ -64,6 +64,7 @@ def stripquotes(x):
     except:
         return x
 """passthrough fns"""
+IGNORECASE=re.IGNORECASE
 def sub(*args,**kwargs):
     # pattern, repl, string, count=0, flags=0
     # log.info("Running re.sub with args: {} and kwargs: {}".format(args,kwargs))
@@ -254,17 +255,24 @@ def s(sdict, stype, polyn=0, word=False, compile=False): #settings lang=None
         return make(output, word=word, compile=compile)
     else:
         return output
-def make(regex, word=False, compile=False):
+def make(regex, **kwargs):
     # if (re.match('^[^(]*\|',regex)) or (re.search('\|[^)]*$',regex)):
     #     log.error('Regex problem! (need parentheses around segments!):',regex)
     #     exit()
-    if word == True:
+    word=kwargs.get('word')
+    compile=kwargs.get('compile')
+    caseinsensitive=kwargs.get('caseinsensitive')
+    if kwargs.get('word'):
         """To make alternations and references work correctly, this should
         already have parentheses () around each S."""
         regex='^'+regex+'$'
-    if compile == True:
+    if kwargs.get('caseinsensitive'):
+        flags=re.UNICODE|re.IGNORECASE
+    else:
+        flags=re.UNICODE
+    if kwargs.get('compile'):
         try:
-            regex=re.compile(regex, re.UNICODE)
+            regex=re.compile(regex, flags=flags)
         except:
             log.error('Regex problem!')
     return regex
@@ -308,7 +316,7 @@ def nX(segmentsin,segmentsout,n):
     #     print(n,i)
     # log.info("Compiling X{} regex {}".format(n,nS))
     return make(nS, compile=True)
-def fromCV(CVs, sdict, distinguish, word=False, compile=False): #check, lang
+def fromCV(CVs, sdict, distinguish, **kwargs): #check, lang
     """ this inputs regex variable (regexCV), a tuple of two parts:
     1. abbreviations with 'C' and 'V' in it, and/or variables for actual
     segments or back reference, e.g., 1 for \1 or 2 for \2, and 'c' or 'v'.
@@ -348,7 +356,7 @@ def fromCV(CVs, sdict, distinguish, word=False, compile=False): #check, lang
         # log.info('CVs: {}'.format(CVs))
     CVs=re.sub('\)([^(]+)\(',')(\\1)(',CVs) #?
     # log.info('Going to compile regex with CVs: {}'.format(CVs))
-    return make(CVs, word=word, compile=compile)
+    return make(CVs, **kwargs)
 if __name__ == '__main__':
     x='ne [pas] plaire, ne pas agréer, ne pas'
     ts=['bobongo','bobingo']
