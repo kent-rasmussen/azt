@@ -14062,6 +14062,8 @@ class Git(Repository):
         r=self.do(args)
         if r:
             r=r.split('\n')
+        else:
+            r=[] # This should always be iterable
         log.info("Using these remotes: {}".format(r))
         return r
     def getremotenameurl(self,remotename):
