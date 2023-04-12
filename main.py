@@ -2231,7 +2231,9 @@ class Settings(object):
     def polygraphcheck(self):
         log.info("Checking for Digraphs and Trigraphs!")
         # log.info("Language settings: {}".format(program['db'].s))
+        firstrun=False
         if not hasattr(self,'polygraphs'):
+            firstrun=True
             self.polygraphs={}
         for lang in program['db'].analangs:
             if lang not in program['db'].s:
@@ -2248,7 +2250,9 @@ class Settings(object):
                 for pg in program['db'].s[lang][sclass]:
                     # log.info("checking for {} ({}/{}) in {}"
                     #         "".format(pg,pclass,sclass,self.polygraphs))
-                    if pg not in self.polygraphs[lang][pclass]:
+                    # Don't show user this on first boot; only when new
+                    # characters show up
+                    if not firstrun and pg not in self.polygraphs[lang][pclass]:
                         log.info(_("{} ({}/{}) has no Di/Trigraph setting; "
                         "prompting user for info.").format(pg,pclass,sclass))
                         if self.askaboutpolygraphs(onboot=True):
