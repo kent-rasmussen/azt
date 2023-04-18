@@ -42,8 +42,7 @@ ECHO again manually (maybe select "Fix install") to set these options.
 ECHO:
 ECHO Otherwise, you should be fine with all default options
 ECHO:
-start python-3.6.8-amd64.exe
-
+start python-3.6.8-amd64.exe /passive PrependPath=1 Include_pip=1 InstallAllUsers=1
 If exist Git-2.33.0.2-64-bit.exe (
 ECHO Git-2.33.0.2-64-bit.exe is there!
 ) ELSE (
