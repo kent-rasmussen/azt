@@ -180,7 +180,7 @@ def getfilename():
         import lift_url
     except:
         log.debug("getfilename lift_url didn't import")
-        return
+        return [] #this should always be iterable
     if (hasattr(lift_url,'filename') and lift_url.filename and
             exists(lift_url.filename)):
         log.debug("lift_url.py imported fine, and url points to a file.")
