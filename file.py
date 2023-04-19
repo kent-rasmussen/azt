@@ -176,7 +176,7 @@ def getfilenames():
     #                                 getattr(lift_url,'filenames',[])
     #                                 if exists(i)]
     #                                 ))
-    return [i for i in lift_url.filenames if exists(i)]
+    return [i for i in getattr(lift_url,'filenames',[]) if exists(i)]
 def getfilename():
     """This returns a single filename, if there, else a list if there"""
     try:
