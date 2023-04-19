@@ -13467,8 +13467,9 @@ class Repository(object):
             branch=self.branch
         for remote in remotes:
             args=['pull',remote,branch+':'+branch]
+            log.info("Pulling: {}".format(args))
             r=self.do(args)
-            # log.info("Pull return: {}".format(r))
+            log.info("Pull return: {}".format(r))
         return r #if we want results for each, do this once for each
     def push(self,remotes=None,branch=None,setupstream=False):
         if not remotes:
