@@ -260,13 +260,13 @@ def lift():
     remove a parent"""
     return writefilename(filename)
 def writefilename(filename=''):
+    filenames=[]
     try:
         import lift_url
         if hasattr(lift_url,'filenames') and lift_url.filenames:
             filenames=lift_url.filenames
     except:
         log.error("writefilename lift_url didn't import.")
-        filenames=[]
     # log.info("filenames: {} ({})".format(filenames,filename))
     if filename and str(filename) not in filenames:
         filenames.append(str(filename))
