@@ -538,6 +538,7 @@ class FileChooser(object):
             return 1
     def __init__(self):
         self.name=file.getfilename() #returns filename if there, else filenames
+        log.info("getfilename returned {}".format(self.name))
         if type(self.name) is not list and not file.exists(self.name):
                 self.name=None #don't return a file that isn't there
         if not self.name or isinstance(self.name,list): #nothing or a selection
