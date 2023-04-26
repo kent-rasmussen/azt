@@ -14722,6 +14722,7 @@ def pythonmodules():
             ]
     log.info("Installs: {}".format(', '.join([i for j in installs for i in j])))
     for install in installs:
+        thisinstalled=False
         pyargs=[program['python'], '-m', 'pip', 'install',
                     '-f', installfolder, #install the one in this folder, if there
                     '--no-index' #This stops it from looking online
@@ -14735,10 +14736,10 @@ def pythonmodules():
             o=subprocess.check_output(pyargs,shell=False,
                                         stderr=subprocess.STDOUT)
             o=stouttostr(o)
-            if not o:
+            if not o or "Successfully installed" in o:
                 log.info("looks like it was successful; so I'm going to reboot "
-                            "in a bit. ({})".format(o))
-                installedsomething=True
+                            "in a bit. Output follows:")
+                thisinstalled=installedsomething=True
         except subprocess.CalledProcessError as e:
             o=stouttostr(e.output)
             if 'Could not find a version' in o:
@@ -14748,12 +14749,14 @@ def pythonmodules():
                     o=subprocess.check_output(pyargs,shell=False,
                                             stderr=subprocess.STDOUT)
                     o=stouttostr(o)
-                    if not o:
+                    if not o or "Successfully installed" in o:
                         log.info("looks like it was at last successful; so "
-                                "I'm going to reboot in a bit. ({})".format(o))
-                        installedsomething=True
+                                "I'm going to reboot in a bit. Output follows:")
+                        thisinstalled=installedsomething=True
                 except subprocess.CalledProcessError as e:
                     o=stouttostr(e.output)
+        if not thisinstalled:
+            log.info("Nothing installed. Output follows:")
         log.info(o) #just give bytes, if encoding isn't correct
     if installedsomething:
         sysrestart()
