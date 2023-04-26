@@ -51,8 +51,12 @@ except Exception as e:
 # import profiles
 import setdefaults
 import xlp
-import urls
-import htmlfns
+try:
+    import urls
+    import htmlfns
+except ModuleNotFoundError as e:
+    log.error("Problem importing url module. Is urllib3 installed? {}".format(e))
+    exceptiononload=True
 from utilities import *
 try:
     import sound
