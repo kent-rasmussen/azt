@@ -14715,10 +14715,12 @@ def pythonmodules():
             ['urllib3'],
             ['numpy'],
             ['pyaudio'],
-            ['Pillow', 'lxml'],
+            ['Pillow'],
+            ['lxml'],
             ['psutil'],
             ['patiencediff']
             ]
+    log.info("Installs: {}".format(', '.join([i for j in installs for i in j])))
     for install in installs:
         pyargs=[program['python'], '-m', 'pip', 'install',
                     '-f', installfolder, #install the one in this folder, if there
