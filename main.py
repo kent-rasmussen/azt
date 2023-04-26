@@ -5416,6 +5416,7 @@ class WordCollection(Segments):
         self.runwindow.form[lang]=ui.StringVar()
         formfield = ui.EntryField(eff, render=True,
                                     textvariable=self.runwindow.form[lang],
+                                    font='readbig',
                                     row=1,column=0,
                                     sticky='')
         formfield.focus_set()
@@ -5741,6 +5742,7 @@ class WordCollection(Segments):
                         row=4, column=2, sticky='e',anchor='e')
         self.var=ui.StringVar()
         self.lxenter=ui.EntryField(self.wordframe,textvariable=self.var,
+                                font='readbig',
                                 row=3,column=0,columnspan=3,
                                 sticky='ew')
         next.bind_all('<Up>',lambda event: self.backword(nostore=True))
