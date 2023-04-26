@@ -2402,9 +2402,22 @@ class Sense(Node,FieldParent):
         self.examples[loc].lastAZTsort()
         prettyprint(self.examples[loc])
     def getexamples(self):
-        self.examples={loc:Example(self,self.find(
-                                    'example/field[@type="location"]/'
-                                    'form/text[.="{}"]/../../..'.format(loc)))
+        # log.info("getting examples for sense {}".format(self.id))
+        # log.info("Locations: {}".format([i.text for i in self.findall(
+        #             'example/field[@type="location"]/'
+        #             'form/text')
+        #             ]
+        #         ))
+        # for python 3.7+, use
+        # self.find(
+        #                             'example/field[@type="location"]/'
+        #                             'form/text[.="{}"]/../../..'.format(loc))
+        self.examples={loc:Example(self,
+                                [i for i in self.find('example')
+                                    if i.find('field[@type="location"]/'
+                                                'form/text') == loc
+                                ]
+                                    )
                             for loc in [i.text for i in self.findall(
                                         'example/field[@type="location"]/'
                                         'form/text')
@@ -4052,7 +4065,7 @@ if __name__ == '__main__':
     # loglevel='Debug'
     # filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bse/SIL CAWL Wushi.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/cky/Mushere Exported AZT file.lift"
     # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift_backupBeforeLx2LcConversion"
@@ -4065,7 +4078,7 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/Eton.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/Demo_gnd/gnd.lift"
     # filename="/home/kentr/bin/raspy/azt/SILCAWL/SILCAWL.lift"
     lift=Lift(filename)
@@ -4085,8 +4098,15 @@ if __name__ == '__main__':
 		'swh':'__',
 		'fr':'__es'}
     ftype='pl'
-    sense=lift.sensedict['daytime_b27c251c-090e-4427-aa86-22b745409f8d']
+    # sense=lift.sensedict['daytime_b27c251c-090e-4427-aa86-22b745409f8d']
+    sense=lift.sensedict['eb91d782-97fc-47da-b1c4-2ba766827ec8']
+    # sense=lift.senses[0]
     prettyprint(sense)
+    # for i in range(10):
+    print(sense.examples.keys())
+    # prettyprint(sense.examples[key])
+    for v in sense.examples.values():
+        prettyprint(v)
     print(sense.entry.lc.getlang(shortest=True))
     exit()
     for entry in lift.entries:
