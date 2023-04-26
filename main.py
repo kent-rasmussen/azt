@@ -14669,6 +14669,10 @@ def findexecutable(exe):
     if exe == 'praat' and program[exe] and not praatversioncheck():
         findexecutable('sendpraat') #only ask if it would be useful
     # os.environ['PATH'] += os.pathsep + os.path.join(os.getcwd(), 'node')
+def sysexecutableversion():
+    # args=[program['python'], '--version']
+    args=[sys.executable, '--version']
+    return stouttostr(subprocess.check_output(args, shell=False))
 def praatversioncheck():
     praatvargs=[program['praat'], '--version']
     versionraw=subprocess.check_output(praatvargs, shell=False)
@@ -15161,6 +15165,7 @@ if __name__ == '__main__':
                                 program['name'],program['version'],mtrel,mt))
     log.info(_("Called with arguments ({}) {} / {}").format(sys.executable,
                                                     sys.argv[0], sys.argv))
+    log.info("Executed by {}".format(sysexecutableversion()))
     text=_("Working directory is {} on {}, running on {} cores"
             ).format(program['aztdir'],
                     program['hostname'],
