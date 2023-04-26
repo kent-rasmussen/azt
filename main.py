@@ -5807,6 +5807,7 @@ class WordCollection(Segments):
             self.wordframe.pic.changesense(self.sense)
         else:
             self.wordframe.pic=ImageFrame(self.wordframe, self.sense,
+                                            pixels=300,
                                             row=2, column=0,
                                             columnspan=3, sticky='')
         self.updatereturnbind()
