@@ -1185,11 +1185,15 @@ class EntryField(Gridded,Text,UI,tkinter.Entry):
         elif grid:
                 self.rendergrid=mygrid
     def __init__(self, parent, render=False, **kwargs):
+        # log.info("grid kwargs: {}".format(kwargs))
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
+        # log.info("text kwargs: {}".format(kwargs))
         Childof.__init__(self,parent)
-        Text.__init__(self,parent)
+        Text.__init__(self, parent, **kwargs)
+        # log.info("textless kwargs: {}".format(kwargs))
         kwargs=self.lesstextkwargs(**kwargs)
+        # log.info("font: {}".format(self.font))
         tkinter.Entry.__init__(self,parent,
                                 font=self.font,
                                 text=self.text,
