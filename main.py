@@ -2746,6 +2746,9 @@ class Settings(object):
         check=kwargs.get('check',program['params'].check())
         kwargs['wsorted']=True #ever not?
         senses=program['slices'].senses(ps=ps,profile=profile)
+        # log.info("Working on {} {} {} senses (first 5): {}".format(len(senses),
+        #                                                             ps,profile,
+        #                                                             senses[:5]))
         log.info("Working on {} sense.ids (first 5): {}".format(len(senses),
                                                     [i.id for i in senses[:5]]))
         program['status'].renewsensestosort([],[]) #will repopulate
