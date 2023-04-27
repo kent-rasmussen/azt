@@ -1843,13 +1843,19 @@ class Settings(object):
                 if len(config[section].values())>0:
                     # log.debug("Found Dictionary value for {} ({})".format(
                     #                                 section,config[section]))
-                    d[section]={}
                     for s in config[section]:
                         # log.debug("Found value {}: {}"
                         #             "".format(s,config[section][s]))
-                        d[section][s]={}
+                        if section in ['status','toneframes']:
+                            d[ofromstr(s)]=ofromstr(config[section][s])
+                        else:
+                            try:
+                                d[section][ofromstr(s)]=ofromstr(
+                                                            config[section][s])
+                            except KeyError:
+                                d[section]={ofromstr(s):ofromstr(
+                                                            config[section][s])}
                         """Make sure strings become python data"""
-                        d[section][ofromstr(s)]=ofromstr(config[section][s])
                 else:
                     log.debug("Found String/list/other value for {}: ({})"
                             "".format(section,len(config[section].values())))
