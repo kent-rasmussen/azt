@@ -2412,11 +2412,15 @@ class Settings(object):
                 for a in self.adhocgroups[ps]:
                     log.debug("Adding {} to {} ps-profile: {}".format(a,ps,
                                                 self.adhocgroups[ps][a]))
+                    # We need to convert ids (to/from file) to senses,
+                    # before including them in profilesbysense
+                    these=[program['db'].sensedict[i]
+                            for i in self.adhocgroups[ps][a]]
                     #copy over stored values:
                     try:
-                        self.profilesbysense[ps][a]=self.adhocgroups[ps][a]
+                        self.profilesbysense[ps][a]=these
                     except KeyError: #in case the ps isn't already there
-                        self.profilesbysense[ps]={a:self.adhocgroups[ps][a]}
+                        self.profilesbysense[ps]={a:these}
                     # log.debug("resulting profilesbysense: {}".format(
                     #                         self.profilesbysense[ps][a]))
         else:
