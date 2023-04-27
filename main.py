@@ -1078,16 +1078,20 @@ class StatusFrame(ui.Frame):
             cmd=self.task.getgrouptorecord
         else:
             cmd=None
-        log.info("check: {}; profile: {}; \n{}-{}; \n{}-{}; \n{}-{};"
-                    "".format(check,profile,
-                                program['status'].checks(wsorted=True),
-                                program['status'].profiles(wsorted=True),
-                                program['status'].checks(tosort=True),
-                                program['status'].profiles(tosort=True),
-                                program['status'].checks(toverify=True),
-                                program['status'].profiles(toverify=True),
-                                program['status'].checks(torecord=True),
-                                program['status'].profiles(torecord=True)))
+        # log.info("check: {}; profile: {}; "
+        #         "\nchecks-profiles:"
+        #         "\ntosort: {}-{}; "
+        #         "\ntoverify: {}-{}; "
+        #         "\ntorecord: {}-{};"
+        #             "".format(check,profile,
+        #                         program['status'].checks(wsorted=True),
+        #                         program['status'].profiles(wsorted=True),
+        #                         program['status'].checks(tosort=True),
+        #                         program['status'].profiles(tosort=True),
+        #                         program['status'].checks(toverify=True),
+        #                         program['status'].profiles(toverify=True),
+        #                         program['status'].checks(torecord=True),
+        #                         program['status'].profiles(torecord=True)))
         self.proselabel(t,cmd=cmd,parent=line)
         self.opts['columnplus']=0
     def cvcheck(self,line):
