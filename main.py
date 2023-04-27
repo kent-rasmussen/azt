@@ -1307,18 +1307,24 @@ class StatusFrame(ui.Frame):
         profiles=program['slices'].profiles()[:] #just sort here
         curprofile=program['slices'].profile()
         curcheck=program['params'].check()
+        # log.info("program['toneframes']: {}".format(program['toneframes']))
         try:
             frames=list(program['toneframes'][ps].keys())
         except KeyError:
             frames=list()
         allchecks=[]
         for profile in profiles:
+            # log.info("Doing profile {} ({})".format(profile,
+            #                                         program['status'][cvt][ps]))
             if profile in program['status'][cvt][ps]:
                 #make sure the table has all columns needed for any profile
                 allchecks+=program['status'][cvt][ps][profile].keys()
+                # log.info("allchecks1: {}".format(allchecks))
         allchecks=list(dict.fromkeys(allchecks)) #could unsort slices priority
+        # log.info("allchecks dicted: {}".format(allchecks))
         if self.cvt != 'T': #don't resort tone frames
             allchecks.sort(key=len,reverse=True) #longest first
+        # log.info("allchecks sorted: {}".format(allchecks))
         profiles.sort(key=lambda x:(x.count(self.cvt),len(x)))
         profiles=['colheader']+profiles+['next']
         ungroups=0
@@ -1334,7 +1340,9 @@ class StatusFrame(ui.Frame):
             htip=_("Refresh table, \nsave settings")
             th=ui.ToolTip(h,htip)
         r=list(program['status'][cvt][ps])
-        log.debug("Table rows possible: {}".format(r))
+        log.info("Table rows possible: {}".format(r))
+        log.info("Table columns possible: {}".format(allchecks))
+        # log.info("toneframes possible: {}".format(frames))
         for profile in profiles:
             column=0
             if profile in ['colheader','next']+list(program['status'][cvt][
