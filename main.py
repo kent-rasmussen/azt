@@ -12210,7 +12210,7 @@ class SliceDict(dict):
         """This returns profiles for either a specified ps or the current one"""
         if not ps:
             ps=self.ps()
-        if ps:
+        if ps and ps in self._profiles:
             # log.info("returning profiles: {}".format(self._profiles[ps]))
             return self._profiles[ps]
         else:
