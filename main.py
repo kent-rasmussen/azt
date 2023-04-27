@@ -3475,12 +3475,14 @@ class TaskDressing(HasMenus,ui.Window):
             "you have mixed unrelated groups.").format(changed)
             ui.Label(w.frame,text=t,wraplength=int(
                         self.frame.winfo_screenwidth()/2)).grid(row=1,column=0)
-            for ps in pss:
-                i=[x for x in self.profilesbysense[ps].keys()
+            for n,ps in enumerate(program['slices'].pss()):
+                i=[x for x in program['slices'].profiles(ps)
                                     if set(d).intersection(set(x))]
-                p=_("Profiles to check: {}").format(i)
-                log.info(p)
-                ui.Label(w.frame,text=p).grid(row=2,column=0)
+                if i:
+                    p=_("{} Profiles to check: {}").format(ps,i)
+                    log.info(p)
+                    l=ui.Label(w.frame,text=p,row=2+n,column=0)
+                    l.wrap()
             ok=Object()
             ok.value=False
             b=ui.Button(w.frame,text=_("OK, go ahead"), command=confirm)
@@ -3507,30 +3509,29 @@ class TaskDressing(HasMenus,ui.Window):
             r=True #only false if changes made, and user exits notice
             changed={}
             for typ in ['distinguish', 'interpret']:
-                for s in getattr(self,typ):
-                    if s in options.vars and s in getattr(self,typ):
+                for s in getattr(program['settings'],typ):
+                    if s in options.vars: # and s in getattr(program['settings'],typ):
                         newvar=options.vars[s].get()
-                        oldvar=getattr(self,typ)[s]
+                        oldvar=getattr(program['settings'],typ)[s]
                         if oldvar != newvar:
                             if typ == 'distinguish': #i.e., boolean
-                                if oldvar and not newvar: #True becomes False
-                                    changed[s]=(oldvar,newvar)
+                                # if oldvar and not newvar: #True becomes False
+                                changed[s]=(oldvar,newvar)
                             else: #i.e., CC v CG v C, etc.
                                 if (len(oldvar)>len(newvar) or # becomes shorter
                                     len(set(['V','G','N'] #one of these is there
                                     ).intersection(set(oldvar))) >0):
                                     changed[s]=(oldvar,newvar)
-                            getattr(self,typ)[s]=newvar
+                            getattr(program['settings'],typ)[s]=newvar
             log.debug('self.distinguish: {}'.format(program['settings'].distinguish))
             log.debug('self.interpret: {}'.format(program['settings'].interpret))
             if changed:
                 log.info('There was a change; we need to redo the analysis now.')
                 log.info('The following changed (from,to): {}'.format(changed))
-                self.storesettingsfile()
                 r=notice(changed)
                 if r:
                     self.runwindow.destroy()
-                    self.storesettingsfile(setting='profiledata')
+                    program['settings'].storesettingsfile(setting='profiledata')
                     program['taskchooser'].restart()
                 else:
                     undo(changed)
