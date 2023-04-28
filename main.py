@@ -3552,28 +3552,40 @@ class TaskDressing(HasMenus,ui.Window):
                     undo(changed)
             else:
                 self.runwindow.destroy()
-        def buttonframeframe(self):
-            s=options.s
-            f=options.frames[s]=ui.Frame(self.runwindow.scroll.content)
-            f.grid(row=options.get('r'),
+        def buttonframeframe(s):
+            f=ui.Frame(self.runwindow.scroll.content,
+                        row=options.get('r'),
                         column=options.get('c'),
                         sticky='ew', padx=options.padx, pady=options.pady)
-            bffl=ui.Label(f,text=options.text,justify=ui.LEFT,
-                                                                anchor='c')
-            bffl.grid(row=1,column=options.column,
+            bffl=ui.Label(f,text=textdict[s],justify=ui.LEFT,
+                            anchor='c',
+                            row=1,column=0,
                             sticky='ew',
                             padx=options.padx,
                             pady=options.pady)
-            # for opt in self.runwindow.options['opts']:
-            #     bffrb=CheckButton(self.runwindow.frames[ss],var=var[ss])#, #RadioButtonFrame
-            #                             # opts=self.runwindow.options['opts'])
-            #     bffrb.grid(row=1,column=1)
-            for opt in options.opts:
+            bffl.wrap()
+            for opt in optdict[s]:
                 bffrb=ui.RadioButtonFrame(f,
+                                        horizontal=True,
                                         var=options.vars[s],
-                                        opts=options.opts)
-                bffrb.grid(row=1,column=1)
-            options.next('r') #self.runwindow.options['row']+=1
+                                        opts=optdict[s],
+                                        row=1,column=1)
+            options.next('r')
+        def exsframe(x):
+            text=_("In your data, {}={}".format(x,', '.join(exsdict[x])))
+            f=ui.Frame(self.runwindow.scroll.content,
+                        row=options.get('r'),
+                        column=options.get('c'),
+                        sticky='ew')
+            bffl=ui.Label(f,text=text,
+                            font='read',
+                            anchor='c',
+                            row=1,column=options.column,
+                            sticky='ew',
+                            padx=options.padx,
+                            pady=options.pady)
+            bffl.wrap()
+            options.next('r')
         self.getrunwindow()
         program['settings'].checkinterpretations()
         analang=program['params'].analang()
@@ -3590,19 +3602,19 @@ class TaskDressing(HasMenus,ui.Window):
         title=_("Interpret {} Segments"
                 ).format(program['settings'].languagenames[analang])
         titl=ui.Label(mwframe,text=title,font='title',
-                justify=ui.LEFT,anchor='c')
-        titl.grid(row=options.get('r'), column=options.get('c'), #self.runwindow.options['column'],
-                    sticky='ew', padx=options.padx, pady=10)
+                justify=ui.LEFT,anchor='c',
+                row=options.get('r'), column=options.get('c'),
+                sticky='ew', padx=options.padx, pady=10)
         options.next('r')
         text=_("Here you can view and set parameters that change how {} "
-        "interprets {} segments \n(consonant and vowel glyphs/characters)"
+        "interprets {} segments (consonant and vowel glyphs/characters)"
                 ).format(program['name'],program['settings'].languagenames[analang])
-        instr=ui.Label(mwframe,text=text,justify=ui.LEFT,anchor='c')
-        instr.grid(row=options.get('r'), column=options.get('c'),
+        instr=ui.Label(mwframe,text=text,justify=ui.LEFT,anchor='c',
+                    row=options.get('r'), column=options.get('c'),
                     sticky='ew', padx=options.padx, pady=options.pady)
+        instr.wrap()
         """The rest of the page"""
-        self.runwindow.scroll=ui.ScrollingFrame(mwframe)
-        self.runwindow.scroll.grid(row=2,column=0)
+        self.runwindow.scroll=ui.ScrollingFrame(mwframe,row=2,column=0)
         log.debug('self.distinguish: {}'.format(program['settings'].distinguish))
         log.debug('self.interpret: {}'.format(program['settings'].interpret))
         """I considered offering these to the user conditionally, but I don't
@@ -3611,108 +3623,94 @@ class TaskDressing(HasMenus,ui.Window):
         yet distinguish word final nasals. Or CG sequences, but not other G's
         --or distinguish G, but leave as CG (≠C). So I think these are all
         independent boolean selections."""
-        options.s='ʔ'
-        options.text=_('Do you want to distinguish '
-                        'initial and medial glottal stops (ʔ) \nfrom '
-                        'other (simple/single) consonants?')
-        options.opts=[(True,'ʔ≠C'),(False,'ʔ=C')]
-        buttonframeframe(self)
-        options.s='ʔwd'
-        options.text=_('Do you want to distinguish Word '
-                        'Final glottal stops (ʔ#) \nfrom other '
-                        'word final consonants?')
-        options.opts=[(True,'ʔ#≠C#'),(False,'ʔ#=C#')]
-        buttonframeframe(self)
-        options.s='N'
-        options.text=_('Do you want to distinguish '
-                        'initial and medial Nasals (N) \nfrom '
-                        'other (simple/single) consonants?')
-        options.opts=[(True,'N≠C'),(False,'N=C')]
-        buttonframeframe(self)
-        options.s='Nwd'
-        options.text=_('Do you want to distinguish Word '
-                        'Final Nasals (N#) \nfrom other word '
-                        'final consonants?')
-        options.opts=[(True,'N#≠C#'),(False,'N#=C#')]
-        buttonframeframe(self)
-        options.s='D'
-        if analang in program['db'].s and 'D' in program['db'].s[analang]:
-            depressors=program['db'].s[analang]['D']
+        if analang in program['db'].s:
+            vars=[k for k in program['db'].s[analang].keys()
+                    if not 'dg' in k
+                    if not 'tg' in k
+                    if not 'qg' in k
+                    ]
+            # log.info("Variable keys to check: {}".format(vars))
         else:
-            depressors=_("<none so far>")
-        options.text=_('Do you want to distinguish '
-                        'initial and medial likely depressor consonants (D={})'
-                        '\nfrom '
-                        'other (simple/single) consonants?'
-                        "").format(depressors)
-        options.opts=[(True,'D≠C'),(False,'D=C')]
-        buttonframeframe(self)
-        options.s='Dwd'
-        options.text=_('Do you want to distinguish Word '
-                        'Final likely depressor consonants (D={})'
-                        '\nfrom '
-                        'other (simple/single) consonants?'
-                        "").format(depressors)
-        options.opts=[(True,'D#≠C#'),(False,'D#=C#')]
-        buttonframeframe(self)
-        options.s='G'
-        options.text=_('Do you want to distinguish '
-                        'initial and medial Glides (G) \nfrom '
-                        'other (simple/single) consonants?')
-        options.opts=[(True,'G≠C'),(False,'G=C')]
-        buttonframeframe(self)
-        options.s='Gwd'
-        options.text=_('Do you want to distinguish Word '
-                        'Final Glides (G) \nfrom '
-                        'other (simple/single) consonants?')
-        options.opts=[(True,'G#≠C#'),(False,'G#=C#')]
-        buttonframeframe(self)
-        options.s='S'
-        options.text=_('Do you want to distinguish '
-                        'initial and medial Non-Nasal/Glide Sonorants (S) '
-                    '\nfrom other (simple/single) consonants?')
-        options.opts=[(True,'S≠C'),(False,'S=C')]
-        buttonframeframe(self)
-        options.s='Swd'
-        options.text=_('Do you want to distinguish Word '
-                        'Final Non-Nasal/Glide Sonorants (S) '
-                    '\nfrom other (simple/single) consonants?')
-        options.opts=[(True,'S#≠C#'),(False,'S#=C#')]
-        buttonframeframe(self)
-        options.s='NC'
-        options.text=_('How do you want to interpret '
-                                        '\nNasal-Consonant (NC) sequences?')
-        options.opts=[('NC','NC=NC (≠C, ≠CC)'),
+            ErrorNotice(_("Something happened! "
+                        "(language not keyed in segment dictionary)"))
+            return #because this is a problem!
+        exsdict={}
+        for var in vars:
+            # log.info("Getting examples of {}".format(var))
+            exsdict[var]=program['db'].s[analang][var]
+            if var in program['settings'].polygraphs[analang]:
+                exsdict[var]+=[k for k,v in
+                        program['settings'].polygraphs[analang][var].items()
+                        if program['settings'].polygraphs[analang][var][k]
+                                ]
+            log.info("Examples of {}: {}".format(var,exsdict[var]))
+        textdict={'ʔ':_('Distinguish glottal stops (ʔ) '
+                        'initially and medially?'),
+                'ʔwd':_('Distinguish glottal stops word finally (ʔ#)?'),
+                'N':_('Distinguish Nasals (N) initially and medially?'),
+                'Nwd':_('Distinguish Nasals word finally (N#)?'),
+                'NC':_('How to interpret Nasal-Consonant (NC) sequences?'),
+                'D':_('Distinguish likely depressor consonants (D) '
+                        'initially and medially?'),
+                'Dwd':_('Distinguish likely depressor consonants word finally '
+                        '(D#)?'),
+                'G':_('Distinguish Glides (G) initially and medially?'),
+                'Gwd':_('Distinguish Glides word finally (G#)?'),
+                'CG':_('How to interpret Consonant-Glide (CG) sequences?'),
+                'S':_('Distinguish Non-Nasal/Glide Sonorants (S) '
+                        'initially and medially?'),
+                'Swd':_('Distinguish Non-Nasal/Glide Sonorants word finally '
+                        '(S#)?'),
+                'VN':_('How to interpret Vowel-Nasal (VN) sequences?')
+                }
+        optdict={'ʔ':[(True,'ʔ≠C'),(False,'ʔ=C')],
+                'ʔwd':[(True,'ʔ#≠C#'),(False,'ʔ#=C#')],
+                'N':[(True,'N≠C'),(False,'N=C')],
+                'Nwd':[(True,'N#≠C#'),(False,'N#=C#')],
+                'NC':[('NC','NC=NC (≠C, ≠CC)'),
                         ('C','NC=C (≠NC, ≠CC)'),
                         ('CC','NC=CC (≠NC, ≠C)')
-                        ]
-        buttonframeframe(self)
-        options.s='CG'
-        options.text=_('How do you want to interpret '
-                                        '\nConsonant-Glide (CG) sequences?')
-        options.opts=[('CG','CG=CG (≠C, ≠CC)'),
+                        ],
+                'D':[(True,'D≠C'),(False,'D=C')],
+                'Dwd':[(True,'D#≠C#'),(False,'D#=C#')],
+                'G':[(True,'G≠C'),(False,'G=C')],
+                'Gwd':[(True,'G#≠C#'),(False,'G#=C#')],
+                'CG':[('CG','CG=CG (≠C, ≠CC)'),
                         ('C','CG=C (≠CG, ≠CC)'),
-                        ('CC','CG=CC (≠CG, ≠C)')]
-        buttonframeframe(self)
-        options.s='VN'
-        options.text=_('How do you want to interpret '
-                                        '\nVowel-Nasal (VN) sequences?')
-        options.opts=[('VN','VN=VN (≠Ṽ)'), ('Ṽ','VN=Ṽ (≠VN)')]
-        buttonframeframe(self)
+                        ('CC','CG=CC (≠CG, ≠C)')],
+                'S':[(True,'S≠C'),(False,'S=C')],
+                'Swd':[(True,'S#≠C#'),(False,'S#=C#')],
+                'VN':[('VN','VN=VN (≠Ṽ)'), ('Ṽ','VN=Ṽ (≠VN)')]
+                }
+        exsframe('C')
+        for var in [i for i in vars if i not in ['C','V']
+                                    if i in exsdict and exsdict[i]]:
+            # log.info("Doing var {}".format(var))
+            exsframe(var)
+            todo=[i for i in textdict if var in i]
+            # log.info("Doing vars {}".format(todo))
+            for var in todo:
+                if var == 'VN':
+                    exsframe('V')
+                buttonframeframe(var)
         """Submit button, etc"""
-        self.runwindow.frame2d=ui.Frame(self.runwindow.scroll.content)
-        self.runwindow.frame2d.grid(row=options.get('r'),
-                    column=options.get('c'),
-                    sticky='ew', padx=options.padx, pady=options.pady)
-        sub_btn=ui.Button(self.runwindow.frame2d,text = 'Use these settings',
-                  command = submitform)
-        sub_btn.grid(row=0,column=1,sticky='nw',pady=options.pady)
+        self.runwindow.frame2d=ui.Frame(mwframe,
+                                        # self.runwindow.scroll.content,
+                                        row=3,
+                                        # row=options.get('r'),
+                                        column=options.get('c'),
+                                        sticky='e', padx=options.padx,
+                                        pady=options.pady)
+        sub_btn=ui.Button(self.runwindow.frame2d, text='Use these settings',
+                          command = submitform,
+                          row=0,column=1,sticky='nw',
+                          pady=options.pady)
         nbtext=_("If you make changes, this button==> \nwill "
-                "restart the program to reanalyze your data, \nwhich will "
-                "take some time.")
-        sub_nb=ui.Label(self.runwindow.frame2d,text = nbtext, anchor='e')
-        sub_nb.grid(row=0,column=0,sticky='e',
-                    pady=options.pady)
+                "restart the program to reanalyze your data.")
+        sub_nb=ui.Label(self.runwindow.frame2d, text = nbtext,
+                        anchor='e',
+                        row=0,column=0,sticky='e',
+                        pady=options.pady)
         self.runwindow.waitdone()
     def getinterfacelang(self,event=None):
         log.info("Asking for interface language...")
