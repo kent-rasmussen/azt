@@ -73,8 +73,15 @@ cd /d "%userprofile%/desktop"
 FOR /F "tokens=* USEBACKQ" %%F IN (`where git`) DO (
 SET GitExe=%%F
 )
+for /R %f in (azt.git) do @IF EXIST %f set azt=%%~dpnxa
+if defined azt (
+echo %azt%
+) else (
+echo File not found; using github
+azt=""https://github.com/kent-rasmussen/azt.git""
+)
 $str={
-""%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprofile%/desktop/azt"""
+""%GitExe%"" clone ""%azt%"" ""%userprofile%/desktop/azt"""
 }
 ECHO Running $str
 REM ""%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprofile%/desktop/azt"""
