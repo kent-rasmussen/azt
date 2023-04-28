@@ -2373,6 +2373,7 @@ class Settings(object):
             program['taskchooser'].wait(msg)
         for sense in senses:
             n+=1
+            # if False: #for testing without backgrounding
             if n%100:
                 t = threading.Thread(target=self.getprofileofsense,
                                     args=(sense,ps))
@@ -2383,7 +2384,10 @@ class Settings(object):
                                             profile))
             if todo>750:
                 program['taskchooser'].waitprogress(n*100/todo)
-        t.join()
+        try:
+            t.join()
+        except UnboundLocalError:
+            pass #not backgrounding...
         if todo>750:
             program['taskchooser'].waitdone()
         return n
