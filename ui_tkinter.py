@@ -1722,6 +1722,7 @@ class RadioButtonFrame(Frame):
         sticky='w'
         # self.parent=parent
         Frame.__init__(self, parent, **kwargs)
+        kwargs=self.lessgridkwargs(**kwargs)
         # kwargs['background']=self.theme.background
         # kwargs['activebackground']=self.theme.activebackground
         row=0
