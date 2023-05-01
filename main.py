@@ -2658,13 +2658,14 @@ class Settings(object):
             # (?=) – positive lookahead
             # (?<=) – positive lookbehind
             # (?<!) – negative lookbehind
-            if c == 'N':
-                #i.e., neither before C nor before word end
-                self.rx[c+'_']=rx.compile(c+'(?!([CSGDʔ]|\Z))')
-            elif c in ['ʔ','D']:
-                self.rx[c+'_']=rx.compile(c+'(?!\Z)') #not word final
-            else:
-                self.rx[c+'_']=rx.compile('(?<![CSGDNʔ])'+c) #not after C
+            self.rx[c+'_']=rx.compile(c+'(?!\Z)') #not word final
+            # if c == 'N':
+            #     #i.e., neither before C nor before word end
+            #     self.rx[c+'_']=rx.compile(c+'(?!([CSGDʔ]|\Z))')
+            # elif c in ['ʔ','D']:
+            #     self.rx[c+'_']=rx.compile(c+'(?!\Z)') #not word final
+            # else: #i.e., 'S','G'
+            #     self.rx[c+'_']=rx.compile('(?<![CSGDNʔ])'+c) #not after C
             self.rx[c+'wd']=rx.compile(c+'(?=\Z)') # word final
     def reloadstatusdatabycvtpsprofile(self,**kwargs):
         # This reloads the status info only for current slice
