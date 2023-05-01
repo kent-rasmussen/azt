@@ -2349,13 +2349,15 @@ class Settings(object):
         #Convert to iterate over local variables
         form=sense.textvaluebyftypelang('lc',program['params'].analang())
         """This adds to self.sextracted, too"""
-        profile=self.profileofform(form,ps=ps)
+        if not form:
+            return form,None,None #This is just for logging
+        ori,profile=self.profileofform(form,ps=ps)
         # log.info("getprofileofsense Profile: {}".format(profile))
         if not set(self.profilelegit).issuperset(profile):
             profile='Invalid'
         self.addtoprofilesbysense(sense, ps=ps, profile=profile)
         self.addtoformstosearch(sense, form, ps=ps)
-        return form,profile
+        return form,ori,profile #This is just for logging
     def getprofilesbyps(self,ps):
         start_time=nowruntime()
         log.info("Processesing {} syllable profiles".format(ps))
@@ -2379,9 +2381,9 @@ class Settings(object):
                                     args=(sense,ps))
                 t.start()
             else:
-                form,profile=self.getprofileofsense(sense,ps)
-                log.debug("{}: {}; {}".format(str(n)+'/'+str(todo),form,
-                                            profile))
+                form,ori,profile=self.getprofileofsense(sense,ps)
+                log.debug("{}: {}; {} > {}".format(str(n)+'/'+str(todo),form,
+                                            ori,profile))
             if todo>750:
                 program['taskchooser'].waitprogress(n*100/todo)
         try:
@@ -2527,9 +2529,9 @@ class Settings(object):
         here, after the 'splitter' profiles are formed..."""
         # log.debug("{}: {}".format(formori,form))
         # log.info("Form before simplification:{}".format(form))
-        form=self.profileofformpreferred(form)
-        # log.info("Form after simplification:{}".format(form))
-        return form
+        prefform=self.profileofformpreferred(form)
+        # log.info("Form after simplification:{}".format(prefform))
+        return form,prefform
     def getscounts(self):
         """This depends on self.sextracted, from getprofiles, so should only
         run when that changes."""
