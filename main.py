@@ -2644,7 +2644,10 @@ class Settings(object):
                 self.compileCVrxforsclass(sclass)
         #Compile preferred regexs here
         for cc in ['CG','CS','NC','VN','VV']:
-            ccc=cc.replace('C','[CSGDʔN]{1}')
+            # This has a group to replace with whatever C value was found
+            ccc=cc.replace('C','(['+''.join( #don't do XX>X
+                        [i for i in ['S','G','D','ʔ','N'] if i not in cc]+['C']
+                                            )+']{1})')
             self.rx[cc]=rx.compile(ccc) #no polygraphs here
         #These will be used a lot, so compile hereː
         for posC in ['^C','C$']:
