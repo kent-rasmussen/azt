@@ -2646,6 +2646,9 @@ class Settings(object):
         for cc in ['CG','CS','NC','VN','VV']:
             ccc=cc.replace('C','[CSGDʔN]{1}')
             self.rx[cc]=rx.compile(ccc) #no polygraphs here
+        #These will be used a lot, so compile hereː
+        for posC in ['^C','C$']:
+            self.rx[posC]=rx.compile(posC)
         for c in sclassesC: #no polygraphs for these, since we're looking for
             # glyph variables, not glyphs.
             # (?!) – negative lookahead
