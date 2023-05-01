@@ -3602,7 +3602,7 @@ class TaskDressing(HasMenus,ui.Window):
         self.getrunwindow()
         program['settings'].checkinterpretations()
         analang=program['params'].analang()
-        options=Options(r=0,padx=50,pady=10,c=0,vars={},frames={})
+        options=Options(r=0,padx=50,pady=0,c=0,vars={},frames={})
         for s in program['settings'].distinguish: #Should be already set.
             options.vars[s] = ui.BooleanVar()
             options.vars[s].set(program['settings'].distinguish[s])
@@ -3674,7 +3674,9 @@ class TaskDressing(HasMenus,ui.Window):
                         'initially and medially?'),
                 'Swd':_('Distinguish Non-Nasal/Glide Sonorants word finally '
                         '(S#)?'),
-                'VN':_('How to interpret Vowel-Nasal (VN) sequences?')
+                'CS':_('How to interpret Consonant-Sonorant (CS) sequences?'),
+                'VN':_('How to interpret Vowel-Nasal (VN) sequences? '
+                        '(after NC interpretation above)')
                 }
         optdict={'ʔ':[(True,'ʔ≠C'),(False,'ʔ=C')],
                 'ʔwd':[(True,'ʔ#≠C#'),(False,'ʔ#=C#')],
@@ -3693,6 +3695,9 @@ class TaskDressing(HasMenus,ui.Window):
                         ('CC','CG=CC (≠CG, ≠C)')],
                 'S':[(True,'S≠C'),(False,'S=C')],
                 'Swd':[(True,'S#≠C#'),(False,'S#=C#')],
+                'CS':[('CS','CS=CS (≠C, ≠CC)'),
+                        ('C','CS=C (≠CS, ≠CC)'),
+                        ('CC','CS=CC (≠CS, ≠C)')],
                 'VN':[('VN','VN=VN (≠Ṽ)'), ('Ṽ','VN=Ṽ (≠VN)')]
                 }
         exsframe('C')
