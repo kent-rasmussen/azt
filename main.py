@@ -2351,6 +2351,7 @@ class Settings(object):
         """This adds to self.sextracted, too"""
         if not form:
             return form,None,None #This is just for logging
+        # log.info("getprofileofsense form: {}".format(form))
         ori,profile=self.profileofform(form,ps=ps)
         # log.info("getprofileofsense Profile: {}".format(profile))
         if not set(self.profilelegit).issuperset(profile):
@@ -2412,6 +2413,12 @@ class Settings(object):
         self.polygraphcheck() #depends only on self.polygraph
         self.checkinterpretations() #checks/sets values for distinguish/interpret
         self.setupCVrxs() # self.rx (calls slists, needs distinguish)
+        # log.info("Interpretation settings: \n{}".format(
+        #         '\n'.join([k+':'+str(v) for k,v in self.interpret.items()])
+        #         ))
+        # log.info("Distinguishing settings: \n{}".format(
+        #         '\n'.join([k+':'+str(v) for k,v in self.distinguish.items()])
+        #         ))
         for ps in program['db'].pss: #45s on English db
             # self.sextracted[ps]={}
             # for s in self.rx:
