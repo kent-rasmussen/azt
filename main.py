@@ -2637,10 +2637,6 @@ class Settings(object):
         # plus 0 to find them all together – since we're looking for glyphs.
         for sclass in list(self.s[analang])+['C']: #be sure to do C last
             if self.s[analang][sclass] != []: #don't make if empty
-                if sclass in sclassesC and (not hasattr(self,'distinguish')
-                        or not self.distinguish.get(sclass)):
-                    self.s[analang]['C']+=self.s[analang][sclass]
-                    continue
                 self.compileCVrxforsclass(sclass)
         #Compile preferred regexs here
         for cc in ['CG','CS','NC','VN','VV']:
