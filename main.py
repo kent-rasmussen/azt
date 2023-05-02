@@ -2456,6 +2456,20 @@ class Settings(object):
         o=["̀",'<','=','ː']
         cc=['CG','CS','NC','VN','VV']
         for g in [i for i in c+o if i in form]:
+        # cc needs to be resolved before the modifier goes away with G,S,D,N,ʔ>C
+        for combo in cc:
+            if combo.startswith('C'):#pattern, sub, string
+                repl=self.rx['^C'].sub('\\\\1',self.interpret[combo])
+            elif combo.endswith('C'):
+                repl=self.rx['C$'].sub('\\\\1',self.interpret[combo])
+            else:
+                repl=self.interpret[combo]
+            form=self.rx[combo].sub(repl,form) #no polygraphs here
+            # For debugging, the following rather than the above:
+            # formn=self.rx[combo].sub(repl,form) #no polygraphs here
+            # if formn != form:
+            #     log.info("Form after {}: {}".format(combo,formn))
+            #     form=formn
             #Remove this glyph variable wherever it occurs:
             if not self.distinguish[g]:
                 if g in o:
@@ -2471,8 +2485,6 @@ class Settings(object):
             if form.endswith(g) and not self.distinguish[g+'wd']:
                 form=self.rx[g+'wd'].sub('C',form) #no polygraphs here
                 # log.debug("{}wd regex result: {}".format(c,form))
-        for cc in [i for i in cc if i in form]:
-            form=self.rx[cc].sub(self.interpret[cc],form) #no polygraphs here
         return form
     def profileofform(self,form,ps):
         if not form or not ps:
