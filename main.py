@@ -3542,14 +3542,7 @@ class TaskDressing(HasMenus,ui.Window):
                         newvar=options.vars[s].get()
                         oldvar=getattr(program['settings'],typ)[s]
                         if oldvar != newvar:
-                            if typ == 'distinguish': #i.e., boolean
-                                # if oldvar and not newvar: #True becomes False
-                                changed[s]=(oldvar,newvar)
-                            else: #i.e., CC v CG v C, etc.
-                                if (len(oldvar)>len(newvar) or # becomes shorter
-                                    len(set(['V','G','N'] #one of these is there
-                                    ).intersection(set(oldvar))) >0):
-                                    changed[s]=(oldvar,newvar)
+                            changed[s]=(oldvar,newvar)
                             getattr(program['settings'],typ)[s]=newvar
             log.debug('self.distinguish: {}'.format(program['settings'].distinguish))
             log.debug('self.interpret: {}'.format(program['settings'].interpret))
