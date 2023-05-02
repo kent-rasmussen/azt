@@ -2455,7 +2455,6 @@ class Settings(object):
         c=['N','S','G','ʔ','D']
         o=["̀",'<','=','ː']
         cc=['CG','CS','NC','VN','VV']
-        for g in [i for i in c+o if i in form]:
         # cc needs to be resolved before the modifier goes away with G,S,D,N,ʔ>C
         for combo in cc:
             if combo.startswith('C'):#pattern, sub, string
@@ -2470,6 +2469,10 @@ class Settings(object):
             # if formn != form:
             #     log.info("Form after {}: {}".format(combo,formn))
             #     form=formn
+        for g in [i for i in c+o if i in form
+                            if self.distinguish[i]
+                            or form.endswith(i) and not self.distinguish[i+'wd']
+                            ]:
             #Remove this glyph variable wherever it occurs:
             if not self.distinguish[g]:
                 if g in o:
