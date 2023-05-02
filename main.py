@@ -2488,6 +2488,7 @@ class Settings(object):
             if form.endswith(g) and not self.distinguish[g+'wd']:
                 form=self.rx[g+'wd'].sub('C',form) #no polygraphs here
                 # log.debug("{}wd regex result: {}".format(c,form))
+            # log.debug("{} regex result: {}".format(g,form))
         return form
     def profileofform(self,form,ps):
         if not form or not ps:
