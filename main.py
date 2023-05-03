@@ -2470,9 +2470,9 @@ class Settings(object):
             #     log.info("Form after {}: {}".format(combo,formn))
             #     form=formn
         for g in [i for i in c+o if i in form
-                            if self.distinguish[i]
-                            or form.endswith(i) and not self.distinguish[i+'wd']
-                            ]:
+                    if self.distinguish[i]
+                    or (form.endswith(i) and not self.distinguish.get(i+'wd'))
+                    ]:
             #Remove this glyph variable wherever it occurs:
             if not self.distinguish[g]:
                 if g in o:
@@ -2485,7 +2485,7 @@ class Settings(object):
                     # not glyphs, so don't use a polyglyph dictionary layer.
                     form=self.rx[g+'_'].sub('C',form) #no polygraphs here
             #Remove this glyph variable word finally:
-            if form.endswith(g) and not self.distinguish[g+'wd']:
+            if form.endswith(g) and not self.distinguish.get(g+'wd'):
                 form=self.rx[g+'wd'].sub('C',form) #no polygraphs here
                 # log.debug("{}wd regex result: {}".format(c,form))
             # log.debug("{} regex result: {}".format(g,form))
