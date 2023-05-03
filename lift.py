@@ -2409,28 +2409,43 @@ class Sense(Node,FieldParent):
         prettyprint(self.examples[loc])
     def getexamples(self):
         # log.info("getting examples for sense {}".format(self.id))
-        # log.info("Locations: {}".format([i.text for i in self.findall(
-        #             'example/field[@type="location"]/'
-        #             'form/text')
-        #             ]
-        #         ))
-        # for python 3.7+, use
-        # self.find(
-        #                             'example/field[@type="location"]/'
-        #                             'form/text[.="{}"]/../../..'.format(loc))
-        self.examples={loc:Example(self,
-                                [i for i in self.find('example')
-                                    if i.find('field[@type="location"]/'
-                                                'form/text') == loc
-                                ]
-                                    )
-                            for loc in [i.text for i in self.findall(
-                                        'example/field[@type="location"]/'
-                                        'form/text')
-                                        ]
-                            if loc
-                        }
-        self.checkforsecondchildbyloc()
+        # actual locations found in actual examples:
+        locations=[i.text for i in self.findall(
+                    'example/field[@type="location"]/'
+                    'form/text')
+                    ]
+        if locations:
+            exs={}
+            # log.info("Locations: {}".format(locations))
+            for loc in locations:
+                # log.info("Examples ({}): {}".format(loc,
+                #                         [i for i in self.findall('example')
+                #                         if i.findtext('field[@type="location"]/'
+                #                                     'form/text') == loc
+                #                         ]))
+                # for python 3.7+, use
+                # self.find(
+                #             'example/field[@type="location"]/'
+                #             'form/text[.="{}"]/../../..'.format(loc))
+                exs[loc]=[i for i in self.findall('example')
+                                if i.findtext('field[@type="location"]/'
+                                            'form/text') == loc
+                            ]
+                if len(exs[loc]) == 1:
+                    continue
+                elif len(exs[loc]) > 1:
+                    log.error("{} node in entry {} has multiple examples with "
+                        "{} location. "
+                        "\nWhile this is legal LIFT, it is probably an error, "
+                        "and will lead to unexpected behavior."
+                        "".format(self.tag,self.parent.guid,loc))
+                else:
+                    log.error("{} node in entry {} has no examples with "
+                        "{} location? This is a logical error in A−Z+T "
+                        "".format(self.tag,self.parent.guid,loc))
+                    raise
+        # only make location keys with examples where found
+        self.examples={loc:Example(self, exs[loc][0]) for loc in locations}
     def getpssubclass(self):
         for n in self.findall('trait[@name="{}-infl-class"]'
                                 ''.format(self.psvalue())):
