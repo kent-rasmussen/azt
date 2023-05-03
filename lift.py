@@ -1888,9 +1888,15 @@ class Node(ET.Element):
             parent.remove(node)
             # log.info("replacing with new node: {}".format(self))
             parent.insert(self.index,self)
-        except:
-            # log.info("adding new node: {}".format(self))
-            parent.append(self) #or
+        except AssertionError:
+            #This must follow assertion, as ET node w/o children is bool False
+            if not node:
+                # log.info("adding new node: {}".format(self))
+                parent.append(self) #or
+            else:
+                log.error("Node present, but not an Element? "
+                        "(parent: {}, {}:{})"
+                        "".format(self.parent,type(node),node))
 class Text(Node):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='text'
