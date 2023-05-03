@@ -2328,11 +2328,13 @@ class Sense(Node,FieldParent):
                     }
         # log.info("Found {} gloss(es)".format(len(self.glosses)))
         # log.info("Found gloss(es): {}".format(self.glosses))
-        # Openclipart only has English keywords:
-        self.collectionglosses=[j for k in self.sense.glosses.get('en',[])
-                                    for i in k.textvalue().split(',')
-                                    for j in rx.noparens(i).split()
+        # Openclipart only has English keywords
+        # This should give appropriate splitting on commas,
+        # without extra spaces, nor splitting phrases by spaces
+        self.collectionglosses=[rx.noparens(i).strip()
+                                    for k in self.sense.glosses.get('en',[])
                                     if k.textvalue()
+                                    for i in k.textvalue().split(',')
                                 ]
         rootimgdir='images/openclipart.org/'
         self.imgselectiondir=None
