@@ -2188,11 +2188,14 @@ class FieldParent(object):
                     "".format(self.tag,self.entry.guid,tag,type))
             return 1
     def getfields(self):
+        # log.info("field types: {}".format([i.get('type')
+        #                                     for i in self.findall('field')]))
         self.fields={
                     node.get('type'):Field(self,node)
                         for node in self.findall('field')
                         if not isinstance(node,Node) #I.e., already brought in
                     }
+        # log.info("getfields fields: {}".format(self.fields))
         for type in self.fields:
             self.checkforsecondfieldbytype(type)
     def newfield(self,type,lang=None,value=None):
@@ -2229,7 +2232,7 @@ class Example(FormParent,FieldParent):
             else:
                 return None
     def tonevalue(self,value=None):
-        # log.info(self.fields)
+        # log.info("Fields @tonevalue: {}".format(self.fields))
         try:
             # Fields should already be picked up.
             assert isinstance(self.fields['tone'],ET.Element)
@@ -2291,6 +2294,7 @@ class Example(FormParent,FieldParent):
         self.entry=parent.entry #make a common reference point for sense/entry
         self.sense=parent
         FieldParent.__init__(self) #tone and location values
+        # log.info("Example fields: {}".format(self.fields))
         # These two are collected by FieldParent:
         self.checkforsecondfieldbytype('location')
         self.checkforsecondfieldbytype('tone')
