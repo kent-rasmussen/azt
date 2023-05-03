@@ -1076,8 +1076,12 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             log.info("Found {} senses with lexical category {}".format(
                                                     self.nsenseidsbyps[ps],ps))
         else:
-            for ps in [i for i in self.pss if i]:
-                self.getsenseidsbyps(ps)
+            # start=time.time()
+            self.senseidsbyps={ps:self.get('sense',ps=ps).get('senseid')
+                                for ps in self.pss}
+            self.nsenseidsbyps={ps:len(self.senseidsbyps[ps])
+                                for ps in self.senseidsbyps}
+            # print(time.time()-start)
     def getsenseids(self):
         self.senseids=[i.id for i in self.senses]
         self.nsenseids=len(self.senseids)
