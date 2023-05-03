@@ -4119,9 +4119,24 @@ if __name__ == '__main__':
     ftype='pl'
     # sense=lift.sensedict['daytime_b27c251c-090e-4427-aa86-22b745409f8d']
     sense=lift.sensedict['eb91d782-97fc-47da-b1c4-2ba766827ec8']
+    # sense=lift.sensedict['head_a8516acf-606c-4796-8fed-75b0c0f2c583']
+    # sense=lift.sensedict['forehead_3e600f7e-74a3-4761-9bc3-09f3f01cd98b']
+    # for sense in ['head_a8516acf-606c-4796-8fed-75b0c0f2c583',
+    #                 'forehead_3e600f7e-74a3-4761-9bc3-09f3f01cd98b',
+    #                 "voice box, larynx, Adam's apple_931554d7-b054-4f75-894c-2c28e2c6121f"]:
+    #     sense=lift.sensedict[sense]
+    #     print(sense.collectionglosses)
+    # exit()
     # sense=lift.senses[0]
     prettyprint(sense)
+    for lang in sense.glosses:
+        log.info("gloss fields: {}".format(sense.glosses[lang]))
+    log.info("sense.examples: {}".format(sense.examples))
+    for example in sense.examples:
+        log.info("example fields: {}".format(sense.examples[example].fields))
+    prettyprint(sense.examples['isolation'])
     # for i in range(10):
+    exit()
     print(sense.examples.keys())
     # prettyprint(sense.examples[key])
     for v in sense.examples.values():
