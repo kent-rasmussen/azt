@@ -2470,22 +2470,19 @@ class Settings(object):
             #     log.info("Form after {}: {}".format(combo,formn))
             #     form=formn
         for g in [i for i in c+o if i in form
-                    if self.distinguish[i]
-                    or (form.endswith(i) and not self.distinguish.get(i+'wd'))
                     ]:
             #Remove this glyph variable wherever it occurs:
             if not self.distinguish[g]:
-                if g in o:
-                    # log.info("Using self.rx[{}]={}".format(g,self.rx[g]))
-                    # If I ever want to pull these based on word position, this
-                    # should be updated. This just pulls all of a given o set.
-                    form=self.rx[g][0].sub('',form)
-                else:
+                if g in c:
                     # This and following rx in this method search for variables,
                     # not glyphs, so don't use a polyglyph dictionary layer.
                     form=self.rx[g+'_'].sub('C',form) #no polygraphs here
+                else:
+                    form=self.rx[g][0].sub('',form)
             #Remove this glyph variable word finally:
-            if form.endswith(g) and not self.distinguish.get(g+'wd'):
+            if (form.endswith(g) and
+                    g+'wd' in self.distinguish and
+                    not self.distinguish[g+'wd']):
                 form=self.rx[g+'wd'].sub('C',form) #no polygraphs here
                 # log.debug("{}wd regex result: {}".format(c,form))
             # log.debug("{} regex result: {}".format(g,form))
