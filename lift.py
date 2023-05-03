@@ -437,8 +437,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for cawl,glosses in list(errors)[:min(len(errors),5)]:
             log.error("Neither CAWL line nor English glosses point "
                 "to a real directory, so I can't tell which image "
-                "directory to use for thes senses. "
-                "Furthermore, I don't have both the line and glosses, "
+                "directory to use for these senses. "
+                "\nFurthermore, I don't have both the line and glosses, "
                 "so I can't construct a directory name to write to: "
                 "{}-{} ({}): {}"
                 "".format(cawl,glosses,len(errors[(cawl,glosses)]),
