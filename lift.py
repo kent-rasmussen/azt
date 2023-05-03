@@ -2404,10 +2404,10 @@ class Sense(Node,FieldParent):
     def getexamples(self):
         # log.info("getting examples for sense {}".format(self.id))
         # actual locations found in actual examples:
-        locations=[i.text for i in self.findall(
-                    'example/field[@type="location"]/'
-                    'form/text')
-                    ]
+        locations=list(set([i.text for i in self.findall(
+                            'example/field[@type="location"]/'
+                            'form/text')
+                            ]))
         if locations:
             exs={}
             # log.info("Locations: {}".format(locations))
