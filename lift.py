@@ -2312,18 +2312,6 @@ class Illustration(ValueNode):
         super(Illustration, self).__init__(parent, node, **kwargs)
         self.valuename='href'
 class Sense(Node,FieldParent):
-    def checkforsecondchildbyloc(self):
-        for loc in self.examples:
-            exs=[i for i in self.findall('example/field[@type="location"]/'
-                                    'form/text[.="{}"]'.format(loc))
-                ]
-            # log.info("Examples: {}".format(exs))
-            if len(exs) > 1:
-                log.error("{} node in entry {} has multiple examples with "
-                    "{} location. "
-                    "While this is legal LIFT, it is probably an error, and "
-                    "will lead to unexpected behavior."
-                    "".format(self.tag,self.parent.guid,loc))
     def getglosses(self):
         """This differs from a FormParent, in that self.glosses contains
         a list of objects, as multiple gloss entries seem to be a thing"""
