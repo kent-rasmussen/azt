@@ -2413,12 +2413,12 @@ class Settings(object):
         self.polygraphcheck() #depends only on self.polygraph
         self.checkinterpretations() #checks/sets values for distinguish/interpret
         self.setupCVrxs() # self.rx (calls slists, needs distinguish)
-        # log.info("Interpretation settings: \n{}".format(
-        #         '\n'.join([k+':'+str(v) for k,v in self.interpret.items()])
-        #         ))
-        # log.info("Distinguishing settings: \n{}".format(
-        #         '\n'.join([k+':'+str(v) for k,v in self.distinguish.items()])
-        #         ))
+        log.info("Interpretation settings: \n{}".format(
+                '\n'.join([k+':'+str(v) for k,v in self.interpret.items()])
+                ))
+        log.info("Distinguishing settings: \n{}".format(
+                '\n'.join([k+':'+str(v) for k,v in self.distinguish.items()])
+                ))
         for ps in program['db'].pss: #45s on English db
             # self.sextracted[ps]={}
             # for s in self.rx:
