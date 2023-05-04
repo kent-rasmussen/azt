@@ -14224,6 +14224,10 @@ class GitReadOnly(Git):
                     r=fns[i]()
         except Exception as e:
             ErrorNotice(e)
+    def switchbranches(self):
+        if self.branch == 'main':
+            self.testversion()
+        else:
     def reverttomain(self,event=None):
         r=self.checkout('main')
         """need to also
