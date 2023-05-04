@@ -15072,9 +15072,11 @@ def main():
 def mainproblem():
     def reverttomain(event=None):
         program['repo'].reverttomain()
+        sysrestart()
         revertb.destroy()
     def testversion(event=None):
         program['repo'].testversion()
+        sysrestart()
         tryb.destroy()
     try:
         log.info(_("Starting up help line..."))
