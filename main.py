@@ -13760,6 +13760,7 @@ class Repository(object):
                     assert self.code == 'git' #don't give hg notices here
                     #these are states we don't want to bother the user with:
                     assert output #git config core.bare gives zero error output
+                    assert iwascalledby not in ['fetch']
                     assert 'ot a git repository' not in output
                     assert 'unknown option' not in output
                     assert 'does not have any commits yet' not in output
@@ -14073,6 +14074,12 @@ class Mercurial(Repository):
         else:
             self=None
 class Git(Repository):
+    def stash(self):
+        r=self.do(['stash'])
+        return r
+    def unstash(self):
+        r=self.do(['stash', 'apply'])
+        return r
     def ignorelist(self):
         return ['*.pdf','*.xcf',
                 'XLingPaperPDFTemp/**',
@@ -14175,21 +14182,29 @@ class GitReadOnly(Git):
         is doing it"""
         # this will mostly operate on all present sources (internet and USB),
         # reporting failures as appropriate. I hope users will be OK with that
+        r={}
         if me: #no one else should push changes
             method=Repository.push
             remotes=self.localremotes() #don't publish to internet this way
+            log.info("remotes: {}".format(remotes))
+            for remote in remotes: #iterate here to keep results
+                r[remote+'/'+self.branch]=method(self,remotes=[remote])
+            self.stash()
+            self.switchbranches()
+            for remote in remotes: #iterate here to keep results
+                r[remote+'/'+self.branch]=method(self,remotes=[remote])
+            self.switchbranches()
+            self.unstash()
         else:
             method=Repository.pull
             #make sure we at least try the github remote:
             remotes=self.findpresentremotes(firsttry=False) #don't ask
             homeurl=program['url']+'.git'
             remotes.extend([homeurl])
+            log.info("remotes: {}".format(remotes))
             self.fetch(remotes)
-        r={}
-        log.info("remotes: {}".format(remotes))
-        for branch in [self.branch]: #'main',program['testversionname']]:
             for remote in remotes:
-                r[remote+'/'+branch]=method(self,branch=branch,remotes=[remote])
+                r[remote+'/'+self.branch]=method(self,remotes=[remote])
         return r
         """I'm going to need to stash and stash apply here, I think"""
         remotes=self.findpresentremotes() #do once
