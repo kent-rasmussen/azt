@@ -15073,6 +15073,9 @@ def mainproblem():
     def reverttomain(event=None):
         program['repo'].reverttomain()
         revertb.destroy()
+    def testversion(event=None):
+        program['repo'].testversion()
+        tryb.destroy()
     try:
         log.info(_("Starting up help line..."))
         # _
@@ -15173,6 +15176,12 @@ def mainproblem():
             revertb=ui.Button(f,
                     text=_("Revert to \nmain branch \nof {}").format(program['name']),
                     cmd=reverttomain,
+                    row=1,column=0,
+                    pady=20)
+        else:
+            tryb=ui.Button(f,
+                    text=_("Try \ntesting branch \nof {}").format(program['name']),
+                    cmd=testversion,
                     row=1,column=0,
                     pady=20)
     ui.Button(f,text=_("Restart \n{}").format(program['name']),
