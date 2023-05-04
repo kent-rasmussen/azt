@@ -131,8 +131,12 @@ class Theme(object):
                                 file.makedir(scaledalready.parent,silent=True)
                             self.photo[name].write(scaledalready)
                             self.scalings.append(y)
-                            log.info("Scaled {} {} @{} resolution".format(
-                                                                name,relurl,y))
+                            log.info("Scaled {} {} @{} resolution: {}"
+                                    "".format(
+                                            name,relurl,y,
+                                            _("OK") if file.exists(scaledalready)
+                                            else _("Problem!")
+                                            ))
                             return #stop when the first/best works
                         except tkinter.TclError as e:
                             # log.info(e)
