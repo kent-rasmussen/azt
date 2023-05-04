@@ -129,7 +129,9 @@ class Theme(object):
                             # log.info("parent: {}".format(scaledalreadydir != scaledalready.parent))
                             if scaledalready.parent != scaledalreadydir:
                                 file.makedir(scaledalready.parent,silent=True)
-                            self.photo[name].write(scaledalready)
+                            self.photo[name].write(
+                                                file.fullpathname(scaledalready)
+                                                    )
                             self.scalings.append(y)
                             log.info("Scaled {} {} @{} resolution: {}"
                                     "".format(
