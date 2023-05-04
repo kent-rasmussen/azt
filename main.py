@@ -13515,6 +13515,18 @@ class Repository(object):
         if r:
             r=self.push(remotes,branch)
         return r #ok if we don't track results for each
+    def fetch(self,remotes=None):
+        if not remotes:
+            remotes=self.findpresentremotes() #do once
+        for remote in remotes:
+            if self.code == 'git':
+                args=['fetch',remote,branch+':'+branch]
+            elif self.code == 'hg':
+                args=['pull',remote,branch+':'+branch]
+            # log.info("Pulling: {}".format(args))
+            r=self.do(args)
+            # log.info("Pull return: {}".format(r))
+        return r #if we want results for each, do this once for each
     def pull(self,remotes=None,branch=None):
         if not remotes:
             remotes=self.findpresentremotes() #do once
@@ -13525,7 +13537,10 @@ class Repository(object):
         if not branch:
             branch=self.branch
         for remote in remotes:
-            args=['pull',remote,branch+':'+branch]
+            if self.code == 'git':
+                args=['pull',remote,branch+':'+branch]
+            elif self.code == 'hg':
+                args=['pull','-u',remote,branch+':'+branch]
             # log.info("Pulling: {}".format(args))
             r=self.do(args)
             # log.info("Pull return: {}".format(r))
@@ -14174,6 +14189,7 @@ class GitReadOnly(Git):
             remotes=self.findpresentremotes(firsttry=False) #don't ask
             homeurl=program['url']+'.git'
             remotes.extend([homeurl])
+            self.fetch(remotes)
         r={}
         log.info("remotes: {}".format(remotes))
         for branch in [self.branch]: #'main',program['testversionname']]:
