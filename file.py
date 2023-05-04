@@ -25,6 +25,7 @@ def fullpathname(filename):
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
+        log.info("using base_path {}".format(base_path))
     except Exception:
         base_path = pathlib.Path(__file__).parent
     return pathlib.Path.joinpath(
