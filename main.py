@@ -13502,7 +13502,7 @@ class Repository(object):
                 return r #need to pass errors for processing
             else:
                 return []
-    def share(self,remotes=None,branch=None):
+    def share(self,remotes=None):
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
@@ -13511,9 +13511,9 @@ class Repository(object):
             return
         r=self.commit() #should always before pulling, at least here
         if r:
-            r=self.pull(remotes,branch)
+            r=self.pull(remotes)
         if r:
-            r=self.push(remotes,branch)
+            r=self.push(remotes)
         return r #ok if we don't track results for each
     def fetch(self,remotes=None):
         if not remotes:
