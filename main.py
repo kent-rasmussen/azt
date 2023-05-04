@@ -13944,7 +13944,10 @@ class Repository(object):
         else:
             return getattr(self,'_remotes',{}).copy() #so I can iterate and change
     def branchname(self):
-        repoheadfile='.'+self.code+'/'+self.branchnamefile
+        if self.bare:
+            repoheadfile=self.branchnamefile
+        else:
+            repoheadfile='.'+self.code+'/'+self.branchnamefile
         log.info("Looking for {} branch name in {}".format(self.repotypename,
                                                             repoheadfile))
         try:
