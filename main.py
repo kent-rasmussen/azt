@@ -564,7 +564,7 @@ class FileChooser(object):
         if (not self.name or not file.exists(self.name)) and (
                             not program['root'].exitFlag.istrue()):
             return
-        if self.name and 'Demo' in self.name:
+        if self.name and 'Demo' in str(self.name):
             file.writefilename() #clear this to select next time
 class FileParser(object):
     """This class parses the LIFT file, once we know which it is."""
