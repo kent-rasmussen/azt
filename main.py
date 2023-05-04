@@ -351,7 +351,7 @@ class LiftChooser(ui.Window,HasMenus):
             # log.info(msg)
             ErrorNotice(msg,wait=True)
     def findrepolift(self,repo):
-        # log.info("Looking for just one LIFT file.")
+        # log.info("Looking for just one LIFT file ({}).".format(repo.files))
         l=[i for i in repo.files if str(i).endswith('.lift')]
         if len(l) == 1:
             log.info("Found just one LIFT file: {}".format(l))
