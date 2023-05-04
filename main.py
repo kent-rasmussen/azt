@@ -15031,7 +15031,7 @@ def updateazt(event=None,**kwargs): #should only be parent, for errorroot
             log.info(set(['parent']))
 def main():
     global program
-    log.info("Running main function on {} ({})".format(platform.system(),
+    logs.info("Running main function on {} ({})".format(platform.system(),
                                     platform.platform())) #Don't translate yet!
     # log.info("root program: {}".format(program))
     try:
