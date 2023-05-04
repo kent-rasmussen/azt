@@ -13682,7 +13682,13 @@ class Repository(object):
             self.files=[]
     def do(self,args,**kwargs):
         # log.info("do args: {}".format(args))
-        if not hasattr(self,'branch') and 'init' not in args:
+        iwascalledby=callerfn()
+        # log.info("iwascalledby1 {}".format(iwascalledby))
+        if (not hasattr(self,'branch') and
+                    'init' not in args and
+                    iwascalledby != 'isbare'): #This calls before branchname...
+            # log.info("do args: {}".format(args))
+            # log.info("branch: {}".format(self.branch))
             return #don't try to do things without an actual repo
         cmd=[self.cmd,self.pwd] #-R
         if 'url' in kwargs and kwargs['url']:
@@ -13699,8 +13705,7 @@ class Repository(object):
                     # "\nYou may also get a 'fatal: not a git repository...' "
                     # "notice, if the repo isn't there yet. "
         cmd.extend([a for a in args if a]) #don't give null args
-        # log.info("{} cmd args: {}".format(self.code,cmd))
-        iwascalledby=callerfn()
+        log.info("{} cmd args: {}".format(self.code,cmd))
         try:
             output=subprocess.check_output(cmd,
                                             stderr=subprocess.STDOUT,
