@@ -13968,10 +13968,10 @@ class Repository(object):
         self.bare=bool(self.isbare())
         log.info("Repo {} is bare: {}".format(self.url,self.bare))
         self.remotenames=self.getremotenames()
+        self.branchname() #This is needed for the following
         self.getusernameargs()
         self.getfiles()
         self.ignorecheck()
-        self.branchname()
         try:
             log.info(_("{} repository object initialized on branch {} at {} "
                     "for {}, with {} files."
