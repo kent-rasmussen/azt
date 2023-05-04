@@ -13944,6 +13944,7 @@ class Repository(object):
         else:
             return getattr(self,'_remotes',{}).copy() #so I can iterate and change
     def branchname(self):
+        # This reads from file, not git/hg
         if self.bare:
             repoheadfile=self.branchnamefile
         else:
