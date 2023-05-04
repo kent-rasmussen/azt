@@ -13705,7 +13705,7 @@ class Repository(object):
                     # "\nYou may also get a 'fatal: not a git repository...' "
                     # "notice, if the repo isn't there yet. "
         cmd.extend([a for a in args if a]) #don't give null args
-        log.info("{} cmd args: {}".format(self.code,cmd))
+        # log.info("{} cmd args: {}".format(self.code,cmd))
         try:
             output=subprocess.check_output(cmd,
                                             stderr=subprocess.STDOUT,
@@ -13770,6 +13770,7 @@ class Repository(object):
                 log.info(text)
             return
         t=stouttostr(output)
+        # log.info("iwascalledby2 {}".format(iwascalledby))
         if iwascalledby in ['commithashes', #never log these, even w/output
                             'lastcommitdate',
                             'lastcommitdaterelative'
@@ -14095,7 +14096,9 @@ class Git(Repository):
     def makebare(self):
         args=['config', '--bool', 'core.bare', 'true']
     def isbare(self):
+        # log.info("Running isbare")
         r=self.do(['config', 'core.bare'])
+        # log.info("isbare returns {}".format(r))
         if r != 'false': # if it is, don't return, i.e., False.
             return r # pass on the config value, if not 'false', which == True
     def leaveunicodealonesargs(self):
