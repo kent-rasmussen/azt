@@ -13520,50 +13520,45 @@ class Repository(object):
             remotes=self.findpresentremotes() #do once
         for remote in remotes:
             if self.code == 'git':
-                args=['fetch',remote,branch+':'+branch]
+                args=['fetch',remote]
             elif self.code == 'hg':
-                args=['pull',remote,branch+':'+branch]
+                args=['pull',remote]
             # log.info("Pulling: {}".format(args))
             r=self.do(args)
             # log.info("Pull return: {}".format(r))
         return r #if we want results for each, do this once for each
-    def pull(self,remotes=None,branch=None):
+    def pull(self,remotes=None):
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
             log.info(_("Couldn't find a local drive to pull from via {}; "
                     "giving up").format(self.repotypename))
             return
-        if not branch:
-            branch=self.branch
         for remote in remotes:
             if self.code == 'git':
-                args=['pull',remote,branch+':'+branch]
+                args=['pull',remote,self.branch]
             elif self.code == 'hg':
-                args=['pull','-u',remote,branch+':'+branch]
+                args=['pull','-u',remote,self.branch]
             # log.info("Pulling: {}".format(args))
             r=self.do(args)
             # log.info("Pull return: {}".format(r))
         return r #if we want results for each, do this once for each
-    def push(self,remotes=None,branch=None,setupstream=False):
+    def push(self,remotes=None,setupstream=False):
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
             log.info(_("Couldn't find a local drive to push to via {}; "
                     "giving up").format(self.repotypename))
             return
-        if not branch:
-            branch=self.branch
         for remote in remotes:
             args=['push']
             if setupstream:
                 args+=['--set-upstream']
-            args+=[remote,branch+':'+branch]
+            args+=[remote,self.branch+':'+self.branch] #don't push across branches
             r=self.do(args)
             if r and 'The current branch master has no upstream branch.' in r:
                 r=self.push(remotes=[remote],
                             #always keep branch names aligned.
-                            branch=self.branch,
                             setupstream=True)
             # log.info(r)
         return r #ok if we don't track results for each
