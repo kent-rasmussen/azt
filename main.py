@@ -14228,6 +14228,7 @@ class GitReadOnly(Git):
         if self.branch == 'main':
             self.testversion()
         else:
+            self.reverttomain()
     def reverttomain(self,event=None):
         r=self.checkout('main')
         """need to also
