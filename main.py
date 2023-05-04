@@ -14765,7 +14765,7 @@ def pythonmodules():
         log.error("Can't find python; how am I doing this? Put it in your PATH")
         sys.exit()
     installs=[
-            # ['--upgrade', 'pip', 'setuptools', 'wheel'], #this is probably never needed
+            ['--upgrade', 'pip', 'setuptools', 'wheel'], #this is probably never needed
             ['urllib3'],
             ['numpy'],
             ['pyaudio'],
