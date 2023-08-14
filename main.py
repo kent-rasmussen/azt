@@ -15315,6 +15315,8 @@ if __name__ == '__main__':
         pythonmodules()
         # sysrestart()
         mainproblem()
+    elif exceptiononloadingmymodule:
+        mainproblem()
     else:
         try:
             main()
