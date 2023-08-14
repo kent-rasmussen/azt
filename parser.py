@@ -150,6 +150,7 @@ class Catalog(object):
     def __init__(self,task):
         # This needs a way of picking up custom analysis morphemes
         # Is the lx parsed already enough?
+        log.info("Initializing parser catalog")
         try: # Get these from main.py:
             self.analang=task.analang
             self.fieldnames=task.secondformfield
