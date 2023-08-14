@@ -38,12 +38,17 @@ information than 'DEBUG' does):
     helpful.
 Other levels:'WARNING','ERROR','CRITICAL'
 """
-import logsetup
-log=logsetup.getlog('root') #not ever a module
-logsetup.setlevel(loglevel)
-"""My modules, which should log as above"""
-import lift
-import parser
+try:
+    import logsetup
+    log=logsetup.getlog('root') #not ever a module
+    logsetup.setlevel(loglevel)
+    """My modules, which should log as above"""
+    import lift
+    import parser
+except Exception as e:
+    log.error("Problem importing {} module. Please report this! ({})"
+                "".format(program['name'],e))
+    exceptiononloadingmymodule=True
 try:
     import openclipart
 except Exception as e:
