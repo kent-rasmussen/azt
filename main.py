@@ -21,7 +21,8 @@ if file.getfile(__file__).parent.parent.stem == 'raspy': # if program['hostname'
     loglevel=6
     # program['testlift']='eng' #portion of filename
     program['testlift']='Demo_en' #portion of filename
-    program['testtask']='SortV' #Will convert from string to class later
+    program['testtask']='WordCollectnParse' #Will convert from string to class later
+    # program['testtask']='SortV' #Will convert from string to class later
 else:
     me=False
     program['production']=True #True for making screenshots (default theme)
