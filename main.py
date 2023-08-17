@@ -12,6 +12,7 @@ program={'name':'A-Z+T',
         }
 # program['testing']=True # eliminates Error screens and zipped logs, repos
 exceptiononload=False
+exceptiononloadingmymodule=False
 import platform
 program['hostname']=platform.uname().node
 import file
