@@ -1579,6 +1579,7 @@ class Settings(object):
                                 'hgurls',
                                 'aztrepourls',
                                 'minimumwordstoreportUFgroup',
+                                'askedlxtolc',
                                 'writeeverynwrites'
                                 ]},
             'profiledata':{
@@ -1929,6 +1930,7 @@ class Settings(object):
                         'interpret':[],
                         'adnlangnames':[],
                         'showdetails':[],
+                        'askedlxtolc':[],
                         'maxprofiles':[]
                         }
     def cleardefaults(self,field=None):
