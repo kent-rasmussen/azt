@@ -4921,12 +4921,15 @@ class TaskChooser(TaskDressing,ui.Window):
         citationsdone=program['db'].nentrieswcitationdata
         log.info("lexemesdone by lang: {}".format(lexemesdone))
         log.info("citationsdone by lang: {}".format(citationsdone))
-        #There should never be more lexemes than citation forms.
-        # for l in lexemesdone:
-        #     if l not in citationsdone or citationsdone[l] < lexemesdone[l]:
-        #         w=self.asktoconvertlxtolc()
-        #         w.wait_window(w) # wait for this answer before moving on
-        #         break #just ask this once
+        # There should never be more lexemes than citation forms.
+        for l in lexemesdone:
+            if not program['settings'].askedlxtolc and (l not in citationsdone
+                                or citationsdone[l] < lexemesdone[l]):
+                w=self.asktoconvertlxtolc()
+                w.wait_window(w) # wait for this answer before moving on
+                program['settings'].askedlxtolc=True
+                program['settings'].storesettingsfile()
+                break #just ask this once
         self.getcawlmissing()
         log.info("nfields in db: {}".format(program['db'].nfields))
         log.info("wannotations in db: {}".format(program['db'].nfieldswannotations))
