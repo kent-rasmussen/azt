@@ -4836,7 +4836,7 @@ class TaskChooser(TaskDressing,ui.Window):
     def asktoconvertlxtolc(self):
         title=_("Convert lexeme field data to citation form fields?")
         url='{}/CITATIONFORMS.md'.format(program['docsurl'])
-        w=ui.Window(self,title=title,exit=False)
+        w=ui.Window(program['root'],title=title,exit=False)
         lexemesdone=list(program['db'].nentrieswlexemedata.values())#[program['settings'].analang]
         citationsdone=list(program['db'].nentrieswcitationdata.values())#[program['settings'].analang]
         nbtext1=_("You have {} entries with lexeme data, and only {} with "
