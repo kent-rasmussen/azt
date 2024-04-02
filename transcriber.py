@@ -149,6 +149,7 @@ class Transcriber(ui.Frame):
                         row=row,
                         column=column,
                         sticky='nsew',
+                        # norender=True,
                         columnspan=columnspan
                         )
         fieldframe=ui.Frame(self,
