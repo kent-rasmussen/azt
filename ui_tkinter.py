@@ -1997,7 +1997,7 @@ def testapp(program):
                     bars[p].current(i)
             time.sleep(.02)
     def textchange(event):
-        l['text']="new text"
+        l['text']="new text ˥˥˦˦˧"
     def textadd(x):
         l['text']+=str(x)
     r=Root(program=program)
@@ -2026,7 +2026,7 @@ def testapp(program):
     ToolTip(l,"this image has a tooltip")
     for c,cls in enumerate([Message,Label]):
         cname=cls.__name__
-        cls(sf.content,text="This is a {}".format(cname),row=2, column=c,
+        cls(sf.content,text="This is a {} ˥˥˦˦˨".format(cname),row=2, column=c,
                 borderwidth=1,relief='raised')
         # cls(w.outsideframe,text="This is a long {}".format(cname),row=3, column=c)
         cls(sf.content,text="This is a very long {}".format(cname),row=4, column=c,
