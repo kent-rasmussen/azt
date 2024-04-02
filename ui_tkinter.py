@@ -1103,6 +1103,7 @@ class Message(Gridded,Text,tkinter.Message): #,tkinter.Label
     """I'm not sure if this will ever have value, but here it is."""
     def __init__(self, parent, **kwargs):
         # log.info("Label Parent: {}".format(type(parent)))
+        kwargs['norender']=True
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
         Childof.__init__(self,parent)
