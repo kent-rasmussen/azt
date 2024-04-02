@@ -504,6 +504,12 @@ class Renderer(ObectwArgs):
             self.isactive=False
         self.renderings={}
         self.imagefonts={}
+    def gettextsize(self, img, text, font, fspacing):
+        # w, h = draw.multiline_textsize(text, font=font, spacing=fspacing)
+        l, t, r, b = img.multiline_textbbox((0,0), text, font=font, spacing=fspacing)
+        # w,h = r-l,b-t
+        # log.info("width: {}, height: {}".format(w,h))
+        return r-l,b-t
     def render(self,**kwargs):
         if not self.isactive:
             return
@@ -599,7 +605,7 @@ class Renderer(ObectwArgs):
             return
         img = PIL.Image.new("1", (10,10), 255)
         draw = PIL.ImageDraw.Draw(img)
-        w, h = draw.multiline_textsize(text, font=font, spacing=fspacing)
+        w, h = self.gettextsize(draw, text, font, fspacing)
         textori=text
         lines=textori.split('\n') #get everything between manual linebreaks
         for line in lines:
@@ -609,7 +615,7 @@ class Renderer(ObectwArgs):
             while y < len(words):
                 y+=1
                 l=' '.join(words[x+nl:y+nl])
-                w, h = draw.multiline_textsize(l, font=font, spacing=fspacing)
+                w, h = self.gettextsize(draw, l, font, fspacing)
                 log.log(2,"Round {} Words {}-{}:{}, width: {}/{}".format(y,x+nl,
                                                 y+nl,l,w,wraplength))
                 if wraplength and w>wraplength:
@@ -619,7 +625,7 @@ class Renderer(ObectwArgs):
             line=' '.join(words) #Join back words
             lines[li]=line
         text='\n'.join(lines) #join back sections between manual linebreaks
-        w, h = draw.multiline_textsize(text, font=font, spacing=fspacing)
+        w, h = self.gettextsize(draw, text, font, fspacing)
         log.log(2,"Final size w: {}, h: {}".format(w,h))
         black = 'rgb(0, 0, 0)'
         white = 'rgb(255, 255, 255)'
