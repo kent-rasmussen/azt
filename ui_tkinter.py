@@ -26,6 +26,7 @@ try: #PIL
     import PIL.ImageDraw
     import PIL.Image
     pilisactive=True
+    log.info("PIL loaded OK")
 except Exception as e:
     log.error("Error loading PIL: {}".format(e))
     pilisactive=False
