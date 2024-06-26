@@ -14858,8 +14858,8 @@ def pythonmodules():
                 thisinstalled=installedsomething=True
         except subprocess.CalledProcessError as e:
             o=stouttostr(e.output)
-            if 'Could not find a version' in o:
-                del pyargs[npyargs-1] #pull no-index
+            if 'Could not find a version' in o and 'pipwin' not in pyargs:
+                pyargs.remove('--no-index')
                 log.info("Running `{}`".format(' '.join(pyargs)))
                 try:
                     o=subprocess.check_output(pyargs,shell=False,
