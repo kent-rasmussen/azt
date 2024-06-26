@@ -14823,14 +14823,17 @@ def pythonmodules():
         sys.exit()
     installs=[
             ['--upgrade', 'pip', 'setuptools', 'wheel'], #this is probably never needed
+            ['pipwin'],
             ['urllib3'],
             ['numpy'],
-            ['pyaudio'],
+            ['pyaudio'], #This must be after pipwin, for MS Windows
             ['Pillow'],
             ['lxml'],
             ['psutil'],
             ['patiencediff']
             ]
+    if platform.system() != 'Windows':
+        installs.remove('pipwin')
     log.info("Installs: {}".format(', '.join([i for j in installs for i in j])))
     for install in installs:
         thisinstalled=False
@@ -14838,6 +14841,8 @@ def pythonmodules():
                     '-f', installfolder, #install the one in this folder, if there
                     '--no-index' #This stops it from looking online
                     ]
+        if platform.system() == 'Windows' and install in ['pyaudio']:
+            pyargs = list(map(lambda x: x.replace('pip', 'pipwin'), pyargs))
         npyargs=len(pyargs)
         # if install[0] == 'pyaudio':
         #     install[0]+='==0.2.13'
