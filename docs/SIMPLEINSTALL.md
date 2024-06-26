@@ -37,6 +37,11 @@ Before you can [Set up A-Z+T for normal use](#set-up-azt-for-normal-use), you ne
 ## Fonts
 If you don't already have [Charis SIL](https://software.sil.org/charis/) on your system, download and install the most recent version from [here](https://software.sil.org/downloads/r/charis/CharisSIL-6.001.zip).
 
+## First Run of A−Z+T
+The first time you run A−Z+T, it will check that you have all the necessary python modules installed. If you don't, this isn't a problem, but it will take a moment and install them for you. If you run into problems installing pyaudio (especially ones including `Microsoft Visual C++`), it may help to run these two commands
+- `python -m pip install pipwin`
+- `pipwin install pyaudio`
+
 ## Set up A-Z+T for normal use
 Once you have completed everything under [Install Python](#install-python) and [Install Git and Download A-Z+T](#install-git-and-download-azt):
 1. Click to open the `azt` folder on your desktop
