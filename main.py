@@ -14871,6 +14871,8 @@ def pythonmodules():
                         thisinstalled=installedsomething=True
                 except subprocess.CalledProcessError as e:
                     o=stouttostr(e.output)
+            elif 'Could not find a version' in o:
+                log.info("No version for pipwin?")
         if not thisinstalled:
             log.info("Nothing installed. Output follows:")
         log.info(o) #just give bytes, if encoding isn't correct
