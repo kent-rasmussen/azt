@@ -776,12 +776,12 @@ class Childof(object):
         self.inherit()
 class UI(ObectwArgs):
     """docstring for UI, after tkinter widgets are initted."""
-    def wait(self,msg=None):
+    def wait(self,msg=None,cancellable=False):
         if self.iswaiting():
             log.debug("There is already a wait window: {}".format(self.ww))
             return
         self.withdraw()
-        self.ww=Wait(self,msg)
+        self.ww=Wait(self,msg,cancellable=cancellable)
     def iswaiting(self):
         return hasattr(self,'ww') and self.ww.winfo_exists()
     def waitprogress(self,x):
@@ -792,6 +792,9 @@ class UI(ObectwArgs):
     def waitunpause(self):
         self.ww.deiconify()
         self.ww.paused=False
+    def waitcancel(self):
+        self.waitcancelled=True
+        log.info("Wait cancel registered; waiting to cancel")
     def waitdone(self):
         try:
             self.ww.close()
@@ -815,6 +818,7 @@ class UI(ObectwArgs):
         for a in ['activebackground','selectcolor']:
             if a in self.keys():
                 self[a]=self.theme.activebackground
+        self.waitcancelled=False
             # try:
             #     self['background']=self.theme.background
             #     self['bg']=self.theme.background
@@ -1839,9 +1843,12 @@ class Wait(Window): #tkinter.Toplevel?
             self.progressbar=Progressbar(self.outsideframe,
                                     orient='horizontal',
                                     mode='determinate', #or 'indeterminate'
-                                    row=3,column=0)
+                                    row=4,column=0)
             self.progress(value)
-    def __init__(self, parent, msg=None):
+    def cancel(self):
+        self.parent.waitcancel()
+        log.info("Sent Wait Cancel")
+    def __init__(self, parent, msg=None, cancellable=False):
         super(Wait, self).__init__(parent,exit=False)
         self.paused=False
         self.withdraw() #don't show until we're done making it
@@ -1864,6 +1871,10 @@ class Wait(Window): #tkinter.Toplevel?
                         image=self.theme.photo['small'],
                         text='',
                         row=2,column=0,sticky='we',padx=50,pady=50)
+        if cancellable:
+            self.cancelbutton=Button(self.outsideframe,text='Cancel',
+                                    cmd=self.cancel,
+                                    row=3,column=0,sticky='e')
         self.deiconify() #show after the window is built
         #for some reason this has to follow the above, or you get a blank window
         self.update_idletasks() #updates just geometry
