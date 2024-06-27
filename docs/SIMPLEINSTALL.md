@@ -11,7 +11,7 @@ Before you can [Set up A-Z+T for normal use](#set-up-azt-for-normal-use), you ne
 2. [Install Git and Download A-Z+T](#install-git-and-download-azt)
 
 ## Install Python
-1. Download and install Python from [here](https://www.python.org/ftp/python/3.6.8/python-3.6.8-amd64.exe). At this step:
+1. Download and install Python from [here](https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe). At this step:
 
 ![Add Python to Path](images/Python_path.png "Add Python to Path")
 

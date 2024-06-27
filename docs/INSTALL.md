@@ -30,7 +30,7 @@ Then this will get you the needed python modules: `python3 -m pip install pyaudi
 
 ![Add Python to Path](images/Python_path.png "Add Python to Path")
 
-For some reason, I have had trouble getting pyaudio installed on Windows machines with most recent versions of Python (3.9). You may have better mileage than I. In any case, I have found that it works smoothly to download and install Python 3.6.8 (e.g., from [here](https://www.python.org/ftp/python/3.6.8/python-3.6.8-amd64.exe)).
+For some reason, I have had trouble getting pyaudio installed on Windows machines with certain versions of Python. You may have better mileage than I. In any case, I have found that it works smoothly to download and install Python 3.12.4 (e.g., from [here](https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe)).
 
 ## Dependencies
 - Depending on how Python is installed on your system, you may also need
