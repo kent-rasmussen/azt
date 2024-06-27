@@ -14823,7 +14823,6 @@ def pythonmodules():
         sys.exit()
     installs=[
             ['--upgrade', 'pip', 'setuptools', 'wheel'], #this is probably never needed
-            ['pipwin'],
             ['urllib3'],
             ['numpy'],
             ['pyaudio'], #This must be after pipwin, for MS Windows
@@ -14832,20 +14831,13 @@ def pythonmodules():
             ['psutil'],
             ['patiencediff']
             ]
-    pipwin_installs=['pyaudio']
-    if platform.system() != 'Windows':
-        installs.remove('pipwin')
     log.info("Installs: {}".format(', '.join([i for j in installs for i in j])))
     for install in installs:
         thisinstalled=False
-        if platform.system() == 'Windows' and set(pipwin_installs)&set(install):
-            log.info("Using pipwin to install {} on MS Windows".format(install))
-            pyargs=[program['python'], '-m', 'pipwin', 'install']
-        else:
-            pyargs=[program['python'], '-m', 'pip', 'install',
-            '-f', installfolder, #install the one in this folder, if there
-            '--no-index' #This stops it from looking online
-            ]
+        pyargs=[program['python'], '-m', 'pip', 'install',
+        '-f', installfolder, #install the one in this folder, if there
+        '--no-index' #This stops it from looking online
+        ]
         npyargs=len(pyargs)
         # if install[0] == 'pyaudio':
         #     install[0]+='==0.2.13'
@@ -14861,7 +14853,7 @@ def pythonmodules():
                 thisinstalled=installedsomething=True
         except subprocess.CalledProcessError as e:
             o=stouttostr(e.output)
-            if 'Could not find a version' in o and 'pipwin' not in pyargs:
+            if 'Could not find a version' in o:
                 pyargs.remove('--no-index')
                 log.info("Running `{}`".format(' '.join(pyargs)))
                 try:
@@ -14874,8 +14866,6 @@ def pythonmodules():
                         thisinstalled=installedsomething=True
                 except subprocess.CalledProcessError as e:
                     o=stouttostr(e.output)
-            elif 'Could not find a version' in o:
-                log.info("No version for pipwin?")
         if not thisinstalled:
             log.info("Nothing installed. Output follows:")
         log.info(o) #just give bytes, if encoding isn't correct
