@@ -5718,7 +5718,8 @@ class WordCollection(Segments):
                                         str(self.sense.imgselectiondir).split('/')[-1].split('_')
                                         if not isinteger(i)]
         self.wait(msg=_("Dowloading images from OpenClipart.org\n{}"
-                        "").format(" ".join(self.sense.collectionglosses)))
+                        "").format(" ".join(self.sense.collectionglosses)),
+                    cancellable=True)
         log.info("Glosses: {}".format(self.sense.collectionglosses))
         scraper=htmlfns.ImageScraper()
         for gloss in self.sense.collectionglosses:
@@ -5757,6 +5758,8 @@ class WordCollection(Segments):
             file.makedir(self.sense.imgselectiondir)
         problems=0
         for i in self.images:
+            if self.waitcancelled:
+                break
             url=htmlfns.imgurl(i['src'])
             num=i['src'].split('/')[-1]
             i['filename']='_'.join([num,rx.urlok(i.get('alt','noalt'))])
