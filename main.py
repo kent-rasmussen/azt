@@ -5707,6 +5707,8 @@ class WordCollection(Segments):
             if not file.exists(self.sense.imgselectiondir):
                 self.getopenclipart(nogui=True)
     def getopenclipart(self,event=None,nogui=False):
+        log.info("Not getting from openclipart.org")
+        return #this isn't really what we want right now
         if not self.sense.collectionglosses:
             log.info("No English glosses to search OpenClipart.org! ({})"
                     "".format(self.sense.glosses))
