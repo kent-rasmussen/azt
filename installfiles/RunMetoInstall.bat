@@ -18,16 +18,16 @@ ECHO not moving to "%userprofile%/Downloads"
 ECHO moving to %~dp0 (where you downloaded the script)
 cd /d %~dp0
 
-If exist python-3.6.8-amd64.exe (
-ECHO python-3.6.8-amd64.exe is there!
+If exist python-3.12.4-amd64.exe (
+ECHO python-3.12.4-amd64.exe is there!
 ) ELSE (
-ECHO "Downloading Python 3.6.8 (31830944; 30M)..."
+ECHO "Downloading Python 3.12.4 (25.5322 Megabyte(s); 26772456 bytes)..."
 ECHO Check that your internet is on and
 pause
-powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.python.org/ftp/python/3.6.8/python-3.6.8-amd64.exe' -OutFile 'python-3.6.8-amd64.exe'"
+powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe' -OutFile 'python-3.12.4-amd64.exe'"
 )
 
-ECHO Installing Python 3.6.8
+ECHO Installing Python 3.12.4
 ECHO:
 ECHO ATTENTION!!
 ECHO            vvvvvvvvvvvvvvvvvvv
@@ -37,12 +37,12 @@ ECHO ALSO:
 ECHO        vvvvvvvvvvvvvvvvvv                      vvvvvvvvvvvvvvvvvvvvvvvv
 ECHO At the end of the install, be sure to click on "remove path limitation"
 ECHO        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ECHO If you forget to do either of these, you should run python-3.6.8-amd64.exe
+ECHO If you forget to do either of these, you should run python-3.12.4-amd64.exe
 ECHO again manually (maybe select "Fix install") to set these options.
 ECHO:
 ECHO Otherwise, you should be fine with all default options
 ECHO:
-start python-3.6.8-amd64.exe /passive PrependPath=1 Include_pip=1 InstallAllUsers=1
+start python-3.12.4-amd64.exe /passive PrependPath=1 Include_pip=1 InstallAllUsers=1
 If exist Git-2.33.0.2-64-bit.exe (
 ECHO Git-2.33.0.2-64-bit.exe is there!
 ) ELSE (
