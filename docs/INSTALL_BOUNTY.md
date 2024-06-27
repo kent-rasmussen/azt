@@ -18,6 +18,9 @@ A−Z+T installation would be greatly helped by having a simpler install process
   - Trigger the "remove path limitation" option in the Python install.
   - Currently between 3.9 and 3.12!!
   ~~At least version 3.6.8~~, though this is negotiable. Some install problems have been minimized in the past by using this version, rather than a newer version. If other solutions (e.g., pipwin) resolve these problems, any recent version may be OK.
+    - https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe
+    - https://www.python.org/ftp/python/3.9.13/python-3.9.13-amd64.exe
+
   - This can happen concurrently with Git install, as they shouldn't depend on each other.
 
 4. Confirm the presence of (or install) Git.
