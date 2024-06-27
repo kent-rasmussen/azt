@@ -5695,6 +5695,9 @@ class WordCollection(Segments):
     def getimagefiles(self):
         if file.exists(self.sense.imgselectiondir):
             return file.getfilesofdirectory(self.sense.imgselectiondir)
+    def selectimageormoveon(self,event=None):
+        if self.selectimage():
+            self.nextword(nostore=False)
     def selectimage(self,event=None):
         files=self.getimagefiles()
         if not files:
@@ -5702,6 +5705,9 @@ class WordCollection(Segments):
         files=self.getimagefiles()
         if files: #still
             self.showimagestoselect(files)
+        else:
+            log.info("There don't seem to be any images to show.")
+            return 1
     def downloadallCAWLimages(self):
         for self.sense in program['db'].senses:
             if not file.exists(self.sense.imgselectiondir):
@@ -5831,8 +5837,8 @@ class WordCollection(Segments):
                 log.info("Return now moves to next word")
             except AssertionError:
                 self.wordframe.pic.bind_all('<Return>',
-                                                            self.selectimage)
-                log.info("Return now selects image")
+                                                    self.selectimageormoveon)
+                log.info("Return now selects image, or moves on")
     def getword(self):
         program['taskchooser'].withdraw()# not sure why necessary
         # log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
