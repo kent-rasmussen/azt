@@ -14836,7 +14836,7 @@ def pythonmodules():
             ['--upgrade', 'pip', 'setuptools', 'wheel'], #this is probably never needed
             ['urllib3'],
             ['numpy'],
-            ['pyaudio'], #This must be after pipwin, for MS Windows
+            ['pyaudio'],
             ['Pillow'],
             ['lxml'],
             ['psutil'],
