@@ -2624,7 +2624,7 @@ class Settings(object):
                                                                 self.s[lang]))
     def setinvalidcharacters(self):
         self.invalidchars=[' ','...',')','(<field type="tone"><form lang="gnd"><text>'] #multiple characters not working.
-        self.invalidregex='( |\.|,|\)|\()+'
+        self.invalidregex=r'( |\.|,|\)|\()+'
         # self.profilelegit=['#','̃','C','N','G','S','V','o'] #In 'alphabetical' order
         self.profilelegit=['#','̃','N','G','S','D','C','Ṽ','V','ʔ','ː',"̀",'=','<'] #'alphabetical' order
     def addtoCVrxs(self,s):
@@ -2688,7 +2688,7 @@ class Settings(object):
             # (?=) – positive lookahead
             # (?<=) – positive lookbehind
             # (?<!) – negative lookbehind
-            self.rx[c+'_']=rx.compile(c+'(?!\Z)') #not word final
+            self.rx[c+'_']=rx.compile(c+r'(?!\Z)') #not word final
             # if c == 'N':
             #     #i.e., neither before C nor before word end
             #     self.rx[c+'_']=rx.compile(c+'(?!([CSGDʔ]|\Z))')
@@ -2696,7 +2696,7 @@ class Settings(object):
             #     self.rx[c+'_']=rx.compile(c+'(?!\Z)') #not word final
             # else: #i.e., 'S','G'
             #     self.rx[c+'_']=rx.compile('(?<![CSGDNʔ])'+c) #not after C
-            self.rx[c+'wd']=rx.compile(c+'(?=\Z)') # word final
+            self.rx[c+'wd']=rx.compile(c+r'(?=\Z)') # word final
     def reloadstatusdatabycvtpsprofile(self,**kwargs):
         # This reloads the status info only for current slice
         # These are specified in iteration, pulled from object if called direct
