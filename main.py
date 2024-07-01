@@ -5854,7 +5854,7 @@ class WordCollection(Segments):
             self.dowordframe()
         elif not self.entries:
             text=_("It looks like you're done filling out the empty "
-            "entries in your database! Congratulations! You can still add words "
+            "entries in your database! Congratulations! \nYou can still add words "
             "through the button on the left ({})."
             "".format(self.dobuttonkwargs()['text']))
             self.killwordframe()
