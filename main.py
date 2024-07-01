@@ -74,6 +74,11 @@ except Exception as e:
     log.error("Problem importing Sound/pyaudio. Is it installed? {}".format(e))
     exceptiononload=True
 """Other people's stuff"""
+try:
+    from packaging import version
+except Exception as e:
+    log.error("Problem importing packaging.version; installed? {}".format(e))
+    exceptiononload=True
 import datetime
 program['start_time'] = datetime.datetime.utcnow()
 import threading
@@ -114,7 +119,7 @@ import os
 import pprint #for settings and status files, etc.
 import subprocess
 import webbrowser
-import pkg_resources
+
 
 class HasMenus():
     def helpnewinterface(self):
@@ -14792,7 +14797,9 @@ def findexecutable(exe):
         log.info("Executable {} found multiple items: {}".format(exe,program[exe]))
         program[exe]=pickshortest(program[exe])
         log.info("Using shortest executable path: {}".format(program[exe]))
-    if exe == 'praat' and program[exe] and not praatversioncheck():
+    if (exe == 'praat' and program[exe]
+            and not exceptiononload
+            and not praatversioncheck()):
         findexecutable('sendpraat') #only ask if it would be useful
     # os.environ['PATH'] += os.pathsep + os.path.join(os.getcwd(), 'node')
 def sysexecutableversion():
@@ -14800,18 +14807,20 @@ def sysexecutableversion():
     args=[sys.executable, '--version']
     return stouttostr(subprocess.check_output(args, shell=False))
 def praatversioncheck():
+    def parseversion(x):
+        return x.split()[1]
     praatvargs=[program['praat'], '--version']
     versionraw=subprocess.check_output(praatvargs, shell=False)
     try:
-        version=pkg_resources.parse_version(stouttostr(versionraw))
+        out=version.Version(parseversion(stouttostr(versionraw)))
     except:
-        version=versionraw
+        out=versionraw
     # This is the version at which we don't need sendpraat anymore
     # and where '--hide-picture' becomes available.
-    justpraatversion=pkg_resources.parse_version(
-                                            'Praat 6.2.04 (December 18 2021)')
-    log.info("Found Praat version {}".format(str(version)))
-    if version>=justpraatversion:
+    justpraatversion=version.Version(parseversion(
+                                            'Praat 6.2.04 (December 18 2021)'))
+    log.info("Found Praat version {}".format(str(out)))
+    if out>=justpraatversion:
         log.info("Praat version at or greater than {}".format(justpraatversion))
         return True
     else:
@@ -14840,6 +14849,7 @@ def pythonmodules():
             ['Pillow'],
             ['lxml'],
             ['psutil'],
+            ['packaging'],
             ['patiencediff']
             ]
     log.info("Installs: {}".format(', '.join([i for j in installs for i in j])))
