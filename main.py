@@ -80,7 +80,7 @@ except Exception as e:
     log.error("Problem importing packaging.version; installed? {}".format(e))
     exceptiononload=True
 import datetime
-program['start_time'] = datetime.datetime.utcnow()
+program['start_time'] = datetime.datetime.now(datetime.UTC)
 import threading
 import multiprocessing
 import itertools
@@ -14318,10 +14318,10 @@ class Object:
         self.value=None
 """These are non-method utilities I'm actually using."""
 def now():
-    return datetime.datetime.utcnow().isoformat()#[:-7]+'Z'
+    return datetime.datetime.now(datetime.UTC).isoformat()#[:-7]+'Z'
 def nowruntime():
     #this returns a delta!
-    return datetime.datetime.utcnow()-program['start_time']
+    return datetime.datetime.now(datetime.UTC)-program['start_time']
 def logfinished(start=program['start_time'],msg=None):
     run_time=nowruntime()
     if type(start) is datetime.datetime: #only work with deltas
