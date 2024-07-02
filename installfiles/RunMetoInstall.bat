@@ -87,6 +87,17 @@ ECHO Running $str
 REM ""%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprofile%/desktop/azt"""
 powershell.exe -noprofile -ExecutionPolicy Bypass -command $str
 REM """%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprofile%/desktop/azt"""
+
+for /f %%i in ('Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled"') do set longpathsOK=%%i
+REM set longpathsOK={
+REM Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled"
+REM }
+if %longpathsOK%==1 (
+echo Long paths are OK.
+) else (
+start ""%userprofile%/desktop/azt/installfiles/longpaths.reg""
+)
+
 ECHO making links to AZT and Transcriber tool...
 mklink "%userprofile%/desktop/A>Z+T" "%userprofile%/desktop/azt/main.py"
 mklink "%userprofile%/desktop/Transcriber" "%userprofile%/desktop/azt/transcriber.py"
