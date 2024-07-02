@@ -14373,15 +14373,18 @@ def interfacelang(lang=None,magic=False):
             except:
                 log.debug("_ doesn't look defined yet, returning interface "
                             "language from locale.")
-                loc,enc=locale.getdefaultlocale()
+                loc,enc=locale.getlocale()
                 if loc:
                     code=loc.split('_')[0]
+                    # log.info("Using code {}".format(code))
                 else:
-                    log.debug("locale.getdefaultlocale doesn't seem to have "
+                    log.debug("locale.getlocale doesn't seem to have "
                     "returned any results: {} (OS: {}); using French user "
                     "interface".format(
-                                        locale.getdefaultlocale(),
+                                        locale.getlocale(),
                                         platform.system()))
+                    log.debug("locale.getdefaultlocale output for comparison: "
+                            "{}".format(locale.getdefaultlocale()))
                     code='en' #I think loc=None normally means English on macOS
                 if code in i18n:
                     return code
