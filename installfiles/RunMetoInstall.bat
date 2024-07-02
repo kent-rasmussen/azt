@@ -42,20 +42,26 @@ ECHO again manually (maybe select "Fix install") to set these options.
 ECHO:
 ECHO Otherwise, you should be fine with all default options
 ECHO:
-start python-3.12.4-amd64.exe /passive PrependPath=1 Include_pip=1 InstallAllUsers=1
-If exist Git-2.33.0.2-64-bit.exe (
-ECHO Git-2.33.0.2-64-bit.exe is there!
+REM trying /quiet instead of /passive
+REM it may help to use SimpleInstall=1, maybe with SimpleInstallDescription="explanatoryText"
+start python-3.12.4-amd64.exe /? > python_switches.txt
+
+start python-3.12.4-amd64.exe /quiet PrependPath=1 Include_pip=1 InstallAllUsers=1 Include_launcher=1 InstallLauncherAllUsers=1 Include_test=0
+
+If exist Git-2.45.2-64-bit.exe (
+ECHO Git-2.45.2-64-bit.exe is there!
 ) ELSE (
-ECHO Downloading Git 2.33.0.2 (50101024; 48M^)...
+ECHO Downloading Git 2.45.2 (68.1 MB; 68,131,584 bytes)...
 ECHO Check that your internet is on and
 pause
-powershell.exe -noprofile -command "Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/Git-2.33.0.2-64-bit.exe' -OutFile 'Git-2.33.0.2-64-bit.exe'"
+REM powershell.exe -noprofile -command "Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/Git-2.33.0.2-64-bit.exe' -OutFile 'Git-2.33.0.2-64-bit.exe'"
+powershell.exe -noprofile -command "Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.45.2.windows.1/Git-2.45.2-64-bit.exe' -OutFile 'Git-2.33.0.2-64-bit.exe'"
 )
 
-ECHO waiting for you to finish installing Python 3.6.8
+ECHO waiting for you to finish installing Python 3.12.4
 pause
 
-ECHO Installing Git 2.33.0.2
+ECHO Installing Git 2.45.2
 ECHO You should be fine with all default options
 ECHO ATTENTION!!
 ECHO                     vvvvvvvvvvvvvvvvvvvvvvv
@@ -64,8 +70,10 @@ ECHO                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ECHO     vvvvvvv
 ECHO You need it for the next step!
 ECHO     ^^^^^^^^^^^^^^
-start Git-2.33.0.2-64-bit.exe
-
+start Git-2.45.2-64-bit.exe /? > git_switches.txt
+REM start Git-2.45.2-64-bit.exe /silent
+start Git-2.45.2-64-bit.exe /VERYSILENT /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\reg\shellhere,assoc,assoc_sh"
+rem or /silent  ?
 pause
 
 ECHO Cloning A-Z+T source to '%userprofile%/desktop/azt'
