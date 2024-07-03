@@ -1,4 +1,5 @@
 ECHO OFF
+::cmd /k
 ECHO:
 ECHO:
 ECHO:
@@ -116,6 +117,8 @@ pause
 
 ECHO Cloning A-Z+T source to '%userprofile%/desktop/azt'
 cd /d "%userprofile%/desktop"
+::cmd /k git clone ""%azt%"" ""%userprofile%/desktop/azt""
+::echo cmd /k done
 ::Uncomment this if needed, and we get `where git` working:
 REM FOR /F "tokens=* USEBACKQ" %%F IN (`where git`) DO (
 REM SET GitExe=%%F
