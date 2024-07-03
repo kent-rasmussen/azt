@@ -44,7 +44,7 @@ ECHO Otherwise, you should be fine with all default options
 ECHO:
 REM trying /quiet instead of /passive
 REM it may help to use SimpleInstall=1, maybe with SimpleInstallDescription="explanatoryText"
-start python-3.12.4-amd64.exe /? > python_switches.txt
+REM start python-3.12.4-amd64.exe /?
 
 start python-3.12.4-amd64.exe /quiet PrependPath=1 Include_pip=1 InstallAllUsers=1 Include_launcher=1 InstallLauncherAllUsers=1 Include_test=0
 
@@ -70,7 +70,7 @@ ECHO                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ECHO     vvvvvvv
 ECHO You need it for the next step!
 ECHO     ^^^^^^^^^^^^^^
-start Git-2.45.2-64-bit.exe /? > git_switches.txt
+REM start Git-2.45.2-64-bit.exe /?
 REM start Git-2.45.2-64-bit.exe /silent
 start Git-2.45.2-64-bit.exe /VERYSILENT /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\reg\shellhere,assoc,assoc_sh"
 rem or /silent  ?
