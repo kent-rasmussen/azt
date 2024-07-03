@@ -78,9 +78,9 @@ pause
 
 ECHO Cloning A-Z+T source to '%userprofile%/desktop/azt'
 cd /d "%userprofile%/desktop"
-FOR /F "tokens=* USEBACKQ" %%F IN (`where git`) DO (
-SET GitExe=%%F
-)
+REM FOR /F "tokens=* USEBACKQ" %%F IN (`where git`) DO (
+REM SET GitExe=%%F
+REM )
 for /R %f in (azt.git) do @IF EXIST %f set azt=%%~dpnxa
 if defined azt (
 echo %azt%
