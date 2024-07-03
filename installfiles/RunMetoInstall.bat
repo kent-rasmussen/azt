@@ -88,12 +88,14 @@ echo %azt%
 echo File not found; using github
 azt=""https://github.com/kent-rasmussen/azt.git""
 )
-$str={
-""%GitExe%"" clone ""%azt%"" ""%userprofile%/desktop/azt"""
-}
-ECHO Running $str
+echo git-cmd.exe clone ""%azt%"" ""%userprofile%/desktop/azt"" >git_clone.bat
+cmd /c git_clone.bat
+REM $str={
+REM ""%GitExe%"" clone ""%azt%"" ""%userprofile%/desktop/azt""
+REM }
+REM ECHO Running $str
 REM ""%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprofile%/desktop/azt"""
-powershell.exe -noprofile -ExecutionPolicy Bypass -command $str
+REM ORI:powershell.exe -noprofile -ExecutionPolicy Bypass -command $str
 REM """%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprofile%/desktop/azt"""
 
 for /f %%i in ('Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled"') do set longpathsOK=%%i
