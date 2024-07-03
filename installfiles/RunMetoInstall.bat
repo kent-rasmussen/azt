@@ -83,11 +83,12 @@ cd /d "%userprofile%/desktop"
 REM FOR /F "tokens=* USEBACKQ" %%F IN (`where git`) DO (
 REM SET GitExe=%%F
 REM )
+::This is for local (USB) repo install (should be %%~dpnxf, and %%f?)
 for /R %f in (azt.git) do @IF EXIST %f set azt=%%~dpnxa
 if defined azt (
 echo %azt%
 ) else (
-echo File not found; using github
+echo Local file not found; using github
 azt=""https://github.com/kent-rasmussen/azt.git""
 )
 echo git-cmd.exe clone ""%azt%"" ""%userprofile%/desktop/azt"" >git_clone.bat
