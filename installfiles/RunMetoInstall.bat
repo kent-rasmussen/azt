@@ -74,7 +74,7 @@ ECHO     ^^^^^^^^^^^^^^
 REM start Git-2.45.2-64-bit.exe /?
 REM start Git-2.45.2-64-bit.exe /silent
 echo on
-start Git-2.45.2-64-bit.exe /SILENT /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\reg\shellhere,assoc,assoc_sh"
+start Git-2.45.2-64-bit.exe /SILENT /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\shellhere,assoc,assoc_sh"
 pause
 
 ECHO Cloning A-Z+T source to '%userprofile%/desktop/azt'
