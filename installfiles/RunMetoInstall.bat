@@ -21,7 +21,7 @@ cd /d %~dp0
 If exist python-3.12.4-amd64.exe (
 ECHO python-3.12.4-amd64.exe is there!
 ) ELSE (
-ECHO "Downloading Python 3.12.4 (25.5322 Megabyte(s); 26772456 bytes)..."
+ECHO Downloading Python 3.12.4 ^(25.5322 Megabyte(s); 26772456 bytes^)...
 ECHO Check that your internet is on and
 pause
 powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe' -OutFile 'python-3.12.4-amd64.exe'"
@@ -52,7 +52,7 @@ start python-3.12.4-amd64.exe /quiet PrependPath=1 Include_pip=1 InstallAllUsers
 If exist Git-2.45.2-64-bit.exe (
 ECHO Git-2.45.2-64-bit.exe is there!
 ) ELSE (
-ECHO "Downloading Git 2.45.2 (68.1 MB; 68,131,584 bytes)..."
+ECHO Downloading Git 2.45.2 ^(68.1 MB; 68,131,584 bytes^)...
 ECHO Check that your internet is on and
 pause
 REM powershell.exe -noprofile -command "Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/Git-2.33.0.2-64-bit.exe' -OutFile 'Git-2.33.0.2-64-bit.exe'"
@@ -83,7 +83,7 @@ cd /d "%userprofile%/desktop"
 REM FOR /F "tokens=* USEBACKQ" %%F IN (`where git`) DO (
 REM SET GitExe=%%F
 REM )
-::This is for local (USB) repo install (should be %%~dpnxf, and %%f?)
+::This is for local ^(USB^) repo install ^(should be %%~dpnxf, and %%f?^)
 for /R %f in (azt.git) do @IF EXIST %f set azt=%%~dpnxa
 if defined azt (
 echo %azt%
@@ -123,7 +123,7 @@ ECHO OMyShortcut.TargetPath = "%windir%\notepad.exe"
 ECHO oMyShortCut.Hotkey = "ALT+CTRL+F"
 ECHO oMyShortCut.Save
 
-ECHO "Install done! (hopefully!)"
+ECHO Install done! ^(hopefully!^)
 
 ECHO I'll pause now; cancel now to be finished, or press any key to continue
 ECHO to install XLingPaper, Praat and Mercurial, to get the most out of A-Z+T.
