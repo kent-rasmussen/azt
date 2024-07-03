@@ -74,11 +74,49 @@ ECHO     ^^^^^^^^^^^^^^
 REM start Git-2.45.2-64-bit.exe /?
 REM start Git-2.45.2-64-bit.exe /silent
 echo on
-start Git-2.45.2-64-bit.exe /SILENT /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\shellhere,assoc,assoc_sh"
+::try maybe /PathOption=Cmd or /GitOnlyOnPath, different orders? ; was ext\reg\shellhere
+::try without components line?
+::try without applications switches?
+::Once path is correctly taken up later, make this /SILENT
+start Git-2.45.2-64-bit.exe /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\shellhere,assoc,assoc_sh"
+::The above line should be commented out to try this block:
+::(echo [Setup]
+::echo PathOption=Cmd
+::Don't use the following indented lines unless necessary:
+::    echo Lang=default
+::    echo Dir=%installDir%
+::    echo Group=Git
+::    echo NoIcons=0
+::    echo SetupType=default
+::    echo Components=icons,ext\reg\shellhere,assoc,assoc_sh
+::    echo Tasks=
+::    echo PathOption=Cmd
+::    echo SSHOption=OpenSSH
+::    echo CRLFOption=CRLFAlways
+::    echo BashTerminalOption=ConHost
+::    echo PerformanceTweaksFSCache=Enabled
+::    echo UseCredentialManager=Enabled
+::    echo EnableSymlinks=Disabled
+::    echo EnableBuiltinDifftool=Disabled
+::)> git_config.inf
+::start Git-2.45.2-64-bit.exe /SILENT /LOADINF="git_config.inf" /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS
+::Once this is working, uncomment
+::del git_config.bat
+ECHO Wait to finish installing Git 2.45.2, then
 pause
+::The problem at this point is that we can't find the git executable,
+::  either because it isn't being put into the path correctly, or
+::  because the path isn't updating (early enough?) in this context. Options:
+::1. try writing and calling a script from a new cmd.exe, which should have the new path
+::1a. do this where the path has clearly changed first (manual install), then if it works, make it silent
+::2. try different silent options to get the path installed and applied correctly.
+::where git
+::echo Don't continue until we find git above ^(after trying script below^)
+::pause
 
 ECHO Cloning A-Z+T source to '%userprofile%/desktop/azt'
 cd /d "%userprofile%/desktop"
+::Uncomment this if needed, and we get `where git` working:
 REM FOR /F "tokens=* USEBACKQ" %%F IN (`where git`) DO (
 REM SET GitExe=%%F
 REM )
@@ -92,6 +130,9 @@ azt=""https://github.com/kent-rasmussen/azt.git""
 )
 echo git-cmd.exe clone ""%azt%"" ""%userprofile%/desktop/azt"" >git_clone.bat
 cmd /c git_clone.bat
+::Once this is working, uncomment
+::del git_clone.bat
+::Uncomment this if needed, and we get `where git` working:
 REM $str={
 REM ""%GitExe%"" clone ""%azt%"" ""%userprofile%/desktop/azt""
 REM }
