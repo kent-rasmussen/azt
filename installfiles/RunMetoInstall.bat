@@ -72,6 +72,7 @@ ECHO You need it for the next step!
 ECHO     ^^^^^^^^^^^^^^
 REM start Git-2.45.2-64-bit.exe /?
 REM start Git-2.45.2-64-bit.exe /silent
+echo on
 start Git-2.45.2-64-bit.exe /SILENT /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\reg\shellhere,assoc,assoc_sh"
 rem or /silent  ?
 pause
