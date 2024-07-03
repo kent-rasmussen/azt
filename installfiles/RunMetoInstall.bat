@@ -131,7 +131,14 @@ echo %azt%
 echo Local file not found; using github
 azt=""https://github.com/kent-rasmussen/azt.git""
 )
-echo git-cmd.exe clone ""%azt%"" ""%userprofile%/desktop/azt"" >git_clone.bat
+(
+echo echo ""%%path%%""
+echo echo ""%path%""
+echo echo ""%%userprofile%%""
+echo echo ""%userprofile%""
+echo where git
+echo git-cmd.exe clone ""%azt%"" ""%userprofile%/desktop/azt""
+) >git_clone.bat
 cmd /c git_clone.bat
 ::Once this is working, uncomment
 ::del git_clone.bat
