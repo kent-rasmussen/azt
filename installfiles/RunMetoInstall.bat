@@ -29,15 +29,16 @@ powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.python.org/ft
 
 ECHO Installing Python 3.12.4
 ECHO:
-ECHO ATTENTION!!
-ECHO            vvvvvvvvvvvvvvvvvvv
-ECHO Be sure to check "add to PATH" in the dialog BEFORE you click "Install Now"
-ECHO            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ECHO ALSO:
+::ECHO ATTENTION!!
+::ECHO            vvvvvvvvvvvvvvvvvvv
+::ECHO Be sure to check "add to PATH" in the dialog BEFORE you click "Install Now"
+::ECHO            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+::ECHO ALSO:
 ECHO        vvvvvvvvvvvvvvvvvv                      vvvvvvvvvvvvvvvvvvvvvvvv
 ECHO At the end of the install, be sure to click on "remove path limitation"
 ECHO        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ECHO If you forget to do either of these, you should run python-3.12.4-amd64.exe
+::ECHO If you forget to do either of these, you should run python-3.12.4-amd64.exe
+ECHO If you forget to do this, you should run python-3.12.4-amd64.exe
 ECHO again manually (maybe select "Fix install") to set these options.
 ECHO:
 ECHO Otherwise, you should be fine with all default options
