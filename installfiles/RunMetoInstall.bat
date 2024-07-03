@@ -55,7 +55,7 @@ ECHO "Downloading Git 2.45.2 (68.1 MB; 68,131,584 bytes)..."
 ECHO Check that your internet is on and
 pause
 REM powershell.exe -noprofile -command "Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/Git-2.33.0.2-64-bit.exe' -OutFile 'Git-2.33.0.2-64-bit.exe'"
-powershell.exe -noprofile -command "Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.45.2.windows.1/Git-2.45.2-64-bit.exe' -OutFile 'Git-2.33.0.2-64-bit.exe'"
+powershell.exe -noprofile -command "Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.45.2.windows.1/Git-2.45.2-64-bit.exe' -OutFile 'Git-2.45.2-64-bit.exe'"
 )
 
 ECHO waiting for you to finish installing Python 3.12.4
