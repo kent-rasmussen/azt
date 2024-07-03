@@ -51,7 +51,7 @@ start python-3.12.4-amd64.exe /quiet PrependPath=1 Include_pip=1 InstallAllUsers
 If exist Git-2.45.2-64-bit.exe (
 ECHO Git-2.45.2-64-bit.exe is there!
 ) ELSE (
-ECHO Downloading Git 2.45.2 (68.1 MB; 68,131,584 bytes)...
+ECHO "Downloading Git 2.45.2 (68.1 MB; 68,131,584 bytes)..."
 ECHO Check that your internet is on and
 pause
 REM powershell.exe -noprofile -command "Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/Git-2.33.0.2-64-bit.exe' -OutFile 'Git-2.33.0.2-64-bit.exe'"
