@@ -23,7 +23,6 @@ whoami /groups | find "S-1-16-12288"
 if errorlevel 1 goto NotAdmin
 ECHO Looks like I'm running As Administrator.
 ECHO Using user profile %userprofile%
-ECHO not moving to "%userprofile%/Downloads"
 ECHO moving to %~dp0 (where you downloaded the script)
 cd /d %~dp0
 
