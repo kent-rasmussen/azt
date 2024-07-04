@@ -127,12 +127,14 @@ REM FOR /F "tokens=* USEBACKQ" %%F IN (`where git`) DO (
 REM SET GitExe=%%F
 REM )
 ::This is for local ^(USB^) repo install ^(should be %%~dpnxf, and %%f?^)
-for /R %f in (azt.git) do @IF EXIST %f set azt=%%~dpnxa
+::testing for local repo:
+::set azt=
+for /R %%f in (azt.git) do @IF EXIST %%f set azt=%%~dpnxf
 if defined azt (
-echo %azt%
+echo azt is defined ^(local repo found^): %azt%
 ) else (
 echo Local file not found; using github
-azt=""https://github.com/kent-rasmussen/azt.git""
+azt=https://github.com/kent-rasmussen/azt.git
 )
 (
 echo echo ""%%path%%""
