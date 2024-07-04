@@ -183,15 +183,15 @@ powershell.exe -noprofile -command "Invoke-WebRequest 'https://software.sil.org/
 ECHO Installing XLingPaper 3.10
 start XLingPaper3-10-1XXEPersonalEditionFullSetup.exe
 
-If exist praat6218_win64.zip (
-ECHO praat6218_win64.zip is there!
+If exist praat6413_win-intel64.zip (
+ECHO praat6413_win-intel64.zip is there!
 ) ELSE (
-ECHO Downloading Praat 6218...
-powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.fon.hum.uva.nl/praat/praat6218_win64.zip' -OutFile 'praat6218_win64.zip'"
+ECHO Downloading Praat 6413...
+powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.fon.hum.uva.nl/praat/praat6413_win-intel64.zip' -OutFile 'praat6218_win64.zip'"
 )
 ECHO Program files in %ProgramFiles%
 ECHO installing Praat to %ProgramFiles%
-tar -xvf praat6218_win64.zip -C "%ProgramFiles%"
+tar -xvf praat6413_win-intel64.zip -C "%ProgramFiles%"
 setx path "%path%;%ProgramFiles%"
 
 If exist Mercurial-6.0-x64.exe (
