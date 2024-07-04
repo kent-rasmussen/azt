@@ -14377,6 +14377,11 @@ def interfacelang(lang=None,magic=False):
                 log.info("found locale {}, encoding {}".format(loc,enc))
                 if loc:
                     code=loc.split('_')[0]
+                    if code not in i18n and code in ['English','Français','French']:
+                        if code == 'English':
+                            code='en'
+                        else:
+                            code='fr'
                     log.info("Using code {}".format(code))
                 else:
                     log.debug("locale.getlocale doesn't seem to have "
