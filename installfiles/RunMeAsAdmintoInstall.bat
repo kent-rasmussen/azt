@@ -186,7 +186,13 @@ echo echo if they fail^, close this window ^(X^) and run again^, as administrato
 echo pause
 echo del %~dpn0-2%~x0
 ) >%~dpn0-2%~x0
-powershell.exe -command "& {Start-Process .\%~dpn0-2%~x0 -ArgumentList "Args" -Verb Runas}"
+echo %~dpn0-2%~x0
+echo %~f0
+::we actually don't want -ArgumentList "Args" -Verb Runas here
+::powershell.exe -command "& {Start-Process %~dpn0-2%~x0 -ArgumentList "Args" -Verb Runas=0}"
+echo %username%
+runas /showtrustlevels
+runas /trustlevel:0x20000 %~dpn0-2%~x0
 
 :: these seem to work before the location exists
 mklink "%userprofile%/desktop/A-Z+T" "%userprofile%/desktop/azt/main.py"
