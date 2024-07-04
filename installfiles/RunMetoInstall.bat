@@ -87,8 +87,8 @@ echo on
 ::try maybe /PathOption=Cmd or /GitOnlyOnPath, different orders? ; was ext\reg\shellhere
 ::try without components line?
 ::try without applications switches?
-::Once path is correctly taken up later, make this /SILENT
-start Git-2.45.2-64-bit.exe /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\shellhere,assoc,assoc_sh"
+::/SP- not needed?
+start Git-2.45.2-64-bit.exe /SILENT /NORESTART /NOCANCEL /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\shellhere,assoc,assoc_sh"
 ::The above line should be commented out to try this block:
 ::(echo [Setup]
 ::echo PathOption=Cmd
