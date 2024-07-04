@@ -1,12 +1,20 @@
 @ECHO OFF
+set pythonversion=3.12.4
+set pythonfilename=python-%pythonversion%-amd64.exe
+set pythonsize=^(25.5322 Megabyte^(s^); 26772456 bytes^)
+set pythonurl=https://www.python.org/ftp/python/3.12.4/%pythonfilename%
+set gitversion=2.45.2
+set gitfilename=Git-%gitversion%-64-bit.exe
+set gitsize=^(68.1 MB; 68,131,584 bytes^)
+set giturl=https://github.com/git-for-windows/git/releases/download/v2.45.2.windows.1/%gitfilename%
 ECHO:
 ECHO:
 ECHO:
 ECHO:
 ECHO A-Z+T Install batch file
 ECHO This script installs stuff --it must be run **As Administrator**!
-ECHO Will download and install Python 3.6.8
-ECHO Will download and install Git 2.33.0.2
+ECHO Will download and install Python %pythonversion%
+ECHO Will download and install Git %gitversion%
 ECHO Will clone/download A-Z+T source to azt directory on your desktop
 ECHO Will create a shortcut to run AZT
 ECHO Error Level is %errorlevel%
@@ -18,16 +26,16 @@ ECHO not moving to "%userprofile%/Downloads"
 ECHO moving to %~dp0 (where you downloaded the script)
 cd /d %~dp0
 
-If exist python-3.12.4-amd64.exe (
-ECHO python-3.12.4-amd64.exe is there!
+If exist %pythonfilename% (
+ECHO %pythonfilename% is there!
 ) ELSE (
-ECHO Downloading Python 3.12.4 ^(25.5322 Megabyte^(s^); 26772456 bytes^)...
+ECHO Downloading Python %pythonversion% %pythonsize%...
 ECHO Check that your internet is on and
 pause
-powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe' -OutFile 'python-3.12.4-amd64.exe'"
+powershell.exe -noprofile -command "Invoke-WebRequest %pythonurl% -OutFile %pythonfilename%"
 )
 
-ECHO Installing Python 3.12.4
+ECHO Installing Python %pythonversion%
 ECHO:
 ::ECHO ATTENTION!!
 ::ECHO            vvvvvvvvvvvvvvvvvvv
@@ -38,16 +46,16 @@ ECHO        vvvvvvvvvvvvvvvvvv                      vvvvvvvvvvvvvvvvvvvvvvvv
 ECHO At the end of the install, be sure to click on "remove path limitation"
 ECHO        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::ECHO If you forget to do either of these, you should run python-3.12.4-amd64.exe
-ECHO If you forget to do this, you should run python-3.12.4-amd64.exe
+ECHO If you forget to do this, you should run %pythonfilename%
 ECHO again manually (maybe select "Fix install") to set these options.
 ECHO:
 ECHO Otherwise, you should be fine with all default options
 ECHO:
 REM trying /quiet instead of /passive
 REM it may help to use SimpleInstall=1, maybe with SimpleInstallDescription="explanatoryText"
-REM start python-3.12.4-amd64.exe /?
+REM start %pythonfilename% /?
 
-start python-3.12.4-amd64.exe /quiet PrependPath=1 Include_pip=1 InstallAllUsers=1 Include_launcher=1 InstallLauncherAllUsers=1 Include_test=0
+start %pythonfilename% /quiet PrependPath=1 Include_pip=1 InstallAllUsers=1 Include_launcher=1 InstallLauncherAllUsers=1 Include_test=0
 
 for /f %%i in ('reg query -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled"') do set longpathsOK=%%i
 REM set longpathsOK={
@@ -59,20 +67,20 @@ echo Long paths are OK.
 start ""%userprofile%/desktop/azt/installfiles/longpaths.reg""
 )
 
-If exist Git-2.45.2-64-bit.exe (
-ECHO Git-2.45.2-64-bit.exe is there!
+If exist %gitfilename% (
+ECHO %gitfilename% is there!
 ) ELSE (
-ECHO Downloading Git 2.45.2 ^(68.1 MB; 68,131,584 bytes^)...
+ECHO Downloading Git %gitversion% %gitsize%...
 ECHO Check that your internet is on and
 pause
 REM powershell.exe -noprofile -command "Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/Git-2.33.0.2-64-bit.exe' -OutFile 'Git-2.33.0.2-64-bit.exe'"
-powershell.exe -noprofile -command "Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.45.2.windows.1/Git-2.45.2-64-bit.exe' -OutFile 'Git-2.45.2-64-bit.exe'"
+powershell.exe -noprofile -command "Invoke-WebRequest %giturl% -OutFile %gitfilename%"
 )
 
-::ECHO waiting for you to finish installing Python 3.12.4
+::ECHO waiting for you to finish installing Python %pythonversion%
 ::pause
 
-ECHO Installing Git 2.45.2
+ECHO Installing Git %gitversion%
 ECHO You should be fine with all default options
 ECHO ATTENTION!!
 ECHO                     vvvvvvvvvvvvvvvvvvvvvvv
@@ -88,7 +96,7 @@ echo on
 ::try without components line?
 ::try without applications switches?
 ::/SP- not needed?
-start Git-2.45.2-64-bit.exe /SILENT /NORESTART /NOCANCEL /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\shellhere,assoc,assoc_sh"
+start %gitfilename% /SILENT /NORESTART /NOCANCEL /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\shellhere,assoc,assoc_sh"
 ::The above line should be commented out to try this block:
 (echo [Setup]
 echo PathOption=Cmd
@@ -110,10 +118,10 @@ echo EnableSymlinks=Disabled
 echo EnableBuiltinDifftool=Disabled
 )> git_config.inf
 ::uncomment to try inf (and comment above git install)
-::start Git-2.45.2-64-bit.exe /SILENT /LOADINF="git_config.inf" /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS
+::start %gitfilename% /SILENT /LOADINF="git_config.inf" /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS
 ::Once this is working, uncomment
 ::del git_config.bat
-ECHO Wait to finish installing Git 2.45.2, then
+ECHO Wait to finish installing Git %gitversion%, then
 pause
 ::The problem at this point is that we can't find the git executable,
 ::I think because the path cannot be updated at this point in the script. So we need to call git from a second script, at this point
