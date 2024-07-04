@@ -47,9 +47,9 @@ ECHO:
 ::ECHO Be sure to check "add to PATH" in the dialog BEFORE you click "Install Now"
 ::ECHO            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::ECHO ALSO:
-ECHO        vvvvvvvvvvvvvvvvvv                      vvvvvvvvvvvvvvvvvvvvvvvv
-ECHO At the end of the install, be sure to click on "remove path limitation"
-ECHO        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+::ECHO        vvvvvvvvvvvvvvvvvv                      vvvvvvvvvvvvvvvvvvvvvvvv
+::ECHO At the end of the install, be sure to click on "remove path limitation"
+::ECHO        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                      ::^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::ECHO If you forget to do either of these, you should run python-3.12.4-amd64.exe
 ECHO If you forget to do this, you should run %pythonfilename%
 ECHO again manually (maybe select "Fix install") to set these options.
