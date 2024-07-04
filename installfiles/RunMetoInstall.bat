@@ -156,9 +156,29 @@ start %gitfilename% /SILENT /NORESTART /NOCANCEL /CLOSEAPPLICATIONS /RESTARTAPPL
 
 ::This is the second script
 (
-echo echo off
+echo @echo off
+echo ECHO Cloning A-Z+T source to '%userprofile%/desktop/azt'
+echo ::This is for local ^(USB^) repo install
+echo set azt=
+echo for /R %%f in (azt.git) do @IF EXIST %%f set azt=%%~dpnxf
+echo if defined azt (
+echo echo azt is defined ^(local repo found^): %azt%
+echo ) else (
+echo echo Local file not found; using github
+echo set azt=https://github.com/kent-rasmussen/azt.git
 echo git clone %azt% ^"%userprofile%/desktop/azt^"
-echo confirm this is what you want, then
+echo echo confirm this is what you want, then
+echo ECHO making links to AZT and Transcriber tool...
+echo mklink "%userprofile%/desktop/A-Z+T" "%userprofile%/desktop/azt/main.py"
+echo mklink "%userprofile%/desktop/Transcriber" "%userprofile%/desktop/azt/transcriber.py"
+ECHO ::WshShell = CreateObject("Wscript.shell")
+ECHO ::strDesktop = WshShell.SpecialFolders("Desktop")
+ECHO ::oMyShortcut = WshShell.CreateShortcut(strDesktop + "\A-Z+T.lnk")
+ECHO ::oMyShortcut.WindowStyle = 3 &&Maximized 7=Minimized 4=Normal
+ECHO ::oMyShortcut.IconLocation = "%userprofile%/desktop/azt/AZT stacks6_icon.png"
+ECHO ::OMyShortcut.TargetPath = "%userprofile%/desktop/azt/main.py"
+ECHO ::oMyShortCut.Hotkey = "ALT+CTRL+F"
+ECHO ::oMyShortCut.Save
 echo pause
 echo del %~dpn0-2%~x0
 ) >%~dpn0-2%~x0
