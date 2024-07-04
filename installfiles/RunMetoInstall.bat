@@ -182,27 +182,8 @@ ECHO ::oMyShortCut.Save
 echo pause
 echo del %~dpn0-2%~x0
 ) >%~dpn0-2%~x0
-::Uncomment this if needed, and we get `where git` working:
-REM $str={
-REM ""%GitExe%"" clone ""%azt%"" ""%userprofile%/desktop/azt""
-REM }
-REM ECHO Running $str
-REM ""%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprofile%/desktop/azt"""
-REM ORI:powershell.exe -noprofile -ExecutionPolicy Bypass -command $str
-REM """%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprofile%/desktop/azt"""
 
 
-ECHO making links to AZT and Transcriber tool...
-mklink "%userprofile%/desktop/A>Z+T" "%userprofile%/desktop/azt/main.py"
-mklink "%userprofile%/desktop/Transcriber" "%userprofile%/desktop/azt/transcriber.py"
-ECHO WshShell = CreateObject("Wscript.shell")
-ECHO strDesktop = WshShell.SpecialFolders("Desktop")
-ECHO oMyShortcut = WshShell.CreateShortcut(strDesktop + "\Sample.lnk")
-ECHO oMyShortcut.WindowStyle = 3 &&Maximized 7=Minimized 4=Normal
-ECHO oMyShortcut.IconLocation = "C:\myicon.ico"
-ECHO OMyShortcut.TargetPath = "%windir%\notepad.exe"
-ECHO oMyShortCut.Hotkey = "ALT+CTRL+F"
-ECHO oMyShortCut.Save
 
 ECHO Install done! ^(hopefully!^)
 
