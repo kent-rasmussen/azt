@@ -126,25 +126,25 @@ start %gitfilename% /SILENT /NORESTART /NOCANCEL /CLOSEAPPLICATIONS /RESTARTAPPL
 ::start %gitfilename% /VERYSILENT /NORESTART /NOCANCEL /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\shellhere,assoc,assoc_sh"
 
 ::The above line should be commented out to try this block:
-(echo [Setup]
-echo PathOption=Cmd
+::(echo [Setup]
+::echo PathOption=Cmd
 ::Don't use the following indented lines unless necessary:
-echo Lang=default
+::echo Lang=default
 ::echo Dir=%installDir%
-echo Group=Git
-echo NoIcons=0
-echo SetupType=default
-echo Components=icons,ext\reg\shellhere,assoc,assoc_sh
-echo Tasks=
-echo PathOption=Cmd
-echo SSHOption=OpenSSH
-echo CRLFOption=CRLFAlways
-echo BashTerminalOption=ConHost
-echo PerformanceTweaksFSCache=Enabled
-echo UseCredentialManager=Enabled
-echo EnableSymlinks=Disabled
-echo EnableBuiltinDifftool=Disabled
-)> git_config.inf
+::echo Group=Git
+::echo NoIcons=0
+::echo SetupType=default
+::echo Components=icons,ext\reg\shellhere,assoc,assoc_sh
+::echo Tasks=
+::echo PathOption=Cmd
+::echo SSHOption=OpenSSH
+::echo CRLFOption=CRLFAlways
+::echo BashTerminalOption=ConHost
+::echo PerformanceTweaksFSCache=Enabled
+::echo UseCredentialManager=Enabled
+::echo EnableSymlinks=Disabled
+::echo EnableBuiltinDifftool=Disabled
+::)> git_config.inf
 ::uncomment to try inf (and comment above git install)
 ::start %gitfilename% /SILENT /LOADINF="git_config.inf" /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS
 ::Once this is working, uncomment
