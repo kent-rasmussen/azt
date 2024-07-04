@@ -15311,21 +15311,18 @@ if __name__ == '__main__':
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
     interfacelang(interfacelang()) #translation works from here
     findexecutable('git')
-    if not exceptiononload: #don't worry about this if we're not running yet
-        program['repo']=GitReadOnly(program['aztdir']) #this needs root for errors
-        try:
-            branch=program['repo'].branch
-        except AttributeError:
-            branch='main'
-            log.info("Repo has no branch attribute; assuming main branch.")
-        if branch != 'main':
-            program['version'] += " ({})".format(branch)
-        program['docsurl']=('https://github.com/kent-rasmussen/azt/blob/{}/docs'
-                            '').format(branch)
-        mt=program['repo'].lastcommitdate()
-        mtrel=program['repo'].lastcommitdaterelative()
-    else:
-        mt=mtrel='?repo'
+    program['repo']=GitReadOnly(program['aztdir']) #this needs root for errors
+    try:
+        branch=program['repo'].branch
+    except AttributeError:
+        branch='main'
+        log.info("Repo has no branch attribute; assuming main branch.")
+    if branch != 'main':
+        program['version'] += " ({})".format(branch)
+    program['docsurl']=('https://github.com/kent-rasmussen/azt/blob/{}/docs'
+                        '').format(branch)
+    mt=program['repo'].lastcommitdate()
+    mtrel=program['repo'].lastcommitdaterelative()
     log.info(_("Running {} v{}, updated {} ({})").format(
                                 program['name'],program['version'],mtrel,mt))
     log.info(_("Called with arguments ({}) {} / {}").format(sys.executable,
