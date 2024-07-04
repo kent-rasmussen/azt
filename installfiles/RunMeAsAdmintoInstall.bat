@@ -1,11 +1,11 @@
 @ECHO OFF
 set pythonversion=3.12.4
 set pythonfilename=python-%pythonversion%-amd64.exe
-set pythonsize=^(25.5322 Megabyte^(s^); 26772456 bytes^)
+set pythonsize="^(25.5322 Megabyte^(s^); 26772456 bytes^)"
 set pythonurl=https://www.python.org/ftp/python/3.12.4/%pythonfilename%
 set gitversion=2.45.2
 set gitfilename=Git-%gitversion%-64-bit.exe
-set gitsize=^(68.1 MB; 68,131,584 bytes^)
+set gitsize="^(68.1 MB; 68,131,584 bytes^)"
 set giturl=https://github.com/git-for-windows/git/releases/download/v2.45.2.windows.1/%gitfilename%
 ECHO:
 ECHO:
@@ -108,17 +108,6 @@ If exist %gitfilename% (ECHO %gitfilename% is there!) ELSE (
   )
 
 ECHO Installing Git %gitversion%
-ECHO You should be fine with all default options
-ECHO ATTENTION!!
-ECHO                     vvvvvvvvvvvvvvvvvvvvvvv
-ECHO Wait until you have finished installing Git before moving on with this script.
-ECHO                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ECHO     vvvvvvv
-ECHO You need it for the next step!
-ECHO     ^^^^^^^^^^^^^^
-REM start Git-2.45.2-64-bit.exe /?
-REM start Git-2.45.2-64-bit.exe /silent
-
 ::/SP- not needed?
 ::Pick one of these; VERYSILENT is not visible to the user, SILENT shows progress
 start %gitfilename% /SILENT /NORESTART /NOCANCEL /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\shellhere,assoc,assoc_sh"
