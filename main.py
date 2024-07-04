@@ -14377,7 +14377,7 @@ def interfacelang(lang=None,magic=False):
                 log.info("found locale {}, encoding {}".format(loc,enc))
                 if loc:
                     code=loc.split('_')[0]
-                    # log.info("Using code {}".format(code))
+                    log.info("Using code {}".format(code))
                 else:
                     log.debug("locale.getlocale doesn't seem to have "
                     "returned any results: {} (OS: {}); using French user "
