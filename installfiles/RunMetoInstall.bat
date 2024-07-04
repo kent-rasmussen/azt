@@ -49,6 +49,16 @@ REM start python-3.12.4-amd64.exe /?
 
 start python-3.12.4-amd64.exe /quiet PrependPath=1 Include_pip=1 InstallAllUsers=1 Include_launcher=1 InstallLauncherAllUsers=1 Include_test=0
 
+for /f %%i in ('Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled"') do set longpathsOK=%%i
+REM set longpathsOK={
+REM Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled"
+REM }
+if %longpathsOK%==1 (
+echo Long paths are OK.
+) else (
+start ""%userprofile%/desktop/azt/installfiles/longpaths.reg""
+)
+
 If exist Git-2.45.2-64-bit.exe (
 ECHO Git-2.45.2-64-bit.exe is there!
 ) ELSE (
@@ -150,15 +160,6 @@ REM ""%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprof
 REM ORI:powershell.exe -noprofile -ExecutionPolicy Bypass -command $str
 REM """%GitExe%"" clone ""https://github.com/kent-rasmussen/azt.git"" ""%userprofile%/desktop/azt"""
 
-for /f %%i in ('Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled"') do set longpathsOK=%%i
-REM set longpathsOK={
-REM Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled"
-REM }
-if %longpathsOK%==1 (
-echo Long paths are OK.
-) else (
-start ""%userprofile%/desktop/azt/installfiles/longpaths.reg""
-)
 
 ECHO making links to AZT and Transcriber tool...
 mklink "%userprofile%/desktop/A>Z+T" "%userprofile%/desktop/azt/main.py"
