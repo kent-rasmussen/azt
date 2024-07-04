@@ -175,6 +175,7 @@ echo echo if they fail^, close this window ^(X^) and run again^, as administrato
 echo pause
 echo del %~dpn0-2%~x0
 ) >%~dpn0-2%~x0
+powershell.exe -command "& {Start-Process .\%~dpn0-2%~x0 -ArgumentList "Args" -Verb Runas}"
 
 :::will these work before the location exists?
 echo mklink "%userprofile%/desktop/A-Z+T" "%userprofile%/desktop/azt/main.py"
