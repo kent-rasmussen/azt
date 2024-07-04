@@ -14374,6 +14374,7 @@ def interfacelang(lang=None,magic=False):
                 log.debug("_ doesn't look defined yet, returning interface "
                             "language from locale.")
                 loc,enc=locale.getlocale()
+                log.info("found locale {}, encoding {}".format(loc,enc))
                 if loc:
                     code=loc.split('_')[0]
                     # log.info("Using code {}".format(code))
@@ -14387,6 +14388,7 @@ def interfacelang(lang=None,magic=False):
                             "{}".format(locale.getdefaultlocale()))
                     code='en' #I think loc=None normally means English on macOS
                 if code in i18n:
+                    log.info("returning {}, of {}".format(code,i18n))
                     return code
 def dictofchilddicts(dict,remove=None):
     # This takes a dict[x][y] and returns a dict[y], with all unique values
