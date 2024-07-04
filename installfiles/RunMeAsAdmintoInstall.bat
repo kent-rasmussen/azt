@@ -7,6 +7,16 @@ set gitversion=2.45.2
 set gitfilename=Git-%gitversion%-64-bit.exe
 set gitsize="^(68.1 MB; 68,131,584 bytes^)"
 set giturl=https://github.com/git-for-windows/git/releases/download/v2.45.2.windows.1/%gitfilename%
+set praatversion=6413
+set praatfilename=praat%praatversion%_win-intel64.zip
+set praaturl=https://www.fon.hum.uva.nl/praat/%praatfilename%
+set xlpversion=3-10
+set xlpfilename=XLingPaper%xlpversion%-1XXEPersonalEditionFullSetup.exe
+set xlpurl=https://software.sil.org/downloads/r/xlingpaper/%xlpfilename%
+set hgversion=6.0
+set hgfilename=Mercurial-%hgversion%-x64.exe
+set hgurl=https://www.mercurial-scm.org/release/windows/%hgfilename%
+
 ECHO:
 ECHO:
 ECHO:
@@ -191,36 +201,36 @@ pause
 
 ::cd /d "%userprofile%/Downloads"
 
-If exist XLingPaper3-10-1XXEPersonalEditionFullSetup.exe (
-ECHO XLingPaper3-10-1XXEPersonalEditionFullSetup.exe is there!
+If exist %xlpfilename% (
+ECHO %xlpfilename% is there!
 ) ELSE (
-ECHO Downloading XLingPaper 3.10...
-powershell.exe -noprofile -command "Invoke-WebRequest 'https://software.sil.org/downloads/r/xlingpaper/XLingPaper3-10-1XXEPersonalEditionFullSetup.exe' -OutFile 'XLingPaper3-10-1XXEPersonalEditionFullSetup.exe'"
+ECHO Downloading XLingPaper %xlpversion%...
+powershell.exe -noprofile -command "Invoke-WebRequest %xlpurl% -OutFile %xlpfilename%"
 )
 
-ECHO Installing XLingPaper 3.10
-start /wait XLingPaper3-10-1XXEPersonalEditionFullSetup.exe
+ECHO Installing XLingPaper %xlpversion%
+start /wait %xlpfilename%
 
-If exist praat6413_win-intel64.zip (
-ECHO praat6413_win-intel64.zip is there!
+If exist %praatfilename% (
+ECHO %praatfilename% is there!
 ) ELSE (
-ECHO Downloading Praat 6413...
-powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.fon.hum.uva.nl/praat/praat6413_win-intel64.zip' -OutFile 'praat6218_win64.zip'"
+ECHO Downloading Praat %praatversion%...
+powershell.exe -noprofile -command "Invoke-WebRequest %praaturl% -OutFile %praatfilename%"
 )
 ECHO Program files in %ProgramFiles%
 ECHO installing Praat to %ProgramFiles%
-tar -xvf praat6413_win-intel64.zip -C "%ProgramFiles%"
+tar -xvf %praatfilename% -C "%ProgramFiles%"
 setx path "%path%;%ProgramFiles%"
 
-If exist Mercurial-6.0-x64.exe (
-ECHO Mercurial-6.0-x64.exe is there!
+If exist %hgfilename% (
+ECHO %hgfilename% is there!
 ) ELSE (
-ECHO Downloading Mercurial 6.0...
-powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.mercurial-scm.org/release/windows/Mercurial-6.0-x64.exe' -OutFile 'Mercurial-6.0-x64.exe'"
+ECHO Downloading Mercurial %hgversion%...
+powershell.exe -noprofile -command "Invoke-WebRequest %hgurl% -OutFile %hgfilename%"
 )
 
-ECHO Installing Mercurial 6.0
-start /wait Mercurial-6.0-x64.exe
+ECHO Installing Mercurial %hgversion%
+start /wait %hgfilename%
 
 echo Stopping here just in case you need to read anything above; we're done!
 Pause
