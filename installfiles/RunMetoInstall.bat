@@ -137,16 +137,12 @@ echo Local file not found; using github
 azt=https://github.com/kent-rasmussen/azt.git
 )
 (
-echo echo ""%%path%%""
-echo echo ""%path%""
-echo echo ""%%userprofile%%""
-echo echo ""%userprofile%""
-echo where git
-echo git-cmd.exe clone ""%azt%"" ""%userprofile%/desktop/azt""
-) >git_clone.bat
-cmd /c git_clone.bat
-::Once this is working, uncomment
-::del git_clone.bat
+echo echo off
+echo git clone %azt% ^"%userprofile%/desktop/azt^"
+echo confirm this is what you want, then
+echo pause
+echo del %~dpn0-2%~x0
+) >%~dpn0-2%~x0
 ::Uncomment this if needed, and we get `where git` working:
 REM $str={
 REM ""%GitExe%"" clone ""%azt%"" ""%userprofile%/desktop/azt""
