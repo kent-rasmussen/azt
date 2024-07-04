@@ -3581,7 +3581,8 @@ def buildurl(url):
 def removenone(url):
     """Remove any attribute reference whose value is 'None'. I only use
     '@name="location"' when using @value, so also remove it if @value=None."""
-    nonattr=re.compile('(\[@name=\'location\'\])*\[[^\[]+None[^\[]+\]')
+    """Confirm that r is correct here"""
+    nonattr=re.compile(r'(\[@name=\'location\'\])*\[[^\[]+None[^\[]+\]')
     newurl=nonattr.sub('',url)
     return newurl
 def getnow():

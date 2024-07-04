@@ -22,7 +22,8 @@ def urlok(x):
         x=re.sub('['+i[0]+']',i[1],x)
     return x
 def splitxpath(x):
-    tag,*features=split('[\]\[]',x)
+    """Confirm that r is correct here"""
+    tag,*features=split(r'[\]\[]',x)
     attrib={}
     for f in [i for i in features if i]:
         # print('-'+f)
@@ -55,7 +56,8 @@ def countxiny(x,y):
 def linebreakwords(x):
     return re.sub(' ','\n',x)
 def pymoduleable(x):
-    return re.sub('\.','_', str(x))
+    """Confirm that r is correct here"""
+    return re.sub(r'\.','_', str(x))
 def delinebreak(x):
     return re.sub('\n','',x)
 def stripquotes(x):
@@ -74,7 +76,8 @@ def compile(x):
 def id(x):
     x=x.replace('˥','4').replace('˦','3').replace('˧','2'
         ).replace('˨','1').replace('˩','0')
-    return re.sub('[][  .!=\(\),\'/?ꞌ\n:;+*]','_',x) #remove charcters that are invalid for ids
+    """Confirm that r is correct here"""
+    return re.sub(r'[][  .!=\(\),\'/?ꞌ\n:;+*]','_',x) #remove charcters that are invalid for ids
 def tonerxs():
     return (re.compile('[˥˦˧˨˩]+', re.UNICODE),
             re.compile(' ', re.UNICODE),
@@ -128,11 +131,13 @@ def texmllike(x):
     for y in repls:
         print("Replacing",y,"with",repls[y])
         x=x.replace(y,repls[y])
-    x=re.sub('\\\\textless{}(([\?!/]|tex:)[^\\\\]*)\\\\textgreater{}',"<\\1>",x)
+    """Confirm that r is correct here"""
+    x=re.sub(r'\\\\textless{}(([\?!/]|tex:)[^\\\\]*)\\\\textgreater{}',"<\\1>",x)
     return x
 def noparens(x): #sometimes I just want this
     if isinstance(x,str):
-        return re.sub('\(.*\)','',x)
+    """Confirm that r is correct here"""
+        return re.sub(r'\(.*\)','',x)
 def glossdeftoform(x):
     x=noparens(x)
     if isinstance(x,str):
@@ -354,7 +359,8 @@ def fromCV(CVs, sdict, distinguish, **kwargs): #check, lang
         CVrepl='\\\\{}'.format(str(x)) #this needs to be escaped to survive...
         # log.info('x: {}; repl: {}'.format(x,CVrepl))
         # log.info('CVs: {}'.format(CVs))
-    CVs=re.sub('\)([^(]+)\(',')(\\1)(',CVs) #?
+    """Confirm that r is correct here"""
+    CVs=re.sub(r'\)([^(]+)\(',')(\\1)(',CVs) #?
     # log.info('Going to compile regex with CVs: {}'.format(CVs))
     return make(CVs, **kwargs)
 if __name__ == '__main__':
