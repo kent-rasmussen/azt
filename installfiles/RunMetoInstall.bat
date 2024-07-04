@@ -21,7 +21,7 @@ cd /d %~dp0
 If exist python-3.12.4-amd64.exe (
 ECHO python-3.12.4-amd64.exe is there!
 ) ELSE (
-ECHO Downloading Python 3.12.4 ^(25.5322 Megabyte(s); 26772456 bytes^)...
+ECHO Downloading Python 3.12.4 ^(25.5322 Megabyte^(s^); 26772456 bytes^)...
 ECHO Check that your internet is on and
 pause
 powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe' -OutFile 'python-3.12.4-amd64.exe'"
