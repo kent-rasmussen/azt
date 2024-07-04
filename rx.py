@@ -136,7 +136,7 @@ def texmllike(x):
     return x
 def noparens(x): #sometimes I just want this
     if isinstance(x,str):
-    """Confirm that r is correct here"""
+        """Confirm that r is correct here"""
         return re.sub(r'\(.*\)','',x)
 def glossdeftoform(x):
     x=noparens(x)
