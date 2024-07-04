@@ -154,24 +154,7 @@ start %gitfilename% /SILENT /NORESTART /NOCANCEL /CLOSEAPPLICATIONS /RESTARTAPPL
 ::The problem at this point is that we can't find the git executable,
 ::I think because the path cannot be updated at this point in the script. So we need to call git from a second script, at this point
 
-ECHO Cloning A-Z+T source to '%userprofile%/desktop/azt'
-cd /d "%userprofile%/desktop"
-::cmd /k git clone ""%azt%"" ""%userprofile%/desktop/azt""
-::echo cmd /k done
-::Uncomment this if needed, and we get `where git` working:
-REM FOR /F "tokens=* USEBACKQ" %%F IN (`where git`) DO (
-REM SET GitExe=%%F
-REM )
-::This is for local ^(USB^) repo install ^(should be %%~dpnxf, and %%f?^)
-::testing for local repo:
-::set azt=
-for /R %%f in (azt.git) do @IF EXIST %%f set azt=%%~dpnxf
-if defined azt (
-echo azt is defined ^(local repo found^): %azt%
-) else (
-echo Local file not found; using github
-azt=https://github.com/kent-rasmussen/azt.git
-)
+::This is the second script
 (
 echo echo off
 echo git clone %azt% ^"%userprofile%/desktop/azt^"
