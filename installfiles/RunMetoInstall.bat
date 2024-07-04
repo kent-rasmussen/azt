@@ -69,8 +69,8 @@ REM powershell.exe -noprofile -command "Invoke-WebRequest 'https://github.com/gi
 powershell.exe -noprofile -command "Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.45.2.windows.1/Git-2.45.2-64-bit.exe' -OutFile 'Git-2.45.2-64-bit.exe'"
 )
 
-ECHO waiting for you to finish installing Python 3.12.4
-pause
+::ECHO waiting for you to finish installing Python 3.12.4
+::pause
 
 ECHO Installing Git 2.45.2
 ECHO You should be fine with all default options
