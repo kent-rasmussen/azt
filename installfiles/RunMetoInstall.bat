@@ -149,8 +149,8 @@ start %gitfilename% /SILENT /NORESTART /NOCANCEL /CLOSEAPPLICATIONS /RESTARTAPPL
 ::start %gitfilename% /SILENT /LOADINF="git_config.inf" /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS
 ::Once this is working, uncomment
 ::del git_config.bat
-ECHO Wait to finish installing Git %gitversion%, then
-pause
+::ECHO Wait to finish installing Git %gitversion%, then
+::pause
 ::The problem at this point is that we can't find the git executable,
 ::I think because the path cannot be updated at this point in the script. So we need to call git from a second script, at this point
 
