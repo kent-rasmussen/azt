@@ -177,7 +177,8 @@ echo @echo off
 echo ECHO Cloning A-Z+T source to '%userprofile%\desktop\azt'
 echo echo Local file not found; using github
 echo set azt=https://github.com/kent-rasmussen/azt.git
-echo git clone %azt% ^"%userprofile%/desktop/azt^"
+echo echo going to run git clone %%azt%% ^"%userprofile%/desktop/azt^"
+echo git clone %%azt%% ^"%userprofile%/desktop/azt^"
 echo echo confirm this is what you want^, then
 echo ECHO making links to AZT and Transcriber tool...
 echo echo these lines will fail if you didn't run this script as administrator
