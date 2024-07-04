@@ -16,20 +16,20 @@ set xlpurl=https://software.sil.org/downloads/r/xlingpaper/%xlpfilename%
 set hgversion=6.0
 set hgfilename=Mercurial-%hgversion%-x64.exe
 set hgurl=https://www.mercurial-scm.org/release/windows/%hgfilename%
-set tab=<tab>
+set tab=
 ECHO:
 ECHO:
 ECHO:
 ECHO:
 ECHO A-Z+T Install batch file
 ECHO This script installs stuff --it must be run **As Administrator**! It will:
-ECHO,%tab%Will download and install Python %pythonversion%
-ECHO,%tab%Will download and install Git %gitversion%
-ECHO,%tab%Create another file (also **run as administrator**) that will
-ECHO,%tab%%tab%Will clone/download A-Z+T source to azt directory on your desktop
-ECHO,%tab%%tab%Will create a shortcut to run AZT on your desktop
+ECHO,%tab%+Will download and install Python %pythonversion%
+ECHO,%tab%+Will download and install Git %gitversion%
+ECHO,%tab%+Create another file (also **run as administrator**) that will
+ECHO,%tab%%tab%+Will clone/download A-Z+T source to azt directory on your desktop
+ECHO,%tab%%tab%+Will create a shortcut to run AZT on your desktop
 ECHO Error Level is %errorlevel%
-@whoami /groups | find "S-1-16-12288"
+whoami /groups | find "S-1-16-12288"
 if errorlevel 1 goto NotAdmin
 ECHO Looks like I'm running As Administrator.
 ECHO Using user profile %userprofile%
