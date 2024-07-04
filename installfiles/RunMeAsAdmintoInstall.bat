@@ -29,7 +29,7 @@ ECHO,%tab%Create another file (also **run as administrator**) that will
 ECHO,%tab%%tab%Will clone/download A-Z+T source to azt directory on your desktop
 ECHO,%tab%%tab%Will create a shortcut to run AZT on your desktop
 ECHO Error Level is %errorlevel%
-whoami /groups | find "S-1-16-12288"
+@whoami /groups | find "S-1-16-12288"
 if errorlevel 1 goto NotAdmin
 ECHO Looks like I'm running As Administrator.
 ECHO Using user profile %userprofile%
