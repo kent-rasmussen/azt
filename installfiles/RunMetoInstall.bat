@@ -200,7 +200,7 @@ powershell.exe -noprofile -command "Invoke-WebRequest 'https://software.sil.org/
 )
 
 ECHO Installing XLingPaper 3.10
-start XLingPaper3-10-1XXEPersonalEditionFullSetup.exe
+start /wait XLingPaper3-10-1XXEPersonalEditionFullSetup.exe
 
 If exist praat6413_win-intel64.zip (
 ECHO praat6413_win-intel64.zip is there!
@@ -221,7 +221,7 @@ powershell.exe -noprofile -command "Invoke-WebRequest 'https://www.mercurial-scm
 )
 
 ECHO Installing Mercurial 6.0
-start Mercurial-6.0-x64.exe
+start /wait Mercurial-6.0-x64.exe
 
 echo Stopping here just in case you need to read anything above; we're done!
 Pause
