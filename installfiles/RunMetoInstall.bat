@@ -101,18 +101,12 @@ for %%k in (HKLM,HKCU,HKCR,HKU,HKCC) do (
   if %longpathsOK%==1 (echo Long paths are now OK.) else (echo longpathsOK=%longpathsOK%)
 )
 
-If exist %gitfilename% (
-ECHO %gitfilename% is there!
-) ELSE (
-ECHO Downloading Git %gitversion% %gitsize%...
-ECHO Check that your internet is on and
-pause
-REM powershell.exe -noprofile -command "Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/Git-2.33.0.2-64-bit.exe' -OutFile 'Git-2.33.0.2-64-bit.exe'"
-powershell.exe -noprofile -command "Invoke-WebRequest %giturl% -OutFile %gitfilename%"
-)
-
-::ECHO waiting for you to finish installing Python %pythonversion%
-::pause
+If exist %gitfilename% (ECHO %gitfilename% is there!) ELSE (
+  ECHO Downloading Git %gitversion% %gitsize%...
+  ECHO Check that your internet is on and
+  pause
+  powershell.exe -noprofile -command "Invoke-WebRequest %giturl% -OutFile %gitfilename%"
+  )
 
 ECHO Installing Git %gitversion%
 ECHO You should be fine with all default options
