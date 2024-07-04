@@ -156,6 +156,7 @@ start /wait %gitfilename% /SILENT /NORESTART /NOCANCEL /CLOSEAPPLICATIONS /RESTA
 
 echo writing the second script ^(%~dpn0-2%~x0^)
 ::What to do with this logic? do causes problems in the echo script...
+::echo This is for local ^(USB^) repo install
 ::echo set azt=
 ::echo for /R %%f in (azt.git) do @IF EXIST %%f set azt=%%~dpnxf
 ::echo if defined azt (
@@ -174,7 +175,6 @@ echo writing the second script ^(%~dpn0-2%~x0^)
 (
 echo @echo off
 echo ECHO Cloning A-Z+T source to '%userprofile%\desktop\azt'
-echo ::This is for local ^(USB^) repo install
 echo echo Local file not found; using github
 echo set azt=https://github.com/kent-rasmussen/azt.git
 echo git clone %azt% ^"%userprofile%/desktop/azt^"
