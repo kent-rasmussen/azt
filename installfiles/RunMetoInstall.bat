@@ -37,6 +37,10 @@ powershell.exe -noprofile -command "Invoke-WebRequest %pythonurl% -OutFile %pyth
 )
 
 ECHO Installing Python %pythonversion%
+::ECHO checking for longfilenames first, for debug ^(the following is not generalized!^)
+::reg query HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled
+::reg add HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled /d 0 /f
+::reg query HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled
 ECHO:
 ::ECHO ATTENTION!!
 ::ECHO            vvvvvvvvvvvvvvvvvvv
