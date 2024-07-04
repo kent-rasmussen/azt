@@ -238,3 +238,4 @@ runas /env /user:Administrator %~0
 echo Stopping here just in case you need to read anything above; we're done!
 Pause
 :end
+:eof
