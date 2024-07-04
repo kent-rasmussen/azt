@@ -14281,10 +14281,7 @@ class GitReadOnly(Git):
     def commit(self,file=None):
         pass
     def setdescription(self):
-        try:
-            self.description=_("AZT source")
-        except NameError:
-            self.description="AZT source"
+        self.description=_("AZT source")
     def __init__(self, url):
         super(GitReadOnly, self).__init__(url)
 class ResultWindow(ui.Window):
@@ -15307,18 +15304,21 @@ if __name__ == '__main__':
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
     interfacelang(interfacelang()) #translation works from here
     findexecutable('git')
-    program['repo']=GitReadOnly(program['aztdir']) #this needs root for errors
-    try:
-        branch=program['repo'].branch
-    except AttributeError:
-        branch='main'
-        log.info("Repo has no branch attribute; assuming main branch.")
-    if branch != 'main':
-        program['version'] += " ({})".format(branch)
-    program['docsurl']=('https://github.com/kent-rasmussen/azt/blob/{}/docs'
-        '').format(branch)
-    mt=program['repo'].lastcommitdate()
-    mtrel=program['repo'].lastcommitdaterelative()
+    if not exceptiononload: #don't worry about this if we're not running yet
+        program['repo']=GitReadOnly(program['aztdir']) #this needs root for errors
+        try:
+            branch=program['repo'].branch
+        except AttributeError:
+            branch='main'
+            log.info("Repo has no branch attribute; assuming main branch.")
+        if branch != 'main':
+            program['version'] += " ({})".format(branch)
+        program['docsurl']=('https://github.com/kent-rasmussen/azt/blob/{}/docs'
+                            '').format(branch)
+        mt=program['repo'].lastcommitdate()
+        mtrel=program['repo'].lastcommitdaterelative()
+    else:
+        mt=mtrel='?repo'
     log.info(_("Running {} v{}, updated {} ({})").format(
                                 program['name'],program['version'],mtrel,mt))
     log.info(_("Called with arguments ({}) {} / {}").format(sys.executable,
