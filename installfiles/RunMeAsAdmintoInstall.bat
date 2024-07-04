@@ -188,9 +188,9 @@ echo del %~dpn0-2%~x0
 ) >%~dpn0-2%~x0
 powershell.exe -command "& {Start-Process .\%~dpn0-2%~x0 -ArgumentList "Args" -Verb Runas}"
 
-:::will these work before the location exists?
-echo mklink "%userprofile%/desktop/A-Z+T" "%userprofile%/desktop/azt/main.py"
-echo mklink "%userprofile%/desktop/Transcriber" "%userprofile%/desktop/azt/transcriber.py"
+:: these seem to work before the location exists
+mklink "%userprofile%/desktop/A-Z+T" "%userprofile%/desktop/azt/main.py"
+mklink "%userprofile%/desktop/Transcriber" "%userprofile%/desktop/azt/transcriber.py"
 
 echo Right-click on %~dpn0-2%~x0 and run it As Administrator ^(or has it?^)
 pause
