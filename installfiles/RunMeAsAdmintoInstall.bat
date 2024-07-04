@@ -181,7 +181,7 @@ powershell.exe -command "& {Start-Process .\%~dpn0-2%~x0 -ArgumentList "Args" -V
 echo mklink "%userprofile%/desktop/A-Z+T" "%userprofile%/desktop/azt/main.py"
 echo mklink "%userprofile%/desktop/Transcriber" "%userprofile%/desktop/azt/transcriber.py"
 
-echo Right-click on %~dpn0-2%~x0 and run it As Administrator
+echo Right-click on %~dpn0-2%~x0 and run it As Administrator ^(or has it?^)
 pause
 ECHO Install done! ^(hopefully!^)
 
