@@ -119,12 +119,12 @@ ECHO You need it for the next step!
 ECHO     ^^^^^^^^^^^^^^
 REM start Git-2.45.2-64-bit.exe /?
 REM start Git-2.45.2-64-bit.exe /silent
-echo on
-::try maybe /PathOption=Cmd or /GitOnlyOnPath, different orders? ; was ext\reg\shellhere
-::try without components line?
-::try without applications switches?
+
 ::/SP- not needed?
+::Pick one of these; VERYSILENT is not visible to the user, SILENT shows progress
 start %gitfilename% /SILENT /NORESTART /NOCANCEL /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\shellhere,assoc,assoc_sh"
+::start %gitfilename% /VERYSILENT /NORESTART /NOCANCEL /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\shellhere,assoc,assoc_sh"
+
 ::The above line should be commented out to try this block:
 (echo [Setup]
 echo PathOption=Cmd
