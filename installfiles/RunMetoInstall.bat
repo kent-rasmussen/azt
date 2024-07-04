@@ -190,7 +190,7 @@ ECHO I'll pause now; cancel now to be finished, or press any key to continue
 ECHO to install XLingPaper, Praat and Mercurial, to get the most out of A-Z+T.
 pause
 
-cd /d "%userprofile%/Downloads"
+::cd /d "%userprofile%/Downloads"
 
 If exist XLingPaper3-10-1XXEPersonalEditionFullSetup.exe (
 ECHO XLingPaper3-10-1XXEPersonalEditionFullSetup.exe is there!
