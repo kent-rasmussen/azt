@@ -116,14 +116,7 @@ echo EnableBuiltinDifftool=Disabled
 ECHO Wait to finish installing Git 2.45.2, then
 pause
 ::The problem at this point is that we can't find the git executable,
-::  either because it isn't being put into the path correctly, or
-::  because the path isn't updating (early enough?) in this context. Options:
-::1. try writing and calling a script from a new cmd.exe, which should have the new path
-::1a. do this where the path has clearly changed first (manual install), then if it works, make it silent
-::2. try different silent options to get the path installed and applied correctly.
-::where git
-::echo Don't continue until we find git above ^(after trying script below^)
-::pause
+::I think because the path cannot be updated at this point in the script. So we need to call git from a second script, at this point
 
 ECHO Cloning A-Z+T source to '%userprofile%/desktop/azt'
 cd /d "%userprofile%/desktop"
