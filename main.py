@@ -14281,7 +14281,10 @@ class GitReadOnly(Git):
     def commit(self,file=None):
         pass
     def setdescription(self):
-        self.description=_("AZT source")
+        try:
+            self.description=_("AZT source")
+        except NameError:
+            self.description="AZT source"
     def __init__(self, url):
         super(GitReadOnly, self).__init__(url)
 class ResultWindow(ui.Window):
