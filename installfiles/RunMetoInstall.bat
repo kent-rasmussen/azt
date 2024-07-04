@@ -58,12 +58,16 @@ ECHO:
 ::ECHO:
 REM start %pythonfilename% /?
 
-start %pythonfilename% /quiet PrependPath=1 Include_pip=1 InstallAllUsers=1 Include_launcher=1 InstallLauncherAllUsers=1 Include_test=0
+::do one of these (/wait allows user to see whatever before going on):
+::this shows the user what?
+start /wait %pythonfilename% SimpleInstall=1 SimpleInstallDescription="Installing Python %pythonversion%" PrependPath=1 Include_pip=1 InstallAllUsers=1 Include_launcher=1 InstallLauncherAllUsers=1 Include_test=0
 
-for /f %%i in ('reg query -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled"') do set longpathsOK=%%i
-REM set longpathsOK={
-REM Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled"
-REM }
+::this shows the user nothing
+::start /wait %pythonfilename% /quiet PrependPath=1 Include_pip=1 InstallAllUsers=1 Include_launcher=1 InstallLauncherAllUsers=1 Include_test=0
+
+::this shows the user progress with a cancel button
+::start /wait %pythonfilename% /passive PrependPath=1 Include_pip=1 InstallAllUsers=1 Include_launcher=1 InstallLauncherAllUsers=1 Include_test=0
+
 if %longpathsOK%==1 (
 echo Long paths are OK.
 ) else (
