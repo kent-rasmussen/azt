@@ -83,7 +83,7 @@ set longpathsOK=
 set regkey=HKLM
 ::This list of registries should be in priority order; the first found is used.
 for %%k in (HKLM,HKCU,HKCR,HKU,HKCC) do (
-  :reg query %%k\SYSTEM\CurrentControlSet\Control\FileSystem /v %var%
+  ::reg query %%k\SYSTEM\CurrentControlSet\Control\FileSystem /v %var%
   for /f "tokens=3" %%i in ('reg query %%k\SYSTEM\CurrentControlSet\Control\FileSystem /v %var%') do (
     set longpathsOK=%%i
     set regkey=%%k
