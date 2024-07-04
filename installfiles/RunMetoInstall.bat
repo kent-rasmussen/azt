@@ -1,5 +1,4 @@
-ECHO OFF
-::cmd /k
+@ECHO OFF
 ECHO:
 ECHO:
 ECHO:
