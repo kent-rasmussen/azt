@@ -51,13 +51,11 @@ ECHO:
 ::ECHO At the end of the install, be sure to click on "remove path limitation"
 ::ECHO        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                      ::^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::ECHO If you forget to do either of these, you should run python-3.12.4-amd64.exe
-ECHO If you forget to do this, you should run %pythonfilename%
-ECHO again manually (maybe select "Fix install") to set these options.
-ECHO:
-ECHO Otherwise, you should be fine with all default options
-ECHO:
-REM trying /quiet instead of /passive
-REM it may help to use SimpleInstall=1, maybe with SimpleInstallDescription="explanatoryText"
+::ECHO If you forget to do this, you should run %pythonfilename%
+::ECHO again manually (maybe select "Fix install") to set these options.
+::ECHO:
+::ECHO Otherwise, you should be fine with all default options
+::ECHO:
 REM start %pythonfilename% /?
 
 start %pythonfilename% /quiet PrependPath=1 Include_pip=1 InstallAllUsers=1 Include_launcher=1 InstallLauncherAllUsers=1 Include_test=0
