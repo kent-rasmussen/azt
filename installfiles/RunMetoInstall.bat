@@ -68,10 +68,37 @@ start /wait %pythonfilename% SimpleInstall=1 SimpleInstallDescription="Installin
 ::this shows the user progress with a cancel button
 ::start /wait %pythonfilename% /passive PrependPath=1 Include_pip=1 InstallAllUsers=1 Include_launcher=1 InstallLauncherAllUsers=1 Include_test=0
 
+echo python installed; path test next
+set var=LongPathsEnabled
+set longpathsOK=
+::This list of registries should be in priority order; the first found is used.
+for %%k in (HKLM,HKCU,HKCR,HKU,HKCC) do (
+  reg query %%k\SYSTEM\CurrentControlSet\Control\FileSystem /v %var%
+  for /f "tokens=3" %%i in ('reg query %%k\SYSTEM\CurrentControlSet\Control\FileSystem /v %var%') do (
+    set longpathsOK=%%i
+    set regkey=%%k
+    goto :next
+    )
+  )
+:next
+::echo longpathsOK is %longpathsOK%
+::echo python path test done here
 if %longpathsOK%==1 (
-echo Long paths are OK.
+echo Long paths are OK ^(already^).
 ) else (
-start ""%userprofile%/desktop/azt/installfiles/longpaths.reg""
+reg add %regkey%\SYSTEM\CurrentControlSet\Control\FileSystem /v %var% /d 1 /f
+::reg query %regkey%\SYSTEM\CurrentControlSet\Control\FileSystem /v %var%'
+::unset because we want current values:
+set longpathsOK=
+for %%k in (HKLM,HKCU,HKCR,HKU,HKCC) do (
+  ::reg query %%k\SYSTEM\CurrentControlSet\Control\FileSystem /v %var%
+  for /f "tokens=3" %%i in ('reg query %%k\SYSTEM\CurrentControlSet\Control\FileSystem /v %var%') do (
+    set longpathsOK=%%i
+    goto :finalokcheck
+    )
+  :finalokcheck
+  echo longpathsOK=%longpathsOK%
+  if %longpathsOK%==1 (echo Long paths are now OK.) else (echo longpathsOK=%longpathsOK%)
 )
 
 If exist %gitfilename% (
