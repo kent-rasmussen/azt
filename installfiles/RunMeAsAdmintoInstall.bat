@@ -16,7 +16,7 @@ set xlpurl=https://software.sil.org/downloads/r/xlingpaper/%xlpfilename%
 set hgversion=6.0
 set hgfilename=Mercurial-%hgversion%-x64.exe
 set hgurl=https://www.mercurial-scm.org/release/windows/%hgfilename%
-set tab=
+set tab=	
 ECHO:
 ECHO:
 ECHO:
