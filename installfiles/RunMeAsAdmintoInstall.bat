@@ -170,7 +170,7 @@ powershell.exe -noprofile -command "Invoke-WebRequest %xlpurl% -OutFile %xlpfile
 )
 
 ECHO Installing XLingPaper %xlpversion%
-start /wait %xlpfilename%
+start /wait %xlpfilename% /silent
 
 If exist %praatfilename% (
 ECHO %praatfilename% is there!
@@ -178,7 +178,7 @@ ECHO %praatfilename% is there!
 ECHO Downloading Praat %praatversion%...
 powershell.exe -noprofile -command "Invoke-WebRequest %praaturl% -OutFile %praatfilename%"
 )
-ECHO Program files in %ProgramFiles%
+::ECHO Program files in %ProgramFiles%
 ECHO installing Praat to %ProgramFiles%
 tar -xvf %praatfilename% -C "%ProgramFiles%"
 setx path "%path%;%ProgramFiles%"
@@ -191,7 +191,7 @@ powershell.exe -noprofile -command "Invoke-WebRequest %hgurl% -OutFile %hgfilena
 )
 
 ECHO Installing Mercurial %hgversion%
-start /wait %hgfilename%
+start /wait %hgfilename% /silent
 
 echo Stopping here just in case you need to read anything above; we're done!
 Pause
