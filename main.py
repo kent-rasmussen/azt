@@ -14835,7 +14835,10 @@ def praatversioncheck():
         log.info("Problem with praat version ({}), assuming recent".format(e))
         return True
     try:
-        out=version.Version(parseversion(stouttostr(versionraw)))
+        characters=stouttostr(versionraw)
+        if characters.count(' ') >2:
+            characters=versionraw.decode('utf-16')
+        out=version.Version(parseversion(characters))
     except:
         out=versionraw
     # This is the version at which we don't need sendpraat anymore
