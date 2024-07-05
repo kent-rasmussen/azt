@@ -16,7 +16,7 @@ set xlpurl=https://software.sil.org/downloads/r/xlingpaper/%xlpfilename%
 set hgversion=6.0
 set hgfilename=Mercurial-%hgversion%-x64.exe
 set hgurl=https://www.mercurial-scm.org/release/windows/%hgfilename%
-set tab=	
+set tab=
 ECHO:
 ECHO:
 ECHO:
@@ -28,12 +28,12 @@ ECHO,%tab%+Will download and install Git %gitversion%
 ECHO,%tab%+Create another file (also **run as administrator**) that will
 ECHO,%tab%%tab%+Will clone/download A-Z+T source to azt directory on your desktop
 ECHO,%tab%%tab%+Will create a shortcut to run AZT on your desktop
+pause
 ECHO Error Level is %errorlevel%
 whoami /groups | find "S-1-16-12288"
 if errorlevel 1 goto NotAdmin
 ECHO Looks like I'm running As Administrator.
-ECHO Using user profile %userprofile%
-ECHO moving to %~dp0 ^(where you downloaded the script^)
+::ECHO moving to %~dp0 ^(where you downloaded the script^)
 cd /d %~dp0
 
 If exist %pythonfilename% (
@@ -50,24 +50,9 @@ ECHO Installing Python %pythonversion%
 ::reg query HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled
 ::reg add HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled /d 0 /f
 ::reg query HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled
-ECHO:
-::ECHO ATTENTION!!
-::ECHO            vvvvvvvvvvvvvvvvvvv
-::ECHO Be sure to check "add to PATH" in the dialog BEFORE you click "Install Now"
-::ECHO            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-::ECHO ALSO:
-::ECHO        vvvvvvvvvvvvvvvvvv                      vvvvvvvvvvvvvvvvvvvvvvvv
-::ECHO At the end of the install, be sure to click on "remove path limitation"
-::ECHO        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                      ::^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-::ECHO If you forget to do either of these, you should run python-3.12.4-amd64.exe
-::ECHO If you forget to do this, you should run %pythonfilename%
-::ECHO again manually (maybe select "Fix install") to set these options.
-::ECHO:
-::ECHO Otherwise, you should be fine with all default options
-::ECHO:
-REM start %pythonfilename% /?
 
-::do one of these (/wait allows user to see whatever before going on):
+::do one of these three (/wait allows user to see whatever before going on):
+
 ::this shows the user "Install: use settings preselected by your administrator"
 ::start /wait %pythonfilename% SimpleInstall=1 SimpleInstallDescription="Installing Python %pythonversion%" PrependPath=1 Include_pip=1 InstallAllUsers=1 Include_launcher=1 InstallLauncherAllUsers=1 Include_test=0
 
@@ -91,13 +76,11 @@ for %%k in (HKLM,HKCU,HKCR,HKU,HKCC) do (
     )
   )
 :next
-::echo longpathsOK is %longpathsOK%
 ::echo python path test done here
 if %longpathsOK%==1 (
 echo Long paths are OK ^(already^).
 ) else (
 reg add %regkey%\SYSTEM\CurrentControlSet\Control\FileSystem /v %var% /d 1 /f
-::reg query %regkey%\SYSTEM\CurrentControlSet\Control\FileSystem /v %var%'
 ::unset because we want current values:
 set longpathsOK=
 for %%k in (HKLM,HKCU,HKCR,HKU,HKCC) do (
@@ -120,48 +103,25 @@ If exist %gitfilename% (ECHO %gitfilename% is there!) ELSE (
   )
 
 ECHO Installing Git %gitversion%
-::/SP- not needed?
 ::Pick one of these; VERYSILENT is not visible to the user, SILENT shows progress
 start /wait %gitfilename% /SILENT /NORESTART /NOCANCEL /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\shellhere,assoc,assoc_sh"
 ::start /wait %gitfilename% /VERYSILENT /NORESTART /NOCANCEL /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\shellhere,assoc,assoc_sh"
 
-::The above line should be commented out to try this block:
-::(echo [Setup]
-::echo PathOption=Cmd
-::Don't use the following indented lines unless necessary:
-::echo Lang=default
-::echo Dir=%installDir%
-::echo Group=Git
-::echo NoIcons=0
-::echo SetupType=default
-::echo Components=icons,ext\reg\shellhere,assoc,assoc_sh
-::echo Tasks=
-::echo PathOption=Cmd
-::echo SSHOption=OpenSSH
-::echo CRLFOption=CRLFAlways
-::echo BashTerminalOption=ConHost
-::echo PerformanceTweaksFSCache=Enabled
-::echo UseCredentialManager=Enabled
-::echo EnableSymlinks=Disabled
-::echo EnableBuiltinDifftool=Disabled
-::)> git_config.inf
-::uncomment to try inf (and comment above git install)
-::start %gitfilename% /SILENT /LOADINF="git_config.inf" /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS
-::Once this is working, uncomment
-::del git_config.bat
-::ECHO Wait to finish installing Git %gitversion%, then
-::pause
-::The problem at this point is that we can't find the git executable,
-::I think because the path cannot be updated at this point in the script. So we need to call git from a second script, at this point
+::The problem at this point is that we can't find the git executable.
+::I think because the path cannot be updated at this point in the script.
+::So we need to call git from a second script, at this point
 
 echo writing the second script ^(%~dpn0-2%~x0^)
-::What to do with this logic? do causes problems in the echo script...
-::echo This is for local ^(USB^) repo install
-::echo set azt=
-::echo for /R %%f in (azt.git) do @IF EXIST %%f set azt=%%~dpnxf
-::echo if defined azt (
-::echo echo azt is defined ^(local repo found^): %azt%
-::echo ) else (
+::Put this logic here; `do` causes problems in the echo script...
+::This is for local ^(USB^) repo install
+set azt=
+for /R %%f in (azt.git) do @IF EXIST %%f set azt=%%~dpnxf
+if defined azt (
+  echo azt is defined ^(local repo found^): %azt%
+  ) else (
+  echo echo Local file not found; using github
+  echo set azt=https://github.com/kent-rasmussen/azt.git
+  )
 
 ::This may also be useless:
 ::ECHO ::WshShell = CreateObject("Wscript.shell")
@@ -175,8 +135,6 @@ echo writing the second script ^(%~dpn0-2%~x0^)
 (
 echo @echo off
 echo ECHO Cloning A-Z+T source to '%userprofile%\desktop\azt'
-echo echo Local file not found; using github
-echo set azt=https://github.com/kent-rasmussen/azt.git
 echo echo going to run git clone %%azt%% ^"%userprofile%/desktop/azt^"
 echo git clone %%azt%% ^"%userprofile%/desktop/azt^"
 echo echo confirm this is what you want^, then
@@ -186,20 +144,16 @@ echo echo if they fail^, close this window ^(X^) and run again^, as administrato
 echo pause
 echo del %~dpn0-2%~x0
 ) >%~dpn0-2%~x0
-echo %~dpn0-2%~x0
-echo %~f0
-::we actually don't want -ArgumentList "Args" -Verb Runas here
-::powershell.exe -command "& {Start-Process %~dpn0-2%~x0 -ArgumentList "Args" -Verb Runas=0}"
-echo %username%
-runas /showtrustlevels
+::Call the script we just made from a new shell for a new path, but as a basic user
+::runas /showtrustlevels
 runas /trustlevel:0x20000 %~dpn0-2%~x0
 
 :: these seem to work before the location exists
 mklink "%userprofile%/desktop/A-Z+T" "%userprofile%/desktop/azt/main.py"
 mklink "%userprofile%/desktop/Transcriber" "%userprofile%/desktop/azt/transcriber.py"
 
-echo Right-click on %~dpn0-2%~x0 and run it As Administrator ^(or has it?^)
-pause
+::echo Right-click on %~dpn0-2%~x0 and run it As Administrator ^(or has it?^)
+::pause
 ECHO Install done! ^(hopefully!^)
 
 ECHO I'll pause now; cancel now to be finished, or press any key to continue
