@@ -14836,10 +14836,11 @@ def praatversioncheck():
         return True
     try:
         characters=stouttostr(versionraw)
-        if characters.count(' ') >2:
+        if characters.count(' ') >4: #normal: praat version (month day year)
             characters=versionraw.decode('utf-16')
         out=version.Version(parseversion(characters))
-    except:
+    except Exception as e:
+        log.info("Problem getting parseable praat version ({})".format(e))
         out=versionraw
     # This is the version at which we don't need sendpraat anymore
     # and where '--hide-picture' becomes available.
