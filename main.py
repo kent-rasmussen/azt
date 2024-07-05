@@ -14822,15 +14822,15 @@ def praatversioncheck():
     praatvargs=[program['praat'], '--version']
     try:
         versionraw=subprocess.check_output(praatvargs, shell=False)
-        for encoding in ['utf-8', 'utf-16', sys.stdout.encoding]:
-            for errortag in ['backslashreplace','strict','ignore', 'replace']:
-                try:
-                    log.info("{},{}.strip: {}".format(encoding, errortag,
-                                versionraw.decode(encoding, errortag).strip()))
-                    log.info("{},{}: {}".format(encoding, errortag,
-                                versionraw.decode(encoding, errortag)))
-                except Exception as e:
-                    log.info("{},{} error".format(encoding, errortag))
+        # for encoding in ['utf-8', 'utf-16', sys.stdout.encoding]:
+        #     for errortag in ['backslashreplace','strict','ignore', 'replace']:
+        #         try:
+        #             log.info("{},{}.strip: {}".format(encoding, errortag,
+        #                         versionraw.decode(encoding, errortag).strip()))
+        #             log.info("{},{}: {}".format(encoding, errortag,
+        #                         versionraw.decode(encoding, errortag)))
+        #         except Exception as e:
+        #             log.info("{},{} error".format(encoding, errortag))
     except Exception as e:
         log.info("Problem with praat version ({}), assuming recent".format(e))
         return True
