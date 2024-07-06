@@ -33,10 +33,6 @@ ECHO,    +Will clone/download A-Z+T source to azt directory on your desktop
 ECHO,    +Will create a shortcut to run AZT on your desktop
 echo:
 pause
-ECHO Error Level is %errorlevel%
-whoami /groups | find "S-1-16-12288" >null 2>&1
-if errorlevel 1 goto NotAdmin
-ECHO Looks like I'm running As Administrator.
 ::ECHO moving to %~dp0 ^(where you downloaded the script^)
 cd /d %~dp0
 
