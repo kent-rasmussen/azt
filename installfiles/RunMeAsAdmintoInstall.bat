@@ -119,7 +119,7 @@ echo Looking for a USB with the azt repo on it ^(there may be 'not found' errors
 set azt=
 for /f %%d in ('wmic logicaldisk get deviceid') do (
 	@IF NOT %%f==DeviceID (
-		for /f %%f in ('dir /b /a:d %%d\*azt.git') do (
+		for /f %%f in ('dir /b /a:d %%d\*azt.git 2>nul') do (
 			echo looking for %%d^\%%f
 			@IF EXIST %%d\%%f (
 				set azt=%%d\%%f
@@ -198,7 +198,7 @@ powershell.exe -noprofile -command "Invoke-WebRequest %praaturl% -OutFile %praat
 ::ECHO Program files in %ProgramFiles%
 ECHO installing Praat to %ProgramFiles%
 tar -xvf %praatfilename% -C "%ProgramFiles%"
-setx path "%path%;%ProgramFiles%"
+setx path="%path%;%ProgramFiles%" >nul
 
 If exist %hgfilename% (
 ECHO %hgfilename% is there!
