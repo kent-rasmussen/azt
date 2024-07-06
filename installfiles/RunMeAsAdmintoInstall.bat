@@ -115,12 +115,23 @@ echo writing the second script ^(%~dpn0-2%~x0^)
 ::Put this logic here; `do` causes problems in the echo script...
 ::This is for local ^(USB^) repo install
 set azt=
-for /R %%f in (azt.git) do @IF EXIST %%f set azt=%%~dpnxf
+for /f %%d in ('wmic logicaldisk get deviceid') do (
+	@IF NOT %%f==DeviceID (
+		for /f %%f in ('dir /b /a:d %%d\*azt.git') do (
+			echo looking for %%d^\%%f
+			@IF EXIST %%d\%%f (
+				set azt=%%d\%%f
+				goto :foundaztrepo
+				) else (echo Didn't find %%d\%%f)
+			)
+		)
+	)
+:foundaztrepo
 if defined azt (
   echo azt is defined ^(local repo found^): %azt%
   ) else (
-  echo echo Local file not found; using github
-  echo set azt=https://github.com/kent-rasmussen/azt.git
+  echo Local file not found; using github
+  set azt=https://github.com/kent-rasmussen/azt.git
   )
 
 ::This may also be useless:
