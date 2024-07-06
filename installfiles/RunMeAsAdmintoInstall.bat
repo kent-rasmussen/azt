@@ -40,8 +40,8 @@ If exist %pythonfilename% (
 ECHO %pythonfilename% is there!
 ) ELSE (
 ECHO Downloading Python %pythonversion% %pythonsize:"=%...
-ECHO Check that your internet is on and
-pause
+::ECHO Check that your internet is on and
+::pause
 powershell.exe -noprofile -command "Invoke-WebRequest %pythonurl% -OutFile %pythonfilename%"
 )
 
@@ -61,6 +61,7 @@ ECHO Installing Python %pythonversion%
 
 ::this shows the user progress with a cancel button
 start /wait %pythonfilename% /passive PrependPath=1 Include_pip=1 InstallAllUsers=1 Include_launcher=1 InstallLauncherAllUsers=1 Include_test=0
+IF %errorlevel% NEQ 0 (goto :checkinternet)
 
 echo python installed; path test next
 set var=LongPathsEnabled
@@ -97,8 +98,8 @@ for %%k in (HKLM,HKCU,HKCR,HKU,HKCC) do (
 
 If exist %gitfilename% (ECHO %gitfilename% is there!) ELSE (
   ECHO Downloading Git %gitversion% %gitsize:"=%...
-  ECHO Check that your internet is on and
-  pause
+  ::ECHO Check that your internet is on and
+  ::pause
   powershell.exe -noprofile -command "Invoke-WebRequest %giturl% -OutFile %gitfilename%"
   )
 
@@ -106,6 +107,7 @@ ECHO Installing Git %gitversion%
 ::Pick one of these; VERYSILENT is not visible to the user, SILENT shows progress
 start /wait %gitfilename% /SILENT /NORESTART /NOCANCEL /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\shellhere,assoc,assoc_sh"
 ::start /wait %gitfilename% /VERYSILENT /NORESTART /NOCANCEL /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\shellhere,assoc,assoc_sh"
+IF %errorlevel% NEQ 0 (goto :checkinternet)
 
 ::The problem at this point is that we can't find the git executable.
 ::I think because the path cannot be updated at this point in the script.
@@ -152,10 +154,10 @@ echo echo going to run git clone %%azt%% ^"%userprofile%/desktop/azt^"
 echo git config --global --add safe.directory %%azt%%
 echo git clone %azt% ^"%userprofile%/desktop/azt^"
 echo echo errorlevel=%%errorlevel%%
-echo IF not errorlevel==0 (
-echo,  echo confirm this is what you want^, then
-echo,  echo pause
-echo,  )
+echo IF %%errorlevel%% neq 0 ^(
+echo.  echo IT looks like there was an error getting the repository.
+echo.  echo is your internet ^^^(or USB repository^^^) connected?
+echo.  ^)
 echo del %~dpn0-2%~x0
 ) >%~dpn0-2%~x0
 ::Call the script we just made from a new shell for a new path, but as a basic user
@@ -222,5 +224,11 @@ runas /env /user:Administrator %~0
 )
 echo Stopping here just in case you need to read anything above; we're done!
 Pause
+goto :end
+:checkinternet
+echo Is your internet connected ? (to download installs)
+echo connect your internet and run %0 again
+pause
+goto :end
 :end
 :eof
