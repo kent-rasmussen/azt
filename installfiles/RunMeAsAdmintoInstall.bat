@@ -16,21 +16,21 @@ set xlpurl=https://software.sil.org/downloads/r/xlingpaper/%xlpfilename%
 set hgversion=6.0
 set hgfilename=Mercurial-%hgversion%-x64.exe
 set hgurl=https://www.mercurial-scm.org/release/windows/%hgfilename%
-set tab=
 ECHO:
 ECHO:
 ECHO:
 ECHO:
 ECHO A-Z+T Install batch file
 ECHO This script installs stuff --it must be run **As Administrator**! It will:
-ECHO,%tab%+Will download and install Python %pythonversion%
-ECHO,%tab%+Will download and install Git %gitversion%
-ECHO,%tab%+Create another file (also **run as administrator**) that will
-ECHO,%tab%%tab%+Will clone/download A-Z+T source to azt directory on your desktop
-ECHO,%tab%%tab%+Will create a shortcut to run AZT on your desktop
+ECHO,  +Will download and install Python %pythonversion%
+ECHO,  +Will download and install Git %gitversion%
+ECHO,  +Create another file (also **run as administrator**) that will
+ECHO,    +Will clone/download A-Z+T source to azt directory on your desktop
+ECHO,    +Will create a shortcut to run AZT on your desktop
+echo:
 pause
 ECHO Error Level is %errorlevel%
-whoami /groups | find "S-1-16-12288"
+whoami /groups | find "S-1-16-12288" >null 2>&1
 if errorlevel 1 goto NotAdmin
 ECHO Looks like I'm running As Administrator.
 ::ECHO moving to %~dp0 ^(where you downloaded the script^)
@@ -111,9 +111,9 @@ start /wait %gitfilename% /SILENT /NORESTART /NOCANCEL /CLOSEAPPLICATIONS /RESTA
 ::I think because the path cannot be updated at this point in the script.
 ::So we need to call git from a second script, at this point
 
-echo writing the second script ^(%~dpn0-2%~x0^)
 ::Put this logic here; `do` causes problems in the echo script...
 ::This is for local ^(USB^) repo install
+echo Looking for a USB with the azt repo on it ^(there may be 'not found' errors^)
 set azt=
 for /f %%d in ('wmic logicaldisk get deviceid') do (
 	@IF NOT %%f==DeviceID (
@@ -143,16 +143,19 @@ if defined azt (
 ::ECHO ::OMyShortcut.TargetPath = "%userprofile%/desktop/azt/main.py"
 ::ECHO ::oMyShortCut.Hotkey = "ALT+CTRL+F"
 ::ECHO ::oMyShortCut.Save
+
+echo writing the second script ^(%~dpn0-2%~x0^)
 (
 echo @echo off
 echo ECHO Cloning A-Z+T source to '%userprofile%\desktop\azt'
 echo echo going to run git clone %%azt%% ^"%userprofile%/desktop/azt^"
-echo git clone %%azt%% ^"%userprofile%/desktop/azt^"
-echo echo confirm this is what you want^, then
-echo ECHO making links to AZT and Transcriber tool...
-echo echo these lines will fail if you didn't run this script as administrator
-echo echo if they fail^, close this window ^(X^) and run again^, as administrator.
-echo pause
+echo git config --global --add safe.directory %%azt%%
+echo git clone %azt% ^"%userprofile%/desktop/azt^"
+echo echo errorlevel=%%errorlevel%%
+echo IF not errorlevel==0 (
+echo,  echo confirm this is what you want^, then
+echo,  echo pause
+echo,  )
 echo del %~dpn0-2%~x0
 ) >%~dpn0-2%~x0
 ::Call the script we just made from a new shell for a new path, but as a basic user
@@ -160,6 +163,7 @@ echo del %~dpn0-2%~x0
 runas /trustlevel:0x20000 %~dpn0-2%~x0
 
 :: these seem to work before the location exists
+echo making links to AZT and Transcriber tool...
 mklink "%userprofile%/desktop/A-Z+T" "%userprofile%/desktop/azt/main.py"
 mklink "%userprofile%/desktop/Transcriber" "%userprofile%/desktop/azt/transcriber.py"
 
