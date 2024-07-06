@@ -1,4 +1,8 @@
 @ECHO OFF
+whoami /groups | find "S-1-16-12288" >NUL 2>&1
+if errorlevel 1 goto NotAdmin
+ECHO Looks like I'm running As Administrator.
+
 set pythonversion=3.12.4
 set pythonfilename=python-%pythonversion%-amd64.exe
 set pythonsize="^(25.5322 Megabyte^(s^); 26772456 bytes^)"
