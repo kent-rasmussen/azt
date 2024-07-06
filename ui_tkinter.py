@@ -134,12 +134,12 @@ class Theme(object):
                                                 file.fullpathname(scaledalready)
                                                     )
                             self.scalings.append(y)
-                            log.info("Scaled {} {} @{} resolution: {}"
-                                    "".format(
-                                            name,relurl,y,
-                                            _("OK") if file.exists(scaledalready)
-                                            else _("Problem!")
-                                            ))
+                            if file.exists(scaledalready):
+                                log.info("Scaled {} {} @{} resolution: {}"
+                                        "".format(name,relurl,y,_("OK")))
+                            # else:
+                            #     log.info("Problem Scaling {} {} @{} resolution"
+                            #             "".format(name,relurl,y,_("OK"))
                             return #stop when the first/best works
                         except tkinter.TclError as e:
                             # log.info(e)
