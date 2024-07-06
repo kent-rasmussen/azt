@@ -217,13 +217,15 @@ goto end
 ECHO This doesn't seem to be running as administrator.
 ECHO Trying to start an admin command prompt. If that doesn't work, please
 ECHO run this bat file as administrator yourself.
+pause
+::this doesn't seem to be working
 if runas /env /user:domain\Administrator %~0 (
-ECHO Worked!
+ECHO Worked^!
 ) ELSE (
 runas /env /user:Administrator %~0
 )
 echo Stopping here just in case you need to read anything above; we're done!
-Pause
+pause
 goto :end
 :checkinternet
 echo Is your internet connected ? (to download installs)
