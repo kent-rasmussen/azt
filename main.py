@@ -14835,14 +14835,16 @@ def praatversioncheck():
         log.info("Problem with praat version ({}), assuming recent".format(e))
         return True
     try:
-        characters=stouttostr(versionraw)
-        log.info("versionraw={}".format(versionraw))
-        log.info("characters1={}".format(characters))
-        log.info("charactersr={}".format(characters.count(r'\x00')))
-        log.info("charactersb={}".format(b'\x00' in versionraw))
-        if characters.count(r'\x00') >4: #normal: praat version (month day year)
+        # log.info("versionraw={}".format(versionraw))
+        # log.info("characters1={}".format(characters))
+        # log.info("charactersr={}".format(characters.count(r'\x00')))
+        # log.info("charactersb={}".format(b'\x00' in versionraw))
+        # characters.count(r'\x00') >4: #normal: praat version (month day year)
+        if b'\x00' in versionraw:
             characters=versionraw.decode('utf-16')
-            log.info("characters1={}".format(characters))
+        else:
+            characters=stouttostr(versionraw)
+        # log.info("characters={}".format(characters))
         out=version.Version(parseversion(characters))
     except Exception as e:
         log.info("Problem getting parseable praat version ({})".format(e))
