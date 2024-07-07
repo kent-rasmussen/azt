@@ -14822,6 +14822,7 @@ def praatversioncheck():
     praatvargs=[program['praat'], '--version']
     try:
         versionraw=subprocess.check_output(praatvargs, shell=False)
+        #These lines could be used to see how a praat is outputting on a computer, where neither utf-8 nor uft-16.
         # for encoding in ['utf-8', 'utf-16', sys.stdout.encoding]:
         #     for errortag in ['backslashreplace','strict','ignore', 'replace']:
         #         try:
@@ -14835,11 +14836,6 @@ def praatversioncheck():
         log.info("Problem with praat version ({}), assuming recent".format(e))
         return True
     try:
-        # log.info("versionraw={}".format(versionraw))
-        # log.info("characters1={}".format(characters))
-        # log.info("charactersr={}".format(characters.count(r'\x00')))
-        # log.info("charactersb={}".format(b'\x00' in versionraw))
-        # characters.count(r'\x00') >4: #normal: praat version (month day year)
         if b'\x00' in versionraw:
             characters=versionraw.decode('utf-16')
         else:
