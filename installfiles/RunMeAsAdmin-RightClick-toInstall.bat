@@ -20,6 +20,7 @@ set xlpurl=https://software.sil.org/downloads/r/xlingpaper/%xlpfilename%
 set hgversion=6.0
 set hgfilename=Mercurial-%hgversion%-x64.exe
 set hgurl=https://www.mercurial-scm.org/release/windows/%hgfilename%
+set charisurl=https://software.sil.org/downloads/r/charis/CharisSIL-6.001.zip
 ECHO:
 ECHO:
 ECHO:

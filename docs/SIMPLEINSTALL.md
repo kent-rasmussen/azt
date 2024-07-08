@@ -1,6 +1,6 @@
 # Simple and Straightforward Instructions for Installing A-Z+T on MS Windows
-## (Or just run [this script](../installfiles/RunMetoInstall.bat?raw=true) as administrator.)
-This document offers instructions with **exactly one set of options**; to explore more options, see [INSTALL](INSTALL.md).
+## (Or just run [this script](../installfiles/RunMetoInstall.bat?raw=true) as administrator; most of this page will be taken care of.)
+If you want to follow the install step by step (and maybe make some changes), the rest of this document offers instructions (with **exactly one set of options**; to explore more options, see [INSTALL](INSTALL.md)).
 
 For simple install instructions for Ubuntu Linux, see [SIMPLEINSTALL_LINUX](SIMPLEINSTALL_LINUX.md).
 
@@ -11,7 +11,7 @@ Before you can [Set up A-Z+T for normal use](#set-up-azt-for-normal-use), you ne
 2. [Install Git and Download A-Z+T](#install-git-and-download-azt)
 
 ## Install Python
-1. Download and install Python from [here](https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe). At this step:
+1. Download and install Python from [here](https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe). As of July 2024, versions 3.9-3.12 seem to work for Windows modules. At this step:
 
 ![Add Python to Path](images/Python_path.png "Add Python to Path")
 
