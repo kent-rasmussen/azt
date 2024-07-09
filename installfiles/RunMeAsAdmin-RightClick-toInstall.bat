@@ -161,6 +161,11 @@ if defined azt (
 ::ECHO ::oMyShortCut.Save
 
 echo writing the second script ^(%~dpn0-2%~x0^)
+::This should probably some day bring in other things from a flash drive:
+::local module install files
+::whisper modules
+
+
 (
 echo @echo off
 echo call :runme-2 ^> %~dpn0-2.log 2>&1
