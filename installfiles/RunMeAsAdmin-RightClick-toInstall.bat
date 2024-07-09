@@ -1,4 +1,9 @@
-@ECHO OFF
+@echo off
+::set LOGFILE=%~dpn0.log
+::%LOGFILE%
+call :runme > %~dpn0.log 2>&1
+exit /B
+:runme
 whoami /groups | find "S-1-16-12288" >NUL 2>&1
 if errorlevel 1 goto NotAdmin
 ECHO Looks like I'm running As Administrator.
@@ -150,6 +155,9 @@ if defined azt (
 echo writing the second script ^(%~dpn0-2%~x0^)
 (
 echo @echo off
+echo call :runme-2 > %~dpn0-2.log 2>&1
+exit exit /B
+echo :runme-2
 echo ECHO Cloning A-Z+T source to '%userprofile%\desktop\azt'
 echo echo going to run git clone %%azt%% ^"%userprofile%/desktop/azt^"
 echo git config --global --add safe.directory %%azt%%
