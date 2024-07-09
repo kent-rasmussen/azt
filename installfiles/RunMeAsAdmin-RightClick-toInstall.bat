@@ -42,7 +42,7 @@ ECHO,    +Will create a shortcut to run AZT on your desktop
 echo:
 pause
 
-call :runme > %~dpn0.log 2>&1
+call :runme > %~dpn0_log.text 2>&1
 exit /B
 :runme
 
