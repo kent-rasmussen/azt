@@ -217,8 +217,8 @@ powershell.exe -noprofile -command "Invoke-WebRequest %praaturl% -OutFile %praat
 )
 ::ECHO Program files in %ProgramFiles%
 ECHO installing Praat to %ProgramFiles%
-tar -xvf %praatfilename% -C "%ProgramFiles%"
-setx path="%path%;%ProgramFiles%" >nul
+powershell.exe -noprofile -command "Expand-Archive %praatfilename% -DestinationPath %ProgramFiles%"
+set path="%path%;%ProgramFiles%" >nul
 
 If exist %hgfilename% (
 ECHO %hgfilename% is there!
