@@ -34,11 +34,12 @@ ECHO:
 ECHO:
 ECHO A-Z+T Install batch file
 ECHO This script installs stuff --it must be run **As Administrator**! It will:
-ECHO,  +Will download and install Python %pythonversion%
-ECHO,  +Will download and install Git %gitversion%
-ECHO,  +Create another file (also **run as administrator**) that will
-ECHO,    +Will clone/download A-Z+T source to azt directory on your desktop
-ECHO,    +Will create a shortcut to run AZT on your desktop
+ECHO,  +Download and install Python %pythonversion%
+ECHO,  +Download and install Git %gitversion%
+ECHO,  +Clone/download A-Z+T source to azt directory on your desktop
+ECHO,  +Create a shortcut to run AZT on your desktop
+echo,  +Install Charis SIL (font), XLingPaper and Praat to get the most out of A−Z+T
+echo,  +Download and Install Mercurial for collaboration
 echo:
 pause
 
@@ -162,8 +163,8 @@ if defined azt (
 echo writing the second script ^(%~dpn0-2%~x0^)
 (
 echo @echo off
-echo call :runme-2 > %~dpn0-2.log 2>&1
-echo exit /B
+echo call :runme-2 ^> %~dpn0-2.log 2>&1
+echo exit ^/B
 echo :runme-2
 echo ECHO Cloning A-Z+T source to '%userprofile%\desktop\azt'
 echo echo going to run git clone %%azt%% ^"%userprofile%/desktop/azt^"
