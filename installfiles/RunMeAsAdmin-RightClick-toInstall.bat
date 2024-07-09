@@ -163,10 +163,10 @@ echo writing the second script ^(%~dpn0-2%~x0^)
 ::local module install files
 ::whisper modules
 
-
+::%~dpn0-2_log.txt
 (
 echo @echo off
-echo call :runme-2 ^> %~dpn0-2_log.txt 2^>^&1
+echo call :runme-2 ^> %~dpn0_log.txt 2^>^&1
 echo exit /B
 echo :runme-2
 echo ECHO Cloning A-Z+T source to '%userprofile%\desktop\azt'
@@ -253,4 +253,5 @@ echo connect your internet and run %0 again
 pause
 goto :end
 :end
+del %~dpn0_log.txt
 :eof
