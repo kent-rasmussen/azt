@@ -1,9 +1,6 @@
 @echo off
 ::set LOGFILE=%~dpn0.log
 ::%LOGFILE%
-call :runme > %~dpn0.log 2>&1
-exit /B
-:runme
 whoami /groups | find "S-1-16-12288" >NUL 2>&1
 if errorlevel 1 goto NotAdmin
 ECHO Looks like I'm running As Administrator.
@@ -44,6 +41,11 @@ ECHO,    +Will clone/download A-Z+T source to azt directory on your desktop
 ECHO,    +Will create a shortcut to run AZT on your desktop
 echo:
 pause
+
+call :runme > %~dpn0.log 2>&1
+exit /B
+:runme
+
 ::ECHO moving to %~dp0 ^(where you downloaded the script^)
 cd /d %~dp0
 
@@ -187,9 +189,9 @@ mklink "%userprofile%/desktop/Transcriber" "%userprofile%/desktop/azt/transcribe
 ::pause
 ECHO Install done! ^(hopefully!^)
 
-ECHO I'll pause now; cancel now to be finished, or press any key to continue
-ECHO to install XLingPaper^, Praat and Mercurial^, to get the most out of A-Z+T.
-pause
+::ECHO I'll pause now; cancel now to be finished, or press any key to continue
+::ECHO to install XLingPaper^, Praat and Mercurial^, to get the most out of A-Z+T.
+::pause
 
 ::cd /d "%userprofile%/Downloads"
 
@@ -224,8 +226,9 @@ powershell.exe -noprofile -command "Invoke-WebRequest %hgurl% -OutFile %hgfilena
 ECHO Installing Mercurial %hgversion%
 start /wait %hgfilename% /silent
 
-echo Stopping here just in case you need to read anything above; we're done!
-Pause
+::echo Stopping here just in case you need to read anything above; we're done!
+::Pause
+echo setup done!
 goto end
 :NotAdmin
 ECHO This doesn't seem to be running as administrator.
