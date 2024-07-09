@@ -36,10 +36,10 @@ ECHO A-Z+T Install batch file
 ECHO This script installs stuff --it must be run **As Administrator**! It will:
 ECHO,  +Download and install Python %pythonversion%
 ECHO,  +Download and install Git %gitversion%
-ECHO,  +Clone/download A-Z+T source to azt directory on your desktop
-ECHO,  +Create a shortcut to run AZT on your desktop
-echo,  +Install Charis SIL (font), XLingPaper and Praat to get the most out of A−Z+T
-echo,  +Download and Install Mercurial for collaboration
+ECHO,  +Clone/download A-Z+T source to a new azt directory on your desktop
+ECHO,  +Create a shortcut to run A-Z+T on your desktop
+echo,  +Install Charis SIL (font), XLingPaper and Praat to get the most out of A-Z+T
+echo,  +Download and Install Mercurial for collaboration with WeSay and FLEx
 echo:
 pause
 
