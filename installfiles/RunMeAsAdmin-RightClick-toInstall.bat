@@ -1,6 +1,4 @@
 @echo off
-::set LOGFILE=%~dpn0.log
-::%LOGFILE%
 whoami /groups | find "S-1-16-12288" >NUL 2>&1
 if errorlevel 1 goto NotAdmin
 ECHO Looks like I'm running As Administrator.
@@ -43,7 +41,7 @@ echo,  +Download and Install Mercurial for collaboration with WeSay and FLEx
 echo:
 pause
 
-call :runme > %~dpn0_log.text 2>&1
+call :runme > %~dpn0_log.txt 2>&1
 exit /B
 :runme
 
