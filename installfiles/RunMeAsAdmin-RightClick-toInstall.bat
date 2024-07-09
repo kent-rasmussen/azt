@@ -232,8 +232,7 @@ echo setup done!
 goto end
 :NotAdmin
 ECHO This doesn't seem to be running as administrator.
-ECHO Trying to start an admin command prompt. If that doesn't work, please
-ECHO run this bat file as administrator yourself.
+ECHO Please run this bat file as administrator (right click on it and click "Run as administrator") yourself.
 pause
 ::this doesn't seem to be working
 if runas /env /user:domain\Administrator %~0 (
