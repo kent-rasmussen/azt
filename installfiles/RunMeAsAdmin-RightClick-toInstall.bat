@@ -204,7 +204,7 @@ ECHO Downloading Charis %charisversion%...
 powershell.exe -noprofile -command "Invoke-WebRequest %charisurl% -OutFile %charisfilename%"
 )
 ECHO installing Charis to %%SYSTEMROOT%%\Fonts
-powershell.exe -noprofile -command "Expand-Archive %charisfilename% -DestinationPath ""%SYSTEMROOT%\Fonts""
+powershell.exe -noprofile -command "Expand-Archive %charisfilename% -DestinationPath ""%SYSTEMROOT%\Fonts"""
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts" /v "Charis SIL Regular (TrueType)" /t REG_SZ /d Charis-Regular.ttf /f
 
 If exist %xlpfilename% (
@@ -225,7 +225,7 @@ powershell.exe -noprofile -command "Invoke-WebRequest %praaturl% -OutFile %praat
 )
 ::ECHO Program files in %ProgramFiles%
 ECHO installing Praat to %ProgramFiles%
-powershell.exe -noprofile -command "Expand-Archive %praatfilename% -DestinationPath ""%ProgramFiles%""
+powershell.exe -noprofile -command "Expand-Archive %praatfilename% -DestinationPath ""%ProgramFiles%"""
 set path="%path%;%ProgramFiles%" >nul
 
 If exist %hgfilename% (
