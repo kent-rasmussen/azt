@@ -168,8 +168,8 @@ echo writing the second script ^(%~dpn0-2%~x0^)
 
 (
 echo @echo off
-echo call :runme-2 ^> %~dpn0-2.log 2>&1
-echo exit ^/B
+echo call :runme-2 ^> %~dpn0-2_log.txt 2>&1
+echo exit /B
 echo :runme-2
 echo ECHO Cloning A-Z+T source to '%userprofile%\desktop\azt'
 echo echo going to run git clone %%azt%% ^"%userprofile%/desktop/azt^"
