@@ -21,11 +21,9 @@ set hgversion=6.0
 set hgfilename=Mercurial-%hgversion%-x64.exe
 set hgurl=https://www.mercurial-scm.org/release/windows/%hgfilename%
 set charisversion=6.200
-set charisfilename=https://software.sil.org/downloads/r/charis/CharisSIL-%charisversion%.zip
+set charisfilename=CharisSIL-%charisversion%.zip
 set charisurl=https://software.sil.org/downloads/r/charis/%charisfilename%
-::unzip
-::Copy to "%SYSTEMROOT%\Fonts"
-::reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts" /v "FontName (TrueType)" /t REG_SZ /d FontName.ttf /f
+
 ECHO:
 ECHO:
 ECHO:
@@ -199,6 +197,17 @@ ECHO Install done! ^(hopefully!^)
 
 ::cd /d "%userprofile%/Downloads"
 
+
+If exist %charisfilename% (
+ECHO %charisfilename% is there!
+) ELSE (
+ECHO Downloading Charis %charisversion%...
+powershell.exe -noprofile -command "Invoke-WebRequest %charisurl% -OutFile %charisfilename%"
+)
+ECHO installing Charis to %%SYSTEMROOT%%\Fonts
+powershell.exe -noprofile -command "Expand-Archive %charisfilename% -DestinationPath %%SYSTEMROOT%%\Fonts
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts" /v "Charis SIL Regular (TrueType)" /t REG_SZ /d Charis-Regular.ttf /f
+
 If exist %xlpfilename% (
 ECHO %xlpfilename% is there!
 ) ELSE (
@@ -217,7 +226,7 @@ powershell.exe -noprofile -command "Invoke-WebRequest %praaturl% -OutFile %praat
 )
 ::ECHO Program files in %ProgramFiles%
 ECHO installing Praat to %ProgramFiles%
-powershell.exe -noprofile -command "Expand-Archive %praatfilename% -DestinationPath %ProgramFiles%"
+powershell.exe -noprofile -command "Expand-Archive %praatfilename% -DestinationPath %%ProgramFiles%%"
 set path="%path%;%ProgramFiles%" >nul
 
 If exist %hgfilename% (
