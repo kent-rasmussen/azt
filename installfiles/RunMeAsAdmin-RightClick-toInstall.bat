@@ -213,6 +213,7 @@ set noext=%%~f:.ttf=%
 set face=%noext:CharisSIL-=%
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts" /f /v "Charis SIL %face:BoldItalic=Bold Italic% (TrueType)" /t REG_SZ /d %%f
 )
+cd ..
 
 If exist %xlpfilename% (
 ECHO %xlpfilename% is there!
