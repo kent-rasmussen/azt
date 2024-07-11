@@ -206,13 +206,20 @@ ECHO Downloading Charis %charisversion%...
 powershell.exe -noprofile -command "Invoke-WebRequest %charisurl% -OutFile %charisfilename%"
 )
 ECHO installing Charis to %SYSTEMROOT%\Fonts
+setlocal enabledelayedexpansion
 powershell.exe -noprofile -command "Expand-Archive %charisfilename% -DestinationPath . -Force"
 cd %charisfilename:.zip=%
 for /f %%f in (*.ttf) do (
 copy %%f ""%SYSTEMROOT%\Fonts""
-set noext=%%~f:.ttf=%
-set face=%noext:CharisSIL-=%
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts" /f /v "Charis SIL %face:BoldItalic=Bold Italic% (TrueType)" /t REG_SZ /d %%f
+set file=%%f
+set noext=!file:.ttf=!
+set face=!noext:CharisSIL-=!
+set facemod=!face:BoldItalic=Bold Italic!
+echo noext is !noext!
+echo font is !file!
+echo face is !face!
+echo facemod is !facemod!
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts" /f /v "Charis SIL !facemod! (TrueType)" /t REG_SZ /d %%f
 )
 cd ..
 
