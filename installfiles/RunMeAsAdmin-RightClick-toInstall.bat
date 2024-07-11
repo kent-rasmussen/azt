@@ -215,10 +215,11 @@ set file=%%f
 set noext=!file:.ttf=!
 set face=!noext:CharisSIL-=!
 set facemod=!face:BoldItalic=Bold Italic!
-echo noext is !noext!
-echo font is !file!
-echo face is !face!
-echo facemod is !facemod!
+echo installing !file! as !facemod!
+:echo noext is !noext!
+:echo font is !file!
+:echo face is !face!
+:echo facemod is !facemod!
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts" /f /v "Charis SIL !facemod! (TrueType)" /t REG_SZ /d %%f
 )
 cd ..
