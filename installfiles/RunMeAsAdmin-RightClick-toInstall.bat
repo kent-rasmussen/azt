@@ -233,7 +233,7 @@ powershell.exe -noprofile -command "Invoke-WebRequest %praaturl% -OutFile %praat
 )
 ::ECHO Program files in %ProgramFiles%
 ECHO installing Praat to %ProgramFiles%
-powershell.exe -noprofile -command "Expand-Archive %praatfilename% -DestinationPath ""%ProgramFiles%"""
+powershell.exe -noprofile -command "Expand-Archive %praatfilename% -DestinationPath ""%ProgramFiles%"" -Force"
 set path="%path%;%ProgramFiles%" >nul
 
 If exist %hgfilename% (
