@@ -38,6 +38,7 @@ echo,  +Install Charis SIL (font), XLingPaper and Praat to get the most out of A
 echo,  +Download and Install Mercurial for collaboration with WeSay and FLEx
 echo:
 pause
+echo Continuing!
 
 call :runme > %~dpn0_log.txt 2>&1
 exit /B
