@@ -204,8 +204,14 @@ ECHO Downloading Charis %charisversion%...
 powershell.exe -noprofile -command "Invoke-WebRequest %charisurl% -OutFile %charisfilename%"
 )
 ECHO installing Charis to %%SYSTEMROOT%%\Fonts
-powershell.exe -noprofile -command "Expand-Archive %charisfilename% -DestinationPath ""%SYSTEMROOT%\Fonts"""
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts" /v "Charis SIL Regular (TrueType)" /t REG_SZ /d Charis-Regular.ttf /f
+powershell.exe -noprofile -command "Expand-Archive %charisfilename% -DestinationPath ."
+cd %charisfilename:.zip=%
+for /f %%f in (*.ttf) do (
+copy %%f ""%SYSTEMROOT%\Fonts""
+set noext=%%~f:.ttf=%
+set face=%noext:CharisSIL-=%
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts" /v "Charis SIL %face:BoldItalic=Bold Italic% (TrueType)" /t REG_SZ /d %%f /f
+)
 
 If exist %xlpfilename% (
 ECHO %xlpfilename% is there!
