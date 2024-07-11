@@ -211,7 +211,7 @@ for /f %%f in (*.ttf) do (
 copy %%f ""%SYSTEMROOT%\Fonts""
 set noext=%%~f:.ttf=%
 set face=%noext:CharisSIL-=%
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts" /v "Charis SIL %face:BoldItalic=Bold Italic% (TrueType)" /t REG_SZ /d %%f /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts" /f /v "Charis SIL %face:BoldItalic=Bold Italic% (TrueType)" /t REG_SZ /d %%f
 )
 
 If exist %xlpfilename% (
