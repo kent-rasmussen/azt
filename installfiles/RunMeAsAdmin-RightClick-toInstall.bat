@@ -209,7 +209,7 @@ ECHO installing Charis to %SYSTEMROOT%\Fonts
 setlocal enabledelayedexpansion
 powershell.exe -noprofile -command "Expand-Archive %charisfilename% -DestinationPath . -Force"
 cd %charisfilename:.zip=%
-for /f %%f in (*.ttf) do (
+for %%f in (*.ttf) do (
 copy %%f ""%SYSTEMROOT%\Fonts""
 set file=%%f
 set noext=!file:.ttf=!
