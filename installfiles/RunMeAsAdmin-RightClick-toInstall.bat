@@ -205,7 +205,7 @@ ECHO %charisfilename% is there!
 ECHO Downloading Charis %charisversion%...
 powershell.exe -noprofile -command "Invoke-WebRequest %charisurl% -OutFile %charisfilename%"
 )
-ECHO installing Charis to %%SYSTEMROOT%%\Fonts
+ECHO installing Charis to %SYSTEMROOT%\Fonts
 powershell.exe -noprofile -command "Expand-Archive %charisfilename% -DestinationPath . -Force"
 cd %charisfilename:.zip=%
 for /f %%f in (*.ttf) do (
