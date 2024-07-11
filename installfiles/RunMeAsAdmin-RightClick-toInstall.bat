@@ -164,6 +164,7 @@ echo writing the second script ^(%~dpn0-2%~x0^)
 
 (
 echo @echo off
+echo downloading A-Z+T
 echo call :runme-2 ^> %~dpn0-2_log.txt 2^>^&1
 echo exit /B
 echo :runme-2
