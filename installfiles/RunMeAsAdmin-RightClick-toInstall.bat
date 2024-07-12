@@ -258,6 +258,9 @@ start /wait %hgfilename% /silent
 ::echo Stopping here just in case you need to read anything above; we're done!
 ::Pause
 echo setup done!
+echo doing first run of A−Z+T, to make sure modules are installed
+python "%userprofile%/desktop/azt/main.py"
+
 goto end
 :NotAdmin
 ECHO This doesn't seem to be running as administrator.
