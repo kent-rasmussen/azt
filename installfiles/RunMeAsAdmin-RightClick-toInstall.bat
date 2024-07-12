@@ -278,7 +278,7 @@ goto :end
 :checkinternet
 echo Is your internet connected ? (to download installs)
 echo connect your internet and run this script again
-goto :end
+goto :eof
 :end
 del %~dpn0_log.txt
 :eof
