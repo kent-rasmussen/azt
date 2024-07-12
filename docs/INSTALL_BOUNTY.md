@@ -1,5 +1,7 @@
 # Bounty description for install executable for MS Windows
 
+I believe most of this is now covered by [this script](../installfiles/RunMeAsAdmin-RightClick-toInstall.bat?raw=true)
+
 A−Z+T installation would be greatly helped by having a simpler install process. Most of what is needed can be found in [this page](SIMPLEINSTALL.md), or in [this script](../installfiles/RunMetoInstall.bat?raw=true). This page will describe explicitly and in prioritized order what an install process (presumably using a single executable) should do.
 
 1. The executable should be as general and future-proof as possible.
