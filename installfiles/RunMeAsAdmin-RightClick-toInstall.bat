@@ -249,7 +249,7 @@ If exist %hgfilename% (
 ECHO %hgfilename% is there!
 ) ELSE (
 ECHO Downloading Mercurial %hgversion%...
-powershell.exe -noprofile -command "Invoke-WebRequest %hgurl% -OutFile %hgfilename%"
+powershell.exe -noprofile -command "Invoke-WebRequest %hgurl% -OutFile ""%hgfilename%"""
 )
 
 ECHO Installing Mercurial %hgversion%
