@@ -259,7 +259,7 @@ start /wait %hgfilename% /silent
 ::Pause
 echo setup done!
 echo doing first run of A−Z+T, to make sure modules are installed
-python "%userprofile%/desktop/azt/main.py"
+runas /env /user:domain\Administrator python "%userprofile%/desktop/azt/main.py"
 
 goto end
 :NotAdmin
