@@ -177,6 +177,8 @@ echo IF %%errorlevel%% neq 0 ^(
 echo.  echo IT looks like there was an error getting the repository.
 echo.  echo is your internet ^^^(or USB repository^^^) connected?
 echo.  ^)
+echo echo doing first run of A−Z+T, to make sure modules are installed
+echo python "%userprofile%/desktop/azt/main.py"
 echo del %~dpn0-2%~x0
 ) >%~dpn0-2%~x0
 ::Call the script we just made from a new shell for a new path, but as a basic user
@@ -258,8 +260,6 @@ start /wait %hgfilename% /silent
 ::echo Stopping here just in case you need to read anything above; we're done!
 ::Pause
 echo setup done!
-echo doing first run of A−Z+T, to make sure modules are installed
-runas /env /user:domain\Administrator python "%userprofile%/desktop/azt/main.py"
 
 goto end
 :NotAdmin
