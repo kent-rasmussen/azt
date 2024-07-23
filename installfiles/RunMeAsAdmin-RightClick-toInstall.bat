@@ -2,6 +2,10 @@
 whoami /groups | find "S-1-16-12288" >NUL 2>&1
 if errorlevel 1 goto NotAdmin
 ECHO Looks like I'm running As Administrator.
+for /f "tokens=* USEBACKQ" %%i in ('powershell -C "[Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)") DO (
+SET desktop=%%i
+)
+echo using desktop=%desktop%
 
 set pythonversion=3.12.4
 set pythonfilename=python-%pythonversion%-amd64.exe
