@@ -173,7 +173,7 @@ echo.  echo is your internet ^^^(or USB repository^^^) connected?
 echo.  ^)
 echo echo doing first run of A−Z+T, to make sure modules are installed
 echo python "%desktop%\azt\main.py"
-echo del %~dpn0-2%~x0
+echo echo del %~dpn0-2%~x0
 ) >%~dpn0-2%~x0
 ::Call the script we just made from a new shell for a new path, but as a basic user
 ::runas /showtrustlevels
