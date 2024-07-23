@@ -169,8 +169,8 @@ echo call :runme-2 ^> %~dpn0-2_log.txt 2^>^&1
 echo exit /B
 echo :runme-2
 echo ECHO Cloning A-Z+T source to '%userprofile%\desktop\azt'
-echo echo going to run git clone %%azt%% ^"%userprofile%/desktop/azt^"
-echo git config --global --add safe.directory %%azt%%
+echo echo going to run git clone %azt% ^"%userprofile%/desktop/azt^"
+echo git config --global --add safe.directory %azt%
 echo git clone %azt% ^"%userprofile%/desktop/azt^"
 echo echo errorlevel=%%errorlevel%%
 echo IF %%errorlevel%% neq 0 ^(
