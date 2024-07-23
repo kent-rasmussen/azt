@@ -2,11 +2,15 @@
 whoami /groups | find "S-1-16-12288" >NUL 2>&1
 if errorlevel 1 goto NotAdmin
 ECHO Looks like I'm running As Administrator.
-for /f "tokens=* USEBACKQ" %%i in ('powershell -C "[Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)"') DO (
+for /f "tokens=* USEBACKQ" %%i in ('powershell -noprofile -command "[Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)"') DO (
 SET desktop=%%i
 )
 echo using desktop=%desktop%
-for /f "tokens=* USEBACKQ" %%i in ('powershell -C "[Environment]::GetFolderPath([Environment+SpecialFolder]::UserProfile)"') DO (
+for /f "tokens=* USEBACKQ" %%i in ('powershell -noprofile -command "[Environment]::GetFolderPath([Environment+SpecialFolder]::UserProfile)"') DO (
+SET userprofile=%%i
+)
+echo using userprofile=%userprofile%
+for /f "tokens=* USEBACKQ" %%i in ('powershell -noprofile -command "echo [Environment]::GetFolderPath([Environment+SpecialFolder]::UserProfile)"') DO (
 SET userprofile=%%i
 )
 echo using userprofile=%userprofile%
