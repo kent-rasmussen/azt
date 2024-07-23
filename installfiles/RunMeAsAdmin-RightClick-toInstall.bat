@@ -169,16 +169,16 @@ echo call :runme-2 ^> %~dpn0-2_log.txt 2^>^&1
 echo exit /B
 echo :runme-2
 echo ECHO Cloning A-Z+T source to '%userprofile%\desktop\azt'
-echo echo going to run git clone %azt% ^"%userprofile%/desktop/azt^"
+echo echo going to run git clone %azt% ^"%userprofile%\desktop\azt^"
 echo git config --global --add safe.directory %azt%
-echo git clone %azt% ^"%userprofile%/desktop/azt^"
+echo git clone %azt% ^"%userprofile%\desktop\azt^"
 echo echo errorlevel=%%errorlevel%%
 echo IF %%errorlevel%% neq 0 ^(
-echo.  echo IT looks like there was an error getting the repository.
+echo.  echo it looks like there was an error getting the repository.
 echo.  echo is your internet ^^^(or USB repository^^^) connected?
 echo.  ^)
 echo echo doing first run of A−Z+T, to make sure modules are installed
-echo python "%userprofile%/desktop/azt/main.py"
+echo python "%userprofile%\desktop\azt\main.py"
 echo del %~dpn0-2%~x0
 ) >%~dpn0-2%~x0
 ::Call the script we just made from a new shell for a new path, but as a basic user
@@ -187,8 +187,8 @@ runas /trustlevel:0x20000 %~dpn0-2%~x0
 
 :: these seem to work before the location exists
 echo making links to AZT and Transcriber tool...
-mklink "%userprofile%/desktop/A-Z+T" "%userprofile%/desktop/azt/main.py"
-mklink "%userprofile%/desktop/Transcriber" "%userprofile%/desktop/azt/transcriber.py"
+mklink "%userprofile%\desktop\A-Z+T" "%userprofile%\desktop\azt\main.py"
+mklink "%userprofile%\desktop\Transcriber" "%userprofile%\desktop\azt\transcriber.py"
 
 ::echo Right-click on %~dpn0-2%~x0 and run it As Administrator ^(or has it?^)
 ::pause
@@ -198,7 +198,7 @@ ECHO Install done! ^(hopefully!^)
 ::ECHO to install XLingPaper^, Praat and Mercurial^, to get the most out of A-Z+T.
 ::pause
 
-::cd /d "%userprofile%/Downloads"
+::cd /d "%userprofile%\Downloads"
 
 
 If exist %charisfilename% (
