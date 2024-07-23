@@ -10,7 +10,7 @@ for /f "tokens=*" %%i in ('powershell -noprofile -command "[Environment]::GetFol
 SET userprofile=%%i
 )
 echo using userprofile=%userprofile%
-for /f "tokens=* USEBACKQ" %%i in ('powershell -C "[Environment]::GetFolderPath([Environment+SpecialFolder]::Downloads)") DO (
+for /f "tokens=*" %%i in ('powershell -noprofile -command "[Environment]::GetFolderPath([Environment+SpecialFolder]::Downloads)"') DO (
 SET downloads=%%i
 )
 echo using downloads=%downloads%
