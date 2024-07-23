@@ -6,14 +6,6 @@ for /f "tokens=*" %%i in ('powershell -noprofile -command "[Environment]::GetFol
 SET desktop=%%i
 )
 echo using desktop=%desktop%
-for /f "tokens=*" %%i in ('powershell -noprofile -command "[Environment]::GetFolderPath([Environment+SpecialFolder]::UserProfile)"') DO (
-SET userprofile=%%i
-)
-echo using userprofile=%userprofile%
-for /f "tokens=*" %%i in ('powershell -noprofile -command "[Environment]::GetFolderPath([Environment+SpecialFolder]::Downloads)"') DO (
-SET downloads=%%i
-)
-echo using downloads=%downloads%
 
 set pythonversion=3.12.4
 set pythonfilename=python-%pythonversion%-amd64.exe
