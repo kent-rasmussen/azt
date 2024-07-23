@@ -155,16 +155,6 @@ if defined azt (
   set azt=https://github.com/kent-rasmussen/azt.git
   )
 
-::This may also be useless:
-::ECHO ::WshShell = CreateObject("Wscript.shell")
-::ECHO ::strDesktop = WshShell.SpecialFolders("Desktop")
-::ECHO ::oMyShortcut = WshShell.CreateShortcut(strDesktop + "\A-Z+T.lnk")
-::ECHO ::oMyShortcut.WindowStyle = 3 &&Maximized 7=Minimized 4=Normal
-::ECHO ::oMyShortcut.IconLocation = "%userprofile%/desktop/azt/AZT stacks6_icon.png"
-::ECHO ::OMyShortcut.TargetPath = "%userprofile%/desktop/azt/main.py"
-::ECHO ::oMyShortCut.Hotkey = "ALT+CTRL+F"
-::ECHO ::oMyShortCut.Save
-
 echo writing the second script ^(%~dpn0-2%~x0^)
 ::This should probably some day bring in other things from a flash drive:
 ::local module install files
