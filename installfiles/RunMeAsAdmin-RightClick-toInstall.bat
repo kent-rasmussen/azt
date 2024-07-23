@@ -177,7 +177,7 @@ echo IF %%errorlevel%% neq 0 ^(
 echo.  echo IT looks like there was an error getting the repository.
 echo.  echo is your internet ^^^(or USB repository^^^) connected?
 echo.  ^)
-echo del %~dpn0-2%~x0
+echo echo del %~dpn0-2%~x0
 ) >%~dpn0-2%~x0
 ::Call the script we just made from a new shell for a new path, but as a basic user
 ::runas /showtrustlevels
