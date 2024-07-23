@@ -6,6 +6,11 @@ for /f "tokens=* USEBACKQ" %%i in ('powershell -C "[Environment]::GetFolderPath(
 SET desktop=%%i
 )
 echo using desktop=%desktop%
+for /f "tokens=* USEBACKQ" %%i in ('powershell -C "[Environment]::GetFolderPath([Environment+SpecialFolder]::UserProfile)") DO (
+SET userprofile=%%i
+)
+echo using userprofile=%userprofile%
+
 
 set pythonversion=3.12.4
 set pythonfilename=python-%pythonversion%-amd64.exe
