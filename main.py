@@ -13362,7 +13362,7 @@ class ErrorNotice(ui.Window):
                 log.error(_("Couldn't find a parent; error message follows"))
                 log.error(text)
                 return
-        parent=kwargs.get('parent',program.get('root',ui.Root))
+        parent=kwargs.get('parent',program.get('root',ui.Root()))
         # log.info("parent: {}".format(kwargs['parent']))
         title=kwargs.get('title',_("Error!"))
         wait=kwargs.get('wait')
