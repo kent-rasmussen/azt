@@ -14917,6 +14917,27 @@ def pythonmodules():
                         thisinstalled=installedsomething=True
                 except subprocess.CalledProcessError as e:
                     o=stouttostr(e.output)
+                    if "Could not find a version" in o:
+                        errors=[i for i in o.splitlines() if "ERROR:" in i]
+                        t=_("Please make sure your internet is connected, then "
+                        "click {}\n{}".format(_("OK"),'\n'.join(errors)))
+                        ErrorNotice(text=t,parent=ui.Root(),wait=True)
+                        log.info("Trying again, hopefully with internet")
+                        try:
+                            o=subprocess.check_output(pyargs,shell=False,
+                                                stderr=subprocess.STDOUT)
+                            o=stouttostr(o)
+                            if not o or "Successfully installed" in o:
+                                log.info("looks like it was at last successful;"
+                                        " so I'm going to reboot in a bit. "
+                                        "Output follows:")
+                                thisinstalled=installedsomething=True
+                        except Exception as e:
+                            t=_("I'm going to give up now, sorry!\n{}"
+                                "".format('\n'.join(errors)))
+                            ErrorNotice(text=t,parent=ui.Root(),wait=True)
+                            log.error("Looks like there was an error, "
+                                        "after all: {}".format(e))
         if not thisinstalled:
             log.info("Nothing installed. Output follows:")
         log.info(o) #just give bytes, if encoding isn't correct
