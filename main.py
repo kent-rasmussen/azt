@@ -15210,7 +15210,7 @@ def mainproblem():
             "solution below)"),justify='left',font='title',
             row=0,column=0
             )
-    if exceptiononload:
+    if False and exceptiononload:
         durl='{}/INSTALL.md#dependencies'.format(program['docsurl'])
         m=ui.Label(errorw.frame,text=_("\nPlease see {}").format(durl),
             justify='left', font='instructions',
