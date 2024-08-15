@@ -32,7 +32,7 @@ ECHO:
 ECHO:
 ECHO:
 ECHO:
-ECHO A-Z+T Install batch file
+ECHO A-Z+T Install batch file (2024-07-23)
 ECHO This script installs stuff --it must be run **As Administrator**! It will:
 ECHO,  +Download and install Python %pythonversion%
 ECHO,  +Download and install Git %gitversion%
