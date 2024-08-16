@@ -148,6 +148,7 @@ class RecordButtonFrame(ui.Frame):
 class Task():
     def __init__(self):
         self.pyaudio=sound.AudioInterface()
+        #any sound task should find settings at self.soundsettings: 
         self.soundsettings=sound.SoundSettings(self.pyaudio)
         self.audiolang=True
 if __name__ == "__main__":
