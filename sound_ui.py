@@ -6,6 +6,8 @@ logsetup.setlevel('INFO',log) #for this file
 import ui_tkinter as ui
 import sound
 import file
+from utilities import *
+
 class RecordButtonFrame(ui.Frame):
     def _start(self, event):
         log.log(3,"Asking PA to record now")
