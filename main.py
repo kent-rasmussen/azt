@@ -15039,13 +15039,6 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     log.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
 def openweburl(url):
     webbrowser.open_new(url)
-def tryrun(cmd):
-    try:
-        cmd()
-    except Exception as e:
-        text=_("{} command error: {}\n({})").format(cmd.__name__,e,cmd)
-        log.error(text)
-        ErrorNotice(text,title=_("{} command error!").format(cmd.__name__))
 def sysshutdown():
     logsetup.shutdown()
     sys.exit()
