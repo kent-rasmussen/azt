@@ -157,6 +157,7 @@ if __name__ == "__main__":
         def _(x):
             return x
     r=ui.Root()
+    program=r.program
     r.title('Sound UI')
     # program['settings']
     task=Task()
