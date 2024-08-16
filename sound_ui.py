@@ -61,7 +61,7 @@ class RecordButtonFrame(ui.Frame):
         # self.p.bind('<ButtonRelease>', self.function)
         self.p.grid(row=0, column=1,sticky='w')
         pttext=_("Click to hear")
-        if program['praat']:
+        if 'praat' in program:
             pttext+='; '+_("right click to open in praat")
             self.p.bind('<Button-3>',lambda x: praatopen(self._filenameURL))
         self.pt=ui.ToolTip(self.p,pttext)
