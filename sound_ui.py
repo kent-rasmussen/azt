@@ -6,13 +6,8 @@ logsetup.setlevel('INFO',log) #for this file
 import ui_tkinter as ui
 import sound
 import file
-def tryrun(cmd):
-    try:
-        cmd()
-    except Exception as e:
-        text=_("{} command error: {}\n({})").format(cmd.__name__,e,cmd)
-        log.error(text)
-        # ErrorNotice(text,title=_("{} command error!").format(cmd.__name__))
+from utilities import *
+
 class RecordButtonFrame(ui.Frame):
     """This is not implemented yet!!"""
     def _start(self, event):
