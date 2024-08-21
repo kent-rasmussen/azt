@@ -1194,7 +1194,7 @@ class StatusFrame(ui.Frame):
     def finalbuttons(self):
         # self.opts['row']+=6
         self.opts['row']+=1
-        if hasattr(self.task,'dobuttonkwargs'):
+        if hasattr(self.task,'dobuttonkwargs') and self.task.dobuttonkwargs():
             self.bigbutton=self.button(**self.task.dobuttonkwargs())
     def makesecondfieldsOK(self):
         for ps in [program['settings'].nominalps, program['settings'].verbalps]:
