@@ -6077,10 +6077,10 @@ class Parse(Segments):
         if self.iswaiting():
             self.waitpause()
         ln=[(i,formattuple(i)) for i in l if i[1] == self.nominalps]
-        ln+=[('ON',_("Another {}").format(self.secondformfield[self.nominalps]))]
+        ln+=[('ON',_("Other {}").format(self.secondformfield[self.nominalps]))]
         # log.info("noun option list: {}".format(ln))
         lv=[(i,formattuple(i)) for i in l if i[1] == self.verbalps]
-        lv+=[('OV',_("Another {}").format(self.secondformfield[self.verbalps]))]
+        lv+=[('OV',_("Other {}").format(self.secondformfield[self.verbalps]))]
         # log.info("verb option list: {}".format(lv))
         w=ui.Window(self)
         w.title(_("Select second form"))
