@@ -801,6 +801,8 @@ class UI(ObectwArgs):
             self.deiconify()
         except tkinter.TclError:
             pass
+        except AttributeError:
+            log.info("Seem to have tried stopping waiting, when I wasn't...")
     def __init__(self): #because this is used everywhere.
         # log.info("UI self._root(): {} ({})".format(self._root(),type(self._root())))
         # log.info("UI self._root() dir: {}".format(dir(self._root())))
