@@ -6041,18 +6041,20 @@ class Parse(Segments):
                     font='small',justify='l',
                     row=0,column=0)
         if self.iswaiting():
+            # log.info("Window almost built; unpausing")
             self.waitpause()
-        w.wait_window(l) #canary on label, not window
         # log.info("exit flag for w({}):{}; self({}):{}"
         #         "".format(w,w.exitFlag,self,self.exitFlag))
+        # log.info("Window built; waiting")
+        w.wait_window(self.l) #canary on label, not window
         if w.exitFlag.istrue():
-            log.info("Exited parse! (self.userresponse.value:{})"
-                    "".format(self.userresponse.value))
+            # log.info("Exited parse! (self.userresponse.value:{})"
+            #         "".format(self.userresponse.value))
             self.waitdone()
             self.exited=True
         else:
-            log.info("Didn't exit parse! (self.userresponse.value:{})"
-                    "".format(self.userresponse.value))
+            # log.info("Didn't exit parse! (self.userresponse.value:{})"
+            #         "".format(self.userresponse.value))
             # w.on_quit()
             w.destroy()
             if self.iswaiting():
