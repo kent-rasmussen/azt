@@ -6407,6 +6407,7 @@ class Parse(Segments):
             self.parser.autolevel(5) #no auto
             self.parser.asklevel(0)
         self.ftype=program['params'].ftype('lc') #Is this always correct?
+        # self.ftype=program['params'].ftype('lx') #I think once we parse, we want this
         # self.nodetag='citation'
         self.dodone=True #give me words with citation done
         self.checkeach=False #don't confirm each word (default)
