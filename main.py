@@ -14219,12 +14219,12 @@ class GitReadOnly(Git):
             log.info("remotes: {}".format(remotes))
             for remote in remotes: #iterate here to keep results
                 r[remote+'/'+self.branch]=method(self,remotes=[remote])
-            self.stash()
+            # self.stash()
             self.switchbranches()
             for remote in remotes: #iterate here to keep results
                 r[remote+'/'+self.branch]=method(self,remotes=[remote])
             self.switchbranches()
-            self.unstash()
+            # self.unstash()
         else:
             method=Repository.pull
             #make sure we at least try the github remote:
