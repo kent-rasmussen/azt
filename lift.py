@@ -191,7 +191,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             for i in range(y):
                 o+=gimmeint()
             return o
-        allguids=self.guids+self.senseids
+        allguids=list(self.guids)+list(self.senseids)
         guid=allguids[0]
         while guid in allguids:
             guid=rxi(8)+'-'+rxi(4)+'-'+rxi(4)+'-'+rxi(4)+'-'+rxi(12)
