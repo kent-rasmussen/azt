@@ -6244,7 +6244,13 @@ class Parse(Segments):
             log.info("Auto parsed {} with two forms".format(self.sense.id))
             return
         elif r and isinstance(r,tuple) and self.userconfirmation(*r):
-            self.parser.doparsetolx(r[1],*r[4:]) #pass root, too
+            if type(self.userresponse.value) is str:
+                log.info("User responded ‘{}’ to root suggestion ‘{}’"
+                        "".format(self.userresponse.value,r[1]))
+                self.fixroot(self.userresponse.value)
+                return self.trythreeforms()
+            else:
+                self.parser.doparsetolx(r[1],*r[4:]) #pass root, too
             return
         return 1 #do not return empty list, bool = False
     def trythreeforms(self):
@@ -6257,12 +6263,18 @@ class Parse(Segments):
                     "".format(self.sense.id,r))
             return
         elif r and isinstance(r,tuple) and self.userconfirmation(*r):
-            # return level, lx, lc, sf, self.ps, afxs #from self.parser.threeforms
-            log.info("r={}".format(r))
-            log.info("sending {}".format(r[4:]))
-            log.info("sending {}; {}".format(*r[4:]))
-            self.parser.addaffixset(*r[4:])#self.ps,afxs)
-            self.parser.sense.pssubclassvalue(r[-1])
+            if type(self.userresponse.value) is str:
+                log.info("User responded ‘{}’ to root suggestion ‘{}’"
+                        "".format(self.userresponse.value,r[1]))
+                self.fixroot(self.userresponse.value)
+                return self.trythreeforms()
+            else:
+                # return level, lx, lc, sf, self.ps, afxs #from self.parser.threeforms
+                log.info("r={}".format(r))
+                log.info("sending {}".format(r[4:]))
+                log.info("sending {}; {}".format(*r[4:]))
+                self.parser.addaffixset(*r[4:])#self.ps,afxs)
+                self.parser.sense.pssubclassvalue(r[-1])
             return
         return r
     def parse(self,**kwargs):
