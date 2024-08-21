@@ -68,6 +68,7 @@ from utilities import *
 try:
     import sound
     import transcriber
+    from sound_ui import SoundSettingsWindow
     program['nosound']=False
 except Exception as e:
     program['nosound']=True
@@ -3180,20 +3181,6 @@ class Settings(object):
         window.destroy()
     def setexamplespergrouptorecord(self,choice,window):
         self.set('examplespergrouptorecord',choice,window)
-    def setsoundhz(self,choice,window):
-        self.soundsettings.fs=choice
-        window.destroy()
-    def setsoundformat(self,choice,window):
-        self.soundsettings.sample_format=choice
-        window.destroy()
-    def setsoundcardindex(self,choice,window):
-        # log.info("setsoundcardindex: {}".format(choice))
-        self.soundsettings.audio_card_in=choice
-        window.destroy()
-    def setsoundcardoutindex(self,choice,window):
-        # log.info("setsoundcardoutindex: {}".format(choice))
-        self.soundsettings.audio_card_out=choice
-        window.destroy()
     def langnames(self,langs=None):
         """This is for getting the prose name for a language from a code."""
         """It should ultimately use a xyz.ldml file, produced (at least)
@@ -8220,76 +8207,6 @@ class Sound(object):
             self.pyaudio.pa.get_format_from_width(1) #just check if its OK
         except:
             self.pyaudio=sound.AudioInterface()
-    def getsoundcardindex(self,event=None):
-        log.info("Asking for input sound card...")
-        window=ui.Window(self.soundsettingswindow,
-                    title=_('Select Input Sound Card'))
-        ui.Label(window.frame, text=_('What sound card do you '
-                                    'want to record sound with with?')
-                ).grid(column=0, row=0)
-        l=list()
-        for card in self.soundsettings.cards['in']:
-            name=self.soundsettings.cards['dict'][card]
-            l+=[(card, name)]
-        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=program['settings'].setsoundcardindex,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def getsoundcardoutindex(self,event=None):
-        log.info("Asking for output sound card...")
-        window=ui.Window(self.soundsettingswindow,
-                title=_('Select Output Sound Card'))
-        ui.Label(window.frame, text=_('What sound card do you '
-                                    'want to play sound with?')
-                ).grid(column=0, row=0)
-        l=list()
-        for card in self.soundsettings.cards['out']:
-            name=self.soundsettings.cards['dict'][card]
-            l+=[(card, name)]
-        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=program['settings'].setsoundcardoutindex,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def getsoundformat(self,event=None):
-        log.info("Asking for audio format...")
-        window=ui.Window(self.soundsettingswindow,
-                        title=_('Select Audio Format'))
-        ui.Label(window.frame, text=_('What audio format do you '
-                                    'want to work with?')
-                ).grid(column=0, row=0)
-        l=list()
-        ss=self.soundsettings
-        for sf in ss.cards['in'][ss.audio_card_in][ss.fs]:
-            name=ss.hypothetical['sample_formats'][sf]
-            l+=[(sf, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=program['settings'].setsoundformat,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-    def getsoundhz(self,event=None):
-        log.info("Asking for sampling frequency...")
-        window=ui.Window(self.soundsettingswindow,
-                        title=_('Select Sampling Frequency'))
-        ui.Label(window.frame, text=_('What sampling frequency you '
-                                    'want to work with?')
-                ).grid(column=0, row=0)
-        l=list()
-        ss=self.soundsettings
-        for fs in ss.cards['in'][ss.audio_card_in]:
-            name=ss.hypothetical['fss'][fs]
-            l+=[(fs, name)]
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=l,
-                                    command=program['settings'].setsoundhz,
-                                    window=window,
-                                    column=0, row=1
-                                    )
     def makesoundsettings(self):
         if not hasattr(program['settings'],'soundsettings'):
             self.pyaudiocheck() #in case self.pyaudio isn't there yet
@@ -8298,115 +8215,12 @@ class Sound(object):
         self.makesoundsettings()
         program['settings'].loadsettingsfile(setting='soundsettings')
         program['soundsettings']=program['settings'].soundsettings
-    def soundcheckrefreshdone(self):
+    def storesoundsettings(self):
         program['settings'].storesettingsfile(setting='soundsettings')
-        self.soundsettingswindow.destroy()
     def quittask(self):
         self.soundsettingswindow.destroy()
         program['taskchooser'].gettask()
         self.on_quit()
-    def soundcheckrefresh(self,dict=None):
-        self.soundsettings.makedefaultifnot()
-        dictnow={
-                'audio_card_in':self.soundsettings.audio_card_in,
-                'fs':self.soundsettings.fs,
-                'sample_format': self.soundsettings.sample_format,
-                'audio_card_out': self.soundsettings.audio_card_out
-                }
-        """Call this just once. If nothing changed, wait; if changes, run,
-        then run again."""
-        if self.soundsettingswindow.exitFlag.istrue() or self.exitFlag.istrue():
-            self.soundsettingswindow.on_quit()
-            self.on_quit()
-            return
-        if dict == dictnow:
-            program['settings'].setrefreshdelay()
-            self.parent.after(program['settings'].refreshdelay,
-                                self.soundcheckrefresh,
-                                dictnow)
-            return
-        log.info("sound settings dict: {}".format(dict))
-        self.soundsettingswindow.resetframe()
-        self.soundsettingswindow.scroll=ui.ScrollingFrame(
-                                                self.soundsettingswindow.frame,
-                                                row=0,column=0)
-        self.soundsettingswindow.content=self.soundsettingswindow.scroll.content
-        row=0
-        ui.Label(self.soundsettingswindow.content, font='title',
-                text=_("Confirm Sound Card Settings"),
-                row=row,column=0)
-        row+=1
-        ui.Label(self.soundsettingswindow.content, #font='title',
-                text=_("(click any to change)"),
-                row=row,column=0)
-        row+=1
-        ss=self.soundsettings
-        ss.check() #make defaults if not valid options
-        for varname, dict, cmd in [
-            ('audio_card_in', ss.cards['dict'], self.getsoundcardindex),
-            ('fs',ss.hypothetical['fss'], self.getsoundhz),
-            ('sample_format', ss.hypothetical['sample_formats'],
-                                                         self.getsoundformat),
-            ('audio_card_out', ss.cards['dict'], self.getsoundcardoutindex),
-                                                    ]:
-            text=_("Change")
-            var=getattr(ss,varname)
-            log.debug("{} in {}".format(var,dict))
-            l=dict[var]
-            if cmd == self.getsoundcardindex:
-                l=_("Microphone: ‘{}’").format(l)
-            if cmd == self.getsoundcardoutindex:
-                l=_("Speakers: ‘{}’").format(l)
-            l=ui.Label(self.soundsettingswindow.content,text=l,
-                    row=row,column=0)
-            l.bind('<ButtonRelease-1>',cmd) #getattr(self,str(cmd)))
-            row+=1
-        br=RecordButtonFrame(self.soundsettingswindow.content,self,test=True)
-        br.grid(row=row,column=0)
-        row+=1
-        # l=_("You may need to change your microphone "
-        #     "\nand/or speaker sound card to get the "
-        #     "\nsampling and format you want.")
-        # ui.Label(self.soundsettingswindow.content,
-        #         text=l).grid(row=row,column=0)
-        # row+=1
-        l=_("Plug in your microphone, and make sure ‘record’ and ‘play’ work "
-            "well here, before recording real data!")
-        caveat=ui.Label(self.soundsettingswindow.content,
-                text=l,font='read',
-                row=row,column=0)
-        caveat.wrap()
-        row+=1
-        # l=_("See also note in documentation about verifying these "
-        #     "recordings in an external application, such as Praat.")
-        # caveat2=ui.Label(self.soundsettingswindow.content,
-        #         text=l,font='instructions',
-        #         row=row,column=0)
-        # caveat2.wrap()
-        # row+=1
-        play=_("Play")
-        l=_("If Praat is installed in your OS path, right click on ‘{}’ above "
-            "to open in Praat.".format(play))
-        caveat3=ui.Label(self.soundsettingswindow.content,
-                text=l,font='default',
-                row=row,column=0)
-        caveat3.wrap()
-        row+=1
-        bd=ui.Button(self.soundsettingswindow.content,
-                    text=_("Done"),
-                    cmd=self.soundcheckrefreshdone,
-                    # anchor='c',
-                    row=row,column=0,
-                    sticky=''
-                    )
-        bd=ui.Button(self.soundsettingswindow.content,
-                    text=_("Quit Task"),
-                    # cmd=program['root'].on_quit,
-                    cmd=self.quittask,
-                    # anchor='c',
-                    row=row,column=1
-                    )
-        self.soundcheckrefresh(dictnow)
     def soundsettingscheck(self):
         if not hasattr(program['settings'],'soundsettings'):
             self.loadsoundsettings()
@@ -8430,12 +8244,13 @@ class Sound(object):
                 return True
         program['settings'].soundsettingsok=True
     def mikecheck(self):
+        """This starts and stops the UI"""
         #move this to Record, after confirming that can be safely done.
         self.pyaudiocheck()
-        self.soundsettingswindow=ui.Window(self, exit=False,
-                                title=_('Select Sound Card Settings'))
+        #will need to add sound_ui in here, once generalized:
+        self.soundsettingswindow=SoundSettingsWindow(program['root'],
+                                                                self)
         self.soundsettingswindow.protocol("WM_DELETE_WINDOW", self.quittask)
-        self.soundcheckrefresh()
         if not self.soundsettingswindow.exitFlag.istrue():
             self.soundsettingswindow.wait_window(self.soundsettingswindow)
         self.donewpyaudio()

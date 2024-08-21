@@ -4,12 +4,17 @@
 # from tkinter import Tk as tkinter.Tk
 import pyaudio
 import wave
-# import soundfile
-import file
 import logsetup
 log=logsetup.getlog(__name__)
 # logsetup.setlevel('INFO',log) #for this file
 logsetup.setlevel('DEBUG',log) #for this file
+try:
+    import asr
+    log.info("ASR loaded OK")
+except Exception as e:
+    log.error("Exception importing ASR: {}".format(e))
+# import soundfile
+import file
 import sys
 import math        #?import needed modules
 try:
@@ -556,14 +561,46 @@ class SoundFileRecorder(object):
             self.wf.close()
         else:
             log.error("Nothing recorded!")
+    def toaudiosample(self):
+        from pydub import AudioSegment
+        return AudioSegment(self.fulldata,
+                frame_rate=self.settings.fs,
+                sample_width=self.settings.sample_format,
+                channels=self.settings.channels
+                )
     def stop(self):
         log.log(3,"I'm stopping recording now")
         if hasattr(self,'stream'):
             self.stream.stop_stream()
         self.fileclose()
+        if self.asrOK:
+            import time
+            audio = self.toaudiosample()
+            for asr in [self.asr,
+                        # self.asr1,
+                        self.asr2
+                        ]:
+                start_time = time.time()
+                # self.filenameURL
+                start_time = time.time()
+                # self.filenameURL
+                # 50% faster with language specified
+                msg=asr.transcribe(audio, language='en')
+                end_time=time.time()
+                log.info("{} ({}s)".format(msg, end_time - start_time))
         self.streamclose()
     def __init__(self,filenameURL,pyaudio,settings):
         log.debug("Initializing Recording to {}".format(filenameURL))
+        try:
+            assert 'asr' in sys.modules
+            self.asr=asr.ASRtoText()
+            # self.asr1=asr.ASRtoText('base')
+            self.asr2=asr.ASRtoText('small')
+            self.asrOK=True
+        except Exception as e:
+            log.error("Exception loading ASR: {}".format(e))
+            self.asrOK=False
+        self.asrOK=False #for now, to make this public without testing it
         self.callbackrecording=True
         self.pa=pyaudio
         self.settings=settings
