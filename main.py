@@ -4769,7 +4769,7 @@ class TaskChooser(TaskDressing,ui.Window):
             # if self.donew['parsedlx']:
             #     tasks.append(SortRoots)
         else: #i.e., analysis tasks
-            tasks=[]
+            tasks=[WordsParse]
             if self.doneenough['sort']:
                 tasks.append(TranscribeV)
                 tasks.append(TranscribeC)
