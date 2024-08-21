@@ -5974,8 +5974,34 @@ class Parse(Segments):
         log.info("asking for user confirmation")
         # Return True or False only
         def do(x):
-            self.userresponse.value=x
-            l.destroy()
+            log.info("doing {}".format(x))
+            if type(x) is ui.StringVar:
+                # log.info("Found StringVar")
+                self.userresponse.value=x.get()
+                self.fixroot(x.get())
+            else:
+                # log.info("Found non-StringVar")
+                self.userresponse.value=x
+            self.l.destroy()
+            # log.info("self.l destroyed")
+        def enterroot():
+            # log.info("Building extra root fields")
+            ui.Label(self.responseframe,
+                        text=_("root:"),
+                        row=0,column=3,padx=(10,0),sticky='ew')
+            roottext = ui.StringVar(self.responseframe, value=lx)
+            self.roottextfield=ui.EntryField(self.responseframe,
+                                                textvariable=roottext,
+                                                row=0,column=4,sticky='ew')
+            ui.Button(self.responseframe,
+                        text=_("OK"),
+                        command=lambda x=roottext: do(x),
+                        row=0,column=5,padx=(10,0),sticky='ew')
+            self.roottextfield.bind('<Return>', lambda event,
+                                                            x=roottext: do(x))
+            # log.info("Extra root fields built")
+            w.wait_window(self.l) #canary on label, not window
+            # log.info("Waiting (again)")
         level, lx, lc, sf, ps, afxs = args
         if self.exitFlag.istrue():
             return
@@ -6035,6 +6061,10 @@ class Parse(Segments):
                     text=_("No!"),
                     command=lambda x=False: do(x),
                     row=0,column=1,sticky='ew')
+        ui.Button(self.responseframe,
+                    text=_("wrong root!"),
+                    command=enterroot,
+                    row=0,column=2,padx=(10,0),sticky='ew')
         self.noticeframe=ui.Frame(w.frame,row=3,column=0)
         t=_("This parse looks good ({})\n").format(self.parser.levels()[level])
         ui.Label(self.noticeframe,text=t+self.currentformnotice(),
