@@ -6054,14 +6054,16 @@ class Parse(Segments):
     def selectsffromlist(self,l):
         def formattuple(l):
             pfx,sfx=l[-1]
+            root=l[2]
+            return '-'.join([i for i in [pfx,root,sfx] if i])
             if pfx:
                 pfx+='-'
             if sfx:
                 sfx='-'+sfx
             if pfx or sfx:
-                rootafxs=[l[2],'affixes:',pfx,sfx]
+                rootafxs=[root,'affixes:',pfx,sfx]
             else:
-                rootafxs=[l[2]]
+                rootafxs=[root]
             return "{} ({} root: {})".format(*l[:2],' '.join(rootafxs))
         def neither():
             # These count askparsed; evaluated and moving on
