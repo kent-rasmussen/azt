@@ -6142,6 +6142,29 @@ class Parse(Segments):
             r=self.asksegments(ps)
             if not r or self.exited: #i.e., returned OK
                 break
+    def currentformsforuser(self,entry=None):
+        if entry:
+            self.parser.entry=entry
+            self.parser.sense=entry.sense
+        lx,lc,pl,imp = self.parser.texts()
+        if lx:
+            return _("{root}: {} ({ps}), {sfname}: {}"
+                ).format(lx,''.join([i for i in [pl,imp] if i]),
+                        root=_("root"),
+                        ps=self.parser.sense.psvalue(),
+                        sfname=self.secondformfield[self.nominalps] if pl
+                        else self.secondformfield[self.verbalps]
+                        )
+        if lc:
+            return _("citation: {}, {sfname}: {}"
+                ).format(lx,''.join([i for i in [pl,imp] if i]),
+                        # root=_("root"),
+                        # ps=self.parser.sense.psvalue(),
+                        sfname=self.secondformfield[self.nominalps] if pl
+                        else self.secondformfield[self.verbalps]
+                        )
+        else:
+            return ""
     def currentformnotice(self):
         return _("currently: ")+("{} ({ps} {root}), {}, {} ({pl}), {} ({imp})"
                 ).format(*self.parser.texts(),
