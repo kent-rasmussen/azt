@@ -5826,6 +5826,11 @@ class WordCollection(Segments):
                                 font='readbig',
                                 row=3,column=0,columnspan=3,
                                 sticky='ew')
+        if hasattr(self.task,'currentformsforuser'):
+            self.cparsetext=ui.StringVar()
+            self.parsebutton=ui.Label(self.wordframe,
+                                        textvariable=self.cparsetext,
+                                        row=4, column=1, sticky='w',anchor='w')
         next.bind_all('<Up>',lambda event: self.backword(nostore=True))
         next.bind_all('<Prior>',lambda event: self.backword(nostore=True))
         next.bind_all('<Down>',lambda event: self.nextword(nostore=True))
