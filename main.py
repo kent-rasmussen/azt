@@ -6044,7 +6044,7 @@ class Parse(Segments):
                                 sticky='ew')
         lcmorphs=list(afxs[0])
         lcmorphs.insert(1,lx)
-        l=ui.Label(self.lcframe,
+        self.l=ui.Label(self.lcframe,
                 text='-'.join([i for i in lcmorphs if i]),font='title',
                 row=0,column=0)
         ImageFrame(self.lcframe,self.sense,
