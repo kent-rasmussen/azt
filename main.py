@@ -6272,6 +6272,15 @@ class Parse(Segments):
                 self.parser.sense.pssubclassvalue(r[-1])
             return
         return r
+    def parse_foreground(self,**kwargs):
+        self.withdraw()
+        self.updatereturnbind()
+        self.parse(**kwargs)
+        if self.iswaiting():
+            self.waitdone()
+        if self.winfo_exists():
+            self.deiconify()
+            self.updatereturnbind()
     def parse(self,**kwargs):
         # These functions return nothing when the parse goes through, 1 when
         # not done. If the user exits, self.exited is set
@@ -6285,6 +6294,9 @@ class Parse(Segments):
         log.info("lx: {}, lc: {}, pl: {}, imp: {}".format(*self.parser.texts()))
         if min(self.parser.auto, self.parser.ask) <= 4:# and not badps:
             r=self.trythreeforms()
+        else:
+            log.info("Not parsing; auto: {}, ask: {}".format(self.parser.auto,
+                                                            self.parser.ask))
         # badps is OK here, but don't do twoforms if threeforms worked
         if r and not self.exited:
             r=self.trytwoforms()
@@ -6304,9 +6316,6 @@ class Parse(Segments):
         # if self.parent.iswaiting():
         #     self.parent.waitdone()
         # self.parent.deiconify()
-        if self.iswaiting():
-            self.waitdone()
-        self.deiconify()
     def initsensetodo(self):
         try:
             r=self.sensetodo
@@ -6481,17 +6490,15 @@ class WordCollectnParse(WordCollection,Parse,TaskDressing):
         try:
             v=self.var.get()
             if v:
-                self.withdraw()
                 self.updatereturnbind()
                 self.entry.lc.textvaluebylang(self.analang,v)
-                self.parse(entry=self.entry)
+                self.parse_foreground(entry=self.entry)
             # if hasattr(self,'sensetodo') and self.sensetodo:
             self.sensetodo=None
             self.maybewrite() #only if above is successful
             log.info("Storing word: {}".format(self.sense.id))
         except AttributeError as e:
             log.info("Not storing word (WordCollectnParse): {}".format(e))
-        self.deiconify()
     def __init__(self, parent):
         log.info("Initializing {}".format(self.tasktitle()))
         self.ftype=program['params'].ftype('lc') #always correct?
