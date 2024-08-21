@@ -6512,6 +6512,32 @@ class WordCollectnParse(WordCollection,Parse,TaskDressing):
         # if me:
         #     self.downloadallCAWLimages()
         fn=self.getwords()#?
+class WordsParse(WordCollection,Parse,TaskDressing):
+    def taskicon(self):
+        return program['theme'].photo['iconWord']
+    def tooltip(self):
+        return _("This task helps you parse words you collected earlier.")
+    def tasktitle(self):
+        return _("Parse Already Collected Words") # for Citation Forms
+    def dobuttonkwargs(self):
+        pass
+    def __init__(self, parent):
+        log.info("Initializing {}".format(self.tasktitle()))
+        self.ftype=program['params'].ftype('lc') #always correct?
+        # self.nodetag='citation'
+        TaskDressing.__init__(self,parent)
+        Parse.__init__(self,parent)
+        WordCollection.__init__(self,parent)
+        self.dodone=True #give me words with citation done
+        self.checkeach=True #confirm each word (not default)
+        self.dodoneonly=True #don't give me other words
+        self.userresponse=Object()
+        program['taskchooser'].withdraw()
+        #This should either be adapted to use parse or not by keyword, or have
+        # another method for addnParse
+        # if me:
+        #     self.downloadallCAWLimages()
+        fn=self.getwords()#?
 class ParseSlice(Parse):
     def tasktitle(self):
         return _("Parse One Slice")
