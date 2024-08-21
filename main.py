@@ -5500,6 +5500,7 @@ class WordCollection(Segments):
                                 text = strings['skip'],
                                 command = skipform,
                                 row=1,column=1,sticky='')
+        self.runwindow.lift()
         self.runwindow.waitdone()
         sub_btn.wait_window(self.runwindow.frame2) #then move to next step
     def addmorpheme(self):
