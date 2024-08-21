@@ -5903,6 +5903,14 @@ class WordCollection(Segments):
         if not default:
             default=''
         self.var.set(default)
+        log.info(self.currentformsforuser(entry=self.entry))
+        self.cparsetext.set(self.currentformsforuser(entry=self.entry))
+        if self.cparsetext.get():
+            self.parsebutton.bind('<ButtonRelease-1>',
+                            lambda event,
+                            entry=self.entry:self.parse_foreground(entry=entry))
+        else:
+            self.parsebutton.unbind('<ButtonRelease-1>')
         self.lxenter.focus_set()
         self.frame.grid_columnconfigure(1,weight=1)
         self.deiconify()
