@@ -6277,6 +6277,8 @@ class Parse(Segments):
                 self.parser.sense.pssubclassvalue(r[-1])
             return
         return r
+    def fixroot(self,root):
+        self.parser.entry.lx.textvaluebylang(self.analang,root)
     def parse_foreground(self,**kwargs):
         self.withdraw()
         self.updatereturnbind()
