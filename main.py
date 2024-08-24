@@ -3,7 +3,7 @@
 """This file runs the actual GUI for lexical file manipulation/checking"""
 program={'name':'A-Z+T',
         'tkinter':True, #for some day
-        'production':False, #True for making screenshots (default theme)
+        'production':True, #True for making screenshots (default theme)
         'testing':False, #normal error screens and logs
         'version':'0.9.10', #This is a string...
         'testversionname':'testing', #always have some real test branch here
