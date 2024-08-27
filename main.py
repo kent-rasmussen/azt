@@ -6053,15 +6053,24 @@ class Parse(Segments):
         ui.Button(self.responseframe,
                     text=_("Yes!"),
                     command=lambda x=True: do(x),
-                    row=0,column=0,sticky='ew')
+                    ipadx=10,
+                    row=0,column=0,sticky='nsew')
         ui.Button(self.responseframe,
                     text=_("No!"),
                     command=lambda x=False: do(x),
-                    row=0,column=1,sticky='ew')
-        ui.Button(self.responseframe,
+                    ipadx=10,
+                    row=0,column=1,sticky='nsew')
+        self.correctframe=ui.Frame(self.responseframe,
+                                    row=0,column=2,
+                                    sticky='ew',padx=(10,0))
+        ui.Button(self.correctframe,
                     text=_("wrong root!"),
                     command=enterroot,
-                    row=0,column=2,padx=(10,0),sticky='ew')
+                    row=0,column=0,sticky='ew')
+        ui.Button(self.correctframe,
+                    text=_("wrong {}!".format(self.secondformfield[self.sense.psvalue()])),
+                    command=undosf,
+                    row=1,column=0,sticky='ew')
         self.noticeframe=ui.Frame(w.frame,row=3,column=0)
         t=_("This parse looks good ({})\n").format(self.parser.levels()[level])
         ui.Label(self.noticeframe,text=t+self.currentformnotice(),
