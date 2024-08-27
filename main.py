@@ -5614,6 +5614,8 @@ class WordCollection(Segments):
             log.info("Not storing {}, by request".format(self.sense.id))
         if self.index < len(self.entries)-1:
             self.index+=1
+        else:
+            self.index=1
         self.getword()
     def backword(self,nostore=True):
         self.dirfn=self.backword
