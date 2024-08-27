@@ -11891,7 +11891,7 @@ class ImageFrame(ui.Frame):
             if (hasattr(self.sense,'image')
                     and isinstance(self.sense.image,ui.Image)
                     and not reload):
-                log.info("Found Image, using")
+                # log.info("Found Image, using")
                 image=self.sense.image
                 compiled=True
                 self.hasimage=True
