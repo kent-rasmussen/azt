@@ -141,6 +141,11 @@ class Catalog(object):
         except AttributeError:
             self.neither=[senseid]
     def addaffixset(self,affixes):
+        if len(affixes[1]) != 2:
+            log.error("Tried to add affixes {} of len {}, not doing!".format(
+                                                    affixes[1],len(affixes[1])
+                                                    ))
+            return
         try:
             self.affixes[affixes[0]].update([affixes[1]])
         except KeyError:
