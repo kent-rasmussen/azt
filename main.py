@@ -6401,14 +6401,13 @@ class Parse(Segments):
             # log.info("Asking for second form typed")
             self.asksegmentsnops()
         if not self.exited:
-            try:
-                self.parsecatalog.addparsed(self.sense.id)
-            except: #upgrade to this
-                self.parsecatalog.addparsed(kwargs['entry'].sense.id)
-            self.maybewrite()
-        # if self.parent.iswaiting():
-        #     self.parent.waitdone()
-        # self.parent.deiconify()
+            self.submitparse()
+    def submitparse(self):
+        try:
+            self.parsecatalog.addparsed(self.sense.id)
+        except: #upgrade to this
+            self.parsecatalog.addparsed(kwargs['entry'].sense.id)
+        self.maybewrite()
     def initsensetodo(self):
         try:
             r=self.sensetodo
