@@ -5833,15 +5833,15 @@ class WordCollection(Segments):
         if self.state() == 'withdrawn':
             self.unbind_all('<Return>')
         else: #only bind to non-withdrawn window
-            try:
-                assert self.wordframe.pic.hasimage
-                self.lxenter.bind_all('<Return>',
-                                    lambda event: self.nextword(nostore=False))
-                log.info("Return now moves to next word")
-            except AssertionError:
-                self.wordframe.pic.bind_all('<Return>',
-                                                    self.selectimageormoveon)
-                log.info("Return now selects image, or moves on")
+            # try: #re-institute this section once pics have good defaults
+            #     assert self.wordframe.pic.hasimage
+            self.lxenter.bind_all('<Return>',
+                                lambda event: self.nextword(nostore=False))
+            #     log.info("Return now moves to next word")
+            # except AssertionError:
+            #     self.wordframe.pic.bind_all('<Return>',
+            #                                         self.selectimageormoveon)
+            #     log.info("Return now selects image, or moves on")
     def getword(self):
         program['taskchooser'].withdraw()# not sure why necessary
         # log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
