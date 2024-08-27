@@ -3534,8 +3534,7 @@ class TaskDressing(HasMenus,ui.Window):
                     log.info(p)
                     l=ui.Label(w.frame,text=p,row=2+n,column=0)
                     l.wrap()
-            ok=Object()
-            ok.value=False
+            ok=Object(value=False)
             b=ui.Button(w.frame,text=_("OK, go ahead"), command=confirm)
             b.grid(row=1,column=1)
             w.wait_window(w)
@@ -6485,7 +6484,7 @@ class Parse(Segments):
         self.dodone=True #give me words with citation done
         self.checkeach=False #don't confirm each word (default)
         self.dodoneonly=True #don't give me other words
-        self.userresponse=Object()
+        self.userresponse=Object(rootchange=False,value=False)
         self.showwhenready()
 class ParseWords(Parse,TaskDressing):
     def taskicon(self):
@@ -14252,8 +14251,9 @@ class Options:
         for arg in kwargs:
             setattr(self,self.alias(arg),kwargs[arg])
 class Object:
-    def __init__(self):
-        self.value=None
+    def __init__(self,**kwargs):
+        for k in kwargs:
+            setattr(self,k,kwargs[k])
 """These are non-method utilities I'm actually using."""
 def now():
     try:
