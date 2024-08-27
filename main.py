@@ -6530,6 +6530,7 @@ class Parse(Segments):
         self.checkeach=False #don't confirm each word (default)
         self.dodoneonly=True #don't give me other words
         self.userresponse=Object(rootchange=False,value=False)
+        self.cparsetext=ui.StringVar() #store UI parse info here
         self.showwhenready()
 class ParseWords(Parse,TaskDressing):
     def taskicon(self):
