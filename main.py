@@ -6300,6 +6300,15 @@ class Parse(Segments):
             return 1
         elif not self.exited:
             self.trytwoforms()
+    def done(self):
+        lx, lc, pl, imp = self.parser.texts()
+        ps=self.parser.sense.psvalue()
+        log.info("Currently working with lx: {}, lc: {}, pl: {}, imp: {}, ps: "
+                "{}".format(lx,lc,pl,imp,ps))
+        log.info("Done: {}".format(bool(lx)&bool(lc)&(
+                                    bool(pl)|bool(imp))&
+                                    bool(ps)))
+        return bool(lx)&bool(lc)&(bool(pl)|bool(imp))&bool(ps)
     def tryoneform(self):
         log.info("Asking for second form selected (parse w/one form)")
         r=self.parser.oneform()
