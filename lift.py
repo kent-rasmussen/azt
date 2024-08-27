@@ -1958,6 +1958,9 @@ class Form(Node):
             r+="("+self.parent.ftype+")"
         return r
     def textvalue(self,value=None):
+        if value is False:
+            self.parent.remove(self)
+            return
         if value is not None: #leave room to clear value with ''
             # log.info("Setting textvalue to ‘{}’ ({})".format(value,type(value)))
             self.textnode.text=value
