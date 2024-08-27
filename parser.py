@@ -491,9 +491,9 @@ class Engine(object):
         log.info("User selected {}".format(x))
         if not type(x) is tuple:
             if x=='ON':
-                self.on=True
+                self.sense.psvalue(self.nominalps)
             elif x=='OV':
-                self.ov=True
+                self.sense.psvalue(self.verbalps)
             else:
                 log.info("Not a tuple, nor known: ({}, {})".format(x,type(x)))
             window.destroy() #actually a canary button
