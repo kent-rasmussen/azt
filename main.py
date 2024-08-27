@@ -6320,6 +6320,8 @@ class Parse(Segments):
     def tryoneform(self):
         log.info("Asking for second form selected (parse w/one form)")
         r=self.parser.oneform()
+        # log.info("r: {}".format(r))
+        # log.info("psvalue: {}".format(self.parser.sense.psvalue()))
         if r:
             self.selectsffromlist(r)
             log.info("Done selecting from {}".format(r))
@@ -6363,6 +6365,9 @@ class Parse(Segments):
             not self.userresponse.rootchange):
             self.trytwoforms()
     def fixroot(self,root):
+        log.info("Fixing Root {} > {}".format(
+                            self.parser.entry.lx.textvaluebylang(self.analang),
+                            root))
         self.parser.entry.lx.textvaluebylang(self.analang,root)
         self.updateparseUI()
     def parse_foreground(self,**kwargs):
