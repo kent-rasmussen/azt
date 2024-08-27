@@ -6205,13 +6205,13 @@ class Parse(Segments):
             self.waitunpause()
     def asksegmentsnops(self):
         for ps in [self.nominalps, self.verbalps]:
-            r=self.asksegments(ps)
+            r=self.asksegments(ps=ps)
             if not r or self.exited: #i.e., returned OK
                 break
     def updateparseUI(self):
         self.cparsetext.set(self.currentformsforuser(entry=self.entry))
     def currentformsforuser(self,entry=None):
-        if entry:
+        if entry is not None:
             self.parser.entry=entry
             self.parser.sense=entry.sense
         lx,lc,pl,imp = self.parser.texts()
