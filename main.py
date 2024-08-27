@@ -6013,6 +6013,18 @@ class Parse(Segments):
                                                             x=roottext: do(x))
             # log.info("Extra root fields built")
             # log.info("Waiting (again)")
+        def undosf():
+            log.info("Running undosf")
+            log.info(self.currentformnotice())
+            if self.sense.psvalue() == self.nominalps:
+                self.entry.plvalue(program['settings'].pluralname,
+                                            self.analang, value=False) #unset value
+            elif self.sense.psvalue() == self.verbalps:
+                self.entry.impvalue(program['settings'].imperativename,
+                                            self.analang, value=False) #unset value
+            program['db'].write()
+            log.info(self.currentformnotice())
+            do(False)
         level, lx, lc, sf, ps, afxs = args
         if self.exitFlag.istrue():
             return
