@@ -6206,7 +6206,7 @@ class Parse(Segments):
                         pl=self.secondformfield[self.nominalps],
                         imp=self.secondformfield[self.verbalps]
                         )
-    def asksegments(self,ps):
+    def asksegments(self,ps=None):
         def do(event=None):
             self.parser.sense.psvalue(ps)
             if ps == self.nominalps:
@@ -6230,6 +6230,8 @@ class Parse(Segments):
             # w.on_quit()
         if self.exitFlag.istrue():
             return
+        if not ps:
+            return asksegmentsnops()
         log.info("asking for second form segments for ‘{}’ ps: {} ({}; {})"
                 "".format(self.parser.entry.lc.textvaluebylang(self.analang),
                             ps,self.parser.sense.id,
@@ -6282,16 +6284,9 @@ class Parse(Segments):
         if r:
             self.selectsffromlist(r)
             log.info("Done selecting from {}".format(r))
-        else:
-            return 1 #no forms to select from, or exited; move on
-        if self.parser.on:
-            # log.info("asking for other noun segments")
-            self.asksegments(self.nominalps)
-        elif self.parser.ov:
-            # log.info("asking for other verb segments")
-            self.asksegments(self.verbalps)
-        if not self.exited:
-            log.info("User seems to have selected a second form, or neither")
+        #User responding "neither noun nor verb" gives no psvalue, so stop here.
+        if not self.exited and not self.done() and self.parser.sense.psvalue():
+            self.tryaskform()
     def trytwoforms(self):
         log.info("Trying for parse with two forms")
         r=self.parser.twoforms()
