@@ -5978,11 +5978,12 @@ class Parse(Segments):
         def do(x):
             log.info("doing {}".format(x))
             if type(x) is ui.StringVar:
-                # log.info("Found StringVar")
-                self.userresponse.value=x.get()
+                log.info("Found StringVar: {}".format(x.get()))
                 self.fixroot(x.get())
+                #keep userresponse.value 'False'
+                self.userresponse.rootchange=True
             else:
-                # log.info("Found non-StringVar")
+                #The only True value here should be for "good parse, continue".
                 self.userresponse.value=x
             self.l.destroy()
             # log.info("self.l destroyed")
@@ -6002,7 +6003,6 @@ class Parse(Segments):
             self.roottextfield.bind('<Return>', lambda event,
                                                             x=roottext: do(x))
             # log.info("Extra root fields built")
-            w.wait_window(self.l) #canary on label, not window
             # log.info("Waiting (again)")
         level, lx, lc, sf, ps, afxs = args
         if self.exitFlag.istrue():
@@ -6010,6 +6010,7 @@ class Parse(Segments):
         w=ui.Window(self,noexit=True)
         w.title(_("Confirm this combination of affixes?"))
         self.userresponse.value=False
+        self.userresponse.rootchange=False
         # gloss=self.getgloss()
         # text=_("Parse looks good ({}):").format(self.parser.levels()[level])
         # text+=("\n{} {}"
@@ -6100,8 +6101,11 @@ class Parse(Segments):
             w.destroy()
             if self.iswaiting():
                 self.waitunpause()
-            # log.info("User responded {}".format(self.userresponse.value))
-            return self.userresponse.value
+            if self.userresponse.rootchange:
+                self.trythreeforms() #kick this back up a level
+            else:
+                # log.info("User responded {}".format(self.userresponse.value))
+                return self.userresponse.value
     def selectsffromlist(self,l):
         def formattuple(l):
             pfx,sfx=l[-1]
@@ -6312,16 +6316,13 @@ class Parse(Segments):
         if not r:
             log.info("Auto parsed {} with two forms".format(self.sense.id))
             return
-        elif r and isinstance(r,tuple) and self.userconfirmation(*r):
-            if type(self.userresponse.value) is str:
-                log.info("User responded ‘{}’ to root suggestion ‘{}’"
-                        "".format(self.userresponse.value,r[1]))
-                self.fixroot(self.userresponse.value)
-                return self.trythreeforms()
-            else:
-                self.parser.doparsetolx(r[1],*r[4:]) #pass root, too
-            return
-        return 1 #do not return empty list, bool = False
+        elif isinstance(r,tuple) and self.userconfirmation(*r):
+            self.parser.doparsetolx(r[1],*r[4:]) #pass root, too
+        if (not self.exited and
+            not self.done() and
+            # rootchange kicks back, so just finish here on rootchange:
+            not self.userresponse.rootchange):
+            self.tryoneform()
     def trythreeforms(self):
         log.info("Trying for parse with three forms")
         r=self.parser.threeforms()
@@ -6331,21 +6332,19 @@ class Parse(Segments):
             log.info("Auto parsed {} with three forms (returned {})"
                     "".format(self.sense.id,r))
             return
-        elif r and isinstance(r,tuple) and self.userconfirmation(*r):
-            if type(self.userresponse.value) is str:
-                log.info("User responded ‘{}’ to root suggestion ‘{}’"
-                        "".format(self.userresponse.value,r[1]))
-                self.fixroot(self.userresponse.value)
-                return self.trythreeforms()
-            else:
+        elif isinstance(r,tuple) and self.userconfirmation(*r):
                 # return level, lx, lc, sf, self.ps, afxs #from self.parser.threeforms
-                log.info("r={}".format(r))
-                log.info("sending {}".format(r[4:]))
-                log.info("sending {}; {}".format(*r[4:]))
-                self.parser.addaffixset(*r[4:])#self.ps,afxs)
-                self.parser.sense.pssubclassvalue(r[-1])
+            log.info("Confirmed parsing of ‘{}’ root from ‘{}’ and ‘{}’ as {}"
+                        "".format(*r[1:5]))
+            log.info("adding {} affix set {}".format(*r[4:]))
+            self.parser.addaffixset(*r[4:])#self.ps,afxs)
+            self.parser.sense.pssubclassvalue(r[-1])
             return
-        return r
+        if (not self.exited and
+            not self.done() and
+            # rootchange kicks back, so just finish here on rootchange:
+            not self.userresponse.rootchange):
+            self.trytwoforms()
     def fixroot(self,root):
         self.parser.entry.lx.textvaluebylang(self.analang,root)
         self.updateparseUI()
