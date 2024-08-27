@@ -6386,19 +6386,19 @@ class Parse(Segments):
         self.parser.parseentry(**kwargs) #sets entry, sense, and sense.id for parser
         log.info("lx: {}, lc: {}, pl: {}, imp: {}".format(*self.parser.texts()))
         if min(self.parser.auto, self.parser.ask) <= 4:# and not badps:
-            r=self.trythreeforms()
+            r=self.trythreeforms() #other functions will be triggered from here.
         else:
             log.info("Not parsing; auto: {}, ask: {}".format(self.parser.auto,
                                                             self.parser.ask))
         # badps is OK here, but don't do twoforms if threeforms worked
-        if r and not self.exited:
-            r=self.trytwoforms()
             # log.info("trytwoforms returned {}".format(r))
-        if r and not self.exited: #and still here
-            r=self.tryoneform()
             # log.info("tryoneform returned {}".format(r))
-        if r and not self.exited:
             # log.info("Asking for second form typed")
+    def tryaskform(self):
+        try:
+            self.asksegments(ps=self.parser.sense.psvalue())
+        except Exception as e:
+            log.info("Exeption: {}".format(e))
             self.asksegmentsnops()
         if not self.exited:
             self.submitparse()
