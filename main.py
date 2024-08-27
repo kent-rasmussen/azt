@@ -6186,6 +6186,8 @@ class Parse(Segments):
             r=self.asksegments(ps)
             if not r or self.exited: #i.e., returned OK
                 break
+    def updateparseUI(self):
+        self.cparsetext.set(self.currentformsforuser(entry=self.entry))
     def currentformsforuser(self,entry=None):
         if entry:
             self.parser.entry=entry
@@ -6341,6 +6343,7 @@ class Parse(Segments):
         return r
     def fixroot(self,root):
         self.parser.entry.lx.textvaluebylang(self.analang,root)
+        self.updateparseUI()
     def parse_foreground(self,**kwargs):
         self.withdraw()
         self.updatereturnbind()
