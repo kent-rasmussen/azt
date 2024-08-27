@@ -3977,7 +3977,8 @@ class TaskDressing(HasMenus,ui.Window):
         todo=len(senses)
         list=[(k,k.formatted(self.analang,self.glosslangs))
                 for k in senses
-                if k.formatted(self.analang,self.glosslangs).startswith(choice)]
+                if k.unformatted(self.analang,self.glosslangs
+                                ).startswith(choice)]
         list.sort(key=lambda x:x[1])
         window=ui.Window(self, title=_('Select Lexical Item'))
         ui.Label(window.frame, text=_('What sense do you want to work with?'),
@@ -3995,15 +3996,21 @@ class TaskDressing(HasMenus,ui.Window):
         # self.wait(msg=msg)
         senses=program['db'].senses
         todo=len(senses)
-        kcounts=collections.Counter([k.formatted(self.analang,self.glosslangs)[0]
-                                            for k in senses]
+        kcounts=collections.Counter([k.unformatted(self.analang,
+                                                    self.glosslangs)[0]
+                                    for k in senses
+                                    if k.unformatted(self.analang,
+                                                    self.glosslangs)
+                                    ]
                                     ).most_common()
         if len(kcounts)<15: #When few choices, use first two letters
-            kcounts=collections.Counter([k.formatted(self.analang,
+            kcounts=collections.Counter([k.unformatted(self.analang,
                                                     self.glosslangs)[:2]
-                                            for k in senses]
-                                    ).most_common()
-
+                                        for k in senses
+                                        if k.unformatted(self.analang,
+                                                    self.glosslangs)
+                                        ]
+                                        ).most_common()
         letters=[{'code':k,'description':v} for k,v in kcounts]
         # log.info("Counts: {}".format(kcounts))
         # letters=list([(k,k,v) for k,v in kcounts])
