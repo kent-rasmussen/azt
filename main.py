@@ -2663,7 +2663,8 @@ class Settings(object):
                      and (k in ['C','V'] or self.distinguish.get(k)))
                 for i in v
                 ]
-        # log.info("Looking for sclass {} in {}".format(sclass,self.s[self.analang]))
+        # log.info("Looking for sclass {} in {}".format(sclass,self.s[analang]))
+        # log.info("Using segments in: {} out: {}".format(sin,sout))
         for n in range(1,7): #just get the Nth C or V, don't worry about polygraphs
             self.rx[sclass+str(n)]=rx.nX(sin,sout,n) #no polygraphs here
     def setupCVrxs(self):
