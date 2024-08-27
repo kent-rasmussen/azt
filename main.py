@@ -5814,8 +5814,7 @@ class WordCollection(Segments):
                                 font='readbig',
                                 row=3,column=0,columnspan=3,
                                 sticky='ew')
-        if hasattr(self.task,'currentformsforuser'):
-            self.cparsetext=ui.StringVar()
+        if isinstance(self.task,Parse):
             self.parsebutton=ui.Label(self.wordframe,
                                         textvariable=self.cparsetext,
                                         row=4, column=1, sticky='w',anchor='w')
@@ -5891,14 +5890,16 @@ class WordCollection(Segments):
         if not default:
             default=''
         self.var.set(default)
-        log.info(self.currentformsforuser(entry=self.entry))
-        self.cparsetext.set(self.currentformsforuser(entry=self.entry))
-        if self.cparsetext.get():
-            self.parsebutton.bind('<ButtonRelease-1>',
-                            lambda event,
-                            entry=self.entry:self.parse_foreground(entry=entry))
-        else:
-            self.parsebutton.unbind('<ButtonRelease-1>')
+        if isinstance(self.task,Parse):
+            log.info(self.currentformsforuser(entry=self.entry))
+            self.updateparseUI()
+            if self.cparsetext.get():
+                self.parsebutton.bind('<ButtonRelease-1>',
+                                        lambda event,
+                                        entry=self.entry:self.parse_foreground(
+                                        entry=entry))
+            else:
+                self.parsebutton.unbind('<ButtonRelease-1>')
         self.lxenter.focus_set()
         self.frame.grid_columnconfigure(1,weight=1)
         self.deiconify()
