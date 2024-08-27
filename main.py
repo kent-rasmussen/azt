@@ -5849,8 +5849,16 @@ class WordCollection(Segments):
         program['taskchooser'].withdraw()# not sure why necessary
         # log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
         # log.info("wordframe: {}".format(getattr(self,'wordframe',None)))
-        if getattr(self,'sensetodo',None):
-            log.info("Sense to do: {}".format(self.sensetodo))
+        # log.info("index: {}".format(self.index))
+        if getattr(self,'sensetodo',None) is not None:
+            # log.info("Sense to do: {}".format(self.sensetodo))
+            # log.info("self.sensetodo.entry: {}".format(self.sensetodo.formatted(self.analang,self.glosslangs)))
+            self.entry=self.sensetodo.entry
+            self.sensetodo=None
+            try:
+                self.index=self.entries.index(self.entry)
+            except Exception as e:
+                log.info("self.entry doesn't seem to be in entries; OK for now")
             self.instructions['text']=self.getinstructions() #in case changed
             self.dowordframe()
         elif not self.entries:
@@ -5869,10 +5877,6 @@ class WordCollection(Segments):
         self.prog['text']='({}/{})'.format(self.index+1,self.nentries)
         # log.info("entries: {}".format(self.entries))
         log.info("index: {}".format(self.index))
-        if getattr(self,'sensetodo',None):
-            self.entry=self.sensetodo.entry
-        else:
-            self.entry=self.entries[self.index]
         self.sense=self.entry.sense
         glosses={}
         for g in set(self.glosslangs) & set(self.sense.glosses):
