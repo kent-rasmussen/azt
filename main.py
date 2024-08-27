@@ -6118,16 +6118,17 @@ class Parse(Segments):
             self.parser.sense.rmpsnode()
             # self.parser.rmpssubclassnode() #leave this for posterity?
             t.destroy()
-        # l=(sf,ps,root,lcafxs,sfafxs)
-        # log.info("full option list: {}".format(l))
+        # log.info("Selecting from option list: {}".format(l))
         if self.exitFlag.istrue():
             return
         if self.iswaiting():
             self.waitpause()
-        ln=[(i,formattuple(i)) for i in l if i[1] == self.nominalps]
+        ln=[(i,formattuple(i)) for i in l if i[1] == self.nominalps
+                        if len(i[-1]) == 2] #each must have (only) pfx and sfx
         ln+=[('ON',_("Other {}").format(self.secondformfield[self.nominalps]))]
         # log.info("noun option list: {}".format(ln))
-        lv=[(i,formattuple(i)) for i in l if i[1] == self.verbalps]
+        lv=[(i,formattuple(i)) for i in l if i[1] == self.verbalps
+                         if len(i[-1]) == 2] #each must have (only) pfx and sfx
         lv+=[('OV',_("Other {}").format(self.secondformfield[self.verbalps]))]
         # log.info("verb option list: {}".format(lv))
         w=ui.Window(self)
