@@ -5872,6 +5872,7 @@ class WordCollection(Segments):
             return
         else:
             self.dowordframe()
+            self.entry=self.entries[self.index]
         log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
         log.info("wordframe: {}".format(getattr(self,'wordframe',None)))
         self.prog['text']='({}/{})'.format(self.index+1,self.nentries)
