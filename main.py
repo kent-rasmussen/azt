@@ -1157,7 +1157,7 @@ class StatusFrame(ui.Frame):
         try:
             ls=self.task.parser.levels() # we need this anyway, and a parser test
         except AttributeError as e:
-            log.info(e)
+            log.info("Error loading parser levels: {}".format(e))
             return
         line=ui.Frame(self.proseframe,row=self.opts['row'],column=0,
                         columnspan=3,sticky='w')
@@ -1176,7 +1176,7 @@ class StatusFrame(ui.Frame):
                         columnspan=3,sticky='w')
         self.opts['row']+=1
         t=self.task
-        if t.sensetodo:
+        if hasattr(t,'sensetodo') and t.sensetodo is not None:
             txt=_("Parsing {}").format(
             t.sensetodo.formatted(t.analang,t.glosslangs)
             )
@@ -3461,16 +3461,14 @@ class TaskDressing(HasMenus,ui.Window):
             if isinstance(self,Multicheck):
                 dictnow.update({'cvtstodo':self.task.cvtstodo})
         if isinstance(self,Parse):
-            if not hasattr(self,'parser'):
-                log.info("No parser yet; waiting")
-                self.trystatusframelater(dictnow)
-                return
-            else:
+            try:
                 dictnow.update({
                     'parserasklevel':self.parser.ask,
                     'parserautolevel':self.parser.auto,
                     'sense.id':self.task.sensetodo,
                     })
+            except AttributeError as e:
+                log.info("looks like the parser isn't up yet ({})".format(e))
         """Call this just once. If nothing changed, wait; if changes, run,
         then run again."""
         if dict == dictnow:
