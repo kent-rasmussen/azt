@@ -2630,6 +2630,18 @@ class Sense(Node,FieldParent):
             l+=self.formattedgloss(lang,ftype,frame,quoted=True) #This is always a list
         # log.info("Returning forms: {}".format(l))
         return ' '.join([i for i in l if i]) #put it all together
+    def unformatted(self,analang,glosslangs,ftype=0): #,showtonegroup=0):
+        """This uses frame definition, not name"""
+        """As a format of the sense, there should be no tonegroup to show"""
+        if not ftype:
+            ftype='lc'
+        l=[]
+        t=self.ftypes[ftype].textvaluebylang(analang)
+        l.append(t)
+        for lang in [i for i in glosslangs if i in self.glosses]:
+            l+=[rx.noparens(i).strip() for i in
+                 self.formattedgloss(lang,ftype,quoted=False)] #always a list
+        return ' '.join([i for i in l if i]) #put it all together
     def rmverificationvalue(self,profile,ftype,value):
         #This treats value as a list object, wrapped by verificationtextvalue
         v=self.verificationtextvalue(profile,ftype)
