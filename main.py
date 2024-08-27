@@ -6488,6 +6488,17 @@ class Parse(Segments):
         except:
             log.info("not showing")
             self.after(1,self.showwhenready)
+    def storethisword(self):
+        try:
+            v=self.var.get()
+            if v:
+                self.entry.lc.textvaluebylang(self.analang,v)
+                if not self.done():
+                    self.parse_foreground(entry=self.entry)
+            self.maybewrite() #only if above is successful
+            log.info("Storing word: {}".format(self.sense.id))
+        except AttributeError as e:
+            log.info("Not storing word (WordCollectnParse): {}".format(e))
     def __init__(self, parent): #frame, filename=None
         self.byslice=False
         self.initsensetodo()
@@ -6579,19 +6590,6 @@ class WordCollectnParse(WordCollection,Parse,TaskDressing):
                 }
     def tasktitle(self):
         return _("Add and Parse Words") # for Citation Forms
-    def storethisword(self):
-        try:
-            v=self.var.get()
-            if v:
-                self.updatereturnbind()
-                self.entry.lc.textvaluebylang(self.analang,v)
-                self.parse_foreground(entry=self.entry)
-            # if hasattr(self,'sensetodo') and self.sensetodo:
-            self.sensetodo=None
-            self.maybewrite() #only if above is successful
-            log.info("Storing word: {}".format(self.sense.id))
-        except AttributeError as e:
-            log.info("Not storing word (WordCollectnParse): {}".format(e))
     def __init__(self, parent):
         log.info("Initializing {}".format(self.tasktitle()))
         self.ftype=program['params'].ftype('lc') #always correct?
