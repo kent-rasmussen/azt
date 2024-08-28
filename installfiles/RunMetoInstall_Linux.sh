@@ -3,7 +3,7 @@
 (. /etc/os-release && sudo tee /etc/apt/sources.list.d/packages-sil-org.list>/dev/null <<< "deb http://packages.sil.org/$ID $VERSION_CODENAME main")
 sudo add-apt-repository --yes ppa:deadsnakes/ppa
 sudo apt update
-sudo apt-get install git python3-tk python3-pip portaudio19-dev texlive-xetex && python3 -m pip install pyaudio lxml Pillow
+sudo apt-get install python3.12 git python3-tk python3-pip portaudio19-dev texlive-xetex && python3 -m pip install pyaudio lxml Pillow
 cd;git clone https://github.com/kent-rasmussen/azt.git;cd -
 echo "The following assumes you have a debian system; if you don't, install"
 echo "the SIL package repository manually (instructions at https://packages.sil.org/)"
