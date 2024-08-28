@@ -1,6 +1,7 @@
 #!/bin/bash
 (wget -O- https://packages.sil.org/keys/pso-keyring-2016.gpg | sudo tee /etc/apt/trusted.gpg.d/pso-keyring-2016.gpg)&>/dev/null
 (. /etc/os-release && sudo tee /etc/apt/sources.list.d/packages-sil-org.list>/dev/null <<< "deb http://packages.sil.org/$ID $VERSION_CODENAME main")
+sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt update
 sudo apt-get install git python3-tk python3-pip portaudio19-dev texlive-xetex && python3 -m pip install pyaudio lxml Pillow
 cd;git clone https://github.com/kent-rasmussen/azt.git;cd -
