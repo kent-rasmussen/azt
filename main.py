@@ -81,10 +81,11 @@ except Exception as e:
     exceptiononload=True
 import datetime
 try:
+    # Python 3.11+
     program['start_time'] = datetime.datetime.now(datetime.UTC)
 except AttributeError as e:
-    log.exception("please install at least Python 3.11 ({})".format(e))
-    raise
+    # Python <=3.11
+    program['start_time'] = datetime.datetime.utcnow()
 import threading
 import multiprocessing
 import itertools
@@ -14322,10 +14323,21 @@ class Object:
         self.value=None
 """These are non-method utilities I'm actually using."""
 def now():
-    return datetime.datetime.now(datetime.UTC).isoformat()#[:-7]+'Z'
+    try:
+        # Python 3.11+
+        return datetime.datetime.now(datetime.UTC).isoformat()
+    except AttributeError as e:
+        # Python <=3.11
+        return datetime.datetime.utcnow()
 def nowruntime():
     #this returns a delta!
-    return datetime.datetime.now(datetime.UTC)-program['start_time']
+    try:
+        # Python 3.11+
+        return datetime.datetime.now(datetime.UTC)-program['start_time']
+    except AttributeError as e:
+        # Python <=3.11
+        return datetime.datetime.utcnow()
+        return datetime.datetime.utcnow()-program['start_time']
 def logfinished(start=program['start_time'],msg=None):
     run_time=nowruntime()
     if type(start) is datetime.datetime: #only work with deltas
