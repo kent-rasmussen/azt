@@ -15385,12 +15385,14 @@ if __name__ == '__main__':
     log.info(_("Loglevel is {}; started at {}").format(loglevel,
                                         program['start_time'].isoformat()))
     #'sendpraat' now in 'praat', if useful
-    for exe in ['praat','hg','ffmpeg','lame','python','python3']:
+    for exe in ['praat','hg','ffmpeg','lame',
+                # 'python','python3'
+                ]:
         findexecutable(exe)
-    if program['python3']: #be sure we're using python v3
-        program['python']=program.pop('python3')
-    if not program['python']:
-        program['python']=sys.executable
+    # if program['python3']: #be sure we're using python v3
+    #     program['python']=program.pop('python3')
+    # if not program['python']:
+    program['python']=sys.executable
     if 'testtask' in program and type(program['testtask']) is str:
         log.info("Converting string ‘{}’ to class".format(program['testtask']))
         program['testtask']=getattr(sys.modules[__name__],
