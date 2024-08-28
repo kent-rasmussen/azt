@@ -10,7 +10,7 @@ sudo apt update
 sudo apt-get install -y python3.12-{distutils,tk,dev} libpython3.12 git portaudio19-dev texlive-xetex
 # python3-tk python3-pip python3-pyaudio
 curl -sS https://bootstrap.pypa.io/get-pip.py |  python3.12
-python3.12 -m pip install pyaudio lxml Pillow
+python3.12 -m pip install six pyaudio lxml Pillow
 cd;git clone https://github.com/kent-rasmussen/azt.git;cd -
 echo "The following assumes you have a debian system; if you don't, install"
 echo "the SIL package repository manually (instructions at https://packages.sil.org/)"
