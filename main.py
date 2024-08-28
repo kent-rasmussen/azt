@@ -84,6 +84,7 @@ try:
     program['start_time'] = datetime.datetime.now(datetime.UTC)
 except AttributeError as e:
     log.exception("please install at least Python 3.11 ({})".format(e))
+    raise
 import threading
 import multiprocessing
 import itertools
