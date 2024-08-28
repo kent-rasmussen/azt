@@ -1,9 +1,15 @@
 #!/bin/bash
 (wget -O- https://packages.sil.org/keys/pso-keyring-2016.gpg | sudo tee /etc/apt/trusted.gpg.d/pso-keyring-2016.gpg)&>/dev/null
 (. /etc/os-release && sudo tee /etc/apt/sources.list.d/packages-sil-org.list>/dev/null <<< "deb http://packages.sil.org/$ID $VERSION_CODENAME main")
+pafile=pa_stable_v190700_20210406.tgz
+wget https://files.portaudio.com/archives/${pafile}
+tar -xf ${pafile}
+cd portaudio && ./configure && make && make install
 sudo add-apt-repository --yes ppa:deadsnakes/ppa
 sudo apt update
-sudo apt-get install python3.12 git python3-tk python3-pip portaudio19-dev texlive-xetex && python3 -m pip install pyaudio lxml Pillow
+sudo apt-get install python3.12-{distutils,tk,dev} libpython3.12 git python3-tk python3-pip portaudio19-dev texlive-xetex python3-pyaudio
+curl -sS https://bootstrap.pypa.io/get-pip.py |  python3.12
+python3.12 -m pip install pyaudio lxml Pillow
 cd;git clone https://github.com/kent-rasmussen/azt.git;cd -
 echo "The following assumes you have a debian system; if you don't, install"
 echo "the SIL package repository manually (instructions at https://packages.sil.org/)"
