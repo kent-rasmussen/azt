@@ -80,7 +80,10 @@ except Exception as e:
     log.error("Problem importing packaging.version; installed? {}".format(e))
     exceptiononload=True
 import datetime
-program['start_time'] = datetime.datetime.now(datetime.UTC)
+try:
+    program['start_time'] = datetime.datetime.now(datetime.UTC)
+except AttributeError as e:
+    log.exception("please install at least Python 3.11 ({})".format(e))
 import threading
 import multiprocessing
 import itertools
