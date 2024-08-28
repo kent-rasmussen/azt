@@ -6578,7 +6578,7 @@ class ParseWords(Parse,TaskDressing):
         TaskDressing.__init__(self,parent)
         Parse.__init__(self,parent)
         # self.checkeach=True #confirm each word
-class WordCollectnParse(WordCollection,Parse,TaskDressing):
+class WordCollectnParse(Parse,WordCollection,TaskDressing):
     """This task collects words, from the SIL CAWL, or one by one.
     First in citation form, then pl or imperativewith Parse"""
     def taskicon(self):
@@ -6626,7 +6626,7 @@ class WordCollectnParse(WordCollection,Parse,TaskDressing):
         # if me:
         #     self.downloadallCAWLimages()
         fn=self.getwords()#?
-class WordsParse(WordCollection,Parse,TaskDressing):
+class WordsParse(Parse,WordCollection,TaskDressing):
     def taskicon(self):
         return program['theme'].photo['iconWord']
     def tooltip(self):
