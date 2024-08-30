@@ -204,8 +204,8 @@ class Theme(object):
                             ('change','Change Circle_sm.png'),
                             ('checkedbox','checked.png'),
                             ('uncheckedbox','unchecked.png'),
-                            ('NoImage','openclipart.org/Image-Not-Found.png'),
-                            ('Order!','openclipart.org/order!.png'),
+                            ('NoImage','toselect/Image-Not-Found.png'),
+                            ('Order!','toselect/order!.png'),
                         ]
         ntodo=len(imagelist)
         self.startruntime()
