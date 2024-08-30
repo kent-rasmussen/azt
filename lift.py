@@ -2344,7 +2344,7 @@ class Sense(Node,FieldParent):
                                     if k.textvalue()
                                     for i in k.textvalue().split(',')
                                 ]
-        rootimgdir='images/openclipart.org/'
+        rootimgdir='images/toselect/'
         self.imgselectiondir=None
         #These first two depend on real directories being there
         if self.cawln:
