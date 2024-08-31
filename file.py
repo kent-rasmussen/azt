@@ -4,6 +4,7 @@ from tkinter import filedialog
 from tkinter import Tk
 import pathlib
 import os
+import stat
 import platform
 import logsetup
 log=logsetup.getlog(__name__)
@@ -99,6 +100,14 @@ def exists(file):
         return True
     # else:
     #     log.info("file {} doesn't exist!".format(file))
+def rmdir(dir):
+    os.rmdir(dir)
+def move(file,newfile):
+    if exists(file) and not exists(newfile):
+        os.rename(file,newfile)
+    else:
+        log.debug(_("Tried to move {} to {}, but I can't find it "
+                    "(or overwrite?).").format(file,newfile))
 def remove(file):
     if exists(file):
         os.remove(file)
@@ -213,8 +222,12 @@ def getfilesofdirectory(dir,regex='*'):
     for i in pathlib.Path(dir).glob(regex):
         l.extend([i])
     return l # we don't want a generator here
-def makeotherwritable(path):
-    os.chmod(path, stat.S_IWOTH)
+def makewritablebyeveryone(path):
+    os.chmod(path,
+            stat.S_IRUSR|stat.S_IWUSR|stat.S_IXUSR|
+            stat.S_IRGRP|stat.S_IWGRP|stat.S_IXGRP|
+            stat.S_IROTH|stat.S_IWOTH|stat.S_IXOTH
+            )
 def getmediadirectory(mediatype=None):
     log.info("Looking for media directory")
     if platform.system() == 'Linux':
