@@ -2349,8 +2349,11 @@ class Sense(Node,FieldParent):
         #These first two depend on real directories being there
         if self.cawln:
             self.imgselectiondir=[i for i in file.getfilesofdirectory(
-                                                        rootimgdir,
-                                                        regex=self.cawln+'*')]
+                            rootimgdir,
+                            regex=self.cawln+'_'.join(
+                                [i for j in self.collectionglosses
+                                    for i in j.split()]
+                                ))]
         elif self.collectionglosses:
             self.imgselectiondir=[i for i in file.getfilesofdirectory(
                                     rootimgdir,
@@ -2359,7 +2362,10 @@ class Sense(Node,FieldParent):
             self.imgselectiondir=self.imgselectiondir[0]
             return
         if self.cawln and self.collectionglosses and not self.imgselectiondir:
-            bits=[i for i in [self.cawln]+self.collectionglosses if i]
+            bits=[i for i in [self.cawln]+[i for j in self.collectionglosses
+                                            for i in j.split()
+                                            if i]
+                ]
             # log.info("I didn't find a real directory present, but I'm ready "
             # "to write to {}".format(''.join([rootimgdir,'_'.join(bits)])))
             self.imgselectiondir=''.join([ #This may not be a real directory
