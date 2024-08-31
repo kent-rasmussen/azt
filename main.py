@@ -282,7 +282,6 @@ class LiftChooser(ui.Window,HasMenus):
             return
         dir=file.gethome()
         newfile=file.getnewlifturl(dir,analang.get())
-        self.newdirname=newfile.parent
         if not newfile:
             ErrorNotice(_("Problem creating file; does the directory "
                         "already exist?"),wait=True)
@@ -291,6 +290,7 @@ class LiftChooser(ui.Window,HasMenus):
             ErrorNotice(_("The file {} already exists! {}").format(newfile),
                                                                 wait=True)
             return
+        self.newdirname=newfile.parent
         self.wait=ui.Wait(parent=program['root'],msg=_("Setting up new LIFT file now."))
         log.info("Beginning Copy of stock to new LIFT file.")
         self.cawldb=loadCAWL()
