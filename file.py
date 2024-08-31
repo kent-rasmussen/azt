@@ -213,6 +213,8 @@ def getfilesofdirectory(dir,regex='*'):
     for i in pathlib.Path(dir).glob(regex):
         l.extend([i])
     return l # we don't want a generator here
+def makeotherwritable(path):
+    os.chmod(path, stat.S_IWOTH)
 def getmediadirectory(mediatype=None):
     log.info("Looking for media directory")
     if platform.system() == 'Linux':
