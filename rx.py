@@ -134,10 +134,14 @@ def texmllike(x):
     """Confirm that r is correct here"""
     x=re.sub(r'\\\\textless{}(([\?!/]|tex:)[^\\\\]*)\\\\textgreater{}',"<\\1>",x)
     return x
-def noparens(x): #sometimes I just want this
+def noparenscontent(x): #pull all content in parentheses
     if isinstance(x,str):
         """Confirm that r is correct here"""
         return re.sub(r'\(.*\)','',x)
+def noparens(x): #pull just the parens
+    if isinstance(x,str):
+        """Confirm that r is correct here"""
+        return re.sub(r'\(|\)','',x)
 def glossdeftoform(x):
     x=noparens(x)
     if isinstance(x,str):
@@ -367,7 +371,8 @@ def fromCV(CVs, sdict, distinguish, **kwargs): #check, lang
     # log.info('Going to compile regex with CVs: {}'.format(CVs))
     return make(CVs, **kwargs)
 if __name__ == '__main__':
-    x='ne [pas] plaire, ne pas agréer, ne pas'
+    x='ne [pas] plaire, (ne pas) agréer, ne pas'
+    rgx='(ne pas) agréer'
     ts=['bobongo','bobingo']
     check='V1=V2=V3'
     value='a'
