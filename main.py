@@ -7841,6 +7841,7 @@ class Sort(object):
             """thread here? No, this updates the UI, as well as writing data"""
             if not self.runwindow.exitFlag.istrue() and tosort:
                 self.buttonframe.sortselected(tosort)
+                self.buttonframe.updatecounts()
         if not self.runwindow.exitFlag.istrue():
             self.runwindow.resetframe()
     def reverify(self):
@@ -11139,7 +11140,7 @@ class ExampleDict(dict):
             log.error("There don't seem to be any sensids in this check tone "
                 "group, so I can't get you an example. ({} {})"
                 "".format(check,group))
-            return
+            return []
         """The above doesn't test for profile, so we restrict that next"""
         log.info("senses ({}): {}".format(len(senses),
                                             [i.id for i in senses][:5]))
@@ -11151,7 +11152,7 @@ class ExampleDict(dict):
                 "group in this slice-group, so I can't get you an example. "
                 "({}-{}, {} {})"
                 "".format(program['slices'].ps(),program['slices'].profile(),check,group))
-            return
+            return []
         return list(set(senses)&set(sensesinslice))
     def hasglosses(self,node):
         # log.info("hasglosses sense: {}".format(sense.id))
@@ -11177,7 +11178,7 @@ class ExampleDict(dict):
             log.info("Audio file check failed for {}".format(node.sense.id))
             return
         return True
-    def getexample(self,group,**kwargs):
+    def getexamples(self,group):
         check=program['params'].check()
         ftype=program['params'].ftype()
         if program['params'].cvt() == 'T': # example nodes
@@ -11200,6 +11201,9 @@ class ExampleDict(dict):
         # else:
         #     log.info("Found {} examples in the {} sort group for the {} check: "
         #         "{}.".format(len(nodes),group,check,[i.id for i in nodes]))
+        return nodes
+    def getexample(self,group,**kwargs):
+        nodes=self.getexamples(group)
         n=len(nodes)
         tries=0
         node=None #do this once, anyway...
@@ -11317,6 +11321,10 @@ class SortButtonFrame(ui.ScrollingFrame):
                         font='instructions'
                         )
         skipb.grid(column=0, row=1, sticky='ew')
+    def updatecounts(self):
+        # log.info("Updating counts for each button")
+        for b in self.groupbuttonlist:
+            b.updatecount()
     def addgroupbutton(self,group):
         if self.exitFlag.istrue():
             return #just don't die
@@ -11591,7 +11599,7 @@ class SortGroupButtonFrame(ui.Frame):
             self.player.play()
     def backup(self,event=None):
         log.info("Resetting tone group example ({}): {} of {} examples with "
-                "kwargs: {}".format(self.group,self.exs[self.group],self._n,
+                "kwargs: {}".format(self.group,self.exs[self.group],self._n.get(),
                                                                 self.kwargs))
         self.kwargs['goback']=True
         self.kwargs['alwaysrefreshable']=True
@@ -11633,14 +11641,16 @@ class SortGroupButtonFrame(ui.Frame):
             self._sense=node.parent.sense
     def getexample(self,**kwargs):
         kwargs=exampletype(**kwargs)
-        self._n,node=self.exs.getexample(self.group,**kwargs)
+        n,node=self.exs.getexample(self.group,**kwargs)
+        self.updatecount(n)
         self.hasexample=False
         if not node:
             if kwargs['wsoundfile']:
                 log.error("self.exs.getexample didn't return an example "
                                     "with a soundfile; trying for one without")
                 kwargs['wsoundfile']=False
-                self._n,node=self.exs.getexample(self.group,**kwargs)
+                n,node=self.exs.getexample(self.group,**kwargs)
+                self.updatecount(n)
                 if not node:
                     log.error("self.exs.getexample didn't return an example "
                                         "with or without sound file; returning")
@@ -11678,8 +11688,8 @@ class SortGroupButtonFrame(ui.Frame):
                 self._playable=False
         else:
             self.selectbutton()
-        if self._n > 1 or self.kwargs['alwaysrefreshable']:
-            self.refreshbutton()
+        if self._n.get() > 1 or self.kwargs['alwaysrefreshable']:
+            self.makerefreshbutton()
     """buttons"""
     def labelbutton(self):
         b=ui.Label(self, text=self._text,
@@ -11724,26 +11734,35 @@ class SortGroupButtonFrame(ui.Frame):
     def refresh(self):
         # if renew is True:
         log.info("Resetting tone group example ({}): {} of {} examples with "
-                "kwargs: {}".format(self.group,self.exs[self.group],self._n,
+                "kwargs: {}".format(self.group,self.exs[self.group],self._n.get(),
                                                                 self.kwargs))
         # del self[self.group]
         self.kwargs['renew']=True
         self.kwargs['alwaysrefreshable']=True
         self.getexample(**self.kwargs)
         self.again()
-    def refreshbutton(self):
+    def updatecount(self,n=None):
+        # log.info("Updating count for group {} (n={})".format(self.group,n))
+        if n is not None:
+            self._n.set(n) #for cases where this is already calculated
+        else:
+            nodes=self.exs.getexamples(self.group)
+            # log.info("Found {} examples: {}".format(len(nodes),nodes))
+            self._n.set(len(nodes))
+    def makerefreshbutton(self):
         tinyfontkwargs=self.buttonkwargs()
         del tinyfontkwargs['font'] #so it will fit in the circle
-        bc=ui.Button(self, image=self.theme.photo['change'], #🔃 not in tck
+        self.refreshbutton=ui.Button(self, image=self.theme.photo['change'], #🔃 not in tck
                         cmd=self.refresh,
-                        text=str(self._n),
+                        textvariable=self._n,
                         compound='center',
                         column=0,
                         row=0,
                         sticky='nsew',
                         **tinyfontkwargs)
-        bc.bind('<ButtonRelease-3>',self.backup)
-        bct=ui.ToolTip(bc,text=_("Change example word; Right click to back up"))
+        self.refreshbutton.bind('<ButtonRelease-3>',self.backup)
+        bct=ui.ToolTip(self.refreshbutton,
+                        text=_("Change example word; Right click to back up"))
     def unsortbutton(self):
         t=_("<= resort *this* *word*")
         usbkwargs=self.buttonkwargs()
@@ -11818,6 +11837,7 @@ class SortGroupButtonFrame(ui.Frame):
         kwargs['padx']=kwargs.pop('bpadx',defaults.get('bpadx',0))
         self.kwargs=kwargs
         self._var=ui.BooleanVar()
+        self._n=ui.IntVar()
         super(SortGroupButtonFrame,self).__init__(parent, **frameargs)
         if self.getexample(**kwargs):
             self.makebuttons()
