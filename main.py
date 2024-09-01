@@ -384,6 +384,7 @@ class LiftChooser(ui.Window,HasMenus):
     def fillcawldbimages(self):
         log.info("Filling in empty image fields where possible")
         todo=self.cawldb.senses
+        newimagedir=file.getimagesdir(self.newdirname)
         # log.info("Filling in {} image fields".format(len(todo)))
         # log.info("Writing to {}".format(file.getimagesdir(self.newdirname)))
         for sense in todo:
@@ -401,7 +402,15 @@ class LiftChooser(ui.Window,HasMenus):
                     if urls:
                         filename=sense.imagename() #new file name
                         # log.info("Working with image filename {}".format(filename))
-                        saveimagefile(urls[0],filename,copyto=file.getimagesdir(self.newdirname)) #just take the first one
+                        for u in urls:
+                            if '__bw.png' in str(u): #this indicates best file
+                                # log.info("Found best image {}; \ngoing to put "
+                                #         "in {}".format(u,self.newdirname))
+                                saveimagefile(u,filename, copyto=newimagedir)
+                        if not file.exists(file.getdiredurl(newimagedir,
+                                                                filename)):
+                            #just take the first one
+                            saveimagefile(urls[0],filename, copyto=newimagedir)
                         sense.illustrationvalue(filename)
                 # log.info("Setting progress {}".format(todo.index(sense)*100/len(todo)))
                 self.wait.progress(todo.index(sense)*100/len(todo))
