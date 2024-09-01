@@ -8,6 +8,8 @@ log=logsetup.getlog(__name__)
 logsetup.setlevel('DEBUG',log) #for this file
 """This is called from a number of places"""
 framerx=re.compile('__') #replace this w/data in frames.
+def slashdash(x):
+    return sub(r'/',r'-',x)
 def urlok(x):
     x=str(x) # just in case we pass a path object
     #These should each be tuple of
