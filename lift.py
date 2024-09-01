@@ -2344,18 +2344,17 @@ class Sense(Node,FieldParent):
                                     if k.textvalue()
                                     for i in k.textvalue().split(',')
                                 ]
-        self.collectionglossesunderlined=[i for j in self.collectionglosses
+        self.collectionglossesunderlined='_'.join([rx.sub('/','-',i)
+                                        for j in self.collectionglosses
                                         for i in j.split()
-                                        if i]
+                                        if i])
         rootimgdir='images/toselect/'
         self.imgselectiondir=None
         #These first two depend on real directories being there
         if self.cawln:
             self.imgselectiondir=[i for i in file.getfilesofdirectory(
                             rootimgdir,
-                            regex=self.cawln+'_'.join(
-                                self.collectionglossesunderlined
-                                ))]
+                            regex='_'.join(self.cawln+self.collectionglossesunderlined)+'*'                                )]
         elif self.collectionglosses:
             self.imgselectiondir=[i for i in file.getfilesofdirectory(
                                     rootimgdir,
@@ -2364,8 +2363,7 @@ class Sense(Node,FieldParent):
             self.imgselectiondir=self.imgselectiondir[0]
             return
         if self.cawln and self.collectionglosses and not self.imgselectiondir:
-            bits=[i for i in [self.cawln]+self.collectionglossesunderlined
-                ]
+            bits=[self.cawln,self.collectionglossesunderlined]
             # log.info("I didn't find a real directory present, but I'm ready "
             # "to write to {}".format(''.join([rootimgdir,'_'.join(bits)])))
             self.imgselectiondir=''.join([ #This may not be a real directory
@@ -2377,9 +2375,9 @@ class Sense(Node,FieldParent):
         # log.info("Making image name")
         affix='.png' #not sure why this isn't there already...
         if self.cawln:
-            return '_'.join([self.cawln]+self.collectionglossesunderlined)+affix
+            return '_'.join([self.cawln,self.collectionglossesunderlined])+affix
         else:
-            return '_'.join([self.id]+self.collectionglossesunderlined)+affix
+            return '_'.join([self.id,self.collectionglossesunderlined])+affix
     def glossbylang(self,lang):
         """This returns just the first, to be compatible with
         example.glossbylang"""
