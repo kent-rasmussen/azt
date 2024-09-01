@@ -126,7 +126,7 @@ def getnewlifturl(dir,xyz):
     dir=pathlib.Path(dir)
     dir=dir.joinpath(xyz)
     if exists(dir):
-        log.error("The directory {} already exits! Not Continuing.".format(dir))
+        log.error("The directory {} already exists! Not Continuing.".format(dir))
         return
     else:
         dir.mkdir()
