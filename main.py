@@ -403,7 +403,7 @@ class LiftChooser(ui.Window,HasMenus):
                         filename=sense.imagename() #new file name
                         # log.info("Working with image filename {}".format(filename))
                         for u in urls:
-                            if '__bw.png' in str(u): #this indicates best file
+                            if '__' in str(u) and '.png' in str(u): #best file
                                 # log.info("Found best image {}; \ngoing to put "
                                 #         "in {}".format(u,self.newdirname))
                                 saveimagefile(u,filename, copyto=newimagedir)
