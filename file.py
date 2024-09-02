@@ -122,6 +122,7 @@ def makedir(dir,**kwargs):
         dir.mkdir(parents=True)
     elif not kwargs.get('silent'):
         log.info("directory {} already exists!".format(dir))
+    return getfile(dir)
 def getnewlifturl(dir,xyz):
     dir=pathlib.Path(dir)
     dir=dir.joinpath(xyz)

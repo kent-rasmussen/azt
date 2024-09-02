@@ -2354,11 +2354,11 @@ class Sense(Node,FieldParent):
         if self.cawln:
             self.imgselectiondir=[i for i in file.getfilesofdirectory(
                             rootimgdir,
-                            regex='_'.join(self.cawln+self.collectionglossesunderlined)+'*'                                )]
-        elif self.collectionglosses:
+                            regex='_'.join([self.cawln,self.collectionglossesunderlined])+'*'                                )]
+        elif self.collectionglossesunderlined:
             self.imgselectiondir=[i for i in file.getfilesofdirectory(
                                     rootimgdir,
-                                    regex='*'+'_'.join(self.collectionglosses))]
+                                    regex='*_'+self.collectionglossesunderlined)]
         if self.imgselectiondir: #unlist if there
             self.imgselectiondir=self.imgselectiondir[0]
             return
@@ -2366,10 +2366,10 @@ class Sense(Node,FieldParent):
             bits=[self.cawln,self.collectionglossesunderlined]
             # log.info("I didn't find a real directory present, but I'm ready "
             # "to write to {}".format(''.join([rootimgdir,'_'.join(bits)])))
-            self.imgselectiondir=''.join([ #This may not be a real directory
-                                        rootimgdir,
-                                        '_'.join(bits)
-                                        ])
+            self.imgselectiondir=file.makedir(''.join([ #This may not be a real directory
+                                                rootimgdir,
+                                                '_'.join(bits)
+                                                ]))
             return
     def imagename(self):
         # log.info("Making image name")
