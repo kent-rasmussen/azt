@@ -2344,7 +2344,7 @@ class Sense(Node,FieldParent):
                                     if k.textvalue()
                                     for i in k.textvalue().split(',')
                                 ]
-        self.collectionglossesunderlined='_'.join([rx.sub('/','-',i)
+        self.collectionglossesunderlined='_'.join([rx.slashdash(i)
                                         for j in self.collectionglosses
                                         for i in j.split()
                                         if i])
