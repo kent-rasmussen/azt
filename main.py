@@ -4470,6 +4470,23 @@ class TaskDressing(HasMenus,ui.Window):
         need to test for both."""
         def releasefullscreen(event):
             self.runwindow.attributes('-fullscreen', False)
+            self.runwindow.bind('<Double-Button-1>', takefullscreen)
+        def takekioskscreen(event):
+            ##This provides a kiosk mode, with no window dressings and all
+            ##screen real estate used.
+            self.runwindow.attributes('-fullscreen', True)
+            ##This seems the same as above, but doesn't remove on fullscreen=F:
+            # screen_width = program['root'].winfo_screenwidth()
+            # screen_height = program['root'].winfo_screenheight()
+            # self.runwindow.geometry(f"{screen_width}x{screen_height}+0+0")
+            self.runwindow.bind('<Double-Button-1>', releasefullscreen)
+        def takefullscreen(event):
+            #This maximizes window, though leaves dressing in place:
+            # self.runwindow.update_idletasks() #necessary?
+            # self.runwindow.attributes('-zoomed', True)
+            # seems the same as above:
+            self.runwindow.wm_attributes('-zoomed', True)
+            self.runwindow.bind('<Double-Button-1>', releasefullscreen)
         if title is None:
             title=(_("Run Window"))
         if self.exitFlag.istrue():
@@ -4480,10 +4497,9 @@ class TaskDressing(HasMenus,ui.Window):
         else:
             self.runwindow=ui.Window(self,title=title)
         self.runwindow.title(title)
-        self.runwindow.attributes('-fullscreen', True)
+        takekioskscreen(None)
         self.runwindow.bind('<Escape>', releasefullscreen)
-        self.runwindow.bind('<Double-Button-1>', releasefullscreen)
-        self.runwindow.lift()
+        self.withdraw()
         self.runwindow.cleanup=self.runwindowcleanup
         if not nowait:
             self.runwindow.wait(msg=msg)
