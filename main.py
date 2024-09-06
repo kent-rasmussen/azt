@@ -4721,8 +4721,12 @@ class TaskChooser(TaskDressing,ui.Window):
         #                                             [i[1] for i in optionlist]))
         if program['testing'] and 'testtask' in program:
             self.maketask(program['testtask'])
-        else:
-            self.maketask(optionlist[-1][0]) #last item, the code
+        else: #we need better logic here
+            if SortV in [i[0] for i in optionlist]:
+                self.maketask(SortV)
+            else:
+                self.maketask(WordCollectnParse)
+                #optionlist[-1][0]) #last item, the code
     def maketask(self,taskclass): #,filename=None
         self.unsetmainwindow()
         try:
