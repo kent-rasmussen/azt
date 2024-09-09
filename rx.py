@@ -145,16 +145,18 @@ def noparens(x): #pull just the parens
         """Confirm that r is correct here"""
         return re.sub(r'\(|\)','',x)
 def glossdeftoform(x):
-    x=noparens(x)
+    # i=x
+    x=noparenscontent(x)
     if isinstance(x,str):
         # x=re.sub('\(.*\)','',x)
-        x=re.sub(',.*','',x)
-        x=re.sub('^ *','',x)
-        x=re.sub(' .*','',x)
+        x=re.sub(',.*','',x) #stop at any comma
+        x=re.sub('^ *','',x) #no leading spaces
+        x=re.sub(' .*','',x) #just use the first word
         # x=re.sub('^(([^() ]+)( [^() ]+){,2})(.*)*$','\\1',x) #up to three words, no parens
         # x=re.sub(',$','',x)
         # x=re.sub(', ',',',x)
         # x=re.sub(' ','.',x)
+        # log.info("glossdeftoform: {} > {}".format(i,x))
         return x
 def glossifydefn(x):
     if isinstance(x,str):
