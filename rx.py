@@ -380,22 +380,12 @@ if __name__ == '__main__':
     ts=['bobongo','bobingo']
     check='V1=V2=V3'
     value='a'
-    r='(eau|ai|ey|oe|ow|ei|ou|au|oi|yi|ie|oa|ay|oo|ea|ee|ue|é|i|a|o|I|u|O|e)'
-    regexdict={'V1': make("((ckw|thw|tch|cc|pp|pt|tt|ck|tw|kw|ch|ph|sh|hh|ff|sc|ss|th|sw|hw|ts|sl|gh|bb|dd|gg|mb|nd|dw|gw|zl|yw|mm|ny|gn|nn|nw|rh|wh|ll|rr|lw|rw|p|P|t|c|k|q|f|s|x|h|b|B|d|g|j|v|z|y|w|m|n|l|r|')*)(eau|ou|ei|ai|yi|ea|ay|ee|ey|ie|oa|oo|ow|ue|oe|au|oi|a|e|i|o|u|I|O|é)",compile=True),
-                'V2': make("((((ckw|thw|tch|cc|pp|pt|tt|ck|tw|kw|ch|ph|sh|hh|ff|sc|ss|th|sw|hw|ts|sl|gh|bb|dd|gg|mb|nd|dw|gw|zl|yw|mm|ny|gn|nn|nw|rh|wh|ll|rr|lw|rw|p|P|t|c|k|q|f|s|x|h|b|B|d|g|j|v|z|y|w|m|n|l|r|')*(eau|ou|ei|ai|yi|ea|ay|ee|ey|ie|oa|oo|ow|ue|oe|au|oi|a|e|i|o|u|I|O|é)))(ckw|thw|tch|cc|pp|pt|tt|ck|tw|kw|ch|ph|sh|hh|ff|sc|ss|th|sw|hw|ts|sl|gh|bb|dd|gg|mb|nd|dw|gw|zl|yw|mm|ny|gn|nn|nw|rh|wh|ll|rr|lw|rw|p|P|t|c|k|q|f|s|x|h|b|B|d|g|j|v|z|y|w|m|n|l|r|')*)(eau|ou|ei|ai|yi|ea|ay|ee|ey|ie|oa|oo|ow|ue|oe|au|oi|a|e|i|o|u|I|O|é)",compile=True),
-                'V3': make("((((ckw|thw|tch|cc|pp|pt|tt|ck|tw|kw|ch|ph|sh|hh|ff|sc|ss|th|sw|hw|ts|sl|gh|bb|dd|gg|mb|nd|dw|gw|zl|yw|mm|ny|gn|nn|nw|rh|wh|ll|rr|lw|rw|p|P|t|c|k|q|f|s|x|h|b|B|d|g|j|v|z|y|w|m|n|l|r|')*(eau|ou|ei|ai|yi|ea|ay|ee|ey|ie|oa|oo|ow|ue|oe|au|oi|a|e|i|o|u|I|O|é))((ckw|thw|tch|cc|pp|pt|tt|ck|tw|kw|ch|ph|sh|hh|ff|sc|ss|th|sw|hw|ts|sl|gh|bb|dd|gg|mb|nd|dw|gw|zl|yw|mm|ny|gn|nn|nw|rh|wh|ll|rr|lw|rw|p|P|t|c|k|q|f|s|x|h|b|B|d|g|j|v|z|y|w|m|n|l|r|')*(eau|ou|ei|ai|yi|ea|ay|ee|ey|ie|oa|oo|ow|ue|oe|au|oi|a|e|i|o|u|I|O|é)))(ckw|thw|tch|cc|pp|pt|tt|ck|tw|kw|ch|ph|sh|hh|ff|sc|ss|th|sw|hw|ts|sl|gh|bb|dd|gg|mb|nd|dw|gw|zl|yw|mm|ny|gn|nn|nw|rh|wh|ll|rr|lw|rw|p|P|t|c|k|q|f|s|x|h|b|B|d|g|j|v|z|y|w|m|n|l|r|')*)(eau|ou|ei|ai|yi|ea|ay|ee|ey|ie|oa|oo|ow|ue|oe|au|oi|a|e|i|o|u|I|O|é)",compile=True),
-                'V':make(r,compile=True)
-                }
-    for t in ts:
-        print(update(t,regexdict,check,value))
-    print(id(x))
-    impname='Imperative'
-    y='field[@type="{}"][@value^="{}"]'.format(impname,1)
-    splitxpath(y)
-    y="field[@type='{}'][@value^='{}']".format(impname,1)
-    splitxpath(y)
-    x='be quench, extinguish'
-    print(glossdeftoform(x))
+    sdict={'D': ['gh', 'bb', 'dd', 'gg', 'gu', 'mb', 'nd', 'dw', 'gw', 'zl', 'b', 'B', 'd', 'g', 'j', 'v', 'z'], 'C': ['ckw', 'thw', 'tch', 'cc', 'pp', 'pt', 'tt', 'ck', 'qu', 'tw', 'kw', 'ch', 'ph', 'sh', 'hh', 'ff', 'sc', 'ss', 'th', 'sw', 'hw', 'ts', 'sl', 'p', 'P', 't', 'c', 'k', 'q', 'f', 's', 'x', 'h'], 'G': ['yw', 'y', 'w'], 'N': ['mm', 'ny', 'gn', 'nn', 'nw', 'm', 'n'], 'S': ['rh', 'wh', 'll', 'rr', 'lw', 'rw', 'l', 'r'], 'ʔ': ["'"], 'V': ['ou', 'ei', 'ai', 'yi', 'ea', 'ay', 'ee', 'ey', 'ie', 'oa', 'oo', 'ow', 'ue', 'oe', 'au', 'oi', 'eau', 'a', 'e', 'i', 'o', 'u', 'I', 'O', 'é'], '̀': [], 'ː': [], '=': ['-'], '<': []}
+    distinguish={'<': True, '=': True, 'G': True, 'Gwd': False, 'N': False, 'S': False, 'Swd': True, 'D': False, 'Dwd': False, 'Nwd': False, 'ʔ': False, 'ʔwd': True, '̀': False, 'ː': False}
+    for CVs in [
+    'CaCVC','CaCV','CaCVʔ',
+    'CaCVS','CaGVC']:
+        fromCV(CVs, sdict, distinguish, word=True, compile=True, caseinsensitive=True)
     # s='ááààééèèííììóóòòúúùù'
     # s2=makeprecomposed(s)
     # print(s,s2)
