@@ -2344,10 +2344,10 @@ class Sense(Node,FieldParent):
                                     if k.textvalue()
                                     for i in k.textvalue().split(',')
                                 ]
-        self.collectionglossesunderlined='_'.join([rx.slashdash(i)
+        self.collectionglossesunderlined=rx.urlok('_'.join([rx.slashdash(i)
                                         for j in self.collectionglosses
                                         for i in j.split()
-                                        if i])
+                                        if i]))
         rootimgdir='images/toselect/'
         self.imgselectiondir=None
         #These first two depend on real directories being there
