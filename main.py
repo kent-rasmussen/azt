@@ -3344,11 +3344,16 @@ class TaskDressing(HasMenus,ui.Window):
                                     sticky='ne')
     def mainlabelrelief(self,relief=None,refresh=False,event=None):
         #set None to make this a label instead of button:
-        log.log(3,"setting button relief to {}, with refresh={}".format(relief,
+        reliefs=["raised", "groove", "sunken", "ridge", "flat"]
+        if self.mainrelief and self.mainrelief in reliefs:
+            self.mainreliefnext=reliefs[(reliefs.index(self.mainrelief)+1
+                                                            )%len(reliefs)]
+        log.info("setting button relief to {}, with refresh={}".format(relief,
                                                                     refresh))
         self.mainrelief=relief # None "raised" "groove" "sunken" "ridge" "flat"
     def _showbuttons(self,event=None):
-        self.mainlabelrelief(relief='flat',refresh=True)
+        todo=getattr(self,'mainreliefnext','flat')
+        self.mainlabelrelief(relief=todo,refresh=True)
         self.setcontext()
     def _hidebuttons(self,event=None):
         self.mainlabelrelief(relief=None,refresh=True)
