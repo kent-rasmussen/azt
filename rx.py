@@ -261,7 +261,7 @@ def s(graphemeset, **kwargs):
     """join a list into regex format, sort for longer first, to capture
     the largest units possible."""
     polyn=kwargs.get('polyn')
-    if polyn: #use all if 0
+    if polyn:
         #make the above limited by len here
         graphemeset=[i for i in graphemeset if len(i) == polyn]
     output=slisttoalternations(graphemeset,group=True)
