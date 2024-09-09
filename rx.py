@@ -241,23 +241,19 @@ def slisttoalternations(graphemeset,group=False):
 def s(sdict, stype, polyn=0, word=False, compile=False): #settings lang=None
     """join a list into regex format, sort for longer first, to capture
     the largest units possible."""
+    """stype is a capital symbolic representation of the group of letters,
+    e.g., N for nasals, D for depressors, etc. """
     """sdict should be a dictionary value keyed by check/settings.s[analang]"""
-    lessdict=set()
-    if stype == "C-ʔ-N":
-        if 'ʔ' in sdict:
-            lessdict+=set(sdict['ʔ'])
-        if 'N' in sdict:
-            lessdict+=set(sdict['N'])
-    elif stype == "C-ʔ":
-        if 'ʔ' in sdict:
-            lessdict+=set(sdict['ʔ'])
-    elif stype == "C-N":
-        if 'N' in sdict:
-            lessdict+=set(sdict['N'])
-    elif stype not in sdict:
-        log.error("Dunno why, but this isn't in lists: {}".format(stype))
-        return
-    graphemeset=set(sdict[stype])-lessdict
+    graphemeset=set()
+    if '+' in stype:
+        log.info("s looking for {} in these keys: {}".format(stype,sdict))
+    graphemevariables=stype.split('+')
+    for x in set(sdict) & set(graphemevariables):
+        graphemeset|=set(sdict[x])
+        graphemevariables.remove(x)
+    if graphemevariables:
+        raise KeyError("stype {} leaves {}, which is not in dict keys: {}"
+                    "".format(stype, graphemevariables, sdict.keys()))
     if polyn:
         #make the above limited by len here
         graphemeset=[i for i in graphemeset if len(i) == polyn]
@@ -336,33 +332,48 @@ def fromCV(CVs, sdict, distinguish, **kwargs): #check, lang
     """ this inputs regex variable (regexCV), a tuple of two parts:
     1. abbreviations with 'C' and 'V' in it, and/or variables for actual
     segments or back reference, e.g., 1 for \1 or 2 for \2, and 'c' or 'v'.
-    2. dictionary of variable meanings (e.g., {'v':'e'}).
-    e.g., for total variable: CVs=("CvC2",{'v':'e'})
+    2. dictionary of variable meanings (e.g., {'v':['e',...]}).
+    e.g., for total variable: CVs=("CvC2",{'v':['e',...]})
     CAUTION: if you don't have this dictionary, CVs[0] is just one letter...
     It outputs language specific regex (compiled if compile=True,
     whole word word=True)."""
     """lang should be check.analang"""
     if type(CVs) is not str:
         log.error("regexCV is not string! ({})".format(CVs))
+    CVs_ori=CVs
+    sdict=sdict.copy()
     regex=list()
     references=('\1','\2','\3','\4')
     references=range(1,5)
-    # Replace word final C first, to get it out of the way:
-    if (distinguish['ʔwd'] and not distinguish['ʔ']) and (distinguish['Nwd']
-                                                    and not distinguish['N']):
-        rxthis=s(sdict,'C-ʔ-N') #Pull out C# first, set to find only relevant Cs
+    # Replace word final Consonants first, to get them out of the way:
+    this='C'
+    for wd in [i for i in distinguish if 'wd' in i]:
+        if distinguish[wd]: # If distinguished, replace them now
+            CVs=re.sub(wd.replace('wd','$'),s(sdict,wd.replace('wd','')),CVs)
+        elif CVs.endswith(wd.replace('wd','')):
+            raise KeyError("CV profile {} ends with {}, which is not "
+                        "distinguished there".format(CVs_ori,
+                                                    wd.replace('wd','')))
+        else:
+            this+='+'+wd.replace('wd','')
+    #Pull out C# first; finds only relevant segments not distinguished from Cs
+    rxthis=s(sdict,this)
+    if rxthis:
         CVs=re.sub('C$',rxthis,CVs)
-    elif distinguish['ʔwd'] and not distinguish['ʔ']:
-        rxthis=s(sdict,'C-ʔ') #Pull out C# first; set to find only relevant Cs
-        CVs=re.sub('C$',rxthis,CVs)
-    elif distinguish['Nwd'] and not distinguish['N']:
-        rxthis=s(sdict,'C-N') #Pull out C# first; set to find only relevant Cs
-        CVs=re.sub('C$',rxthis,CVs)
-        # log.info('CVs: {}'.format(CVs))
-    # if C includes [N,?], find C first; if it doesn't, move on to [N,?].
-    # if we distinguish [N,?]# (only), C# is already gone, so other C's here.
-    for x in sdict: #["V","C","N","ʔ","G","S"]:
-        # if x in check.s[lang]: #just pull out big ones first
+    else:
+        log.error("No rxthis? ({}): {}".format(this,sdict))
+    # At this point, all word final Consonant variables should be gone;
+    # the following is for other word placement.
+    for x in [i for i in distinguish if 'wd' not in i]:
+        if distinguish[x]:
+            CVs=re.sub(x,s(sdict,x),CVs)
+        elif x in CVs:
+            raise KeyError("CV profile {} contains {}, which is not "
+                            "distinguished there".format(CVs_ori,x))
+        else:
+            sdict['C']+=sdict[x] #these are all consonants, if not distinguished
+            del sdict[x] #don't leave this key there to find stuff below
+    for x in sdict:
         rxthis=s(sdict,x) #this should have parens for each S
         CVs=re.sub(x,rxthis,CVs)
         # log.info('CVs: {}'.format(CVs))
@@ -372,7 +383,7 @@ def fromCV(CVs, sdict, distinguish, **kwargs): #check, lang
         # log.info('CVs: {}'.format(CVs))
     """Confirm that r is correct here"""
     CVs=re.sub(r'\)([^(]+)\(',')(\\1)(',CVs) #?
-    # log.info('Going to compile regex with CVs: {}'.format(CVs))
+    # log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
     return make(CVs, **kwargs)
 if __name__ == '__main__':
     x='ne [pas] plaire, (ne pas) agréer, ne pas'
