@@ -5280,6 +5280,10 @@ class Segments(object):
         #                                             check.replace('x','')))
         # log.info("self.regexCV (buildregex): {}".format(self.regexCV))
         """Final step: convert the CVx code to regex, and store in self."""
+        # log.info("program['settings'].s[self.analang]: {}".format(
+        #                                 program['settings'].s[self.analang]))
+        # log.info("program['settings'].distinguish: {}".format(
+        #                                 program['settings'].distinguish))
         self.regex=rx.fromCV(self.regexCV, program['settings'].s[self.analang],
                             program['settings'].distinguish,
                             word=True, compile=True, caseinsensitive=True)
