@@ -5323,8 +5323,9 @@ class Segments(object):
         # kwargs['formstosearch']=self.formsthisprofile(**kwargs)
         for group in [i for i in groups if isnoninteger(i)]:
             self.buildregex(group=group,cvt=cvt,profile=profile,check=check)
-            # log.info("self.regex: {}; self.regexCV: {}".format(self.regex,
-            #                                             self.regexCV))
+            log.info("self.regexCV: {}; self.regex: {}".format(self.regexCV,
+                                                                self.regex
+                                                                ))
             s=set(self.senseformsbyregex(self.regex,ps=ps))
             if s: #senses just for this group
                 self.presort(list(s),check,group)
