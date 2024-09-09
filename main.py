@@ -502,6 +502,7 @@ class LiftChooser(ui.Window,HasMenus):
         ErrorNotice(msg,title=_("New LIFT file location"),wait=True)
     def setfilename(self,choice,window, event=None):
         self.withdraw()
+        restart=False
         if choice == 'New':
             name=self.startnewfile()
         elif choice == 'Other':
@@ -509,9 +510,11 @@ class LiftChooser(ui.Window,HasMenus):
         elif choice == 'Clone':
             log.info("trying clone from USB")
             name=self.clonefromUSB()
+            restart=True
         elif choice == 'Demo':
             log.info("Making a CAWL demo database")
             name=self.makeCAWLdemo()
+            restart=True
         else:
             name=choice
         log.info("self.name: {}".format(name))
@@ -523,6 +526,8 @@ class LiftChooser(ui.Window,HasMenus):
             if (hasattr(program['taskchooser'],'splash') and
                         program['taskchooser'].splash.winfo_exists()):
                 program['taskchooser'].splash.deiconify()
+            if restart:
+                sysrestart()
     def __init__(self,chooser,filenamelist):
         self.filechooser=chooser
         self.parent=program['root']
