@@ -5287,6 +5287,12 @@ class Segments(object):
         self.regex=rx.fromCV(self.regexCV, program['settings'].s[self.analang],
                             program['settings'].distinguish,
                             word=True, compile=True, caseinsensitive=True)
+    def buildregexnocheck(self,**kwargs):
+        """This is the same as above, but should get all senses of a profile, regardless of check and value"""
+        profile=kwargs.get('profile',program['slices'].profile())
+        self.regex=rx.fromCV(profile, program['settings'].s[self.analang],
+                            program['settings'].distinguish,
+                            word=True, compile=True, caseinsensitive=True)
     def ifregexadd(self,regex,form,id):
         # This fn is just to make this threadable
         if regex.search(form):
@@ -5333,8 +5339,15 @@ class Segments(object):
         msg=_("Presorting ({}={})").format(check,groups)
         log.info(msg)
         w=self.getrunwindow(msg=msg)
+        program['status'].renewsensestosort([],[]) #will repopulate
         # test this before implementing it:
         # kwargs['formstosearch']=self.formsthisprofile(**kwargs)
+        """Find all relevant senseids, remove sorted ids for each group,
+        them mark the remaining senses NA, then offer them to user in
+        a modified verify page (new instructions, for those that DON'T
+        fit the test)"""
+        self.buildregexnocheck()
+        unsortedids=set(self.senseformsbyregex(self.regex,ps=ps))
         for group in [i for i in groups if isnoninteger(i)]:
             self.buildregex(group=group,cvt=cvt,profile=profile,check=check)
             log.info("self.regexCV: {}; self.regex: {}".format(self.regexCV,
@@ -5343,6 +5356,15 @@ class Segments(object):
             s=set(self.senseformsbyregex(self.regex,ps=ps))
             if s: #senses just for this group
                 self.presort(list(s),check,group)
+                unsortedids-=s
+        log.info("unsortedids ({}): {}".format(
+                                        len(unsortedids),
+                                        unsortedids
+                                        ))
+        if unsortedids:
+            self.presort(unsortedids,check,group='NA')
+            program['status'].group('NA')
+            self.verify() #do this here, just this once.
         program['status'].presorted(True)
         program['status'].store() #after all the above
         self.runwindow.waitdone()
@@ -7937,8 +7959,16 @@ class Sort(object):
         # The title for this page changes by group, below.
         self.getrunwindow(msg=_("preparing to verify {} group: {}").format(check,
                                                                         group))
-        oktext='These all have the same {}'.format(program['params'].cvcheckname())
-        instructions=_("Read down this list to verify they all have the same "
+        if group == 'NA':
+            oktext='These all DO NOT have the same {}'.format(program['params'].cvcheckname())
+            instructions=_("These words seem to not fit the check ‘{}’. Read "
+                            "down this list to verify this. If any DOES belong "
+                            "in this test, click on it to remove it from this "
+                            "list, and you can sort it on the next page."
+                            ).format(program['params'].cvcheckname())
+        else:
+            oktext='These all have the same {}'.format(program['params'].cvcheckname())
+            instructions=_("Read down this list to verify they all have the same "
             "{0} sound. Click on any word with a different {0} sound to "
             "remove it from the list.").format(program['params'].cvcheckname())
         """group is set here, but probably OK"""
@@ -8056,7 +8086,7 @@ class Sort(object):
             kwargs['anchor']='w'
         #This should be pulling from the example, as it is there already
         check=program['params'].check()
-        frames=program['toneframes'].get(self.ps)
+        frames=program['toneframes'].get(program['slices'].ps())
         if frames:
             frame=frames.get(self.check)
         else:
