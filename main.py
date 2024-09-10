@@ -5356,6 +5356,7 @@ class Segments(object):
                                     })
             t.start()
         t.join()
+        # program['status'].marksensesorted(sense) #now in marksortgroup
         self.updatestatus(group=group) # marks the group unverified.
     def updateformtextnodebycheck(self,t,check,value):
         """update this to read and write objects"""
@@ -7655,6 +7656,7 @@ class Sort(object):
                                         "".format(newgroup,group))
         if kwargs.get('updateforms'):
             self.updateformtoannotations(sense,ftype,check)
+        program['status'].marksensesorted(sense)
         program['status'].last('sort',update=True) #this will always be a change
         program['status'].tojoin(True)
         self.updatestatus(group=group,writestatus=True) # write just this once
@@ -11472,7 +11474,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         else:
             log.debug('No group selected: {}'.format(groupselected))
             return 1 # this should only happen on Exit
-        program['status'].marksensesorted(sense)
+        # program['status'].marksensesorted(sense) #now in marksortgroup
         self.maybewrite()
     def __init__(self, parent, task, groups, *args, **kwargs):
         super(SortButtonFrame, self).__init__(parent, *args, **kwargs)
