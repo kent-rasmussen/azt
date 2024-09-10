@@ -5085,6 +5085,12 @@ class Segments(object):
         profile=kwargs.get('profile',program['slices'].profile())
         self.regex=self.rxdict.fromCV(profile,
                             word=True, compile=True, caseinsensitive=True)
+    def buildregexnocheck(self,**kwargs):
+        """This is the same as above, but should get all senses of a profile, regardless of check and value"""
+        profile=kwargs.get('profile',program['slices'].profile())
+        self.regex=rx.fromCV(profile, program['settings'].s[self.analang],
+                            program['settings'].distinguish,
+                            word=True, compile=True, caseinsensitive=True)
     def ifregexadd(self,regex,form,id):
         # This fn is just to make this threadable
         if regex.search(form):
