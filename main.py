@@ -5388,9 +5388,9 @@ class Segments(object):
         for c in reversed(check.split('=')):
             log.info("subbing {} for {} in {}, using {}".format(value,c,tori,
                                                     program['settings'].rx[c]))
-            log.info("found {}".format(program['settings'].rx[c].search(t.text)))
             match=program['settings'].rx[c].search(t.text)
             if match:
+                log.info("found {}".format(match))
                 matches.append(match.groups()[-1])
                 t.text=match.expand('\\g<1>'+value)+t.text[match.end():]
             # t.text=program['settings'].rx[c].sub('\\g<1>'+value,t.text)
