@@ -3592,13 +3592,13 @@ class TaskDressing(HasMenus,ui.Window):
                 log.info('The following changed (from,to): {}'.format(changed))
                 r=notice(changed)
                 if r:
-                    self.runwindow.destroy()
+                    self.runwindow.on_quit()
                     program['settings'].storesettingsfile(setting='profiledata')
                     program['taskchooser'].restart()
                 else:
                     undo(changed)
             else:
-                self.runwindow.destroy()
+                self.runwindow.on_quit()
         def buttonframeframe(s):
             f=ui.Frame(self.runwindow.scroll.content,
                         row=options.get('r'),
@@ -5602,7 +5602,7 @@ class WordCollection(Segments):
                             glosslangs=self.runwindow.glosslangs,
                             form=self.runwindow.form)
             # Update profile information in the running instance, and in the file.
-            self.runwindow.destroy()
+            self.runwindow.on_quit()
             """The following are useless without ps information, so they will
             have to come later."""
     def addCAWLentries(self):
@@ -7271,7 +7271,7 @@ class Tone(object):
             kwargs['window'].destroy() #in any case; if fails, try again.
         ToneFrameDrafter(self)
     def aframe(self):
-        self.runwindow.destroy()
+        self.runwindow.on_quit()
         self.addframe()
         self.addwindow.wait_window(self.addwindow)
         self.runcheck()
@@ -7424,7 +7424,7 @@ class Sort(object):
             if profilevar.get() == '':
                 log.debug("Give a name for this adhoc sort group!")
                 return
-            self.runwindow.destroy()
+            self.runwindow.on_quit()
             ids=[]
             for var in [x for x in vars if len(x.get()) >1]:
                 # log.info("var {}: {}".format(vars.index(var),var.get()))
@@ -7568,7 +7568,7 @@ class Sort(object):
             program['status'].nextcheck(toverify=True)
         #if neither, this should call nprofile
         try:
-            self.runwindow.destroy()
+            self.runwindow.on_quit()
         except AttributeError:
             log.info("Looks like we wanted to kill a non-existent runwindow.")
         self.runcheck()
@@ -7578,7 +7578,7 @@ class Sort(object):
             program['status'].nextprofile(toverify=True)
         #if neither, this should give up with a congrats and comment to pick another ps
         try:
-            self.runwindow.destroy()
+            self.runwindow.on_quit()
         except AttributeError:
             log.info("Looks like we wanted to kill a non-existent runwindow.")
         self.runcheck()
@@ -7588,7 +7588,7 @@ class Sort(object):
         if not r:
             program['status'].nextprofile(toverify=True)
         try:
-            self.runwindow.destroy()
+            self.runwindow.on_quit()
         except AttributeError:
             log.info("Looks like we wanted to kill a non-existent runwindow.")
         self.runcheck()
@@ -8218,7 +8218,7 @@ class Sort(object):
                     "".format(oktext,ngroupstojoin))
             #this avoids asking the user about it again, until more sorting:
             program['status'].tojoin(False)
-            self.runwindow.destroy()
+            self.runwindow.on_quit()
             return 0
         elif ngroupstojoin > 2:
             log.info("User selected ‘{}’ with {} groups selected, This is "
@@ -8587,7 +8587,7 @@ class Record(Sound,TaskDressing):
     def showtonegroupexs(self):
         def next():
             program['status'].nextprofile()
-            self.runwindow.destroy()
+            self.runwindow.on_quit()
             self.showtonegroupexs()
         if (not(hasattr(self,'examplespergrouptorecord')) or
             (type(self.examplespergrouptorecord) is not int)):
@@ -10089,7 +10089,7 @@ class Transcribe(Sound,Sort,TaskDressing):
         program['status'].group(gc)
         program['settings'].set('group_comparison',g)
         # program['settings'].setgroup(gc)
-        self.runwindow.destroy()
+        self.runwindow.on_quit()
         self.makewindow()
     def submitandswitch(self):
         if hasattr(self,'group_comparison'):
@@ -10210,7 +10210,7 @@ class Transcribe(Sound,Sort,TaskDressing):
                 self.maybewrite()
         if hasattr(self,'group_comparison'):
             delattr(self,'group_comparison') # in either case
-        self.runwindow.destroy()
+        self.runwindow.on_quit()
         return
     def done(self):
         self.submitform()
@@ -10618,7 +10618,7 @@ class JoinUFgroups(Tone,TaskDressing):
                     for sense in self.analysis.sensesbygroup[group]:
                         sense.uftonevalue(uf)
             self.maybewrite()
-            self.runwindow.destroy()
+            self.runwindow.on_quit()
             program['status'].last('joinUF',update=True)
             self.tonegroupsjoinrename() #call again, in case needed
         self.makeanalysis()
@@ -10626,10 +10626,10 @@ class JoinUFgroups(Tone,TaskDressing):
             self.wait(_("Redoing Tone Analysis")+'\n'+timestamps)
             self.analysis.do()
             self.waitdone()
-            # self.runwindow.destroy()
+            # self.runwindow.on_quit()
             self.tonegroupsjoinrename() #call again, in case needed
         def done():
-            self.runwindow.destroy()
+            self.runwindow.on_quit()
         ps=kwargs.get('ps',program['slices'].ps())
         profile=kwargs.get('profile',program['slices'].profile())
         analysisOK,joinedsince,timestamps=program['status'].isanalysisOK(**kwargs) #Should specify which lasts...
@@ -10701,7 +10701,7 @@ class JoinUFgroups(Tone,TaskDressing):
         nheaders=0
         if not self.analysis.orderedUFs:
             self.runwindow.waitdone()
-            self.runwindow.destroy()
+            self.runwindow.on_quit()
             ErrorNotice(title=_("No draft UF groups found for {} words!"
                                 "").format(ps),
                         text=_("You don't seem to have any analyzed {0} groups "
