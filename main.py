@@ -13299,28 +13299,30 @@ class CheckParameters(dict):
             'T':{
                 1:[('T', _("Tone melody"))]},
             'V':{
-                1:[('V1', _("First/only Vowel"))],
+                1:[('V1', _("First Vowel"))],
                 2:[
-                    ('V1=V2', _("Same First/only Two Vowels")),
-                    ('V1xV2', _("Correspondence of First/only Two Vowels")),
+                    ('V1=V2', _("Same First Two Vowels")),
+                    ('V1xV2', _("Correspondence of First Two Vowels")),
                     ('V2', _("Second Vowel"))
                     ],
                 3:[
-                    ('V1=V2=V3', _("Same First/only Three Vowels")),
+                    ('V1=V2=V3', _("Same First Three Vowels")),
                     ('V3', _("Third Vowel")),
-                    ('V2=V3', _("Same Second Two Vowels")),
-                    ('V2xV3', _("Correspondence of Second Two Vowels"))
+                    ('V2=V3', _("Same Second and Third Vowels")),
+                    ('V2xV3', _("Correspondence of Second and Third Vowels"))
                     ],
                 4:[
-                    ('V1=V2=V3=V4', _("Same First/only Four Vowels")),
+                    ('V1=V2=V3=V4', _("Same First Four Vowels")),
+                    ('V3=V4', _("Same Third and Fourth Vowels")),
+                    ('V3xV4', _("Correspondence of Third and Fourth Vowels")),
                     ('V4', _("Fourth Vowel"))
                     ],
                 5:[
-                    ('V1=V2=V3=V4=V5', _("Same First/only Five Vowels")),
+                    ('V1=V2=V3=V4=V5', _("Same First Five Vowels")),
                     ('V5', _("Fifth Vowel"))
                     ],
                 6:[
-                    ('V1=V2=V3=V4=V5=V6', _("Same First/only Six Vowels")),
+                    ('V1=V2=V3=V4=V5=V6', _("Same First Six Vowels")),
                     ('V6', _("Sixth Vowel"))
                     ]
                 },
