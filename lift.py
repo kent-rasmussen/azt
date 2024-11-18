@@ -36,11 +36,11 @@ except:
 nodes), to edit the XML."""
 class Object(object):
     pass
-class TreeParsed(object):
-    def __init__(self, lift):
-        self=Tree(lift).parsed
-        log.info(self.glosslang)
-        Tree.__init__(self, db, guid=guid)
+# class TreeParsed(object):
+#     def __init__(self, lift):
+#         self=Tree(lift).parsed
+#         log.info(self.glosslang)
+#         Tree.__init__(self, db, guid=guid)
 class Error(Exception):
     """Base class for exceptions in this module."""
     pass
