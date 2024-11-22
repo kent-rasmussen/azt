@@ -16,6 +16,16 @@ def tryrun(cmd):
         text=_("{} command error: {}\n({})").format(cmd.__name__,e,cmd)
         log.error(text)
         ErrorNotice(text,title=_("{} command error!").format(cmd.__name__))
+def quote(x):
+    #does this fail on non-string x?
+    if isinstance(x,dict) or isinstance(x,int) or isinstance(x,list):
+        return str(x) #don't put brackets around this, just make it a string
+    if "'" not in x:
+        return "'"+x+"'"
+    elif '"' not in x:
+        return '"'+x+'"'
+    else:
+        log.error("Looks like ˋ{}ˊ contains single and double quotes!".format(x))
 def indenteddict(indict):
     outdict={}
     # log.info("working on dict with keys {}".format(indict.keys()))
