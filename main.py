@@ -14353,16 +14353,6 @@ def dictcompare(x,y,ignore=[]):
     else:
         r=len(pairs)/(len(pairs)+len(unpairs))
     return (r,pairs,unpairs)
-def quote(x):
-    #does this fail on non-string x?
-    if isinstance(x,dict) or isinstance(x,int) or isinstance(x,list):
-        return str(x) #don't put brackets around this, just make it a string
-    if "'" not in x:
-        return "'"+x+"'"
-    elif '"' not in x:
-        return '"'+x+'"'
-    else:
-        log.error("Looks like ˋ{}ˊ contains single and double quotes!".format(x))
 def selected(groupvars):
     return [k for k in groupvars
             if groupvars[k] is not None #necessary?
