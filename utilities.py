@@ -54,7 +54,7 @@ def indenteddict(indict):
                 # '\n\t\t'.join(str({i:v[j][k][i]
                 #                             for i in v[j][k]}))
             else:
-                log.info(_("printing indented dict for {} key").format(j))
+                # log.info(_("printing indented dict for {} key").format(j))
                 outdict[j]='{'+',\n'.join([quote(i)+':'+quote(indict[j][i])
                                         for i in indict[j]#.keys()
                                         if i])+'}'
