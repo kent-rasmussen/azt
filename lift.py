@@ -48,6 +48,7 @@ class BadParseError(Error):
     def __init__(self, filename):
         self.filename = filename
 class Lift(object): #fns called outside of this class call self.nodes here.
+    """This should maybe be subclassed under XML, from xmletfns"""
     """The job of this class is to expose the LIFT XML as python object
     attributes. Nothing more, not thing else, should be done here."""
     def __init__(self, filename, tostrip=False):
@@ -2039,7 +2040,8 @@ class FormParent(Node):
             #                     self.forms[lang].annotationvalue(name,value)))
             return self.forms[lang].annotationvalue(name,value)
         except KeyError:
-            log.error("Can't annotate; no form for {} lang!".format(lang))
+            log.error("Can't annotate; no form for {} lang! (only {})".format(
+                        lang, self.forms.keys()))
         except Exception as e:
             log.error("Exception! ({})".format(e))
             # if value is not None: #only make if we're populating it, allow ''
