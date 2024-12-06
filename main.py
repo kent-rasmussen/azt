@@ -2335,16 +2335,16 @@ class Settings(object):
                 self.distinguish[var]=False
             if var in ['<','=']: #typically not word-forming
                 self.distinguish[var]=True
-        for var in ['NC','CG','CS','VV','VN']:
+        for var in ['NC','CG','CS','Vː','VN']:
             if ((var not in self.interpret) or
                 (type(self.interpret[var]) is not str) or
                 not(1 <=len(self.interpret[var])<= 2)):
-                if (var == 'VV') or (var == 'VN'):
+                if (var == 'Vː') or (var == 'VN'):
                     self.interpret[var]=var
                 else:
                     self.interpret[var]='CC'
-        if self.interpret['VV']=='Vː' and self.distinguish['ː']==False:
-            self.interpret['VV']='VV'
+        if self.interpret['Vː']=='V' and self.distinguish['ː']==False:
+            self.interpret['Vː']='VV'
         log.log(2,"self.distinguish: {}".format(self.distinguish))
     def addtoprofilesbysense(self,sense,ps,profile):
         # log.info("kwargs: {}".format(kwargs))
@@ -2492,7 +2492,7 @@ class Settings(object):
         """Simplify combinations where desired"""
         c=['N','S','G','ʔ','D']
         o=["̀",'<','=','ː']
-        cc=['CG','CS','NC','VN','VV']
+        cc=['CG','CS','NC','VN','Vː']
         # cc needs to be resolved before the modifier goes away with G,S,D,N,ʔ>C
         for combo in cc:
             if combo.startswith('C'):#pattern, sub, string
@@ -2700,7 +2700,7 @@ class Settings(object):
             if self.s[analang][sclass] != []: #don't make if empty
                 self.compileCVrxforsclass(sclass)
         #Compile preferred regexs here
-        for cc in ['CG','CS','NC','VN','VV']:
+        for cc in ['CG','CS','NC','VN','Vː']:
             # This has a group to replace with whatever C value was found
             ccc=cc.replace('C','(['+''.join( #don't do XX>X
                         [i for i in ['S','G','D','ʔ','N'] if i not in cc]+['C']
@@ -3716,7 +3716,10 @@ class TaskDressing(HasMenus,ui.Window):
                         '(S#)?'),
                 'CS':_('How to interpret Consonant-Sonorant (CS) sequences?'),
                 'VN':_('How to interpret Vowel-Nasal (VN) sequences? '
-                        '(after NC interpretation above)')
+                        '(after NC interpretation above)'),
+                'Vː':_('How to interpret Long Vowels (Vː)? '
+                        '(one vowel quality, but longer)')
+
                 }
         optdict={'ʔ':[(True,'ʔ≠C'),(False,'ʔ=C')],
                 'ʔwd':[(True,'ʔ#≠C#'),(False,'ʔ#=C#')],
@@ -3738,7 +3741,8 @@ class TaskDressing(HasMenus,ui.Window):
                 'CS':[('CS','CS=CS (≠C, ≠CC)'),
                         ('C','CS=C (≠CS, ≠CC)'),
                         ('CC','CS=CC (≠CS, ≠C)')],
-                'VN':[('VN','VN=VN (≠Ṽ)'), ('Ṽ','VN=Ṽ (≠VN)')]
+                'VN':[('VN','VN=VN (≠Ṽ)'), ('Ṽ','VN=Ṽ (≠VN)')],
+                'Vː':[('VV','Vː=VV (≠V)'), ('V','Vː=V (≠VV)')]
                 }
         exsframe('C')
         for var in [i for i in vars if i not in ['C','V']
