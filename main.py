@@ -2446,13 +2446,17 @@ class Settings(object):
         self.notifyuserofextrasegments() #analang set by now, depends db only
         self.polygraphcheck() #depends only on self.polygraph
         self.checkinterpretations() #checks/sets values for distinguish/interpret
-        self.setupCVrxs() # self.rx (calls slists, needs distinguish)
         log.info("Interpretation settings: \n{}".format(
-                '\n'.join([k+':'+str(v) for k,v in self.interpret.items()])
+                '\n'.join([k+': '+str(v) for k,v in self.interpret.items()])
                 ))
+        log.info("Setting preferred profile with self.interpret: {}"
+                "".format(self.interpret))
         log.info("Distinguishing settings: \n{}".format(
-                '\n'.join([k+':'+str(v) for k,v in self.distinguish.items()])
+                '\n'.join([k+': '+str(v) for k,v in self.distinguish.items()])
                 ))
+        log.info("Setting distinguished profile with self.distinguish: {}"
+                "".format(self.distinguish))
+        self.setupCVrxs() # self.rx (calls slists, needs distinguish)
         for ps in program['db'].pss: #45s on English db
             # self.sextracted[ps]={}
             # for s in self.rx:
