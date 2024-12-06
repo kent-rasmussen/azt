@@ -2337,7 +2337,7 @@ class Settings(object):
                 self.distinguish[var]=False
             if var in ['<','=']: #typically not word-forming
                 self.distinguish[var]=True
-        for var in ['NC','CG','CS','VV','VN']:
+        for var in ['NC','CG','CS','Vː','VN']:
             if ((var not in self.interpret) or
                 (type(self.interpret[var]) is not str) or
                 not(1 <=len(self.interpret[var])<= 2)):
@@ -2345,8 +2345,8 @@ class Settings(object):
                     self.interpret[var]=var
                 else:
                     self.interpret[var]='CC'
-        if self.interpret['VV']=='Vː' and self.distinguish['ː']==False:
-            self.interpret['VV']='VV'
+        if self.interpret['Vː']=='V' and self.distinguish['ː']==False:
+            self.interpret['Vː']='VV'
         log.log(2,"self.distinguish: {}".format(self.distinguish))
     def addtoprofilesbysense(self,sense,ps,profile):
         # log.info("kwargs: {}".format(kwargs))
