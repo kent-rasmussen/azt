@@ -73,6 +73,8 @@ def sub(*args,**kwargs):
     # pattern, repl, string, count=0, flags=0
     # log.info("Running re.sub with args: {} and kwargs: {}".format(args,kwargs))
     return re.sub(*args,**kwargs)
+def search(*args,**kwargs):
+    return re.search(*args,**kwargs)
 def compile(x):
     return re.compile(x, re.UNICODE)
 def id(x):
