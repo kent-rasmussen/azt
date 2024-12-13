@@ -62,3 +62,27 @@ def indenteddict(indict):
             # log.info(_("printing unindented dict for {} key").format(j))
             outdict[j]=str(indict[j]) #don't quote booleans!
     return outdict
+def nesteddictadd1key(dict,key):
+    if key not in dict:
+        dict[key]={}
+    return dict[key]
+def setnesteddictval(dict,val,*keys,addval=False):
+    """Include as many key layers as you like,
+    put keys in order; dict,v,x,y gives dict[x][y]=v
+    with addval, if val is int or list, it is added to value/list already there, 
+    or assigned if there is no current value.
+    """
+    dictlist=[] #keep dictionaries at each level in memory
+    for n,k in enumerate(keys): #keys may repeat, can't index
+        if dictlist:
+            d=dictlist[-1]
+        else:
+            d=dict
+        if n-len(keys)+1:
+            dictlist.append(nesteddictadd1key(d,k))
+        elif addval and k in d:
+            print(f"For keys {keys} adding value {val}")
+            d[k]+=val
+        else:
+            print(f"For keys {keys} assinging value {val}")
+            d[k]=val
