@@ -143,7 +143,7 @@ class Report(object):
         newdom=rx.texmllike(str(dom))
         with open(outfile+'c', 'wb') as f:
             f.write(newdom.encode('utf_8'))
-        dom = lxml.etree.parse(outfile+'c')
+        dom = lxml.etree.parse(outfile+'c') #this is where this currently breaks
         try:
             texfile=outfile.replace('.xml','.tex')
             outdir=file.getfilenamedir(outfile)
