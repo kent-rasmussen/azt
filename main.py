@@ -13031,9 +13031,15 @@ class StatusDict(dict):
             self._checksdict[cvt][profile]=list()
             for i in range(n): # get max checks and lesser
                 if i+1 >6:
-                    log.info(_("We aren't doing checks with more than 6 "
-                            "consonants or vowels ({} in {}); If you need "
-                            "that, please let me know.").format(i+1,profile))
+                    c=0
+                    for ps in program['slices'].pss():
+                        if (profile,ps) in program['slices']:
+                            c+=program['slices'][(profile,ps)]
+                    log.info(_("Not doing checks with more than 6 "
+                            f"consonants or vowels; there are {i+1} " f"{program['params'].cvtdict()[cvt]['pl']} "
+                            f"in {profile}); "
+                            "If you need that, please let me know. "
+                            f"({c} word(s).)"))
                     continue
                 """This is a list of (code, name) tuples"""
                 syltuples=program['params']._checknames[cvt][i+1] #range+1 = syl
