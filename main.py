@@ -9642,10 +9642,16 @@ class Report(object):
         self.checkcounts={}
         # self.printprofilesbyps() #don't really need this
         # self.printcountssorted() #don't really need this
-        t=_("This report covers the following top two Grammatical categories, "
-            "with the top {} syllable profiles in each. "
+        t=_("This report covers {} Grammatical categories, "
+            "with {} syllable profiles in each. "
             "This is of course configurable, but I assume you don't want "
-            "everything.".format(program['settings'].maxprofiles))
+            "everything."
+            "".format("the top "+str(program['settings'].maxpss)
+                        if program['settings'].maxpss
+                        else 'all', #fix this!
+                        "the top "+str(program['settings'].maxprofiles)
+                                    if program['settings'].maxprofiles
+                                    else 'all'))
         log.info(t)
         print(t)
         p=xlp.Paragraph(si,t)
