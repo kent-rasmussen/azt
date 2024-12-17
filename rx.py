@@ -393,6 +393,8 @@ class RegexDict(dict):
     CVs=re.sub(r'\)([^(]+)\(',')(\\1)(',CVs) #?
     # log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
     return make(CVs, **kwargs)
+    """These make rxs to find glyphs given a variable (C,V,N,G,S,etc), any
+        or first, second, etc occurrance"""
     def makeglyphregex(self,c,**kwargs):
         """We are doing a few things here:
         1. regex to find all glyphs of a variable (n=0)>rx[v][0]
