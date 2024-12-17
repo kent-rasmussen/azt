@@ -103,12 +103,11 @@ def update(t,regexdict,check,value,matches=[]):
     for c in reversed(check.split('=')):
         log.info("subbing {} for {} in {}, using {}".format(value,c,t,
                                                     regexdict[c]))
-        # log.info("found {}".format(regexdict[c].search(t)))
         match=regexdict[c].search(t)
         if match:
             matches.append(match.groups()[-1])
             t=match.expand('\\g<1>'+value)+t[match.end():]
-    log.info("updated {} > {}".format(tori,t))
+    # log.info("updated {} > {}".format(tori,t))
     for match in matches:
         if len(match)>1:
             log.info(_("NOTICE: we just matched (to remove) a set of "
