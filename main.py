@@ -5350,24 +5350,6 @@ class Segments(object):
         t.join()
         # program['status'].marksensesorted(sense) #now in marksortgroup
         self.updatestatus(group=group) # marks the group unverified.
-    def updateformtextnodebycheck(self,t,check,value):
-        """update this to read and write objects"""
-        tori=t.text[:]
-        matches=[]
-        t=rx.update(t,program['settings'].rx,check,value)
-        for c in reversed(check.split('=')):
-            log.info("subbing {} for {} in {}, using {}".format(value,c,tori,
-                                                    program['settings'].rx[c]))
-            match=program['settings'].rx[c].search(t.text)
-            if match:
-                log.info("found {}".format(match))
-                matches.append(match.groups()[-1])
-                t.text=match.expand('\\g<1>'+value)+t.text[match.end():]
-            # t.text=program['settings'].rx[c].sub('\\g<1>'+value,t.text)
-        log.info("updated {} > {}".format(tori,t.text))
-        #now that we've potentially added a grapheme, see that it will be found.
-        program['settings'].addtoCVrxs(value)
-        #this should update polygraphs; if so, trigger reanalysis (instead of above)
     def updateformtoannotations(self,sense,ftype,check=None,write=False):
         """This should take a sense, ftype and check, in normal usage.
         If we want to upadate forms to *all* annotations, don't give check.
