@@ -2531,7 +2531,8 @@ class Sense(Node,FieldParent):
         try:
             return self.ftypes[ftype].textvaluebylang(lang,value)
         except KeyError:
-            log.info("No {} type ({})".format(ftype,self.ftypes))
+            pass
+            # log.info("No {} type ({})".format(ftype,self.ftypes))
     def annotationvaluebyftypelang(self,ftype,lang,name,value=None):
         try:
             # log.info("annotationvaluebyftypelang returning {}".format(
