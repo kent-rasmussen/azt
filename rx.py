@@ -393,6 +393,13 @@ class RegexDict(dict):
     CVs=re.sub(r'\)([^(]+)\(',')(\\1)(',CVs) #?
     # log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
     return make(CVs, **kwargs)
+    def makeglyphregexs(self):
+        todo=['C','V','Cwd']+[k for k in self.distinguish if self.distinguish[k]
+                                and self.sdict[k.strip('wd')]] #only if there
+        notdo=set(self.sdict)-set(todo)
+        log.info(f"Going to make rxs for {todo}; not doing {notdo}")
+        for c in todo:
+            self.makeglyphregex(c)
     def __init__(self,**kwargs):
         super(dict, self).__init__()
         self.count=0
