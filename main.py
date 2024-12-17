@@ -9374,7 +9374,9 @@ class Report(object):
             if 'ufgroup' in kwargs:
                 titlebits+=kwargs['ufgroup']
             id=rx.id(titlebits)
-            ex=xlp.Example(parent,id,heading=checkprose)
+            rxcomment=("These items were found with this regex:\n"
+                        f"{str(self.regex).strip("re.compile()")}")
+            ex=xlp.Example(parent,id,heading=checkprose,comment=rxcomment)
             if hasattr(self,'basicreported') and '=' in check:
                 # log.info(self.basicreported.keys())
                 # log.info("Adding to basicreported for keys {}"
