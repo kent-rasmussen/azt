@@ -1447,7 +1447,7 @@ class StatusFrame(ui.Frame):
                         nunverified=len(set(total)-set(done))
                         for g in total:
                             if g in done:
-                                g='+'+g #these should be strings
+                                g+='+' #these should be strings
                                 # g='?'+g #these should be strings
                                 # g='<'+g+'>' #these should be strings
                             totalwverified+=[g]
