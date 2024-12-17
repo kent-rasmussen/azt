@@ -378,21 +378,37 @@ class RegexDict(dict):
         elif x in CVs:
             raise KeyError("CV profile {} contains {}, which is not "
                             "distinguished there".format(CVs_ori,x))
+    def undistinguished(self,variableset,**kwargs):
+        """This function converts C or V (or others) into a variable
+        representing each class that should be included, based on
+        self.distinguished values and (non-)final position."""
+        v_ori=variableset
+        if kwargs.get('final'):
+            for wd in self.distinguished(variableset,False,**kwargs):
+                variableset+='+'+wd.replace('wd','')
         else:
-            sdict['C']+=sdict[x] #these are all consonants, if not distinguished
-            del sdict[x] #don't leave this key there to find stuff below
-    for x in sdict:
-        rxthis=s(sdict,x) #this should have parens for each S
-        CVs=re.sub(x,rxthis,CVs)
-        # log.info('CVs: {}'.format(CVs))
-    for x in references: #get capture group expressions
-        CVrepl='\\\\{}'.format(str(x)) #this needs to be escaped to survive...
-        # log.info('x: {}; repl: {}'.format(x,CVrepl))
-        # log.info('CVs: {}'.format(CVs))
-    """Confirm that r is correct here"""
-    CVs=re.sub(r'\)([^(]+)\(',')(\\1)(',CVs) #?
-    # log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
-    return make(CVs, **kwargs)
+            for x in self.distinguished(variableset,False,**kwargs):
+                variableset+='+'+x
+        # log.info("Returning {} for {} {}".format(variableset,v_ori,kwargs))
+        return variableset
+    def distinguished(self,x,value=True,**kwargs): #self.distinguish
+        """This outputs a list of all segment types which are distinguished
+        (from C or V) in the given position (or NOT distinguished,
+        if value=False) —evidently, not including C or V."""
+        if x == 'C':
+            l=['G','N','S','D','ʔ']
+            if kwargs.get('final'):
+                l=[i+'wd' for i in l]
+            dset=set(l)
+        elif x == 'V':
+            dset=set(['̀','ː'])
+        else:
+            dset=set()
+        dset&=set(self.distinguish) #limit dset to what is there, in case
+        if value:
+            return [i for i in dset if self.distinguish[i]]
+        else:
+            return [i for i in dset if not self.distinguish[i]]
     def setnXrx(self,s,n,nS):
         # These should always be all glyphs
         # log.info("Setting {}{} value {}".format(s,n,nS))
