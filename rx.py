@@ -393,6 +393,18 @@ class RegexDict(dict):
     CVs=re.sub(r'\)([^(]+)\(',')(\\1)(',CVs) #?
     # log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
     return make(CVs, **kwargs)
+    def profileofform(self,form,ps):
+        if not form or not ps:
+            # log.info("Either no form ({}) or no ps ({}); returning".format(form,ps))
+            return 'Invalid'
+        profile=form
+        for polyn in range(4,0,-1): #find and sub longer forms first
+            for s in set(self.profilelegit) & set(self.rx):
+                if polyn in self.rx[s]:
+                    # log.info(f"Checking for {s} with {self.rx[s][polyn]}")
+                    profile=self.rx[s][polyn].sub(s,profile)
+        # log.info(f"ready to return {formori}>{form}")
+        return profile
     def makeprofileforcheck(self,**kwargs):
         check=kwargs.get("check")
         replS='\\1'+kwargs.get("group")
