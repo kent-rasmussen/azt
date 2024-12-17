@@ -251,30 +251,18 @@ def slisttoalternations(graphemeset,group=False):
     if group:
         output='('+output+')'
     return output
-def s(sdict, stype, polyn=0, word=False, compile=False): #settings lang=None
+def s(graphemeset, **kwargs):
     """join a list into regex format, sort for longer first, to capture
     the largest units possible."""
-    """stype is a capital symbolic representation of the group of letters,
-    e.g., N for nasals, D for depressors, etc. """
-    """sdict should be a dictionary value keyed by check/settings.s[analang]"""
-    graphemeset=set()
-    if '+' in stype:
-        log.info("s looking for {} in these keys: {}".format(stype,sdict))
-    graphemevariables=stype.split('+')
-    for x in set(sdict) & set(graphemevariables):
-        graphemeset|=set(sdict[x])
-        graphemevariables.remove(x)
-    if graphemevariables:
-        raise KeyError("stype {} leaves {}, which is not in dict keys: {}"
-                    "".format(stype, graphemevariables, sdict.keys()))
-    if polyn:
+    polyn=kwargs.get('polyn')
+    if polyn: #use all if 0
         #make the above limited by len here
         graphemeset=[i for i in graphemeset if len(i) == polyn]
     output=slisttoalternations(graphemeset,group=True)
-    if compile:
+    if kwargs.get('compile'):
         # log.info("Compiling {}[{}] regex {} (word={})"
         #         "".format(stype,polyn,output,word))
-        return make(output, word=word, compile=compile)
+        return make(output, **kwargs)
     else:
         return output
 def make(regex, **kwargs):
