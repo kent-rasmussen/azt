@@ -1906,6 +1906,8 @@ class Text(Node):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='text'
         super(Text, self).__init__(parent, node, **kwargs)
+        if self.text:
+            self.text=self.text.replace('\n','').strip() #don't allow spaces or newlines on edges, no newlines anywhere
 class ValueNode(Node):
     def myvalue(self,value=None):
         if value:
