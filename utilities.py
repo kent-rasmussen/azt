@@ -82,7 +82,14 @@ def setnesteddictval(dict,val,*keys,addval=False):
             dictlist.append(nesteddictadd1key(d,k))
         elif addval and k in d:
             print(f"For keys {keys} adding value {val}")
-            d[k]+=val
+            if type(val) == type(d[k]) == set:
+                d[k]|=val
+            elif type(val) == set or type(d[k]) == set:
+                raise TypeError(f"you're trying to add {val} ({type(val)}) "
+                                f"to {d[k]} ({type(d[k])}), but "
+                                "one is a set and the other isn't")
+            else:
+                d[k]+=val
         else:
             print(f"For keys {keys} assinging value {val}")
             d[k]=val
