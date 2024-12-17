@@ -243,9 +243,14 @@ def inxyz(db, lang, segmentlist): #This calls the above script for each characte
     log.log(2,'{} {}'.format(time.time()-start_time, segmentlist)) # with this
     return list(dict.fromkeys(actuals))
 def slisttoalternations(graphemeset,group=False):
+    """This fn takes a list (or set) of graphemes and
+        orders them longest first
+        separates with '|'
+        (group) if kwarg['group']=True
+    """
     # This '|' delimited list should never go inside of [^ ], as it will be
     # misinterpreted!!
-    # This provides the form to go in [^ ] lists or alone, with a one grouping
+    # This provides the form with or without one grouping
     # around the list, but with longer graphemes first (trigraphs, then
     # digraphs and decomposed characters)
     output='|'.join(sorted(graphemeset,key=len,reverse=True))
