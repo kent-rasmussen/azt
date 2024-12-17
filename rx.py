@@ -330,32 +330,6 @@ def nX(segmentsin,segmentsout,n):
     #     print(n,i)
     # log.info("Compiling X{} regex {}".format(n,nS))
     return make(nS, compile=True)
-def fromCV(CVs, sdict, distinguish, **kwargs): #check, lang
-    """ this inputs regex variable (regexCV), a tuple of two parts:
-    1. abbreviations with 'C' and 'V' in it, and/or variables for actual
-    segments or back reference, e.g., 1 for \1 or 2 for \2, and 'c' or 'v'.
-    2. dictionary of variable meanings (e.g., {'v':['e',...]}).
-    e.g., for total variable: CVs=("CvC2",{'v':['e',...]})
-    CAUTION: if you don't have this dictionary, CVs[0] is just one letter...
-    It outputs language specific regex (compiled if compile=True,
-    whole word word=True)."""
-    """lang should be check.analang"""
-    if type(CVs) is not str:
-        log.error("regexCV is not string! ({})".format(CVs))
-    CVs_ori=CVs
-    sdict=sdict.copy()
-    regex=list()
-    references=('\1','\2','\3','\4')
-    references=range(1,5)
-    # Replace word final Consonants first, to get them out of the way:
-    this='C'
-    for wd in [i for i in distinguish if 'wd' in i]:
-        if distinguish[wd]: # If distinguished, replace them now
-            CVs=re.sub(wd.replace('wd','$'),s(sdict,wd.replace('wd','')),CVs)
-        elif CVs.endswith(wd.replace('wd','')):
-            raise KeyError("CV profile {} ends with {}, which is not "
-                        "distinguished there".format(CVs_ori,
-                                                    wd.replace('wd','')))
 class RegexDict(dict):
     """This makes and stores all the regex's needed for A−Z+T (for now)"""
     """distinguish and interpret should only be set once, on boot"""
