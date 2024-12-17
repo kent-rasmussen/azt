@@ -1326,6 +1326,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         c['p']={}
         c['p'][2]=['kk','kp','cc','pp','pt','tt','ck',
                     'qu', #French
+                    'mp', 'nt', 'nk', 'ŋk',
                     # 'kw','tw',
                     'Pk','Pw' #tsh
                     ] #gnd
