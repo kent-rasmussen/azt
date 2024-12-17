@@ -393,6 +393,21 @@ class RegexDict(dict):
     CVs=re.sub(r'\)([^(]+)\(',')(\\1)(',CVs) #?
     # log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
     return make(CVs, **kwargs)
+    def makeprofileregexs(self):
+        """These are just to find (combinations of) variables in syllable
+        profiles"""
+        self.rx_profile={} #these look for profile variables
+        sclassesC=['N','S','G','ʔ','D']
+        o=["̀",'<','=','ː']
+        for posC in ['^C','C$']:
+            self.rx_profile[posC]=compile(posC)
+        for c in self.distinguish:
+            if 'wd' in c or c in o: # positive lookahead: word final
+                self.rx_profile[c]=compile(c.strip('wd')+r'(?=\Z)')
+            else: # negative lookahead: not word final
+                self.rx_profile[c+'_']=compile(c+r'(?!\Z)')
+        for cc in self.interpret:
+            self.rx_profile[cc]=compile(cc) #no polygraphs here
     """These make rxs to find glyphs given a variable (C,V,N,G,S,etc), any
         or first, second, etc occurrance"""
     def makeglyphregex(self,c,**kwargs):
