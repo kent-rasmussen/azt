@@ -378,6 +378,27 @@ class RegexDict(dict):
         elif x in CVs:
             raise KeyError("CV profile {} contains {}, which is not "
                             "distinguished there".format(CVs_ori,x))
+    def glyphsforvariable(self,stype): #self.sdict
+        """This returns a set of all the graphemes for a single group,
+        stype: a capital symbolic representation of the group of letters,
+                e.g., N for nasals, D for depressors, etc.
+                -joined by '+' when added together (to make a larger set).
+        This script does NOT distinguish between
+        --location (final, non-final), (this should already be done)
+        --what should be distinguished (this should already be done)
+        --glyph length (polyn) (this is done later)
+        """
+        graphemeset=set()
+        graphemevariables=stype.split('+')
+        # Collect variables that are both given and in the dict:
+        for x in set(self.sdict) & set(graphemevariables):
+            # track that all given variables are used (or throw error):
+            graphemeset|=set([i for i in self.sdict[x]])
+            graphemevariables.remove(x)
+        if graphemevariables:
+            raise KeyError("stype {} leaves {}, which is duplicated or not in "
+            "dict keys: {}".format(stype, graphemevariables, self.sdict.keys()))
+        return graphemeset
     def interpretationsanitycheck(self,x):
         for i in self.interpret:
             if i in x and i != self.interpret[i]:
