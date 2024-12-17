@@ -5083,29 +5083,15 @@ class Segments(object):
         """include profile (of those available for ps and check),
         and subcheck (e.g., a: CaC\2)."""
         """Provides self.regexCV and self.regex"""
-        cvt=kwargs.get('cvt',program['params'].cvt())
-        # ps=kwargs.get('ps',program['slices'].ps())
         profile=kwargs.get('profile',program['slices'].profile())
-        check=kwargs.get('check',program['params'].check())
-        group=kwargs.get('group',program['status'].group())
-        maxcount=rx.countxiny(cvt, profile)
         if profile is None:
             log.info(_("You haven't picked a syllable profile yet."))
             return
-        """Don't need this; only doing count=1 at a time. Let's start with
-        the easier ones, with the first occurrance changed."""
-        # log.info("self.regexCV: {}".format(self.regexCV))
-        """One pass for all regexes, S3, then S2, then S1, as needed."""
-        # log.info("maxcount: {}".format(maxcount))
-        # log.info("check: {}".format(check))
-        # log.info("group: {}".format(group))
-        # log.info("self.groupcomparison: {}".format(self.groupcomparison))
         self.regex=self.rxdict.makeprofileforcheck(
-                                                profile=profile,
-                                                check=check,
-                                                group=group,
-                                                groupcomparison=getattr(
-                                                self,'groupcomparison',False)
+                        profile=profile,
+                        check=kwargs.get('check',program['params'].check()),
+                        group=kwargs.get('group',program['status'].group()),
+                        groupcomparison=getattr(self,'groupcomparison',False)
                                                     )
     def buildregexnocheck(self,**kwargs):
         """This is the same as above, but should get all senses of a profile, regardless of check and value"""
