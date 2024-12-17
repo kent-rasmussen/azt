@@ -378,6 +378,12 @@ class RegexDict(dict):
         elif x in CVs:
             raise KeyError("CV profile {} contains {}, which is not "
                             "distinguished there".format(CVs_ori,x))
+    def interpretationsanitycheck(self,x):
+        for i in self.interpret:
+            if i in x and i != self.interpret[i]:
+                raise ValueError("Syllable profile {} contains {}, which "
+                "should be {} (according to your settings)"
+                "".format(x,i,self.interpret[i]))
     def interpreted(self,x,**kwargs):
         """This fn expands C, or V into a regex matching all that should be
         interpreted as C, with an extra optional group for each new symbol.
