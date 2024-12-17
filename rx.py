@@ -387,17 +387,96 @@ def fromCV(CVs, sdict, distinguish, **kwargs): #check, lang
     # log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
     return make(CVs, **kwargs)
 if __name__ == '__main__':
-    x='ne [pas] plaire, (ne pas) agréer, ne pas'
+    x="ne [pas] ˥plai're, (ne pas) ˧agréer, ne pas\n][  .!=(),'/?:;+*][. /?*\:;|,\"><'‘’"
+    i=id(x)
+    print(x,i,"end")
+    quit()
     rgx='(ne pas) agréer'
     ts=['bobongo','bobingo']
     check='V1=V2=V3'
     value='a'
-    sdict={'D': ['gh', 'bb', 'dd', 'gg', 'gu', 'mb', 'nd', 'dw', 'gw', 'zl', 'b', 'B', 'd', 'g', 'j', 'v', 'z'], 'C': ['ckw', 'thw', 'tch', 'cc', 'pp', 'pt', 'tt', 'ck', 'qu', 'tw', 'kw', 'ch', 'ph', 'sh', 'hh', 'ff', 'sc', 'ss', 'th', 'sw', 'hw', 'ts', 'sl', 'p', 'P', 't', 'c', 'k', 'q', 'f', 's', 'x', 'h'], 'G': ['yw', 'y', 'w'], 'N': ['mm', 'ny', 'gn', 'nn', 'nw', 'm', 'n'], 'S': ['rh', 'wh', 'll', 'rr', 'lw', 'rw', 'l', 'r'], 'ʔ': ["'"], 'V': ['ou', 'ei', 'ai', 'yi', 'ea', 'ay', 'ee', 'ey', 'ie', 'oa', 'oo', 'ow', 'ue', 'oe', 'au', 'oi', 'eau', 'a', 'e', 'i', 'o', 'u', 'I', 'O', 'é'], '̀': [], 'ː': [], '=': ['-'], '<': []}
-    distinguish={'<': True, '=': True, 'G': True, 'Gwd': False, 'N': False, 'S': False, 'Swd': True, 'D': False, 'Dwd': False, 'Nwd': False, 'ʔ': False, 'ʔwd': True, '̀': False, 'ː': False}
-    for CVs in [
-    'CaCVC','CaCV','CaCVʔ',
-    'CaCVS','CaGVC']:
-        fromCV(CVs, sdict, distinguish, word=True, compile=True, caseinsensitive=True)
+    sdict={'D': ['gh', 'bb', 'dd', 'gg', 'gu', 'mb', 'nd', 'dw', 'gw', 'zl',
+                'b', 'B', 'd', 'g', 'j', 'v', 'z'],
+            'C': ['ckw', 'thw', 'tch', 'cc', 'pp', 'pt', 'tt', 'ck', 'qu', 'tw',
+                'kw', 'ch', 'ph', 'sh', 'hh', 'ff', 'sc', 'ss', 'th', 'sw',
+                'hw', 'ts', 'sl', 'p', 'P', 't', 'c', 'k', 'q', 'f', 's', 'x',
+                'h'],
+            'G': ['yw', 'y', 'w'],
+            'N': ['mm', 'ny', 'gn', 'nn', 'nw', 'm', 'n'],
+            'S': ['rh', 'wh', 'll', 'rr', 'lw', 'rw', 'l', 'r'],
+            'ʔ': ["'"],
+            'V': ['ou', 'ei', 'ai', 'yi', 'ea', 'ay', 'ee', 'ey', 'ie', 'oa',
+                'oo', 'ow', 'ue', 'oe', 'au', 'oi', 'eau', 'a', 'e', 'i', 'o',
+                'u', 'I', 'O', 'é'],
+            '̀': [], 'ː': [], '=': ['-'], '<': []}
+    distinguish={
+                    'G': False, 'Gwd': False,
+                    'S': False, 'Swd': False,
+                    'D': True, 'Dwd': False,
+                    'N': False, 'Nwd': True,
+                    'ʔ': False, 'ʔwd': False,
+                    '<': True, '=': True,
+                    '̀': False, 'ː': False}
+    interpret={'NC': 'C',
+                'CG': 'C',
+                'CS': 'C',
+                'VV': 'VV',
+                'VN': 'VN'}
+    invalidchars=[' ','...',')','(<field type="tone"><form lang="gnd"><text>'] #multiple characters not working.
+    invalidregex=r'( |\.|,|\)|\()+'
+    # self.profilelegit=['#','̃','C','N','G','S','V','o'] #In 'alphabetical' order
+    profilelegit=['̃','N','G','S','D','C','Ṽ','V','ʔ','ː',"̀",'=','<'] #'alphabetical' order (had '#'?)
+    profilesegments=['N','G','S','D','C','V','ʔ']
+    d=RegexDict(distinguish=distinguish,
+                interpret=interpret,
+                sdict=sdict,
+                invalidchars=invalidchars,
+                profilelegit=profilelegit,
+                profilesegments=profilesegments
+    )
+    exit()
+    log.info(d.distinguish)
+    log.info(d.sdict)
+    log.info(d.glyphsforvariable('C+D'))
+    # exit()
+    log.info(d.interpret)
+    log.info("distinguished Final (True): {}".format(d.distinguished('C',True,final=True)))
+    log.info("distinguished Final (False): {}".format(d.distinguished('C',False,final=True)))
+    log.info("distinguished (True): {}".format(d.distinguished('C',True,final=False)))
+    log.info("distinguished (False): {}".format(d.distinguished('C',False,final=False)))
+    # d.interpreted('C',final="True")
+    # d.interpreted('V',final="True")
+    # d.interpreted('C',final="False")
+    # d.interpreted('V',final="False")
+    # exit()
+    for CVs in ['C'+str(i) for i in range(1,6)]:
+    # [
+    # 'CVCVC','CVCV','CVCVS','CVCCVC','CVCCCVC','CACV','CACCVC','CVC'
+    # # 'CaNCVC',
+    # # 'CaCV','CaCVʔ',
+    # # 'CaCVS','CaGVC'
+    # ]:
+        print(d.rxuncompiled[CVs])
+        print('\n'+CVs,'\t(not)')
+        # r=d.fromCV(CVs, word=True, compile=True, caseinsensitive=True)
+        r=d.rx[CVs]
+        for w in [
+            # 'bambat','wambut','wambat',
+            # 'bablat','wabwut','wablwat','wabwlat',
+            # 'babat','wawut','walat',
+            'no', 'non', 'bon', 'bono', 'bogon', 'bogono',
+            'nonomon', 'pokemon', 'mblano', 'mbwana', 'mpsyaka'
+            # "pa'at",'wapput','nappall',
+            # 'bamban','wambun','wama',
+            # 'bambay','wambuy','waya',
+            # 'bambal','wambul','wala','wal',
+            # 'wat','tat','taw','lat'
+                ]:
+            # print(type(r),r)
+            if bool(r.match(w)):
+                print(w)
+            else:
+                print('\t'+w)#,r.match(w))
     # s='ááààééèèííììóóòòúúùù'
     # s2=makeprecomposed(s)
     # print(s,s2)
