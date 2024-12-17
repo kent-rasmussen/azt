@@ -12483,7 +12483,7 @@ class SliceDict(dict):
         self.profilecountsValid=0
         self.profilecounts=0
         self.maxprofiles=None
-        self.maxpss=None
+        self.maxpss=None #This only seems to be used in pspriority
         self._adhoc=adhoc
         self.analang=profilesbysense['analang']
         self._profilesbysense={k:v for k,v in profilesbysense.items()
