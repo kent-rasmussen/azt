@@ -2349,6 +2349,7 @@ class Settings(object):
     def addtoprofilesbysense(self,sense,ps,profile):
         # log.info("kwargs: {}".format(kwargs))
         # This will die if ps and profile aren't in kwargs:
+        setnesteddictval(self.profilesbysense,[sense],ps,profile,addval=True)
         try:
             self.profilesbysense[ps][profile]+=[sense]
         except KeyError:
@@ -2358,14 +2359,7 @@ class Settings(object):
                 self.profilesbysense[ps]={profile:[sense]}
                 # self.profilesbysense[ps][profile]=[sense]
     def addtoformstosearch(self,sense,form,ps,oldform=None):
-        try:
-            if sense not in self.formstosearch[ps][form]: #don't duplicate
-                self.formstosearch[ps][form].append(sense)
-        except KeyError: # either ps or form is missing, nothing to append to
-            try: #if it's just form
-                self.formstosearch[ps][form]=[sense]
-            except KeyError: #ps is missing, build from scratch
-                self.formstosearch[ps]={form:[sense,]}
+        setnesteddictval(self.formstosearch,[sense],ps,form,addval=True)
         # log.info("Added {} id={}".format(form,sense.id))
         if oldform:
             try:
@@ -2390,9 +2384,9 @@ class Settings(object):
         # log.info("getprofileofsense Profile: {}".format(profile))
         if not set(self.profilelegit).issuperset(profile):
             profile='Invalid'
-        self.addtoprofilesbysense(sense, ps=ps, profile=profile)
-        self.addtoformstosearch(sense, form, ps=ps)
-        return form,ori,profile #This is just for logging
+        setnesteddictval(self.profilesbysense,[sense],ps,profile,addval=True)
+        setnesteddictval(self.formstosearch,[sense],ps,form,addval=True)
+        return form,profile #This is just for logging
     def getprofilesbyps(self,ps):
         start_time=nowruntime()
         log.info("Processesing {} syllable profiles".format(ps))
@@ -2544,41 +2538,7 @@ class Settings(object):
             # log.info('s: {}; rx: {}'.format(s, self.rx[s]))
             for i in self.rx[s][0].findall(form): #find any polygraph match
                 # log.info('found polygraph ‘{}’'.format(i))
-                try:
-                    self.sextracted[ps][s][i]+=1 #self.rx[s].subn('',form)[1] #just the count
-                    # log.info('added to polygraph key: {}'.format(i))
-                    # log.info('self.sextracted[{}]: ‘{}’'.format(ps,
-                    #                                     self.sextracted[ps]))
-                except KeyError as e:
-                    try:
-                        # log.info('self.sextracted[{}]: ‘{}’'.format(ps,
-                        #                                 self.sextracted[ps]))
-                        self.sextracted[ps][s][i]=1
-                        # log.info('made new polygraph key: {}:{} ({})'.format(s,i,e))
-                        # log.info('self.sextracted[{}]: ‘{}’'.format(ps,
-                        #                                 self.sextracted[ps]))
-                    except KeyError as e:
-                        try:
-                            # log.info('self.sextracted[{}]: ‘{}’'.format(ps,
-                            #                                 self.sextracted[ps]))
-                            self.sextracted[ps][s]={i:1}
-                            # log.info('made new s key: {}:{} ({})'.format(s,i,e))
-                            # log.info('self.sextracted[{}]: ‘{}’'.format(ps,
-                            #                                 self.sextracted[ps]))
-                        except KeyError:
-                            self.sextracted[ps]={s:{i:1}}
-                            # log.info('made new ps key: {}:{}:{}'.format(ps,s,i))
-                            # log.info('self.sextracted[{}]: ‘{}’'.format(ps,
-                            #                                 self.sextracted[ps]))
-                except AttributeError:
-                    try:
-                        self.sextracted={ps:{s:{i:1}}}
-                        # log.info('made sextracted attribute')
-                        # log.info('self.sextracted[{}]: ‘{}’'.format(ps,
-                        #                                 self.sextracted[ps]))
-                    except Exception as e:
-                        log.error("Ouch! No idea what happened! ({})"
-                                    "".format(e))
+                setnesteddictval(self.sextracted,1,ps,s,i,addval=True)
         for polyn in range(4,0,-1): #find and sub longer forms first
             for s in set(self.profilelegit) & set(self.rx.keys()):
                 if polyn in self.rx[s]:
@@ -9406,28 +9366,7 @@ class Report(object):
                 """put X=Y data in XxY"""
                 othergroup=group
                 c=rx.sub('=','x',check, count=1) #copy V1=V2 into V1xV2
-            try:
-                self.checkcounts[ps][profile][ufg][c][
-                                                group][othergroup]=n
-            except KeyError:
-                try:
-                    self.checkcounts[ps][profile][ufg][c][
-                                                group]={othergroup:n}
-                except KeyError:
-                    try:
-                        self.checkcounts[ps][profile][ufg][c]={group:{
-                                                    othergroup:n}}
-                    except KeyError:
-                        try:
-                            self.checkcounts[ps][profile][ufg]={c:{group:{
-                                                    othergroup:n}}}
-                        except KeyError:
-                            try:
-                                self.checkcounts[ps][profile]={ufg:{c:{
-                                            group:{othergroup:n}}}}
-                            except KeyError:
-                                self.checkcounts[ps]={profile:{ufg:{c:{
-                                            group:{othergroup:n}}}}}
+            setnesteddictval(self.checkcounts,n,ps,profile,ufg,c,group,othergroup)
         if n>0:
             titlebits='x'+ps+profile+check+group
             if 'x' in check:
@@ -9442,17 +9381,7 @@ class Report(object):
                 #         "".format(check.split('=')))
                 for c in check.split('='):
                     # log.info("adding {} matches".format(len(matches)))
-                    try:
-                        # log.info("to {} matches for {}".format(
-                        #         len(self.basicreported[c]),c))
-                        self.basicreported[c]|=matches
-                        # log.info("Last entries: {}".format(
-                        #                 list(self.basicreported[c])[-5:]))
-                    except KeyError:
-                        # log.info("to a new key for {}".format(c))
-                        self.basicreported[c]=matches
-                        # log.info("First entries: {}".format(
-                        #                     list(self.basicreported[c])[:5]))
+                    setnesteddictval(self.basicreported,matches,c,addval=True)
             for sense in matches:
                 node=sense.ftypes[ftype]
                 self.nodetoXLP(node,parent=ex,listword=True) #showgroups?
