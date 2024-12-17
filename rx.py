@@ -393,6 +393,29 @@ class RegexDict(dict):
     CVs=re.sub(r'\)([^(]+)\(',')(\\1)(',CVs) #?
     # log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
     return make(CVs, **kwargs)
+    def makeglyphregex(self,c,**kwargs):
+        """We are doing a few things here:
+        1. regex to find all glyphs of a variable (n=0)>rx[v][0]
+        2. regex to find glyphs of a variable with length=n>rx[v][n]
+        3. regex to find the nth occurance of a variable (e.g., C3) >rx[Cn]
+        All of these should respect interpret/distinguish and finality!
+        """
+        for pn in range(4,-1,-1):
+            # log.info(f"Trying pn {pn} for {c}; final={kwargs.get('final')}")
+            kwargs['polyn']=pn
+            try:
+                self.setrx(c,self.interpreted(c,
+                                **kwargs), #limit glyphs in interpreted
+                                **kwargs) #store in correct place
+            except TypeError as e:
+                log.error("{}({}): {}".format(c,pn,self.rx[c]))
+                raise
+        # log.info(f"compileCVrxforsclass {c} RXs: {self.rx[c]}")
+        # log.info("Looking for sclass {} in {}".format(c,self.sdict))
+        return #I don't think we use this next bit, but may some day
+        for n in range(1,7): #just the Nth C or V, no polygraph distinction
+            self.nX(c,n) #no polygraphs here
+        # log.info(f"makeglyphregexs self.rx: {self.rx}")
     def makeglyphregexs(self):
         todo=['C','V','Cwd']+[k for k in self.distinguish if self.distinguish[k]
                                 and self.sdict[k.strip('wd')]] #only if there
