@@ -9816,7 +9816,7 @@ class Report(object):
                         if not wide:
                             #if all are not wide, join them into one row
                             caption=' '.join([ufg,ps,profile,check])
-                            table=xlp.Table(s3s,caption)
+                            table=xlp.Table(s3s,caption+' Correspondences')
                             row=xlp.Row(table)
                             for check in xchecks:
                                 counts=self.checkcounts[ps][profile][ufg][check]
@@ -9841,7 +9841,7 @@ class Report(object):
                                                                         check,
                                                                         counts))
                                     caption=' '.join([ufg,ps,profile,check])
-                                    table=xlp.Table(s3s,caption)
+                                    table=xlp.Table(s3s,caption+' Correspondences')
                                     self.coocurrencetable(table,check,counts)
                     #Finally, do all single column tables in one table:
                     if (columncounts and len(list(columncounts)) and
