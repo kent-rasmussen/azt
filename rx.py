@@ -355,6 +355,12 @@ def fromCV(CVs, sdict, distinguish, **kwargs): #check, lang
             raise KeyError("CV profile {} ends with {}, which is not "
                         "distinguished there".format(CVs_ori,
                                                     wd.replace('wd','')))
+class RegexDict(dict):
+    """This makes and stores all the regex's needed for A−Z+T (for now)"""
+    """distinguish and interpret should only be set once, on boot"""
+    """This should probably reference/store another class of regexs which
+    would have strings and compiled versions?"""
+    """This needs to output"""
         else:
             this+='+'+wd.replace('wd','')
     #Pull out C# first; finds only relevant segments not distinguished from Cs
@@ -386,6 +392,18 @@ def fromCV(CVs, sdict, distinguish, **kwargs): #check, lang
     CVs=re.sub(r'\)([^(]+)\(',')(\\1)(',CVs) #?
     # log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
     return make(CVs, **kwargs)
+    def __init__(self,**kwargs):
+        super(dict, self).__init__()
+        self.count=0
+        """At some point, I should think about distinguishing interpretation of
+        VV as V, V:, or VV depending on V1=V2 or V1≠V2."""
+        #distinguish,interpret,sdict,profilelegit,invalidchars,profilesegments
+        for k in kwargs:
+            setattr(self,k,kwargs[k])
+        self.rx={} #This holds rx's keyed by variable to find all glyphs.
+        self.rxuncompiled={} #uncompiled versions
+        self.makeprofileregexs()
+        self.makeglyphregexs()
 if __name__ == '__main__':
     x="ne [pas] ˥plai're, (ne pas) ˧agréer, ne pas\n][  .!=(),'/?:;+*][. /?*\:;|,\"><'‘’"
     i=id(x)
