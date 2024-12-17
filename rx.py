@@ -378,6 +378,53 @@ class RegexDict(dict):
         elif x in CVs:
             raise KeyError("CV profile {} contains {}, which is not "
                             "distinguished there".format(CVs_ori,x))
+    def interpreted(self,x,**kwargs):
+        """This fn expands C, or V into a regex matching all that should be
+        interpreted as C, with an extra optional group for each new symbol.
+        It strips 'wd' suffix, setting kwargs[final]=True when found."""
+        """Linguistics Note: I'm assuming that if CG and CS should each be
+        interpreted as C, the combo would be CGS, rather than CSG (due to
+        sonority hierarchy). If this assumption fails, we should revisit this.
+        Not sure what to do with order conflicts between 'VN' and 'Vː'; is there
+        an orthographic convention for this?"""
+        """Because the syllable profile analysis will have been simplified by
+        the interpretation settings, here we return the regex to include all
+        possible complexity."""
+        output=x
+        result=''
+        kwargs['compile']=kwargs['word']=False
+        if 'wd' in x:
+            kwargs['final']=True
+            x=x.strip('wd')
+        if x in ['C','V']:
+            basedone=False
+            interplist=['NC','CG','CS','VV','VN'] #in this order!
+            assert set(interplist) >= set(self.interpret) #error on new values
+            for interp in interplist:
+                if x in interp and self.interpret[interp] == x:
+                    # log.info("complex interpretation! ({}={})".format(interp,x))
+                    for i in interp:
+                        """This works because of the ordering of interplist.
+                        There is only one pre-C segment, then C, then G and/or S
+                        """
+                        if i in ['C','V'] and not basedone: #just do this once!
+                                r=self.makegroup(
+                                    self.undistinguished(i,**kwargs),
+                                    **{**kwargs, 'compile':False})
+                                if r == '()':.
+                                    # log.info(f"r is {r}, so returning empty")
+                                    return r #don't add to nothing
+                                # log.info(f"r is {r} {type(r)}; continuing")
+                                result+=r
+                                basedone=True
+                        else: #get just this group
+                            result+=self.makegroup(i)
+                            result+='?' # this group is optional in the regex
+        if not result:
+            result=self.makegroup(self.undistinguished(x,**kwargs), #final?
+                                    **{**kwargs, 'compile':False})
+        # log.info("returning {}".format(result))
+        return result
     def undistinguished(self,variableset,**kwargs):
         """This function converts C or V (or others) into a variable
         representing each class that should be included, based on
