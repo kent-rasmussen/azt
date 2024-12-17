@@ -393,6 +393,33 @@ class RegexDict(dict):
     CVs=re.sub(r'\)([^(]+)\(',')(\\1)(',CVs) #?
     # log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
     return make(CVs, **kwargs)
+    def setnXrx(self,s,n,nS):
+        # These should always be all glyphs
+        # log.info("Setting {}{} value {}".format(s,n,nS))
+        self.rxuncompiled[s+str(n)]=nS
+        self.rx[s+str(n)]=make(nS, compile=True)
+    def setrx(self, c, crx, **kwargs):
+        polyn=kwargs.get('polyn') #put this in the correct place
+        if not crx or crx == '()':
+            return #don't make or store empty regexs; they match everywhere
+        # log.info("Setting {} with {} value {}".format(c,polyn,crx))
+        if len(c) == 1:
+            setnesteddictval(self.rxuncompiled,crx,c,polyn)
+            setnesteddictval(self.rx, make(crx, **{**kwargs,'compile':True}),
+                            c, polyn)
+        else:
+            self.rxuncompiled[c]=crx
+            self.rx[c]=make(crx, **{**kwargs,'compile':True})
+    def getrx(self, c, **kwargs):
+        if len(c) == 1:
+            return self.rx[c][kwargs.get('polyn')]
+        else:
+            return self.rx[c]
+    def getrxuncompiled(self, c, **kwargs):
+        if len(c) == 1:
+            return self.rxuncompiled[c][kwargs.get('polyn')]
+        else:
+            return self.rxuncompiled[c]
     def fromCV(self, CVs, **kwargs): #check, lang
         """CVs is a regex variable (regexCV), which may be a combination of
         specific glyphs and variables (e.g., 'C','V') in it. This should NOT
