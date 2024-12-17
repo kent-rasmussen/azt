@@ -378,6 +378,12 @@ class RegexDict(dict):
         elif x in CVs:
             raise KeyError("CV profile {} contains {}, which is not "
                             "distinguished there".format(CVs_ori,x))
+    def makegroup(self,x,**kwargs):
+        """this makes (x|y) format from C+D+N, etc.,
+        Distinctions should already be accounted for in the variable (x)
+        length and compilation are managed in s"""
+        # log.info(f"Making a regex group with kwargs {kwargs}")
+        return s(self.glyphsforvariable(x),**kwargs)
     def glyphsforvariable(self,stype): #self.sdict
         """This returns a set of all the graphemes for a single group,
         stype: a capital symbolic representation of the group of letters,
