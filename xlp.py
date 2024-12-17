@@ -334,12 +334,19 @@ class Paragraph(ET.Element):
         self.node=ET.SubElement(parent.node,'p')
         self.node.text=text
 class Example(ET.Element):
-    def __init__(self,parent,id,heading=None):
+    def __init__(self,parent,id,heading=None,comment=None):
         rxid=rx.id(id)
         self.node=ET.SubElement(parent.node,'example',attrib={'num':rxid})
         if heading is not None:
-            headnode=ET.SubElement(self.node,'exampleHeading')
-            headnode.text=heading
+            headnode=ExampleHeading(self,heading,comment=comment)
+class ExampleHeading():
+    def __init__(self,parent,text,comment=None):
+        # A comment cannot go anywhere in an example but in a heading;
+        # if we need this without one, this should be reworked
+        self.node=ET.SubElement(parent.node,'exampleHeading')
+        self.node.text=text
+        if comment:
+            Comment(self,'\n'+comment)
 class Table(ET.Element):
     """<tablenumbered id="nt-ndk-melodies">
             <table border="1">
@@ -409,6 +416,10 @@ class Gloss(ET.Element):
         self.node=ET.SubElement(parent.node,'gloss',attrib={'lang':lang})
         self.node.text=text
 
+class Comment(ET.Element):
+    def __init__(self,parent,text):
+        self.node=ET.SubElement(parent.node,'comment') #,attrib={'lang':lang}
+        self.node.text=text
 class XLPobject(ET.Element):
     def __init__(self,parent,typ,text):
         self.node=ET.SubElement(parent.node, 'object',attrib={'type':typ})
