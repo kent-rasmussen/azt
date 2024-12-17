@@ -69,11 +69,11 @@ def nesteddictadd1key(dict,key):
 def setnesteddictval(dict,val,*keys,addval=False):
     """Include as many key layers as you like,
     put keys in order; dict,v,x,y gives dict[x][y]=v
-    with addval, if val is int or list, it is added to value/list already there, 
+    with addval, if val is int or list, it is added to value/list already there,
     or assigned if there is no current value.
     """
     dictlist=[] #keep dictionaries at each level in memory
-    for n,k in enumerate(keys): #keys may repeat, can't index
+    for n,k in enumerate(keys): #keys may repeat, can't use list.index()
         if dictlist:
             d=dictlist[-1]
         else:
@@ -81,7 +81,7 @@ def setnesteddictval(dict,val,*keys,addval=False):
         if n-len(keys)+1:
             dictlist.append(nesteddictadd1key(d,k))
         elif addval and k in d:
-            print(f"For keys {keys} adding value {val}")
+            # print(f"For keys {keys} adding value {val}")
             if type(val) == type(d[k]) == set:
                 d[k]|=val
             elif type(val) == set or type(d[k]) == set:
@@ -91,5 +91,5 @@ def setnesteddictval(dict,val,*keys,addval=False):
             else:
                 d[k]+=val
         else:
-            print(f"For keys {keys} assinging value {val}")
+            # print(f"For keys {keys} assigning value {val}")
             d[k]=val
