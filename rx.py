@@ -393,6 +393,48 @@ class RegexDict(dict):
     CVs=re.sub(r'\)([^(]+)\(',')(\\1)(',CVs) #?
     # log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
     return make(CVs, **kwargs)
+    def makeprofileforcheck(self,**kwargs):
+        check=kwargs.get("check")
+        replS='\\1'+kwargs.get("group")
+        regexCV=str(kwargs.get("profile"))
+        groupcomparison=kwargs.get("groupcomparison")
+        if groupcomparison:
+            log.info(f"going to make {check} profile for {kwargs.get("group")} "
+                    f"and {groupcomparison}")
+        for cvt in ['CxV','VxC','C','V']:
+            if cvt in check:
+                S=str(cvt).replace('x','')
+                regexS='.*?'+S
+                maxcount=countxiny(S, regexCV)
+                break
+        #don't compare CVs or VCs with each other (e.g., CV1xCV2):
+        if 'x' in check and 'CxV' not in check and 'VxC' not in check:
+            replScomp='\\1'+groupcomparison
+            compared=False
+            # log.info("Making regex for {} check with group {} and "
+            # "comparison {} ({})".format(check,group,self.groupcomparison,replS))
+        elif 'x' in check:
+            replS=replS+groupcomparison
+            compared=True #well, don't do two runs, in any case.
+            # log.info("Making regex for {} check with group {} ({})"
+            #         "".format(check,group,replS))
+        for occurrence in reversed(range(maxcount)):
+            occurrence+=1
+            # log.info("S+str(occurrence): {}".format(S+str(occurrence)))
+            # log.info("Check (less x): {}".format(check.replace('x','')))
+            if S+str(occurrence) in check.replace('x',''):
+                """Get the (n=occurrence) S, regardless of intervening
+                non S..."""
+                regS='^('+regexS*(occurrence-1)+'.*?)('+S+')'
+                if 'x' in check and not compared:
+                    regexCV=sub(regS,replScomp,regexCV, count=1)
+                    compared=True
+                else:
+                    regexCV=sub(regS,replS,regexCV, count=1)
+        """Final step: convert the CVx code to regex, and store in self."""
+        return self.fromCV(regexCV,
+                            word=True, compile=True, caseinsensitive=True)
+    """These make regexs to manipulate syllable profile patterns"""
     def makeprofileregexs(self):
         """These are just to find (combinations of) variables in syllable
         profiles"""
