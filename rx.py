@@ -20,7 +20,7 @@ def urlok(x):
     p=(r"][\. /?*\\:;\|,\"><'",'_')
     l=("əéèêɛ",'e')
     o=("ô",'o')
-    for i in [d,p,l]:
+    for i in [d,p,l,o]:
         x=re.sub('['+i[0]+']',i[1],x)
     return x
 def splitxpath(x):
