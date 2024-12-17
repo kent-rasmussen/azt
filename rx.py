@@ -78,10 +78,22 @@ def search(*args,**kwargs):
 def compile(x):
     return re.compile(x, re.UNICODE)
 def id(x):
-    x=x.replace('˥','4').replace('˦','3').replace('˧','2'
-        ).replace('˨','1').replace('˩','0')
+    translations=[('˥˦˧˨˩', '43210'),
+    (r'][  .!=(),\'/?:;+*'+'\n','_'),
+    (r"][. /?*\:;|,\"><'‘’",'_'),
+    ("éèê",'e'),#ɛə
+    ("ô",'o')
+    ]
+    for t in translations:
+        if len(t[0]) == len(t[1]):
+            t={t[0][i]:t[1][i] for i in range(len(t[0]))}
+        else:
+            for i in t[0]:
+                print(i)
+            t={i:t[1] for i in t[0]}
+        x=x.translate(str.maketrans(t))
     """Confirm that r is correct here"""
-    return re.sub(r'[][  .!=\(\),\'/?ꞌ\n:;+*]','_',x) #remove charcters that are invalid for ids
+    return x
 def tonerxs():
     return (re.compile('[˥˦˧˨˩]+', re.UNICODE),
             re.compile(' ', re.UNICODE),
