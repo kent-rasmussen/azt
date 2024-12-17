@@ -267,11 +267,7 @@ def s(graphemeset, **kwargs):
     else:
         return output
 def make(regex, **kwargs):
-    # if (re.match('^[^(]*\|',regex)) or (re.search('\|[^)]*$',regex)):
-    #     log.error('Regex problem! (need parentheses around segments!):',regex)
-    #     exit()
-    word=kwargs.get('word')
-    compile=kwargs.get('compile')
+    # log.info("making regex {} with kwargs:{}".format(regex,kwargs))
     caseinsensitive=kwargs.get('caseinsensitive')
     if kwargs.get('word'):
         """To make alternations and references work correctly, this should
@@ -284,8 +280,10 @@ def make(regex, **kwargs):
     if kwargs.get('compile'):
         try:
             regex=re.compile(regex, flags=flags)
-        except:
-            log.error('Regex problem!')
+        except ValueError as e:
+            log.error('Regex Value compile problem ({};{})'.format(e,regex))
+        except Exception as e:
+            log.error('Regex compile problem ({};{})'.format(e,regex))
     return regex
 class RegexDict(dict):
     """This makes and stores all the regex's needed for A−Z+T (for now)"""
