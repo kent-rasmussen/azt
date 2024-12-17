@@ -2482,81 +2482,21 @@ class Settings(object):
         if program['slices'].profile():
             self.getscounts()
         self.storesettingsfile(setting='profiledata')
-    def profileofformpreferred(self,form):
-        """Simplify combinations where desired"""
-        c=['N','S','G','ʔ','D']
-        o=["̀",'<','=','ː']
-        cc=['CG','CS','NC','VN','Vː']
-        # cc needs to be resolved before the modifier goes away with G,S,D,N,ʔ>C
-        for combo in cc:
-            if combo.startswith('C'):#pattern, sub, string
-                repl=self.rx['^C'].sub('\\\\1',self.interpret[combo])
-            elif combo.endswith('C'):
-                repl=self.rx['C$'].sub('\\\\1',self.interpret[combo])
-            else:
-                repl=self.interpret[combo]
-            form=self.rx[combo].sub(repl,form) #no polygraphs here
-            # For debugging, the following rather than the above:
-            # formn=self.rx[combo].sub(repl,form) #no polygraphs here
-            # if formn != form:
-            #     log.info("Form after {}: {}".format(combo,formn))
-            #     form=formn
-        for g in [i for i in c+o if i in form
-                    ]:
-            #Remove this glyph variable wherever it occurs:
-            if not self.distinguish[g]:
-                if g in c:
-                    # This and following rx in this method search for variables,
-                    # not glyphs, so don't use a polyglyph dictionary layer.
-                    form=self.rx[g+'_'].sub('C',form) #no polygraphs here
-                else:
-                    form=self.rx[g][0].sub('',form)
-            #Remove this glyph variable word finally:
-            if (form.endswith(g) and
-                    g+'wd' in self.distinguish and
-                    not self.distinguish[g+'wd']):
-                form=self.rx[g+'wd'].sub('C',form) #no polygraphs here
-                # log.debug("{}wd regex result: {}".format(c,form))
-            # log.debug("{} regex result: {}".format(g,form))
-        return form
-    def profileofform(self,form,ps):
-        if not form or not ps:
-            # log.info("Either no form ({}) or no ps ({}); returning".format(form,ps))
-            return 'Invalid'
-        # log.debug("profiling {}...".format(form))
-        formori=form
-        """priority sort alphabets (need logic to set one or the other)"""
-        """Look for any C, don't find N or G"""
-        # self.profilelegit=['#','̃','C','N','G','S','V']
-        """Look for word boundaries, N and G before C (though this doesn't
-        work, since CG is captured by C first...)"""
-        # self.profilelegit=['#','̃','N','G','S','C','Ṽ','V','d','b']
-        # log.info("Searching {} ordered as: {}".format(form,self.profilelegit))
-        # log.info("Searching with these regexes: {}".format(self.rx))
-        # log.info('self.sextracted: ‘{}’'.format(self.sextracted))
-        for s in set(self.profilelegit) & set(self.rx.keys()):
-            # log.info('s: {}; rx: {}'.format(s, self.rx[s]))
-            for i in self.rx[s][0].findall(form): #find any polygraph match
+    def extractsegmentsfromform(self,form,ps):
+        for s in set(self.profilelegit) & set(self.rxdict.rx):
+            # log.info('s: {}; rx: {}'.format(s, self.rxdict.rx[s]))
+            # log.info(f"srx output: {self.rxdict.rx[s][0].findall(form)}")
+            for i in [j for j in self.rxdict.rx[s][0].findall(form) if j]:
+                i=''.join(i) #('o', 'e') > 'oe'
                 # log.info('found polygraph ‘{}’'.format(i))
                 setnesteddictval(self.sextracted,1,ps,s,i,addval=True)
-        for polyn in range(4,0,-1): #find and sub longer forms first
-            for s in set(self.profilelegit) & set(self.rx.keys()):
-                if polyn in self.rx[s]:
-                    form=self.rx[s][polyn].sub(s,form) #replace with profile variable
-        """We could consider combining NC to C (or not), and CG to C (or not)
-        here, after the 'splitter' profiles are formed..."""
-        # log.debug("{}: {}".format(formori,form))
-        # log.info("Form before simplification:{}".format(form))
-        prefform=self.profileofformpreferred(form)
-        # log.info("Form after simplification:{}".format(prefform))
-        return form,prefform
     def getscounts(self):
         """This depends on self.sextracted, from getprofiles, so should only
         run when that changes."""
         scount={}
         for ps in self.sextracted: # was program['db'].pss[self.analang]:
             scount[ps]={}
-            for s in self.rx:
+            for s in self.rxdict.rx:
                 try:
                     scount[ps][s]=sorted([(x,self.sextracted[ps][s][x])
                         for x in self.sextracted[ps][s]],key=lambda x:x[1],
@@ -2621,69 +2561,23 @@ class Settings(object):
         if cvt in ['C', 'V'] and s not in self.s[analang][cvt]:
             self.s[analang][cvt]+=[s]
             # log.info("Compiling rx list: {}".format(self.s[self.analang][cvt]))
-            self.compileCVrxforsclass(cvt)
+            self.rxdict.makeglyphregex(cvt)
             # log.info("Compiled rx list: {}".format(self.rx[cvt]))
     def compileCVrxforsclass(self,sclass):
+        # this is now all in regexdict, and isn't called anywhere
         """This does sorting by length to make longest first"""
         analang=program['params'].analang()
-        if sclass not in self.rx:
-            self.rx[sclass]={}
-        for pn in range(4,-1,-1):
-            self.rx[sclass][pn]=rx.s(self.s[analang],sclass,
-                                polyn=pn, #limit by glyph length, 0=everything
-                                compile=True)
-            if self.rx[sclass][pn] == rx.compile('()'):
-                # log.info("Empty Regex; removing.")
-                del self.rx[sclass][pn]
         # log.info("compileCVrxforsclass RXs: {}".format(self.rx))
-        sin=self.s[analang][sclass]
-        sout=[i for k,v in self.s[analang].items()
-                if (k not in [sclass,'<','='] # no affix boundary or punctuation
-                     and (k in ['C','V'] or self.distinguish.get(k)))
-                for i in v
-                ]
-        log.info("Looking for sclass {} in {}".format(sclass,self.s[analang]))
-        log.info("Using segments in: {} out: {}".format(sin,sout))
-        for n in range(1,7): #just get the Nth C or V, don't worry about polygraphs
-            self.rx[sclass+str(n)]=rx.nX(sin,sout,n) #no polygraphs here
-        log.info("compileCVrxforsclass RXs: {}".format(self.rx))
     def setupCVrxs(self):
         self.slists() #makes s; depends on polygraphs
-        sclassesC=['N','S','G','ʔ','D']
-        self.rx={}
-        analang=program['params'].analang()
-        if not self.s[analang]:
-            return # this is pointless until there is data
+        self.rxdict=rx.RegexDict(distinguish=self.distinguish,
+                                interpret=self.interpret,
+                                sdict=self.s[program['params'].analang()],
+                                profilelegit=self.profilelegit,
+                                invalidchars=self.invalidchars,
+                                profilesegments=self.profilesegments)
         #Each glyph variable found in the language gets a regex for each length,
         # plus 0 to find them all together – since we're looking for glyphs.
-        for sclass in list(self.s[analang])+['C']: #be sure to do C last
-            if self.s[analang][sclass] != []: #don't make if empty
-                self.compileCVrxforsclass(sclass)
-        #Compile preferred regexs here
-        for cc in ['CG','CS','NC','VN','Vː']:
-            # This has a group to replace with whatever C value was found
-            ccc=cc.replace('C','(['+''.join( #don't do XX>X
-                        [i for i in ['S','G','D','ʔ','N'] if i not in cc]+['C']
-                                            )+']{1})')
-            self.rx[cc]=rx.compile(ccc) #no polygraphs here
-        #These will be used a lot, so compile hereː
-        for posC in ['^C','C$']:
-            self.rx[posC]=rx.compile(posC)
-        for c in sclassesC: #no polygraphs for these, since we're looking for
-            # glyph variables, not glyphs.
-            # (?!) – negative lookahead
-            # (?=) – positive lookahead
-            # (?<=) – positive lookbehind
-            # (?<!) – negative lookbehind
-            self.rx[c+'_']=rx.compile(c+r'(?!\Z)') #not word final
-            # if c == 'N':
-            #     #i.e., neither before C nor before word end
-            #     self.rx[c+'_']=rx.compile(c+'(?!([CSGDʔ]|\Z))')
-            # elif c in ['ʔ','D']:
-            #     self.rx[c+'_']=rx.compile(c+'(?!\Z)') #not word final
-            # else: #i.e., 'S','G'
-            #     self.rx[c+'_']=rx.compile('(?<![CSGDNʔ])'+c) #not after C
-            self.rx[c+'wd']=rx.compile(c+r'(?=\Z)') # word final
     def reloadstatusdatabycvtpsprofile(self,**kwargs):
         # This reloads the status info only for current slice
         # These are specified in iteration, pulled from object if called direct
@@ -5200,68 +5094,23 @@ class Segments(object):
             return
         """Don't need this; only doing count=1 at a time. Let's start with
         the easier ones, with the first occurrance changed."""
-        self.regexCV=str(profile) #Let's set this before changing it.
         # log.info("self.regexCV: {}".format(self.regexCV))
         """One pass for all regexes, S3, then S2, then S1, as needed."""
         # log.info("maxcount: {}".format(maxcount))
         # log.info("check: {}".format(check))
         # log.info("group: {}".format(group))
         # log.info("self.groupcomparison: {}".format(self.groupcomparison))
-        S=str(cvt) #should this ever be cvt? Do I ever want CV1xCV2,CV1=CV2?
-        regexS='.*?'+S #This will be a problem if S=NC or CG...
-        # log.info("regexS: {}".format(regexS))
-        if 'x' in check and cvt in ['V','C']:
-            replScomp='\\1'+self.groupcomparison
-            replS='\\1'+group
-            compared=False
-            # log.info("Making regex for {} check with group {} and "
-            # "comparison {} ({})".format(check,group,self.groupcomparison,replS))
-        elif 'x' in check:
-            replS='\\1'+group+self.groupcomparison
-            compared=True #well, don't do two runs, in any case.
-        else:
-            # log.info("Not comparing: {}".format(check))
-            replS='\\1'+group
-            # log.info("Making regex for {} check with group {} ({})"
-            #         "".format(check,group,replS))
-        for occurrence in reversed(range(maxcount)):
-            occurrence+=1
-            # log.info("S+str(occurrence): {}".format(S+str(occurrence)))
-            # log.info("Check (less x): {}".format(check.replace('x','')))
-            if S+str(occurrence) in check.replace('x',''):
-                """Get the (n=occurrence) S, regardless of intervening
-                non S..."""
-                # log.info("regexS: {}".format(regexS))
-                # regS='^('+regexS*(occurrence-1)+'[^'+S+']*)('+S+')'
-                regS='^('+regexS*(occurrence-1)+'.*?)('+S+')'
-                # log.info("regS: {}".format(regS))
-                # log.info("regexS: {}".format(regexS))
-                # log.info("regS: {}".format(regS))
-                # log.info("replS: {}".format(replS))
-                # log.info("self.regexCV: {}".format(self.regexCV))
-                if 'x' in check and not compared:
-                    self.regexCV=rx.sub(regS,replScomp,self.regexCV, count=1)
-                    compared=True
-                else:
-                    self.regexCV=rx.sub(regS,replS,self.regexCV, count=1)
-                # log.info("self.regexCV: {}".format(self.regexCV))
-        #     else:
-        #         log.info("{} not found in {}".format(S+str(occurrence),
-        #                                             check.replace('x','')))
-        # log.info("self.regexCV (buildregex): {}".format(self.regexCV))
-        """Final step: convert the CVx code to regex, and store in self."""
-        # log.info("program['settings'].s[self.analang]: {}".format(
-        #                                 program['settings'].s[self.analang]))
-        # log.info("program['settings'].distinguish: {}".format(
-        #                                 program['settings'].distinguish))
-        self.regex=rx.fromCV(self.regexCV, program['settings'].s[self.analang],
-                            program['settings'].distinguish,
-                            word=True, compile=True, caseinsensitive=True)
+        self.regex=self.rxdict.makeprofileforcheck(
+                                                profile=profile,
+                                                check=check,
+                                                group=group,
+                                                groupcomparison=getattr(
+                                                self,'groupcomparison',False)
+                                                    )
     def buildregexnocheck(self,**kwargs):
         """This is the same as above, but should get all senses of a profile, regardless of check and value"""
         profile=kwargs.get('profile',program['slices'].profile())
-        self.regex=rx.fromCV(profile, program['settings'].s[self.analang],
-                            program['settings'].distinguish,
+        self.regex=self.rxdict.fromCV(profile,
                             word=True, compile=True, caseinsensitive=True)
     def ifregexadd(self,regex,form,id):
         # This fn is just to make this threadable
@@ -5402,6 +5251,7 @@ class Segments(object):
     def __init__(self, parent):
         self.dodone=True
         self.dodoneonly=False #don't give me other words
+        self.rxdict=program['settings'].rxdict
 class WordCollection(Segments):
     """This task collects words, from the SIL CAWL, or one by one."""
     def taskicon(self):
