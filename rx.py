@@ -393,6 +393,81 @@ class RegexDict(dict):
     CVs=re.sub(r'\)([^(]+)\(',')(\\1)(',CVs) #?
     # log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
     return make(CVs, **kwargs)
+    def fromCV(self, CVs, **kwargs): #check, lang
+        """CVs is a regex variable (regexCV), which may be a combination of
+        specific glyphs and variables (e.g., 'C','V') in it. This should NOT
+        contain characters in positions that are not distinguished!"""
+        """It outputs a language specific regex (compiled if compile=True,
+        whole word word=True)."""
+        if type(CVs) is not str:
+            log.error("regexCV is not string! ({})".format(CVs))
+        self.interpretationsanitycheck(CVs)
+        try:
+            if kwargs.get('compile'):
+                log.info("Processed to here")
+                return self.getrx(CVs, **kwargs)
+            else:
+                return self.getrxuncompiled(CVs)
+        except Exception as e:
+            # log.info("Getrx Exception: {}".format(e))
+            pass
+        log.info("No rx found in rxdict; making {}".format(CVs))
+        CVs_ori=CVs
+        regex=list()
+        this='C'
+        for wd in self.distinguished('C',True,final=True): #doesn't include C
+            # If Xwd is distinguished, replace it now
+            # log.info("{} in distinguishedTrueFinal for {}".format(wd,CVs))
+            s=wd.replace('wd','')
+            if s in CVs: #otherwise, waste and recursion
+                CVs=re.sub(wd.replace('wd','$'),
+                        #This should not be compiled:
+                        self.makegroup(wd.replace('wd',''),
+                                        polyn=kwargs.get('polyn')),
+                                        CVs)
+        # log.info("Replacing final distinguished (non-C): {}".format(CVs))
+        for wd in self.distinguished('C',False,final=True): #sanity check only
+            # log.info("{} in distinguishedFalseFinal for {}".format(wd,CVs))
+            s=wd.replace('wd','')
+            if s in CVs and CVs.endswith(s) and len(CVs)-1: #Don't object if len=1
+                raise KeyError("CV profile {} ends with {}, which is not "
+                            "distinguished there".format(CVs_ori,s))
+        rxthis=self.interpreted('C',final=True, **kwargs)
+        if rxthis: #confirm there are segments to find first
+            CVs=re.sub('C$',rxthis,CVs)
+        # else:
+        #     log.error("No rxthis? ({}): {}".format(this,self.sdict))
+        # log.info("Replacing final distinguished (C): {}".format(CVs))
+        # At this point, all word final Consonant variables should be gone;
+        # the following is for non-final distinguished consonants.
+        for x in self.distinguished('C',True,final=False):
+            # log.info("{} in distinguishedTrueNon-Finalfor {}".format(x,CVs))
+            if x in CVs:
+                CVs=re.sub(x,
+                        # self.fromCV(x, causes recursion?
+                        self.makegroup(x,
+                        polyn=kwargs.get('polyn')), #Should not be compiled!
+                        CVs)
+                log.info("Now {}".format(CVs))
+        for x in self.distinguished('C',False,final=False): #sanity check only
+            # log.info("{} in distinguishedFalseNon-Final for {}".format(x,CVs))
+            if s in CVs and x in CVs and len(CVs)-1: #Don't object if len=1
+                raise KeyError("CV profile {} contains {}, which is not "
+                                "distinguished there".format(CVs_ori,x))
+        # log.info("Replacing non-final distinguished (C): {}".format(CVs))
+        # Only V and non-final C should be left at this point.
+        for svar in ['C','V']: #no contrast for vowels word finally, as of now
+            # interpreted never returns compiled
+            rxthis=self.interpreted(svar,final=False, **kwargs)
+            if rxthis: #confirm there are segments to find first
+                CVs=re.sub(svar,rxthis,CVs)
+            # else:
+            #     log.error("No rxthis? ({}): {}".format(this,self.sdict))
+        # log.info("Replacing other Cs and Vs: {}".format(CVs))
+        CVs=re.sub(r'\)([^(?]+)\(',')(\\1)(',CVs) #this puts parens around everything
+        log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
+        self.setrx(CVs_ori, CVs, **kwargs)
+        return self.getrx(CVs_ori, **kwargs)
     def profileofform(self,form,ps):
         if not form or not ps:
             # log.info("Either no form ({}) or no ps ({}); returning".format(form,ps))
