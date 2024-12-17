@@ -287,71 +287,65 @@ def make(regex, **kwargs):
         except:
             log.error('Regex problem!')
     return regex
-def nX(segmentsin,segmentsout,n):
-    #Start by being clear which graphs count, and which don't.
-    # these should mutually exclude each other.
-    overlap=set(segmentsin) & set(segmentsout)
-    if overlap:
-        log.error("Your in/out segment lists overlap: {}".format(overlap))
-        # log.error("in: {}".format(segmentsin))
-        # log.error("out: {}".format(segmentsout))
-    # for each of in/out, make a dict keyed by length, with value listing glyphs
-    # with that length (automatically separate trigraphs, digraphs, etc)
-    sindict={n:[i for i in segmentsin if len(i) == n]
-                for n in range(1,len(max(segmentsin,key=len, default=''))+1)}
-                #?default='' b/c can be empty sometimes, early on
-    soutdict={n:[i for i in segmentsout if len(i) == n]
-                for n in range(1,len(max(segmentsout,key=len, default=''))+1)}
-                #default='' b/c can be empty sometimes, early on
-    # Convert those value lists to a string of alternations, for each key
-    sin={k:slisttoalternations(sindict[k]) for k in sindict}
-    sin.update({'all':slisttoalternations([i for j in sindict.values()
-                                            for i in j])})
-    sout={k:slisttoalternations(soutdict[k]) for k in soutdict}
-    sout.update({'all':slisttoalternations([i for j in soutdict.values()
-                                            for i in j])})
-    # Make a list, longest first
-    # this probably doesn't need the isdigit test
-    strlist=[sout[i] for i in range(max([j for j in sout.keys()
-                                        if str(j).isdigit()],default=0),
-                                    0,-1)]
-    #join list of alternations to one long alternation
-    notS='|'.join(strlist)
-    strlist+=['('+sin['all']+')'] #look for, capture this
-    #This needs to multiply as a unit, while getting each subpart separately:
-    oneS='(('+notS+')*('+sin['all']+'))'#.join(strlist)
-    #We need to keep each alternation set a unit, and keep all but last in \1
-    if n-1:
-        priors='('+oneS*(n-1)+')'
-    else:
-        priors=''
-    nS='('+priors+'('+notS+')*)('+sin['all']+')'
-    # for n,i in enumerate([sin,sout,oneS,notS,nS]):
-    #     print(n,i)
-    # log.info("Compiling X{} regex {}".format(n,nS))
-    return make(nS, compile=True)
 class RegexDict(dict):
     """This makes and stores all the regex's needed for A−Z+T (for now)"""
     """distinguish and interpret should only be set once, on boot"""
     """This should probably reference/store another class of regexs which
     would have strings and compiled versions?"""
     """This needs to output"""
+    def nX(self,x,n):
+        """Make a variable to find the nth occurrance of x
+        Start by being clear which graphs count, and which don't.
+        These should mutually exclude each other.
+        n is the occurance to look for, e.g., C3 is n=3.
+        """
+        # log.info(f"Working with {self.sdict[x]}")
+        if x in ['C','V']:
+            sin=[j for i in [x]+self.distinguished(x,value=False)
+                for j in self.sdict[i]]
         else:
-            this+='+'+wd.replace('wd','')
-    #Pull out C# first; finds only relevant segments not distinguished from Cs
-    rxthis=s(sdict,this)
-    if rxthis:
-        CVs=re.sub('C$',rxthis,CVs)
-    else:
-        log.error("No rxthis? ({}): {}".format(this,sdict))
-    # At this point, all word final Consonant variables should be gone;
-    # the following is for other word placement.
-    for x in [i for i in distinguish if 'wd' not in i]:
-        if distinguish[x]:
-            CVs=re.sub(x,s(sdict,x),CVs)
-        elif x in CVs:
-            raise KeyError("CV profile {} contains {}, which is not "
-                            "distinguished there".format(CVs_ori,x))
+            sin=self.sdict[x]
+        sout=[j for i in self.sdict #keys only here
+            if i not in [x]+self.distinguished(x,value=False)
+            for j in self.sdict[i]
+            ]
+        # log.info("Using segments in: {} out: {}".format(sin,sout))
+        overlap=set(sin) & set(sout)
+        if overlap:
+            log.error("Your in/out segment lists overlap: {}".format(overlap))
+            # log.error("in: {}".format(segmentsin))
+            # log.error("out: {}".format(segmentsout))
+        # for each of in/out, make a dict keyed by length, with value listing glyphs
+        # with that length (automatically separate trigraphs, digraphs, etc)
+        sindict={n:[i for i in sin if len(i) == n]
+                    for n in range(1,len(max(sin,key=len, default=''))+1)}
+        soutdict={n:[i for i in sout if len(i) == n]
+                    for n in range(1,len(max(sout,key=len, default=''))+1)}
+        # Convert those value lists to a string of alternations, for each key
+        sin={k:slisttoalternations(sindict[k]) for k in sindict}
+        sin.update({'all':slisttoalternations([i for j in sindict.values()
+                                                for i in j])})
+        sout={k:slisttoalternations(soutdict[k]) for k in soutdict}
+        sout.update({'all':slisttoalternations([i for j in soutdict.values()
+                                                for i in j])})
+        # Make a list, longest first
+        strlist=[sout[i] for i in range(max([j for j in sout.keys()
+                                            if str(j).isdigit()],default=0),
+                                        0,-1)]
+        #join list of alternations to one long alternation
+        notS='|'.join(strlist)
+        strlist+=['('+sin['all']+')'] #look for, capture this
+        #This needs to multiply as a unit, while getting each subpart separately:
+        oneS='(('+notS+')*('+sin['all']+'))'
+        #We need to keep each alternation set a unit, and keep all but last in \1
+        if n-1:
+            priors='('+oneS*(n-1)+')'
+        else:
+            priors=''
+        #anchor the begining, not the end:
+        nS='^('+priors+'('+notS+')*)('+sin['all']+')'
+        # log.info("Compiling X{} regex {}".format(n,nS))
+        self.setnXrx(x,n,nS)
     def makegroup(self,x,**kwargs):
         """this makes (x|y) format from C+D+N, etc.,
         Distinctions should already be accounted for in the variable (x)
