@@ -2380,7 +2380,7 @@ class Settings(object):
         form=sense.textvaluebyftypelang('lc',program['params'].analang())
         """This adds to self.sextracted, too"""
         if not form:
-            return form,None,None #This is just for logging
+            return form,None #This is just for logging
         # log.info("getprofileofsense form: {}".format(form))
         profile=self.rxdict.profileofform(form,ps=ps)
         self.extractsegmentsfromform(form,ps=ps)
