@@ -2440,24 +2440,15 @@ class Settings(object):
         self.notifyuserofextrasegments() #analang set by now, depends db only
         self.polygraphcheck() #depends only on self.polygraph
         self.checkinterpretations() #checks/sets values for distinguish/interpret
-        log.info("Interpretation settings: \n{}".format(
-                '\n'.join([k+': '+str(v) for k,v in self.interpret.items()])
+        log.info("Interpretation: \n{}".format(
+                '\n'.join([k+': '+self.interpret[k] for k in self.interpret])
                 ))
-        log.info("Setting preferred profile with self.interpret: {}"
-                "".format(self.interpret))
-        log.info("Distinguishing settings: \n{}".format(
-                '\n'.join([k+': '+str(v) for k,v in self.distinguish.items()])
+        log.info("Distinguishing: \n{}".format(
+                '\n'.join([k+': '+str(self.distinguish[k]) for k in self.distinguish])
                 ))
-        log.info("Setting distinguished profile with self.distinguish: {}"
-                "".format(self.distinguish))
-        self.setupCVrxs() # self.rx (calls slists, needs distinguish)
+        self.setupCVrxs()
         for ps in program['db'].pss: #45s on English db
-            # self.sextracted[ps]={}
-            # for s in self.rx:
-            #     self.sextracted[ps][s]={}
             self.getprofilesbyps(ps)
-        # self.getprofilesbyentry()
-        #Convert to iterate over local variables
         """Do I want this? better to keep the adhoc groups separate"""
         """We will *never* have slices set up by this time; read from file."""
         if hasattr(self,'adhocgroups'):
