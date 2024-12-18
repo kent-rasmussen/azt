@@ -14193,8 +14193,11 @@ def logfinished(start=program['start_time'],msg=None):
         msg=str(msg)+' '
     else:
         msg=''
-    text=_("Finished {}at {} ({:1.0f}m, {:2.3f}s)"
+    try:
+        text=_("Finished {}at {} ({:1.0f}m, {:2.3f}s)"
             "").format(msg,now(),*divmod((run_time-start).total_seconds(),60))
+    except AttributeError:
+        text=_("Finished {msg}at {now()}, after {run_time-start} seconds")
     log.info(text)
     return text
 def interfacelang(lang=None,magic=False):
