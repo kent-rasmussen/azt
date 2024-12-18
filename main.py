@@ -5186,6 +5186,7 @@ class Segments(object):
         self.updatestatus(group=group) # marks the group unverified.
     def updateformtoannotations(self,sense,ftype,check=None,write=False):
         """This should take a sense, ftype and check, in normal usage.
+        If we want to update forms to *all* annotations, don't give check.
         Iterate across a few or many senses.
         Iterate also across ftypes, to catch them all...
         that would likely need more smarts for affix and root distinction."""
