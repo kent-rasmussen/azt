@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=AZT
 Comment=Dictionary & Orthography checker
-Exec=/usr/bin/python3 ~/azt/main.py
+Exec=/usr/bin/python3.12 ~/azt/main.py
 Icon=~/azt/images/AZT green stacks_transparent_sm.png
 #Terminal=false
 NoDisplay=true
