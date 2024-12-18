@@ -2398,7 +2398,6 @@ class Settings(object):
     def _getprofiles(self,senses,ps):
         n=0
         todo=len(senses)
-        # log.info("RXs: {}".format(self.rx))
         if todo>750:
             msg=_("getting profiles for {} lexical category").format(ps)
             program['taskchooser'].wait(msg)
@@ -2410,9 +2409,9 @@ class Settings(object):
                                     args=(sense,ps))
                 t.start()
             else:
-                form,ori,profile=self.getprofileofsense(sense,ps)
-                log.debug("{}: {}; {} > {}".format(str(n)+'/'+str(todo),form,
-                                            ori,profile))
+                form,profile=self.getprofileofsense(sense,ps)
+                log.debug("{}: {} > {}".format(str(n)+'/'+str(todo),form,
+                                            profile))
             if todo>750:
                 program['taskchooser'].waitprogress(n*100/todo)
         try:
