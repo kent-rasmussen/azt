@@ -2325,8 +2325,9 @@ class Settings(object):
             self.distinguish={}
         if (not hasattr(self,'interpret')) or (self.interpret is None):
             self.interpret={}
-        for var in ['G','Gwd','N','S','Swd','D','Dwd','Nwd','ʔ','ʔwd',
-                    '̀','ː','<','=']:
+        for var in self.profilelegit+[i+'wd' for i in self.profilesegments]:
+            if var in ['C','V']:
+                continue
             if ((var not in self.distinguish) or
                 (type(self.distinguish[var]) is not bool)):
                 self.distinguish[var]=False
