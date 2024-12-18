@@ -580,7 +580,7 @@ class RegexDict(dict):
         regexCV=str(kwargs.get("profile"))
         groupcomparison=kwargs.get("groupcomparison")
         if groupcomparison:
-            log.info(f"going to make {check} profile for {kwargs.get("group")} "
+            log.info(f"going to make {check} profile for {kwargs.get('group')} "
                     f"and {groupcomparison}")
         for cvt in ['CxV','VxC','C','V']:
             if cvt in check:
