@@ -3138,7 +3138,7 @@ class Settings(object):
         program['settings']=self
         self.liftfilename=taskchooser.filename
         self.getdirectories() #incl settingsfilecheck and repocheck
-        self.setinvalidcharacters()
+        self.setvalidcharacters()
         # self.settingsfilecheck()
         self.settingsinit() #init, clear, fields
         self.loadsettingsfile()
@@ -5186,7 +5186,6 @@ class Segments(object):
         self.updatestatus(group=group) # marks the group unverified.
     def updateformtoannotations(self,sense,ftype,check=None,write=False):
         """This should take a sense, ftype and check, in normal usage.
-        If we want to upadate forms to *all* annotations, don't give check.
         Iterate across a few or many senses.
         Iterate also across ftypes, to catch them all...
         that would likely need more smarts for affix and root distinction."""
