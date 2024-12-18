@@ -2321,6 +2321,7 @@ class Settings(object):
                         return
         log.info("Di/Trigraph settings seem complete; moving on.")
     def checkinterpretations(self):
+        """This sets sane defaults, if not there"""
         if (not hasattr(self,'distinguish')) or (self.distinguish is None):
             self.distinguish={}
         if (not hasattr(self,'interpret')) or (self.interpret is None):

@@ -102,8 +102,8 @@ def tonerxs():
 def update(t,regexdict,check,value,matches=[]):
     tori=t
     for c in reversed(check.split('=')):
-        log.info("subbing {} for {} in {}, using {}".format(value,c,t,
-                                                    regexdict[c]))
+        # log.info("subbing {} for {} in {}, using {}".format(value,c,t,
+        #                                             regexdict[c]))
         match=regexdict[c].search(t)
         if match:
             matches.append(match.groups()[-1])
