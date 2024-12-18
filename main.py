@@ -3445,10 +3445,10 @@ class TaskDressing(HasMenus,ui.Window):
                         if oldvar != newvar:
                             changed[s]=(oldvar,newvar)
                             getattr(program['settings'],typ)[s]=newvar
-            log.debug('self.distinguish: {}'.format(program['settings'].distinguish))
-            log.debug('self.interpret: {}'.format(program['settings'].interpret))
+            # log.debug('self.distinguish: {}'.format(program['settings'].distinguish))
+            # log.debug('self.interpret: {}'.format(program['settings'].interpret))
             if changed:
-                log.info('There was a change; we need to redo the analysis now.')
+                # log.info('There was a change; we need to redo the analysis now.')
                 log.info('The following changed (from,to): {}'.format(changed))
                 r=notice(changed)
                 if r:
@@ -3479,7 +3479,7 @@ class TaskDressing(HasMenus,ui.Window):
                                         row=1,column=1)
             options.next('r')
         def exsframe(x):
-            text=_("In your data, {}={}".format(x,', '.join(exsdict[x])))
+            text=_("In your data, {} includes {}".format(x,', '.join(exsdict[x])))
             f=ui.Frame(self.runwindow.scroll.content,
                         row=options.get('r'),
                         column=options.get('c'),
@@ -3522,8 +3522,8 @@ class TaskDressing(HasMenus,ui.Window):
         instr.wrap()
         """The rest of the page"""
         self.runwindow.scroll=ui.ScrollingFrame(mwframe,row=2,column=0)
-        log.debug('self.distinguish: {}'.format(program['settings'].distinguish))
-        log.debug('self.interpret: {}'.format(program['settings'].interpret))
+        # log.debug('self.distinguish: {}'.format(program['settings'].distinguish))
+        # log.debug('self.interpret: {}'.format(program['settings'].interpret))
         """I considered offering these to the user conditionally, but I don't
         see a subset of them that would only be relevant when another is
         selected. For instance, a user may NOT want to distinguish all Nasals,
@@ -3536,11 +3536,11 @@ class TaskDressing(HasMenus,ui.Window):
                     if not 'tg' in k
                     if not 'qg' in k
                     ]
-            # log.info("Variable keys to check: {}".format(vars))
+            log.info("Variable keys to check: {}".format(vars))
         else:
             ErrorNotice(_("Something happened! "
                         "(language not keyed in segment dictionary)"))
-            return #because this is a problem!
+            return
         exsdict={}
         for var in vars:
             # log.info("Getting examples of {}".format(var))
@@ -3550,7 +3550,7 @@ class TaskDressing(HasMenus,ui.Window):
                         program['settings'].polygraphs[analang][var].items()
                         if program['settings'].polygraphs[analang][var][k]
                                 ]
-            log.info("Examples of {}: {}".format(var,exsdict[var]))
+            # log.info("Examples of {}: {}".format(var,exsdict[var]))
         textdict={'ʔ':_('Distinguish glottal stops (ʔ) '
                         'initially and medially?'),
                 'ʔwd':_('Distinguish glottal stops word finally (ʔ#)?'),
@@ -3571,9 +3571,8 @@ class TaskDressing(HasMenus,ui.Window):
                 'CS':_('How to interpret Consonant-Sonorant (CS) sequences?'),
                 'VN':_('How to interpret Vowel-Nasal (VN) sequences? '
                         '(after NC interpretation above)'),
-                'Vː':_('How to interpret Long Vowels (Vː)? '
-                        '(one vowel quality, but longer)')
-
+                'VV':_('How to interpret the *same* vowel letter twice '
+                        'in a row (VV)? ')
                 }
         optdict={'ʔ':[(True,'ʔ≠C'),(False,'ʔ=C')],
                 'ʔwd':[(True,'ʔ#≠C#'),(False,'ʔ#=C#')],
@@ -3596,24 +3595,24 @@ class TaskDressing(HasMenus,ui.Window):
                         ('C','CS=C (≠CS, ≠CC)'),
                         ('CC','CS=CC (≠CS, ≠C)')],
                 'VN':[('VN','VN=VN (≠Ṽ)'), ('Ṽ','VN=Ṽ (≠VN)')],
-                'Vː':[('VV','Vː=VV (≠V)'), ('V','Vː=V (≠VV)')]
+                'VV':[('VV','VV=VV (≠V)'), ('V','VV=V (≠VV)')]
                 }
         exsframe('C')
-        for var in [i for i in vars if i not in ['C','V']
+        for var in [i for i in vars if i not in ['C','V','VN']
                                     if i in exsdict and exsdict[i]]:
             # log.info("Doing var {}".format(var))
             exsframe(var)
             todo=[i for i in textdict if var in i]
             # log.info("Doing vars {}".format(todo))
             for var in todo:
-                if var == 'VN':
-                    exsframe('V')
                 buttonframeframe(var)
+        exsframe('V')
+        todo=[i for i in textdict if 'V' in i]
+        for v in todo:
+            buttonframeframe(v)
         """Submit button, etc"""
         self.runwindow.frame2d=ui.Frame(mwframe,
-                                        # self.runwindow.scroll.content,
                                         row=3,
-                                        # row=options.get('r'),
                                         column=options.get('c'),
                                         sticky='e', padx=options.padx,
                                         pady=options.pady)
