@@ -2380,8 +2380,10 @@ class Settings(object):
         if not form:
             return form,None,None #This is just for logging
         # log.info("getprofileofsense form: {}".format(form))
-        ori,profile=self.profileofform(form,ps=ps)
-        # log.info("getprofileofsense Profile: {}".format(profile))
+        profile=self.rxdict.profileofform(form,ps=ps)
+        self.extractsegmentsfromform(form,ps=ps)
+        # log.info(f"self.sextracted: {self.sextracted}")
+        # log.info(f"getprofileofsense Profile: {profile}")
         if not set(self.profilelegit).issuperset(profile):
             profile='Invalid'
         setnesteddictval(self.profilesbysense,[sense],ps,profile,addval=True)
