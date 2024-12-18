@@ -7,7 +7,7 @@ pafile=pa_stable_v190700_20210406.tgz
 # cd portaudio && ./configure && make && sudo make install
 sudo add-apt-repository --yes ppa:deadsnakes/ppa
 sudo apt update
-sudo apt-get install -y python3.12-{distutils,tk,dev} libpython3.12 git portaudio19-dev texlive-xetex
+sudo apt-get install -y python3.12-{tk,dev} libpython3.12 git portaudio19-dev texlive-xetex
 # python3-tk python3-pip python3-pyaudio
 curl -sS https://bootstrap.pypa.io/get-pip.py |  python3.12
 python3.12 -m pip install six pyaudio lxml Pillow
