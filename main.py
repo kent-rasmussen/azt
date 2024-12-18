@@ -2546,11 +2546,11 @@ class Settings(object):
                 """These lines just add to a C list, for a later regex"""
             log.info("Segment lists for {} language: {}".format(lang,
                                                                 self.s[lang]))
-    def setinvalidcharacters(self):
-        self.invalidchars=[' ','...',')','(<field type="tone"><form lang="gnd"><text>'] #multiple characters not working.
-        self.invalidregex=r'( |\.|,|\)|\()+'
-        # self.profilelegit=['#','̃','C','N','G','S','V','o'] #In 'alphabetical' order
-        self.profilelegit=['#','̃','N','G','S','D','C','Ṽ','V','ʔ','ː',"̀",'=','<'] #'alphabetical' order
+    def setvalidcharacters(self):
+        """These are sent to rxdict, but the top two are also used here"""
+        self.profilesegments=['N','G','S','D','C','V','ʔ']
+        self.profilelegit=['̃','N','G','S','D','C','Ṽ','V','ʔ','ː',"̀",'=','<']
+        self.invalidchars=[' ','...',')','(<field type="tone"><form lang="gnd"><text>']
     def addtoCVrxs(self,s):
         """This method is just to add a new grapheme while running, so we
         don't have to restart between C/V changes."""
@@ -9275,6 +9275,8 @@ class Report(object):
             for kwargs['group'] in groups:
                 for self.groupcomparison in groupcomparisons:
                     if kwargs['group'] != self.groupcomparison:
+                        # log.info(f"Going to compare {kwargs['group']} with "
+                        #         f"{self.groupcomparison}")
                         self.wordsbypsprofilechecksubcheckp(parent,**kwargs)
         elif group:
             log.info("Going to run subcheckp just for group {}".format(group))
