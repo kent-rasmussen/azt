@@ -415,7 +415,7 @@ class RegexDict(dict):
                                 r=self.makegroup(
                                     self.undistinguished(i,**kwargs),
                                     **{**kwargs, 'compile':False})
-                                if r == '()':.
+                                if r == '()':
                                     # log.info(f"r is {r}, so returning empty")
                                     return r #don't add to nothing
                                 # log.info(f"r is {r} {type(r)}; continuing")
