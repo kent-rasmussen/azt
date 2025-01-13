@@ -5548,7 +5548,9 @@ class WordCollection(Segments):
                                             self.markimage(x,w))
     def getimagefiles(self):
         if file.exists(self.sense.imgselectiondir):
-            return file.getfilesofdirectory(self.sense.imgselectiondir)
+            return [i for i in
+                    file.getfilesofdirectory(self.sense.imgselectiondir)
+                    if "terms.txt" not in str(i)]
     def selectimageormoveon(self,event=None):
         if self.selectimage():
             self.nextword(nostore=False)
