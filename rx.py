@@ -678,7 +678,7 @@ class RegexDict(dict):
         self.makeprofileregexs()
         self.makeglyphregexs()
 if __name__ == '__main__':
-    x="ne [pas] ˥plai're, (ne pas) ˧agréer, ne pas\n][  .!=(),'/?:;+*][. /?*\:;|,\"><'‘’"
+    x="ne [pas] ˥plai're, (ne pas) ˧agréer, ne pas\n][  .!=(),'/?:;+*][. /?*:;|,\"><'‘’"
     i=id(x)
     print(x,i,"end")
     quit()
