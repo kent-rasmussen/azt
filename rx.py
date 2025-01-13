@@ -658,7 +658,9 @@ class RegexDict(dict):
         # log.info(f"makeglyphregexs self.rx: {self.rx}")
     def makeglyphregexs(self):
         todo=['C','V','Cwd']+[k for k in self.distinguish if self.distinguish[k]
-                                and self.sdict[k.strip('wd')]] #only if there
+                                and k.strip('wd') in self.sdict #key there
+                                and self.sdict[k.strip('wd')] #value there
+                                ]
         notdo=set(self.sdict)-set(todo)
         log.info(f"Going to make rxs for {todo}; not doing {notdo}")
         for c in todo:
