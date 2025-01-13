@@ -14854,7 +14854,7 @@ def sysrestart(event=None):
     log.info("Hard shutting down now.")
     logsetup.shutdown()
     if osys == 'Linux':
-        log.info(f"restarting with {sys.argv[0]}?={program['python'}")
+        log.info(f"restarting with {sys.argv[0]}?={program['python']}")
         os.execv(sys.argv[0], sys.argv)
         # log.info("Trying argv[0] with args {}, {} and {}".format(sys.executable,
         #                                                         sys.argv[0],
