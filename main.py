@@ -14860,7 +14860,7 @@ def sysrestart(event=None):
     logsetup.shutdown()
     if osys == 'Linux':
         log.info(f"restarting with {sys.argv[0]}?={program['python']} ({sys.argv}?)")
-        os.execv(sys.executable, sys.argv[0], sys.argv)
+        os.execv(sys.executable, sys.argv)
         # log.info("Trying argv[0] with args {}, {} and {}".format(sys.executable,
         #                                                         sys.argv[0],
         #                                                         sys.argv))
