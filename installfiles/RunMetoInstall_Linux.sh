@@ -18,7 +18,7 @@ sudo apt-get install -y python3.12-{tk,dev} libpython3.12 git portaudio19-dev te
 echo "The following assumes you have a debian system; if you don't, install"
 echo "the SIL package repository manually (instructions at https://packages.sil.org/)"
 sudo apt-get install fonts-sil-charis
-read -p "Super User stuff is done; the rest of this script should be done \
+read -p $"Super User stuff is done; the rest of this script should be done \
 as a normal user. \nIf that's you, press Enter to continue. \nIf you are *not* the \
 normal user of this machine, cancel here, and have that user run \
 this script again." </dev/tty
