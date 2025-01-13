@@ -2515,7 +2515,7 @@ class Settings(object):
         self.s={l:{} for l in set(program['db'].analangs+
                                 [program['params'].analang()])
                 }
-        for lang in program['db'].analangs:
+        for lang in set(self.s)&set(program['db'].s):
             """These should always be there, no matter what"""
             for sclass in [x for x in program['db'].s[lang]
                                         if 'dg' not in x
@@ -2532,6 +2532,10 @@ class Settings(object):
                     self.s[lang][sclass]=list()
                 self.s[lang][sclass]+=program['db'].s[lang][sclass]
                 """These lines just add to a C list, for a later regex"""
+            log.info("Segment lists for {} language: {}".format(lang,
+                                                                self.s[lang]))
+        for lang in set(self.s)-set(program['db'].s): #in case no language data
+            self.s[lang]=program['db'].hypotheticals
             log.info("Segment lists for {} language: {}".format(lang,
                                                                 self.s[lang]))
     def setvalidcharacters(self):
