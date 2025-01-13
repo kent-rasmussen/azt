@@ -14676,8 +14676,11 @@ def praatversioncheck():
     else:
         log.info("Praat version less than {}".format(justpraatversion))
         return False
-def pythonmodules():
-    log.info("Installing python dependencies")
+def pythonmodules(secondtry=False):
+    if secondtry:
+        log.info("Trying a second time, with '--force-reinstall'")
+    else:
+        log.info("Installing python dependencies")
     if platform.system() == 'Linux':
         log.info(_("If you have errors containing ˋportaudioˊ above, you should "
             "install pyaudio with your package manager."))
@@ -14710,6 +14713,8 @@ def pythonmodules():
         '--no-index' #This stops it from looking online
         ]
         npyargs=len(pyargs)
+        if secondtry:
+            pyargs.extend('--force-reinstall')
         # if install[0] == 'pyaudio':
         #     install[0]+='==0.2.13'
         pyargs.extend(install)
@@ -14763,6 +14768,8 @@ def pythonmodules():
         log.info(o) #just give bytes, if encoding isn't correct
     if installedsomething:
         sysrestart()
+    elif not secondtry:
+        pythonmodules(secondtry=True) #force reinstalls, just once
 def praatopen(file,newpraat=False,event=None):
     """sendpraat is now looked for only where praat version is before
     'Praat 6.2.04 (December 18 2021)', when new functionality was added to
