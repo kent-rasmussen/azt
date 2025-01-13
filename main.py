@@ -2512,8 +2512,8 @@ class Settings(object):
         just pulls from the segment types in the lift database."""
         log.info("Found db.analangs: {}".format(program['db'].analangs))
         log.info("Found params analang: {}".format(program['params'].analang()))
-        self.s={l:{} for l in set(program['db'].analangs+
-                                [program['params'].analang()])
+        self.s={l:{} for l in set(program['db'].analangs+ #analang from database
+                                [program['params'].analang()]) #inferred analang
                 }
         for lang in set(self.s)&set(program['db'].s):
             """These should always be there, no matter what"""
@@ -2562,6 +2562,7 @@ class Settings(object):
         # log.info("compileCVrxforsclass RXs: {}".format(self.rx))
     def setupCVrxs(self):
         self.slists() #makes s; depends on polygraphs
+        log.info(f"self.s: {self.s[program['params'].analang()]}")
         self.rxdict=rx.RegexDict(distinguish=self.distinguish,
                                 interpret=self.interpret,
                                 sdict=self.s[program['params'].analang()],
@@ -5585,12 +5586,15 @@ class WordCollection(Segments):
             return [i for i in
                     file.getfilesofdirectory(self.sense.imgselectiondir)
                     if "terms.txt" not in str(i)]
+        else:
+            log.info(f"{self.sense.imgselectiondir} doesn't seem to exist.")
     def selectimageormoveon(self,event=None):
         if self.selectimage():
             self.nextword(nostore=False)
     def selectimage(self,event=None):
         files=self.getimagefiles()
         if not files:
+            log.info(f"{self.sense.imgselectiondir} seems there, but empty.")
             self.getopenclipart()
         files=self.getimagefiles()
         if files: #still
