@@ -44,3 +44,4 @@ reports/**
 *.ini
 secrets.py
 *.lift*txt
+bin/
