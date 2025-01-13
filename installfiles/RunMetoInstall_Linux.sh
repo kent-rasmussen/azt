@@ -15,25 +15,12 @@ sudo add-apt-repository --yes ppa:deadsnakes/ppa
 sudo apt update
 sudo apt-get install -y python3.12-{tk,dev} libpython3.12 git portaudio19-dev texlive-xetex
 # python3-tk python3-pip python3-pyaudio
-<<<<<<< HEAD
-=======
-echo
-read -p "Super User stuff is done; the rest of this script should be done \
-as a normal user. If that's you, press Enter to continue. If you are *not* the \
-normal user of this machine, cancel here, and have that user run \
-this script again." </dev/tty
-curl -sS https://bootstrap.pypa.io/get-pip.py |  python3.12
-python3.12 -m pip install six pyaudio lxml Pillow
-cd;git clone https://github.com/kent-rasmussen/azt.git;cd -
->>>>>>> 7173d62d (testing the run)
 echo "The following assumes you have a debian system; if you don't, install"
 echo "the SIL package repository manually (instructions at https://packages.sil.org/)"
 sudo apt-get install fonts-sil-charis
 read -p "Super User stuff is done; the rest of this script should be done \
-as a normal user.
-If that's you, press Enter to continue.
-If you are *not* the \
-normal user of this machine, cancel here (Control-C), and have that user run \
+as a normal user. \nIf that's you, press Enter to continue. \nIf you are *not* the \
+normal user of this machine, cancel here, and have that user run \
 this script again." </dev/tty
 curl -sS https://bootstrap.pypa.io/get-pip.py |  python3.12
 python3.12 -m pip install six pyaudio lxml Pillow
