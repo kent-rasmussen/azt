@@ -1366,7 +1366,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """If these appear, they should always be single consonants."""
         c['pn'][2]=['ᵐb','ᵐp','ᵐv','ᵐf','ⁿd','ⁿt','ᵑg','ⁿg','ᵑg','ⁿk','ᵑk',
                     'ⁿj','ⁿs','ⁿz']
-        x={} #dict to put all hypothetical segements in, by category
+        self.hypotheticals=x={} #dict to put all hypothetical segements in, by category
         c['G']={1:['ẅ','y','Y','w','W']}
         c['N']={1:['m','M','n','ŋ','ɲ','ɱ']} #'N', messed with profiles
         c['N'][2]=['mm','ŋŋ','ny','gn','nn']
