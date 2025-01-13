@@ -14861,7 +14861,7 @@ def sysrestart(event=None):
     if osys == 'Linux':
         log.info(f"restarting with {sys.argv[0]}?={program['python']} ({sys.argv}?)")
         log.info(f"os.execl({sys.executable}, {sys.argv})")
-        os.execl([sys.executable, sys.argv[0]] *sys.argv)
+        os.execl([sys.executable, sys.argv[0]], *sys.argv)
         # log.info("Trying argv[0] with args {}, {} and {}".format(sys.executable,
         #                                                         sys.argv[0],
         #                                                         sys.argv))
