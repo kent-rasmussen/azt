@@ -14754,7 +14754,7 @@ def pythonmodules(secondtry=False):
         ]
         npyargs=len(pyargs)
         if secondtry:
-            pyargs.extend('--force-reinstall')
+            pyargs.extend(['--force-reinstall'])
         # if install[0] == 'pyaudio':
         #     install[0]+='==0.2.13'
         pyargs.extend(install)
