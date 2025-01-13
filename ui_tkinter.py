@@ -1063,6 +1063,10 @@ class Text(Childof,ObectwArgs):
         #                             **kwargs)
 """These have parent (Childof) and grid (Gridded)"""
 class Frame(Gridded,Childof,tkinter.Frame):
+    def columns(self):
+        return self.grid_size()[0]
+    def rows(self):
+        return self.grid_size()[1]
     def windowsize(self):
         if not hasattr(self,'configured'):
             self.configured=0
