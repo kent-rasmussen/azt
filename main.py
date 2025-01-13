@@ -5518,6 +5518,37 @@ class WordCollection(Segments):
         if f and file.exists(f):
             self.markimage(f)
     def showimagestoselect(self,files):
+        self.imagecolumns=4
+        self.imagepixels=0
+        def makegrid(cols=0,pixels=0):
+            if cols:
+                self.imagecolumns=cols
+            if pixels:
+                self.imagepixels=pixels
+            if hasattr(self.selectionwindow,'sf'):
+                self.selectionwindow.sf.destroy()
+            self.selectionwindow.sf=ui.ScrollingFrame(
+                        self.selectionwindow.frame,row=2,column=0)
+            for n,f in enumerate(files+['local']):
+                # log.info("Using row {}, col {}".format(n//cols,n%cols))
+                if f == 'local':
+                    ui.Button(self.selectionwindow.sf.content,
+                        text=_("select local file"),
+                        cmd=self.selectlocalimage,
+                        row=n//self.imagecolumns,
+                        column=n%self.imagecolumns,
+                        sticky='nsew')
+                else:
+                    i=ImageFrame(self.selectionwindow.sf.content,url=f,
+                                pixels=self.imagepixels,
+                                row=n//self.imagecolumns,
+                                column=n%self.imagecolumns,
+                                sticky='nsew')
+                    if i.image:
+                        i.bindchildren('<ButtonRelease-1>',
+                                        lambda event,x=f,w=self.selectionwindow:
+                                                self.markimage(x,w))
+            self.selectionwindow.update_idletasks()
         log.info("Select from these images: \n{}".format('\n'.join(
                                                     [str(i) for i in files])))
         self.selectionwindow=ui.Window(self)
@@ -5525,22 +5556,21 @@ class WordCollection(Segments):
         self.selectionwindow.title(title)
         t=ui.Label(self.selectionwindow.frame,text=title, font='title',
                     row=0,column=0)
-        sf=ui.ScrollingFrame(self.selectionwindow.frame,row=1,column=0)
-        cols=4
-        for n,f in enumerate(files+['local']):
-            # log.info("Using row {}, col {}".format(n//cols,n%cols))
-            if f == 'local':
-                ui.Button(sf.content,text=_("local file"),
-                    cmd=self.selectlocalimage,
-                    row=n//cols,column=n%cols,sticky='nsew')
-            else:
-                i=ImageFrame(sf.content,url=f,pixels=0,
-                            row=n//cols, column=n%cols,
-                            sticky='nsew')
-                if i.image:
-                    i.bindchildren('<ButtonRelease-1>',
-                                    lambda event,x=f,w=self.selectionwindow:
-                                            self.markimage(x,w))
+        columnselection=ui.Frame(self.selectionwindow.frame,
+                                row=1, column=0, sticky='e')
+        ui.Label(columnselection,text=_("pixels:"), font='small',
+                    row=0,column=0)
+        for n in range(200,1000,100):
+            ui.Button(columnselection,text=n, font='small',
+                    command=lambda x=n:makegrid(pixels=x),
+                    row=0,column=columnselection.columns()+1)
+        ui.Label(columnselection,text=_("columns:"), font='small',
+                    row=0,column=columnselection.columns()+1)
+        for n in range(1,9):
+            ui.Button(columnselection,text=n, font='small',
+                    command=lambda x=n:makegrid(cols=x),
+                    row=0,column=columnselection.columns()+1)
+        makegrid(4)
     def getimagefiles(self):
         if file.exists(self.sense.imgselectiondir):
             return [i for i in
