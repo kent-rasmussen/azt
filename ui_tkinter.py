@@ -835,8 +835,10 @@ class UI(ObectwArgs):
 class Image(tkinter.PhotoImage):
     def biggerby(self,x):
         #always do this one first, if doing both, to start from scratch
+        # log.info(f"scaling bigger by {x}")
         self.scaled=self.zoom(x,x)
     def smallerby(self,x):
+        # log.info(f"scaling smaller by {x}")
         try:
             self.scaled=self.scaled.subsample(x,x)
         except AttributeError:
