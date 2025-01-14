@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # coding=UTF-8
+"""Consider making the above work for a venv"""
 """This file runs the actual GUI for lexical file manipulation/checking"""
 program={'name':'A-Z+T',
         'tkinter':True, #for some day
