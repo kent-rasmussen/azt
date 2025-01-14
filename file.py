@@ -23,6 +23,7 @@ def getfilenamefrompath(filename):
     if filename:
         return pathlib.Path(filename).name
 def fullpathname(filename):
+    """This is full, relative to this file (in the program repo root)"""
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
@@ -32,6 +33,16 @@ def fullpathname(filename):
     return pathlib.Path.joinpath(
                                 base_path,
                                 filename)
+def fullpathnamewrt(db,filename):
+    """This is full, relative to the db file (use for lift or other non-program
+    references)"""
+    if exists(db):
+        dir=db
+    elif hasattr(db,'filename') and exists(db.filename): #for lift object
+        dir=db.filename
+    else:
+        log.error(f"{db} doesn't seem to exist, nor does {db}.filename")
+    return pathlib.Path.joinpath(dir,filename)
 def askfilename(self):
     log.info('Apparently there is no last lift file url; asking...')
     text=(_("Please select a LIFT lexicon file to check"))
