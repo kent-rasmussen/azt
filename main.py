@@ -14740,6 +14740,7 @@ def pythonmodules(secondtry=False):
     if not program['python']:
         log.error("Can't find python; how am I doing this? Put it in your PATH")
         sys.exit()
+    """Migrate this to `bin/pip install -r requirements.txt`"""
     installs=[
             ['--upgrade', 'pip', 'setuptools', 'wheel'], #this is probably never needed
             ['urllib3'],
