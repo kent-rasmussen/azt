@@ -5074,7 +5074,7 @@ class Segments(object):
     def buildregex(self,**kwargs):
         """include profile (of those available for ps and check),
         and subcheck (e.g., a: CaC\2)."""
-        """Provides self.regexCV and self.regex"""
+        """Provides self.regex"""
         profile=kwargs.get('profile',program['slices'].profile())
         if profile is None:
             log.info(_("You haven't picked a syllable profile yet."))
@@ -5152,9 +5152,8 @@ class Segments(object):
         unsortedids=set(self.senseformsbyregex(self.regex,ps=ps))
         for group in [i for i in groups if isnoninteger(i)]:
             self.buildregex(group=group,cvt=cvt,profile=profile,check=check)
-            log.info("self.regexCV: {}; self.regex: {}".format(self.regexCV,
-                                                                self.regex
-                                                                ))
+            log.info(f"group: {group}, cvt: {cvt}, profile: {profile}, "
+                    f"check: {check}; self.regex: {self.regex}")
             s=set(self.senseformsbyregex(self.regex,ps=ps))
             if s: #senses just for this group
                 self.presort(list(s),check,group)
@@ -9161,13 +9160,7 @@ class Report(object):
         log.info(checkprose)
         """possibly iterating over all these parameters, used by buildregex"""
         self.buildregex(**kwargs)
-        # log.info("{}; regexCV: {}"
-        #         # "; \nregex: {}"
-        #         "".format(
-        #         checkprose,
-        #         self.regexCV,
-        #         # self.regex
-        #         )         )
+        log.info("{checkprose}; \nregex: {self.regex}")
         matches=set(self.senseformsbyregex(self.regex,**kwargs))
         if 'ufsenses' in kwargs:
             matches=matches&set(kwargs['ufsenses'])
