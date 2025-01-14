@@ -15220,7 +15220,7 @@ if __name__ == '__main__':
     mtrel=program['repo'].lastcommitdaterelative()
     log.info(_("Running {} v{}, updated {} ({})").format(
                                 program['name'],program['version'],mtrel,mt))
-    log.info(_("Called with arguments ({}) {} / {}").format(sys.executable,
+    log.info(_("Called with arguments {} {} / {}").format(sys.executable,
                                                     sys.argv[0], sys.argv))
     log.info("Executed by {}".format(sysexecutableversion()))
     text=_("Working directory is {} on {}, running on {} cores"
