@@ -5583,6 +5583,10 @@ class WordCollection(Segments):
             ui.Button(columnselection,text=n, font='small',
                     command=lambda x=n:makegrid(pixels=x),
                     row=0,column=columnselection.columns()+1)
+        ui.Label(columnselection,text="", font='small',
+                    row=0,column=columnselection.columns()+1)
+        columnselection.grid_columnconfigure(columnselection.columns()-1,
+                                            weight=1)
         ui.Label(columnselection,text=_("columns:"), font='small',
                     row=0,column=columnselection.columns()+1)
         for n in range(1,9):
