@@ -5516,11 +5516,17 @@ class WordCollection(Segments):
         self.maybewrite()
         self.wordframe.pic.reloadimage()
         self.updatereturnbind()
-    def selectlocalimage(self,event=None):
+    def selectlocalimage(self,w=None,event=None):#w is window to close on OK
         log.info("Select a local image")
-        f=file.askopenfilename()
+        title = _("Select Example Image File"),
+        filetypes=[
+                ("PNG Image File",'.[Pp][Nn][Gg]'),
+                ("GIF Image File",'.[Gg][Ii][Ff]'),
+                ("BMP Image File",'.[Bb][Mm][Pp]'),
+                ]
+        f=file.askopenfilename(title=title,filetypes=filetypes)
         if f and file.exists(f):
-            self.markimage(f)
+            self.markimage(f,w)
     def showimagestoselect(self,files):
         self.imagecolumns=4
         self.imagepixels=0
