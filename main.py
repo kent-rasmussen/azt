@@ -5594,22 +5594,22 @@ class WordCollection(Segments):
                     row=0,column=columnselection.columns()+1)
         makegrid(4)
     def getimagefiles(self):
-        if file.exists(self.sense.imgselectiondir):
-            return [i for i in
-                    file.getfilesofdirectory(self.sense.imgselectiondir)
-                    if "terms.txt" not in str(i)]
+        dir=file.fullpathname(self.sense.imgselectiondir)
+        if file.exists(dir):
+            return dir,[i for i in file.getfilesofdirectory(dir)
+                                if "terms.txt" not in str(i)]
         else:
-            log.info(f"{self.sense.imgselectiondir} doesn't seem to exist.")
+            log.info(f"{dir} doesn't seem to exist.")
     def selectimageormoveon(self,event=None):
         if self.selectimage():
             self.nextword(nostore=False)
     def selectimage(self,event=None):
-        files=self.getimagefiles()
+        dir,files=self.getimagefiles()
         if not files:
-            log.info(f"{self.sense.imgselectiondir} seems there, but empty.")
+            log.info(f"{dir} seems there, but empty.")
             self.getopenclipart()
-        files=self.getimagefiles()
-        if files: #still
+            dir,files=self.getimagefiles()
+        if files:
             self.showimagestoselect(files)
         else:
             log.info("There don't seem to be any images to show.")
