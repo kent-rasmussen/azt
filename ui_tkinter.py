@@ -846,22 +846,25 @@ class Image(tkinter.PhotoImage):
             return max(self.scaled.width(),self.scaled.height())
         else:
             return max(self.width(),self.height())
-    def scale(self,scale,pixels=100,resolution=10):
-        # log.info("Scaling with these args: scale {},pixels {}, resolution {}"
+    def scale(self,scale,pixels=100,resolution=1):
+        """'resolution*r' and 'resolution' here express a float scaling ratio
+        as two integers, so r = 0.7 = 7/10, because the zoom and subsample fns
+        only work on integers. To not waste computation, resolution starts
+        small and increases to what is needed to keep both integers positive"""
+        # log.info("Scaling with these args: scale {}, pixels {}, resolution {}"
         #         "".format(scale,pixels,resolution))
-        # 'x' and 'resolution' here express a float as two integers,
-        # so r = 0.7 = 7/10, because the zoom and subsample fns
-        # only work on integers
         if pixels:
             s=pixels*scale #the number of pixels, scaled
             r=s/self.maxhw() #the ratio we need to reduce actual pixels by
             # log.info("scaled pixels: {} (of {})".format(s,pixels))
         else:
             r=1 #don't scale for pixels=0
-        x=resolution*r
-        # log.info("ratio to scale image: {} (of {})".format(r,self.maxhw()))
-        # log.info("biggerby to do: {}".format(x))
-        self.biggerby(int(x))
+        while not int(resolution*r): #This must be >=1 (True)
+            resolution=resolution*2
+        # log.info(f"scaling with {int(resolution*r)}/{int(resolution)}="
+        #         f"{int(resolution*r)/int(resolution)} as a proxy for "
+        #         f"{s}/{self.maxhw()}={r}")
+        self.biggerby(int(resolution*r))
         # log.info("Image: {} ({})".format(self.scaled, self.maxhw(scaled=True)))
         self.smallerby(int(resolution))
         # self[pixels]=self.scaled

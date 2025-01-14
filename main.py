@@ -11536,7 +11536,7 @@ class SortGroupButtonFrame(ui.Frame):
                                     frame=program['toneframes'].get(
                                                 program['params'].check()),
                                     showtonegroup=self.kwargs['showtonegroup'])
-        self._illustration=getimageifthere(node.sense,pixels=100,resolution=10)
+        self._illustration=getimageifthere(node.sense,pixels=100)
         return 1
     def makebuttons(self):
         if self.kwargs['label']:
@@ -11843,7 +11843,7 @@ class ImageFrame(ui.Frame):
             if not specifiedurl:
                 self.sense.image=image
         # log.info("Image: {} ({})".format(image,type(image)))
-        scaledimage(image,pixels=self.pixels,resolution=self.resolution)
+        scaledimage(image,pixels=self.pixels)
         self.image=image.scaled #Imageframe.image = sense.image.scaled
     def pluralframe(self):
         ui.Label(self,text='',image=self.image,
@@ -11859,7 +11859,7 @@ class ImageFrame(ui.Frame):
     def imperativeframe(self):
         try:
             image1=program['theme'].photo['Order!']
-            image1.scale(program['scale'],pixels=300,resolution=10) #300 wide
+            scaledimage(image,pixels=300) #300 wide
             image2=self.image
             # log.info("image1.scaled: {} ({})".format(image1.scaled,type(image1.scaled)))
             # log.info("image2: {} ({})".format(image2,type(image2)))
@@ -11897,7 +11897,6 @@ class ImageFrame(ui.Frame):
         self.url=kwargs.pop('url',None)
         self.ftype=kwargs.pop('ftype',None)
         self.pixels=kwargs.pop('pixels',150)
-        self.resolution=kwargs.pop('resolution',10)
         super(ImageFrame, self).__init__(parent, *args, **kwargs)
         self.getimage()
         if self.ftype == 'pl':
@@ -14546,8 +14545,8 @@ def saveimagefile(url,filename,copyto=None):
         with open(url,'rb') as u:
             # log.info("opened old file")
             f.write(u.read())
-def scaledimage(image,pixels=150,resolution=10):
-    image.scale(program['scale'],pixels=pixels,resolution=resolution)
+def scaledimage(image,pixels=150):
+    image.scale(program['scale'],pixels=pixels)
 def getimagelocationURI(sense):
     i=sense.illustrationvalue()
     for d in [program['settings'].imagesdir,program['settings'].directory]:
@@ -14567,7 +14566,7 @@ def compilesenseimage(sense):
         sense.image=ui.Image(uri)
     else:
         sense.image=None
-def getimageifthere(sense,pixels=100,resolution=10):
+def getimageifthere(sense,pixels=100):
     if not (hasattr(sense,'image') and
                 isinstance(sense.image,ui.Image)):
         try:
@@ -14577,7 +14576,7 @@ def getimageifthere(sense,pixels=100,resolution=10):
                     "couldn't recognize data in image file" not in e.args[0]):
                 log.info("ui.Image error: {}".format(e))
     if sense.image:
-        scaledimage(sense.image,pixels=pixels,resolution=resolution)
+        scaledimage(sense.image,pixels=pixels)
         return sense.image.scaled
     # else:
     #     self._illustration=None
