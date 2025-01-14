@@ -5558,14 +5558,29 @@ class WordCollection(Segments):
         self.selectionwindow.title(title)
         t=ui.Label(self.selectionwindow.frame,text=title, font='title',
                     row=0,column=0)
+        currentimage=getimageifthere(self.sense,pixels=100)
+        if currentimage:
+            t['image']=currentimage
+            t['compound']='right'
         columnselection=ui.Frame(self.selectionwindow.frame,
-                                row=1, column=0, sticky='e')
+                                row=1, column=0, sticky='ew')
+        ui.Button(columnselection,text=_("select local file"), font='small',
+            command=lambda x=self.selectionwindow:self.selectlocalimage(w=x),
+            row=0,column=columnselection.columns()+1)
+        ui.Label(columnselection,text="", font='small',
+                    row=0,column=columnselection.columns()+1)
+        columnselection.grid_columnconfigure(columnselection.columns()-1,
+                                            weight=2)
         ui.Label(columnselection,text=_("pixels:"), font='small',
-                    row=0,column=0)
+                    row=0,column=columnselection.columns()+1)
         for n in range(200,1000,100):
             ui.Button(columnselection,text=n, font='small',
                     command=lambda x=n:makegrid(pixels=x),
                     row=0,column=columnselection.columns()+1)
+        ui.Label(columnselection,text="", font='small',
+                    row=0,column=columnselection.columns()+1)
+        columnselection.grid_columnconfigure(columnselection.columns()-1,
+                                            weight=1)
         ui.Label(columnselection,text=_("columns:"), font='small',
                     row=0,column=columnselection.columns()+1)
         for n in range(1,9):
@@ -11838,7 +11853,7 @@ class ImageFrame(ui.Frame):
                 image=self.theme.photo['NoImage']
                 self.hasimage=False
                 # log.info("Image null: {}".format(img))
-            if not specifiedurl:
+            if not specifiedurl and self.hasimage: #don't assign "no image"
                 self.sense.image=image
         # log.info("Image: {} ({})".format(image,type(image)))
         scaledimage(image,pixels=self.pixels)
