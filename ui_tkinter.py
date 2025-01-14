@@ -848,19 +848,18 @@ class Image(tkinter.PhotoImage):
             return max(self.scaled.width(),self.scaled.height())
         else:
             return max(self.width(),self.height())
-    def scale(self,scale,pixels=100,resolution=1):
+    def scale(self,scale,pixels=100,resolution=5):
         """'resolution*r' and 'resolution' here express a float scaling ratio
         as two integers, so r = 0.7 = 7/10, because the zoom and subsample fns
         only work on integers. To not waste computation, resolution starts
         small and increases to what is needed to keep both integers positive"""
         # log.info("Scaling with these args: scale {}, pixels {}, resolution {}"
         #         "".format(scale,pixels,resolution))
-        if pixels:
-            s=pixels*scale #the number of pixels, scaled
-            r=s/self.maxhw() #the ratio we need to reduce actual pixels by
-            # log.info("scaled pixels: {} (of {})".format(s,pixels))
-        else:
-            r=1 #don't scale for pixels=0
+        s=pixels*scale #the number of pixels, scaled
+        r=s/self.maxhw() #the ratio we need to reduce actual pixels by
+        # log.info("scaled pixels: {} (of {})".format(s,pixels))
+        if not r:
+            r=1 #don't scale for pixels=r=0
         while not int(resolution*r): #This must be >=1 (True)
             resolution=resolution*2
         # log.info(f"scaling with {int(resolution*r)}/{int(resolution)}="
