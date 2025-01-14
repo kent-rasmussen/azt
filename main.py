@@ -5539,16 +5539,8 @@ class WordCollection(Segments):
                 self.selectionwindow.sf.destroy()
             self.selectionwindow.sf=ui.ScrollingFrame(
                         self.selectionwindow.frame,row=2,column=0)
-            for n,f in enumerate(files+['local']):
+            for n,f in enumerate(files):
                 # log.info("Using row {}, col {}".format(n//cols,n%cols))
-                if f == 'local':
-                    ui.Button(self.selectionwindow.sf.content,
-                        text=_("select local file"),
-                        cmd=self.selectlocalimage,
-                        row=n//self.imagecolumns,
-                        column=n%self.imagecolumns,
-                        sticky='nsew')
-                else:
                     i=ImageFrame(self.selectionwindow.sf.content,url=f,
                                 pixels=self.imagepixels,
                                 row=n//self.imagecolumns,
