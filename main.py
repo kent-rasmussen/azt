@@ -5847,11 +5847,11 @@ class WordCollectionLexeme(TaskDressing,WordCollection):
     def __init__(self, parent): #frame, filename=None
         """This should never really be used, though I made it first, so I've
         left it"""
+        self.ftype=program['params'].ftype('lx') #lift.Entry.citationformnodeofentry
         TaskDressing.__init__(self,parent)
         WordCollection.__init__(self,parent)
         log.info("Initializing {}".format(self.tasktitle()))
         #Status frame is 0,0
-        self.ftype=program['params'].ftype('lx') #lift.Entry.citationformnodeofentry
         self.getwords()
 class WordCollectionCitation(TaskDressing,WordCollection):
     def tooltip(self):
@@ -5859,11 +5859,11 @@ class WordCollectionCitation(TaskDressing,WordCollection):
     def tasktitle(self):
         return _("Add Words") # for Citation Forms
     def __init__(self, parent): #frame, filename=None
+        self.ftype=program['params'].ftype('lc') #lift.Entry.citationformnodeofentry
         TaskDressing.__init__(self,parent)
         WordCollection.__init__(self,parent)
         log.info("Initializing {}".format(self.tasktitle()))
         #Status frame is 0,0
-        self.ftype=program['params'].ftype('lc') #lift.Entry.citationformnodeofentry
         self.getwords()
 class WordCollectionPlural(TaskDressing,WordCollection):
     def tooltip(self):
@@ -5871,6 +5871,7 @@ class WordCollectionPlural(TaskDressing,WordCollection):
     def tasktitle(self):
         return _("Add plural forms")
     def __init__(self, parent):
+        self.ftype=program['params'].ftype('pl')
         TaskDressing.__init__(self,parent)
         WordCollection.__init__(self,parent)
         if not program['settings'].secondformfieldsOK():
@@ -5881,7 +5882,6 @@ class WordCollectionPlural(TaskDressing,WordCollection):
             return
         log.info("Initializing {}".format(self.tasktitle()))
         #Status frame is 0,0
-        self.ftype=program['params'].ftype('pl')
         # self.nodetag='citation' #lift.Entry.citationformnodeofentry
         self.getwords()
 class WordCollectionImperative(TaskDressing,WordCollection):
@@ -5890,6 +5890,7 @@ class WordCollectionImperative(TaskDressing,WordCollection):
     def tasktitle(self):
         return _("Add imperative forms")
     def __init__(self, parent):
+        self.ftype=program['params'].ftype('imp')
         TaskDressing.__init__(self,parent)
         WordCollection.__init__(self,parent)
         if not program['settings'].secondformfieldsOK():
@@ -5900,7 +5901,6 @@ class WordCollectionImperative(TaskDressing,WordCollection):
             return
         log.info("Initializing {}".format(self.tasktitle()))
         #Status frame is 0,0
-        self.ftype=program['params'].ftype('imp')
         # self.nodetag='citation' #lift.Entry.citationformnodeofentry
         self.getwords()
 class Parse(Segments):
