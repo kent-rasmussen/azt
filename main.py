@@ -4456,6 +4456,7 @@ class TaskDressing(HasMenus,ui.Window):
         ui.ContextMenu(self)
         self.tableiteration=0
         self.makestatusframe()
+        self.withdraw() #made visible by chooser when complete
         self._taskchooserbutton()
         self.correlatemenus()
         # back=ui.Button(self.outsideframe,text=_("Tasks"),cmd=program['taskchooser'])
