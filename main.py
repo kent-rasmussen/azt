@@ -1214,6 +1214,7 @@ class StatusFrame(ui.Frame):
         if hasattr(self.task,'dobuttonkwargs') and self.task.dobuttonkwargs():
             self.bigbutton=self.button(**self.task.dobuttonkwargs())
     def makesecondfieldsOK(self):
+        """Not called anywhere?"""
         for ps in [program['settings'].nominalps, program['settings'].verbalps]:
             if ps not in program['settings'].secondformfield and (
                 isinstance(self.task,Parse) or (
@@ -1502,6 +1503,7 @@ class StatusFrame(ui.Frame):
                         "cells".format(ungroups)))
         # self.frame.update()
     def __init__(self, parent, task, **kwargs):
+        # log.info("Remaking status frame")
         self.setopts()
         self.parent=parent
         self.task=task #this is the window that called it; task or chooser
@@ -3964,6 +3966,8 @@ class TaskDressing(HasMenus,ui.Window):
                             row=2,column=0,sticky='nsew'
                             )
     def getsecondformfield(self,ps,opts,othername,setcmd,other=False):
+        """This function must address situations where there are or are not
+        plausible fields already in the database."""
         def getother():
             window.destroy()
             self.getsecondformfield(ps=ps,
@@ -4062,6 +4066,7 @@ class TaskDressing(HasMenus,ui.Window):
             output+=[program['params'].cvtdict()[cvt]['pl']]
         return output
     def secondfieldnames(self):
+        """Not called anywhere?"""
         if program['settings'].nominalps not in program['settings'].secondformfield:
             self.getsecondformfieldN()
         if program['settings'].verbalps not in program['settings'].secondformfield:
