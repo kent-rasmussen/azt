@@ -3226,6 +3226,7 @@ class TaskDressing(HasMenus,ui.Window):
         self.mainlabelrelief(relief=None,refresh=True)
         self.setcontext()
     def correlatemenus(self):
+        """I don't think I want this. Rather, menus must always be asked for."""
         log.info("Menus: {}; {} (chooser)".format(self.menu,program['taskchooser'].menu))
         if hasattr(self,'task'):
             log.info("Menus: {}; {} (task)".format(self.menu,self.task.menu))
@@ -4465,7 +4466,7 @@ class TaskDressing(HasMenus,ui.Window):
         self.makestatusframe()
         self.withdraw() #made visible by chooser when complete
         self._taskchooserbutton()
-        self.correlatemenus()
+        self._removemenus() #self.correlatemenus()
         # back=ui.Button(self.outsideframe,text=_("Tasks"),cmd=program['taskchooser'])
         # self.setfontsdefault()
 class TaskChooser(TaskDressing,ui.Window):
@@ -4546,7 +4547,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if not self.showreports:
             self.frame.status.finalbuttons()
         if not self.mainwindow:
-            self.correlatemenus() #only if moving to this window
+            # self.correlatemenus() #not even if moving to this window
             self.unsetmainwindow() #first, so the program stays alive
         elif not self.showingreports and not self.showreports:
             self.datacollection=not self.datacollection
