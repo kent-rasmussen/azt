@@ -397,9 +397,10 @@ class LiftChooser(ui.Window,HasMenus):
             # log.info("Working with image files {}".format(
             #                                 file.getfilesofdirectory(sense.imgselectiondir)))
             if sense.cawln and not sense.illustrationvalue():
+                dir=file.fullpathname(sense.imgselectiondir)
                 # log.info("Found CAWL sense without image field")
-                if file.exists(sense.imgselectiondir):
-                    urls=file.getfilesofdirectory(sense.imgselectiondir)
+                if file.exists(dir):
+                    urls=file.getfilesofdirectory(dir)
                     if urls:
                         filename=sense.imagename() #new file name
                         # log.info("Working with image filename {}".format(filename))
