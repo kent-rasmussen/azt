@@ -4016,9 +4016,12 @@ class TaskDressing(HasMenus,ui.Window):
                             column=0, row=1,
                             cmd=getcustom
                             )
-        self.withdraw()
-        window.wait_window(window)
-        self.deiconify()
+        if self.winfo_viewable():
+            self.withdraw()
+            window.wait_window(window)
+            self.deiconify()
+        else:
+            window.wait_window(window)
     def getmulticheckscope(self,event=None):
             log.info("Asking for multicheckscope...")
             window=ui.Window(self, title=_('Select Scope of Checks'))
