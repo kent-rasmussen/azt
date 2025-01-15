@@ -3289,7 +3289,7 @@ class TaskDressing(HasMenus,ui.Window):
                 text=self.tasktitle(),
                 row=0, column=0, columnspan=2)
         tasks=_("Tasks")
-        t.tt=ui.ToolTip(t,text=_("click ‘{}’ to change tasks").format(tasks))
+        t.tt=ui.ToolTip(t,text=_("click on the task you want to do").format(tasks))
         # t.bind("<Button-1>",program['taskchooser'].gettask)
     def fullscreen(self):
         w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
