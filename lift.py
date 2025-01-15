@@ -2636,6 +2636,9 @@ class Sense(Node,FieldParent):
         # log.info("1 forms: {}".format(l))
         t=self.formattedform(analang,ftype,frame)
         l.append(t)
+        # l.append(t+':') this or the above
+        l.append('—')
+        # l.append(' ')
         # log.info("2 forms: {}".format(l))
         for lang in [i for i in glosslangs if i in self.glosses]:
             l+=self.formattedgloss(lang,ftype,frame,quoted=True) #This is always a list
