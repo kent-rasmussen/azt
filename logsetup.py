@@ -44,30 +44,40 @@ def getlogdir():
 def getlogfilename():
     for h in [i for i in logging.root.handlers if isinstance(i,logging.FileHandler)]:
         return h.baseFilename
-def dorootloghandlers(self):
-    logfile='log_'+datetime.datetime.utcnow().isoformat()[:-16]+'.txt'
-    logdir=getlogdir()
-    filename=pathlib.Path.joinpath(logdir,logfile)
-    simpleformat = logging.Formatter('%(message)s')
-    fullformat = logging.Formatter('%(asctime)s: %(name)s: %(levelname)s '
-                                    '- %(message)s')
-    timelessformat = logging.Formatter('%(name)s: %(levelname)s: '
-                                    '%(message)s')
-    rootformat = logging.Formatter('%(asctime)s: '
+def logformat(x):
+    formats={'simpleformat':logging.Formatter('%(message)s'),
+                'fullformat':logging.Formatter('%(asctime)s: %(name)s: '
+                                    '%(levelname)s - %(message)s'),
+                'timelessformat':logging.Formatter('%(name)s: %(levelname)s: '
+                                    '%(message)s'),
+                'rootformat':logging.Formatter('%(asctime)s: '
                                     # '- %(name)s '
                                     '%(levelname)s: '
                                     '%(message)s')
+            }
+    return formats[x]
+def dorootloghandlers(self):
     console = logging.StreamHandler()
     console.setLevel(0) #Let the loglevel determine what to show
-    console.setFormatter(simpleformat)
-    file = logging.handlers.RotatingFileHandler(filename,mode='w', encoding='utf-8',
-                                        maxBytes=500000,backupCount=5)
-    file.doRollover()# start at the beginning of a file
-    # file = logging.FileHandler(filename,mode='w', encoding='utf-8')
-    file.setLevel(0) #Let the loglevel determine what to show
-    file.setFormatter(timelessformat)
+    console.setFormatter(logformat('simpleformat'))
     self.addHandler(console)
-    self.addHandler(file)
+    tryfilehandler(self)
+def tryfilehandler(self,lessiso=16):
+    logfile='log_'+datetime.datetime.utcnow().isoformat()[:-lessiso]+'.txt'
+    logdir=getlogdir()
+    filename=pathlib.Path.joinpath(logdir,logfile)
+    try:
+        file = logging.handlers.RotatingFileHandler(filename, mode='w',
+                                                    encoding='utf-8',
+                                                    maxBytes=500000,
+                                                    backupCount=5)
+        file.doRollover()# start at the beginning of a file
+        file.setLevel(0) #Let the loglevel determine what to show
+        file.setFormatter(logformat('timelessformat'))
+        self.addHandler(file)
+    except PermissionError as e:
+        log.info(f"Logfile permission problem ({e}); trying again.")
+        tryfilehandler(self,lessiso=lessiso-3)
 def test(self):
     self.debug("Debug!")
     self.info("Info!")
