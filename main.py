@@ -5570,7 +5570,7 @@ class WordCollection(Segments):
             t['compound']='right'
         columnselection=ui.Frame(self.selectionwindow.frame,
                                 row=1, column=0, sticky='ew')
-        ui.Button(columnselection,text=_("select local file"), font='small',
+        ui.Button(columnselection,text=_("Browse"), font='small',
             command=lambda x=self.selectionwindow:self.selectlocalimage(w=x),
             row=0,column=columnselection.columns()+1)
         ui.Label(columnselection,text="", font='small',
