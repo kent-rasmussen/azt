@@ -2118,6 +2118,10 @@ class Settings(object):
                 self.pluralname=self.secondformfield[self.nominalps]
             if self.verbalps in self.secondformfield:
                 self.imperativename=self.secondformfield[self.verbalps]
+    def secondformfieldsOK(self):
+        if (self.nominalps in self.secondformfield and
+            self.verbalps in self.secondformfield):
+            return True
     def fields(self):
         """I think this is lift specific; may move it to defaults, if not."""
         # log.info(program['db'].fieldnames)
@@ -3197,6 +3201,10 @@ class TaskDressing(HasMenus,ui.Window):
                                     cmd=program['taskchooser'].gettask,
                                     row=0,column=2,
                                     sticky='ne')
+    def shutdowntask(self):
+        program['taskchooser'].task=self # in case this hasn't been set yet
+        self.withdraw()
+        program['taskchooser'].gettask()
     def mainlabelrelief(self,relief=None,refresh=False,event=None):
         #set None to make this a label instead of button:
         reliefs=["raised", "groove", "sunken", "ridge", "flat"]
@@ -5862,6 +5870,12 @@ class WordCollectionPlural(TaskDressing,WordCollection):
     def __init__(self, parent):
         TaskDressing.__init__(self,parent)
         WordCollection.__init__(self,parent)
+        if not program['settings'].secondformfieldsOK():
+            ErrorNotice(_("To collect Plural forms, you must first "
+                            "define which fields should contain those forms"),
+                            wait=True)
+            self.shutdowntask()
+            return
         log.info("Initializing {}".format(self.tasktitle()))
         #Status frame is 0,0
         self.ftype=program['params'].ftype('pl')
@@ -5875,6 +5889,12 @@ class WordCollectionImperative(TaskDressing,WordCollection):
     def __init__(self, parent):
         TaskDressing.__init__(self,parent)
         WordCollection.__init__(self,parent)
+        if not program['settings'].secondformfieldsOK():
+            ErrorNotice(_("To collect Imperative forms, you must first "
+                            "define which fields should contain those forms"),
+                            wait=True)
+            self.shutdowntask()
+            return
         log.info("Initializing {}".format(self.tasktitle()))
         #Status frame is 0,0
         self.ftype=program['params'].ftype('imp')
@@ -6431,6 +6451,8 @@ class Parse(Segments):
         self.nominalps=program['settings'].nominalps
         self.verbalps=program['settings'].verbalps
         self.loadfromlift=True
+        if not program['settings'].secondformfieldsOK():
+            return
         if hasattr(parent,'parsecatalog'):
             self.parsecatalog=parent.parsecatalog
         else:
@@ -6522,6 +6544,12 @@ class WordCollectnParse(Parse,WordCollection,TaskDressing):
         Parse.__init__(self,parent)
         WordCollection.__init__(self,parent)
         program['taskchooser'].withdraw()
+        if not program['settings'].secondformfieldsOK():
+            ErrorNotice(_("To parse, you must first define which fields "
+                            "should contain those forms"),
+                            wait=True)
+            self.shutdowntask()
+            return
         #This should either be adapted to use parse or not by keyword, or have
         # another method for addnParse
         # if me:
@@ -6543,6 +6571,12 @@ class WordsParse(Parse,WordCollection,TaskDressing):
         TaskDressing.__init__(self,parent)
         Parse.__init__(self,parent)
         WordCollection.__init__(self,parent)
+        if not program['settings'].secondformfieldsOK():
+            ErrorNotice(_("To parse, you must first define which fields "
+                            "should contain secondary forms"),
+                            wait=True)
+            self.shutdowntask()
+            return
         self.dodone=True #give me words with citation done
         self.checkeach=True #confirm each word (not default)
         self.dodoneonly=True #don't give me other words
