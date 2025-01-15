@@ -7861,7 +7861,7 @@ class Sort(object):
         if program['params'].cvt() == 'T' and 'examples' not in program:
             log.error(_("Not verifying tone examples which don't exist."))
             return 1
-        senses=program['examples'].sensesinslicegroup(group,check)
+        self.currentsortitems=senses=program['examples'].sensesinslicegroup(group,check)
         if not senses: #then remove the group
             groups=program['status'].groups(wsorted=True) #from which to remove, put back
             # log.info("Groups: {}".format(program['status'].groups(toverify=True)))
@@ -7931,11 +7931,12 @@ class Sort(object):
                 elif row+1 == self.buttoncolumns:
                     row=0
             # log.info("Next button at r:{}, c:{}".format(row,column))
-        bf=ui.Frame(self.sframe.content)
-        bf.grid(row=max(row+1,self.buttoncolumns+1), column=0, sticky='ew',
+        self.verifycanary=ui.Frame(self.sframe.content)
+        self.verifycanary.grid(row=max(row+1,self.buttoncolumns+1), column=0,
+                        sticky='ew',
                         columnspan=self.buttoncolumns+1) #Keep on own row
-        b=ui.Button(bf, text=oktext,
-                        cmd=bf.destroy,
+        b=ui.Button(self.verifycanary, text=oktext,
+                        cmd=self.verifycanary.destroy,
                         anchor='w',
                         font='instructions'
                         )
@@ -7944,7 +7945,7 @@ class Sort(object):
             return 1
         self.sframe.windowsize()
         self.runwindow.waitdone()
-        b.wait_window(bf)
+        b.wait_window(self.verifycanary)
         if self.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
             return 1
         log.debug("User selected ‘{}’, moving on.".format(oktext))
@@ -7956,7 +7957,13 @@ class Sort(object):
         # it will fail.
         # should move to specify location and fieldvalue in button lambda
         def notok():
-            self.removesensefromgroup(sense,sorting=True,write=False)
+            if len(self.currentsortitems) > 2:
+                self.removesensefromgroup(sense,sorting=True,write=False)
+                self.currentsortitems.remove(sense)
+            else:
+                for i in self.currentsortitems:
+                    self.removesensefromgroup(i,sorting=True,write=False)
+                self.verifycanary.destroy()
             self.maybewrite()
             bf.destroy()
         if 'font' not in kwargs:
