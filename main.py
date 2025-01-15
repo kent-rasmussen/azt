@@ -1516,7 +1516,9 @@ class StatusFrame(ui.Frame):
             self.fieldsline()
         if ('slices' in program and
                 not isinstance(self.task,TaskChooser) and
-                not isinstance(self.task,Parse)):
+                not isinstance(self.task,Parse) and
+                not isinstance(self.task,WordCollection)
+                ):
             self.cvt=program['params'].cvt()
             self.ps=program['slices'].ps()
             self.profile=program['slices'].profile()
