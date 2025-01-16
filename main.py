@@ -3234,10 +3234,23 @@ class Settings(object):
         #ET.register_namespace("", 'palaso')
         ns = {'palaso': 'urn://palaso.org/ldmlExtensions/v1'}
         node=None
-        self.languagenames={}
+        d={'fr':_("French"),
+            'en':_("English"),
+            'es':_("Spanish"),
+            'pt':_("Portuguese"),
+            'id':_("Bahasa Indonesian"),
+            'ind':_("Bahasa Indonesian"),
+            'ha':_("Hausa"),
+            'hau':_("Hausa"),
+            'swc':_("Congo Swahili"),
+            'swh':_("Swahili"),
+            'gnd':_("Zulgo"),
+            'fub':_("Fulfulde"),
+            'bfj':_("Chufie’")}
         if not langs:
             langs=[self.analang]+program['db'].analangs+program['db'].glosslangs
         for xyz in langs:
+            default=_(f"Language with code [{xyz}]")
             # log.info(' '.join('Looking for language name for',xyz))
             """This provides an ldml node"""
             #log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
@@ -3250,34 +3263,12 @@ class Settings(object):
             if node is not None:
                 self.languagenames[xyz]=node.get('value')
                 log.info(' '.join('found',self.languagenames[xyz]))
-            elif xyz == 'fr':
-                self.languagenames[xyz]=_("French")
-            elif xyz == 'en':
-                self.languagenames[xyz]=_("English")
-            elif xyz == 'es':
-                self.languagenames[xyz]=_("Spanish")
-            elif xyz == 'pt':
-                self.languagenames[xyz]=_("Portuguese")
-            elif xyz in ['id','ind']:
-                self.languagenames[xyz]=_("Bahasa Indonesian")
-            elif xyz in ['ha','hau']:
-                self.languagenames[xyz]=_("Hausa")
-            elif xyz == 'swc':
-                self.languagenames[xyz]=_("Congo Swahili")
-            elif xyz == 'swh':
-                self.languagenames[xyz]=_("Swahili")
-            elif xyz == 'gnd':
-                self.languagenames[xyz]=_("Zulgo")
-            elif xyz == 'fub':
-                self.languagenames[xyz]=_("Fulfulde")
-            elif xyz == 'bfj':
-                self.languagenames[xyz]=_("Chufie’")
-            else:
-                self.languagenames[xyz]=_("Language with code "
-                                                        "[{}]").format(xyz)
-            if not hasattr(self,'adnlangnames') or self.adnlangnames is None:
-                self.adnlangnames={}
-            if xyz in self.adnlangnames and self.adnlangnames[xyz] is not None:
+            # if not hasattr(self,'adnlangnames') or self.adnlangnames is None:
+            #     self.adnlangnames={}
+            if (hasattr(self,'adnlangnames') and
+                    self.adnlangnames and
+                    xyz in self.adnlangnames and
+                    self.adnlangnames[xyz]):
                 self.languagenames[xyz]=self.adnlangnames[xyz]
     def makeeverythingok(self):
         try:
