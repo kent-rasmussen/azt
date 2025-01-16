@@ -3252,6 +3252,7 @@ class Settings(object):
         for xyz in langs:
             default=_(f"Language with code [{xyz}]")
             # log.info(' '.join('Looking for language name for',xyz))
+            setnesteddictobjectval(self,'languagenames',d.get(xyz,default),xyz)
             """This provides an ldml node"""
             #log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
             #nsurl=tree.nodes.find(f"ldml/special/@xmlns:palaso")

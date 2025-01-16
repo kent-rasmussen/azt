@@ -66,6 +66,16 @@ def nesteddictadd1key(dict,key):
     if key not in dict:
         dict[key]={}
     return dict[key]
+def setnesteddictobjectval(object,dictname,val,*keys,addval=False):
+    if not hasattr(object,dictname) or not getattr(object,dictname):
+        try:
+            log.info(f"The dictionary at {object}.{dictname} doesn't seem "
+                    "to exist, or is null; creating.")
+        except NameError:
+            print(f"The dictionary at {object}.{dictname} doesn't seem "
+                    "to exist, or is null; creating.")
+        setattr(object,dictname,{})
+    setnesteddictval(getattr(object,dictname),val,*keys,addval=addval)
 def setnesteddictval(dict,val,*keys,addval=False):
     """Include as many key layers as you like,
     put keys in order; dict,v,x,y gives dict[x][y]=v
