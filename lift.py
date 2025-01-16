@@ -2637,7 +2637,7 @@ class Sense(Node,FieldParent):
         t=self.formattedform(analang,ftype,frame)
         l.append(t)
         # l.append(t+':') this or the above
-        l.append('—')
+        l.append('—') #this is just a visual break between the form and glosses
         # l.append(' ')
         # log.info("2 forms: {}".format(l))
         for lang in [i for i in glosslangs if i in self.glosses]:
