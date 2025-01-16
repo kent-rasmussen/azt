@@ -1546,6 +1546,7 @@ class StatusFrame(ui.Frame):
 class Settings(object):
     """docstring for Settings."""
     def interfacelangwrapper(self,choice=None,window=None):
+        # log.info(f"going to set interface lang {choice}")
         if choice:
             interfacelang(choice) #change the UI *ONLY*; no object attributes
             self.set('interfacelang',choice,window) #set variable for the future
