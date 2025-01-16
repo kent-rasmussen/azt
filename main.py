@@ -3159,6 +3159,8 @@ class Settings(object):
         if window:
             window.destroy()
     def setanalang(self,choice,window):
+        """This is only used when more than one analang exists in the database"""
+        log.info(f"Setting Analysis Language to {choice}")
         program['params'].analang(choice)
         self.attrschanged.append('analang')
         self.refreshattributechanges()
