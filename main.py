@@ -3803,24 +3803,28 @@ class TaskDressing(HasMenus,ui.Window):
     def getanalangname(self,event=None):
         log.info("this sets the language name")
         def submit(event=None):
-            program['settings'].languagenames[self.analang]=namevar.get()
-            if (not hasattr(program['settings'],'adnlangnames') or
-                    not program['settings'].adnlangnames):
-                program['settings'].adnlangnames={}
-            if 'Language with code [' not in namevar.get():
-                program['settings'].adnlangnames[self.analang]=namevar.get()
-                # if self.analang in self.adnlangnames:
+            if namevar.get():
+                program['settings'].languagenames[self.analang]=namevar.get()
+                #This stores to file:
+                setnesteddictobjectval(program['settings'],'adnlangnames',
+                                    namevar.get(),self.analang)
+            else:
+                del program['settings'].languagenames[self.analang]
+                del program['settings'].adnlangnames[self.analang]
+                program['settings'].langnames([self.analang])
             program['settings'].storesettingsfile()
             window.destroy()
         window=ui.Window(self,title=_('Enter Analysis Language Name'))
         curname=program['settings'].languagenames[self.analang]
         defaultname=_(f"Language with code [{self.analang}]")
         t=_("How do you want to display the name of {}").format(curname)
+        namevar=ui.StringVar()
+        log.info(f"{curname} = {defaultname}? {curname == defaultname}")
         if curname != defaultname:
             t+=_(", with ISO 639-3 code [{}]").format(self.analang)
+            namevar.set(curname)
         t+='?' # _("Language with code [{}]").format(xyz)
         ui.Label(window.frame,text=t,row=0,column=0,sticky='e',columnspan=2)
-        namevar=ui.StringVar()
         name = ui.EntryField(window.frame,textvariable=namevar,
                             row=1,column=0,
                             sticky='e')
