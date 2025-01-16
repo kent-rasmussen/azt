@@ -1917,8 +1917,6 @@ class Settings(object):
             log.info("maketoneframes: {}".format(program['toneframes']))
         else:
             self.readsettingsdict(d)
-        if hasattr(self,'interfacelang'):
-            interfacelang(self.interfacelang)
     def initdefaults(self):
         """Some of these defaults should be reset when setting another field.
         These are listed under that other field. If no field is specified
@@ -14301,61 +14299,66 @@ def interfacelang(lang=None,magic=False):
     """Attention: for this to work, _ has to be defined globally (here, not in
     a class or module.) So I'm getting the language setting in the class, then
     calling the module (imported globally) from here."""
-    if lang:
-        curlang=interfacelang()
+    for l in i18n:
         try:
-            if _.__module__ == 'gettext':
-                log.debug("Magic: {}".format(_.__module__))
+            _
+            if i18n[l] == _.__self__:
+                curlang=l
                 magic=True
-            else:
-                log.debug("Magic seems to be installed, but not gettext: {}"
-                            "".format(_.__module__))
+                break #i.e., if it is already set up correctly
         except:
-            log.debug("Looks like translation magic isn't defined yet; making")
-        if lang != curlang or magic == False:
-            if lang is not None:
-                log.debug("Setting Interface language: {}".format(lang))
-                i18n[lang].install()
-                log.debug("New Magic: {}".format(_.__module__))
-            else:
-                log.debug("Setting Default Interface language: {}".format(curlang))
-                i18n[curlang].install()
+            curlang=None
+            log.debug("_ doesn't look defined yet")
+            break
+    """Diagnostics of questionable value, with Magic above?"""
+    try:
+        if _.__module__ == 'gettext':
+            # log.debug("Magic: {}".format(_.__module__))
+            magic=True
         else:
-            log.debug(_("Apparently we're trying to set the same interface "
-                                        "language: {}={}").format(lang,curlang))
-        log.debug(_("Translation seems to be working, using {}"
-                                                    "").format(interfacelang()))
-    else:
-        for lang in i18n:
-            try:
-                _
-                if i18n[lang] == _.__self__:
-                    return lang
-            except:
-                log.debug("_ doesn't look defined yet, returning interface "
-                            "language from locale.")
-                loc,enc=locale.getlocale()
-                log.info("found locale {}, encoding {}".format(loc,enc))
-                if loc:
-                    code=loc.split('_')[0]
-                    if code not in i18n and code in ['English','Français','French']:
-                        if code == 'English':
-                            code='en'
-                        else:
-                            code='fr'
-                    log.info("Using code {}".format(code))
-                else:
-                    log.debug("locale.getlocale doesn't seem to have "
-                    "returned any results: {} (OS: {}); using French user "
-                    "interface".format(
-                                        locale.getlocale(),
-                                        platform.system()))
-                    log.debug("locale.getdefaultlocale output for comparison: "
-                            "{}".format(locale.getdefaultlocale()))
-                    code='en' #I think loc=None normally means English on macOS
-                if code in i18n:
-                    log.info("returning {}, of {}".format(code,i18n))
-                    return code
+            log.debug("Magic seems to be installed, but not gettext: {}"
+            "".format(_.__module__))
+    except:
+        log.debug("Looks like translation magic isn't defined yet; making")
+    if lang:
+        log.info(f"Asked to set lang {lang} with curlang {curlang}")
+    if not lang and not curlang: #deduce, but don't override current setting.
+        # log.info("checking for a local setting")
+        code=file.uilang()
+        if not code:
+            # log.debug("local settings don't seem to have returned any "
+            #         f"results ({code})")
+            code=getlangfromlocale()
+            if not code:
+                log.debug("locale.getlocale doesn't seem to have "
+                "returned any results: "
+                f"{locale.getlocale()} (OS: {platform.system()})"
+                "Using English user interface")
+                log.debug("locale.getdefaultlocale output for "
+                            f"comparison: {locale.getdefaultlocale()}")
+                code='en' #I think loc=None normally means English on macOS
+        if code in i18n:
+            # log.info("returning {} (of {})".format(code,list(i18n)))
+            lang=code
+    if lang and lang != curlang and lang in i18n: # or not magic:
+        log.debug("Setting Interface language: {}".format(lang))
+        i18n[lang].install()
+        file.uilang(lang)
+        return lang
+    return curlang
+def getlangfromlocale():
+    # log.debug("Looking for interface language in locale.")
+    loc,enc=locale.getlocale()
+    log.info("Found locale {}, encoding {}".format(loc,enc))
+    if loc:
+        code=loc.split('_')[0]
+        if code not in i18n and code in ['English','Français','French']:
+            if code == 'English':
+                code='en'
+            else:
+                code='fr'
+        # log.info("Using code {}".format(code))
+        return code
 def dictofchilddicts(dict,remove=None):
     # This takes a dict[x][y] and returns a dict[y], with all unique values
     # listed for all dict[*][y].
@@ -15268,7 +15271,7 @@ if __name__ == '__main__':
     i18n={}
     i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
     i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
-    interfacelang(interfacelang()) #translation works from here
+    interfacelang() #translation works from here
     findexecutable('git')
     program['repo']=GitReadOnly(program['aztdir']) #this needs root for errors
     try:

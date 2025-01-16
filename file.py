@@ -199,6 +199,20 @@ def getfilenames():
     #                                 if exists(i)]
     #                                 ))
     return [i for i in getattr(lift_url,'filenames',[]) if exists(i)]
+def uilang(lang=None):
+    """So far, there is just one value here; no need to load before writing"""
+    if not lang:
+        try:
+            import ui_lang
+            log.info(f"Found ui_lang value {ui_lang.ui_lang}") 
+            return ui_lang.ui_lang
+        except:
+            log.debug("ui_lang didn't import, or didn't have a value to return")
+            return
+    file=fullpathnamewrt(getfilenamedir(__file__),"ui_lang.py")
+    # pathlib.Path.joinpath(pathlib.Path(__file__).parent, "ui_lang.py")
+    with open(file, 'w', encoding='utf-8') as f:
+        f.write('ui_lang="'+str(lang)+'"\n')
 def getfilename():
     """This returns a single filename, if there, else a list if there"""
     try:
