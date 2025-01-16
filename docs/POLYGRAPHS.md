@@ -1,11 +1,13 @@
 # Digraphs and Trigraphs in [A-Z+T]
 
-When you first open a new database, [A-Z+T] will ask you to indicate which possible combinations of vowels or consonants are actually digraphs or trigraphs in your data. That is, where two or three letters refer to just one sound.
+When [A-Z+T] encounters new potential digraphs or trigraphs in your data, it will ask you to indicate which are actually digraphs or trigraphs in your data. That is, where two or three letters refer to just one sound.
 
 ## Initial Assumptions
-[A-Z+T] initially asssumes that all possible polygraphs (that I've told it about) found in the data are actually polygraphs; this is what you see on the window with all the boxes ticked. If any one of those is actually a sequence of sounds in your language, untick that box, and AZT will treat it as a sequence of sounds in the syllable profile analysis.
+[A-Z+T] initially assumes that all possible polygraphs (that I've told it about) _found in the data_ are actually polygraphs; this is what you see on the window with all the boxes ticked. If any one of those is actually a sequence of sounds in your language, untick that box, and AZT will treat it as a sequence of sounds in the syllable profile analysis.
 
 If you are unsure about this, it is _probably_ safe to just leave them all checked, and see how the analysis works out.
+
+If you go to this settings window intentionally but don't see anything to do, it may be because [A-Z+T] hasn't seen any potential digraphs or trigraphs in your data yet. Just come back after you have added more data; this shouldn't matter until you start sorting.
 
 ## Problems with Digraph and Trigraph settings
 If there is a problem with your digraph settings, you should notice that some words don't fit in the syllable profile where they have been put, based on their pronunciations. Some words may have an extra (or missing) syllable, or a longer (or shorter) vowel, or a heavier (or lighter) syllable.
