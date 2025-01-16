@@ -13284,9 +13284,9 @@ class CheckParameters(object):
                     self._cvchecknames[tup[0]]=tup[1]
     def analang(self,analang=None):
         if analang:
+            log.info(f"Setting analysis language as {analang} ({self})")
             self._analang=analang
-        elif not hasattr(self,'_analang'):
-            self._analang=None
+        # log.info(f"Returning analysis language as {self._analang} ({self})")
         return self._analang
     def audiolang(self,audiolang=None):
         if audiolang:
