@@ -2157,6 +2157,12 @@ class Settings(object):
         except AttributeError:
             log.info(_('Looks like there is no Imperative field in the database'))
             self.imperativename=None
+    def checkforpolygraphsindata(self):
+        for lang in program['db'].s:
+            for sclass in [sc for sc in program['db'].s[lang]
+                                if ('dg' in sc or 'tg' in sc or 'qg' in sc)]:
+                if program['db'].s[lang][sclass]:
+                    return True
     def askaboutpolygraphs(self,onboot=False):
         def nochanges():
             log.info("Trying to make no changes")
@@ -2199,11 +2205,16 @@ class Settings(object):
             nochangetext=_("Exit with no changes")
         log.info("Asking about Digraphs and Trigraphs!")
         titlet=_("{} Digraphs and Trigraphs").format(program['name'])
+        hasdata=self.checkforpolygraphsindata()
         #From wherever this is opened, it should withdraw and deiconify that
         pgw=ui.Window(program['taskchooser'].mainwindowis,title=titlet,exit=False)
-        t=_("Which of the following letter sequences "
+        t=_("Which of the following letter sequences from your data "
             "refer to a single sound?")
-        lnames=[self.languagenames[y] for y in program['db'].analangs]
+        log.info(f"working with db.analangs: {program['db'].analangs} "
+                f"and params.analang: {program['params'].analang()}")
+        lnames=[self.languagenames[y] for y in set(
+                    program['db'].analangs+[program['params'].analang()]
+                                                )]
         if len(lnames)>1:
             t+=_(" (Answer for each of {}.)".format(unlist(lnames)))
         else:
@@ -2221,21 +2232,20 @@ class Settings(object):
                         column=0, row=row
                         )
         instr.wrap()
-        t=_("If you expect one that isn't listed "
+        t=_("If you expect one (already in your data) that isn't listed "
             "here, please click here to Email me, and I can add it.")
         row+=1
         t2=ui.Label(pgw.frame,text=t,column=0, row=row)
         eurl='mailto:{}?subject=New trigraph or digraph to add (today)'.format(
                                                             program['Email'])
         t2.bind("<Button-1>", lambda e: openweburl(eurl))
-        t=_("Making changes will restart {} and trigger another syllable "
-            "profile analysis. \nIf you don't want that, click ‘{}’."
-            # "\nEither way, you won't get past this window until you answer "
-            # "this question."
-            # "\nIf you just started this database, and are unsure what to do, "
-            # "you are probably OK to leave them all selected."
-            # "\nYou can always come back here and make changes as you need."
-            "".format(program['name'],nochangetext))
+        if hasdata:
+            t=_(f"Making changes will restart {program['name']} "
+                "and trigger another syllable profile analysis. \n"
+                f"If you don't want that, click ‘{nochangetext}’.")
+        else:
+            t=_("\n*** There don't seem to be any possible digraphs or trigraphs "
+                "in your data ***\n")
         row+=1
         t3=ui.Label(pgw.frame,text=t,column=0, row=row)
         helpurl='{}/POLYGRAPHS.md'.format(program['docsurl'],program['Email'])
@@ -2289,8 +2299,9 @@ class Settings(object):
                     else:
                         col=1 #not header
                         srow+=1
-        row+=1
-        b=ui.Button(pgw.frame,text=oktext,command=makechanges, width=15,
+        if hasdata:
+            row+=1
+            b=ui.Button(pgw.frame,text=oktext,command=makechanges, width=15,
                     column=0, row=row, sticky='e',padx=15)
         pgw.wait_window(pgw)
         if not program['taskchooser'].exitFlag.istrue():
