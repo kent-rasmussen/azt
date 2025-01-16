@@ -13226,7 +13226,7 @@ class StatusDict(dict):
         self.source(dict)
         self._checksdict={}
         self._cvchecknames={}
-class CheckParameters(dict):
+class CheckParameters(object):
     """This stores and returns current cvt/type and check only; there is not check
     here that the setting is valid (done in status), nor that the consequences
     of the change are done (done in check)."""
