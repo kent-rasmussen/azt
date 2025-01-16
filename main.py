@@ -3497,6 +3497,7 @@ class TaskDressing(HasMenus,ui.Window):
                 'self.fontthemesmall':self.fontthemesmall,
                 'buttonkwargs':self.dobuttonkwargs(),
                 'iflang':program['settings'].interfacelangwrapper(),
+                'analangname':program['settings'].languagenames[self.analang],
                 'analang':program['params'].analang(),
                 'glang1':self.glosslangs.lang1(),
                 'glang2':self.glosslangs.lang2(),
