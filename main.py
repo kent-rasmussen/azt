@@ -2294,6 +2294,154 @@ class Settings(object):
         pgw.wait_window(pgw)
         if not program['taskchooser'].exitFlag.istrue():
             return nochanges() #this is the default exit behavior
+    def polygraphLWCdefaults(self):
+        lwcdefaults={'en':{'D':{'gh':True,
+                        		'bb':True,
+                        		'dd':True,
+                        		'gg':True,
+                        		'gu':True,
+                        		'mb':False,
+                        		'nd':False,
+                        		'dw':False,
+                        		'gw':False,
+                        		'zl':False},
+                        	'C':{'ckw':False,
+                        		'thw':False,
+                        		'tch':True,
+                        		'cc':True,
+                        		'pp':True,
+                        		'pt':False,
+                        		'tt':True,
+                        		'ck':True,
+                        		'qu':True,
+                        		'mp':False,
+                        		'nt':False,
+                        		'nk':False,
+                        		'tw':False,
+                        		'kw':False,
+                        		'ch':True,
+                        		'ph':True,
+                        		'sh':True,
+                        		'hh':True,
+                        		'ff':True,
+                        		'sc':False,
+                        		'ss':True,
+                        		'th':True,
+                        		'sw':False,
+                        		'hw':True,
+                        		'ts':False,
+                        		'sl':False},
+                        	'G':{'yw':False},
+                        	'N':{'mm':True,
+                        		'ny':False,
+                        		'gn':True,
+                        		'nn':True,
+                        		'nw':False},
+                        	'S':{'rh':True,
+                        		'wh':True,
+                        		'll':True,
+                        		'rr':True,
+                        		'lw':False,
+                        		'rw':False},
+                        	'V':{'ou':True,
+                        		'ei':True,
+                        		'ai':True,
+                        		'yi':True,
+                        		'ea':True,
+                        		'ay':True,
+                        		'ee':True,
+                        		'ey':True,
+                        		'ie':True,
+                        		'oa':True,
+                        		'oo':True,
+                        		'ow':True,
+                        		'ue':True,
+                        		'oe':True,
+                        		'au':True,
+                        		'oi':True,
+                        		'eau':True}},
+                     'fr':{'D':{'gh':False,
+                         		'bb':False,
+                         		'dd':False,
+                         		'gg':False,
+                         		'gu':True,
+                         		'mb':False,
+                         		'nd':False,
+                         		'dw':False,
+                         		'gw':False,
+                         		'zl':False},
+                         	'C':{'ckw':False,
+                         		'thw':False,
+                         		'tch':True,
+                         		'cc':True,
+                         		'pp':True,
+                         		'pt':False,
+                         		'tt':False,
+                         		'ck':False,
+                         		'qu':True,
+                         		'mp':False,
+                         		'nt':False,
+                         		'nk':False,
+                         		'tw':False,
+                         		'kw':False,
+                         		'ch':True,
+                         		'ph':True,
+                         		'sh':False,
+                         		'hh':False,
+                         		'ff':False,
+                         		'sc':False,
+                         		'ss':True,
+                         		'th':True,
+                         		'sw':False,
+                         		'hw':False,
+                         		'ts':False,
+                         		'sl':False},
+                         	'G':{'yw':False},
+                         	'N':{'mm':False,
+                         		'ny':False,
+                         		'gn':True,
+                         		'nn':False,
+                         		'nw':False},
+                         	'S':{'rh':True,
+                         		'wh':True,
+                         		'll':True,
+                         		'rr':True,
+                         		'lw':False,
+                         		'rw':False},
+                         	'V':{'ou':True,
+                         		'ei':True,
+                         		'ai':True,
+                         		'yi':False,
+                         		'ea':True,
+                         		'ay':False,
+                         		'ee':False,
+                         		'ey':False,
+                         		'ie':True,
+                         		'oa':True,
+                         		'oo':True,
+                         		'ow':False,
+                         		'ue':True,
+                         		'oe':True,
+                         		'au':True,
+                         		'oi':True,
+                         		'eau':True}
+                    }   }
+        if program['params'].analang in lwcdefaults:
+            log.info("It looks like you're working on your LWC; using "
+                    f"{self.languagenames[program['params'].analang]} "
+                    "digraph defaults")
+            return lwcdefaults[program['params'].analang] #in case trying out a demo
+        try:
+            log.info("Using your interface language "
+                    f"({self.languagenames[interfacelang()]}) digraph defaults")
+            return lwcdefaults[interfacelang()] #assume this general framework
+        except KeyError:
+            log.info("It looks like neither your LWC "
+                    f"({self.languagenames[program['params'].analang]}) "
+                    "nor your interface language "
+                    f"({self.languagenames[interfacelang()]}) has a set of "
+                    "digraph defaults, so not providing any")
+            return {} #let users build from scratch
     def polygraphcheck(self):
         log.info("Checking for Digraphs and Trigraphs!")
         # log.info("Language settings: {}".format(program['db'].s))
@@ -2307,7 +2455,7 @@ class Settings(object):
                             ).format(lang))
                 continue
             if lang not in self.polygraphs:
-                self.polygraphs[lang]={}
+                self.polygraphs[lang]=self.polygraphLWCdefaults()
             for sclass in [sc for sc in program['db'].s[lang]
                                     if ('dg' in sc or 'tg' in sc or 'qg' in sc)]:
                 pclass=sclass.replace('dg','').replace('tg','').replace('qg','')
