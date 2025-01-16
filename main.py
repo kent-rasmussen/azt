@@ -998,7 +998,7 @@ class StatusFrame(ui.Frame):
         analang=program['params'].analang()
         langname=program['settings'].languagenames[analang]
         t=(_("Studying {}").format(langname))
-        if (langname == _("Language with code [{}]").format(analang)):
+        if (langname == _(f"Language with code [{analang}]")):
             self.proselabel(t,cmd=self.task.getanalangname,
                                             tt=_("Set analysis language Name"))
         else:
@@ -3814,7 +3814,7 @@ class TaskDressing(HasMenus,ui.Window):
             window.destroy()
         window=ui.Window(self,title=_('Enter Analysis Language Name'))
         curname=program['settings'].languagenames[self.analang]
-        defaultname=_("Language with code [{}]").format(self.analang)
+        defaultname=_(f"Language with code [{self.analang}]")
         t=_("How do you want to display the name of {}").format(curname)
         if curname != defaultname:
             t+=_(", with ISO 639-3 code [{}]").format(self.analang)
