@@ -3365,11 +3365,16 @@ class TaskDressing(HasMenus,ui.Window):
         #set None to make this a label instead of button:
         reliefs=["raised", "groove", "sunken", "ridge", "flat"]
         if self.mainrelief and self.mainrelief in reliefs:
+            program['taskchooser'].mainreliefnext=\
+            program['taskchooser'].task.mainreliefnext=\
             self.mainreliefnext=reliefs[(reliefs.index(self.mainrelief)+1
                                                             )%len(reliefs)]
         log.info("setting button relief to {}, with refresh={}".format(relief,
                                                                     refresh))
-        self.mainrelief=relief # None "raised" "groove" "sunken" "ridge" "flat"
+        # None "raised" "groove" "sunken" "ridge" "flat"
+        program['taskchooser'].mainrelief=\
+        program['taskchooser'].task.mainrelief=\
+        self.mainrelief=relief
     def _showbuttons(self,event=None):
         todo=getattr(self,'mainreliefnext','flat')
         self.mainlabelrelief(relief=todo,refresh=True)
@@ -3417,10 +3422,10 @@ class TaskDressing(HasMenus,ui.Window):
             self.context.menuitem(_("Show Menus"),self._setmenus)
         else:
             self.context.menuitem(_("Hide Menus"),self._removemenus)
-        if hasattr(self,'mainrelief') and not self.mainrelief:
-            self.context.menuitem(_("Show Buttons"),self._showbuttons)
+        if hasattr(program['taskchooser'],'mainrelief') and not program['taskchooser'].mainrelief:
+            self.context.menuitem(_("Show Buttons"), self._showbuttons)
         else:
-            self.context.menuitem(_("Hide Buttons"),self._hidebuttons)
+            self.context.menuitem(_("Hide Buttons"), self._hidebuttons)
         if hasattr(self,'fontthemesmall') and not self.fontthemesmall:
             self.context.menuitem(_("Smaller Fonts"),self.setfontssmaller)
         else:
