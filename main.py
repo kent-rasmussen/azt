@@ -5735,6 +5735,17 @@ class WordCollection(Segments):
                         i.bindchildren('<ButtonRelease-1>',
                                         lambda event,x=f,w=self.selectionwindow:
                                                 self.markimage(x,w))
+            """activate and inactivate buttons as appropriate"""
+            for t in bdict:
+                if t == pixelopts:
+                    val=self.imagepixels
+                else:
+                    val=self.imagecolumns
+                for v in bdict[t]:
+                    if not val or t.index(val)+v in range(0,len(t)):
+                        bdict[t][v]["state"] = "normal"
+                    else:
+                        bdict[t][v]["state"] = "disabled"
             self.selectionwindow.update_idletasks()
         log.info("Select from these images: \n{}".format('\n'.join(
                                                     [str(i) for i in files])))
@@ -5747,32 +5758,37 @@ class WordCollection(Segments):
         if currentimage:
             t['image']=currentimage
             t['compound']='right'
-        columnselection=ui.Frame(self.selectionwindow.frame,
-                                row=1, column=0, sticky='ew')
-        ui.Button(columnselection,text=_("Browse"), font='small',
+        imageparameters=ui.Frame(self.selectionwindow.frame,
+                                row=1, column=0, sticky='e')
+        fontsize='small'
+        parameterseparation=10
+        ui.Button(imageparameters,text=_("Browse"), font='small',
             command=lambda x=self.selectionwindow:self.selectlocalimage(w=x),
-            row=0,column=columnselection.columns()+1)
-        ui.Label(columnselection,text="", font='small',
-                    row=0,column=columnselection.columns()+1)
-        columnselection.grid_columnconfigure(columnselection.columns()-1,
-                                            weight=2)
-        ui.Label(columnselection,text=_("pixels:"), font='small',
-                    row=0,column=columnselection.columns()+1)
-        for n in range(200,1000,100):
-            ui.Button(columnselection,text=n, font='small',
-                    command=lambda x=n:makegrid(pixels=x),
-                    row=0,column=columnselection.columns()+1)
-        ui.Label(columnselection,text="", font='small',
-                    row=0,column=columnselection.columns()+1)
-        columnselection.grid_columnconfigure(columnselection.columns()-1,
-                                            weight=1)
-        ui.Label(columnselection,text=_("columns:"), font='small',
-                    row=0,column=columnselection.columns()+1)
-        for n in range(1,9):
-            ui.Button(columnselection,text=n, font='small',
-                    command=lambda x=n:makegrid(cols=x),
-                    row=0,column=columnselection.columns()+1)
-        makegrid(4)
+            ipady=0,row=0,column=imageparameters.columns())
+        ui.Label(imageparameters,text="", font=fontsize,
+                    width=parameterseparation,
+                    row=0,column=imageparameters.columns())
+        bdict={pixelopts:{},colopts:{}}
+        bdict[pixelopts][-1]=ui.Button(imageparameters,text='-', font=fontsize,
+                            command=lambda x=-1:makegrid(pixels=x),ipady=0,
+                            width=1,row=0,column=imageparameters.columns())
+        ui.Label(imageparameters,text=_("Image Size"), font=fontsize, padx=2,
+                    row=0,column=imageparameters.columns())
+        bdict[pixelopts][1]=ui.Button(imageparameters,text='+', font=fontsize,
+                            command=lambda x=1:makegrid(pixels=x),ipady=0,
+                            width=1,row=0,column=imageparameters.columns())
+        ui.Label(imageparameters,text="", font=fontsize,
+                    width=parameterseparation,
+                    row=0,column=imageparameters.columns())
+        bdict[colopts][-1]=ui.Button(imageparameters,text='-', font=fontsize,
+                            command=lambda x=-1:makegrid(cols=x),ipady=0,
+                            width=1,row=0,column=imageparameters.columns())
+        ui.Label(imageparameters,text=_("Columns"), font=fontsize, padx=2,
+                    row=0,column=imageparameters.columns())
+        bdict[colopts][1]=ui.Button(imageparameters,text="+", font=fontsize,
+                            command=lambda x=1:makegrid(cols=x),ipady=0,
+                            width=1,row=0,column=imageparameters.columns())
+        makegrid()
     def getimagefiles(self):
         dir=file.fullpathname(self.sense.imgselectiondir)
         if file.exists(dir):
