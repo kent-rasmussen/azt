@@ -5381,7 +5381,7 @@ class Segments(object):
         if check: #just update to this annotation
             value=sense.annotationvaluebyftypelang(ftype,self.analang,check)
             if value is not None: #should I act on ''?
-                f=rx.update(formvalue,program['settings'].rx,check,value)
+                f=self.rxdict.update(formvalue,check,value)
                 sense.textvaluebyftypelang(ftype,self.analang,f)
                 log.info("Done with updateformtextnodebycheck")
                 #This should update formstosearch:
@@ -5397,7 +5397,7 @@ class Segments(object):
             annodict=sense.annotationvaluedictbyftypelang(ftype,self.analang)
             # log.info("annodict: {}".format(annodict))
             for check,value in annodict.items():
-                f=rx.update(formvalue,program['settings'].rx,check,value)
+                f=self.rxdict.update(formvalue,check,value)
                 sense.textvaluebyftypelang(self.analang,f)
         if write:
             self.maybewrite()
@@ -10850,7 +10850,7 @@ class ReportCitation(Report,Segments,TaskDressing):
         program['settings'].storesettingsfile()
         t=(_('Run Check'))
         log.info("Running report...")
-        log.info("Using these regexs: {}".format(program['settings'].rx))
+        log.info("Using these regexs: {}".format(self.rxdict))
         # exit() #for testing
         i=0
         cvt=program['params'].cvt()
