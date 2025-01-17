@@ -3342,7 +3342,7 @@ class TaskDressing(HasMenus,ui.Window):
     def _taskchooserbutton(self):
         if isinstance(self,TaskChooser) and not self.showreports:
             if self.datacollection:
-                text=_("Analyze")
+                text=_("Analyze & Decide")
             else:
                 text=_("Collect Data")
         elif isinstance(self,Report):
