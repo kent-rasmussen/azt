@@ -5707,7 +5707,7 @@ class WordCollection(Segments):
         if f and file.exists(f):
             self.markimage(f,w)
     def showimagestoselect(self,files):
-        self.imagecolumns=4
+        self.imagecolumns=3
         self.imagepixels=0
         pixelopts=range(200,1000,100)
         colopts=range(1,9)
