@@ -836,8 +836,12 @@ class Image(tkinter.PhotoImage):
     def biggerby(self,x):
         #always do this one first, if doing both, to start from scratch
         # log.info(f"scaling bigger by {x}")
-        self.scaled=self.zoom(x,x)
+        try:
+            self.scaled=self.transparency.zoom(x,x)
+        except AttributeError:
+            self.scaled=self.zoom(x,x)
     def smallerby(self,x):
+        # transparency is managed in biggerby
         # log.info(f"scaling smaller by {x}")
         try:
             self.scaled=self.scaled.subsample(x,x)
@@ -870,8 +874,32 @@ class Image(tkinter.PhotoImage):
         self.smallerby(int(resolution))
         # self[pixels]=self.scaled
         # log.info("Image: {} ({})".format(self.scaled, self.maxhw(scaled=True)))
+    def transparent(self):
+        log.info("Running trasparent")
+        # self.transparent=self.convert("RGBA")
+        tkinter.PhotoImage(file=self.filename)
+        self.transparency=tkinter.PhotoImage(file=self.filename)
+        log.info(f"self.transparency type: {type(self.transparency)}")
+        log.info(f"self.transparency width: {self.transparency.width()}")
+        log.info(f"self.transparency height: {self.transparency.height()}")
+        for x in range(self.transparency.width()):
+            for y in range(self.transparency.height()):
+                if self.transparency.get(x,y) == (255,255,255):
+                    self.transparency.put(x,y) == (0,0,0)
+                # log.info(f"{x},{y} pixel: {self.transparency.get(x,y)}")
+        # datas = self.transparent.getdata()
+        return
+        newData = []
+        for item in datas:
+            if item[0] == 255 and item[1] == 255 and item[2] == 255:
+                # replacing it with a transparent value
+                newData.append((255, 255, 255, 0))
+            else:
+                newData.append(item)
+        self.transparency.putdata(newData)
+        return self.transparency
     def __init__(self,filename):
-        # self.name=filename
+        self.filename=filename
         try:
             super(Image, self).__init__(file=filename)#,*args, **kwargs)
         except tkinter.TclError as e:
@@ -2047,7 +2075,8 @@ def testapp(program):
     log.info("Image dict: {}".format(r.theme.photo))
     # img=r.theme.photo['transparent']
     img=r.theme.photo['NoImage']
-    log.info("Image: {} ({})".format(img, Image.maxhw(img)))
+    # img.transparent()
+    # log.info("Image: {} ({})".format(img.transparency, Image.maxhw(img)))
     log.info("Image dir: {}".format(dir(img)))
     img.scale(program['scale'],pixels=100,resolution=10)
     log.info("Image: {} ({})".format(img.scaled, Image.maxhw(img,scaled=True)))
