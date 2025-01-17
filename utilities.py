@@ -103,3 +103,19 @@ def setnesteddictval(dict,val,*keys,addval=False):
         else:
             # print(f"For keys {keys} assigning value {val}")
             d[k]=val
+def iteratelistitem(l,item,val,circular=False):
+    try:
+        initindex=l.index(item)
+    except ValueError as e:
+        return f"Item {item} not in list {l}, not iterating."
+    if type(val) is int and type(initindex) is int:
+        newindex=initindex+val
+        if circular:
+            newindex=newindex%len(l)
+        elif 0 > newindex or newindex >= len(l):
+            print("requested index out of bounds; not moving.")
+            newindex=initindex
+        return l[newindex]
+    else:
+        return ("problem with iteration value type "
+                f"({type(val)}) or index type ({type(initindex)})")

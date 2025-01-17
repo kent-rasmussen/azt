@@ -5709,11 +5709,17 @@ class WordCollection(Segments):
     def showimagestoselect(self,files):
         self.imagecolumns=4
         self.imagepixels=0
+        pixelopts=range(200,1000,100)
+        colopts=range(1,9)
         def makegrid(cols=0,pixels=0):
             if cols:
-                self.imagecolumns=cols
+                self.imagecolumns=iteratelistitem(colopts,
+                                                    self.imagecolumns,cols)
             if pixels:
-                self.imagepixels=pixels
+                if not self.imagepixels: #allows native resolution until tweaked
+                    self.imagepixels=pixelopts[int(len(pixelopts)/2)]
+                self.imagepixels=iteratelistitem(pixelopts,
+                                                    self.imagepixels,pixels)
             if hasattr(self.selectionwindow,'sf'):
                 self.selectionwindow.sf.destroy()
             self.selectionwindow.sf=ui.ScrollingFrame(
