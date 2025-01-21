@@ -87,8 +87,10 @@ class Theme(object):
             scaledalreadydir='images/scaled/'+str(scale)+'/'
             file.makedir(file.fullpathname(scaledalreadydir)) #in case not there
         def mkimg(name,filename):
-            relurl=file.getdiredurl('images/',filename)
+            relurl=file.fullpathname(
+                            file.getdiredurl('images/',filename))
             # log.info("scale: {}".format(scale))
+            log.info(f"making image {name} ({filename}) with relurl {relurl}")
             if scale-1: #x != y:
                 scaledalready=file.getdiredurl(scaledalreadydir,filename)
                 # log.info("Looking for {}".format(scaledalready))
@@ -97,6 +99,7 @@ class Theme(object):
                     relurl=scaledalready
                 # log.info("Dirs: {}?={}".format(scaledalready,relurl))
                 if scaledalready != relurl: # should scale if off by >2% either way
+                    log.info(f"scaledalready ({scaledalready}) != relurl ({relurl})")
                     # log.info("Scaling {}".format(relurl)) #Just do this once!
                     try:
                         assert self.fakeroot.winfo_exists()
@@ -146,7 +149,7 @@ class Theme(object):
                             if ('not enough free memory '
                                 'for image buffer' in str(e)):
                                 continue
-            # log.info("Using {}".format(relurl))
+            log.info(f"Using {relurl} ({file.fullpathname(relurl)})")
             self.photo[name] = Image(file.fullpathname(relurl))
             # log.info("Compiled {} {}".format(name,relurl))
         imagelist=[ ('transparent','AZT stacks6.png'),
@@ -219,16 +222,17 @@ class Theme(object):
                             ))
             try:
                 self.fakeroot.ww.progress(n*100/ntodo)
-            except:
-                pass
+            except Exception as e:
+                log.info("Something happened: {}".format(e))
+                raisepass
         try:
             self.logfinished("Image compilation")
             self.fakeroot.ww.close()
             self.fakeroot.destroy()
             self.program['theme'].unbootstraptheme()
         except Exception as e:
-            # log.info("Something happened: {}".format(e))
-            # raise
+            log.info("Something happened: {}".format(e))
+            raise
             pass
     def settheme(self):
         if not self.name:
