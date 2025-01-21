@@ -9346,12 +9346,13 @@ class Report(object):
             #this is only for adhoc "big button" reports.
 
         if isinstance(self, Multislice) and 'psprofiles' in kwargs:
-            reporttype=' '.join(
-                        [' '.join([ps]+
-                                ['('+'-'.join(kwargs['psprofiles'][ps])+')'
-                                            ])
-                                for ps in kwargs['psprofiles']
+            reporttype=' '.join([ps+' ('+'-'.join(kwargs['psprofiles'][ps])+')'
+                                    for ps in kwargs['psprofiles']
                                 ])
+            if len(reporttype) > 200: #this should be more than enough chars
+                reporttype=' '.join([ps+' ('+kwargs['psprofiles'][ps][0]+'-etc)'
+                                for ps in kwargs['psprofiles']][:1]+['etc'])
+
         else:
             reporttype=' '.join([ps,profile])
         if isinstance(self,Multicheck):
