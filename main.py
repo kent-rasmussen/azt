@@ -13807,7 +13807,7 @@ class Repository(object):
         elif self.code == 'git' and firsttry: # and me:
             # Show this only once per run, if a user doesn't have settings
             if remotesinsettings or not self.directorydontask:
-                program['taskchooser'].task.withdraw()
+                program['taskchooser'].withdraw()
                 text=_(
                 # "{} can't find your {} {} backup. "
                 # "If you have a USB drive for your {} {} backup, insert it now."
