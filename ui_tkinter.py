@@ -233,7 +233,7 @@ class Theme(object):
             self.program['theme'].unbootstraptheme()
         except Exception as e:
             log.info("Something happened: {}".format(e))
-            raise
+            # raise
             pass
     def settheme(self):
         if not self.name:
