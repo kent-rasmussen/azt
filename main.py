@@ -159,13 +159,19 @@ class HasMenus():
                 )
         webl.bind("<Button-1>", lambda e: openweburl(url))
     def helpabout(self):
-        title=(_("{name} Dictionary and Orthography Checker"
-                "".format(name=program['name'])))
+        title=(_(f"{program['name']} Dictionary and Orthography Checker"))
         window=ui.Window(self, title=title)
         ui.Label(window.frame,
                 text=_("version: {}").format(program['version']),
                 anchor='c',padx=50,
                 row=1,column=0,sticky='we'
+                        )
+        versiondate=_(
+                        f"updated to {program['repo'].lastcommitdate()} " f"({program['repo'].lastcommitdaterelative()})")
+        ui.Label(window.frame,
+                text=versiondate,
+                anchor='c',padx=50,
+                row=2,column=0,sticky='we'
                         )
         text=_("{name} is a computer program that accelerates community"
                 "-based language development by facilitating the sorting of a "
@@ -191,7 +197,7 @@ class HasMenus():
                 font='title',anchor='c',padx=50,
                 row=0,column=0,sticky='we')
         f=ui.ScrollingFrame(window.frame,
-                            row=2,column=0,sticky='we')
+                            row=3,column=0,sticky='we')
         ui.Label(f.content, image=self.frame.theme.photo['small'],
                 text='',
                 row=0,column=0,sticky='we'
@@ -209,9 +215,11 @@ class HasMenus():
                 row=3,column=0,sticky='we'
                 )
         webl.bind("<Button-1>", lambda e: openweburl(program['url']))
+        ui.ToolTip(webl, _(f"See {program['name']} online"))
         murl='mailto:{}?subject= {} question'.format(program['Email'],
                                                     program['name'])
         maill.bind("<Button-1>", lambda e: openweburl(murl))
+        ui.ToolTip(maill, _(f"Send me an Email (from your mail client)"))
     def reverttomainazt(self,event=None):
         #This doesn't care which (test) version one is on
         r=program['repo'].reverttomain()
@@ -12167,6 +12175,8 @@ class ImageFrame(ui.Frame):
 class Splash(ui.Window):
     def maketexts(self):
         self.labels['v']['text']=_("Version: {}".format(program['version']))
+        self.labels['v2']['text']=_(
+                            f"updated to {program['repo'].lastcommitdate()} " f"({program['repo'].lastcommitdaterelative()})")
         self.labels['text']['text']=_("Your dictionary database is loading...\n"
                 "\n{name} is a computer program that accelerates community"
                 "-based language development by facilitating the sorting of a "
@@ -12196,12 +12206,15 @@ class Splash(ui.Window):
                         'v':ui.Label(self.frame, text='', anchor='c',padx=25,
                         row=1,column=0,sticky='we'
                         ),
-                        'photo':ui.Label(self.frame, image=self.theme.photo['transparent'],text='',
+                        'v2':ui.Label(self.frame, text='', anchor='c',padx=25,
                         row=2,column=0,sticky='we'
+                        ),
+                        'photo':ui.Label(self.frame, image=self.theme.photo['transparent'],text='',
+                        row=3,column=0,sticky='we'
                         ),
                         'text':ui.Label(self.frame, text='', padx=50,
                                     wraplength=int(self.winfo_screenwidth()/2),
-                                    row=3,column=0,sticky='we'
+                                    row=4,column=0,sticky='we'
                                     )
                     }
         self.maketexts()
