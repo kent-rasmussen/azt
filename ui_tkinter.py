@@ -64,7 +64,7 @@ class Theme(object):
         #this returns a delta!
         return datetime.datetime.utcnow()-self.start_time
     def logfinished(self,msg=None):
-        log.info("logging finish now")
+        # log.info("logging finish now")
         run_time=self.nowruntime()
         # if type(start) is datetime.datetime: #only work with deltas
         #     start-=self.start_time
