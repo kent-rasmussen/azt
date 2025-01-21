@@ -4643,7 +4643,7 @@ class TaskChooser(TaskDressing,ui.Window):
         elif self.datacollection:
             return _("Data Collection Tasks")
         else:
-            return _("Analysis Tasks")
+            return _("Analysis & Decision Tasks")
     def dobuttonkwargs(self):
         return {'text':_("Reports"),
                 'fn':self.choosereports,
