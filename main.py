@@ -10226,27 +10226,28 @@ class Transcribe(Sound,Sort,TaskDressing):
             program['settings'].storesettingsfile(setting='status')
             """Update regular expressions here!!"""
         else: #move on, but notify in logs
-            log.info("User selected ‘{}’, but with no change.".format(
-                                                                self.oktext))
-            # update forms, even if group doesn't change. I should have a test
-            # for when this is needed..…
-            group=program['status'].group()
-            if isnoninteger(group): #Don't do this for default groups
-                ftype=program['params'].ftype()
-                check=program['params'].check()
-                log.info("updating for type {} check {}, group ‘{}’"
-                        "".format(ftype,check,group))
-                senses=self.getsensesincheckgroup()
-                log.info("modding senses {}".format([i.id for i in senses]))
-                for sense in senses:
-                    u = threading.Thread(target=self.updateformtoannotations,
-                                        args=(sense,ftype,check),
-                                        # kwargs={'check':check}
-                                        )
-                    u.start()
-                if senses:
-                    u.join()
-                self.maybewrite()
+            log.info(f"User selected ‘{self.oktext}’, but with "
+                    "no change.")
+        # update forms, even if group doesn't change:
+        group=program['status'].group() #this should now be 'newvalue'
+        if program['params'].cvt() != 'T' and isnoninteger(group):
+            #Don't do this for default or tone groups
+            ftype=program['params'].ftype()
+            check=program['params'].check()
+            log.info("updating for type {} check {}, group ‘{}’"
+                    "".format(ftype,check,group))
+            senses=self.getsensesincheckgroup()
+            log.info("modding senses {}".format([i.id for i in senses]))
+            for sense in senses:
+                # self.updateformtoannotations(sense,ftype,check)
+                u = threading.Thread(target=self.updateformtoannotations,
+                                    args=(sense,ftype,check),
+                                    # kwargs={'check':check}
+                                    )
+                u.start()
+            if senses:
+                u.join()
+            self.maybewrite()
         if hasattr(self,'group_comparison'):
             delattr(self,'group_comparison') # in either case
         self.runwindow.on_quit()
