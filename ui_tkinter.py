@@ -90,7 +90,7 @@ class Theme(object):
             imgurl=file.fullpathname(
                             file.getdiredurl('images/',filename))
             # log.info("scale: {}".format(scale))
-            log.info(f"making image {name} ({filename}) with imgurl {imgurl}")
+            # log.info(f"making image {name} ({filename}) with imgurl {imgurl}")
             if scale-1: #x != y:
                 scaledalready=file.getdiredurl(scaledalreadydir,filename)
                 # log.info("Looking for {}".format(scaledalready))
@@ -99,7 +99,7 @@ class Theme(object):
                     imgurl=scaledalready
                 # log.info("Dirs: {}?={}".format(scaledalready,imgurl))
                 if scaledalready != imgurl: # should scale if off by >2% either way
-                    log.info(f"scaledalready ({scaledalready}) != imgurl ({imgurl})")
+                    # log.info(f"scaledalready ({scaledalready}) != imgurl ({imgurl})")
                     # log.info("Scaling {}".format(imgurl)) #Just do this once!
                     try:
                         assert self.fakeroot.winfo_exists()
