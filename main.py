@@ -10534,6 +10534,7 @@ class TranscribeV(Transcribe,Segments):
         # 'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
         ]
         Transcribe.__init__(self,parent)
+        Segments.__init__(self,parent)
         program['params'].cvt('V')
 class TranscribeC(Transcribe,Segments):
     def tasktitle(self):
@@ -10588,6 +10589,7 @@ class TranscribeC(Transcribe,Segments):
         'rh','wh',
         ]
         Transcribe.__init__(self,parent)
+        Segments.__init__(self,parent)
         program['params'].cvt('C')
 class TranscribeT(Transcribe,Tone):
     def tasktitle(self):
