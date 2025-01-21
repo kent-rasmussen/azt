@@ -84,23 +84,23 @@ class Theme(object):
         #do these once:
         if scale-1: #x != y: #should be the same as scale != 1
             log.info("Maybe scaling images; please wait...")
-            scaledalreadydir='images/scaled/'+str(scale)+'/'
-            file.makedir(file.fullpathname(scaledalreadydir)) #in case not there
+            scaledalreadydir=file.fullpathname('images/scaled/'+str(scale)+'/')
+            file.makedir(scaledalreadydir) #in case not there
         def mkimg(name,filename):
-            relurl=file.fullpathname(
+            imgurl=file.fullpathname(
                             file.getdiredurl('images/',filename))
             # log.info("scale: {}".format(scale))
-            log.info(f"making image {name} ({filename}) with relurl {relurl}")
+            log.info(f"making image {name} ({filename}) with imgurl {imgurl}")
             if scale-1: #x != y:
                 scaledalready=file.getdiredurl(scaledalreadydir,filename)
                 # log.info("Looking for {}".format(scaledalready))
-                if file.exists(file.fullpathname(scaledalready)):
+                if file.exists(scaledalready):
                     # log.info("scaled image exists for {}".format(filename))
-                    relurl=scaledalready
-                # log.info("Dirs: {}?={}".format(scaledalready,relurl))
-                if scaledalready != relurl: # should scale if off by >2% either way
-                    log.info(f"scaledalready ({scaledalready}) != relurl ({relurl})")
-                    # log.info("Scaling {}".format(relurl)) #Just do this once!
+                    imgurl=scaledalready
+                # log.info("Dirs: {}?={}".format(scaledalready,imgurl))
+                if scaledalready != imgurl: # should scale if off by >2% either way
+                    log.info(f"scaledalready ({scaledalready}) != imgurl ({imgurl})")
+                    # log.info("Scaling {}".format(imgurl)) #Just do this once!
                     try:
                         assert self.fakeroot.winfo_exists()
                     except:
@@ -120,9 +120,9 @@ class Theme(object):
                         #lower option if higher fails due to memory limitations
                         # y=int(y)
                         x=int(scale*y)
-                        # log.info("Scaling {} @{} resolution".format(relurl,y)) #Just do this once!
+                        # log.info("Scaling {} @{} resolution".format(imgurl,y)) #Just do this once!
                         try:
-                            img = Image(file.fullpathname(relurl))
+                            img = Image(imgurl)
                             # keep these at full size, for now
                             if 'openclipart.org' not in filename:
                                 img.scale(scale,pixels=img.maxhw(),resolution=y)
@@ -133,25 +133,23 @@ class Theme(object):
                             # log.info("parent: {}".format(scaledalreadydir != scaledalready.parent))
                             if scaledalready.parent != scaledalreadydir:
                                 file.makedir(scaledalready.parent,silent=True)
-                            self.photo[name].write(
-                                                file.fullpathname(scaledalready)
-                                                    )
+                            self.photo[name].write(scaledalready)
                             self.scalings.append(y)
                             if file.exists(scaledalready):
                                 log.info("Scaled {} {} @{} resolution: {}"
-                                        "".format(name,relurl,y,_("OK")))
+                                        "".format(name,imgurl,y,_("OK")))
                             # else:
                             #     log.info("Problem Scaling {} {} @{} resolution"
-                            #             "".format(name,relurl,y,_("OK"))
+                            #             "".format(name,imgurl,y,_("OK"))
                             return #stop when the first/best works
                         except tkinter.TclError as e:
                             # log.info(e)
                             if ('not enough free memory '
                                 'for image buffer' in str(e)):
                                 continue
-            log.info(f"Using {relurl} ({file.fullpathname(relurl)})")
-            self.photo[name] = Image(file.fullpathname(relurl))
-            # log.info("Compiled {} {}".format(name,relurl))
+            # log.info(f"Using {imgurl}")
+            self.photo[name] = Image(imgurl)
+            # log.info("Compiled {} {}".format(name,imgurl))
         imagelist=[ ('transparent','AZT stacks6.png'),
                             ('tall','AZT clear stacks tall.png'),
                             ('small','AZT stacks6_sm.png'),
@@ -223,7 +221,7 @@ class Theme(object):
             try:
                 self.fakeroot.ww.progress(n*100/ntodo)
             except Exception as e:
-                log.info("Something happened: {}".format(e))
+                # log.info("Something happened: {}".format(e))
                 # raise
                 pass
         try:
@@ -232,7 +230,7 @@ class Theme(object):
             self.fakeroot.destroy()
             self.program['theme'].unbootstraptheme()
         except Exception as e:
-            log.info("Something happened: {}".format(e))
+            # log.info("Something happened: {}".format(e))
             # raise
             pass
     def settheme(self):
