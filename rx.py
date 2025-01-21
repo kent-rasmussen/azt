@@ -652,9 +652,10 @@ class RegexDict(object):
                 raise
         # log.info(f"compileCVrxforsclass {c} RXs: {self.rx[c]}")
         # log.info("Looking for sclass {} in {}".format(c,self.sdict))
-        return #I don't think we use this next bit, but may some day
-        for n in range(1,7): #just the Nth C or V, no polygraph distinction
-            self.nX(c,n) #no polygraphs here
+        #this next bit is needed to replace just one segment (e.g., C3 or V2)
+        if c in ['C','V']:
+            for n in range(1,7): #just the Nth C or V, no polygraph distinction
+                self.nX(c,n) #no polygraphs here
         # log.info(f"makeglyphregexs self.rx: {self.rx}")
     def makeglyphregexs(self):
         todo=['C','V','Cwd']+[k for k in self.distinguish if self.distinguish[k]
