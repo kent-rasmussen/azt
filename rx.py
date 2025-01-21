@@ -681,7 +681,6 @@ if __name__ == '__main__':
     x="ne [pas] ˥plai're, (ne pas) ˧agréer, ne pas\n][  .!=(),'/?:;+*][. /?*:;|,\"><'‘’"
     i=id(x)
     print(x,i,"end")
-    quit()
     rgx='(ne pas) agréer'
     ts=['bobongo','bobingo']
     check='V1=V2=V3'
@@ -703,7 +702,7 @@ if __name__ == '__main__':
     distinguish={
                     'G': False, 'Gwd': False,
                     'S': False, 'Swd': False,
-                    'D': True, 'Dwd': False,
+                    'D': False, 'Dwd': False,
                     'N': False, 'Nwd': True,
                     'ʔ': False, 'ʔwd': False,
                     '<': True, '=': True,
@@ -725,7 +724,6 @@ if __name__ == '__main__':
                 profilelegit=profilelegit,
                 profilesegments=profilesegments
     )
-    exit()
     log.info(d.distinguish)
     log.info(d.sdict)
     log.info(d.glyphsforvariable('C+D'))
@@ -747,7 +745,7 @@ if __name__ == '__main__':
     # # 'CaCV','CaCVʔ',
     # # 'CaCVS','CaGVC'
     # ]:
-        print(d.rxuncompiled[CVs])
+        # print(d.rxuncompiled[CVs])
         print('\n'+CVs,'\t(not)')
         # r=d.fromCV(CVs, word=True, compile=True, caseinsensitive=True)
         r=d.rx[CVs]
@@ -755,7 +753,7 @@ if __name__ == '__main__':
             # 'bambat','wambut','wambat',
             # 'bablat','wabwut','wablwat','wabwlat',
             # 'babat','wawut','walat',
-            'no', 'non', 'bon', 'bono', 'bogon', 'bogono',
+            'no', 'non', 'bon', 'bono', 'bonopo', 'bogon', 'bogono',
             'nonomon', 'pokemon', 'mblano', 'mbwana', 'mpsyaka'
             # "pa'at",'wapput','nappall',
             # 'bamban','wambun','wama',
@@ -765,7 +763,7 @@ if __name__ == '__main__':
                 ]:
             # print(type(r),r)
             if bool(r.match(w)):
-                print(w)
+                print(w,'>',d.update(w,CVs,'B'))
             else:
                 print('\t'+w)#,r.match(w))
     # s='ááààééèèííììóóòòúúùù'
