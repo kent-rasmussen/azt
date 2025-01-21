@@ -5297,10 +5297,11 @@ class Segments(object):
             dicttosearch=self.formspsprofile(**kwargs)
         # log.info("Reduced to {} entries".format(len(dicttosearch)))
         # log.info("Looking for senses by regex {}".format(regex))
-        self.output=[
-                    j for k,v in dicttosearch.items()
-                    if k and regex.search(k)
-                    for j in v
+        self.output=[s for s in program['db'].senses
+                        if s.ftypes[self.ftype].textvaluebylang(self.analang)
+                        if regex.search(
+                        s.ftypes[self.ftype].textvaluebylang(self.analang)
+                                        )
                     ]
         # log.info("Found senses: {}".format(self.output))
         return self.output
@@ -5412,6 +5413,7 @@ class Segments(object):
     def __init__(self, parent):
         self.dodone=True
         self.dodoneonly=False #don't give me other words
+        self.ftype=program['params'].ftype()
         self.rxdict=program['settings'].rxdict
 class WordCollection(Segments):
     """This task collects words, from the SIL CAWL, or one by one."""
@@ -10878,6 +10880,7 @@ class ReportCitation(Report,Segments,TaskDressing):
                                                  ps,check,profile))
         self.getresults()
     def __init__(self, parent): #frame, filename=None
+        program['params'].ftype('lc')
         Segments.__init__(self,parent)
         self.do=self.getresults
         TaskDressing.__init__(self,parent)
