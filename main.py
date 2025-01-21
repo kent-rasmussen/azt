@@ -9407,7 +9407,7 @@ class Report(object):
         log.info(checkprose)
         """possibly iterating over all these parameters, used by buildregex"""
         self.buildregex(**kwargs)
-        log.info("{checkprose}; \nregex: {self.regex}")
+        log.info(f"{checkprose}; \nregex: {self.regex}")
         matches=set(self.senseformsbyregex(self.regex,**kwargs))
         if 'ufsenses' in kwargs:
             matches=matches&set(kwargs['ufsenses'])
