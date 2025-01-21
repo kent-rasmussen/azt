@@ -13807,6 +13807,7 @@ class Repository(object):
         elif self.code == 'git' and firsttry: # and me:
             # Show this only once per run, if a user doesn't have settings
             if remotesinsettings or not self.directorydontask:
+                program['taskchooser'].task.withdraw()
                 text=_(
                 # "{} can't find your {} {} backup. "
                 # "If you have a USB drive for your {} {} backup, insert it now."
@@ -14348,6 +14349,7 @@ class GitReadOnly(Git):
         r={}
         if me: #no one else should push changes
             method=Repository.push
+            # This doesn't mind if there is no USB:
             remotes=self.localremotes() #don't publish to internet this way
             log.info("remotes: {}".format(remotes))
             for remote in remotes: #iterate here to keep results
@@ -14361,6 +14363,7 @@ class GitReadOnly(Git):
         else:
             method=Repository.pull
             #make sure we at least try the github remote:
+            # User is asked for a USB if nothing is found here:
             remotes=self.findpresentremotes(firsttry=False) #don't ask
             homeurl=program['url']+'.git'
             remotes.extend([homeurl])
