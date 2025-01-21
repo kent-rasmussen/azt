@@ -99,24 +99,6 @@ def tonerxs():
     return (re.compile('[˥˦˧˨˩]+', re.UNICODE),
             re.compile(' ', re.UNICODE),
             re.compile(' ', re.UNICODE))
-def update(t,regexdict,check,value,matches=[]):
-    tori=t
-    for c in reversed(check.split('=')):
-        # log.info("subbing {} for {} in {}, using {}".format(value,c,t,
-        #                                             regexdict[c]))
-        match=regexdict[c].search(t)
-        if match:
-            matches.append(match.groups()[-1])
-            t=match.expand('\\g<1>'+value)+t[match.end():]
-    # log.info("updated {} > {}".format(tori,t))
-    for match in matches:
-        if len(match)>1:
-            log.info(_("NOTICE: we just matched (to remove) a set of "
-            "symbols representing one sound ({}). Until you are done "
-            "with it, we will leave it there, so both forms will be "
-            "found. Once you are done with it, remove it from the "
-            "polygraph settings.").format(match))
-    return t
 def texmllike(x):
     """This attempts to implement TeXMLLikeCharacterConversion.java from
     XLingPaper"""
@@ -262,8 +244,8 @@ def slisttoalternations(graphemeset, **kwargs): #group=False,nocapture=False):
     # around the list, but with longer graphemes first (trigraphs, then
     # digraphs and decomposed characters)
     output='|'.join(sorted(graphemeset,key=len,reverse=True))
-    if group:
-        output='('+output+')'
+    if kwargs.get("group"):
+        output=group(output, **kwargs)
     return output
 def s(graphemeset, **kwargs):
     """join a list into regex format, sort for longer first, to capture
@@ -272,7 +254,7 @@ def s(graphemeset, **kwargs):
     if polyn: #use all if 0
         #make the above limited by len here
         graphemeset=[i for i in graphemeset if len(i) == polyn]
-    output=slisttoalternations(graphemeset,group=True)
+    output=slisttoalternations(graphemeset, **{**kwargs, 'group': True})
     if kwargs.get('compile'):
         # log.info("Compiling {}[{}] regex {} (word={})"
         #         "".format(stype,polyn,output,word))
@@ -311,52 +293,76 @@ class RegexDict(object):
         n is the occurance to look for, e.g., C3 is n=3.
         """
         # log.info(f"Working with {self.sdict[x]}")
-        if x in ['C','V']:
-            sin=[j for i in [x]+self.distinguished(x,value=False)
-                for j in self.sdict[i]]
+        if 'wd' in x:
+            nxisfinal=True
+            x=x.strip('wd')
         else:
-            sin=self.sdict[x]
-        sout=[j for i in self.sdict #keys only here
-            if i not in [x]+self.distinguished(x,value=False)
-            for j in self.sdict[i]
-            ]
+            nxisfinal=False
+        # log.info(f"Working with {x}={self.sdict[x]}")
+        # log.info(f"Working with sdict keys={list(self.sdict)}")
+        # Here I want to find anything that anyone might interpret as C or V
+        # regardless of distinction prerferences and word location
+        segtypes=['C','V']
+        segrx={i:self.interpreted(i,evendistinguished=True) for i in segtypes}
+        if x not in segtypes:
+            log.error(f"Not sure what to do with x={x}")
+            raise
+        sin=segrx[x]
+        segtypes.remove(x)
+        sout=segrx[segtypes[0]] #unlist the other
         # log.info("Using segments in: {} out: {}".format(sin,sout))
-        overlap=set(sin) & set(sout)
-        if overlap:
-            log.error("Your in/out segment lists overlap: {}".format(overlap))
             # log.error("in: {}".format(segmentsin))
             # log.error("out: {}".format(segmentsout))
         # for each of in/out, make a dict keyed by length, with value listing glyphs
         # with that length (automatically separate trigraphs, digraphs, etc)
-        sindict={n:[i for i in sin if len(i) == n]
-                    for n in range(1,len(max(sin,key=len, default=''))+1)}
-        soutdict={n:[i for i in sout if len(i) == n]
-                    for n in range(1,len(max(sout,key=len, default=''))+1)}
         # Convert those value lists to a string of alternations, for each key
-        sin={k:slisttoalternations(sindict[k]) for k in sindict}
-        sin.update({'all':slisttoalternations([i for j in sindict.values()
-                                                for i in j])})
-        sout={k:slisttoalternations(soutdict[k]) for k in soutdict}
-        sout.update({'all':slisttoalternations([i for j in soutdict.values()
-                                                for i in j])})
-        # Make a list, longest first
-        strlist=[sout[i] for i in range(max([j for j in sout.keys()
-                                            if str(j).isdigit()],default=0),
-                                        0,-1)]
-        #join list of alternations to one long alternation
-        notS='|'.join(strlist)
-        strlist+=['('+sin['all']+')'] #look for, capture this
         #This needs to multiply as a unit, while getting each subpart separately:
-        oneS='(('+notS+')*('+sin['all']+'))'
+        nocap={'nocapture':True}
+        oneS=group(group(sout, **nocap) + '*?' + group(sin, **nocap), **nocap)
+        # log.info(f"oneS: {oneS}")
         #We need to keep each alternation set a unit, and keep all but last in \1
         if n-1:
-            priors='('+oneS*(n-1)+')'
+            priors=group(oneS*(n-1), **nocap) #this is str mult., not regex 0+...
         else:
             priors=''
-        #anchor the begining, not the end:
-        nS='^('+priors+'('+notS+')*)('+sin['all']+')'
-        # log.info("Compiling X{} regex {}".format(n,nS))
+        # only this one (last) group should ever capture:
+        nS=group(priors + group(sout, **nocap) + '*?') + group(sin)
+        if nxisfinal:
+            nS=anchor(nS,anchorend=True)
+        else: #anchor the begining, not the end:
+            nS=anchor(nS)
+            # nS='^(?:'+priors+'(?:'+sout+')*?)('+sin+')'
+        # log.info(f"Compiling {x}{n} regex {nS}")
         self.setnXrx(x,n,nS)
+    def update(self,t,check,value):
+        matches=[]
+        tori=t
+        for c in reversed(check.split('=')):
+            # log.info("subbing {} for {} in {}, using {}".format(value,c,t,
+            #                                             regexdict[c]))
+            match=self.rx[c].search(t)
+            # log.info(f"Checking with rx: {self.rx[c]}")
+            if match:
+                # log.info(f"{check} match to ‘{t}’ found: {match} (Groups: {match.groups()})")
+                matches.append(match.groups()[-1])
+                # We need everything before the text to change to show up in a group
+                t=match.expand('\\g<1>'+value)+t[match.end():]
+                log.info(match.expand('\\g<1>'+value)+t[match.end():])
+                log.info(t[:match.start(match.lastindex)]+match.expand(value)+t[match.end():])
+        # log.info(f"List of matches found: {matches}")
+        # log.info("updated {} > {}".format(tori,t))
+        for match in matches:
+            if len(match)>1:
+                txt=("NOTICE: we just matched (to remove) a set of "
+                f"symbols representing one sound ({match}). Until you are done "
+                "with it, we will leave it there, so both forms will be "
+                "found. Once you are done with it, remove it from the "
+                "polygraph settings.")
+                try:
+                    log.info(_(txt))
+                except NameError:
+                    log.info(txt)
+        return t
     def makegroup(self,x,**kwargs):
         """this makes (x|y) format from C+D+N, etc.,
         Distinctions should already be accounted for in the variable (x)
@@ -422,19 +428,21 @@ class RegexDict(object):
                         if i in ['C','V'] and not basedone: #just do this once!
                                 r=self.makegroup(
                                     self.undistinguished(i,**kwargs),
-                                    **{**kwargs, 'compile':False})
-                                if r == '()':
+                                    **{**kwargs, 'compile': False,
+                                                'nocapture': True})
+                                if r in ['()','(?:)']:
                                     # log.info(f"r is {r}, so returning empty")
                                     return r #don't add to nothing
                                 # log.info(f"r is {r} {type(r)}; continuing")
                                 result+=r
                                 basedone=True
                         else: #get just this group
-                            result+=self.makegroup(i)
+                            result+=self.makegroup(i, nocapture=True)
                             result+='?' # this group is optional in the regex
         if not result:
             result=self.makegroup(self.undistinguished(x,**kwargs), #final?
-                                    **{**kwargs, 'compile':False})
+                                    **{**kwargs, 'compile': False,
+                                                'nocapture': True})
         # log.info("returning {}".format(result))
         return result
     def undistinguished(self,variableset,**kwargs):
@@ -463,6 +471,8 @@ class RegexDict(object):
             dset=set(['̀','ː'])
         else:
             dset=set()
+        if not value and kwargs.get('evendistinguished'):
+            return dset #use this to keep this script structure, but incl all
         dset&=set(self.distinguish) #limit dset to what is there, in case
         if value:
             return [i for i in dset if self.distinguish[i]]
@@ -475,7 +485,7 @@ class RegexDict(object):
         self.rx[s+str(n)]=make(nS, compile=True)
     def setrx(self, c, crx, **kwargs):
         polyn=kwargs.get('polyn') #put this in the correct place
-        if not crx or crx == '()':
+        if not crx or crx in ['()', '(?:)']:
             return #don't make or store empty regexs; they match everywhere
         # log.info("Setting {} with {} value {}".format(c,polyn,crx))
         if len(c) == 1:
