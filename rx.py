@@ -290,7 +290,7 @@ def make(regex, **kwargs):
         except Exception as e:
             log.error('Regex compile problem ({};{})'.format(e,regex))
     return regex
-class RegexDict(dict):
+class RegexDict(object):
     """This makes and stores all the regex's needed for A−Z+T (for now)"""
     """distinguish and interpret should only be set once, on boot"""
     """This should probably reference/store another class of regexs which
@@ -666,7 +666,7 @@ class RegexDict(dict):
         for c in todo:
             self.makeglyphregex(c)
     def __init__(self,**kwargs):
-        super(dict, self).__init__()
+        super(object, self).__init__()
         self.count=0
         """At some point, I should think about distinguishing interpretation of
         VV as V, V:, or VV depending on V1=V2 or V1≠V2."""
