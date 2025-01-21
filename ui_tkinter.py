@@ -1901,7 +1901,7 @@ class Wait(Window): #tkinter.Toplevel?
         self['background']=parent['background']
         self.attributes("-topmost", True)
         title=(_("Please Wait! {name} Dictionary and Orthography Checker "
-                "in Process").format(name=self._root().program['theme'].name))
+                "in Process").format(name=self._root().program['name']))
         self.title(title)
         text=_("Please Wait...")
         self.l=Label(self.outsideframe, text=text,
