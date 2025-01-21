@@ -2643,7 +2643,7 @@ class Settings(object):
             # log.info('s: {}; rx: {}'.format(s, self.rxdict.rx[s]))
             # log.info(f"srx output: {self.rxdict.rx[s][0].findall(form)}")
             for i in [j for j in self.rxdict.rx[s][0].findall(form) if j]:
-                i=''.join(i) #('o', 'e') > 'oe'
+                i=''.join(i).lower() #('o', 'e') > 'oe', no upper case
                 # log.info('found polygraph ‘{}’'.format(i))
                 setnesteddictval(self.sextracted,1,ps,s,i,addval=True)
     def getscounts(self):
