@@ -204,7 +204,7 @@ def uilang(lang=None):
     if not lang:
         try:
             import ui_lang
-            log.info(f"Found ui_lang value {ui_lang.ui_lang}") 
+            log.info(f"Found ui_lang value {ui_lang.ui_lang}")
             return ui_lang.ui_lang
         except:
             log.debug("ui_lang didn't import, or didn't have a value to return")
@@ -226,7 +226,8 @@ def getfilename():
         return lift_url.filename
     else:
         log.debug("lift_url imported, but didn't contain a url that points "
-                    "to a file: {}".format(dir(lift_url)))
+                    "to an existing file "
+                    f"({getattr(lift_url,'filename',None)}): {dir(lift_url)}")
         return getfilenames()
 def gethome():
     home=pathlib.Path.home()
