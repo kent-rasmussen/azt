@@ -224,7 +224,7 @@ class Theme(object):
                 self.fakeroot.ww.progress(n*100/ntodo)
             except Exception as e:
                 log.info("Something happened: {}".format(e))
-                raise
+                # raise
                 pass
         try:
             self.logfinished("Image compilation")
