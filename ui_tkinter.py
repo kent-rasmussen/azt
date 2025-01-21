@@ -98,7 +98,7 @@ class Theme(object):
                     # log.info("scaled image exists for {}".format(filename))
                     imgurl=scaledalready
                 # log.info("Dirs: {}?={}".format(scaledalready,imgurl))
-                if scaledalready != imgurl: # should scale if off by >2% either way
+                else:
                     # log.info(f"scaledalready ({scaledalready}) != imgurl ({imgurl})")
                     # log.info("Scaling {}".format(imgurl)) #Just do this once!
                     try:
