@@ -242,7 +242,7 @@ def inxyz(db, lang, segmentlist): #This calls the above script for each characte
             actuals.append(s)
     log.log(2,'{} {}'.format(time.time()-start_time, segmentlist)) # with this
     return list(dict.fromkeys(actuals))
-def slisttoalternations(graphemeset,group=False):
+def slisttoalternations(graphemeset, **kwargs): #group=False,nocapture=False):
     """This fn takes a list (or set) of graphemes and
         orders them longest first
         separates with '|'
