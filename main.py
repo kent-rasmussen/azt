@@ -12214,7 +12214,7 @@ class Splash(ui.Window):
                         ),
                         'text':ui.Label(self.frame, text='', padx=50,
                                     wraplength=int(self.winfo_screenwidth()/2),
-                                    row=4,column=0,sticky='we'
+                                    row=5,column=0,sticky='we'
                                     )
                     }
         self.maketexts()
