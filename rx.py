@@ -89,8 +89,8 @@ def id(x):
         if len(t[0]) == len(t[1]):
             t={t[0][i]:t[1][i] for i in range(len(t[0]))}
         else:
-            for i in t[0]:
-                print(i)
+            # for i in t[0]:
+            #     print(i)
             t={i:t[1] for i in t[0]}
         x=x.translate(str.maketrans(t))
     """Confirm that r is correct here"""
@@ -127,7 +127,7 @@ def texmllike(x):
         '\u200d ': ".~"
     }
     for y in repls:
-        print("Replacing",y,"with",repls[y])
+        # print("Replacing",y,"with",repls[y])
         x=x.replace(y,repls[y])
     """Confirm that r is correct here"""
     x=re.sub(r'\\\\textless{}(([\?!/]|tex:)[^\\\\]*)\\\\textgreater{}',"<\\1>",x)
