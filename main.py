@@ -5293,7 +5293,7 @@ class Segments(object):
         # log.info("Looking at {} entries".format(len(d)))
         return {k:d[k] for k in d
                         if set(d[k]) & set(program['slices'].senses(**kwargs))}
-    def senseformsbyregex(self,regex,**kwargs):
+    def sensesbyforminregex(self,regex,**kwargs):
         """This function takes in a compiled regex,
         and outputs a list of senses."""
         ps=kwargs.get('ps',program['slices'].ps())
@@ -5337,12 +5337,12 @@ class Segments(object):
         a modified verify page (new instructions, for those that DON'T
         fit the test)"""
         self.buildregexnocheck()
-        unsortedids=set(self.senseformsbyregex(self.regex,ps=ps))
+        unsortedids=set(self.sensesbyforminregex(self.regex,ps=ps))
         for group in [i for i in groups if isnoninteger(i)]:
             self.buildregex(group=group,cvt=cvt,profile=profile,check=check)
             log.info(f"group: {group}, cvt: {cvt}, profile: {profile}, "
                     f"check: {check}; self.regex: {self.regex}")
-            s=set(self.senseformsbyregex(self.regex,ps=ps))
+            s=set(self.sensesbyforminregex(self.regex,ps=ps))
             if s: #senses just for this group
                 self.presort(list(s),check,group)
                 unsortedids-=s
@@ -9419,7 +9419,7 @@ class Report(object):
         """possibly iterating over all these parameters, used by buildregex"""
         self.buildregex(**kwargs)
         log.info(f"{checkprose}; \nregex: {self.regex}")
-        matches=set(self.senseformsbyregex(self.regex,**kwargs))
+        matches=set(self.sensesbyforminregex(self.regex,**kwargs))
         if 'ufsenses' in kwargs:
             matches=matches&set(kwargs['ufsenses'])
         if hasattr(self,'basicreported') and check in self.basicreported:
