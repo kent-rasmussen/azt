@@ -1427,8 +1427,8 @@ class StatusFrame(ui.Frame):
             htip=_("Refresh table, \nsave settings")
             th=ui.ToolTip(h,htip)
         r=list(program['status'][cvt][ps])
-        log.info("Table rows possible: {}".format(r))
-        log.info("Table columns possible: {}".format(allchecks))
+        # log.info("Table rows possible: {}".format(r))
+        # log.info("Table columns possible: {}".format(allchecks))
         # log.info("toneframes possible: {}".format(frames))
         for profile in profiles:
             column=0
@@ -1597,6 +1597,7 @@ class StatusFrame(ui.Frame):
             self.sensetodo()
         self.maybeboard()
         self.finalbuttons()
+        # self.dogrid()
 class Settings(object):
     """docstring for Settings."""
     def interfacelangwrapper(self,choice=None,window=None):
@@ -3221,16 +3222,15 @@ class Settings(object):
         window.destroy()
         program['taskchooser'].restart()
     def setgroup(self,choice,window):
-        # log.debug("group: {}".format(choice))
+        log.debug("setting group: {}".format(choice))
         program['status'].group(choice)
-        # log.debug("group: {}".format(choice))
         program['taskchooser'].mainwindowis.status.updategroup()
         if isinstance(program['taskchooser'].task,Sort) and (
                 hasattr(program['taskchooser'].task,'menu') and
                         program['taskchooser'].task.menu):
             program['taskchooser'].task.menubar.redoadvanced()
         window.destroy()
-        # log.debug("group: {}".format(choice))
+        log.debug(f"group {choice} set: {program['status'].group()}")
     def setgroup_comparison(self,choice,window):
         if hasattr(self,'group_comparison'):
             log.debug("group_comparison: {}".format(self.group_comparison))
@@ -3599,8 +3599,9 @@ class TaskDressing(HasMenus,ui.Window):
             # log.info("No dict changes; no updating the UI: {}".format(dictnow))
             self.trystatusframelater(dictnow)
             return
-        # log.info("Dict changes; checking attributes and updating the UI. ({})"
-        #                                                     "".format(dictnow))
+        log.info("Dict changes; checking attributes and updating the UI.")
+        # log.info(f"dictori: {dict}")
+        # log.info(f"dictnow: {dictnow}")
         if program['taskchooser'].donew['collectionlc']:
             program['settings'].makeeverythingok()
         #This will probably need to be reworked
@@ -3619,7 +3620,8 @@ class TaskDressing(HasMenus,ui.Window):
         if selfwasvisible:
             self.deiconify()
         program['settings'].storesettingsfile()
-        self.makestatusframe(dictnow)
+        self.makestatusframe(dictnow) #this method
+        log.info(f"{type(self)} makestatusframe iteration finished")
     def setSdistinctions(self):
         def notice(changed):
             def confirm():
@@ -4416,7 +4418,7 @@ class TaskDressing(HasMenus,ui.Window):
     def _getgroup(self,window,event=None, **kwargs):
         # fn=inspect.currentframe().f_code.co_name
         """Window is called in getgroup"""
-        log.info("_getgroup kwargs: {}".format(kwargs))
+        log.info(f"Asking for a group (_getgroup kwargs: {kwargs})")
         ps=kwargs.get('ps',program['slices'].ps())
         cvt=kwargs.get('cvt',program['params'].cvt())
         profile=kwargs.get('profile',program['slices'].profile())
@@ -4486,13 +4488,13 @@ class TaskDressing(HasMenus,ui.Window):
                                      window=window,
                                      column=0, row=4
                                      )
-        log.info("Done making buttonframe")
+        log.info("Done making _getgroup buttonframe")
     def getgroup(self,event=None,**kwargs): #guess=False,
         """I need to think though how to get this to wait appropriately
         both for single C/V selection, and for CxV selection"""
-        log.info("this sets the group")
+        # log.info("this sets the group")
         kwargs=grouptype(**kwargs) #if any should be True, set in wrappers above
-        log.info("getgroup kwargs: {}".format(kwargs))
+        # log.info("getgroup kwargs: {}".format(kwargs))
         program['settings'].refreshattributechanges()
         cvt=kwargs.get('cvt',program['params'].cvt())
         if cvt == 'V':
@@ -4591,7 +4593,7 @@ class TaskDressing(HasMenus,ui.Window):
             self.maybewrite(definitely=True)
         else:
             log.info("No final write to lift")
-        ui.Window.cleanup(self) #Exitable
+        ui.Window.cleanup(self) #Exitable; currently does nothing else
     def getrunwindow(self,nowait=False,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
         but the attribute is still there after window has been killed, so we
@@ -5406,11 +5408,15 @@ class Segments(object):
         a modified verify page (new instructions, for those that DON'T
         fit the test)"""
         self.buildregexnocheck()
+        # log.info(f"(presortgroups-buildregexnocheck) "
+        #         f"cvt: {cvt}, profile: {profile}, "
+        #         f"check: {check}; self.regex: {self.regex}")
         unsortedids=set(self.sensesbyforminregex(self.regex,ps=ps))
         for group in [i for i in groups if isnoninteger(i)]:
             self.buildregex(group=group,cvt=cvt,profile=profile,check=check)
-            log.info(f"group: {group}, cvt: {cvt}, profile: {profile}, "
-                    f"check: {check}; self.regex: {self.regex}")
+            # log.info(f"(presortgroups-buildregex) group: {group}, cvt: {cvt}, "
+            #         f"profile: {profile}, "
+            #         f"check: {check}; self.regex: {self.regex}")
             s=set(self.sensesbyforminregex(self.regex,ps=ps))
             if s: #senses just for this group
                 self.presort(list(s),check,group)
@@ -7825,7 +7831,6 @@ class Sort(object):
         if not nocheck:
             return newgroup
     def notdonewarning(self):
-        self.getrunwindow(nowait=True)
         buttontxt=_("Sort!")
         text=_("Hey, you're not done with {} {} words by {}!"
                 "\nCome back when you have time; restart where you left "
@@ -9494,10 +9499,11 @@ class Report(object):
             skipthisone=True
         if skipthisone:
             return
-        log.info(checkprose)
+        # log.info(checkprose)
         """possibly iterating over all these parameters, used by buildregex"""
         self.buildregex(**kwargs)
-        log.info(f"{checkprose}; \nregex: {self.regex}")
+        # log.info(f"{checkprose} (wordsbypsprofilechecksubcheckp-buildregex); \n"
+        #             f"regex: {self.regex}")
         matches=set(self.sensesbyforminregex(self.regex,**kwargs))
         if 'ufsenses' in kwargs:
             matches=matches&set(kwargs['ufsenses'])
@@ -12481,7 +12487,8 @@ class SliceDict(dict):
         try:
             profiles+=self.adhoc()[self._ps].keys()
         except KeyError:
-            log.info("There seem to be no ad hoc {} groups.".format(self._ps))
+            # log.info("There seem to be no ad hoc {} groups.".format(self._ps))
+            pass #don't care
         if (not hasattr(self,'_profile')
                 or self._profile not in profiles):
             self.profile(profiles[0])
