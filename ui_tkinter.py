@@ -1107,6 +1107,10 @@ class Text(Childof,ObectwArgs):
         #                             **kwargs)
 """These have parent (Childof) and grid (Gridded)"""
 class Frame(Gridded,Childof,tkinter.Frame):
+    def iswaiting(self):
+        return self.parent.iswaiting()
+    def deiconify(self):
+        return self.parent.deiconify()
     def columns(self):
         return self.grid_size()[0]
     def rows(self):
