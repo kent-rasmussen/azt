@@ -12214,11 +12214,11 @@ class Splash(ui.Window):
         self.labels['v']['text']=_("Version: {}".format(program['version']))
         self.labels['v2']['text']=_(
                             f"updated to {program['repo'].lastcommitdate()} " f"({program['repo'].lastcommitdaterelative()})")
-        self.labels['text']['text']=_("Your dictionary database is loading...\n"
-                "\n{name} is a computer program that accelerates community"
-                "-based language development by facilitating the sorting of a "
-                "beginning dictionary by vowels, consonants and tone. "
-                "(more in help:about)").format(name=program['name'])
+        self.labels['textl']['text']=_("Your dictionary database is loading...")
+        self.labels['text']['text']=_(f"{program['name']} is a computer "
+                "program that accelerates community-based language development "
+                "by facilitating the sorting of a beginning dictionary "
+                "by vowels, consonants and tone. (more in help:about)")
         self.labels['titletext']['text']=(_("{name} Dictionary and Orthography "
                                         "Checker").format(name=program['name']))
         self.update_idletasks()
@@ -12249,9 +12249,13 @@ class Splash(ui.Window):
                         'photo':ui.Label(self.frame, image=self.theme.photo['transparent'],text='',
                         row=3,column=0,sticky='we'
                         ),
+                        'textl':ui.Label(self.frame, text='', padx=50,
+                                    wraplength=int(self.winfo_screenwidth()/2),
+                                    row=4,column=0,sticky='we'
+                                    ),
                         'text':ui.Label(self.frame, text='', padx=50,
                                     wraplength=int(self.winfo_screenwidth()/2),
-                                    row=5,column=0,sticky='we'
+                                    row=6,column=0,sticky='we'
                                     )
                     }
         self.maketexts()
@@ -12259,7 +12263,7 @@ class Splash(ui.Window):
         self.progressbar=ui.Progressbar(self.frame,
                                 orient='horizontal',
                                 mode='determinate', #or 'indeterminate'
-                                row=4,column=0)
+                                row=5,column=0)
         self.w = self.winfo_reqwidth()
         x=int(self.master.winfo_screenwidth()/2-(self.w/2))
         self.h = self.winfo_reqheight()
