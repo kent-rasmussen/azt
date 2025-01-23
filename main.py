@@ -4695,7 +4695,7 @@ class TaskChooser(TaskDressing,ui.Window):
                 'sticky':'ew'
                 }
     def choosereports(self):
-        self.frame.status.bigbutton.destroy()
+        self.status.bigbutton.destroy()
         self.showreports=True
         self.setmainwindow(self)
         self.gettask()
@@ -4745,11 +4745,11 @@ class TaskChooser(TaskDressing,ui.Window):
         # if self.reports:
         self.withdraw()
         try:
-                self.frame.status.bigbutton.destroy()
+                self.status.bigbutton.destroy()
         except AttributeError:
             log.info("There doesn't seem to be a big button")
         if not self.showreports:
-            self.frame.status.finalbuttons()
+            self.status.finalbuttons()
         if not self.mainwindow:
             # self.correlatemenus() #not even if moving to this window
             self.unsetmainwindow() #first, so the program stays alive
@@ -6660,7 +6660,7 @@ class Parse(Segments):
             self.waitdone()
     def showwhenready(self):
         try:
-            assert self.frame.status.winfo_exists()
+            assert self.status.winfo_exists()
             log.info("showing")
             self.deiconify()
         except:
@@ -10022,7 +10022,7 @@ class Multislice(object):
     def __init__(self):
         # log.info("Setting up Multislice report, with {}".format(dir()))
         """I think these two should go:"""
-        self.frame.status.redofinalbuttons() #because the fns changed
+        self.status.redofinalbuttons() #because the fns changed
 class MultisliceS(Multislice):
     def __init__(self):
         self.do=self.basicreport
@@ -10039,7 +10039,7 @@ class Multicheck(object):
         program['status'].group(None)
         log.info("Setting up Multicheck report, based on {}".format(dir()))
         self.do=self.basicreport
-        self.frame.status.redofinalbuttons() #because the fns changed
+        self.status.redofinalbuttons() #because the fns changed
 class Multicheckslice(Multicheck,MultisliceS):
     def __init__(self):
         Multicheck.__init__(self)
@@ -10055,7 +10055,7 @@ class Background(object):
         log.info("Setting up background report, based on {}"
                 "".format(self.do.__name__))
         self.do=lambda fn=self.do:self.background(fn)
-        self.frame.status.redofinalbuttons() #because the fns changed
+        self.status.redofinalbuttons() #because the fns changed
 class SortCV(Sort,Segments,TaskDressing):
     """docstring for SortCV."""
     def __init__(self, parent):
@@ -10939,7 +10939,7 @@ class ReportCitationBackground(Background,ReportCitation):
         Background.__init__(self)
         """Does the above not work? was turned off..."""
         # self.do=lambda fn=self.getresults:self.background(fn)
-        # self.frame.status.redofinalbuttons() #because the fns changed
+        # self.status.redofinalbuttons() #because the fns changed
 class ReportCitationMulticheckBackground(Multicheck,Background,ReportCitation):
     """docstring for ReportCitation."""
     def tasktitle(self):
