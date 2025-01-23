@@ -980,6 +980,10 @@ class Menu(Childof,tkinter.Menu): #not Text
         # log.info("Menu opts: {}".format((self,label,command)))
         label=self.pad(label)
         tkinter.Menu.add_command(self,label=label,command=command)
+    def insert_cascade(self,label,menu,index):
+        # log.info("Cascade opts: {}".format((self,label,menu)))
+        label=self.pad(label)
+        tkinter.Menu.insert_cascade(self,label=label,menu=menu,index=index)
     def add_cascade(self,label,menu):
         # log.info("Cascade opts: {}".format((self,label,menu)))
         label=self.pad(label)

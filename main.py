@@ -672,9 +672,14 @@ class Menus(ui.Menu):
     """this is the overall menu set, from which each will be selected."""
     def command(self,parent,label,cmd):
         parent.add_command(label=label, command=cmd)
-    def cascade(self,parent,label,newmenuname):
+    def cascade(self,parent,label,newmenuname,index=False):
         setattr(self,newmenuname, ui.Menu(parent, tearoff=0))
-        parent.add_cascade(label=label, menu=getattr(self,newmenuname))
+        if index is not False:
+            parent.insert_cascade(label=label,
+                                    menu=getattr(self,newmenuname),
+                                    index=index)
+        else:
+            parent.add_cascade(label=label, menu=getattr(self,newmenuname))
     # def setmenus(self):
     #     self.menubar = ui.Menu(self)
     def change(self):
@@ -796,8 +801,19 @@ class Menus(ui.Menu):
         domenu.add_command(label=_("Join Groups"),
                         command=lambda x=check:Check.join(x))
         """Advanced"""
-    def advanced(self):
-        self.cascade(self,_("Advanced"),'advancedmenu')
+    def redoadvanced(self):
+        log.info("Redoing the Advanced menu")
+        title=_("Advanced")
+        i=self.index(title)
+        # log.info(f"Advanced is currently index {i}")
+        # self.parent.withdraw()
+        self.delete(_("Advanced"))
+        # self.advancedmenu.destroy()
+        self.advanced(index=i)
+        self.parent.update_idletasks()
+        # self.parent.deiconify()
+    def advanced(self,index=False):
+        self.cascade(self,_("Advanced"),'advancedmenu',index=index)
         options=[(_("Change to another Database (Restart)"),
                             program['taskchooser'].changedatabase),
                 (_("Digraph and Trigraph settings"),
