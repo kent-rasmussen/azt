@@ -235,11 +235,14 @@ class HasMenus():
         if r:
             program['taskchooser'].restart()
     def _removemenus(self,event=None):
-        log.info(_("Hiding menus?"))
+        # log.info(_(f"Hiding menus? (vars={vars(self)}, self:{self}, event={event})"))
         if hasattr(self,'menubar'):
             self.menubar.destroy()
+            # log.info(_(f"now {vars(self)}"))
             self.menu=False
+            # log.info(_(f"now {vars(self)}"))
             self.setcontext()
+        log.info("done with _removemenus")
     def _setmenus(self,event=None):
         # check=self.check
         log.info(_("Showing menus"))
