@@ -3453,6 +3453,8 @@ class TaskDressing(HasMenus,ui.Window):
         program['settings'].set('showdetails', True, refresh=True)
         self.setcontext()
     def setcontext(self,context=None):
+        if self.exitFlag.istrue() or not self.winfo_exists():
+            return
         self.context.menuinit() #This is a ContextMenu() method
         if not hasattr(self,'menu') or not self.menu:
             self.context.menuitem(_("Show Menus"),self._setmenus)
