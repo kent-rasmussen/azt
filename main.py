@@ -864,8 +864,11 @@ class Menus(ui.Menu):
                                                 self.parent.addmodadhocsort),]
         if isinstance(self.parent,SortT):
             options.extend([(_("Add Tone frame"), self.parent.addframe)])
+        group=program['status'].group()
+        if not group:
+            group=_("Select")
         options.extend([(_("Resort skipped data"), self.parent.tryNAgain),
-                        (_("Reverify current framed group"),
+                        (_(f"Reverify current group ({group})"),
                                                         self.parent.reverify),
                         (_("Join Groups"), self.parent.join)
                         ])
