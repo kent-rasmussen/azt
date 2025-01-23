@@ -3538,17 +3538,17 @@ class TaskDressing(HasMenus,ui.Window):
                 'maxprofiles':program['settings'].maxprofiles,
                 'maxpss':program['settings'].maxpss
                 }
-        if 'slices' in program:
-            dictnow.update({
-                'cvt':program['params'].cvt(),
-                'check':program['params'].check(),
-                'ps':program['slices'].ps(),
-                'profile':program['slices'].profile(),
-                'group':program['status'].group(),
-                'tableiteration':self.tableiteration,
-                })
-            if isinstance(self,Multicheck):
-                dictnow.update({'cvtstodo':self.task.cvtstodo})
+        # if 'slices' in program:
+        dictnow.update({
+            'cvt':program['params'].cvt(),
+            # 'check':program['params'].check(),
+            'ps':program['slices'].ps(),
+            'profile':program['slices'].profile(),
+            # 'group':program['status'].group(),
+            'tableiteration':self.tableiteration,
+            })
+        if isinstance(self,Multicheck):
+            dictnow.update({'cvtstodo':self.task.cvtstodo})
         if isinstance(self,Parse):
             try:
                 dictnow.update({
