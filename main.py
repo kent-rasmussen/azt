@@ -975,38 +975,31 @@ class StatusFrame(ui.Frame):
             'width':None, #10
             'columnspan':3,
             'columnplus':0}
-    def proselabel(self,label,parent=None,cmd=None,tt=None):
-        if parent is None:
+    def proselabel(self,**kwargs):
+        if not kwargs.get('parent'):
             parent=self.proseframe
             column=self.opts['labelcolumn']
             row=self.opts['row']
             columnspan=self.opts['columnspan']
             ipadx=self.opts['labelxpad']
         else:
-            column=0+self.opts['columnplus']
+            parent=kwargs.get('parent')
+            column=0+kwargs.get('columnplus',self.opts.get('columnplus'))
             row=0
             columnspan=1
             ipadx=0
+        text=kwargs.get('text',kwargs.get('label'))
         if not self.mainrelief:
-            l=ui.Label(parent, text=label,font='report',anchor='w')
+            l=ui.Label(parent, text=text,font='report',anchor='w')
         else:
-            l=ui.Button(parent,text=label,font='report',anchor='w',
+            l=ui.Button(parent,text=text,font='report',anchor='w',
                 relief=self.mainrelief)
         l.grid(column=column, row=row, columnspan=columnspan,
                 ipadx=ipadx, sticky='w')
-        if cmd is not None:
-            l.bind('<ButtonRelease-1>',cmd)
-        if tt is not None:
-            ttl=ui.ToolTip(l,tt)
-    def labels(self,parent,label,value): #not used!
-        ui.Label(self, text=label,
-                column=opts['labelcolumn'], row=self.opts['row'],
-                ipadx=opts['labelxpad'], sticky='w'
-                )
-        ui.Label(self, text=value,
-                column=opts['valuecolumn'], row=self.opts['row'],
-                ipadx=opts['labelxpad'], sticky='w'
-                )
+        if kwargs.get('cmd'):
+            l.bind('<ButtonRelease-1>',kwargs.get('cmd'))
+        if kwargs.get('tt'):
+            ttl=ui.ToolTip(l,kwargs.get('tt'))
     def button(self,text,fn,**kwargs): #=opts['labelcolumn']
         """cmd overrides the standard button command system."""
         ttt=kwargs.pop('tttext',None)
@@ -1164,20 +1157,40 @@ class StatusFrame(ui.Frame):
         #                         program['status'].profiles(torecord=True)))
         self.proselabel(t,cmd=cmd,parent=line)
         self.opts['columnplus']=0
-    def cvcheck(self,line):
-        self.opts['columnplus']=1
-        t=(_("working on {}".format(program['params'].cvcheckname())))
-        self.proselabel(t,cmd=self.task.getcheck,
-                        parent=line)
-        # self.opts['row']+=1
-    def cvgroup(self,line):
-        if program['status'].group():
-            t=(_("= {}".format(program['status'].group())))
+    def updatecheck(self):
+        if program['params'].cvt() == 'T':
+            log.info("not updating Tone check yet")
         else:
-            t=(_("(All groups)"))
-        self.opts['columnplus']=2
-        self.proselabel(t,cmd=self.task.getgroup,
-                        parent=line)
+            self.labels['cvcheck']['text'].set(self.cvchecklabel())
+    def cvchecklabel(self):
+            return (_("working on {}".format(program['params'].cvcheckname())))
+    def cvcheck(self,line):
+        self.labels['cvcheck']={'text':ui.StringVar(value=self.cvchecklabel()),
+                                'columnplus':1,
+                                'cmd':self.task.getcheck,
+                                'parent':line,
+                                'tt':_("change this check")}
+        self.proselabel(**self.labels['cvcheck'])
+        # self.opts['row']+=1
+    def updategroup(self):
+        if program['params'].cvt() == 'T':
+            log.info("not updating Tone group yet")
+        else:
+            self.labels['cvgroup']['text'].set(self.cvgrouplabel())
+    def cvgrouplabel(self):
+        if 'x' in program['params'].check():
+            return
+        if program['status'].group():
+            return (_("= {}".format(program['status'].group())))
+        else:
+            return (_("(All groups)"))
+    def cvgroup(self,line):
+        self.labels['cvgroup']={'text':ui.StringVar(value=self.cvgrouplabel()),
+                                'columnplus':2,
+                                'cmd':self.task.getgroup,
+                                'parent':line,
+                                'tt':_("change this group")}
+        self.proselabel(**self.labels['cvgroup'])
         # self.opts['row']+=1
     def buttoncolumnsline(self):
         self.opts['row']+=1
@@ -1544,7 +1557,9 @@ class StatusFrame(ui.Frame):
         self.parent=parent
         self.task=task #this is the window that called it; task or chooser
         self.mainrelief=kwargs.pop('relief',None) #not for frame
+        self.labels={} #make a place to store these
         kwargs['padx']=25
+        kwargs['gridwait']=True
         super(StatusFrame, self).__init__(parent, **kwargs)
         self.makeproseframe()
         self.interfacelangline()
@@ -3206,6 +3221,11 @@ class Settings(object):
         # log.debug("group: {}".format(choice))
         program['status'].group(choice)
         # log.debug("group: {}".format(choice))
+        program['taskchooser'].mainwindowis.status.updategroup()
+        if isinstance(program['taskchooser'].task,Sort) and (
+                hasattr(program['taskchooser'].task,'menu') and
+                        program['taskchooser'].task.menu):
+            program['taskchooser'].task.menubar.redoadvanced()
         window.destroy()
         # log.debug("group: {}".format(choice))
     def setgroup_comparison(self,choice,window):
@@ -3219,6 +3239,7 @@ class Settings(object):
         self.refreshattributechanges()
     def setcheck(self,choice,window=None):
         program['params'].check(choice)
+        program['taskchooser'].mainwindowis.status.updatecheck()
         self.attrschanged.append('check')
         self.refreshattributechanges()
         if window:
