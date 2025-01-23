@@ -1143,6 +1143,7 @@ class Frame(Gridded,Childof,tkinter.Frame):
 class Label(Gridded,Text,tkinter.Label): #,tkinter.Label
     def __init__(self, parent, **kwargs):
         # log.info("Label Parent: {}".format(type(parent)))
+        # log.info(f"text type: {type(kwargs.get('text'))}")
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
         Childof.__init__(self,parent)
@@ -1157,12 +1158,22 @@ class Label(Gridded,Text,tkinter.Label): #,tkinter.Label
         #                         kwargs
         #                         )
         #         )
-        tkinter.Label.__init__(self,
+        if isinstance(self.text, tkinter.StringVar):
+            # log.info("Found StringVar, using")
+            tkinter.Label.__init__(self,
                                 parent,
-                                text=self.text,
+                                textvariable=self.text,
                                 image=self.image,
                                 font=self.font,
                                 **kwargs)
+        else:
+            # log.info(f"Making text label ({self.text})")
+            tkinter.Label.__init__(self,
+                                    parent,
+                                    text=self.text,
+                                    image=self.image,
+                                    font=self.font,
+                                    **kwargs)
         i=self.grid_info()
         if i and self.text:
             self.wrap()
