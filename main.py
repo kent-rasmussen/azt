@@ -3543,12 +3543,18 @@ class TaskDressing(HasMenus,ui.Window):
         #This will probably need to be reworked
         if self.exitFlag.istrue():
             return
-        if hasattr(self.frame,'status') and self.frame.status.winfo_exists():
-            self.frame.status.destroy()
-        self.frame.status=StatusFrame(self.frame, self,
-                                        relief=self.mainrelief,
-                                        row=1, column=0, sticky='nw')
-        self.frame.update_idletasks()
+        selfwasvisible=self.winfo_viewable()
+        status=StatusFrame(self.frame, self,
+                            relief=self.mainrelief,
+                            row=1, column=0, sticky='nw')
+        if selfwasvisible:
+            self.withdraw()
+        if hasattr(self,'status') and self.status.winfo_exists():
+            self.status.destroy()
+        self.status=status
+        self.status.dogrid()
+        if selfwasvisible:
+            self.deiconify()
         program['settings'].storesettingsfile()
         self.makestatusframe(dictnow)
     def setSdistinctions(self):
@@ -7909,6 +7915,7 @@ class Sort(object):
         self.runwindow.waitdone()
         for b in self.buttonframe.groupbuttonlist:
             b.setcanary(self.sortitem)
+        self.runwindow.deiconify() # not until here
         self.runwindow.wait_window(window=self.sortitem)
         if not self.runwindow.exitFlag.istrue():
             return sense
@@ -8135,6 +8142,7 @@ class Sort(object):
             return 1
         self.sframe.windowsize()
         self.runwindow.waitdone()
+        self.runwindow.deiconify() # not until here
         b.wait_window(self.verifycanary)
         if self.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
             return 1
@@ -8270,6 +8278,7 @@ class Sort(object):
             # log.info("Next button at r:{}, c:{}".format(row,column))
         """If all is good, destroy this frame."""
         self.runwindow.waitdone()
+        self.runwindow.deiconify() # not until here
         ngroupstojoin=0
         while ngroupstojoin < 2:
             bok=ui.Button(self.sortitem, text=oktext,

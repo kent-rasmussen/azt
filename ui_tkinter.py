@@ -783,7 +783,11 @@ class UI(ObectwArgs):
         if self.iswaiting():
             log.debug("There is already a wait window: {}".format(self.ww))
             return
-        self.withdraw()
+        if self.winfo_viewable():
+            self.withdraw()
+            self.wasvisible=True
+        else:
+            self.wasvisible=False
         self.ww=Wait(self,msg,cancellable=cancellable)
     def iswaiting(self):
         return hasattr(self,'ww') and self.ww.winfo_exists()
@@ -801,7 +805,8 @@ class UI(ObectwArgs):
     def waitdone(self):
         try:
             self.ww.close()
-            self.deiconify()
+            if self.wasvisible:
+                self.deiconify()
         except tkinter.TclError:
             pass
         except AttributeError:
