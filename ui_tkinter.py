@@ -1096,7 +1096,7 @@ class Text(Childof,ObectwArgs):
                     and not self.norender):
             self.render(**kwargs)
             # log.info("text and image: {} - {}".format(self.text,self.image))
-        else:
+        elif not isinstance(self.text, tkinter.StringVar):
             self.text=nfc(self.text)
         # log.info(getattr(self,'wraplength',0))
         # log.info("Text wraplength: {}".format(kwargs['wraplength']))
