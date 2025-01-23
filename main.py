@@ -4549,7 +4549,9 @@ class TaskDressing(HasMenus,ui.Window):
         buttonFrame1.wait_window(window)
     def runwindowcleanup(self):
         log.info("Shutting down runwindow")
-        if self.exitFlag.istrue() and program['taskchooser'].towrite:
+        if not self.exitFlag.istrue():
+            self.deiconify()
+        if program['taskchooser'].towrite:
             log.info("Final write to lift")
             self.maybewrite(definitely=True)
         else:
