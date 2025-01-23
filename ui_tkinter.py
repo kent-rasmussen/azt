@@ -1415,11 +1415,12 @@ class ContextMenu(Childof):
                 self.parent.unbind_all('<Button-1>')
     def menuinit(self):
         """redo menu on context change"""
-        self.menu = Menu(self.root, tearoff=0)
         try:
-            log.info("menuinit done")#: {}".format(self.menu.__dict__))
-        except:
-            log.error("Problem initializing context menu")
+            self.menu = Menu(self.root, tearoff=0)
+            # log.info("menuinit done")#: {}".format(self.menu.__dict__))
+        except Exception as e:
+            log.error(f"Problem initializing context menu: {e}")
+            raise
     def menuitem(self,msg,cmd):
         try:
             self.menu.add_command(label=msg,command=cmd)
