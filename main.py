@@ -7794,7 +7794,9 @@ class Sort(object):
                 "\nCome back when you have time; restart where you left "
                 "off by pressing ‘{}’".format(self.ps,self.profile,self.check,
                                                 buttontxt))
-        ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
+        self.withdraw()
+        ErrorNotice(text=text,title=_("Not Done!"),wait=True) #all
+        self.deiconify()
     def resetsortbutton(self):
         # This attribute/fn is used to track whether something has been done
         # since the user last asked for a sort. We don't want the user in an
