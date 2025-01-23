@@ -147,7 +147,8 @@ def glossdeftoform(x):
         # x=re.sub('\(.*\)','',x)
         x=re.sub(',.*','',x) #stop at any comma
         x=re.sub('^ *','',x) #no leading spaces
-        x=re.sub(' .*','',x) #just use the first word
+        if not re.match('[A-Z]',x): #initial capital means proper name: leave it
+            x=re.sub(' .*','',x) #just use the first word
         # x=re.sub('^(([^() ]+)( [^() ]+){,2})(.*)*$','\\1',x) #up to three words, no parens
         # x=re.sub(',$','',x)
         # x=re.sub(', ',',',x)
