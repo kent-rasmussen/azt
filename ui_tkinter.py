@@ -1132,12 +1132,14 @@ class Frame(Gridded,Childof,tkinter.Frame):
         self.configured+=1
     def __init__(self, parent, **kwargs):
         # log.info("Initializing Frame object")
+        gridwait=kwargs.pop('gridwait',False)
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
         Childof.__init__(self,parent)
         tkinter.Frame.__init__(self,parent,**kwargs)
         UI.__init__(self)
-        self.dogrid()
+        if not gridwait:
+            self.dogrid()
 class Label(Gridded,Text,tkinter.Label): #,tkinter.Label
     def __init__(self, parent, **kwargs):
         # log.info("Label Parent: {}".format(type(parent)))
