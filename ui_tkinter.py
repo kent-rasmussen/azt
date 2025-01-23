@@ -1506,7 +1506,7 @@ class ButtonFrame(Frame):
                 "put it in a tuple, with a second argument to display, so "
                 "users know what it means when they select it."))
                 return
-            log.info("first optionlist item: {}".format(optionlist[0]))
+            # log.info("first optionlist item: {}".format(optionlist[0]))
             optionlist = [(
                             {'code':optionlist[i], 'name':optionlist[i]}
                             if type(optionlist[i]) is not tuple
