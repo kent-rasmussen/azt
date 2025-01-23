@@ -7896,7 +7896,7 @@ class Sort(object):
                 #only on first two ifs:
         if fn:
             done+='\n'+_("Moving on to the next {}!".format(next))
-        ErrorNotice(text=done,title=_("Done!")) #all
+        ErrorNotice(text=done,title=_("Done!"),wait=True) #all
         if fn:
             fn() #only on first two ifs
     def presenttosort(self):
