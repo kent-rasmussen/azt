@@ -5321,6 +5321,7 @@ class Segments(object):
         if regex.search(form):
             self.output+=id
     def formspsprofile(self,**kwargs):
+        """I think I want to move away from this"""
         log.info("Asked for forms to search for a data slice (only do once!)")
         ps=kwargs.get('ps',program['slices'].ps())
         d=program['settings'].formstosearch[ps] #{form:sense}
@@ -5331,15 +5332,12 @@ class Segments(object):
         """This function takes in a compiled regex,
         and outputs a list of senses."""
         ps=kwargs.get('ps',program['slices'].ps())
-        self.output=[]
         # log.info("Kwargs keys: {} (formstosearch n={})".format(kwargs.keys(),
         #                                 len(kwargs['formstosearch'])))
-        dicttosearch=kwargs.get('formstosearch')
-        if not dicttosearch:
-            dicttosearch=self.formspsprofile(**kwargs)
         # log.info("Reduced to {} entries".format(len(dicttosearch)))
         # log.info("Looking for senses by regex {}".format(regex))
-        self.output=[s for s in program['db'].senses
+        self.output=[s for s in program['slices'].senses(**kwargs)
+                                                    # program['db'].senses
                         if s.ftypes[self.ftype].textvaluebylang(self.analang)
                         if regex.search(
                         s.ftypes[self.ftype].textvaluebylang(self.analang)
@@ -9276,7 +9274,7 @@ class Report(object):
         c2 = 'Any'
         """nn() here keeps None and {} from the output, takes one string,
         list, or tuple."""
-        kwargs['formstosearch']=self.formspsprofile(**kwargs)
+        # kwargs['formstosearch']=self.formspsprofile(**kwargs)
         text=(_("{} roots of form {} by {}".format(kwargs['ps'],
                                                     kwargs['profile'],
                                                     kwargs['check'])))
@@ -9808,7 +9806,7 @@ class Report(object):
             p=xlp.Paragraph(s1,t)
             log.info(t)
             for kwargs['profile'] in profiles:
-                kwargs['formstosearch']=self.formspsprofile(**kwargs)
+                # kwargs['formstosearch']=self.formspsprofile(**kwargs)
                 t=_("{} {}s".format(kwargs['profile'],kwargs['ps']))
                 s2=xlp.Section(s1,t,level=2)
                 log.info(t)
