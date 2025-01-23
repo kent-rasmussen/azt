@@ -7835,6 +7835,8 @@ class Sort(object):
         # exitstatuses()
         if self.exitFlag.istrue(): #if the task has been shut down, stop
             return
+        if not hasattr(self,'did'):
+            self.resetsortbutton()
         cvt=program['params'].cvt()
         self.check=program['params'].check()
         self.ps=program['slices'].ps()
