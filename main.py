@@ -464,7 +464,11 @@ class LiftChooser(ui.Window,HasMenus):
         newfile=self.newdirname.joinpath('Demo_'+self.demolang+'.lift')
         if file.exists(newfile):
             self.wait.close()
-            ErrorNotice(_("File {} already exists!").format(newfile),wait=True)
+            ErrorNotice(_(f"File {newfile} already exists! \nUse it?"),
+                        wait=True,
+                        button=(_("Yes!"),lambda event,x=str(newfile):
+                                self.setfilenameandcontinue(x,restart=True))
+                        )
             return
         self.cawldb.getentries()
         self.cawldb.getsenses()
@@ -531,16 +535,21 @@ class LiftChooser(ui.Window,HasMenus):
         else:
             name=choice
         log.info("self.name: {}".format(name))
-        self.deiconify()
         if name:
-            self.name=self.filechooser.name=name
-            file.writefilename(name)
-            self.destroy()
-            if (hasattr(program['taskchooser'],'splash') and
-                        program['taskchooser'].splash.winfo_exists()):
-                program['taskchooser'].splash.deiconify()
-            if restart:
-                sysrestart()
+            self.setfilenameandcontinue(name,restart)
+        elif not self.name: #If not either, trust that Demo is working
+            self.deiconify() #let user pick again
+    def setfilenameandcontinue(self,name,restart=False,event=None):
+        log.info(_("Running setfilenameandcontinue with "
+                    f"name={name} and restart={restart}"))
+        self.name=self.filechooser.name=name
+        file.writefilename(name)
+        self.destroy()
+        if (hasattr(program['taskchooser'],'splash') and
+                    program['taskchooser'].splash.winfo_exists()):
+            program['taskchooser'].splash.deiconify()
+        if restart:
+            sysrestart()
     def __init__(self,chooser,filenamelist):
         self.filechooser=chooser
         self.parent=program['root']
