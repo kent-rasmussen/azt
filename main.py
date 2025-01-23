@@ -9388,6 +9388,7 @@ class Report(object):
         profile=kwargs.get('profile',program['slices'].profile())
         default=kwargs.get('default',True)
         check=kwargs.get('check',program['params'].check())
+        group=kwargs.get('group',program['status'].group())
             #this is only for adhoc "big button" reports.
 
         if isinstance(self, Multislice) and 'psprofiles' in kwargs:
@@ -9404,6 +9405,8 @@ class Report(object):
             reporttype+=' '+'-'.join(self.cvtstodo)
         elif not isinstance(self,Tone) or isinstance(self,Segments):
             reporttype+='-'+check
+            if group and not 'x' in check:
+                reporttype+='='+group
         else:
             if self.bylocation:
                 reporttype+='Tone-bylocation'
