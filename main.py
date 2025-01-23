@@ -3524,6 +3524,15 @@ class TaskDressing(HasMenus,ui.Window):
         program['settings'].setrefreshdelay()
         self.parent.after(program['settings'].refreshdelay,self.makestatusframe,dict)
     def makestatusframe(self,dict=None):
+        """There are two threads of this method running or waiting at all times,
+        one for the taskchooser and another for the task. this should probably
+        be converted to a more tkinter native update, like with
+        StringVar().set()"""
+        if 'slices' not in program:
+            # slices is done by taskchooser on boot, but later
+            # don't update both taskchooser and task, just the visible one
+            self.trystatusframelater(dict)
+            return #don't die, but don't do this until ready, either
         dictnow={
                 'mainrelief':self.mainrelief,
                 'showdetails':program['settings'].showdetails, #attr, not task.method
