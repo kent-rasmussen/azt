@@ -10930,6 +10930,7 @@ class ReportCitation(Report,Segments,TaskDressing):
         self.do=self.getresults
         TaskDressing.__init__(self,parent)
         Report.__init__(self)
+        program['status'].group(None) #default to reports with all groups
 class ReportCitationBackground(Background,ReportCitation):
     """docstring for ReportCitation."""
     def tasktitle(self):
