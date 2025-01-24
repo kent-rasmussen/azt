@@ -681,17 +681,10 @@ class Exitable(object):
 class Gridded(ObectwArgs):
     def dogrid(self):
         if self._grid:
-            log.log(4,"Gridding at r{},c{},rsp{},csp{},st{},padx{},pady{},"
-                    "ipadx{},ipady{}".format(self.row,
-                                self.column,
-                                self.rowspan,
-                                self.columnspan,
-                                self.sticky,
-                                self.padx,
-                                self.pady,
-                                self.ipadx,
-                                self.ipady,
-                                ))
+            # log.info(f"Gridding {type(self)} at r{self.row},c{self.column},"
+            #         f"rsp{self.rowspan},csp{self.columnspan},st{self.sticky},"
+            #         f"padx{self.padx},pady{self.pady},ipadx{self.ipadx},"
+            #         f"ipady{self.ipady}")
             self.grid(
                         row=self.row,
                         column=self.column,
