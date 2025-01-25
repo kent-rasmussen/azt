@@ -3289,9 +3289,14 @@ class Settings(object):
                 self.refreshattributechanges()
         else:
             log.debug(_('No change: {} == {}'.format(attribute,choice)))
+    def statusisup(self):
+        """Use this for when a setting should ignore status frame updates"""
+        return (hasattr(program['taskchooser'].mainwindowis,'status') and
+                type(program['taskchooser'].mainwindowis.status) is StatusFrame)
     def setsecondformfieldN(self,choice,window=None):
         self.secondformfield[self.nominalps]=self.pluralname=choice
-        program['taskchooser'].mainwindowis.status.updatefields()
+        if self.statusisup():
+            program['taskchooser'].mainwindowis.status.updatefields()
         self.attrschanged.append('secondformfield')
         for entry in program['db'].entries:
             entry.plvalue(self.pluralname,program['params'].analang) # get the right field!
@@ -3300,7 +3305,8 @@ class Settings(object):
             window.destroy()
     def setsecondformfieldV(self,choice,window=None):
         self.secondformfield[self.verbalps]=self.imperativename=choice
-        program['taskchooser'].mainwindowis.status.updatefields()
+        if self.statusisup():
+            program['taskchooser'].mainwindowis.status.updatefields()
         self.attrschanged.append('secondformfield')
         for entry in program['db'].entries:
             entry.impvalue(self.imperativename,program['params'].analang) # get the right field!
@@ -3393,7 +3399,8 @@ class Settings(object):
             window.destroy()
     def setbuttoncolumns(self,choice,window=None):
         self.buttoncolumns=program['taskchooser'].mainwindowis.buttoncolumns=choice
-        program['taskchooser'].mainwindowis.status.updatebuttoncolumns()
+        if self.statusisup():
+            program['taskchooser'].mainwindowis.status.updatebuttoncolumns()
         if window:
             window.destroy()
     def setmaxprofiles(self,choice,window):
