@@ -2303,6 +2303,11 @@ class Settings(object):
                 self.pluralname=self.secondformfield[self.nominalps]
             if self.verbalps in self.secondformfield:
                 self.imperativename=self.secondformfield[self.verbalps]
+    def makesecondformfieldsOK(self):
+        if self.nominalps not in self.secondformfield:
+            program['taskchooser'].mainwindowis.getsecondformfieldN()
+        if self.verbalps not in self.secondformfield:
+            program['taskchooser'].mainwindowis.getsecondformfieldV()
     def secondformfieldsOK(self):
         if (self.nominalps in self.secondformfield and
             self.verbalps in self.secondformfield):
