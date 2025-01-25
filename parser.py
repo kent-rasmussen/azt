@@ -236,6 +236,11 @@ class Engine(object):
 
             log.info("missing node on {} ({})".format(self.senseid,e.args[0]))
             raise
+        except KeyError as e:
+            # if "'Engine' object has no attribute 'lxnode'" in e.args[0]:
+
+            log.info(f"missing field {e.args[0]} in fieldnames")
+            return ("","","","")
     def addaffixset(self,ps,afxtuple):
         self.catalog.addaffixset((ps,afxtuple))
         self.catalog.addparsed(self.senseid)
