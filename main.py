@@ -6866,6 +6866,9 @@ class Parse(Segments):
             log.info("Storing word: {}".format(self.sense.id))
         except AttributeError as e:
             log.info("Not storing word (WordCollectnParse): {}".format(e))
+    def waitforOKsecondfields(self):
+        while not program['settings'].secondformfieldsOK():
+            after(10*100,callback=self.waitforOKsecondfields) # wait a second
     def __init__(self, parent): #frame, filename=None
         self.byslice=False
         self.initsensetodo()
@@ -6875,8 +6878,7 @@ class Parse(Segments):
         self.nominalps=program['settings'].nominalps
         self.verbalps=program['settings'].verbalps
         self.loadfromlift=True
-        if not program['settings'].secondformfieldsOK():
-            return
+        # program['settings'].makesecondformfieldsOK() #do elsewhere
         if hasattr(parent,'parsecatalog'):
             self.parsecatalog=parent.parsecatalog
         else:
@@ -6968,12 +6970,12 @@ class WordCollectnParse(Parse,WordCollection,TaskDressing):
         Parse.__init__(self,parent)
         WordCollection.__init__(self,parent)
         program['taskchooser'].withdraw()
-        if not program['settings'].secondformfieldsOK():
-            ErrorNotice(_("To parse, you must first define which fields "
-                            "should contain those forms"),
-                            wait=True)
-            self.shutdowntask()
-            return
+        # if not program['settings'].secondformfieldsOK():
+        #     ErrorNotice(_("To parse, you must first define which fields "
+        #                     "should contain those forms"),
+        #                     wait=True)
+        #     self.shutdowntask()
+        #     return
         #This should either be adapted to use parse or not by keyword, or have
         # another method for addnParse
         # if me:
@@ -6995,12 +6997,12 @@ class WordsParse(Parse,WordCollection,TaskDressing):
         TaskDressing.__init__(self,parent)
         Parse.__init__(self,parent)
         WordCollection.__init__(self,parent)
-        if not program['settings'].secondformfieldsOK():
-            ErrorNotice(_("To parse, you must first define which fields "
-                            "should contain secondary forms"),
-                            wait=True)
-            self.shutdowntask()
-            return
+        # if not program['settings'].secondformfieldsOK():
+        #     ErrorNotice(_("To parse, you must first define which fields "
+        #                     "should contain secondary forms"),
+        #                     wait=True)
+        #     self.shutdowntask()
+        #     return
         self.dodone=True #give me words with citation done
         self.checkeach=True #confirm each word (not default)
         self.dodoneonly=True #don't give me other words
