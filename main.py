@@ -550,6 +550,14 @@ class LiftChooser(ui.Window,HasMenus):
             program['taskchooser'].splash.deiconify()
         if restart:
             sysrestart()
+    def displayname(self,filename):
+        """Ultimately, it would be nice to return some lift-internal name here"""
+        log.info(f"working on {filename}")
+        name=file.getfilenamefrompath(filename)
+        if file.parentfrompath(filename)+'.lift' == name:
+            return name
+        else:
+            return file.fileandparentfrompath(filename)
     def __init__(self,chooser,filenamelist):
         self.filechooser=chooser
         self.parent=program['root']
@@ -561,7 +569,7 @@ class LiftChooser(ui.Window,HasMenus):
         optionlist=[('New',_("Start work on a new language"))]
         optionlist+=[('Clone',_("Copy work from a USB drive"))]
         if filenamelist:
-            optionlist+=[(f,f) for f in filenamelist] #keep everything a tuple
+            optionlist+=[(f,self.displayname(f)) for f in filenamelist]
             self.other=_("Select another database on my computer") #use later
         else:
             self.other=_("Select a database on my computer") #use later

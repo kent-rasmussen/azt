@@ -22,6 +22,10 @@ def getfile(filename):
 def getfilenamefrompath(filename):
     if filename:
         return pathlib.Path(filename).name
+def fileandparentfrompath(url):
+    return getreldir(pathlib.Path(url).parent.parent, pathlib.Path(url))
+def parentfrompath(url):
+    return getreldir(pathlib.Path(url).parent.parent, pathlib.Path(url).parent)
 def fullpathname(filename):
     """This is full, relative to this file (in the program repo root)"""
     try:
