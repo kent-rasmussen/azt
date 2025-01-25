@@ -1121,7 +1121,7 @@ class StatusFrame(ui.Frame):
                     isinstance(self.task,WordCollection
                     ) and self.task.ftype not in ['lx','lc'])):
                 cmd()
-                return #just do one at a time
+                # return #just do one at a time
             self.labels['fields'+ps]={
                             'text':ui.StringVar(value=self.fieldslabel(ps)),
                             'columnplus':1,
