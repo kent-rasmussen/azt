@@ -1095,7 +1095,8 @@ class StatusFrame(ui.Frame):
         self.proselabel(**self.labels['glosslang2'])
     def updatefields(self):
         for ps in [program['settings'].nominalps, program['settings'].verbalps]:
-            self.labels['fields'+ps]['text'].set(self.fieldslabel(ps))
+            if 'fields'+ps in self.labels:
+                self.labels['fields'+ps]['text'].set(self.fieldslabel(ps))
     def fieldslabel(self,ps):
         if ps in program['settings'].secondformfield:
             field=program['settings'].secondformfield[ps]
