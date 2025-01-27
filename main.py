@@ -1026,6 +1026,8 @@ class StatusFrame(ui.Frame):
     """These functions point to program['taskchooser'] functions, betcause we don't
     know who this frame's parent is"""
     def makeproseframe(self):
+        if hasattr(self,'proseframe'):
+            self.proseframe.destroy()
         self.proseframe=ui.Frame(self,row=0,column=0)
     def updateinterfacelang(self):
         self.labels['interfacelang']['text'].set(self.interfacelanglabel())
@@ -13483,7 +13485,7 @@ class StatusDict(dict):
         if 'last' not in sn:
             sn['last']={}
         if update:
-            sn['last'][task]=now()
+            sn['last'][task]=str(now())
         if kwargs.get('write'):
             self.store()
         if task in sn['last']:
