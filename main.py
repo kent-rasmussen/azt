@@ -8410,9 +8410,9 @@ class Sort(object):
         check=program['params'].check()
         frames=program['toneframes'].get(program['slices'].ps())
         if frames:
-            frame=frames.get(self.check)
+            frame=frames.get(check)
         else:
-            frame=None # e.g., for segmental checks
+            frame=None # e.g., for segmental checks before tone frames defined
         text=sense.formatted(self.analang,self.glosslangs,
                             program['params'].ftype(),frame)
         if program['settings'].lowverticalspace:
