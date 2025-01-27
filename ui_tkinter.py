@@ -776,11 +776,9 @@ class UI(ObectwArgs):
         if self.iswaiting():
             log.debug("There is already a wait window: {}".format(self.ww))
             return
-        if self.winfo_viewable():
+        self.showafterwait=self.winfo_viewable()
+        if self.showafterwait:
             self.withdraw()
-            self.wasvisible=True
-        else:
-            self.wasvisible=False
         self.ww=Wait(self,msg,cancellable=cancellable)
     def iswaiting(self):
         return hasattr(self,'ww') and self.ww.winfo_exists()
@@ -798,7 +796,7 @@ class UI(ObectwArgs):
     def waitdone(self):
         try:
             self.ww.close()
-            if self.wasvisible:
+            if self.showafterwait:
                 self.deiconify()
         except tkinter.TclError:
             pass
@@ -1895,7 +1893,7 @@ class ToolTip(object):
 class Wait(Window): #tkinter.Toplevel?
     def close(self):
         self.update_idletasks()
-        if not isinstance(self.parent,Root) and self.parentwasvisible:
+        if not isinstance(self.parent,Root) and self.parentshowafterwait:
             #Don't show a root window, nor one that was hidden before
             self.parent.deiconify()
         self.on_quit()
@@ -1916,7 +1914,7 @@ class Wait(Window): #tkinter.Toplevel?
         super(Wait, self).__init__(parent,exit=False)
         self.paused=False
         self.withdraw() #don't show until we're done making it
-        self.parentwasvisible=parent.winfo_viewable()
+        self.parentshowafterwait=parent.winfo_viewable()
         parent.withdraw()
         self['background']=parent['background']
         self.attributes("-topmost", True)

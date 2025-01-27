@@ -3767,17 +3767,17 @@ class TaskDressing(HasMenus,ui.Window):
         #This will probably need to be reworked
         if self.exitFlag.istrue():
             return
-        selfwasvisible=self.winfo_viewable()
+        hidewhileworking=self.winfo_viewable()
         status=StatusFrame(self.frame, self,
                             relief=self.mainrelief,
                             row=1, column=0, sticky='nw')
-        if selfwasvisible:
+        if hidewhileworking:
             self.withdraw()
         if hasattr(self,'status') and self.status.winfo_exists():
             self.status.destroy()
         self.status=status
         self.status.dogrid()
-        if selfwasvisible:
+        if hidewhileworking:
             self.deiconify()
         program['settings'].storesettingsfile()
         self.makestatusframe(dictnow) #this method
@@ -4789,10 +4789,12 @@ class TaskDressing(HasMenus,ui.Window):
         self.runwindow.title(title)
         takekioskscreen(None)
         self.runwindow.bind('<Escape>', releasefullscreen)
-        self.withdraw()
         self.runwindow.cleanup=self.runwindowcleanup
-        if not nowait:
+        if not nowait: #withdraw one way or another, but just waitdone to return
             self.runwindow.wait(msg=msg)
+            self.runwindow.showafterwait=True #in case not visible yet
+        else:
+            self.withdraw()
     """Functions that everyone needs"""
     def updateazt(self,event=None):
         updateazt()
