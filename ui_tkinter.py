@@ -403,6 +403,7 @@ class Theme(object):
                 'small':tkinter.font.Font(family=charis, size=small),
                 'tiny':tkinter.font.Font(family=charis, size=tiny),
                 'default':tkinter.font.Font(family=charis, size=default),
+                'italic':tkinter.font.Font(family=charis, size=default, slant='italic'),
                 'fixed':tkinter.font.Font(family='TkFixedFont', size=small)
                     }
         """additional keyword options (ignored if font is specified):
@@ -2091,7 +2092,7 @@ def testapp(program):
             row=0,column=0,
             borderwidth=1,relief='raised')
     l=Label(sf.content,text="At least this much",
-            row=1,column=0,
+            row=1,column=0, font='italic',
             borderwidth=1,relief='raised')
     # log.info("l dir is {}".format(dir(l)))
     log.info("l _root is {}".format(l._root()))
