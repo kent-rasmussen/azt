@@ -11433,11 +11433,11 @@ class Glosslangs(list):
             return
         if len(self) < 1:
             ErrorNotice(_("Hey, you have no gloss languages set!"))
-    def lang1(self,lang=None):
-        if self and not lang:
+    def lang1(self,lang=False):
+        if self and lang is False: #i.e., not specified
             return self[0]
         if self:
-            self[0]=lang
+            self[0]=lang #before others
         else:
             self.append(lang)
         self.sanitycheck()
