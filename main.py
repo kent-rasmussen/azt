@@ -1180,7 +1180,7 @@ class StatusFrame(ui.Frame):
             self.cvcheck(line)
             self.cvgroup(line)
     def updatetoneframe(self):
-        self.labels['cvcheck']['text'].set(self.toneframelabel())
+        self.labels['toneframe']['text'].set(self.toneframelabel())
     def toneframelabel(self):
         """this label follows a comma, so no caps"""
         checks=program['status'].checks()
@@ -3342,7 +3342,8 @@ class Settings(object):
     def setcvt(self,choice,window=None):
         program['params'].cvt(choice)
         self.attrschanged.append('cvt')
-        program['taskchooser'].mainwindowis.status.updatecvt()
+        if self.statusisup():
+            program['taskchooser'].mainwindowis.status.updatecvt()
         self.refreshattributechanges()
         if (not hasattr(program['taskchooser'],'task') or
                 not program['taskchooser'].task.mainwindow):
