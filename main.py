@@ -4055,9 +4055,11 @@ class TaskDressing(HasMenus,ui.Window):
                 setnesteddictobjectval(program['settings'],'adnlangnames',
                                     namevar.get(),self.analang)
             else:
-                del program['settings'].languagenames[self.analang]
-                del program['settings'].adnlangnames[self.analang]
-                program['settings'].langnames([self.analang])
+                if self.analang in program['settings'].languagenames:
+                    del program['settings'].languagenames[self.analang]
+                if self.analang in program['settings'].adnlangnames:
+                    del program['settings'].adnlangnames[self.analang]
+                program['settings'].langnames([self.analang]) #refreshes w/above
             program['settings'].storesettingsfile()
             program['taskchooser'].mainwindowis.status.updateanalang() #ui
             window.destroy()
