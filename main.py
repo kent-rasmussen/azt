@@ -2080,6 +2080,7 @@ class Settings(object):
                         #             "".format(s,config[section][s]))
                         if section in ['status','toneframes']:
                             d[ofromstr(s)]=ofromstr(config[section][s])
+                            # log.info(f"{s} item {ofromstr(s)} is {d[ofromstr(s)]}")
                         else:
                             try:
                                 d[section][ofromstr(s)]=ofromstr(
