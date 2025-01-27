@@ -1044,7 +1044,7 @@ class StatusFrame(ui.Frame):
                         'tt':_("change the interface language")}
         self.proselabel(**self.labels['interfacelang'])
     def updateanalang(self):
-        self.labels['glosslang']['text'].set(self.analanglabel())
+        self.labels['analangline']['text'].set(self.analanglabel())
     def analanglabel(self):
         analang=program['params'].analang()
         langname=program['settings'].languagenames[analang]
@@ -3419,7 +3419,7 @@ class Settings(object):
         window.destroy()
     def setglosslang(self,choice,window):
         self.glosslangs.lang1(choice)
-        program['taskchooser'].mainwindowis.status.updateglosslang()
+        program['taskchooser'].mainwindowis.status.updateglosslangs()
         self.attrschanged.append('glosslangs')
         self.refreshattributechanges()
         window.destroy()
@@ -3428,7 +3428,7 @@ class Settings(object):
             self.glosslangs.lang2(choice)
         elif len(self.glosslangs)>1:
             self.glosslangs.pop(1) #if lang2 is None
-        program['taskchooser'].mainwindowis.status.updateglosslang2()
+        program['taskchooser'].mainwindowis.status.updateglosslangs()
         self.attrschanged.append('glosslangs')
         self.refreshattributechanges()
         window.destroy()
@@ -4059,6 +4059,7 @@ class TaskDressing(HasMenus,ui.Window):
                 del program['settings'].adnlangnames[self.analang]
                 program['settings'].langnames([self.analang])
             program['settings'].storesettingsfile()
+            program['taskchooser'].mainwindowis.status.updateanalang() #ui
             window.destroy()
         window=ui.Window(self,title=_('Enter Analysis Language Name'))
         curname=program['settings'].languagenames[self.analang]
@@ -4258,6 +4259,7 @@ class TaskDressing(HasMenus,ui.Window):
             window.wait_window(window)
     def setsensetodo(self,choice,window):
         self.sense=self.sensetodo=choice
+        program['taskchooser'].mainwindowis.status.updatesensetodo()
         window.destroy()
         if isinstance(self,WordCollection):
             self.withdraw()
