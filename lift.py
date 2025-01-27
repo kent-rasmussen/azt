@@ -2573,36 +2573,36 @@ class Sense(Node,FieldParent):
         # log.info("formattedgloss called with glosslang={}, ftype={}, frame={}, "
         #         "quoted={}"
         #         "".format(glosslang,ftype,frame,quoted))
+        if glosslang not in self.glosses:
+            return [_(f"No {glosslang} gloss found!")]
+        if frame and glosslang not in frame:
+            return [_(f"No {glosslang} field in frame!")]
         if not ftype:
             if frame:
                 ftype=frame['field']
             else:
                 ftype='lc'
         t=[]
-        try:
-            for gloss in self.glosses[glosslang]: #unlist each gloss for one lang
-                # log.info("gloss forms starting: {}".format(t))
-                # log.info("gloss: {} ({})".format(gloss.textvalue(),glosslang))
-                g=gloss.textvalue()
-                if ftype:
-                    if ftype == 'imp':
-                        g+='!'
-                    elif ftype != 'lc':
-                        g+=' ('+ftype+')'
-                if frame:
-                    # log.info("gloss form to sub: {}".format(g))
-                    g=rx.framerx.sub(g,frame[glosslang])
-                    # log.info("gloss form subbed: {}".format(g))
-                if quoted:
-                    g=quote(g)
-                    # log.info("gloss form quoted: {}".format(g))
-                t.append(g)
-                # log.info("gloss forms formatted: {}".format(t))
-            # log.info("gloss forms returned: {}".format(t))
-            return t
-        except KeyError:
-            log.info("No glosslang {} in sense {}".format(glosslang,self.id))
-            return [_("Missing {} gloss!".format(glosslang))]
+        for gloss in self.glosses[glosslang]: #unlist each gloss for one lang
+            # log.info("gloss forms starting: {}".format(t))
+            # log.info("gloss: {} ({})".format(gloss.textvalue(),glosslang))
+            g=gloss.textvalue()
+            if ftype:
+                if ftype == 'imp':
+                    g+='!'
+                elif ftype != 'lc':
+                    g+=' ('+ftype+')'
+            if frame:
+                # log.info("gloss form to sub: {}".format(g))
+                g=rx.framerx.sub(g,frame[glosslang])
+                # log.info("gloss form subbed: {}".format(g))
+            if quoted:
+                g=quote(g)
+                # log.info("gloss form quoted: {}".format(g))
+            t.append(g)
+            # log.info("gloss forms formatted: {}".format(t))
+        # log.info("gloss forms returned: {}".format(t))
+        return t
     def formatteddictbylang(self,analang,glosslangs,ftype=None,frame=None):
         if frame and ftype and not frame['field'] == ftype:
             log.error("ftype mismatch! ({}/{})".format(frame['field'],ftype))
@@ -2632,6 +2632,7 @@ class Sense(Node,FieldParent):
         elif frame and not ftype:
             ftype=frame['field']
         l=[]
+        glosses=[]
         # log.info("frame: {}".format(frame))
         # log.info("1 forms: {}".format(l))
         t=self.formattedform(analang,ftype,frame)
@@ -2640,8 +2641,15 @@ class Sense(Node,FieldParent):
         l.append('—') #this is just a visual break between the form and glosses
         # l.append(' ')
         # log.info("2 forms: {}".format(l))
-        for lang in [i for i in glosslangs if i in self.glosses]:
-            l+=self.formattedgloss(lang,ftype,frame,quoted=True) #This is always a list
+        for lang in [i for i in glosslangs if i in self.glosses if i in frame]:
+            glosses+=self.formattedgloss(lang,ftype,frame,quoted=True) # list
+        if glosses:
+            l+=glosses
+        else:
+            log.info(f"Asked for glosslangs {glosslangs}, "
+                    f"found glosses for {list(self.glosses)} and "
+                    f"frame translations for {list(frame)}")
+            l+=[_(f"{' & '.join(glosslangs)} gloss languages not in frame!")]
         # log.info("Returning forms: {}".format(l))
         return ' '.join([i for i in l if i]) #put it all together
     def unformatted(self,analang,glosslangs,ftype=0): #,showtonegroup=0):
