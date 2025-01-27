@@ -8101,10 +8101,8 @@ class Sort(object):
             fn=self.nprofile
         else:
             fn=None
-        done=_("All ‘{}’ groups in the ‘{}’ {} are verified and "
-                "distinct!").format(
-                                    self.profile,self.check,
-                                    self.checktypename[cvt])
+        done=_(f"All ‘{self.profile}’ groups in the ‘{self.check}’ "
+                f"{self.checktypename[cvt]} are verified and distinct!")
                 #only on first two ifs:
         if fn:
             done+='\n'+_("Moving on to the next {}!".format(next))
