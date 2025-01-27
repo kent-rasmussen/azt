@@ -8516,7 +8516,6 @@ class Sort(object):
             # log.info("Next button at r:{}, c:{}".format(row,column))
         """If all is good, destroy this frame."""
         self.runwindow.waitdone()
-        self.runwindow.deiconify() # not until here
         ngroupstojoin=0
         while ngroupstojoin < 2:
             bok=ui.Button(self.sortitem, text=oktext,
@@ -8564,7 +8563,8 @@ class Sort(object):
             for group in groupstojoin: #not verified=True --since joined
                 self.updatestatus(group=group,write=write)
                 write=True #For second group
-            self.maybesort() #go back to verify, etc.
+            # self.maybesort() #go back to verify, etc.
+            return 1 #not done yet, return to maybesort
         """'These are all different' doesn't need to be saved anywhere, as this
         can happen at any time. Just move on to verification, where each group's
         sameness will be verified and recorded."""
