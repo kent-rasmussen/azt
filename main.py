@@ -10299,8 +10299,8 @@ class SortV(Sort,Segments,TaskDressing):
                 }
     def __init__(self, parent):
         # ui.Window.__init__(self,parent)
-        TaskDressing.__init__(self,parent)
         program['params'].cvt('V')
+        TaskDressing.__init__(self,parent)
         Sort.__init__(self, parent)
         Segments.__init__(self,parent)
         # super(SortV, self).__init__()
@@ -10322,8 +10322,8 @@ class SortC(Sort,Segments,TaskDressing):
                 'sticky':'ew'
                 }
     def __init__(self, parent):
-        TaskDressing.__init__(self,parent)
         program['params'].cvt('C')
+        TaskDressing.__init__(self,parent)
         Sort.__init__(self, parent)
         Segments.__init__(self,parent)
         # super(SortC, parent).__init__()
