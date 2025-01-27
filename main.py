@@ -1693,6 +1693,8 @@ class StatusFrame(ui.Frame):
         kwargs['padx']=25
         kwargs['gridwait']=True
         super(StatusFrame, self).__init__(parent, **kwargs)
+        self.makeui()
+    def makeui(self):
         self.makeproseframe()
         self.interfacelangline()
         self.analangline()
@@ -1734,6 +1736,7 @@ class Settings(object):
         if choice:
             interfacelang(choice) #change the UI *ONLY*; no object attributes
             self.set('interfacelang',choice,window) #set variable for the future
+            program['taskchooser'].mainwindowis.status.makeui()
             self.storesettingsfile() #>xyz.CheckDefaults.py
             #because otherwise, this stays as is...
             program['taskchooser'].mainwindowis.maketitle()
