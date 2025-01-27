@@ -4116,9 +4116,14 @@ class TaskDressing(HasMenus,ui.Window):
         text=_('What Language do you want to use for glosses?')
         ui.Label(window.frame, text=text, column=0, row=1)
         langs=list()
-        for lang in program['db'].glosslangs:
+        for lang in set(program['db'].glosslangs)|set(
+                                            program['settings'].glosslangs[1:]):
             langs.append({'code':lang,
                             'name':program['settings'].languagenames[lang]})
+        if program['settings'].glosslangs.lang2():
+            langs.append({'code':None,
+                    'name':'just use '+program['settings'].languagenames[
+                                    program['settings'].glosslangs.lang2()]})
         buttonFrame1=ui.ButtonFrame(window.frame,
                                  optionlist=langs,
                                  command=program['settings'].setglosslang,
@@ -4130,13 +4135,14 @@ class TaskDressing(HasMenus,ui.Window):
         text=_('What other language do you want to use for glosses?')
         ui.Label(window.frame, text=text, column=0, row=1)
         langs=list()
-        for lang in program['db'].glosslangs:
+        for lang in set(program['db'].glosslangs)|set(program['settings'].glosslangs[:1]):
             if lang == program['settings'].glosslangs[0]:
                 continue
             langs.append({'code':lang,
                             'name':program['settings'].languagenames[lang]})
-        langs.append({'code':None, 'name':'just use '
-                +program['settings'].languagenames[program['settings'].glosslangs.lang1()]})
+        langs.append({'code':None,
+                    'name':'just use '+program['settings'].languagenames[
+                                    program['settings'].glosslangs.lang1()]})
         buttonFrame1=ui.ButtonFrame(window.frame,
                                     optionlist=langs,
                                     command=program['settings'].setglosslang2,
