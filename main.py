@@ -12083,6 +12083,8 @@ class SortGroupButtonFrame(ui.Frame):
                 self._playable=False
         else:
             self.selectbutton()
+        if self.kwargs['unsortable']:
+            self.unsortbutton()
         if self._n.get() > 1 or self.kwargs['alwaysrefreshable']:
             self.makerefreshbutton()
     """buttons"""
@@ -12112,8 +12114,6 @@ class SortGroupButtonFrame(ui.Frame):
             bttext+='; '+_("right click to open in praat")
             b.bind('<Button-3>',lambda x: praatopen(self._filenameURL))
         bt=ui.ToolTip(b,bttext)
-        if self.kwargs['unsortable']:
-            self.unsortbutton()
     def selectbutton(self):
         if self.kwargs['labelizeonselect']:
             cmd=self.selectnlabelize
