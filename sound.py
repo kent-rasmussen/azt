@@ -71,7 +71,13 @@ class SoundSettings(object):
     def default_in(self):
         self.audio_card_in=min(self.cards['in'])
     def default_out(self):
-        self.audio_card_out=min(self.cards['out'])
+        self.audio_card_out=[k for k,v in self.cards['dict'].items()
+                                    if k in self.cards['out']
+                                    if 'default' in v]
+        if self.audio_card_out:
+            self.audio_card_out=self.audio_card_out[0]
+        else:
+            self.audio_card_out=min(self.cards['out'])
     def default_fs(self):
         self.fs=max(self.cards['in'][self.audio_card_in])
     def default_sf(self):
@@ -367,13 +373,19 @@ class SoundFilePlayer(object):
                 "{} channels".format(self.settings.audio_card_out,rate,format,
                                                                     channels))
         if self.settings.audio_card_out not in self.settings.cards['out']:
-            log.debug("{} doesn't seem to be a supported card; giving up."
-                        "".format(self.settings.audio_card_out))
+            log.debug(f"{self.settings.audio_card_out} doesn't seem to be "
+                    f"a supported output card ({self.settings.cards['out']})"
+                    "; giving up.")
+            self.settings.default_out()
+            self.play()
             return
         elif rate not in self.settings.cards['out'][
                                                 self.settings.audio_card_out]:
-            log.debug("{} doesn't seem to be a supported rate; giving up."
-                        "".format(rate))
+            log.debug(f"{rate} doesn't seem to be a supported rate "
+                f"({self.settings.cards['out'][self.settings.audio_card_out]})"
+                    "; giving up.")
+            self.settings.default_out()
+            self.play()
             return
         def block():
             self.streamopen(rate,channels)
