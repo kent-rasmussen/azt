@@ -2641,14 +2641,16 @@ class Sense(Node,FieldParent):
         l.append('—') #this is just a visual break between the form and glosses
         # l.append(' ')
         # log.info("2 forms: {}".format(l))
-        for lang in [i for i in glosslangs if i in self.glosses if i in frame]:
+        for lang in [i for i in glosslangs if i in self.glosses if not frame or i in frame]:
             glosses+=self.formattedgloss(lang,ftype,frame,quoted=True) # list
         if glosses:
             l+=glosses
         else:
-            log.info(f"Asked for glosslangs {glosslangs}, "
-                    f"found glosses for {list(self.glosses)} and "
-                    f"frame translations for {list(frame)}")
+            txt=(f"Asked for glosslangs {glosslangs}, "
+                f"found glosses for {list(self.glosses)}")
+            if frame:
+                txt+=f" and frame translations for {list(frame)}"
+            log.info(txt)
             l+=[_(f"{' & '.join(glosslangs)} gloss languages not in frame!")]
         # log.info("Returning forms: {}".format(l))
         return ' '.join([i for i in l if i]) #put it all together
