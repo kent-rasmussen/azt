@@ -2521,12 +2521,14 @@ class Sense(Node,FieldParent):
         try:
             return self.ftypes[ftype].annotationvaluedictbylang(lang)
         except KeyError:
-            log.info("No {} type to pull annotation dict from".format(ftype))
+            # log.info("No {} type to pull annotation dict from".format(ftype))
+            pass
     def nodebyftype(self,ftype):
         try:
             return self.ftypes[ftype]
         except KeyError:
-            log.info("No {} type to pull ({})".format(ftype,self.ftypes))
+            # log.info("No {} type to pull ({})".format(ftype,self.ftypes))
+            pass
     def textvaluebyftypelang(self,ftype,lang,value=None):
         try:
             return self.ftypes[ftype].textvaluebylang(lang,value)
