@@ -12165,7 +12165,7 @@ class SortGroupButtonFrame(ui.Frame):
         b_unsort=ui.Button(self,text = t,
                             cmd=self.unsort,
                             column=2,row=0,#padx=50,
-                            **usbkwargs
+                            **{**usbkwargs, 'font':'default'}
                             )
     def buttonkwargs(self):
         """This is a method to allow pulling these args after updating kwargs"""
