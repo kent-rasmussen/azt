@@ -8912,7 +8912,7 @@ class Record(Sound,TaskDressing):
                 probably make this a function, like getframeddata"""
                 if not text:
                     exit()
-                rb=RecordButtonFrame(examplesframe,self,example)
+                rb=sound_ui.RecordButtonFrame(examplesframe,self,example)
                 rb.grid(row=row,column=0,sticky='w')
                 ui.Label(examplesframe, anchor='w',text=text
                                         ).grid(row=row, column=1, sticky='w')
