@@ -8951,13 +8951,14 @@ class Record(Sound,TaskDressing):
             for ufgroup in torecord:
                 print(i,len(torecord[ufgroup]),ufgroup,torecord[ufgroup])
                 if len(torecord[ufgroup]) > i: #no done piles.
-                    sense=[program['db'].sensedict[torecord[ufgroup][i]]] #list of one
+                    # sense=[program['db'].sensedict[torecord[ufgroup][i]]] #list of one
+                    sense=torecord[ufgroup][i] #list of one
                 else:
                     print("Not enough examples, moving on:",i,ufgroup)
                     continue
                 log.info(_('Giving user the number {} example from tone '
                         'group {}'.format(i,ufgroup)))
-                exited=self.showsenseswithexamplestorecord(sense,
+                exited=self.showsenseswithexamplestorecord([sense],
                             (ufgroup, i+1, self.examplespergrouptorecord),
                             skip=skip)
                 if exited == 'skip':
