@@ -70,7 +70,7 @@ import executables
 try:
     import sound
     import transcriber
-    from sound_ui import SoundSettingsWindow
+    import sound_ui
     program['nosound']=False
 except Exception as e:
     program['nosound']=True
