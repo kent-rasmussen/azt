@@ -772,11 +772,13 @@ class Childof(object):
         self.inherit()
 class UI(ObectwArgs):
     """docstring for UI, after tkinter widgets are initted."""
-    def wait(self,msg=None,cancellable=False):
+    def wait(self,msg=None,cancellable=False,thenshow=False):
         if self.iswaiting():
             log.debug("There is already a wait window: {}".format(self.ww))
+            if thenshow:
+                self.showafterwait=True
             return
-        self.showafterwait=self.winfo_viewable()
+        self.showafterwait=self.winfo_viewable()|thenshow
         if self.showafterwait:
             self.withdraw()
         self.ww=Wait(self,msg,cancellable=cancellable)
@@ -1892,10 +1894,6 @@ class ToolTip(object):
 """Move back to main"""
 class Wait(Window): #tkinter.Toplevel?
     def close(self):
-        self.update_idletasks()
-        if not isinstance(self.parent,Root) and self.parentshowafterwait:
-            #Don't show a root window, nor one that was hidden before
-            self.parent.deiconify()
         self.on_quit()
     def progress(self,value):
         # between 0 and 100
@@ -1914,8 +1912,6 @@ class Wait(Window): #tkinter.Toplevel?
         super(Wait, self).__init__(parent,exit=False)
         self.paused=False
         self.withdraw() #don't show until we're done making it
-        self.parentshowafterwait=parent.winfo_viewable()
-        parent.withdraw()
         self['background']=parent['background']
         self.attributes("-topmost", True)
         title=(_("Please Wait! {name} Dictionary and Orthography Checker "

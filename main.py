@@ -4809,10 +4809,8 @@ class TaskDressing(HasMenus,ui.Window):
         self.runwindow.bind('<Escape>', releasefullscreen)
         self.runwindow.cleanup=self.runwindowcleanup
         if not nowait: #withdraw one way or another, but just waitdone to return
-            self.runwindow.wait(msg=msg)
-            self.runwindow.showafterwait=True #in case not visible yet
-        else:
-            self.withdraw()
+            self.runwindow.wait(msg=msg,thenshow=True)
+        self.withdraw() #this is the parent of the runwindow, the task
     """Functions that everyone needs"""
     def updateazt(self,event=None):
         updateazt()
@@ -8775,7 +8773,7 @@ class Record(Sound,TaskDressing):
         for page in pages:
             if self.runwindow.exitFlag.istrue():
                 return
-            self.runwindow.wait()
+            self.runwindow.wait(thenshow=True)
             buttonframes=ui.ScrollingFrame(self.runwindow.frame,
                                             row=1,column=0,sticky='w')
             row=0
