@@ -16,6 +16,7 @@ class RecordButtonFrame(ui.Frame):
     def _stop(self, event):
         try:
             self.recorder.stop()
+            # log.info(f"self.recorder: {hasattr(self,'recorder')}")
         except Exception as e:
             log.info("Couldn't stop recorder; was it on? ({})".format(e))
         """This is done in advance of recording now:"""
