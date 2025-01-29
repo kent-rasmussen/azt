@@ -8946,6 +8946,8 @@ class Record(Sound,TaskDressing):
             self.showtonegroupexs()
             return
         batch={}
+        # log.info(f"program['db'].sensedict ({len(program['db'].sensedict)}): "
+        #         f"{program['db'].sensedict}")
         for i in range(self.examplespergrouptorecord):
             batch[i]=[]
             for ufgroup in torecord:
@@ -8995,7 +8997,7 @@ class Record(Sound,TaskDressing):
             pslocopts.insert(0,ps+'-'+l) #the first option.
             fieldlocopts.append(l) #make this the last option.
         except AttributeError:
-            log.info("doesn't look like an example node; not offering location")
+            # log.info("doesn't look like an example node; not offering location")
             pass
                     # Yes, these allow for location to be present twice, but
                 # that should never be found, nor offered
