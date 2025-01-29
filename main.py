@@ -8741,7 +8741,7 @@ class Sound(object):
 class Record(Sound,TaskDressing):
     """This holds all the Sound methods specific for Recording."""
     def makelabelsnrecordingbuttons(self,parent,node,r,c):
-        # log.info("Making buttons for {} (in {})".format(sense['nodetoshow'],sense))
+        # log.info("Making buttons for {} (in {})".format(node,parent))
         t=node.formatted(self.analang,self.glosslangs)
         lxl=ui.Label(parent, text=t,row=r,column=c+1,sticky='w')
         lcb=sound_ui.RecordButtonFrame(parent,self,node,
@@ -8784,6 +8784,7 @@ class Record(Sound,TaskDressing):
                                             row=1,column=0,sticky='w')
             row=0
             done=list()
+            # log.info("Looking through entries now")
             for row,entry in enumerate([i.entry for i in page]):
                 self.runwindow.column=0
                 if entry.guid in done: #only the first of multiple senses
@@ -8794,6 +8795,9 @@ class Record(Sound,TaskDressing):
                 now return a list of form elements, each. Something will need to be
                 adjusted here..."""
                 ftypes=['lc','pl','imp']
+                # for f in ftypes:
+                #     log.info(f"{f}: {entry.sense.nodebyftype(f)}, "
+                #                 f"{type(entry.sense.nodebyftype(f))}")
                 for node in [entry.sense.nodebyftype(f) for f in ftypes
                                 if entry.sense.nodebyftype(f)]:
                     self.runwindow.column+=2
@@ -8801,9 +8805,11 @@ class Record(Sound,TaskDressing):
                     self.makelabelsnrecordingbuttons(buttonframes.content,node,
                         row,self.runwindow.column)
                 # row+=1
+            # log.info("Done iterating for one page")
             ui.Button(buttonframes.content,column=1,row=row,
                         text=_("Next {} words").format(nperpage),
                         cmd=lambda x=buttonframes:self.cleanup_pa(x))
+            # log.info("Showing waitwindow now")
             self.runwindow.waitdone()
             buttonframes.wait_window(buttonframes)
         if not self.runwindow.exitFlag.istrue():
