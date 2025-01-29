@@ -66,6 +66,7 @@ except ModuleNotFoundError as e:
     log.error("Problem importing url module. Is urllib3 installed? {}".format(e))
     exceptiononload=True
 from utilities import *
+import executables
 try:
     import sound
     import transcriber
@@ -12112,7 +12113,8 @@ class SortGroupButtonFrame(ui.Frame):
         bttext=_("Click to hear this utterance")
         if program['praat']:
             bttext+='; '+_("right click to open in praat")
-            b.bind('<Button-3>',lambda x: praatopen(self._filenameURL))
+            b.bind('<Button-3>',
+                    lambda x: executables.praatopen(program, self._filenameURL))
         bt=ui.ToolTip(b,bttext)
     def selectbutton(self):
         if self.kwargs['labelizeonselect']:

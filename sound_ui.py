@@ -7,7 +7,7 @@ import ui_tkinter as ui
 import sound
 import file
 from utilities import *
-
+import executables
 class RecordButtonFrame(ui.Frame):
     """This is not implemented yet!!"""
     def _start(self, event):
@@ -64,7 +64,10 @@ class RecordButtonFrame(ui.Frame):
         pttext=_("Click to hear")
         if 'praat' in program:
             pttext+='; '+_("right click to open in praat")
-            self.p.bind('<Button-3>',lambda x: praatopen(self._filenameURL))
+            self.p.bind('<Button-3>',
+                        lambda x: executables.praatopen(
+                                                    self.soundsettings.program,
+                                                    self._filenameURL))
         self.pt=ui.ToolTip(self.p,pttext)
     def makedeletebutton(self):
         self.r=ui.Button(self,text='×',font='read',command=self.function,
