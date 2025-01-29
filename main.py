@@ -8743,10 +8743,9 @@ class Record(Sound,TaskDressing):
     def makelabelsnrecordingbuttons(self,parent,node,r,c):
         # log.info("Making buttons for {} (in {})".format(sense['nodetoshow'],sense))
         t=node.formatted(self.analang,self.glosslangs)
-        lxl=ui.Label(parent, text=t)
-        lcb=RecordButtonFrame(parent,self,node)
-        lcb.grid(row=r,column=c,sticky='w')
-        lxl.grid(row=r,column=c+1,sticky='w')
+        lxl=ui.Label(parent, text=t,row=r,column=c+1,sticky='w')
+        lcb=sound_ui.RecordButtonFrame(parent,self,node,
+                                        row=r,column=c,sticky='w')
     def cleanup_pa(self,parentframe):
         import gc
         for w in parentframe.content.winfo_children():
