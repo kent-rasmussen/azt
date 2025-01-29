@@ -12,9 +12,6 @@ class RecordButtonFrame(ui.Frame):
     """This is not implemented yet!!"""
     def _start(self, event):
         log.log(3,"Asking PA to record now")
-        self.recorder=sound.SoundFileRecorder(self._filenameURL,self.pa,
-                                            self.soundsettings)
-        log.debug("PA recorder made OK")
         self.recorder.start()
     def _stop(self, event):
         try:
@@ -39,6 +36,12 @@ class RecordButtonFrame(ui.Frame):
         else:
             self.makerecordbutton()
     def makerecordbutton(self):
+        # if not hasattr(self,'recorder'):
+        #     log.debug(f"PA recorder init ({vars(self)})")
+        #     self.recorder=sound.SoundFileRecorder(self._filenameURL,self.pa,
+        #                                     self.soundsettings)
+        #     log.debug(f"PA recorder ({type(self.recorder)}) init ({vars(self)})")
+        # log.debug("PA recorder made OK")
         self.b=ui.Button(self, command=self.function,
                         image='record',
                         ipadx=20, ipady=15
@@ -49,8 +52,6 @@ class RecordButtonFrame(ui.Frame):
         self.bt=ui.ToolTip(self.b,_("press-speak-release"))
     def _play(self,event=None):
         log.debug("Asking PA to play now")
-        self.player=sound.SoundFilePlayer(self._filenameURL,self.pa,
-                                            self.soundsettings)
         tryrun(self.player.play)
     def makeplaybutton(self):
         self.p=ui.Button(self, text='‣', command=self._play,
@@ -128,6 +129,11 @@ class RecordButtonFrame(ui.Frame):
             log.error(t)
             ui.Label(self,text=t,borderwidth=1,font='default',
                     relief='raised').grid(row=0,column=0)
+        # Just do these each once, since their dependencies don't change
+        self.recorder=sound.SoundFileRecorder(self._filenameURL,self.pa,
+                                        self.soundsettings)
+        self.player=sound.SoundFilePlayer(self._filenameURL,self.pa,
+                                            self.soundsettings)
         ui.Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
         might cause the init to stop."""
