@@ -62,7 +62,7 @@ class RecordButtonFrame(ui.Frame):
         # self.p.bind('<ButtonRelease>', self.function)
         self.p.grid(row=0, column=1,sticky='w')
         pttext=_("Click to hear")
-        if 'praat' in program:
+        if 'praat' in self.soundsettings.program:
             pttext+='; '+_("right click to open in praat")
             self.p.bind('<Button-3>',
                         lambda x: executables.praatopen(
@@ -80,12 +80,12 @@ class RecordButtonFrame(ui.Frame):
     def addlink(self):
         if self.test:
             return
-        program['db'].addmediafields(self.node,self.filename,
-                                program['params'].audiolang,
+        self.soundsettings.program['db'].addmediafields(self.node,self.filename,
+                                self.soundsettings.program['params'].audiolang,
                                 # ftype=ftype,
                                 write=False)
         self.task.maybewrite()
-        program['status'].last('recording',update=True)
+        self.soundsettings.program['status'].last('recording',update=True)
     def __init__(self,parent,task,node=None,**kwargs): #filenames
         """Uses node to make framed data, just for soundfile name"""
         """Without node, this just populates a sound file, with URL as
@@ -101,9 +101,10 @@ class RecordButtonFrame(ui.Frame):
             task.pyaudio=sound.AudioInterface()
         self.pa=task.pyaudio
         if not hasattr(task,'soundsettings'):
-            if not hasattr(program['settings'],'soundsettings'):
+            if not hasattr(self.soundsettings.program['settings'],
+                            'soundsettings'):
                 task.loadsoundsettings()
-            self.soundsettings=program['settings'].soundsettings
+            self.soundsettings=self.soundsettings.program['settings'].soundsettings
         else:
             self.soundsettings=task.soundsettings
         self.callbackrecording=True
@@ -112,7 +113,8 @@ class RecordButtonFrame(ui.Frame):
         self.test=kwargs.pop('test',None)
         if node:# and framed.framed != 'NA':
             task.makeaudiofilename(node) #should fill out the following
-            self.filename=node.textvaluebylang(program['params'].audiolang)
+            self.filename=node.textvaluebylang(
+                            self.soundsettings.program['params'].audiolang)
             if not self.filename: #should have above or below
                 self.filename=node.audiofilenametoput
             self._filenameURL=node.audiofileURL
@@ -129,7 +131,7 @@ class RecordButtonFrame(ui.Frame):
         ui.Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
         might cause the init to stop."""
-        if not self.test and not program['settings'].audiolang:
+        if not self.test and not self.soundsettings.program['settings'].audiolang:
             tlang=_("Set audio language to get record buttons!")
             log.error(tlang)
             ui.Label(self,text=tlang,borderwidth=1,
@@ -338,12 +340,14 @@ class SoundSettingsWindow(ui.Window):
     def soundcheckrefreshdone(self):
         self.task.storesoundsettings()
         self.destroy()
-    def __init__(self,parent,task,**kwargs):
+    def __init__(self,program,task,**kwargs):
         self.refreshdelay=1000 # wait 1s for a refresh check, always mainwindow
         ui.Window.__init__(self, parent, exit=False,
+        ui.Window.__init__(self, program['root'], exit=False,
                             title=_('Select Sound Card Settings'))
         self.task=task
         self.soundsettings=task.soundsettings
+        self.soundsettings.program=program
         self.soundcheckrefresh()
 class Task():
     def quittask(self):
@@ -362,11 +366,12 @@ if __name__ == "__main__":
         def _(x):
             return x
     r=ui.Root()
+    r.program['praat']='/home/kentr/bin/praat'
     program=r.program
     r.title('Sound UI')
     # program['settings']
     task=Task()
-    ssw=SoundSettingsWindow(r,task)
+    ssw=SoundSettingsWindow(r.program,task)
     ssw.wait_window(ssw)
     ui.Label(r,text="test Frame",row=0,column=0)
     RecordButtonFrame(r,task,test=True,row=1,column=0)

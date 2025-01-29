@@ -8711,8 +8711,7 @@ class Sound(object):
         #move this to Record, after confirming that can be safely done.
         self.pyaudiocheck()
         #will need to add sound_ui in here, once generalized:
-        self.soundsettingswindow=SoundSettingsWindow(program['root'],
-                                                                self)
+        self.soundsettingswindow=sound_ui.SoundSettingsWindow(program, self)
         self.soundsettingswindow.protocol("WM_DELETE_WINDOW", self.quittask)
         if not self.soundsettingswindow.exitFlag.istrue():
             self.soundsettingswindow.wait_window(self.soundsettingswindow)
