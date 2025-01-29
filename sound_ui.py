@@ -160,18 +160,47 @@ class RecordButtonFrame(ui.Frame):
 class SoundSettingsWindow(ui.Window):
     def setsoundformat(self,choice,window):
         self.soundsettings.sample_format=choice
+        self.updatesoundformat()
         window.destroy()
+    def updatesoundformat(self):
+        self.labeltext['sample_format'].set(self.soundformatlabel())
+    def soundformatlabel(self):
+        self.soundsettings.check()
+        cur=self.soundsettings.hypothetical['sample_formats'][
+                                            self.soundsettings.sample_format]
+        return _(f"{cur}")
     def setsoundcardindex(self,choice,window):
         # log.info("setsoundcardindex: {}".format(choice))
         self.soundsettings.audio_card_in=choice
+        self.updatesoundcard()
         window.destroy()
+    def updatesoundcard(self):
+        self.labeltext['audio_card_in'].set(self.soundcardlabel())
+    def soundcardlabel(self):
+        self.soundsettings.check()
+        cur=self.soundsettings.cards['dict'][self.soundsettings.audio_card_in]
+        return _(f"Microphone: ‘{cur}’")
     def setsoundcardoutindex(self,choice,window):
         # log.info("setsoundcardoutindex: {}".format(choice))
         self.soundsettings.audio_card_out=choice
+        self.updatesoundcardoutindex()
         window.destroy()
+    def updatesoundcardoutindex(self):
+        self.labeltext['audio_card_out'].set(self.soundcardoutindexlabel())
+    def soundcardoutindexlabel(self):
+        self.soundsettings.check()
+        cur=self.soundsettings.cards['dict'][self.soundsettings.audio_card_out]
+        return _(f"Speakers: ‘{cur}’")
     def setsoundhz(self,choice,window):
         self.soundsettings.fs=choice
+        self.updatesoundhz()
         window.destroy()
+    def updatesoundhz(self):
+        self.labeltext['fs'].set(self.soundhzlabel())
+    def soundhzlabel(self):
+        self.soundsettings.check()
+        cur=self.soundsettings.hypothetical['fss'][self.soundsettings.fs]
+        return _(cur)
     def getsoundcardindex(self,event=None):
         log.info("Asking for input sound card...")
         window=ui.Window(self,
@@ -256,11 +285,6 @@ class SoundSettingsWindow(ui.Window):
             self.on_quit()
             self.on_quit()
             return
-        if dict == dictnow:
-            self.parent.after(self.refreshdelay,
-                                self.soundcheckrefresh,
-                                dictnow)
-            return
         log.info("sound settings dict: {}".format(dict))
         self.resetframe()
         self.scroll=ui.ScrollingFrame(
@@ -276,27 +300,23 @@ class SoundSettingsWindow(ui.Window):
                 text=_("(click any to change)"),
                 row=row,column=0)
         row+=1
-        ss=self.soundsettings
-        ss.check() #make defaults if not valid options
-        for varname, dict, cmd in [
-            ('audio_card_in', ss.cards['dict'], self.getsoundcardindex),
-            ('fs',ss.hypothetical['fss'], self.getsoundhz),
-            ('sample_format', ss.hypothetical['sample_formats'],
-                                                         self.getsoundformat),
-            ('audio_card_out', ss.cards['dict'], self.getsoundcardoutindex),
+        self.labeltext={}
+        for varname, cmd in [
+            ('audio_card_in', self.getsoundcardindex),
+            ('fs', self.getsoundhz),
+            ('sample_format', self.getsoundformat),
+            ('audio_card_out', self.getsoundcardoutindex),
                                                     ]:
             text=_("Change")
-            var=getattr(ss,varname)
-            log.debug("{} in {}".format(var,dict))
-            l=dict[var]
-            if cmd == self.getsoundcardindex:
-                l=_("Microphone: ‘{}’").format(l)
-            if cmd == self.getsoundcardoutindex:
-                l=_("Speakers: ‘{}’").format(l)
-            l=ui.Label(self.content,text=l,
-                    row=row,column=0)
+            self.labeltext[varname]=ui.StringVar()
+            l=ui.Label(self.content,text=self.labeltext[varname],
+                        row=row,column=0)
             l.bind('<ButtonRelease-1>',cmd) #getattr(self,str(cmd)))
             row+=1
+        self.updatesoundcard()
+        self.updatesoundhz()
+        self.updatesoundformat()
+        self.updatesoundcardoutindex()
         br=RecordButtonFrame(self.content,self,test=True)
         br.grid(row=row,column=0)
         row+=1
@@ -342,7 +362,6 @@ class SoundSettingsWindow(ui.Window):
                     # anchor='c',
                     row=row,column=1
                     )
-        self.soundcheckrefresh(dictnow)
     def soundcheckrefreshdone(self):
         self.task.storesoundsettings()
         self.destroy()
