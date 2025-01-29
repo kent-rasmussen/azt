@@ -8773,7 +8773,7 @@ class Record(Sound,TaskDressing):
         instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
         instr.grid(row=0,column=0,sticky='w')
         senses=program['slices'].senses(ps=ps,profile=profile)
-        nperpage=10
+        nperpage=5
         pages=[senses[i:i+nperpage] for i in range(0,len(senses),nperpage)]
         log.info("pages: {}".format(pages))
         for page in pages:
