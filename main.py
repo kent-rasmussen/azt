@@ -8747,6 +8747,14 @@ class Record(Sound,TaskDressing):
         lcb=RecordButtonFrame(parent,self,node)
         lcb.grid(row=r,column=c,sticky='w')
         lxl.grid(row=r,column=c+1,sticky='w')
+    def cleanup_pa(self,parentframe):
+        import gc
+        for w in parentframe.content.winfo_children():
+            if type(w) is sound_ui.RecordButtonFrame:
+                w.recorder.streamclose()
+                w.player.streamclose()
+        parentframe.destroy() #for now, at least
+        gc.collect()
     def showentryformstorecordpage(self):
         #The info we're going for is stored above sense, hence guid.
         if self.runwindow.exitFlag.istrue():
@@ -8796,7 +8804,7 @@ class Record(Sound,TaskDressing):
                 # row+=1
             ui.Button(buttonframes.content,column=1,row=row,
                         text=_("Next {} words").format(nperpage),
-                        cmd=buttonframes.destroy)
+                        cmd=lambda x=buttonframes:self.cleanup_pa(x))
             self.runwindow.waitdone()
             buttonframes.wait_window(buttonframes)
         if not self.runwindow.exitFlag.istrue():
