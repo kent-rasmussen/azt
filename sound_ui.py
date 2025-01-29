@@ -348,7 +348,6 @@ class SoundSettingsWindow(ui.Window):
         self.destroy()
     def __init__(self,program,task,**kwargs):
         self.refreshdelay=1000 # wait 1s for a refresh check, always mainwindow
-        ui.Window.__init__(self, parent, exit=False,
         ui.Window.__init__(self, program['root'], exit=False,
                             title=_('Select Sound Card Settings'))
         self.task=task
