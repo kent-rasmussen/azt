@@ -411,7 +411,7 @@ class SoundFilePlayer(object):
                     self.stream.write(self.data,exception_on_underflow=True)
                 except:
                     log.exception("Other exception trying to play "
-                                "sound! %s {}".format(sys.exc_info()[0]))
+                                f"sound! {sys.exc_info()[0]}")
                     log.info("The above may indicate a systemic problem!")
                     # raise
                 try:
@@ -420,7 +420,7 @@ class SoundFilePlayer(object):
                     if "Output underflowed" in e.arg[0]:
                         self.streamopen(rate,channels)
                     log.exception("Unexpected exception trying to read "
-                                "frames %s {}".format(sys.exc_info()[0]))
+                                f"frames {sys.exc_info()[0]}")
                     log.info("The above may indicate a systemic problem!")
                     # raise
             log.debug("apparently we're out of data")
