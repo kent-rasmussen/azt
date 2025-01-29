@@ -408,7 +408,7 @@ class SoundFilePlayer(object):
             self.data = self.wf.readframes(self.settings.chunk)
             while len(self.data) > 0:
                 try:
-                    self.stream.write(self.data,exception_on_underflow=True)
+                    self.stream.write(self.data)#,exception_on_underflow=True)
                 except:
                     log.exception("Other exception trying to play "
                                 f"sound! {sys.exc_info()[0]}")
