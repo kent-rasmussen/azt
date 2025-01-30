@@ -4385,6 +4385,7 @@ class TaskDressing(HasMenus,ui.Window):
                             wraplength=int(self.frame.winfo_screenwidth()/3),
                             row=2,column=0,sticky='nsew'
                             )
+        window.wait_window()
     def getsecondformfield(self,ps,opts,othername,setcmd,other=False):
         """'other' is used when fields already present in the database
         do not include a good option. 'Othername' is used to exclude another
