@@ -4420,12 +4420,21 @@ class TaskDressing(HasMenus,ui.Window):
         title=_('Select Second Form Field for {}').format(ps)
         window=ui.Window(self,title=title)
         if othernames:
-            text=_("These fields were found in your database; which one should "
-                    f"be used for second forms for ‘{ps}’ words?")
+            if len(othernames)-1:
+                text=_("Select a database field "
+                        f"to use for second forms of ‘{ps}’ words")
+                otherbuttontext=_("None of these; make a new field")
+            else:
+                text=_("Select this database field "
+                        f"for second forms of ‘{ps}’ words")
+                otherbuttontext=_("No; make a new field")
+            cmd=getother
             optionslist=othernames
         else:
-            text=_("No suitable database fields were found; what field name "
-                    f"do you want to use for second forms for ‘{ps}’ words?")
+            text=_("No suitable database fields were found; what name "
+                    f"do you want to use for second forms of ‘{ps}’ words?")
+            otherbuttontext=_("None of these work; make my own field")
+            cmd=getcustom
             optionslist=opts
         ui.Label(window.frame, text=text, column=0, row=0)
         """What does this extra frame do?"""
@@ -4437,17 +4446,10 @@ class TaskDressing(HasMenus,ui.Window):
                 window=window,
                 column=0, row=0
                 )
-        if othernames:
-            otherbutton=ui.Button(buttonFrame1.content,
-                            text=_("None of these; make a new field"),
+        otherbutton=ui.Button(buttonFrame1.content,
+                            text=otherbuttontext,
                             column=0, row=1,
-                            cmd=getother
-                            )
-        else:
-            otherbutton=ui.Button(buttonFrame1.content,
-                            text=_("None of these work; make my own field"),
-                            column=0, row=1,
-                            cmd=getcustom
+                            cmd=cmd
                             )
         if self.winfo_viewable():
             self.withdraw()
