@@ -4386,9 +4386,14 @@ class TaskDressing(HasMenus,ui.Window):
                             row=2,column=0,sticky='nsew'
                             )
     def getsecondformfield(self,ps,opts,othername,setcmd,other=False):
-        """This function must address situations where there are or are not
-        plausible fields already in the database."""
+        """'other' is used when fields already present in the database
+        do not include a good option. 'Othername' is used to exclude another
+        grammatical category, e.g., verb fields for a noun second form.
+        If there are no such fields in the db (e.g., if you just started
+        a new db for word collection), the user will go straight to selecting
+        from default options, or providing a custom name for the new field"""
         def getother():
+            """Current db fields aren't enough, ask for default or custom"""
             window.destroy()
             self.getsecondformfield(ps=ps,
                                     opts=opts,
@@ -4396,6 +4401,7 @@ class TaskDressing(HasMenus,ui.Window):
                                     setcmd=setcmd,
                                     other=True)
         def getcustom():
+            """Current db fields and custom names aren't enough, get custom"""
             window.destroy()
             self.getcustomsecondformfield(ps=ps,
                                     # opts=opts,
@@ -4413,12 +4419,12 @@ class TaskDressing(HasMenus,ui.Window):
         title=_('Select Second Form Field for {}').format(ps)
         window=ui.Window(self,title=title)
         if othernames:
-            text=_("What is the database field for second forms for ‘{}’ words?"
-            "".format(ps))
+            text=_("These fields were found in your database; which one should "
+                    f"be used for second forms for ‘{ps}’ words?")
             optionslist=othernames
         else:
-            text=_("What database field name do you want to use for second "
-            "forms for {} words?".format(ps))
+            text=_("No suitable database fields were found; what field name "
+                    f"do you want to use for second forms for ‘{ps}’ words?")
             optionslist=opts
         ui.Label(window.frame, text=text, column=0, row=0)
         """What does this extra frame do?"""
