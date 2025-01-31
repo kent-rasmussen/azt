@@ -3331,12 +3331,13 @@ class Settings(object):
             self.refreshattributechanges()
     def setprofile(self,choice,window):
         program['slices'].profile(choice)
-        #in case checks changed:
-        firstcheck=program['status'].updatechecksbycvt()[0]
         program['taskchooser'].mainwindowis.status.updateprofile()
-        if program['params'].check() != firstcheck:
-            program['params'].check(firstcheck)
-            self.attrschanged.append('check')
+        if program['params'].cvt() != 'T': #profiles don't determine tone checks
+            #in case checks changed:
+            firstcheck=program['status'].updatechecksbycvt()[0]
+            if program['params'].check() != firstcheck:
+                program['params'].check(firstcheck)
+                self.attrschanged.append('check')
         self.attrschanged.append('profile')
         self.refreshattributechanges()
         window.destroy()
