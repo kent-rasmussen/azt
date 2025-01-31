@@ -7643,6 +7643,7 @@ class Tone(object):
             """Fine if check isn't there; will be caught with exception"""
             # providing both ftype and frame isn't necessary, but allows check
             # that they align:
+            assert check in sense.examples
             f=sense.formattedform(self.analang,ftype,
                                 program['toneframes'][ps][check])
             log.info("Setting form to {}".format(f))
@@ -7659,7 +7660,7 @@ class Tone(object):
                     log.info("Setting {} translation to {}".format(g,f))
                     sense.examples[check].translationvalue(g,f)
             sense.examples[check].lastAZTsort()
-        except KeyError:
+        except (KeyError,AssertionError) as e:
             sense.newexample(check,
                             program['toneframes'][ps][check],
                             self.analang,
