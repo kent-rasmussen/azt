@@ -1138,6 +1138,8 @@ class StatusFrame(ui.Frame):
         return (_(f"Looking at {program['slices'].profile()}"))
     def updateps(self):
         self.labels['ps']['text'].set(self.pslabel())
+        self.makesliceattrs()
+        self.maybeboard()
     def pslabel(self):
         count=program['slices'].count()
         return (_(f"{program['slices'].ps()} words ({count})"))
@@ -1160,6 +1162,8 @@ class StatusFrame(ui.Frame):
         self.proselabel(**self.labels['ps'])
     def updatecvt(self):
         self.labels['cvt']['text'].set(self.cvtlabel())
+        self.makesliceattrs()
+        self.maybeboard()
     def cvtlabel(self):
         return (_(f"Checking {program['params'].cvtdict()[self.cvt]['pl']},"))
     def cvtline(self):
@@ -1410,8 +1414,6 @@ class StatusFrame(ui.Frame):
     def maybeboard(self):
         if hasattr(self,'leaderboard') and type(self.leaderboard) is ui.Frame:
             self.leaderboard.destroy()
-        if hasattr(self,'noboard'): # and type(self.leaderboard) is ui.Frame:
-            self.noboard.destroy()
         self.leaderboard=ui.Frame(self,row=0,column=1,sticky='') #nesw
         #Given the line above, much of the below can go, but not all?
         if (
@@ -1695,6 +1697,13 @@ class StatusFrame(ui.Frame):
         kwargs['gridwait']=True
         super(StatusFrame, self).__init__(parent, **kwargs)
         self.makeui()
+    def makesliceattrs(self):
+        if not isinstance(self.task,WordCollection):
+            self.cvt=program['params'].cvt()
+            self.ps=program['slices'].ps()
+            self.profile=program['slices'].profile()
+            self.check=program['params'].check()
+            self.checks=program['status'].checks()
     def makeui(self):
         self.makeproseframe()
         self.interfacelangline()
@@ -1707,11 +1716,7 @@ class StatusFrame(ui.Frame):
                 not isinstance(self.task,Parse) and
                 not isinstance(self.task,WordCollection)
                 ):
-            self.cvt=program['params'].cvt()
-            self.ps=program['slices'].ps()
-            self.profile=program['slices'].profile()
-            self.check=program['params'].check()
-            self.checks=program['status'].checks()
+            self.makesliceattrs()
             if isinstance(self.task,Multislice): #any cvt
                 self.maxes()
             else:
