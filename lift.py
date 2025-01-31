@@ -2231,12 +2231,12 @@ class FieldParent(object):
 class Example(FormParent,FieldParent):
     def locationvalue(self,loc=None):
         try: # without lang here, annotationlang is used; value=None returns
+            assert isinstance(self.fields['location'],ET.Element)
             curloc=self.fields['location'].textvaluebylang()
             if loc and curloc:
                 log.error("Received loc {}, but value already present! ({})"
                         "".format(loc,curloc))
                 loc=None #don't overwrite
-            assert isinstance(self.fields['location'],ET.Element)
             return self.fields['location'].textvaluebylang(value=loc)
         except (KeyError,AssertionError) as e:
             log.error("Something missing (locationvalue): {}".format(e))
