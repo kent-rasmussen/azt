@@ -11850,6 +11850,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                 log.debug('Group selected: {} ({})'.format(group,
                                                             groupselected))
                 """This needs to *not* operate on "exit" button."""
+                # self.marksortgroup(sense,group) #finish this, then update UI
                 t = threading.Thread(target=self.marksortgroup,
                                     args=(sense,group),
                                     kwargs={
