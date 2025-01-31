@@ -4553,7 +4553,9 @@ class TaskDressing(HasMenus,ui.Window):
         # fn=inspect.currentframe().f_code.co_name
         log.info("Getting the check name...")
         checks=program['status'].checks(**kwargs)
+        self.withdraw()
         window=ui.Window(self,title='Select Check')
+        window.withdraw()
         if not checks:
             if program['params'].cvt() == 'T':
                 btext=_("Define a New Tone Frame")
@@ -4563,7 +4565,7 @@ class TaskDressing(HasMenus,ui.Window):
                 "you don't understand, or if you're not \nsure what a tone "
                 "frame is, please ask for help. \nWhen you are done making "
                 "frames, click ‘Exit’ to continue.".format(btext))
-                cmd=self.task.addframe
+                cmd=lambda w=window: self.addframe(window=w)
             else:
                 btext=_("Return to {}, to fix settings").format(program['name'])
                 text=_("I can't find any checks for type {}, ps {}, profile {}."
@@ -4571,15 +4573,19 @@ class TaskDressing(HasMenus,ui.Window):
                         " settings, or with your syllable profile analysis"
                         "".format(cvt,ps,profile))
                 cmd=window.destroy
-            ui.Label(window.frame, text=text).grid(column=0, row=0, ipady=25)
+            ui.Label(window.frame, text=text, column=0, row=0, ipady=25)
             b=ui.Button(window.frame, text=btext,
                     cmd=cmd,
-                    anchor='c')
-            b.grid(column=0, row=1,sticky='')
-            """I need to make this quit the whole program, immediately."""
+                    anchor='c',
+                    column=0, row=1,sticky='')
+            window.deiconify()
             b.wait_window(window)
+            self.deiconify()
+            log.info("Done getting checks without a check")
         elif guess is True:
             program['status'].makecheckok(tosort=tosort,wsorted=wsorted)
+            window.destroy() #never shown
+            self.deiconify()
         else:
             log.info("Checks: {}".format(checks))
             if program['params'].cvt() == 'T':
@@ -4595,16 +4601,14 @@ class TaskDressing(HasMenus,ui.Window):
                                     column=0, row=4
                                     )
             count=len(buttonFrame1.bf.winfo_children())
-            if program['taskchooser'] is self:
-                task=self.mainwindowis
-            else:
-                task=self
             if program['params'].cvt() == 'T':
                 newb=ui.Button(buttonFrame1.bf,
                             text=_("New Frame"),
-                            cmd=lambda w=window: task.addframe(window=w),
+                            cmd=lambda w=window: self.addframe(window=w),
                             row=count+1)
+            window.deiconify()
             buttonFrame1.wait_window(window)
+            self.deiconify()
         """Make sure we got a value"""
         if program['params'].check() not in checks:
             return 1
@@ -7265,6 +7269,7 @@ class ToneFrameDrafter(ui.Window):
         exemplify=ui.Button(self.fds,text=text,cmd=self.exemplified,
                             columnspan=2,column=0,row=n+2)
         exemplify.update_idletasks()
+        self.parent.withdraw() #just in case it's visible
     def setfieldtype(self,choice,window):
         self.forms['field']=choice
         window.on_quit()
@@ -7545,7 +7550,6 @@ class ToneFrameDrafter(ui.Window):
         return f
     def __init__(self,parent):
         ui.Window.__init__(self,parent)
-        parent.withdraw()
         self.task=parent #this should always be called by a window task
         self.analang=parent.analang
         self.ps=program['slices'].ps()
@@ -7608,7 +7612,10 @@ class Tone(object):
     def addframe(self,**kwargs):
         if 'window' in kwargs:
             kwargs['window'].destroy() #in any case; if fails, try again.
-        ToneFrameDrafter(self)
+        self.withdraw()
+        t=ToneFrameDrafter(self)
+        if not t.exitFlag.istrue():
+            self.wait_window(t)
     def aframe(self):
         self.runwindow.on_quit()
         self.addframe()
