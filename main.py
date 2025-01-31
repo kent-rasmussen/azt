@@ -10982,14 +10982,21 @@ class JoinUFgroups(Tone,TaskDressing):
             self.analysis.do()
             self.waitdone()
             # self.runwindow.on_quit()
-            self.tonegroupsjoinrename() #call again, in case needed
+            self.tonegroupsjoinrename(redo=True) #call again, in case needed
         def done():
             self.runwindow.on_quit()
         ps=kwargs.get('ps',program['slices'].ps())
         profile=kwargs.get('profile',program['slices'].profile())
         analysisOK,joinedsince,timestamps=program['status'].isanalysisOK(**kwargs) #Should specify which lasts...
         if not analysisOK:
-            redo(timestamps) #otherwise, the user will almost certainly be upset to have to do it later
+            if not kwargs.get('redo'):
+                #otherwise, the user will almost certainly be upset to have to do it later
+                redo(timestamps)
+            else:
+                txt=_("The analysis still isn't OK after retrying; "
+                        f"Check your settings and try again (e.g., "
+                        f"{ps} {profile} checks: {program['status'].checks()})")
+                ErrorNotice(txt,wait=True,parent=self)
             return
         self.getrunwindow(msg=_("Preparing to join draft underlying form groups"
                                 "")+'\n'+timestamps)
