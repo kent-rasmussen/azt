@@ -13696,6 +13696,8 @@ class ErrorNotice(ui.Window):
         button=kwargs.get('button')
         image=kwargs.get('image')
         super(ErrorNotice, self).__init__(parent,title=title,exit=False)
+        self.withdraw()
+        self.parent.withdraw()
         self.title = title
         self.text = text
         l=ui.Label(self.frame, text=text,
@@ -13720,8 +13722,11 @@ class ErrorNotice(ui.Window):
                 cmd=self.on_quit,
                 row=1, column=2, sticky='nse')
         self.attributes("-topmost", True)
+        self.deiconify()
         if wait:
             self.wait_window(self)
+        if not isinstance(self.parent,ui.Root):
+            self.parent.deiconify()
 class Repository(object):
     """SuperClass for Repository classes"""
     def checkout(self,branchname):
