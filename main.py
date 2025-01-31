@@ -5440,7 +5440,7 @@ class TaskChooser(TaskDressing,ui.Window):
         return not self.writeable%program['settings'].writeeverynwrites
     def schedule_write_check(self):
         """Schedule `check_if_write_done()` function after five seconds."""
-        log.info("Scheduling check")
+        # log.info("Scheduling check")
         program['root'].after(2000, self.check_if_write_done)
         # log.info("Scheduled check")
         # program['taskchooser'].after(5000, self.check_if_write_done, t)
@@ -5471,8 +5471,8 @@ class TaskChooser(TaskDressing,ui.Window):
             self.writethread.start()
             self.schedule_write_check()
         elif write:
-            log.info(_("Already writing to lift; I trust this new mod will "
-                    "get picked up later..."))
+            # log.info(_("Already writing to lift; I trust this new mod will "
+            #         "get picked up later..."))
             self.towrite=True
     def usbcheck(self):
         self.splash.withdraw()
@@ -7646,7 +7646,7 @@ class Tone(object):
             assert check in sense.examples
             f=sense.formattedform(self.analang,ftype,
                                 program['toneframes'][ps][check])
-            log.info("Setting form to {}".format(f))
+            # log.info("Setting form to {}".format(f))
             sense.examples[check].textvaluebylang(
                                     lang=self.analang,
                                     value=f)
@@ -7657,10 +7657,11 @@ class Tone(object):
                         set(sense.ftypes[ftype])): # form in lexicon
                 for f in sense.formattedgloss(g,
                                         program['toneframes'][ps][check])[:1]:
-                    log.info("Setting {} translation to {}".format(g,f))
+                    # log.info("Setting {} translation to {}".format(g,f))
                     sense.examples[check].translationvalue(g,f)
             sense.examples[check].lastAZTsort()
         except (KeyError,AssertionError) as e:
+            # log.info(f"Adding a new example to store ‘{check}’ values ({e})")
             sense.newexample(check,
                             program['toneframes'][ps][check],
                             self.analang,
@@ -8020,9 +8021,9 @@ class Sort(object):
             if newgroup != group:
                 log.error("Field addition failed! LIFT says {}, not {}.".format(
                                                     newgroup,group))
-            else:
-                log.info("Field addition succeeded! LIFT says {}, which is {}."
-                                        "".format(newgroup,group))
+            # else:
+            #     log.info("Field addition succeeded! LIFT says {}, which is {}."
+            #                             "".format(newgroup,group))
         if kwargs.get('updateforms'):
             self.updateformtoannotations(sense,ftype,check)
         program['status'].marksensesorted(sense)
@@ -11847,8 +11848,7 @@ class SortButtonFrame(ui.ScrollingFrame):
                     group='NA'
                 else:
                     group=groupselected
-                log.debug('Group selected: {} ({})'.format(group,
-                                                            groupselected))
+                # log.debug(f'Group selected: {group} ({groupselected})')
                 """This needs to *not* operate on "exit" button."""
                 # self.marksortgroup(sense,group) #finish this, then update UI
                 t = threading.Thread(target=self.marksortgroup,

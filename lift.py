@@ -2023,6 +2023,7 @@ class FormParent(Node):
         if lang not in self.forms:
             # log.info("Missing ‘{}’ lang in textvaluebylang".format(lang))
             if value is not None: #only make if we're populating it, allow ''
+                # log.info(f"Adding new {lang} form field = {value}")
                 self.forms[lang]=Form(self,attrib={'lang':lang})
                 # prettyprint(self.forms[lang])
             else:
@@ -2239,8 +2240,8 @@ class Example(FormParent,FieldParent):
                 loc=None #don't overwrite
             return self.fields['location'].textvaluebylang(value=loc)
         except (KeyError,AssertionError) as e:
-            log.error("Something missing (locationvalue): {}".format(e))
             if loc: #don't make field if not setting value
+                # log.info(f"Adding new location field = {loc} ({e})")
                 self.newfield('location',value=loc) #use annotationlang
             else:
                 return None
@@ -2253,7 +2254,7 @@ class Example(FormParent,FieldParent):
             return self.fields['tone'].textvaluebylang(value=value) # w/wo value
         except (KeyError,AssertionError) as e:
             if value: #don't make field if not setting value
-                log.info("Adding tone value: {} ({})".format(value,e))
+                # log.info(f"Adding new tone field = {value} ({e})")
                 self.newfield('tone',value=value) #use annotationlang
             else:
                 log.info("No tone value found: {}".format(e))
@@ -2266,6 +2267,7 @@ class Example(FormParent,FieldParent):
             return self.translation.textvaluebylang(lang,value) # w/wo value
         except AssertionError:
             if value: #don't make field if not setting value
+                # log.info(f"Adding new translation field {lang} = {value} ({e})")
                 t=Translation(self)
                 t.textvaluebylang(lang,value)
             else:
@@ -2417,7 +2419,7 @@ class Sense(Node,FieldParent):
                 self.examples[loc].translationvalue(g,f)
         self.examples[loc].setguid()
         self.examples[loc].lastAZTsort()
-        prettyprint(self.examples[loc])
+        # prettyprint(self.examples[loc])
     def getexamples(self):
         # log.info("getting examples for sense {}".format(self.id))
         # actual locations found in actual examples:
@@ -2700,6 +2702,7 @@ class Sense(Node,FieldParent):
         # log.info("setting value {} ({})".format(value,type(value)))
         if value:
             log.info("setting value {} ({})".format(value,type(value)))
+        #This is stored as a list in text, so return it to a python list:
         return xmlfns.stringtoobject(self.fields[key].textvaluebylang(
                                                                 value=value))
     def __init__(self, parent, node=None, **kwargs):
