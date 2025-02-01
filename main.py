@@ -1585,7 +1585,7 @@ class StatusFrame(ui.Frame):
                 elif profile == 'next': # end of row headers
                     brh=ui.Button(self.leaderboardtable,text=_(profile),
                             font='reportheader',
-                            relief='flat',cmd=program['settings'].setnextprofile)
+                            relief='flat',cmd=program['settings'].setprofile)
                     brh.grid(row=row,column=column,sticky='e')
                     brht=ui.ToolTip(brh,_("Go to the next syllable profile"))
                 for check in allchecks+['next']:
@@ -1601,7 +1601,7 @@ class StatusFrame(ui.Frame):
                                                     ):
                                 cmd=self.task.addframe
                             else:
-                                cmd=lambda todo=True:program['settings'].setnextcheck(
+                                cmd=lambda todo=True:program['settings'].setcheck(
                                                                     todo=todo)
                             bch=ui.Button(self.leaderboardtable,text=_(check),
                                         relief='flat',
@@ -3325,16 +3325,9 @@ class Settings(object):
         self.refreshattributechanges()
         if window:
             window.destroy()
-    def setnextprofile(self):
-        r=program['status'].nextprofile()
-        if r:
-            firstcheck=program['status'].updatechecksbycvt()[0]
-            if program['params'].check() != firstcheck:
-                program['params'].check(firstcheck)
-                self.attrschanged.append('check')
-            self.attrschanged.append('profile')
-            self.refreshattributechanges()
-    def setprofile(self,choice,window):
+    def setprofile(self,choice=None,window=None):
+        if not choice:
+            choice=program['status'].nextprofile()
         program['slices'].profile(choice)
         program['taskchooser'].mainwindowis.status.updateprofile()
         if program['params'].cvt() != 'T': #profiles don't determine tone checks
@@ -3345,7 +3338,8 @@ class Settings(object):
                 self.attrschanged.append('check')
         self.attrschanged.append('profile')
         self.refreshattributechanges()
-        window.destroy()
+        if window:
+            window.destroy()
     def setcvt(self,choice,window=None):
         program['params'].cvt(choice)
         self.attrschanged.append('cvt')
@@ -3397,11 +3391,9 @@ class Settings(object):
             log.debug("group_comparison: {}".format(self.group_comparison))
         self.set('group_comparison',choice,window,refresh=False)
         log.debug("group_comparison: {}".format(self.group_comparison))
-    def setnextcheck(self,**kwargs):
-        program['status'].nextcheck(**kwargs)
-        self.attrschanged.append('check')
-        self.refreshattributechanges()
-    def setcheck(self,choice,window=None):
+    def setcheck(self,choice=None,window=None,**kwargs):
+        if not choice:
+            choice=program['status'].nextcheck(**kwargs)
         program['params'].check(choice)
         if program['params'].cvt() == 'T':
             program['taskchooser'].mainwindowis.status.updatetoneframe()
@@ -12918,7 +12910,7 @@ class StatusDict(dict):
             if idx != len(profiles)-1:
                 nextprofile=profiles[idx+1]
         program['slices'].profile(nextprofile)
-        return True
+        return nextprofile
     def nextcheck(self, event=None, **kwargs):
         kwargs=grouptype(**kwargs)
         check=program['params'].check()
@@ -12932,7 +12924,7 @@ class StatusDict(dict):
             if idx != len(checks)-1: # i.e., not already last
                 nextcheck=checks[idx+1] #overwrite default in this one case
         program['params'].check(nextcheck)
-        return True
+        return nextcheck
     def nextgroup(self, **kwargs):
         kwargs=grouptype(**kwargs)
         group=self.group()
