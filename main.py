@@ -12534,6 +12534,7 @@ class Analysis(object):
         program['db'].write()
         self.doanyway()
         program['status'].last('analysis',update=True)
+        program['status'].store()
     def doanyway(self):
         """compare(x=UFs/checks) give self.comparison(x) and self.ordered(x)"""
         self.comparechecks() #also self.valuesbygroupcheck -> …checkgroup
