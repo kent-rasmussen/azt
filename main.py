@@ -13422,16 +13422,41 @@ class StatusDict(dict):
         if task in sn['last']:
             return sn['last'][task]
     def isanalysisOK(self,**kwargs):
-        a=self.last('analysis',**kwargs)
-        s=self.last('sort',**kwargs)
-        j=self.last('joinUF',**kwargs)
+        if 'check' in kwargs:
+            a=self.last('analysis',**kwargs)
+            s=self.last('sort',**kwargs)
+            j=self.last('joinUF',**kwargs)
+        else:
+            log.info("checking for an OK analysis across all checks")
+            analysisl=[]
+            sortl=[]
+            ufjoinl=[]
+            self.renewchecks()
+            # log.info(f"Working on checks ‘{self.checks()}’")
+            # log.info(f"Working on updatechecksbycvt ‘{self.updatechecksbycvt()}’")
+            for check in self.updatechecksbycvt():
+                log.info(f"Working on check ‘{check}’")
+                analysisl.append(self.last('analysis',**{**kwargs,'check':check}))
+                sortl.append(self.last('sort',**{**kwargs,'check':check}))
+                ufjoinl.append(self.last('joinUF',**{**kwargs,'check':check}))
+            log.info(f"Collected analysisl: {analysisl}")
+            log.info(f"Collected sortl: {sortl}")
+            log.info(f"Collected ufjoinl: {ufjoinl}")
+            # These are stored on file as strings
+            a=min([datetime.datetime.fromisoformat(i) for i in analysisl if i],
+                                                                    default='')
+            s=max([datetime.datetime.fromisoformat(i) for i in sortl if i],
+                                                                    default='')
+            j=max([datetime.datetime.fromisoformat(i) for i in ufjoinl if i],
+                                                                    default='')
+        log.info(f"{a}>{s}?")
         if a and s:
-            ok=a>s
+            ok=fixnaivedatetime(a)>fixnaivedatetime(s)
         elif a:
             ok=True # b/c analysis would be more recent than last sorting
         else:
             ok=False # w/o info, trigger reanalysis
-        if ok and j and j > a:
+        if ok and j and fixnaivedatetime(j) > fixnaivedatetime(a):
             joinsinceanalysis=True #show groups on all non-default reports
         else:
             joinsinceanalysis=False
@@ -14664,13 +14689,16 @@ class Object:
         for k in kwargs:
             setattr(self,k,kwargs[k])
 """These are non-method utilities I'm actually using."""
+def fixnaivedatetime(d):
+    """Assume naive was made wrt UTC (as has been my practice)"""
+    return d.replace(tzinfo=datetime.timezone.utc)
 def now():
     try:
         # Python 3.11+
-        return datetime.datetime.now(datetime.UTC).isoformat()
+        return datetime.datetime.now(datetime.UTC)#.isoformat() adds T
     except AttributeError as e:
         # Python <=3.11
-        return datetime.datetime.utcnow()
+        return datetime.datetime.now(datetime.timezone.utc)#.isoformat()
 def nowruntime():
     #this returns a delta!
     try:
