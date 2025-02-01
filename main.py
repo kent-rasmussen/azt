@@ -13408,6 +13408,10 @@ class StatusDict(dict):
         log.log(4,"Returning checkslicetypecurrent kwargs {}".format(kwargs))
         return kwargs
     def last(self,task,update=False,**kwargs):
+        if update and not kwargs.get('check'): #write cross-check tone analysis
+            for kwargs['check'] in self.checks():
+                self.last(task,update,**kwargs)
+            return
         sn=self.node(**kwargs)
         if 'last' not in sn:
             sn['last']={}
