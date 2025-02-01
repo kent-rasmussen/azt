@@ -5479,6 +5479,8 @@ class TaskChooser(TaskDressing,ui.Window):
             #         "get picked up later..."))
             self.towrite=True
     def usbcheck(self):
+        if self.splash.exitFlag.istrue():
+            return
         self.splash.withdraw()
         for r in program['settings'].repo.values():
             # log.info("checking repo {} for USB drive".format(r))
@@ -5528,6 +5530,8 @@ class TaskChooser(TaskDressing,ui.Window):
                 ).format(program['name'])
             ErrorNotice(e)
         self.splash.progress(100)
+        if self.splash.exitFlag.istrue():
+            sysshutdown()
         self.splash.destroy()
         self.makeexampledict() #needed for makestatus, needs params,slices,data
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
@@ -12372,6 +12376,8 @@ class ImageFrame(ui.Frame):
             self.citationframe()
 class Splash(ui.Window):
     def maketexts(self):
+        if self.exitFlag.istrue():
+            return
         self.labels['v']['text']=_("Version: {}".format(program['version']))
         self.labels['v2']['text']=_(
                             f"updated to {program['repo'].lastcommitdate()} " f"({program['repo'].lastcommitdaterelative()})")
@@ -12388,6 +12394,8 @@ class Splash(ui.Window):
         # self.update()
         self.deiconify() #show after placement
     def progress(self,value):
+        if self.exitFlag.istrue():
+            return
         self.progressbar.current(value)
     def __init__(self, parent):
         try:
