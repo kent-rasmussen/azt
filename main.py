@@ -1512,8 +1512,9 @@ class StatusFrame(ui.Frame):
             return len(x) #to show counts only
         def updateprofilencheck(profile,check):
             # log.info("running updateprofilencheck({},{})".format(profile,check))
-            program['slices'].profile(profile)
-            program['params'].check(check)
+            program['settings'].setprofile(profile)
+            program['settings'].setcheck(check)
+            self.maybeboard()
             # log.info("now {},{}".format(program['slices'].profile(),
             #                             program['params'].check()))
             #run this in any case, rather than running it not at all, or twice
@@ -7913,8 +7914,10 @@ class Sort(object):
             program['status'].marksensetosort(sense)
     def ncheck(self):
         r=program['status'].nextcheck(tosort=True)
-        if not r:
-            program['status'].nextcheck(toverify=True)
+        if r:
+            program['settings'].setcheck(r)
+        else:
+            program['settings'].setcheck(toverify=True)
         #if neither, this should call nprofile
         try:
             self.runwindow.on_quit()
@@ -7923,8 +7926,10 @@ class Sort(object):
         self.runcheck()
     def nprofile(self):
         r=program['status'].nextprofile(tosort=True)
-        if not r:
-            program['status'].nextprofile(toverify=True)
+        if r:
+            program['settings'].setprofile(r)
+        else:
+            program['settings'].setprofile(toverify=True)
         #if neither, this should give up with a congrats and comment to pick another ps
         try:
             self.runwindow.on_quit()
@@ -8145,7 +8150,11 @@ class Sort(object):
                 #only on first two ifs:
         if fn:
             done+='\n'+_("Moving on to the next {}!".format(next))
-        ErrorNotice(text=done,title=_("Done!"),wait=True) #all
+        if hasattr(self,'runwindow'):
+            ErrorNotice(text=done,title=_("Done!"),wait=True,
+                                                        parent=self.runwindow)
+        else:
+            ErrorNotice(text=done,title=_("Done!"),wait=True)
         if fn:
             fn() #only on first two ifs
     def presenttosort(self):
