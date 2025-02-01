@@ -6806,6 +6806,7 @@ class Parse(Segments):
         self.withdraw()
         self.updatereturnbind()
         self.parse(**kwargs)
+        self.updateparseUI()
         if self.iswaiting():
             self.waitdone()
         if self.winfo_exists():
@@ -6935,6 +6936,7 @@ class Parse(Segments):
                 if not self.done():
                     self.parse_foreground(entry=self.entry)
             self.maybewrite() #only if above is successful
+            self.updateparseUI()
             log.info("Storing word: {}".format(self.sense.id))
         except AttributeError as e:
             log.info("Not storing word (WordCollectnParse): {}".format(e))
