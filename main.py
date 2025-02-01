@@ -5305,6 +5305,7 @@ class TaskChooser(TaskDressing,ui.Window):
         sortsrecorded=program['db'].nfieldswsoundfiles
         log.info("nfieldswsoundfiles by lang: {}".format(sortsrecorded))
         sortsnotrecorded={}
+        log.info(f"sorts: {sorts}")
         if me:
             enough=0
         else:
