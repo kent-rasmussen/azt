@@ -1134,6 +1134,7 @@ class StatusFrame(ui.Frame):
             self.proselabel(**self.labels['fields'+ps])
     def updateprofile(self):
         self.labels['profile']['text'].set(self.profilelabel())
+        self.labels['ps']['text'].set(self.pslabel())
     def profilelabel(self):
         return (_(f"Looking at {program['slices'].profile()}"))
     def updateps(self):
