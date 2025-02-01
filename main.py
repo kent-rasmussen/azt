@@ -1490,6 +1490,15 @@ class StatusFrame(ui.Frame):
         notext=_("Nothing to see here...")
         ui.Label(self.leaderboardtable,text=notext).grid(row=1,column=0)
         # self.frame.update()
+    def updateprogresstable(self):
+        """This could be a method called in creation, then again when updates
+        are needed. I should controll activebackground and commands, setting
+        and clering the one or the other, according to current settings.
+        Maybe could iterate across all, maybe calculate the right column and row
+        should access self.checks and self.profiles for indexes"""
+        if profile == curprofile and check == curcheck:
+            tb.configure(background=tb['activebackground'])
+            tb.configure(command=donothing)
     def makeprogresstable(self):
         def groupfn(x):
             for i in x:
