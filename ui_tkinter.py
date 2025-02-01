@@ -1059,13 +1059,17 @@ class Text(Childof,ObectwArgs):
         return kwargs
     def __init__(self,parent,**kwargs):
         Childof.__init__(self,parent)
-        self.textkwargs=['text','image','font','norender']
-        if isinstance(kwargs.get('text'), tkinter.StringVar):
-            self.textvariable=kwargs.pop('text')
+        self.textkwargs=['text','textvariable','image','font','norender']
+        if 'textvariable' in kwargs:
+            t=kwargs.pop('textvariable')
+        elif 'text' in kwargs: #this may be empty, for an image label
+            t=kwargs.pop('text')
+        if isinstance(t, tkinter.StringVar):
+            self.textvariable=t
             self.text=''
         else:
             self.textvariable=''
-            self.text=kwargs.pop('text','')
+            self.text=t
         # self.renderings=parent.renderings
         self.anchor=kwargs.pop('anchor',"w")
         if 'font' in kwargs:
@@ -1277,6 +1281,7 @@ class EntryField(Gridded,Text,UI,tkinter.Entry):
         tkinter.Entry.__init__(self,parent,
                                 font=self.font,
                                 text=self.text,
+                                textvariable=self.textvariable,
                                 **kwargs)
         if render is True:
             self.bind('<KeyRelease>', self.renderlabel)

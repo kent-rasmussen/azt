@@ -279,7 +279,7 @@ class LiftChooser(ui.Window,HasMenus):
         l.wrap()
         entryframe=ui.Frame(window.frame,row=2,column=0,sticky='nsew')
         analang=ui.StringVar()
-        e=ui.EntryField(entryframe, textvariable=analang, font='readbig',
+        e=ui.EntryField(entryframe, text=analang, font='readbig',
                         width=5, row=0,column=0,sticky='w')
         e.bind('<Return>',done)
         e.focus_set()
@@ -4097,7 +4097,7 @@ class TaskDressing(HasMenus,ui.Window):
             namevar.set(curname)
         t+='?' # _("Language with code [{}]").format(xyz)
         ui.Label(window.frame,text=t,row=0,column=0,sticky='e',columnspan=2)
-        name = ui.EntryField(window.frame,textvariable=namevar,
+        name = ui.EntryField(window.frame,text=namevar,
                             row=1,column=0,
                             sticky='e')
         name.focus_set()
@@ -4391,7 +4391,7 @@ class TaskDressing(HasMenus,ui.Window):
                 row=0,column=0)
         custom=ui.StringVar()
         formfield = ui.EntryField(window, render=True,
-                                    textvariable=custom,
+                                    text=custom,
                                     row=1,column=0,
                                     sticky='')
         formfield.focus_set()
@@ -5812,7 +5812,7 @@ class WordCollection(Segments):
         #variable and field for entry:
         self.runwindow.form[lang]=ui.StringVar()
         formfield = ui.EntryField(eff, render=True,
-                                    textvariable=self.runwindow.form[lang],
+                                    text=self.runwindow.form[lang],
                                     font='readbig',
                                     row=1,column=0,
                                     sticky='')
@@ -6222,13 +6222,13 @@ class WordCollection(Segments):
         next=ui.Button(self.wordframe,text=_("Next"),cmd=self.nextword,
                         row=4, column=2, sticky='e',anchor='e')
         self.var=ui.StringVar()
-        self.lxenter=ui.EntryField(self.wordframe,textvariable=self.var,
+        self.lxenter=ui.EntryField(self.wordframe,text=self.var,
                                 font='readbig',
                                 row=3,column=0,columnspan=3,
                                 sticky='ew')
         if isinstance(self.task,Parse):
             self.parsebutton=ui.Label(self.wordframe,
-                                        textvariable=self.cparsetext,
+                                        text=self.cparsetext,
                                         row=4, column=1, sticky='w',anchor='w')
         next.bind_all('<Up>',lambda event: self.backword(nostore=True))
         next.bind_all('<Prior>',lambda event: self.backword(nostore=True))
@@ -6418,7 +6418,7 @@ class Parse(Segments):
                         row=0,column=3,padx=(10,0),sticky='ew')
             roottext = ui.StringVar(self.responseframe, value=lx)
             self.roottextfield=ui.EntryField(self.responseframe,
-                                                textvariable=roottext,
+                                                text=roottext,
                                                 row=0,column=4,sticky='ew')
             ui.Button(self.responseframe,
                         text=_("OK"),
@@ -6646,19 +6646,21 @@ class Parse(Segments):
         if lx:
             return _("{root}: {} ({ps}), {sfname}: {}"
                 ).format(lx,''.join([i for i in [pl,imp] if i]),
-                        root=_("root"),
+                        root=_("Root"),
                         ps=self.parser.sense.psvalue(),
                         sfname=self.secondformfield[self.nominalps] if pl
                         else self.secondformfield[self.verbalps]
                         )
-        if lc:
-            return _("citation: {}, {sfname}: {}"
-                ).format(lx,''.join([i for i in [pl,imp] if i]),
+        if lc and (pl or imp):
+            return _("Citation: {}, {sfname}: {}"
+                ).format(lc,''.join([i for i in [pl,imp] if i]),
                         # root=_("root"),
                         # ps=self.parser.sense.psvalue(),
                         sfname=self.secondformfield[self.nominalps] if pl
                         else self.secondformfield[self.verbalps]
                         )
+        if lc:
+            return _(f"Citation: {lc}")
         else:
             return ""
     def currentformnotice(self):
@@ -6719,7 +6721,7 @@ class Parse(Segments):
         ImageFrame(w.frame,self.parser.sense,ftype=ftype,row=0,column=2)
         segments=ui.StringVar()
         segments.set(self.parser.entry.lc.textvaluebylang(self.analang))
-        e=ui.EntryField(w.frame,textvariable=segments,
+        e=ui.EntryField(w.frame,text=segments,
                         row=1,column=0)
         b=ui.Button(w.frame,text=_("OK"),cmd=do,
                         row=2,column=0, sticky='e')
@@ -6807,6 +6809,7 @@ class Parse(Segments):
         self.withdraw()
         self.updatereturnbind()
         self.parse(**kwargs)
+        self.updateparseUI()
         if self.iswaiting():
             self.waitdone()
         if self.winfo_exists():
@@ -6936,6 +6939,7 @@ class Parse(Segments):
                 if not self.done():
                     self.parse_foreground(entry=self.entry)
             self.maybewrite() #only if above is successful
+            self.updateparseUI()
             log.info("Storing word: {}".format(self.sense.id))
         except AttributeError as e:
             log.info("Not storing word (WordCollectnParse): {}".format(e))
@@ -7499,7 +7503,7 @@ class ToneFrameDrafter(ui.Window):
             except KeyError:
                 v=self.forms['name']=ui.StringVar(self,initval)
         formfield = ui.EntryField(eff, render=True,
-                                textvariable=v,
+                                text=v,
                                 row=1,column=0,
                                 sticky='')
         formfield.focus_set()
@@ -7873,7 +7877,7 @@ class Sort(object):
         else:
             default=profile
         profilevar=ui.StringVar(value=default)
-        namefield = ui.EntryField(qframe,textvariable=profilevar)
+        namefield = ui.EntryField(qframe,text=profilevar)
         namefield.grid(row=0,column=1)
         text=_("Select the {} words below that you want in this group, then "
                 "click ==>".format(ps))
@@ -11072,7 +11076,7 @@ class JoinUFgroups(Tone,TaskDressing):
                     )
         q.wrap()
         named=ui.StringVar() #store the new name here
-        namefield = ui.EntryField(qframe,textvariable=named)
+        namefield = ui.EntryField(qframe,text=named)
         namefield.grid(row=qrow,column=1)
         namefield.bind('<Key>', clearerror)
         errorlabel=ui.Label(qframe,text='',fg='red')
@@ -12094,7 +12098,7 @@ class SortGroupButtonFrame(ui.Frame):
         del tinyfontkwargs['font'] #so it will fit in the circle
         self.refreshbutton=ui.Button(self, image=self.theme.photo['change'], #🔃 not in tck
                         cmd=self.refresh,
-                        textvariable=self._n,
+                        text=self._n,
                         compound='center',
                         column=0,
                         row=0,
