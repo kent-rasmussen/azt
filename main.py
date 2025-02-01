@@ -3296,7 +3296,9 @@ class Settings(object):
         #otherwise, don't set window (which would be destroyed)
         #Set refresh=False (or anything but True) to not redo the main window
         #afterwards. Do this to save time if you are setting multiple variables.
-        log.info("Setting {} variable with value: {}".format(attribute,choice))
+        log.info("Setting {} variable with value: {} ({})".format(
+                attribute,choice,
+                getattr(self,attribute,"Not Present")))
         if window is not None:
             window.destroy()
         if not hasattr(self,attribute) or getattr(self,attribute) != choice: #only set if different
@@ -3610,16 +3612,19 @@ class TaskDressing(HasMenus,ui.Window):
         log.info("setting button relief to {}, with refresh={}".format(relief,
                                                                     refresh))
         # None "raised" "groove" "sunken" "ridge" "flat"
+        self.status.mainrelief=\
         program['taskchooser'].mainrelief=\
         program['taskchooser'].task.mainrelief=\
         self.mainrelief=relief
     def _showbuttons(self,event=None):
         todo=getattr(self,'mainreliefnext','flat')
         self.mainlabelrelief(relief=todo,refresh=True)
+        program['taskchooser'].mainwindowis.status.makeui()
         self.setcontext()
     def _hidebuttons(self,event=None):
         self.mainlabelrelief(relief=None,refresh=True)
-        self.setcontext()
+        program['taskchooser'].mainwindowis.status.makeui()
+        self. setcontext()
     def correlatemenus(self):
         """I don't think I want this. Rather, menus must always be asked for."""
         log.info("Menus: {}; {} (chooser)".format(self.menu,program['taskchooser'].menu))
@@ -3646,13 +3651,15 @@ class TaskDressing(HasMenus,ui.Window):
         self.fontthemesmall=True
         self.setcontext()
         self.tableiteration+=1
-    def hidedetails(self):
+    def _hidedetails(self):
         # log.info("Hiding group names")
         program['settings'].set('showdetails', False, refresh=True)
+        program['taskchooser'].mainwindowis.status.maybeboard()
         self.setcontext()
-    def showdetails(self):
+    def _showdetails(self):
         # log.info("Showing group names")
         program['settings'].set('showdetails', True, refresh=True)
+        program['taskchooser'].mainwindowis.status.maybeboard()
         self.setcontext()
     def setcontext(self,context=None):
         if self.exitFlag.istrue() or not self.winfo_exists():
@@ -3670,11 +3677,10 @@ class TaskDressing(HasMenus,ui.Window):
             self.context.menuitem(_("Smaller Fonts"),self.setfontssmaller)
         else:
             self.context.menuitem(_("Larger Fonts"),self.setfontsdefault)
-        if hasattr(program['settings'],
-                    'showdetails') and program['settings'].showdetails:
-            self.context.menuitem(_("Hide details"),self.hidedetails)
+        if getattr(program['settings'], 'showdetails'):
+            self.context.menuitem(_("Hide details"),self._hidedetails)
         else:
-            self.context.menuitem(_("Show details"),self.showdetails)
+            self.context.menuitem(_("Show details"),self._showdetails)
     def maketitle(self):
         title=_("{} Dictionary and Orthography Checker: {}").format(
                                             program['name'],self.tasktitle())
