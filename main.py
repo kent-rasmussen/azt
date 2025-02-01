@@ -5308,7 +5308,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if me:
             enough=0
         else:
-            enough=25
+            enough=6 #for demonstrating; is 25 a reasonable minimum?
         # log.info("looking at sorts now: {}".format(sorts))
         for l in sorts:
             maybeals=[i for i in program['db'].audiolangs if l in i]
