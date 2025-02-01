@@ -1490,6 +1490,15 @@ class StatusFrame(ui.Frame):
         notext=_("Nothing to see here...")
         ui.Label(self.leaderboardtable,text=notext).grid(row=1,column=0)
         # self.frame.update()
+    def updateprogresstable(self):
+        """This could be a method called in creation, then again when updates
+        are needed. I should controll activebackground and commands, setting
+        and clering the one or the other, according to current settings.
+        Maybe could iterate across all, maybe calculate the right column and row
+        should access self.checks and self.profiles for indexes"""
+        if profile == curprofile and check == curcheck:
+            tb.configure(background=tb['activebackground'])
+            tb.configure(command=donothing)
     def makeprogresstable(self):
         def groupfn(x):
             for i in x:
@@ -1503,8 +1512,9 @@ class StatusFrame(ui.Frame):
             return len(x) #to show counts only
         def updateprofilencheck(profile,check):
             # log.info("running updateprofilencheck({},{})".format(profile,check))
-            program['slices'].profile(profile)
-            program['params'].check(check)
+            program['settings'].setprofile(profile)
+            program['settings'].setcheck(check)
+            self.maybeboard()
             # log.info("now {},{}".format(program['slices'].profile(),
             #                             program['params'].check()))
             #run this in any case, rather than running it not at all, or twice
@@ -1538,13 +1548,13 @@ class StatusFrame(ui.Frame):
                 #make sure the table has all columns needed for any profile
                 allchecks+=program['status'][cvt][ps][profile].keys()
                 # log.info("allchecks1: {}".format(allchecks))
-        allchecks=list(dict.fromkeys(allchecks)) #could unsort slices priority
+        self.checks=list(dict.fromkeys(allchecks)) #could unsort slices priority
         # log.info("allchecks dicted: {}".format(allchecks))
         if self.cvt != 'T': #don't resort tone frames
-            allchecks.sort(key=len,reverse=True) #longest first
+            self.checks.sort(key=len,reverse=True) #longest first
         # log.info("allchecks sorted: {}".format(allchecks))
         profiles.sort(key=lambda x:(x.count(self.cvt),len(x)))
-        profiles=['colheader']+profiles+['next']
+        self.profiles=['colheader']+profiles+['next']
         ungroups=0
         unsortedtext='[X]'
         if program['settings'].showdetails:
@@ -1561,10 +1571,11 @@ class StatusFrame(ui.Frame):
         # log.info("Table rows possible: {}".format(r))
         # log.info("Table columns possible: {}".format(allchecks))
         # log.info("toneframes possible: {}".format(frames))
-        for profile in profiles:
+        for profile in self.profiles: #keep this for later updates
             column=0
             if profile in ['colheader','next']+list(program['status'][cvt][
                                                             ps].keys()):
+                """header first"""
                 if profile in program['status'][cvt][ps]:
                     if program['status'][cvt][ps][profile] == {}:
                         continue
@@ -1585,10 +1596,11 @@ class StatusFrame(ui.Frame):
                 elif profile == 'next': # end of row headers
                     brh=ui.Button(self.leaderboardtable,text=_(profile),
                             font='reportheader',
-                            relief='flat',cmd=program['settings'].setnextprofile)
+                            relief='flat',cmd=program['settings'].setprofile)
                     brh.grid(row=row,column=column,sticky='e')
                     brht=ui.ToolTip(brh,_("Go to the next syllable profile"))
-                for check in allchecks+['next']:
+                """then checks"""
+                for check in self.checks+['next']:
                     column+=1
                     if profile == 'colheader':
                         if check == 'next': # end of column headers
@@ -1601,7 +1613,7 @@ class StatusFrame(ui.Frame):
                                                     ):
                                 cmd=self.task.addframe
                             else:
-                                cmd=lambda todo=True:program['settings'].setnextcheck(
+                                cmd=lambda todo=True:program['settings'].setcheck(
                                                                     todo=todo)
                             bch=ui.Button(self.leaderboardtable,text=_(check),
                                         relief='flat',
@@ -3284,7 +3296,9 @@ class Settings(object):
         #otherwise, don't set window (which would be destroyed)
         #Set refresh=False (or anything but True) to not redo the main window
         #afterwards. Do this to save time if you are setting multiple variables.
-        log.info("Setting {} variable with value: {}".format(attribute,choice))
+        log.info("Setting {} variable with value: {} ({})".format(
+                attribute,choice,
+                getattr(self,attribute,"Not Present")))
         if window is not None:
             window.destroy()
         if not hasattr(self,attribute) or getattr(self,attribute) != choice: #only set if different
@@ -3325,16 +3339,9 @@ class Settings(object):
         self.refreshattributechanges()
         if window:
             window.destroy()
-    def setnextprofile(self):
-        r=program['status'].nextprofile()
-        if r:
-            firstcheck=program['status'].updatechecksbycvt()[0]
-            if program['params'].check() != firstcheck:
-                program['params'].check(firstcheck)
-                self.attrschanged.append('check')
-            self.attrschanged.append('profile')
-            self.refreshattributechanges()
-    def setprofile(self,choice,window):
+    def setprofile(self,choice=None,window=None):
+        if not choice:
+            choice=program['status'].nextprofile()
         program['slices'].profile(choice)
         program['taskchooser'].mainwindowis.status.updateprofile()
         if program['params'].cvt() != 'T': #profiles don't determine tone checks
@@ -3345,7 +3352,8 @@ class Settings(object):
                 self.attrschanged.append('check')
         self.attrschanged.append('profile')
         self.refreshattributechanges()
-        window.destroy()
+        if window:
+            window.destroy()
     def setcvt(self,choice,window=None):
         program['params'].cvt(choice)
         self.attrschanged.append('cvt')
@@ -3397,11 +3405,9 @@ class Settings(object):
             log.debug("group_comparison: {}".format(self.group_comparison))
         self.set('group_comparison',choice,window,refresh=False)
         log.debug("group_comparison: {}".format(self.group_comparison))
-    def setnextcheck(self,**kwargs):
-        program['status'].nextcheck(**kwargs)
-        self.attrschanged.append('check')
-        self.refreshattributechanges()
-    def setcheck(self,choice,window=None):
+    def setcheck(self,choice=None,window=None,**kwargs):
+        if not choice:
+            choice=program['status'].nextcheck(**kwargs)
         program['params'].check(choice)
         if program['params'].cvt() == 'T':
             program['taskchooser'].mainwindowis.status.updatetoneframe()
@@ -3606,16 +3612,19 @@ class TaskDressing(HasMenus,ui.Window):
         log.info("setting button relief to {}, with refresh={}".format(relief,
                                                                     refresh))
         # None "raised" "groove" "sunken" "ridge" "flat"
+        self.status.mainrelief=\
         program['taskchooser'].mainrelief=\
         program['taskchooser'].task.mainrelief=\
         self.mainrelief=relief
     def _showbuttons(self,event=None):
         todo=getattr(self,'mainreliefnext','flat')
         self.mainlabelrelief(relief=todo,refresh=True)
+        program['taskchooser'].mainwindowis.status.makeui()
         self.setcontext()
     def _hidebuttons(self,event=None):
         self.mainlabelrelief(relief=None,refresh=True)
-        self.setcontext()
+        program['taskchooser'].mainwindowis.status.makeui()
+        self. setcontext()
     def correlatemenus(self):
         """I don't think I want this. Rather, menus must always be asked for."""
         log.info("Menus: {}; {} (chooser)".format(self.menu,program['taskchooser'].menu))
@@ -3642,13 +3651,15 @@ class TaskDressing(HasMenus,ui.Window):
         self.fontthemesmall=True
         self.setcontext()
         self.tableiteration+=1
-    def hidedetails(self):
+    def _hidedetails(self):
         # log.info("Hiding group names")
         program['settings'].set('showdetails', False, refresh=True)
+        program['taskchooser'].mainwindowis.status.maybeboard()
         self.setcontext()
-    def showdetails(self):
+    def _showdetails(self):
         # log.info("Showing group names")
         program['settings'].set('showdetails', True, refresh=True)
+        program['taskchooser'].mainwindowis.status.maybeboard()
         self.setcontext()
     def setcontext(self,context=None):
         if self.exitFlag.istrue() or not self.winfo_exists():
@@ -3666,11 +3677,10 @@ class TaskDressing(HasMenus,ui.Window):
             self.context.menuitem(_("Smaller Fonts"),self.setfontssmaller)
         else:
             self.context.menuitem(_("Larger Fonts"),self.setfontsdefault)
-        if hasattr(program['settings'],
-                    'showdetails') and program['settings'].showdetails:
-            self.context.menuitem(_("Hide details"),self.hidedetails)
+        if getattr(program['settings'], 'showdetails'):
+            self.context.menuitem(_("Hide details"),self._hidedetails)
         else:
-            self.context.menuitem(_("Show details"),self.showdetails)
+            self.context.menuitem(_("Show details"),self._showdetails)
     def maketitle(self):
         title=_("{} Dictionary and Orthography Checker: {}").format(
                                             program['name'],self.tasktitle())
@@ -5476,6 +5486,8 @@ class TaskChooser(TaskDressing,ui.Window):
             #         "get picked up later..."))
             self.towrite=True
     def usbcheck(self):
+        if self.splash.exitFlag.istrue():
+            return
         self.splash.withdraw()
         for r in program['settings'].repo.values():
             # log.info("checking repo {} for USB drive".format(r))
@@ -5525,6 +5537,8 @@ class TaskChooser(TaskDressing,ui.Window):
                 ).format(program['name'])
             ErrorNotice(e)
         self.splash.progress(100)
+        if self.splash.exitFlag.istrue():
+            sysshutdown()
         self.splash.destroy()
         self.makeexampledict() #needed for makestatus, needs params,slices,data
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
@@ -6614,8 +6628,13 @@ class Parse(Segments):
     def asksegmentsnops(self):
         for ps in [self.nominalps, self.verbalps]:
             r=self.asksegments(ps=ps)
-            if not r or self.exited: #i.e., returned OK
+            if r in [None,1] or self.exited: #i.e., returned OK or not this ps
                 break
+    def asksegmentsotherps(self):
+        pss=[i for i in [self.nominalps, self.verbalps]
+                    if i != self.parser.sense.psvalue()]
+        for ps in pss:
+            self.asksegments(ps=ps)
     def updateparseUI(self):
         self.cparsetext.set(self.currentformsforuser(entry=self.entry))
     def currentformsforuser(self,entry=None):
@@ -6814,7 +6833,10 @@ class Parse(Segments):
             # log.info("Asking for second form typed")
     def tryaskform(self):
         try:
-            self.asksegments(ps=self.parser.sense.psvalue())
+            r=self.asksegments(ps=self.parser.sense.psvalue())
+            if r == 1:
+                r=self.asksegmentsotherps()
+                assert r != 1
         except Exception as e:
             log.info("Exeption: {}".format(e))
             self.asksegmentsnops()
@@ -7913,8 +7935,10 @@ class Sort(object):
             program['status'].marksensetosort(sense)
     def ncheck(self):
         r=program['status'].nextcheck(tosort=True)
-        if not r:
-            program['status'].nextcheck(toverify=True)
+        if r:
+            program['settings'].setcheck(r)
+        else:
+            program['settings'].setcheck(toverify=True)
         #if neither, this should call nprofile
         try:
             self.runwindow.on_quit()
@@ -7923,8 +7947,10 @@ class Sort(object):
         self.runcheck()
     def nprofile(self):
         r=program['status'].nextprofile(tosort=True)
-        if not r:
-            program['status'].nextprofile(toverify=True)
+        if r:
+            program['settings'].setprofile(r)
+        else:
+            program['settings'].setprofile(toverify=True)
         #if neither, this should give up with a congrats and comment to pick another ps
         try:
             self.runwindow.on_quit()
@@ -8145,7 +8171,11 @@ class Sort(object):
                 #only on first two ifs:
         if fn:
             done+='\n'+_("Moving on to the next {}!".format(next))
-        ErrorNotice(text=done,title=_("Done!"),wait=True) #all
+        if hasattr(self,'runwindow'):
+            ErrorNotice(text=done,title=_("Done!"),wait=True,
+                                                        parent=self.runwindow)
+        else:
+            ErrorNotice(text=done,title=_("Done!"),wait=True)
         if fn:
             fn() #only on first two ifs
     def presenttosort(self):
@@ -12353,6 +12383,8 @@ class ImageFrame(ui.Frame):
             self.citationframe()
 class Splash(ui.Window):
     def maketexts(self):
+        if self.exitFlag.istrue():
+            return
         self.labels['v']['text']=_("Version: {}".format(program['version']))
         self.labels['v2']['text']=_(
                             f"updated to {program['repo'].lastcommitdate()} " f"({program['repo'].lastcommitdaterelative()})")
@@ -12369,6 +12401,8 @@ class Splash(ui.Window):
         # self.update()
         self.deiconify() #show after placement
     def progress(self,value):
+        if self.exitFlag.istrue():
+            return
         self.progressbar.current(value)
     def __init__(self, parent):
         try:
@@ -12919,7 +12953,7 @@ class StatusDict(dict):
             if idx != len(profiles)-1:
                 nextprofile=profiles[idx+1]
         program['slices'].profile(nextprofile)
-        return True
+        return nextprofile
     def nextcheck(self, event=None, **kwargs):
         kwargs=grouptype(**kwargs)
         check=program['params'].check()
@@ -12933,7 +12967,7 @@ class StatusDict(dict):
             if idx != len(checks)-1: # i.e., not already last
                 nextcheck=checks[idx+1] #overwrite default in this one case
         program['params'].check(nextcheck)
-        return True
+        return nextcheck
     def nextgroup(self, **kwargs):
         kwargs=grouptype(**kwargs)
         group=self.group()

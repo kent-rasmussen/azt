@@ -1060,7 +1060,12 @@ class Text(Childof,ObectwArgs):
     def __init__(self,parent,**kwargs):
         Childof.__init__(self,parent)
         self.textkwargs=['text','image','font','norender']
-        self.text=kwargs.pop('text','')
+        if isinstance(kwargs.get('text'), tkinter.StringVar):
+            self.textvariable=kwargs.pop('text')
+            self.text=''
+        else:
+            self.textvariable=''
+            self.text=kwargs.pop('text','')
         # self.renderings=parent.renderings
         self.anchor=kwargs.pop('anchor',"w")
         if 'font' in kwargs:
@@ -1085,6 +1090,7 @@ class Text(Childof,ObectwArgs):
             self.image=self.theme.photo[self.image]
         d=set(["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"])
         sticks=set(['˥','˦','˧','˨','˩',' '])
+        """This doesn't work for tkinter.StringVar..."""
         if (hasattr(self.text, '__iter__')
                     and set(self.text) & (sticks|d)
                     and not self.norender):
@@ -1152,22 +1158,13 @@ class Label(Gridded,Text,tkinter.Label): #,tkinter.Label
         #                         kwargs
         #                         )
         #         )
-        if isinstance(self.text, tkinter.StringVar):
-            # log.info("Found StringVar, using")
-            tkinter.Label.__init__(self,
-                                parent,
-                                textvariable=self.text,
-                                image=self.image,
-                                font=self.font,
-                                **kwargs)
-        else:
-            # log.info(f"Making text label ({self.text})")
-            tkinter.Label.__init__(self,
-                                    parent,
-                                    text=self.text,
-                                    image=self.image,
-                                    font=self.font,
-                                    **kwargs)
+        tkinter.Label.__init__(self,
+                            parent,
+                            textvariable=self.textvariable,
+                            text=self.text,
+                            image=self.image,
+                            font=self.font,
+                            **kwargs)
         i=self.grid_info()
         if i and self.text:
             self.wrap()
@@ -1238,6 +1235,7 @@ class Button(Gridded,Text,tkinter.Button):
         tkinter.Button.__init__(self,
                                 parent,
                                 command=cmd,
+                                textvariable=self.textvariable,
                                 text=self.text,
                                 image=self.image,
                                 font=self.font,
