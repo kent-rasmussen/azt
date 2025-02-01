@@ -6617,8 +6617,13 @@ class Parse(Segments):
     def asksegmentsnops(self):
         for ps in [self.nominalps, self.verbalps]:
             r=self.asksegments(ps=ps)
-            if not r or self.exited: #i.e., returned OK
+            if r in [None,1] or self.exited: #i.e., returned OK or not this ps
                 break
+    def asksegmentsotherps(self):
+        pss=[i for i in [self.nominalps, self.verbalps]
+                    if i != self.parser.sense.psvalue()]
+        for ps in pss:
+            self.asksegments(ps=ps)
     def updateparseUI(self):
         self.cparsetext.set(self.currentformsforuser(entry=self.entry))
     def currentformsforuser(self,entry=None):
@@ -6817,7 +6822,10 @@ class Parse(Segments):
             # log.info("Asking for second form typed")
     def tryaskform(self):
         try:
-            self.asksegments(ps=self.parser.sense.psvalue())
+            r=self.asksegments(ps=self.parser.sense.psvalue())
+            if r == 1:
+                r=self.asksegmentsotherps()
+                assert r != 1
         except Exception as e:
             log.info("Exeption: {}".format(e))
             self.asksegmentsnops()
