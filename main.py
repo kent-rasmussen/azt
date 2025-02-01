@@ -1548,13 +1548,13 @@ class StatusFrame(ui.Frame):
                 #make sure the table has all columns needed for any profile
                 allchecks+=program['status'][cvt][ps][profile].keys()
                 # log.info("allchecks1: {}".format(allchecks))
-        allchecks=list(dict.fromkeys(allchecks)) #could unsort slices priority
+        self.checks=list(dict.fromkeys(allchecks)) #could unsort slices priority
         # log.info("allchecks dicted: {}".format(allchecks))
         if self.cvt != 'T': #don't resort tone frames
-            allchecks.sort(key=len,reverse=True) #longest first
+            self.checks.sort(key=len,reverse=True) #longest first
         # log.info("allchecks sorted: {}".format(allchecks))
         profiles.sort(key=lambda x:(x.count(self.cvt),len(x)))
-        profiles=['colheader']+profiles+['next']
+        self.profiles=['colheader']+profiles+['next']
         ungroups=0
         unsortedtext='[X]'
         if program['settings'].showdetails:
@@ -1571,10 +1571,11 @@ class StatusFrame(ui.Frame):
         # log.info("Table rows possible: {}".format(r))
         # log.info("Table columns possible: {}".format(allchecks))
         # log.info("toneframes possible: {}".format(frames))
-        for profile in profiles:
+        for profile in self.profiles: #keep this for later updates
             column=0
             if profile in ['colheader','next']+list(program['status'][cvt][
                                                             ps].keys()):
+                """header first"""
                 if profile in program['status'][cvt][ps]:
                     if program['status'][cvt][ps][profile] == {}:
                         continue
@@ -1598,7 +1599,8 @@ class StatusFrame(ui.Frame):
                             relief='flat',cmd=program['settings'].setprofile)
                     brh.grid(row=row,column=column,sticky='e')
                     brht=ui.ToolTip(brh,_("Go to the next syllable profile"))
-                for check in allchecks+['next']:
+                """then checks"""
+                for check in self.checks+['next']:
                     column+=1
                     if profile == 'colheader':
                         if check == 'next': # end of column headers
