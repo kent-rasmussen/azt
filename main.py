@@ -5308,7 +5308,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if me:
             enough=0
         else:
-            enough=25
+            enough=6 #for demonstrating; is 25 a reasonable minimum?
         # log.info("looking at sorts now: {}".format(sorts))
         for l in sorts:
             maybeals=[i for i in program['db'].audiolangs if l in i]
@@ -10982,14 +10982,21 @@ class JoinUFgroups(Tone,TaskDressing):
             self.analysis.do()
             self.waitdone()
             # self.runwindow.on_quit()
-            self.tonegroupsjoinrename() #call again, in case needed
+            self.tonegroupsjoinrename(redo=True) #call again, in case needed
         def done():
             self.runwindow.on_quit()
         ps=kwargs.get('ps',program['slices'].ps())
         profile=kwargs.get('profile',program['slices'].profile())
         analysisOK,joinedsince,timestamps=program['status'].isanalysisOK(**kwargs) #Should specify which lasts...
         if not analysisOK:
-            redo(timestamps) #otherwise, the user will almost certainly be upset to have to do it later
+            if not kwargs.get('redo'):
+                #otherwise, the user will almost certainly be upset to have to do it later
+                redo(timestamps)
+            else:
+                txt=_("The analysis still isn't OK after retrying; "
+                        f"Check your settings and try again (e.g., "
+                        f"{ps} {profile} checks: {program['status'].checks()})")
+                ErrorNotice(txt,wait=True,parent=self)
             return
         self.getrunwindow(msg=_("Preparing to join draft underlying form groups"
                                 "")+'\n'+timestamps)
@@ -12527,6 +12534,7 @@ class Analysis(object):
         program['db'].write()
         self.doanyway()
         program['status'].last('analysis',update=True)
+        program['status'].store()
     def doanyway(self):
         """compare(x=UFs/checks) give self.comparison(x) and self.ordered(x)"""
         self.comparechecks() #also self.valuesbygroupcheck -> …checkgroup
@@ -13401,6 +13409,10 @@ class StatusDict(dict):
         log.log(4,"Returning checkslicetypecurrent kwargs {}".format(kwargs))
         return kwargs
     def last(self,task,update=False,**kwargs):
+        if update and not kwargs.get('check'): #write cross-check tone analysis
+            for kwargs['check'] in self.checks():
+                self.last(task,update,**kwargs)
+            return
         sn=self.node(**kwargs)
         if 'last' not in sn:
             sn['last']={}
@@ -13411,16 +13423,41 @@ class StatusDict(dict):
         if task in sn['last']:
             return sn['last'][task]
     def isanalysisOK(self,**kwargs):
-        a=self.last('analysis',**kwargs)
-        s=self.last('sort',**kwargs)
-        j=self.last('joinUF',**kwargs)
+        if 'check' in kwargs:
+            a=self.last('analysis',**kwargs)
+            s=self.last('sort',**kwargs)
+            j=self.last('joinUF',**kwargs)
+        else:
+            log.info("checking for an OK analysis across all checks")
+            analysisl=[]
+            sortl=[]
+            ufjoinl=[]
+            self.renewchecks()
+            # log.info(f"Working on checks ‘{self.checks()}’")
+            # log.info(f"Working on updatechecksbycvt ‘{self.updatechecksbycvt()}’")
+            for check in self.updatechecksbycvt():
+                log.info(f"Working on check ‘{check}’")
+                analysisl.append(self.last('analysis',**{**kwargs,'check':check}))
+                sortl.append(self.last('sort',**{**kwargs,'check':check}))
+                ufjoinl.append(self.last('joinUF',**{**kwargs,'check':check}))
+            log.info(f"Collected analysisl: {analysisl}")
+            log.info(f"Collected sortl: {sortl}")
+            log.info(f"Collected ufjoinl: {ufjoinl}")
+            # These are stored on file as strings
+            a=min([datetime.datetime.fromisoformat(i) for i in analysisl if i],
+                                                                    default='')
+            s=max([datetime.datetime.fromisoformat(i) for i in sortl if i],
+                                                                    default='')
+            j=max([datetime.datetime.fromisoformat(i) for i in ufjoinl if i],
+                                                                    default='')
+        log.info(f"{a}>{s}?")
         if a and s:
-            ok=a>s
+            ok=fixnaivedatetime(a)>fixnaivedatetime(s)
         elif a:
             ok=True # b/c analysis would be more recent than last sorting
         else:
             ok=False # w/o info, trigger reanalysis
-        if ok and j and j > a:
+        if ok and j and fixnaivedatetime(j) > fixnaivedatetime(a):
             joinsinceanalysis=True #show groups on all non-default reports
         else:
             joinsinceanalysis=False
@@ -13696,6 +13733,8 @@ class ErrorNotice(ui.Window):
         button=kwargs.get('button')
         image=kwargs.get('image')
         super(ErrorNotice, self).__init__(parent,title=title,exit=False)
+        self.withdraw()
+        self.parent.withdraw()
         self.title = title
         self.text = text
         l=ui.Label(self.frame, text=text,
@@ -13720,8 +13759,11 @@ class ErrorNotice(ui.Window):
                 cmd=self.on_quit,
                 row=1, column=2, sticky='nse')
         self.attributes("-topmost", True)
+        self.deiconify()
         if wait:
             self.wait_window(self)
+        if not isinstance(self.parent,ui.Root):
+            self.parent.deiconify()
 class Repository(object):
     """SuperClass for Repository classes"""
     def checkout(self,branchname):
@@ -14648,13 +14690,16 @@ class Object:
         for k in kwargs:
             setattr(self,k,kwargs[k])
 """These are non-method utilities I'm actually using."""
+def fixnaivedatetime(d):
+    """Assume naive was made wrt UTC (as has been my practice)"""
+    return d.replace(tzinfo=datetime.timezone.utc)
 def now():
     try:
         # Python 3.11+
-        return datetime.datetime.now(datetime.UTC).isoformat()
+        return datetime.datetime.now(datetime.UTC)#.isoformat() adds T
     except AttributeError as e:
         # Python <=3.11
-        return datetime.datetime.utcnow()
+        return datetime.datetime.now(datetime.timezone.utc)#.isoformat()
 def nowruntime():
     #this returns a delta!
     try:
