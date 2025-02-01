@@ -6645,19 +6645,21 @@ class Parse(Segments):
         if lx:
             return _("{root}: {} ({ps}), {sfname}: {}"
                 ).format(lx,''.join([i for i in [pl,imp] if i]),
-                        root=_("root"),
+                        root=_("Root"),
                         ps=self.parser.sense.psvalue(),
                         sfname=self.secondformfield[self.nominalps] if pl
                         else self.secondformfield[self.verbalps]
                         )
-        if lc:
-            return _("citation: {}, {sfname}: {}"
-                ).format(lx,''.join([i for i in [pl,imp] if i]),
+        if lc and (pl or imp):
+            return _("Citation: {}, {sfname}: {}"
+                ).format(lc,''.join([i for i in [pl,imp] if i]),
                         # root=_("root"),
                         # ps=self.parser.sense.psvalue(),
                         sfname=self.secondformfield[self.nominalps] if pl
                         else self.secondformfield[self.verbalps]
                         )
+        if lc:
+            return _(f"Citation: {lc}")
         else:
             return ""
     def currentformnotice(self):
