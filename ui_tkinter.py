@@ -1064,11 +1064,10 @@ class Text(Childof,ObectwArgs):
             t=kwargs.pop('textvariable')
         elif 'text' in kwargs: #this may be empty, for an image label
             t=kwargs.pop('text')
-        if isinstance(t, tkinter.StringVar):
+        self.textvariable=self.text='' #clear now, not all labels/buttons use t
+        if t and isinstance(t, tkinter.StringVar):
             self.textvariable=t
-            self.text=''
-        else:
-            self.textvariable=''
+        elif t:
             self.text=t
         # self.renderings=parent.renderings
         self.anchor=kwargs.pop('anchor',"w")
