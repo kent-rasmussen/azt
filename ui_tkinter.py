@@ -1065,7 +1065,8 @@ class Text(Childof,ObectwArgs):
             t=kwargs.pop('textvariable')
         elif 'text' in kwargs: #this may be empty, for an image label
             t=kwargs.pop('text')
-        if t and isinstance(t, tkinter.StringVar):
+        if t and (isinstance(t, tkinter.StringVar) or
+                    isinstance(t, tkinter.IntVar)):
             self.textvariable=t
         elif t:
             self.text=t
