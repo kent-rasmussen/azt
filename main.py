@@ -8072,9 +8072,9 @@ class Sort(object):
                 "\nCome back when you have time; restart where you left "
                 "off by pressing ‘{}’".format(self.ps,self.profile,self.check,
                                                 buttontxt))
-        self.withdraw()
-        ErrorNotice(text=text,title=_("Not Done!"),wait=True) #all
-        self.deiconify()
+        # self.withdraw()
+        ErrorNotice(text=text,title=_("Not Done!"),parent=self,wait=True)
+        # self.deiconify()
     def resetsortbutton(self):
         # This attribute/fn is used to track whether something has been done
         # since the user last asked for a sort. We don't want the user in an
@@ -8176,11 +8176,10 @@ class Sort(object):
                 #only on first two ifs:
         if fn:
             done+='\n'+_("Moving on to the next {}!".format(next))
-        if hasattr(self,'runwindow'):
-            ErrorNotice(text=done,title=_("Done!"),wait=True,
-                                                        parent=self.runwindow)
-        else:
-            ErrorNotice(text=done,title=_("Done!"),wait=True)
+        # if hasattr(self,'runwindow'):
+        #     ErrorNotice(text=done,title=_("Done!"),wait=True,parent=self.runwindow)
+        # else:
+        ErrorNotice(text=done,title=_("Done!"),wait=True,parent=self)
         if fn:
             fn() #only on first two ifs
     def presenttosort(self):
@@ -13802,6 +13801,8 @@ class ErrorNotice(ui.Window):
         self.deiconify()
         if wait:
             self.wait_window(self)
+        if self.exitFlag.istrue():
+            return
         if not isinstance(self.parent,ui.Root):
             self.parent.deiconify()
 class Repository(object):

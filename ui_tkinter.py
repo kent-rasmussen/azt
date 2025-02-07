@@ -1060,15 +1060,15 @@ class Text(Childof,ObectwArgs):
     def __init__(self,parent,**kwargs):
         Childof.__init__(self,parent)
         self.textkwargs=['text','textvariable','image','font','norender']
+        t=self.textvariable=self.text='' #clear now, not all labels/buttons use
         if 'textvariable' in kwargs:
             t=kwargs.pop('textvariable')
         elif 'text' in kwargs: #this may be empty, for an image label
             t=kwargs.pop('text')
-        if isinstance(t, tkinter.StringVar):
+        if t and (isinstance(t, tkinter.StringVar) or
+                    isinstance(t, tkinter.IntVar)):
             self.textvariable=t
-            self.text=''
-        else:
-            self.textvariable=''
+        elif t:
             self.text=t
         # self.renderings=parent.renderings
         self.anchor=kwargs.pop('anchor',"w")
