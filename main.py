@@ -5157,6 +5157,7 @@ class TaskChooser(TaskDressing,ui.Window):
                     ]
             if self.doneenough['collectionlc']:
                 """Do these next"""
+                tasks.append(SortSyllables)
                 tasks.append(SortV)
                 tasks.append(SortC)
                 tasks.append(SortT)
@@ -10391,6 +10392,50 @@ class Background(object):
                 "".format(self.do.__name__))
         self.do=lambda fn=self.do:self.background(fn)
         self.status.redofinalbuttons() #because the fns changed
+class SortSyllables(Sort,Segments,TaskDressing):
+    def taskicon(self):
+        return program['theme'].photo['iconWord']
+    def tasktitle(self):
+        return _("Sort Word Syllables") #Citation Form Sorting in Tone Frames
+    def tooltip(self):
+        return _("This task helps you sort words in citation form by whole "
+                "word syllable profiles.")
+    def dobuttonkwargs(self):
+        return {'text':_("Sort!"),
+                'fn':self.runcheck,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':program['theme'].photo['Word'], #self.cvt
+                'sticky':'ew'
+                }
+    def presortgroups(self):
+        """organize all the words that belong to the top X syllable profiles,
+        and mark them belonging to groups defined by profile"""
+        """These groups should be sorted into and out of as for others"""
+        ps=program['slices'].ps()
+        for sense in program['db'].sensesbyps[ps]:
+            valuelist=[k for k in program['settings'].profilesbysense[ps]
+                        if sense in program['settings'].profilesbysense[ps][k]]
+            if valuelist:
+                sense.cvprofilevalue(program['params'].ftype(),valuelist[0])
+    def runcheck(self):
+        program['settings'].storesettingsfile()
+        log.info("Running check...")
+        cvt=program['params'].cvt()
+        check=program['params'].check()
+        profiles=program['slices'].profiles()
+        """further specify check check in maybesort, where you can send the user
+        on to the next setting"""
+        self.presortgroups()
+        program['settings'].updatesortingstatus() # Not just tone anymore
+        self.resetsortbutton() #track what is done since each button press.
+        self.maybesort()
+    def __init__(self, parent):
+        program['params'].cvt('S') #syllable
+        TaskDressing.__init__(self,parent)
+        Sort.__init__(self, parent)
+        Segments.__init__(self,parent)
 class SortCV(Sort,Segments,TaskDressing):
     """docstring for SortCV."""
     def __init__(self, parent):
@@ -12926,6 +12971,8 @@ class StatusDict(dict):
         else:
             # log.info("Returning task {}".format(type(self._task)))
             return self._task
+    def profiletosort(self):
+        """Return whether there is a profile that has been unsorted"""
     def checktosort(self,**kwargs):
         check=kwargs.get('check',program['params'].check())
         cvt=kwargs.get('cvt',program['params'].cvt())
@@ -13301,7 +13348,7 @@ class StatusDict(dict):
         if cvt not in self._checksdict:
             self._checksdict[cvt]={}
             self.renewchecks(**kwargs)
-        if cvt == 'T':
+        if cvt in ['T','S']:
             """This depends on ps and program['toneframes']"""
             ps=kwargs.get('ps',program['slices'].ps())
             if ps not in self._checksdict[cvt]:
@@ -13336,6 +13383,9 @@ class StatusDict(dict):
             for ps in program['slices'].pss():
                 if ps in program['toneframes']:
                     self._checksdict[cvt][ps]=list(program['toneframes'][ps])
+        elif cvt == 'S':
+            for ps in program['slices'].pss():
+                self._checksdict[cvt][ps]=program['params'].cvchecknamesdict().keys()
         elif profile:
             """This depends on profile only"""
             n=profile.count(cvt)
@@ -13618,6 +13668,7 @@ class CheckParameters(object):
             for s in self._checknames[t]:
                 for tup in self._checknames[t][s]:
                     self._cvchecknames[tup[0]]=tup[1]
+        return self._cvchecknames
     def analang(self,analang=None):
         if analang:
             log.info(f"Setting analysis language as {analang} ({self})")
@@ -13636,6 +13687,14 @@ class CheckParameters(object):
         elif not hasattr(self,'_ftype'):
             self._ftype='lc'
         return self._ftype
+    def secondfield(self,ps):
+        fields=program['settings'].secondformfield
+        if ps in fields:
+            return fields[ps]
+    def nominalpsfield(self):
+        return self.secondfield(program['settings'].nominalps)
+    def verbalpsfield(self):
+        return self.secondfield(program['settings'].verbalps)
     def __init__(self,analang,audiolang): # had, do I need check? to write?
         program['params']=self
         """replaces setnamesall"""
@@ -13653,8 +13712,15 @@ class CheckParameters(object):
                 'T':{'sg':_('Tone'),'pl':_('Tones')},
                 }
         self._checknames={
+            'S':{ 1:[('lc', _("Whole Citation Word Syllable Profile")),
+                ('lx', _("Whole Root Syllable Profile")),
+                ('pl', _(f"Whole {self.nominalpsfield()} Word "
+                            "Syllable Profile")),
+                ('imp', _(f"Whole {self.verbalpsfield()} Word "
+                            "Syllable Profile")),
+                ]},
             'T':{
-                1:[('T', _("Tone melody"))]},
+                1:[('T', _("Tone Melody"))]},
             'V':{
                 1:[('V1', _("First Vowel"))],
                 2:[

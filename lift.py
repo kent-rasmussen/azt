@@ -2469,6 +2469,21 @@ class Sense(Node,FieldParent):
         except KeyError:
             # log.info("There is no {} example in sense {}".format(frame,self.id))
             pass
+    def cvprofilevalue(self,ftype='lc',value=None):
+        fieldname='cvprofile_'+ftype
+        try:
+            assert isinstance(self.fields[fieldname],ET.Element)
+            # log.info("found ET node")
+        except (AssertionError,KeyError):
+            found=self.find(f'field[type="{fieldname}"]')
+            # log.info("found {}".format(found))
+            if isinstance(found,ET.Element) or value:
+                self.fields.update({fieldname:Field(self,node=found,type=fieldname)})
+                # self.newfield('tone',value=value) #use annotationlang
+            else:
+                return None
+        # specify value as kwarg because not specifying lang
+        return self.fields[fieldname].textvaluebylang(value=value)
     def uftonevalue(self,value=None):
         try:
             assert isinstance(self.fields['tone'],ET.Element)
