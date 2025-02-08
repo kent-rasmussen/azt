@@ -8535,7 +8535,7 @@ class Sort(object):
                                         program['settings'].languagenames[self.analang],
                                         check
                                         )
-        oktext=_('These are all different')
+        oktext=_('These are each different from the other(s)')
         introtext=_("Congratulations! \nAll your {} with profile ‘{}’ are "
                 "sorted into the groups exemplified below (in the ‘{}’ frame). "
                 "Do any of these have the same {}? "
