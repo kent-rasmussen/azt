@@ -1262,7 +1262,7 @@ class StatusFrame(ui.Frame):
     def updatecvgroup(self):
         self.labels['cvgroup']['text'].set(self.cvgrouplabel())
     def cvgrouplabel(self):
-        if 'x' in program['params'].check():
+        if not program['params'].check() or 'x' in program['params'].check():
             return
         if program['status'].group():
             return (_("= {}".format(program['status'].group())))
