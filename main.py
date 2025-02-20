@@ -13043,6 +13043,8 @@ class StatusDict(dict):
         checks=self.updatechecksbycvt(**kwargs)
         if isinstance(self.task(),Sort) or isinstance(self.task(),Transcribe):
             checks=[i for i in checks if 'x' not in i]
+        if not checks:
+            return cs
         for kwargs['check'] in checks:
             tosortkwargs['check']=toverifykwargs['check']=tojoinkwargs['check']=kwargs['check']# log.info("{} tosort: {}".format(kwargs['check'],self.checktosort(**tosortkwargs)))
             # log.info("{} tosort: {}".format(kwargs['check'],self.groups(**toverifykwargs)))
@@ -13280,6 +13282,9 @@ class StatusDict(dict):
                 self._checks=self._checksdict[cvt][ps]
         else:
             profile=kwargs.get('profile',program['slices'].profile())
+            log.info(f"Using profile {profile} for updatechecksbycvt")
+            if not profile:
+                return #if no data yet, no segmental checks, either
             if profile not in self._checksdict[cvt]:
                 self.renewchecks(**kwargs) #should be able to find something
             self._checks=self._checksdict[cvt][profile]
