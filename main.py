@@ -4600,7 +4600,8 @@ class TaskDressing(HasMenus,ui.Window):
             self.deiconify()
             log.info("Done getting checks without a check")
         elif guess is True:
-            program['status'].makecheckok(tosort=tosort,wsorted=wsorted)
+            #kwargs with tosort,wsorted don't seem to ever be passed (yet)...
+            program['status'].makecheckok(**kwargs) #tosort=tosort,wsorted=wsorted)
             window.destroy() #never shown
             self.deiconify()
         else:
