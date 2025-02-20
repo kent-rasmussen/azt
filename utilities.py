@@ -2,9 +2,6 @@
 # coding=UTF-8
 import ast
 import logsetup
-log=logsetup.getlog(__name__)
-# logsetup.setlevel('INFO',log) #for this file
-logsetup.setlevel('DEBUG',log) #for this file
 def ofromstr(x):
     """This interprets a string as a python object, if possible"""
     """This is needed to interpret [x,y] as a list and {x:y} as a dictionary."""
@@ -123,3 +120,8 @@ def iteratelistitem(l,item,val,circular=False):
     else:
         return ("problem with iteration value type "
                 f"({type(val)}) or index type ({type(initindex)})")
+if __name__ == '__main__':
+    log=logsetup.getlog(__name__)
+    # logsetup.setlevel('INFO',log) #for this file
+    logsetup.setlevel('DEBUG',log) #for this file
+    quote("'\"'")
