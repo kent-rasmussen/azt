@@ -8889,7 +8889,7 @@ class Record(Sound,TaskDressing):
         else:
             #store for later
             ps=program['slices'].ps()
-            prifile=program['slices'].profile()
+            profile=program['slices'].profile()
             for psprofile in program['slices'].valid(): #self.profilecountsValid:
                 if self.runwindow.exitFlag.istrue():
                     return 1
