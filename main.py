@@ -1136,14 +1136,20 @@ class StatusFrame(ui.Frame):
         self.labels['profile']['text'].set(self.profilelabel())
         self.labels['ps']['text'].set(self.pslabel())
     def profilelabel(self):
-        return (_(f"Looking at {program['slices'].profile()}"))
+        profile=program['slices'].profile()
+        if not profile:
+            profile=_("<no syllable profile>")
+        return (_(f"Looking at {profile}"))
     def updateps(self):
         self.labels['ps']['text'].set(self.pslabel())
         self.makesliceattrs()
         self.maybeboard()
     def pslabel(self):
         count=program['slices'].count()
-        return (_(f"{program['slices'].ps()} words ({count})"))
+        ps=program['slices'].ps()
+        if not ps:
+            ps=_("<no grammatical category>")
+        return (_(f"{ps} words ({count})"))
     def sliceline(self):
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
