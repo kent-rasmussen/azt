@@ -8884,7 +8884,7 @@ class Record(Sound,TaskDressing):
         # Save these values before iterating over them
         #Convert to iterate over local variables
         self.getrunwindow()
-        if justone:
+        if justone or not program['slices'].valid():
             self.showentryformstorecordpage()
         else:
             #store for later
