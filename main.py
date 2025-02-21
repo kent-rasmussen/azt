@@ -5131,6 +5131,7 @@ class TaskChooser(TaskDressing,ui.Window):
         elif self.datacollection:
             tasks=[
                     WordCollectionCitation,
+                    WordCollectionbyRecording,
                     # WordCollectionPlural, #What is the value of this
                     # WordCollectionImperative, #What is the value of this
                     WordCollectnParse,
@@ -6214,10 +6215,24 @@ class WordCollection(Segments):
         #     log.info("word frame: {}".format(f))
         #     if f:
         #         log.info("word frame exists: {}".format(f.winfo_exists()))
+    def setdefaulttext(self):
+        default=self.sense.textvaluebyftypelang(self.ftype,self.analang)
+        if not default:
+            default=''
+        self.var.set(default)
+    def dowordentryfields(self):
+        self.var=ui.StringVar()
+        self.lxenter=ui.EntryField(self.wordentryframe,text=self.var,
+                                font='readbig',
+                                row=0,column=0,
+                                sticky='ew')
+        self.lxenter.focus_set()
     def dowordframe(self):
         f=getattr(self,'wordframe',None)
         if isinstance(f,ui.Frame) and f.winfo_exists():
             # log.info("Skipping word frame; already exists!")
+            if isinstance(self,Record):
+                self.dowordentryfields()
             return
         log.info("doing word frame")
         self.wordframe=ui.Frame(self.wordsframe,row=1,column=0,sticky='ew')
@@ -6230,11 +6245,11 @@ class WordCollection(Segments):
                         row=4, column=0, sticky='w',anchor='w')
         next=ui.Button(self.wordframe,text=_("Next"),cmd=self.nextword,
                         row=4, column=2, sticky='e',anchor='e')
-        self.var=ui.StringVar()
-        self.lxenter=ui.EntryField(self.wordframe,text=self.var,
-                                font='readbig',
-                                row=3,column=0,columnspan=3,
-                                sticky='ew')
+        self.wordentryframe=ui.Frame(self.wordframe,
+                                    row=3,column=0,columnspan=3,
+                                    sticky='ew')
+        ui.Label(text="Nothing to see here.",parent=self.wordentryframe)
+        self.dowordentryfields()
         if isinstance(self.task,Parse):
             self.parsebutton=ui.Label(self.wordframe,
                                         text=self.cparsetext,
@@ -6247,7 +6262,7 @@ class WordCollection(Segments):
         log.info("Updating binding ({})".format(self.state()))
         if self.state() == 'withdrawn':
             self.unbind_all('<Return>')
-        else: #only bind to non-withdrawn window
+        elif hasattr(self,'lxenter'): #only bind to non-withdrawn window
             # try: #re-institute this section once pics have good defaults
             #     assert self.wordframe.pic.hasimage
             self.lxenter.bind_all('<Return>',
@@ -6283,14 +6298,15 @@ class WordCollection(Segments):
             self.instructions.wrap()
             return
         else:
-            self.dowordframe()
             self.entry=self.entries[self.index]
+            self.dowordframe()
         log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
         log.info("wordframe: {}".format(getattr(self,'wordframe',None)))
         self.prog['text']='({}/{})'.format(self.index+1,self.nentries)
         # log.info("entries: {}".format(self.entries))
         log.info("index: {}".format(self.index))
         self.sense=self.entry.sense
+        self.setdefaulttext()
         glosses={}
         for g in set(self.glosslangs) & set(self.sense.glosses):
             glosses[g]=', '.join(self.sense.formattedgloss(g,quoted=True))
@@ -6312,10 +6328,6 @@ class WordCollection(Segments):
         self.updatereturnbind()
         """I don't want this on every ImageFrame, just here"""
         self.wordframe.pic.bindchildren('<ButtonRelease-1>', self.selectimage)
-        default=self.sense.textvaluebyftypelang(self.ftype,self.analang)
-        if not default:
-            default=''
-        self.var.set(default)
         if isinstance(self.task,Parse):
             log.info(self.currentformsforuser(entry=self.entry))
             self.updateparseUI()
@@ -6326,7 +6338,6 @@ class WordCollection(Segments):
                                         entry=entry))
             else:
                 self.parsebutton.unbind('<ButtonRelease-1>')
-        self.lxenter.focus_set()
         self.frame.grid_columnconfigure(1,weight=1)
         self.deiconify()
         self.lift()
@@ -9102,13 +9113,8 @@ class Record(Sound,TaskDressing):
                             if node.tag == 'field':
                                 args+=[node.ftype]
                         form=node.textvaluebylang(self.analang)
-                        if not form:
-                            log.error("No {} analang in {} (forms: {})".format(
-                                                        self.analang,
-                                                        node.sense.id,
-                                                        node.textvaluedict()))
-                            return
-                        args+=[form] #[self.ftype]]
+                        if form:
+                            args+=[form] #[self.ftype]]
                         for l in self.glosslangs:
                             args+=[node.glossbylang(l)]
                         optargs=args[:]
@@ -9146,6 +9152,45 @@ class Record(Sound,TaskDressing):
         TaskDressing.__init__(self,parent)
         Sound.__init__(self)
         self.mikecheck() #only ask for settings check if recording
+class WordCollectionbyRecording(WordCollection,Record):
+    """This task collects words, from the SIL CAWL, or one by one."""
+    def tooltip(self):
+        return _("This task helps you collect words with a microphone.")
+    def tasktitle(self):
+        return _("Record Word List") # for Citation Forms
+    def taskicon(self):
+        return program['theme'].photo['iconWordRec']
+    def dobuttonkwargs(self):
+        pass
+    def setdefaulttext(self):
+        pass
+    def dowordentryfields(self):
+        log.info(f"setting up recording buttons "
+                f"({self.entry}, {dict(self.entry.fields)})")
+        #lc and lx are set automatically, set these now to fill in if needed:
+        self.entry.plvalue(program['settings'].nominalps,self.analang,
+                                                                novalueOK=True)
+        self.entry.impvalue(program['settings'].verbalps,self.analang,
+                                                                novalueOK=True)
+        ftypes=['lc','lx','pl','imp']
+        for ftype in ftypes:
+            node=getattr(self.entry,ftype)
+            log.info(f"ready to use node {node}, {type(node)}")
+            b=sound_ui.RecordButtonFrame(self.wordentryframe,self,node,
+                                        row=ftypes.index(ftype),
+                                        column=0,sticky='ew')
+    def storethisword(self):
+        self.wordentryframe.destroy()
+    def __init__(self,parent):
+        ErrorNotice("This task has memory problems for now.",wait=True)
+        TaskDressing.__init__(self,parent)
+        self.shutdowntask()
+        return
+        WordCollection.__init__(self)
+        Record.__init__(self,parent)
+        self.dodone=False
+        log.info("Initializing {}".format(self.tasktitle()))
+        self.getwords()
 class Report(object):
     def consultantcheck(self):
         program['settings'].reloadstatusdata()

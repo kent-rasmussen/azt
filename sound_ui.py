@@ -95,6 +95,7 @@ class RecordButtonFrame(ui.Frame):
         # This class needs to be cleanup after closing, with check.donewpyaudio()
         """Originally from https://realpython.com/playing-and-recording-
         sound-python/"""
+        # log.info(f"self: NotYet ,parent: {parent}, task: {task}, node: {node}")
         self.id=id
         self.task=task
         try:
@@ -113,7 +114,8 @@ class RecordButtonFrame(ui.Frame):
         self.chunk = 1024  # Record in chunks of 1024 samples (for block only)
         self.channels = 1 #Always record in mono
         self.test=kwargs.pop('test',None)
-        if node:# and framed.framed != 'NA':
+        # log.info(f"node: {node} ({type(node)})")
+        if node is not None:
             task.makeaudiofilename(node) #should fill out the following
             self.filename=node.textvaluebylang(
                             self.soundsettings.program['params'].audiolang)

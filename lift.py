@@ -2750,7 +2750,7 @@ class Entry(Node,FieldParent): # what does "object do here?"
     def getlc(self):
         self.lc=Citation(self,self.find('citation'))
         self.checkforsecondchild('citation')
-    def plvalue(self,ftype,lang,value=None):
+    def plvalue(self,ftype,lang,value=None,novalueOK=False):
         try:
             assert self.pl.get('type') == ftype
             # log.info("plural is correct type ({})".format(ftype))
@@ -2760,7 +2760,7 @@ class Entry(Node,FieldParent): # what does "object do here?"
         except AttributeError:
             # log.info("plural isn't already self.pl ({})".format(ftype))
             found=self.find('field[@type="{}"]'.format(ftype))
-            if isinstance(found,ET.Element) or value:
+            if isinstance(found,ET.Element) or value or novalueOK:
                 # log.info("before making field")
                 self.pl=Field(self,found,type=ftype) #OK if None found
                 # log.info("after making field")
@@ -2774,7 +2774,7 @@ class Entry(Node,FieldParent): # what does "object do here?"
                 return None
         # log.info("plural to set and return: {} ({})".format(value,lang))
         return self.pl.textvaluebylang(lang,value)
-    def impvalue(self,ftype,lang,value=None):
+    def impvalue(self,ftype,lang,value=None,novalueOK=False):
         try:
             assert self.imp.get('type') == ftype
             # log.info("imperative is correct type ({})".format(ftype))
@@ -2784,7 +2784,7 @@ class Entry(Node,FieldParent): # what does "object do here?"
         except AttributeError:
             # log.info("imperative seems to not already be there ({})".format(ftype))
             found=self.find('field[@type="{}"]'.format(ftype))
-            if found or value:
+            if isinstance(found,ET.Element) or value or novalueOK:
                 self.imp=Field(self,found,type=ftype)
                 self.imp.getsense()
                 for sense in self.senses:
