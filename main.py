@@ -4259,13 +4259,15 @@ class TaskDressing(HasMenus,ui.Window):
     def getprofile(self,event=None,**kwargs):
         log.info("Asking for profile...")
         # self.refreshattributechanges()
-        window=ui.Window(self,title=_('Select Syllable Profile'))
         ps=program['slices'].ps()
-        if program['settings'].profilesbysense[ps] is None: #likely never happen...
-            ui.Label(window.frame,
+        if not ps:
+            text=(_("No Grammatical Category? ")+""
+                    f" ({list(program['settings'].profilesbysense)})")
+            ErrorNotice(text, parent=self, wait=True)
+        elif program['settings'].profilesbysense[ps] is None: #likely never happen...
             text=_('Error: please set Grammatical category with profiles '
                     'first!')+' (not '+str(ps)+')'
-            ).grid(column=0, row=0)
+            ErrorNotice(text, parent=self, wait=True)
         else:
             profilecounts=program['slices'].valid()
             profilecountsAdHoc=program['slices'].adhoccounts()
@@ -4280,6 +4282,7 @@ class TaskDressing(HasMenus,ui.Window):
                 log.error("No profiles of {} type found!".format(kwargs))
             # log.info("count types: {}, {}".format(type(profilecounts),
             #                                         type(profilecountsAdHoc)))
+            window=ui.Window(self,title=_('Select Syllable Profile'))
             ui.Label(window.frame, text=_('What ({}) syllable profile do you '
                                     'want to work with?'.format(ps))
                                     ).grid(column=0, row=0)
