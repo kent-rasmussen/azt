@@ -5716,7 +5716,7 @@ class Segments(object):
     def getsensegroup(self,sense,check):
         ftype=program['params'].ftype() #not helpful for Tone.getsensegroup
         return sense.annotationvaluebyftypelang(ftype,self.analang,check)
-    def __init__(self, parent):
+    def __init__(self):
         self.dodone=True
         self.dodoneonly=False #don't give me other words
         self.ftype=program['params'].ftype()
@@ -6342,8 +6342,8 @@ class WordCollection(Segments):
         self.deiconify()
         self.lift()
         self.wordframe.update_idletasks()
-    def __init__(self, parent):
-        Segments.__init__(self,parent)
+    def __init__(self):
+        Segments.__init__(self)
         self.dodone=False
 class WordCollectionLexeme(TaskDressing,WordCollection):
     def tooltip(self):
@@ -6355,7 +6355,7 @@ class WordCollectionLexeme(TaskDressing,WordCollection):
         left it"""
         self.ftype=program['params'].ftype('lx') #lift.Entry.citationformnodeofentry
         TaskDressing.__init__(self,parent)
-        WordCollection.__init__(self,parent)
+        WordCollection.__init__(self)
         log.info("Initializing {}".format(self.tasktitle()))
         #Status frame is 0,0
         self.getwords()
@@ -6367,7 +6367,7 @@ class WordCollectionCitation(TaskDressing,WordCollection):
     def __init__(self, parent): #frame, filename=None
         self.ftype=program['params'].ftype('lc') #lift.Entry.citationformnodeofentry
         TaskDressing.__init__(self,parent)
-        WordCollection.__init__(self,parent)
+        WordCollection.__init__(self)
         log.info("Initializing {}".format(self.tasktitle()))
         #Status frame is 0,0
         self.getwords()
@@ -6379,7 +6379,7 @@ class WordCollectionPlural(TaskDressing,WordCollection):
     def __init__(self, parent):
         self.ftype=program['params'].ftype('pl')
         TaskDressing.__init__(self,parent)
-        WordCollection.__init__(self,parent)
+        WordCollection.__init__(self)
         if not program['settings'].secondformfieldsOK():
             ErrorNotice(_("To collect Plural forms, you must first "
                             "define which fields should contain those forms"),
@@ -6398,7 +6398,7 @@ class WordCollectionImperative(TaskDressing,WordCollection):
     def __init__(self, parent):
         self.ftype=program['params'].ftype('imp')
         TaskDressing.__init__(self,parent)
-        WordCollection.__init__(self,parent)
+        WordCollection.__init__(self)
         if not program['settings'].secondformfieldsOK():
             ErrorNotice(_("To collect Imperative forms, you must first "
                             "define which fields should contain those forms"),
@@ -6969,7 +6969,7 @@ class Parse(Segments):
     def __init__(self, parent): #frame, filename=None
         self.byslice=False
         self.initsensetodo()
-        Segments.__init__(self,parent)
+        Segments.__init__(self)
         self.parent=parent
         self.secondformfield=program['settings'].secondformfield
         self.nominalps=program['settings'].nominalps
@@ -7065,7 +7065,7 @@ class WordCollectnParse(Parse,WordCollection,TaskDressing):
         # self.nodetag='citation'
         TaskDressing.__init__(self,parent)
         Parse.__init__(self,parent)
-        WordCollection.__init__(self,parent)
+        WordCollection.__init__(self)
         program['taskchooser'].withdraw()
         # if not program['settings'].secondformfieldsOK():
         #     ErrorNotice(_("To parse, you must first define which fields "
@@ -7093,7 +7093,7 @@ class WordsParse(Parse,WordCollection,TaskDressing):
         # self.nodetag='citation'
         TaskDressing.__init__(self,parent)
         Parse.__init__(self,parent)
-        WordCollection.__init__(self,parent)
+        WordCollection.__init__(self)
         # if not program['settings'].secondformfieldsOK():
         #     ErrorNotice(_("To parse, you must first define which fields "
         #                     "should contain secondary forms"),
@@ -10417,7 +10417,7 @@ class SortCV(Sort,Segments,TaskDressing):
     def __init__(self, parent):
         TaskDressing.__init__(self,parent)
         Sort.__init__(self, parent)
-        Segments.__init__(self,parent)
+        Segments.__init__(self)
         # super(SortCV, parent).__init__()
         # Sort.__init__(self)
 class SortV(Sort,Segments,TaskDressing):
@@ -10441,7 +10441,7 @@ class SortV(Sort,Segments,TaskDressing):
         program['params'].cvt('V')
         TaskDressing.__init__(self,parent)
         Sort.__init__(self, parent)
-        Segments.__init__(self,parent)
+        Segments.__init__(self)
         # super(SortV, self).__init__()
         # Sort.__init__(self)
 class SortC(Sort,Segments,TaskDressing):
@@ -10464,7 +10464,7 @@ class SortC(Sort,Segments,TaskDressing):
         program['params'].cvt('C')
         TaskDressing.__init__(self,parent)
         Sort.__init__(self, parent)
-        Segments.__init__(self,parent)
+        Segments.__init__(self)
         # super(SortC, parent).__init__()
         # Sort.__init__(self)
 class SortT(Sort,Tone,TaskDressing):
@@ -10939,7 +10939,7 @@ class TranscribeV(Transcribe,Segments):
         # 'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
         ]
         Transcribe.__init__(self,parent)
-        Segments.__init__(self,parent)
+        Segments.__init__(self)
         program['params'].cvt('V')
 class TranscribeC(Transcribe,Segments):
     def tasktitle(self):
@@ -10994,7 +10994,7 @@ class TranscribeC(Transcribe,Segments):
         'rh','wh',
         ]
         Transcribe.__init__(self,parent)
-        Segments.__init__(self,parent)
+        Segments.__init__(self)
         program['params'].cvt('C')
 class TranscribeT(Transcribe,Tone):
     def tasktitle(self):
@@ -11213,7 +11213,7 @@ class RecordCitation(Record,Segments):
     def taskicon(self):
         return program['theme'].photo['iconWordRec']
     def __init__(self, parent): #frame, filename=None
-        Segments.__init__(self,parent)
+        Segments.__init__(self)
         # ui.Window.__init__(self,parent)
         # TaskDressing.__init__(self,parent)
         Record.__init__(self,parent)
@@ -11289,7 +11289,7 @@ class ReportCitation(Report,Segments,TaskDressing):
         self.getresults()
     def __init__(self, parent): #frame, filename=None
         program['params'].ftype('lc')
-        Segments.__init__(self,parent)
+        Segments.__init__(self)
         self.do=self.getresults
         program['status'].group(None) #default to reports with all groups
         TaskDressing.__init__(self,parent)
