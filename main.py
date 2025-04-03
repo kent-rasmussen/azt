@@ -2044,7 +2044,7 @@ class Settings(object):
                 #             "".format(s,o,v,type(v)))
                 setattr(o,s,v)
         return d
-    def storesettingsfile(self,setting='defaults',noobjects=False):
+    def storesettingsfile(self,setting='defaults'):
         #There are too many calls to this; why?
         filename=self.settingsfile(setting)
         config=ConfigParser()
