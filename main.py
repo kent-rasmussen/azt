@@ -628,6 +628,7 @@ class FileChooser(object):
                             not program['root'].exitFlag.istrue()):
             return
         if self.name and 'Demo' in str(self.name):
+            program['Demo']=True
             file.writefilename() #clear this to select next time
 class FileParser(object):
     """This class parses the LIFT file, once we know which it is."""
@@ -8082,7 +8083,8 @@ class Sort(object):
                 "off by pressing ‘{}’".format(self.ps,self.profile,self.check,
                                                 buttontxt))
         # self.withdraw()
-        ErrorNotice(text=text,title=_("Not Done!"),parent=self,wait=True)
+        if not program['Demo']: #Should anyone see this?
+            ErrorNotice(text=text,title=_("Not Done!"),parent=self,wait=True)
         # self.deiconify()
     def resetsortbutton(self):
         # This attribute/fn is used to track whether something has been done
@@ -8188,7 +8190,9 @@ class Sort(object):
         # if hasattr(self,'runwindow'):
         #     ErrorNotice(text=done,title=_("Done!"),wait=True,parent=self.runwindow)
         # else:
-        ErrorNotice(text=done,title=_("Done!"),wait=True,parent=self)
+        if not program['Demo']: #Should anyone see this?
+            ErrorNotice(text=done,title=_("Done!"),wait=True,parent=self)
+        self.status.maybeboard()
         if fn:
             fn() #only on first two ifs
     def presenttosort(self):
