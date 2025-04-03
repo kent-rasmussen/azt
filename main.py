@@ -429,6 +429,21 @@ class LiftChooser(ui.Window,HasMenus):
                         sense.illustrationvalue(filename)
                 # log.info("Setting progress {}".format(todo.index(sense)*100/len(todo)))
                 self.wait.progress(todo.index(sense)*100/len(todo))
+    def storedefaultsettings(self,basename):
+        filename=basename.with_suffix('.CheckDefaults.ini')
+        config=ConfigParser()
+        config['default']={
+                            'glosslangs':['fr'],
+                            'buttoncolumns':2
+                            }
+        header=(_("# This transitional settings file was made on {} on {}").format(
+                                                    now(),platform.uname().node)
+                )
+        header+=(_("\n# It should only be used to get a new demo started."))
+        with open(filename, 'w', encoding='utf-8') as file:
+            file.write(header+'\n\n')
+            config.write(file)
+        log.info(f"Stored config {dict(config['default'])} for next run.")
     def makeCAWLdemo(self):
         title=_("Make a Demo LIFT Database")
         w=ui.Window(program['root'],title=title)
@@ -483,6 +498,7 @@ class LiftChooser(ui.Window,HasMenus):
         self.wait.close()
         self.newfilelocation(newfile)
         log.info("newfilelocation done")
+        self.storedefaultsettings(newfilebasename)
         return str(newfile)
     def stripcawldb(self):
         for n in (self.cawldb.nodes.findall('entry/lexical-unit')+
