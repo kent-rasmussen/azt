@@ -2,6 +2,7 @@
 # coding=UTF-8
 from xml.etree import ElementTree as ET
 import logsetup
+#This should not be imported with from xmletfns import *
 log=logsetup.getlog(__name__)
 import file
 import urllib
