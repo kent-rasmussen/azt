@@ -462,7 +462,8 @@ class LiftChooser(ui.Window,HasMenus):
         self.newdirname=file.getfile(homedir).joinpath('Demo_'+self.demolang)
         log.info(self.newdirname)
         file.makedir(self.newdirname)
-        newfile=self.newdirname.joinpath('Demo_'+self.demolang+'.lift')
+        newfilebasename=self.newdirname.joinpath('Demo_'+self.demolang)
+        newfile=newfilebasename.with_suffix('.lift')
         if file.exists(newfile):
             self.wait.close()
             ErrorNotice(_(f"File {newfile} already exists! \nUse it?"),
