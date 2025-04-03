@@ -14138,7 +14138,8 @@ class Repository(object):
                 # of clicking this button (instead of 'exit') when you have a
                 # drive already set up is an extra file dialog —hopefully OK.
                 button=(_("Create new USB"),clonetoUSB)
-                e=ErrorNotice(text,
+                if not program['Demo']:
+                    e=ErrorNotice(text,
                             title=_("No {} {} USB backup found"
                                     ).format(self.repotypename,
                                             self.description),
