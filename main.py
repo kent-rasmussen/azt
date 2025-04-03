@@ -2274,6 +2274,7 @@ class Settings(object):
                 # log.info("Trying to read {} to {} with value {}, type {}"
                 #             "".format(s,o,v,type(v)))
                 setattr(o,s,v)
+        return settingsdict
     def storesettingsfile(self,setting='defaults'):
         #There are too many calls to this; why?
         filename=self.settingsfile(setting)
