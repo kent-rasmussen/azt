@@ -8139,6 +8139,7 @@ class Sort(object):
                 self.notdonewarning() #warn if runwindow exited, but not task
             else:
                 self.maybesort() #if neither exited, continue
+            self.status.maybeboard()
         # exitstatuses()
         if self.exitFlag.istrue(): #if the task has been shut down, stop
             return
