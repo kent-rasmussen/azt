@@ -1862,7 +1862,7 @@ class Settings(object):
         else:
             log.error("No file name for setting {}!".format(setting))
     def loadandconvertlegacysettingsfile(self,setting='defaults'):
-        #This should be removed at some point
+        #This should be removed at some point Only used when find old file NAME
         savefile=self.settingsfile(setting)
         legacy=savefile.with_suffix('.py')
         log.info("Going to make {} into {}".format(legacy,savefile))
