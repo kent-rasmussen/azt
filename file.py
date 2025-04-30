@@ -16,6 +16,14 @@ try: #Allow this module to be used without translation
 except:
     def _(x):
         return x
+def quote(x):
+    x=str(x) #going to return a string anyway
+    if '"' not in x:
+        return '"'+x+'"'
+    elif "'" not in x:
+        return "'"+x+"'"
+    else:
+        log.error("Looks like ˋ{}ˊ contains single and double quotes!".format(x))
 def getfile(filename):
     if filename:
         return pathlib.Path(filename)
