@@ -1372,7 +1372,10 @@ class Window(Toplevel):
         """Give windows some margin"""
         # log.info("Theme: {}".format(self.theme))
         # log.info("Theme.photo: {}".format(self.theme.photo))
-        self.iconphoto(False, self.theme.photo['icon']) #don't want this transparent
+        try:
+            self.iconphoto(False, self.theme.photo['icon']) #don't want this transparent
+        except:
+            log.info(f"self.theme.photo: {self.theme.photo}")
         self.title(title)
         self.resetframe()
         self.exitFlag=ExitFlag() #This overwrites inherited exitFlag
