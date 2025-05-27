@@ -65,7 +65,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if tostrip:
             return #we're done, if this is a template read
         backupbits=[filename,'_',
-                    datetime.datetime.utcnow().isoformat()[:-16], #once/day
+                    # datetime.datetime.utcnow().isoformat()[:-16], #once/min
+                    str(datetime.datetime.now(datetime.UTC))[:-10], #once/day
                     '.txt']
         self.backupfilename=''.join(backupbits)
         """I should skip some checks in certain cases, like working with the
