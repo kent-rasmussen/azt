@@ -958,6 +958,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                 # t.close()
                 d.close()
         return compressed
+    def writebackup(self):
+        self.write(self.backupfilename)
     def write(self,filename=None):
         """This writes changes back to XML."""
         if filename is None:
