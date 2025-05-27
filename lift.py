@@ -3649,7 +3649,8 @@ def removenone(url):
     newurl=nonattr.sub('',url)
     return newurl
 def getnow():
-    return datetime.datetime.utcnow().isoformat()[:-7]+'Z'
+    return datetime.datetime.now(datetime.UTC).isoformat()[:-7]+'Z'
+    # return datetime.datetime.utcnow().isoformat()[:-7]+'Z'
 def another():
     #This should be a class, constructed...
     a=attribdict={}
