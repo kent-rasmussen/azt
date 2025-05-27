@@ -2075,6 +2075,13 @@ class FormParent(Node):
                     "for ‘{}’ lang. While this is legal LIFT, it is almost "
                     "certainly an error, and will lead to unexpected behavior."
                     "".format(self.tag,num,self.parent.entry.guid,lang))
+                forms=self.findall(f'form[@lang="{lang}"]')
+                texts=[i.find('text').text for i in forms
+                                                if hasattr(i.find('text'),'text')]
+                if texts and texts[0] == texts[1]:
+                    log.info(f"texts {texts[0]} & {texts[1]} are the same, so "
+                        "deleting the second")
+                    self.remove(forms[1])
     def getforms(self):
         self.forms={
                     lang:Form(self,self.find('form[@lang="{}"]'.format(lang)))
