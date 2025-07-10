@@ -233,8 +233,14 @@ class TextGrid(tgt.core.TextGrid):
         tgt.core.TextGrid.add_tier(self,tier)
         return tier
     def __init__(self,file_name,**kwargs):
+        try:
+            tgt_text_grid=tgt.io.read_textgrid(file_name)
+        except UnicodeDecodeError:
+            tgt_text_grid=tgt.io.read_textgrid(file_name,encoding='utf-16')
         super().__init__(filename=file_name, **kwargs)
-        # print(self.filename)
+        for tier in tgt_text_grid.tiers:
+            self.add_tier(tier.name)
+            self.get_tier_by_name(tier.name).add_annotations(tier.annotations)
 class TextFile():
     def get_lines(self):
         self.lines=self.text.split('\n')
@@ -317,7 +323,6 @@ class Files():
     def read_textgrid(self,file=None):#, encoding='UTF-16'
         if not file:
             file=self.file_name
-        # self.textgrid=tgt.io.read_textgrid(filename=file)
         self.textgrid=TextGrid(file)
         print(f"Textgrid file {file} loaded; tiers:annotations {self.textgrid_info()}.")
     def read_plaintext(self,file=None):
@@ -335,14 +340,11 @@ class Files():
                 assert os.path.isfile(lookingfor) #analogous; raise if not text
                 self.filetypes[x]['fn'](lookingfor)
                 break
-            # except AssertionError:
-            #     print(f"File {lookingfor} not found.")
             except Exception as e:
                 if len(e.args):
-                    print(f"Exception: {e}")
+                    print(f"Exception {type(e)}: {e}")
                 pass
     def parse_file_name(self):
-        # assert os.path.exists(file_name)
         try: # Is file_name a sound file?
             self.read_soundfile() #self.file_name
             self.try_x_file_options('textgrid')
@@ -427,7 +429,8 @@ class ExtractToArchive():
                 except:
                     pass
         else:
-            print(f"Please specify a tier name in {self.files.textgrid.tiers}")
+            print("Please specify a tier name (-t) in "
+                    f"{self.files.textgrid.get_tier_names()}")
             exit()
         return tier
     def __init__(
@@ -593,9 +596,9 @@ if __name__ == '__main__':
                     # file_name=file_name,
                     # tier_name=kwargs.pop('tier'),
                     **kwargs) #TextGrid
-if not (kwargs.get('align_clauses') or kwargs.get('align_words') or
-        kwargs.get('make_archive')):
-    p.print_help()
-print()
-print("Please select at least one of 'align_clauses', 'align_words', "
-        "or 'make_archive'")
+    if not (kwargs.get('align_clauses') or kwargs.get('align_words') or
+            kwargs.get('make_archive')):
+        p.print_help()
+        print()
+        print("Please select at least one of 'align_clauses', 'align_words', "
+            "or 'make_archive'")
