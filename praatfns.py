@@ -361,11 +361,12 @@ class Files():
         self.kwargs=kwargs
         try:
             self.file_name=file_name
-            assert os.path.exists(self.file_name)
+            assert os.path.exists(self.file_name),"doesn't exist"
             self.datadir=os.path.dirname(self.file_name)
-            assert os.path.isdir(self.datadir)
+            # 'not' in case working in local directory
+            assert not self.datadir or os.path.isdir(self.datadir),"is a directory"
         except Exception as e:
-            print(f"File {file_name} doesn't seem to exist ({e}).")
+            print(f"File {file_name} {e}.")
             exit()
         # ext_options should always be a double iterable
         self.filetypes={
@@ -592,3 +593,9 @@ if __name__ == '__main__':
                     # file_name=file_name,
                     # tier_name=kwargs.pop('tier'),
                     **kwargs) #TextGrid
+if not (kwargs.get('align_clauses') or kwargs.get('align_words') or
+        kwargs.get('make_archive')):
+    p.print_help()
+print()
+print("Please select at least one of 'align_clauses', 'align_words', "
+        "or 'make_archive'")
