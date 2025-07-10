@@ -2,6 +2,16 @@
 # coding=UTF-8
 import ast
 import logsetup
+import datetime
+"""Function Decorators"""
+def marktime(f,*args,**kwargs):
+    def timed(*args,**kwargs):
+        start_time=datetime.datetime.now(datetime.UTC)
+        r=f(*args,**kwargs)
+        print("Function",f.__class__.__name__,datetime.datetime.now(datetime.UTC)-start_time)
+        return r
+    return timed
+
 def ofromstr(x):
     """This interprets a string as a python object, if possible"""
     """This is needed to interpret [x,y] as a list and {x:y} as a dictionary."""
