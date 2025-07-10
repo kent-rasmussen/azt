@@ -78,7 +78,8 @@ def setnesteddictobjectval(object,dictname,val,*keys,addval=False):
         setattr(object,dictname,{})
     setnesteddictval(getattr(object,dictname),val,*keys,addval=addval)
 def setnesteddictval(dict,val,*keys,addval=False):
-    """Include as many key layers as you like,
+    """dict must already exist as a dictionary object; this just modifies it.
+    Include as many key layers as you like,
     put keys in order; dict,v,x,y gives dict[x][y]=v
     with addval, if val is int or list, it is added to value/list already there,
     or assigned if there is no current value.
