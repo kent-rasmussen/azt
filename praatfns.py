@@ -237,6 +237,8 @@ class TextGrid(tgt.core.TextGrid):
             tgt_text_grid=tgt.io.read_textgrid(file_name)
         except UnicodeDecodeError:
             tgt_text_grid=tgt.io.read_textgrid(file_name,encoding='utf-16')
+        except FileNotFoundError:
+            tgt_text_grid=tgt.core.TextGrid(file_name)
         super().__init__(filename=file_name, **kwargs)
         for tier in tgt_text_grid.tiers:
             self.add_tier(tier.name)
