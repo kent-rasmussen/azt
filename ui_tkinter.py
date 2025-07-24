@@ -1839,7 +1839,8 @@ class ToolTip(object):
     Modified to include a delay time by Victor Zaccardo, 25mar16
     """
     def __init__(self, widget, text=_("change this")):
-        self.waittime = 500     #miliseconds
+        self.waittime = 500     #miliseconds before showing tip
+        self.showtime = 2000    #miliseconds to show tip
         self.wraplength = 180   #pixels
         self.dispx = 25
         self.dispy = 20
@@ -1893,6 +1894,7 @@ class ToolTip(object):
         label['background']="#ffffff"
         label.pack(ipadx=1)
         self.widget.bind("<Leave>", self.leave)
+        self.widget.after(self.showtime, self.hidetip)
     def hidetip(self, event=None):
         tw = self.tw
         self.tw= None
