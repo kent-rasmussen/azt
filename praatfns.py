@@ -243,6 +243,18 @@ class TextGrid(tgt.core.TextGrid):
         for tier in tgt_text_grid.tiers:
             self.add_tier(tier.name)
             self.get_tier_by_name(tier.name).add_annotations(tier.annotations)
+            print(tier.name)
+            if self.has_tier(tier.name):
+                print(f"Tier ‘{tier.name}’ is already there!")
+                print("Won't add "
+                f"{len(tier.annotations)} "
+                "annotations (first 5: "
+                f"{[i.text for i in tier.annotations[:5]]})")
+            else:
+                print(f"Tier ‘{tier.name}’ not there, adding!")
+                self.add_tier(tier.name)
+                self.get_tier_by_name(tier.name).add_annotations(tier.annotations)
+            print("Done with",tier.name)
 class TextFile():
     def get_lines(self):
         self.lines=self.text.split('\n')
