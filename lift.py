@@ -469,9 +469,9 @@ class Lift(object): #fns called outside of this class call self.nodes here.
     def slicebypl(self):
         #This can be converted to by profile in main.py
         self.entriesbypl={l:{t:[j for j in self.entries
-                                    if t == j.plvalue('Plural',l)
+                                    if t == j.fieldvalue('Plural',l)
                                 ]
-                            for t in [i.plvalue('Plural',l)
+                            for t in [i.fieldvalue('Plural',l)
                                         for i in self.entries]
                             }
                             for l in self.analangs
