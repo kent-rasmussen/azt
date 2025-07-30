@@ -1976,7 +1976,18 @@ class Form(Node):
         self.getannotations()
         self.lang=self.get("lang")
 class FormParent(Node):
-    def getlang(self,lang=None,shortest=False):
+    def getanalang(self):
+        try:
+            return min(list(self.parent.lc.langs()),key=len)
+        except:
+            return min(list(self.parent.parent.lc.langs()),key=len)
+    def getlang(self,lang=None): #,shortest=False
+        """The number of languages in FormParent forms doesn't really tell what
+        makes a good default language choice. Some fields typically only have
+        one form, in a given language (e.g., 'translation' and
+        Fields with ftype=verification, tone, cvprofile, or location).
+        Other fields (e.g., lc, lx, pl, imp, example) normally take
+        multiple forms ()"""
         # this allows forms to be specified for any lang, so long as there is
         # just one. Ultimately, we should specify which language these fields
         # should be encoded in, and what to do when the UI lang is different.
