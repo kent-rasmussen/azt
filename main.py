@@ -2380,7 +2380,7 @@ class Settings(object):
         try:
             log.info(_('Plural field name: {}').format(self.pluralname))
             for entry in program['db'].entries:
-                entry.plvalue(self.pluralname,self.analang) # get the right field!
+                entry.fieldvalue(self.pluralname,self.analang) # get the right field!
         except AttributeError:
             log.info(_('Looks like there is no Plural field in the database'))
             self.pluralname=None
@@ -2390,7 +2390,7 @@ class Settings(object):
         try:
             log.info(_('Imperative field name: {}'.format(self.imperativename)))
             for entry in program['db'].entries:
-                entry.impvalue(self.imperativename,self.analang) # get the right field!
+                entry.fieldvalue(self.imperativename,self.analang) # get the right field!
         except AttributeError:
             log.info(_('Looks like there is no Imperative field in the database'))
             self.imperativename=None
@@ -2782,7 +2782,9 @@ class Settings(object):
         #CONTINUE HERE
     def getprofileofsense(self,sense,ps):
         #Convert to iterate over local variables
-        form=sense.textvaluebyftypelang('lc',program['params'].analang())
+        # form=sense.textvaluebyftypelang('lc',program['params'].analang())
+        form=sense.textvaluebyftypelang(self.profilesbysense['ftype'],
+                                        self.profilesbysense['analang'])
         """This adds to self.sextracted, too"""
         if not form:
             return form,None #This is just for logging
@@ -3361,7 +3363,8 @@ class Settings(object):
             program['taskchooser'].mainwindowis.status.updatefields()
         self.attrschanged.append('secondformfield')
         for entry in program['db'].entries:
-            entry.impvalue(self.imperativename,program['params'].analang) # get the right field!
+            """Doesn't do anything??!?"""
+            entry.fieldvalue(self.imperativename,program['params'].analang) # get the right field!
         self.refreshattributechanges()
         if window:
             window.destroy()
@@ -6007,7 +6010,7 @@ class WordCollection(Segments):
                         self.var.get())
                 # lift.prettyprint(self.entry.pl)
             elif self.ftype == 'imp':
-                self.entry.impvalue(
+                self.entry.fieldvalue(
                         program['settings'].secondformfield[program['settings'].verbalps],
                         self.analang,
                         self.var.get())
@@ -6465,7 +6468,7 @@ class Parse(Segments):
                 self.entry.plvalue(program['settings'].pluralname,
                                             self.analang, value=False) #unset value
             elif self.sense.psvalue() == self.verbalps:
-                self.entry.impvalue(program['settings'].imperativename,
+                self.entry.fieldvalue(program['settings'].imperativename,
                                             self.analang, value=False) #unset value
             program['db'].write()
             log.info(self.currentformnotice())
@@ -6709,7 +6712,7 @@ class Parse(Segments):
                 fn=self.parser.entry.plvalue
             elif ps == self.verbalps:
                 # tag='imp'
-                fn=self.parser.entry.impvalue
+                fn=self.parser.entry.fieldvalue
             # lift.prettyprint(self.parser.entry.imp)
             # lift.prettyprint(self.parser.entry.pl)
             # log.info("value: {}".format(segments.get()))
