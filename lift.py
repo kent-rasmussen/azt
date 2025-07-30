@@ -1133,8 +1133,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """This is NOT sensitive to sense level fields, which is where we store
         analysis and verification. This should just pick up entry form fields,
         or CAWL numbers, etc, which shouldn't be coded for analang."""
-        fieldswannotations={}
-        fieldswsoundfiles={}
+        self.fieldswannotations={}
+        self.fieldswsoundfiles={}
         self.nfieldswsoundfiles={}
         self.nfieldswannotations={}
         self.fields={}
@@ -1153,7 +1153,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         # log.info("fieldopts: {}".format(fieldopts))
         for lang in self.analangs:
             self.fields[lang]={}
-            fieldswannotations[lang]={}
+            self.fieldswannotations[lang]={}
             # fieldswsoundfiles[lang]={}
             self.nfields[lang]={}
             # self.nfieldswsoundfiles[lang]={}
@@ -1165,25 +1165,25 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                                         if i.text
                                         ]
                 self.nfields[lang][field]=len(self.fields[lang][field])
-                fieldswannotations[lang][field]=[i for i in
+                self.fieldswannotations[lang][field]=[i for i in
                     self.nodes.findall('entry/{}/form[@lang="{}"]/annotation'
                                         ''.format(fieldopts[field],lang))
                                         if i.get('value')
                                                 ]
                 self.nfieldswannotations[lang][field]=len(
-                                        fieldswannotations[lang][field])
+                                        self.fieldswannotations[lang][field])
         #get actual audiolangs here; relate to analangs elsewhere
         for lang in self.audiolangs:
-            fieldswsoundfiles[lang]={}
+            self.fieldswsoundfiles[lang]={}
             self.nfieldswsoundfiles[lang]={}
             for field in fieldopts:
-                fieldswsoundfiles[lang][field]=[i for i in
+                self.fieldswsoundfiles[lang][field]=[i for i in
                     self.nodes.findall('entry/{}/form[@lang="{}"]/text'
                                         ''.format(fieldopts[field],lang))
                                         if i.text
                                                 ]
-                self.nfieldswsoundfiles[lang][field]=len(fieldswsoundfiles[lang]
-                                                                        [field])
+                self.nfieldswsoundfiles[lang][field]=len(self.fieldswsoundfiles
+                                                                [lang][field])
                 log.info("Found {} fieldswsoundfiles for {}/{}".format(
                             self.nfieldswsoundfiles[lang][field],field,lang))
         # log.info("Found {} fieldswsoundfiles".format(self.nfieldswsoundfiles))
