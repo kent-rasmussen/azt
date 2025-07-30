@@ -3618,6 +3618,12 @@ def pylanglegacy2(analang):
      return analang+'-py'
 def pylang(analang):
      return analang+'-x-py'
+def profilelang(analang):
+     return analang+'-x-cvprofile'
+def tonelang(analang):
+     return analang+'-x-tone'
+def audiolangname(analang):
+    return "{}-Zxxx-x-audio".format(analang)
 def quote(x):
     return "‘"+str(x)+"’"
 def textornone(x):
