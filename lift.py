@@ -2706,13 +2706,15 @@ class Sense(Node,FieldParent):
         key='{} {} verification'.format(profile,ftype)
         self.remove(self.fields[key])
         del self.fields[key]
+    def verificationkey(self,profile,ftype):
+        key='{} {} verification'.format(profile,ftype)
+        if key: #don't do this for none or []
+            return str(key)
     def verificationtextvalue(self,profile,ftype,lang=None,value=None):
         """value here is the list of verification codes, stored as a string"""
         """Without lang arg, value must be sent as a kwarg."""
-        key='{} {} verification'.format(profile,ftype)
-        if value: #don't do this for none or []
-            value=str(value)
-        elif value == []: #for empty list value, remove node
+        key=self.verificationkey(profile,ftype)
+        if key == []: #for empty list value, remove node
             self.rmverificationnode(profile,ftype)
             return [] #in case user needs a return
         try:
