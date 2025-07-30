@@ -1997,25 +1997,41 @@ class FormParent(Node):
         if lang:
             # log.info("using lang specified: {}".format(lang))
             return lang
-        langs=list(self.langs())
-        if len(langs) == 1: # Just one? use it
-            lang=langs[0]
-            # log.info("using only present lang {}".format(lang))
-        elif len(langs) == 0: # Adding? use default
+        # langs=list(self.parent.entry.lc.langs()) #languages of forms already present
+        analang=self.getanalang()
+        # min(list(self.parent.entry.lc.langs()),key=len)
+        # self.parent.entry.lc.getlang(shortest=True)
+        # if shortest:
+        #     return min(langs,key=len)
+        """Fields with variable ftypes are used for pl and imp, each of which
+        can have at least analang and audiolang form nodes. Those are currently
+        made by methods that require lang be specified. When updated to use
+        they should be wrapped by a method that maintains this requirement."""
+        if isinstance(self, Field):
             if 'verification' in self.ftype:
-                #should be analang, at least not audiolang or phonetic variant:
-                lang=pylang(self.parent.entry.lc.getlang(shortest=True))
+                return pylang(analang)
                 # log.info("using verification pylang {}".format(lang))
+            elif 'tone' in self.ftype:
+                return tonelang(analang)
+            elif 'cvprofile' in self.ftype:
+                return profilelang(analang)
+            elif self.ftype in ['location', 'SILCAWL']:
+                return self.annotationlang
             else:
-                lang=self.annotationlang
-                # log.info("using annotationlang {}".format(lang))
-        elif shortest:
-            lang=min(langs,key=len)
-            # log.info("returning shortest lang ({}) of {}".format(lang,langs))
+                log.error("Apparently I left a field type off the list? "
+                            "Plural and imperative fields need lang specified. "
+                            f"({self.ftype})")
+                raise
+        elif isinstance(self, (Example, Definition, Translation, Lexeme,
+                                                    Citation, Pronunciation)):
+            log.error(f"{type(self)} node is asking for a language; this "
+                        "should already be specified.")
+            raise
         else:
-            log.error("textvaluebylang got no lang kwarg for {} node, but "
-                    "multiple langs present: {}".format(self.tag,langs))
-        return lang
+            log.error("Apparently I left a node type off the list? "
+                        f"({type(self)})")
+            raise
+            # log.info("returning shortest lang ({}) of {}".format(lang,langs))
     def langftypecode(self,lang):
         return '_'.join([lang,self.ftype])
     def stripftypecode(self,x):
