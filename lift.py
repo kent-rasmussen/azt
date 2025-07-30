@@ -397,7 +397,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             if i.tag == 'entry']
         # self.nentries=len(self.entries)
         # log.info("nentries: {}".format(self.nentries))
-        self.entries=[i for i in self.entries if i.sense]
+        self.entries=[i for i in self.entries if len(i.sense)]
         self.nentries=len(self.entries)
         # log.info("nentries: {}".format(self.nentries))
     def getsenses(self):
@@ -674,7 +674,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                     x.findall('form[@lang="{}"]/text'.format(lang)).text
                         for x in examples
                         for lang in self.analangs
-                        if x.find('form[@lang="{}"]/text'.format(lang))]))
+                        if len(x.find('form[@lang="{}"]/text'.format(lang)))]))
                 """Before implementing the following, we need a test for
                 presence of audio file link, and different tone values,
                 including which to preserve if different (i.e., not '')"""
