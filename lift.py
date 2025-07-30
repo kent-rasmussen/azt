@@ -2727,8 +2727,8 @@ class Sense(Node,FieldParent):
         if value:
             log.info("setting value {} ({})".format(value,type(value)))
         #This is stored as a list in text, so return it to a python list:
-        return xmlfns.stringtoobject(self.fields[key].textvaluebylang(
-                                                                value=value))
+        return xmlfns.stringtoobject(
+                self.fields[key].textvaluebylang(value=value)) #lang not needed
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='sense'
         super(Sense, self).__init__(parent, node, **kwargs)
