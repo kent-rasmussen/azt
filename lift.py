@@ -1018,8 +1018,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         if self.audiolangs == []:
             log.debug(_('No audio languages found in Database; creating one '
             'for each analysis language.'))
-            for self.analang in self.analangs:
-                self.audiolangs+=[self.makeaudiolangname()] #f'{self.analang}-Zxxx-x-audio']
+            self.audiolangs=[audiolangname(i) for i in self.analangs]
         log.info('Audio languages: {}'.format(self.audiolangs))
         log.info('Analysis languages: {}'.format(self.analangs))
     def makeaudiolangname(self):
