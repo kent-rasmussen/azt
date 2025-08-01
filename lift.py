@@ -2807,7 +2807,7 @@ class Sense(Node,FieldParent):
             assert key in self.fields
         except AssertionError:
             if value:
-                self.newfield(key,value=value) #lang=None will give default
+                self.fieldvalue(key,value=value)
             else:
                 return [] #return empty list to fill
         # This value is a list, but needs to be stored and retrieved as str text
