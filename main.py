@@ -10617,7 +10617,8 @@ class Transcribe(Sound,Sort,TaskDressing):
                         ).format(program['name'])
             title=_("Syllable profile change?")
             #Just state this and move on to making changes:
-            self.err=ErrorNotice(warning,parent=self,title=title)
+            log.info(warning)
+            # self.err=ErrorNotice(warning,parent=self,title=title)
     def submitform(self):
         newvalue=self.transcriber.formfield.get()
         if newvalue == '':
