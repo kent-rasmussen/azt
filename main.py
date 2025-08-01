@@ -1566,14 +1566,7 @@ class StatusFrame(ui.Frame):
             frames=list(program['toneframes'][ps].keys())
         except KeyError:
             frames=list()
-        allchecks=[]
-        for profile in profiles:
-            # log.info("Doing profile {} ({})".format(profile,
-            #                                         program['status'][cvt][ps]))
-            if profile in program['status'][cvt][ps]:
-                #make sure the table has all columns needed for any profile
-                allchecks+=program['status'][cvt][ps][profile].keys()
-                # log.info("allchecks1: {}".format(allchecks))
+        allchecks=program['status'].allcheckswdata()
         self.checks=list(dict.fromkeys(allchecks)) #could unsort slices priority
         # log.info("allchecks dicted: {}".format(allchecks))
         if self.cvt != 'T': #don't resort tone frames
@@ -13106,6 +13099,23 @@ class StatusDict(dict):
                 p+=[kwargs['profile']]
         # log.info("Profiles with kwargs {}: {}".format(kwargs,p))
         return p
+    def allcheckswCVdata(self):
+        return list(set([i for j in [program['status'][cvt][ps][profile]
+                                    for cvt in program['status']
+                                    if cvt != 'T'
+                                    for ps in program['status'][cvt]
+                                    for profile in program['status'][cvt][ps]
+                                    if ps in program['status'][cvt]
+                                    ]
+                                for i in j]))
+    def allcheckswdata(self, **kwargs): #needs cvt and ps
+        cvt=kwargs.get('cvt',program['params'].cvt())
+        ps=kwargs.get('ps',program['slices'].ps())
+        return list(set([i for j in [program['status'][cvt][ps][profile]
+                                    for profile in program['status'][cvt][ps]
+                                    ]
+                            for i in j
+                        ]))
     def checks(self, **kwargs):
         """This method is designed for tone, which depends on ps, not profile.
         we'll need to rethink it, when working on CV checks, which depend on
