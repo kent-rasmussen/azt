@@ -85,6 +85,13 @@ def getreportdir(dirname):
         log.debug("{} not there, making it!".format(dir))
         os.mkdir(dir)
     return dir
+def getexportdir(dirname):
+    dir=pathlib.Path.joinpath(dirname,'exports')
+    log.debug("Looking for {}".format(dir))
+    if not os.path.exists(dir):
+        log.debug("{} not there, making it!".format(dir))
+        os.mkdir(dir)
+    return dir
 def getreldir(origin,dest):
     return os.path.relpath(dest,origin)
     # return getfile(dest).relative_to(getfile(origin))
