@@ -317,7 +317,6 @@ def writefilename(filename=''):
             filenames=lift_url.filenames
     except:
         log.error("writefilename lift_url didn't import.")
-    # log.info("filenames: {} ({})".format(filenames,filename))
     if filename and str(filename) not in filenames:
         filenames.append(str(filename))
     file=pathlib.Path.joinpath(pathlib.Path(__file__).parent, "lift_url.py")
