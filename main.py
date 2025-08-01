@@ -1571,7 +1571,7 @@ class StatusFrame(ui.Frame):
         self.checks=list(dict.fromkeys(allchecks)) #could unsort slices priority
         # log.info("allchecks dicted: {}".format(allchecks))
         if self.cvt != 'T': #don't resort tone frames
-            self.checks.sort(key=len,reverse=True) #longest first
+            self.checks.sort(key= lambda x:(len(x),x),reverse=True) #longest first
         # log.info("allchecks sorted: {}".format(allchecks))
         profiles.sort(key=lambda x:(x.count(self.cvt),len(x)))
         self.profiles=['colheader']+profiles+['next']
