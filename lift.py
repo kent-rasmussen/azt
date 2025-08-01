@@ -2745,6 +2745,83 @@ class Sense(Node,FieldParent):
         #This is stored as a list in text, so return it to a python list:
         return xmlfns.stringtoobject(
                 self.fields[key].textvaluebylang(value=value)) #lang not needed
+    def getcvverificationkeys(self,ftype):
+        profile=self.cvprofilevalue(ftype=ftype)
+        if not profile:
+            # log.info("skipping verification; no analyzed profile found")
+            return 1
+        counts={c:profile.count(c) for c in profile}
+        actual=self.verificationtextvalue(profile,ftype)
+        if not actual:
+            return 1
+        # log.info(f"Checking if {actual} covers {profile} profile.")
+        actualkeys={i.split('=')[0]:i.split('=')[1] for i in actual}
+        return counts,actualkeys
+    def cvverificationforcheck(self,ftype,check):
+        try:
+            counts,actualkeys=self.getcvverificationkeys(ftype)
+        except TypeError:
+            # print("Missing profile or verication dictionary; skipping")
+            return
+        if check in actualkeys:
+            return actualkeys[check]
+    def cvverificationdone(self,ftype):
+        try:
+            counts,actualkeys=self.getcvverificationkeys(ftype)
+        except TypeError:
+            # print("Missing profile or verication dictionary; skipping")
+            return
+        for c in counts:
+            for i in range(counts[c]):
+                if not c+str(i+1) in actualkeys.keys():
+                    # log.info(f"missing {c+str(i+1)} in {actualkeys} (at least)")
+                    return
+        # log.info("Looks Good!")
+        return True
+    def examplesforASRtraining(self,analang,audiolang,audiodir):
+        for location in self.examples: # each location should be here.
+            example=self.examples[location]
+            if example.hassoundfile(audiolang,audiodir):
+                # log.info(f"Found soundfile {example.audiofileURL}")
+                translation=example.textvaluebylang(analang)
+                if translation:
+                    # log.info(f"Ex {self.id}-{location} ready for ASR training")
+                    # log.info(f"Found value for transcription in lang {analang}")
+                    i=(example.audiofileURL,translation)
+                    try:
+                        r+=[i]
+                    except:
+                        r=[i]
+        try:
+            return r
+        except (UnboundLocalError,NameError):
+            return []
+    def lexicalformsforASRtraining(self,analang,audiolang,audiodir,
+                                no_verify_check=False,
+                                check=None):
+        for ftype in self.ftypes: #includes pl and imp if there
+            i=()
+            if self.ftypes[ftype].hassoundfile(audiolang,audiodir):
+                if check:# e.g., V1=?
+                    value=self.cvverificationforcheck(ftype,check)
+                else: #word form
+                    value=self.ftypes[ftype].textvaluebylang(analang)
+                    if not (no_verify_check or self.cvverificationdone(ftype)):
+                        value=None
+                if value:
+                    # log.info(f"{self.id}-{ftype} ready for ASR training"
+                    #                 f" (no_verify_check: {no_verify_check}; "
+                    #                 f"check: {check})"
+                    #             )
+                    i=(self.ftypes[ftype].audiofileURL,value)
+                    try: #catch each ftype for sense
+                        r+=[i]
+                    except:
+                        r=[i]
+        try:
+            return r
+        except (UnboundLocalError,NameError):
+            return []
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='sense'
         super(Sense, self).__init__(parent, node, **kwargs)
