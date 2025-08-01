@@ -2259,6 +2259,32 @@ class FieldParent(object):
         self.fields.update({type:Field(self,type=type)})
         # without lang here, annotationlang is used; value=None does nothing
         self.fields[type].textvaluebylang(lang=lang,value=value)
+    def fieldvalue(self,type,lang=None,value=None):
+        try:
+            assert isinstance(self.fields[type],ET.Element)
+            # log.info("found ET node")
+        except (AssertionError,KeyError):
+            found=self.find(f'field[type="{type}"]')
+            # log.info("found {}".format(found))
+            if isinstance(found,ET.Element) or value:
+                if isinstance(found,ET.Element):
+                    log.error("This should never happen; somehow an XML field "
+                        "was not picked up on boot, but was found just now. "
+                        f"type: {type}, lang: {found.getlang()}, "
+                        f"value: {found.textvaluebylang()}, "
+                        f"parent: {self.parent}")
+                    raise
+                if self.checkforsecondfieldbytype(type):
+                    log.error("This should definitely never happen; somehow "
+                        f"multiple XML fields are found with type {type}.")
+                # node=None creates a new field node, forms nodes below
+                self.fields.update({type:Field(self,node=found,type=type)})
+                self.checkforsecondfieldbytype(type) #b/c new field made
+                # self.newfield('tone',value=value) #use annotationlang
+            else:
+                return None
+        # specify value as kwarg because not specifying lang
+        return self.fields[type].textvaluebylang(value=value)
     def __init__(self):
         # log.info("Initializing field parent for {}".format(self))
         if not hasattr(self,'annotationlang'):
@@ -2267,36 +2293,12 @@ class FieldParent(object):
         # log.info("Initialized field parent for {}".format(self))
 class Example(FormParent,FieldParent):
     def locationvalue(self,loc=None):
-        try: # without lang here, annotationlang is used; value=None returns
-            assert isinstance(self.fields['location'],ET.Element)
-            curloc=self.fields['location'].textvaluebylang()
-            if loc and curloc:
-                log.error("Received loc {}, but value already present! ({})"
-                        "".format(loc,curloc))
-                loc=None #don't overwrite
-            return self.fields['location'].textvaluebylang(value=loc)
-        except (KeyError,AssertionError) as e:
-            if loc: #don't make field if not setting value
-                # log.info(f"Adding new location field = {loc} ({e})")
-                self.newfield('location',value=loc) #use annotationlang
-            else:
-                return None
+        """this should use fieldvalue(self,type,lang=None,value
+        """
+        return self.fieldvalue('location',value=loc)
     def tonevalue(self,value=None):
         # log.info("Fields @tonevalue: {}".format(self.fields))
-        try:
-            # Fields should already be picked up.
-            assert isinstance(self.fields['tone'],ET.Element)
-            # log.info("Sending ‘{}’ from tonevalue".format(value))
-            return self.fields['tone'].textvaluebylang(value=value) # w/wo value
-        except (KeyError,AssertionError) as e:
-            if value: #don't make field if not setting value
-                # log.info(f"Adding new tone field = {value} ({e})")
-                self.newfield('tone',value=value) #use annotationlang
-            else:
-                log.info("No tone value found: {}".format(e))
-                return None
-        except AttributeError as e:
-            log.error("This should never happen! ({})".format(e))
+        return self.fieldvalue('tone',value=value)
     def translationvalue(self,lang=None,value=None):
         try:
             assert isinstance(self.translation,ET.Element)
@@ -2505,35 +2507,20 @@ class Sense(Node,FieldParent):
         except KeyError:
             # log.info("There is no {} example in sense {}".format(frame,self.id))
             pass
+    def cvprofileuservalue(self,ftype='lc',value=None):
+        type='cvprofile-user_'+ftype
+        if value:
+            log.info(f"setting {self.id} to {type} = {value}")
+        else:
+            log.info(f"returning {self.id} {type} value: "
+                        f"{self.fieldvalue(type,value=value)}")
+        #w/o lang, 'value' must be kwarg:
+        return self.fieldvalue(type,value=value)
     def cvprofilevalue(self,ftype='lc',value=None):
-        fieldname='cvprofile_'+ftype
-        try:
-            assert isinstance(self.fields[fieldname],ET.Element)
-            # log.info("found ET node")
-        except (AssertionError,KeyError):
-            found=self.find(f'field[type="{fieldname}"]')
-            # log.info("found {}".format(found))
-            if isinstance(found,ET.Element) or value:
-                self.fields.update({fieldname:Field(self,node=found,type=fieldname)})
-                # self.newfield('tone',value=value) #use annotationlang
-            else:
-                return None
-        # specify value as kwarg because not specifying lang
-        return self.fields[fieldname].textvaluebylang(value=value)
+        type='cvprofile_'+ftype
+        return self.fieldvalue(type,value=value) #wo lang, 'value' must be kwarg
     def uftonevalue(self,value=None):
-        try:
-            assert isinstance(self.fields['tone'],ET.Element)
-            # log.info("found ET node")
-        except (AssertionError,KeyError):
-            found=self.find('field[type="tone"]')
-            # log.info("found {}".format(found))
-            if isinstance(found,ET.Element) or value:
-                self.fields.update({'tone':Field(self,node=found,type='tone')})
-                # self.newfield('tone',value=value) #use annotationlang
-            else:
-                return None
-        # specify value as kwarg because not specifying lang
-        return self.fields['tone'].textvaluebylang(value=value)
+        return self.fieldvalue('tone',value)
     def pssubclassvalue(self,value=None):
         try:
             assert isinstance(self.pssubclass,ET.Element)
@@ -2803,51 +2790,21 @@ class Entry(Node,FieldParent): # what does "object do here?"
     def getlc(self):
         self.lc=Citation(self,self.find('citation'))
         self.checkforsecondchild('citation')
+    def lxvalue(self,lang,value=None):
+        return self.lx.textvaluebylang(lang,value)
+    def lcvalue(self,lang,value=None):
+        return self.lc.textvaluebylang(lang,value)
     def plvalue(self,ftype,lang,value=None):
-        try:
-            assert self.pl.get('type') == ftype
-            # log.info("plural is correct type ({})".format(ftype))
-        except AssertionError:
-            log.error("Asked for ftype {}, but found pl which is {}"
-                    "".format(ftype,self.pl.get('type')))
-        except AttributeError:
-            # log.info("plural isn't already self.pl ({})".format(ftype))
-            found=self.find('field[@type="{}"]'.format(ftype))
-            if isinstance(found,ET.Element) or value:
-                # log.info("before making field")
-                self.pl=Field(self,found,type=ftype) #OK if None found
-                # log.info("after making field")
                 self.pl.getsense()
                 for sense in self.senses:
                     sense.ftypes['pl']=self.pl
                     sense.ftypes[ftype]=self.pl #make this accessible here, too
-                # prettyprint(self)
-                self.checkforsecondfieldbytype(ftype)
-            else:
-                return None
-        # log.info("plural to set and return: {} ({})".format(value,lang))
-        return self.pl.textvaluebylang(lang,value)
+
+        Similar modifications should be made for impvalue and phvalue.
+        """
+        return self.fieldvalue(ftype,lang,value)
     def impvalue(self,ftype,lang,value=None):
-        try:
-            assert self.imp.get('type') == ftype
-            # log.info("imperative is correct type ({})".format(ftype))
-        except AssertionError:
-            log.error("Asked for ftype {}, but found imp which is {}"
-                    "".format(ftype,self.imp.get('type')))
-        except AttributeError:
-            # log.info("imperative seems to not already be there ({})".format(ftype))
-            found=self.find('field[@type="{}"]'.format(ftype))
-            if found or value:
-                self.imp=Field(self,found,type=ftype)
-                self.imp.getsense()
-                for sense in self.senses:
-                    sense.ftypes['imp']=self.imp
-                    sense.ftypes[ftype]=self.imp #make this accessible here, too
-                # prettyprint(self.imp)
-                self.checkforsecondfieldbytype(ftype)
-            else:
-                return None
-        return self.imp.textvaluebylang(lang,value)
+        return self.fieldvalue(ftype,lang,value)
     def phvalue(self,ftype,lang,value=None):
         try:
             assert self.ph.get('type') == ftype
