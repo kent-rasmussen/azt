@@ -2856,7 +2856,7 @@ class Entry(Node,FieldParent): # what does "object do here?"
         try:
             self.sense=self.senses[0] #for when I really just need one
         except IndexError:
-            self.sense=None
+            self.sense=[]
             log.info("Removing entry with no senses: {}".format(self.guid))
             return 1
         # log.info("Found {} sense(s)".format(len(self.senses)))
