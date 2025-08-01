@@ -721,12 +721,13 @@ class Gridded(ObectwArgs):
                 pass
     def __init__(self, *args, **kwargs): #because this is used everywhere.
         """this removes gridding kwargs from the widget calls"""
-        self.gridkwargs=['sticky',
+        self.gridkwargs={'sticky',
                             'row','rowspan',
                             'column','columnspan',
-                            'padx','pady','ipadx','ipady']
+                            'r','c','col',
+                            'padx','pady','ipadx','ipady'}
         self._grid=False
-        if set(kwargs) & set(self.gridkwargs):
+        if bool(set(kwargs) & (self.gridkwargs)):
             self._grid=True
             self.sticky=kwargs.pop('sticky',"ew")
             self.row=kwargs.pop('row',kwargs.pop('r',0))
