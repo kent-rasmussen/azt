@@ -6,7 +6,7 @@ import logsetup
 log=logsetup.getlog(__name__)
 # logsetup.setlevel('INFO',log) #for this file
 logsetup.setlevel('DEBUG',log) #for this file
-log.info("Importing lift.py")
+log.info(f"Importing {__name__}")
 # try:
 #     from lxml import etree as ET
 #     log.info("using lxml to parse XML")
