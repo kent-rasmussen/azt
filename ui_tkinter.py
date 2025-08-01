@@ -785,8 +785,22 @@ class UI(ObectwArgs):
         self.ww=Wait(self,msg,cancellable=cancellable)
     def iswaiting(self):
         return hasattr(self,'ww') and self.ww.winfo_exists()
+    def progress(self,value,parent=None,**kwargs):
+        # between 0 and 100
+        try:
+            self.progressbar.current(value)
+        except AttributeError:
+            print("making new progressbar")
+            if not parent:
+                parent=self.outsideframe
+            self.progressbar=Progressbar(parent,
+                                    orient='horizontal',
+                                    mode='determinate', #or 'indeterminate'
+                                    # sticky='nsew',
+                                    **kwargs)
+            self.progress(value)
     def waitprogress(self,x):
-        self.ww.progress(x)
+        self.ww.progress(x,r=4)
     def waitpause(self):
         self.ww.withdraw()
         self.ww.paused=True
@@ -1904,16 +1918,6 @@ class ToolTip(object):
 class Wait(Window): #tkinter.Toplevel?
     def close(self):
         self.on_quit()
-    def progress(self,value):
-        # between 0 and 100
-        try:
-            self.progressbar.current(value)
-        except AttributeError:
-            self.progressbar=Progressbar(self.outsideframe,
-                                    orient='horizontal',
-                                    mode='determinate', #or 'indeterminate'
-                                    row=4,column=0)
-            self.progress(value)
     def cancel(self):
         self.parent.waitcancel()
         log.info("Sent Wait Cancel")
