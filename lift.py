@@ -467,6 +467,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             for l in self.analangs
                         }
     def slicebypl(self):
+        """Is this used? if so, 'Plural' here should be generalized."""
         #This can be converted to by profile in main.py
         self.entriesbypl={l:{t:[j for j in self.entries
                                     if t == j.fieldvalue('Plural',l)
@@ -477,6 +478,8 @@ class Lift(object): #fns called outside of this class call self.nodes here.
                             for l in self.analangs
                         }
     def slicebyimp(self):
+        """Is this used? if so, .imp should be updated."""
+        raise
         #This can be converted to by profile in main.py
         self.entriesbyimp={l:{i.imp.textvaluebylang(l):i}
                             for i in self.entries
@@ -2293,6 +2296,7 @@ class Citation(FormParent):
 class FieldParent(object):
     """This is needed because some fields are under Entry, others under sense"""
     def checkforsecondfieldbytype(self,type,tag=None):
+        """This just logs an error with a return if found"""
         if not tag:
             tag='field'
         if len(self.findall('{}[@type="{}"]'.format(tag,type))) > 1:
@@ -2302,6 +2306,8 @@ class FieldParent(object):
                     "".format(self.tag,self.entry.guid,tag,type))
             return 1
     def getfields(self):
+        """This converts XML field nodes to Field objects, and indexes them
+        under this parent."""
         # log.info("field types: {}".format([i.get('type')
         #                                     for i in self.findall('field')]))
         self.fields={
@@ -2313,6 +2319,8 @@ class FieldParent(object):
         for type in self.fields:
             self.checkforsecondfieldbytype(type)
     def newfield(self,type,lang=None,value=None):
+        """use fieldvalue below"""
+        raise
         if not value:
             log.info("We normally shouldn't create empty fields: {}/{}".format(
                                                                 lang, value))
@@ -2320,9 +2328,9 @@ class FieldParent(object):
             log.error("There is already a {} field here! ({})".format(type,
                                                                 self.fields))
             return
-        self.fields.update({type:Field(self,type=type)})
+        self.fields.update({type:Field(self,type=type)}) #make field
         # without lang here, annotationlang is used; value=None does nothing
-        self.fields[type].textvaluebylang(lang=lang,value=value)
+        self.fields[type].textvaluebylang(lang=lang,value=value) #set value?
     def fieldvalue(self,type,lang=None,value=None):
         try:
             assert isinstance(self.fields[type],ET.Element)
