@@ -68,6 +68,7 @@ except ModuleNotFoundError as e:
     exceptiononload=True
 from utilities import *
 import executables
+import export
 try:
     import sound
     import transcriber
@@ -2215,6 +2216,7 @@ class Settings(object):
         self.audiodir=file.getaudiodir(self.directory)
         # log.info('self.audiodir: {}'.format(self.audiodir))
         self.reportsdir=file.getreportdir(self.directory)
+        self.exportsdir=file.getexportdir(self.directory)
         self.reportbasefilename=file.getdiredurl(self.reportsdir,
                                                     self.liftnamebase)
         self.reporttoaudiorelURL=file.getreldir(self.reportsdir, self.audiodir)
@@ -5127,6 +5129,7 @@ class TaskChooser(TaskDressing,ui.Window):
         self.whatsdone()
         if self.showreports:
             tasks=[
+                    ExportData,
                     ReportCitationBackground,
                     ReportCitationMulticheckBackground,
                     ReportCitationMultichecksliceBackground
@@ -5573,6 +5576,123 @@ class TaskChooser(TaskDressing,ui.Window):
         self.makedefaulttask() #normal default
         # self.gettask() # let the user pick
         """Do I want this? Rather give errors..."""
+class ExportData(ui.Window):
+    """docstring for ExportData."""
+    def taskicon(self):
+        return program['theme'].photo['USBdrive']
+    def tooltip(self):
+        return _("This tells you how much data you could export now, and "
+                    "allows you to export it.")
+    def tasktitle(self):
+        return _("Export Data")
+    def dobuttonkwargs(self):
+        text=_("Export Data")
+        tttext=_("This tells you how much data you could export now, and "
+                    "allows you to export it.")
+        return {'text':text,
+                # 'fn':pass,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':program['taskchooser'].theme.photo['USBdrive'],
+                'sticky':'ew',
+                'tttext':tttext
+                }
+    def on_quit(self):
+        ui.Window.on_quit(self)
+        program['taskchooser'].gettask()
+    def switch(self,event=None):
+        if self.exportclass == export.Lexicon:
+            self.exportclass=export.Examples
+        else:
+            self.exportclass=export.Lexicon
+        self.report_data()
+    def do_export(self,event=None):
+        self.done_notice=ui.Label(self.frame,
+                                    text=_("In Progress..."),
+                                    anchor='c',padx=50,
+                                    row=4,column=0,columnspan=2,sticky='we'
+                                )
+        for i in self.export.export():
+            self.progress(i*100)
+        self.progress(100)
+        self.done_notice['text']=_(f"Done!\n(saved to {self.export.save_dir})")
+    def report_data(self,check=None,event=None):
+        if hasattr(self,'button') and isinstance(self.button,dict):
+            for i in self.button.values():
+                i.destroy()
+            del self.button
+        for o in ['info','button',
+                    'export_button', 'switch_button',
+                    'done_notice']:
+            try:
+                getattr(self,o).destroy()
+            except:
+                pass
+        self.update()
+        self.export=self.exportclass(
+                lift=program['db'],
+                analang=program['params'].analang(),
+                audiolang=program['params'].audiolang(),
+                audiodir=program['settings'].audiodir,
+                save_dir=program['settings'].exportsdir,
+                check=check,
+                max_rows_total=self.max_rows_total,
+                max_rows_per_file=self.max_rows_per_file,
+                )
+        self.info=ui.Label(self.frame,
+            text=_("Checking work done..."),
+            anchor='c',padx=50,
+            row=0,column=0,sticky='we'
+        )
+        self.button_frame=ui.Frame(self.frame,
+                                    row=2,column=0,
+                                    )
+        self.progress(0,self.frame,row=3,column=0)
+        for i in self.export.report():
+            self.progress(i*100)
+        self.info['text']=self.export.info
+        self.export_button=ui.Button(self.button_frame,
+                text=_("Export"),
+                anchor='c',padx=50,
+                row=0,column=1,sticky='we'
+        )
+        if self.exportclass == export.Lexicon:
+            self.switch_button=ui.Button(self.button_frame,
+                    text=_("Check Examples"),
+                    anchor='c',padx=50,
+                    row=0,column=0,sticky='w'
+            )
+            if self.slices:
+                allchecks=program['status'].allcheckswCVdata()
+                self.button={c:ui.Button(self.button_frame,
+                                        text=_(f"Just {c} data"),
+                                        anchor='c',padx=50,
+                                        row=allchecks.index(c)+1,
+                                        column=0,sticky='w'
+                                        )
+                        for c in allchecks
+                            }
+                for c in self.button:
+                    self.button[c].bind("<Button-1>",
+                                        lambda event,x=c: self.report_data(x))
+
+        else:
+            self.switch_button=ui.Button(self.button_frame,
+                    text=_("Check Lexicon"),
+                    anchor='c',padx=50,
+                    row=0,column=0,sticky='w'
+            )
+        self.export_button.bind("<Button-1>",self.do_export)
+        self.switch_button.bind("<Button-1>",self.switch)
+    def __init__(self, arg):
+        self.exportclass=export.Lexicon
+        title=(_(f"{program['name']} Data Export"))
+        ui.Window.__init__(self,program['root'], title=title)
+        self.slices=False #allow user to output data for each check
+        self.max_rows_total=None
+        self.max_rows_per_file=None
+        self.report_data()
 class Segments(object):
     """docstring for Segments."""
     def buildregex(self,**kwargs):
