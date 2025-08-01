@@ -2,7 +2,6 @@
 # coding=UTF-8
 import logsetup
 log=logsetup.getlog(__name__)
-# logsetup.setlevel('INFO',log) #for this file
 logsetup.setlevel('DEBUG',log) #for this file
 log.info(f"Importing {__name__}")
 import file
@@ -12,7 +11,8 @@ except:
     def _(x):
         return x
 class Exporter(object):
-    """docstring for Exporter."""
+    """This class contains most of what is needed to pull data out of lift
+    to create a tarball for ASR training."""
     def report(self):
         self.data=[]
         todo=len(self.lift.senses)
@@ -61,9 +61,6 @@ class Exporter(object):
         done=0
         yield done #progress
         for n in range(ngroups):
-            # else: #just one file
-            # if self.max_rows_per_file >= ndata:
-            #     tarname+=f'_{str(n)}'
             if self.max_rows_per_file < ndata:
                 archivename=f'{tarname}_{str(n)}'
             else:
@@ -71,20 +68,14 @@ class Exporter(object):
             t=file.TarBall(outputdir=self.save_dir,
                             archivename=archivename,
                             metadata_header=f'file_name,{check}')
-            # print(dir(t))
             log.info(f"working on set {n*groupsize}:{min((n+1)*groupsize,ndata)} "
                     f"({len(data[n*groupsize:(n+1)*groupsize])} of "
                     f"{min(ndata,self.max_rows_total)})")
-            #progress:
-            # left=ndata-n*groupsize
             for i in t.populate(data[n*groupsize:min((n+1)*groupsize,ndata)]):
                 done+=1
                 yield done/ndata
-            # self.prog=(n+1)/ngroups
         print(f"Done with {type}.")
     def __init__(self, **kwargs): #lift, analang, audiolang, audiodir):
-        # self.max_rows_total=3500
-        # self.max_rows_per_file=500
         needed=set(['lift', 'analang', 'audiolang', 'audiodir'])
         kwargset=set(kwargs)
         if not kwargset.issuperset(needed):
@@ -96,11 +87,10 @@ class Exporter(object):
             setattr(self,k,kwargs[k])
         self.check=kwargs.get('check',None) #in case not specified
         super(Exporter, self).__init__()
-        # self.analang = analang
-
 
 class Lexicon(Exporter):
-    """docstring for Lexicon."""
+    """This exports lexical entries with sound files and certain checking
+    levels."""
     def getdatafromsense(self,sense):
         return sense.lexicalformsforASRtraining(
                                         self.analang,
@@ -113,9 +103,8 @@ class Lexicon(Exporter):
         super(Lexicon, self).__init__(*args, **kwargs)
         self.no_verify_check=self.analang in ['gnd']
         print(f"working with no_verify_check: {self.no_verify_check}")
-        # self.report()
 class Examples(Exporter):
-    """docstring for Examples."""
+    """This exports Examples (from senses) with sound files."""
 
     def getdatafromsense(self,sense):
         return sense.examplesforASRtraining(
@@ -125,7 +114,6 @@ class Examples(Exporter):
                                     )
     def __init__(self, *args, **kwargs):
         super(Examples, self).__init__(*args, **kwargs)
-        # self.report()
 if __name__ == '__main__':
     import lift
     l=Examples(lift=lift.Lift("/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"),
