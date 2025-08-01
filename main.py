@@ -2773,6 +2773,7 @@ class Settings(object):
             profile='Invalid'
         setnesteddictval(self.profilesbysense,[sense],ps,profile,addval=True)
         setnesteddictval(self.formstosearch,[sense],ps,form,addval=True)
+        sense.cvprofilevalue(self.profilesbysense['ftype'],profile) #store this for future reference
         return form,profile #This is just for logging
     def getprofilesbyps(self,ps):
         start_time=nowruntime()
@@ -5515,7 +5516,6 @@ class TaskChooser(TaskDressing,ui.Window):
         self.filename=FileChooser().name
         self.splash = Splash(self)
         self.splash.draw()
-        self.splash.progress(25)
         FileParser(self.filename)
         self.splash.progress(55)
         self.setmainwindow(self)
@@ -9240,7 +9240,7 @@ class Record(Sound,TaskDressing):
                         filenames+=[wavfilename+'.wav']
         return filenames
     def makeaudiofilename(self,node):
-        """If node is already marked with woudn file attributes, we're done"""
+        """If node is already marked with sound file attributes, we're done"""
         if self.hassoundfile(node):
             return
         """Otherwise, generate prioritized list of name options"""
@@ -10506,6 +10506,12 @@ class SortSyllables(Sort,Segments,TaskDressing):
         """organize all the words that belong to the top X syllable profiles,
         and mark them belonging to groups defined by profile"""
         """These groups should be sorted into and out of as for others"""
+        """cvprofilevalue should have set value on boot, so we shouldn't
+        recalculate it here. but once sorted, we shouldn't override on each
+        boot.
+        We should likely store different values, one that is calculated,
+        the other is user data
+        """
         ps=program['slices'].ps()
         for sense in program['db'].sensesbyps[ps]:
             valuelist=[k for k in program['settings'].profilesbysense[ps]
