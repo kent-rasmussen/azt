@@ -327,29 +327,22 @@ def writefilename(filename=''):
     f.close()
     return filename
 if __name__ == "__main__":
-    import sys
-    import datetime
-    import shutil
-    from tkinter import ttk
-    def usage():
-        log.info("usage for one entry:")
-        log.info(" python3 " + pathlib.Path(__file__).name + " <forms|ids|tones|prontones|glosses|gloss2s|plurals|pses|all|cards|lxnglosses> <lift file> <guid>")
-        log.info("usage for all entries in lift file:")
-        log.info(" python3 " + pathlib.Path(__file__).name + " <forms|ids|tones|prontones|glosses|gloss2s|plurals|pses|all|cards|lxnglosses|ids2testN|ids2testV> <lift file>")
-        exit() #if there is a problem with the usage, we don't want to keep going...
-    def liftori():
-        global wsfolder
-        global xyz
-        return pathlib.Path.joinpath(wsfolder, xyz, xyz +'.lift')
-    def liftstr():
-        global wsfolder
-        global xyz
-        return str(pathlib.Path.joinpath(wsfolder, xyz, xyz +'.lift'))
-    def liftdirstr():
-        global wsfolder
-        global xyz
-        return str(pathlib.Path.joinpath(wsfolder, xyz))
-    # Create an instance of ttk
-    log.info(lift())
+    def filetuple(i): #This is just for testing; we need real translations!
+        return ('/home/kentr/Assignment/Tools/WeSay/gnd/audio/'+i,
+            i.split('-unit_')[-1])
+    filelist=[
+                'Nom_fd97d4d3-b2cd-40f4-8543-d1e84b9697a2_lexical-unit_təɓah_palmier-rônier_.wav',
+                'Nom_fda908b3-1153-48a5-8d7c-a310e34c2b93_lexical-unit_rəŋga_ruine_.wav',
+                # 'Nom_fed71211-7f50-41e9-8533-132516027276_lexical-unit_simir_flèche_.wav'
+            ]
+    fqfilelist=[filetuple(i) for i in filelist]
+    archivename='lexicon_test'
+    archivedir='/home/kentr/bin/raspy/newASR/training_data/'
+    t=TarBall(archivedir,archivename)
+    t.populate(fqfilelist)
+    t=TarBall(archivedir,archivename,append=True)
+    file='Nom_fed71211-7f50-41e9-8533-132516027276_lexical-unit_simir_flèche_.wav'
+    t.add_soundfile_w_metadata(filetuple(file))
+    t.writeout()
     quit()
     
