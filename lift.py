@@ -1021,8 +1021,6 @@ class Lift(object): #fns called outside of this class call self.nodes here.
             self.audiolangs=[audiolangname(i) for i in self.analangs]
         log.info('Audio languages: {}'.format(self.audiolangs))
         log.info('Analysis languages: {}'.format(self.analangs))
-    def makeaudiolangname(self):
-        return "{}-Zxxx-x-audio".format(self.analang)
     def getglosslangs(self):
         """These are ordered by frequency in the database"""
         g=self.get('gloss').get('lang')
