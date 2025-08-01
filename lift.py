@@ -2872,13 +2872,6 @@ class Entry(Node,FieldParent): # what does "object do here?"
     def lcvalue(self,lang,value=None):
         return self.lc.textvaluebylang(lang,value)
     def plvalue(self,ftype,lang,value=None):
-                self.pl.getsense()
-                for sense in self.senses:
-                    sense.ftypes['pl']=self.pl
-                    sense.ftypes[ftype]=self.pl #make this accessible here, too
-
-        Similar modifications should be made for impvalue and phvalue.
-        """
         return self.fieldvalue(ftype,lang,value)
     def impvalue(self,ftype,lang,value=None):
         return self.fieldvalue(ftype,lang,value)
