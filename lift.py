@@ -1126,6 +1126,60 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         self.nentrieswlexemedata={lang:len(self.entrieswlexemedata[lang])
                                     for lang in self.entrieswlexemedata
                                     }
+    # def getfieldswithsoundfilesandtranscriptions(self):
+    #     for ftype in ['lc','lx']:
+    #         for profile in ['CVC','CVCVC','CVCV','CVCCVC']:
+    #             self.cvverificationdone(profile,ftype)
+    #     # self.nodes.findall('entry/{}/form[@lang="{}"]/text'
+    #     #                     ''.format(fieldopts[field],lang))
+    #     #                     if i.text
+    #     #                     ]
+    #     separate out functions for lexical:
+    #             fieldopts=['citation', 'lexical-unit']
+    #     examples: fieldopts=['sense/example']
+    #             fieldopts=['sense/example', 'citation', 'lexical-unit']
+    #     rows={}
+    #     for F in FormParent:
+    #         value[lang]=F.textvaluebylang(lang)
+    #     output+=[(value[lang1],value[lang2])]
+    #     for f in fieldopts:
+    #         rows[f]={}
+    #         for lang in self.analangs:
+    #             rows[f][lang]={}
+    #             for audiolang in self.audiolangs:
+    #                 # This needs to be brought into the class below:
+    #                 for l in [lang,audiolang]:
+    #                     FormParent.hastextbylang(l)
+    #                 rows[f][lang][audiolang]=[i for i in self.nodes.findall(
+    #                                     f'entry/{f}/form[@lang="{lang}"]/text'
+    #                                     f'/../../form[@lang="{audiolang}"]/text'
+    #                                     f'/../..'
+    #                                                     )
+    #                                     if getattr(i.find(
+    #                                     f'form[@lang="{lang}"]/text'
+    #                                     f'/../../form[@lang="{audiolang}"]/text'
+    #                                     # f'/../..'
+    #                                     ),'text',None)
+    #                                     and getattr(i.find(
+    #                                     f'form[@lang="{audiolang}"]/text'
+    #                                     f'/../../form[@lang="{lang}"]/text'
+    #                                     # f'/../..'
+    #                                     ),'text',None)
+    #                                         ]
+    #     # log.info(rows)
+    #     outrows=[]
+    #     for f in rows:
+    #         for lang in rows[f]:
+    #             lstring=f'form[@lang="{lang}"]/text'
+    #             for al in rows[f][lang]:
+    #                 alstring=f'form[@lang="{al}"]/text'
+    #                 log.info(f"{len(rows[f][lang][al])} {f} rows for "
+    #                             f"lang:{lang}, audiolang:{al}")
+    #                 for r in rows[f][lang][al]:
+    #                     outrows+=[(f"{r.find(alstring).text}",
+    #                         # ','
+    #                         f"{r.find(lstring).text}")]
+    #     return outrows
     def getfieldswsoundfiles(self):
         """This is NOT sensitive to sense level fields, which is where we store
         analysis and verification. This should just pick up entry form fields,
@@ -2105,6 +2159,9 @@ class FormParent(Node):
                     log.info(f"texts {texts[0]} & {texts[1]} are the same, so "
                         "deleting the second")
                     self.remove(forms[1])
+                else:
+                    log.info(f"texts ‘{texts[0]}’ & ‘{texts[1]}’ are not the same, "
+                        "so I'm not sure what to do.")
     def getforms(self):
         self.forms={
                     lang:Form(self,self.find('form[@lang="{}"]'.format(lang)))
@@ -2171,18 +2228,28 @@ class FormParent(Node):
                                     self.parent.senses))
     def glossbylang(self,lang):
         return ', '.join(self.parent.sense.formattedgloss(lang))
-    def hassoundfile(self,audiolang,audiodir,recheck=False):
-        """These attributes are not stored in lift; they depend on the work
-        environment, so are set on each use"""
+    def hassoundfile(self,audiolang=None,audiodir=None,recheck=False):
+        """self.audiofileisthere is stored and read here both for lexical and
+        example fields."""
+        """"These attributes are not stored in lift; they depend on the work
+        environment, so are set on each use. audiodir should be the
+        fully qualified filesystem path, not a relative one (e.g., 'audio')"""
         if hasattr(self,'audiofileisthere') and not recheck:
             return self.audiofileisthere
-        f=self.textvaluebylang(audiolang)
-        if f:#forms[self.params.audiolang()]
-            abs=file.getdiredurl(audiodir,f)
-            if file.exists(abs):
+        if not audiolang: #guess, if not declared
+            audiolang=audiolangname(self.getanalang())
+        try: #get audiofileURL or fail
+            abs=file.getdiredurl(audiodir,self.textvaluebylang(audiolang))
+            # log.info(f"Working with absolute audio filename: {abs}")
+            if bool(abs) and file.exists(abs):
                 self.audiofileisthere=True
                 self.audiofileURL=abs
                 return True
+        except Exception as e:
+            if "NoneType" not in str(e):
+                log.info(f"skipping because of exception ({e}) —any failure "
+                "probably means there is no sound file, so this is "
+                "probably OK.")
         self.audiofileisthere=False #If not in lift *and* file system
     def __init__(self, parent, node=None, **kwargs):
         super(FormParent, self).__init__(parent, node, **kwargs)
