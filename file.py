@@ -26,6 +26,9 @@ def getfile(filename):
 def getfilenamefrompath(filename):
     if filename:
         return pathlib.Path(filename).name
+def localfile(filename):
+    print(f"Running from file {__file__}, in directory {os.path.dirname(__file__)}")
+    return os.path.join(os.path.dirname(__file__),filename)
 def fileandparentfrompath(url):
     return getreldir(pathlib.Path(url).parent.parent, pathlib.Path(url))
 def parentfrompath(url):
