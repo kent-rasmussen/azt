@@ -723,7 +723,7 @@ class Gridded(ObectwArgs):
         """this removes gridding kwargs from the widget calls"""
         self.gridkwargs={'sticky',
                             'row','rowspan',
-                            'column','columnspan',
+                            'column','columnspan','colspan',
                             'r','c','col',
                             'padx','pady','ipadx','ipady'}
         self._grid=False
@@ -732,7 +732,7 @@ class Gridded(ObectwArgs):
             self.sticky=kwargs.pop('sticky',"ew")
             self.row=kwargs.pop('row',kwargs.pop('r',0))
             self.column=kwargs.pop('column',kwargs.pop('col',kwargs.pop('c',0)))
-            self.columnspan=kwargs.pop('columnspan',1)
+            self.columnspan=kwargs.pop('columnspan',kwargs.pop('colspan',1))
             self.rowspan=kwargs.pop('rowspan',1)
             self.padx=kwargs.pop('padx',0)
             self.pady=kwargs.pop('pady',0)
