@@ -2123,6 +2123,15 @@ def testapp(program):
     Label(sf.content,text="Seems to work!",font='title',
             row=0,column=0,
             borderwidth=1,relief='raised')
+    textvariable=StringVar()
+    options = ("choice 1", "choice 2", "choice 3", "choice 4")
+    def print_choice(event):
+        print(textvariable.get())
+    c=Combobox(sf.content,
+                textvariable=textvariable,
+                command=print_choice,
+                optionlist=options,
+                row=0,column=1)
     l=Label(sf.content,text="At least this much",
             row=1,column=0, font='italic',
             borderwidth=1,relief='raised')
