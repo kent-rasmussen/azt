@@ -1333,6 +1333,30 @@ class CheckButton(Gridded,Childof,tkinter.Checkbutton):
                                 )
         UI.__init__(self)
         self.dogrid()
+class Combobox(Gridded,Text,UI,tkinter.ttk.Combobox):
+    """docstring for Combobox."""
+
+    def __init__(self, parent, *args, **kwargs):
+        optionlist=kwargs.pop('optionlist')
+        command=kwargs.pop('command')
+        # super(Combobox, self).__init__(*args, **kwargs)
+        Gridded.__init__(self,**kwargs)
+        kwargs=self.lessgridkwargs(**kwargs)
+        # log.info("text kwargs: {}".format(kwargs))
+        Childof.__init__(self,parent)
+        Text.__init__(self, parent, **kwargs)
+        # log.info("textless kwargs: {}".format(kwargs))
+        kwargs=self.lesstextkwargs(**kwargs)
+        # self.textvariable.set(optionlist[0])
+        tkinter.ttk.Combobox.__init__(self,parent,
+                                font=self.font,
+                                text=self.text,
+                                textvariable=self.textvariable,
+                                values=optionlist,
+                                **kwargs)
+        self.bind('<<ComboboxSelected>>', command)
+        UI.__init__(self)
+        self.dogrid()
 class Scrollbar(Gridded,Childof,tkinter.Scrollbar):
     """Scrollbar for scrolling frames."""
     def __init__(self, parent, *args, **kwargs):
