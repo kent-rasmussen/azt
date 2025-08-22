@@ -1177,14 +1177,6 @@ class Label(Gridded,Text,tkinter.Label): #,tkinter.Label
         Text.__init__(self,parent,**kwargs)
         kwargs=self.lesstextkwargs(**kwargs)
         """These shouldn't need to be here..."""
-        # log.info("{}; {}; {}; {}; {}".format(
-        #                         parent,
-        #                         self.text,
-        #                         self.image,
-        #                         self.font,
-        #                         kwargs
-        #                         )
-        #         )
         tkinter.Label.__init__(self,
                             parent,
                             textvariable=self.textvariable,
