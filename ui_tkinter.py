@@ -1182,6 +1182,7 @@ class Label(Gridded,Text,tkinter.Label): #,tkinter.Label
                             textvariable=self.textvariable,
                             text=self.text,
                             image=self.image,
+                            wraplength=self.wraplength,
                             font=self.font,
                             **kwargs)
         i=self.grid_info()
