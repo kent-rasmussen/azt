@@ -1316,19 +1316,26 @@ class RadioButton(Gridded,Childof,tkinter.Radiobutton):
         tkinter.Radiobutton.__init__(self,parent,**kwargs)
         UI.__init__(self)
         self.dogrid()
-class CheckButton(Gridded,Childof,tkinter.Checkbutton):
+class CheckButton(Gridded,Text,tkinter.Checkbutton): #was Childof
     def __init__(self, parent, **kwargs):
         Gridded.__init__(self,**kwargs)
         kwargs=self.lessgridkwargs(**kwargs)
         Childof.__init__(self,parent)
+        if 'font' not in kwargs:
+            kwargs['font']='read' #Text.__init__ will convert name to font
+        #before lesstextkwargs removes this:
+        self.unselectedimage=kwargs.get('image',self.theme.photo['uncheckedbox'])
+        Text.__init__(self,parent,**kwargs)
+        kwargs=self.lesstextkwargs(**kwargs)
+        kwargs['compound']=kwargs.get('compound','left')
+        kwargs['anchor']=kwargs.get('anchor','w')
+        kwargs['indicatoron']=kwargs.get('indicatoron',False)
+        kwargs['selectimage']=kwargs.get('selectimage',
+                                            self.theme.photo['checkedbox'])
         tkinter.Checkbutton.__init__(self,
                                 parent,
-                                image=self.theme.photo['uncheckedbox'],
-                                selectimage=self.theme.photo['checkedbox'],
-                                indicatoron=False,
-                                compound='left',
-                                font=self.theme.fonts['read'],
-                                anchor='w',
+                                image=self.unselectedimage,
+                                font=self.font,
                                 **kwargs
                                 )
         UI.__init__(self)
