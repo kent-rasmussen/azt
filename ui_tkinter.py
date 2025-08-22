@@ -1074,7 +1074,8 @@ class Text(Childof,ObectwArgs):
         return kwargs
     def __init__(self,parent,**kwargs):
         Childof.__init__(self,parent)
-        self.textkwargs=['text','textvariable','image','font','norender']
+        self.textkwargs=['text','textvariable','image','font','norender',
+                        'wraplength']
         t=self.textvariable=self.text='' #clear now, not all labels/buttons use
         if 'textvariable' in kwargs:
             t=kwargs.pop('textvariable')
