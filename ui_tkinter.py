@@ -1101,7 +1101,14 @@ class Text(Childof,ObectwArgs):
         # log.info(getattr(self,'wraplength',0))
         self.wraplength=kwargs['wraplength']=kwargs.get('wraplength',
                                         getattr(self,'wraplength',0))
-        # log.info("Text wraplength: {}".format(kwargs['wraplength']))
+        # log.info(f"self.wraplength: {self.wraplength} ({type(self.wraplength)})")
+        if isinstance(self.wraplength, str) and '%' in self.wraplength: #convert to pixels
+            self.wraplength=kwargs['wraplength']=parent.winfo_screenwidth(
+                                        )*float(self.wraplength.strip('%'))/100
+        # log.info(f"self.wraplength: {self.wraplength} "
+        #                             f"({type(self.wraplength)})")
+        # log.info(f"Text wraplength: {kwargs['wraplength']} "
+        #                                     f" ({type(kwargs['wraplength'])})")
         # self.wraplength=kwargs.get('wraplength',defaultwr) #also for ButtonLabel
         self.norender=kwargs.pop('norender',False)
         self.image=kwargs.pop('image',None)
