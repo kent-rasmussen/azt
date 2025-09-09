@@ -26,9 +26,19 @@ def getfile(filename):
 def getfilenamefrompath(filename):
     if filename:
         return pathlib.Path(filename).name
+def absolute_of_other(file1,file2):
+    """If either file is a final subset of the other, it returns"""
+    for a,b in [(file1,file2)]:
+        for x,y in [(a,b),(b,a)]:
+            if str(pathlib.PurePath(x)).endswith(str(pathlib.PurePath(y))):
+                return x
 def localfile(filename):
     print(f"Running from file {__file__}, in directory {os.path.dirname(__file__)}")
     return os.path.join(os.path.dirname(__file__),filename)
+def replace(this,ontothat):
+    os.replace(this,ontothat)
+def getsize(x):
+    return os.path.getsize(x)
 def fileandparentfrompath(url):
     return getreldir(pathlib.Path(url).parent.parent, pathlib.Path(url))
 def parentfrompath(url):
