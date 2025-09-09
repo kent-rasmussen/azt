@@ -438,9 +438,9 @@ class TarBall(Buffered):
                     else: #Load this for appending, not to self.tar
                         self.metadata=TextFile(in_tar.extractfile(
                                             self.metadataname).read().decode())
+                        rows=self.metadata.contents.split('\n')
                         print(f"Found metadata file ‘{self.metadataname}’ with "
-                            f"{len(self.metadata.contents.split('\n'))} rows "
-                            "(including header)")
+                            f"{len(rows)} rows (including header)")
                 print(f"Imported {len(self.tar.getnames())} files (w/o "
                         "metadata)")
         except FileNotFoundError as e:
