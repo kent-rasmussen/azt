@@ -519,6 +519,48 @@ def writefilename(filename=''):
     f.close()
     return filename
 if __name__ == "__main__":
+    files=[
+        (r"C:\Users\camha\Documents\WeSay\bfj\audio\Verb-_HL_like_this_711e77ec-"
+        "86ee-4c49-ba5b-2af75076798c_example_sɨ̀_pɛʼ_change_like_this_(IMP)_.wav"),
+        (r"\audio\Verb-_HL_like_this_711e77ec-"
+        "86ee-4c49-ba5b-2af75076798c_example_sɨ̀_pɛʼ_change_like_this_(IMP)_.wav"),
+        (r"audio\Verb-_HL_like_this_711e77ec-"
+        "86ee-4c49-ba5b-2af75076798c_example_sɨ̀_pɛʼ_change_like_this_(IMP)_.wav"),
+        ("Verb-_HL_like_this_711e77ec-86ee-4c49-ba5b-2af75076798c_"
+        "example_sɨ̀_pɛʼ_change_like_this_(IMP)_.wav"),
+        ("/Users/camha/Documents/WeSay/bfj/audio/Verb-_HL_like_this_711e77ec-"
+        "86ee-4c49-ba5b-2af75076798c_example_sɨ̀_pɛʼ_change_like_this_(IMP)_.wav"),
+        ("/audio/Verb-_HL_like_this_711e77ec-"
+        "86ee-4c49-ba5b-2af75076798c_example_sɨ̀_pɛʼ_change_like_this_(IMP)_.wav"),
+        ("audio/Verb-_HL_like_this_711e77ec-"
+        "86ee-4c49-ba5b-2af75076798c_example_sɨ̀_pɛʼ_change_like_this_(IMP)_.wav"),
+        ("Verb-_HL_like_this_711e77ec-86ee-4c49-ba5b-2af75076798c_"
+        "example_sɨ̀_pɛʼ_change_like_this_(IMP)_.wa"),
+        (r":\Users\camha\Documents\WeSay\bfj\audio\Verb-_HL_like_this_711e77ec-"
+        "86ee-4c49-ba5b-2af75076798c_example_sɨ̀_pɛʼ_change_like_this_(IMP)_.wav")
+        ]
+    for i in range(len(files)):
+        print(compare_paths(files[i],files[i]))
+    exit()
+    import itertools
+    # p_list=list(itertools.permutations(files,2))
+    p_list=list(itertools.combinations(files,2))
+    for x,y in p_list:
+        in_it=compare_paths(x,y)
+        if in_it:
+            print(files.index(x),files.index(y),in_it,'\n',
+                    [i for i in [x,y] if i != str(in_it)],'\n')
+    #     print("Good Windows paths")
+    #
+    # print("Good Linux paths")
+    #
+    # print(compare_paths(file3,file2))
+    # print("Good Windows path w/incomplete filename")
+    #
+    # print(compare_paths(file1,file4))
+    # print("Bad Windows path w/complete filename")
+    # print(compare_paths(file5,file2))
+    exit()
     def filetuple(i): #This is just for testing; we need real translations!
         return ('/home/kentr/Assignment/Tools/WeSay/gnd/audio/'+i,
             i.split('-unit_')[-1])
@@ -537,4 +579,3 @@ if __name__ == "__main__":
     t.add_soundfile_w_metadata(filetuple(file))
     t.writeout()
     quit()
-    
