@@ -637,6 +637,21 @@ class LiftChooser(ui.Window,HasMenus):
                         sense.illustrationvalue(filename)
                 # log.info("Setting progress {}".format(todo.index(sense)*100/len(todo)))
                 self.wait.progress(todo.index(sense)*100/len(todo))
+    def storedefaultsettings(self,basename):
+        filename=basename.with_suffix('.CheckDefaults.ini')
+        config=ConfigParser()
+        config['default']={
+                            'glosslangs':['fr'],
+                            'buttoncolumns':2
+                            }
+        header=(_("# This transitional settings file was made on {} on {}").format(
+                                                    now(),platform.uname().node)
+                )
+        header+=(_("\n# It should only be used to get a new demo started."))
+        with open(filename, 'w', encoding='utf-8') as file:
+            file.write(header+'\n\n')
+            config.write(file)
+        log.info(f"Stored config {dict(config['default'])} for next run.")
     def makeCAWLdemo(self):
         title=_("Make a Demo LIFT Database")
         w=ui.Window(program['root'],title=title)
@@ -671,7 +686,8 @@ class LiftChooser(ui.Window,HasMenus):
         self.newdirname=file.getfile(homedir).joinpath('Demo_'+self.demolang)
         log.info(self.newdirname)
         file.makedir(self.newdirname)
-        newfile=self.newdirname.joinpath('Demo_'+self.demolang+'.lift')
+        newfilebasename=self.newdirname.joinpath('Demo_'+self.demolang)
+        newfile=newfilebasename.with_suffix('.lift')
         if file.exists(newfile):
             self.wait.close()
             ErrorNotice(_(f"File {newfile} already exists! \nUse it?"),
@@ -690,6 +706,7 @@ class LiftChooser(ui.Window,HasMenus):
         self.wait.close()
         self.newfilelocation(newfile)
         log.info("newfilelocation done")
+        self.storedefaultsettings(newfilebasename)
         return str(newfile)
     def stripcawldb(self):
         for n in (self.cawldb.nodes.findall('entry/lexical-unit')+
@@ -839,6 +856,7 @@ class FileChooser(object):
                             not program['root'].exitFlag.istrue()):
             return
         if self.name and 'Demo' in str(self.name):
+            program['Demo']=True
             file.writefilename() #clear this to select next time
 class FileParser(object):
     """This class parses the LIFT file, once we know which it is."""
@@ -2069,7 +2087,7 @@ class Settings(object):
         else:
             log.error("No file name for setting {}!".format(setting))
     def loadandconvertlegacysettingsfile(self,setting='defaults'):
-        #This should be removed at some point
+        #This should be removed at some point Only used when find old file NAME
         savefile=self.settingsfile(setting)
         legacy=savefile.with_suffix('.py')
         log.info("Going to make {} into {}".format(legacy,savefile))
@@ -2259,7 +2277,7 @@ class Settings(object):
                 #             "".format(s,o,v,type(v)))
                 setattr(o,s,v)
         return settingsdict
-    def storesettingsfile(self,setting='defaults',noobjects=False):
+    def storesettingsfile(self,setting='defaults'):
         #There are too many calls to this; why?
         filename=self.settingsfile(setting)
         config=ConfigParser()
@@ -9019,7 +9037,8 @@ class Sort(object):
                 "off by pressing ‘{}’".format(self.ps,self.profile,self.check,
                                                 buttontxt))
         # self.withdraw()
-        ErrorNotice(text=text,title=_("Not Done!"),parent=self,wait=True)
+        if not program['Demo']: #Should anyone see this?
+            ErrorNotice(text=text,title=_("Not Done!"),parent=self,wait=True)
         # self.deiconify()
     def resetsortbutton(self):
         # This attribute/fn is used to track whether something has been done
@@ -9056,6 +9075,7 @@ class Sort(object):
                 self.notdonewarning() #warn if runwindow exited, but not task
             else:
                 self.maybesort() #if neither exited, continue
+            self.status.maybeboard()
         # exitstatuses()
         if self.exitFlag.istrue(): #if the task has been shut down, stop
             return
@@ -9125,7 +9145,9 @@ class Sort(object):
         # if hasattr(self,'runwindow'):
         #     ErrorNotice(text=done,title=_("Done!"),wait=True,parent=self.runwindow)
         # else:
-        ErrorNotice(text=done,title=_("Done!"),wait=True,parent=self)
+        if not program['Demo']: #Should anyone see this?
+            ErrorNotice(text=done,title=_("Done!"),wait=True,parent=self)
+        self.status.maybeboard()
         if fn:
             fn() #only on first two ifs
     def presenttosort(self):
@@ -14727,7 +14749,8 @@ class Repository(object):
                 # of clicking this button (instead of 'exit') when you have a
                 # drive already set up is an extra file dialog —hopefully OK.
                 button=(_("Create new USB"),clonetoUSB)
-                e=ErrorNotice(text,
+                if not program['Demo']:
+                    e=ErrorNotice(text,
                             title=_("No {} {} USB backup found"
                                     ).format(self.repotypename,
                                             self.description),
