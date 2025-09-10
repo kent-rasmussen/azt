@@ -745,7 +745,7 @@ class LiftChooser(ui.Window,HasMenus):
         else:
             name=choice
         log.info("if choice == 'New': complete")
-        log.info(f"{self.name if hasattr(self,'name') else "no self.name!"}")
+        # log.info(f"{self.name if hasattr(self,'name') else "no self.name!"}")
         log.info(f"{name}")
         if name:
             self.setfilenameandcontinue(name,restart)
