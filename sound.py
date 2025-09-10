@@ -14,9 +14,11 @@ try:
 except Exception as e:
     log.error("Exception importing ASR: {}".format(e))
 # import soundfile
+import utilities as utils
 import file
 import sys
 import math        #?import needed modules
+import copy
 try:
     import numpy
 except ModuleNotFoundError:
