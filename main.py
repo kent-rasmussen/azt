@@ -9653,7 +9653,7 @@ class Record(Sound,TaskDressing):
         for f in filenames:
             if self.audioexists(f):
                 log.info("Audiofile {} found at {}".format(f, self.audioURL(f)))
-                node.textvaluebylang(lang=program['params'].audiolang,value=f)
+                node.textvaluebylang(lang=program['params'].audiolang(),value=f)
                 if self.hassoundfile(node,recheck=True):
                     log.info("file {} linked in LIFT".format(node.audiofileURL))
                 break
