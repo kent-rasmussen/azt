@@ -14,6 +14,14 @@ log=logsetup.getlog(__name__)
 logsetup.setlevel('DEBUG',log) #for this file
 log.info(f"Importing {__name__}")
 # import language_data #optional, for stats and names
+"""Users should be able to type in the name of their language as they
+know/understand it, without knowing the iso or other codes. Based on what they
+type, we want to give a (short) selection of possible language options for them
+to pick from: including official name, other names, iso and other codes,
+region/country, and linguistic parent (and maybe siblings?)
+"""
+"""Methods/functions here should be able to return iso or other codes from
+whatever input is provided, as some lists have one, and some the other."""
 
 """This package defines one class, named Language, which contains the results of parsing a language tag. Language objects have the following fields, any of which may be unspecified:
 language: the code for the language itself.
@@ -62,9 +70,8 @@ def validate_private(x, delim='-', prefix='x'):
     Add 'x' prefix if not present
     split any subtags of more than eight characters every eight characters
     """
-    if type(x) is str:#and delim in x:
+    if type(x) is str:
         x=rx.split(f'[;,\\s_{delim}]+', x)
-        # x=x.split(delim+' _')
         for ni,i in enumerate(x):
             if len(i) > 8:
                 new_i=''
