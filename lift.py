@@ -2995,41 +2995,25 @@ class Entry(Node,FieldParent): # what does "object do here?"
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='entry'
         self.annotationlang=kwargs.pop('annotationlang','en')
-        super(Entry, self).__init__(parent, node, **kwargs)
-        self.entry=self #make a common reference point for sense/entry
+        Node.__init__(self, parent, node, **kwargs)
         self.guid=self.get('guid')
+        FieldParent.__init__(self)
+        self.entry=self #make a common reference point for sense/entry
+        # log.info(f"Entry {self.guid} init {[i for i in self]=}")
         self.getlx()
         self.getlc()
         r=self.getsenses() #this needs lx and lc already
         if r: #If no senses, stop here
+            log.info("Stopping here b/c no senses found.")
             return
         self.lx.getsense() #this needs senses already
         self.lc.getsense() #this needs senses already
-        FieldParent.__init__(self)
-        """Probably should rework this... How to get entry fields?"""
-        # self.nodes=self.db.nodes.find(f"entry[@guid='{self.guid}']") #get.nodes(self)
-        #log.info(self.nodes.get('guid'))
-        #probably should trim all of these..…
-        """These depend on check analysis, should move..."""
-        """get(self,attribute,guid=None,analang=None,glosslang=None,lang=None,
-        ps=None,form=None,fieldtype=None,location=None,showurl=False)"""
-        # self.lexeme=db.get('lexeme',guid=guid) #don't use this!
-        # self.citation=get.citation(self,self.analang)
-        # self.gloss=get.obentrydefn(self, self.db.glosslang) #entry.get.gloss(self, self.db.glosslang, guid)
-        # self.gloss2=get.gloss(self, self.db.glosslang2, guid)
-        # self.plural=db.get('plural',guid=guid)
-        # log.info("Looking for pronunciation field locations...")
+        self.fields.update({
+                    'lx':self.lx,
+                    'lc':self.lc,
+                    })
         self.tone={}
-        # for location in self.db.get('pronunciationfieldlocation',guid=guid,
-        #     fieldtype='tone'):
-        #     # log.info(' '.join('Found:', location))
-        #     self.tone[location]=db.get('pronunciationfieldvalue',guid=guid,location=location,fieldtype='tone')
-        """These depend on check analysis, should move..."""
-        #self.plural=db.get('fieldvalue',guid=guid,lang=self.analang,fieldtype=db.pluralname)
-        #self.imperative=db.get('fieldvalue',guid=guid,lang=self.analang,fieldtype=db.imperativename)
-        # self.imperative=db.get('imperative',guid=guid)
-        # self.ps=db.get('ps',guid=guid)
-        # self.illustration=db.get('illustration',guid=guid)
+
 class Language(object):
     def __init__(self, xyz):
         """define consonants and vowels here?regex's belong where?"""
