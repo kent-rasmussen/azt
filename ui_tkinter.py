@@ -212,6 +212,8 @@ class Theme(object):
                             ('change','Change Circle_sm.png'),
                             ('checkedbox','checked.png'),
                             ('uncheckedbox','unchecked.png'),
+                            ('checkedbox_sm','checked_sm.png'),
+                            ('uncheckedbox_sm','unchecked_sm.png'),
                             ('NoImage','toselect/Image-Not-Found.png'),
                             ('Order!','toselect/order!.png'),
                         ]
@@ -398,6 +400,8 @@ class Theme(object):
         self.fonts={
                 'title':tkinter.font.Font(family=charis, size=title), #Charis
                 'instructions':tkinter.font.Font(family=charis,
+                                            size=normal), #Charis
+                'normal':tkinter.font.Font(family=charis,
                                             size=normal), #Charis
                 'report':tkinter.font.Font(family=charis, size=small),
                 'reportheader':tkinter.font.Font(family=charis, size=small,
