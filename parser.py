@@ -328,7 +328,8 @@ class Engine(object):
         if not (bestn[1] or bestv[1]):
             log.info("No nroot of value ({}:{}): {}".format(lc,pl,nroots))
             log.info("No vroot of value ({}:{}): {}".format(lc,imp,vroots))
-            return 1 #no found affixes built either form, do manually
+            log.info("No root of value for either ps; suppletive?")
+            return 2 #no found affixes built either form, do manually
         if bestn[1] and bestv[1]:
             # This shouldn't happen often: both forms have lc lcs which build
             # at least one form with a known affix
