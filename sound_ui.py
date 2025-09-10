@@ -63,7 +63,7 @@ class RecordButtonFrame(ui.Frame):
         #Not using these for now
         # self.p.bind('<ButtonPress>', self._play)
         # self.p.bind('<ButtonRelease>', self.function)
-        self.p.grid(row=0, column=1,sticky='w')
+        self.p.grid(row=0, column=1,sticky='nsw')
         pttext=_("Click to hear")
         if 'praat' in self.program:
             pttext+='; '+_("right click to open in praat")
