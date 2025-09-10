@@ -7232,6 +7232,9 @@ class Parse(Segments):
             return
         elif isinstance(r,tuple) and self.userconfirmation(*r):
             self.parser.doparsetolx(r[1],*r[4:]) #pass root, too
+        elif not isinstance(r,tuple) and r > 1:
+            log.info("I need to figure out what to do with suppletive forms!")
+            return
         if (not self.exited and
             not self.done() and
             # rootchange kicks back, so just finish here on rootchange:
