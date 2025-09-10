@@ -2190,10 +2190,12 @@ class FormParent(Node):
                     num=self.find('field[@type="location"]/form/text').text
                 except:
                     num="?"
-                log.error("{} node {} in entry {} has multiple forms "
-                    "for ‘{}’ lang. While this is legal LIFT, it is almost "
-                    "certainly an error, and will lead to unexpected behavior."
-                    "".format(self.tag,num,self.parent.entry.guid,lang))
+                guid=(self.parent.entry.guid if hasattr(self.parent,'entry')
+                                            else self.parent.guid)
+                log.error(f"{self.tag} node {num} in entry {guid} has multiple "
+                    "forms for ‘{lang}’ lang. While this is legal LIFT, "
+                    "it is almost certainly an error, and will lead to "
+                    "unexpected behavior.")
                 forms=self.findall(f'form[@lang="{lang}"]')
                 texts=[i.find('text').text for i in forms
                                                 if hasattr(i.find('text'),'text')]
@@ -2201,8 +2203,21 @@ class FormParent(Node):
                     log.info(f"texts {texts[0]} & {texts[1]} are the same, so "
                         "deleting the second")
                     self.remove(forms[1])
+                elif set('/\\')&set(texts[0]) or set('/\\')&set(texts[1]):
+                    absolute=file.absolute_of_other(*texts[:2])
+                    if absolute:
+                        log.info(f"texts ‘{texts[0]}’ & ‘{texts[1]}’ are not "
+                        f"the same, but {absolute} seems to be an absolute (or "
+                        "more absolute) version of the other, so removing it.")
+                        self.remove(forms[texts.index(absolute)])
+                    else:
+                        log.info(f"texts ‘{texts[0]}’ & ‘{texts[1]}’ are not "
+                            "the same. At least one seems to contain "
+                            "a directory, but I can't find an absolute path "
+                            "to remove.")
                 else:
-                    log.info(f"texts ‘{texts[0]}’ & ‘{texts[1]}’ are not the same, "
+                    log.info(f"texts ‘{texts[0]}’ & ‘{texts[1]}’ are not "
+                        "the same, and neither seems to contain a directory,"
                         "so I'm not sure what to do.")
     def getforms(self):
         self.forms={
