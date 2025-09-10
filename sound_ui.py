@@ -460,6 +460,8 @@ class SoundSettingsWindow(ui.Window):
         self.task.storesoundsettings()
         self.destroy()
     def __init__(self,program,task,**kwargs):
+    def tasktitle(self):
+        return _('Sound Card Settings')
         self.refreshdelay=1000 # wait 1s for a refresh check, always mainwindow
         ui.Window.__init__(self, program['root'], exit=False,
                             title=_('Select Sound Card Settings'))
