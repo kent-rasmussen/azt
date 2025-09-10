@@ -212,6 +212,13 @@ class SoundSettings(object):
                     for sf in self.cards[io][card][fs]:
                         log.debug('\t{}_{}'.format(self.hypothetical['fss'][fs],
                                     self.hypothetical['sample_formats'][sf]))
+    def sample_format_numpy(self):
+        d={
+            pyaudio.paInt32:numpy.int32,
+            pyaudio.paInt24:numpy.int24,
+            pyaudio.paInt16:numpy.int16,
+            }
+        return d[self.sample_format]
     def sethypothetical(self):
         self.hypothetical={}
         self.hypothetical['fss']={192000:'192khz',
