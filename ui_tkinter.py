@@ -2119,16 +2119,16 @@ def testapp(program):
                     bars[p].current(100-i)
                 else:
                     bars[p].current(i)
-            time.sleep(.02)
+            time.sleep(.002)
     def textchange(event):
         l['text']="new text ˥˥˦˦˧"
     def textadd(x):
         l['text']+=str(x)
     r=Root(program=program)
-    log.info("root is {}".format(r))
+    # log.info("root is {}".format(r))
     r.withdraw()
     w=Window(r)
-    log.info("window is {}".format(w))
+    # log.info("window is {}".format(w))
     sf=ScrollingFrame(w.outsideframe,row=0,column=0)
     Label(sf.content,text="Seems to work!",font='title',
             row=0,column=0,
@@ -2142,15 +2142,38 @@ def testapp(program):
                 command=print_choice,
                 optionlist=options,
                 row=0,column=1)
+    textvariable2=StringVar()
+    def print_selection(event=None):
+        print(lb1.curselection(),type(lb1.curselection()))
+        if 0 in lb1.curselection() and len(lb1.curselection())>1:
+            lb1.select_clear(0)
+        print(lb1.curselection(),type(lb1.curselection()))
+        print(", ".join([lb1.get(i) for i in lb1.curselection()]))
+        # print('selection:',lb1.get(lb1.curselection()))
+        print(f"box length: {len(lb1.get(0,'end'))}")
+        for i in lb1.curselection():
+            print(lb1.get(i))
+    lb1=ListBox(sf.content,
+                textvariable=textvariable2,
+                selectmode=tkinter.MULTIPLE,
+                command=print_selection,
+                optionlist=options,
+                height=3,
+                row=0,column=2)
+    lb1.selection_set(0)
+    CheckButton(sf.content,
+                text="Boolean toggle",
+                anchor='c',
+                variable = BooleanVar(),
+                onvalue = True, offvalue = False,
+                font='default',
+                row=1,column=1)
     l=Label(sf.content,text="At least this much",
             row=1,column=0, font='italic',
             borderwidth=1,relief='raised')
-    # log.info("l dir is {}".format(dir(l)))
     log.info("l _root is {}".format(l._root()))
     log.info("Image dict: {}".format(r.theme.photo))
-    # img=r.theme.photo['transparent']
     img=r.theme.photo['NoImage']
-    # img.transparent()
     # log.info("Image: {} ({})".format(img.transparency, Image.maxhw(img)))
     log.info("Image dir: {}".format(dir(img)))
     img.scale(program['scale'],pixels=100,resolution=10)
@@ -2162,7 +2185,6 @@ def testapp(program):
         cname=cls.__name__
         cls(sf.content,text="This is a {} ˥˥˦˦˨".format(cname),row=2, column=c,
                 borderwidth=1,relief='raised')
-        # cls(w.outsideframe,text="This is a long {}".format(cname),row=3, column=c)
         cls(sf.content,text="This is a very long {}".format(cname),row=4, column=c,
                 borderwidth=1,relief='raised')
         cls(sf.content,text="This is a very very long {}".format(cname),
@@ -2183,10 +2205,7 @@ def testapp(program):
                     "long {}".format(cname),row=7, column=c,
                     borderwidth=1,relief='raised')
         if cls == Label:
-            # lll['wraplength']=20
             lll.config(wraplength=120)
-            # lll.wrap()
-    # m=tkinter.Label(sf.content,text="This is a Label", row=3, column=0)
     bars={}
     for orient in ['horizontal','vertical']:
         for row in [0,2]:
@@ -2212,14 +2231,15 @@ def testapp(program):
     w.bind('<Next>',lambda event,x='v':textadd(x),add=True) #page down button
     w.bind('<Left>',lambda event,x='<—':textadd(x),add=True)
     w.bind('<Right>',lambda event,x='—>':textadd(x),add=True)
-    # parent.winfo_viewable()
     log.info(dir(w))
     log.info(w.bindtags())
     log.info(w.wm_state())
     log.info(w.state())
-    # w.withdraw()
-    # log.info(w.wm_state())
-    # log.info(w.state())
+    j=IntVar(value=1)
+    j=IntVar(value=False)
+    k=Variable(value='False')
+    for i in [j,k]:
+        print(isinstance(i,tkinter.Variable),i.get(),type(i.get()))
     r.mainloop()
 if __name__ == '__main__':
     program={'name':'tkinter UI module',
