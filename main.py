@@ -41,6 +41,7 @@ information than 'DEBUG' does):
     helpful.
 Other levels:'WARNING','ERROR','CRITICAL'
 """
+from utilities import *
 try:
     import logsetup
     log=logsetup.getlog(__name__) #not ever a module
@@ -66,7 +67,6 @@ try:
 except ModuleNotFoundError as e:
     log.error("Problem importing url module. Is urllib3 installed? {}".format(e))
     exceptiononload=True
-from utilities import *
 import executables
 import export
 import langtags
