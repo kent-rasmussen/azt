@@ -2921,7 +2921,7 @@ class Sense(Node,FieldParent):
             return []
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='sense'
-        super(Sense, self).__init__(parent, node, **kwargs)
+        Node.__init__(self, parent, node, **kwargs)
         self.entry=parent #make a common reference point for sense/entry
         FieldParent.__init__(self)
         self.getcawlline()
