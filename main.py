@@ -843,7 +843,7 @@ class FileParser(object):
     def loaddatabase(self):
         try:
             #This program key will only be available after this finishes
-            program['db']=lift.Lift(str(self.name))
+            program['db']=lift.LiftXML(str(self.name))
         except lift.BadParseError:
             text=_("{} doesn't look like a well formed lift file; please "
                     "try again.").format(self.name)
@@ -15495,7 +15495,7 @@ def loadCAWL():
         log.info("Found stock LIFT file: {}".format(stockCAWL))
     try:
         # cawldb=lift.Lift(str(stockCAWL))
-        cawldb=lift.Lift(str(stockCAWL),tostrip=True)
+        cawldb=lift.LiftXML(str(stockCAWL),tostrip=True)
         log.info("Parsed ET.")
         log.info("Got ET Root.")
     except lift.BadParseError as e:
