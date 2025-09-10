@@ -685,6 +685,21 @@ class SoundFileRecorder(object):
         #         channels=self.settings.channels
         #         )
         #         # set_frame_rate
+    def get_asr(self):
+        try: #assume this is already there
+            self.asr=self.settings.asr
+        except AttributeError:
+            self.settings.load_ASR() #load if not there
+            self.asr=self.settings.asr
+    def get_transcriptions(self):
+        self.get_asr()
+        # log.info(f"self.settings settings: {vars(self.settings)}")
+        self.asr.sister_languages=self.settings.asr_kwargs['sister_languages']
+        self.asr.show_tone=self.settings.asr_kwargs['show_tone']
+        self.asr.get_transcriptions(str(self.filenameURL))
+        self.transcriptions=self.asr.transcriptions
+        self.transcriptions_ipa=self.asr.transcriptions_ipa
+        self.tone_melody=getattr(self.asr,'tone_melody',None)
     def stop(self):
         log.log(3,"I'm stopping recording now")
         if hasattr(self,'stream'):
