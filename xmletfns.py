@@ -8,6 +8,7 @@ log.info(f"Importing {__name__}")
 import file
 import urllib
 import datetime
+ElementTree=ET.ElementTree
 Element=ET.Element
 parse=ET.parse
 def readxmltext(text):
