@@ -2009,7 +2009,7 @@ class ValueNode(Node):
 class Annotation(ValueNode):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='annotation'
-        if 'attrib' in kwargs and 'name' not in kwargs['attrib']: #nodecheck elsewhere
+        if 'attrib' in kwargs and 'name' not in kwargs['attrib']:
             log.error("No name for this annotation! ({})".format(kwargs))
         super(Annotation, self).__init__(parent, node, **kwargs)
 class Trait(ValueNode):
@@ -2143,19 +2143,24 @@ class FormParent(Node):
         if not lang:
             lang=self.getlang(lang)
         if lang not in self.forms:
-            # log.info("Missing ‘{}’ lang in textvaluebylang".format(lang))
+            # log.info(f"Missing ‘{lang}’ lang in textvaluebylang: {self.forms=}")
             if value is not None: #only make if we're populating it, allow ''
                 # log.info(f"Adding new {lang} form field = {value}")
                 self.forms[lang]=Form(self,attrib={'lang':lang})
+                # log.info(f"Is ‘{lang}’ lang in textvaluebylang? {self.forms=}")
                 # prettyprint(self.forms[lang])
             else:
                 return None
         if value is False:
+            # log.info(f"Removing ‘{lang}’ lang in textvaluebylang: {self.forms=}")
+            self.remove(self.forms[lang])
             del self.forms[lang]
-            # self.parent.remove(self)
+            #without something like the following, it leaves empty FormParent
+            # if not self.forms:
+            #     self.parent.remove(self)
             return
         # if value:
-        #     log.info("Sending ‘{}’ ({}) from textvaluebylang".format(value,type(value)))
+        #     log.info(f"Sending ‘{value}’ ({type(value)}) from textvaluebylang")
         return self.forms[lang].textvalue(value)
     def annotationvaluedictbylang(self,lang):
         self.forms[lang].annotationvaluedict()
