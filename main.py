@@ -9665,9 +9665,8 @@ class Record(Sound,TaskDressing):
         node.audiofilenametoput=f #don't write this until we actually record
         node.audiofileURL=self.audioURL(f)
     def __init__(self,parent):
-        TaskDressing.__init__(self,parent)
         Sound.__init__(self)
-        self.mikecheck() #only ask for settings check if recording
+        self.soundsettings.load_ASR() #after file settings are loaded
 class Report(object):
     def consultantcheck(self):
         program['settings'].reloadstatusdata()
