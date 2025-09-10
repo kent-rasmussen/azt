@@ -524,7 +524,7 @@ class ASRtoText(object):
                                             i in ['allosaurus','neurlang']
                                             else False
                                 for i in self.repo_modelnames})
-        self.kwarg_defaults.update(kwargs)
+        self.kwarg_defaults.update(kwargs) #override defaults with given kwargs
         return self.kwarg_defaults
     def __init__(self,**kwargs):
         kwargs['return_ipa']=True #always, for now
