@@ -520,8 +520,9 @@ class ASRtoText(object):
         ]
         self.kwarg_defaults={i:True if i in self.do_by_default else False
                             for i in self.postprocess_kwargs}
-        self.kwarg_defaults.update({i:True if 'mms' in i or
-                                            i in ['allosaurus','neurlang']
+        self.kwarg_defaults.update({i:True if i in ['mms_all',
+                                                # 'allosaurus',
+                                                'neurlang']
                                             else False
                                 for i in self.repo_modelnames})
         self.kwarg_defaults.update(kwargs) #override defaults with given kwargs
