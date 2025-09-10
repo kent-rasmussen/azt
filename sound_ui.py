@@ -409,7 +409,7 @@ class SoundSettingsWindow(ui.Window):
         self.content=self.scroll.content
         row=0
         ui.Label(self.content, font='title',
-                text=_("Confirm Sound Card Settings"),
+                text=self.tasktitle(),
                 row=row,column=0)
         row+=1
         ui.Label(self.content, #font='title',
