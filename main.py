@@ -264,40 +264,245 @@ class HasMenus():
 class LiftChooser(ui.Window,HasMenus):
     """this class allows the user to select a LIFT file, including options
     to start a new one (live or demo), or copy from USB."""
+    def newfile_page(self):
+        self._new_w=ui.Window(program['root'],title=_("Start New LIFT Database"))
+        defaults={'pady':20,'column':0,'sticky':'w','gridwait':True}
+        self.title_frame=ui.Frame(self._new_w.frame, row=0, **defaults)
+        self.code_frame=ui.Frame(self._new_w.frame, row=1, **defaults)
+        self.code_label=ui.Label(self.code_frame, text='code: ',
+                                font='readbig', row=0, **defaults)
+        self.use_code_button=ui.Button(self.code_frame,
+                                        text='<= '+_("Use this code"),
+                                        command=self._new_w.destroy,
+                                        font='readbig', padx=20,
+                                        **{**defaults,'column':1}
+                                    )
+        self.entryframe=ui.Frame(self._new_w.frame, row=2, **defaults)
+        log.info("newfile_page done")
+    def set_up_variables(self):
+        self.analang_entry=ui.StringVar()
+        self.variant_entry=ui.StringVar()
+        self.territory_entry=ui.StringVar()
     def startnewfile(self):
-        def done(event=None):
-            window.destroy()
-        window=ui.Window(program['root'],title=_("Start New LIFT Database"))
-        ethnologueurl='https://www.ethnologue.com/'
-        title=_("What is the Ethnologue (ISO 639-3) code?")
-        text=_("(find your language on {}; the code is at the top of "
-                "the page) "
-                "\nThis code will be used throughout your database, so please "
-                "\ntake a moment and confirm that this is correct before "
-                "continuing.".format(ethnologueurl)
-                )
-        t=ui.Label(window.frame, text=title, font='title', column=0, row=0)
-        l=ui.Label(window.frame, text=text, column=0, row=1)
-        l.bind("<Button-1>", lambda e: openweburl(ethnologueurl))
+        program['root'].unbind_all('<Button-1>')
+        program['root'].unbind_all('<Return>')
+        self.newfile_page()
+        title=_("What is your language code?")
+        text=_("Type the name of your language in the field, then find and select the full name below.")
+        self.no_country_text=_("Multiple/all territories")
+        t=ui.Label(self.title_frame, text=title, font='title', column=0, row=0)
+        l=ui.Label(self.title_frame, text=text, column=0, row=1)
         l.wrap()
-        entryframe=ui.Frame(window.frame,row=2,column=0,sticky='nsew')
-        analang=ui.StringVar()
-        e=ui.EntryField(entryframe, text=analang, font='readbig',
-                        width=5, row=0,column=0,sticky='w')
-        e.bind('<Return>',done)
-        e.focus_set()
-        ui.Button(entryframe, text='OK', cmd=done, font='title',
-                    row=0,column=1,sticky='e')
-        l.wait_window(window)
-        self.analang=analang.get()
+        self.set_up_variables()
+        self.title_frame.grid()
+        self.make_lang_entry()
+        self._new_w.mainwindow=False
+        t.wait_window(self._new_w)
+        if not self._new_w.exitFlag.istrue(): #true w/ X or Exit, not "Use..."
+            return self.analang_code_complete()
+    def make_lang_entry(self):
+        """This should be pulled into it's own class, so we can source it here and in sound_ui the same way."""
+        self.trace_analang_entry()
+        self.entry_field=ui.EntryField(self.entryframe,
+                                        text=self.analang_entry,
+                                        font='normal',
+                                        width=10,
+                                        row=1,
+                                        column=0,
+                                        sticky='w')
+        self.list_of_possibles=ui.ListBox(self.entryframe,
+                                        command=self.lang_name_selected,
+                                        font='default',
+                                        height=1,
+                                        width=10,
+                                        row=2,
+                                        column=0,
+                                        gridwait=True,
+                                        sticky='w')
+        self.entryframe.grid()
+        self.entry_field.grid()
+        self.entry_field.focus_set()
+    def trace_analang_entry(self):
+        # log.info("trace_analang_entry")
+        self.analang_entry.trace=self.analang_entry.trace_add('write',
+                                                            self.show_possibles)
+        # log.info("trace_analang_entry OK")
+    def untrace_analang_entry(self):
+        # log.info("untrace_analang_entry")
+        try:
+            self.analang_entry.trace_remove('write',self.analang_entry.trace)
+            # log.info("untrace_analang_entry OK")
+        except:
+            pass
+    def show_possibles(self,*args):
+        value=self.analang_entry.get()
+        log.info(f"Updating Possibles for ‘{value}’")
+        self.entry_field.configure(width=max(10,len(value)))
+        if hasattr(self,'subtags_frame') and self.subtags_frame.winfo_exists():
+            self.subtags_frame.destroy()
+        if not value:
+            self.list_of_possibles.grid_remove()
+            self.iso=''
+            self.update_code() #remove code and button
+            return
+        self.list_of_possibles.delete(0, "end")
+        self.list_of_possibles.grid()
+        self.l_codes=program['languages'].get_codes(value)
+        log.info(f"found these codes for {value}: {self.l_codes}")
+        self.l_codes=list(self.l_codes)[:20] #preserve order from here on out
+        if not self.list_of_possibles.winfo_viewable():
+            self.list_of_possibles.dogrid()
+        if not self.l_codes:
+            # log.info("no l_codes")
+            self.options=[f"Error: ‘{value}’ not found"]
+            # log.info("get OK")
+            self.list_of_possibles.config(state='disabled')
+        else:
+            # log.info("yes l_codes")
+            objs=[program['languages'].get_obj(i) for i in self.l_codes]
+            # log.info("get_obj OK")
+            self.options=[i.full_display() for i in objs]
+            # log.info("options OK")
+            self.list_of_possibles.config(state='normal')
+        # log.info(f"self.options: {self.options}")
+        for i in self.options:
+            self.list_of_possibles.insert("end", i)
+        max_value_len=max([len(self.list_of_possibles.get(i))
+                    for i in range(len(self.list_of_possibles.get(0,'end')))])
+        self.list_of_possibles.configure(width=max(10,max_value_len),
+                                        height=min(4,len(self.options)))
+        log.info(f"Done updating possibles for ‘{value}’")
+    def lang_name_selected(self,*args):
+        log.info("lang_name_selected")
+        if not self.list_of_possibles.curselection():
+            return
+        this_index=self.list_of_possibles.curselection()[0]
+        self.iso=self.l_codes[this_index]
+        self.update_code()
+        log.info(f"iso: {self.iso}")
+        value=self.list_of_possibles.get(this_index)
+        self.untrace_analang_entry() #don't redo possibles here
+        self.analang_entry.set(value)
+        self.trace_analang_entry()
+        self.entry_field.configure(width=max(10,len(value)))
+        self.list_of_possibles.grid_remove()
+        self.show_subtag_frames()
+    def update_code(self,*args):
+        log.info(f"Updating code {self.iso=}")
+        if not self.iso:
+            self.code_label.grid_remove()
+            self.use_code_button.grid_remove()
+            self.check_tag_validity()
+            self._new_w.update_idletasks()
+            return
+        self.code=self.iso
+        if self.territory_entry.get():
+            self.code+='-'+self.territory_entry.get()
+        if self.variant_entry.get():
+            self.code+='-x-'+self.variant_entry.get().lower() #in case caps
+        self.code_label['text']=f"code: {self.code}"
+        self.code_label.grid()
+        self.use_code_button.grid()
+        self.check_tag_validity()
+    def show_private_use(self,event=None):
+        """The user needs to ask to see this field"""
+        self.show_private_w.grid_remove()
+        instructions=ui.Label(self.private_use_frame, r=0, c=0, colspan=2,
+                                text=_("give two to eight (2-8) characters "
+                                        "to identify your dialect"))
+        prefix=ui.Label(self.private_use_frame, text='x-',
+                                                r=1, c=0, sticky='e')
+        self.entry_field_2=ui.EntryField(self.private_use_frame,
+                                        textvariable=self.variant_entry,
+                                        font='normal', width=10,
+                                        row=1, column=1,
+                                        sticky='w')
+        self.variant_entry.trace_add('write', self.update_code)
+        self.entry_field_2.focus_set()
+    def territory_selected(self,*args):
+        this_index=self.list_of_territories.curselection()[0]
+        if this_index:
+            name=self.list_of_territories.get(this_index)
+            code=[k for k,v in program['languages'].region_codes_names.items()
+                        if name == v].pop()
+            self.territory_entry.set(code)
+        else:
+            self.territory_entry.set('')
+        self.update_code()
+    def show_subtag_frames(self):
+        # log.info("show_subtag_frames")
+        defaults={'pady':20,'padx':20,'sticky':'w','gridwait':True}
+        self.subtags_frame=ui.Frame(self._new_w.frame, row=3, **defaults)
+        self.private_use_frame=ui.Frame(self.subtags_frame, **defaults)
+        self.territory_frame=ui.Frame(self.subtags_frame,
+                                        column=1, **defaults)
+        self.show_private_w=ui.Button(self.private_use_frame,
+                            text=_("I'm working on a dialect of this language"),
+                            command=self.show_private_use,
+                            r=0,c=0
+                        )
+        self.subtags_frame.grid()
+        self.private_use_frame.grid()
+        lang_obj=program['languages'].get_obj(self.iso)
+        if len(lang_obj.regions) > 1:
+            self.territory_frame.grid()
+            instructions=_("This language is spoken in multiple territories; "
+                            "where are you working?")
+            territory_instructions=ui.Label(self.territory_frame,
+                                            text=instructions,
+                                            row=0,
+                                            column=0,
+                                            # gridwait=True,
+                                            sticky='w')
+            max_len=max([len(i) for i in lang_obj.regions])
+            options=[self.no_country_text]+list(lang_obj.regions)
+            self.list_of_territories=ui.ListBox(self.territory_frame,
+                                        command=self.territory_selected,
+                                        optionlist=options,
+                                        font='default',
+                                        height=min(5,len(lang_obj.regions)+1),
+                                        width=max_len,
+                                        row=1,
+                                        column=0,
+                                        # gridwait=True,
+                                        sticky='w')
+        elif len(lang_obj.regions):
+            self.territory_frame.destroy()
+        else:
+            self.territory_frame.destroy()
+        self.use_code_button.grid()
+    def check_tag_validity(self):
+        log.info("check_tag_validity")
+        for code in [langtags.tone_code,
+                    langtags.phonetic_code,
+                    langtags.audio_code]:
+            if code in self.code:
+                self.use_code_button.configure(state='disabled')
+                self.use_code_button['text']=f"‘{code}’ invalid"
+                return
+        if langtags.tag_is_valid(self.code):
+            # log.info("tag valid")
+            self.use_code_button.configure(state='normal')
+        else:
+            # log.info(f"tag not valid {self.code=}")
+            self.use_code_button.configure(state='disabled')
+    def analang_code_complete(self):
+        log.info("analang_code_complete")
+        self.analang=self.code
         if not self.analang:
             return
-        if len(self.analang) != 3:
+        try:
+            self.analang_obj=program['languages'].get_obj(self.analang)
+        except langcodes.tag_parser.LanguageTagError:
+            log.info(f"{self.analang_obj} didn't parse.")
+        if not self.analang_obj.is_valid():
+            log.error(f"It looks like your code ({self.analang}) isn't valid "
+                        f"({self.analang_obj.full_display()})")
+        if not langtags.tag_is_valid(self.analang):
             e=ErrorNotice("That doesn't look like an ethnologue code "
-                        "(just three letters)",wait=True)
-            return
+                        f"({self.analang=})",wait=True)
         dir=file.gethome()
-        newfile=file.getnewlifturl(dir,analang.get())
+        newfile=file.getnewlifturl(dir,self.analang)
         if not newfile:
             ErrorNotice(_("Problem creating file; does the directory "
                         "already exist?"),wait=True)
@@ -317,6 +522,7 @@ class LiftChooser(ui.Window,HasMenus):
         self.copytonewfile(newfile)
         self.wait.close()
         self.newfilelocation(newfile)
+        log.info("analang_code_complete complete")
         return str(newfile)
     def clonefromUSB(self):
         def makenewrepo(repoclass,mediadir):
