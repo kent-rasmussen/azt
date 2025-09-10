@@ -5106,6 +5106,8 @@ class TaskDressing(HasMenus,ui.Window):
             log.info("Done maybe committing/pushing to {}".format(r))
         log.info("Saving settings for next time")
         program['settings'].storesettingsfile() #in case we added repos
+        if isinstance(self,Sound):
+            program['settings'].storesettingsfile(setting='soundsettings')
         log.info("Settings saved")
         log.info("Killing window")
         ui.Window.killall(self) #Exitable
