@@ -669,23 +669,33 @@ class Exitable(object):
         throwing an error. This doesn't do anything but set the flag value
         on exit, the logic to stop needs to be elsewhere, e.g.,
         `if self.exitFlag.istrue(): return`"""
+        # log.info(f"Quitting window {self}")
         if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
             # log.info("Setting window ({}) exit flag True!".format(self))
             self.exitFlag.true()
+            # log.info(f"Set exitflag of window {self}")
         if self.mainwindow: #exit afterwards if main window
+            # log.info(f"Window {self} is mainwindow")
             self.exittoroot()
             self.killall()
         else:
+            # log.info(f"Window {self} is NOT mainwindow")
             if (hasattr(self,'parent') and
                     self.parent.winfo_exists() and
                     not isinstance(self.parent,Root)):
+                # log.info(f"Window {self} has non-root parent that exists")
                 if not self.parent.iswaiting():
+                    # log.info(f"Window {self} is not waiting")
                     self.parent.deiconify()
                 # else:
+                #     log.info(f"Window {self} is waiting")
                 #     self.parent.waitunpause()
                     # self.ww.paused=True
-                # log.info("Going to deiconify {}".format(self.parent))
+            # else:
+            #     log.info(f"Window {self} has NOT a non-root parent that exists")
+            # log.info("Going to deiconify {}".format(self.parent))
             # log.info("Going to cleanup {}".format(self))
+            # log.info(f"Window {self} cleaning up")
             self.cleanup()
             self.destroy() #do this for everything
     def __init__(self):
@@ -2084,6 +2094,7 @@ class ToolTip(object):
 """Move back to main"""
 class Wait(Window): #tkinter.Toplevel?
     def close(self):
+        # log.info("Wait window disappears")
         self.on_quit()
     def cancel(self):
         self.parent.waitcancel()
@@ -2113,6 +2124,7 @@ class Wait(Window): #tkinter.Toplevel?
             self.cancelbutton=Button(self.outsideframe,text='Cancel',
                                     cmd=self.cancel,
                                     row=3,column=0,sticky='e')
+        # log.info("Wait window appears")
         self.deiconify() #show after the window is built
         #for some reason this has to follow the above, or you get a blank window
         self.update_idletasks() #updates just geometry
