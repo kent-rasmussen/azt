@@ -2381,7 +2381,7 @@ class FieldParent(object):
             else:
                 return None
         # specify value as kwarg because not specifying lang
-        return self.fields[type].textvaluebylang(value=value)
+        return self.fields[type].textvaluebylang(lang=lang,value=value)
     def __init__(self):
         # log.info("Initializing field parent for {}".format(self))
         if not hasattr(self,'annotationlang'):
