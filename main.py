@@ -6670,6 +6670,109 @@ class WordCollection(Segments):
     def __init__(self, parent):
         Segments.__init__(self,parent)
         self.dodone=False
+class WordCollectionwRecordings(WordCollection,Record):
+    def getinstructions(self):
+        return _("Record a word in your language that goes with these "
+                "meanings."
+                "\nGive just a single word (not a phrase) wherever possible."
+                # "\nClick-Speak-Release on the record button."
+                )
+    def set_up_transcription(self):
+        self.set_transcription_fields()
+        self.set_transcription_frame(row=3,column=0,colspan=2) #instructions2
+    def set_transcription_fields(self,**kwargs):
+        ftype=kwargs.pop('ftype',self.ftype)
+        self.transcription_var=ui.StringVar()
+        self.transcription_ipa_var=ui.StringVar()
+        self.transcription_tone_var=ui.StringVar()
+        self.transcription_var.trace_add('write', self.show_drafts)
+        self.transcription_ipa_var.trace_add('write', self.store_phonetic)
+        self.transcription_tone_var.trace_add('write', self.store_tone)
+        if ftype not in self.entry.fields: #Need this to record to
+            if ftype == 'lx':
+                self.entry.lx=lift.Lexeme(self.entry)
+            elif ftype == 'lc':
+                self.entry.lx=lift.Citation(self.entry)
+            else:
+                self.entry.fields[ftype]=lift.Field(self.entry,ftype=ftype)
+    def set_transcription_frame(self,**kwargs):
+        ftype=kwargs.pop('ftype',self.ftype)
+        try:
+            self.wordframe.recordFrame.destroy()#don't leave this around!
+        except:
+            pass
+        log.info(f"setting frame with settings: {self.soundsettings}")
+        self.wordframe.recordFrame=sound_ui.RecordnTranscribeButtonFrame(
+                        self.wordframe,
+                        self, #task
+                        self.entry.fields[ftype],#node,
+                        transcription_var=self.transcription_var,
+                        transcription_ipa_var=self.transcription_ipa_var,
+                        transcription_tone_var=self.transcription_tone_var,
+                        # show_transcriptions=True, #this typically in Entry
+                        # show_transcriptions_ipa=True,
+                        show_tone=True,
+                        shown='none',
+                        sticky='ew',
+                        **kwargs
+                    )
+    def show_drafts(self,*args):
+        # log.info(f"show_drafts got args {args}")
+        instructions2=("click on the best option(s) above\n "
+                        "correct the consonants and vowels below.")
+        try:
+            self.wordframe.draftFrame.destroy()
+        except:
+            pass
+        content=self.wordframe.recordFrame.recorder.transcriptions
+        log.info(f"Recorder returned {len(content)} transcriptions")
+        if len(content) == 1:
+            self.var.set(content[0][1]) #value of first (only) option
+            return
+        c,r=self.wordframe.recordFrame.grid_size()
+        self.wordframe.draftFrame=ui.Frame(self.wordframe.recordFrame,
+                                            column=c,
+                                            row=0
+                                        )
+        # log.info(f"{content=}")
+        content=sorted(content.items(),key=lambda x: len(x[1]))
+        # log.info(f"{content=}")
+        aspect=3/4 #float OK
+        nrows=max(3,int((len(content)*aspect)**.5))
+        buttons=0
+        max_len=20 #don't want words kicking buttons off the page...
+        for repo,line in content:
+            ui.Button(self.wordframe.draftFrame,
+                text=line[:max_len],
+                command=lambda x=repo,y=line:self.draft_entry(x,y),
+                column=buttons//nrows,
+                row=buttons%nrows,
+            )
+            buttons+=1
+        self.instructions2['text']=instructions2
+    def draft_entry(self,repo,value,*args):
+        # This just fills in the visible field. Dictionary may be
+        # overwritten on confirmation later
+        # This is only called when a user clicks on a button, not
+        # automatically, so it should always overwrite the entry field
+        program['soundsettings'].tally_asr_repo(repo)
+        self.var.set(value)
+        program['settings'].storesettingsfile(setting='soundsettings')
+        log.info(program['soundsettings'].asr_repo_tally())
+    def store_phonetic(self,*args):
+        #Need to fix this; format isn't correct
+        self.entry.fieldvalue(self.ftype,
+                        program['db'].phoneticlangname(machine=True),
+                        value=self.transcription_ipa_var.get().split('\n')[0]
+                        )
+    def store_tone(self,*args):
+        self.entry.fieldvalue(self.ftype,
+                        program['db'].tonelangname(machine=True),
+                        value=self.transcription_tone_var.get()
+                        )
+    def __init__(self, parent):
+        Record.__init__(self,parent)
+        WordCollection.__init__(self,parent)
 class WordCollectionLexeme(TaskDressing,WordCollection):
     def tooltip(self):
         return _("Don't use this task.")
