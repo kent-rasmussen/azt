@@ -704,6 +704,11 @@ class Gridded(ObectwArgs):
                         columnspan=self.columnspan,
                         rowspan=self.rowspan
                         )
+            self.grid_remove()
+            if self.gridwait: #just skip the first one
+                self.gridwait=False
+                return
+            self.grid()
     def lessgridkwargs(self,**kwargs):
         for opt in self.gridkwargs:
             if opt in kwargs:
@@ -732,7 +737,9 @@ class Gridded(ObectwArgs):
                             'row','rowspan',
                             'column','columnspan','colspan',
                             'r','c','col',
-                            'padx','pady','ipadx','ipady'}
+                            'padx','pady','ipadx','ipady',
+                            'gridwait'
+                        }
         self._grid=False
         if bool(set(kwargs) & (self.gridkwargs)):
             self._grid=True
@@ -745,6 +752,7 @@ class Gridded(ObectwArgs):
             self.pady=kwargs.pop('pady',0)
             self.ipadx=kwargs.pop('ipadx',0)
             self.ipady=kwargs.pop('ipady',0)
+            self.gridwait=kwargs.pop('gridwait',False)
         else:
             log.log(4,"Not Gridding! ({})".format(kwargs))
 class Childof(object):
@@ -1167,8 +1175,7 @@ class Frame(Gridded,Childof,tkinter.Frame):
         Childof.__init__(self,parent)
         tkinter.Frame.__init__(self,parent,**kwargs)
         UI.__init__(self)
-        if not gridwait:
-            self.dogrid()
+        self.dogrid()
 class Label(Gridded,Text,tkinter.Label): #,tkinter.Label
     def __init__(self, parent, **kwargs):
         # log.info("Label Parent: {}".format(type(parent)))
