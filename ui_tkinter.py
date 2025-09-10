@@ -970,7 +970,11 @@ class Toplevel(Childof,Exitable,tkinter.Toplevel,UI): #NoParent
     def __init__(self, parent, *args, **kwargs):
         self.mainwindow=False
         Childof.__init__(self,parent)
-        tkinter.Toplevel.__init__(self)
+        tkinter.Toplevel.__init__(self, *args)
+        if kwargs.pop("withdrawn",False):
+            # log.info("Not immediately showing window")
+            self.withdraw()
+            # log.info(f"State: {self.state()}")
         # log.info("Toplevel._root(): {} ({})".format(self._root(),type(self._root())))
         # log.info("Toplevel.parent._root(): {} ({})".format(self.parent._root(),type(self.parent._root())))
         Exitable.__init__(self)
@@ -1401,7 +1405,8 @@ class Window(Toplevel):
         # self.parent=parent
         # self.theme=parent.theme
         """Things requiring tkinter.Window below here"""
-        Toplevel.__init__(self, parent) #no title attr for Toplevel
+        Toplevel.__init__(self, parent, *args, **kwargs) #no title attr for Toplevel
+        # log.info(f"Window {self} parent is {self.parent}")
         # self.config(className="azt")
         # self['background']=self.theme.background
         # self['background']=self.theme.background
