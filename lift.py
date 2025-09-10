@@ -997,14 +997,17 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         xmlfns.indent(self.nodes)
         tree=ET.ElementTree(self.nodes)
         try:
-            tree.write(filename+'.part', encoding="UTF-8")
+            tmp=filename+'.part'
+            if file.exists(tmp):
+                file.remove(tmp)
+            tree.write(tmp, encoding="UTF-8")
             write=True
-        except:
-            log.error("There was a problem writing to partial file: {}"
-                    "".format(filename+'.part'))
+        except Exception as e:
+            log.error("There was a problem writing to partial file: "
+                        f"{tmp} ({e})")
         if write:
             try:
-                os.replace(filename+'.part',filename)
+                os.replace(tmp,filename)
             except:
                 log.error("There was a problem writing {} file to {} "
                 "directory. This is what's here: {}".format(
