@@ -475,6 +475,9 @@ class SoundSettingsWindow(ui.Window):
         self.soundsettings=self.program['soundsettings']
         self.soundcheckrefresh()
 class Task():
+        if not kwargs.get("withdrawn"):
+            task.withdraw()
+            self.deiconify()
     def quittask(self):
         print("Not actually quitting task")
     def storesoundsettings(self):
