@@ -1,7 +1,18 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 import langcodes
-import rx
+import ethnologue_language_relationships as iso
+import ethnologue_macrolanguages_members
+import rx,os
+import json
+import urllib.request #as request
+import file
+import copy
+from file import localfile
+import logsetup
+log=logsetup.getlog(__name__)
+logsetup.setlevel('DEBUG',log) #for this file
+log.info(f"Importing {__name__}")
 # import language_data #optional, for stats and names
 
 """This package defines one class, named Language, which contains the results of parsing a language tag. Language objects have the following fields, any of which may be unspecified:
