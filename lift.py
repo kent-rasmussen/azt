@@ -2362,14 +2362,14 @@ class FieldParent(object):
     def getfields(self):
         """This converts XML field nodes to Field objects, and indexes them
         under this parent."""
-        # log.info("field types: {}".format([i.get('type')
-        #                                     for i in self.findall('field')]))
+        # log.info(f"FieldParent {self.tag} field types: {[i.get('type')
+        #                                     for i in self.findall('field')]}")
         self.fields={
                     node.get('type'):Field(self,node)
                         for node in self.findall('field')
                         if not isinstance(node,Node) #I.e., already brought in
                     }
-        # log.info("getfields fields: {}".format(self.fields))
+        # log.info(f"FieldParent {self.tag} getfields {self.fields=}")
         for type in self.fields:
             self.checkforsecondfieldbytype(type)
     def newfield(self,type,lang=None,value=None):
