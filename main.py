@@ -7200,14 +7200,14 @@ class Parse(Segments):
         segments=ui.StringVar()
         segments.set(self.parser.entry.lc.textvaluebylang(self.analang))
         e=ui.EntryField(w.frame,text=segments,
-                        row=1,column=0)
+                        row=2,column=0)
         b=ui.Button(w.frame,text=_("OK"),cmd=do,
-                        row=2,column=0, sticky='e')
+                        row=3,column=0, sticky='e')
         ui.Button(w.frame,text=_("Not a {}").format(ps),cmd=next,
-                        row=2,column=1, sticky='e')
+                        row=3,column=1, sticky='e')
         ui.Label(w.frame,text=self.currentformnotice(),
                     font='small',justify='l',
-                    row=3,column=0,columnspan=2)
+                    row=4,column=0,columnspan=2)
         e.focus_set()
         e.bind('<Return>',do)
         w.wait_window(b)
