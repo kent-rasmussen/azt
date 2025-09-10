@@ -15,7 +15,6 @@ try: #translation
 except:
     def _(x):
         return x
-import xmletfns
 import lift
 import rx
 from utilities import *
