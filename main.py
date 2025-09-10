@@ -7528,16 +7528,7 @@ class WordCollectnParse(Parse,WordCollection,TaskDressing):
         Parse.__init__(self,parent)
         WordCollection.__init__(self,parent)
         program['taskchooser'].withdraw()
-        # if not program['settings'].secondformfieldsOK():
-        #     ErrorNotice(_("To parse, you must first define which fields "
-        #                     "should contain those forms"),
-        #                     wait=True)
-        #     self.shutdowntask()
-        #     return
-        #This should either be adapted to use parse or not by keyword, or have
-        # another method for addnParse
-        # if me:
-        #     self.downloadallCAWLimages()
+        fn=self.getwords()#?
 class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,TaskDressing):
     """This task collects words, from the SIL CAWL, or one by one.
     First in citation form, then pl or imperativewith Parse"""
