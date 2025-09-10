@@ -15,6 +15,35 @@ private: a code starting with x- that has no defined meaning.
 
 maybe pull ldml from https://ldml.api.sil.org/langtags.json, then add PUA
 """
+tag_is_valid=langcodes.tag_is_valid
+tone_code='-x-tone'
+phonetic_code='-x-ipa'
+audio_code='-Zxxx-x-audio'
+machine_transcription_code='_MT'
+try:
+    import whisper_codes_names
+except (ModuleNotFoundError,NameError):
+    """dict of lowercase language name keys valued to a language code"""
+    from transformers.models.whisper.tokenization_whisper import TO_LANGUAGE_CODE
+    by_iso={langcodes.Language.get(code).to_alpha3(variant=variant):(code,name)
+                                    for name,code in TO_LANGUAGE_CODE.items()
+                                for variant in ['B','T']}
+    by_whisper_code={code:(langcodes.Language.get(code).to_alpha3(),name)
+                                    for name,code in TO_LANGUAGE_CODE.items()}
+    by_name={name:(langcodes.Language.get(code).to_alpha3(),code)
+                                    for name,code in TO_LANGUAGE_CODE.items()}
+    with open(localfile('whisper_codes_names.py'),'w') as f:
+        f.write(f'by_name={str(by_name)}\n')
+        f.write(f'by_iso={str(by_iso)}\n')
+        f.write(f'by_whisper_code={str(by_whisper_code)}')
+    import whisper_codes_names
+macrolanguage_members=ethnologue_macrolanguages_members.dict
+def dict_by(key):
+    return {p:[j for j in iso.list if key in j if p == j[key]]
+                for p in set([i[key] for i in iso.list if key in i])}
+def whisper_codes_alpha3():
+    return [langcodes.Language.get(i).to_alpha3() for i in whisper_languages().values()]
+
 def validate_private(x, delim='-', prefix='x'):
     """validate 'An optional private-use subtag, composed of the letter x
     and a hyphen followed by subtags of one to eight characters each,
@@ -40,10 +69,34 @@ def validate_private(x, delim='-', prefix='x'):
         print(f'{x} is final string!')
         return x
     print(f'{x} is not a string!')
-def langcode(name):
+def langcode(x,glosslang=None): #This must return str!
+    # print("working on",x,type(x))
+    if langcodes.tag_is_valid(x):
+        return x
+    else: #redundant, but allows subclassing langcodes.Language
+        try: #find gives exception on not found
+            lang_obj=langcodes.Language.find(x,language=glosslang)
+            return str(lang_obj)
+        except LookupError as e:
+            lang_obj=langcodes.Language.find(x)
+            return str(lang_obj)
+            print(f"language {x} not found ({e})")
     """return code from language name"""
+def code_to_iso(x):
+    return langcodes.Language.get(x).to_alpha3()
 def territorycode(name):
     """return code from territory"""
+def whisper_languages(lang=None):
+    """This returns a dict of lowercase keys valued to a language code"""
+    from transformers.models.whisper.tokenization_whisper import TO_LANGUAGE_CODE
+    if lang:
+        print(f"Found {len(TO_LANGUAGE_CODE)} languages supported by whisper. ({lang}={lang.lower() in TO_LANGUAGE_CODE})")
+    return TO_LANGUAGE_CODE
+def whisper_language_names():
+    return sorted(whisper_languages().keys())
+def whisper_language_codes():
+    return sorted(whisper_languages().values())
+
 class SisterLanguages(object):
     """docstring for SisterLanguages."""
     def load_fleurs():
