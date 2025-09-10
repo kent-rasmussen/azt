@@ -3,9 +3,12 @@
 from xml.etree import ElementTree as ET
 import logsetup
 log=logsetup.getlog(__name__)
+log.info(f"Importing {__name__}")
 import file
 import urllib
 import datetime
+Element=ET.Element
+parse=ET.parse
 def readxmltext(text):
     return ET.fromstring(text)
 def readxml(filename):
