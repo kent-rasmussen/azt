@@ -69,7 +69,13 @@ class SoundSettings(object):
         for setting in ['audio_card_in','sample_format','fs','audio_card_out']:
             log.info("{}: {}".format(setting,getattr(self,setting)))
     def default_in(self):
-        self.audio_card_in=min(self.cards['in'])
+        self.audio_card_in=[k for k,v in self.cards['dict'].items()
+                                    if k in self.cards['in']
+                                    if 'default' in v]
+        if self.audio_card_in:
+            self.audio_card_in=self.audio_card_in[0]
+        else:
+            self.audio_card_in=min(self.cards['in'])
     def default_out(self):
         self.audio_card_out=[k for k,v in self.cards['dict'].items()
                                     if k in self.cards['out']
