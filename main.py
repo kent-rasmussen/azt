@@ -9261,7 +9261,9 @@ class Sound(object):
     def makesoundsettings(self):
         if not hasattr(program['settings'],'soundsettings'):
             self.pyaudiocheck() #in case self.pyaudio isn't there yet
-            program['settings'].soundsettings=sound.SoundSettings(self.pyaudio)
+            program['settings'].soundsettings=sound.SoundSettings(self.pyaudio,
+                        analang_obj=program['languages'].get_obj(self.analang)
+                                                                )
     def loadsoundsettings(self):
         self.makesoundsettings()
         program['settings'].loadsettingsfile(setting='soundsettings')
