@@ -6575,17 +6575,21 @@ class WordCollection(Segments):
                                     row=1, column=0, columnspan=3, sticky='ew')
         back=ui.Button(self.wordframe,text=_("Back"),cmd=self.backword,
                         row=4, column=0, sticky='w',anchor='w')
+        self.instructions2=ui.Label(self.wordframe,text='',font='small',
+                        row=4, column=1, sticky='ew',anchor='c')
         next=ui.Button(self.wordframe,text=_("Next"),cmd=self.nextword,
                         row=4, column=2, sticky='e',anchor='e')
         self.var=ui.StringVar()
         self.lxenter=ui.EntryField(self.wordframe,text=self.var,
                                 font='readbig',
-                                row=3,column=0,columnspan=3,
+                                row=5,column=0,columnspan=3,
                                 sticky='ew')
         if isinstance(self.task,Parse):
             self.parsebutton=ui.Label(self.wordframe,
                                         text=self.cparsetext,
-                                        row=4, column=1, sticky='w',anchor='w')
+                                        row=6, column=1,
+                                        sticky='w',
+                                        anchor='w')
         next.bind_all('<Up>',lambda event: self.backword(nostore=True))
         next.bind_all('<Prior>',lambda event: self.backword(nostore=True))
         next.bind_all('<Down>',lambda event: self.nextword(nostore=True))
@@ -6604,6 +6608,8 @@ class WordCollection(Segments):
             #     self.wordframe.pic.bind_all('<Return>',
             #                                         self.selectimageormoveon)
             #     log.info("Return now selects image, or moves on")
+    def set_up_transcription(self):
+        pass
     def getword(self):
         program['taskchooser'].withdraw()# not sure why necessary
         # log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
@@ -6663,6 +6669,7 @@ class WordCollection(Segments):
         if not default:
             default=''
         self.var.set(default)
+        self.set_up_transcription() #for tasks with it
         if isinstance(self.task,Parse):
             log.info(self.currentformsforuser(entry=self.entry))
             self.updateparseUI()
