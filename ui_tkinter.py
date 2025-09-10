@@ -1344,7 +1344,27 @@ class CheckButton(Gridded,Text,tkinter.Checkbutton): #was Childof
         self.dogrid()
 class Combobox(Gridded,Text,UI,tkinter.ttk.Combobox):
     """docstring for Combobox."""
+    def _handle_popdown_font(self):
+        """ Handle popdown font
+        Note: https://github.com/nomad-software/tcltk/blob/master/dist/library/ttk/combobox.tcl#L270
+        """
+        #   grab (create a new one or get existing) popdown
+        popdown = self.tk.eval('ttk::combobox::PopdownWindow %s' % self)
+        #   configure popdown font
+        self.tk.call('%s.f.l' % popdown, 'configure', '-font', self['font'])
+    def configure(self, cnf=None, **kw):
+        """Configure resources of a widget. Overridden!
 
+        The values for resources are specified as keyword
+        arguments. To get an overview about
+        the allowed keyword arguments call the method keys.
+        """
+
+        #   default configure behavior
+        self._configure('configure', cnf, kw)
+        #   if font was configured - configure font for popdown as well
+        if 'font' in kw or (cnf and 'font' in cnf):
+            self._handle_popdown_font()
     def __init__(self, parent, *args, **kwargs):
         optionlist=kwargs.pop('optionlist')
         command=kwargs.pop('command')
@@ -1363,6 +1383,7 @@ class Combobox(Gridded,Text,UI,tkinter.ttk.Combobox):
                                 textvariable=self.textvariable,
                                 values=optionlist,
                                 **kwargs)
+        self._handle_popdown_font()
         self.bind('<<ComboboxSelected>>', command)
         UI.__init__(self)
         self.dogrid()
