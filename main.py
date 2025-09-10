@@ -9268,6 +9268,11 @@ class Sound(object):
         self.makesoundsettings()
         program['settings'].loadsettingsfile(setting='soundsettings')
         program['soundsettings']=program['settings'].soundsettings
+        if program['hostname'] == 'karlap' and (
+                        'cache_dir' not in program['soundsettings'].asr_kwargs
+                        ):
+            program['soundsettings'].asr_kwargs[
+                                            'cache_dir']='/media/kentr/hfcache'
     def storesoundsettings(self):
         program['settings'].storesettingsfile(setting='soundsettings')
     def quittask(self):
@@ -9278,17 +9283,17 @@ class Sound(object):
         if not hasattr(program['settings'],'soundsettings'):
             self.loadsoundsettings()
     def missingsoundattr(self):
-        log.info(dir(self.soundsettings))
-        ss=self.soundsettings
+        # log.info(dir(program['settings'].soundsettings))
+        ss=program['settings'].soundsettings
         for s in ['fs', 'sample_format',
                     'audio_card_in',
                     'audio_card_out']:
-            if hasattr(self.soundsettings,s):
-                if s+'s' in ss.hypothetical and (getattr(self.soundsettings,s)
+            if hasattr(ss,s):
+                if s+'s' in ss.hypothetical and (getattr(ss,s)
                                                 not in ss.hypothetical[s+'s']):
                     log.info("Sound setting {} invalid; asking again".format(s))
                     return True
-                elif 'audio_card' in s and (getattr(self.soundsettings,s)
+                elif 'audio_card' in s and (getattr(ss,s)
                                                     not in ss.cards['dict']):
                     log.info("Sound setting {} invalid; asking again".format(s))
                     return True
@@ -9296,18 +9301,6 @@ class Sound(object):
                 log.info("Missing sound setting {}; asking again".format(s))
                 return True
         program['settings'].soundsettingsok=True
-    def mikecheck(self):
-        """This starts and stops the UI"""
-        #move this to Record, after confirming that can be safely done.
-        self.pyaudiocheck()
-        #will need to add sound_ui in here, once generalized:
-        self.soundsettingswindow=sound_ui.SoundSettingsWindow(program, self)
-        self.soundsettingswindow.protocol("WM_DELETE_WINDOW", self.quittask)
-        if not self.soundsettingswindow.exitFlag.istrue():
-            self.soundsettingswindow.wait_window(self.soundsettingswindow)
-        self.donewpyaudio()
-        if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
-            self.soundsettingswindow.destroy()
     def soundcheck(self):
         #just make sure settings are there
         self.soundsettingscheck()
@@ -9324,9 +9317,15 @@ class Sound(object):
         """sets self.audiofileisthere and maybe self.audiofileURL"""
         return node.hassoundfile(program['params'].audiolang(),
                                 self.audiodir,recheck)
+    def _configure_sound(self,event=None):
+        sound_ui.SoundSettingsWindow(self)
+    def setcontext(self,context=None):
+        TaskDressing.setcontext(self)
+        self.context.menuitem(_("Sound settings"),self._configure_sound)
     def __init__(self):
         self.audiodir=program['settings'].audiodir
         self.audiolang=program['params'].audiolang()
+        self.program=program #make available to sound_ui
         self.soundcheck()
 class Record(Sound): #TaskDressing
     """This holds all the Sound methods specific for Recording."""
