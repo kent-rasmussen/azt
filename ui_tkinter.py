@@ -1326,17 +1326,24 @@ class CheckButton(Gridded,Text,tkinter.Checkbutton): #was Childof
         if 'font' not in kwargs:
             kwargs['font']='read' #Text.__init__ will convert name to font
         #before lesstextkwargs removes this:
-        self.unselectedimage=kwargs.get('image',self.theme.photo['uncheckedbox'])
-        Text.__init__(self,parent,**kwargs)
+        kwargs['indicatoron']=kwargs.get('indicatoron',False)
+        if not kwargs.get('no_default_indicator_images',False):
+            img_names=['uncheckedbox','checkedbox'] #don't do both imgs and ind
+            if not kwargs.pop('large_images',False):
+                img_names=[f'{i}_sm' for i in img_names]
+            unselectedimage=kwargs.get('image',self.theme.photo[img_names[0]])
+            kwargs['selectimage']=kwargs.get('selectimage',
+                                                self.theme.photo[img_names[1]])
+        #If we render text as image, that will mess with the use of image here
+        Text.__init__(self,parent,**{**kwargs, 'norender': True})
         kwargs=self.lesstextkwargs(**kwargs)
+        if not kwargs.pop('no_default_indicator_images',False):
+            kwargs['image']=unselectedimage
         kwargs['compound']=kwargs.get('compound','left')
         kwargs['anchor']=kwargs.get('anchor','w')
-        kwargs['indicatoron']=kwargs.get('indicatoron',False)
-        kwargs['selectimage']=kwargs.get('selectimage',
-                                            self.theme.photo['checkedbox'])
         tkinter.Checkbutton.__init__(self,
                                 parent,
-                                image=self.unselectedimage,
+                                text=self.text,
                                 font=self.font,
                                 **kwargs
                                 )
