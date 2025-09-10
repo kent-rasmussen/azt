@@ -2330,7 +2330,7 @@ class Field(FormParent):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='field'
         super(Field, self).__init__(parent, node, **kwargs)
-        self.ftype=self.get('type')
+        self.ftype=self.get('type',kwargs.get('ftype')) #make a field with kwargs
         # log.info("Made field with type {}, texts {}".format(self.ftype,
         #                                                 self.textvaluedict()))
 class Definition(FormParent):
