@@ -102,7 +102,7 @@ class SoundSettings(object):
             return 1
         else:
             self.audio_card_in=ins[insi+1]
-            log.debug("next_card_in {} (of {})".format(self.audio_card_in,ins))
+            # log.debug("next_card_in {} (of {})".format(self.audio_card_in,ins))
             self.default_fs()
             self.default_sf()
     def next_card_out(self):
@@ -112,11 +112,11 @@ class SoundSettings(object):
             return 1
         else:
             self.audio_card_out=outs[outsi+1]
-            log.debug("next_card_out {} (of {})".format(self.audio_card_out,outs))
+            # log.debug("next_card_out {} (of {})".format(self.audio_card_out,outs))
             # self.default_fs()
             # self.default_sf()
     def next_fs(self):
-        log.debug("next_fs")
+        # log.debug("next_fs")
         exit=False
         fss=sorted(self.cards['in'][self.audio_card_in].keys(),reverse=True)
         fssi=fss.index(self.fs)
@@ -128,7 +128,7 @@ class SoundSettings(object):
             self.fs=fss[fssi+1]
         return exit
     def next_sf(self):
-        log.debug("next_sf")
+        # log.debug("next_sf")
         exit=False
         sfs=sorted(self.cards['in'][self.audio_card_in][self.fs],reverse=True)
         sfsi=sfs.index(self.sample_format)
@@ -149,16 +149,16 @@ class SoundSettings(object):
             devinfo=self.pyaudio.get_device_info_by_host_api_device_index(0, i)
             d={'code':i,'name':devinfo['name']}
             if (devinfo.get('maxInputChannels')) > 0: #microphone
-                log.info("Input Device id {} - {} ({}/{}); channels in: {}; "
-                        "out: {}".format(i,d['name'], devinfo['index'],
-                        numdevices-1, devinfo['maxInputChannels'],
-                        devinfo['maxOutputChannels']))
+                # log.info("Input Device id {} - {} ({}/{}); channels in: {}; "
+                #         "out: {}".format(i,d['name'], devinfo['index'],
+                #         numdevices-1, devinfo['maxInputChannels'],
+                #         devinfo['maxOutputChannels']))
                 self.cards['in'][i]={}
             if (devinfo.get('maxOutputChannels')) > 0: #speaker
-                log.info("Output Device id {} - {} ({}/{}); channels in: {}; "
-                        "out: {}".format(i,d['name'], devinfo['index'],
-                        numdevices-1, devinfo['maxInputChannels'],
-                        devinfo['maxOutputChannels']))
+                # log.info("Output Device id {} - {} ({}/{}); channels in: {}; "
+                #         "out: {}".format(i,d['name'], devinfo['index'],
+                #         numdevices-1, devinfo['maxInputChannels'],
+                #         devinfo['maxOutputChannels']))
                 self.cards['out'][i]={}
             self.cards['dict'][i]=devinfo['name']
         for card in self.cards['in'].copy():
@@ -174,10 +174,11 @@ class SoundSettings(object):
                                                             input_format=sf)
                         self.cards['in'][card][fs].append(sf)
                     except ValueError as e:
-                        log.info("Config not supported; no worries: rate={}; "
-                            "output_device={}; "
-                            "output_channels=1, "
-                            "output_format={} ({})".format(fs,card,sf,e))
+                        pass
+                        # log.info("Config not supported; no worries: rate={}; "
+                        #     "output_device={}; "
+                        #     "output_channels=1, "
+                        #     "output_format={} ({})".format(fs,card,sf,e))
                 if self.cards['in'][card][fs] == []:
                     del self.cards['in'][card][fs]
             if self.cards['in'][card] == {}:
@@ -195,10 +196,11 @@ class SoundSettings(object):
                                                             output_format=sf)
                         self.cards['out'][card][fs].append(sf)
                     except ValueError as e:
-                        log.info("Config not supported; no worries: rate={}; "
-                            "output_device={}; "
-                            "output_channels=1, "
-                            "output_format={} ({})".format(fs,card,sf,e))
+                        pass
+                        # log.info("Config not supported; no worries: rate={}; "
+                        #     "output_device={}; "
+                        #     "output_channels=1, "
+                        #     "output_format={} ({})".format(fs,card,sf,e))
                 if self.cards['out'][card][fs] == []:
                     del self.cards['out'][card][fs]
             if self.cards['out'][card] == {}:
@@ -265,11 +267,11 @@ class SoundSettings(object):
             if 'Device unavailable' in e.args[0]:
                 self.next_card_out()
                 self.check()
-            log.info("Config not supported; no worries: rate={}; "
-                "output_device={}; "
-                "output_channels=1, "
-                "output_format={} ({})".format(self.fs,self.audio_card_out,
-                                                self.sample_format,e))
+            # log.info("Config not supported; no worries: rate={}; "
+            #     "output_device={}; "
+            #     "output_channels=1, "
+            #     "output_format={} ({})".format(self.fs,self.audio_card_out,
+            #                                     self.sample_format,e))
         # log.info(_("Testing microphone settings:"))
         try:
             ifs=self.pyaudio.is_format_supported(rate=self.fs,
@@ -285,11 +287,11 @@ class SoundSettings(object):
                 self.next_sf()
                 # self.next_fs()
                 self.check()
-                log.info("Config not supported; no worries: rate={}; "
-                "output_device={}; "
-                "output_channels=1, "
-                "output_format={} ({})".format(self.fs,self.audio_card_in,
-                                                self.sample_format,e))
+                # log.info("Config not supported; no worries: rate={}; "
+                # "output_device={}; "
+                # "output_channels=1, "
+                # "output_format={} ({})".format(self.fs,self.audio_card_in,
+                #                                 self.sample_format,e))
     def initial_ASR_kwargs(self,language_object):
         log.info("setting initial_ASR_kwargs")
         try:
