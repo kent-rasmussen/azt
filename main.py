@@ -16369,6 +16369,7 @@ if __name__ == '__main__':
                                         program['testtask'])
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload:
+    if exceptiononload and not me:
         pythonmodules()
         # sysrestart()
         mainproblem()
