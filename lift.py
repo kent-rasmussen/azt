@@ -1015,44 +1015,50 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                     os.listdir(pathlib.Path(filename).parent)))
     def getanalangs(self):
         """These are ordered by frequency in the database"""
-        self.audiolangs=[]
-        self.analangs=[]
-        lxl=[j for k in [i.lx.langs()
+        langs=[j for k in [i.lx.langs()|i.lc.langs()|(
+                                        i.ph.langs() if hasattr(i,'ph') else set())
                         for i in self.entries]
                     for j in k
                     ]
-        lcl=[j for k in [i.lc.langs()
-                        for i in self.entries]
-                    for j in k
-                    ]
-        pronl=[j for k in [i.ph.langs()
-                        for i in self.entries
-                        if hasattr(i,'ph')]
-                    for j in k
-                    ]
-        langsbycount=collections.Counter(lxl+lcl+pronl)
-        self.analangs=[i[0] for i in langsbycount.most_common()
-                        if i[0] != 'x-unk'] #I assume will never analyze this
-        log.info(_("Possible analysis language codes found: {}".format(
-                                                                self.analangs)))
+        codes={'audiolangs':langtags.audio_code,
+            'phoneticlangs':langtags.phonetic_code,
+            'tonelangs':langtags.tone_code,
+            'machine':langtags.machine_transcription_code
+        }
+        l_ordered=[i[0] for i in collections.Counter(langs).most_common()] #tups
+        for l in ['audiolangs','tonelangs','phoneticlangs']:
+            setattr(self,l,[i for i in l_ordered if codes[l] in i
+                                                and codes['machine'] not in i])
+            l_ordered=[i for i in l_ordered if i not in getattr(self,l)]
+        self.analangs=[i for i in l_ordered if langtags.tag_is_valid(i)
+                                            and codes['machine'] not in i]
+        l_ordered=[i for i in l_ordered if i not in self.analangs]
+        if not self.analangs:
+            tryname=file.getfilenamebase(self.filename)
+            if langtags.tag_is_valid(tryname):
+                log.info(_("No language data yet: extrapolating analysis "
+                    f"language from file name ({tryname})."))
+                self.analangs=[tryname]
+            log.error("I can't find a plausible analang! "
+                        f"(from ‘{l_ordered}’)")
+        # log.info(_(f"Possible analysis language codes found: {self.analangs}"))
         for glang in set(['fr','en']) & set(self.analangs):
-            c=langsbycount[glang]
-            if 0< c:
-                """For Saxwe, and others who have fr or en encoding errors"""
-                if c <= 10:
-                    log.info("Only {} examples of LWC lang {} found; is this "
-                            "correct?".format(c,glang))
-        for lang in self.analangs:
-            if 'audio' in lang:
-                log.debug(_("Audio language {} found.".format(lang)))
-                self.audiolangs+=[lang]
-                self.analangs.remove(lang)
-        if self.audiolangs == []:
-            log.debug(_('No audio languages found in Database; creating one '
-            'for each analysis language.'))
-            self.audiolangs=[audiolangname(i) for i in self.analangs]
-        log.info('Audio languages: {}'.format(self.audiolangs))
-        log.info('Analysis languages: {}'.format(self.analangs))
+            log.info(f"Examples of LWC lang {glang} found; is this correct?")
+        for l in ['audiolangs','tonelangs','phoneticlangs']:
+            if not getattr(self,l):
+                log.debug(_(f'No {l} found in Database; creating one '
+                            'for each analysis language.'))
+                setattr(self,l,[i+codes[l] for i in getattr(self,'analangs')])
+        for l in ['analang','audiolang','tonelang','phoneticlang']:
+            if len(getattr(self,l+'s')) == 1:
+                setattr(self,l,getattr(self,l+'s')[0])
+                log.info(f'One {l} found: {getattr(self,l)}')
+            else:
+                log.info(f'Multiple {l}s: {getattr(self,l+'s')}')
+                setattr(self,l,None)#fix this later, but have attr
+        if l_ordered:
+            log.error(_(f"Language codes {l_ordered} found in data, "
+                        "but not sure what to do with them"))
     def getglosslangs(self):
         """These are ordered by frequency in the database"""
         g=self.get('gloss').get('lang')
