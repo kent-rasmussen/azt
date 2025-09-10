@@ -2366,11 +2366,12 @@ def testapp(program):
     log.info(w.bindtags())
     log.info(w.wm_state())
     log.info(w.state())
-    j=IntVar(value=1)
+    i=IntVar(value=1)
     j=IntVar(value=False)
     k=Variable(value='False')
-    for i in [j,k]:
-        print(isinstance(i,tkinter.Variable),i.get(),type(i.get()))
+    l=StringVar(value='False')
+    for i in [i,j,k,l]:
+        print(isinstance(i,tkinter.Variable),type(i),i.get(),type(i.get()))
     r.mainloop()
 if __name__ == '__main__':
     program={'name':'tkinter UI module',
