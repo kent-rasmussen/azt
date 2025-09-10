@@ -2063,9 +2063,17 @@ class Form(Node):
 class FormParent(Node):
     def getanalang(self):
         try:
-            return min(list(self.parent.lc.langs()),key=len)
+            return min([l
+                        for lang in self.parent.fields.values()
+                        for l in lang.langs()
+                        ]
+                        ,key=len)
         except:
-            return min(list(self.parent.parent.lc.langs()),key=len)
+            return min([l
+                        for lang in self.parent.parent.fields.values()
+                        for l in lang.langs()
+                        ]
+                        ,key=len)
     def getlang(self,lang=None): #,shortest=False
         """The number of languages in FormParent forms doesn't really tell what
         makes a good default language choice. Some fields typically only have
