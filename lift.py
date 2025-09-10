@@ -4289,7 +4289,8 @@ if __name__ == '__main__':
     # loglevel='Debug'
     # filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bse/SIL CAWL Wushi.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/blm-x-rundu/blm-x-rundu.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/cky/Mushere Exported AZT file.lift"
     # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift_backupBeforeLx2LcConversion"
@@ -4305,7 +4306,7 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/Demo_gnd/gnd.lift"
     # filename="/home/kentr/bin/raspy/azt/SILCAWL/SILCAWL.lift"
-    lift=Lift(filename)
+    lift=LiftXML(filename)
     print(time.time())
     def writetofile(name):
         f = open(str(name)+'.txt', 'w', encoding='utf-8') # to append, "a"
@@ -4340,7 +4341,7 @@ if __name__ == '__main__':
     for example in sense.examples:
         log.info("example fields: {}".format(sense.examples[example].fields))
     prettyprint(sense.examples['isolation'])
-    # for i in range(10):
+    print(sense.db.audiolang)
     exit()
     print(sense.examples.keys())
     # prettyprint(sense.examples[key])
