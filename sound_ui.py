@@ -477,6 +477,302 @@ class SoundSettingsWindow(ui.Window):
         if not kwargs.get("withdrawn"):
             task.withdraw()
             self.deiconify()
+class ASRModelSelectionWindow(ui.Window):
+    def language_entry(self):
+        self.language_frame=ui.Frame(self.languages_frame,
+                                    row=0,column=0,
+                                    sticky='new')
+        self.sister_frame=ui.Frame(self.languages_frame,
+                                    row=0,column=1,
+                                    sticky='ew')
+        ui.Label(self.language_frame,text="Language:",ipadx=10,row=0,column=0)
+        self.lang=ui.StringVar()
+        ef=ui.EntryField(self.language_frame,textvariable=self.lang,
+                        row=1, sticky='ew')
+        self.langs_possible_var=ui.StringVar()
+        ui.Label(self.language_frame,textvariable=self.langs_possible_var,
+                font='small', ipadx=10, row=3)
+        self.bind('<Return>', self.language_selection)
+        self.bind('<Tab>', self.language_selection)
+        self.bind('<Button-1>', self.language_selection)
+        self.lang.trace_add('write', self.language_selection)
+    def language_selection(self,*args):
+        if hasattr(self,'lang_cur') and self.lang_cur == self.lang.get():
+            return
+        try:
+            self.language_info.destroy()
+        except:
+            pass
+        try:
+            self.lang_cur=self.lang.get()
+            log.info(f"Getting language info for input {self.lang_cur}")
+            display=self.languages.get_obj(self.lang_cur).full_display()
+            possibles=self.languages.get_codes(self.lang_cur)
+            displays=[self.languages.get_obj(j).full_display()
+                                                    for j in possibles]
+            log.info(f"Looking for languages related to {display}")
+        except Exception as e:
+            log.error(f"Language display error: {e}")
+            self.lang_display_var.set(f"Error: ‘{self.lang_cur}’ not found")
+            self.sister_options=["Nothing"]
+            self.update_n_sisters()
+            self.sisters_listbox.delete(0, "end")
+            return
+        self.lang_display_var.set(display)
+        self.langs_possible_var.set('\n'.join(displays))
+        self.get_sister_options()
+    def get_sister_options(self,*args):
+        self.language=self.languages.get_obj(self.lang_cur)
+        self.sister_options=[self.alllangs]
+        self.sister_options.extend(
+                self.language.supported_ancestor_objs_prioritized()
+                                )
+        self.update_n_sisters()
+        self.sisters_listbox.delete(0, "end")
+        for i in self.sister_options:
+            self.sisters_listbox.insert("end", i if isinstance(i,str)
+                                                else i.full_display())
+        max_value_len=max([len(self.sisters_listbox.get(i)) for i in range(len(self.sisters_listbox.get(0,'end')))])
+        self.sisters_listbox.configure(width=min(max_value_len,60))
+        self.save_sister() #since it is showing, anyway.
+    def save_sister(self,event=None):
+        log.info("Saving sister language now")
+        if (0 in self.sisters_listbox.curselection() and
+                len(self.sisters_listbox.curselection())>1):
+            #Force user to pick all(0) or some, not both
+            if 0 in self.last_selection_indexes:
+                self.sisters_listbox.select_clear(0)
+            else:
+                self.sisters_listbox.select_clear(1,'end')
+        displays=[self.sisters_listbox.get(i) for i #indexed displays
+                     in self.sisters_listbox.curselection()]
+        lobjs=[self.sister_options[i] for i #indexed objs
+                     in self.sisters_listbox.curselection() if i != 0]
+        codes=[i.iso() for i in lobjs]
+        displays_from_codes=[i.full_display() for i in lobjs]
+        print(displays,[i.full_display() for i in self.sister_options
+                                            if i != self.alllangs])
+        if codes:
+            log.info(f"Selected {codes}, {displays}")
+        else:
+            codes=[i.iso() for i in self.sister_options if i != self.alllangs]
+            log.info(f"No language selected; using all: {codes}")
+        self.kwarg_vars['sister_languages'].set(codes)
+        self.save_kwarg_to_soundsettings('sister_languages',codes)
+        self.last_selection_indexes=self.sisters_listbox.curselection()
+    def update_n_sisters(self):
+        n=len(self.sister_options)-1
+        if n:
+            self.n_sisters['text']=f"Related Languages with ASR support ({n}):"
+            self.sister_frame.grid()
+        else:
+            self.sister_frame.grid_remove()
+    def sister_selection(self):
+        self.n_sisters=ui.Label(self.sister_frame,text='',
+                                    ipadx=10,row=0,column=0)
+        self.sisters_listbox=ui.ListBox(self.sister_frame,
+                command=self.save_sister,
+                font='default',
+                selectmode='multiple',
+                optionlist=[], #If analang later, populate then
+                row=1,column=0,
+                sticky='ew'
+                )
+    def make_kwargVars(self):
+        log.info(f"making kwargVars for {self.soundsettings.asr_kwargs}")
+        for k in self.soundsettings.asr_kwargs:
+            # log.info(f"Looking at {k}")
+            if k not in self.kwarg_vars: #if it is there, leave it alone!
+                if isinstance(self.soundsettings.asr_kwargs[k],bool):
+                    self.kwarg_vars[k]=ui.BooleanVar()
+                elif isinstance(self.soundsettings.asr_kwargs[k],str):
+                    self.kwarg_vars[k]=ui.StringVar()
+                else:
+                    self.kwarg_vars[k]=ui.Variable()
+                self.kwarg_vars[k].set(self.soundsettings.asr_kwargs[k])
+    def get_vars(self):
+        self.kwarg_vars={}
+        self.make_kwargVars()
+        self.lang_display_var=ui.StringVar()
+        self.asr_settings_w={}
+    def save_kwargs_to_soundsettings(self):
+        for k,v in self.kwarg_vars.items():
+            self.save_kwarg_to_soundsettings(k,v)
+    def save_kwarg_to_soundsettings(self,k,v):
+        if isinstance(v,ui.Variable):
+            value=v.get()
+        else:
+            value=v
+        # log.info(f"Starting Value: {value} ({type(value)})")
+        try:
+            assert self.soundsettings.asr_kwargs[k] == value
+        except (AssertionError,KeyError):
+            log.info(f"Changing {k} from {self.soundsettings.asr_kwargs[k]
+            if k in self.soundsettings.asr_kwargs else None} to "
+                    f"{value}")
+            self.soundsettings.asr_kwargs[k]=value
+        # This runs once before the ASR boots, when the above will suffice.
+        if k in ['sister_languages'] and hasattr(self.soundsettings,'asr'):
+            setattr(self.soundsettings.asr,k,value)
+    def report_settings_strings(self):
+        for k,v in self.kwarg_vars.items():
+            if k in ['sister_languages']:
+                row=self.strings_frame.grid_size()[1],
+                ui.Label(self.strings_frame, text=f"{k}:", row=row, column=0)
+                self.asr_settings_w[k]=ui.Label(self.strings_frame,
+                                                textvariable=v,
+                                                wraplength='50%',
+                                                anchor='w',
+                                                ipadx=10,
+                                                row=row,
+                                                borderwidth=1,
+                                                column=1
+                                                )
+    def report_settings_bool(self,columns):
+        self.boolean_frame_process=ui.Frame(self.boolean_frame,sticky='ew',
+                                                                pady=10,r=0,c=0)
+        self.boolean_frame_models=ui.Frame(self.boolean_frame,sticky='ew',
+                                                                pady=10,r=1,c=0)
+        self.boolean_frame_repos=ui.Frame(self.boolean_frame,sticky='ew',
+                                                                rowspan=2,
+                                                                pady=20,
+                                                                padx=20,
+                                                                r=0,c=1)
+        m_buttons=p_buttons=-1
+        for k,v in [(k,v) for k,v in self.kwarg_vars.items()
+                        if isinstance(v,ui.BooleanVar)]:
+            text=k
+            if k in self.soundsettings.asr.repo_modelnames:
+                if k in ["return_ipa"]:
+                    continue
+                parent=self.boolean_frame_models
+                m_buttons+=1
+                buttons=m_buttons
+                if (self.soundsettings.asr.repo_modelnames[k]
+                                    in self.soundsettings.asr_repos):
+                    count=self.soundsettings.asr_repos[
+                                    self.soundsettings.asr.repo_modelnames[k]]
+                    text=f"k ({count})"
+            else:
+                parent=self.boolean_frame_process
+                p_buttons+=1
+                buttons=p_buttons
+            self.asr_settings_w[k]=ui.CheckButton(parent,
+                                        text = k,
+                                        no_default_indicator_images=True,
+                                        variable = self.kwarg_vars[k],
+                                        onvalue = True, offvalue = False,
+                                        ipadx=10,
+                                        sticky='ew',
+                                        font='default',
+                                        row=buttons//columns,
+                                        column=buttons%columns
+                                        )
+        for frame in self.boolean_frame.winfo_children():
+            for c in range(columns):
+                frame.grid_columnconfigure(c, weight=1, uniform="uniwide")
+        repos=sorted(self.soundsettings.asr_repos.items(),key=lambda x:-x[1])
+        kwargs={'font':'small','sticky':'ew'}
+        for n,(k,v) in enumerate(repos):
+            ui.Label(self.boolean_frame_repos,text=k,r=n,**kwargs)
+            ui.Label(self.boolean_frame_repos,text=v,r=n,c=1,**kwargs)
+    def report_settings(self):
+        self.settings_title=ui.Label(self.reload_frame,
+                                    textvariable=self.lang_display_var,
+                                    row=0,
+                                    column=0,
+                                    ipadx=10,
+                                    anchor='w',
+                                    sticky='we'
+                                )
+        self.report_settings_strings()
+        self.report_settings_bool(columns=3)
+        self.reload=ui.Button(self.reload_frame, text=_("Reload Model"),
+                            command=self.reload_model,
+                            row=0,column=1,
+                            anchor='e',sticky='ew')
+    def settings_grid(self):
+        self.title=ui.Label(self,text=self.page_title,font='title',
+                                                    row=0,column=1)
+        self.option_frame=ui.Frame(self,row=1,column=1)
+        self.reload_frame=ui.Frame(self.option_frame,row=0,column=0,sticky='ew')
+        self.languages_frame=ui.Frame(self.option_frame,
+                                    row=1,column=0,
+                                    sticky='ew')
+        self.strings_frame=ui.Frame(self.option_frame,
+                                    row=2,column=0,
+                                    colspan=2,
+                                    ipady=20,
+                                    sticky='ew')
+        self.boolean_frame=ui.Frame(self.option_frame,
+                                    row=3,column=0,
+                                    columnspan=2,
+                                    ipady=10,
+                                    sticky='ew')
+        self.language_entry()
+        self.sister_selection()
+        self.report_settings()
+    def changed_kwargs(self):
+        return self.soundsettings.changed_kwargs()
+    def reload_model(self):
+        self.save_kwargs_to_soundsettings()
+        #Decide if we reload entirely, or just change adaptors
+        r=self.soundsettings.get_changed_kwargs()
+        if not r:
+            changed_kwargs=self.soundsettings.changed_kwargs
+            if not changed_kwargs['all']: #.asr exists; no changes since loaded
+                log.info(f"Didn't find any changed kwargs ({changed_kwargs})")
+                log.info(f"kwargs is ({self.soundsettings.asr_kwargs})")
+                return
+        # changed_kwargs doesn't exist if r...
+        # Only count models that will be loaded (not offloaded):
+        if r or [i for i in changed_kwargs['repos'].values() if i]:
+            self.wait(_("Reloading ASR model(s)")+'\n'+_(
+                        "(This may require a large download)"),
+                        thenshow=True)
+        elif changed_kwargs: #any other values
+            log.info("Changing settings (or dropping ASR models; not loading)")
+            log.info(f"changed_kwargs: {changed_kwargs['all']} "
+                        f"({bool(changed_kwargs['all'])})")
+        log.info(f"asr_kwargs: {self.soundsettings.asr_kwargs}")
+        self.soundsettings.load_ASR()
+        self.waitdone()
+    def modify(self):
+        self.soundsettings.asr_kwargs['sister_languages']=['zmg']
+        self.soundsettings.asr_kwargs['simplify_length']=False
+    def __init__(self,task,**kwargs):
+        window_title=_('Select ASR Settings')
+        self.page_title=_('Settings for Transcription Model')
+        log.info(f"Theme of task: {task.theme}")
+        ui.Window.__init__(self,
+                            task,
+                            exit=False,
+                            title=window_title,
+                            withdrawn=True
+                            )
+        self.program=task.program #needed to find praat
+        self.soundsettings=self.program['soundsettings']
+        if 'cache_dir' in self.soundsettings.asr_kwargs and not file.exists(self.soundsettings.asr_kwargs['cache_dir']):
+            log.error(f"Cache dir {self.soundsettings.asr_kwargs['cache_dir']} "
+                    "not found; exiting.")
+            exit()
+        self.languages=self.program.get('languages')
+        try:
+            self.analang=self.program.get('params').analang()
+        except:
+            self.analang=self.program.get('analang') #for testing
+        self.alllangs=_("All of the below")
+        self.get_vars()
+        self.reload_model()
+        self.make_kwargVars() #after ASR loaded, with full defaults
+        self.settings_grid()
+        if self.analang:
+            self.lang.set(self.analang)
+            self.get_sister_options() #Not on every change, but on boot
+        self.save_kwargs_to_soundsettings()
+        if not kwargs.get("withdrawn"):
+            task.withdraw()
+            self.deiconify()
 class Task(ui.Window):
     def wait(self,x):
         print(x)
