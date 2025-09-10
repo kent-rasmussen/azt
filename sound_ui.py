@@ -136,8 +136,6 @@ class RecordButtonFrame(ui.Frame):
         else:
             t=_("No framed value, nor testing; can't continue...")
             log.error(t)
-            ui.Label(self,text=t,borderwidth=1,font='default',
-                    relief='raised').grid(row=0,column=0)
         # Just do these each once, since their dependencies don't change
         self.recorder=sound.SoundFileRecorder(self._filenameURL,self.pa,
                                         self.soundsettings)
@@ -436,12 +434,6 @@ class SoundSettingsWindow(ui.Window):
         br=RecordButtonFrame(self.content,self,test=True)
         br.grid(row=row,column=0)
         row+=1
-        # l=_("You may need to change your microphone "
-        #     "\nand/or speaker sound card to get the "
-        #     "\nsampling and format you want.")
-        # ui.Label(self.soundsettingswindow.content,
-        #         text=l).grid(row=row,column=0)
-        # row+=1
         l=_("Plug in your microphone, and make sure ‘record’ and ‘play’ work "
             "well here, before recording real data!")
         caveat=ui.Label(self.content,
@@ -449,13 +441,6 @@ class SoundSettingsWindow(ui.Window):
                 row=row,column=0)
         caveat.wrap()
         row+=1
-        # l=_("See also note in documentation about verifying these "
-        #     "recordings in an external application, such as Praat.")
-        # caveat2=ui.Label(self.soundsettingswindow.content,
-        #         text=l,font='instructions',
-        #         row=row,column=0)
-        # caveat2.wrap()
-        # row+=1
         play=_("Play")
         l=_("If Praat is installed in your OS path, right click on ‘{}’ above "
             "to open in Praat.".format(play))
@@ -470,13 +455,6 @@ class SoundSettingsWindow(ui.Window):
                     # anchor='c',
                     row=row,column=0,
                     sticky=''
-                    )
-        bd=ui.Button(self.content,
-                    text=_("Quit Task"),
-                    # cmd=program['root'].on_quit,
-                    cmd=self.task.quittask,
-                    # anchor='c',
-                    row=row,column=1
                     )
     def soundcheckrefreshdone(self):
         self.task.storesoundsettings()
