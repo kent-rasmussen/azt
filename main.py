@@ -1100,8 +1100,9 @@ class Menus(ui.Menu):
     def sort(self):
         self.advancedmenu.add_separator()
         # While this remains broken, leave off. Is it worth fixing?
-        # options=[(_("Add/Modify Ad Hoc Sorting Group"),
-        #                                         self.parent.addmodadhocsort),]
+        options=[]
+        # options.extend([(_("Add/Modify Ad Hoc Sorting Group"),
+        #                                     self.parent.addmodadhocsort)])
         if isinstance(self.parent,SortT):
             options.extend([(_("Add Tone frame"), self.parent.addframe)])
         group=program['status'].group()
