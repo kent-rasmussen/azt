@@ -446,7 +446,7 @@ class SoundFilePlayer(object):
         process=False
         # process=True #This takes precedence
         thread=False #over this
-        self.wf = wave.open(self.filenameURL, 'rb')
+        self.wf = wave.open(str(self.filenameURL), 'rb')
         frames = self.wf.getnframes()
         rate=int(self.wf.getframerate())
         duration = frames / float(rate)
@@ -590,6 +590,7 @@ class SoundFileRecorder(object):
             self.stream.close()
     def start(self):
         log.log(3,"I'm recording now")
+        self.file_write_OK=False #either way, clear this now; catch any errors
         if hasattr(self,'fulldata'):
             delattr(self,'fulldata') #let's start each recording afresh.
         def callback(self):
@@ -637,9 +638,8 @@ class SoundFileRecorder(object):
             block(self)
     def fileopen(self):
         #This fn is for recording, not playing
-        file.remove(self.filenameURL) #don't do this until recording new file.
         try:
-            self.wf = wave.open(self.filenameURL, 'wb')
+            self.wf = wave.open(str(self.file_tmp), 'wb')
             self.wf.setnchannels(self.settings.channels)
             self.wf.setsampwidth(self.pa.get_sample_size(
                                                 self.settings.sample_format))
@@ -655,8 +655,14 @@ class SoundFileRecorder(object):
         if hasattr(self,'fulldata'):
             self.wf.writeframes(self.fulldata)
             self.wf.close()
+        if self.settings.file_ok(self.file_tmp):
+            #don't do this until we have a good, new recording
+            log.error(f"File recorded! ({file.getsize(self.file_tmp)})")
+            self.file_write_OK=True
+            file.replace(self.file_tmp,self.filenameURL)
         else:
-            log.error("Nothing recorded!")
+            log.error("Nothing recorded! "
+                        f"(file size: {file.getsize(self.file_tmp)})")
     def toaudiosample(self):
         from pydub import AudioSegment
         return AudioSegment(self.fulldata,
