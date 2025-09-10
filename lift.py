@@ -14,8 +14,9 @@ log.info(f"Importing {__name__}")
 # except:
 log.info("using xml.etree to parse XML")
 lxml=False
-from xmletfns import * # from xml.etree import ElementTree as ET
-import xmlfns
+# from xmletfns import * # from xml.etree import ElementTree as ET
+import xmletfns as et
+import xmlfns, file
 import sys
 import pathlib
 import threading
@@ -235,37 +236,37 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         log.info('newsenseid: {}'.format(senseid))
         now=getnow()
         analang=kwargs['analang']
-        entry=ET.SubElement(self.nodes, 'entry', attrib={
+        entry=et.SubElement(self.nodes, 'entry', attrib={
                                 'dateCreated':now,
                                 'dateModified':now,
                                 'guid':guid,
                                 'id':(kwargs['form'][analang]+'_'+str(guid))
                                 })
-        lexicalunit=ET.SubElement(entry, 'lexical-unit', attrib={})
+        lexicalunit=et.SubElement(entry, 'lexical-unit', attrib={})
         """Just adding citation, not lexeme forms, with this function,
         though we need the lexeme field (above) to be there"""
-        # form=ET.SubElement(lexicalunit, 'form',
+        # form=et.SubElement(lexicalunit, 'form',
         #                                 attrib={'lang':analang})
-        # text=ET.SubElement(form, 'text')
+        # text=et.SubElement(form, 'text')
         # text.text=kwargs['form'][analang]
         """At some point, I'll want to distinguish between these two"""
-        citation=ET.SubElement(entry, 'citation', attrib={})
-        form=ET.SubElement(citation, 'form', attrib={'lang':analang})
-        text=ET.SubElement(form, 'text')
+        citation=et.SubElement(entry, 'citation', attrib={})
+        form=et.SubElement(citation, 'form', attrib={'lang':analang})
+        text=et.SubElement(form, 'text')
         text.text=kwargs['form'][analang]
         del kwargs['form'][analang] #because we're done with this.
-        sense=ET.SubElement(entry, 'sense', attrib={'id':senseid})
-        grammaticalinfo=ET.SubElement(sense, 'grammatical-info',
+        sense=et.SubElement(entry, 'sense', attrib={'id':senseid})
+        grammaticalinfo=et.SubElement(sense, 'grammatical-info',
                                             attrib={'value':kwargs['ps']})
-        definition=ET.SubElement(sense, 'definition')
+        definition=et.SubElement(sense, 'definition')
         for glosslang in kwargs['form']: #now just glosslangs
-            form=ET.SubElement(definition, 'form',
+            form=et.SubElement(definition, 'form',
                                 attrib={'lang':glosslang})
-            text=ET.SubElement(form, 'text')
+            text=et.SubElement(form, 'text')
             text.text=kwargs['form'][glosslang]
-            gloss=ET.SubElement(sense, 'gloss',
+            gloss=et.SubElement(sense, 'gloss',
                                 attrib={'lang':glosslang})
-            text=ET.SubElement(gloss, 'text')
+            text=et.SubElement(gloss, 'text')
             text.text=kwargs['form'][glosslang]
         self.write()
         """Since we added a guid and senseid, we want to refresh these"""
@@ -377,12 +378,12 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                     nfixed+=1
                     log.info("Found legacy verification node ({}):"
                                 "".format(fieldname))
-                    prettyprint(f)
+                    et.prettyprint(f)
                     t=f.text
                     f.text=None
                     Node.makeformnode(f,lang=lang,text=t)
                     log.info("Converted to:")
-                    prettyprint(f)
+                    et.prettyprint(f)
         # log.info("Found {} legacy verification nodes in {} seconds".format(
         log.info("Found {} legacy verification nodes".format(
                                                     nfixed,
@@ -410,7 +411,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         # prettyprint(vft)
         # prettyprint(vf)
         t=None #this default will give no text node value
-        if not isinstance(vft,ET.Element): #only then add fields
+        if not isinstance(vft,et.Element): #only then add fields
             # log.info("Empty vft; adding verification field")
             vf=Node(sensenode, tag='field',
                             attrib={'type':"{} {} verification".format(vtype,
@@ -943,9 +944,9 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         """this parses the lift file into an entire ElementTree tree,
         for reading or writing the LIFT file."""
         log.info("Reading LIFT file: {}".format(self.filename))
-        self.tree,self.nodes=readxml(self.filename)
+        self.tree,self.nodes=et.readxml(self.filename)
         self.nodes=Lift(self,self.nodes)
-        # self.tree=ET.parse(self.filename)
+        # self.tree=et.parse(self.filename)
         # self.nodes=self.tree.getroot()
         log.info("Done reading LIFT file.")
         """This returns the root node of an ElementTree tree (the entire
@@ -996,7 +997,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         write=0
         nodes=self.nodes
         xmlfns.indent(self.nodes)
-        tree=ET.ElementTree(self.nodes)
+        tree=et.ElementTree(self.nodes)
         try:
             tmp=filename+'.part'
             if file.exists(tmp):
@@ -1336,12 +1337,12 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 agloss[lang]=agloss[lang].text
         """For now, these two are either there or not."""
         asilcawl=asense.find("field[@type='SILCAWL']")
-        if isinstance(asilcawl,ET.Element):
+        if isinstance(asilcawl,et.Element):
             asilcawlt=asilcawl.find('form/text').text
         else:
             asilcawlt=EmptyTextNodePlaceholder()
         asdn=asense.find("trait[@name='semantic-domain-ddp4']")
-        if isinstance(asdn,ET.Element):
+        if isinstance(asdn,et.Element):
             asd=asdn.get('value')
         else:
             asd=None
@@ -1353,7 +1354,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 asense.append(n) #append the node wholesale, not values.
         bsilcawl=bsense.find("field[@type='SILCAWL']")
         bsilcawlt=bsilcawl.find('form/text').text
-        if isinstance(bsilcawl,ET.Element): #Should always be, but just to be sure
+        if isinstance(bsilcawl,et.Element): #Should always be, but just to be sure
             if not asilcawlt or bsilcawlt != asilcawlt:
                 asense.append(bsilcawl) #copy over if empty or not the same
             #     log.info("yes,")
@@ -1897,7 +1898,7 @@ class EmptyTextNodePlaceholder(object):
     def __init__(self):
         # super(EmptyTextNodePlaceholder, self).__init__()
         self.text = None
-class Node(ET.Element):
+class Node(et.Element):
     def makefieldnode(self,type,lang,text=None,gimmetext=False):
         n=Node(self,tag='field',attrib={'type':type})
         nn=n.makeformnode(lang,text,gimmetext=gimmetext)
@@ -1940,7 +1941,7 @@ class Node(ET.Element):
                     "This is not legal LIFT; please fix this!"
                     "".format(self.tag,self.entry.guid,tag))
     def tagattrib(self,node,**kwargs):
-        if isinstance(node,ET.Element):
+        if isinstance(node,et.Element):
             tag=node.tag
             kwargs.pop('tag','') #in case this is there, too.
             attrib=node.attrib
@@ -1957,7 +1958,7 @@ class Node(ET.Element):
         #     log.info("These kwargs are not being passed on: {}".format(kwargs))
         return tag,attrib
     def isnode(self):
-        return isinstance(self,ET.Element) #allow boolean True w/o children
+        return isinstance(self,et.Element) #allow boolean True w/o children
     def __init__(self, parent, node=None, **kwargs):
         self.parent=parent
         tag,attrib=self.tagattrib(node,**kwargs) #this pulls from either
@@ -1965,17 +1966,17 @@ class Node(ET.Element):
         #                                                 tag, attrib, kwargs
         #                                                     ))
         super(Node, self).__init__(tag, attrib) # **kwargs gives extra attrs
-        if isinstance(node,ET.Element): #make sure to get all of it
+        if isinstance(node,et.Element): #make sure to get all of it
             for child in node:
                 self.append(child)
             for attr in ['text', 'tail']:
                 setattr(self,attr,getattr(node,attr))
         elif node:
-            log.error("Non-ET.Element Node provided ? (parent: {}, {}:{})"
+            log.error("Non-et.Element Node provided ? (parent: {}, {}:{})"
                     "".format(self.parent,type(node),node))
             raise
-        if isinstance(parent,ET.Element):
-            if isinstance(node,ET.Element): #put back where it came from
+        if isinstance(parent,et.Element):
+            if isinstance(node,et.Element): #put back where it came from
                 # log.info("replacing with new node: {}".format(self))
                 self.index=[i for i in parent].index(node)
                 parent.remove(node)
@@ -2389,13 +2390,13 @@ class FieldParent(object):
         self.fields[type].textvaluebylang(lang=lang,value=value) #set value?
     def fieldvalue(self,type,lang=None,value=None):
         try:
-            assert isinstance(self.fields[type],ET.Element)
+            assert isinstance(self.fields[type],et.Element)
             # log.info("found ET node")
         except (AssertionError,KeyError):
             found=self.find(f'field[type="{type}"]')
             # log.info("found {}".format(found))
-            if isinstance(found,ET.Element) or value:
-                if isinstance(found,ET.Element):
+            if isinstance(found,et.Element) or value:
+                if isinstance(found,et.Element):
                     log.error("This should never happen; somehow an XML field "
                         "was not picked up on boot, but was found just now. "
                         f"type: {type}, lang: {found.getlang()}, "
@@ -2429,7 +2430,7 @@ class Example(FormParent,FieldParent):
         return self.fieldvalue('tone',value=value)
     def translationvalue(self,lang=None,value=None):
         try:
-            assert isinstance(self.translation,ET.Element)
+            assert isinstance(self.translation,et.Element)
             return self.translation.textvaluebylang(lang,value) # w/wo value
         except AssertionError:
             if value: #don't make field if not setting value
@@ -2442,7 +2443,7 @@ class Example(FormParent,FieldParent):
         return self.translationvalue(lang)
     def lastAZTsort(self):
         try:
-            assert isinstance(self.lastsort,ET.Element)
+            assert isinstance(self.lastsort,et.Element)
         except (AssertionError,AttributeError):
             found=self.find('trait[@name="Latest A-Z+T Sort"]')
             self.lastsort=Trait(self, found, name="Latest A-Z+T Sort")
@@ -2559,7 +2560,7 @@ class Sense(Node,FieldParent):
             return gs[0]
     def glossvaluesbylang(self,lang):
         try:
-            assert isinstance(self.glosses[lang][0],ET.Element)
+            assert isinstance(self.glosses[lang][0],et.Element)
             return [i.gettext() for i in self.glosses[lang]]
         except KeyError:
             # log.info("No gloss for lang {}".format(lang))
@@ -2651,11 +2652,11 @@ class Sense(Node,FieldParent):
         return self.fieldvalue('tone',value)
     def pssubclassvalue(self,value=None):
         try:
-            assert isinstance(self.pssubclass,ET.Element)
+            assert isinstance(self.pssubclass,et.Element)
         except (AssertionError,AttributeError):
             found=self.find('trait[@name="{}-infl-class"]'
                             ''.format(self.psvalue()))
-            if isinstance(found,ET.Element) or value:
+            if isinstance(found,et.Element) or value:
                 self.pssubclass=Trait(self,found,
                                     name="{}-infl-class".format(self.psvalue()))
                                     # value=value)
@@ -2663,24 +2664,24 @@ class Sense(Node,FieldParent):
                 return None
         return self.pssubclass.myvalue(value)
     def rmpsnode(self):
-        if (hasattr(self,'ps') and isinstance(self.ps,ET.Element)
+        if (hasattr(self,'ps') and isinstance(self.ps,et.Element)
                                 and self.ps in self):
             self.remove(self.ps)
         else:
             log.info("psnode {} not found in sense {} ({})".format(self.ps,
                                                     self,self.id))
     def rmpssubclassnode(self):
-        if isinstance(self.pssubclass,ET.Element):
+        if isinstance(self.pssubclass,et.Element):
             self.remove(self.pssubclass)
         else:
             log.info("pssubclass {} not found in sense {} ({})"
                     "".format(self.pssubclass,self,self.id))
     def psvalue(self,value=None):
         try:
-            assert isinstance(self.ps,ET.Element)
+            assert isinstance(self.ps,et.Element)
         except (AssertionError,AttributeError):
             found=self.find('grammatical-info')
-            if isinstance(found,ET.Element) or value:
+            if isinstance(found,et.Element) or value:
                 self.ps=Ps(self, found)
             else:
                 return None
@@ -2718,12 +2719,12 @@ class Sense(Node,FieldParent):
             self.cawln=None
     def illustrationvalue(self,value=None):
         try:
-            assert isinstance(self.illustration,ET.Element)
+            assert isinstance(self.illustration,et.Element)
             # if value:
             #     self.illustration.myvalue(value)
         except (AssertionError,AttributeError):
             found=self.find('illustration')
-            if isinstance(found,ET.Element) or value:
+            if isinstance(found,et.Element) or value:
                 self.illustration=Illustration(self, found)
             else:
                 return None
@@ -3048,10 +3049,10 @@ class Entry(Node,FieldParent): # what does "object do here?"
 class Language(object):
     def __init__(self, xyz):
         """define consonants and vowels here?regex's belong where?"""
-        self.tree=ET.parse(lift.languages[xyz]) #this parses the lift file into an entire ElementTree tree, for reading or writing the LIFT file.
+        self.tree=et.parse(lift.languages[xyz]) #this parses the lift file into an entire ElementTree tree, for reading or writing the LIFT file.
         #self.object=Tree(filename)
         self.nodes=self.tree.getroot() #.parsed #This returns the root node of an ElementTree tree (the entire tree as nodes), to edit the XML.
-        #self.tree=ET.parse(lift)
+        #self.tree=et.parse(lift)
         #self.parsed=self.tree.getroot()
         self.code=xyz
 class Unused():
