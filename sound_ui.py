@@ -276,6 +276,15 @@ class SoundSettingsWindow(ui.Window):
         cur=self.soundsettings.hypothetical['sample_formats'][
                                             self.soundsettings.sample_format]
         return _(f"{cur}")
+    def setsoundcard_byname(self,name):
+        if name in self.soundsettings.cards['dict'].values():
+            self.soundsettings.audio_card_in=[n for n,v
+                                    in self.soundsettings.cards['dict'].items()
+                                    if v == name][0]
+        else:
+            log.error(f"card {name} not available "
+                        f" ({self.soundsettings.cards['dict'].keys()})")
+        self.updatesoundcard()
     def setsoundcardindex(self,choice,window):
         # log.info("setsoundcardindex: {}".format(choice))
         self.soundsettings.audio_card_in=choice
