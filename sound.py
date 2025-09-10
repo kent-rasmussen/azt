@@ -664,12 +664,27 @@ class SoundFileRecorder(object):
             log.error("Nothing recorded! "
                         f"(file size: {file.getsize(self.file_tmp)})")
     def toaudiosample(self):
-        from pydub import AudioSegment
-        return AudioSegment(self.fulldata,
-                frame_rate=self.settings.fs,
-                sample_width=self.settings.sample_format,
-                channels=self.settings.channels
-                )
+        import io
+
+        with io.BytesIO() as self.wf16k:
+            wav_writer = wave.open(self.wf16k, "wb")
+            try:
+                wav_writer.setframerate(16000)
+                wav_writer.setsampwidth(self.settings.sample_format)
+                wav_writer.setnchannels(1)
+                wav_writer.writeframes(self.fulldata)
+                # self.wf16k = wav_file.getvalue()
+            finally:
+                wav_writer.close()
+        print(type(self.wf16k))
+        return self.wf16k
+        # from pydub import AudioSegment
+        # return AudioSegment(self.fulldata,
+        #         frame_rate=self.settings.fs,
+        #         sample_width=self.settings.sample_format,
+        #         channels=self.settings.channels
+        #         )
+        #         # set_frame_rate
     def stop(self):
         log.log(3,"I'm stopping recording now")
         if hasattr(self,'stream'):
