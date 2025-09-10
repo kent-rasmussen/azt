@@ -2283,11 +2283,6 @@ class FormParent(Node):
         if hasattr(self.parent,'senses') and self.parent.senses:
             # we want a common reference point for glosses, first sense is OK
             self.sense=self.parent.sense
-        else:
-            log.info("This form can't find a sense ({}; parent: {})"
-                    "".format(type(self),type(self.parent)))
-            log.info("{}; {}".format(hasattr(self.parent,'senses'),
-                                    self.parent.senses))
     def glossbylang(self,lang):
         return ', '.join(self.parent.sense.formattedgloss(lang))
     def hassoundfile(self,audiolang=None,audiodir=None,recheck=False):
