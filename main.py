@@ -6799,6 +6799,18 @@ class WordCollectionCitation(TaskDressing,WordCollection):
         log.info("Initializing {}".format(self.tasktitle()))
         #Status frame is 0,0
         self.getwords()
+class WordCollectionCitationwRecordings(TaskDressing,WordCollectionwRecordings):
+    def tooltip(self):
+        return _("This task helps you collect words in citation form through "
+                "recordings with automatic transcription drafts.")
+    def tasktitle(self):
+        return _("Add Words") # for Citation Forms
+    def __init__(self, parent): #frame, filename=None
+        self.ftype=program['params'].ftype('lc') #lift.Entry.citationformnodeofentry
+        TaskDressing.__init__(self,parent)
+        WordCollection.__init__(self,parent)
+        log.info("Initializing {}".format(self.tasktitle()))
+        self.getwords()
 class WordCollectionPlural(TaskDressing,WordCollection):
     def tooltip(self):
         return _("This task helps you collect plural word forms.")
