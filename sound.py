@@ -707,6 +707,7 @@ class SoundFileRecorder(object):
         self.pa=pyaudio
         self.settings=settings
         self.filenameURL=filenameURL
+        self.file_tmp=str(self.filenameURL)+'.tmp'
 class BeepGenerator(object):
     def play(self):
         # self.compile(pitches=str(pitches))
