@@ -10,10 +10,10 @@ import utilities as utils
 import executables
 class RecordButtonFrame(ui.Frame):
     """This is not implemented yet!!"""
-    def _start(self, event):
+    def _start(self, event=None):
         log.log(3,"Asking PA to record now")
         self.recorder.start()
-    def _stop(self, event):
+    def _stop(self, event=None):
         try:
             self.recorder.stop()
             # log.info(f"self.recorder: {hasattr(self,'recorder')}")
