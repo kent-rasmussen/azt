@@ -3189,7 +3189,7 @@ class Settings(object):
         # log.info("compileCVrxforsclass RXs: {}".format(self.rx))
     def setupCVrxs(self):
         self.slists() #makes s; depends on polygraphs
-        log.info(f"self.s: {self.s[program['params'].analang()]}")
+        # log.info(f"self.s: {self.s[program['params'].analang()]}")
         self.rxdict=rx.RegexDict(distinguish=self.distinguish,
                                 interpret=self.interpret,
                                 sdict=self.s[program['params'].analang()],
