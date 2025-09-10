@@ -3346,7 +3346,7 @@ class Settings(object):
             "database!")
             basename=file.getfilenamebase(self.liftfilename)
             parent=file.getfilenamebase(file.getfilenamedir(self.liftfilename))
-            if parent == basename and len(parent) == 3: #plausible iso
+            if parent == basename and langtags.tag_is_valid(basename):
                 self.analang=parent
                 errortext+=_("\n(guessing [{}]; if that's not correct, exit now "
                             "and fix it!)").format(self.analang)
@@ -3364,8 +3364,6 @@ class Settings(object):
                 e=ErrorNotice(errortext,title=_("Error!"),wait=True)
                 file.writefilename() #just clear the default; let user move on
                 sysrestart()
-            # program['db'].pss=program['db'].getpssbylang(self.analang) #redo this, specify
-            # return
         elif nlangs == 1:
             self.analang=program['db'].analangs[0]
             log.debug(_('Only one analang in file; using it: ({})'.format(
@@ -3374,6 +3372,7 @@ class Settings(object):
             of the first two is three letters long, and the other isn't"""
         elif nlangs == 2:
             if ((len(program['db'].analangs[0]) == 3) and
+                langtags.tag_is_valid(program['db'].analangs[0]) and
                 (lcwdatamax == program['db'].analangs[0] or
                     lxwdatamax == program['db'].analangs[0]) and
                 (len(program['db'].analangs[1]) != 3)):
@@ -3382,6 +3381,7 @@ class Settings(object):
                 self.analang=program['db'].analangs[0] #assume this is the iso code
                 self.analangdefault=program['db'].analangs[0] #In case it gets changed.
             elif ((len(program['db'].analangs[1]) == 3) and
+                langtags.tag_is_valid(program['db'].analangs[1]) and
                 (lcwdatamax == program['db'].analangs[1] or
                     lxwdatamax == program['db'].analangs[1]) and
                     (len(program['db'].analangs[0]) != 3)):
@@ -3389,11 +3389,13 @@ class Settings(object):
                                 'analang! ({})'.format(program['db'].analangs[1])))
                 self.analang=program['db'].analangs[1] #assume this is the iso code
                 self.analangdefault=program['db'].analangs[1] #In case it gets changed.
-            elif lcwdatamax in program['db'].analangs:
+            elif (lcwdatamax in program['db'].analangs and
+                            langtags.tag_is_valid(lcwdatamax)):
                 self.analang=lcwdatamax
                 log.debug('Neither analang looks like an iso code, taking the '
                 'one with most citation data: {}'.format(program['db'].analangs))
-            elif lxwdatamax in program['db'].analangs:
+            elif (lxwdatamax in program['db'].analangs and
+                            langtags.tag_is_valid(lxwdatamax)):
                 self.analang=lxwdatamax
                 log.debug('Neither analang looks like an iso code, taking the '
                 'one with most lexeme data: {}'.format(program['db'].analangs))
@@ -3402,7 +3404,8 @@ class Settings(object):
                 log.debug('Neither analang looks like an iso code, nor has much'
                 'data; taking the first one: {}'.format(program['db'].analangs))
         else: #for three or more analangs, take the first plausible iso code
-            if lcwdatamax in program['db'].analangs and len(lcwdatamax) == 3:
+            if (lcwdatamax in program['db'].analangs and
+                        langtags.tag_is_valid(lxwdatamax)):
                 self.analang=lcwdatamax
                 log.debug('The language with the most citation data looks like '
                 'an iso code; using: {}'.format(program['db'].analangs))
@@ -3411,7 +3414,8 @@ class Settings(object):
                 log.debug('The language with the most citation data is also '
                     'the language with the most lexeme data; using: {}'.format(
                                                             program['db'].analangs))
-            elif lxwdatamax in program['db'].analangs and len(lxwdatamax) == 3:
+            elif (lxwdatamax in program['db'].analangs and
+                        langtags.tag_is_valid(lxwdatamax)):
                 self.analang=lxwdatamax
                 log.debug('The language with the most lexeme data looks like '
                 'an iso code; using: {}'.format(program['db'].analangs))
@@ -3428,29 +3432,11 @@ class Settings(object):
     def guessaudiolang(self):
         nlangs=len(program['db'].audiolangs)
         """if there's only one audio language, use it."""
-        if nlangs == 0 and self.analang:
-            self.audiolang=lift.Lift.makeaudiolangname(self) #program['db'].audiolangs[0]
-        if nlangs == 1:
-            self.audiolang=program['db'].audiolangs[0]
-        elif nlangs == 2:
-            if ((self.analang in program['db'].audiolangs[0]) and
-                (self.analang not in program['db'].audiolangs[1])):
-                self.audiolang=program['db'].audiolangs[0]
-                log.info(("Analang in first of two audiolangs only, selecting "
-                        )+self.audiolang)
-            elif ((self.analang in program['db'].audiolangs[1]) and
-                    (self.analang not in program['db'].audiolangs[0])):
-                self.audiolang=program['db'].audiolangs[1]
-                log.info(_("Analang in second of two audiolangs only, selecting "
-                        )+self.audiolang)
-            elif ((self.analang in program['db'].audiolangs[1]) and
-                    (self.analang in program['db'].audiolangs[0])):
-                self.audiolang=sorted(program['db'].audiolangs,key = len)[0]
-                log.info(_("Analang in both of two audiolangs only, selecting "
-                "shorter: {}").format(self.audiolang))  #assume is more basic
+        if program['db'].audiolang:
+            self.audiolang=program['db'].audiolang
         else: #for three or more analangs, take the first plausible iso code
             for n in range(nlangs):
-                if self.analang in program['db'].analangs[n]:
+                if self.analang in program['db'].audiolangs[n]:
                     self.audiolang=program['db'].audiolangs[n]
                     return
     def makeglosslangs(self):
