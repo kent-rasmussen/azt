@@ -1930,7 +1930,6 @@ class Node(ET.Element):
                     "".format(self.tag,self.entry.guid,tag))
     def tagattrib(self,node,**kwargs):
         if isinstance(node,ET.Element):
-            self.index=[i for i in self.parent].index(node)
             tag=node.tag
             kwargs.pop('tag','') #in case this is there, too.
             attrib=node.attrib
@@ -1946,44 +1945,37 @@ class Node(ET.Element):
         # if kwargs:
         #     log.info("These kwargs are not being passed on: {}".format(kwargs))
         return tag,attrib
-    def nodecheck(self,node,**kwargs):
-        """Is this working?"""
-        if not isinstance(node,ET.Element):
-            try:
-                node=Node(self.parent,**kwargs)
-            except RecursionError:
-                log.error("It looks like you need to add kwargs['tag'] for "
-                        "this class")
-                exit()
-        return node
+    def isnode(self):
+        return isinstance(self,ET.Element) #allow boolean True w/o children
     def __init__(self, parent, node=None, **kwargs):
         self.parent=parent
-        if not 'tag' in kwargs:
-            node=self.nodecheck(node,**kwargs)
         tag,attrib=self.tagattrib(node,**kwargs) #this pulls from either
         # log.info("Calling with tag: {}, attrib: {}, kwargs: {}".format(
         #                                                 tag, attrib, kwargs
         #                                                     ))
         super(Node, self).__init__(tag, attrib) # **kwargs gives extra attrs
-        try:
-            assert isinstance(node,ET.Element)
+        if isinstance(node,ET.Element): #make sure to get all of it
             for child in node:
                 self.append(child)
             for attr in ['text', 'tail']:
                 setattr(self,attr,getattr(node,attr))
-            # log.info("removing old node (@{}): {}".format(self.index,node))
-            parent.remove(node)
-            # log.info("replacing with new node: {}".format(self))
-            parent.insert(self.index,self)
-        except AssertionError:
-            #This must follow assertion, as ET node w/o children is bool False
-            if not node:
-                # log.info("adding new node: {}".format(self))
-                parent.append(self) #or
+        elif node:
+            log.error("Non-ET.Element Node provided ? (parent: {}, {}:{})"
+                    "".format(self.parent,type(node),node))
+            raise
+        if isinstance(parent,ET.Element):
+            if isinstance(node,ET.Element): #put back where it came from
+                # log.info("replacing with new node: {}".format(self))
+                self.index=[i for i in parent].index(node)
+                parent.remove(node)
+                parent.insert(self.index,self)
             else:
-                log.error("Node present, but not an Element? "
-                        "(parent: {}, {}:{})"
-                        "".format(self.parent,type(node),node))
+                parent.append(self) # add new elements after other children
+            self.db=parent.db #keep this available
+        elif isinstance(parent,LiftXML): # root element parent is object
+            self.db=parent
+        # if self.tag not in ['text','form','gloss']:
+        #     log.info(f"Init done for {self.tag} node with {[i for i in self]}")
 class Text(Node):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='text'
