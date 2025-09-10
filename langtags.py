@@ -44,6 +44,46 @@ def langcode(name):
     """return code from language name"""
 def territorycode(name):
     """return code from territory"""
+class SisterLanguages(object):
+    """docstring for SisterLanguages."""
+    def load_fleurs():
+        """Make this load from https://huggingface.co/datasets/google/fleurs"""
+    def load_mms_data(self):
+        from mms_language_support import data
+        self.mms_data=data
+    def mms_support(self,type):
+        if type not in self.mms_types:
+            log.error(f"MMS supports the following types: {self.mms_types}")
+        return {k for k in self.mms_data if self.mms_data[k][type]}
+    def lookup_name_mms(self,name): #could be multiple
+        return [k for k in self.mms_data if name.lower() in
+                                            self.mms_data[k]['name'].lower()]
+    def load_whisper_dict(self):
+        self.whisper_dict=whisper_languages()
+    def whisper_codes_alpha3(self):
+        return {langcodes.Language.get(i).to_alpha3()
+                    for i in self.whisper_dict.values()}
+    def lookup_name_whisper(self,name):
+        return [whisper_codes_names.by_name[i][0]
+                    for i in whisper_codes_names.by_name
+                    if name.lower() in i]
+    def lookup_name(self,name):
+        code=self.lookup_name_whisper(name) # returns a list
+        code.extend(self.lookup_name_mms(name)) # returns a list
+        return [i for i in code if i]
+    def __init__(self):
+        super(SisterLanguages, self).__init__()
+        self.mms_types=['asr', 'tts', 'lid']
+        self.load_mms_data()
+        self.mms_asr_support=self.mms_support('asr')
+        self.mms_lid_support=self.mms_support('lid')
+        self.mms_tts_support=self.mms_support('tts')
+        self.load_whisper_dict()
+        self.whisper_support=self.whisper_codes_alpha3()
+        log.info(f"Whisper language support for {len(self.whisper_dict)} "
+                "languages")
+        log.info(f"Facebook MMS language support for {len(self.mms_data)} "
+                f"languages ({len(self.mms_support('asr'))} for ASR)")
 class Languages(dict):
     def fix_data(self):
         qafar_names={'localname': 'Qafar', 'localnames': ['Qafar af']}
