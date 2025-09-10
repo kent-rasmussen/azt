@@ -9328,7 +9328,7 @@ class Sound(object):
         self.audiodir=program['settings'].audiodir
         self.audiolang=program['params'].audiolang()
         self.soundcheck()
-class Record(Sound,TaskDressing):
+class Record(Sound): #TaskDressing
     """This holds all the Sound methods specific for Recording."""
     def makelabelsnrecordingbuttons(self,parent,node,r,c):
         # log.info("Making buttons for {} (in {})".format(node,parent))
@@ -9587,15 +9587,22 @@ class Record(Sound,TaskDressing):
         # could be moved to a FieldParent method
         """This should generate possible filenames, with preferred (current
         schema) last, as that will be used if none are found."""
+        print(f"Looking for file names for {node} ({node.tag})")
         ps=program['slices'].ps()
-        pslocopts=[ps]
+        print("ps:",ps)
+        if ps:
+            pslocopts=[ps]
+        else:
+            pslocopts=[]
         # Except for data generated early in 2021, profile should not be there,
         # because it can change with analysis. But we include here to pick up
         # old files, in case they are there but not linked.
         # First option (legacy):
         # pslocopts.insert(0,ps+'_'+self.parent.taskchooser.slices.profile())
-        pslocopts.insert(0,ps+'_'+program['slices'].profile())
-        fieldlocopts=[None]
+        profile=program['slices'].profile()
+        if ps and profile:
+            pslocopts.insert(0,ps+'_'+profile)
+        fieldlocopts=[None] #none is OK
         try:
             l=node.locationvalue()
             #the last option is taken, if none are found
@@ -9606,6 +9613,8 @@ class Record(Sound,TaskDressing):
             pass
                     # Yes, these allow for location to be present twice, but
                 # that should never be found, nor offered
+        if not pslocopts:
+            pslocopts=[None] #make this an iterable, none is OK
         filenames=[]
         """We iterate over lots of filename schemas, to preserve legacy data.
         This is only really needed (and so could be removed at some point) when
@@ -9625,11 +9634,9 @@ class Record(Sound,TaskDressing):
                                 args+=[node.ftype]
                         form=node.textvaluebylang(self.analang)
                         if not form:
-                            log.error("No {} analang in {} (forms: {})".format(
-                                                        self.analang,
-                                                        node.sense.id,
-                                                        node.textvaluedict()))
-                            return
+                            log.error(f"No {self.analang} analang in "
+                                f"{node.sense.id}! (OK if recording first; "
+                                f"forms: {node.textvaluedict()})")
                         args+=[form] #[self.ftype]]
                         for l in self.glosslangs:
                             args+=[node.glossbylang(l)]
@@ -9664,6 +9671,27 @@ class Record(Sound,TaskDressing):
         """Should be able to just send f"""
         node.audiofilenametoput=f #don't write this until we actually record
         node.audiofileURL=self.audioURL(f)
+        log.info(f"Finishing makeaudiofilename with {node.audiofilenametoput=} "
+                f"and {node.audiofileURL=}")
+    def mikecheck(self):
+        """This starts and stops the UI"""
+        self.withdraw()
+        self.pyaudiocheck()
+        #will need to add sound_ui in here, once generalized:
+        self.soundsettingswindow=sound_ui.SoundSettingsWindow(self)
+        self.soundsettingswindow.protocol("WM_DELETE_WINDOW", self.quittask)
+        if not self.soundsettingswindow.exitFlag.istrue():
+            self.soundsettingswindow.wait_window(self.soundsettingswindow)
+        self.donewpyaudio()
+        self.deiconify()
+        if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
+            self.soundsettingswindow.destroy()
+    def _configure_transcription(self,event=None):
+        sound_ui.ASRModelSelectionWindow(self)
+    def setcontext(self,context=None):
+        Sound.setcontext(self)
+        self.context.menuitem(_("Transcription settings"),
+                                    self._configure_transcription)
     def __init__(self,parent):
         Sound.__init__(self)
         self.soundsettings.load_ASR() #after file settings are loaded
