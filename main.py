@@ -5300,7 +5300,7 @@ class TaskChooser(TaskDressing,ui.Window):
             if SortV in [i[0] for i in optionlist]:
                 self.maketask(SortV)
             else:
-                self.maketask(WordCollectnParse)
+                self.maketask(WordCollectnParsewRecordings)
                 #optionlist[-1][0]) #last item, the code
     def maketask(self,taskclass): #,filename=None
         self.unsetmainwindow()
@@ -5361,6 +5361,7 @@ class TaskChooser(TaskDressing,ui.Window):
                     # WordCollectionPlural, #What is the value of this
                     # WordCollectionImperative, #What is the value of this
                     WordCollectnParse,
+                    WordCollectnParsewRecordings,
                     RecordCitation
                     ]
             if self.doneenough['collectionlc']:
