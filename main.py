@@ -3026,11 +3026,12 @@ class Settings(object):
         log.info("Processed {} forms to syllable profile".format(n))
         logfinished(start_time)
     def _getprofiles(self,senses,ps):
+        # This goes fast, even on a large database; do we need the wait?
         n=0
         todo=len(senses)
-        if todo>750:
-            msg=_("getting profiles for {} lexical category").format(ps)
-            program['taskchooser'].wait(msg)
+        # if todo>750:
+        #     msg=_("getting profiles for {} lexical category").format(ps)
+        #     program['taskchooser'].wait(msg)
         for sense in senses:
             n+=1
             # if False: #for testing without backgrounding
@@ -3042,14 +3043,14 @@ class Settings(object):
                 form,profile=self.getprofileofsense(sense,ps)
                 log.debug("{}: {} > {}".format(str(n)+'/'+str(todo),form,
                                             profile))
-            if todo>750:
-                program['taskchooser'].waitprogress(n*100/todo)
+            # if todo>750:
+            #     program['taskchooser'].waitprogress(n*100/todo)
         try:
             t.join()
         except UnboundLocalError:
             pass #not backgrounding...
-        if todo>750:
-            program['taskchooser'].waitdone()
+        # if todo>750:
+        #     program['taskchooser'].waitdone()
         return n
     def getprofilesbyentry(self):
         for entry in program['db'].entries:
