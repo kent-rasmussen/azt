@@ -43,7 +43,7 @@ Other levels:'WARNING','ERROR','CRITICAL'
 """
 try:
     import logsetup
-    log=logsetup.getlog('root') #not ever a module
+    log=logsetup.getlog(__name__) #not ever a module
     logsetup.setlevel(loglevel)
     """My modules, which should log as above"""
     import lift
