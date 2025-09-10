@@ -26,7 +26,6 @@ def tryrun(cmd):
     except Exception as e:
         text=_("{} command error: {}\n({})").format(cmd.__name__,e,cmd)
         log.error(text)
-        ErrorNotice(text,title=_("{} command error!").format(cmd.__name__))
 def quote(x):
     #does this fail on non-string x?
     if isinstance(x,dict) or isinstance(x,int) or isinstance(x,list):
