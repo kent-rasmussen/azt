@@ -708,16 +708,6 @@ class SoundFileRecorder(object):
         self.streamclose()
     def __init__(self,filenameURL,pyaudio,settings):
         log.debug("Initializing Recording to {}".format(filenameURL))
-        try:
-            assert 'asr' in sys.modules
-            self.asr=asr.ASRtoText()
-            # self.asr1=asr.ASRtoText('base')
-            self.asr2=asr.ASRtoText('small')
-            self.asrOK=True
-        except Exception as e:
-            log.error("Exception loading ASR: {}".format(e))
-            self.asrOK=False
-        self.asrOK=False #for now, to make this public without testing it
         self.callbackrecording=True
         self.pa=pyaudio
         self.settings=settings
