@@ -392,13 +392,32 @@ if __name__ == "__main__":
             return x
     r=ui.Root()
     r.program['praat']='/home/kentr/bin/praat'
-    program=r.program
-    r.title('Sound UI')
-    # program['settings']
-    task=Task()
-    ssw=SoundSettingsWindow(r.program,task)
-    ssw.wait_window(ssw)
-    ui.Label(r,text="test Frame",row=0,column=0)
-    RecordButtonFrame(r,task,test=True,row=1,column=0)
-    r.deiconify()# soundsettings=sound.SoundSettings()
+    r.program['hostname']='karlap'
+    r.program['name']='A−Z+T'
+    r.program['analang']='tbt-CD'
+    import langtags
+    r.program['languages']=langtags.Languages()
+    #This will normally pass self.pyaudio from task to SoundSettings, to keep
+    # one pyaudio instance, but if not, settings will create one.
+    language=r.program['languages'].get_obj(r.program['analang'])
+    r.program['soundsettings']=sound.SoundSettings(analang_obj=language)
+    log.info(f"asr_kwargs: {r.program['soundsettings'].asr_kwargs}")
+    r.title('Test Sound UI')
+    task=Task(program=r.program)
+    if r.program['hostname'] == 'karlap':
+        r.program['soundsettings'].asr_kwargs['cache_dir']='/media/kentr/hfcache'
+    ssw=SoundSettingsWindow(task,withdrawn=True)
+    ssw.setsoundcard_byname('default')
+    ssw.destroy() #since not waiting
+    log.info(f"asr_kwargs: {r.program['soundsettings'].asr_kwargs}")
+    # ssw.wait_window(ssw) #only if need to change stuff
+    ssw=ASRModelSelectionWindow(task)
+    log.info(f"asr_kwargs: {r.program['soundsettings'].asr_kwargs}")
+    ui.Label(r,text="Record sound to test Automatic Speech Recognition engines",row=0,column=0)
+    RecordnTranscribeButtonFrame(r,task,test=True,
+        show_transcriptions=True, #this typically in Entry
+        show_tone=True,
+        shown='all',
+        row=2,column=0)
+    r.deiconify()
     r.mainloop()
