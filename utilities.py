@@ -87,19 +87,22 @@ def setnesteddictobjectval(object,dictname,val,*keys,addval=False):
                     "to exist, or is null; creating.")
         setattr(object,dictname,{})
     setnesteddictval(getattr(object,dictname),val,*keys,addval=addval)
-def setnesteddictval(dict,val,*keys,addval=False):
+def setnesteddictval(dictionary,val,*keys,addval=False):
     """dict must already exist as a dictionary object; this just modifies it.
     Include as many key layers as you like,
     put keys in order; dict,v,x,y gives dict[x][y]=v
     with addval, if val is int or list, it is added to value/list already there,
     or assigned if there is no current value.
     """
+    if not isinstance(dictionary,dict):
+        print(f"setnesteddictval got dictionary of type {type(dictionary)}")
+        exit() #This should never happen, would be my fault, and I should know
     dictlist=[] #keep dictionaries at each level in memory
     for n,k in enumerate(keys): #keys may repeat, can't use list.index()
         if dictlist:
             d=dictlist[-1]
         else:
-            d=dict
+            d=dictionary
         if n-len(keys)+1:
             dictlist.append(nesteddictadd1key(d,k))
         elif addval and k in d:
