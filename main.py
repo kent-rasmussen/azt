@@ -69,6 +69,8 @@ except ModuleNotFoundError as e:
 from utilities import *
 import executables
 import export
+import langtags
+program['languages']=langtags.Languages()
 try:
     import sound
     import transcriber
