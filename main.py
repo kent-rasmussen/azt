@@ -21,16 +21,16 @@ import file
 if file.getfile(__file__).parent.parent.stem == 'raspy': # if program['hostname'] == 'karlap':
     program['testing']=True #eliminates Error screens and zipped logs
     me=True
-    loglevel=6
+    loglevel='INFO'
     # program['testlift']='eng' #portion of filename
-    program['testlift']='Demo_en' #portion of filename
+    # program['testlift']='Demo_en' #portion of filename
     # program['testtask']='WordCollectnParse' #Will convert from string to class later
     # program['testtask']='SortV' #Will convert from string to class later
 else:
     me=False
     program['production']=True #True for making screenshots (default theme)
     program['testing']=False #True eliminates Error screens and zipped logs
-    loglevel='DEBUG'
+    loglevel='INFO'
 """Integers here are more fine grained than 'DEBUG'. I.e., 1-9 show you more
 information than 'DEBUG' does):
 1. Information I probably never want to see.
