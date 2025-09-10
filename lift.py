@@ -47,7 +47,7 @@ class Error(Exception):
 class BadParseError(Error):
     def __init__(self, filename):
         self.filename = filename
-class Lift(object): #fns called outside of this class call self.nodes here.
+class LiftXML(object): #fns called outside of this class call self.nodes here.
     """This should maybe be subclassed under XML, from xmletfns"""
     """The job of this class is to expose the LIFT XML as python object
     attributes. Nothing more, not thing else, should be done here."""
@@ -943,6 +943,7 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         for reading or writing the LIFT file."""
         log.info("Reading LIFT file: {}".format(self.filename))
         self.tree,self.nodes=readxml(self.filename)
+        self.nodes=Lift(self,self.nodes)
         # self.tree=ET.parse(self.filename)
         # self.nodes=self.tree.getroot()
         log.info("Done reading LIFT file.")
@@ -1976,6 +1977,10 @@ class Node(ET.Element):
             self.db=parent
         # if self.tag not in ['text','form','gloss']:
         #     log.info(f"Init done for {self.tag} node with {[i for i in self]}")
+class Lift(Node):
+    def __init__(self, parent, node, **kwargs):
+        kwargs['tag']='lift'
+        super(Lift, self).__init__(parent, node, **kwargs)
 class Text(Node):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='text'
