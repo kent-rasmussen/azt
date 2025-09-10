@@ -3503,11 +3503,7 @@ class Settings(object):
                 program['taskchooser'].task.getword() #update UI for glosses
         if 'secondformfield' in self.attrschanged:
             self.attrschanged.remove('secondformfield')
-        soundattrs=['fs',
-                    'sample_format',
-                    'audio_card_index',
-                    'audioout_card_index'
-                    ]
+        soundattrs=self.settings['soundsettings']['attributes']
         soundattrschanged=set(soundattrs) & set(self.attrschanged)
         for a in soundattrschanged:
             self.storesettingsfile(setting='soundsettings')
