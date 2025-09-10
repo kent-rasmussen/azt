@@ -744,6 +744,13 @@ class BeepGenerator(object):
         # self.play()
 if __name__ == "__main__":
     """Set volume, somehow!!"""
+    analang='tbt'
+    import langtags
+    languages=langtags.Languages()
+    language=languages.get_obj(analang)
+    # langtags.Language(analang,languages=languages)
+    soundsettings=SoundSettings(analang_obj=language)
+    log.info(f"soundsettings.asr_kwargs: {soundsettings.asr_kwargs}")
     b=BeepGenerator()
     b.compile()
     b.play()
