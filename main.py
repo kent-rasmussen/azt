@@ -3837,7 +3837,7 @@ class TaskDressing(HasMenus,ui.Window):
     def _hidebuttons(self,event=None):
         self.mainlabelrelief(relief=None,refresh=True)
         program['taskchooser'].mainwindowis.status.makeui()
-        self. setcontext()
+        self.setcontext()
     def correlatemenus(self):
         """I don't think I want this. Rather, menus must always be asked for."""
         log.info("Menus: {}; {} (chooser)".format(self.menu,program['taskchooser'].menu))
