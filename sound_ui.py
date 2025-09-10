@@ -166,6 +166,104 @@ class RecordButtonFrame(ui.Frame):
                 ).grid(row=0,column=0)
             return
         self.makebuttons()
+class RecordnTranscribeButtonFrame(RecordButtonFrame):
+    def _stop(self, event):
+        RecordButtonFrame._stop(self)
+        if self.soundsettings.asrOK and self.recorder.file_write_OK:
+            self.task.wait("Getting transcriptions...")
+            self.recorder.get_transcriptions()
+            self.task.waitdone()
+        else:
+            log.info("Not transcribing because asr is not OK!")
+        if hasattr(self.recorder,'transcriptions'):
+            self.maketranscriptionlabel()
+    def _redo(self, event):
+        self.remove_transcriptions()
+        RecordButtonFrame._redo(self)
+    def makebuttons(self):
+        RecordButtonFrame.makebuttons(self)
+        if (file.exists(self._filenameURL) and
+                hasattr(self.recorder, 'transcriptions') and
+                not self.shown == 'none'):
+            self.maketranscriptionlabel()
+    def maketranscriptionlabel(self):
+        try:
+            self.transcription_var.set(self.recorder.transcriptions)
+            self.transcription_ipa_var.set(self.recorder.transcriptions_ipa)
+            self.transcription_tone_var.set(self.recorder.tone_melody)
+        except Exception as e:
+            pass
+            # log.info(f"No transcription variables set ({e})")
+        self.transcriptionframe=ui.ScrollingFrame(self,row=0,col=3)
+        scrolling_content=self.transcriptionframe.content
+        c=0
+        repos=sorted(set(self.recorder.transcriptions)|set(
+                        self.recorder.transcriptions_ipa)) #all keys, keep order
+        for trans in ['transcriptions','transcriptions_ipa']:
+            # log.info(f"maybe showing {trans}")
+            if (hasattr(self,f'show_{trans}') and
+                getattr(self,f'show_{trans}') and
+                hasattr(self.recorder,trans) and
+                getattr(self.recorder,trans)):
+                # log.info(f"showing {trans}")
+                # log.info(f"showing {trans} now ({toshow[:20]})")
+                setattr(self,trans,{})
+                r=0
+                for i in repos:
+                    text=getattr(self.recorder,trans).get(i,'')
+                    if text and len(repos) > self.show_repo_name_if_more_than:
+                        text=i+': '+text
+                    try:
+                        assert text
+                        getattr(self,trans)[i]=ui.Label(scrolling_content,
+                                                    text=text,
+                                                    ipadx=20,
+                                                    row=r,
+                                                    column=c
+                                                    )
+                    except Exception as e:
+                        log.info(f"Probably nothing: {e}")
+                    if self.shown == 'first':
+                        continue
+                    r+=1
+                c+=1
+        if (hasattr(self,'show_tone') and self.show_tone
+                and hasattr(self.recorder,'tone_melody')
+            and self.recorder.tone_melody):
+            self.tone_melody=ui.Label(scrolling_content,
+                                    text=self.recorder.tone_melody,
+                                    ipadx=20, #ipady=15,
+                                    row=r, column=0, colspan=2
+                                    )
+        # log.info(f"scrolling_content size: {scrolling_content.grid_size()}")
+        if not sum(scrolling_content.grid_size()):
+            self.transcriptionframe.destroy()
+    def remove_transcriptions(self):
+        try:
+            self.transcriptionframe.content.destroy()
+            self.transcriptionframe.destroy()
+            self.tone_melody.destroy()
+            del self.recorder.transcriptions
+            del self.recorder.transcriptions_ipa
+            del self.recorder.tone_melody
+        except Exception as e:
+            log.info(f"transcription destruction failed ({e})")
+            pass
+    def configure_this(self):
+        ASRModelSelectionWindow(self.program)
+    def __init__(self,parent,task,node=None,**kwargs):
+        must_haves=['transcription_var','show_transcriptions',
+            'transcription_ipa_var','show_transcriptions_ipa',
+            'transcription_tone_var','show_tone','shown']
+        for f in must_haves:
+            setattr(self,f,kwargs.pop(f,False))
+        for f in [i for i in must_haves if '_var' in i]:
+            if not getattr(self,f):
+                setattr(self,f,ui.StringVar())
+                log.info(f"Set untracked StringVar for {f}; it won't be "
+                    f"available outside this {self.__class__.__name__}")
+        self.show_repo_name_if_more_than=1
+        super(RecordnTranscribeButtonFrame,self).__init__(parent,task,node,**kwargs)
 class SoundSettingsWindow(ui.Window):
     def setsoundformat(self,choice,window):
         self.soundsettings.sample_format=choice
