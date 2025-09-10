@@ -7405,7 +7405,7 @@ class Parse(Segments):
             self.updateparseUI()
             log.info(f"Storing word: {self.sense.id} ({self.analang}:{v})")
         except AttributeError as e:
-            log.info("Not storing word (WordCollectnParse): {}".format(e))
+            log.info("Not storing word (Parse): {}".format(e))
     def waitforOKsecondfields(self):
         while not program['settings'].secondformfieldsOK():
             after(10*100,callback=self.waitforOKsecondfields) # wait a second
