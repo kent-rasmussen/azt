@@ -7416,7 +7416,7 @@ class Parse(Segments):
         try:
             v=self.var.get()
             if v:
-                self.entry.lc.textvaluebylang(self.analang,v)
+                self.entry.fields[self.ftype].textvaluebylang(self.analang,v)
                 if not self.done():
                     self.parse_foreground(entry=self.entry)
             self.maybewrite() #only if above is successful
