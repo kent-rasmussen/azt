@@ -118,7 +118,10 @@ class RecordButtonFrame(ui.Frame):
         self.chunk = 1024  # Record in chunks of 1024 samples (for block only)
         self.channels = 1 #Always record in mono
         self.test=kwargs.pop('test',None)
-        if node:# and framed.framed != 'NA':
+        # log.info(f"Working with node: {node} "
+        #         f"({node.tag if node is not None else ''})"
+        #         f": {vars(node) if node is not None else ''}")
+        if node is not None and node.isnode():
             task.makeaudiofilename(node) #should fill out the following
             self.filename=node.textvaluebylang(
                                             self.program['params'].audiolang())
