@@ -20,17 +20,18 @@ class RecordButtonFrame(ui.Frame):
         except Exception as e:
             log.info("Couldn't stop recorder; was it on? ({})".format(e))
         """This is done in advance of recording now:"""
-        self.b.destroy()
-        self.makeplaybutton()
-        self.makedeletebutton()
-        self.addlink()
-    def _redo(self, event):
+        if self.recorder.file_write_OK:
+            self.b.destroy()
+            self.makeplaybutton()
+            self.makedeletebutton()
+            self.addlink()
+    def _redo(self, event=None):
         log.log(3,"I'm deleting the recording now")
         self.p.destroy()
         self.makerecordbutton()
         self.r.destroy()
     def makebuttons(self):
-        if file.exists(self._filenameURL):
+        if self.soundsettings.file_ok(self._filenameURL):
             self.makeplaybutton()
             self.makedeletebutton()
             self.addlink()
