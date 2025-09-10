@@ -1,8 +1,18 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 import ast
-import logsetup
+# import logsetup
 import datetime
+if __name__ == '__main__':
+    try: #Allow this module to be used without translation
+        _
+    except:
+        def _(x):
+            return x
+    import logsetup
+    log=logsetup.getlog(__name__)
+    logsetup.setlevel('DEBUG',log) #for this file
+    log.info(f"Importing {__name__}")
 """Function Decorators"""
 def marktime(f,*args,**kwargs):
     def timed(*args,**kwargs):
@@ -68,8 +78,9 @@ def indenteddict(indict):
                 outdict[j]='{'+',\n'.join([quote(i)+':'+quote(indict[j][i])
                                         for i in indict[j]#.keys()
                                         if i])+'}'
-        elif indict[j]:
-            # log.info(_("printing unindented dict for {} key").format(j))
+        # elif indict[j]: #this doesn't print "False"
+        else:
+            # print(_(f"printing unindented dict for {j} key"))
             outdict[j]=str(indict[j]) #don't quote booleans!
     return outdict
 def nesteddictadd1key(dict,key):
