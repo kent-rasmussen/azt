@@ -6,7 +6,7 @@ program={'name':'A-Z+T',
         'tkinter':True, #for some day
         'production':True, #True for making screenshots (default theme)
         'testing':False, #normal error screens and logs
-        'version':'0.9.14', #This is a string...
+        'version':'0.9.15', #This is a string...
         'testversionname':'testing', #always have some real test branch here
         'url':'https://github.com/kent-rasmussen/azt',
         'Email':'kent_rasmussen@sil.org'
