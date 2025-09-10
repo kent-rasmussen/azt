@@ -65,10 +65,20 @@ class Language(langcodes.Language):
     def __init__(self,**kwargs):
         super(Language, self).__init__(**kwargs)
 if __name__ == '__main__':
-    l=Language(language='en',territory="US")
-    l.addprivate('pacNW')
-    # print(vars(l))
-    print(l,l.display_name('fr'))
-    print('minimal object:',l.tag(),'valid:',l.is_valid())
-    print('maximal object:',l.maximize(),'valid:',l.maximize().is_valid())
-    
+    print(f"{tag_is_valid('sw-x-ipa_MT')=}")
+    ldict=Languages()
+    for code in ['sw-x-ipa_MT','sw-TZ']:
+        o=Language(code,ldict)
+        print(o.full_display())
+    for s in [
+        # 'tem','temb','tembo','Tembo',
+        #     'lug','lg',
+        'swh','swc','zmb','english','Swahili',
+            'tbt-x-xkivu','tbt-x-kivu-x','tbt-x-i','en'
+            # 'en','eng'
+            ]:
+        if s in ldict.by_iso:
+            print('country name:',ldict.by_iso[s]['country name'])
+        else:
+            o=ldict.get_obj(s)
+            print(o.full_display())
