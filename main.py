@@ -3052,12 +3052,12 @@ class Settings(object):
         self.notifyuserofextrasegments() #analang set by now, depends db only
         self.polygraphcheck() #depends only on self.polygraph
         self.checkinterpretations() #checks/sets values for distinguish/interpret
-        log.info("Interpretation: \n{}".format(
-                '\n'.join([k+': '+self.interpret[k] for k in self.interpret])
-                ))
-        log.info("Distinguishing: \n{}".format(
-                '\n'.join([k+': '+str(self.distinguish[k]) for k in self.distinguish])
-                ))
+        # log.info("Interpretation: \n{}".format(
+        #         '\n'.join([k+': '+self.interpret[k] for k in self.interpret])
+        #         ))
+        # log.info("Distinguishing: \n{}".format(
+        #         '\n'.join([k+': '+str(self.distinguish[k]) for k in self.distinguish])
+        #         ))
         self.setupCVrxs()
         for ps in program['db'].pss: #45s on English db
             self.getprofilesbyps(ps)
