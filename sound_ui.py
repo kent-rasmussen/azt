@@ -474,16 +474,30 @@ class SoundSettingsWindow(ui.Window):
         self.task=task
         self.soundsettings=self.program['soundsettings']
         self.soundcheckrefresh()
-class Task():
         if not kwargs.get("withdrawn"):
             task.withdraw()
             self.deiconify()
+class Task(ui.Window):
+    def wait(self,x):
+        print(x)
+    def waitdone(self):
+        pass
     def quittask(self):
         print("Not actually quitting task")
     def storesoundsettings(self):
         print("Not actually storing settings")
-    def __init__(self):
-        self.pyaudio=sound.AudioInterface()
+    def __init__(self,program):
+        self.program=program
+        self.theme=program['theme']
+        window_title=_('Test Task (Does nothing)')
+        ui.Window.__init__(self,
+                            program['root'],
+                            # program['root'],
+                            exit=False,
+                            title=window_title,
+                            withdrawn=True
+                            # state='withdrawn'
+                            )
         #any sound task should find settings at self.soundsettings:
         self.soundsettings=program['soundsettings'] #Each task with sound should have this
         self.pyaudio=program['soundsettings'].pyaudio
