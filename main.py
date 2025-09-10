@@ -14158,6 +14158,13 @@ class CheckParameters(object):
         }
         self.cvchecknamesdict()
 class ConfigParser(configparser.ConfigParser):
+    def output(self):
+        for k in self:
+            if isinstance(self[k],str):
+                log.info(f"Config {k}: {self[k]}")
+            else:
+                for j in self[k]:
+                    log.info(f"Config {k}/{j}: {self[k][j]}")
     def write(self,*args,**kwargs):
         configparser.ConfigParser.write(self,*args,**kwargs,
                                             space_around_delimiters=False)
