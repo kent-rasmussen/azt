@@ -44,6 +44,162 @@ def langcode(name):
     """return code from language name"""
 def territorycode(name):
     """return code from territory"""
+class Languages(dict):
+    def fix_data(self):
+        qafar_names={'localname': 'Qafar', 'localnames': ['Qafar af']}
+        self.full_codes['aa-Arab-ET'].update(qafar_names)
+    def reload_json(self):
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; '
+                        'x64; rv:77.0) Gecko/20100101 Firefox/77.0'}
+        request = urllib.request.Request(self.url, headers=headers)
+        r = urllib.request.urlopen(request)
+        content=r.read().decode('utf-8')
+        with open(localfile(self.url.split('/')[-1]),'w') as f:
+            f.write(content)
+        self.load_json()
+    def load_json(self):
+        try:
+            with open(localfile(self.url.split('/')[-1]),'r') as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            self.reload_json()
+            return
+        self.full_codes={i['full']:i for i in data if 'full' in i}
+        self.fix_data()
+        self.all_tags={k:i for i in data if 'tags' in i for k in i['tags'] }
+        self.all_tags.update({k:i for i in data if 'tag' in i
+                                for k in [i['tag']]})
+        region_dict_list=[i for i in data if 'full' not in i
+                                            if 'regions' in i]
+        if len(region_dict_list) != 1:
+            log.error("Problem with region list (not exactly one list dict): "
+                        f"\n{region_dict_list}")
+        self.region_codes=region_dict_list[0]['regions']
+        self.region_codes_names={i['region']:i['regionname'] for i in data
+                                            if 'full' in i and 'regionname' in i
+                                }
+        api_dict_list=[i for i in data if 'api' in i]
+        if len(api_dict_list) != 1:
+            log.error("Problem with api list (not exactly one list dict)")
+        self.data_version=api_dict_list[0]['api']
+        self.data_date=api_dict_list[0]['date']
+        phonetic_labels_dict_list=[i for i in data if i['tag'] == '_phonvar']
+        if len(phonetic_labels_dict_list) != 1:
+            log.error("Problem with phonetic variable list "
+                        "(not exactly one list dict)")
+        self.phonetic_labels=phonetic_labels_dict_list[0]['variants']
+        metadata=[i for i in data if 'full' not in i
+                                    if 'regions' not in i
+                                    if 'api' not in i
+                                    if i['tag'] != '_phonvar'
+                                ]
+        log.info(f"Loaded JSON language data with {len(self.full_codes)} "
+            "full language codes "
+            f"and {len(self.region_codes)} regions ("
+            f"v{self.data_version}; {self.data_date})")
+        log.info(f"found phonetic labels {self.phonetic_labels}")
+        log.info(f"Remaining metadata: {metadata}")
+    def load_by_iso(self):
+        self.by_iso=dict_by('language code')
+        for i in self.by_iso:
+            if len(self.by_iso[i])-1:
+                print(f"More than one ({len(self.by_iso[i])}) {i} entry found ! "
+                    f" ({self.by_iso[i]})")
+                exit()
+        self.by_iso={k:v[0] for k,v in self.by_iso.items()}
+    def lookup_name(self,name):
+        return [k for k in self.by_iso
+                            if name.lower() in (
+                                [self.by_iso[k].get('localname','').lower(),
+                                    self.by_iso[k].get('name','').lower()] or
+                        [i.lower() for i in self.by_iso[k].get('names',[])] or
+                        [i.lower() for i in self.by_iso[k].get('localnames',[])]
+                                        )
+                ]
+    def get_codes(self,input,first_wins=False):
+        codes=[]
+        try:
+            # log.info(f"code {input} is iso: {input in self.all_iso_codes}")
+            code=langcodes.standardize_tag(input)
+            # log.info(f"standardized {input} code: {code}")
+            obj=Language(code,self)
+            if obj.is_valid():
+                if first_wins:
+                    return [code]
+                codes.append(code)
+        except (langcodes.tag_parser.LanguageTagError,
+                AssertionError,
+                LookupError) as e:
+            # log.info(f"Language tag parsing error: {e}")
+            pass
+        from language_data.names import name_to_code,code_to_names
+        """name_to_code can also have a "language" kwarg to look up a
+        language name in a given language. Without this, it looks up a
+        language name in *ANY* language."""
+        code=name_to_code('language',input)
+        if code:
+            if first_wins:
+                # log.info(f"found {input} in language_data list "
+                #     f"with code(s) {code}")
+                return [code]
+            codes.append(code)
+            # log.info(f"Names: {code_to_names(code)}")
+        code=self.lookup_name(input) #this outputs a list of possibles
+        if code:
+            if first_wins:
+                # log.info(f"found {input} in Ethnologue list with "
+                #     f"code(s) {code}")
+                return [code]
+            codes.extend(code)
+        code=self.sisters.lookup_name(input) #this outputs a list of possibles
+        if code:
+            if first_wins:
+                # log.info(f"found {code} code(s) for {input} in Sisters list")
+                return [code]
+            codes.extend(code)
+        # log.info(f"Finishing with codes {codes}")
+        codes=set([langcodes.standardize_tag(i) for i in codes])
+        # log.info(f"Finished with codes {codes}")
+        return codes
+    def get_code(self,lang):
+        codes=self.get_codes(lang,first_wins=True)
+        # log.info("Finished getting codes")
+        if len(codes)>1:
+            log.info("Please select one of the following: \n"
+                f"{'\n'.join([f'{l}: {langcodes.Language(l).display_name()}' for l in codes])}")
+            exit()
+        elif codes:
+            return codes.pop() #just one
+    def get_obj(self,input): #input can be code or name
+        try:
+            return Language(input,self) #if this works, we're done
+        except:
+            code=self.get_code(input)
+            if code:
+                # log.info("Trying to make language element now")
+                return Language(code,self)
+            else:
+                log.error(f"Input {input} didn't result in a code!")
+    def get_objs(self,input): #input can be code or name
+        codes=self.get_codes(input)
+        return [Language(code,self) for code in codes]
+    def descendants_of(self,group_list):
+        group_set=set(group_list)
+        d={k for k in self.by_iso
+            if group_set & set(self.by_iso[k]['lineage']) == group_set}
+        # include macrolanguages of these langs, too:
+        d|={k for k,v in macrolanguage_members.items() if v&d}
+        print(f"Found {len(d)} descendants of {group_list}")
+        return d
+    def __init__(self,**kwargs):
+        self.url="https://ldml.api.sil.org/langtags.json"
+        super(Languages, self).__init__(**kwargs)
+        self.sisters=SisterLanguages()
+        # self.reload_json() #Forces online usage
+        self.load_json()
+        self.load_by_iso()
+        self.all_iso_codes=set(self.by_iso) | set(macrolanguage_members)
+        self.all_valid_codes=self.all_iso_codes|set(whisper_language_codes())
 class Language(langcodes.Language):
     """maybe pull ldml from https://ldml.api.sil.org/langtags.json
     probably store in my repo (if permitted)
