@@ -2071,6 +2071,8 @@ class Settings(object):
                                             'fs',
                                             'audio_card_in',
                                             'audio_card_out',
+                                            'asr_kwargs',
+                                            'asr_repos'
                                             ]},
             'toneframes':{
                                 'file':'toneframesfile',
@@ -2205,6 +2207,8 @@ class Settings(object):
             fns['profile']=program['slices'].profile
             # except this one, which pretends to set but doesn't (throws arg away)
             fns['profilecounts']=program['slices'].slicepriority
+            fns['asr_repos']=program['soundsettings'].asr_repo_tally
+            fns['asr_kwargs']=program['soundsettings'].asr_kwarg_dict
         except Exception as e:
             log.error("Only finished settingsobjects up to {} ({})".format(fns.keys(),e))
             return []
@@ -2221,7 +2225,7 @@ class Settings(object):
             o=self
         for s in self.settings[setting]['attributes']:
             # log.info("Looking for {} attr".format(s))
-            # log.info("{} attr value: {}".format(s,getattr(self,s,'Not Found!')))
+            # log.info("{} attr value: {}".format(s,getattr(o,s,'Not Found!')))
             """This dictionary of functions isn't made until after the objects,
             at the end of settings init. So this block is not used in
             conversion, only in later saves."""
@@ -2232,8 +2236,9 @@ class Settings(object):
                     # log.info("Value {}={} found in object".format(s,d[s]))
                 except:
                     log.error("Value of {} not found in object".format(s))
-            elif hasattr(o,s) and getattr(o,s):
-                d[s]=getattr(o,s)
+            elif hasattr(o,s):
+                if getattr(o,s) or setting == 'soundsettings': #store Falses
+                    d[s]=getattr(o,s)
                 # log.info("Set to dict self.{} with value {}, type {}"
                 #         "".format(s,d[s],type(d[s])))
             # else:
@@ -2247,24 +2252,28 @@ class Settings(object):
                     d['glosslangs'].append(d['glosslang2'])
                     del d['glosslang2']
         return d
-    def readsettingsdict(self,dict):
+    def readsettingsdict(self,settingsdict):
         """This takes a dictionary keyed by attribute names"""
-        d=dict
-        if 'fs' in dict:
+        # d=settingsdict
+        if 'fs' in settingsdict:
             o=self.soundsettings
         else:
             o=self
-        for s in dict:
-            v=d[s]
-            if hasattr(self,'fndict') and s in self.fndict:
+        for s in settingsdict:
+            v=settingsdict[s]
+            if isinstance(v,configparser.SectionProxy):
+                continue #don't store expty section headers
+            elif hasattr(self,'fndict') and s in self.fndict:
                 # log.info("Trying to read {} to object with value {} and fn "
                 #             "{}".format(s,v,self.fndict[s]))
                 self.fndict[s](v)
+            elif (isinstance(v,dict) and
+                hasattr(o,s) and isinstance(getattr(o,s),dict)):
+                getattr(o,s).update(v)
             else:
                 # log.info("Trying to read {} to {} with value {}, type {}"
                 #             "".format(s,o,v,type(v)))
                 setattr(o,s,v)
-        return d
     def storesettingsfile(self,setting='defaults'):
         #There are too many calls to this; why?
         filename=self.settingsfile(setting)
@@ -2280,12 +2289,13 @@ class Settings(object):
         #     return
         # else:
         #     log.info("Settings from file: {}".format(dict(config['default'])))
-        #     log.info("Settings currently: {}".format(d))
+        if setting in ['soundsettings']:
+            log.info("Sound settings currently: {}".format(d))
         config['default']={}
         # log.info("storing settings file {}".format(setting))
         for s in [i for i in d if i not in [None,'None']]:
             v=d[s]
-            # log.info("Ready to store {} type data: {}".format(type(v),v))
+            # log.info(f"Ready to store {type(v)} type data for {s}: {v}")
             if isinstance(v, dict):
                 config[s]=indenteddict(v)
             else:
@@ -2295,6 +2305,8 @@ class Settings(object):
         header=(_("# This settings file was made on {} on {}").format(
                                                     now(),platform.uname().node)
                 )
+        # log.info(f"Ready to write {type(config)} type data: {config}")
+        # config.output() #this logs out the whole config
         with open(filename, 'w', encoding='utf-8') as file:
             file.write(header+'\n\n')
             config.write(file)
@@ -2308,14 +2320,14 @@ class Settings(object):
                 self.adhocgroups={}
             return
         d={}
-        log.info("Found {} sections: {}".format(setting,config.sections()))
+        # log.info("Found {} sections: {}".format(setting,config.sections()))
         for section in config: #self.settings[setting]['attributes']:
             # log.info('\n'.join([': '.join([k,config[section][k]])
             #                             for k in config[section]]))
             if 'default' in config and section in ['default','DEFAULT']:
                 for k in config[section]:
-                    log.info("Moving {}.{}={} to object".format(section,k,
-                                                            config[section][k]))
+                    # log.info("Moving {}.{}={} to object".format(section,k,
+                    #                                         config[section][k]))
                     d[k]=ofromstr(config['default'][k])
                 # d[section]=ofromstr(config['default'][section])
             else:
