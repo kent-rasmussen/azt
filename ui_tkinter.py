@@ -1342,6 +1342,40 @@ class CheckButton(Gridded,Text,tkinter.Checkbutton): #was Childof
                                 )
         UI.__init__(self)
         self.dogrid()
+class ListBox(Gridded,Text,UI,tkinter.Listbox):
+    def __init__(self, parent, *args, **kwargs):
+        # log.info(f"Starting to make Listbox: {vars(self)}, args:{args}, "
+        #             f" kwargs:{kwargs}")
+        optionlist=kwargs.pop('optionlist',[])
+        command=kwargs.pop('command')
+        Gridded.__init__(self,**kwargs)
+        kwargs=self.lessgridkwargs(**kwargs)
+        Childof.__init__(self,parent)
+        Text.__init__(self, parent, **kwargs)
+        kwargs=self.lesstextkwargs(**kwargs)
+        if (hasattr(self,'textvariable') and
+                                isinstance(self.textvariable,tkinter.Variable)):
+            if not hasattr(self.textvariable.get(), '__iter__'):
+                self.textvariable.set(optionlist) #even if empty, make this iter
+            # else:
+            #     log.info("ListBox Found a variable with an iterable value; "
+            #                 "leaving alone.")
+        else:
+            log.info("making self.textvariable")
+            self.textvariable=tkinter.Variable(value=optionlist)
+        # log.info(f"Ready to make Listbox: {vars(self)}")
+        """selectmode can be
+        tkinter.BROWSE – allows a single selection. This is the default.
+        tkinter.EXTENDED – select any adjacent group of items at once by clicking the first item and dragging to the last line.
+        tkinter.SINGLE – allow you to select one line and you cannot drag the mouse.
+        tkinter.MULTIPLE – select any number of lines at once. Clicking on any line toggles whether it is selected or not."""
+        tkinter.Listbox.__init__(self,parent,
+                                font=self.font,
+                                listvariable=self.textvariable,
+                                **kwargs)
+        self.bind('<<ListboxSelect>>', command)
+        UI.__init__(self)
+        self.dogrid()
 class SearchableComboBox(Gridded,Text):
     """Adapted from https://coderslegacy.com/searchable-combobox-in-tkinter/"""
     def __init__(self, options) -> None:
