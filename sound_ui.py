@@ -64,11 +64,11 @@ class RecordButtonFrame(ui.Frame):
         # self.p.bind('<ButtonRelease>', self.function)
         self.p.grid(row=0, column=1,sticky='w')
         pttext=_("Click to hear")
-        if 'praat' in self.soundsettings.program:
+        if 'praat' in self.program:
             pttext+='; '+_("right click to open in praat")
             self.p.bind('<Button-3>',
                         lambda x: executables.praatopen(
-                                                    self.soundsettings.program,
+                                                    self.program,
                                                     self._filenameURL))
         self.pt=ui.ToolTip(self.p,pttext)
     def makedeletebutton(self):
@@ -82,12 +82,12 @@ class RecordButtonFrame(ui.Frame):
     def addlink(self):
         if self.test:
             return
-        self.soundsettings.program['db'].addmediafields(self.node,self.filename,
-                                self.soundsettings.program['params'].audiolang,
+        self.program['db'].addmediafields(self.node,self.filename,
+                                self.program['params'].audiolang(),
                                 # ftype=ftype,
                                 write=False)
         self.task.maybewrite()
-        self.soundsettings.program['status'].last('recording',update=True)
+        self.program['status'].last('recording',update=True)
     def __init__(self,parent,task,node=None,**kwargs): #filenames
         """Uses node to make framed data, just for soundfile name"""
         """Without node, this just populates a sound file, with URL as
@@ -102,13 +102,17 @@ class RecordButtonFrame(ui.Frame):
         except:
             task.pyaudio=sound.AudioInterface()
         self.pa=task.pyaudio
-        if not hasattr(task,'soundsettings'):
-            if not hasattr(self.soundsettings.program['settings'],
-                            'soundsettings'):
-                task.loadsoundsettings()
-            self.soundsettings=self.soundsettings.program['settings'].soundsettings
-        else:
-            self.soundsettings=task.soundsettings
+        if not hasattr(task,'soundsettings') or not hasattr(task,'program'):
+            log.error("task missing a settings attr? "
+                        f"(soundsettings:{hasattr(task,'soundsettings')}; "
+                        f"program:{hasattr(task,'program')})")
+            exit()
+        self.soundsettings=task.soundsettings
+        self.program=task.program
+        # log.info("RecordButtonFrame found program settings "
+        #         f"{self.program}")
+        # log.info("RecordButtonFrame started with soundsettings "
+        #         f"{vars(self.soundsettings)}")
         self.callbackrecording=True
         self.chunk = 1024  # Record in chunks of 1024 samples (for block only)
         self.channels = 1 #Always record in mono
@@ -116,7 +120,7 @@ class RecordButtonFrame(ui.Frame):
         if node:# and framed.framed != 'NA':
             task.makeaudiofilename(node) #should fill out the following
             self.filename=node.textvaluebylang(
-                            self.soundsettings.program['params'].audiolang)
+                                            self.program['params'].audiolang())
             if not self.filename: #should have above or below
                 self.filename=node.audiofilenametoput
             self._filenameURL=node.audiofileURL
@@ -138,7 +142,7 @@ class RecordButtonFrame(ui.Frame):
         ui.Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
         might cause the init to stop."""
-        if not self.test and not self.soundsettings.program['settings'].audiolang:
+        if not self.test and not self.program['settings'].audiolang:
             tlang=_("Set audio language to get record buttons!")
             log.error(tlang)
             ui.Label(self,text=tlang,borderwidth=1,
@@ -371,8 +375,7 @@ class SoundSettingsWindow(ui.Window):
         ui.Window.__init__(self, program['root'], exit=False,
                             title=_('Select Sound Card Settings'))
         self.task=task
-        self.soundsettings=task.soundsettings
-        self.soundsettings.program=program
+        self.soundsettings=self.program['soundsettings']
         self.soundcheckrefresh()
 class Task():
     def quittask(self):
@@ -382,7 +385,8 @@ class Task():
     def __init__(self):
         self.pyaudio=sound.AudioInterface()
         #any sound task should find settings at self.soundsettings:
-        self.soundsettings=sound.SoundSettings(self.pyaudio)
+        self.soundsettings=program['soundsettings'] #Each task with sound should have this
+        self.pyaudio=program['soundsettings'].pyaudio
         self.audiolang=True
 if __name__ == "__main__":
     try:
