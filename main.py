@@ -41,10 +41,9 @@ information than 'DEBUG' does):
     helpful.
 Other levels:'WARNING','ERROR','CRITICAL'
 """
-from utilities import *
 try:
     import logsetup
-    log=logsetup.getlog(__name__) #not ever a module
+    log=logsetup.getlog('root') #not ever a module
     logsetup.setlevel(loglevel)
     """My modules, which should log as above"""
     import lift
@@ -67,6 +66,7 @@ try:
 except ModuleNotFoundError as e:
     log.error("Problem importing url module. Is urllib3 installed? {}".format(e))
     exceptiononload=True
+from utilities import *
 import executables
 import export
 import langtags
@@ -762,12 +762,10 @@ class LiftChooser(ui.Window,HasMenus):
             restart=True
         else:
             name=choice
-        log.info("if choice == 'New': complete")
-        log.info(f"{self.name if hasattr(self,'name') else "no self.name!"}")
-        log.info(f"{name}")
+        log.info("self.name: {}".format(name))
         if name:
             self.setfilenameandcontinue(name,restart)
-        elif not hasattr(self,'name') or not self.name: #If not either, trust that Demo is working
+        elif not self.name: #If not either, trust that Demo is working
             self.deiconify() #let user pick again
     def setfilenameandcontinue(self,name,restart=False,event=None):
         log.info(_("Running setfilenameandcontinue with "
@@ -1099,9 +1097,8 @@ class Menus(ui.Menu):
                     )
     def sort(self):
         self.advancedmenu.add_separator()
-        # While this remains broken, leave off. Is it worth fixing?
-        # options=[(_("Add/Modify Ad Hoc Sorting Group"),
-        #                                         self.parent.addmodadhocsort),]
+        options=[(_("Add/Modify Ad Hoc Sorting Group"),
+                                                self.parent.addmodadhocsort),]
         if isinstance(self.parent,SortT):
             options.extend([(_("Add Tone frame"), self.parent.addframe)])
         group=program['status'].group()
@@ -3026,12 +3023,11 @@ class Settings(object):
         log.info("Processed {} forms to syllable profile".format(n))
         logfinished(start_time)
     def _getprofiles(self,senses,ps):
-        # This goes fast, even on a large database; do we need the wait?
         n=0
         todo=len(senses)
-        # if todo>750:
-        #     msg=_("getting profiles for {} lexical category").format(ps)
-        #     program['taskchooser'].wait(msg)
+        if todo>750:
+            msg=_("getting profiles for {} lexical category").format(ps)
+            program['taskchooser'].wait(msg)
         for sense in senses:
             n+=1
             # if False: #for testing without backgrounding
@@ -3043,14 +3039,14 @@ class Settings(object):
                 form,profile=self.getprofileofsense(sense,ps)
                 log.debug("{}: {} > {}".format(str(n)+'/'+str(todo),form,
                                             profile))
-            # if todo>750:
-            #     program['taskchooser'].waitprogress(n*100/todo)
+            if todo>750:
+                program['taskchooser'].waitprogress(n*100/todo)
         try:
             t.join()
         except UnboundLocalError:
             pass #not backgrounding...
-        # if todo>750:
-        #     program['taskchooser'].waitdone()
+        if todo>750:
+            program['taskchooser'].waitdone()
         return n
     def getprofilesbyentry(self):
         for entry in program['db'].entries:
@@ -3070,12 +3066,12 @@ class Settings(object):
         self.notifyuserofextrasegments() #analang set by now, depends db only
         self.polygraphcheck() #depends only on self.polygraph
         self.checkinterpretations() #checks/sets values for distinguish/interpret
-        # log.info("Interpretation: \n{}".format(
-        #         '\n'.join([k+': '+self.interpret[k] for k in self.interpret])
-        #         ))
-        # log.info("Distinguishing: \n{}".format(
-        #         '\n'.join([k+': '+str(self.distinguish[k]) for k in self.distinguish])
-        #         ))
+        log.info("Interpretation: \n{}".format(
+                '\n'.join([k+': '+self.interpret[k] for k in self.interpret])
+                ))
+        log.info("Distinguishing: \n{}".format(
+                '\n'.join([k+': '+str(self.distinguish[k]) for k in self.distinguish])
+                ))
         self.setupCVrxs()
         for ps in program['db'].pss: #45s on English db
             self.getprofilesbyps(ps)
@@ -3189,7 +3185,7 @@ class Settings(object):
         # log.info("compileCVrxforsclass RXs: {}".format(self.rx))
     def setupCVrxs(self):
         self.slists() #makes s; depends on polygraphs
-        # log.info(f"self.s: {self.s[program['params'].analang()]}")
+        log.info(f"self.s: {self.s[program['params'].analang()]}")
         self.rxdict=rx.RegexDict(distinguish=self.distinguish,
                                 interpret=self.interpret,
                                 sdict=self.s[program['params'].analang()],
@@ -3350,7 +3346,7 @@ class Settings(object):
             "database!")
             basename=file.getfilenamebase(self.liftfilename)
             parent=file.getfilenamebase(file.getfilenamedir(self.liftfilename))
-            if parent == basename and langtags.tag_is_valid(basename):
+            if parent == basename and len(parent) == 3: #plausible iso
                 self.analang=parent
                 errortext+=_("\n(guessing [{}]; if that's not correct, exit now "
                             "and fix it!)").format(self.analang)
@@ -3368,6 +3364,8 @@ class Settings(object):
                 e=ErrorNotice(errortext,title=_("Error!"),wait=True)
                 file.writefilename() #just clear the default; let user move on
                 sysrestart()
+            # program['db'].pss=program['db'].getpssbylang(self.analang) #redo this, specify
+            # return
         elif nlangs == 1:
             self.analang=program['db'].analangs[0]
             log.debug(_('Only one analang in file; using it: ({})'.format(
@@ -3376,7 +3374,6 @@ class Settings(object):
             of the first two is three letters long, and the other isn't"""
         elif nlangs == 2:
             if ((len(program['db'].analangs[0]) == 3) and
-                langtags.tag_is_valid(program['db'].analangs[0]) and
                 (lcwdatamax == program['db'].analangs[0] or
                     lxwdatamax == program['db'].analangs[0]) and
                 (len(program['db'].analangs[1]) != 3)):
@@ -3385,7 +3382,6 @@ class Settings(object):
                 self.analang=program['db'].analangs[0] #assume this is the iso code
                 self.analangdefault=program['db'].analangs[0] #In case it gets changed.
             elif ((len(program['db'].analangs[1]) == 3) and
-                langtags.tag_is_valid(program['db'].analangs[1]) and
                 (lcwdatamax == program['db'].analangs[1] or
                     lxwdatamax == program['db'].analangs[1]) and
                     (len(program['db'].analangs[0]) != 3)):
@@ -3393,13 +3389,11 @@ class Settings(object):
                                 'analang! ({})'.format(program['db'].analangs[1])))
                 self.analang=program['db'].analangs[1] #assume this is the iso code
                 self.analangdefault=program['db'].analangs[1] #In case it gets changed.
-            elif (lcwdatamax in program['db'].analangs and
-                            langtags.tag_is_valid(lcwdatamax)):
+            elif lcwdatamax in program['db'].analangs:
                 self.analang=lcwdatamax
                 log.debug('Neither analang looks like an iso code, taking the '
                 'one with most citation data: {}'.format(program['db'].analangs))
-            elif (lxwdatamax in program['db'].analangs and
-                            langtags.tag_is_valid(lxwdatamax)):
+            elif lxwdatamax in program['db'].analangs:
                 self.analang=lxwdatamax
                 log.debug('Neither analang looks like an iso code, taking the '
                 'one with most lexeme data: {}'.format(program['db'].analangs))
@@ -3408,8 +3402,7 @@ class Settings(object):
                 log.debug('Neither analang looks like an iso code, nor has much'
                 'data; taking the first one: {}'.format(program['db'].analangs))
         else: #for three or more analangs, take the first plausible iso code
-            if (lcwdatamax in program['db'].analangs and
-                        langtags.tag_is_valid(lxwdatamax)):
+            if lcwdatamax in program['db'].analangs and len(lcwdatamax) == 3:
                 self.analang=lcwdatamax
                 log.debug('The language with the most citation data looks like '
                 'an iso code; using: {}'.format(program['db'].analangs))
@@ -3418,8 +3411,7 @@ class Settings(object):
                 log.debug('The language with the most citation data is also '
                     'the language with the most lexeme data; using: {}'.format(
                                                             program['db'].analangs))
-            elif (lxwdatamax in program['db'].analangs and
-                        langtags.tag_is_valid(lxwdatamax)):
+            elif lxwdatamax in program['db'].analangs and len(lxwdatamax) == 3:
                 self.analang=lxwdatamax
                 log.debug('The language with the most lexeme data looks like '
                 'an iso code; using: {}'.format(program['db'].analangs))
@@ -3436,11 +3428,29 @@ class Settings(object):
     def guessaudiolang(self):
         nlangs=len(program['db'].audiolangs)
         """if there's only one audio language, use it."""
-        if program['db'].audiolang:
-            self.audiolang=program['db'].audiolang
+        if nlangs == 0 and self.analang:
+            self.audiolang=lift.Lift.makeaudiolangname(self) #program['db'].audiolangs[0]
+        if nlangs == 1:
+            self.audiolang=program['db'].audiolangs[0]
+        elif nlangs == 2:
+            if ((self.analang in program['db'].audiolangs[0]) and
+                (self.analang not in program['db'].audiolangs[1])):
+                self.audiolang=program['db'].audiolangs[0]
+                log.info(("Analang in first of two audiolangs only, selecting "
+                        )+self.audiolang)
+            elif ((self.analang in program['db'].audiolangs[1]) and
+                    (self.analang not in program['db'].audiolangs[0])):
+                self.audiolang=program['db'].audiolangs[1]
+                log.info(_("Analang in second of two audiolangs only, selecting "
+                        )+self.audiolang)
+            elif ((self.analang in program['db'].audiolangs[1]) and
+                    (self.analang in program['db'].audiolangs[0])):
+                self.audiolang=sorted(program['db'].audiolangs,key = len)[0]
+                log.info(_("Analang in both of two audiolangs only, selecting "
+                "shorter: {}").format(self.audiolang))  #assume is more basic
         else: #for three or more analangs, take the first plausible iso code
             for n in range(nlangs):
-                if self.analang in program['db'].audiolangs[n]:
+                if self.analang in program['db'].analangs[n]:
                     self.audiolang=program['db'].audiolangs[n]
                     return
     def makeglosslangs(self):
@@ -3503,7 +3513,11 @@ class Settings(object):
                 program['taskchooser'].task.getword() #update UI for glosses
         if 'secondformfield' in self.attrschanged:
             self.attrschanged.remove('secondformfield')
-        soundattrs=self.settings['soundsettings']['attributes']
+        soundattrs=['fs',
+                    'sample_format',
+                    'audio_card_index',
+                    'audioout_card_index'
+                    ]
         soundattrschanged=set(soundattrs) & set(self.attrschanged)
         for a in soundattrschanged:
             self.storesettingsfile(setting='soundsettings')
@@ -3855,7 +3869,7 @@ class TaskDressing(HasMenus,ui.Window):
     def _hidebuttons(self,event=None):
         self.mainlabelrelief(relief=None,refresh=True)
         program['taskchooser'].mainwindowis.status.makeui()
-        self.setcontext()
+        self. setcontext()
     def correlatemenus(self):
         """I don't think I want this. Rather, menus must always be asked for."""
         log.info("Menus: {}; {} (chooser)".format(self.menu,program['taskchooser'].menu))
@@ -5106,8 +5120,6 @@ class TaskDressing(HasMenus,ui.Window):
             log.info("Done maybe committing/pushing to {}".format(r))
         log.info("Saving settings for next time")
         program['settings'].storesettingsfile() #in case we added repos
-        if isinstance(self,Sound):
-            program['settings'].storesettingsfile(setting='soundsettings')
         log.info("Settings saved")
         log.info("Killing window")
         ui.Window.killall(self) #Exitable
@@ -5300,7 +5312,7 @@ class TaskChooser(TaskDressing,ui.Window):
             if SortV in [i[0] for i in optionlist]:
                 self.maketask(SortV)
             else:
-                self.maketask(WordCollectnParsewRecordings)
+                self.maketask(WordCollectnParse)
                 #optionlist[-1][0]) #last item, the code
     def maketask(self,taskclass): #,filename=None
         self.unsetmainwindow()
@@ -5361,7 +5373,6 @@ class TaskChooser(TaskDressing,ui.Window):
                     # WordCollectionPlural, #What is the value of this
                     # WordCollectionImperative, #What is the value of this
                     WordCollectnParse,
-                    WordCollectnParsewRecordings,
                     RecordCitation
                     ]
             if self.doneenough['collectionlc']:
@@ -5782,7 +5793,6 @@ class TaskChooser(TaskDressing,ui.Window):
         self.makeexampledict() #needed for makestatus, needs params,slices,data
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
         self.maxpss=2 #don't automatically give more than two grammatical categories
-        log.info("done setting up taskChooser")
         self.makedefaulttask() #normal default
         # self.gettask() # let the user pick
         """Do I want this? Rather give errors..."""
@@ -6067,454 +6077,6 @@ class Segments(object):
         self.dodoneonly=False #don't give me other words
         self.ftype=program['params'].ftype()
         self.rxdict=program['settings'].rxdict
-class Sound(object):
-    """This holds all the Sound methods, mostly for playing."""
-    def donewpyaudio(self):
-        try:
-            self.pyaudio.terminate()
-        except:
-            log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
-    def pyaudiocheck(self):
-        try:
-            self.pyaudio.pa.get_format_from_width(1) #just check if its OK
-        except:
-            self.pyaudio=sound.AudioInterface()
-    def makesoundsettings(self):
-        if not hasattr(program['settings'],'soundsettings'):
-            self.pyaudiocheck() #in case self.pyaudio isn't there yet
-            program['settings'].soundsettings=sound.SoundSettings(self.pyaudio,
-                        analang_obj=program['languages'].get_obj(self.analang)
-                                                                )
-    def loadsoundsettings(self):
-        self.makesoundsettings()
-        program['settings'].loadsettingsfile(setting='soundsettings')
-        program['soundsettings']=program['settings'].soundsettings
-        if program['hostname'] == 'karlap' and (
-                        'cache_dir' not in program['soundsettings'].asr_kwargs
-                        ):
-            program['soundsettings'].asr_kwargs[
-                                            'cache_dir']='/media/kentr/hfcache'
-    def storesoundsettings(self):
-        program['settings'].storesettingsfile(setting='soundsettings')
-    def quittask(self):
-        self.soundsettingswindow.destroy()
-        program['taskchooser'].gettask()
-        self.on_quit()
-    def soundsettingscheck(self):
-        if not hasattr(program['settings'],'soundsettings'):
-            self.loadsoundsettings()
-    def missingsoundattr(self):
-        # log.info(dir(program['settings'].soundsettings))
-        ss=program['settings'].soundsettings
-        for s in ['fs', 'sample_format',
-                    'audio_card_in',
-                    'audio_card_out']:
-            if hasattr(ss,s):
-                if s+'s' in ss.hypothetical and (getattr(ss,s)
-                                                not in ss.hypothetical[s+'s']):
-                    log.info("Sound setting {} invalid; asking again".format(s))
-                    return True
-                elif 'audio_card' in s and (getattr(ss,s)
-                                                    not in ss.cards['dict']):
-                    log.info("Sound setting {} invalid; asking again".format(s))
-                    return True
-            else:
-                log.info("Missing sound setting {}; asking again".format(s))
-                return True
-        program['settings'].soundsettingsok=True
-    def soundcheck(self):
-        #just make sure settings are there
-        self.soundsettingscheck()
-        self.soundsettings=program['settings'].soundsettings
-        self.soundsettings.check()
-        if not self.exitFlag.istrue() and self.missingsoundattr():
-            self.mikecheck() #if not, get them
-            return
-    def audioexists(self,relfilename):
-        return file.exists(self.audioURL(relfilename))
-    def audioURL(self,relfilename):
-        return str(file.getdiredurl(self.audiodir,relfilename))
-    def hassoundfile(self,node,recheck=False):
-        """sets self.audiofileisthere and maybe self.audiofileURL"""
-        return node.hassoundfile(program['params'].audiolang(),
-                                self.audiodir,recheck)
-    def _configure_sound(self,event=None):
-        sound_ui.SoundSettingsWindow(self)
-    def setcontext(self,context=None):
-        TaskDressing.setcontext(self)
-        self.context.menuitem(_("Sound settings"),self._configure_sound)
-    def __init__(self):
-        self.audiodir=program['settings'].audiodir
-        self.audiolang=program['params'].audiolang()
-        self.program=program #make available to sound_ui
-        self.soundcheck()
-class Record(Sound): #TaskDressing
-    """This holds all the Sound methods specific for Recording."""
-    def makelabelsnrecordingbuttons(self,parent,node,r,c):
-        # log.info("Making buttons for {} (in {})".format(node,parent))
-        t=node.formatted(self.analang,self.glosslangs)
-        lxl=ui.Label(parent, text=t,row=r,column=c+1,sticky='w')
-        lcb=sound_ui.RecordButtonFrame(parent,self,node,
-                                        row=r,column=c,sticky='w')
-    def cleanup_pa(self,parentframe):
-        import gc
-        for w in parentframe.content.winfo_children():
-            if type(w) is sound_ui.RecordButtonFrame:
-                w.recorder.streamclose()
-                w.player.streamclose()
-        parentframe.destroy() #for now, at least
-        gc.collect()
-    def showentryformstorecordpage(self):
-        #The info we're going for is stored above sense, hence guid.
-        if self.runwindow.exitFlag.istrue():
-            log.info('no runwindow; quitting!')
-            return
-        if not self.runwindow.frame.winfo_exists():
-            log.info('no runwindow frame; quitting!')
-            return
-        self.runwindow.resetframe()
-        ps=program['slices'].ps()
-        profile=program['slices'].profile()
-        count=program['slices'].count()
-        text=_("Record {} {} Words: click ‘Record’, talk, "
-                "and release ({} words)".format(profile,ps,
-                                                count))
-        log.info(text)
-        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
-        instr.grid(row=0,column=0,sticky='w')
-        senses=program['slices'].senses(ps=ps,profile=profile)
-        if not senses: #i.e., no profile analysis yet
-            senses=program['db'].senses
-        nperpage=5
-        pages=[senses[i:i+nperpage] for i in range(0,len(senses),nperpage)]
-        log.info("pages: {}".format(pages))
-        for page in pages:
-            if self.runwindow.exitFlag.istrue():
-                return
-            self.runwindow.wait(thenshow=True)
-            buttonframes=ui.ScrollingFrame(self.runwindow.frame,
-                                            row=1,column=0,sticky='w')
-            row=0
-            done=list()
-            # log.info("Looking through entries now")
-            for row,entry in enumerate([i.entry for i in page]):
-                self.runwindow.column=0
-                if entry.guid in done: #only the first of multiple senses
-                    continue
-                else:
-                    done.append(entry.guid)
-                """These following two have been shifted down a level, and will
-                now return a list of form elements, each. Something will need to be
-                adjusted here..."""
-                ftypes=['lc','pl','imp']
-                # for f in ftypes:
-                #     log.info(f"{f}: {entry.sense.nodebyftype(f)}, "
-                #                 f"{type(entry.sense.nodebyftype(f))}")
-                for node in [entry.sense.nodebyftype(f) for f in ftypes
-                                if entry.sense.nodebyftype(f)]:
-                    self.runwindow.column+=2
-                    # sense['nodetoshow']=sense[node]
-                    self.makelabelsnrecordingbuttons(buttonframes.content,node,
-                        row,self.runwindow.column)
-                # row+=1
-            # log.info("Done iterating for one page")
-            ui.Button(buttonframes.content,column=1,row=row,
-                        text=_("Next {} words").format(nperpage),
-                        cmd=lambda x=buttonframes:self.cleanup_pa(x))
-            # log.info("Showing waitwindow now")
-            self.runwindow.waitdone()
-            buttonframes.wait_window(buttonframes)
-        if not self.runwindow.exitFlag.istrue():
-            self.runwindow.wait_window(self.runwindow.frame)
-    def showentryformstorecord(self,justone=False):
-        # Save these values before iterating over them
-        #Convert to iterate over local variables
-        self.getrunwindow()
-        if justone or not program['slices'].valid():
-            self.showentryformstorecordpage()
-        else:
-            #store for later
-            ps=program['slices'].ps()
-            profile=program['slices'].profile()
-            for psprofile in program['slices'].valid(): #self.profilecountsValid:
-                if self.runwindow.exitFlag.istrue():
-                    return 1
-                program['slices'].ps(psprofile[1])
-                program['slices'].profile(psprofile[0])
-                nextb=ui.Button(self.runwindow,text=_("Next Group"),
-                                        cmd=self.runwindow.resetframe) # .frame.destroy
-                nextb.grid(row=0,column=1,sticky='ne')
-                self.showentryformstorecordpage()
-            #return to initial
-            program['slices'].ps(ps)
-            program['slices'].profile(profile)
-        self.donewpyaudio()
-    def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
-        def setskip(event):
-            self.runwindow.frame.skip=True
-            entryframe.destroy()
-        self.getrunwindow()
-        if self.exitFlag.istrue() or self.runwindow.exitFlag.istrue():
-            return
-        log.debug("Working with skip: {}".format(skip))
-        if skip == 'skip':
-            self.runwindow.frame.skip=True
-        else:
-            self.runwindow.frame.skip=skip
-        text=_("Words and phrases to record: click ‘Record’, talk, and release")
-        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
-        instr.grid(row=0,column=0,sticky='w',columnspan=2)
-        if (program['settings'].entriestoshow is None) and (senses is None):
-            ui.Label(self.runwindow.frame, anchor='w',
-                    text=_("Sorry, there are no entries to show!")).grid(row=1,
-                                    column=0,sticky='w')
-            return
-        if self.runwindow.frame.skip == False:
-            skipf=ui.Frame(self.runwindow.frame)
-            skipb=ui.Button(skipf,
-                        text=rx.linebreakwords(_("Skip to next undone")),
-                        cmd=skipf.destroy)
-            skipf.grid(row=1,column=1,sticky='w')
-            skipb.grid(row=0,column=0,sticky='w')
-            skipb.bind('<ButtonRelease-1>', setskip)
-        if senses is None:
-            senses=program['settings'].entriestoshow
-        for sense in senses:
-            log.debug("Working on {} with skip: {}".format(sense.id,
-                                                    self.runwindow.frame.skip))
-            examples=list(sense.examples.values())
-            if examples == []:
-                log.debug(_("No examples! Add some, then come back."))
-                continue
-            if ((self.runwindow.frame.skip == True) and
-                (lift.atleastoneexamplehaslangformmissing(examples,
-                                    program['settings'].audiolang) == False)):
-                continue
-            row=0
-            if self.runwindow.exitFlag.istrue():
-                return 1
-            entryframe=ui.Frame(self.runwindow.frame)
-            entryframe.grid(row=1,column=0)
-            if progress is not None:
-                progressl=ui.Label(self.runwindow.frame, anchor='e',
-                    font='small',
-                    text='({} {}/{})'.format(*progress)
-                    )
-                progressl.grid(row=0,column=2,sticky='ne')
-            """This is the title for each page: isolation form and glosses."""
-            text=sense.formatted(self.analang,self.glosslangs)
-            if not text:
-                entryframe.destroy() #is this ever needed?
-                continue
-            ui.Label(entryframe, anchor='w', font='read',
-                    text=text).grid(row=row,
-                                    column=0,sticky='w')
-            """Then get each sorted example"""
-            self.runwindow.frame.scroll=ui.ScrollingFrame(entryframe)
-            self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
-            examplesframe=ui.Frame(self.runwindow.frame.scroll.content)
-            examplesframe.grid(row=0,column=0,sticky='w')
-            # examples.reverse()
-            for example in examples:
-                if (skip == True and
-                    lift.examplehaslangform(example,program['settings'].audiolang) == True):
-                    continue
-                # """These should already be framed!"""
-                text=example.formatted(self.analang,self.glosslangs)
-                if not text:
-                    #Don't show the whole dictionary of frames here:
-                    log.info("Not showing example with text {}".format(text))
-                    continue
-                row+=1
-                """If I end up pulling from example nodes elsewhere, I should
-                probably make this a function, like getframeddata"""
-                if not text:
-                    exit()
-                rb=sound_ui.RecordButtonFrame(examplesframe,self,example)
-                rb.grid(row=row,column=0,sticky='w')
-                ui.Label(examplesframe, anchor='w',text=text
-                                        ).grid(row=row, column=1, sticky='w')
-            row+=1
-            d=ui.Button(examplesframe, text=_("Done/Next"),command=entryframe.destroy)
-            d.grid(row=row,column=0)
-            self.runwindow.waitdone()
-            examplesframe.wait_window(entryframe)
-            if self.runwindow.exitFlag.istrue():
-                return 1
-            if self.runwindow.frame.skip == True:
-                return 'skip'
-    def showtonegroupexs(self):
-        def next():
-            program['status'].nextprofile()
-            self.runwindow.on_quit()
-            self.showtonegroupexs()
-        if (not(hasattr(self,'examplespergrouptorecord')) or
-            (type(self.examplespergrouptorecord) is not int)):
-            self.examplespergrouptorecord=100
-            program['settings'].storesettingsfile()
-        self.makeanalysis()
-        self.analysis.donoUFanalysis()
-        torecord=self.analysis.sensesbygroup
-        ntorecord=len(torecord) #number of groups
-        nexs=len([k for i in torecord for j in torecord[i] for k in j])
-        nslice=program['slices'].count()
-        log.info("Found {} analyzed of {} examples in slice".format(nexs,nslice))
-        skip=False
-        if ntorecord == 0:
-            log.error(_("How did we get no UR tone groups? {}-{}"
-                    "\nHave you run the tone report recently?"
-                    "\nDoing that for you now...").format(
-                            program['slices'].profile(),
-                            program['slices'].ps()
-                                                        ))
-            self.analysis.do()
-            self.showtonegroupexs()
-            return
-        batch={}
-        # log.info(f"program['db'].sensedict ({len(program['db'].sensedict)}): "
-        #         f"{program['db'].sensedict}")
-        for i in range(self.examplespergrouptorecord):
-            batch[i]=[]
-            for ufgroup in torecord:
-                print(i,len(torecord[ufgroup]),ufgroup,torecord[ufgroup])
-                if len(torecord[ufgroup]) > i: #no done piles.
-                    # sense=[program['db'].sensedict[torecord[ufgroup][i]]] #list of one
-                    sense=torecord[ufgroup][i] #list of one
-                else:
-                    print("Not enough examples, moving on:",i,ufgroup)
-                    continue
-                log.info(_('Giving user the number {} example from tone '
-                        'group {}'.format(i,ufgroup)))
-                exited=self.showsenseswithexamplestorecord([sense],
-                            (ufgroup, i+1, self.examplespergrouptorecord),
-                            skip=skip)
-                if exited == 'skip':
-                    skip=True
-                if exited == True:
-                    return
-        if not (self.runwindow.exitFlag.istrue() or self.exitFlag.istrue()):
-            self.runwindow.waitdone()
-            self.runwindow.resetframe()
-            ui.Label(self.runwindow.frame, anchor='w',font='read',
-            text=_("All done! Sort some more words, and come back.")
-            ).grid(row=0,column=0,sticky='w')
-            ui.Button(self.runwindow.frame,
-                    text=_("Continue to next syllable profile"),
-                    command=next).grid(row=1,column=0)
-        self.donewpyaudio()
-    def filenameoptions(self,node):
-        # This depends on self.analang and program['slices'].profile; otherwise, it
-        # could be moved to a FieldParent method
-        """This should generate possible filenames, with preferred (current
-        schema) last, as that will be used if none are found."""
-        print(f"Looking for file names for {node} ({node.tag})")
-        ps=program['slices'].ps()
-        print("ps:",ps)
-        if ps:
-            pslocopts=[ps]
-        else:
-            pslocopts=[]
-        # Except for data generated early in 2021, profile should not be there,
-        # because it can change with analysis. But we include here to pick up
-        # old files, in case they are there but not linked.
-        # First option (legacy):
-        # pslocopts.insert(0,ps+'_'+self.parent.taskchooser.slices.profile())
-        profile=program['slices'].profile()
-        if ps and profile:
-            pslocopts.insert(0,ps+'_'+profile)
-        fieldlocopts=[None] #none is OK
-        try:
-            l=node.locationvalue()
-            #the last option is taken, if none are found
-            pslocopts.insert(0,ps+'-'+l) #the first option.
-            fieldlocopts.append(l) #make this the last option.
-        except AttributeError:
-            # log.info("doesn't look like an example node; not offering location")
-            pass
-                    # Yes, these allow for location to be present twice, but
-                # that should never be found, nor offered
-        if not pslocopts:
-            pslocopts=[None] #make this an iterable, none is OK
-        filenames=[]
-        """We iterate over lots of filename schemas, to preserve legacy data.
-        This is only really needed (and so could be removed at some point) when
-        data has been recorded but no link is in place, for whatever reason.
-        If there is a link to a real sound file, that is covered above.
-        If there is no sound file, then the below will result in the default
-        (current) schema."""
-        # log.info("forms at this point: {}".format(self.forms))
-        for pslocopt in pslocopts:
-            for fieldlocopt in fieldlocopts: #for older name schema
-                for legacy in ['_', None]:
-                    for tags in [ None, 1 ]:
-                        args=[node.sense.id]
-                        if tags:
-                            args+=[node.tag]
-                            if node.tag == 'field':
-                                args+=[node.ftype]
-                        form=node.textvaluebylang(self.analang)
-                        if not form:
-                            log.error(f"No {self.analang} analang in "
-                                f"{node.sense.id}! (OK if recording first; "
-                                f"forms: {node.textvaluedict()})")
-                        args+=[form] #[self.ftype]]
-                        for l in self.glosslangs:
-                            args+=[node.glossbylang(l)]
-                        optargs=args[:]
-                        optargs.insert(0,pslocopt) #put first
-                        optargs.insert(3,fieldlocopt) #put after self.node.tag
-                        # log.info("optargs: {}".format(optargs))
-                        wavfilename='_'.join([x for x in optargs if x])
-                        if legacy == '_': #There was a schema that had an extra '_'.
-                            wavfilename+='_'
-                        wavfilename=rx.urlok(wavfilename) #one character check
-                        filenames+=[wavfilename+'.wav']
-        return filenames
-    def makeaudiofilename(self,node):
-        """If node is already marked with sound file attributes, we're done"""
-        if self.hassoundfile(node):
-            return
-        """Otherwise, generate prioritized list of name options"""
-        filenames=self.filenameoptions(node)
-        """if any of the generated filenames are there, stop at the first one"""
-        for f in filenames:
-            if self.audioexists(f):
-                log.info("Audiofile {} found at {}".format(f, self.audioURL(f)))
-                node.textvaluebylang(lang=program['params'].audiolang(),value=f)
-                if self.hassoundfile(node,recheck=True):
-                    log.info("file {} linked in LIFT".format(node.audiofileURL))
-                break
-        """If none found, be ready to write with last/highest priority option"""
-        f=filenames[-1]
-        log.debug(_("No audio file found, but ready to record: "
-                    )+"{}; {}:{}".format(f, _("url"), self.audioURL(f)))
-        """Should be able to just send f"""
-        node.audiofilenametoput=f #don't write this until we actually record
-        node.audiofileURL=self.audioURL(f)
-        log.info(f"Finishing makeaudiofilename with {node.audiofilenametoput=} "
-                f"and {node.audiofileURL=}")
-    def mikecheck(self):
-        """This starts and stops the UI"""
-        self.withdraw()
-        self.pyaudiocheck()
-        #will need to add sound_ui in here, once generalized:
-        self.soundsettingswindow=sound_ui.SoundSettingsWindow(self)
-        self.soundsettingswindow.protocol("WM_DELETE_WINDOW", self.quittask)
-        if not self.soundsettingswindow.exitFlag.istrue():
-            self.soundsettingswindow.wait_window(self.soundsettingswindow)
-        self.donewpyaudio()
-        self.deiconify()
-        if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
-            self.soundsettingswindow.destroy()
-    def _configure_transcription(self,event=None):
-        sound_ui.ASRModelSelectionWindow(self)
-    def setcontext(self,context=None):
-        Sound.setcontext(self)
-        self.context.menuitem(_("Transcription settings"),
-                                    self._configure_transcription)
-    def __init__(self,parent):
-        Sound.__init__(self)
-        self.soundsettings.load_ASR() #after file settings are loaded
 class WordCollection(Segments):
     """This task collects words, from the SIL CAWL, or one by one."""
     def taskicon(self):
@@ -7023,21 +6585,17 @@ class WordCollection(Segments):
                                     row=1, column=0, columnspan=3, sticky='ew')
         back=ui.Button(self.wordframe,text=_("Back"),cmd=self.backword,
                         row=4, column=0, sticky='w',anchor='w')
-        self.instructions2=ui.Label(self.wordframe,text='',font='small',
-                        row=4, column=1, sticky='ew',anchor='c')
         next=ui.Button(self.wordframe,text=_("Next"),cmd=self.nextword,
                         row=4, column=2, sticky='e',anchor='e')
         self.var=ui.StringVar()
         self.lxenter=ui.EntryField(self.wordframe,text=self.var,
                                 font='readbig',
-                                row=5,column=0,columnspan=3,
+                                row=3,column=0,columnspan=3,
                                 sticky='ew')
         if isinstance(self.task,Parse):
             self.parsebutton=ui.Label(self.wordframe,
                                         text=self.cparsetext,
-                                        row=6, column=1,
-                                        sticky='w',
-                                        anchor='w')
+                                        row=4, column=1, sticky='w',anchor='w')
         next.bind_all('<Up>',lambda event: self.backword(nostore=True))
         next.bind_all('<Prior>',lambda event: self.backword(nostore=True))
         next.bind_all('<Down>',lambda event: self.nextword(nostore=True))
@@ -7056,8 +6614,6 @@ class WordCollection(Segments):
             #     self.wordframe.pic.bind_all('<Return>',
             #                                         self.selectimageormoveon)
             #     log.info("Return now selects image, or moves on")
-    def set_up_transcription(self):
-        pass
     def getword(self):
         program['taskchooser'].withdraw()# not sure why necessary
         # log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
@@ -7117,7 +6673,6 @@ class WordCollection(Segments):
         if not default:
             default=''
         self.var.set(default)
-        self.set_up_transcription() #for tasks with it
         if isinstance(self.task,Parse):
             log.info(self.currentformsforuser(entry=self.entry))
             self.updateparseUI()
@@ -7136,109 +6691,6 @@ class WordCollection(Segments):
     def __init__(self, parent):
         Segments.__init__(self,parent)
         self.dodone=False
-class WordCollectionwRecordings(WordCollection,Record):
-    def getinstructions(self):
-        return _("Record a word in your language that goes with these "
-                "meanings."
-                "\nGive just a single word (not a phrase) wherever possible."
-                # "\nClick-Speak-Release on the record button."
-                )
-    def set_up_transcription(self):
-        self.set_transcription_fields()
-        self.set_transcription_frame(row=3,column=0,colspan=2) #instructions2
-    def set_transcription_fields(self,**kwargs):
-        ftype=kwargs.pop('ftype',self.ftype)
-        self.transcription_var=ui.StringVar()
-        self.transcription_ipa_var=ui.StringVar()
-        self.transcription_tone_var=ui.StringVar()
-        self.transcription_var.trace_add('write', self.show_drafts)
-        self.transcription_ipa_var.trace_add('write', self.store_phonetic)
-        self.transcription_tone_var.trace_add('write', self.store_tone)
-        if ftype not in self.entry.fields: #Need this to record to
-            if ftype == 'lx':
-                self.entry.lx=lift.Lexeme(self.entry)
-            elif ftype == 'lc':
-                self.entry.lx=lift.Citation(self.entry)
-            else:
-                self.entry.fields[ftype]=lift.Field(self.entry,ftype=ftype)
-    def set_transcription_frame(self,**kwargs):
-        ftype=kwargs.pop('ftype',self.ftype)
-        try:
-            self.wordframe.recordFrame.destroy()#don't leave this around!
-        except:
-            pass
-        log.info(f"setting frame with settings: {self.soundsettings}")
-        self.wordframe.recordFrame=sound_ui.RecordnTranscribeButtonFrame(
-                        self.wordframe,
-                        self, #task
-                        self.entry.fields[ftype],#node,
-                        transcription_var=self.transcription_var,
-                        transcription_ipa_var=self.transcription_ipa_var,
-                        transcription_tone_var=self.transcription_tone_var,
-                        # show_transcriptions=True, #this typically in Entry
-                        # show_transcriptions_ipa=True,
-                        show_tone=True,
-                        shown='none',
-                        sticky='ew',
-                        **kwargs
-                    )
-    def show_drafts(self,*args):
-        # log.info(f"show_drafts got args {args}")
-        instructions2=("click on the best option(s) above\n "
-                        "correct the consonants and vowels below.")
-        try:
-            self.wordframe.draftFrame.destroy()
-        except:
-            pass
-        content=self.wordframe.recordFrame.recorder.transcriptions
-        log.info(f"Recorder returned {len(content)} transcriptions")
-        if len(content) == 1:
-            self.var.set(content[0][1]) #value of first (only) option
-            return
-        c,r=self.wordframe.recordFrame.grid_size()
-        self.wordframe.draftFrame=ui.Frame(self.wordframe.recordFrame,
-                                            column=c,
-                                            row=0
-                                        )
-        # log.info(f"{content=}")
-        content=sorted(content.items(),key=lambda x: len(x[1]))
-        # log.info(f"{content=}")
-        aspect=3/4 #float OK
-        nrows=max(3,int((len(content)*aspect)**.5))
-        buttons=0
-        max_len=20 #don't want words kicking buttons off the page...
-        for repo,line in content:
-            ui.Button(self.wordframe.draftFrame,
-                text=line[:max_len],
-                command=lambda x=repo,y=line:self.draft_entry(x,y),
-                column=buttons//nrows,
-                row=buttons%nrows,
-            )
-            buttons+=1
-        self.instructions2['text']=instructions2
-    def draft_entry(self,repo,value,*args):
-        # This just fills in the visible field. Dictionary may be
-        # overwritten on confirmation later
-        # This is only called when a user clicks on a button, not
-        # automatically, so it should always overwrite the entry field
-        program['soundsettings'].tally_asr_repo(repo)
-        self.var.set(value)
-        program['settings'].storesettingsfile(setting='soundsettings')
-        log.info(program['soundsettings'].asr_repo_tally())
-    def store_phonetic(self,*args):
-        #Need to fix this; format isn't correct
-        self.entry.fieldvalue(self.ftype,
-                        program['db'].phoneticlangname(machine=True),
-                        value=self.transcription_ipa_var.get().split('\n')[0]
-                        )
-    def store_tone(self,*args):
-        self.entry.fieldvalue(self.ftype,
-                        program['db'].tonelangname(machine=True),
-                        value=self.transcription_tone_var.get()
-                        )
-    def __init__(self, parent):
-        Record.__init__(self,parent)
-        WordCollection.__init__(self,parent)
 class WordCollectionLexeme(TaskDressing,WordCollection):
     def tooltip(self):
         return _("Don't use this task.")
@@ -7264,18 +6716,6 @@ class WordCollectionCitation(TaskDressing,WordCollection):
         WordCollection.__init__(self,parent)
         log.info("Initializing {}".format(self.tasktitle()))
         #Status frame is 0,0
-        self.getwords()
-class WordCollectionCitationwRecordings(TaskDressing,WordCollectionwRecordings):
-    def tooltip(self):
-        return _("This task helps you collect words in citation form through "
-                "recordings with automatic transcription drafts.")
-    def tasktitle(self):
-        return _("Add Words") # for Citation Forms
-    def __init__(self, parent): #frame, filename=None
-        self.ftype=program['params'].ftype('lc') #lift.Entry.citationformnodeofentry
-        TaskDressing.__init__(self,parent)
-        WordCollection.__init__(self,parent)
-        log.info("Initializing {}".format(self.tasktitle()))
         self.getwords()
 class WordCollectionPlural(TaskDressing,WordCollection):
     def tooltip(self):
@@ -7648,14 +7088,14 @@ class Parse(Segments):
         segments=ui.StringVar()
         segments.set(self.parser.entry.lc.textvaluebylang(self.analang))
         e=ui.EntryField(w.frame,text=segments,
-                        row=2,column=0)
+                        row=1,column=0)
         b=ui.Button(w.frame,text=_("OK"),cmd=do,
-                        row=3,column=0, sticky='e')
+                        row=2,column=0, sticky='e')
         ui.Button(w.frame,text=_("Not a {}").format(ps),cmd=next,
-                        row=3,column=1, sticky='e')
+                        row=2,column=1, sticky='e')
         ui.Label(w.frame,text=self.currentformnotice(),
                     font='small',justify='l',
-                    row=4,column=0,columnspan=2)
+                    row=3,column=0,columnspan=2)
         e.focus_set()
         e.bind('<Return>',do)
         w.wait_window(b)
@@ -7698,9 +7138,6 @@ class Parse(Segments):
             return
         elif isinstance(r,tuple) and self.userconfirmation(*r):
             self.parser.doparsetolx(r[1],*r[4:]) #pass root, too
-        elif not isinstance(r,tuple) and r > 1:
-            log.info("I need to figure out what to do with suppletive forms!")
-            return
         if (not self.exited and
             not self.done() and
             # rootchange kicks back, so just finish here on rootchange:
@@ -7864,14 +7301,14 @@ class Parse(Segments):
         try:
             v=self.var.get()
             if v:
-                self.entry.fields[self.ftype].textvaluebylang(self.analang,v)
+                self.entry.lc.textvaluebylang(self.analang,v)
                 if not self.done():
                     self.parse_foreground(entry=self.entry)
             self.maybewrite() #only if above is successful
             self.updateparseUI()
-            log.info(f"Storing word: {self.sense.id} ({self.analang}:{v})")
+            log.info("Storing word: {}".format(self.sense.id))
         except AttributeError as e:
-            log.info("Not storing word (Parse): {}".format(e))
+            log.info("Not storing word (WordCollectnParse): {}".format(e))
     def waitforOKsecondfields(self):
         while not program['settings'].secondformfieldsOK():
             after(10*100,callback=self.waitforOKsecondfields) # wait a second
@@ -7976,51 +7413,16 @@ class WordCollectnParse(Parse,WordCollection,TaskDressing):
         Parse.__init__(self,parent)
         WordCollection.__init__(self,parent)
         program['taskchooser'].withdraw()
-        fn=self.getwords()#?
-class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,TaskDressing):
-    """This task collects words, from the SIL CAWL, or one by one.
-    First in citation form, then pl or imperativewith Parse"""
-    def taskicon(self):
-        return program['theme'].photo['iconWordRec']
-    def tooltip(self):
-        return _("This task helps you collect and parse words by recording "
-                "them, with an automatic draft.")
-    def dobuttonkwargs(self):
-        if program['taskchooser'].cawlmissing:
-            fn=self.addCAWLentries
-            text=_("Add remaining CAWL entries")
-            tttext=_("This will add entries from the Comparative African "
-                    "Wordlist (CAWL) which aren't already in your database "
-                    "(you are missing {} CAWL tags). If the appropriate "
-                    "glosses are found in your database, CAWL tags will be "
-                    "merged with those entries."
-                    "\nDepending on the number of entries, this may take "
-                    "awhile.").format(len(program['taskchooser'].cawlmissing))
-        else:
-            text=_("Add a Word")#?
-            fn=self.addmorpheme#?
-            tttext=_("This adds any word, but is best used after filling out a "
-                    "wordlist, if the word you want to add isn't there "
-                    "already.")
-        return {'text':text,
-                'fn':fn,
-                # column=0,
-                'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program['theme'].photo['WordRec'],
-                'sticky':'ew',
-                'tttext':tttext
-                }
-    def tasktitle(self):
-        return _("Add and Parse Words with Audio") # for Citation Forms
-    def __init__(self, parent):
-        log.info("Initializing {}".format(self.tasktitle()))
-        self.ftype=program['params'].ftype('lc') #always correct?
-        # self.nodetag='citation'
-        TaskDressing.__init__(self,parent)
-        Parse.__init__(self,parent)
-        WordCollectionwRecordings.__init__(self,parent)
-        program['taskchooser'].withdraw()
+        # if not program['settings'].secondformfieldsOK():
+        #     ErrorNotice(_("To parse, you must first define which fields "
+        #                     "should contain those forms"),
+        #                     wait=True)
+        #     self.shutdowntask()
+        #     return
+        #This should either be adapted to use parse or not by keyword, or have
+        # another method for addnParse
+        # if me:
+        #     self.downloadallCAWLimages()
         fn=self.getwords()#?
 class WordsParse(Parse,WordCollection,TaskDressing):
     def taskicon(self):
@@ -9685,6 +9087,426 @@ class Sort(object):
                         'CV':'check',
                         }
         self.analang=program['params'].analang()
+class Sound(object):
+    """This holds all the Sound methods, mostly for playing."""
+    def donewpyaudio(self):
+        try:
+            self.pyaudio.terminate()
+        except:
+            log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
+    def pyaudiocheck(self):
+        try:
+            self.pyaudio.pa.get_format_from_width(1) #just check if its OK
+        except:
+            self.pyaudio=sound.AudioInterface()
+    def makesoundsettings(self):
+        if not hasattr(program['settings'],'soundsettings'):
+            self.pyaudiocheck() #in case self.pyaudio isn't there yet
+            program['settings'].soundsettings=sound.SoundSettings(self.pyaudio)
+    def loadsoundsettings(self):
+        self.makesoundsettings()
+        program['settings'].loadsettingsfile(setting='soundsettings')
+        program['soundsettings']=program['settings'].soundsettings
+    def storesoundsettings(self):
+        program['settings'].storesettingsfile(setting='soundsettings')
+    def quittask(self):
+        self.soundsettingswindow.destroy()
+        program['taskchooser'].gettask()
+        self.on_quit()
+    def soundsettingscheck(self):
+        if not hasattr(program['settings'],'soundsettings'):
+            self.loadsoundsettings()
+    def missingsoundattr(self):
+        log.info(dir(self.soundsettings))
+        ss=self.soundsettings
+        for s in ['fs', 'sample_format',
+                    'audio_card_in',
+                    'audio_card_out']:
+            if hasattr(self.soundsettings,s):
+                if s+'s' in ss.hypothetical and (getattr(self.soundsettings,s)
+                                                not in ss.hypothetical[s+'s']):
+                    log.info("Sound setting {} invalid; asking again".format(s))
+                    return True
+                elif 'audio_card' in s and (getattr(self.soundsettings,s)
+                                                    not in ss.cards['dict']):
+                    log.info("Sound setting {} invalid; asking again".format(s))
+                    return True
+            else:
+                log.info("Missing sound setting {}; asking again".format(s))
+                return True
+        program['settings'].soundsettingsok=True
+    def mikecheck(self):
+        """This starts and stops the UI"""
+        #move this to Record, after confirming that can be safely done.
+        self.pyaudiocheck()
+        #will need to add sound_ui in here, once generalized:
+        self.soundsettingswindow=sound_ui.SoundSettingsWindow(program, self)
+        self.soundsettingswindow.protocol("WM_DELETE_WINDOW", self.quittask)
+        if not self.soundsettingswindow.exitFlag.istrue():
+            self.soundsettingswindow.wait_window(self.soundsettingswindow)
+        self.donewpyaudio()
+        if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
+            self.soundsettingswindow.destroy()
+    def soundcheck(self):
+        #just make sure settings are there
+        self.soundsettingscheck()
+        self.soundsettings=program['settings'].soundsettings
+        self.soundsettings.check()
+        if not self.exitFlag.istrue() and self.missingsoundattr():
+            self.mikecheck() #if not, get them
+            return
+    def audioexists(self,relfilename):
+        return file.exists(self.audioURL(relfilename))
+    def audioURL(self,relfilename):
+        return str(file.getdiredurl(self.audiodir,relfilename))
+    def hassoundfile(self,node,recheck=False):
+        """sets self.audiofileisthere and maybe self.audiofileURL"""
+        return node.hassoundfile(program['params'].audiolang(),
+                                self.audiodir,recheck)
+    def __init__(self):
+        self.audiodir=program['settings'].audiodir
+        self.audiolang=program['params'].audiolang()
+        self.soundcheck()
+class Record(Sound,TaskDressing):
+    """This holds all the Sound methods specific for Recording."""
+    def makelabelsnrecordingbuttons(self,parent,node,r,c):
+        # log.info("Making buttons for {} (in {})".format(node,parent))
+        t=node.formatted(self.analang,self.glosslangs)
+        lxl=ui.Label(parent, text=t,row=r,column=c+1,sticky='w')
+        lcb=sound_ui.RecordButtonFrame(parent,self,node,
+                                        row=r,column=c,sticky='w')
+    def cleanup_pa(self,parentframe):
+        import gc
+        for w in parentframe.content.winfo_children():
+            if type(w) is sound_ui.RecordButtonFrame:
+                w.recorder.streamclose()
+                w.player.streamclose()
+        parentframe.destroy() #for now, at least
+        gc.collect()
+    def showentryformstorecordpage(self):
+        #The info we're going for is stored above sense, hence guid.
+        if self.runwindow.exitFlag.istrue():
+            log.info('no runwindow; quitting!')
+            return
+        if not self.runwindow.frame.winfo_exists():
+            log.info('no runwindow frame; quitting!')
+            return
+        self.runwindow.resetframe()
+        ps=program['slices'].ps()
+        profile=program['slices'].profile()
+        count=program['slices'].count()
+        text=_("Record {} {} Words: click ‘Record’, talk, "
+                "and release ({} words)".format(profile,ps,
+                                                count))
+        log.info(text)
+        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
+        instr.grid(row=0,column=0,sticky='w')
+        senses=program['slices'].senses(ps=ps,profile=profile)
+        if not senses: #i.e., no profile analysis yet
+            senses=program['db'].senses
+        nperpage=5
+        pages=[senses[i:i+nperpage] for i in range(0,len(senses),nperpage)]
+        log.info("pages: {}".format(pages))
+        for page in pages:
+            if self.runwindow.exitFlag.istrue():
+                return
+            self.runwindow.wait(thenshow=True)
+            buttonframes=ui.ScrollingFrame(self.runwindow.frame,
+                                            row=1,column=0,sticky='w')
+            row=0
+            done=list()
+            # log.info("Looking through entries now")
+            for row,entry in enumerate([i.entry for i in page]):
+                self.runwindow.column=0
+                if entry.guid in done: #only the first of multiple senses
+                    continue
+                else:
+                    done.append(entry.guid)
+                """These following two have been shifted down a level, and will
+                now return a list of form elements, each. Something will need to be
+                adjusted here..."""
+                ftypes=['lc','pl','imp']
+                # for f in ftypes:
+                #     log.info(f"{f}: {entry.sense.nodebyftype(f)}, "
+                #                 f"{type(entry.sense.nodebyftype(f))}")
+                for node in [entry.sense.nodebyftype(f) for f in ftypes
+                                if entry.sense.nodebyftype(f)]:
+                    self.runwindow.column+=2
+                    # sense['nodetoshow']=sense[node]
+                    self.makelabelsnrecordingbuttons(buttonframes.content,node,
+                        row,self.runwindow.column)
+                # row+=1
+            # log.info("Done iterating for one page")
+            ui.Button(buttonframes.content,column=1,row=row,
+                        text=_("Next {} words").format(nperpage),
+                        cmd=lambda x=buttonframes:self.cleanup_pa(x))
+            # log.info("Showing waitwindow now")
+            self.runwindow.waitdone()
+            buttonframes.wait_window(buttonframes)
+        if not self.runwindow.exitFlag.istrue():
+            self.runwindow.wait_window(self.runwindow.frame)
+    def showentryformstorecord(self,justone=False):
+        # Save these values before iterating over them
+        #Convert to iterate over local variables
+        self.getrunwindow()
+        if justone or not program['slices'].valid():
+            self.showentryformstorecordpage()
+        else:
+            #store for later
+            ps=program['slices'].ps()
+            profile=program['slices'].profile()
+            for psprofile in program['slices'].valid(): #self.profilecountsValid:
+                if self.runwindow.exitFlag.istrue():
+                    return 1
+                program['slices'].ps(psprofile[1])
+                program['slices'].profile(psprofile[0])
+                nextb=ui.Button(self.runwindow,text=_("Next Group"),
+                                        cmd=self.runwindow.resetframe) # .frame.destroy
+                nextb.grid(row=0,column=1,sticky='ne')
+                self.showentryformstorecordpage()
+            #return to initial
+            program['slices'].ps(ps)
+            program['slices'].profile(profile)
+        self.donewpyaudio()
+    def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
+        def setskip(event):
+            self.runwindow.frame.skip=True
+            entryframe.destroy()
+        self.getrunwindow()
+        if self.exitFlag.istrue() or self.runwindow.exitFlag.istrue():
+            return
+        log.debug("Working with skip: {}".format(skip))
+        if skip == 'skip':
+            self.runwindow.frame.skip=True
+        else:
+            self.runwindow.frame.skip=skip
+        text=_("Words and phrases to record: click ‘Record’, talk, and release")
+        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
+        instr.grid(row=0,column=0,sticky='w',columnspan=2)
+        if (program['settings'].entriestoshow is None) and (senses is None):
+            ui.Label(self.runwindow.frame, anchor='w',
+                    text=_("Sorry, there are no entries to show!")).grid(row=1,
+                                    column=0,sticky='w')
+            return
+        if self.runwindow.frame.skip == False:
+            skipf=ui.Frame(self.runwindow.frame)
+            skipb=ui.Button(skipf,
+                        text=rx.linebreakwords(_("Skip to next undone")),
+                        cmd=skipf.destroy)
+            skipf.grid(row=1,column=1,sticky='w')
+            skipb.grid(row=0,column=0,sticky='w')
+            skipb.bind('<ButtonRelease-1>', setskip)
+        if senses is None:
+            senses=program['settings'].entriestoshow
+        for sense in senses:
+            log.debug("Working on {} with skip: {}".format(sense.id,
+                                                    self.runwindow.frame.skip))
+            examples=list(sense.examples.values())
+            if examples == []:
+                log.debug(_("No examples! Add some, then come back."))
+                continue
+            if ((self.runwindow.frame.skip == True) and
+                (lift.atleastoneexamplehaslangformmissing(examples,
+                                    program['settings'].audiolang) == False)):
+                continue
+            row=0
+            if self.runwindow.exitFlag.istrue():
+                return 1
+            entryframe=ui.Frame(self.runwindow.frame)
+            entryframe.grid(row=1,column=0)
+            if progress is not None:
+                progressl=ui.Label(self.runwindow.frame, anchor='e',
+                    font='small',
+                    text='({} {}/{})'.format(*progress)
+                    )
+                progressl.grid(row=0,column=2,sticky='ne')
+            """This is the title for each page: isolation form and glosses."""
+            text=sense.formatted(self.analang,self.glosslangs)
+            if not text:
+                entryframe.destroy() #is this ever needed?
+                continue
+            ui.Label(entryframe, anchor='w', font='read',
+                    text=text).grid(row=row,
+                                    column=0,sticky='w')
+            """Then get each sorted example"""
+            self.runwindow.frame.scroll=ui.ScrollingFrame(entryframe)
+            self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
+            examplesframe=ui.Frame(self.runwindow.frame.scroll.content)
+            examplesframe.grid(row=0,column=0,sticky='w')
+            # examples.reverse()
+            for example in examples:
+                if (skip == True and
+                    lift.examplehaslangform(example,program['settings'].audiolang) == True):
+                    continue
+                # """These should already be framed!"""
+                text=example.formatted(self.analang,self.glosslangs)
+                if not text:
+                    #Don't show the whole dictionary of frames here:
+                    log.info("Not showing example with text {}".format(text))
+                    continue
+                row+=1
+                """If I end up pulling from example nodes elsewhere, I should
+                probably make this a function, like getframeddata"""
+                if not text:
+                    exit()
+                rb=sound_ui.RecordButtonFrame(examplesframe,self,example)
+                rb.grid(row=row,column=0,sticky='w')
+                ui.Label(examplesframe, anchor='w',text=text
+                                        ).grid(row=row, column=1, sticky='w')
+            row+=1
+            d=ui.Button(examplesframe, text=_("Done/Next"),command=entryframe.destroy)
+            d.grid(row=row,column=0)
+            self.runwindow.waitdone()
+            examplesframe.wait_window(entryframe)
+            if self.runwindow.exitFlag.istrue():
+                return 1
+            if self.runwindow.frame.skip == True:
+                return 'skip'
+    def showtonegroupexs(self):
+        def next():
+            program['status'].nextprofile()
+            self.runwindow.on_quit()
+            self.showtonegroupexs()
+        if (not(hasattr(self,'examplespergrouptorecord')) or
+            (type(self.examplespergrouptorecord) is not int)):
+            self.examplespergrouptorecord=100
+            program['settings'].storesettingsfile()
+        self.makeanalysis()
+        self.analysis.donoUFanalysis()
+        torecord=self.analysis.sensesbygroup
+        ntorecord=len(torecord) #number of groups
+        nexs=len([k for i in torecord for j in torecord[i] for k in j])
+        nslice=program['slices'].count()
+        log.info("Found {} analyzed of {} examples in slice".format(nexs,nslice))
+        skip=False
+        if ntorecord == 0:
+            log.error(_("How did we get no UR tone groups? {}-{}"
+                    "\nHave you run the tone report recently?"
+                    "\nDoing that for you now...").format(
+                            program['slices'].profile(),
+                            program['slices'].ps()
+                                                        ))
+            self.analysis.do()
+            self.showtonegroupexs()
+            return
+        batch={}
+        # log.info(f"program['db'].sensedict ({len(program['db'].sensedict)}): "
+        #         f"{program['db'].sensedict}")
+        for i in range(self.examplespergrouptorecord):
+            batch[i]=[]
+            for ufgroup in torecord:
+                print(i,len(torecord[ufgroup]),ufgroup,torecord[ufgroup])
+                if len(torecord[ufgroup]) > i: #no done piles.
+                    # sense=[program['db'].sensedict[torecord[ufgroup][i]]] #list of one
+                    sense=torecord[ufgroup][i] #list of one
+                else:
+                    print("Not enough examples, moving on:",i,ufgroup)
+                    continue
+                log.info(_('Giving user the number {} example from tone '
+                        'group {}'.format(i,ufgroup)))
+                exited=self.showsenseswithexamplestorecord([sense],
+                            (ufgroup, i+1, self.examplespergrouptorecord),
+                            skip=skip)
+                if exited == 'skip':
+                    skip=True
+                if exited == True:
+                    return
+        if not (self.runwindow.exitFlag.istrue() or self.exitFlag.istrue()):
+            self.runwindow.waitdone()
+            self.runwindow.resetframe()
+            ui.Label(self.runwindow.frame, anchor='w',font='read',
+            text=_("All done! Sort some more words, and come back.")
+            ).grid(row=0,column=0,sticky='w')
+            ui.Button(self.runwindow.frame,
+                    text=_("Continue to next syllable profile"),
+                    command=next).grid(row=1,column=0)
+        self.donewpyaudio()
+    def filenameoptions(self,node):
+        # This depends on self.analang and program['slices'].profile; otherwise, it
+        # could be moved to a FieldParent method
+        """This should generate possible filenames, with preferred (current
+        schema) last, as that will be used if none are found."""
+        ps=program['slices'].ps()
+        pslocopts=[ps]
+        # Except for data generated early in 2021, profile should not be there,
+        # because it can change with analysis. But we include here to pick up
+        # old files, in case they are there but not linked.
+        # First option (legacy):
+        # pslocopts.insert(0,ps+'_'+self.parent.taskchooser.slices.profile())
+        pslocopts.insert(0,ps+'_'+program['slices'].profile())
+        fieldlocopts=[None]
+        try:
+            l=node.locationvalue()
+            #the last option is taken, if none are found
+            pslocopts.insert(0,ps+'-'+l) #the first option.
+            fieldlocopts.append(l) #make this the last option.
+        except AttributeError:
+            # log.info("doesn't look like an example node; not offering location")
+            pass
+                    # Yes, these allow for location to be present twice, but
+                # that should never be found, nor offered
+        filenames=[]
+        """We iterate over lots of filename schemas, to preserve legacy data.
+        This is only really needed (and so could be removed at some point) when
+        data has been recorded but no link is in place, for whatever reason.
+        If there is a link to a real sound file, that is covered above.
+        If there is no sound file, then the below will result in the default
+        (current) schema."""
+        # log.info("forms at this point: {}".format(self.forms))
+        for pslocopt in pslocopts:
+            for fieldlocopt in fieldlocopts: #for older name schema
+                for legacy in ['_', None]:
+                    for tags in [ None, 1 ]:
+                        args=[node.sense.id]
+                        if tags:
+                            args+=[node.tag]
+                            if node.tag == 'field':
+                                args+=[node.ftype]
+                        form=node.textvaluebylang(self.analang)
+                        if not form:
+                            log.error("No {} analang in {} (forms: {})".format(
+                                                        self.analang,
+                                                        node.sense.id,
+                                                        node.textvaluedict()))
+                            return
+                        args+=[form] #[self.ftype]]
+                        for l in self.glosslangs:
+                            args+=[node.glossbylang(l)]
+                        optargs=args[:]
+                        optargs.insert(0,pslocopt) #put first
+                        optargs.insert(3,fieldlocopt) #put after self.node.tag
+                        # log.info("optargs: {}".format(optargs))
+                        wavfilename='_'.join([x for x in optargs if x])
+                        if legacy == '_': #There was a schema that had an extra '_'.
+                            wavfilename+='_'
+                        wavfilename=rx.urlok(wavfilename) #one character check
+                        filenames+=[wavfilename+'.wav']
+        return filenames
+    def makeaudiofilename(self,node):
+        """If node is already marked with sound file attributes, we're done"""
+        if self.hassoundfile(node):
+            return
+        """Otherwise, generate prioritized list of name options"""
+        filenames=self.filenameoptions(node)
+        """if any of the generated filenames are there, stop at the first one"""
+        for f in filenames:
+            if self.audioexists(f):
+                log.info("Audiofile {} found at {}".format(f, self.audioURL(f)))
+                node.textvaluebylang(lang=program['params'].audiolang,value=f)
+                if self.hassoundfile(node,recheck=True):
+                    log.info("file {} linked in LIFT".format(node.audiofileURL))
+                break
+        """If none found, be ready to write with last/highest priority option"""
+        f=filenames[-1]
+        log.debug(_("No audio file found, but ready to record: "
+                    )+"{}; {}:{}".format(f, _("url"), self.audioURL(f)))
+        """Should be able to just send f"""
+        node.audiofilenametoput=f #don't write this until we actually record
+        node.audiofileURL=self.audioURL(f)
+    def __init__(self,parent):
+        TaskDressing.__init__(self,parent)
+        Sound.__init__(self)
+        self.mikecheck() #only ask for settings check if recording
 class Report(object):
     def consultantcheck(self):
         program['settings'].reloadstatusdata()
@@ -12162,7 +11984,7 @@ class DictbyLang(dict):
     def getformfromnode(self,node,truncate=False):
         #this assumes *one* value/lang, a second will overwrite.
         #this will comma separate text nodes, if there are multiple text nodes.
-        if isinstance(node,lift.et.Element):
+        if isinstance(node,lift.ET.Element):
             lang=node.get('lang')
             if truncate: #this gives up to three words, no parens
                 text=unlist([rx.glossifydefn(i.text).strip('‘’')
@@ -15617,7 +15439,7 @@ def ifone(l,nt=None):
     if l and not len(l)-1:
         return l[0]
 def unlist(l,ignore=[None]):
-    if l and isinstance(l[0],lift.et.Element):
+    if l and isinstance(l[0],lift.ET.Element):
          log.error("unlist should only be used on text (not node) lists ({})"
                     "".format(l))
          log.error("Element[0] text: {}".format(l[0].text))
@@ -16408,7 +16230,7 @@ if __name__ == '__main__':
         program['testtask']=getattr(sys.modules[__name__],
                                         program['testtask'])
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
-    if exceptiononload and not me:
+    if exceptiononload:
         pythonmodules()
         # sysrestart()
         mainproblem()
