@@ -283,14 +283,85 @@ class SoundSettings(object):
                 "output_channels=1, "
                 "output_format={} ({})".format(self.fs,self.audio_card_in,
                                                 self.sample_format,e))
-    def __init__(self,pyaudio=None):
+    def initial_ASR_kwargs(self,language_object):
+        log.info("setting initial_ASR_kwargs")
+        try:
+            langs=language_object.supported_ancestor_codes_prioritized()
+            # log.info("Done with supported_ancestor_codes_prioritized")
+        except Exception as e: #e.g., if language_object is None
+            log.info(f"Exception: {e}")
+            langs=['en']
+        self.asr_repos={}
+        self.asr_kwargs={'sister_languages':langs}
+        log.info(f"Done with initial self.asr_kwargs: {self.asr_kwargs}")
+    def reload_ASR(self):
+        self.get_changed_kwargs()
+        #This just returns if no kwargs:
+        self.asr.load_models_by_kwarg(**self.changed_kwargs['repos'])
+        #this redoes everything, so needs all kwargs
+        self.asr.load_postprocess_by_kwarg(**self.asr_kwargs)
+    def load_ASR(self):
+        """Only do this if there is no ASR; reload above."""
+        try:
+            assert isinstance(self.asr,asr.ASRtoText)
+            self.reload_ASR()
+            log.info("ASR reloaded")
+        except (AssertionError,AttributeError) as e:
+            log.info(f"Loading ASR ({e})")
+            self.asr=asr.ASRtoText(**self.asr_kwargs)
+            self.asr_kwargs=copy.deepcopy(self.asr.kwarg_defaults)
+            log.info("ASR loaded")
+    def tally_asr_repo(self,reponame):
+        log.info(f"{self.asr_repos=} ({type(self.asr_repos)})")
+        utils.setnesteddictval(self.asr_repos,1,reponame,addval=True)
+    def asr_repo_tally(self,d=None):
+        # log.info(f"{d=} ({type(d)})")
+        if d and isinstance(d,dict):
+            self.asr_repos=d
+        return self.asr_repos
+    def asr_kwarg_dict(self,d):
+        if d and isinstanced(d,dict):
+            self.asr_kwargs=d
+        return self.asr_kwargs
+    def get_changed_kwargs(self):
+        if not hasattr(self,'asr') or not isinstance(self.asr,asr.ASRtoText):
+            return 1 # will need to reload anyway
+        changed_kwargs={k:v for k,v in self.asr_kwargs.items()
+                        if not hasattr(self.asr,k) or
+                            v != getattr(self.asr,k)
+                        }
+        self.changed_kwargs={
+            'repos':{k:v for k,v in changed_kwargs.items()
+                         if k in self.asr.repo_modelnames}, #incl 'show_tone'
+            'postprocess':{k:v for k,v in changed_kwargs.items()
+                             if k in self.asr.postprocess_kwargs},
+            'sister_languages':(changed_kwargs['sister_languages']
+                        if 'sister_languages' in changed_kwargs else []),
+            }
+        self.changed_kwargs['all']={**self.changed_kwargs['repos'],
+                                    **self.changed_kwargs['postprocess'],
+                    'sister_languages':self.changed_kwargs['sister_languages']}
+    def file_ok(self,filename):
+        return (file.exists(filename) and
+                file.getsize(filename) > self.min_audio_file_size)
+    def __init__(self,pyaudio=None,analang_obj=None):
         if not pyaudio:
             pyaudio = AudioInterface()
         self.pyaudio=pyaudio
         self.sethypothetical()
         self.getactual()
         self.makedefaultifnot()
+        #I may want to tweak this; the point is to exclude accidental recordings
+        # 44.8khz @1s = 14.6k
+        self.min_audio_file_size=5000
         # self.defaults() #pick best of actuals
+        try:
+            assert 'asr' in sys.modules
+            self.initial_ASR_kwargs(analang_obj) #overwritten by UI or file
+            self.asrOK=True
+        except Exception as e:
+            log.error("Exception loading ASR: {}".format(e))
+            self.asrOK=False
         self.check()
         # self.printactuals()
         self.chunk=1024
