@@ -7520,6 +7520,50 @@ class WordCollectnParse(Parse,WordCollection,TaskDressing):
         # another method for addnParse
         # if me:
         #     self.downloadallCAWLimages()
+class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,TaskDressing):
+    """This task collects words, from the SIL CAWL, or one by one.
+    First in citation form, then pl or imperativewith Parse"""
+    def taskicon(self):
+        return program['theme'].photo['iconWordRec']
+    def tooltip(self):
+        return _("This task helps you collect and parse words by recording "
+                "them, with an automatic draft.")
+    def dobuttonkwargs(self):
+        if program['taskchooser'].cawlmissing:
+            fn=self.addCAWLentries
+            text=_("Add remaining CAWL entries")
+            tttext=_("This will add entries from the Comparative African "
+                    "Wordlist (CAWL) which aren't already in your database "
+                    "(you are missing {} CAWL tags). If the appropriate "
+                    "glosses are found in your database, CAWL tags will be "
+                    "merged with those entries."
+                    "\nDepending on the number of entries, this may take "
+                    "awhile.").format(len(program['taskchooser'].cawlmissing))
+        else:
+            text=_("Add a Word")#?
+            fn=self.addmorpheme#?
+            tttext=_("This adds any word, but is best used after filling out a "
+                    "wordlist, if the word you want to add isn't there "
+                    "already.")
+        return {'text':text,
+                'fn':fn,
+                # column=0,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                'image':program['theme'].photo['WordRec'],
+                'sticky':'ew',
+                'tttext':tttext
+                }
+    def tasktitle(self):
+        return _("Add and Parse Words with Audio") # for Citation Forms
+    def __init__(self, parent):
+        log.info("Initializing {}".format(self.tasktitle()))
+        self.ftype=program['params'].ftype('lc') #always correct?
+        # self.nodetag='citation'
+        TaskDressing.__init__(self,parent)
+        Parse.__init__(self,parent)
+        WordCollectionwRecordings.__init__(self,parent)
+        program['taskchooser'].withdraw()
         fn=self.getwords()#?
 class WordsParse(Parse,WordCollection,TaskDressing):
     def taskicon(self):
