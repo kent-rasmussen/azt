@@ -41,6 +41,13 @@ E=tkinter.E
 W=tkinter.W
 RIGHT=tkinter.RIGHT
 LEFT=tkinter.LEFT
+MULTIPLE=tkinter.MULTIPLE
+EXTENDED=tkinter.EXTENDED
+SINGLE=tkinter.SINGLE
+Variable=tkinter.Variable
+IntVar=tkinter.IntVar
+StringVar=tkinter.StringVar
+BooleanVar=tkinter.BooleanVar
 """These classes have no dependencies"""
 class ObectwArgs(object):
     """ObectwArgs just allows us to throw away unused args and kwargs."""
@@ -928,15 +935,6 @@ class Image(tkinter.PhotoImage):
             else:
                 log.info("Image error: {}".format(e))
         self.biggerby(1)
-class IntVar(tkinter.IntVar):
-    def __init__(self, *args, **kwargs):
-        super(tkinter.IntVar, self).__init__(*args, **kwargs)
-class StringVar(tkinter.StringVar):
-    def __init__(self, *args, **kwargs):
-        super(tkinter.StringVar, self).__init__(*args, **kwargs)
-class BooleanVar(tkinter.BooleanVar):
-    def __init__(self, *args, **kwargs):
-        super(tkinter.BooleanVar, self).__init__(*args, **kwargs)
 """below here has UI"""
 class Root(Exitable,tkinter.Tk):
     """this is the root of the tkinter GUI."""
