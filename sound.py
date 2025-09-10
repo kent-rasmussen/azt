@@ -690,21 +690,6 @@ class SoundFileRecorder(object):
         if hasattr(self,'stream'):
             self.stream.stop_stream()
         self.fileclose()
-        if self.asrOK:
-            import time
-            audio = self.toaudiosample()
-            for asr in [self.asr,
-                        # self.asr1,
-                        self.asr2
-                        ]:
-                start_time = time.time()
-                # self.filenameURL
-                start_time = time.time()
-                # self.filenameURL
-                # 50% faster with language specified
-                msg=asr.transcribe(audio, language='en')
-                end_time=time.time()
-                log.info("{} ({}s)".format(msg, end_time - start_time))
         self.streamclose()
     def __init__(self,filenameURL,pyaudio,settings):
         log.debug("Initializing Recording to {}".format(filenameURL))
