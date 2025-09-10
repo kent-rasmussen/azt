@@ -13818,9 +13818,8 @@ class CheckParameters(object):
     def audiolang(self,audiolang=None):
         if audiolang:
             self._audiolang=audiolang
-        elif not hasattr(self,'_audiolang'):
-            self._audiolang=None
-        return self._audiolang
+        if hasattr(self,'_audiolang'):
+            return self._audiolang
     def ftype(self,ftype=None):
         if ftype:
             self._ftype=ftype

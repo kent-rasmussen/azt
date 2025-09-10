@@ -118,6 +118,31 @@ class Lift(object): #fns called outside of this class call self.nodes here.
         """Think through where this belongs; what classes/functions need it?"""
         self.morphtypes=self.getmorphtypes()
         log.info("Language initialization done.")
+    def tonelangname(self,machine=False):
+        try:
+            bits=[self.tonelang]
+        except AttributeError:
+            bits=[self.analang,langtags.tone_code]
+        if machine:
+            bits+=[langtags.machine_transcription_code]
+        log.info(f"{bits=}")
+        return ''.join(bits)
+    def audiolangname(self):
+        try:
+            return self.audiolang
+        except AttributeError:
+            bits=[self.analang,langtags.audio_code]
+            log.info(f"{bits=}")
+            return ''.join(bits)
+    def phoneticlangname(self,machine=False):
+        try:
+            bits=[self.phoneticlang]
+        except AttributeError:
+            bits=[self.analang,langtags.phonetic_code]
+        if machine:
+            bits+=[langtags.machine_transcription_code]
+        log.info(f"{bits=}")
+        return ''.join(bits)
     def retarget(self,urlobj,target,showurl=False):
         k=self.urlkey(urlobj.kwargs)
         urlobj.kwargs['retarget']=target
@@ -3748,10 +3773,6 @@ def pylang(analang):
      return analang+'-x-py'
 def profilelang(analang):
      return analang+'-x-cvprofile'
-def tonelang(analang):
-     return analang+'-x-tone'
-def audiolangname(analang):
-    return "{}-Zxxx-x-audio".format(analang)
 def quote(x):
     return "‘"+str(x)+"’"
 def textornone(x):
