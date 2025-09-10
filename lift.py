@@ -27,6 +27,7 @@ import rx
 import ast #For string list interpretation
 import copy
 import collections
+import langtags
 try: #Allow this module to be used without translation
     _
 except:
