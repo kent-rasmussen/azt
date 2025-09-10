@@ -19,6 +19,111 @@ def soundfile_info(sf):
 def camel_to_pascal(x):
     return x[0].upper()+x[1:]
 class Align():
+    def remove_less_than_one_word(self):
+        hz=self.files.sound.sampling_frequency
+        n_to_find=int(self.one_word*hz/self.sample_each_n)
+        # print("Last silence ends at "
+        #         f"{self.silence_found[-1][1]*self.sample_each_n/hz}s")
+        for n,i in enumerate(self.silence_found):
+            # print(n,i)
+            if n: #not on first
+                # print(n-1,n,self.silence_found[n-1],i)
+                utterance_length=i[0]-self.silence_found[n-1][1]
+                utterance_length_s=utterance_length*self.sample_each_n/hz
+                utterance_end_s=i[0]*self.sample_each_n/hz
+                if utterance_length<n_to_find:
+                    # print(f"Item {n} not long enough: "
+                    #     f"{i[0]}—{self.silence_found[n-1][1]}"
+                    #     f"({utterance_length}={utterance_length_s}, "
+                    #     f"ending at {utterance_end_s}s); removing.")
+                    self.silence_found[n-1]=(self.silence_found[n-1][0],
+                                            self.silence_found[n][1])
+                    self.silence_found.pop(n)
+                    # exit()
+    def remove_silence_without_falling_pitch(self):
+        hz=self.files.sound.sampling_frequency #sampling, not pitch
+        # print("Last silence ends at "
+        #         f"{self.silence_found[-1][1]*self.sample_each_n/hz}s")
+        #don't modify the list over which we're iterating:
+        #remove from the end, so indexes are preserved:
+        silence_found_ori=self.silence_found.copy()
+        n_silences_ori=len(silence_found_ori)
+        silence_found_ori.reverse()
+        for n,i in enumerate(silence_found_ori):
+            # print(f"Silence {n} of {len(silence_found_ori)}")
+            if 0<n<len(silence_found_ori)-1: #not on first or last; file ends.
+                # get_number_of_frames
+                # print(f"Looking for sound in "
+                #     f"{self.silence_found[n-1][1]} "
+                #     f"({self.silence_found[n-1][1]*self.sample_each_n/hz}s)"
+                #     f" to {i[0]} ({i[0]*self.sample_each_n/hz}s)")
+                # print(f"Looking for sound in "
+                #     f"{i[1]} "
+                #     f"({i[1]*self.sample_each_n/hz}s)"
+                #     f" to {self.silence_found[n+1][0]} "
+                #     f"({self.silence_found[n+1][0]*self.sample_each_n/hz}s)")
+                # print(f"Looking for sound in {i[1]} to {self.silence_found[n+1][0]}")
+                # print(f"Pitch samples: {len(self.pitches_sampled)}")
+                self.pitches_sampled.time_to_frame_number
+                #self.pitches_sampled and self.silence_found have the same sampling
+                previous=next=numpy.nan
+                j=i[0]
+                while numpy.isnan(previous) and j>=silence_found_ori[n+1][1]:
+                    # previous=self.pitches_sampled.get_value_in_frame(j)
+                    # p_sampled_time=self.pitches_sampled.frame_number_to_time(j)
+                    p_sampled_time=j*self.sample_each_n/hz
+                    previous=self.pitches_sampled.get_value_at_time(p_sampled_time)
+                    # print("Previous pitch:",previous)
+                    j-=1 #frame number goes down
+                j=i[1]
+                # print(silence_found_ori[n-1])
+                # print(silence_found_ori[n])
+                # print(silence_found_ori[n+1])
+                # print(silence_found_ori[n+1][0])
+                while (numpy.isnan(next) and
+                        # n==len(silence_found_ori) or
+                        j<=silence_found_ori[n-1][0]):
+                    # next=self.pitches_sampled.get_value_in_frame(j)
+                    # n_sampled_time=self.pitches_sampled.frame_number_to_time(j)
+                    n_sampled_time=j*self.sample_each_n/hz
+                    next=self.pitches_sampled.get_value_at_time(n_sampled_time)
+                    # print("Next pitch:",next)
+                    j+=1 #frame number goes up
+                # print("Previous pitch:",previous)
+                # print("Next pitch:",next)
+                if next-previous<self.new_breath_pitch_rise_min:
+                    print("Silence starting at "
+                        f"{i[0]*self.sample_each_n/hz:.1f}s raises "
+                        f"{next-previous:.1f}hz (from "
+                        f"{previous:.1f}hz @{p_sampled_time:.1f}s to "
+                        f"{next:.1f}hz @{n_sampled_time:.1f}s), so "
+                        "doesn't seem like a breath reset; removing.")
+                    # print(f"Going to remove {-(n+1)} of "
+                    #         f"{len(self.silence_found)} items")
+                    self.silence_found.pop(n_silences_ori-(n+1))
+                # print(f"Previous Pitches: {previous[20:]}")
+                # print(f"Next Pitches: {next[:20]}")
+                # exit()
+    def find_pitches(self):
+        print("finding pitches")
+        # to_pitch_ac
+        # to_pitch
+        # to_pitch_cc
+        # to_pitch_shs
+        # to_pitch_spinet
+        self.pitches_sampled=self.files.sound.to_pitch(
+            time_step=self.sample_each_n/self.files.sound.sampling_frequency,
+            pitch_floor=50.0,#: Positive[float] = 75.0,
+            pitch_ceiling=800.0,#: Positive[float] = 600.0
+            # max_number_of_candidates: Positive[int] = 15,
+            # very_accurate: bool = False,
+            # silence_threshold: float = 0.03,
+            # voicing_threshold: float = 0.45,
+            # octave_cost: float = 0.01,
+            # octave_jump_cost: float = 0.35,
+            # voiced_unvoiced_cost: float = 0.14
+            )
+        print("found pitches")
     def find_silences(self):
         def meets_threshold(x):
             # print(x,self.intensity_threshold,x>=self.intensity_threshold)
@@ -37,8 +142,8 @@ class Align():
             print('n_samples',self.files.sound.n_samples,'?=',trues+falses,
             self.files.sound.n_samples==trues+falses,
             (trues+falses)/self.files.sound.n_samples)
-        def next_threshold_2(n_found,target):
-            d=abs(n_found > target)
+        def next_threshold_2(n_found):
+            d=abs(self.intensity_dict[self.intensity_threshold] - self.target)
             try:
                 if d < best_delta:
                     best_delta=d
@@ -46,25 +151,86 @@ class Align():
             except UnboundLocalError:
                 best_delta=d
                 best_threshold=self.intensity_threshold
-
-        def next_threshold_1(n_found,target):
-            if n_found > target:
+        def next_threshold_1():
+            if self.intensity_dict[self.intensity_threshold] > self.target:
                 last_threshold_above_target=self.intensity_threshold
                 try:
                     self.intensity_threshold=(last_threshold_below_target+
                                         self.intensity_threshold)/2
                 except UnboundLocalError:
-                    self.intensity_threshold/=2
+                    self.intensity_threshold/=1.5
             else:
                 last_threshold_below_target=self.intensity_threshold
                 try:
                     self.intensity_threshold=(last_threshold_above_target+
                                         self.intensity_threshold)/2
                 except UnboundLocalError:
-                    self.intensity_threshold*=1.5
-        # p
-        self.intensity=self.files.sound.to_intensity()
+                    self.intensity_threshold*=1.25
+            print(f"Working with {self.possible_range[1]} and "
+                    f"{self.intensity_threshold}")
+            self.intensity_threshold=numpy.min(numpy.array(
+                                        [self.possible_range[1],
+                                        self.intensity_threshold]))
+            self.intensity_threshold=numpy.max(numpy.array(
+                                        [self.possible_range[0],
+                                        self.intensity_threshold]))
+        def switch_ranges():
+            lower_range=self.intensity_threshold<self.intensity_high_range[0]
+            print(f"Switching ranges (to High:{lower_range}, "
+                f"{self.intensity_threshold}<{self.intensity_high_range[0]})")
+            self.intensity_threshold=(
+                self.intensity_high_range[int(lower_range)
+                    ]+self.possible_range[int(lower_range)]
+                                        )/2
+        def next_threshold_normal():
+            # if low update possible range
+            if not self.intensity_high_range:
+                return next_threshold_1()
+            # if not len(self.intensity_dict.keys())%5:
+            #     switch_ranges()
+            #     return
+            self.upper_range=self.intensity_threshold>=self.intensity_high_range[1]
+            print("self.upper_range:",self.upper_range,
+                                    self.intensity_threshold,
+                                    self.intensity_high_range[1])
+            # if (self.upper_range and self.upper_range_done) or (
+            #     not self.upper_range and self.lower_range_done):
+            if self.upper_range:
+                switch_ranges()
+                return
+            # print(f"self.intensity_high_range[{int(upper_range)}]:",self.intensity_high_range[int(upper_range)])
+            # print("self.intensity_high_range:",self.intensity_high_range)
+            # print("self.possible_range:",self.possible_range)
+            # print(f"self.possible_range[{int(upper_range)}]:",self.possible_range[int(upper_range)])
+            # print("self.intensity_threshold:",self.intensity_threshold)
+            print(f"looking for {self.intensity_threshold} in range "
+                f"{sorted([self.possible_range[int(self.upper_range)],
+                self.intensity_high_range[int(self.upper_range)]])}, "
+                f"found {self.intensity_dict[self.intensity_threshold]} "
+                f"(need {self.target})"
+                )
+                # upper_range=True
+            if self.intensity_dict[self.intensity_threshold] > self.target:
+                self.intensity_threshold=(
+                    self.intensity_threshold+self.possible_range[
+                                    int(self.upper_range)]
+                                        )/2
+            elif self.intensity_dict[self.intensity_threshold] < self.target:
+                self.possible_range[int(self.upper_range)
+                                    ]=self.intensity_threshold
+                self.intensity_threshold=(
+                    self.intensity_threshold+self.intensity_high_range[
+                                    int(self.upper_range)]
+                                        )/2
+            else:
+                print(f"Huh? ({self.intensity_threshold}, looking for "
+                    f"{self.target} in {self.intensity_dict})")
+            # self.silence_found=
         hz=self.files.sound.sampling_frequency
+        self.intensity=self.files.sound.to_intensity(time_step=self.sample_each_n/hz)
+        print("Intensity length:",len(self.intensity),len(self.intensity)/hz)
+        self.intensity.subtract_mean()
+        print("Intensity length:",len(self.intensity),len(self.intensity)/hz)
         # print(self.intensity)
         # print(type(self.intensity))
         intensity_mean=self.intensity.get_average()
@@ -78,12 +244,13 @@ class Align():
             f'{1000*self.sample_each_n/hz} '
             'milliseconds')
         # These convert seconds to samples:
-        start_at=int(self.untranscribed_intro*hz)
-        end_at=int(self.files.sound.n_samples-self.untranscribed_epilogue*hz)
+        start_at=int(self.untranscribed_intro*hz/self.sample_each_n)
+        end_at=int((self.files.sound.n_samples-self.untranscribed_epilogue*hz
+                    )/self.sample_each_n)
         print(f"Looking for sound gaps from {start_at} "
-            f"({start_at/hz}s) to {end_at} "
-            f"({end_at/hz//60}m "
-            f"{end_at/hz%60}s)")
+            f"({start_at*self.sample_each_n/hz}s) to {end_at} "
+            f"({end_at*self.sample_each_n/hz//60}m "
+            f"{end_at*self.sample_each_n/hz%60}s)")
         self.intensity_threshold=intensity_mean/1.5 #start here
         self.intensity_threshold=intensity_mean/2 #start here
         self.threshold_resolution=self.intensity_threshold/100
@@ -94,18 +261,38 @@ class Align():
         silence_regex='(?<!^)0{'+str(n_to_find)+'}0*(?!$)'
         any_silence_regex='0*'
         final_silence_regex=any_silence_regex+'$'
-        intensity_vector=numpy.array([
-            self.intensity.get_value(
-                time=self.sample_each_n*(start_at+i)/hz)
-                # for i in tqdm(range(self.files.sound.n_samples//self.sample_each_n))
-                for i in tqdm(range((end_at)//self.sample_each_n))
-            ])
+        # print("self.intensity:",type(self.intensity))
+        # print("self.intensity.TimeFrameSampled:",isinstance(self.intensity,parselmouth.TimeFrameSampled))
+        # print("self.intensity.Vector:",isinstance(self.intensity,parselmouth.Vector))
+        # quit()
+        # for i in tqdm(range((end_at)//self.sample_each_n)):
+        #     print(self.intensity.get_value(
+        #         time=self.sample_each_n*(start_at+i)/hz))
+        #     print(self.sample_each_n*(start_at+i)/hz)
+        #     print(self.sample_each_n*(start_at+i))
+        #     print(self.sample_each_n*(i))
+        # intensity_vector=numpy.array([
+        #     self.intensity.get_value(
+        #         time=(start_at+self.sample_each_n*i)/hz,
+        #         # interpolation="ENERGY"
+        #         )# for i in tqdm(range(self.files.sound.n_samples//self.sample_each_n))
+        #         for i in tqdm(range(start_at//self.sample_each_n,
+        #                             end_at//self.sample_each_n))
+        #     ])
+        print("Intensity length:",len(self.intensity),len(self.intensity)/hz)
+        intensity_vector=self.intensity.as_array().T
+        # intensity_vector.flip()
+        print(type(intensity_vector))
+        print(intensity_vector.shape)
         min=numpy.nanmin(intensity_vector)
         max=numpy.nanmax(intensity_vector)
+        self.possible_range=[min,max]
         print(f"Intensity ranges from {min} to {max}")
-        print('intensity_vector',intensity_vector[15:-15])
-        target=len(self.texts_to_align)-1
-        print(f"Looking for {target} sound gaps")
+        # print('intensity_vector',intensity_vector[15:-15])
+        self.target=len(self.texts_to_align)+1
+        print(f"Looking for {self.target} sound gaps")
+        self.intensity_dict={}
+        self.find_pitches() #just once
         while True:
             if not min <= self.intensity_threshold <= max:
                 print(f"intensity threshold {self.intensity_threshold} "
@@ -115,48 +302,98 @@ class Align():
                                         # for i in tqdm(intensity_vector)
                                         for i in intensity_vector
                                     ])
-            threshold_vector=''.join([str(int(i)) for i in threshold_vector])
+            threshold_vector[:start_at]=0
+            threshold_vector[end_at:]=0
+            # print("threshold_vector shape:",threshold_vector.shape)
+            # print("threshold_vector length:",threshold_vector.shape[0],
+            #         f"({threshold_vector.shape[0]*self.sample_each_n/hz}s)")
+            threshold_vector=''.join([str(int(i)) for i in threshold_vector.T[0]])
+            # print("threshold_vector ends at "
+            #         f"{len(threshold_vector)*self.sample_each_n/hz}s")
             # print('threshold_vector',threshold_vector[15:-15])
             g=re.finditer(silence_regex,threshold_vector)
-            self.silence_found=list(g)
+            self.silence_found=[i.span() for i in g]
+            n_total=len(self.silence_found)
+            print(f"first pass: {len(self.silence_found)}")
+            self.remove_less_than_one_word()
+            print(f"after remove_less_than_one_word: {len(self.silence_found)}")
+            # n_found=len(self.silence_found)
+            self.remove_silence_without_falling_pitch()
+            print(f"after remove_silence_without_falling_pitch: {len(self.silence_found)}")
             n_found=len(self.silence_found)
             print(f"at threshhold {self.intensity_threshold:.2f}: {n_found} "
-                "matches found")
+                f"matches found (of {n_total} total)")
+            if self.intensity_threshold in self.intensity_dict:
+                print(f"Giving up, having tried (to find {self.target}) "
+                        "this:\n", self.intensity_dict)
+                quit()
+            self.intensity_dict[self.intensity_threshold]=n_found
             # exit()
-            if n_found == target:
+            if n_found == self.target:
                 # print("Looks good:")
                 # for m in found:
                 #     print(tuple([(i)*self.sample_each_n for i in m.span()]))
                 break
             else:
-                next_threshold_1(n_found,target)
+                self.intensity_high_items=[i for i in list(self.intensity_dict)
+                                            if self.intensity_dict[i]>self.target]
+                if self.intensity_high_items:
+                    # print(self.intensity_high_items)
+                    self.intensity_high_range=(
+                                    numpy.nanmin(self.intensity_high_items),
+                                    numpy.nanmax(self.intensity_high_items))
+                else:
+                    self.intensity_high_range=False
+                next_threshold_normal()
         #Convert back to absolute samples:
-        self.silence_boundaries=[tuple(start_at+i*self.sample_each_n for i in j.span())
-                                        for j in self.silence_found]
+        # print("self.silence_found[:5]",[i.span() for i in self.silence_found[:5]
+        #                         ])
+        # print("self.silence_found[:5]",[(i.span()[0]*self.sample_each_n/hz+self.untranscribed_intro,
+        #                                 i.span()[1]*self.sample_each_n/hz+self.untranscribed_intro)
+        #                         for i in self.silence_found[:5]
+        #                         ])
+        # self.silence_boundaries=[tuple(start_at+(i*self.sample_each_n)
+        #                                 for i in j.span())
+        #                                 for j in self.silence_found]
+        self.silence_boundaries=[(start_at+(i*self.sample_each_n),
+                                    start_at+(j*self.sample_each_n))
+                                        for i,j in self.silence_found]
+        # print("self.silence_boundaries[:5]",[(i[0]/hz,i[1]/hz)
+        #                                     for i in self.silence_boundaries[:5]])
         self.sound_begins=(re.match(any_silence_regex,threshold_vector
                                     ).span()[1]+start_at)*self.sample_each_n
         self.sound_ends=(re.search(final_silence_regex,threshold_vector
                                     ).span()[0]+start_at)*self.sample_each_n
-        print("Sound from",self.sound_begins,"to",self.sound_ends)
-        # for t in tqdm(range(self.files.sound.n_samples)):
+        print("Sound from",self.sound_begins,f"({self.sound_begins/hz}) to",
+            self.sound_ends,f"({self.sound_ends/hz})")
+        # exit()# for t in tqdm(range(self.files.sound.n_samples)):
         #     print(self.intensity.get_value(time=t/hz))
     def silence_to_tier_annotations(self):
-        assert len(self.silence_boundaries) == len(self.files.plaintext.clauses) -1
+        # This should be +1 what''s wrong??!?
+        assert len(self.silence_boundaries) == len(self.files.plaintext.clauses) +1
         # for num in [self.silence_boundaries,self.files.plaintext.clauses]:
         #     print(num[:5])
         tier=self.files.textgrid.add_tier(self.tier_name+
-                                            f'x{self.sample_each_n}')
+                            f'x{self.sample_each_n}_{int(self.upper_range)}')
+        if self.upper_range:
+            self.upper_range_done=True
+        else:
+            self.lower_range_done=True
         hz=self.files.sound.sampling_frequency
+        # print("self.silence_boundaries[:5]:",[(i/hz,j/hz) for (i,j) in self.silence_boundaries[-5:]])
         for n,clause_text in enumerate(self.files.plaintext.clauses):
-            if n:
-                start=self.silence_boundaries[n-1][1]/hz
-            else:
-                start=self.sound_begins/hz
+            # n+=len(self.files.plaintext.clauses)-7
+            start=self.silence_boundaries[n][1]/hz
+            # if n:
+            #     start=self.silence_boundaries[n-1][1]/hz
+            # else:
+            #     start=self.sound_begins/hz
             if n == len(self.files.plaintext.clauses) -1:
                 end=self.sound_ends/hz
             else:
-                end=self.silence_boundaries[n][0]/hz
+                end=self.silence_boundaries[n+1][0]/hz
             try:
+                print("start:",start,"end_time:",end,clause_text)
                 tier.add_interval(start,
                                     end_time=end,
                                     text=clause_text)
@@ -168,6 +405,7 @@ class Align():
                 pass
     def __init__(self,file_name,**kwargs):
         # super().__init__(file_name=file_name, **kwargs)
+        self.new_breath_pitch_rise_min=15 #hz
         self.files=Files(file_name)
         if not hasattr(self.files,'sound'):
             print("Missing sound file; can't continue!")
@@ -197,18 +435,23 @@ class Align():
             self.untranscribed_epilogue=0
         self.texts_to_align=getattr(self.files.plaintext,self.attr_to_align)
         self.tier_name=f'{self.attr_to_align}__auto'
-        for self.sample_each_n in [100,10,1]:
+        for self.sample_each_n in [100]: #,10  ,1
+            self.lower_range_done=self.upper_range_done=False
+            # for i in range(2):
             self.find_silences()
             self.silence_to_tier_annotations()
         self.files.textgrid.write()
 class AlignWords(Align):
     def __init__(self,file_name,**kwargs):
         self.silence_to_find_in_s=.075 #100 miliseconds
+        self.one_word=.1 #100ms, standard used by Praat
         self.attr_to_align='words'
         super().__init__(file_name=file_name, **kwargs)
 class AlignClauses(Align):
     def __init__(self,file_name,**kwargs):
         self.silence_to_find_in_s=.2 #200 miliseconds
+        self.one_word=.2 #.1=100ms, standard used by Praat
+        # self.silence_to_find_in_s=.3 #150 miliseconds
         self.attr_to_align='clauses'
         super().__init__(file_name=file_name, **kwargs)
 class IntervalTier(tgt.core.IntervalTier):
@@ -217,8 +460,8 @@ class IntervalTier(tgt.core.IntervalTier):
             i=tgt.core.Interval(start_time, end_time, text)
             tgt.core.IntervalTier.add_interval(self,i)
             return i
-        except ValueError:
-            print("Failed to make interval",start_time, end_time, text)
+        except ValueError as e:
+            print("Failed to make interval",start_time, end_time, text, e)
     def __init__(self,name,**kwargs):
         super().__init__(name=name, **kwargs)
 class TextGrid(tgt.core.TextGrid):
@@ -241,8 +484,6 @@ class TextGrid(tgt.core.TextGrid):
             tgt_text_grid=tgt.core.TextGrid(file_name)
         super().__init__(filename=file_name, **kwargs)
         for tier in tgt_text_grid.tiers:
-            self.add_tier(tier.name)
-            self.get_tier_by_name(tier.name).add_annotations(tier.annotations)
             print(tier.name)
             if self.has_tier(tier.name):
                 print(f"Tier ‘{tier.name}’ is already there!")
@@ -269,7 +510,7 @@ class TextFile():
         regex='|'.join(['\\'+i if i in ['?','.','-'] else i
                             for i in self.clause_breaks])
         # print(regex)
-        self.clauses=re.split(regex, self.text)
+        self.clauses=[i for i in re.split(regex, self.text) if i]
     def info(self):
         self.get_clauses()
         self.get_words()
@@ -337,6 +578,7 @@ class Files():
     def read_textgrid(self,file=None):#, encoding='UTF-16'
         if not file:
             file=self.file_name
+        print(f"Going to load Textgrid file {file}")
         self.textgrid=TextGrid(file)
         print(f"Textgrid file {file} loaded; tiers:annotations {self.textgrid_info()}.")
     def read_plaintext(self,file=None):
