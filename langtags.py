@@ -55,15 +55,192 @@ class Language(langcodes.Language):
         # self.update_dict({'private':validate_private(tag)})
         self.private=validate_private(tag)
         self.reset_tag()
+    def alpha23(self):
+        iso=self.to_alpha3()
+        if iso > self.tag_raw(): #if expanded, give both
+            return f"{self.tag_raw()}/{iso}"
+        else:
+            return iso
+    def unprivate(self):
+        broader=self.broader_tags().remove['und']
+        check in self.languages.by_iso
+        self.privatex=self.private
+        self.private=None
+        self.reset_tag()
+    def iso(self):
+        r=self.to_alpha3()
+        if r in macrolanguage_members:
+            log.info(f"Language code {str(self)} is for a macrolanguage {r} "
+                f"with members {macrolanguage_members[r]}")
+            self.isos=macrolanguage_members[r]
+        elif r not in self.languages.by_iso:
+            log.error(f"Language with code {str(self)} > {r} "
+                            "not in Ethnologue data!")
+            return
+        # log.info(f"returning {r} for iso of {self.tag_raw()}")
+        return r
+    def tag_raw(self):
+        """Maybe put out non-standard tags"""
+        return str(self)
     def tag(self):
         """Never put out non-standard tags"""
         return langcodes.standardize_tag(self)
     def is_valid(self):
         return langcodes.Language.is_valid(langcodes.Language.get(self.tag()))
-    def maximize(self):
-        return langcodes.Language.maximize(langcodes.Language.get(self.tag()))
-    def __init__(self,**kwargs):
-        super(Language, self).__init__(**kwargs)
+    def fill_tag(self):
+        self.maximize()
+    def get_lineage(self):
+        """This returns a single ordered list, of ancestors of a single
+        language, or shared ancestors for a macrolanguage"""
+        iso=self.iso()
+        # log.info(f"{iso in self.languages.by_iso=}")
+        # log.info(f"{iso in macrolanguage_members=}")
+        if iso in self.languages.by_iso:
+            self.lineage = self.languages.by_iso[iso]['lineage']
+        elif iso in macrolanguage_members:
+            self.lineages={iso:self.languages.by_iso[iso]['lineage']
+                            for iso in self.isos
+                            if iso in self.languages.by_iso
+                        }
+            # log.info(f"{self.lineages=}")
+            self.lineage = self.shared_lineage()
+        else:
+            log.error(f"code ‘{iso}’ is not in self.languages.by_iso "
+                        "or macrolanguage_members!?")
+    def shared_lineage(self):
+        result=[]
+        lists=copy.deepcopy(list(self.lineages.values()))
+        for i in range(min([len(v) for v in lists])):
+            this_result=set([v.pop(0) for v in lists])
+            if len(this_result) == 1:
+                result.append(this_result.pop())
+            else:
+                # print(f"Ancestors differ at: {this_result}")
+                return result
+    def family(self):
+        try:
+            return self.lineage[0]
+        except:
+            log.error(f"code ‘{self.iso()}’ came back with no family!? "
+                f"({self.lineages})")
+    def get_regionname(self):
+        tag=self.language
+        if (tag in self.languages.all_tags and
+            'region' in self.languages.all_tags[tag] and
+            self.languages.all_tags[tag]['region'] in
+            self.languages.region_codes_names):
+            self.regions={self.languages.region_codes_names[
+                        self.languages.all_tags[tag]['region']]}
+        else:
+            self.regions=set()
+            # log.info(f"Found regions {self.regions}")
+        if (tag in self.languages.all_tags and
+                    'regions' in self.languages.all_tags[tag]):
+            self.regions|={self.languages.region_codes_names[i]
+                    if i in self.languages.region_codes_names else i
+                    for i in self.languages.all_tags[tag]['regions']}
+            # log.info(f"Found regions {self.regions}")
+        if tag in macrolanguage_members:
+            macro_regions={self.languages.region_codes_names[
+                                    self.languages.all_tags[t]['region']]
+                            for t in macrolanguage_members[tag]
+                            if t in self.languages.all_tags and
+                            'region' in self.languages.all_tags[t]
+                        }
+            self.regions|=macro_regions
+            self.regions|={self.languages.region_codes_names[i]
+                        for t in macrolanguage_members[tag]
+                        if t in self.languages.all_tags and
+                        'regions' in self.languages.all_tags[t]
+                        for i in self.languages.all_tags[t]['regions']
+            }
+            # print(f"Found macrolanguage spoken in {', '.join(self.regions)}")
+        if self.regions:
+            if len(self.regions)>3:
+                if tag in macrolanguage_members:
+                    if len(macro_regions)<=3:
+                        self.regionname=', '.join(macro_regions)
+                        return
+                    region=macro_regions[0]
+                try:
+                    region=self.languages.region_codes_names[
+                                self.languages.all_tags[tag]['region']]
+                except:
+                    try:
+                        region=self.languages.by_iso[tag]['country name']
+                    except:
+                        region=self.regions[0]
+                self.regionname=f'{region}, etc'
+            else:
+                self.regionname=', '.join(self.regions)
+        # else:
+        #     print(f"No regionname! ({self.languages.by_iso[tag]})")
+    def full_display(self):
+        n=min(len(self.lineage),3)
+        meta='/'.join(self.lineage[-n:])
+        if hasattr(self,'regionname') and self.regionname:
+            meta=f"{self.regionname}; {meta}"
+        if self.private:
+            meta=f"{self.private.removeprefix('x-')} dialect; {meta}"
+        return (f"{self.display_name()} [{self.alpha23()}] ({meta})")
+    def supported_ancestor_objs_prioritized(self):
+        return [self.languages.get_obj(i)
+                    for i in self.supported_ancestor_codes_prioritized()
+                    if i]
+    def supported_ancestor_codes_prioritized(self):
+        d=self.supported_ancestors()
+        sisters=[]
+        if d:
+            for o in ['both','whisper','mms_asr']: #in this order
+                # log.info(f"self.sister_options[{o}]: {self.sister_options}")
+                sisters.extend([
+                        i for i in d[o]
+                        if i not in sisters] #no repeats
+                    )
+        return sisters
+    def supported_ancestors(self):
+        # lineage=self.lineage() #for macrolanguages, just the shared bit
+        for i in range(len(self.lineage),0,-1):
+            all=self.languages.descendants_of(self.lineage[:i])
+            ancestors={'whisper':all&self.languages.sisters.whisper_support,
+                        'mms_asr':all&self.languages.sisters.mms_asr_support,
+                        'mms_lid':all&self.languages.sisters.mms_lid_support,
+                        'mms_tts':all&self.languages.sisters.mms_tts_support,
+                        }
+            total=[len(v) for k,v in ancestors.items()
+                                if k in ['whisper','mms_asr']]
+            if sum(total):
+                ancestors['both']=ancestors['whisper']&ancestors['mms_asr']
+                log.info(f"Support found for "
+                    f"{'/'.join(self.lineage[:i])} languages: {ancestors}")
+                return ancestors
+    def report(self):
+        log.info(f"{self.display_name()} ({self.display_name('fr')}; "
+            f"tag ‘{self.tag()}’ "
+            f"{'Valid' if self.is_valid() else 'Not valid'}, "
+            f"from {self.tag_raw()} > {self.maximize()})")
+        log.info(f"Family: {self.family()}")
+        self.supported_ancestors()
+        # print("Maximal Tag:",self.maximize(),
+        #     f"({'Valid' if self.maximize().is_valid() else 'Not valid'})")
+        # print("Unstandardized Tag:",self.tag_raw())
+    def __init__(self,language,languages,**kwargs): #languages just for lookup?
+        # print(language,languages)
+        kwargs['language']=language
+        if '-' in kwargs['language']:
+            kwargs.update({t[0]:t[1] for t in langcodes.parse_tag(language)})
+            # log.info(f"Updated {language=} to {kwargs=}")
+        try:
+            super(Language, self).__init__(**kwargs)
+        except Exception as e:
+            log.info(f"Language didn't init ({kwargs})")
+            kwargs['language']=languages.get_code(language)
+            log.info(f"Trying init again with {kwargs}")
+            super(Language, self).__init__(**kwargs)
+        self.languages=languages
+        self.get_lineage() #I think the kproblem is here?
+        self.fill_tag()
+        self.get_regionname()
 if __name__ == '__main__':
     print(f"{tag_is_valid('sw-x-ipa_MT')=}")
     ldict=Languages()
