@@ -6079,6 +6079,454 @@ class Segments(object):
         self.dodoneonly=False #don't give me other words
         self.ftype=program['params'].ftype()
         self.rxdict=program['settings'].rxdict
+class Sound(object):
+    """This holds all the Sound methods, mostly for playing."""
+    def donewpyaudio(self):
+        try:
+            self.pyaudio.terminate()
+        except:
+            log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
+    def pyaudiocheck(self):
+        try:
+            self.pyaudio.pa.get_format_from_width(1) #just check if its OK
+        except:
+            self.pyaudio=sound.AudioInterface()
+    def makesoundsettings(self):
+        if not hasattr(program['settings'],'soundsettings'):
+            self.pyaudiocheck() #in case self.pyaudio isn't there yet
+            program['settings'].soundsettings=sound.SoundSettings(self.pyaudio,
+                        analang_obj=program['languages'].get_obj(self.analang)
+                                                                )
+    def loadsoundsettings(self):
+        self.makesoundsettings()
+        program['settings'].loadsettingsfile(setting='soundsettings')
+        program['soundsettings']=program['settings'].soundsettings
+        if program['hostname'] == 'karlap' and (
+                        'cache_dir' not in program['soundsettings'].asr_kwargs
+                        ):
+            program['soundsettings'].asr_kwargs[
+                                            'cache_dir']='/media/kentr/hfcache'
+    def storesoundsettings(self):
+        program['settings'].storesettingsfile(setting='soundsettings')
+    def quittask(self):
+        self.soundsettingswindow.destroy()
+        program['taskchooser'].gettask()
+        self.on_quit()
+    def soundsettingscheck(self):
+        if not hasattr(program['settings'],'soundsettings'):
+            self.loadsoundsettings()
+    def missingsoundattr(self):
+        # log.info(dir(program['settings'].soundsettings))
+        ss=program['settings'].soundsettings
+        for s in ['fs', 'sample_format',
+                    'audio_card_in',
+                    'audio_card_out']:
+            if hasattr(ss,s):
+                if s+'s' in ss.hypothetical and (getattr(ss,s)
+                                                not in ss.hypothetical[s+'s']):
+                    log.info("Sound setting {} invalid; asking again".format(s))
+                    return True
+                elif 'audio_card' in s and (getattr(ss,s)
+                                                    not in ss.cards['dict']):
+                    log.info("Sound setting {} invalid; asking again".format(s))
+                    return True
+            else:
+                log.info("Missing sound setting {}; asking again".format(s))
+                return True
+        program['settings'].soundsettingsok=True
+    def soundcheck(self):
+        #just make sure settings are there
+        self.soundsettingscheck()
+        self.soundsettings=program['settings'].soundsettings
+        self.soundsettings.check()
+        if not self.exitFlag.istrue() and self.missingsoundattr():
+            self.mikecheck() #if not, get them
+            return
+    def audioexists(self,relfilename):
+        return file.exists(self.audioURL(relfilename))
+    def audioURL(self,relfilename):
+        return str(file.getdiredurl(self.audiodir,relfilename))
+    def hassoundfile(self,node,recheck=False):
+        """sets self.audiofileisthere and maybe self.audiofileURL"""
+        return node.hassoundfile(program['params'].audiolang(),
+                                self.audiodir,recheck)
+    def _configure_sound(self,event=None):
+        sound_ui.SoundSettingsWindow(self)
+    def setcontext(self,context=None):
+        TaskDressing.setcontext(self)
+        self.context.menuitem(_("Sound settings"),self._configure_sound)
+    def __init__(self):
+        self.audiodir=program['settings'].audiodir
+        self.audiolang=program['params'].audiolang()
+        self.program=program #make available to sound_ui
+        self.soundcheck()
+class Record(Sound): #TaskDressing
+    """This holds all the Sound methods specific for Recording."""
+    def makelabelsnrecordingbuttons(self,parent,node,r,c):
+        # log.info("Making buttons for {} (in {})".format(node,parent))
+        t=node.formatted(self.analang,self.glosslangs)
+        lxl=ui.Label(parent, text=t,row=r,column=c+1,sticky='w')
+        lcb=sound_ui.RecordButtonFrame(parent,self,node,
+                                        row=r,column=c,sticky='w')
+    def cleanup_pa(self,parentframe):
+        import gc
+        for w in parentframe.content.winfo_children():
+            if type(w) is sound_ui.RecordButtonFrame:
+                w.recorder.streamclose()
+                w.player.streamclose()
+        parentframe.destroy() #for now, at least
+        gc.collect()
+    def showentryformstorecordpage(self):
+        #The info we're going for is stored above sense, hence guid.
+        if self.runwindow.exitFlag.istrue():
+            log.info('no runwindow; quitting!')
+            return
+        if not self.runwindow.frame.winfo_exists():
+            log.info('no runwindow frame; quitting!')
+            return
+        self.runwindow.resetframe()
+        ps=program['slices'].ps()
+        profile=program['slices'].profile()
+        count=program['slices'].count()
+        text=_("Record {} {} Words: click ‘Record’, talk, "
+                "and release ({} words)".format(profile,ps,
+                                                count))
+        log.info(text)
+        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
+        instr.grid(row=0,column=0,sticky='w')
+        senses=program['slices'].senses(ps=ps,profile=profile)
+        if not senses: #i.e., no profile analysis yet
+            senses=program['db'].senses
+        nperpage=5
+        pages=[senses[i:i+nperpage] for i in range(0,len(senses),nperpage)]
+        log.info("pages: {}".format(pages))
+        for page in pages:
+            if self.runwindow.exitFlag.istrue():
+                return
+            self.runwindow.wait(thenshow=True)
+            buttonframes=ui.ScrollingFrame(self.runwindow.frame,
+                                            row=1,column=0,sticky='w')
+            row=0
+            done=list()
+            # log.info("Looking through entries now")
+            for row,entry in enumerate([i.entry for i in page]):
+                self.runwindow.column=0
+                if entry.guid in done: #only the first of multiple senses
+                    continue
+                else:
+                    done.append(entry.guid)
+                """These following two have been shifted down a level, and will
+                now return a list of form elements, each. Something will need to be
+                adjusted here..."""
+                ftypes=['lc','pl','imp']
+                # for f in ftypes:
+                #     log.info(f"{f}: {entry.sense.nodebyftype(f)}, "
+                #                 f"{type(entry.sense.nodebyftype(f))}")
+                for node in [entry.sense.nodebyftype(f) for f in ftypes
+                                if entry.sense.nodebyftype(f)]:
+                    self.runwindow.column+=2
+                    # sense['nodetoshow']=sense[node]
+                    self.makelabelsnrecordingbuttons(buttonframes.content,node,
+                        row,self.runwindow.column)
+                # row+=1
+            # log.info("Done iterating for one page")
+            ui.Button(buttonframes.content,column=1,row=row,
+                        text=_("Next {} words").format(nperpage),
+                        cmd=lambda x=buttonframes:self.cleanup_pa(x))
+            # log.info("Showing waitwindow now")
+            self.runwindow.waitdone()
+            buttonframes.wait_window(buttonframes)
+        if not self.runwindow.exitFlag.istrue():
+            self.runwindow.wait_window(self.runwindow.frame)
+    def showentryformstorecord(self,justone=False):
+        # Save these values before iterating over them
+        #Convert to iterate over local variables
+        self.getrunwindow()
+        if justone or not program['slices'].valid():
+            self.showentryformstorecordpage()
+        else:
+            #store for later
+            ps=program['slices'].ps()
+            profile=program['slices'].profile()
+            for psprofile in program['slices'].valid(): #self.profilecountsValid:
+                if self.runwindow.exitFlag.istrue():
+                    return 1
+                program['slices'].ps(psprofile[1])
+                program['slices'].profile(psprofile[0])
+                nextb=ui.Button(self.runwindow,text=_("Next Group"),
+                                        cmd=self.runwindow.resetframe) # .frame.destroy
+                nextb.grid(row=0,column=1,sticky='ne')
+                self.showentryformstorecordpage()
+            #return to initial
+            program['slices'].ps(ps)
+            program['slices'].profile(profile)
+        self.donewpyaudio()
+    def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
+        def setskip(event):
+            self.runwindow.frame.skip=True
+            entryframe.destroy()
+        self.getrunwindow()
+        if self.exitFlag.istrue() or self.runwindow.exitFlag.istrue():
+            return
+        log.debug("Working with skip: {}".format(skip))
+        if skip == 'skip':
+            self.runwindow.frame.skip=True
+        else:
+            self.runwindow.frame.skip=skip
+        text=_("Words and phrases to record: click ‘Record’, talk, and release")
+        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
+        instr.grid(row=0,column=0,sticky='w',columnspan=2)
+        if (program['settings'].entriestoshow is None) and (senses is None):
+            ui.Label(self.runwindow.frame, anchor='w',
+                    text=_("Sorry, there are no entries to show!")).grid(row=1,
+                                    column=0,sticky='w')
+            return
+        if self.runwindow.frame.skip == False:
+            skipf=ui.Frame(self.runwindow.frame)
+            skipb=ui.Button(skipf,
+                        text=rx.linebreakwords(_("Skip to next undone")),
+                        cmd=skipf.destroy)
+            skipf.grid(row=1,column=1,sticky='w')
+            skipb.grid(row=0,column=0,sticky='w')
+            skipb.bind('<ButtonRelease-1>', setskip)
+        if senses is None:
+            senses=program['settings'].entriestoshow
+        for sense in senses:
+            log.debug("Working on {} with skip: {}".format(sense.id,
+                                                    self.runwindow.frame.skip))
+            examples=list(sense.examples.values())
+            if examples == []:
+                log.debug(_("No examples! Add some, then come back."))
+                continue
+            if ((self.runwindow.frame.skip == True) and
+                (lift.atleastoneexamplehaslangformmissing(examples,
+                                    program['settings'].audiolang) == False)):
+                continue
+            row=0
+            if self.runwindow.exitFlag.istrue():
+                return 1
+            entryframe=ui.Frame(self.runwindow.frame)
+            entryframe.grid(row=1,column=0)
+            if progress is not None:
+                progressl=ui.Label(self.runwindow.frame, anchor='e',
+                    font='small',
+                    text='({} {}/{})'.format(*progress)
+                    )
+                progressl.grid(row=0,column=2,sticky='ne')
+            """This is the title for each page: isolation form and glosses."""
+            text=sense.formatted(self.analang,self.glosslangs)
+            if not text:
+                entryframe.destroy() #is this ever needed?
+                continue
+            ui.Label(entryframe, anchor='w', font='read',
+                    text=text).grid(row=row,
+                                    column=0,sticky='w')
+            """Then get each sorted example"""
+            self.runwindow.frame.scroll=ui.ScrollingFrame(entryframe)
+            self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
+            examplesframe=ui.Frame(self.runwindow.frame.scroll.content)
+            examplesframe.grid(row=0,column=0,sticky='w')
+            # examples.reverse()
+            for example in examples:
+                if (skip == True and
+                    lift.examplehaslangform(example,program['settings'].audiolang) == True):
+                    continue
+                # """These should already be framed!"""
+                text=example.formatted(self.analang,self.glosslangs)
+                if not text:
+                    #Don't show the whole dictionary of frames here:
+                    log.info("Not showing example with text {}".format(text))
+                    continue
+                row+=1
+                """If I end up pulling from example nodes elsewhere, I should
+                probably make this a function, like getframeddata"""
+                if not text:
+                    exit()
+                rb=sound_ui.RecordButtonFrame(examplesframe,self,example)
+                rb.grid(row=row,column=0,sticky='w')
+                ui.Label(examplesframe, anchor='w',text=text
+                                        ).grid(row=row, column=1, sticky='w')
+            row+=1
+            d=ui.Button(examplesframe, text=_("Done/Next"),command=entryframe.destroy)
+            d.grid(row=row,column=0)
+            self.runwindow.waitdone()
+            examplesframe.wait_window(entryframe)
+            if self.runwindow.exitFlag.istrue():
+                return 1
+            if self.runwindow.frame.skip == True:
+                return 'skip'
+    def showtonegroupexs(self):
+        def next():
+            program['status'].nextprofile()
+            self.runwindow.on_quit()
+            self.showtonegroupexs()
+        if (not(hasattr(self,'examplespergrouptorecord')) or
+            (type(self.examplespergrouptorecord) is not int)):
+            self.examplespergrouptorecord=100
+            program['settings'].storesettingsfile()
+        self.makeanalysis()
+        self.analysis.donoUFanalysis()
+        torecord=self.analysis.sensesbygroup
+        ntorecord=len(torecord) #number of groups
+        nexs=len([k for i in torecord for j in torecord[i] for k in j])
+        nslice=program['slices'].count()
+        log.info("Found {} analyzed of {} examples in slice".format(nexs,nslice))
+        skip=False
+        if ntorecord == 0:
+            log.error(_("How did we get no UR tone groups? {}-{}"
+                    "\nHave you run the tone report recently?"
+                    "\nDoing that for you now...").format(
+                            program['slices'].profile(),
+                            program['slices'].ps()
+                                                        ))
+            self.analysis.do()
+            self.showtonegroupexs()
+            return
+        batch={}
+        # log.info(f"program['db'].sensedict ({len(program['db'].sensedict)}): "
+        #         f"{program['db'].sensedict}")
+        for i in range(self.examplespergrouptorecord):
+            batch[i]=[]
+            for ufgroup in torecord:
+                print(i,len(torecord[ufgroup]),ufgroup,torecord[ufgroup])
+                if len(torecord[ufgroup]) > i: #no done piles.
+                    # sense=[program['db'].sensedict[torecord[ufgroup][i]]] #list of one
+                    sense=torecord[ufgroup][i] #list of one
+                else:
+                    print("Not enough examples, moving on:",i,ufgroup)
+                    continue
+                log.info(_('Giving user the number {} example from tone '
+                        'group {}'.format(i,ufgroup)))
+                exited=self.showsenseswithexamplestorecord([sense],
+                            (ufgroup, i+1, self.examplespergrouptorecord),
+                            skip=skip)
+                if exited == 'skip':
+                    skip=True
+                if exited == True:
+                    return
+        if not (self.runwindow.exitFlag.istrue() or self.exitFlag.istrue()):
+            self.runwindow.waitdone()
+            self.runwindow.resetframe()
+            ui.Label(self.runwindow.frame, anchor='w',font='read',
+            text=_("All done! Sort some more words, and come back.")
+            ).grid(row=0,column=0,sticky='w')
+            ui.Button(self.runwindow.frame,
+                    text=_("Continue to next syllable profile"),
+                    command=next).grid(row=1,column=0)
+        self.donewpyaudio()
+    def filenameoptions(self,node):
+        # This depends on self.analang and program['slices'].profile; otherwise, it
+        # could be moved to a FieldParent method
+        """This should generate possible filenames, with preferred (current
+        schema) last, as that will be used if none are found."""
+        print(f"Looking for file names for {node} ({node.tag})")
+        ps=program['slices'].ps()
+        print("ps:",ps)
+        if ps:
+            pslocopts=[ps]
+        else:
+            pslocopts=[]
+        # Except for data generated early in 2021, profile should not be there,
+        # because it can change with analysis. But we include here to pick up
+        # old files, in case they are there but not linked.
+        # First option (legacy):
+        # pslocopts.insert(0,ps+'_'+self.parent.taskchooser.slices.profile())
+        profile=program['slices'].profile()
+        if ps and profile:
+            pslocopts.insert(0,ps+'_'+profile)
+        fieldlocopts=[None] #none is OK
+        try:
+            l=node.locationvalue()
+            #the last option is taken, if none are found
+            pslocopts.insert(0,ps+'-'+l) #the first option.
+            fieldlocopts.append(l) #make this the last option.
+        except AttributeError:
+            # log.info("doesn't look like an example node; not offering location")
+            pass
+                    # Yes, these allow for location to be present twice, but
+                # that should never be found, nor offered
+        if not pslocopts:
+            pslocopts=[None] #make this an iterable, none is OK
+        filenames=[]
+        """We iterate over lots of filename schemas, to preserve legacy data.
+        This is only really needed (and so could be removed at some point) when
+        data has been recorded but no link is in place, for whatever reason.
+        If there is a link to a real sound file, that is covered above.
+        If there is no sound file, then the below will result in the default
+        (current) schema."""
+        # log.info("forms at this point: {}".format(self.forms))
+        for pslocopt in pslocopts:
+            for fieldlocopt in fieldlocopts: #for older name schema
+                for legacy in ['_', None]:
+                    for tags in [ None, 1 ]:
+                        args=[node.sense.id]
+                        if tags:
+                            args+=[node.tag]
+                            if node.tag == 'field':
+                                args+=[node.ftype]
+                        form=node.textvaluebylang(self.analang)
+                        if not form:
+                            log.error(f"No {self.analang} analang in "
+                                f"{node.sense.id}! (OK if recording first; "
+                                f"forms: {node.textvaluedict()})")
+                        args+=[form] #[self.ftype]]
+                        for l in self.glosslangs:
+                            args+=[node.glossbylang(l)]
+                        optargs=args[:]
+                        optargs.insert(0,pslocopt) #put first
+                        optargs.insert(3,fieldlocopt) #put after self.node.tag
+                        # log.info("optargs: {}".format(optargs))
+                        wavfilename='_'.join([x for x in optargs if x])
+                        if legacy == '_': #There was a schema that had an extra '_'.
+                            wavfilename+='_'
+                        wavfilename=rx.urlok(wavfilename) #one character check
+                        filenames+=[wavfilename+'.wav']
+        return filenames
+    def makeaudiofilename(self,node):
+        """If node is already marked with sound file attributes, we're done"""
+        if self.hassoundfile(node):
+            return
+        """Otherwise, generate prioritized list of name options"""
+        filenames=self.filenameoptions(node)
+        """if any of the generated filenames are there, stop at the first one"""
+        for f in filenames:
+            if self.audioexists(f):
+                log.info("Audiofile {} found at {}".format(f, self.audioURL(f)))
+                node.textvaluebylang(lang=program['params'].audiolang(),value=f)
+                if self.hassoundfile(node,recheck=True):
+                    log.info("file {} linked in LIFT".format(node.audiofileURL))
+                break
+        """If none found, be ready to write with last/highest priority option"""
+        f=filenames[-1]
+        log.debug(_("No audio file found, but ready to record: "
+                    )+"{}; {}:{}".format(f, _("url"), self.audioURL(f)))
+        """Should be able to just send f"""
+        node.audiofilenametoput=f #don't write this until we actually record
+        node.audiofileURL=self.audioURL(f)
+        log.info(f"Finishing makeaudiofilename with {node.audiofilenametoput=} "
+                f"and {node.audiofileURL=}")
+    def mikecheck(self):
+        """This starts and stops the UI"""
+        self.withdraw()
+        self.pyaudiocheck()
+        #will need to add sound_ui in here, once generalized:
+        self.soundsettingswindow=sound_ui.SoundSettingsWindow(self)
+        self.soundsettingswindow.protocol("WM_DELETE_WINDOW", self.quittask)
+        if not self.soundsettingswindow.exitFlag.istrue():
+            self.soundsettingswindow.wait_window(self.soundsettingswindow)
+        self.donewpyaudio()
+        self.deiconify()
+        if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
+            self.soundsettingswindow.destroy()
+    def _configure_transcription(self,event=None):
+        sound_ui.ASRModelSelectionWindow(self)
+    def setcontext(self,context=None):
+        Sound.setcontext(self)
+        self.context.menuitem(_("Transcription settings"),
+                                    self._configure_transcription)
+    def __init__(self,parent):
+        Sound.__init__(self)
+        self.soundsettings.load_ASR() #after file settings are loaded
 class WordCollection(Segments):
     """This task collects words, from the SIL CAWL, or one by one."""
     def taskicon(self):
@@ -9089,426 +9537,6 @@ class Sort(object):
                         'CV':'check',
                         }
         self.analang=program['params'].analang()
-class Sound(object):
-    """This holds all the Sound methods, mostly for playing."""
-    def donewpyaudio(self):
-        try:
-            self.pyaudio.terminate()
-        except:
-            log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
-    def pyaudiocheck(self):
-        try:
-            self.pyaudio.pa.get_format_from_width(1) #just check if its OK
-        except:
-            self.pyaudio=sound.AudioInterface()
-    def makesoundsettings(self):
-        if not hasattr(program['settings'],'soundsettings'):
-            self.pyaudiocheck() #in case self.pyaudio isn't there yet
-            program['settings'].soundsettings=sound.SoundSettings(self.pyaudio)
-    def loadsoundsettings(self):
-        self.makesoundsettings()
-        program['settings'].loadsettingsfile(setting='soundsettings')
-        program['soundsettings']=program['settings'].soundsettings
-    def storesoundsettings(self):
-        program['settings'].storesettingsfile(setting='soundsettings')
-    def quittask(self):
-        self.soundsettingswindow.destroy()
-        program['taskchooser'].gettask()
-        self.on_quit()
-    def soundsettingscheck(self):
-        if not hasattr(program['settings'],'soundsettings'):
-            self.loadsoundsettings()
-    def missingsoundattr(self):
-        log.info(dir(self.soundsettings))
-        ss=self.soundsettings
-        for s in ['fs', 'sample_format',
-                    'audio_card_in',
-                    'audio_card_out']:
-            if hasattr(self.soundsettings,s):
-                if s+'s' in ss.hypothetical and (getattr(self.soundsettings,s)
-                                                not in ss.hypothetical[s+'s']):
-                    log.info("Sound setting {} invalid; asking again".format(s))
-                    return True
-                elif 'audio_card' in s and (getattr(self.soundsettings,s)
-                                                    not in ss.cards['dict']):
-                    log.info("Sound setting {} invalid; asking again".format(s))
-                    return True
-            else:
-                log.info("Missing sound setting {}; asking again".format(s))
-                return True
-        program['settings'].soundsettingsok=True
-    def mikecheck(self):
-        """This starts and stops the UI"""
-        #move this to Record, after confirming that can be safely done.
-        self.pyaudiocheck()
-        #will need to add sound_ui in here, once generalized:
-        self.soundsettingswindow=sound_ui.SoundSettingsWindow(program, self)
-        self.soundsettingswindow.protocol("WM_DELETE_WINDOW", self.quittask)
-        if not self.soundsettingswindow.exitFlag.istrue():
-            self.soundsettingswindow.wait_window(self.soundsettingswindow)
-        self.donewpyaudio()
-        if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
-            self.soundsettingswindow.destroy()
-    def soundcheck(self):
-        #just make sure settings are there
-        self.soundsettingscheck()
-        self.soundsettings=program['settings'].soundsettings
-        self.soundsettings.check()
-        if not self.exitFlag.istrue() and self.missingsoundattr():
-            self.mikecheck() #if not, get them
-            return
-    def audioexists(self,relfilename):
-        return file.exists(self.audioURL(relfilename))
-    def audioURL(self,relfilename):
-        return str(file.getdiredurl(self.audiodir,relfilename))
-    def hassoundfile(self,node,recheck=False):
-        """sets self.audiofileisthere and maybe self.audiofileURL"""
-        return node.hassoundfile(program['params'].audiolang(),
-                                self.audiodir,recheck)
-    def __init__(self):
-        self.audiodir=program['settings'].audiodir
-        self.audiolang=program['params'].audiolang()
-        self.soundcheck()
-class Record(Sound,TaskDressing):
-    """This holds all the Sound methods specific for Recording."""
-    def makelabelsnrecordingbuttons(self,parent,node,r,c):
-        # log.info("Making buttons for {} (in {})".format(node,parent))
-        t=node.formatted(self.analang,self.glosslangs)
-        lxl=ui.Label(parent, text=t,row=r,column=c+1,sticky='w')
-        lcb=sound_ui.RecordButtonFrame(parent,self,node,
-                                        row=r,column=c,sticky='w')
-    def cleanup_pa(self,parentframe):
-        import gc
-        for w in parentframe.content.winfo_children():
-            if type(w) is sound_ui.RecordButtonFrame:
-                w.recorder.streamclose()
-                w.player.streamclose()
-        parentframe.destroy() #for now, at least
-        gc.collect()
-    def showentryformstorecordpage(self):
-        #The info we're going for is stored above sense, hence guid.
-        if self.runwindow.exitFlag.istrue():
-            log.info('no runwindow; quitting!')
-            return
-        if not self.runwindow.frame.winfo_exists():
-            log.info('no runwindow frame; quitting!')
-            return
-        self.runwindow.resetframe()
-        ps=program['slices'].ps()
-        profile=program['slices'].profile()
-        count=program['slices'].count()
-        text=_("Record {} {} Words: click ‘Record’, talk, "
-                "and release ({} words)".format(profile,ps,
-                                                count))
-        log.info(text)
-        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
-        instr.grid(row=0,column=0,sticky='w')
-        senses=program['slices'].senses(ps=ps,profile=profile)
-        if not senses: #i.e., no profile analysis yet
-            senses=program['db'].senses
-        nperpage=5
-        pages=[senses[i:i+nperpage] for i in range(0,len(senses),nperpage)]
-        log.info("pages: {}".format(pages))
-        for page in pages:
-            if self.runwindow.exitFlag.istrue():
-                return
-            self.runwindow.wait(thenshow=True)
-            buttonframes=ui.ScrollingFrame(self.runwindow.frame,
-                                            row=1,column=0,sticky='w')
-            row=0
-            done=list()
-            # log.info("Looking through entries now")
-            for row,entry in enumerate([i.entry for i in page]):
-                self.runwindow.column=0
-                if entry.guid in done: #only the first of multiple senses
-                    continue
-                else:
-                    done.append(entry.guid)
-                """These following two have been shifted down a level, and will
-                now return a list of form elements, each. Something will need to be
-                adjusted here..."""
-                ftypes=['lc','pl','imp']
-                # for f in ftypes:
-                #     log.info(f"{f}: {entry.sense.nodebyftype(f)}, "
-                #                 f"{type(entry.sense.nodebyftype(f))}")
-                for node in [entry.sense.nodebyftype(f) for f in ftypes
-                                if entry.sense.nodebyftype(f)]:
-                    self.runwindow.column+=2
-                    # sense['nodetoshow']=sense[node]
-                    self.makelabelsnrecordingbuttons(buttonframes.content,node,
-                        row,self.runwindow.column)
-                # row+=1
-            # log.info("Done iterating for one page")
-            ui.Button(buttonframes.content,column=1,row=row,
-                        text=_("Next {} words").format(nperpage),
-                        cmd=lambda x=buttonframes:self.cleanup_pa(x))
-            # log.info("Showing waitwindow now")
-            self.runwindow.waitdone()
-            buttonframes.wait_window(buttonframes)
-        if not self.runwindow.exitFlag.istrue():
-            self.runwindow.wait_window(self.runwindow.frame)
-    def showentryformstorecord(self,justone=False):
-        # Save these values before iterating over them
-        #Convert to iterate over local variables
-        self.getrunwindow()
-        if justone or not program['slices'].valid():
-            self.showentryformstorecordpage()
-        else:
-            #store for later
-            ps=program['slices'].ps()
-            profile=program['slices'].profile()
-            for psprofile in program['slices'].valid(): #self.profilecountsValid:
-                if self.runwindow.exitFlag.istrue():
-                    return 1
-                program['slices'].ps(psprofile[1])
-                program['slices'].profile(psprofile[0])
-                nextb=ui.Button(self.runwindow,text=_("Next Group"),
-                                        cmd=self.runwindow.resetframe) # .frame.destroy
-                nextb.grid(row=0,column=1,sticky='ne')
-                self.showentryformstorecordpage()
-            #return to initial
-            program['slices'].ps(ps)
-            program['slices'].profile(profile)
-        self.donewpyaudio()
-    def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
-        def setskip(event):
-            self.runwindow.frame.skip=True
-            entryframe.destroy()
-        self.getrunwindow()
-        if self.exitFlag.istrue() or self.runwindow.exitFlag.istrue():
-            return
-        log.debug("Working with skip: {}".format(skip))
-        if skip == 'skip':
-            self.runwindow.frame.skip=True
-        else:
-            self.runwindow.frame.skip=skip
-        text=_("Words and phrases to record: click ‘Record’, talk, and release")
-        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
-        instr.grid(row=0,column=0,sticky='w',columnspan=2)
-        if (program['settings'].entriestoshow is None) and (senses is None):
-            ui.Label(self.runwindow.frame, anchor='w',
-                    text=_("Sorry, there are no entries to show!")).grid(row=1,
-                                    column=0,sticky='w')
-            return
-        if self.runwindow.frame.skip == False:
-            skipf=ui.Frame(self.runwindow.frame)
-            skipb=ui.Button(skipf,
-                        text=rx.linebreakwords(_("Skip to next undone")),
-                        cmd=skipf.destroy)
-            skipf.grid(row=1,column=1,sticky='w')
-            skipb.grid(row=0,column=0,sticky='w')
-            skipb.bind('<ButtonRelease-1>', setskip)
-        if senses is None:
-            senses=program['settings'].entriestoshow
-        for sense in senses:
-            log.debug("Working on {} with skip: {}".format(sense.id,
-                                                    self.runwindow.frame.skip))
-            examples=list(sense.examples.values())
-            if examples == []:
-                log.debug(_("No examples! Add some, then come back."))
-                continue
-            if ((self.runwindow.frame.skip == True) and
-                (lift.atleastoneexamplehaslangformmissing(examples,
-                                    program['settings'].audiolang) == False)):
-                continue
-            row=0
-            if self.runwindow.exitFlag.istrue():
-                return 1
-            entryframe=ui.Frame(self.runwindow.frame)
-            entryframe.grid(row=1,column=0)
-            if progress is not None:
-                progressl=ui.Label(self.runwindow.frame, anchor='e',
-                    font='small',
-                    text='({} {}/{})'.format(*progress)
-                    )
-                progressl.grid(row=0,column=2,sticky='ne')
-            """This is the title for each page: isolation form and glosses."""
-            text=sense.formatted(self.analang,self.glosslangs)
-            if not text:
-                entryframe.destroy() #is this ever needed?
-                continue
-            ui.Label(entryframe, anchor='w', font='read',
-                    text=text).grid(row=row,
-                                    column=0,sticky='w')
-            """Then get each sorted example"""
-            self.runwindow.frame.scroll=ui.ScrollingFrame(entryframe)
-            self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
-            examplesframe=ui.Frame(self.runwindow.frame.scroll.content)
-            examplesframe.grid(row=0,column=0,sticky='w')
-            # examples.reverse()
-            for example in examples:
-                if (skip == True and
-                    lift.examplehaslangform(example,program['settings'].audiolang) == True):
-                    continue
-                # """These should already be framed!"""
-                text=example.formatted(self.analang,self.glosslangs)
-                if not text:
-                    #Don't show the whole dictionary of frames here:
-                    log.info("Not showing example with text {}".format(text))
-                    continue
-                row+=1
-                """If I end up pulling from example nodes elsewhere, I should
-                probably make this a function, like getframeddata"""
-                if not text:
-                    exit()
-                rb=sound_ui.RecordButtonFrame(examplesframe,self,example)
-                rb.grid(row=row,column=0,sticky='w')
-                ui.Label(examplesframe, anchor='w',text=text
-                                        ).grid(row=row, column=1, sticky='w')
-            row+=1
-            d=ui.Button(examplesframe, text=_("Done/Next"),command=entryframe.destroy)
-            d.grid(row=row,column=0)
-            self.runwindow.waitdone()
-            examplesframe.wait_window(entryframe)
-            if self.runwindow.exitFlag.istrue():
-                return 1
-            if self.runwindow.frame.skip == True:
-                return 'skip'
-    def showtonegroupexs(self):
-        def next():
-            program['status'].nextprofile()
-            self.runwindow.on_quit()
-            self.showtonegroupexs()
-        if (not(hasattr(self,'examplespergrouptorecord')) or
-            (type(self.examplespergrouptorecord) is not int)):
-            self.examplespergrouptorecord=100
-            program['settings'].storesettingsfile()
-        self.makeanalysis()
-        self.analysis.donoUFanalysis()
-        torecord=self.analysis.sensesbygroup
-        ntorecord=len(torecord) #number of groups
-        nexs=len([k for i in torecord for j in torecord[i] for k in j])
-        nslice=program['slices'].count()
-        log.info("Found {} analyzed of {} examples in slice".format(nexs,nslice))
-        skip=False
-        if ntorecord == 0:
-            log.error(_("How did we get no UR tone groups? {}-{}"
-                    "\nHave you run the tone report recently?"
-                    "\nDoing that for you now...").format(
-                            program['slices'].profile(),
-                            program['slices'].ps()
-                                                        ))
-            self.analysis.do()
-            self.showtonegroupexs()
-            return
-        batch={}
-        # log.info(f"program['db'].sensedict ({len(program['db'].sensedict)}): "
-        #         f"{program['db'].sensedict}")
-        for i in range(self.examplespergrouptorecord):
-            batch[i]=[]
-            for ufgroup in torecord:
-                print(i,len(torecord[ufgroup]),ufgroup,torecord[ufgroup])
-                if len(torecord[ufgroup]) > i: #no done piles.
-                    # sense=[program['db'].sensedict[torecord[ufgroup][i]]] #list of one
-                    sense=torecord[ufgroup][i] #list of one
-                else:
-                    print("Not enough examples, moving on:",i,ufgroup)
-                    continue
-                log.info(_('Giving user the number {} example from tone '
-                        'group {}'.format(i,ufgroup)))
-                exited=self.showsenseswithexamplestorecord([sense],
-                            (ufgroup, i+1, self.examplespergrouptorecord),
-                            skip=skip)
-                if exited == 'skip':
-                    skip=True
-                if exited == True:
-                    return
-        if not (self.runwindow.exitFlag.istrue() or self.exitFlag.istrue()):
-            self.runwindow.waitdone()
-            self.runwindow.resetframe()
-            ui.Label(self.runwindow.frame, anchor='w',font='read',
-            text=_("All done! Sort some more words, and come back.")
-            ).grid(row=0,column=0,sticky='w')
-            ui.Button(self.runwindow.frame,
-                    text=_("Continue to next syllable profile"),
-                    command=next).grid(row=1,column=0)
-        self.donewpyaudio()
-    def filenameoptions(self,node):
-        # This depends on self.analang and program['slices'].profile; otherwise, it
-        # could be moved to a FieldParent method
-        """This should generate possible filenames, with preferred (current
-        schema) last, as that will be used if none are found."""
-        ps=program['slices'].ps()
-        pslocopts=[ps]
-        # Except for data generated early in 2021, profile should not be there,
-        # because it can change with analysis. But we include here to pick up
-        # old files, in case they are there but not linked.
-        # First option (legacy):
-        # pslocopts.insert(0,ps+'_'+self.parent.taskchooser.slices.profile())
-        pslocopts.insert(0,ps+'_'+program['slices'].profile())
-        fieldlocopts=[None]
-        try:
-            l=node.locationvalue()
-            #the last option is taken, if none are found
-            pslocopts.insert(0,ps+'-'+l) #the first option.
-            fieldlocopts.append(l) #make this the last option.
-        except AttributeError:
-            # log.info("doesn't look like an example node; not offering location")
-            pass
-                    # Yes, these allow for location to be present twice, but
-                # that should never be found, nor offered
-        filenames=[]
-        """We iterate over lots of filename schemas, to preserve legacy data.
-        This is only really needed (and so could be removed at some point) when
-        data has been recorded but no link is in place, for whatever reason.
-        If there is a link to a real sound file, that is covered above.
-        If there is no sound file, then the below will result in the default
-        (current) schema."""
-        # log.info("forms at this point: {}".format(self.forms))
-        for pslocopt in pslocopts:
-            for fieldlocopt in fieldlocopts: #for older name schema
-                for legacy in ['_', None]:
-                    for tags in [ None, 1 ]:
-                        args=[node.sense.id]
-                        if tags:
-                            args+=[node.tag]
-                            if node.tag == 'field':
-                                args+=[node.ftype]
-                        form=node.textvaluebylang(self.analang)
-                        if not form:
-                            log.error("No {} analang in {} (forms: {})".format(
-                                                        self.analang,
-                                                        node.sense.id,
-                                                        node.textvaluedict()))
-                            return
-                        args+=[form] #[self.ftype]]
-                        for l in self.glosslangs:
-                            args+=[node.glossbylang(l)]
-                        optargs=args[:]
-                        optargs.insert(0,pslocopt) #put first
-                        optargs.insert(3,fieldlocopt) #put after self.node.tag
-                        # log.info("optargs: {}".format(optargs))
-                        wavfilename='_'.join([x for x in optargs if x])
-                        if legacy == '_': #There was a schema that had an extra '_'.
-                            wavfilename+='_'
-                        wavfilename=rx.urlok(wavfilename) #one character check
-                        filenames+=[wavfilename+'.wav']
-        return filenames
-    def makeaudiofilename(self,node):
-        """If node is already marked with sound file attributes, we're done"""
-        if self.hassoundfile(node):
-            return
-        """Otherwise, generate prioritized list of name options"""
-        filenames=self.filenameoptions(node)
-        """if any of the generated filenames are there, stop at the first one"""
-        for f in filenames:
-            if self.audioexists(f):
-                log.info("Audiofile {} found at {}".format(f, self.audioURL(f)))
-                node.textvaluebylang(lang=program['params'].audiolang,value=f)
-                if self.hassoundfile(node,recheck=True):
-                    log.info("file {} linked in LIFT".format(node.audiofileURL))
-                break
-        """If none found, be ready to write with last/highest priority option"""
-        f=filenames[-1]
-        log.debug(_("No audio file found, but ready to record: "
-                    )+"{}; {}:{}".format(f, _("url"), self.audioURL(f)))
-        """Should be able to just send f"""
-        node.audiofilenametoput=f #don't write this until we actually record
-        node.audiofileURL=self.audioURL(f)
-    def __init__(self,parent):
-        TaskDressing.__init__(self,parent)
-        Sound.__init__(self)
-        self.mikecheck() #only ask for settings check if recording
 class Report(object):
     def consultantcheck(self):
         program['settings'].reloadstatusdata()
