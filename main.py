@@ -12014,7 +12014,7 @@ class DictbyLang(dict):
     def getformfromnode(self,node,truncate=False):
         #this assumes *one* value/lang, a second will overwrite.
         #this will comma separate text nodes, if there are multiple text nodes.
-        if isinstance(node,lift.ET.Element):
+        if isinstance(node,lift.et.Element):
             lang=node.get('lang')
             if truncate: #this gives up to three words, no parens
                 text=unlist([rx.glossifydefn(i.text).strip('‘’')
@@ -15469,7 +15469,7 @@ def ifone(l,nt=None):
     if l and not len(l)-1:
         return l[0]
 def unlist(l,ignore=[None]):
-    if l and isinstance(l[0],lift.ET.Element):
+    if l and isinstance(l[0],lift.et.Element):
          log.error("unlist should only be used on text (not node) lists ({})"
                     "".format(l))
          log.error("Element[0] text: {}".format(l[0].text))
