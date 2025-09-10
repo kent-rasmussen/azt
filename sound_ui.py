@@ -6,7 +6,7 @@ logsetup.setlevel('INFO',log) #for this file
 import ui_tkinter as ui
 import sound
 import file
-from utilities import *
+import utilities as utils
 import executables
 class RecordButtonFrame(ui.Frame):
     """This is not implemented yet!!"""
@@ -53,7 +53,7 @@ class RecordButtonFrame(ui.Frame):
         self.bt=ui.ToolTip(self.b,_("press-speak-release"))
     def _play(self,event=None):
         log.debug("Asking PA to play now")
-        tryrun(self.player.play)
+        utils.tryrun(self.player.play)
     def makeplaybutton(self):
         self.p=ui.Button(self, text='‣', command=self._play,
                         font='readbig',
