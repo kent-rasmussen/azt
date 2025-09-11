@@ -8717,7 +8717,7 @@ class Sort(object):
                     add=None #only once, duplicates next
                 elif check in code: #multiple times, if duplicates
                     sense.rmverificationvalue(profile,ftype,code)
-                    values.remove(code)
+                     # values.remove(code) #covered in the above
             if add: #i.e., still, after switching out for changes
                 values.append(add)
                 added=add
