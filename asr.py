@@ -9,6 +9,7 @@ import torch
 import datetime, copy
 import whisper_codes_names
 from transformers import pipeline
+from huggingface_hub import try_to_load_from_cache, _CACHED_NO_EXIST
 import langtags
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
@@ -461,6 +462,15 @@ class ASRtoText(object):
         if repo in self.models:
             del self.models[repo]
             log.info(f"ASR model {repo} unloaded.")
+    def is_cached(self,model_name):
+        location=try_to_load_from_cache(model_name,
+                                    cache_dir,
+                                repo_type='model' #by default
+                            )
+        if location is _CACHED_NO_EXIST:
+            log.error(f"The model {model_name} doesn't seem to exist")
+        else:
+            return location
     def load_models_by_kwarg(self,**kwargs):
         if not kwargs: #we are only making changes here, maybe none
             log.info("not reloading models_by_kwarg")
@@ -481,6 +491,9 @@ class ASRtoText(object):
         if self.return_ipa and not ipa_kwargs_to_remain:
             kwargs['return_ipa']=True
         log.info(f"{kwargs=}")
+        to_do=[k for k,v in kwargs.items() if k in self.repo_modelnames and v]
+        to_undo=[k for k,v in kwargs.items()
+                                if k in self.repo_modelnames and not v]
         for k,v in kwargs.items():
             if k in self.repo_modelnames: #these are all we do here
                 if v:
