@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # coding=UTF-8
+import logsetup
+log=logsetup.getlog(__name__)
+logsetup.setlevel('INFO',log) #for this file
 import os #,sys
 import re
 import numpy
@@ -476,15 +479,37 @@ class TextGrid(tgt.core.TextGrid):
         tgt.core.TextGrid.add_tier(self,tier)
         return tier
     def __init__(self,file_name,**kwargs):
+        import codecs
         try:
-            tgt_text_grid=tgt.io.read_textgrid(file_name)
-        except UnicodeDecodeError:
+            log.info(f"trying tgt.io.read_textgrid with {file_name}")
+            # tgt_text_grid=tgt.io.read_textgrid(file_name)
+            with codecs.open(file_name, 'r', encoding='utf-8') as f:
+            # Read whole file into memory ignoring empty lines and lines consisting
+            # solely of a single double quote.
+                stg = [line.strip() for line in f.readlines()
+                    if line.strip() not in ['', '"']]
+            log.info(f"stg: {stg[0:4]}")
+            if ((stg[0] != 'File type = "ooTextFile"' or
+                stg[1] != 'Object class = "TextGrid"') and
+                (stg[0] != 'File type = "ooTextFile short"' or
+                    stg[1] != '"TextGrid"')):
+                raise Exception('Invalid TextGrid header: {0}\n{1}'.format(stg[0], stg[1]))
+            # tgt_text_grid=tgt.io.read_short_textgrid(file_name,stg)
+            tgt_text_grid=tgt.io.read_long_textgrid(file_name,stg)
+            log.info("tgt.io.read_textgrid completed successfully")
+        except IndexError as e:
+            log.info(f"found IndexError {e}; trying more generic read")
+            raise
+            tgt_text_grid=parselmouth.read(file_path=file_name)
+        except UnicodeDecodeError as e:
+            log.info(f"found UnicodeDecodeError {e}; trying utf-16")
             tgt_text_grid=tgt.io.read_textgrid(file_name,encoding='utf-16')
-        except FileNotFoundError:
+        except FileNotFoundError as e:
+            log.info(f"found FileNotFoundError {e}; making a new file")
             tgt_text_grid=tgt.core.TextGrid(file_name)
         super().__init__(filename=file_name, **kwargs)
         for tier in tgt_text_grid.tiers:
-            print(tier.name)
+            # print(tier.name)
             if self.has_tier(tier.name):
                 print(f"Tier ‘{tier.name}’ is already there!")
                 print("Won't add "
@@ -599,6 +624,10 @@ class Files():
             except Exception as e:
                 if len(e.args):
                     print(f"Exception {type(e)}: {e}")
+                if isinstance(e,IndexError):
+                    log.info("Check for a malformed textgrid file, especially "
+                    "with extra information, or linebreaks in content.")
+                    raise
                 pass
     def parse_file_name(self):
         try: # Is file_name a sound file?
@@ -645,9 +674,13 @@ class Files():
         self.parse_file_name()
 class ExtractToArchive():
     def init_tarball(self,metadata_header=None,append=False):
-        self.tarball=file.TarBall(os.path.splitext(
-                                self.files.textgrid.filename)[0],
-                                metadata_header=metadata_header,append=append)
+        # outputdir,archivename,metadata_header=None,append=False
+        log.info(f"{os.path.dirname(self.files.textgrid.filename)},{self.files.textgrid.filename}")
+        log.info(os.path.splitext(self.files.textgrid.filename))
+        dirname=os.path.dirname(self.files.textgrid.filename)
+        self.tarball=file.TarBall(dirname if dirname else '.',
+                            os.path.splitext(self.files.textgrid.filename)[0],
+                            metadata_header=metadata_header,append=append)
     def finish_tarball(self):
         self.tarball.writeout()
     def get_text_in_annotation_times(self,tier_name,start,end):
@@ -670,7 +703,8 @@ class ExtractToArchive():
         if tier_name in self.files.textgrid.get_tier_names():
             tier=self.files.textgrid.get_tier_by_name(tier_name)
         elif tier_name:
-            print(f"Tier {tier_name} not in {self.files.textgrid.tiers}")
+            log.info(f"Tier ‘{tier_name}’ not in "
+                    "{self.files.textgrid.get_tier_names()}")
             exit()
         elif len(self.files.textgrid.tiers) == 1:
             tier=self.files.textgrid.tiers[0]
