@@ -12253,7 +12253,7 @@ class ExampleDict(dict):
                                 program['settings'].audiodir)
     def exampletypeok(self,node,**kwargs):
         kwargs=exampletype(**kwargs)
-        if not node:
+        if node is None:
             return
         # log.info("exampletypeok framed: {}".format(framed))
         if kwargs['wglosses'] and not self.hasglosses(node):
@@ -12596,7 +12596,7 @@ class SortGroupButtonFrame(ui.Frame):
         n,node=self.exs.getexample(self.group,**kwargs)
         self.updatecount(n)
         self.hasexample=False
-        if not node:
+        if node is not None:
             if kwargs['wsoundfile']:
                 log.error("self.exs.getexample didn't return an example "
                                     "with a soundfile; trying for one without")
