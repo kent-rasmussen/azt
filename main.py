@@ -1102,6 +1102,7 @@ class Menus(ui.Menu):
         # While this remains broken, leave off. Is it worth fixing?
         # options=[(_("Add/Modify Ad Hoc Sorting Group"),
         #                                         self.parent.addmodadhocsort),]
+        options=[]
         if isinstance(self.parent,SortT):
             options.extend([(_("Add Tone frame"), self.parent.addframe)])
         group=program['status'].group()
