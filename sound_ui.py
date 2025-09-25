@@ -607,9 +607,9 @@ class ASRModelSelectionWindow(ui.Window):
         try:
             assert self.soundsettings.asr_kwargs[k] == value
         except (AssertionError,KeyError):
-            log.info(f"Changing {k} from {self.soundsettings.asr_kwargs[k]
-            if k in self.soundsettings.asr_kwargs else None} to "
-                    f"{value}")
+            log.info(f"Changing {k} from "
+                    f"{self.soundsettings.asr_kwargs.get(k,None)} "
+                    f"to {value}")
             self.soundsettings.asr_kwargs[k]=value
         # This runs once before the ASR boots, when the above will suffice.
         if k in ['sister_languages'] and hasattr(self.soundsettings,'asr'):
