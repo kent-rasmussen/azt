@@ -15743,8 +15743,8 @@ def saveimagefile(url,filename,copyto=None):
         with open(url,'rb') as u:
             # log.info("opened old file")
             f.write(u.read())
-def scaledimage(image,pixels=150):
-    image.scale(program['scale'],pixels=pixels)
+def scaledimage(image,pixels=150,scaleto='height'):
+    image.scale(program['scale'],pixels=pixels,scaleto=scaleto)
 def getimagelocationURI(sense):
     i=sense.illustrationvalue()
     for d in [program['settings'].imagesdir,program['settings'].directory]:
