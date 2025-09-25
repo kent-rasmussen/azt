@@ -922,14 +922,27 @@ class Image(tkinter.PhotoImage):
         # log.info("scaled pixels: {} (of {})".format(s,pixels))
         if not r:
             r=1 #don't scale for pixels=r=0
+        # res_ori=resolution #for below logging
+        # int(resolution*r) must be >=1 (True) for biggerby
+        # r_off_by is precision
         while not int(resolution*r) or r_off_by() > .02:
             resolution=resolution*2
+            # print(r_off_by(), resolution*r, int(resolution*r), int(resolution),
+            #     int(resolution*r)/int(resolution))
         # log.info(f"scaling with {int(resolution*r)}/{int(resolution)}="
         #         f"{int(resolution*r)/int(resolution)} as a proxy for "
         #         f"{s}/{self.maxhw()}={r}")
         self.biggerby(int(resolution*r))
         # log.info("Image: {} ({})".format(self.scaled, self.maxhw(scaled=True)))
         self.smallerby(int(resolution))
+        # r_actual=int(resolution*r)/int(resolution)
+        # log.info(f"Asked for {scale=}, {pixels=}, {scale*pixels=}, {scaleto=}")
+        # log.info(f"Found Image with {self.maxhw()=}, {self.height()=}, "
+        #         f"{self.width()=}, calculated {r=}\n"
+        #         f"returned {r_actual=}, {self.maxhw()*r_actual=}, "
+        #         f"{self.height()*r_actual=}, {self.width()*r_actual=}, "
+        #         f"with {resolution=}")
+        # log.info(f"{self.scaled.height()=}; {self.scaled.width()=}")
         # self[pixels]=self.scaled
         # log.info("Image: {} ({})".format(self.scaled, self.maxhw(scaled=True)))
     def transparent(self):
