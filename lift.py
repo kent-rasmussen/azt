@@ -2370,6 +2370,11 @@ class FieldParent(object):
         under this parent."""
         # log.info(f"FieldParent {self.tag} field types: {[i.get('type')
         #                                     for i in self.findall('field')]}")
+        # self.fields={node.ftype:node for node in self
+        #                 if isinstance(node,Node) #I.e., already brought in
+        #                 and nod.tag == 'field'
+        #             }
+        # use the above updated with this if fields aren't picked up correctly
         self.fields={
                     node.get('type'):Field(self,node)
                         for node in self.findall('field')
