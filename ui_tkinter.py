@@ -899,9 +899,9 @@ class Image(tkinter.PhotoImage):
         else:
             return max(self.width(),self.height())
     def scale_height(self,scale,pixels=100,resolution=5):
-        self.scale(scale,pixels=100,resolution,scaleto='height')
+        self.scale(scale,pixels=100,resolution=resolution,scaleto='height')
     def scale_width(self,scale,pixels=100,resolution=5):
-        self.scale(scale,pixels=100,resolution,scaleto='width')
+        self.scale(scale,pixels=100,resolution=resolution,scaleto='width')
     def scale(self,scale,pixels=100,resolution=5,scaleto='both'):
         """'resolution*r' and 'resolution' here express a float scaling ratio
         as two integers, so r = 0.7 = 7/10, because the zoom and subsample fns
