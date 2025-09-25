@@ -907,6 +907,8 @@ class Image(tkinter.PhotoImage):
         as two integers, so r = 0.7 = 7/10, because the zoom and subsample fns
         only work on integers. To not waste computation, resolution starts
         small and increases to what is needed to keep both integers positive"""
+        def r_off_by(): #how far off does this integer division push this?
+            return abs(r-(int(resolution*r)/int(resolution)))/r
         # log.info("Scaling with these args: scale {}, pixels {}, resolution {}"
         #         "".format(scale,pixels,resolution))
         s=pixels*scale #the number of pixels, scaled
