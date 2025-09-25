@@ -4665,28 +4665,32 @@ class TaskDressing(HasMenus,ui.Window):
         try:
             assert other == False
             othernames=[i for i in program['db'].fieldnames[self.analang]
-                    if i != othername]
+                    if i != othername and i not in ['lc','lx']]
         except (KeyError,AssertionError):
             othernames=[]
-        title=_('Select Second Form Field for {}').format(ps)
-        window=ui.Window(self,title=title)
         if othernames:
             if len(othernames)-1:
                 text=_("Select a database field "
                         f"to use for second forms of ‘{ps}’ words")
                 otherbuttontext=_("None of these; make a new field")
             else:
-                text=_("Select this database field "
+                text=_(f"Select the ‘{othernames[0]}’ database field "
                         f"for second forms of ‘{ps}’ words")
                 otherbuttontext=_("No; make a new field")
             cmd=getother
             optionslist=othernames
         else:
-            text=_("No suitable database fields were found; what name "
-                    f"do you want to use for second forms of ‘{ps}’ words?")
-            otherbuttontext=_("None of these work; make my own field")
-            cmd=getcustom
-            optionslist=opts
+            setcmd(opts[0])
+            # ErrorNotice(_("No suitable database fields were found for second "
+            #             f"forms of ‘{ps}’ words; using ‘{opts[0]}’."))
+            return
+            # text=_("No suitable database fields were found; what name "
+            #         f"do you want to use for second forms of ‘{ps}’ words?")
+            # otherbuttontext=_("None of these work; make my own field")
+            # cmd=getcustom
+            # optionslist=opts
+        title=_('Select Second Form Field for {}').format(ps)
+        window=ui.Window(self,title=title)
         ui.Label(window.frame, text=text, column=0, row=0)
         """What does this extra frame do?"""
         window.scroll=ui.Frame(window.frame)
