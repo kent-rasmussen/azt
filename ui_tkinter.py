@@ -922,7 +922,7 @@ class Image(tkinter.PhotoImage):
         # log.info("scaled pixels: {} (of {})".format(s,pixels))
         if not r:
             r=1 #don't scale for pixels=r=0
-        while not int(resolution*r): #This must be >=1 (True)
+        while not int(resolution*r) or r_off_by() > .02:
             resolution=resolution*2
         # log.info(f"scaling with {int(resolution*r)}/{int(resolution)}="
         #         f"{int(resolution*r)/int(resolution)} as a proxy for "
