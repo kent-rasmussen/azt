@@ -6909,6 +6909,9 @@ class WordCollection(Segments):
             self.nextword(nostore=False)
     def selectimage(self,event=None):
         dir,files=self.getimagefiles()
+        if len(files) >50:
+            ErrorNotice(f"There are too many images to show! ({len(files)})")
+            files=files[:10]
         if not files:
             log.info(f"{dir} seems there, but empty.")
             self.getopenclipart()
