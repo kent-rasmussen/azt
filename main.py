@@ -6867,7 +6867,7 @@ class WordCollection(Segments):
         self.selectionwindow.title(title)
         t=ui.Label(self.selectionwindow.frame,text=title, font='title',
                     row=0,column=0)
-        currentimage=getimageifthere(self.sense,pixels=100)
+        currentimage=getimageifthere(self.sense)
         if currentimage:
             t['image']=currentimage
             t['compound']='right'
@@ -12625,7 +12625,7 @@ class SortGroupButtonFrame(ui.Frame):
                                     frame=program['toneframes'].get(
                                                 program['params'].check()),
                                     showtonegroup=self.kwargs['showtonegroup'])
-        self._illustration=getimageifthere(node.sense,pixels=100)
+        self._illustration=getimageifthere(node.sense)
         return 1
     def makebuttons(self):
         if self.kwargs['label']:
@@ -15769,16 +15769,15 @@ def compilesenseimage(sense):
         sense.image=ui.Image(uri)
     else:
         sense.image=None
-def getimageifthere(sense,pixels=100):
-    if not (hasattr(sense,'image') and
-                isinstance(sense.image,ui.Image)):
+def getimageifthere(sense,pixels=70):
+    if not getattr(sense,'image',False) or not isinstance(sense.image,ui.Image):
         try:
             compilesenseimage(sense)
         except tkinter.TclError as e:
             if ('value for "-file" missing' not in e.args[0] and
                     "couldn't recognize data in image file" not in e.args[0]):
                 log.info("ui.Image error: {}".format(e))
-    if sense.image:
+    if getattr(sense,'image',False):
         scaledimage(sense.image,pixels=pixels)
         return sense.image.scaled
     # else:
