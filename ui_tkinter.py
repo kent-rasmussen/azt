@@ -913,12 +913,12 @@ class Image(tkinter.PhotoImage):
         #         "".format(scale,pixels,resolution))
         s=pixels*scale #the number of pixels, scaled
         if scaleto == 'both':
-            standard=self.maxhw() #the ratio we need to reduce actual pixels by
+            standard=self.maxhw()
         elif scaleto == 'height':
-            standard=self.height() #the ratio we need to reduce actual pixels by
+            standard=self.height()
         elif scaleto == 'width':
-            standard=self.width() #the ratio we need to reduce actual pixels by
-        r=s/standard
+            standard=self.width()
+        r=s/standard #the ratio we need to reduce actual pixels by
         # log.info("scaled pixels: {} (of {})".format(s,pixels))
         if not r:
             r=1 #don't scale for pixels=r=0
