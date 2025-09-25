@@ -2103,7 +2103,10 @@ class FormParent(Node):
         made by methods that require lang be specified. When updated to use
         they should be wrapped by a method that maintains this requirement."""
         if isinstance(self, Field):
-            if 'verification' in self.ftype:
+            possibles=list(self.langs())
+            if len(possibles) == 1:
+                return possibles[0]
+            elif 'verification' in self.ftype:
                 return pylang(analang)
                 # log.info("using verification pylang {}".format(lang))
             elif 'tone' in self.ftype:
