@@ -4364,7 +4364,7 @@ if __name__ == '__main__':
 		'fr':'__es'}
     ftype='pl'
     # sense=lift.sensedict['daytime_b27c251c-090e-4427-aa86-22b745409f8d']
-    sense=lift.sensedict['eb91d782-97fc-47da-b1c4-2ba766827ec8']
+    sense=lift.sensedict['body_791094f2-a82b-4650-81d8-c3b6145d2be4']
     # sense=lift.sensedict['head_a8516acf-606c-4796-8fed-75b0c0f2c583']
     # sense=lift.sensedict['forehead_3e600f7e-74a3-4761-9bc3-09f3f01cd98b']
     # for sense in ['head_a8516acf-606c-4796-8fed-75b0c0f2c583',
@@ -4374,6 +4374,7 @@ if __name__ == '__main__':
     #     print(sense.collectionglosses)
     # exit()
     # sense=lift.senses[0]
+    # print(sense.cawln)
     prettyprint(sense)
     for lang in sense.glosses:
         log.info("gloss fields: {}".format(sense.glosses[lang]))
