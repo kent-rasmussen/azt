@@ -701,6 +701,39 @@ class Exitable(object):
     def __init__(self):
         self.protocol("WM_DELETE_WINDOW", self.on_quit)
 class Gridded(ObectwArgs):
+class Childof(object):
+    def inherit(self,parent=None,attr=None):
+        """This function brings these attributes from the parent, to inherit
+        from the root window, through all windows, frames, and scrolling frames, etc
+        """
+        # log.info("inheriting")
+        if not parent and hasattr(self,'parent') and self.parent:
+            parent=self.parent
+        elif parent:
+            self.parent=parent
+        if not attr:
+            attrs=['theme',
+                    # 'fonts', #in theme
+                    # 'debug',
+                    'wraplength',
+                    # 'photo', #in theme
+                    'renderer',
+                    # 'program',
+                    'exitFlag']
+        else:
+            attrs=[attr]
+        for attr in attrs:
+            if hasattr(parent,attr):
+                setattr(self,attr,getattr(parent,attr))
+                # log.info("inheriting {} from parent {} (to {})"
+                #         "".format(attr,type(parent),type(self)))
+            else:
+                log.debug("parent {} (of {}) doesn't have attr {}, skipping inheritance"
+                        "".format(parent,type(self),attr))
+    def __init__(self, parent, *args, **kwargs): #because this is used everywhere.
+        self.parent=parent
+        self.inherit()
+        super().__init__(*args, **kwargs)
     def dogrid(self):
         if self._grid:
             # log.info(f"Gridding {type(self)} at r{self.row},c{self.column},"
@@ -769,38 +802,6 @@ class Gridded(ObectwArgs):
             self.gridwait=kwargs.pop('gridwait',False)
         else:
             log.log(4,"Not Gridding! ({})".format(kwargs))
-class Childof(object):
-    def inherit(self,parent=None,attr=None):
-        """This function brings these attributes from the parent, to inherit
-        from the root window, through all windows, frames, and scrolling frames, etc
-        """
-        # log.info("inheriting")
-        if not parent and hasattr(self,'parent') and self.parent:
-            parent=self.parent
-        elif parent:
-            self.parent=parent
-        if not attr:
-            attrs=['theme',
-                    # 'fonts', #in theme
-                    # 'debug',
-                    'wraplength',
-                    # 'photo', #in theme
-                    'renderer',
-                    # 'program',
-                    'exitFlag']
-        else:
-            attrs=[attr]
-        for attr in attrs:
-            if hasattr(parent,attr):
-                setattr(self,attr,getattr(parent,attr))
-                # log.info("inheriting {} from parent {} (to {})"
-                #         "".format(attr,type(parent),type(self)))
-            else:
-                log.debug("parent {} (of {}) doesn't have attr {}, skipping inheritance"
-                        "".format(parent,type(self),attr))
-    def __init__(self, parent): #because this is used everywhere.
-        self.parent=parent
-        self.inherit()
 class UI(ObectwArgs):
     """docstring for UI, after tkinter widgets are initted."""
     def wait(self,msg=None,cancellable=False,thenshow=False):
