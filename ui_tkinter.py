@@ -649,57 +649,6 @@ class Renderer(ObectwArgs):
         draw.multiline_text((0+xpad//2, 0+ypad//4), text,font=font,fill=black,
                                                                 align=align)
         self.img = PIL.ImageTk.PhotoImage(img)
-class Exitable(object):
-    """This class provides the method and init to make things exit normally.
-    Hence, it applies to roots and windows, but not frames, etc."""
-    def killall(self):
-        self.destroy()
-        sys.exit()
-    def cleanup(self):
-        pass
-    def exittoroot(self):
-        if hasattr(self,'parent') and not isinstance(self.parent,Root):
-            self.parent.exittoroot()
-            return
-        elif hasattr(self,'parent'):
-            self.parent.exitFlag.true()
-    def on_quit(self):
-        """Do this when a window closes, so any window functions can know
-        to just stop, rather than trying to build graphic components and
-        throwing an error. This doesn't do anything but set the flag value
-        on exit, the logic to stop needs to be elsewhere, e.g.,
-        `if self.exitFlag.istrue(): return`"""
-        # log.info(f"Quitting window {self}")
-        if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
-            # log.info("Setting window ({}) exit flag True!".format(self))
-            self.exitFlag.true()
-            # log.info(f"Set exitflag of window {self}")
-        if self.mainwindow: #exit afterwards if main window
-            # log.info(f"Window {self} is mainwindow")
-            self.exittoroot()
-            self.killall()
-        else:
-            # log.info(f"Window {self} is NOT mainwindow")
-            if (hasattr(self,'parent') and
-                    self.parent.winfo_exists() and
-                    not isinstance(self.parent,Root)):
-                # log.info(f"Window {self} has non-root parent that exists")
-                if not self.parent.iswaiting():
-                    # log.info(f"Window {self} is not waiting")
-                    self.parent.deiconify()
-                # else:
-                #     log.info(f"Window {self} is waiting")
-                #     self.parent.waitunpause()
-                    # self.ww.paused=True
-            # else:
-            #     log.info(f"Window {self} has NOT a non-root parent that exists")
-            # log.info("Going to deiconify {}".format(self.parent))
-            # log.info("Going to cleanup {}".format(self))
-            # log.info(f"Window {self} cleaning up")
-            self.cleanup()
-            self.destroy() #do this for everything
-    def __init__(self):
-        self.protocol("WM_DELETE_WINDOW", self.on_quit)
 class Gridded(ObectwArgs):
 class Childof(object):
     def inherit(self,parent=None,attr=None):
@@ -879,6 +828,58 @@ class UI(ObectwArgs):
             # except tkinter.TclError as e:
             #     log.info("TclError {}".format(e))
         # super(UI, self).__init__(*args, **kwargs)
+class Exitable(ObectwArgs):
+    """This class provides the method and init to make things exit normally.
+    Hence, it applies to roots and windows, but not frames, etc."""
+    def killall(self):
+        self.destroy()
+        sys.exit()
+    def cleanup(self):
+        pass
+    def exittoroot(self):
+        if hasattr(self,'parent') and not isinstance(self.parent,Root):
+            self.parent.exittoroot()
+            return
+        elif hasattr(self,'parent'):
+            self.parent.exitFlag.true()
+    def on_quit(self):
+        """Do this when a window closes, so any window functions can know
+        to just stop, rather than trying to build graphic components and
+        throwing an error. This doesn't do anything but set the flag value
+        on exit, the logic to stop needs to be elsewhere, e.g.,
+        `if self.exitFlag.istrue(): return`"""
+        # log.info(f"Quitting window {self}")
+        if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
+            # log.info("Setting window ({}) exit flag True!".format(self))
+            self.exitFlag.true()
+            # log.info(f"Set exitflag of window {self}")
+        if self.mainwindow: #exit afterwards if main window
+            # log.info(f"Window {self} is mainwindow")
+            self.exittoroot()
+            self.killall()
+        else:
+            # log.info(f"Window {self} is NOT mainwindow")
+            if (hasattr(self,'parent') and
+                    self.parent.winfo_exists() and
+                    not isinstance(self.parent,Root)):
+                # log.info(f"Window {self} has non-root parent that exists")
+                if not self.parent.iswaiting():
+                    # log.info(f"Window {self} is not waiting")
+                    self.parent.deiconify()
+                # else:
+                #     log.info(f"Window {self} is waiting")
+                #     self.parent.waitunpause()
+                    # self.ww.paused=True
+            # else:
+            #     log.info(f"Window {self} has NOT a non-root parent that exists")
+            # log.info("Going to deiconify {}".format(self.parent))
+            # log.info("Going to cleanup {}".format(self))
+            # log.info(f"Window {self} cleaning up")
+            self.cleanup()
+            self.destroy() #do this for everything
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.protocol("WM_DELETE_WINDOW", self.on_quit)
 class Image(tkinter.PhotoImage):
     def biggerby(self,x):
         #always do this one first, if doing both, to start from scratch
