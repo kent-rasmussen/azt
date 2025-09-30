@@ -753,52 +753,6 @@ class Childof(object):
             log.log(4,"Not Gridding! ({})".format(kwargs))
 class UI(ObectwArgs):
     """docstring for UI, after tkinter widgets are initted."""
-    def wait(self,msg=None,cancellable=False,thenshow=False):
-        if self.iswaiting():
-            log.debug("There is already a wait window: {}".format(self.ww))
-            if thenshow:
-                self.showafterwait=True
-            return
-        self.showafterwait=self.winfo_viewable()|thenshow
-        if self.showafterwait:
-            self.withdraw()
-        self.ww=Wait(self,msg,cancellable=cancellable)
-    def iswaiting(self):
-        return hasattr(self,'ww') and self.ww.winfo_exists()
-    def progress(self,value,parent=None,**kwargs):
-        # between 0 and 100
-        try:
-            self.progressbar.current(value)
-        except AttributeError:
-            print("making new progressbar")
-            if not parent:
-                parent=self.outsideframe
-            self.progressbar=Progressbar(parent,
-                                    orient='horizontal',
-                                    mode='determinate', #or 'indeterminate'
-                                    # sticky='nsew',
-                                    **kwargs)
-            self.progress(value)
-    def waitprogress(self,x):
-        self.ww.progress(x,r=4)
-    def waitpause(self):
-        self.ww.withdraw()
-        self.ww.paused=True
-    def waitunpause(self):
-        self.ww.deiconify()
-        self.ww.paused=False
-    def waitcancel(self):
-        self.waitcancelled=True
-        log.info("Wait cancel registered; waiting to cancel")
-    def waitdone(self):
-        try:
-            self.ww.close()
-            if self.showafterwait:
-                self.deiconify()
-        except tkinter.TclError:
-            pass
-        except AttributeError:
-            log.info("Seem to have tried stopping waiting, when I wasn't...")
     def __init__(self): #because this is used everywhere.
         # log.info("UI self._root(): {} ({})".format(self._root(),type(self._root())))
         # log.info("UI self._root() dir: {}".format(dir(self._root())))
@@ -1556,6 +1510,52 @@ class Scrollbar(Gridded,Childof,tkinter.Scrollbar):
         self.dogrid()
 """These classes don't call tkinter classes directly"""
 class Window(Toplevel):
+    def wait(self,msg=None,cancellable=False,thenshow=False):
+        if self.iswaiting():
+            log.debug("There is already a wait window: {}".format(self.ww))
+            if thenshow:
+                self.showafterwait=True
+            return
+        self.showafterwait=self.winfo_viewable()|thenshow
+        if self.showafterwait:
+            self.withdraw()
+        self.ww=Wait(self,msg,cancellable=cancellable)
+    def iswaiting(self):
+        return hasattr(self,'ww') and self.ww.winfo_exists()
+    def progress(self,value,parent=None,**kwargs):
+        # between 0 and 100
+        try:
+            self.progressbar.current(value)
+        except AttributeError:
+            print("making new progressbar")
+            if not parent:
+                parent=self.outsideframe
+            self.progressbar=Progressbar(parent,
+                                    orient='horizontal',
+                                    mode='determinate', #or 'indeterminate'
+                                    # sticky='nsew',
+                                    **kwargs)
+            self.progress(value)
+    def waitprogress(self,x):
+        self.ww.progress(x,r=4)
+    def waitpause(self):
+        self.ww.withdraw()
+        self.ww.paused=True
+    def waitunpause(self):
+        self.ww.deiconify()
+        self.ww.paused=False
+    def waitcancel(self):
+        self.waitcancelled=True
+        log.info("Wait cancel registered; waiting to cancel")
+    def waitdone(self):
+        try:
+            self.ww.close()
+            if self.showafterwait:
+                self.deiconify()
+        except tkinter.TclError:
+            pass
+        except AttributeError:
+            log.info("Seem to have tried stopping waiting, when I wasn't...")
     def resetframe(self):
         if self.parent.exitFlag.istrue():
             return
