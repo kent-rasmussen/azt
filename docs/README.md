@@ -1,6 +1,6 @@
 <a href="https://gitlocalize.com/repo/7965/fr?utm_source=badge"> <img src="https://gitlocalize.com/repo/7965/fr/badge.svg" /> </a>
 <a href="fr/README.md">Français</a>
-### There is an install executable for MS Windows, with instructions, [here](https://github.com/MaggieCampo/aztinstaller) ([direct link](https://github.com/MaggieCampo/aztinstaller/blob/master/AZT_Installer.exe?raw=true))
+### MS Windows installer [here](https://github.com/MaggieCampo/aztinstaller/blob/master/AZT_Installer.exe?raw=true), with instructions [here](https://github.com/MaggieCampo/aztinstaller)
 ### Simplest (batch file) install on [MS Windows](SIMPLEINSTALL.md) ([script](../installfiles/RunMeAsAdmin-RightClick-toInstall.bat?raw=true)) or [Linux](SIMPLEINSTALL_LINUX.md) ([script](../installfiles/RunMetoInstall_Linux.sh?raw=true))
 ### If you want consultant help, see also [this page](HELP_PREREQUISITES.md)
 ### You can now [create a Demo database](DEMOS.md) to try out [A-Z+T].
