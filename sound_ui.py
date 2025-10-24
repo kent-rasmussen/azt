@@ -659,7 +659,7 @@ class ASRModelSelectionWindow(ui.Window):
                 buttons=p_buttons
             self.asr_settings_w[k]=ui.CheckButton(parent,
                                         text = k,
-                                        no_default_indicator_images=True,
+                                        # no_default_indicator_images=True,
                                         variable = self.kwarg_vars[k],
                                         onvalue = True, offvalue = False,
                                         ipadx=10,
