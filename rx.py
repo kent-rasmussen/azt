@@ -336,6 +336,16 @@ class RegexDict(object):
         # log.info(f"Compiling {x}{n} regex {nS}")
         self.setnXrx(x,n,nS)
     def update(self,t,check,value):
+        """This splits a check into one or more occurrances of Sn where
+        - S is C or V and
+        - x is the nth occcurance of that segment type.
+        These are used to replace last first, so changes cannot interfere with
+        following changes (i.e., C1=C2 starts with C2)
+        the regular expression (defined in nX, set in setnXrx) matches
+        everything up to Sn, with Sn in the last group. Thus updating is done
+        by substituting the new value for the last group, then adding the part
+        after the match.
+        """
         matches=[]
         tori=t
         for c in reversed(check.split('=')):
@@ -348,8 +358,8 @@ class RegexDict(object):
                 matches.append(match.groups()[-1])
                 # We need everything before the text to change to show up in a group
                 t=match.expand('\\g<1>'+value)+t[match.end():]
-                log.info(match.expand('\\g<1>'+value)+t[match.end():])
-                log.info(t[:match.start(match.lastindex)]+match.expand(value)+t[match.end():])
+                # log.info(match.expand('\\g<1>'+value)+t[match.end():])
+                # log.info(t[:match.start(match.lastindex)]+match.expand(value)+t[match.end():])
         # log.info(f"List of matches found: {matches}")
         # log.info("updated {} > {}".format(tori,t))
         for match in matches:
