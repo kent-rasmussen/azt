@@ -2239,7 +2239,7 @@ class Wait(Window): #tkinter.Toplevel?
         self.update_idletasks() #updates just geometry
 """unclassed functions"""
 def now():
-    return datetime.datetime.utcnow().isoformat()#[:-7]+'Z'
+    return datetime.datetime.now(datetime.UTC).isoformat()#[:-7]+'Z'
 def availablexy(self,w=None):
     def padstoint(p):
         """Pads can be expressed as integers or (before,after) tuples"""
