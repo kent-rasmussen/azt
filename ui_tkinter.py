@@ -2354,8 +2354,93 @@ def nfc(x):
 def nfd(x):
     #This makes decomposed characters. e.g., vowel + accent (not used yet)
     return unicodedata.normalize('NFD', str(x))
+def testapp3(program):
+    r=Root(program=program)
+    # frame=Frame(r,r=0,c=0)
+    w=Window(r) #,withdrawn=True
+    w.mainwindow=True
+    w.title(f"Testing Drag and Drop with {w.theme.name} theme")
+    droppable=False
+    draggable=True
+    cols=2
+    for i in range(6):
+        Label(w.frame,
+                    text=f"Label {i}\ndrag:{draggable} \ndrop: {droppable}",
+                    font='title',
+                    row=i//cols, column=i%cols,
+                    draggable=True,
+                    droppable=droppable,
+                    borderwidth=1,relief='raised')
+        #switch after first
+        draggable=False
+        droppable=True
+    w.mainloop()
+def testapp2(program):
+    r=Root(program=program)
+    # frame=Frame(r,r=0,c=0)
+    w=Window(r) #,withdrawn=True
+    w.mainwindow=True
+    w.title(f"Testing with {w.theme.name} theme")
+    sf=ScrollingFrame(w.frame,row=1,column=1)
+    i=0
+    for p in [r,w,w.frame,sf.content,w.outsideframe]:
+        label1=Button(p,
+                        text=f"Seems to work \n({p};{i}!",
+                        font='title',
+                        command=w.frame.winfo_children()[-1].destroy,
+                        row=0,column=0,#draggable=True,
+                        borderwidth=1,relief='raised')
+        i+=1
+        log.info(f"Finished with {p}")
+    log.info(f"w children: {w.winfo_children()}")
+    log.info(f"r children: {r.winfo_children()}")
+    log.info(f"r MRO: {r.__class__.__mro__}")
+    for text in [("Pictured Only", ),
+                            ("Show All", )]:
+        Button(w.frame, text=text, command=w.frame.winfo_children()[-1].destroy,
+                    r=w.frame.grid_size()[1], c=0)
+    Button(w.frame, text="Print", command=w.frame.winfo_children()[-1].destroy,
+                r=w.frame.grid_size()[1], c=0)# # w.outsideframe.grid()
+    r.deiconify()
+    # w.deiconify()
+    w.mainloop()
+def testapp4(program):
+    def textadd(x):
+        l['text']+=str(x)
+    def printed(*args,window=None):
+        for x in args:
+            print(str(x)+'ed')
+        if window:
+            window.destroy()
+    r=Root(program=program)
+    log.info("root is {}".format(r))
+    # r.withdraw()
+    print(r.theme,r.theme.name)
+    w=Window(r) #,withdrawn=True
+    w.mainwindow=True
+    log.info(f"window is {w=}, children {w.winfo_children()=} {w._root()=}")
+    log.info(f"root is {r=}, children {r.winfo_children()=} {r._root()=}")
+    # sf=ScrollingFrame(w.outsideframe,row=0,column=0)
+    test_frame=Frame(w.frame,row=1,column=1)
+    sbf1=ScrollingButtonFrame(test_frame,
+                    optionlist=range(6,11),
+                    command=printed,
+                    window=w,
+                    image='icon',
+                    compound='right',
+                    bsticky='ew',
+                    sticky='',
+                    row=0,column=0)
+    l=Label(sbf1.content,text="testing SBF",
+                            row=1)#len(sbf1.content.winfo_children()))
+    sbfb=Button(sbf1.content,
+                text="testing SBF",
+                cmd=lambda x='.':textadd(x),
+                row=2)#len(sbf1.content.winfo_children()))
+    r.mainloop()
 def testapp(program):
     def progress(event):
+        # print('running progress')
         import time
         for i in range(101):
             for p in bars:
@@ -2369,14 +2454,65 @@ def testapp(program):
     def textadd(x):
         l['text']+=str(x)
     r=Root(program=program)
-    # log.info("root is {}".format(r))
-    r.withdraw()
-    w=Window(r)
-    # log.info("window is {}".format(w))
-    sf=ScrollingFrame(w.outsideframe,row=0,column=0)
-    Label(sf.content,text="Seems to work!",font='title',
-            row=0,column=0,
+    log.info("root is {}".format(r))
+    # r.withdraw()
+    print(r.theme,r.theme.name)
+    w=Window(r) #,withdrawn=True
+    w.mainwindow=True
+    log.info(f"window is {w=}, children {w.winfo_children()=} {w._root()=}")
+    log.info(f"root is {r=}, children {r.winfo_children()=} {r._root()=}")
+    # sf=ScrollingFrame(w.outsideframe,row=0,column=0)
+    test_frame=Frame(w.frame,row=1,column=1)
+    sbf1=ScrollingButtonFrame(test_frame,
+                    optionlist=range(6,11),
+                    command=print,
+                    row=0,column=0)
+    sbfl=Label(sbf1.content,text="testing SBF",
+                            row=1)#len(sbf1.content.winfo_children()))
+    sf=ScrollingFrame(test_frame,row=1,column=0)
+    # class DragLabel(Label):
+    #     def dnd_end(self,target,event):
+    #         print(target)
+    #         print(target['text'])
+    #     def __init__(self, *args, **kwargs):
+    #         super().__init__(*args, **kwargs)
+    firstFrame=Frame(sf.content,row=0,column=0)
+    label1=Label(firstFrame,text="Seems to work!",font='title',
+            row=0,column=0,draggable=True,image='icon',#compound='left',
             borderwidth=1,relief='raised')
+    button1=Button(firstFrame,text="Seems to work!",font='title',
+            row=0,column=1,draggable=True,image='icon',#compound='left',
+            command=lambda: sf.content.winfo_children()[-1].destroy(), borderwidth=1,relief='raised')
+    entry=EntryField(firstFrame,render=True,row=1,column=0,colspan=2)
+    rb_var=StringVar()
+    def printvar(x):
+        print()
+    rb1=RadioButton(firstFrame,text="RadioButton 1",
+                    variable=rb_var,
+                    value=1,
+                    row=2,column=0)
+    rb2=RadioButton(firstFrame,text="RadioButton 1 (no indicatoron)",
+                    variable=rb_var,
+                    value=2,
+                    row=2,column=1,indicatoron=0)
+    rb_var.trace_add('write',lambda *args:print(rb_var.get()))
+    rbf=RadioButtonFrame(firstFrame,
+                        variable=rb_var,
+                        optionlist=[(i,'+'+str(i)) for i in range(4)],
+                        # opts=range(4),
+                        indicatoron=1,
+                        # horizontal=True,
+                        row=3,column=0)
+    b1=Button(firstFrame,
+                    text='destroy me',
+                    command=exit,
+                    row=3,column=1)
+    bf2=ButtonFrame(firstFrame,
+                    optionlist=range(5,10),
+                    command=print,
+                    row=4,column=1)
+    # label1.dnd_end=lambda x,event:print(x.text)
+    # tkinter.dnd.Draggable(label1)
     textvariable=StringVar()
     options = ("choice 1", "choice 2", "choice 3", "choice 4")
     def print_choice(event):
@@ -2385,60 +2521,97 @@ def testapp(program):
                 textvariable=textvariable,
                 command=print_choice,
                 optionlist=options,
-                row=0,column=1)
+                # image='icon',
+                row=0,column=1,droppable=True)
     textvariable2=StringVar()
     def print_selection(event=None):
-        print(lb1.curselection(),type(lb1.curselection()))
+        print(event,lb1.curselection(),type(lb1.curselection()))
         if 0 in lb1.curselection() and len(lb1.curselection())>1:
-            lb1.select_clear(0)
-        print(lb1.curselection(),type(lb1.curselection()))
+            for i in lb1.curselection():
+                if i:
+                    lb1.select_clear(i)
+        # print(lb1.curselection(),type(lb1.curselection()))
         print(", ".join([lb1.get(i) for i in lb1.curselection()]))
         # print('selection:',lb1.get(lb1.curselection()))
-        print(f"box length: {len(lb1.get(0,'end'))}")
+        # print(f"box length: {len(lb1.get(0,'end'))}")
         for i in lb1.curselection():
             print(lb1.get(i))
     lb1=ListBox(sf.content,
-                textvariable=textvariable2,
+                listvariable=textvariable2,
                 selectmode=tkinter.MULTIPLE,
                 command=print_selection,
-                optionlist=options,
+                optionlist=options,#droppable=True,
                 height=3,
                 row=0,column=2)
     lb1.selection_set(0)
     CheckButton(sf.content,
-                text="Boolean toggle",
+                text="Boolean toggle w/default imgs ([˥˥˦˦˨])",
                 anchor='c',
                 variable = BooleanVar(),
                 onvalue = True, offvalue = False,
+                # selectimage=None,
                 font='default',
                 row=1,column=1)
+    CheckButton(sf.content,
+                text="Boolean toggle w/indicatoron",
+                anchor='c',
+                variable = BooleanVar(),
+                onvalue = True, offvalue = False,
+                indicatoron=True,
+                # selectimage=None,
+                font='default',
+                row=2,column=1)
+    CheckButton(sf.content,
+                text="Boolean toggle w/o default imgs ([˥˥˦˦˨])",
+                anchor='c',
+                variable = BooleanVar(),
+                onvalue = True, offvalue = False,
+                selectimage=None,
+                # no_default_indicator_images=True,
+                # image='icon',compound='bottom',selectimage=None,
+                font='default',
+                row=3,column=1)
+    CheckButton(sf.content,
+                text="Boolean toggle w/indicatoron\nw/o default imgs",
+                anchor='c',
+                variable = BooleanVar(),
+                onvalue = True, offvalue = False,
+                indicatoron=True,
+                selectimage=None,
+                # image='icon',selectimage=None,
+                # no_default_indicator_images=True,
+                font='default',
+                row=4,column=1)
     l=Label(sf.content,text="At least this much",
-            row=1,column=0, font='italic',
-            borderwidth=1,relief='raised')
+            row=5,column=0, font='italic',
+            borderwidth=3,relief='raised')
     log.info("l _root is {}".format(l._root()))
     log.info("Image dict: {}".format(r.theme.photo))
-    img=r.theme.photo['NoImage']
-    # log.info("Image: {} ({})".format(img.transparency, Image.maxhw(img)))
-    log.info("Image dir: {}".format(dir(img)))
-    img.scale(program['scale'],pixels=100,resolution=10)
-    log.info("Image: {} ({})".format(img.scaled, Image.maxhw(img,scaled=True)))
-    l['image']=img.scaled
-    l['compound']="bottom"
+    # l.img=r.theme.photo['NoImage']
+    # # log.info("Image: {} ({})".format(l.img.transparency, Image.maxhw(l.img)))
+    # log.info("Image dir: {}".format(dir(l.img)))
+    # l.img.scale(program['scale'],pixels=100,resolution=10)
+    # log.info("Image: {} ({})".format(l.img.scaled, Image.maxhw(l.img,scaled=True)))
+    # l['image']=l.img.scaled
+    # l['compound']="bottom"
     ToolTip(l,"this image has a tooltip")
+    column,row=sf.content.grid_size()
+    lm_frame=Frame(sf.content,r=row,c=0,colspan=column)
     for c,cls in enumerate([Message,Label]):
+    # for c,cls in enumerate([Label]):
         cname=cls.__name__
-        cls(sf.content,text="This is a {} ˥˥˦˦˨".format(cname),row=2, column=c,
+        cls(lm_frame,text="This is a {} ˥˥˦˦˨".format(cname),row=2, column=c,
                 borderwidth=1,relief='raised')
-        cls(sf.content,text="This is a very long {}".format(cname),row=4, column=c,
-                borderwidth=1,relief='raised')
-        cls(sf.content,text="This is a very very long {}".format(cname),
+        cls(lm_frame,text="This is a very long {}".format(cname),row=4, column=c,
+                borderwidth=1,relief='raised',droppable=True)
+        cls(lm_frame,text="This is a very very long {}".format(cname),
             row=5, column=c,
-            borderwidth=1,relief='raised')
-        cls(sf.content,text="This is a very very very very long {}"
+            borderwidth=1,relief='raised',droppable=True)
+        cls(lm_frame,text="This is a very very very very long {}"
                     "".format(cname),
                     row=6, column=c,
-                    borderwidth=1,relief='raised')
-        lll=cls(sf.content,text="This is a very very very very "
+                    borderwidth=1,relief='raised',droppable=True)
+        lll=cls(lm_frame,text="This is a very very very very "
                     "very very very very "
                     "very very very very "
                     "very very very very "
@@ -2447,7 +2620,7 @@ def testapp(program):
                     "very very very very "
                     "very very very very "
                     "long {}".format(cname),row=7, column=c,
-                    borderwidth=1,relief='raised')
+                    borderwidth=1,relief='raised',droppable=True)
         if cls == Label:
             lll.config(wraplength=120)
     bars={}
@@ -2457,16 +2630,19 @@ def testapp(program):
                 col=1
                 colspan=1
                 rowspan=1
+                sticky='ew'
             else:
                 col=row
                 row=1
                 colspan=1
                 rowspan=1
-            bars[(orient,row+col)]=Progressbar(w, orient=orient,
+                sticky='ns'
+            bars[(orient,row+col)]=Progressbar(w.frame, orient=orient,
                                             mode='determinate',
                                             row=row, column=col,
                                             columnspan=colspan,
-                                            rowspan=rowspan,sticky='nesw')
+                                            rowspan=rowspan,
+                                            sticky=sticky)
     w.bind('<ButtonRelease-1>',textchange)
     w.bind('<ButtonRelease-1>',progress,add=True)
     w.bind('<Up>',lambda event,x='^':textadd(x),add=True)
@@ -2481,12 +2657,13 @@ def testapp(program):
     log.info(w.state())
     h=IntVar(value=1)
     j=IntVar(value=False)
-    l=list([1,2,3,4])
+    # l=list([1,2,3,4])
     k=Variable(value=l)
-    l=StringVar(value='False')
-    for i in [h,j,k,l]:
+    # l=StringVar(value='False')
+    for i in [h,j,k]:
         print(isinstance(i,tkinter.Variable),type(i),i.get(),type(i.get()))
         if isinstance(i.get(),tuple):
+            print("Found a tuple!")
             for m in i.get():
                 print(m)
     r.mainloop()
@@ -2499,3 +2676,4 @@ if __name__ == '__main__':
     """To Test:"""
     # loglevel='Debug'
     testapp(program)
+    sys.exit()
