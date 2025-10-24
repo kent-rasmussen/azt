@@ -4380,6 +4380,16 @@ if __name__ == '__main__':
     # exit()
     # sense=lift.senses[0]
     # print(sense.cawln)
+    lift.convert_langtag('en','en-US')
+    # lift.convert_langtag('pt','en-US')
+    # lift.convert_langtag('ha','en-US')
+    # lift.convert_langtag('es','en-US')
+    # lift.convert_langtag('xyz','en-US')
+    # lift.convert_langtag('en','fr')
+    # lift.convert_langtag('en','en')
+    # lift.convert_langtag('ha-CL','en-US')
+    # lift.convert_langtag('id','en-US')
+    lift.write()
     prettyprint(sense)
     for lang in sense.glosses:
         log.info("gloss fields: {}".format(sense.glosses[lang]))
