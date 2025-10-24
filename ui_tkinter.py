@@ -50,12 +50,6 @@ IntVar=tkinter.IntVar
 StringVar=tkinter.StringVar
 BooleanVar=tkinter.BooleanVar
 """These classes have no dependencies"""
-class ObectwArgs(object):
-    """ObectwArgs just allows us to throw away unused args and kwargs."""
-
-    def __init__(self, *args, **kwargs):
-        log.info("ObectwArgs args: {};{}".format(args,kwargs))
-        super(ObectwArgs, self).__init__()
 class NoParent(object):
     """docstring for NoParent."""
     def __init__(self, *args, **kwargs):
@@ -509,7 +503,7 @@ class ExitFlag(object):
         self.value=False
     def __init__(self):
         self.false()
-class Renderer(ObectwArgs):
+class Renderer():
     def __init__(self,test=False,**kwargs):
         global pilisactive
         if pilisactive:
@@ -650,8 +644,7 @@ class Renderer(ObectwArgs):
         draw.multiline_text((0+xpad//2, 0+ypad//4), text,font=font,fill=black,
                                                                 align=align)
         self.img = PIL.ImageTk.PhotoImage(img)
-class Gridded(ObectwArgs):
-class Childof(object):
+class Childof():
     def inherit(self,parent=None,attr=None):
         """This function brings these attributes from the parent, to inherit
         from the root window, through all windows, frames, and scrolling frames, etc
@@ -684,6 +677,7 @@ class Childof(object):
         self.parent=parent
         self.inherit()
         super().__init__(*args, **kwargs)
+class Gridded():
     def dogrid(self):
         if self._grid:
             # log.info(f"Gridding {type(self)} at r{self.row},c{self.column},"
@@ -830,7 +824,7 @@ class Childof(object):
             self.gridwait=kwargs.pop('gridwait',False)
         else:
             log.log(4,"Not Gridding! ({})".format(kwargs))
-class UI(ObectwArgs):
+class UI():
     """docstring for UI, after tkinter widgets are initted."""
     def __init__(self): #because this is used everywhere.
         # log.info("UI self._root(): {} ({})".format(self._root(),type(self._root())))
@@ -861,7 +855,7 @@ class UI(ObectwArgs):
             # except tkinter.TclError as e:
             #     log.info("TclError {}".format(e))
         # super(UI, self).__init__(*args, **kwargs)
-class Exitable(ObectwArgs):
+class Exitable():
     """This class provides the method and init to make things exit normally.
     Hence, it applies to roots and windows, but not frames, etc."""
     def killall(self):
@@ -1106,7 +1100,8 @@ class Progressbar(Gridded,Childof,tkinter.ttk.Progressbar):
         tkinter.ttk.Progressbar.__init__(self,parent,**kwargs)
         UI.__init__(self)
         self.dogrid()
-class Text(Childof,ObectwArgs):
+class TextBase():
+class Text(TextBase):
     """This converts kwargs 'text', 'image' and 'font' into attributes which are
     default where not specified, and rendered where appropriate for the
     characters in the text."""
