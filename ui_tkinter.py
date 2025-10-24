@@ -2225,7 +2225,8 @@ class Wait(Window): #tkinter.Toplevel?
             self.l1=Label(self.outsideframe, text=msg,
                 font='default',anchor='c',row=1,column=0,sticky='we')
             self.l1.wrap()
-        self.l2=Label(self.outsideframe,
+        if not isinstance(self.parent,Root) or not self.parent.noimagescaling:
+            self.l2=Label(self.outsideframe,
                         image=self.theme.photo['small'],
                         text='',
                         row=2,column=0,sticky='we',padx=50,pady=50)
