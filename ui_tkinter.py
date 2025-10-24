@@ -12,6 +12,7 @@ import tkinter #as gui
 import tkinter.font
 import tkinter.scrolledtext
 import tkinter.ttk
+import tkinter.dnd
 import file #for image pathnames
 from random import randint #for theme selection
 import datetime
@@ -719,6 +720,10 @@ class Childof(object):
                 kwargs[opt]=kwargs['b'+opt]
                 del kwargs['b'+opt]
         return kwargs
+        if self.draggable:
+            self.draggable_bindings()
+        if self.draggable or self.droppable:
+            self.dnd_bindings()
     def bindchildren(self,bind,command):
         self.bind(bind,command)
         for child in self.winfo_children():
@@ -728,6 +733,80 @@ class Childof(object):
                 log.info("Exception in Gridded binding: {}".format(e))
                 pass
     def __init__(self, *args, **kwargs): #because this is used everywhere.
+    """The following are for draggable widgets"""
+    def draggable_bindings(self):
+        self.bind("<ButtonPress-1>", self.on_drag_start)
+        self.bind("<Enter>", self.dnd_focus_on)
+        self.bind("<Leave>", self.dnd_focus_off)
+    def dnd_bindings(self):
+        self.initial_widget=False
+    def on_drag_start(self,event):
+        """Stores the widget and initial position when dragging starts."""
+        event.widget.pointer_startX = event.x
+        event.widget.pointer_startY = event.y
+        event.widget.startX = event.widget.winfo_x()
+        event.widget.startY = event.widget.winfo_y()
+        tkinter.dnd.dnd_start(self,event)
+        event.widget.initial_widget=True
+        event.widget.dnd_focus_on()
+    def on_drag_motion(self,event):
+        """Not in use; compare with dnd_motion"""
+        """Moves the widget to the new position while dragging."""
+        widget=event.widget._root()._DndHandler__dnd.initial_widget
+        try:
+            x = event.widget.winfo_x() + (event.x - widget.pointer_startX)
+            y = event.widget.winfo_y() + (event.y - widget.pointer_startY)
+            widget.place(x=x, y=y)
+        except Exception as e:
+            log.info(f"{e}: {[i['text'].split('\n')[0]
+                                        for i in (widget,event.widget)]}")
+        event.widget._root()._DndHandler__dnd.initial_widget.on_motion(event)
+    def dnd_end(self, target, event):
+        self.initial_widget=False
+        if target and hasattr(target,'dnd_focus_off'):
+            target.dnd_focus_off()
+        self.dnd_focus_off()
+    def dnd_putback(self,target, event):
+        if target:
+            target.dnd_leave(self, event)
+        event.widget.grid()
+    """The following are for droppable widgets (which can be dropped upon)"""
+    def dnd_accept(self, source, event):
+        if self.droppable:
+            return self
+    def dnd_focus_on(self,event=None):
+        if self.initial_widget:
+            self['highlightbackground']='black'
+            self['highlightthickness']=1
+        self['background']=self.theme.activebackground
+    def dnd_focus_off(self,event=None):
+        self['background']=self.theme.background
+        self['highlightthickness']=0
+    def dnd_enter(self, source, event):
+        self.dnd_focus_on()
+    def dnd_motion(self, source, event):
+        """For whatever reason, this can move with the widget UNDER other
+        widgets, or it will block those widgets from becoming targets, neither
+        of which work for me"""
+        return
+        x = event.widget.winfo_x() + (event.x - widget.pointer_startX)
+        y = event.widget.winfo_y() + (event.y - widget.pointer_startY)
+        widget.place(x=x, y=y)
+        event.widget.update_idletasks()
+    def dnd_leave(self, source, event):
+        if not self.initial_widget:
+            self.dnd_focus_off()
+    def dnd_commit(self, source, event):
+        """I may need to sort out how this and dnd_end relate"""
+        try:
+            super().dnd_commit(source, event)
+        except:
+            source.dnd_putback(self, event)
+            # log.info(f"Drag and Drop landed on {self} ({type(self)})")
+            # try:
+            #     print("Target Text:",self.text)
+            # except:
+            #     print(f"no target Text ({self}; source: {source.text})")
         """this removes gridding kwargs from the widget calls"""
         self.gridkwargs={'sticky',
                             'row','rowspan',
