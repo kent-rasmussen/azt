@@ -4409,13 +4409,13 @@ if __name__ == '__main__':
     # lift.convert_langtag('ha-CL','en-US')
     # lift.convert_langtag('id','en-US')
     lift.write()
-    prettyprint(sense)
+    et.prettyprint(sense)
     for lang in sense.glosses:
         log.info("gloss fields: {}".format(sense.glosses[lang]))
     log.info("sense.examples: {}".format(sense.examples))
     for example in sense.examples:
         log.info("example fields: {}".format(sense.examples[example].fields))
-    prettyprint(sense.examples['isolation'])
+    et.prettyprint(sense.examples['isolation'])
     print(sense.db.audiolang)
     exit()
     print(sense.examples.keys())
