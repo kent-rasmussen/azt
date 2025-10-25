@@ -2080,6 +2080,8 @@ class Form(Node):
     def annotationvaluedict(self):
         return {name:self.annotations[name].annotationvalue(name)
                 for name in self.annotations}
+    def annotationkeys(self):
+        return list(self.annotations)
     def annotationvalue(self,name,value=None):
         try:
             # log.info("annotationvalue returning {}"
@@ -2198,6 +2200,17 @@ class FormParent(Node):
         return self.forms[lang].textvalue(value)
     def annotationvaluedictbylang(self,lang):
         self.forms[lang].annotationvaluedict()
+    def annotationkeysbylang(self,lang):
+        lang=self.getlang(lang) #This might be better more internally
+        try:
+            # log.info("annotationvaluebylang returning {}".format(
+            #                     self.forms[lang].annotationvalue(name,value)))
+            return self.forms[lang].annotationkeys()
+        except Exception as e:
+            log.error("Exception! ({})".format(e))
+    def annotationkeyinlang(self,check,lang=None):
+        lang=self.getlang(lang) #This might be better more internally
+        return check in self.annotationkeysbylang(lang)
     def annotationvaluebylang(self,lang,name,value=None):
         lang=self.getlang(lang) #This might be better more internally
         try:
