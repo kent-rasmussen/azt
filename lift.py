@@ -340,6 +340,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                         # log.info("{}; {}".format(n.tag,n.attrib))
                         n.set('lang',pylang(lang))
     def modverificationnode(self,senseid,vtype,ftype,analang,**kwargs):
+        """I think this is obsolete"""
         # use self.verificationtextvalue(profile,ftype,lang=None,value=None)
         """this node stores a python symbolic representation, specific to an
         analysis language"""
@@ -399,8 +400,9 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         # This is used in cases where form@lang wasn't specified, so now we make
         # it up, and trust the user can fix if this is guessed wrong
         try:
+            assert self.analang
             lang=pylang(self.analang)
-        except AttributeError:
+        except (AttributeError,AssertionError):
             return #if there is no analang, there are no legacy fields either
         #any verification field, anywhere:
         allfieldnames=[i.get('type') for i in self.nodes.findall(".//field")]
