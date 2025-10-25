@@ -226,10 +226,8 @@ class Engine(object):
             return (
                 self.entry.lx.textvaluebylang(self.analang),
                 self.entry.lc.textvaluebylang(self.analang),
-                self.entry.plvalue(self.fieldnames[self.nominalps],
-                                                            self.analang),
-                self.entry.impvalue(self.fieldnames[self.verbalps],
-                                                            self.analang))
+                self.entry.plvalue(self.fieldnames[self.nominalps]),
+                self.entry.impvalue(self.fieldnames[self.verbalps]))
         except AttributeError as e:
             # if "'Engine' object has no attribute 'lxnode'" in e.args[0]:
 
@@ -510,9 +508,9 @@ class Engine(object):
             return
         self.doparsetolx(x[2],x[1],(x[3],x[4]))
         if x[1] == self.nominalps:
-            self.entry.plvalue(self.fieldnames[x[1]],self.analang,x[0])
+            self.entry.plvalue(self.fieldnames[x[1]],x[0])
         elif x[1] == self.verbalps:
-            self.entry.impvalue(self.fieldnames[x[1]],self.analang,x[0])
+            self.entry.impvalue(self.fieldnames[x[1]],x[0])
         else:
             log.error("Parsed but neither noun nor verb?")
         window.destroy() #actually a canary button

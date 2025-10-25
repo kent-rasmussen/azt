@@ -697,6 +697,7 @@ class LiftChooser(ui.Window,HasMenus):
                                 self.setfilenameandcontinue(x,restart=True))
                         )
             return
+        self.cawldb.analang=self.demolang
         self.cawldb.getentries()
         self.cawldb.getsenses()
         self.cawldb.convertglosstocitation(self.demolang)
@@ -861,10 +862,10 @@ class FileChooser(object):
             file.writefilename() #clear this to select next time
 class FileParser(object):
     """This class parses the LIFT file, once we know which it is."""
-    def loaddatabase(self):
+    def loaddatabase(self,analang=None):
         try:
             #This program key will only be available after this finishes
-            program['db']=lift.LiftXML(str(self.name))
+            program['db']=lift.LiftXML(str(self.name),analang)
         except lift.BadParseError:
             text=_("{} doesn't look like a well formed lift file; please "
                     "try again.").format(self.name)
@@ -895,11 +896,11 @@ class FileParser(object):
         program['db'].languagecodes=program['db'].analangs+program['db'].glosslangs
         program['db'].languagepaths=file.getlangnamepaths(self.name,
                                                     program['db'].languagecodes)
-    def __init__(self,name):
+    def __init__(self,name,analang=None):
         super(FileParser, self).__init__()
         self.name=name
         # splash.progress(15)
-        self.loaddatabase()
+        self.loaddatabase(analang)
         # splash.progress(25)
         if program['root'].exitFlag.istrue():
             return
@@ -3057,14 +3058,14 @@ class Settings(object):
     def getprofilesbyentry(self):
         for entry in program['db'].entries:
             for sense in entry.senses:
-                sense.lx.textvaluebylang(self.analang)
+                sense.lxvalue()
     def getprofiles(self):
         """This is called after settings finished init/load from files"""
         #This is for analysis from scratch
         self.profileswdatabyentry={}
         self.profilesbysense={}
         self.profilesbysense['Invalid']=[]
-        self.profilesbysense['analang']=program['params'].analang()
+        self.profilesbysense['analang']=program['db'].analang
         self.profilesbysense['ftype']=program['params'].ftype()
         self.profiledguids=[]
         self.formstosearch={}
@@ -3124,7 +3125,7 @@ class Settings(object):
                     #             "").format(e,ps,s))
         program['slices'].scount(scount) #send to object
     def notifyuserofextrasegments(self):
-        analang=program['params'].analang()
+        analang=program['db'].analang
         if analang not in program['db'].segmentsnotinregexes:
             return
         invalids=program['db'].segmentsnotinregexes[analang]
@@ -3142,7 +3143,7 @@ class Settings(object):
         log.info("Found db.analangs: {}".format(program['db'].analangs))
         log.info("Found params analang: {}".format(program['params'].analang()))
         self.s={l:{} for l in set(program['db'].analangs+ #analang from database
-                                [program['params'].analang()]) #inferred analang
+                                [program['db'].analang]) #inferred analang
                 }
         for lang in set(self.s)&set(program['db'].s):
             """These should always be there, no matter what"""
@@ -3176,9 +3177,9 @@ class Settings(object):
         """This method is just to add a new grapheme while running, so we
         don't have to restart between C/V changes."""
         if not hasattr(self,'analang'): #in case running after startup
-            self.analang=program['params'].analang()
+            self.analang=program['db'].analang
         cvt=program['params'].cvt()
-        analang=program['params'].analang()
+        analang=program['db'].analang
         if cvt in ['C', 'V'] and s not in self.s[analang][cvt]:
             self.s[analang][cvt]+=[s]
             # log.info("Compiling rx list: {}".format(self.s[self.analang][cvt]))
@@ -3187,14 +3188,14 @@ class Settings(object):
     def compileCVrxforsclass(self,sclass):
         # this is now all in regexdict, and isn't called anywhere
         """This does sorting by length to make longest first"""
-        analang=program['params'].analang()
+        analang=program['db'].analang
         # log.info("compileCVrxforsclass RXs: {}".format(self.rx))
     def setupCVrxs(self):
         self.slists() #makes s; depends on polygraphs
         # log.info(f"self.s: {self.s[program['params'].analang()]}")
         self.rxdict=rx.RegexDict(distinguish=self.distinguish,
                                 interpret=self.interpret,
-                                sdict=self.s[program['params'].analang()],
+                                sdict=self.s[program['db'].analang],
                                 profilelegit=self.profilelegit,
                                 invalidchars=self.invalidchars,
                                 profilesegments=self.profilesegments)
@@ -3331,7 +3332,12 @@ class Settings(object):
         if store:
             # log.info("updatesortingstatus kwargs: {}".format(kwargs))
             self.storesettingsfile(setting='status')
-    def guessanalang(self):
+    def dont_guessanalang(self):
+        """Analang should be easily deduceable from the lift file, and/or
+        explicit in the settings."""
+        self.analang=program['db'].analang
+        log.info(_(f"analang in use: {self.analang} (If you don't like this, change it in the menus)"))
+        return
         #have this call set()?
         """if there's only one analysis language, use it."""
         nlangs=len(program['db'].analangs)
@@ -3557,7 +3563,7 @@ class Settings(object):
             program['taskchooser'].mainwindowis.status.updatefields()
         self.attrschanged.append('secondformfield')
         for entry in program['db'].entries:
-            entry.plvalue(self.pluralname,program['params'].analang) # get the right field!
+            entry.plvalue(self.pluralname) # get the right field!
         self.refreshattributechanges()
         if window:
             window.destroy()
@@ -3776,7 +3782,7 @@ class Settings(object):
             self.analang=taskchooser.analang #I need to keep this alive until objects are done
             program['db'].getpss() #redo this, specify
         else:
-            self.guessanalang() #needed for regexs
+        self.dont_guessanalang() #needed for regexs
         if not self.analang:
             log.error("No analysis language; exiting.")
             return
@@ -5747,10 +5753,11 @@ class TaskChooser(TaskDressing,ui.Window):
         self.showreports=False
         self.showingreports=False
         self.interfacelangs=getinterfacelangs()
-        self.filename=FileChooser().name
+        self.filename=FileChooser().name #new file self.analang set here
         self.splash = Splash(self)
         self.splash.draw()
-        FileParser(self.filename)
+        Settings(self) #pick up self.analang from file
+        FileParser(self.filename,program['settings'].analang)
         self.splash.progress(55)
         self.setmainwindow(self)
         Settings(self)
@@ -6782,14 +6789,12 @@ class WordCollection(Segments):
                                             self.var.get())
             elif self.ftype == 'pl':
                 self.entry.plvalue(
-                        program['settings'].secondformfield[program['settings'].nominalps],
-                        self.analang,
-                        self.var.get())
+                    program['settings'].secondformfield[program['settings'].nominalps],
+                    self.var.get())
                 # lift.prettyprint(self.entry.pl)
             elif self.ftype == 'imp':
                 self.entry.fieldvalue(
                         program['settings'].secondformfield[program['settings'].verbalps],
-                        self.analang,
                         self.var.get())
             # self.entry.lc.textvaluebylang(self.analang,self.var.get())
             self.maybewrite() #only if above is successful
@@ -7366,9 +7371,8 @@ class Parse(Segments):
         def undosf():
             log.info("Running undosf")
             log.info(self.currentformnotice())
-            if self.sense.psvalue() == self.nominalps:
-                self.entry.plvalue(program['settings'].pluralname,
-                                            self.analang, value=False) #unset value
+            if self.sense.psvalue() == self.nominalps: #unset value
+                self.entry.plvalue(program['settings'].pluralname, value=False)
             elif self.sense.psvalue() == self.verbalps:
                 self.entry.fieldvalue(program['settings'].imperativename,
                                             self.analang, value=False) #unset value
@@ -7518,7 +7522,7 @@ class Parse(Segments):
                         "").format(
                         self.secondformfield[self.nominalps],
                         self.secondformfield[self.verbalps],
-                        self.parser.entry.lc.textvaluebylang(self.analang),
+                        self.parser.entry.lcvalue(),
                         self.getgloss()
                                 ),
                     font='title',
@@ -7620,7 +7624,7 @@ class Parse(Segments):
             # log.info("value: {}".format(segments.get()))
             # lift.prettyprint(self.parser.entry.imp)
             # lift.prettyprint(self.parser.entry.pl)
-            fn(self.secondformfield[ps],self.analang,segments.get())
+            fn(self.secondformfield[ps],segments.get())
             # log.info("v: {}".format(fn(self.secondformfield[ps],self.analang)))
             # self.parser.nodetextvalue(tag,segments.get())
             b.destroy()
@@ -7633,7 +7637,7 @@ class Parse(Segments):
         if not ps:
             return asksegmentsnops()
         log.info("asking for second form segments for ‘{}’ ps: {} ({}; {})"
-                "".format(self.parser.entry.lc.textvaluebylang(self.analang),
+                "".format(self.parser.entry.lcvalue(),
                             ps,self.parser.sense.id,
                             self.parsecatalog.parsen()))
         sfname=self.secondformfield[ps]
@@ -7644,7 +7648,7 @@ class Parse(Segments):
         l=ui.Label(w.frame,
                 text=_("What {} form goes with ‘{}’ ({})?"
                     "").format(sfname,
-                            self.parser.entry.lc.textvaluebylang(self.analang),
+                            self.parser.entry.lcvalue(),
                             self.getgloss()),
                 font='title',
                 row=0,column=0,columnspan=2)
@@ -7655,7 +7659,7 @@ class Parse(Segments):
             ftype='imp'
         ImageFrame(w.frame,self.parser.sense,ftype=ftype,row=0,column=2)
         segments=ui.StringVar()
-        segments.set(self.parser.entry.lc.textvaluebylang(self.analang))
+        segments.set(self.parser.entry.lcvalue())
         e=ui.EntryField(w.frame,text=segments,
                         row=2,column=0)
         b=ui.Button(w.frame,text=_("OK"),cmd=do,
@@ -7739,9 +7743,9 @@ class Parse(Segments):
             self.trytwoforms()
     def fixroot(self,root):
         log.info("Fixing Root {} > {}".format(
-                            self.parser.entry.lx.textvaluebylang(self.analang),
+                            self.parser.entry.lxvalue(),
                             root))
-        self.parser.entry.lx.textvaluebylang(self.analang,root)
+        self.parser.entry.lxvalue(root) #setting
         self.updateparseUI()
     def parse_foreground(self,**kwargs):
         self.withdraw()
@@ -9693,7 +9697,7 @@ class Sort(object):
                         'V':'check',
                         'CV':'check',
                         }
-        self.analang=program['params'].analang()
+        self.analang=program['db'].analang
 class Report(object):
     def consultantcheck(self):
         program['settings'].reloadstatusdata()
@@ -10502,7 +10506,7 @@ class Report(object):
         else:
             exx=xlp.Example(parent,id) #the id goes here...
             ex=xlp.Word(exx) #This doesn't have an id
-        audio=node.textvaluebylang(program['settings'].audiolang)
+        audio=node.textvaluebylang(program['db'].audiolang)
         form=node.textvaluebylang(self.analang)
         # log.info("Found form {} and audio {}".format(form,audio))
         if audio:
@@ -12275,7 +12279,7 @@ class ExampleDict(dict):
             nodes=[s.ftypes[ftype] for s in program['slices'].inslice(
                                                         program['db'].senses)
                         if s.annotationvaluebyftypelang(ftype,
-                                                    program['params'].analang(),
+                                                    program['db'].analang,
                                                     check
                                                         ) == group
                     ]
@@ -13197,7 +13201,7 @@ class Analysis(object):
         self.senses=program['slices'].senses(ps=self.ps,profile=self.profile)
     def __init__(self, **kwargs):
         super(Analysis, self).__init__()
-        self.analang=program['params'].analang()
+        self.analang=program['db'].analang
         self.setslice(**kwargs)
 class SliceDict(dict):
     """This stores and returns current ps and profile only; there is no check
@@ -13422,7 +13426,7 @@ class SliceDict(dict):
                                                         profilecountInvalid))
         if program['db'].analangs and not len(wcounts):
             e+='\n'+_("This may be a problem with your analysis language: {}"
-                    "").format(program['params'].analang())
+                    "").format(program['db'].analang)
             e+='\n'+_("Or a problem with your database.")
             ErrorNotice(e,title=_("Data Problem!"),wait=True)
         log.info(e)
@@ -13438,7 +13442,10 @@ class SliceDict(dict):
         self.maxprofiles=None
         self.maxpss=None #This only seems to be used in pspriority
         self._adhoc=adhoc
-        self.analang=profilesbysense['analang']
+        self.analang=program['db'].analang
+        if self.analang != profilesbysense['analang']:
+            log.error(f"Problem: {self.analang=} != {profilesbysense['analang']=}")
+            raise
         self._profilesbysense={k:v for k,v in profilesbysense.items()
                                                 if k not in ['analang','ftype']}
         if not self._profilesbysense:
@@ -14241,13 +14248,13 @@ class CheckParameters(object):
         return self.secondfield(program['settings'].nominalps)
     def verbalpsfield(self):
         return self.secondfield(program['settings'].verbalps)
-    def __init__(self,analang,audiolang): # had, do I need check? to write?
+    def __init__(self):
         program['params']=self
         """replaces setnamesall"""
         """replaces self.checknamesall"""
         super(CheckParameters, self).__init__()
-        self._analang=analang
-        self._audiolang=audiolang
+        self._analang=program['db'].analang
+        self._audiolang=program['db'].audiolang
         self._cvts={
                 'V':{'sg':_('Vowel'),'pl':_('Vowels')},
                 'C':{'sg':_('Consonant'),'pl':_('Consonants')},
