@@ -2388,9 +2388,10 @@ class FieldParent(object):
         if not tag:
             tag='field'
         if len(self.findall('{}[@type="{}"]'.format(tag,type))) > 1:
+            values=[i.textvaluebylang() for i in self.findall(f'{tag}[@type="{type}"]')]
             log.error("{} node in entry {} has multiple {} nodes of ‘{}’ type. "
                     "While this is legal LIFT, it is probably an error, and "
-                    "will lead to unexpected behavior."
+                    f"will lead to unexpected behavior. ({values=})"
                     "".format(self.tag,self.entry.guid,tag,type))
             return 1
     def getfields(self):
