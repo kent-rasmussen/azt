@@ -1039,16 +1039,23 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             tree.write(tmp, encoding="UTF-8")
             write=True
         except Exception as e:
-            log.error("There was a problem writing to partial file: "
-                        f"{tmp} ({e})")
+            error=_("There was a problem writing to partial file: "
+                f"{tmp} ({e})")
+            log.error(error)
         if write:
             try:
                 os.replace(tmp,filename)
+                self.write_OK=True
+                self.write_error=None
+                return
             except:
-                log.error("There was a problem writing {} file to {} "
-                "directory. This is what's here: {}".format(
-                    pathlib.Path(filename).name, pathlib.Path(filename).parent,
-                    os.listdir(pathlib.Path(filename).parent)))
+                error=_("There was a problem writing "
+                    f"{pathlib.Path(filename).name} file to " f"{pathlib.Path(filename).parent} "
+                    "directory. This is what's here: "
+                    f"{os.listdir(pathlib.Path(filename).parent)}")
+                log.error(error)
+        self.write_OK=False
+        self.write_error=error
     def getanalangs(self,analang=None):
         """These are ordered by frequency in the database"""
         langs=[i.get('lang') for i in self.nodes.findall('entry/citation/form'
@@ -2418,12 +2425,16 @@ class FieldParent(object):
         # without lang here, annotationlang is used; value=None does nothing
         self.fields[type].textvaluebylang(lang=lang,value=value) #set value?
     def fieldvalue(self,type,lang=None,value=None):
+        """lang=None is OK for fields with just one form@lang node, or if
+        self.ftype contains 'verification', 'tone', 'cvprofile', 'location',
+        or 'SILCAWL'
+        """
         try:
             assert isinstance(self.fields[type],et.Element)
             # log.info("found ET node")
         except (AssertionError,KeyError):
             found=self.find(f'field[type="{type}"]')
-            # log.info("found {}".format(found))
+            # log.info(f"found new XML node {found}")
             if isinstance(found,et.Element) or value:
                 if isinstance(found,et.Element):
                     log.error("This should never happen; somehow an XML field "
@@ -2438,11 +2449,12 @@ class FieldParent(object):
                 # node=None creates a new field node, forms nodes below
                 self.fields.update({type:Field(self,node=found,type=type)})
                 self.checkforsecondfieldbytype(type) #b/c new field made
-                # self.newfield('tone',value=value) #use annotationlang
             else:
                 return None
         # specify value as kwarg because not specifying lang
-        return self.fields[type].textvaluebylang(lang=lang,value=value)
+        fv=self.fields[type].textvaluebylang(lang=lang,value=value)
+        # log.info(f"fieldvalue returning {fv=} for {self=}")
+        return fv
     def __init__(self):
         # log.info("Initializing field parent for {}".format(self))
         if not hasattr(self,'annotationlang'):
@@ -2875,34 +2887,37 @@ class Sense(Node,FieldParent):
         except Exception as e:
             log.info("tried to remove what wasn't there? ({})".format(e))
     def rmverificationnode(self,profile,ftype):
-        key='{} {} verification'.format(profile,ftype)
+        key=self.verificationkey(profile,ftype)
+        # log.info(f"Removing {key} verification from {self}")
         self.remove(self.fields[key])
         del self.fields[key]
     def verificationkey(self,profile,ftype):
-        key='{} {} verification'.format(profile,ftype)
-        if key: #don't do this for none or []
-            return str(key)
+        return '{} {} verification'.format(profile,ftype)
     def verificationtextvalue(self,profile,ftype,lang=None,value=None):
         """value here is the list of verification codes, stored as a string"""
         """Without lang arg, value must be sent as a kwarg."""
         key=self.verificationkey(profile,ftype)
-        if key == []: #for empty list value, remove node
-            self.rmverificationnode(profile,ftype)
-            return [] #in case user needs a return
-        try:
-            assert key in self.fields
-        except AssertionError:
-            if value:
-                self.fieldvalue(key,value=value)
-            else:
-                return [] #return empty list to fill
-        # This value is a list, but needs to be stored and retrieved as str text
-        # log.info("setting value {} ({})".format(value,type(value)))
-        if value:
-            log.info("setting value {} ({})".format(value,type(value)))
+        if value == [] and key in self.fields: #i.e., if reduced to nothing
+            self.rmverificationnode(profile,ftype) #remove what's there
+        #Because of the line above, or other situation with no value or field:
+        if not value and key not in self.fields: #if value, add field below
+            return [] #return empty list to fill, don't add or remove
         #This is stored as a list in text, so return it to a python list:
-        return xmlfns.stringtoobject(
-                self.fields[key].textvaluebylang(value=value)) #lang not needed
+        # if value:
+        #     log.info(f"setting value {value} ({type(value)})")
+        # else:
+        #     log.info("getting value")
+        if value is None: #don't send str(None)!
+            v=self.fieldvalue(key)
+        else:
+            v=self.fieldvalue(key,value=str(value))
+        if v: #fieldvalue returns None on no node
+            v=xmlfns.stringtoobject(v) #must come and go to XML as string
+            # log.info(f"verificationtextvalue returning {value=} {v=} ({type(v)=})")
+            return v
+        else:
+            # log.info(f"verificationtextvalue returning [] ({v=}; {type(v)=})")
+            return []
     def getcvverificationkeys(self,ftype):
         profile=self.cvprofilevalue(ftype=ftype)
         if not profile:
@@ -3015,8 +3030,6 @@ class Entry(Node,FieldParent): # what does "object do here?"
             self.sense=[]
             log.info("Removing entry with no senses: {}".format(self.guid))
             return 1
-        # log.info("Found {} sense(s)".format(len(self.senses)))
-        # log.info("Found sense(s): {}".format(self.senses))
     def getlx(self):
         self.lx=Lexeme(self,self.find('lexical-unit'))
         self.checkforsecondchild('lexical-unit')
@@ -3072,7 +3085,6 @@ class Entry(Node,FieldParent): # what does "object do here?"
                     'lc':self.lc,
                     })
         self.tone={}
-
 class Language(object):
     def __init__(self, xyz):
         """define consonants and vowels here?regex's belong where?"""
