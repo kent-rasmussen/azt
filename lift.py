@@ -456,14 +456,14 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.entries=[Entry(self.nodes,i,annotationlang=self.annotationlang)
                             for i in self.nodes
                             if i.tag == 'entry']
-        # self.nentries=len(self.entries)
-        # log.info("nentries: {}".format(self.nentries))
+        # log.info(f"{len(self.entries)=}")
         self.entries=[i for i in self.entries if len(i.sense)]
         self.nentries=len(self.entries)
-        # log.info("nentries: {}".format(self.nentries))
+        # log.info(f"{self.nentries=}")
     def getsenses(self):
         self.senses=[i for j in self.entries for i in j.senses]
         self.nsenses=len(self.senses)
+        # log.info(f"{self.nsenses=}")
     def slicebyid(self):
         self.entrydict={i.guid:i for i in self.entries}
         self.sensedict={i.id:i for i in self.senses}
@@ -1028,6 +1028,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         """This writes changes back to XML."""
         if filename is None:
             filename=self.filename
+        # log.info(f"{filename=} ({type(filename)=})")
         write=0
         nodes=self.nodes
         xmlfns.indent(self.nodes)
@@ -1036,6 +1037,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             tmp=filename+'.part'
             if file.exists(tmp):
                 file.remove(tmp)
+            # log.info(f"{tmp=} ({type(tmp)=})")
             tree.write(tmp, encoding="UTF-8")
             write=True
         except Exception as e:
@@ -1067,6 +1069,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             'machine':langtags.machine_transcription_code
         }
         l_ordered=[i[0] for i in collections.Counter(langs).most_common()] #tups
+        # log.info(f"Found these languages in lc/lx/ph fields: {l_ordered} ({len(langs)})")
         for l in ['audiolangs','tonelangs','phoneticlangs']:
             setattr(self,l,[i for i in l_ordered if codes[l] in i
                                                 and codes['machine'] not in i])
