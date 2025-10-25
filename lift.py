@@ -179,6 +179,38 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 pass
         log.info(f"No images found in {self.imgdir=}, but will put new images "
             "there; if your images are elsewhere, fix this.")
+    def convert_langtag(self,current_lang,new_lang):
+        """This method is only for established databases who need to change
+        langauge codes, typically because of an error or underdifferentiated
+        code. It will only be available by manual calling in this module, not anywhere in the UI —at least until I can come up with a way to prevent
+        its abuse.
+        """
+        present_langs=[i.get('lang') for i in self.nodes.findall(".//*[@lang]")]
+        lang_stats=collections.Counter(present_langs).most_common()
+        langs=set(present_langs)
+        if current_lang in self.glosslangs:
+            log.error(f"‘{current_lang}’ is a gloss lang! ({self.glosslangs})!")
+            return
+        if current_lang == new_lang:
+            log.error(f"‘{new_lang}’ is the same as ‘{current_lang}’!")
+            return
+        if current_lang not in langs:
+            log.error(f"‘{current_lang}’ not in {langs=}!")
+            return
+        if new_lang in langs:
+            log.error(f"‘{new_lang}’ already in {langs=}!")
+            return
+        log.info(f"found ‘{current_lang}’, and not ‘{new_lang}’ in {langs=}.")
+        target_nodes=[i for i in
+                            self.nodes.findall(f".//*[@lang='{current_lang}']")]
+        for n in target_nodes:
+            n.set('lang',new_lang)
+        receptor_nodes=[i for i in
+                            self.nodes.findall(f".//*[@lang='{new_lang}']")]
+        target_nodes=[i for i in
+                            self.nodes.findall(f".//*[@lang='{current_lang}']")]
+        log.info(f'Found {len(receptor_nodes)} receptor nodes with {new_lang}.')
+        log.info(f'Found {len(target_nodes)} target nodes with {current_lang}.')
     def retarget(self,urlobj,target,showurl=False):
         k=self.urlkey(urlobj.kwargs)
         urlobj.kwargs['retarget']=target
