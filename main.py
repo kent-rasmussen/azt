@@ -3521,7 +3521,7 @@ class Settings(object):
             log.error("Remaining changed attribute! ({})".format(
                                                         self.attrschanged))
     def makeparameters(self):
-        CheckParameters(self.analang,self.audiolang)
+        CheckParameters()
     def maketoneframes(self,dict={}):
         ToneFrames(dict)
         # ToneFrames(getattr(self,'toneframes',{}))
