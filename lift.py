@@ -2809,6 +2809,10 @@ class Sense(Node,FieldParent):
             self.cawln=self.fields['SILCAWL'].textvaluebylang()
         else:
             self.cawln=None
+    def illustrationURI(self):
+        v=self.illustrationvalue()
+        if v:
+            return file.getdiredurl(self.db.imgdir,v)
     def illustrationvalue(self,value=None):
         try:
             assert isinstance(self.illustration,et.Element)
