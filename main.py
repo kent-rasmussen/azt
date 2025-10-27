@@ -12565,7 +12565,7 @@ class ExampleDict(dict):
         if tries == n*2:
             log.info(_("Apparently I tried for a sense {} times, and couldn't "
             "find one matching your needs ({}) glosses (out of {} possible "
-            "senses). This is probably a systematic problem to fix.").format(
+            "senses). This may be a systematic problem to fix.").format(
                                                                 tries,kwargs,n))
             return 0,None
         else:
