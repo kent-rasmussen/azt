@@ -122,6 +122,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.morphtypes=self.getmorphtypes()
         self.get_audiodir()
         self.get_imgdir()
+        self.get_reportdir()
         log.info("Language initialization done.")
     def tonelangname(self,machine=False):
         try:
@@ -149,8 +150,8 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         log.info(f"{bits=}")
         return ''.join(bits)
     def get_audiodir(self):
-        lift_home=file.getparent(self.filename)
-        self.audiodir=file.getaudiodir(lift_home)
+        self.lift_home=file.getparent(self.filename)
+        self.audiodir=file.getaudiodir(self.lift_home)
         for s in self.senses:
             for fp in list(s.fields.values())+list(s.examples.values()): #dicts
                 if self.audiolang in fp.forms:
@@ -166,8 +167,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         log.info(f"No audio found in {self.audiodir=}, but will put new audio "
             "there; if your audio is elsewhere, fix this.")
     def get_imgdir(self):
-        lift_home=file.getparent(self.filename)
-        self.imgdir=file.getimagesdir(lift_home)
+        self.imgdir=file.getimagesdir(self.lift_home)
         for s in self.senses:
             try:
                 totry=file.getdiredurl(self.imgdir,s.illustrationvalue())
@@ -179,6 +179,8 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 pass
         log.info(f"No images found in {self.imgdir=}, but will put new images "
             "there; if your images are elsewhere, fix this.")
+    def get_reportdir(self):
+        self.reportdir=file.getreportdir(self.lift_home)
     def convert_langtag(self,current_lang,new_lang):
         """This method is only for established databases who need to change
         langauge codes, typically because of an error or underdifferentiated
