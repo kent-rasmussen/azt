@@ -85,6 +85,7 @@ class OrderAlphabet(ui.Window):
                                     column=n%self.ncolumns)
             for g in self.buttons.keys()-set(self.show_order):
                 self.buttons[g].grid_forget()
+            self.chart.update()
         else:
             self.show_chart() #If buttons are missing, restart.
             return
@@ -249,6 +250,7 @@ class OrderAlphabet(ui.Window):
                                         sticky='news',
                                         r=1,c=0,
                                         **self.get_kwargs(g))
+        self.chart.update()
     def chart_config(self):
         self.chart=ui.ScrollingFrame(self.frame,r=1,c=1,ipadx=20,ipady=20)
         self.configFrame=ui.Frame(self.outsideframe, r=1, c=2, sticky='n')
