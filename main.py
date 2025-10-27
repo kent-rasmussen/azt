@@ -11386,34 +11386,11 @@ class Transcribe(Sound,Sort,TaskDressing):
                         "comparisonbuttons)"))
         self.sub_c['text']=t
     def makewindow(self):
-        # log.info("Making transcribe window")
-        def changegroupnow(event=None):
-            log.info("changing group now")
-            w=program['taskchooser'].getgroup(wsorted=True)
-            self.runwindow.wait_window(w)
-            if not w.exitFlag.istrue(): #Not sure why this works; may break later.
-            #     log.info("w ExitFlag is true!")
-            # else:
-                self.runwindow.on_quit()
-                self.makewindow()
         cvt=program['params'].cvt()
         ps=program['slices'].ps()
         profile=program['slices'].profile()
         check=program['params'].check()
-        self.buttonframew=int(program['screenw']/3.5)
-        if not check:
-            self.getcheck(guess=True)
-            if check == None:
-                log.info("I asked for a check name, but didn't get one.")
-                return
-        if not program['status'].groups(wsorted=True):
-            log.error(_("I don't have any sorted data for check: {}, "
-                        "ps-profile: {}-{},").format(check,ps,profile))
-            return
-        groupsok=self.updategroups()
-        if not groupsok:
-            log.error("Problem with log; check earlier message.")
-            return
+        groupsok=self.updategroups() #sets self.othergroups
         padx=50
         if program['settings'].lowverticalspace:
             log.info("Using low vertical space setting")
@@ -11429,9 +11406,6 @@ class Transcribe(Sound,Sort,TaskDressing):
                         )
         getformtext=_("What letter(s) do you want to use for this {} "
                         "group?").format(program['params'].cvtdict()[cvt]['sg'])
-        if cvt == 'T':
-            getformtext+=_("\nA label that describes the surface tone form "
-                        "in this context would be best, like ‘[˥˥˥ ˨˨˨]’")
         getform=ui.Label(self.runwindow.frame,
                         text=getformtext,
                         font='read',
@@ -11460,48 +11434,29 @@ class Transcribe(Sound,Sort,TaskDressing):
         log.info("There: {}, NTG: {}; g:{}".format(self.groups,
                                                     self.othergroups,g))
         groupslabel=ui.Label(infoframe,
-                            text='Other Groups:\n{}'.format(g),
+                            text=f"Don't use Other Groups:\n{g}",
                             row=0,column=1,
                             sticky='new',
                             padx=padx,
                             rowspan=2
                             )
-        groupslabel.bind('<ButtonRelease-1>',changegroupnow)
         self.errorlabel=ui.Label(infoframe,text='',
                             fg='red',
                             wraplength=int(self.frame.winfo_screenwidth()/3),
                             row=2,column=1,sticky='nsew'
                             )
-        responseframe=ui.Frame(self.runwindow.frame,
+        self.oktext=_("OK")
+        ok_button=ui.Button(self.runwindow.frame, text=self.oktext,
                                 row=3,
                                 column=0,
                                 sticky='',
                                 padx=padx,
                                 pady=pady,
-                                )
-        self.oktext=_('Use this name and go to:')
-        column=0
-        sub_lbl=ui.Label(responseframe,text = self.oktext, font='read',
-                        row=0,column=column,sticky='ns'
-                        )
-        buttons=[
-                (_('main screen'), self.done),
-                (_('next group'), self.next)]
-        if cvt == 'T':
-            buttons+=[(_('next tone frame'), self.nextcheck)]
-        else:
-            buttons+=[(_('next check'), self.nextcheck)]
-        buttons+=[(_('next syllable profile'), self.nextprofile),
-                (_('comparison group'), self.submitandswitch)
-                ]
-        for button in buttons:
-            column+=1
-            ui.Button(responseframe,text = button[0], command = button[1],
-                                anchor ='c',
-                                row=0,column=column,sticky='ns'
-                                )
+                                command=self.done
+        )
         examplesframe=ui.Frame(self.runwindow.frame,
-                                row=4,column=0,sticky=''
+                                row=4,column=0,sticky='',
+                                # border=1
                                 )
         b=SortGroupButtonFrame(examplesframe, self,
                                 self.group,
