@@ -6112,24 +6112,29 @@ class Segments(object):
         t.join()
         # program['status'].marksensesorted(sense) #now in marksortgroup
         self.updatestatus(group=group) # marks the group unverified.
-    def updateformtoannotations(self,sense,ftype,check=None,write=False):
-        """This should take a sense, ftype and check, in normal usage.
+    def updateformtoannotations(self,sense,check=None,write=False):
+        """This should take a sense and check, in normal usage.
+        provide self.ftype prior to this
         If we want to update forms to *all* annotations, don't give check.
         Iterate across a few or many senses.
         Iterate also across ftypes, to catch them all...
         that would likely need more smarts for affix and root distinction."""
-        formvalue=sense.textvaluebyftypelang(ftype,self.analang)
+        formvalue=sense.textvaluebyftypelang(self.ftype,self.analang)
         if not formvalue:
             log.info("updateformtoannotations didn't return a form value for "
                     "sense={}, ftype={}, analang={}"
-                    "".format(sense.id,ftype,self.analang))
+                    "".format(sense.id,self.ftype,self.analang))
             return
         # log.info("fnode: {}; text: {}".format(fnode,t.text))
         if check: #just update to this annotation
-            value=sense.annotationvaluebyftypelang(ftype,self.analang,check)
-            if value is not None: #should I act on ''?
+            value=sense.annotationvaluebyftypelang(self.ftype,self.analang,check)
+            if value is None or value.isdigit(): #don't update to unnamed groups
+                # log.info(f"Not updating {sense.id} form {formvalue} to "
+                #         f"{check}={value}")
+                return
+            elif value is not None: #should I act on ''?
                 f=self.rxdict.update(formvalue,check,value)
-                sense.textvaluebyftypelang(ftype,self.analang,f)
+                sense.textvaluebyftypelang(self.ftype,self.analang,f)
                 #This should update formstosearch:
                 if formvalue != f:
                     program['settings'].addtoformstosearch(sense,f,formvalue)
@@ -9153,7 +9158,11 @@ class Sort(object):
             #     log.info("Field addition succeeded! LIFT says {}, which is {}."
             #                             "".format(newgroup,group))
         if kwargs.get('updateforms'):
-            self.updateformtoannotations(sense,ftype,check)
+            if ftype != program['params'].ftype():
+                ErrorNotice(f"{ftype=} differs from "
+                            f"{program['params'].ftype()=}; this is a problem!",
+                            wait=True)
+            self.updateformtoannotations(sense,check)
         program['status'].marksensesorted(sense)
         program['status'].last('sort',update=True) #this will always be a change
         program['status'].tojoin(True)
@@ -9217,6 +9226,7 @@ class Sort(object):
         self.check=program['params'].check()
         self.ps=program['slices'].ps()
         self.profile=program['slices'].profile()
+        self.ftype=program['params'].ftype()
         log.info("cvt:{}; ps:{}; profile:{}; check:{}".format(cvt,self.ps,
                                                     self.profile,self.check))
         tosortupdate()
