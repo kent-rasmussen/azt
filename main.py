@@ -6099,6 +6099,7 @@ class Segments(object):
             self.verify() #do this here, just this once.
         program['status'].presorted(True)
         program['status'].store() #after all the above
+        self.maybewrite()
         self.runwindow.waitdone()
     def presort(self,senses,check,group):
         ftype=program['params'].ftype()
@@ -11322,6 +11323,7 @@ class Transcribe(Sound,Sort,TaskDressing):
             self.updategroups()
             program['settings'].storesettingsfile(setting='status')
             """Update regular expressions here!!"""
+            self.maybewrite()
         else: #move on, but notify in logs
             log.info(f"User selected ‘{self.oktext}’, but with "
                     "no change.")
