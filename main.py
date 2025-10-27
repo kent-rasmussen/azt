@@ -666,7 +666,7 @@ class LiftChooser(ui.Window,HasMenus):
         self.cawldb=loadCAWL()
         Settings.langnames(self,self.cawldb.glosslangs)
         opts=[(i,self.languagenames[i]) for i in self.cawldb.glosslangs]
-        log.info("Options: {}".format(opts))
+        # log.info("Options: {}".format(opts))
         s=ui.ScrollingButtonFrame(w.frame,
                                     optionlist=opts,
                                     command=self.submitdemolang,
@@ -679,14 +679,11 @@ class LiftChooser(ui.Window,HasMenus):
             return
         else:
             log.info("User selected a language: {}.".format(self.demolang))
-        log.info("Done waiting")
         self.stripcawldb()
         self.wait=ui.Wait(parent=program['root'],
                         msg=_("Making Demo Database \n(will restart)"))
         homedir=file.gethome() #don't ask where to put it
-        log.info(homedir)
         self.newdirname=file.getfile(homedir).joinpath('Demo_'+self.demolang)
-        log.info(self.newdirname)
         file.makedir(self.newdirname)
         newfilebasename=self.newdirname.joinpath('Demo_'+self.demolang)
         newfile=newfilebasename.with_suffix('.lift')
@@ -698,6 +695,8 @@ class LiftChooser(ui.Window,HasMenus):
                                 self.setfilenameandcontinue(x,restart=True))
                         )
             return
+        # else:
+        #     log.info(f"{newfile=} doesn't exist already!")
         self.cawldb.analang=self.demolang
         self.cawldb.getentries()
         self.cawldb.getsenses()
@@ -764,7 +763,6 @@ class LiftChooser(ui.Window,HasMenus):
             restart=True
         else:
             name=choice
-        log.info("if choice == 'New': complete")
         # log.info(f"{self.name if hasattr(self,'name') else "no self.name!"}")
         log.info(f"{name}")
         if name:
@@ -1682,7 +1680,6 @@ class StatusFrame(ui.Frame):
                         log.info("Ps {} not in toneframes ({})".format(self.ps,
                                 program['toneframes']))
                 else:
-                    log.info("Found CV verifications")
                     self.makeprogresstable()
                     return
         else:
@@ -5735,9 +5732,10 @@ class TaskChooser(TaskDressing,ui.Window):
         self.writeable+=1 #and tally here each time this is asked
         return not self.writeable%program['settings'].writeeverynwrites
     def schedule_write_check(self):
-        """Schedule `check_if_write_done()` function after five seconds."""
-        # log.info("Scheduling check")
-        program['root'].after(2000, self.check_if_write_done)
+        """Schedule `check_if_write_done()` function after x seconds."""
+        x=1
+        # log.info("Scheduling check after {x} seconds")
+        program['root'].after(x*1000, self.check_if_write_done)
         # log.info("Scheduled check")
         # program['taskchooser'].after(5000, self.check_if_write_done, t)
     def check_if_write_done(self):
@@ -5751,8 +5749,14 @@ class TaskChooser(TaskDressing,ui.Window):
             log.info("Exception: {}".format(e))
             log.info("writethread: {}".format(hasattr(self,'writethread')))
         if done:
-            log.info("Done writing to lift.")
+            log.info(f"Done writing to lift ({program['db'].write_OK=}).")
+            if not program['db'].write_OK:
+                ErrorNotice(_(f"Write to lift returned "
+                            f"‘{program['db'].write_error}’."),wait=True)
             self.writing=False
+            if self.towrite:
+                log.info(f"Found previous request to write; doing again.")
+                self._write()
         else:
             # Otherwise check again later.
             log.info("schedule_write_check writing to lift.")
@@ -6116,16 +6120,12 @@ class Segments(object):
             if value is not None: #should I act on ''?
                 f=self.rxdict.update(formvalue,check,value)
                 sense.textvaluebyftypelang(ftype,self.analang,f)
-                log.info("Done with updateformtextnodebycheck")
                 #This should update formstosearch:
                 if formvalue != f:
                     program['settings'].addtoformstosearch(sense,f,formvalue)
-                    log.info("Done with addtoformstosearch")
                 if len(value)>1:
                     sc=program['params'].cvt()
                     program['settings'].polygraphs[self.analang][sc][value]=True
-            else:
-                write=False #in case it isn't already
         else: #update to all annotations
             annodict=sense.annotationvaluedictbyftypelang(ftype,self.analang)
             # log.info("annodict: {}".format(annodict))
@@ -9084,9 +9084,11 @@ class Sort(object):
         ftype=kwargs.get('ftype',program['params'].ftype())
         nocheck=kwargs.get('nocheck',False)
         guid=None
-        log.debug("marking sortgroup {}={} ({})".format(check,group,sense.id))
+        log.info("marking sortgroup {}={} ({})".format(check,group,sense.id))
         if kwargs.get('updateverification'):
+            # log.info("updateverification {}={} ({})".format(check,group,sense.id))
             add=self.verificationcode(check=check,group=group)
+            # log.info("updateverification {add=}")
             # Checking and verifying that the current group and verification
             # values match may be excessive, as well as undesirable, without
             # any other way to fix discrepancies:
@@ -9095,9 +9097,10 @@ class Sort(object):
             if noconfirmation or self.confirmverificationgroup(sense, profile,
                                                                 ftype, check):
                 self.modverification(sense,profile,ftype,check,add)
+        else: #unless specifically doing otherwise, marking should unverify:
+            self.rmverification(sense,profile,ftype,check)
         self.setsensegroup(sense,ftype,check,group)
         if not nocheck:
-            # newgroup=unlist(self.getsensegroup(sense,check))
             newgroup=self.getsensegroup(sense,check)
             if newgroup != group:
                 log.error("Field addition failed! LIFT says {}, not {}.".format(
@@ -9112,7 +9115,7 @@ class Sort(object):
         program['status'].tojoin(True)
         self.updatestatus(group=group,writestatus=True) # write just this once
         if kwargs.get('write'):
-            self.maybewrite() #This is never iterated over; just one entry at a time.
+            self.maybewrite() #Not iterated over.
         if not nocheck:
             return newgroup
     def notdonewarning(self):
@@ -9201,7 +9204,7 @@ class Sort(object):
             if r:
                 warnorcontinue()
                 return
-            else: #continue on
+            else: #done; continue on
                 self.did['join']=True
         # exitstatuses()
         # At this point, there should be nothing to sort, verify or join, so we
@@ -11162,7 +11165,7 @@ class Transcribe(Sound,Sort,TaskDressing):
         program['settings'].set('group_comparison',g)
         # program['settings'].setgroup(gc)
         self.runwindow.on_quit()
-        self.makewindow()
+        self.makewindow() #The other group needs a name, too!
     def submitandswitch(self):
         if hasattr(self,'group_comparison'):
             comparison=self.group_comparison
@@ -11242,9 +11245,9 @@ class Transcribe(Sound,Sort,TaskDressing):
             diff=False
             if newvalue in self.groups:
                 deja=_("Sorry, there is already a group with "
-                                "that label; If you want to join the "
-                                "groups, give it a different name now, "
-                                "and join it later".format(newvalue))
+                                "that label; see comparison below. \n"
+                                "If you want to join the "
+                                "groups, go back and do it in the sort task.")
                 log.debug(deja)
                 self.errorlabel['text'] = deja
                 return 1
@@ -11417,15 +11420,14 @@ class Transcribe(Sound,Sort,TaskDressing):
             pady=0
         else:
             pady=10
-        title=_("Rename {} {} {} group ‘{}’ in ‘{}’ frame"
-                        ).format(ps,profile,
-                        program['params'].cvtdict()[cvt]['sg'],
-                        self.group,check)
+        title=_(f"Rename {program['params'].cvtdict()[cvt]['sg']} group "
+                f"‘{self.group}’")
+        self.buttonframew=int(program['screenw']/3.5)
         self.getrunwindow(title=title)
         titlel=ui.Label(self.runwindow.frame,text=title,font='title',
                         row=0,column=0,sticky='ew',padx=padx,pady=pady
                         )
-        getformtext=_("What new name do you want to call this {} "
+        getformtext=_("What letter(s) do you want to use for this {} "
                         "group?").format(program['params'].cvtdict()[cvt]['sg'])
         if cvt == 'T':
             getformtext+=_("\nA label that describes the surface tone form "
@@ -12331,12 +12333,12 @@ class ExampleDict(dict):
         kwargs=exampletype(**kwargs)
         if node is None:
             return
-        # log.info("exampletypeok framed: {}".format(framed))
+        # log.info(f"exampletypeok looking at {node=}")
         if kwargs['wglosses'] and not self.hasglosses(node):
-            log.info("Gloss check failed for {}".format(node.sense.id))
+            # log.info("Gloss check failed for {}".format(node.sense.id))
             return
         if not self.hassoundfile(node) and kwargs['wsoundfile']:
-            log.info("Audio file check failed for {}".format(node.sense.id))
+            # log.info("Audio file check failed for {}".format(node.sense.id))
             return
         return True
     def getexamples(self,group):
@@ -12373,7 +12375,7 @@ class ExampleDict(dict):
         while not self.exampletypeok(node,**kwargs) and tries<n*2:
             tries+=1
             if group in self:
-                log.info("group in self")
+                # log.info("group in self")
                 if self[group] in nodes: #if stored value is in group
                     # log.info("self[group] in examples")
                     if not kwargs['renew']:
@@ -12383,22 +12385,22 @@ class ExampleDict(dict):
                         #don't do this if clause more than once
                         kwargs['renew']=True
                     else:
-                        log.info("renewing")
+                        # log.info("renewing")
                         i=nodes.index(self[group])
                         if not kwargs.get('goback'):
-                            log.info("not going back")
+                            # log.info("not going back")
                             if i == len(nodes)-1: #loop back on last
                                 node=nodes[0]
                             else:
                                 node=nodes[i+1]
                         else:
-                            log.info("going back")
+                            # log.info("going back")
                             if i == 0: #loop back on last
                                 node=nodes[len(nodes)-1]
                             else:
                                 node=nodes[i-1]
-                        log.info("Using next value for ‘{}’ group: ‘{}’"
-                                "".format(group, self[group]))
+                        # log.info("Using next value for ‘{}’ group: ‘{}’"
+                        #         "".format(group, self[group]))
                 else:
                     # log.info("self[group] not in examples")
                     node=nodes[0]
@@ -12535,8 +12537,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         groups.append(str(newgroup))
         program['status'].groups(groups,wsorted=True)
         program['status'].store()
-        # log.info("Groups (appended): {}".format(groups))
-        # log.info("Groups (appended): {}".format(program['status'].groups(wsorted=True)))
+        log.info(f"Groups (appended): {groups}")
         return str(newgroup)
     def sortselected(self,sense):
         selectedgroups=selected(self.groupvars)
@@ -12808,7 +12809,7 @@ class SortGroupButtonFrame(ui.Frame):
             del bkwargs[arg]
         return bkwargs #only the kwargs appropriate for buttons
     def __init__(self, parent, check, group, **kwargs):
-        log.info("Initializing buttons for group {}".format(group))
+        # log.info("Initializing buttons for group {}".format(group))
         self.exs=program['examples']
         self.check=check #the task/check OR the scrollingframe! use self.check.task
         self.group=group
@@ -12867,7 +12868,7 @@ class SortGroupButtonFrame(ui.Frame):
         self.kwargs=kwargs
         self._var=ui.BooleanVar()
         self._n=ui.IntVar()
-        super(SortGroupButtonFrame,self).__init__(parent, **frameargs)
+        super().__init__(parent, **frameargs)
         if self.getexample(**kwargs):
             self.makebuttons()
         # """Should I do this outside the class?"""
@@ -13983,7 +13984,7 @@ class StatusDict(dict):
                 self._checks=self._checksdict[cvt][ps]
         else:
             profile=kwargs.get('profile',program['slices'].profile())
-            log.info(f"Using profile {profile} for updatechecksbycvt")
+            # log.info(f"Using profile {profile} for updatechecksbycvt")
             if not profile:
                 return #if no data yet, no segmental checks, either
             if profile not in self._checksdict[cvt]:
@@ -14489,7 +14490,7 @@ class ErrorNotice(ui.Window):
         if not text:
             log.error(_("ErrorNotice got no text?"))
             return
-        log.info("Making ErrorNotice: {}".format(text))
+        log.error(f"ErrorNotice: “{text}”")
         # log.info("parent: {}".format(kwargs['parent']))
         # log.info("program: {}".format(program))
         # log.info("program['root']: {}".format(program['root']))
@@ -15671,7 +15672,7 @@ def selected(groupvars):
             ]
 def exampletype(**kwargs):
     if not kwargs:
-        print(exampletype)
+        print("exampletype called without kwargs")
     for arg in ['wglosses']:
         kwargs[arg]=kwargs.get(arg,True)
     for arg in ['renew','wsoundfile']:
@@ -15698,8 +15699,10 @@ def isnoninteger(x):
 def isinteger(x):
     try:
         int(x)
+        # log.info("‘{x}’ is an integer.")
         return True
     except (ValueError,TypeError):
+        # log.info("‘{x}’ is not an integer.")
         return False
 def ifone(l,nt=None):
     if l and not len(l)-1:
