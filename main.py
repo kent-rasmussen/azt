@@ -746,7 +746,8 @@ class LiftChooser(ui.Window,HasMenus):
                         azt=program['name'])
         # log.info(msg)
         ErrorNotice(msg,title=_("New LIFT file location"),wait=True)
-    def setfilename(self,choice,window, event=None):
+    def setfilename(self, choice, window, event=None):
+        log.info(f"Calling setfilename with {choice=} {window=} {event=}")
         self.withdraw()
         restart=False
         if choice == 'New':
@@ -816,7 +817,8 @@ class LiftChooser(ui.Window,HasMenus):
                                 )
         # make mediadir look for *.git
         ui.Label(self.frame, image=program['theme'].photo['small'],
-                text=text, font='title', column=1, row=1, ipadx=20)
+                text=text, font='title', compound='top',
+                column=1, row=1, ipadx=20)
         # if hasattr(program['taskchooser'],'splash'):
         try:
             program['taskchooser'].splash.withdraw()
@@ -1078,7 +1080,7 @@ class Menus(ui.Menu):
     def sound(self):
         self.advancedmenu.add_separator()
         options=[(_("Sound Settings"),
-                self.parent.mikecheck),]
+                self.parent.soundcheck),]
         if isinstance(self.parent,Record):
             options+=[(_("Number of Examples to Record"),
                     program['taskchooser'].getexamplespergrouptorecord),]
@@ -1111,7 +1113,7 @@ class Menus(ui.Menu):
         options.extend([(_("Resort skipped data"), self.parent.tryNAgain),
                         (_(f"Reverify current group ({group})"),
                                                         self.parent.reverify),
-                        (_("Join Groups"), self.parent.join)
+                        (_("Join Groups"), self.parent.redo_join)
                         ])
         for m in options:
             self.command(self.advancedmenu,
