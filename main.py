@@ -12663,9 +12663,8 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.groupvars[group]=b.var()
         self.groupbuttonlist.append(b)
         self._configure_canvas()
-    def addtonegroup(self):
-        log.info("Adding a tone group!")
-        values=[0,] #always have something here
+    def add_int_group(self):
+        log.info("Adding a new group!")
         groups=program['status'].groups(wsorted=True)
         for i in groups:
             try:
@@ -12700,7 +12699,7 @@ class SortButtonFrame(ui.ScrollingFrame):
             if groupselected in ["NONEOFTHEABOVE",'ok']:
                 """If there are no groups yet, or if the user asks for
                 another group, make a new group."""
-                group=self.addtonegroup()
+                group=self.add_int_group()
                 """And give the user a button for it, for future words
                 (N.B.: This is only used for groups added during the current
                 run. At the beginning of a run, all used groups have buttons
