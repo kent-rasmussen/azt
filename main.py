@@ -5767,19 +5767,23 @@ class TaskChooser(TaskDressing,ui.Window):
             # Otherwise check again later.
             log.info("schedule_write_check writing to lift.")
             self.schedule_write_check()
+    def _write(self):
+        self.towrite=False
+        self.writethread = threading.Thread(target=program['db'].write)
+        self.writing=True
+        log.info("Writing to lift...")
+        self.writethread.start()
+        self.schedule_write_check()
     def maybewrite(self,definitely=False):
         write=self.timetowrite() #just call this once!
-        if (write and not self.writing) or definitely:
-            self.towrite=False
-            self.writethread = threading.Thread(target=program['db'].write)
-            self.writing=True
-            log.info("Writing to lift...")
-            self.writethread.start()
-            self.schedule_write_check()
+        if (write and not self.writing):# or definitely:bad idea to overwrite write
+            self._write()
         elif write:
             # log.info(_("Already writing to lift; I trust this new mod will "
             #         "get picked up later..."))
+            #This tells A−Z+T that something hasn't been written yet, so it will force a write on shutdown.
             self.towrite=True
+            # self.schedule_write()
     def usbcheck(self):
         if self.splash.exitFlag.istrue():
             return
