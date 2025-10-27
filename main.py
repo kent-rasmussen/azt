@@ -9348,7 +9348,7 @@ class Sort(object):
                 not self.runwindow.exitFlag.istrue()):
             tosort=self.presenttosort()
             """thread here? No, this updates the UI, as well as writing data"""
-            if not self.runwindow.exitFlag.istrue() and tosort:
+            if not self.runwindow.exitFlag.istrue() and tosort is not None:
                 self.buttonframe.sortselected(tosort)
                 self.buttonframe.updatecounts()
         if not self.runwindow.exitFlag.istrue():
@@ -12364,13 +12364,16 @@ class ExampleDict(dict):
         if not nodes:
             log.error("There don't seem to be any nodes in this check({})-"
                         "group({})/ftype({})-slice.".format(check,group,ftype))
-            return 0,None
+            return None #as 0,None; why?
         # else:
         #     log.info("Found {} examples in the {} sort group for the {} check: "
         #         "{}.".format(len(nodes),group,check,[i.id for i in nodes]))
         return nodes
     def getexample(self,group,**kwargs):
         nodes=self.getexamples(group)
+        if not nodes:
+            log.error("getexample has no example nodes for {group=}?")
+            return 0,None
         n=len(nodes)
         tries=0
         node=None #do this once, anyway...
@@ -12677,14 +12680,14 @@ class SortGroupButtonFrame(ui.Frame):
         n,node=self.exs.getexample(self.group,**kwargs)
         self.updatecount(n)
         self.hasexample=False
-        if node is not None:
+        if node is None:
             if kwargs['wsoundfile']:
                 log.error("self.exs.getexample didn't return an example "
                                     "with a soundfile; trying for one without")
                 kwargs['wsoundfile']=False
                 n,node=self.exs.getexample(self.group,**kwargs)
                 self.updatecount(n)
-                if not node:
+                if node is None:
                     log.error("self.exs.getexample didn't return an example "
                                         "with or without sound file; returning")
                     return
@@ -12712,7 +12715,7 @@ class SortGroupButtonFrame(ui.Frame):
         if self.kwargs['label']:
             self.labelbutton()
         elif self.kwargs['playable']:
-            if self._sense and self._filenameURL:
+            if self._sense is not None and self._filenameURL:
                 self.playbutton()
                 self._playable=True
             else: #Label if there is no sound file on any example.
