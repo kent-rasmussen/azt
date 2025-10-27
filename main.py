@@ -9191,6 +9191,9 @@ class Sort(object):
         self.did={'sort':False,
                     'verify': False,
                     'join': False}
+    def redo_join(self):
+        program['status'].tojoin(True)
+        self.maybesort()
     def maybesort(self):
         """This should look for one group to verify at a time, with sorting
         in between, then join and repeat"""
