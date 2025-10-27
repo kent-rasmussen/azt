@@ -12661,18 +12661,6 @@ class SortButtonFrame(ui.ScrollingFrame):
         if not b.hasexample:
             return
         self.groupvars[group]=b.var()
-        if not self.buttoncolumns or (self.buttoncolumns and
-                                    self.groupbuttons.row+1<self.buttoncolumns):
-            self.groupbuttons.row+=1
-        else:
-            self.groupbuttons.col+=1
-            self.groupbuttons.col%=self.buttoncolumns # from 0 to cols-1
-            if not self.groupbuttons.col:
-                self.groupbuttons.row+=1
-            elif self.groupbuttons.row+1 == self.buttoncolumns:
-                self.groupbuttons.row=0
-        # log.info("Next button at r:{}, c:{}".format(groupbuttons.row,
-        #                                             groupbuttons.col))
         self.groupbuttonlist.append(b)
         self._configure_canvas()
     def addtonegroup(self):
