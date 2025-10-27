@@ -936,7 +936,7 @@ class Waitable(Exitable):
             self.ww.close()
             if self.showafterwait:
                 self.deiconify()
-        except tkinter.TclError:
+        except (tkinter.TclError,AttributeError):
             pass
         # except AttributeError:
         #     log.info("Seem to have tried stopping waiting, when I wasn't...")
