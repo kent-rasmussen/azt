@@ -6268,8 +6268,7 @@ class Sound(object):
         return str(file.getdiredurl(self.audiodir,relfilename))
     def hassoundfile(self,node,recheck=False):
         """sets self.audiofileisthere and maybe self.audiofileURL"""
-        return node.hassoundfile(program['params'].audiolang(),
-                                self.audiodir,recheck)
+        return node.hassoundfile(recheck)
     def _configure_sound(self,event=None):
         sound_ui.SoundSettingsWindow(self)
     def setcontext(self,context=None):
@@ -12471,8 +12470,7 @@ class ExampleDict(dict):
         """sets self.audiofileisthere and maybe self.audiofileURL"""
         """You want to do this even if you don't need it, as this checks and
         marks the example"""
-        return node.hassoundfile(program['params'].audiolang(),
-                                program['settings'].audiodir)
+        return node.hassoundfile()
     def exampletypeok(self,node,**kwargs):
         kwargs=exampletype(**kwargs)
         if node is None:
