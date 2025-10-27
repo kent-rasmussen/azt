@@ -8817,46 +8817,47 @@ class Sort(object):
         check=kwargs.get('check',program['params'].check())
         group=kwargs.get('group',program['status'].group())
         return self.getsensesingroup(check, group)
+    def rmverification(self,sense,profile,ftype,check):
+        self.modverification(sense,profile,ftype,check)
     def modverification(self,sense,profile,ftype,check,add=None):
         """
         'add' here should be a single compiled 'check=group' code
         These fns all take value kwarg, with a default lang generated there
         This and other methods should be making this:
         field type="CVCVC lc verification">
-                <form lang="gnd-x-py">
+                <form lang="{xyz}-x-py">
                     <text>['V1=ə', …
-        """
         # This could all be moved to operate on sense.fields[key]...
         # Would require pushing down protections for string values, and probably
         # making a class for verification nodes
-        key='{} {} verification'.format(profile,ftype)
+        """
         added=None
+        assert not add or check in add
         # add=Nonelog.info("Modifying verification node {} (to add {})".format(
         #                                                             key,add))
         # if key in sense.fields:
         #     lift.prettyprint(sense.fields[key])
-        values=sense.verificationtextvalue(profile,ftype)
+        values=sense.verificationtextvalue(profile,ftype) #always returns list
+        # log.info(f"Found verificationtextvalue values {values}")
         if add and not values:
             # log.info("No values found; just adding {}".format(add))
             sense.verificationtextvalue(profile,ftype,value=[add])
-        elif values:
-            for code in values[:]:
-                #look for a code for the current check, replace or remove.
-                if add and check in add and check in code:
-                    log.info("Switching {} for {}".format(add,code))
-                    values[values.index(code)]=add
-                    added=add
-                    add=None #only once, duplicates next
-                elif check in code: #multiple times, if duplicates
-                    sense.rmverificationvalue(profile,ftype,code)
-                     # values.remove(code) #covered in the above
-            if add: #i.e., still, after switching out for changes
-                values.append(add)
+            return
+        for code in [i for i in values if check in i]:
+            #look for a code for the current check, replace or remove.
+            if add:
+                log.info("Switching {} for {}".format(add,code))
+                values[values.index(code)]=add
                 added=add
-            if values: #i.e., still, after removal
-                sense.verificationtextvalue(profile,ftype,value=values)
-        log.info("Done modifying verification node {} (added {}, have {})"
-                "".format(key,add,sense.verificationtextvalue(profile,ftype)))
+                add=None #only once, not also below
+            else:
+                values.remove(code) #covered in the above
+        if add: #i.e., still, after switching out current values for changes
+            values.append(add)
+            added=add
+        sense.verificationtextvalue(profile,ftype,value=values)
+        log.info(f"Done modifying verification node {profile}-{ftype} "
+            f"(added {add}, have {sense.verificationtextvalue(profile,ftype)})")
         # if key in sense.fields: #i.e., if not removed
         #     lift.prettyprint(sense.fields[key])
     def updatestatuslift(self,verified=False,**kwargs):
