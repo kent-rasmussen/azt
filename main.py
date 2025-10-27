@@ -13771,6 +13771,16 @@ class StatusDict(dict):
                 cs+=[kwargs['check']]
         # log.info("Checks with {}: {}".format(kwargs,cs))
         return cs
+    def all_groups_verified_anywhere(self):
+        d=self.dict()
+        return {cvt:set([i
+                        for ps in d[cvt]
+                        for profile in d[cvt][ps]
+                        for check in d[cvt][ps][profile]
+                        for i in d[cvt][ps][profile][check]['done']
+                        ])
+                for cvt in d
+                }
     def groups(self,g=None, **kwargs):
         # log.info("groups kwargs: {}".format(kwargs))
         kwargs=grouptype(**kwargs)
