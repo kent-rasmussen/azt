@@ -11513,6 +11513,10 @@ class Transcribe(Sound,Sort,TaskDressing):
                                 row=0, column=0, sticky='w',
                                 wraplength=self.buttonframew
                                 )
+        if not b.examplesOK:
+            ui.Label(examplesframe, text=_("No Examples; pick another group"),
+                    row=0, column=0, sticky='w',
+            )
         self.compframe=ui.Frame(examplesframe,
                     highlightthickness=10,
                     highlightbackground=self.frame.theme.white,
@@ -12871,6 +12875,9 @@ class SortGroupButtonFrame(ui.Frame):
         super().__init__(parent, **frameargs)
         if self.getexample(**kwargs):
             self.makebuttons()
+            self.examplesOK=True
+        else:
+            self.examplesOK=False
         # """Should I do this outside the class?"""
         # self.grid(column=column, row=row, sticky=sticky)
 class AlphabetGroupButtonFrame(SortGroupButtonFrame):
