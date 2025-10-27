@@ -657,7 +657,7 @@ class LiftChooser(ui.Window,HasMenus):
     def makeCAWLdemo(self):
         title=_("Make a Demo LIFT Database")
         w=ui.Window(program['root'],title=title)
-        w.wait(_("Loading Demo Template"))
+        w.withdraw()
         w.mainwindow=False
         t=ui.Label(w.frame, text=title, font='title', row=0, column=0)
         inst=_("Which language would you like to study, in this demonstration "
@@ -672,7 +672,7 @@ class LiftChooser(ui.Window,HasMenus):
                                     command=self.submitdemolang,
                                     window=w, sticky='',
                                     column=0, row=2)
-        w.waitdone()
+        w.deiconify()
         w.wait_window(w)
         if not hasattr(self,'demolang') or not self.demolang:
             log.info("User exited without selecting a language.")
