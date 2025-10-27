@@ -5807,7 +5807,7 @@ class TaskChooser(TaskDressing,ui.Window):
         FileParser(self.filename,program['settings'].analang)
         self.splash.progress(55)
         self.setmainwindow(self)
-        Settings(self)
+        program['settings'].post_lift_init()
         self.splash.progress(65)
         self.whatsdone()
         self.splash.progress(80)
