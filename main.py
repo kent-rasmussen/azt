@@ -12666,13 +12666,7 @@ class SortButtonFrame(ui.ScrollingFrame):
     def add_int_group(self):
         log.info("Adding a new group!")
         groups=program['status'].groups(wsorted=True)
-        for i in groups:
-            try:
-                values+=[int(i)]
-            except:
-                # log.info('Tone group {} cannot be interpreted as an integer!'
-                #         ''.format(i))
-                pass
+        values=[int(i) for i in groups if isinteger(i)]+[0] #in case none
         newgroup=max(values)+1
         groups.append(str(newgroup))
         program['status'].groups(groups,wsorted=True)
