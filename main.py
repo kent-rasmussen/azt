@@ -13848,9 +13848,7 @@ class StatusDict(dict):
         with open(self._filename, 'w', encoding='utf-8') as file:
             config.write(file)
     def dict(self): #needed?
-        for k in self:
-            v[k]=self[k]
-        return v
+        return {k:self[k] for k in self}
     def dictcheck(self,**kwargs):
         kwargs=self.checkslicetypecurrent(**kwargs)
         try:
