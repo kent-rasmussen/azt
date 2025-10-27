@@ -4174,8 +4174,8 @@ class TaskDressing(HasMenus,ui.Window):
             for opt in optdict[s]:
                 bffrb=ui.RadioButtonFrame(f,
                                         horizontal=True,
-                                        var=options.vars[s],
-                                        opts=optdict[s],
+                                        variable=options.vars[s],
+                                        optionlist=optdict[s],
                                         row=1,column=1)
             options.next('r')
         def exsframe(x):
@@ -4930,7 +4930,7 @@ class TaskDressing(HasMenus,ui.Window):
             return
         if kwargs.get('intfirst') and kwargs.get('guess'):
             l=[int(i) for i in program['status'].groups(cvt=cvt,**kwargs)
-                                    if str(i).isdigit()]
+                                    if str(i).isdecimal()]
             if l:
                 program['settings'].setgroup(str(min(l)),window)
             else:
@@ -5467,7 +5467,7 @@ class TaskChooser(TaskDressing,ui.Window):
                     tasktuples.append((task,task.tasktitle(task),None))
             else:
                 if hasattr(task,'taskicon'):
-                    tasktuples.append((task,str(task),task.taskicon(task)))
+                    tasktuples.append((task,str(task), task.taskicon(task)))
                 else:
                     tasktuples.append((task,str(task),None))
         log.info("Tasks available ({}): {}".format(len(tasktuples),
@@ -5731,7 +5731,10 @@ class TaskChooser(TaskDressing,ui.Window):
             self.task.deiconify()
         # self.restart(self.filename)
     def timetowrite(self):
-        """only write to file every self.writeeverynwrites times you might."""
+        """only write to file every self.writeeverynwrites times you might.
+        current defaiult is every write possible (writeeverynwrites=1)
+        change this in your project settings if your power is stable and you
+        want to write less."""
         self.writeable+=1 #and tally here each time this is asked
         return not self.writeable%program['settings'].writeeverynwrites
     def schedule_write_check(self):
