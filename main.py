@@ -11502,7 +11502,7 @@ class TranscribeS(Transcribe,Segments):
         ok_button=ui.Button(self.runwindow.frame, text=self.oktext,
                                 row=3,
                                 column=0,
-                                sticky='',
+                                sticky='nsew',
                                 padx=padx,
                                 pady=pady,
                                 command=self.done
