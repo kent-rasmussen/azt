@@ -12646,14 +12646,17 @@ class SortButtonFrame(ui.ScrollingFrame):
             scaledpady=0
         else:
             scaledpady=int(40*program['scale'])
+        # log.info(f"This button at {self.groupbuttons.row=}, {self.groupbuttons.col=}")
+        nbuttons=len(self.groupbuttons.winfo_children())
+        r,c=nbuttons//self.buttoncolumns,nbuttons%self.buttoncolumns
         b=SortGroupButtonFrame(self.groupbuttons, self,
                                 group,
                                 showtonegroup=True,
                                 alwaysrefreshable=True,
                                 bpady=0,
                                 bipady=scaledpady,
-                                row=self.groupbuttons.row,
-                                column=self.groupbuttons.col,
+                                row=r,#self.groupbuttons.row,
+                                column=c,#self.groupbuttons.col,
                                 sticky='w')
         if not b.hasexample:
             return
