@@ -80,6 +80,7 @@ except Exception as e:
     program['nosound']=True
     log.error("Problem importing Sound/pyaudio. Is it installed? {}".format(e))
     exceptiononload=True
+import alphabet_chart
 """Other people's stuff"""
 try:
     from packaging import version
@@ -2079,6 +2080,13 @@ class Settings(object):
                                             'asr_kwargs',
                                             'asr_repos'
                                             ]},
+            'alphabet':{
+                                'file':'alphabetsettingsfile',
+                                'attributes':['alphabet_order',
+                                            'alphabet_ncolumns',
+                                            'alphabet_exids',
+                                            'alphabet_chart_title',
+                                            ]},
             'toneframes':{
                                 'file':'toneframesfile',
                                 'attributes':['toneframes']}
@@ -2168,6 +2176,7 @@ class Settings(object):
         self.profiledatafile=basename.with_suffix(".ProfileData.dat")
         self.adhocgroupsfile=basename.with_suffix(".AdHocGroups.dat")
         self.soundsettingsfile=basename.with_suffix(".SoundSettings.ini")
+        self.alphabetsettingsfile=basename.with_suffix(".AlphabetChart.ini")
         self.settingsbyfile() #This just sets self.settings
         for setting in self.settings:
             savefile=self.settingsfile(setting)#self.settings[setting]['file']
@@ -2210,6 +2219,10 @@ class Settings(object):
             fns['hgurls']=self.repo['hg'].remoteurls
             fns['ps']=program['slices'].ps
             fns['profile']=program['slices'].profile
+            fns['alphabet_order']=self.alpha_order
+            fns['alphabet_ncolumns']=self.alpha_ncolumns
+            fns['alphabet_exids']=self.alpha_exids
+            fns['alphabet_chart_title']=self.alpha_chart_title
             # except this one, which pretends to set but doesn't (throws arg away)
             fns['profilecounts']=program['slices'].slicepriority
             fns['asr_repos']=program['soundsettings'].asr_repo_tally
@@ -2537,6 +2550,24 @@ class Settings(object):
                     # if u:
                     #     u.join()
         log.info("trackuntrackedfiles finished.")
+    def alpha_order(self,value=[]):
+        if value:
+            self.alphabet_order=value
+        return getattr(self,'alphabet_order',value)
+    def alpha_exids(self,value=dict()):
+        if value:
+            self.alphabet_exids=value
+        return getattr(self,'alphabet_exids',value)
+    def alpha_ncolumns(self,value=5):
+        if value:
+            self.alphabet_ncolumns=value
+        return getattr(self,'alphabet_ncolumns',value)
+        # if hasattr(self,'alphabet_ncolumns'):
+        #     return self.alphabet_ncolumns
+    def alpha_chart_title(self,value=''):
+        if value:
+            self.alphabet_chart_title=value
+        return getattr(self,'alphabet_chart_title',value)
     def pss(self):
         log.info(_("checking these lexical category names for plausible noun "
                 "and verb names: {}").format(program['db'].pss))
@@ -3804,6 +3835,7 @@ class Settings(object):
         self.loadsettingsfile(setting='status')
         self.loadsettingsfile(setting='toneframes')
         self.loadsettingsfile(setting='adhocgroups')
+        self.loadsettingsfile(setting='alphabet')
         self.makeeverythingok()
         """The following might be OK here, but need to be OK later, too."""
         # """The following should only be done after word collection"""
@@ -5351,6 +5383,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if self.showreports:
             tasks=[
                     ExportData,
+                    AlphabetChart,
                     ReportCitationBackground,
                     ReportCitationMulticheckBackground,
                     ReportCitationMultichecksliceBackground
@@ -5916,6 +5949,45 @@ class ExportData(ui.Window):
         self.max_rows_total=None
         self.max_rows_per_file=None
         self.report_data()
+class AlphabetChart(alphabet_chart.OrderAlphabet):
+    """docstring for AlphabetChart."""
+    def taskicon(self):
+        return program['theme'].photo['alpha_icon']
+    def tooltip(self):
+        return _("This task helps you organize an alphabet and select words "
+            "with pictures to represent each letter.")
+    def tasktitle(self):
+        return _("Alphabet Chart") # for Citation Forms
+    def save_settings(self):
+        for k in self.my_settings: #defined in module
+            value=getattr(self,k)
+            if isinstance(value,ui.Variable):
+                value=value.get()
+            #     log.info(f"found ui.Variable: {value}")
+            # else:
+            #     log.info(f"Didn't find ui.Variable: {value}")
+            getattr(program['settings'],'alpha_'+k)(value)
+        program['settings'].storesettingsfile(setting='alphabet')
+    def __init__(self, parent, **kwargs):
+        order=program['settings'].alpha_order()
+        groupdict=program['status'].all_groups_verified_anywhere()
+        # log.info(f"{groupdict=}")
+        for cv in ['C','V']:
+            if cv in groupdict:
+                extras={i for i in groupdict[cv] if not i.isdecimal()}-set(order if order else [])
+                log.info(f"adding to {cv}: {extras=}")
+                order=sorted(extras)+order #put new symbols first
+        #only actually present:
+        order=[i for i in order if i in
+                        [k for l in groupdict.values() for k in l]
+                ]
+        # for k in ['exids','order','ncolumns','chart_title']:
+        #     log.info(f"{getattr(program['settings'],'alpha_'+k)()=}")
+        # log.info(f"{order=}")
+        program['settings'].alpha_order(order)
+        self.program=program
+        super().__init__(parent)
+        self.mainwindow=False #don't exit on close
 class Segments(object):
     """docstring for Segments."""
     def buildregex(self,**kwargs):
