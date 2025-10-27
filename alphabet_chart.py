@@ -367,9 +367,10 @@ class SelectFromPicturableWords(ui.Window):
     def set_up_images(self):
         if len(self.examples) > 5:
             self.wait("Loading Images")
-        for i in self.examples.copy():
+        for n,i in enumerate(self.examples.copy()):
+            self.waitprogress(n*100//len(self.examples))
             if getimagelocationURI(i):
-                print(f"no image for {i.id}!")
+                # print(f"no image for {i.id}!")
                 self.examples.remove(i)
             else:
                 i.image.scale(1,pixels=100,scaleto='height')
