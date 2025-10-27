@@ -11385,6 +11385,14 @@ class Transcribe(Sound,Sort,TaskDressing):
             log.info(_("This should never happen (renamegroup/"
                         "comparisonbuttons)"))
         self.sub_c['text']=t
+    def __init__(self,parent): #frame, filename=None
+        TaskDressing.__init__(self, parent)
+        program['settings'].makeeverythingok()
+        self.ftype=program['params'].ftype()
+        self.mistake=False #track when a user has made a mistake
+        program['status'].makecheckok()
+        Sound.__init__(self)
+class TranscribeS(Transcribe,Segments):
     def makewindow(self):
         cvt=program['params'].cvt()
         ps=program['slices'].ps()
@@ -11488,13 +11496,10 @@ class Transcribe(Sound,Sort,TaskDressing):
         self.sub_c.wait_window(self.runwindow) #then move to next step
         """Store these variables above, finish with (destroying window with
         local variables):"""
-    def __init__(self,parent): #frame, filename=None
-        TaskDressing.__init__(self, parent)
-        program['settings'].makeeverythingok()
-        self.mistake=False #track when a user has made a mistake
-        program['status'].makecheckok()
-        Sound.__init__(self)
-class TranscribeV(Transcribe,Segments):
+    def __init__(self, parent): #frame, filename=None
+        Transcribe.__init__(self,parent)
+        Segments.__init__(self,parent)
+class TranscribeV(TranscribeS):
     def tasktitle(self):
         return _("Vowel Letters")
     def tooltip(self):
@@ -11529,10 +11534,9 @@ class TranscribeV(Transcribe,Segments):
         # # 'Â', 'Ê', 'Î', 'Ô', 'Û',
         # 'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
         ]
-        Transcribe.__init__(self,parent)
-        Segments.__init__(self,parent)
+        super().__init__(parent)
         program['params'].cvt('V')
-class TranscribeC(Transcribe,Segments):
+class TranscribeC(TranscribeS):
     def tasktitle(self):
         return _("Consonant Letters")
     def tooltip(self):
@@ -11584,8 +11588,7 @@ class TranscribeC(Transcribe,Segments):
         'l','r',
         'rh','wh',
         ]
-        Transcribe.__init__(self,parent)
-        Segments.__init__(self,parent)
+        super().__init__(parent)
         program['params'].cvt('C')
 class TranscribeT(Transcribe,Tone):
     def tasktitle(self):
