@@ -9747,8 +9747,9 @@ class Sort(object):
             groupstojoin.sort(key=str) #put a number first (to remove)
             self.updatebygroupsense(*groupstojoin) #calls marksortgroup on all
             groups.remove(groupstojoin[0])
-                self.updatestatus(group=group,write=write)
-                write=True #For second group
+            # I think these should have been removed:
+                # self.updatestatus(group=group,write=write)
+                # write=True #For second group
             # self.maybesort() #go back to verify, etc.
             return 1 #not done yet, return to maybesort
         """'These are all different' doesn't need to be saved anywhere, as this
