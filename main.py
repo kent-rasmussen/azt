@@ -3810,8 +3810,9 @@ class Settings(object):
         """I think I need this before setting up regexs"""
         if hasattr(taskchooser,'analang'): #i.e., new file
             self.analang=taskchooser.analang #I need to keep this alive until objects are done
-            program['db'].getpss() #redo this, specify
-        else:
+            self.storesettingsfile() #write analang to file
+    def post_lift_init(self):
+        """These settings require the LIFt db be up and parsed already"""
         self.dont_guessanalang() #needed for regexs
         if not self.analang:
             log.error("No analysis language; exiting.")
