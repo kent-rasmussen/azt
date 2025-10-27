@@ -11309,6 +11309,7 @@ class Transcribe(Sound,Sort,TaskDressing):
                                 "groups, go back and do it in the sort task.")
                 log.debug(deja)
                 self.errorlabel['text'] = deja
+                self.setgroup_comparison(newvalue)
                 return 1
             if program['params'].cvt() != 'T': #Warning only on segmental changes
                 self.polygraphwarn(newvalue)
