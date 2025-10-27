@@ -365,6 +365,7 @@ class OrderAlphabet(ui.Window):
 class SelectFromPicturableWords(ui.Window):
     """This allows users to select a picturable word for one grapheme"""
     def set_up_images(self):
+        """This would look faster if we made one button at a time."""
         if len(self.examples) > 5:
             self.wait("Loading Images")
         for n,i in enumerate(self.examples.copy()):
