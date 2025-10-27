@@ -53,7 +53,8 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
     """This should maybe be subclassed under XML, from xmletfns"""
     """The job of this class is to expose the LIFT XML as python object
     attributes. Nothing more, not thing else, should be done here."""
-    def __init__(self, filename, tostrip=False):
+    def __init__(self, filename, analang=None, tostrip=False):
+        # analang is optional because we don't always care (CAWL).
         self.debug=False
         self.filename=filename #lift_file.liftstr()
         self.logfile=filename+".changes"
@@ -72,9 +73,9 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.backupfilename=''.join(backupbits)
         """I should skip some checks in certain cases, like working with the
         CAWL template"""
-        self.getentries()
+        self.getanalangs(analang) #sets: self.analangs, self.audiolangs
+        self.getentries() #need self.analang by here
         self.getsenses()
-        self.getanalangs() #sets: self.analangs, self.audiolangs
         self.getpss() #all ps values, in a prioritized list
         self.slicebyerror()
         self.slicebyps()
@@ -119,6 +120,9 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.findduplicateexamples()
         """Think through where this belongs; what classes/functions need it?"""
         self.morphtypes=self.getmorphtypes()
+        self.get_audiodir()
+        self.get_imgdir()
+        self.get_reportdir()
         log.info("Language initialization done.")
     def tonelangname(self,machine=False):
         try:
@@ -145,6 +149,70 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             bits+=[langtags.machine_transcription_code]
         log.info(f"{bits=}")
         return ''.join(bits)
+    def get_audiodir(self):
+        self.lift_home=file.getparent(self.filename)
+        self.audiodir=file.getaudiodir(self.lift_home)
+        for s in self.senses:
+            for fp in list(s.fields.values())+list(s.examples.values()): #dicts
+                if self.audiolang in fp.forms:
+                    try:
+                        filename=fp.textvaluebylang(self.audiolang)
+                        totry=file.getdiredurl(self.audiodir,filename)
+                        assert file.exists(totry)
+                        log.info(f"Found {totry}; assuming {self.audiodir=}")
+                        return
+                    except:# Exception as e:
+                        # log.info(f"Exception: {e}")
+                        pass
+        log.info(f"No audio found in {self.audiodir=}, but will put new audio "
+            "there; if your audio is elsewhere, fix this.")
+    def get_imgdir(self):
+        self.imgdir=file.getimagesdir(self.lift_home)
+        for s in self.senses:
+            try:
+                totry=file.getdiredurl(self.imgdir,s.illustrationvalue())
+                assert file.exists(totry)
+                log.info(f"Found {totry}; assuming {self.imgdir=}")
+                return
+            except:# Exception as e:
+                # log.info(f"Exception: {e}")
+                pass
+        log.info(f"No images found in {self.imgdir=}, but will put new images "
+            "there; if your images are elsewhere, fix this.")
+    def get_reportdir(self):
+        self.reportdir=file.getreportdir(self.lift_home)
+    def convert_langtag(self,current_lang,new_lang):
+        """This method is only for established databases who need to change
+        langauge codes, typically because of an error or underdifferentiated
+        code. It will only be available by manual calling in this module, not anywhere in the UI —at least until I can come up with a way to prevent
+        its abuse.
+        """
+        present_langs=[i.get('lang') for i in self.nodes.findall(".//*[@lang]")]
+        lang_stats=collections.Counter(present_langs).most_common()
+        langs=set(present_langs)
+        if current_lang in self.glosslangs:
+            log.error(f"‘{current_lang}’ is a gloss lang! ({self.glosslangs})!")
+            return
+        if current_lang == new_lang:
+            log.error(f"‘{new_lang}’ is the same as ‘{current_lang}’!")
+            return
+        if current_lang not in langs:
+            log.error(f"‘{current_lang}’ not in {langs=}!")
+            return
+        if new_lang in langs:
+            log.error(f"‘{new_lang}’ already in {langs=}!")
+            return
+        log.info(f"found ‘{current_lang}’, and not ‘{new_lang}’ in {langs=}.")
+        target_nodes=[i for i in
+                            self.nodes.findall(f".//*[@lang='{current_lang}']")]
+        for n in target_nodes:
+            n.set('lang',new_lang)
+        receptor_nodes=[i for i in
+                            self.nodes.findall(f".//*[@lang='{new_lang}']")]
+        target_nodes=[i for i in
+                            self.nodes.findall(f".//*[@lang='{current_lang}']")]
+        log.info(f'Found {len(receptor_nodes)} receptor nodes with {new_lang}.')
+        log.info(f'Found {len(target_nodes)} target nodes with {current_lang}.')
     def retarget(self,urlobj,target,showurl=False):
         k=self.urlkey(urlobj.kwargs)
         urlobj.kwargs['retarget']=target
@@ -306,6 +374,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                         # log.info("{}; {}".format(n.tag,n.attrib))
                         n.set('lang',pylang(lang))
     def modverificationnode(self,senseid,vtype,ftype,analang,**kwargs):
+        """I think this is obsolete"""
         # use self.verificationtextvalue(profile,ftype,lang=None,value=None)
         """this node stores a python symbolic representation, specific to an
         analysis language"""
@@ -365,8 +434,9 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         # This is used in cases where form@lang wasn't specified, so now we make
         # it up, and trust the user can fix if this is guessed wrong
         try:
+            assert self.analang
             lang=pylang(self.analang)
-        except AttributeError:
+        except (AttributeError,AssertionError):
             return #if there is no analang, there are no legacy fields either
         #any verification field, anywhere:
         allfieldnames=[i.get('type') for i in self.nodes.findall(".//field")]
@@ -422,14 +492,14 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.entries=[Entry(self.nodes,i,annotationlang=self.annotationlang)
                             for i in self.nodes
                             if i.tag == 'entry']
-        # self.nentries=len(self.entries)
-        # log.info("nentries: {}".format(self.nentries))
+        # log.info(f"{len(self.entries)=}")
         self.entries=[i for i in self.entries if len(i.sense)]
         self.nentries=len(self.entries)
-        # log.info("nentries: {}".format(self.nentries))
+        # log.info(f"{self.nentries=}")
     def getsenses(self):
         self.senses=[i for j in self.entries for i in j.senses]
         self.nsenses=len(self.senses)
+        # log.info(f"{self.nsenses=}")
     def slicebyid(self):
         self.entrydict={i.guid:i for i in self.entries}
         self.sensedict={i.id:i for i in self.senses}
@@ -994,6 +1064,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         """This writes changes back to XML."""
         if filename is None:
             filename=self.filename
+        # log.info(f"{filename=} ({type(filename)=})")
         write=0
         nodes=self.nodes
         xmlfns.indent(self.nodes)
@@ -1002,32 +1073,39 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             tmp=filename+'.part'
             if file.exists(tmp):
                 file.remove(tmp)
+            # log.info(f"{tmp=} ({type(tmp)=})")
             tree.write(tmp, encoding="UTF-8")
             write=True
         except Exception as e:
-            log.error("There was a problem writing to partial file: "
-                        f"{tmp} ({e})")
+            error=_("There was a problem writing to partial file: "
+                f"{tmp} ({e})")
+            log.error(error)
         if write:
             try:
                 os.replace(tmp,filename)
+                self.write_OK=True
+                self.write_error=None
+                return
             except:
-                log.error("There was a problem writing {} file to {} "
-                "directory. This is what's here: {}".format(
-                    pathlib.Path(filename).name, pathlib.Path(filename).parent,
-                    os.listdir(pathlib.Path(filename).parent)))
-    def getanalangs(self):
+                error=_("There was a problem writing "
+                    f"{pathlib.Path(filename).name} file to " f"{pathlib.Path(filename).parent} "
+                    "directory. This is what's here: "
+                    f"{os.listdir(pathlib.Path(filename).parent)}")
+                log.error(error)
+        self.write_OK=False
+        self.write_error=error
+    def getanalangs(self,analang=None):
         """These are ordered by frequency in the database"""
-        langs=[j for k in [i.lx.langs()|i.lc.langs()|(
-                                        i.ph.langs() if hasattr(i,'ph') else set())
-                        for i in self.entries]
-                    for j in k
-                    ]
+        langs=[i.get('lang') for i in self.nodes.findall('entry/citation/form'
+                                    )+self.nodes.findall('entry/lexical-unit/form'
+                                    )+self.nodes.findall('entry/pronunciation/form')]
         codes={'audiolangs':langtags.audio_code,
             'phoneticlangs':langtags.phonetic_code,
             'tonelangs':langtags.tone_code,
             'machine':langtags.machine_transcription_code
         }
         l_ordered=[i[0] for i in collections.Counter(langs).most_common()] #tups
+        # log.info(f"Found these languages in lc/lx/ph fields: {l_ordered} ({len(langs)})")
         for l in ['audiolangs','tonelangs','phoneticlangs']:
             setattr(self,l,[i for i in l_ordered if codes[l] in i
                                                 and codes['machine'] not in i])
@@ -1035,12 +1113,21 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.analangs=[i for i in l_ordered if langtags.tag_is_valid(i)
                                             and codes['machine'] not in i]
         l_ordered=[i for i in l_ordered if i not in self.analangs]
-        if not self.analangs:
-            tryname=file.getfilenamebase(self.filename)
+        tryname=file.getfilenamebase(self.filename)
+        if analang in self.analangs:
+            log.info(_(f"Using {analang=} from settings."))
+            self.analangs=[analang]
+        elif tryname in self.analangs:
+            log.info(_("Found file name base in possible analysis languages; "
+                    "assuming that and moving on. To select another "
+                    "analysis language for this database, rename it first."))
+            self.analangs=[tryname]
+        elif not self.analangs:
             if langtags.tag_is_valid(tryname):
                 log.info(_("No language data yet: extrapolating analysis "
                     f"language from file name ({tryname})."))
                 self.analangs=[tryname]
+        else:
             log.error("I can't find a plausible analang! "
                         f"(from ‘{l_ordered}’)")
         # log.info(_(f"Possible analysis language codes found: {self.analangs}"))
@@ -1056,7 +1143,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 setattr(self,l,getattr(self,l+'s')[0])
                 log.info(f'One {l} found: {getattr(self,l)}')
             else:
-                log.info(f'Multiple {l}s: {getattr(self,l+'s')}')
+                log.info(f'Multiple/no {l}s: {getattr(self,l+'s')}')
                 setattr(self,l,None)#fix this later, but have attr
         if l_ordered:
             log.error(_(f"Language codes {l_ordered} found in data, "
@@ -2032,6 +2119,8 @@ class Form(Node):
     def annotationvaluedict(self):
         return {name:self.annotations[name].annotationvalue(name)
                 for name in self.annotations}
+    def annotationkeys(self):
+        return list(self.annotations)
     def annotationvalue(self,name,value=None):
         try:
             # log.info("annotationvalue returning {}"
@@ -2064,18 +2153,7 @@ class Form(Node):
         self.lang=self.get("lang")
 class FormParent(Node):
     def getanalang(self):
-        try:
-            return min([l
-                        for lang in self.parent.fields.values()
-                        for l in lang.langs()
-                        ]
-                        ,key=len)
-        except:
-            return min([l
-                        for lang in self.parent.parent.fields.values()
-                        for l in lang.langs()
-                        ]
-                        ,key=len)
+        return self.db.analang
     def getlang(self,lang=None): #,shortest=False
         """The number of languages in FormParent forms doesn't really tell what
         makes a good default language choice. Some fields typically only have
@@ -2103,7 +2181,10 @@ class FormParent(Node):
         made by methods that require lang be specified. When updated to use
         they should be wrapped by a method that maintains this requirement."""
         if isinstance(self, Field):
-            if 'verification' in self.ftype:
+            possibles=list(self.langs()) #This is self.forms.keys()
+            if len(possibles) == 1:
+                return possibles[0]
+            elif 'verification' in self.ftype:
                 return pylang(analang)
                 # log.info("using verification pylang {}".format(lang))
             elif 'tone' in self.ftype:
@@ -2112,13 +2193,16 @@ class FormParent(Node):
                 return profilelang(analang)
             elif self.ftype in ['location', 'SILCAWL']:
                 return self.annotationlang
+            elif analang in possibles:
+                return analang
             else:
                 log.error("Apparently I left a field type off the list? "
                             "Plural and imperative fields need lang specified. "
                             f"({self.ftype})")
                 raise
-        elif isinstance(self, (Example, Definition, Translation, Lexeme,
-                                                    Citation, Pronunciation)):
+        elif isinstance(self, (Lexeme, Citation)):
+            return analang
+        elif isinstance(self, (Example, Definition, Translation,Pronunciation)):
             log.error(f"{type(self)} node is asking for a language; this "
                         "should already be specified.")
             raise
@@ -2140,32 +2224,32 @@ class FormParent(Node):
         except KeyError:
             return None
     def textvaluebylang(self,lang=None,value=None):
-        # if value:
-        #     log.info("Working on {} ({})".format(self.tag,self.ftype))
         if not lang:
             lang=self.getlang(lang)
         if lang not in self.forms:
             # log.info(f"Missing ‘{lang}’ lang in textvaluebylang: {self.forms=}")
             if value is not None: #only make if we're populating it, allow ''
-                # log.info(f"Adding new {lang} form field = {value}")
                 self.forms[lang]=Form(self,attrib={'lang':lang})
-                # log.info(f"Is ‘{lang}’ lang in textvaluebylang? {self.forms=}")
-                # prettyprint(self.forms[lang])
             else:
                 return None
         if value is False:
-            # log.info(f"Removing ‘{lang}’ lang in textvaluebylang: {self.forms=}")
             self.remove(self.forms[lang])
             del self.forms[lang]
-            #without something like the following, it leaves empty FormParent
-            # if not self.forms:
-            #     self.parent.remove(self)
             return
-        # if value:
-        #     log.info(f"Sending ‘{value}’ ({type(value)}) from textvaluebylang")
         return self.forms[lang].textvalue(value)
     def annotationvaluedictbylang(self,lang):
         self.forms[lang].annotationvaluedict()
+    def annotationkeysbylang(self,lang):
+        lang=self.getlang(lang) #This might be better more internally
+        try:
+            # log.info("annotationvaluebylang returning {}".format(
+            #                     self.forms[lang].annotationvalue(name,value)))
+            return self.forms[lang].annotationkeys()
+        except Exception as e:
+            log.error("Exception! ({})".format(e))
+    def annotationkeyinlang(self,check,lang=None):
+        lang=self.getlang(lang) #This might be better more internally
+        return check in self.annotationkeysbylang(lang)
     def annotationvaluebylang(self,lang,name,value=None):
         lang=self.getlang(lang) #This might be better more internally
         try:
@@ -2287,7 +2371,7 @@ class FormParent(Node):
             self.sense=self.parent.sense
     def glossbylang(self,lang):
         return ', '.join(self.parent.sense.formattedgloss(lang))
-    def hassoundfile(self,audiolang=None,audiodir=None,recheck=False):
+    def hassoundfile(self,recheck=False):
         """self.audiofileisthere is stored and read here both for lexical and
         example fields."""
         """"These attributes are not stored in lift; they depend on the work
@@ -2295,10 +2379,9 @@ class FormParent(Node):
         fully qualified filesystem path, not a relative one (e.g., 'audio')"""
         if hasattr(self,'audiofileisthere') and not recheck:
             return self.audiofileisthere
-        if not audiolang: #guess, if not declared
-            audiolang=audiolangname(self.getanalang())
         try: #get audiofileURL or fail
-            abs=file.getdiredurl(audiodir,self.textvaluebylang(audiolang))
+            abs=file.getdiredurl(self.audiodir,
+                                self.textvaluebylang(self.audiolang))
             # log.info(f"Working with absolute audio filename: {abs}")
             if bool(abs) and file.exists(abs):
                 self.audiofileisthere=True
@@ -2357,9 +2440,10 @@ class FieldParent(object):
         if not tag:
             tag='field'
         if len(self.findall('{}[@type="{}"]'.format(tag,type))) > 1:
+            values=[i.textvaluebylang() for i in self.findall(f'{tag}[@type="{type}"]')]
             log.error("{} node in entry {} has multiple {} nodes of ‘{}’ type. "
                     "While this is legal LIFT, it is probably an error, and "
-                    "will lead to unexpected behavior."
+                    f"will lead to unexpected behavior. ({values=})"
                     "".format(self.tag,self.entry.guid,tag,type))
             return 1
     def getfields(self):
@@ -2367,6 +2451,11 @@ class FieldParent(object):
         under this parent."""
         # log.info(f"FieldParent {self.tag} field types: {[i.get('type')
         #                                     for i in self.findall('field')]}")
+        # self.fields={node.ftype:node for node in self
+        #                 if isinstance(node,Node) #I.e., already brought in
+        #                 and nod.tag == 'field'
+        #             }
+        # use the above updated with this if fields aren't picked up correctly
         self.fields={
                     node.get('type'):Field(self,node)
                         for node in self.findall('field')
@@ -2389,12 +2478,16 @@ class FieldParent(object):
         # without lang here, annotationlang is used; value=None does nothing
         self.fields[type].textvaluebylang(lang=lang,value=value) #set value?
     def fieldvalue(self,type,lang=None,value=None):
+        """lang=None is OK for fields with just one form@lang node, or if
+        self.ftype contains 'verification', 'tone', 'cvprofile', 'location',
+        or 'SILCAWL'
+        """
         try:
             assert isinstance(self.fields[type],et.Element)
             # log.info("found ET node")
         except (AssertionError,KeyError):
             found=self.find(f'field[type="{type}"]')
-            # log.info("found {}".format(found))
+            # log.info(f"found new XML node {found}")
             if isinstance(found,et.Element) or value:
                 if isinstance(found,et.Element):
                     log.error("This should never happen; somehow an XML field "
@@ -2409,11 +2502,12 @@ class FieldParent(object):
                 # node=None creates a new field node, forms nodes below
                 self.fields.update({type:Field(self,node=found,type=type)})
                 self.checkforsecondfieldbytype(type) #b/c new field made
-                # self.newfield('tone',value=value) #use annotationlang
             else:
                 return None
         # specify value as kwarg because not specifying lang
-        return self.fields[type].textvaluebylang(lang=lang,value=value)
+        fv=self.fields[type].textvaluebylang(lang=lang,value=value)
+        # log.info(f"fieldvalue returning {fv=} for {self=}")
+        return fv
     def __init__(self):
         # log.info("Initializing field parent for {}".format(self))
         if not hasattr(self,'annotationlang'):
@@ -2717,6 +2811,10 @@ class Sense(Node,FieldParent):
             self.cawln=self.fields['SILCAWL'].textvaluebylang()
         else:
             self.cawln=None
+    def illustrationURI(self):
+        v=self.illustrationvalue()
+        if v:
+            return file.getdiredurl(self.db.imgdir,v)
     def illustrationvalue(self,value=None):
         try:
             assert isinstance(self.illustration,et.Element)
@@ -2846,34 +2944,37 @@ class Sense(Node,FieldParent):
         except Exception as e:
             log.info("tried to remove what wasn't there? ({})".format(e))
     def rmverificationnode(self,profile,ftype):
-        key='{} {} verification'.format(profile,ftype)
+        key=self.verificationkey(profile,ftype)
+        # log.info(f"Removing {key} verification from {self}")
         self.remove(self.fields[key])
         del self.fields[key]
     def verificationkey(self,profile,ftype):
-        key='{} {} verification'.format(profile,ftype)
-        if key: #don't do this for none or []
-            return str(key)
+        return '{} {} verification'.format(profile,ftype)
     def verificationtextvalue(self,profile,ftype,lang=None,value=None):
         """value here is the list of verification codes, stored as a string"""
         """Without lang arg, value must be sent as a kwarg."""
         key=self.verificationkey(profile,ftype)
-        if key == []: #for empty list value, remove node
-            self.rmverificationnode(profile,ftype)
-            return [] #in case user needs a return
-        try:
-            assert key in self.fields
-        except AssertionError:
-            if value:
-                self.fieldvalue(key,value=value)
-            else:
-                return [] #return empty list to fill
-        # This value is a list, but needs to be stored and retrieved as str text
-        # log.info("setting value {} ({})".format(value,type(value)))
-        if value:
-            log.info("setting value {} ({})".format(value,type(value)))
+        if value == [] and key in self.fields: #i.e., if reduced to nothing
+            self.rmverificationnode(profile,ftype) #remove what's there
+        #Because of the line above, or other situation with no value or field:
+        if not value and key not in self.fields: #if value, add field below
+            return [] #return empty list to fill, don't add or remove
         #This is stored as a list in text, so return it to a python list:
-        return xmlfns.stringtoobject(
-                self.fields[key].textvaluebylang(value=value)) #lang not needed
+        # if value:
+        #     log.info(f"setting value {value} ({type(value)})")
+        # else:
+        #     log.info("getting value")
+        if value is None: #don't send str(None)!
+            v=self.fieldvalue(key)
+        else:
+            v=self.fieldvalue(key,value=str(value))
+        if v: #fieldvalue returns None on no node
+            v=xmlfns.stringtoobject(v) #must come and go to XML as string
+            # log.info(f"verificationtextvalue returning {value=} {v=} ({type(v)=})")
+            return v
+        else:
+            # log.info(f"verificationtextvalue returning [] ({v=}; {type(v)=})")
+            return []
     def getcvverificationkeys(self,ftype):
         profile=self.cvprofilevalue(ftype=ftype)
         if not profile:
@@ -2907,12 +3008,12 @@ class Sense(Node,FieldParent):
                     return
         # log.info("Looks Good!")
         return True
-    def examplesforASRtraining(self,analang,audiolang,audiodir):
+    def examplesforASRtraining(self):
         for location in self.examples: # each location should be here.
             example=self.examples[location]
-            if example.hassoundfile(audiolang,audiodir):
+            if example.hassoundfile():
                 # log.info(f"Found soundfile {example.audiofileURL}")
-                translation=example.textvaluebylang(analang)
+                translation=example.textvaluebylang(self.db.analang)
                 if translation:
                     # log.info(f"Ex {self.id}-{location} ready for ASR training")
                     # log.info(f"Found value for transcription in lang {analang}")
@@ -2925,16 +3026,14 @@ class Sense(Node,FieldParent):
             return r
         except (UnboundLocalError,NameError):
             return []
-    def lexicalformsforASRtraining(self,analang,audiolang,audiodir,
-                                no_verify_check=False,
-                                check=None):
+    def lexicalformsforASRtraining(self, no_verify_check=False, check=None):
         for ftype in self.ftypes: #includes pl and imp if there
             i=()
-            if self.ftypes[ftype].hassoundfile(audiolang,audiodir):
+            if self.ftypes[ftype].hassoundfile():
                 if check:# e.g., V1=?
                     value=self.cvverificationforcheck(ftype,check)
                 else: #word form
-                    value=self.ftypes[ftype].textvaluebylang(analang)
+                    value=self.ftypes[ftype].textvaluebylang(self.db.analang)
                     if not (no_verify_check or self.cvverificationdone(ftype)):
                         value=None
                 if value:
@@ -2988,22 +3087,20 @@ class Entry(Node,FieldParent): # what does "object do here?"
             self.sense=[]
             log.info("Removing entry with no senses: {}".format(self.guid))
             return 1
-        # log.info("Found {} sense(s)".format(len(self.senses)))
-        # log.info("Found sense(s): {}".format(self.senses))
     def getlx(self):
         self.lx=Lexeme(self,self.find('lexical-unit'))
         self.checkforsecondchild('lexical-unit')
     def getlc(self):
         self.lc=Citation(self,self.find('citation'))
         self.checkforsecondchild('citation')
-    def lxvalue(self,lang,value=None):
-        return self.lx.textvaluebylang(lang,value)
-    def lcvalue(self,lang,value=None):
-        return self.lc.textvaluebylang(lang,value)
-    def plvalue(self,ftype,lang,value=None):
-        return self.fieldvalue(ftype,lang,value)
-    def impvalue(self,ftype,lang,value=None):
-        return self.fieldvalue(ftype,lang,value)
+    def lxvalue(self,value=None):
+        return self.lx.textvaluebylang(self.db.analang,value)
+    def lcvalue(self,value=None):
+        return self.lc.textvaluebylang(self.db.analang,value)
+    def plvalue(self,ftype,value=None):
+        return self.fieldvalue(ftype,self.db.analang,value)
+    def impvalue(self,ftype,value=None):
+        return self.fieldvalue(ftype,self.db.analang,value)
     def phvalue(self,ftype,lang,value=None):
         try:
             assert self.ph.get('type') == ftype
@@ -3045,7 +3142,6 @@ class Entry(Node,FieldParent): # what does "object do here?"
                     'lc':self.lc,
                     })
         self.tone={}
-
 class Language(object):
     def __init__(self, xyz):
         """define consonants and vowels here?regex's belong where?"""
@@ -4327,7 +4423,7 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bse/SIL CAWL Wushi.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/blm-x-rundu/blm-x-rundu.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/blm-x-rundu/blm-x-rundu.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/cky/Mushere Exported AZT file.lift"
     # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift_backupBeforeLx2LcConversion"
@@ -4340,7 +4436,7 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/Eton.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/Demo_gnd/gnd.lift"
     # filename="/home/kentr/bin/raspy/azt/SILCAWL/SILCAWL.lift"
     lift=LiftXML(filename)
@@ -4361,7 +4457,7 @@ if __name__ == '__main__':
 		'fr':'__es'}
     ftype='pl'
     # sense=lift.sensedict['daytime_b27c251c-090e-4427-aa86-22b745409f8d']
-    sense=lift.sensedict['eb91d782-97fc-47da-b1c4-2ba766827ec8']
+    sense=lift.sensedict['body_791094f2-a82b-4650-81d8-c3b6145d2be4']
     # sense=lift.sensedict['head_a8516acf-606c-4796-8fed-75b0c0f2c583']
     # sense=lift.sensedict['forehead_3e600f7e-74a3-4761-9bc3-09f3f01cd98b']
     # for sense in ['head_a8516acf-606c-4796-8fed-75b0c0f2c583',
@@ -4371,13 +4467,24 @@ if __name__ == '__main__':
     #     print(sense.collectionglosses)
     # exit()
     # sense=lift.senses[0]
-    prettyprint(sense)
+    # print(sense.cawln)
+    lift.convert_langtag('en','en-US')
+    # lift.convert_langtag('pt','en-US')
+    # lift.convert_langtag('ha','en-US')
+    # lift.convert_langtag('es','en-US')
+    # lift.convert_langtag('xyz','en-US')
+    # lift.convert_langtag('en','fr')
+    # lift.convert_langtag('en','en')
+    # lift.convert_langtag('ha-CL','en-US')
+    # lift.convert_langtag('id','en-US')
+    lift.write()
+    et.prettyprint(sense)
     for lang in sense.glosses:
         log.info("gloss fields: {}".format(sense.glosses[lang]))
     log.info("sense.examples: {}".format(sense.examples))
     for example in sense.examples:
         log.info("example fields: {}".format(sense.examples[example].fields))
-    prettyprint(sense.examples['isolation'])
+    et.prettyprint(sense.examples['isolation'])
     print(sense.db.audiolang)
     exit()
     print(sense.examples.keys())

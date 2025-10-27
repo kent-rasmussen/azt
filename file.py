@@ -31,6 +31,9 @@ def quote(x):
 def getfile(filename):
     if filename:
         return pathlib.Path(filename)
+def getparent(filename):
+    if filename:
+        return pathlib.Path(filename).parent
 def getfilenamefrompath(filename):
     if filename:
         return pathlib.Path(filename).name

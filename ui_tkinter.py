@@ -12,6 +12,7 @@ import tkinter #as gui
 import tkinter.font
 import tkinter.scrolledtext
 import tkinter.ttk
+import tkinter.dnd
 import file #for image pathnames
 from random import randint #for theme selection
 import datetime
@@ -49,29 +50,16 @@ IntVar=tkinter.IntVar
 StringVar=tkinter.StringVar
 BooleanVar=tkinter.BooleanVar
 """These classes have no dependencies"""
-class ObectwArgs(object):
-    """ObectwArgs just allows us to throw away unused args and kwargs."""
-
-    def __init__(self, *args, **kwargs):
-        log.info("ObectwArgs args: {};{}".format(args,kwargs))
-        super(ObectwArgs, self).__init__()
-class NoParent(object):
-    """docstring for NoParent."""
-    def __init__(self, *args, **kwargs):
-        if args:
-            args=list(args)
-            args.remove(args[0])
-        super(NoParent, self).__init__(*args, **kwargs)
 class Theme(object):
     """docstring for Theme."""
     def startruntime(self):
-        self.start_time=datetime.datetime.utcnow()
+        """/home/kentr/bin/raspy/azt/ui_tkinter.py:95: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+        self.start_time=datetime.datetime.utcnow()"""
+        self.start_time=datetime.datetime.now(datetime.UTC)
         log.info("starting at {}".format(self.start_time))
-    def nowruntime(self):
-        #this returns a delta!
-        return datetime.datetime.utcnow()-self.start_time
+    def nowruntime(self): #this returns a delta!
+        return datetime.datetime.now(datetime.UTC)-self.start_time
     def logfinished(self,msg=None):
-        # log.info("logging finish now")
         run_time=self.nowruntime()
         # if type(start) is datetime.datetime: #only work with deltas
         #     start-=self.start_time
@@ -102,44 +90,40 @@ class Theme(object):
                 scaledalready=file.getdiredurl(scaledalreadydir,filename)
                 # log.info("Looking for {}".format(scaledalready))
                 if file.exists(scaledalready):
-                    # log.info("scaled image exists for {}".format(filename))
+                    # log.info(f"scaled image exists for {filename} ({scaledalready})")
                     imgurl=scaledalready
-                # log.info("Dirs: {}?={}".format(scaledalready,imgurl))
                 else:
-                    # log.info(f"scaledalready ({scaledalready}) != imgurl ({imgurl})")
-                    # log.info("Scaling {}".format(imgurl)) #Just do this once!
                     try:
                         assert self.fakeroot.winfo_exists()
                     except:
                         program=self.program.copy()
                         program['theme']=None
-                        self.fakeroot=Root(program,
+                        self.fakeroot=Root(program, withdrawn=True,
                                             noimagescaling=True)
-                        self.fakeroot.ww=Wait(parent=self.fakeroot,
-                                        msg="Scaling Images (Just this once)")
+                        self.fakeroot.wait(msg="Scaling Images (Just this once)")
                     if not self.scalings:
                         maxscaled=100
                     else:
                         maxscaled=int(sum(self.scalings)/len(self.scalings)+10)
                     for y in range(maxscaled,10,-5):
-                        # Higher number is better resolution (x*y/y), more time to process
-                        #10>50 High OK, since we do this just once now
-                        #lower option if higher fails due to memory limitations
-                        # y=int(y)
-                        x=int(scale*y)
-                        # log.info("Scaling {} @{} resolution".format(imgurl,y)) #Just do this once!
+                        """Higher number is better resolution (x*y/y), more
+                        time to process. as much as 10>50 High OK, since we do
+                        this just once now. Lower this if higher fails
+                        due to memory limitations x=int(scale*y)"""
+                        # log.info("Scaling {} @{} resolution".format(imgurl,y))
                         try:
-                            img = Image(imgurl)
+                            self.photo[name] = Image(imgurl)
                             # keep these at full size, for now
                             if 'openclipart.org' not in filename:
-                                img.scale(scale,pixels=img.maxhw(),resolution=y)
-                                self.photo[name]=img.scaled
-                            else:
-                                self.photo[name]=img
-                            # log.info("scaledalready.parent: {}".format(scaledalready.parent))
-                            # log.info("parent: {}".format(scaledalreadydir != scaledalready.parent))
+                                pixels=self.photo[name].maxhw() #max here only
+                                """If this seems to fail inexplicably, check that
+                                the image isn't too large (>800x800 pixels)?"""
+                                self.photo[name].scale(scale, pixels=pixels,
+                                                        resolution=y)
+                                self.photo[name]=self.photo[name].scaled
                             if scaledalready.parent != scaledalreadydir:
                                 file.makedir(scaledalready.parent,silent=True)
+                            # log.info(f"writing {name} to {scaledalready}")
                             self.photo[name].write(scaledalready)
                             self.scalings.append(y)
                             if file.exists(scaledalready):
@@ -147,14 +131,14 @@ class Theme(object):
                                         "".format(name,imgurl,y,_("OK")))
                             # else:
                             #     log.info("Problem Scaling {} {} @{} resolution"
-                            #             "".format(name,imgurl,y,_("OK"))
+                            #             "".format(name,imgurl,y))
                             return #stop when the first/best works
                         except tkinter.TclError as e:
-                            # log.info(e)
                             if ('not enough free memory '
                                 'for image buffer' in str(e)):
                                 continue
-            # log.info(f"Using {imgurl}")
+                        except Exception as e:
+                            log.error(f"Other exception making image at {imgurl} ({e})")
             self.photo[name] = Image(imgurl)
             # log.info("Compiled {} {}".format(name,imgurl))
         imagelist=[ ('transparent','AZT stacks6.png'),
@@ -214,6 +198,8 @@ class Theme(object):
                             ('uncheckedbox','unchecked.png'),
                             ('checkedbox_sm','checked_sm.png'),
                             ('uncheckedbox_sm','unchecked_sm.png'),
+                            ('alpha_chart','Alphabet_ChartZ.png'),
+                            ('alpha_icon','Alphabet_ChartZ_icon.png'),
                             ('NoImage','toselect/Image-Not-Found.png'),
                             ('Order!','toselect/order!.png'),
                         ]
@@ -227,15 +213,15 @@ class Theme(object):
                 log.info("Image {} ({}) not compiled ({})".format(
                             name,filename,e
                             ))
-            try:
-                self.fakeroot.ww.progress(n*100/ntodo)
+            try: #self.fakeroot is only there if scaled not found
+                self.fakeroot.waitprogress(n*100/ntodo)
             except Exception as e:
                 # log.info("Something happened: {}".format(e))
                 # raise
                 pass
         try:
             self.logfinished("Image compilation")
-            self.fakeroot.ww.close()
+            self.fakeroot.waitdone() #won't die if not waiting
             self.fakeroot.destroy()
             self.program['theme'].unbootstraptheme()
         except Exception as e:
@@ -267,12 +253,9 @@ class Theme(object):
             setattr(self,k,self.themes[self.name][k])
         self.themettk = tkinter.ttk.Style()
         self.themettk.theme_use('clam')
-        self.themettk.configure("Progressbar",
+        self.themettk.configure("TProgressbar", #T+class.name
                                 troughcolor=self.activebackground,
                                 background=self.background,
-                                # bordercolor=self.background,
-                                # darkcolor=self.background,
-                                # lightcolor=self.background
                                 )
     def setthemes(self):
         self.themes={'lightgreen':{
@@ -481,9 +464,6 @@ class Theme(object):
                 log.error("Stopping theme creation here.")
                 return #only do the following only once per run
         self.program['theme']=self #this theme needs to be in use, either way
-        # log.info("making theme with program {}".format(self.program))
-        # I should allow a default theme here, so I can display GUI without
-        # any of this already done
         self.setpads(**kwargs)
         self.setthemes()
         if kwargs.get('noimagescaling'):
@@ -494,8 +474,7 @@ class Theme(object):
         log.info("Using {} theme ({})".format(self.name,self.program))
         self.setimages()
         self.setfonts()
-        super(Theme, self).__init__()
-        # log.info("self.photo keys: {}".format(list(self.photo)))
+        super().__init__()
         # log.info("Theme initialized: {}".format(self))
 class ExitFlag(object):
     def istrue(self):
@@ -508,22 +487,18 @@ class ExitFlag(object):
         self.value=False
     def __init__(self):
         self.false()
-class Renderer(ObectwArgs):
+class Renderer():
     def __init__(self,test=False,**kwargs):
         global pilisactive
         if pilisactive:
             self.isactive=True
         else:
             log.info("Seems like PIL is not installed; inactivating Renderer.")
-            # self.img=None
             self.isactive=False
         self.renderings={}
         self.imagefonts={}
     def gettextsize(self, img, text, font, fspacing):
-        # w, h = draw.multiline_textsize(text, font=font, spacing=fspacing)
         l, t, r, b = img.multiline_textbbox((0,0), text, font=font, spacing=fspacing)
-        # w,h = r-l,b-t
-        # log.info("width: {}, height: {}".format(w,h))
         return r-l,b-t
     def render(self,**kwargs):
         if not self.isactive:
@@ -612,7 +587,6 @@ class Renderer(ObectwArgs):
                     if e == 'cannot open resource':
                         log.debug("no file {}, checking next".format(file))
         else: #i.e., if it was done before
-            # log.info("Using image font: {}".format(str(fontkey)))
             font=self.imagefonts[str(fontkey)]
         if str(fontkey) not in self.imagefonts: #i.e., neither before nor now
             log.error("Cannot find font file for {}; giving up".format(fname))
@@ -641,7 +615,6 @@ class Renderer(ObectwArgs):
             lines[li]=line
         text='\n'.join(lines) #join back sections between manual linebreaks
         w, h = self.gettextsize(draw, text, font, fspacing)
-        log.log(2,"Final size w: {}, h: {}".format(w,h))
         black = 'rgb(0, 0, 0)'
         white = 'rgb(255, 255, 255)'
         img = PIL.Image.new("RGBA", (w+xpad, h+ypad), (255, 255, 255,0 )) #alpha
@@ -649,64 +622,61 @@ class Renderer(ObectwArgs):
         draw.multiline_text((0+xpad//2, 0+ypad//4), text,font=font,fill=black,
                                                                 align=align)
         self.img = PIL.ImageTk.PhotoImage(img)
-class Exitable(object):
-    """This class provides the method and init to make things exit normally.
-    Hence, it applies to roots and windows, but not frames, etc."""
-    def killall(self):
-        self.destroy()
-        sys.exit()
-    def cleanup(self):
-        pass
-    def exittoroot(self):
-        if hasattr(self,'parent') and not isinstance(self.parent,Root):
-            self.parent.exittoroot()
-            return
-        elif hasattr(self,'parent'):
-            self.parent.exitFlag.true()
-    def on_quit(self):
-        """Do this when a window closes, so any window functions can know
-        to just stop, rather than trying to build graphic components and
-        throwing an error. This doesn't do anything but set the flag value
-        on exit, the logic to stop needs to be elsewhere, e.g.,
-        `if self.exitFlag.istrue(): return`"""
-        # log.info(f"Quitting window {self}")
-        if hasattr(self,'exitFlag'): #only do this if there is an exitflag set
-            # log.info("Setting window ({}) exit flag True!".format(self))
-            self.exitFlag.true()
-            # log.info(f"Set exitflag of window {self}")
-        if self.mainwindow: #exit afterwards if main window
-            # log.info(f"Window {self} is mainwindow")
-            self.exittoroot()
-            self.killall()
+class Childof():
+    def pre_tk_init(self,**kwargs):
+        try:
+            kwargs=super().pre_tk_init(**kwargs)
+        finally:
+            return kwargs
+    def post_tk_init(self):
+        try:
+            super().post_tk_init()
+        except:
+            pass
+    def inherit(self,parent=None,attr=None):
+        """This function brings these attributes from the parent, to inherit
+        from the root window, through all windows, frames, and scrolling frames, etc
+        """
+        if not parent and hasattr(self,'parent') and self.parent:
+            parent=self.parent
+        elif parent:
+            self.parent=parent
+        if not attr:
+            attrs=['theme',
+                    'wraplength',
+                    'renderer',
+                    'exitFlag']
         else:
-            # log.info(f"Window {self} is NOT mainwindow")
-            if (hasattr(self,'parent') and
-                    self.parent.winfo_exists() and
-                    not isinstance(self.parent,Root)):
-                # log.info(f"Window {self} has non-root parent that exists")
-                if not self.parent.iswaiting():
-                    # log.info(f"Window {self} is not waiting")
-                    self.parent.deiconify()
-                # else:
-                #     log.info(f"Window {self} is waiting")
-                #     self.parent.waitunpause()
-                    # self.ww.paused=True
+            attrs=[attr]
+        for attr in attrs:
+            if hasattr(parent,attr):
+                setattr(self,attr,getattr(parent,attr))
+                # log.info(f"inheriting {attr} from parent {type(parent)} "
+                #         f"(to {type(self)})")
             # else:
-            #     log.info(f"Window {self} has NOT a non-root parent that exists")
-            # log.info("Going to deiconify {}".format(self.parent))
-            # log.info("Going to cleanup {}".format(self))
-            # log.info(f"Window {self} cleaning up")
-            self.cleanup()
-            self.destroy() #do this for everything
-    def __init__(self):
-        self.protocol("WM_DELETE_WINDOW", self.on_quit)
-class Gridded(ObectwArgs):
+            #     log.info(f"parent {type(parent)} (of {type(self)}) doesn't "
+            #             f"have attr {attr}, skipping inheritance")
+    def __init__(self, parent, *args, **kwargs): #because this is used everywhere.
+        self.parent=parent
+        self.inherit()
+        super().__init__(*args, **kwargs)
+class Gridded():
+    gridkwargs={'sticky',
+                        'row','rowspan',
+                        'column','columnspan','colspan',
+                        'r','c','col',
+                        'padx','pady','ipadx','ipady',
+                        'gridwait','draggable','droppable'
+                    }
+    gridkwargs_for_child_buttons={'b'+i for i in gridkwargs}
+    def pre_tk_init(self,**kwargs):
+        kwargs=super().pre_tk_init(**kwargs)
+        return kwargs
+    def post_tk_init(self):
+        self.dogrid()
+        super().post_tk_init()
     def dogrid(self):
         if self._grid:
-            # log.info(f"Gridding {type(self)} at r{self.row},c{self.column},"
-            #         f"rsp{self.rowspan},csp{self.columnspan},st{self.sticky},"
-            #         f"padx{self.padx},pady{self.pady},ipadx{self.ipadx},"
-            #         f"ipady{self.ipady}")
             self.grid(
                         row=self.row,
                         column=self.column,
@@ -723,20 +693,10 @@ class Gridded(ObectwArgs):
                 self.gridwait=False
                 return
             self.grid()
-    def lessgridkwargs(self,**kwargs):
-        for opt in self.gridkwargs:
-            if opt in kwargs:
-                del kwargs[opt]
-            if 'b'+opt in kwargs:
-                del kwargs['b'+opt]
-        return kwargs
-    def gridbkwargs(self,**kwargs):
-        # preserve some of these for buttons
-        for opt in self.gridkwargs:
-            if 'b'+opt in kwargs:
-                kwargs[opt]=kwargs['b'+opt]
-                del kwargs['b'+opt]
-        return kwargs
+        if self.draggable:
+            self.draggable_bindings()
+        if self.draggable or self.droppable:
+            self.dnd_bindings()
     def bindchildren(self,bind,command):
         self.bind(bind,command)
         for child in self.winfo_children():
@@ -745,15 +705,82 @@ class Gridded(ObectwArgs):
             except Exception as e:
                 log.info("Exception in Gridded binding: {}".format(e))
                 pass
-    def __init__(self, *args, **kwargs): #because this is used everywhere.
+    """The following are for draggable widgets"""
+    def draggable_bindings(self):
+        self.bind("<ButtonPress-1>", self.on_drag_start)
+        self.bind("<Enter>", self.dnd_focus_on)
+        self.bind("<Leave>", self.dnd_focus_off)
+    def dnd_bindings(self):
+        self.initial_widget=False
+    def on_drag_start(self,event):
+        """Stores the widget and initial position when dragging starts."""
+        event.widget.pointer_startX = event.x
+        event.widget.pointer_startY = event.y
+        event.widget.startX = event.widget.winfo_x()
+        event.widget.startY = event.widget.winfo_y()
+        tkinter.dnd.dnd_start(self,event)
+        event.widget.initial_widget=True
+        event.widget.dnd_focus_on()
+    def on_drag_motion(self,event):
+        """Not in use; compare with dnd_motion"""
+        """Moves the widget to the new position while dragging."""
+        widget=event.widget._root()._DndHandler__dnd.initial_widget
+        try:
+            x = event.widget.winfo_x() + (event.x - widget.pointer_startX)
+            y = event.widget.winfo_y() + (event.y - widget.pointer_startY)
+            widget.place(x=x, y=y)
+        except Exception as e:
+            log.info(f"{e}: {[i['text'].split('\n')[0]
+                                        for i in (widget,event.widget)]}")
+        event.widget._root()._DndHandler__dnd.initial_widget.on_motion(event)
+    def dnd_end(self, target, event):
+        self.initial_widget=False
+        if target and hasattr(target,'dnd_focus_off'):
+            target.dnd_focus_off()
+        self.dnd_focus_off()
+    def dnd_putback(self,target, event):
+        if target:
+            target.dnd_leave(self, event)
+        event.widget.grid()
+    """The following are for droppable widgets (which can be dropped upon)"""
+    def dnd_accept(self, source, event):
+        if self.droppable:
+            return self
+    def dnd_focus_on(self,event=None):
+        if self.initial_widget:
+            self['highlightbackground']='black'
+            self['highlightthickness']=1
+        self['background']=self.theme.activebackground
+    def dnd_focus_off(self,event=None):
+        self['background']=self.theme.background
+        self['highlightthickness']=0
+    def dnd_enter(self, source, event):
+        self.dnd_focus_on()
+    def dnd_motion(self, source, event):
+        """For whatever reason, this can move with the widget UNDER other
+        widgets, or it will block those widgets from becoming targets, neither
+        of which work for me"""
+        return
+        x = event.widget.winfo_x() + (event.x - widget.pointer_startX)
+        y = event.widget.winfo_y() + (event.y - widget.pointer_startY)
+        widget.place(x=x, y=y)
+        event.widget.update_idletasks()
+    def dnd_leave(self, source, event):
+        if not self.initial_widget:
+            self.dnd_focus_off()
+    def dnd_commit(self, source, event):
+        """I may need to sort out how this and dnd_end relate"""
+        try:
+            super().dnd_commit(source, event)
+        except:
+            source.dnd_putback(self, event)
+            # log.info(f"Drag and Drop landed on {self} ({type(self)})")
+            # try:
+            #     print("Target Text:",self.text)
+            # except:
+            #     print(f"no target Text ({self}; source: {source.text})")
+    def __init__(self, *args, **kwargs):
         """this removes gridding kwargs from the widget calls"""
-        self.gridkwargs={'sticky',
-                            'row','rowspan',
-                            'column','columnspan','colspan',
-                            'r','c','col',
-                            'padx','pady','ipadx','ipady',
-                            'gridwait'
-                        }
         self._grid=False
         if bool(set(kwargs) & (self.gridkwargs)):
             self._grid=True
@@ -767,45 +794,120 @@ class Gridded(ObectwArgs):
             self.ipadx=kwargs.pop('ipadx',0)
             self.ipady=kwargs.pop('ipady',0)
             self.gridwait=kwargs.pop('gridwait',False)
-        else:
-            log.log(4,"Not Gridding! ({})".format(kwargs))
-class Childof(object):
-    def inherit(self,parent=None,attr=None):
-        """This function brings these attributes from the parent, to inherit
-        from the root window, through all windows, frames, and scrolling frames, etc
-        """
-        # log.info("inheriting")
-        if not parent and hasattr(self,'parent') and self.parent:
-            parent=self.parent
-        elif parent:
-            self.parent=parent
-        if not attr:
-            attrs=['theme',
-                    # 'fonts', #in theme
-                    # 'debug',
-                    'wraplength',
-                    # 'photo', #in theme
-                    'renderer',
-                    # 'program',
-                    'exitFlag']
-        else:
-            attrs=[attr]
-        for attr in attrs:
-            if hasattr(parent,attr):
-                setattr(self,attr,getattr(parent,attr))
-                # log.info("inheriting {} from parent {} (to {})"
-                #         "".format(attr,type(parent),type(self)))
-            else:
-                log.debug("parent {} (of {}) doesn't have attr {}, skipping inheritance"
-                        "".format(parent,type(self),attr))
-    def __init__(self, parent): #because this is used everywhere.
-        self.parent=parent
-        self.inherit()
-class UI(ObectwArgs):
+        self.draggable=kwargs.pop('draggable',False)
+        self.droppable=kwargs.pop('droppable',False)
+        self.super_kwargs=kwargs #whenever we make a change
+        super().__init__(*args, **kwargs)
+class GridinGridded(Gridded):
+    def pre_tk_init(self,**kwargs):
+        kwargs=super().pre_tk_init(**kwargs)
+        return kwargs
+    def post_tk_init(self):
+        super().post_tk_init()
+    def normalize_bkwarg(self,kwarg):
+        """This takes a grid kwarg for a child (preserved from use by a parent)
+        and makes it suitable to used for that child. This is done so grid
+        kwargs can be passed down, e.g., to elements of a ButtonFrame."""
+        if kwarg in Gridded.gridkwargs_for_child_buttons:
+            return kwarg[1:] #just pull the first letter, a 'b'
+        return kwarg
+    def promotegridbkwargs(self,**kwargs):
+        """For grid kwargs that were passed down from a parent, now make them
+        available to the child, typically a button"""
+        return {self.normalize_bkwarg(opt):kwargs[opt] for opt in kwargs}
+    def __init__(self, *args, **kwargs):
+        self.super_kwargs=kwargs #whenever we make a change
+        super().__init__(*args, **self.promotegridbkwargs(**kwargs))
+class UI():
     """docstring for UI, after tkinter widgets are initted."""
+    backgrounds=['background','bg','troughcolor']
+    pads=['ipady','ipadx','pady','padx']
+    active_color=['activebackground','selectcolor','highlightcolor']
+    def pre_tk_init(self,**kwargs):
+        return kwargs
+    def post_tk_init(self):
+        """Here we want to use explicit values where present; otherwise the
+        theme value"""
+        for a in self.backgrounds:
+            if a in self.keys(): #only set where appropriate
+                self[a]=getattr(self,'background',self.theme.background)
+        for a in self.pads:
+            if a in self.keys() and hasattr(self.theme,a):
+                self[a]=getattr(self,a,getattr(self.theme,a))
+        for a in self.active_color:
+            if a in self.keys():
+                self[a]=getattr(self,'activebackground',
+                                self.theme.activebackground)
+        if self.withdrawn:
+            self.withdraw()
+    def __init__(self, *args, **kwargs):
+        """This is always the last of my methods, after which tkinter is called.
+        because of this, we need to restore the parent so tkinter can see it"""
+        for k in self.backgrounds+self.pads+self.active_color:
+            try:
+                setattr(self,k,kwargs.pop(k))
+            except:
+                pass
+        self.withdrawn=kwargs.pop("withdrawn",True if isinstance(self,Root)
+                                                    else False)
+        kwargs=self.pre_tk_init(**kwargs)
+        if self.parent:
+            super().__init__(self.parent, *args, **kwargs)
+        else: #Don't send for Root
+            super().__init__(*args, **kwargs)
+        self.post_tk_init()
+        self.waitcancelled=False
+class Exitable():
+    """This class provides the method and init to make things exit normally.
+    Hence, it applies to roots and windows, but not frames, etc."""
+    def pre_tk_init(self,**kwargs):
+        kwargs=super().pre_tk_init(**kwargs)
+        return kwargs
+    def post_tk_init(self):
+        self.protocol("WM_DELETE_WINDOW", self.on_quit)
+        super().post_tk_init()
+    def killall(self):
+        self.destroy()
+        sys.exit()
+    def cleanup(self):
+        pass
+    def exittoroot(self):
+        """This is just for toplevel windows — Root and Toplevel(Windows).
+        It doesn't actually kill anything, just marks the windows as exiting,
+        so functions can check the flag and exit nicely."""
+        if self.parent: #Toplevel
+            self.parent.exittoroot()
+            return
+        else: #Root
+            self.parent.exitFlag.true()
+    def on_quit(self,to_root=False):
+        """Do this when a window closes, so any window functions can know
+        to just stop, rather than trying to build graphic components and
+        throwing an error. This doesn't do anything but set the flag value
+        on exit, the logic to stop needs to be elsewhere, e.g.,
+        `if self.exitFlag.istrue(): return`"""
+        log.info(f"Quitting window {self}")
+        self.exitFlag.true()
+        if (to_root or self.mainwindow) and self.parent:
+            self.parent.on_quit(to_root=True)
+        elif isinstance(self,Root): #exit afterwards if main window
+            self.killall()
+        else:
+            if (self.parent and
+                self.parent.winfo_exists() and
+                not isinstance(self.parent,Root)):
+                if not self.parent.iswaiting():
+                    self.parent.deiconify()
+            self.cleanup()
+            self.destroy() #do this for everything
+    def __init__(self, *args, **kwargs):
+        self.exitFlag = ExitFlag()
+        super().__init__(*args, **kwargs)
+class Waitable(Exitable):
+    """docstring for Waitable."""
     def wait(self,msg=None,cancellable=False,thenshow=False):
         if self.iswaiting():
-            log.debug("There is already a wait window: {}".format(self.ww))
+            # log.debug("There is already a wait window: {}".format(self.ww))
             if thenshow:
                 self.showafterwait=True
             return
@@ -815,28 +917,17 @@ class UI(ObectwArgs):
         self.ww=Wait(self,msg,cancellable=cancellable)
     def iswaiting(self):
         return hasattr(self,'ww') and self.ww.winfo_exists()
-    def progress(self,value,parent=None,**kwargs):
-        # between 0 and 100
-        try:
-            self.progressbar.current(value)
-        except AttributeError:
-            print("making new progressbar")
-            if not parent:
-                parent=self.outsideframe
-            self.progressbar=Progressbar(parent,
-                                    orient='horizontal',
-                                    mode='determinate', #or 'indeterminate'
-                                    # sticky='nsew',
-                                    **kwargs)
-            self.progress(value)
-    def waitprogress(self,x):
-        self.ww.progress(x,r=4)
     def waitpause(self):
         self.ww.withdraw()
         self.ww.paused=True
     def waitunpause(self):
         self.ww.deiconify()
         self.ww.paused=False
+    def waitprogress(self,x):
+        try:
+            self.ww.progress(x,r=4)
+        except Exception as e:
+            log.info(f"Couldn't change wait progress ({e})")
     def waitcancel(self):
         self.waitcancelled=True
         log.info("Wait cancel registered; waiting to cancel")
@@ -845,84 +936,68 @@ class UI(ObectwArgs):
             self.ww.close()
             if self.showafterwait:
                 self.deiconify()
-        except tkinter.TclError:
+        except (tkinter.TclError,AttributeError):
             pass
-        except AttributeError:
-            log.info("Seem to have tried stopping waiting, when I wasn't...")
-    def __init__(self): #because this is used everywhere.
-        # log.info("UI self._root(): {} ({})".format(self._root(),type(self._root())))
-        # log.info("UI self._root() dir: {}".format(dir(self._root())))
-        # log.info("self.parent: {} ({})".format(self.parent,type(self.parent)))
-        # log.info("self.parent._root(): {} ({})".format(self.parent._root(),type(self.parent._root())))
-        # self.theme=self._root().program['theme']
-        # log.info("UI {}.theme({}).photo keys: {}".format(self,self.theme,
-        #                                                 list(self.theme.photo)))
-        for a in ['background','bg','troughcolor']:
-            if a in self.keys():
-                self[a]=self.theme.background
-        for a in ['ipady','ipadx','pady','padx']:
-            if a in self.keys() and hasattr(self.theme,a):
-                self[a]=getattr(self.theme,a)
-        for a in ['activebackground','selectcolor']:
-            if a in self.keys():
-                self[a]=self.theme.activebackground
-        self.waitcancelled=False
-            # try:
-            #     self['background']=self.theme.background
-            #     self['bg']=self.theme.background
-            #     # self['foreground']=self.theme.background
-            #     self['troughcolor']=self.theme.background
-            #     self['activebackground']=self.theme.activebackground
-            # except TypeError as e:
-            #     log.info("TypeError {}".format(e))
-            # except tkinter.TclError as e:
-            #     log.info("TclError {}".format(e))
-        # super(UI, self).__init__(*args, **kwargs)
+        # except AttributeError:
+        #     log.info("Seem to have tried stopping waiting, when I wasn't...")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 class Image(tkinter.PhotoImage):
     def biggerby(self,x):
         #always do this one first, if doing both, to start from scratch
-        # log.info(f"scaling bigger by {x}")
         try:
             self.scaled=self.transparency.zoom(x,x)
         except AttributeError:
             self.scaled=self.zoom(x,x)
+        # except Exception as e:
+        #     log.info(f"Exception in biggerby: {e}")
     def smallerby(self,x):
         # transparency is managed in biggerby
-        # log.info(f"scaling smaller by {x}")
         try:
             self.scaled=self.scaled.subsample(x,x)
         except AttributeError:
             self.scaled=self.subsample(x,x)
+        # except Exception as e:
+        #     log.info(f"Exception in smallerby: {e}")
     def maxhw(self,scaled=False):
         if scaled:
             return max(self.scaled.width(),self.scaled.height())
         else:
             return max(self.width(),self.height())
-    def scale(self,scale,pixels=100,resolution=5):
+    def scale_height(self,scale,pixels=100,resolution=5):
+        self.scale(scale,pixels=100,resolution=resolution,scaleto='height')
+    def scale_width(self,scale,pixels=100,resolution=5):
+        self.scale(scale,pixels=100,resolution=resolution,scaleto='width')
+    def scale(self,scale,pixels=100,resolution=5,scaleto='both'):
         """'resolution*r' and 'resolution' here express a float scaling ratio
         as two integers, so r = 0.7 = 7/10, because the zoom and subsample fns
         only work on integers. To not waste computation, resolution starts
         small and increases to what is needed to keep both integers positive"""
+        def r_off_by(): #how far off does this integer division push this?
+            return abs(r-(int(resolution*r)/int(resolution)))/r
         # log.info("Scaling with these args: scale {}, pixels {}, resolution {}"
         #         "".format(scale,pixels,resolution))
         s=pixels*scale #the number of pixels, scaled
-        r=s/self.maxhw() #the ratio we need to reduce actual pixels by
-        # log.info("scaled pixels: {} (of {})".format(s,pixels))
+        if scaleto == 'both':
+            standard=self.maxhw()
+        elif scaleto == 'height':
+            standard=self.height()
+        elif scaleto == 'width':
+            standard=self.width()
+        r=s/standard #the ratio we need to reduce actual pixels by
         if not r:
             r=1 #don't scale for pixels=r=0
-        while not int(resolution*r): #This must be >=1 (True)
+        # int(resolution*r) must be >=1 (True) for biggerby
+        # r_off_by is precision
+        # If the resolution gets too high, we run out of memory...
+        while (not int(resolution*r) or r_off_by() > .02) and resolution < 100:
             resolution=resolution*2
-        # log.info(f"scaling with {int(resolution*r)}/{int(resolution)}="
-        #         f"{int(resolution*r)/int(resolution)} as a proxy for "
-        #         f"{s}/{self.maxhw()}={r}")
         self.biggerby(int(resolution*r))
-        # log.info("Image: {} ({})".format(self.scaled, self.maxhw(scaled=True)))
         self.smallerby(int(resolution))
-        # self[pixels]=self.scaled
-        # log.info("Image: {} ({})".format(self.scaled, self.maxhw(scaled=True)))
+        return self.scaled # for where needed
     def transparent(self):
-        log.info("Running trasparent")
-        # self.transparent=self.convert("RGBA")
+        log.info("Running transparent")
+        return
         tkinter.PhotoImage(file=self.filename)
         self.transparency=tkinter.PhotoImage(file=self.filename)
         log.info(f"self.transparency type: {type(self.transparency)}")
@@ -933,7 +1008,6 @@ class Image(tkinter.PhotoImage):
                 if self.transparency.get(x,y) == (255,255,255):
                     self.transparency.put(x,y) == (0,0,0)
                 # log.info(f"{x},{y} pixel: {self.transparency.get(x,y)}")
-        # datas = self.transparent.getdata()
         return
         newData = []
         for item in datas:
@@ -947,9 +1021,8 @@ class Image(tkinter.PhotoImage):
     def __init__(self,filename):
         self.filename=filename
         try:
-            super(Image, self).__init__(file=filename)#,*args, **kwargs)
+            super().__init__(file=filename)
         except tkinter.TclError as e:
-            # log.info("Error: {} ({})".format(e.args,type(e)))
             if "couldn't recognize data in image file" in e.args[0]:
                 raise #this is processed elsewhere
             elif 'value for "-file" missing' in e.args[0]:
@@ -958,51 +1031,53 @@ class Image(tkinter.PhotoImage):
                 log.info("Image error: {}".format(e))
         self.biggerby(1)
 """below here has UI"""
-class Root(Exitable,tkinter.Tk):
+class Root(Waitable,UI,tkinter.Tk):
     """this is the root of the tkinter GUI."""
-    def __init__(self, program={}, *args, **kwargs):
-        """specify theme name in program['theme']"""
-        """bring in program here, send it to theme, everyone accesses scale from there."""
-        """"Some roots aren't THE root, e.g., contextmenu. Furthermore, I'm
-        currently not showing the root, so the user will never exit it."""
-        # log.info("Root called with program dict {}".format(program))
-        self.program=program
-        if 'root' not in self.program:
-            self.program['root']=self
-        self.mainwindow=False
-        self.exitFlag = ExitFlag()
-        tkinter.Tk.__init__(self)
-        self.withdraw() #this is almost always correct
+    def post_tk_init(self,**kwargs):
+        """This needs Tk to be instantiated already, but must precede UI
+        application"""
         try:
-            assert not kwargs.get('noimagescaling') #otherwise, make copy theme
+            assert not self.noimagescaling #otherwise, make copy theme
             assert isinstance(self.program['theme'],Theme) #use what's there
             self.theme=self.program['theme']
         except (KeyError,AssertionError):
-            self.theme=Theme(self.program, **kwargs)
+            self.theme=Theme(self.program,
+                            **{**kwargs,'noimagescaling':self.noimagescaling})
+        super().post_tk_init()
+    def __init__(self, program={}, *args, **kwargs):
+        """specify theme name in program['theme']
+        bring in program here, send it to theme, everyone accesses scale
+        from there.
+        Some roots aren't THE root, e.g., contextmenu.
+        Furthermore, I'm currently not showing the root, so the user will
+        never exit it --though this is managed in UI.
+        """
+        # log.info("Root called with program dict {}".format(program))
+        self.program=program
+        self.parent=None
+        if 'root' not in self.program:
+            self.program['root']=self
+        self.mainwindow=False
+        self.noimagescaling=kwargs.pop('noimagescaling',False)
+        super().__init__(*args, **kwargs)
+        self.post_tk_init(**kwargs) #Theme needs Tk to exist by now
         self.renderer=Renderer()
-        Exitable.__init__(self)
-        UI.__init__(self)
-        # log.info("self.theme.photo keys: {}".format(list(self.theme.photo)))
-        # log.info("self.theme({}).photo keys: {}".format(self.theme,list(self.theme.photo)))
-        log.info("Root initialized")
+        # log.info("Root initialized")
 """These have parent (Childof), but no grid"""
-class Toplevel(Childof,Exitable,tkinter.Toplevel,UI): #NoParent
+class Toplevel(Childof,Waitable,UI,tkinter.Toplevel): #
     """This and all Childof classes should have a parent, to inherit a common
     theme. Otherwise, colors, fonts, and icons will be incongruous."""
+    def post_tk_init(self):
+        super().post_tk_init()
     def __init__(self, parent, *args, **kwargs):
         self.mainwindow=False
-        Childof.__init__(self,parent)
-        tkinter.Toplevel.__init__(self, *args)
-        if kwargs.pop("withdrawn",False):
-            # log.info("Not immediately showing window")
-            self.withdraw()
-            # log.info(f"State: {self.state()}")
-        # log.info("Toplevel._root(): {} ({})".format(self._root(),type(self._root())))
-        # log.info("Toplevel.parent._root(): {} ({})".format(self.parent._root(),type(self.parent._root())))
-        Exitable.__init__(self)
-        UI.__init__(self)
-        self.protocol("WM_DELETE_WINDOW", lambda s=self: Window.on_quit(s))
+        super().__init__(parent, *args, **kwargs)
+        self.post_tk_init()
 class Menu(Childof,tkinter.Menu): #not Text
+    def post_tk_init(self):
+        log.info("Running Menu post_tk_init")
+        self['background']=self.theme.menubackground
+        super().post_tk_init()
     def pad(self,label):
         w=5 #Make menus at least w characters wide
         if len(label) <w:
@@ -1010,110 +1085,80 @@ class Menu(Childof,tkinter.Menu): #not Text
             label=spaces+label+spaces
         return label
     def add_command(self,label,command):
-        # log.info("Menu opts: {}".format((self,label,command)))
         label=self.pad(label)
         tkinter.Menu.add_command(self,label=label,command=command)
     def insert_cascade(self,label,menu,index):
-        # log.info("Cascade opts: {}".format((self,label,menu)))
         label=self.pad(label)
         tkinter.Menu.insert_cascade(self,label=label,menu=menu,index=index)
     def add_cascade(self,label,menu):
-        # log.info("Cascade opts: {}".format((self,label,menu)))
         label=self.pad(label)
         tkinter.Menu.add_cascade(self,label=label,menu=menu)
     def __init__(self,parent,**kwargs):
-        Childof.__init__(self,parent)
-        self.theme=parent.theme
-        tkinter.Menu.__init__(self,parent,
-                                font=self.theme.fonts['default'],
-                                **kwargs)
-        UI.__init__(self)
-        self['background']=self.theme.menubackground
-class Progressbar(Gridded,Childof,tkinter.ttk.Progressbar):
+        kwargs['font']=kwargs.get('font','default')
+        super().__init__(parent,**kwargs)
+        self.post_tk_init()
+class Progressbar(Childof,Gridded,UI,tkinter.ttk.Progressbar):
+    def post_tk_init(self):
+        super().post_tk_init()
     def current(self,value):
         if 0 <= value <= 100:
             self['value']=value
         self.update_idletasks() #updates just geometry
-    def __init__(self, parent, **kwargs):
-        # log.info("Initializing Progressbar object")
-        Gridded.__init__(self,**kwargs)
-        kwargs=self.lessgridkwargs(**kwargs)
-        Childof.__init__(self,parent)
+    def __init__(self, parent, *args, **kwargs):
         if 'orient' not in kwargs:
             kwargs['orient']='horizontal' #or 'vertical'
         if 'mode' not in kwargs:
             kwargs['mode']='determinate' #or 'indeterminate'
-        tkinter.ttk.Progressbar.__init__(self,parent,**kwargs)
-        UI.__init__(self)
-        self.dogrid()
-class Text(Childof,ObectwArgs):
-    """This converts kwargs 'text', 'image' and 'font' into attributes which are
-    default where not specified, and rendered where appropriate for the
-    characters in the text."""
-    def wrap(self):
-        availablexy(self)
-        if not hasattr(self,'wraplength'):
-            wraplength=self.maxwidth
-        else:
-            wraplength=min(self.wraplength,self.maxwidth)
-        self.config(wraplength=wraplength)
-        log.log(3,'self.maxwidth (Label class): {}'.format(self.maxwidth))
-    def render(self, **kwargs):
-        if not self.renderer.isactive:
-            return
-        style=(self.font['family'], # from kwargs['font'].actual()
-                self.font['size'],self.font['weight'],
-                self.font['slant'],self.font['underline'],
-                self.font['overstrike'])
-        if style not in self.renderer.renderings:
-            self.renderer.renderings[style]={}
-        if kwargs['wraplength'] not in self.renderer.renderings[style]:
-            self.renderer.renderings[style][kwargs['wraplength']]={}
-        thisrenderings=self.renderer.renderings[style][kwargs['wraplength']]
-        if (self.text in thisrenderings and
-                thisrenderings[self.text] is not None):
-            log.log(5,"text {} already rendered with {} wraplength, using."
-                    "".format(self.text,kwargs['wraplength']))
-            self.image=thisrenderings[self.text]
-            self.text=''
-        elif self.image:
-            log.error("You gave an image and tone characters in the same "
-            "label? ({},{})".format(self.image,self.text))
-            return
-        else:
-            log.log(5,"Sticks found! (Generating image for label)")
-            self.renderer.render(
-                        text=self.text,
-                        font=self.font,
-                        # wraplength=kwargs['wraplength'],
-                        **kwargs)
-            self.tkimg=self.renderer.img
-            if self.tkimg is not None:
-                thisrenderings[self.text]=self.image=self.tkimg
-                self.text=''
-    def lesstextkwargs(self, **kwargs):
-        for opt in self.textkwargs:
-            if opt in kwargs:
-                del kwargs[opt]
+        super().__init__(parent, *args, **kwargs)
+        self.post_tk_init()
+class TextBase():
+    """no image for Message, ComboBox, EntryField, RadioButton, ListBox """
+    textkwargs={'text','textvariable','font'}
+    tk_textkwargs=textkwargs #all OK for Tk
+    def reserve_kwargs(self,**kwargs):
+        """This method pulls kwargs out of the kwarg dict when this class is
+        not a subclass of the instantiated class (e.g. Button is not a subclass
+        of ButtonFrame), to keep those kwargs out of the way
+        of super()__init__().
+        Because of this, it should pull out all kwargs reserved for this class
+        and its subclasses.
+        """
+        for k in set(kwargs)&TextBase.textkwargs: #any kwarg used on TextBase
+            if hasattr(self,k) and getattr(self,k) != kwargs[k]:
+                log.info(f"TextBase attr found! {k}:{getattr(self,k)}")
+                exit() #this should never happen
+            setattr(self,k,kwargs.pop(k))
         return kwargs
-    def __init__(self,parent,**kwargs):
-        Childof.__init__(self,parent)
-        self.textkwargs=['text','textvariable','image','font','norender',
-                        'wraplength']
+    def restore_kwargs(self,**kwargs):
+        """This restores kwargs needed for the tkinter classes"""
+        for k in TextBase.textkwargs: #all, not just those OK for Tk
+            if hasattr(self,k):
+                kwargs[k]=getattr(self,k)
+        return kwargs
+    def my_tk_kwargs(self,**kwargs):
+        return {k:v for k,v in kwargs.items()
+                if k not in TextBase.textkwargs or k in TextBase.tk_textkwargs
+                }
+    def pre_tk_init(self,**kwargs):
+        """This is called at UI init, just before tkinter """
+        kwargs=TextBase.restore_kwargs(self,**kwargs) #add back to kwargs
+        kwargs=TextBase.my_tk_kwargs(self,**kwargs) #then limit
+        kwargs=super().pre_tk_init(**kwargs)
+        return kwargs
+    def __init__(self,*args,**kwargs):
+        kwargs=TextBase.restore_kwargs(self,**kwargs)
         t=self.textvariable=self.text='' #clear now, not all labels/buttons use
-        if 'textvariable' in kwargs:
-            t=kwargs.pop('textvariable')
-        elif 'text' in kwargs: #this may be empty, for an image label
-            t=kwargs.pop('text')
-        if t and isinstance(t, tkinter.Variable):
-            self.textvariable=t
-        elif t:
-            self.text=t
-        # self.renderings=parent.renderings
+        self.text=kwargs.pop('text','')
+        tv=kwargs.pop('textvariable',None)
+        for i in [self.text, tv]:
+            if i and isinstance(i, tkinter.Variable):
+                self.textvariable=i
+                self.text=''
+                break
+        self.text=nfc(self.text) #ok empty
         self.anchor=kwargs.pop('anchor',"w")
         if 'font' in kwargs:
             if isinstance(kwargs['font'],tkinter.font.Font):
-                # log.info("Found font {}; using as is".format(kwargs['font']))
                 self.font=kwargs['font']
             elif kwargs['font'] in self.theme.fonts: #if font key (e.g., 'small')
                 self.font=self.theme.fonts[kwargs['font']] #change key to font
@@ -1122,41 +1167,120 @@ class Text(Childof,ObectwArgs):
             del kwargs['font']
         else:
             self.font=self.theme.fonts['default']
-        # log.info(getattr(self,'wraplength',0))
-        self.wraplength=kwargs['wraplength']=kwargs.get('wraplength',
-                                        getattr(self,'wraplength',0))
-        # log.info(f"self.wraplength: {self.wraplength} ({type(self.wraplength)})")
-        if isinstance(self.wraplength, str) and '%' in self.wraplength: #convert to pixels
-            self.wraplength=kwargs['wraplength']=parent.winfo_screenwidth(
-                                        )*float(self.wraplength.strip('%'))/100
-        # log.info(f"self.wraplength: {self.wraplength} "
-        #                             f"({type(self.wraplength)})")
-        # log.info(f"Text wraplength: {kwargs['wraplength']} "
-        #                                     f" ({type(kwargs['wraplength'])})")
-        # self.wraplength=kwargs.get('wraplength',defaultwr) #also for ButtonLabel
+        self.super_kwargs=kwargs
+        super().__init__(*args,**kwargs)
+class Text(TextBase):
+    """This converts kwargs 'text', 'image' and 'font' into attributes which are
+    default where not specified, and rendered where appropriate for the
+    characters in the text. tk_textkwargs are passed back for tkinter"""
+    # tk_textkwargs=TextBase.tk_textkwargs|{'image','compound','wraplength'}
+    # textkwargs=TextBase.textkwargs|tk_textkwargs|{'norender'}
+    tk_textkwargs={'image','compound','wraplength'}
+    textkwargs=TextBase.textkwargs|tk_textkwargs|{'norender'}
+    d=set(["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"])
+    sticks=set(['˥','˦','˧','˨','˩',' '])
+    def reserve_kwargs(self,**kwargs):
+        """This method pulls kwargs out of the kwarg dict when this class is
+        not a subclass of the instantiated class (e.g. Button is not a subclass
+        of ButtonFrame), to keep those kwargs out of the way
+        of super()__init__().
+        Because of this, it should pull out all kwargs reserved for this class
+        and its subclasses.
+        """
+        kwargs=TextBase.reserve_kwargs(self,**kwargs)
+        for k in set(kwargs)&Text.tk_textkwargs: #any kwarg used on text
+            if hasattr(self,k) and getattr(self,k) != kwargs[k]:
+                log.info(f"Text attr found! {k}:{getattr(self,k)}")
+                exit() #this should never happen
+            setattr(self,k,kwargs.pop(k))
+        return kwargs
+    def restore_kwargs(self,**kwargs):
+        """This restores kwargs needed for the tkinter classes"""
+        kwargs=TextBase.restore_kwargs(self,**kwargs)
+        for k in Text.textkwargs: #all, not just those OK for Tk
+            if hasattr(self,k):
+                kwargs[k]=getattr(self,k)
+        return kwargs
+    def my_tk_kwargs(self,**kwargs):
+        kwargs=TextBase.my_tk_kwargs(self,**kwargs)
+        return {k:v for k,v in kwargs.items()
+                if k not in Text.textkwargs or k in Text.tk_textkwargs
+                }
+    def pre_tk_init(self,**kwargs):
+        """This restores kwargs needed for the tkinter classes"""
+        if (hasattr(self.text, '__iter__')
+                    and set(self.text) & (Text.sticks|Text.d)
+                    and not self.norender):
+            self.render(**{k:v for k,v in kwargs.items()
+                                        if k not in self.textkwargs})
+        kwargs=Text.restore_kwargs(self,**kwargs) #add back to kwargs
+        kwargs=Text.my_tk_kwargs(self,**kwargs) #then limit
+        kwargs=super().pre_tk_init(**kwargs)
+        return kwargs
+    def post_tk_init(self,**kwargs):
+        super().post_tk_init()
+        i=self.grid_info()
+        if i and self.text:
+            self.wrap()
+    def wrap(self):
+        availablexy(self)
+        if not hasattr(self,'wraplength'):
+            wraplength=self.maxwidth
+        else:
+            wraplength=min(self.wraplength,self.maxwidth)
+        self.config(wraplength=wraplength)
+    def render(self, **kwargs):
+        # log.info(f"Calling render {kwargs=}")
+        if not self.renderer.isactive:
+            # log.info("Aborting render (inactive)")
+            return
+        try:
+            text=kwargs.get('textvariable',self.textvariable).get()
+        except:
+            text=self.text
+        style=(self.font['family'],
+                self.font['size'],self.font['weight'],
+                self.font['slant'],self.font['underline'],
+                self.font['overstrike'])
+        if style not in self.renderer.renderings:
+            self.renderer.renderings[style]={}
+        if self.wraplength not in self.renderer.renderings[style]:
+            self.renderer.renderings[style][self.wraplength]={}
+        thisrenderings=self.renderer.renderings[style][self.wraplength]
+        if (text in thisrenderings and thisrenderings[text] is not None):
+            self.image=thisrenderings[text]
+            self.text=''
+        elif self.image and self.image not in thisrenderings.values():
+            log.error("You gave an image and tone characters in the same "
+                        f"label? ({self.image},{text})")
+            return
+        else:
+            self.renderer.render(
+                        text=text,
+                        font=self.font,
+                        wraplength=self.wraplength,
+                        **kwargs)
+            self.tkimg=self.renderer.img
+            if self.tkimg is not None:
+                thisrenderings[text]=self.image=self.tkimg
+                self.text=''
+    def __init__(self,*args,**kwargs):
+        kwargs=Text.restore_kwargs(self,**kwargs)
+        self.wraplength=kwargs.pop('wraplength', getattr(self,'wraplength',0))
+        if isinstance(self.wraplength, str) and '%' in self.wraplength:
+            percent=float(self.wraplength.strip('%'))/100
+            self.wraplength=self.parent.winfo_screenwidth()*percent
         self.norender=kwargs.pop('norender',False)
-        self.image=kwargs.pop('image',None)
+        self.image=kwargs.pop('image',None) #pull image by name:
         if isinstance(self.image,str) and self.image in self.theme.photo:
             self.image=self.theme.photo[self.image]
-        d=set(["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"])
-        sticks=set(['˥','˦','˧','˨','˩',' '])
-        """This doesn't work for tkinter.StringVar..."""
-        if (hasattr(self.text, '__iter__')
-                    and set(self.text) & (sticks|d)
-                    and not self.norender):
-            self.render(**kwargs)
-            # log.info("text and image: {} - {}".format(self.text,self.image))
-        elif not isinstance(self.text, tkinter.StringVar):
-            self.text=nfc(self.text)
-        # log.info(getattr(self,'wraplength',0))
-        # log.info("Text wraplength: {}".format(kwargs['wraplength']))
-        # log.info(parent)
-        # super(Text,self).__init__(
-        #                             text=self.text,
-        #                             image=self.image,
-        #                             **kwargs)
+        self.compound=kwargs.pop('compound','left')
+        self.super_kwargs=kwargs
+        super().__init__(*args,**kwargs)
 """These have parent (Childof) and grid (Gridded)"""
-class Frame(Gridded,Childof,tkinter.Frame):
+class Frame(Childof,Gridded,UI,tkinter.Frame):
+    def post_tk_init(self):
+        super().post_tk_init()
     def iswaiting(self):
         return self.parent.iswaiting()
     def deiconify(self):
@@ -1180,235 +1304,216 @@ class Frame(Gridded,Childof,tkinter.Frame):
                 or (self.winfo_height() > self.maxheight)):
             self.config(height=min(self.maxheight,contentrh))
         self.configured+=1
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent, *args, **kwargs):
         # log.info("Initializing Frame object")
-        gridwait=kwargs.pop('gridwait',False)
-        Gridded.__init__(self,**kwargs)
-        kwargs=self.lessgridkwargs(**kwargs)
-        Childof.__init__(self,parent)
-        tkinter.Frame.__init__(self,parent,**kwargs)
-        UI.__init__(self)
-        self.dogrid()
-class Label(Gridded,Text,tkinter.Label): #,tkinter.Label
-    def __init__(self, parent, **kwargs):
-        # log.info("Label Parent: {}".format(type(parent)))
-        # log.info(f"text type: {type(kwargs.get('text'))}")
-        Gridded.__init__(self,**kwargs)
-        kwargs=self.lessgridkwargs(**kwargs)
-        Childof.__init__(self,parent)
-        Text.__init__(self,parent,**kwargs)
-        kwargs=self.lesstextkwargs(**kwargs)
-        """These shouldn't need to be here..."""
-        tkinter.Label.__init__(self,
-                            parent,
-                            textvariable=self.textvariable,
-                            text=self.text,
-                            image=self.image,
-                            wraplength=self.wraplength,
-                            font=self.font,
-                            **kwargs)
-        i=self.grid_info()
-        if i and self.text:
-            self.wrap()
-        UI.__init__(self)
-        self.dogrid()
-class Message(Gridded,Text,tkinter.Message): #,tkinter.Label
+        if kwargs.get('border'):
+            kwargs['highlightbackground']='black'
+            kwargs['highlightthickness']=int(kwargs.pop('border'))
+        super().__init__(parent, *args, **kwargs)
+        """This class is subclassed a lot; make sure the parent class methods
+        are used, if there."""
+        if self.__class__.__mro__[0] is Frame:
+            self.post_tk_init()
+        else:
+            super().post_tk_init()
+class Label(Childof,Gridded,Text,UI,tkinter.Label):
+    def post_tk_init(self):
+        super().post_tk_init()
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.post_tk_init()
+class Message(Childof,Gridded,TextBase,UI,tkinter.Message):
     """I'm not sure if this will ever have value, but here it is."""
-    def __init__(self, parent, **kwargs):
-        # log.info("Label Parent: {}".format(type(parent)))
-        kwargs['norender']=True
-        Gridded.__init__(self,**kwargs)
-        kwargs=self.lessgridkwargs(**kwargs)
-        Childof.__init__(self,parent)
-        Text.__init__(self,parent,**kwargs)
-        kwargs=self.lesstextkwargs(**kwargs)
-        """These shouldn't need to be here..."""
-        # log.info("{}; {}; {}; {}; {}".format(
-        #                         parent,
-        #                         self.text,
-        #                         self.image,
-        #                         self.font,
-        #                         kwargs
-        #                         )
-        #         )
-        tkinter.Message.__init__(self,
-                                parent,
-                                text=self.text,
-                                image=self.image,
-                                font=self.font,
-                                **kwargs)
-        i=self.grid_info()
-        if i and self.text:
-            self.wrap()
-        UI.__init__(self)
-        self.dogrid()
-class Button(Gridded,Text,tkinter.Button):
+    def post_tk_init(self):
+        super().post_tk_init()
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.post_tk_init()
+class Button(Childof,GridinGridded,Text,UI,tkinter.Button):
+    tk_buttons={'command'}
+    buttons=Gridded.gridkwargs_for_child_buttons|Text.textkwargs|tk_buttons|{
+                                                    'cmd', 'window', 'choice'}
+    def reserve_kwargs(self,**kwargs):
+        """This method pulls kwargs out of the kwarg dict when this class is
+        not a subclass of the instantiated class (e.g. Button is not a subclass
+        of ButtonFrame), to keep those kwargs out of the way
+        of super()__init__().
+        Because of this, it should pull out all kwargs reserved for this class
+        and its subclasses.
+        """
+        for k in set(kwargs)&Button.buttons: #any kwarg used on buttons
+            if hasattr(self,k) and getattr(self,k) != kwargs[k]:
+                log.info(f"Button attr already! {k}:{getattr(self,k)}")
+                exit() #this should never happen
+            setattr(self,k,kwargs.pop(k))
+        kwargs=Text.reserve_kwargs(self,**kwargs)
+        return kwargs
+    def restore_kwargs(self,**kwargs):
+        """This method restores kwargs which have been reserved, so that a
+        second level of super().__init__() can access them, e.g., for a Button
+        or ButtonFrame called inside the init of a ButtonFrame or
+        ScrollingButtonFrame.
+        Because of this, it should restore all kwargs needed for it and
+        its subclasses.
+        """
+        for k in Button.buttons: #all, not just those OK for Tk
+            if hasattr(self,k):
+                # log.info(f"Button restore_kwargs found {k}:{getattr(self,k)}")
+                kwargs[k]=getattr(self,k)
+        kwargs=Text.restore_kwargs(self,**kwargs)
+        return kwargs
+    def my_tk_kwargs(self,**kwargs):
+        kwargs=Text.my_tk_kwargs(self,**kwargs)
+        return {k:v for k,v in kwargs.items()
+                if k not in Button.buttons or k in Button.tk_buttons
+                }
+    def build_command(self):
+        """x= as a lambda argument allows us to assign the
+        variable value now (in the loop across choices). Otherwise, it will
+        maintain a link to the variable itself, and give the last value it
+        had to all the buttons... --not what we want!
+        """
+        if hasattr(self,'command'):
+            command=self.command #this needs to refer to this value, not future...
+            if self.command:
+                if hasattr(self,'choice') and hasattr(self,'window'):
+                    cmd=lambda x=self.choice, w=self.window:command(x,window=w)
+                elif hasattr(self,'choice'):
+                    cmd=lambda x=self.choice:command(x)
+                else:
+                    cmd=command
+            else:
+                log.error(f"Not sure what to do to make command ({vars(self)=})")
+                cmd=None
+        else:
+            cmd=None
+        self.command=getattr(self,'cmd',cmd) #in case a value was provided earlier
+    def pre_tk_init(self,**kwargs):
+        """This restores kwargs needed for the tkinter classes, notably
+        excluding those used for building my subclassing of them."""
+        self.build_command() #doesn't need kwargs
+        kwargs=Button.restore_kwargs(self,**kwargs) #add back to kwargs
+        kwargs=Button.my_tk_kwargs(self,**kwargs) #then limit
+        kwargs=super().pre_tk_init(**kwargs)
+        return kwargs
+    def post_tk_init(self):
+        super().post_tk_init()
     def nofn(self):
         pass
-    def __init__(self, parent, choice=None, window=None, command=None, **kwargs):
-        """Usta include column=0, row=1, norender=False,"""
-        # log.info("Button Parent: {}".format(type(parent)))
-        # log.info("button kwargs: {}".format(kwargs))
-        Gridded.__init__(self,**kwargs)
-        kwargs=self.lessgridkwargs(**kwargs)
-        Childof.__init__(self,parent)
-        Text.__init__(self,parent,**kwargs)
-        kwargs=self.lesstextkwargs(**kwargs)
-        kwargs=self.gridbkwargs(**kwargs)
-        # `command` is my hacky command specification, with lots of args added.
-        # cmd is just the command passing through.
-        if 'cmd' in kwargs and kwargs['cmd'] is not None:
-            cmd=kwargs['cmd']
-            del kwargs['cmd'] #we don't want this going to the button as is.
-        elif command is None:
-            cmd=self.nofn
-        else:
-            """This doesn't seem to be working, but OK to avoid it..."""
-            if window is not None:
-                if choice is not None:
-                    cmd=lambda w=window:command(choice,window=w)
-                else:
-                    cmd=lambda w=window:command(window=w)
-            else:
-                if choice is not None:
-                    cmd=lambda :command('choice')
-                else:
-                    cmd=lambda :command()
-        tkinter.Button.__init__(self,
-                                parent,
-                                command=cmd,
-                                textvariable=self.textvariable,
-                                text=self.text,
-                                image=self.image,
-                                font=self.font,
-                                **kwargs)
-        UI.__init__(self)
-        self.dogrid()
-class EntryField(Gridded,Text,UI,tkinter.Entry):
-    def renderlabel(self,grid=False,event=None):
-        v=self.get()
-        if hasattr(self,'rendered'): #Get grid info before destroying old one
-            mygrid=self.rendered.grid_info()
-            grid=True
-            self.rendered.destroy()
-        self.rendered=Label(self.parent,text=v)
-        d=["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉",
-            "˥", "˦", "˧", "˨", "˩",
-            ]
-        if set(d) & set(v):
-            if grid:
-                self.rendered.grid(**mygrid)
-            elif hasattr(self,'rendergrid'):
-                self.rendered.grid(**self.rendergrid)
-            else:
-                log.error("Help! I have no idea what happened!")
-            if hasattr(self,'rendergrid'):
-                delattr(self,'rendergrid')
-        elif grid:
-                self.rendergrid=mygrid
-    def __init__(self, parent, render=False, **kwargs):
-        # log.info("grid kwargs: {}".format(kwargs))
-        Gridded.__init__(self,**kwargs)
-        kwargs=self.lessgridkwargs(**kwargs)
-        # log.info("text kwargs: {}".format(kwargs))
-        Childof.__init__(self,parent)
-        Text.__init__(self, parent, **kwargs)
-        # log.info("textless kwargs: {}".format(kwargs))
-        kwargs=self.lesstextkwargs(**kwargs)
-        # log.info("font: {}".format(self.font))
-        tkinter.Entry.__init__(self,parent,
-                                font=self.font,
-                                text=self.text,
-                                textvariable=self.textvariable,
-                                **kwargs)
-        if render is True:
+    def __init__(self, parent, **kwargs):
+        kwargs=Button.restore_kwargs(self,**kwargs)
+        kwargs=self.reserve_kwargs(**kwargs)
+        super().__init__(parent, **kwargs)
+        self.post_tk_init()
+class EntryField(Childof,Gridded,TextBase,UI,tkinter.Entry):
+    def post_tk_init(self):
+        if self.render is True:
             self.bind('<KeyRelease>', self.renderlabel)
-            self.renderlabel()
-        UI.__init__(self)
-        self['background']=self.theme.offwhite #because this is for entry...
-        self.dogrid()
-class RadioButton(Gridded,Childof,tkinter.Radiobutton):
-    def __init__(self, parent, **kwargs):
-        Gridded.__init__(self,**kwargs)
-        kwargs=self.lessgridkwargs(**kwargs)
-        Childof.__init__(self,parent)
-        self.parent=parent
-        if 'font' not in kwargs:
-            kwargs['font']=self.theme.fonts['default']
-        tkinter.Radiobutton.__init__(self,parent,**kwargs)
-        UI.__init__(self)
-        self.dogrid()
-class CheckButton(Gridded,Text,tkinter.Checkbutton): #was Childof
-    def __init__(self, parent, **kwargs):
-        Gridded.__init__(self,**kwargs)
-        kwargs=self.lessgridkwargs(**kwargs)
-        Childof.__init__(self,parent)
-        if 'font' not in kwargs:
-            kwargs['font']='read' #Text.__init__ will convert name to font
-        #before lesstextkwargs removes this:
-        kwargs['indicatoron']=kwargs.get('indicatoron',False)
-        if not kwargs.get('no_default_indicator_images',False):
-            img_names=['uncheckedbox','checkedbox'] #don't do both imgs and ind
-            if not kwargs.pop('large_images',False):
-                img_names=[f'{i}_sm' for i in img_names]
-            unselectedimage=kwargs.get('image',self.theme.photo[img_names[0]])
-            kwargs['selectimage']=kwargs.get('selectimage',
-                                                self.theme.photo[img_names[1]])
-        #If we render text as image, that will mess with the use of image here
-        Text.__init__(self,parent,**{**kwargs, 'norender': True})
-        kwargs=self.lesstextkwargs(**kwargs)
-        if not kwargs.pop('no_default_indicator_images',False):
-            kwargs['image']=unselectedimage
-        kwargs['compound']=kwargs.get('compound','left')
-        kwargs['anchor']=kwargs.get('anchor','w')
-        tkinter.Checkbutton.__init__(self,
-                                parent,
-                                text=self.text,
-                                font=self.font,
-                                **kwargs
-                                )
-        UI.__init__(self)
-        self.dogrid()
-class ListBox(Gridded,Text,UI,tkinter.Listbox):
-    def __init__(self, parent, *args, **kwargs):
-        # log.info(f"Starting to make Listbox: {vars(self)}, args:{args}, "
-        #             f" kwargs:{kwargs}")
-        optionlist=kwargs.pop('optionlist',[])
-        command=kwargs.pop('command')
-        Gridded.__init__(self,**kwargs)
-        kwargs=self.lessgridkwargs(**kwargs)
-        Childof.__init__(self,parent)
-        Text.__init__(self, parent, **kwargs)
-        kwargs=self.lesstextkwargs(**kwargs)
-        if (hasattr(self,'textvariable') and
-                                isinstance(self.textvariable,tkinter.Variable)):
-            if not hasattr(self.textvariable.get(), '__iter__'):
-                self.textvariable.set(optionlist) #even if empty, make this iter
-            # else:
-            #     log.info("ListBox Found a variable with an iterable value; "
-            #                 "leaving alone.")
+            self.rendered=Label(self.parent,text='') #make a place only
+        super().post_tk_init()
+    def renderlabel(self,grid=False,event=None):
+        if (Text.d|Text.sticks) & set(self.get()):
+            self.rendered.render(textvariable=self.textvariable)
+            self.rendered['image']=self.rendered.image
+            self.rendered.grid()
         else:
-            log.info("making self.textvariable")
-            self.textvariable=tkinter.Variable(value=optionlist)
-        # log.info(f"Ready to make Listbox: {vars(self)}")
+            self.rendered.grid_remove()
+    def __init__(self, parent, *args, **kwargs):
+        self.render=kwargs.pop('render',False)
+        # Always use a variable for this class, even if not passed one:
+        kwargs['textvariable']=kwargs.get('textvariable',StringVar())
+        kwargs['background']=kwargs.get('background',parent.theme.white)
+        super().__init__(parent, *args, **kwargs)
+        super().post_tk_init()
+class RadioButton(Childof,Gridded,TextBase,UI,tkinter.Radiobutton):
+    rb_kwargs={'variable','indicatoron'}
+    def reserve_kwargs(self,**kwargs):
+        for k in set(kwargs)&RadioButton.rb_kwargs: #any kwarg used on buttons
+            if hasattr(self,k):
+                log.info(f"RadioButton attr already! {k}:{getattr(self,k)}")
+                exit() #this should never happen
+            log.info(f"RadioButton reserving {k}:{kwargs[k]}")
+            setattr(self,k,kwargs.pop(k))
+        return kwargs
+    def restore_kwargs(self,**kwargs):
+        for k in RadioButton.rb_kwargs: #just those OK for Tk
+            if hasattr(self,k):
+                kwargs[k]=getattr(self,k)
+        return kwargs
+    def pre_tk_init(self,**kwargs):
+        kwargs=self.restore_kwargs(**kwargs)
+        kwargs=super().pre_tk_init(**kwargs)
+        return kwargs
+    def post_tk_init(self):
+        super().post_tk_init()
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        super().post_tk_init()
+class CheckButton(Childof,Gridded,Text,UI,tkinter.Checkbutton):
+    def post_tk_init(self):
+        super().post_tk_init()
+    def __init__(self, parent, *args, **kwargs):
+        """If no values are passed for image and selectimage, default checkboxes
+        will be used. If you don't want that, pass None.
+        If selectimage is None, there will be no alternation, with image present
+        at all times (i.e., while selected and notselected).
+        If there is no image alternation (image=selectimage=None), the text can
+        render to an image like for other Text classes. This will fail if
+        an image is provided, in the same manner as for other Text classes.
+        """
+        kwargs['font']=kwargs.get('font','read')
+        kwargs['indicatoron']=kwargs.get('indicatoron',False)
+        img_names=['uncheckedbox','checkedbox']
+        if not kwargs.pop('large_images',False):
+            img_names=[f'{i}_sm' for i in img_names]
+        kwargs['selectimage']=kwargs.get('selectimage',
+                                        parent.theme.photo[img_names[1]])
+        if kwargs.get('selectimage'):
+            kwargs['image']=kwargs.get('image',parent.theme.photo[img_names[0]])
+            kwargs['norender']=True #This creates self.image
+        super().__init__(parent, *args, **kwargs)
+        kwargs=self.super_kwargs
+        self.post_tk_init()
+class ListBox(Childof,Gridded,UI,tkinter.Listbox): #TextBase?
+    tk_textkwargs=TextBase.tk_textkwargs|{'listvariable'}
+    def pre_tk_init(self,**kwargs):
+        """This restores kwargs needed for the tkinter classes"""
+        kwargs=super().pre_tk_init(**kwargs)
+        return kwargs
+    def post_tk_init(self):
+        try:
+            assert not hasattr(self['listvariable'].get(), '__iter__')
+            self['listvariable'].set(self.optionlist) #even if empty, make this iter
+        except:
+            self['listvariable']=tkinter.Variable(value=self.optionlist)
+        self.bind('<<ListboxSelect>>', self.command)
+        self.dogrid()
+        super().post_tk_init()
+    def __init__(self, parent, *args, **kwargs):
         """selectmode can be
         tkinter.BROWSE – allows a single selection. This is the default.
         tkinter.EXTENDED – select any adjacent group of items at once by clicking the first item and dragging to the last line.
         tkinter.SINGLE – allow you to select one line and you cannot drag the mouse.
         tkinter.MULTIPLE – select any number of lines at once. Clicking on any line toggles whether it is selected or not."""
-        tkinter.Listbox.__init__(self,parent,
-                                font=self.font,
-                                listvariable=self.textvariable,
-                                **kwargs)
-        self.bind('<<ListboxSelect>>', command)
-        UI.__init__(self)
-        self.dogrid()
-class SearchableComboBox(Gridded,Text):
+        if 'textvariable' in kwargs:
+            log.error("Listbox doesn't take 'textvariable'. "
+                "This module can create a default 'listvariable' and fill it "
+                "with 'optionlist' contents, if you don't provide a "
+                "'listvariable' with contents set to a list.")
+        self.optionlist=kwargs.pop('optionlist',[])
+        self.command=kwargs.pop('command')
+        #selectforeground is font color for selected items
+        kwargs['selectbackground']=kwargs.get('selectbackground',
+                                            parent.theme.activebackground)
+        super().__init__(parent, *args, **kwargs)
+        self.post_tk_init()
+class SearchableComboBox(Childof,Gridded,Text,UI):
     """Adapted from https://coderslegacy.com/searchable-combobox-in-tkinter/"""
+    def post_tk_init(self):
+        super().post_tk_init()
     def __init__(self, options) -> None:
         self.dropdown_id = None
         self.options = options
-
         # Create a Text widget for the entry field
         wrapper = tk.Frame(root)
         wrapper.pack()
@@ -1450,20 +1555,21 @@ class SearchableComboBox(Gridded,Text):
             selected_option = self.listbox.get(selected_index)
             self.entry.delete(0, tk.END)
             self.entry.insert(0, selected_option)
-
     def show_dropdown(self, event=None):
         self.listbox.place(in_=self.entry, x=0, rely=1, relwidth=1.0, anchor="nw")
         self.listbox.lift()
-
         # Show dropdown for 2 seconds
         if self.dropdown_id: # Cancel any old events
             self.listbox.after_cancel(self.dropdown_id)
         self.dropdown_id = self.listbox.after(2000, self.hide_dropdown)
-
     def hide_dropdown(self):
         self.listbox.place_forget()
-class Combobox(Gridded,Text,UI,tkinter.ttk.Combobox):
+class Combobox(Childof,Gridded,TextBase,UI,tkinter.ttk.Combobox):
     """docstring for Combobox."""
+    def post_tk_init(self):
+        self._handle_popdown_font()
+        self.bind('<<ComboboxSelected>>', self.command)
+        super().post_tk_init()
     def _handle_popdown_font(self):
         """ Handle popdown font
         Note: https://github.com/nomad-software/tcltk/blob/master/dist/library/ttk/combobox.tcl#L270
@@ -1474,61 +1580,58 @@ class Combobox(Gridded,Text,UI,tkinter.ttk.Combobox):
         self.tk.call('%s.f.l' % popdown, 'configure', '-font', self['font'])
     def configure(self, cnf=None, **kw):
         """Configure resources of a widget. Overridden!
-
         The values for resources are specified as keyword
         arguments. To get an overview about
         the allowed keyword arguments call the method keys.
         """
-
         #   default configure behavior
         self._configure('configure', cnf, kw)
         #   if font was configured - configure font for popdown as well
         if 'font' in kw or (cnf and 'font' in cnf):
             self._handle_popdown_font()
     def __init__(self, parent, *args, **kwargs):
-        optionlist=kwargs.pop('optionlist')
-        command=kwargs.pop('command')
-        # super(Combobox, self).__init__(*args, **kwargs)
-        Gridded.__init__(self,**kwargs)
-        kwargs=self.lessgridkwargs(**kwargs)
-        # log.info("text kwargs: {}".format(kwargs))
-        Childof.__init__(self,parent)
-        Text.__init__(self, parent, **kwargs)
-        # log.info("textless kwargs: {}".format(kwargs))
-        kwargs=self.lesstextkwargs(**kwargs)
-        # self.textvariable.set(optionlist[0])
-        tkinter.ttk.Combobox.__init__(self,parent,
-                                font=self.font,
-                                text=self.text,
-                                textvariable=self.textvariable,
-                                values=optionlist,
-                                **kwargs)
-        self._handle_popdown_font()
-        self.bind('<<ComboboxSelected>>', command)
-        UI.__init__(self)
-        self.dogrid()
-class Scrollbar(Gridded,Childof,tkinter.Scrollbar):
+        kwargs['values']=kwargs.pop('optionlist')
+        self.command=kwargs.pop('command')
+        super().__init__(parent, *args, **kwargs)
+        self.post_tk_init()
+class Scrollbar(Childof,Gridded,UI,tkinter.Scrollbar):
     """Scrollbar for scrolling frames."""
+    def post_tk_init(self):
+        super().post_tk_init()
     def __init__(self, parent, *args, **kwargs):
         """set this befor gridded call"""
         if 'orient' in kwargs and kwargs['orient']==tkinter.HORIZONTAL:
             kwargs['sticky']=kwargs.get('sticky',tkinter.E+tkinter.W)
         else:
             kwargs['sticky']=kwargs.get('sticky',tkinter.N+tkinter.S)
-        Gridded.__init__(self,**kwargs)
-        kwargs=self.lessgridkwargs(**kwargs)
-        Childof.__init__(self,parent)
-        # yscrollbar.config(background=self.theme.background)
-        # yscrollbar.config(activebackground=self.theme.activebackground)
-        # yscrollbar.config(troughcolor=self.theme.background)
-        tkinter.Scrollbar.__init__(self,parent,
-                                    **kwargs
-                                    )
+        super().__init__(parent, *args, **kwargs)
         """after theme is inherited:"""
-        UI.__init__(self)
-        self.dogrid()
+        self.post_tk_init()
 """These classes don't call tkinter classes directly"""
 class Window(Toplevel):
+    def post_tk_init(self):
+        """This centers the r=c=1 frame"""
+        for rc in [0,2]:
+            self.grid_rowconfigure(rc, weight=3)
+            self.grid_columnconfigure(rc, weight=3)
+        try:
+            self.iconphoto(False, self.parent.theme.photo['icon']) #!transparent
+        except Exception as e:
+            log.info(f"{e} self.theme.photo: {self.theme.photo}")
+        super().post_tk_init()
+    def progress(self,value,parent=None,**kwargs):
+        # between 0 and 100
+        try:
+            self.progressbar.current(value)
+        except AttributeError:
+            print("making new progressbar")
+            if not parent:
+                parent=self.outsideframe
+            self.progressbar=Progressbar(parent,
+                                    orient='horizontal',
+                                    mode='determinate', #or 'indeterminate'
+                                    **kwargs)
+            self.progress(value)
     def resetframe(self):
         if self.parent.exitFlag.istrue():
             return
@@ -1538,58 +1641,36 @@ class Window(Toplevel):
             for rc in [0,2]:
                 self.outsideframe.grid_rowconfigure(rc, weight=3)
                 self.outsideframe.grid_columnconfigure(rc, weight=3)
-            self.frame=Frame(self.outsideframe,
-                            row=1, column=1, sticky='nsew'
+            self.frame=Frame(self.outsideframe, #border=5,
+                            row=1, column=1, sticky='nsew',
                             )
     def __init__(self, parent, backcmd=False, exit=True, title="No Title Yet!",
                 choice=None, *args, **kwargs):
-        # self.parent=parent
-        # self.theme=parent.theme
-        """Things requiring tkinter.Window below here"""
-        Toplevel.__init__(self, parent, *args, **kwargs) #no title attr for Toplevel
-        # log.info(f"Window {self} parent is {self.parent}")
-        # self.config(className="azt")
-        # self['background']=self.theme.background
-        # self['background']=self.theme.background
-        """Is this section necessary for centering on resize?"""
-        for rc in [0,2]:
-            self.grid_rowconfigure(rc, weight=3)
-            self.grid_columnconfigure(rc, weight=3)
-        self.outsideframe=Frame(self,
-                                row=1, column=1,sticky='we',
-                                padx=(25,0),
-                                pady=(0,25)
-                                )
-        """Give windows some margin"""
-        # log.info("Theme: {}".format(self.theme))
-        # log.info("Theme.photo: {}".format(self.theme.photo))
-        try:
-            self.iconphoto(False, self.theme.photo['icon']) #don't want this transparent
-        except:
-            log.info(f"self.theme.photo: {self.theme.photo}")
+        super().__init__(parent, *args, **kwargs)
+        self.post_tk_init()
         self.title(title)
+        self.outsideframe=Frame(self, # border=True,
+                                row=1, column=1, sticky='we',
+                                )
         self.resetframe()
-        self.exitFlag=ExitFlag() #This overwrites inherited exitFlag
+        # self.exitFlag=ExitFlag() #This overwrites inherited exitFlag
         if exit:
             e=(_("Exit")) #This should be the class, right?
             self.exitButton=Button(self.outsideframe, width=10, text=e,
                                 command=self.on_quit,
                                 font='small',
-                                padx=(0,25),
+                                column=2,row=2
                                             )
-            self.exitButton.grid(column=2,row=2)
-        else:
-            self.outsideframe['padx']=25
         if backcmd is not False: #This one, too...
             b=(_("Back"))
             cmd=lambda:backcmd(parent, window, check, entry, choice)
             self.backButton=Button(self.outsideframe, width=10, text=b,
                                 command=cmd,
+                                column=3,row=2
                                             )
-            self.backButton.grid(column=3,row=2)
-        UI.__init__(self)
-        # self.dogrid()
 class ContextMenu(Childof):
+    def post_tk_init(self):
+        super().post_tk_init()
     def updatebindings(self):
         self.parent.bind('<Motion>', self._bind_to_makemenus)
         self.parent.bind('<Leave>', self._unbind_to_makemenus) #parent only
@@ -1598,7 +1679,7 @@ class ContextMenu(Childof):
             log.log(2,"undo_popup Checking for ContextMenu.menu: {}".format(
                                                             self.menu.__dict__))
             try:
-                self.root.destroy() #Tk()
+                self.root.destroy()
                 log.log(3,"popup parent/root destroyed")
             except:
                 log.log(3,"popup parent/root not destroyed!")
@@ -1608,7 +1689,6 @@ class ContextMenu(Childof):
         """redo menu on context change"""
         try:
             self.menu = Menu(self.root, tearoff=0)
-            # log.info("menuinit done")#: {}".format(self.menu.__dict__))
         except Exception as e:
             log.error(f"Problem initializing context menu: {e}")
             raise
@@ -1644,103 +1724,131 @@ class ContextMenu(Childof):
     def _unbind_to_makemenus(self,event):
         self.parent.unbind_all('<Button-3>')
     def getroot(self):
-        # log.info("parent: {}".format(self.parent))
-        # log.info("parent._root(): {}".format(self.parent._root()))
-        # log.info("parent._root().program: {}".format(self.parent._root().program))
-        # log.info("parent._root().program['theme']: {}".format(self.parent._root().program['theme']))
-        self.root=Root(self.parent._root().program) #self.parent._root().program #tkinter.Tk()
+        self.root=Root(self.parent._root().program)
         self.root.withdraw()
-        self.root.parent=self.parent
+        log.info("Ad hoc inherit")
         Childof.inherit(self.root,self.parent)
-    def __init__(self,parent,context=None):
-        Childof.__init__(self,parent)
+        log.info("Ad hoc inherit done")
+    def __init__(self,parent,context=None, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
         self.getroot()
-        super(ContextMenu,self).__init__(parent)
+        self.post_tk_init()
         self.parent.context=self
         self.context=context #where the menu is showing (e.g., verifyT)
-        # self.menuinit() #can't redo after context change
-        # self.inherit()
         self.updatebindings()
-        # UI.__init__(self)
 """These have gridding (not Window or ContextMenu, above)"""
 class ButtonFrame(Frame):
-    def __init__(self,parent,**kwargs):
-        # Gridded.__init__(self,**kwargs)
-        # Childof.__init__(self,parent)
-        optionlist=kwargs.pop('optionlist')
-        command=kwargs.pop('command')
-        window=kwargs.pop('window',None)
-        # log.info("Buttonframe option list: {} ({})".format(optionlist,command))
-        Frame.__init__(self,parent,**kwargs)
-        kwargs=self.lessgridkwargs(**kwargs)
-        # for kwarg in ['row', 'column']: #done with these
-        #     if kwarg in kwargs:
-        #         del kwargs[kwarg]
-        gimmenull=False # When do I want a null option added to my lists? ever?
-        # self['background']=self.theme.background
-        i=0
-        """Make sure list is in the proper format: list of dictionaries"""
-        if type(optionlist) is not list:
-            print("optionlist is Not a list!",optionlist,type(optionlist))
-            return
-        elif (optionlist is None) or (len(optionlist) == 0):
-            print("list is empty!",type(optionlist))
-            return
-            """Assuming from here on that the first list item represents
-            the format of the whole list; hope that's true!"""
-        elif type(optionlist[0]) is dict:
-            # log.info("looks like options are already in dictionary format.")
-            pass
-        else: #tuple, str or int
-            if None in optionlist:
-                log.error(_("Having None as a list is fine, but you need to "
-                "put it in a tuple, with a second argument to display, so "
-                "users know what it means when they select it."))
+    bf_kwargs={'optionlist'}
+    bf_kwargs|=Button.buttons #not for Tk —Frame!
+    tk_bf_kwargs={}
+    def reserve_kwargs(self,**kwargs):
+        kwargs=Button.reserve_kwargs(self,**kwargs)
+        for k in set(kwargs)&ButtonFrame.bf_kwargs: #any kwarg used on buttons
+            if hasattr(self,k) and getattr(self,k) != kwargs[k]:
+                log.info(f"ButtonFrame found {k}:{getattr(self,k)} ({kwargs[k]=})")
+                exit() #this should never happen
+            log.info(f"ButtonFrame reserving {k}:{kwargs[k]}")
+            setattr(self,k,kwargs.pop(k))
+        return kwargs
+    def restore_kwargs(self,**kwargs):
+        kwargs=Button.restore_kwargs(self,**kwargs) #not a subclass
+        for k in ButtonFrame.bf_kwargs: #all, not just those OK for Tk
+            if hasattr(self,k):
+                # log.info(f"ButtonFrame restore_kwargs found {k}:{getattr(self,k)}")
+                kwargs[k]=getattr(self,k)
+        return kwargs
+    def my_tk_kwargs(self,**kwargs):
+        kwargs=Button.my_tk_kwargs(self,**kwargs) #super?
+        return {k:v for k,v in kwargs.items()
+                if k not in self.bf_kwargs or k in self.tk_bf_kwargs
+                }
+    def pre_tk_init(self,**kwargs):
+        """This restores kwargs needed for the tkinter classes"""
+        kwargs=ButtonFrame.restore_kwargs(self,**kwargs) #add back to kwargs
+        kwargs=ButtonFrame.my_tk_kwargs(self,**kwargs) #then limit
+        kwargs=super().pre_tk_init(**kwargs) #self.kwargs?
+        return kwargs
+    def post_tk_init(self):
+        super().post_tk_init()
+    def regularize_choice(self,choice):
+        if type(choice) in [str,int]: #most popular
+            choice={'code':choice, 'name':choice}
+        elif type(choice) is dict:
+            #Whatever is in a dict; this assures 'code' and 'name'.
+            if choice['code'] in [None,'Null','None']:
+                choice['name']=choice.get('name',"None of These")
+            else:
+                choice['name']=choice.get('name',str(choice['code']))
+        elif type(choice) is tuple:
+            if len(choice) == 4:
+                choice={'code':choice[0], 'name':choice[1],
+                        'description':choice[2], 'image':choice[3]}
+            elif len(choice) == 3:
+                choice={'code':choice[0], 'name':choice[1],
+                        'description':choice[2]}
+            elif len(choice) == 2:
+                choice={'code':choice[0], 'name':choice[1]}
+            else:
+                log.error(f"I don't know how to process tuple {choice=}")
                 return
-            # log.info("first optionlist item: {}".format(optionlist[0]))
-            optionlist = [(
-                            {'code':optionlist[i], 'name':optionlist[i]}
-                            if type(optionlist[i]) is not tuple
-                            else {'code':optionlist[i][0],
-                                'name':optionlist[i][1]}
-                            if type(optionlist[i][1]) is str
-                            else {'code':optionlist[i][0],
-                                'description':optionlist[i][1]}
-                            ) for i in range(0, len(optionlist))]
-        if not 'name' in optionlist[0]: #duplicate name from code.
-            for i in range(0, len(optionlist)):
-                log.info("optionlist item: {}".format(optionlist[i]))
-                optionlist[i]['name']=str(optionlist[i]['code'])
-        if gimmenull == True:
-            optionlist.append(({code:"Null",name:"None of These"}))
-        # log.info("These are the options going to the set of buttons: {}".format(
-        #                                                             optionlist))
-        for choice in optionlist:
-            if choice['name'] == ["Null"]:
-                command=newvowel #come up with something better here..…
-            if 'description' in choice:
-                text=choice['name']+' ('+str(choice['description'])+')'
-            else:
-                text=choice['name']
-            """commands are methods, so this normally includes self (don't
-            specify it here). x= as a lambda argument allows us to assign the
-            variable value now (in the loop across choices). Otherwise, it will
-            maintain a link to the variable itself, and give the last value it
-            had to all the buttons... --not what we want!
-            """
-            if window:
-                cmd=lambda x=choice['code'], w=window:command(x,window=w)
-                kwargs['window']=window
-            else:
-                cmd=lambda x=choice['code']:command(x)
-            b=Button(self,text=text,choice=choice['code'],
-                    cmd=cmd,#width=self.width,
-                    row=i,
-                    **kwargs
-                    )
-            i=i+1
-        UI.__init__(self)
+        else:
+            log.info(f"Problem setting up {choice=} ({type(choice)=})")
+            return
+        #For historical reasons, I used 'code' here, but 'choice' for button.
+        kwargs={'choice':choice['code'],
+                'text':choice['name']}
+        if 'image' in choice:
+            kwargs['image']=choice['image']
+        if 'description' in choice:
+            kwargs['text']+=f' ({str(choice['description'])})'
+        return kwargs
+    def __init__(self,parent,**kwargs):
+        """optionlist can be specified as a simple iterable, or as a list of
+        options specifying 'code', 'name', 'description', and 'image'.
+        A tuple is interpreted as those items, in that order, so 'code' will
+        always be taken, while 'image' only will if all four items are there.
+        Dictionary items should be keyed with those names.
+        If 'name' is missing, it is taken from 'code'.
+        if 'description' is present, it is added to the name for button display,
+        in parentheses. This is often used for an item count.
+        If present, 'image' should appear according to the normal button rules
+        for images.
+        """
+        #Because there may be button/Text kwargs, which shouldn't go to Frame
+        kwargs=ButtonFrame.restore_kwargs(self,**kwargs)
+        kwargs=ButtonFrame.reserve_kwargs(self,**kwargs)
+        super().__init__(parent,**kwargs)
+        kwargs=self.super_kwargs #don't forward frame args
+        """Make sure list is in the proper format: list of dictionaries"""
+        if isinstance(self.optionlist, str):
+            log.info(f"options is string! {self.optionlist=} "
+                        f"({type(self.optionlist)=})")
+            return
+        if not hasattr(self.optionlist, '__iter__'):
+            log.info(f"options Not iterable! {self.optionlist=} "
+                        f"({type(self.optionlist)=})")
+            return
+        if (self.optionlist is None) or (len(self.optionlist) == 0):
+            log.info("list is empty!",type(self.optionlist))
+            return
+        self.buttons=dict()
+        kwargs=Button.restore_kwargs(self,**kwargs)
+        for choice in self.optionlist:
+            choice_kwargs=self.regularize_choice(choice)
+            if not choice:
+                continue
+            self.buttons[choice_kwargs['choice']]=Button(self,
+                                                row=len(self.winfo_children()),
+                                                **choice_kwargs,
+                                                **kwargs
+                                                )
 class ScrollingFrame(Frame):
+    def post_tk_init(self):
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        """With or without the following, it still scrolls through..."""
+        self.grid_propagate(0) #make it not shrink to nothing
+        super().post_tk_init()
     def _bound_to_mousewheel(self, event):
         # with Windows OS
         self.canvas.bind_all("<MouseWheel>", self._on_mousewheelMS)
@@ -1856,7 +1964,7 @@ class ScrollingFrame(Frame):
             -the max dimensions, from above."""
         #This should maybe be pulled out to another method?
         #scrolling window width
-        if contentrw > self.maxwidth: #self.winfo_width() <
+        if contentrw > self.maxwidth and not self.ignore_maxwidth:
             width=self.maxwidth
         else:
             width=contentrw #self.config(width=contentrw)
@@ -1901,18 +2009,11 @@ class ScrollingFrame(Frame):
     def totop(self):
         self.update_idletasks()
         self.canvas.yview_moveto(0)
-    def __init__(self,parent,xscroll=False,**kwargs):
-        # Gridded.__init__(self,**kwargs)
-        # Childof.__init__(self,parent)
+    def __init__(self, parent, xscroll=False, *args, **kwargs):
+        self.ignore_maxwidth=kwargs.pop('ignore_maxwidth',False)
         """Make this a Frame, with all the inheritances, I need"""
-        Frame.__init__(self, parent, **kwargs)
-        """Not sure if I want these... rather not hardcode."""
-        # log.debug(self.parent.winfo_children())
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        """With or without the following, it still scrolls through..."""
-        self.grid_propagate(0) #make it not shrink to nothing
-
+        super().__init__(parent, *args, **kwargs)
+        self.post_tk_init()
         """We might want horizonal bars some day? (also below)"""
         if xscroll == True:
             xscrollbar = Scrollbar(self, orient=tkinter.HORIZONTAL,
@@ -1946,9 +2047,7 @@ class ScrollingFrame(Frame):
             self.canvas.config(xscrollcommand=xscrollbar.set)
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
         """Make all this show up, and take up all the space in parent"""
-        # self.grid(row=0, column=0,sticky='nsew') # should be done outside
         self.canvas.grid(row=0, column=0,sticky='nsew')
-        # self.content.grid(row=0, column=0,sticky='nsew')
         """We might want horizonal bars some day? (also above)"""
         if xscroll == True:
             xscrollbar.config(width=self.yscrollbarwidth)
@@ -1958,70 +2057,75 @@ class ScrollingFrame(Frame):
             xscrollbar.config(command=self.canvas.xview)
         yscrollbar.config(command=self.canvas.yview)
         """Bindings so the mouse wheel works correctly, etc."""
-        self.canvas.bind('<Enter>', self._bound_to_mousewheel)
-        self.canvas.bind('<Leave>', self._unbound_to_mousewheel)
+        w=self.winfo_toplevel()
+        self.bind('<Enter>', self._bound_to_mousewheel)
+        self.bind('<Leave>', self._unbound_to_mousewheel)
         self.canvas.bind('<Destroy>', self._unbound_to_mousewheel)
         # self.canvas.bind('<Configure>', self._configure_canvas) #called by:
         self.content.bind('<Configure>', self._configure_interior)
         self.bind('<Visibility>', self.windowsize)
-        # UI.__init__(self)
-        # self.dogrid()
-class ScrollingButtonFrame(ScrollingFrame,ButtonFrame):
+class ScrollingButtonFrame(ScrollingFrame):
     """This needs to go inside another frame, for accurrate grid placement"""
+    def reserve_kwargs(self,**kwargs):
+        kwargs=ButtonFrame.reserve_kwargs(self,**kwargs)
+        return kwargs
+    def post_tk_init(self):
+        super().post_tk_init()
     def __init__(self,parent,**kwargs):
-        # Gridded.__init__(self,**kwargs)
-        # Childof.__init__(self,parent)
-        optionlist=kwargs.pop('optionlist')
-        command=kwargs.pop('command')
-        window=kwargs.pop('window',None)
-        ScrollingFrame.__init__(self,parent,**kwargs)
-        kwargs=self.lessgridkwargs(**kwargs)
-        # for kwarg in ['row', 'column']: #done with these
-        #     if kwarg in kwargs:
-        #         del kwargs[kwarg]
+        # log.info(f"Calling ScrollingButtonFrame {kwargs=}")
+        kwargs=self.reserve_kwargs(**kwargs)
+        super().__init__(parent,**kwargs)
+        kwargs=self.super_kwargs
+        self.post_tk_init()
+        kwargs=ButtonFrame.restore_kwargs(self,**kwargs)
         self.bf=ButtonFrame(parent=self.content,
-                            optionlist=optionlist,
-                            command=command,
-                            window=window,
                             row=0,
                             column=0,
                             **kwargs)
-        UI.__init__(self)
-        self.dogrid()
+        # log.info(f"ScrollingButtonFrame ButtonFrame complete {kwargs=}")
 class RadioButtonFrame(Frame):
-    def __init__(self, parent, horizontal=False,**kwargs):
-        # Gridded.__init__(self,**kwargs)
-        # Childof.__init__(self,parent)
-        for vars in ['var','opts']:
-            if (vars not in kwargs):
-                print('You need to set {} for radio button frame!').format(vars)
+    rbf_kwargs={'optionlist'}
+    def reserve_kwargs(self,**kwargs):
+        kwargs=RadioButton.reserve_kwargs(self,**kwargs)
+        for k in set(kwargs)&RadioButtonFrame.rbf_kwargs: #any button kwarg
+            if hasattr(self,k):
+                log.info(f"RadioButtonFrame found {k}:{getattr(self,k)}")
+                exit() #this should never happen
+            log.info(f"RadioButtonFrame reserving {k}:{kwargs[k]}")
+            setattr(self,k,kwargs.pop(k))
+        return kwargs
+    def pre_tk_init(self,**kwargs):
+        """Not Tk kwargs to add here"""
+        kwargs=super().pre_tk_init(**kwargs)
+        return kwargs
+    def post_tk_init(self):
+        super().post_tk_init()
+    def __init__(self, parent, *args, **kwargs):
+        horizontal=kwargs.pop('horizontal',False) #only for this init
+        column=row=0
+        sticky=kwargs.pop('sticky','w')
+        kwargs=self.reserve_kwargs(**kwargs)
+        super().__init__(parent, *args, **kwargs)
+        kwargs=self.super_kwargs
+        self.post_tk_init()
+        for opt in self.optionlist:
+            if type(opt) is tuple and len(opt) == 2:
+                value=opt[0]
+                name=opt[1]
             else:
-                setattr(self,vars,kwargs[vars])
-                del kwargs[vars] #we don't want this going to the button.
-        column=0
-        sticky='w'
-        # self.parent=parent
-        Frame.__init__(self, parent, **kwargs)
-        kwargs=self.lessgridkwargs(**kwargs)
-        # kwargs['background']=self.theme.background
-        # kwargs['activebackground']=self.theme.activebackground
-        row=0
-        for opt in self.opts:
-            value=opt[0]
-            name=opt[1]
+                name=value=opt
             log.log(3,"Value: {}; name: {}".format(value,name))
-            RadioButton(self,variable=self.var, value=value, text=nfc(name),
+            kwargs=RadioButton.restore_kwargs(self,**kwargs)
+            RadioButton(self,value=value, text=nfc(name),
                                                 column=column,
                                                 row=row,
                                                 sticky=sticky,
-                                                indicatoron=0,
-                                                **kwargs)
+                                                **kwargs
+                                                )
             if horizontal:
                 column+=1
             else:
                 row+=1
-        UI.__init__(self)
-        self.dogrid()
 class ToolTip(object):
     """
     create a tooltip for a given widget
@@ -2029,6 +2133,8 @@ class ToolTip(object):
     www.daniweb.com/programming/software-development/code/484591/a-tooltip-class-for-tkinter
     Modified to include a delay time by Victor Zaccardo, 25mar16
     """
+    def post_tk_init(self):
+        super().post_tk_init()
     def __init__(self, widget, text=_("change this")):
         self.waittime = 500     #miliseconds before showing tip
         self.showtime = 2000    #miliseconds to show tip
@@ -2093,14 +2199,17 @@ class ToolTip(object):
             tw.destroy()
 """Move back to main"""
 class Wait(Window): #tkinter.Toplevel?
+    def post_tk_init(self):
+        super().post_tk_init()
     def close(self):
         # log.info("Wait window disappears")
         self.on_quit()
     def cancel(self):
         self.parent.waitcancel()
         log.info("Sent Wait Cancel")
-    def __init__(self, parent, msg=None, cancellable=False):
-        super(Wait, self).__init__(parent,exit=False)
+    def __init__(self, parent, msg=None, cancellable=False, *args, **kwargs):
+        kwargs['exit']=False
+        super().__init__(parent, *args, **kwargs)
         self.paused=False
         self.withdraw() #don't show until we're done making it
         self['background']=parent['background']
@@ -2116,7 +2225,8 @@ class Wait(Window): #tkinter.Toplevel?
             self.l1=Label(self.outsideframe, text=msg,
                 font='default',anchor='c',row=1,column=0,sticky='we')
             self.l1.wrap()
-        self.l2=Label(self.outsideframe,
+        if not isinstance(self.parent,Root) or not self.parent.noimagescaling:
+            self.l2=Label(self.outsideframe,
                         image=self.theme.photo['small'],
                         text='',
                         row=2,column=0,sticky='we',padx=50,pady=50)
@@ -2130,7 +2240,7 @@ class Wait(Window): #tkinter.Toplevel?
         self.update_idletasks() #updates just geometry
 """unclassed functions"""
 def now():
-    return datetime.datetime.utcnow().isoformat()#[:-7]+'Z'
+    return datetime.datetime.now(datetime.UTC).isoformat()#[:-7]+'Z'
 def availablexy(self,w=None):
     def padstoint(p):
         """Pads can be expressed as integers or (before,after) tuples"""
@@ -2253,8 +2363,93 @@ def nfc(x):
 def nfd(x):
     #This makes decomposed characters. e.g., vowel + accent (not used yet)
     return unicodedata.normalize('NFD', str(x))
+def testapp3(program):
+    r=Root(program=program)
+    # frame=Frame(r,r=0,c=0)
+    w=Window(r) #,withdrawn=True
+    w.mainwindow=True
+    w.title(f"Testing Drag and Drop with {w.theme.name} theme")
+    droppable=False
+    draggable=True
+    cols=2
+    for i in range(6):
+        Label(w.frame,
+                    text=f"Label {i}\ndrag:{draggable} \ndrop: {droppable}",
+                    font='title',
+                    row=i//cols, column=i%cols,
+                    draggable=True,
+                    droppable=droppable,
+                    borderwidth=1,relief='raised')
+        #switch after first
+        draggable=False
+        droppable=True
+    w.mainloop()
+def testapp2(program):
+    r=Root(program=program)
+    # frame=Frame(r,r=0,c=0)
+    w=Window(r) #,withdrawn=True
+    w.mainwindow=True
+    w.title(f"Testing with {w.theme.name} theme")
+    sf=ScrollingFrame(w.frame,row=1,column=1)
+    i=0
+    for p in [r,w,w.frame,sf.content,w.outsideframe]:
+        label1=Button(p,
+                        text=f"Seems to work \n({p};{i}!",
+                        font='title',
+                        command=w.frame.winfo_children()[-1].destroy,
+                        row=0,column=0,#draggable=True,
+                        borderwidth=1,relief='raised')
+        i+=1
+        log.info(f"Finished with {p}")
+    log.info(f"w children: {w.winfo_children()}")
+    log.info(f"r children: {r.winfo_children()}")
+    log.info(f"r MRO: {r.__class__.__mro__}")
+    for text in [("Pictured Only", ),
+                            ("Show All", )]:
+        Button(w.frame, text=text, command=w.frame.winfo_children()[-1].destroy,
+                    r=w.frame.grid_size()[1], c=0)
+    Button(w.frame, text="Print", command=w.frame.winfo_children()[-1].destroy,
+                r=w.frame.grid_size()[1], c=0)# # w.outsideframe.grid()
+    r.deiconify()
+    # w.deiconify()
+    w.mainloop()
+def testapp4(program):
+    def textadd(x):
+        l['text']+=str(x)
+    def printed(*args,window=None):
+        for x in args:
+            print(str(x)+'ed')
+        if window:
+            window.destroy()
+    r=Root(program=program)
+    log.info("root is {}".format(r))
+    # r.withdraw()
+    print(r.theme,r.theme.name)
+    w=Window(r) #,withdrawn=True
+    w.mainwindow=True
+    log.info(f"window is {w=}, children {w.winfo_children()=} {w._root()=}")
+    log.info(f"root is {r=}, children {r.winfo_children()=} {r._root()=}")
+    # sf=ScrollingFrame(w.outsideframe,row=0,column=0)
+    test_frame=Frame(w.frame,row=1,column=1)
+    sbf1=ScrollingButtonFrame(test_frame,
+                    optionlist=range(6,11),
+                    command=printed,
+                    window=w,
+                    image='icon',
+                    compound='right',
+                    bsticky='ew',
+                    sticky='',
+                    row=0,column=0)
+    l=Label(sbf1.content,text="testing SBF",
+                            row=1)#len(sbf1.content.winfo_children()))
+    sbfb=Button(sbf1.content,
+                text="testing SBF",
+                cmd=lambda x='.':textadd(x),
+                row=2)#len(sbf1.content.winfo_children()))
+    r.mainloop()
 def testapp(program):
     def progress(event):
+        # print('running progress')
         import time
         for i in range(101):
             for p in bars:
@@ -2268,14 +2463,65 @@ def testapp(program):
     def textadd(x):
         l['text']+=str(x)
     r=Root(program=program)
-    # log.info("root is {}".format(r))
-    r.withdraw()
-    w=Window(r)
-    # log.info("window is {}".format(w))
-    sf=ScrollingFrame(w.outsideframe,row=0,column=0)
-    Label(sf.content,text="Seems to work!",font='title',
-            row=0,column=0,
+    log.info("root is {}".format(r))
+    # r.withdraw()
+    print(r.theme,r.theme.name)
+    w=Window(r) #,withdrawn=True
+    w.mainwindow=True
+    log.info(f"window is {w=}, children {w.winfo_children()=} {w._root()=}")
+    log.info(f"root is {r=}, children {r.winfo_children()=} {r._root()=}")
+    # sf=ScrollingFrame(w.outsideframe,row=0,column=0)
+    test_frame=Frame(w.frame,row=1,column=1)
+    sbf1=ScrollingButtonFrame(test_frame,
+                    optionlist=range(6,11),
+                    command=print,
+                    row=0,column=0)
+    sbfl=Label(sbf1.content,text="testing SBF",
+                            row=1)#len(sbf1.content.winfo_children()))
+    sf=ScrollingFrame(test_frame,row=1,column=0)
+    # class DragLabel(Label):
+    #     def dnd_end(self,target,event):
+    #         print(target)
+    #         print(target['text'])
+    #     def __init__(self, *args, **kwargs):
+    #         super().__init__(*args, **kwargs)
+    firstFrame=Frame(sf.content,row=0,column=0)
+    label1=Label(firstFrame,text="Seems to work!",font='title',
+            row=0,column=0,draggable=True,image='icon',#compound='left',
             borderwidth=1,relief='raised')
+    button1=Button(firstFrame,text="Seems to work!",font='title',
+            row=0,column=1,draggable=True,image='icon',#compound='left',
+            command=lambda: sf.content.winfo_children()[-1].destroy(), borderwidth=1,relief='raised')
+    entry=EntryField(firstFrame,render=True,row=1,column=0,colspan=2)
+    rb_var=StringVar()
+    def printvar(x):
+        print()
+    rb1=RadioButton(firstFrame,text="RadioButton 1",
+                    variable=rb_var,
+                    value=1,
+                    row=2,column=0)
+    rb2=RadioButton(firstFrame,text="RadioButton 1 (no indicatoron)",
+                    variable=rb_var,
+                    value=2,
+                    row=2,column=1,indicatoron=0)
+    rb_var.trace_add('write',lambda *args:print(rb_var.get()))
+    rbf=RadioButtonFrame(firstFrame,
+                        variable=rb_var,
+                        optionlist=[(i,'+'+str(i)) for i in range(4)],
+                        # opts=range(4),
+                        indicatoron=1,
+                        # horizontal=True,
+                        row=3,column=0)
+    b1=Button(firstFrame,
+                    text='destroy me',
+                    command=exit,
+                    row=3,column=1)
+    bf2=ButtonFrame(firstFrame,
+                    optionlist=range(5,10),
+                    command=print,
+                    row=4,column=1)
+    # label1.dnd_end=lambda x,event:print(x.text)
+    # tkinter.dnd.Draggable(label1)
     textvariable=StringVar()
     options = ("choice 1", "choice 2", "choice 3", "choice 4")
     def print_choice(event):
@@ -2284,60 +2530,97 @@ def testapp(program):
                 textvariable=textvariable,
                 command=print_choice,
                 optionlist=options,
-                row=0,column=1)
+                # image='icon',
+                row=0,column=1,droppable=True)
     textvariable2=StringVar()
     def print_selection(event=None):
-        print(lb1.curselection(),type(lb1.curselection()))
+        print(event,lb1.curselection(),type(lb1.curselection()))
         if 0 in lb1.curselection() and len(lb1.curselection())>1:
-            lb1.select_clear(0)
-        print(lb1.curselection(),type(lb1.curselection()))
+            for i in lb1.curselection():
+                if i:
+                    lb1.select_clear(i)
+        # print(lb1.curselection(),type(lb1.curselection()))
         print(", ".join([lb1.get(i) for i in lb1.curselection()]))
         # print('selection:',lb1.get(lb1.curselection()))
-        print(f"box length: {len(lb1.get(0,'end'))}")
+        # print(f"box length: {len(lb1.get(0,'end'))}")
         for i in lb1.curselection():
             print(lb1.get(i))
     lb1=ListBox(sf.content,
-                textvariable=textvariable2,
+                listvariable=textvariable2,
                 selectmode=tkinter.MULTIPLE,
                 command=print_selection,
-                optionlist=options,
+                optionlist=options,#droppable=True,
                 height=3,
                 row=0,column=2)
     lb1.selection_set(0)
     CheckButton(sf.content,
-                text="Boolean toggle",
+                text="Boolean toggle w/default imgs ([˥˥˦˦˨])",
                 anchor='c',
                 variable = BooleanVar(),
                 onvalue = True, offvalue = False,
+                # selectimage=None,
                 font='default',
                 row=1,column=1)
+    CheckButton(sf.content,
+                text="Boolean toggle w/indicatoron",
+                anchor='c',
+                variable = BooleanVar(),
+                onvalue = True, offvalue = False,
+                indicatoron=True,
+                # selectimage=None,
+                font='default',
+                row=2,column=1)
+    CheckButton(sf.content,
+                text="Boolean toggle w/o default imgs ([˥˥˦˦˨])",
+                anchor='c',
+                variable = BooleanVar(),
+                onvalue = True, offvalue = False,
+                selectimage=None,
+                # no_default_indicator_images=True,
+                # image='icon',compound='bottom',selectimage=None,
+                font='default',
+                row=3,column=1)
+    CheckButton(sf.content,
+                text="Boolean toggle w/indicatoron\nw/o default imgs",
+                anchor='c',
+                variable = BooleanVar(),
+                onvalue = True, offvalue = False,
+                indicatoron=True,
+                selectimage=None,
+                # image='icon',selectimage=None,
+                # no_default_indicator_images=True,
+                font='default',
+                row=4,column=1)
     l=Label(sf.content,text="At least this much",
-            row=1,column=0, font='italic',
-            borderwidth=1,relief='raised')
+            row=5,column=0, font='italic',
+            borderwidth=3,relief='raised')
     log.info("l _root is {}".format(l._root()))
     log.info("Image dict: {}".format(r.theme.photo))
-    img=r.theme.photo['NoImage']
-    # log.info("Image: {} ({})".format(img.transparency, Image.maxhw(img)))
-    log.info("Image dir: {}".format(dir(img)))
-    img.scale(program['scale'],pixels=100,resolution=10)
-    log.info("Image: {} ({})".format(img.scaled, Image.maxhw(img,scaled=True)))
-    l['image']=img.scaled
-    l['compound']="bottom"
+    # l.img=r.theme.photo['NoImage']
+    # # log.info("Image: {} ({})".format(l.img.transparency, Image.maxhw(l.img)))
+    # log.info("Image dir: {}".format(dir(l.img)))
+    # l.img.scale(program['scale'],pixels=100,resolution=10)
+    # log.info("Image: {} ({})".format(l.img.scaled, Image.maxhw(l.img,scaled=True)))
+    # l['image']=l.img.scaled
+    # l['compound']="bottom"
     ToolTip(l,"this image has a tooltip")
+    column,row=sf.content.grid_size()
+    lm_frame=Frame(sf.content,r=row,c=0,colspan=column)
     for c,cls in enumerate([Message,Label]):
+    # for c,cls in enumerate([Label]):
         cname=cls.__name__
-        cls(sf.content,text="This is a {} ˥˥˦˦˨".format(cname),row=2, column=c,
+        cls(lm_frame,text="This is a {} ˥˥˦˦˨".format(cname),row=2, column=c,
                 borderwidth=1,relief='raised')
-        cls(sf.content,text="This is a very long {}".format(cname),row=4, column=c,
-                borderwidth=1,relief='raised')
-        cls(sf.content,text="This is a very very long {}".format(cname),
+        cls(lm_frame,text="This is a very long {}".format(cname),row=4, column=c,
+                borderwidth=1,relief='raised',droppable=True)
+        cls(lm_frame,text="This is a very very long {}".format(cname),
             row=5, column=c,
-            borderwidth=1,relief='raised')
-        cls(sf.content,text="This is a very very very very long {}"
+            borderwidth=1,relief='raised',droppable=True)
+        cls(lm_frame,text="This is a very very very very long {}"
                     "".format(cname),
                     row=6, column=c,
-                    borderwidth=1,relief='raised')
-        lll=cls(sf.content,text="This is a very very very very "
+                    borderwidth=1,relief='raised',droppable=True)
+        lll=cls(lm_frame,text="This is a very very very very "
                     "very very very very "
                     "very very very very "
                     "very very very very "
@@ -2346,7 +2629,7 @@ def testapp(program):
                     "very very very very "
                     "very very very very "
                     "long {}".format(cname),row=7, column=c,
-                    borderwidth=1,relief='raised')
+                    borderwidth=1,relief='raised',droppable=True)
         if cls == Label:
             lll.config(wraplength=120)
     bars={}
@@ -2356,16 +2639,19 @@ def testapp(program):
                 col=1
                 colspan=1
                 rowspan=1
+                sticky='ew'
             else:
                 col=row
                 row=1
                 colspan=1
                 rowspan=1
-            bars[(orient,row+col)]=Progressbar(w, orient=orient,
+                sticky='ns'
+            bars[(orient,row+col)]=Progressbar(w.frame, orient=orient,
                                             mode='determinate',
                                             row=row, column=col,
                                             columnspan=colspan,
-                                            rowspan=rowspan,sticky='nesw')
+                                            rowspan=rowspan,
+                                            sticky=sticky)
     w.bind('<ButtonRelease-1>',textchange)
     w.bind('<ButtonRelease-1>',progress,add=True)
     w.bind('<Up>',lambda event,x='^':textadd(x),add=True)
@@ -2380,12 +2666,13 @@ def testapp(program):
     log.info(w.state())
     h=IntVar(value=1)
     j=IntVar(value=False)
-    l=list([1,2,3,4])
+    # l=list([1,2,3,4])
     k=Variable(value=l)
-    l=StringVar(value='False')
-    for i in [h,j,k,l]:
+    # l=StringVar(value='False')
+    for i in [h,j,k]:
         print(isinstance(i,tkinter.Variable),type(i),i.get(),type(i.get()))
         if isinstance(i.get(),tuple):
+            print("Found a tuple!")
             for m in i.get():
                 print(m)
     r.mainloop()
@@ -2398,3 +2685,4 @@ if __name__ == '__main__':
     """To Test:"""
     # loglevel='Debug'
     testapp(program)
+    sys.exit()

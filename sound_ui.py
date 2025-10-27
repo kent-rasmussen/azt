@@ -607,9 +607,9 @@ class ASRModelSelectionWindow(ui.Window):
         try:
             assert self.soundsettings.asr_kwargs[k] == value
         except (AssertionError,KeyError):
-            log.info(f"Changing {k} from {self.soundsettings.asr_kwargs[k]
-            if k in self.soundsettings.asr_kwargs else None} to "
-                    f"{value}")
+            log.info(f"Changing {k} from "
+                    f"{self.soundsettings.asr_kwargs.get(k,None)} "
+                    f"to {value}")
             self.soundsettings.asr_kwargs[k]=value
         # This runs once before the ASR boots, when the above will suffice.
         if k in ['sister_languages'] and hasattr(self.soundsettings,'asr'):
@@ -659,7 +659,7 @@ class ASRModelSelectionWindow(ui.Window):
                 buttons=p_buttons
             self.asr_settings_w[k]=ui.CheckButton(parent,
                                         text = k,
-                                        no_default_indicator_images=True,
+                                        # no_default_indicator_images=True,
                                         variable = self.kwarg_vars[k],
                                         onvalue = True, offvalue = False,
                                         ipadx=10,

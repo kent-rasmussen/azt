@@ -93,12 +93,9 @@ class Lexicon(Exporter):
     levels."""
     def getdatafromsense(self,sense):
         return sense.lexicalformsforASRtraining(
-                                        self.analang,
-                                        self.audiolang,
-                                        self.audiodir,
                                         no_verify_check=self.no_verify_check,
                                         check=self.check
-                                    )
+                                        )
     def __init__(self, *args, **kwargs):
         super(Lexicon, self).__init__(*args, **kwargs)
         self.no_verify_check=self.analang in ['gnd']
@@ -107,11 +104,7 @@ class Examples(Exporter):
     """This exports Examples (from senses) with sound files."""
 
     def getdatafromsense(self,sense):
-        return sense.examplesforASRtraining(
-                                        self.analang,
-                                        self.audiolang,
-                                        self.audiodir
-                                    )
+        return sense.examplesforASRtraining()
     def __init__(self, *args, **kwargs):
         super(Examples, self).__init__(*args, **kwargs)
 if __name__ == '__main__':
