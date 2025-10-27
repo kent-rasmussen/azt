@@ -6137,6 +6137,38 @@ class Segments(object):
     def setsensegroup(self,sense,ftype,check,group,**kwargs):
         # log.info("Setting segment sort group")
         sense.annotationvaluebyftypelang(ftype,self.analang,check,group)
+    def updateformsbycheck(self):
+        for sense in self.getsensesincheck():
+            u = threading.Thread(target=self.updateformtoannotations,
+                                args=(sense,self.check), # w/o check, all done
+                                )
+            u.start()
+        try:
+            u.join()
+        except:
+            pass
+        self.maybewrite()#after iteration
+    def name_new_groups(self):
+        groups=program['status'].groups()
+        if program['params'].cvt() == 'C':
+            transcribe=TranscribeC
+        elif program['params'].cvt() == 'V':
+            transcribe=TranscribeV
+        else:
+            log.error("Not sure what to do with this group "
+                "({program['params'].cvt()=}; {groups=})")
+        w=transcribe(self)
+        self.withdraw()
+        for group in [i for i in groups if isinteger(i)]:
+            program['status'].group(group)
+            w.makewindow()
+        w.destroy() #just this window, not parent
+        self.deiconify()
+    def getsensesincheck(self):
+        return [
+                i for i in program['db'].senses
+                if i.ftypes[self.ftype].annotationkeyinlang(self.check)
+                ]
     def getsensesingroup(self,check,group):
         ftype=program['params'].ftype()
         lang=program['params'].analang()
@@ -8760,6 +8792,8 @@ class Tone(object):
         return sense.tonevaluebyframe(check)
     def getUFgroupofsense(self,sense):
         return sense.uftonevalue()
+    def name_new_groups(self):
+        pass
     def __init__(self):
         pass
 class Sort(object):
@@ -9206,6 +9240,8 @@ class Sort(object):
                 return
             else: #done; continue on
                 self.did['join']=True
+                self.updateformsbycheck()
+                self.name_new_groups()
         # exitstatuses()
         # At this point, there should be nothing to sort, verify or join, so we
         # move on to the next group.
@@ -9684,10 +9720,9 @@ class Sort(object):
             log.debug(msg)
             """All the senses we're looking at, by ps/profile"""
             # log.info("Join about to run updatebygroupsense(*groupstojoin)")
-            self.updatebygroupsense(*groupstojoin)
+            groupstojoin.sort(key=str) #put a number first (to remove)
+            self.updatebygroupsense(*groupstojoin) #calls marksortgroup on all
             groups.remove(groupstojoin[0])
-            write=False #for the first
-            for group in groupstojoin: #not verified=True --since joined
                 self.updatestatus(group=group,write=write)
                 write=True #For second group
             # self.maybesort() #go back to verify, etc.
@@ -11156,13 +11191,14 @@ class Transcribe(Sound,Sort,TaskDressing):
             log.error(_("Missing either group or comparison, without value "
                         "specified; can't switch them."))
             return
-        g=self.group
-        if comparison:
-            gc=comparison
-        else:
-            gc=self.group_comparison
-        program['status'].group(gc)
-        program['settings'].set('group_comparison',g)
+        log.info(f"Swtiching groups; using ‘{self.group_comparison}’ for "
+                f"‘{self.group}’")
+        #actually change the data, not the group settings:
+        #This method should go somewhere more reasonable:
+        g=SortButtonFrame.add_int_group(self) #Don't merge groups!
+        self.updatebygroupsense(self.group,g)
+        self.updatebygroupsense(self.group_comparison,self.group,updateforms=True)
+        self.updatebygroupsense(g,self.group_comparison,updateforms=True)
         # program['settings'].setgroup(gc)
         self.runwindow.on_quit()
         self.makewindow() #The other group needs a name, too!
@@ -11266,25 +11302,6 @@ class Transcribe(Sound,Sort,TaskDressing):
             log.info(f"User selected ‘{self.oktext}’, but with "
                     "no change.")
         # update forms, even if group doesn't change:
-        group=program['status'].group() #this should now be 'newvalue'
-        if program['params'].cvt() != 'T' and isnoninteger(group):
-            #Don't do this for default or tone groups
-            ftype=program['params'].ftype()
-            check=program['params'].check()
-            log.info("updating for type {} check {}, group ‘{}’"
-                    "".format(ftype,check,group))
-            senses=self.getsensesincheckgroup()
-            log.info("modding senses {}".format([i.id for i in senses]))
-            for sense in senses:
-                # self.updateformtoannotations(sense,ftype,check)
-                u = threading.Thread(target=self.updateformtoannotations,
-                                    args=(sense,ftype,check),
-                                    # kwargs={'check':check}
-                                    )
-                u.start()
-            if senses:
-                u.join()
-            self.maybewrite()
         if hasattr(self,'group_comparison'):
             delattr(self,'group_comparison') # in either case
         self.runwindow.on_quit()
@@ -11323,15 +11340,16 @@ class Transcribe(Sound,Sort,TaskDressing):
             program['status'].nextprofile(wsorted=True)
             # log.debug("profile: {}".format(profile))
             self.makewindow()
-    def setgroup_comparison(self):
-        w=self.getgroup(comparison=True,wsorted=True) #this returns its window
-        if w and w.winfo_exists(): #This window may be already gone
-            log.info("Waiting for {}".format(w))
-            w.wait_window(w)
-        log.info("Groups: {} (of {}); {}?".format(self.group,
-                                            self.groups,
-                                            # self.group_comparison,
-                                            program['settings'].group_comparison))
+    def setgroup_comparison(self,group=None):
+        if group:
+            program['settings'].set('group_comparison',group)
+        else:
+            w=self.getgroup(comparison=True,wsorted=True) #this returns its window
+            if w and w.winfo_exists(): #This window may be already gone
+                log.info("Waiting for {}".format(w))
+                w.wait_window(w)
+        log.info(f"Groups: {self.group} (of {self.groups}); "
+                f"{program['settings'].group_comparison}?")
         if hasattr(program['settings'],'group_comparison'):
             self.group_comparison=program['settings'].group_comparison
         if self.errorlabel['text'] == _("Sorry, pick a comparison first!"):
@@ -11365,7 +11383,7 @@ class Transcribe(Sound,Sort,TaskDressing):
                                     )
             self.compframe.bf2.grid(row=0, column=0, sticky='w')
             self.compframe.b2=ui.Button(self.compframe.compframeb,
-                                        text=_("Switch Groups"),
+                                        text=_("Switch with this Group"),
                                         cmd=self.switchgroups,
                                         row=0, column=1, sticky='w')
             self.compframe.b2tt=ui.ToolTip(self.compframe.b2,
