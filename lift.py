@@ -2380,8 +2380,8 @@ class FormParent(Node):
         if hasattr(self,'audiofileisthere') and not recheck:
             return self.audiofileisthere
         try: #get audiofileURL or fail
-            abs=file.getdiredurl(self.audiodir,
-                                self.textvaluebylang(self.audiolang))
+            abs=file.getdiredurl(self.db.audiodir,
+                                self.textvaluebylang(self.db.audiolang))
             # log.info(f"Working with absolute audio filename: {abs}")
             if bool(abs) and file.exists(abs):
                 self.audiofileisthere=True
