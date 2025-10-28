@@ -133,7 +133,6 @@ import pprint #for settings and status files, etc.
 import subprocess
 import webbrowser
 
-
 class HasMenus():
     def helpnewinterface(self):
         title=(_("{} Dictionary and Orthography Checker"
@@ -3376,6 +3375,8 @@ class Settings(object):
             fn=Tone.getsensegroup
         else:
             fn=Segments.getsensegroup
+        """I think this is the problem why valid groupslike aʲ are getting dropped."""
+        """continue here"""
         for sense in senses:
             # log.info("Working on sense {}".format(sense.id))
             self.categorizebygrouping(fn,sense,**kwargs)
