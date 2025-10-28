@@ -4973,7 +4973,7 @@ class TaskDressing(HasMenus,ui.Window):
             window.destroy()
             return
         if kwargs.get('comparison'):
-            g2=groups[:]
+            g2=list(groups)
             g2.remove(program['status'].group()) #group() is not cvt aware
             if not g2:
                 window.destroy()
@@ -12564,7 +12564,7 @@ class ExampleDict(dict):
     def getexample(self,group,**kwargs):
         nodes=self.getexamples(group)
         if not nodes:
-            log.error("getexample has no example nodes for {group=}?")
+            log.error(f"getexample has no example nodes for {group=}?")
             return 0,None
         n=len(nodes)
         tries=0
@@ -12837,7 +12837,7 @@ class SortGroupButtonFrame(ui.Frame):
         self.sortnext()
         # remove()
     def unsort(self):
-        self.check.removesensefromgroup(self._sense,sorting=False)
+        self.task.removesensefromgroup(self._sense,sorting=False)
         self.refresh()
     def setcanary(self,canary):
         if canary.winfo_exists():
@@ -12906,17 +12906,18 @@ class SortGroupButtonFrame(ui.Frame):
             self.makerefreshbutton()
     """buttons"""
     def labelbutton(self):
-        b=ui.Label(self, text=self._text,
+        log.info("Making Label button")
+        self.label=ui.Label(self, text=self._text,
                     column=1, row=0, sticky='ew',
                     **self.buttonkwargs()
                     )
         if hasattr(self,'_illustration'):
-            b['image']=self._illustration
-            b['compound']='left'
+            self.label['image']=self._illustration
+            self.label['compound']='left'
     def playbutton(self):
-        self.check.pyaudiocheck()
-        self.check.soundsettingscheck()
-        self.player=sound.SoundFilePlayer(self._filenameURL,self.check.pyaudio,
+        self.task.pyaudiocheck()
+        self.task.soundsettingscheck()
+        self.player=sound.SoundFilePlayer(self._filenameURL,self.task.pyaudio,
                                             program['settings'].soundsettings)
         b=ui.Button(self, text=self._text,
                     cmd=self.player.play,
@@ -12991,10 +12992,10 @@ class SortGroupButtonFrame(ui.Frame):
         for arg in self.unbuttonargs:
             del bkwargs[arg]
         return bkwargs #only the kwargs appropriate for buttons
-    def __init__(self, parent, check, group, **kwargs):
+    def __init__(self, parent, task, group, **kwargs):
         # log.info("Initializing buttons for group {}".format(group))
         self.exs=program['examples']
-        self.check=check #the task/check OR the scrollingframe! use self.check.task
+        self.task=task #the task/check OR the scrollingframe! use self.check.task
         self.group=group
         # self,parent,group,row,column=0,label=False,canary=None,canary2=None,
         # alwaysrefreshable=False,playable=False,renew=False,unsortable=False,
