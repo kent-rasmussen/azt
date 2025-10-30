@@ -5449,6 +5449,7 @@ class TaskChooser(TaskDressing,ui.Window):
                     WordCollectionCitation,
                     # WordCollectionPlural, #What is the value of this
                     # WordCollectionImperative, #What is the value of this
+                    WordCollectionCitationwRecordings,
                     WordCollectnParse,
                     WordCollectnParsewRecordings,
                     RecordCitation
