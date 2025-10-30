@@ -14050,7 +14050,7 @@ class StatusDict(dict):
             # log.info("Returning groups: {}".format(todo))
             return todo
     def sensestosort(self):
-        return self._sensestosort
+        return getattr(self,'_sensestosort',False) #always return, even w/o attr
     def sensessorted(self):
         return self._sensessorted
     def renewsensestosort(self,todo,done):
