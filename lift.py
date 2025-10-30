@@ -3106,6 +3106,11 @@ class Entry(Node,FieldParent): # what does "object do here?"
     def getlc(self):
         self.lc=Citation(self,self.find('citation'))
         self.checkforsecondchild('citation')
+    def getph(self):
+        v=self.find('pronunciation')
+        if v:
+            self.ph=Pronunciation(self,v)
+        self.checkforsecondchild('pronunciation')
     def lxvalue(self,value=None):
         return self.lx.textvaluebylang(self.db.analang,value)
     def lcvalue(self,value=None):
@@ -3134,6 +3139,12 @@ class Entry(Node,FieldParent): # what does "object do here?"
             else:
                 return None
         return self.ph.textvaluebylang(lang,value)
+    def move_ph_sound_to_lc(self):
+        try:
+            wav=self.ph.find('media').get('href')
+            self.lc.textvaluebylang(lang=self.db.audiolang,value=wav)
+        except Exception as e:
+            log.info(f"Exception: ({e}; {self.guid=})")
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='entry'
         self.annotationlang=kwargs.pop('annotationlang','en')
@@ -3144,16 +3155,20 @@ class Entry(Node,FieldParent): # what does "object do here?"
         # log.info(f"Entry {self.guid} init {[i for i in self]=}")
         self.getlx()
         self.getlc()
+        self.getph()
         r=self.getsenses() #this needs lx and lc already
         if r: #If no senses, stop here
             log.info("Stopping here b/c no senses found.")
             return
-        self.lx.getsense() #this needs senses already
-        self.lc.getsense() #this needs senses already
+        for l in ['lx','lc','ph']:
+            if hasattr(self,l):
+                getattr(self,l).getsense() #this needs senses already
         self.fields.update({
                     'lx':self.lx,
                     'lc':self.lc,
                     })
+        if hasattr(self,'ph'):
+            self.fields.update({'ph':self.ph})
         self.tone={}
 class Language(object):
     def __init__(self, xyz):
