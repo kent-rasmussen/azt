@@ -12572,7 +12572,7 @@ class ExampleDict(dict):
             # log.info("Audio file check failed for {}".format(node.sense.id))
             return
         return True
-    def getexamples(self,group,all_for_cvt=False):
+    def getexamples(self,group,all_for_cvt=False,**kwargs):
         check=program['params'].check()
         ftype=program['params'].ftype()
         if program['params'].cvt() == 'T': # example nodes
@@ -12583,7 +12583,7 @@ class ExampleDict(dict):
         elif all_for_cvt:
             nodes=[s.ftypes[ftype] for s in program['db'].senses #any ps-profile
                         if group in s.annotationvaluedictbyftypelang(ftype,
-                                                        program['db'].analang)
+                                                program['db'].analang).values()
                     ]
         else: # Other FormParent nodes
             nodes=[s.ftypes[ftype] for s in program['slices'].inslice(
@@ -12594,15 +12594,15 @@ class ExampleDict(dict):
                                                         ) == group
                     ]
         if not nodes:
-            log.error("There don't seem to be any nodes in this check({})-"
-                        "group({})/ftype({})-slice.".format(check,group,ftype))
+            log.error(f"There don't seem to be any nodes in this {check=}-"
+                        f"{group=}/{ftype=})-slice. ({all_for_cvt=})")
             return None #as 0,None; why?
         # else:
         #     log.info("Found {} examples in the {} sort group for the {} check: "
         #         "{}.".format(len(nodes),group,check,[i.id for i in nodes]))
         return nodes
     def getexample(self,group,**kwargs):
-        nodes=self.getexamples(group)
+        nodes=self.getexamples(group,**kwargs)
         if not nodes:
             log.error(f"getexample has no example nodes for {group=}?")
             return 0,None
@@ -14005,7 +14005,7 @@ class StatusDict(dict):
                         for profile in d[cvt][ps]
                         for check in d[cvt][ps][profile]
                         for i in d[cvt][ps][profile][check]['done']
-                        ])
+                        if i not in ['NA']])
                 for cvt in d
                 }
     def all_groups_verified_for_cvt(self):
