@@ -1717,6 +1717,7 @@ class ContextMenu(Childof):
             self.dosetcontext()
             self.menu.tk_popup(event.x_root, event.y_root)
         finally:
+            self.menu.bind('<Leave>',self.undo_popup) #_all
             self.menu.grab_release() #allows click on main window
     def _bind_to_makemenus(self,event): #all needed to cover all of window
         self.parent.bind_all('<Button-3>',self.do_popup) #_all
