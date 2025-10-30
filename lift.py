@@ -2594,12 +2594,10 @@ class Pronunciation(FormParent,FieldParent):
         kwargs['tag']='pronunciation'
         super(Pronunciation, self).__init__(parent, node, **kwargs)
         self.entry=parent.entry #make a common reference point for sense/entry
-        self.sense=parent.sense
         FieldParent.__init__(self) #tone and location values
         # These two are collected by FieldParent:
         self.checkforsecondfieldbytype('location')
         self.checkforsecondfieldbytype('tone')
-        self.gettranslations()
 class Illustration(ValueNode):
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='illustration'
