@@ -527,14 +527,13 @@ class RegexDict(object):
         self.interpretationsanitycheck(CVs)
         try:
             if kwargs.get('compile'):
-                log.info("Processed to here")
                 return self.getrx(CVs, **kwargs)
             else:
                 return self.getrxuncompiled(CVs)
         except Exception as e:
             # log.info("Getrx Exception: {}".format(e))
             pass
-        log.info("No rx found in rxdict; making {}".format(CVs))
+        # log.info("No rx found in rxdict; making {}".format(CVs))
         CVs_ori=CVs
         regex=list()
         this='C'
@@ -571,7 +570,7 @@ class RegexDict(object):
                         self.makegroup(x,
                         polyn=kwargs.get('polyn')), #Should not be compiled!
                         CVs)
-                log.info("Now {}".format(CVs))
+                # log.info("Now {}".format(CVs))
         for x in self.distinguished('C',False,final=False): #sanity check only
             # log.info("{} in distinguishedFalseNon-Final for {}".format(x,CVs))
             if s in CVs and x in CVs and len(CVs)-1: #Don't object if len=1
@@ -588,7 +587,7 @@ class RegexDict(object):
             #     log.error("No rxthis? ({}): {}".format(this,self.sdict))
         # log.info("Replacing other Cs and Vs: {}".format(CVs))
         CVs=re.sub(r'\)([^(?]+)\(',')(\\1)(',CVs) #this puts parens around everything
-        log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
+        # log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
         self.setrx(CVs_ori, CVs, **kwargs)
         return self.getrx(CVs_ori, **kwargs)
     def profileofform(self,form,ps):
