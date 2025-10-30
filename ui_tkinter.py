@@ -1748,7 +1748,7 @@ class ButtonFrame(Frame):
             if hasattr(self,k) and getattr(self,k) != kwargs[k]:
                 log.info(f"ButtonFrame found {k}:{getattr(self,k)} ({kwargs[k]=})")
                 exit() #this should never happen
-            log.info(f"ButtonFrame reserving {k}:{kwargs[k]}")
+            # log.info(f"ButtonFrame reserving {k}:{kwargs[k]}")
             setattr(self,k,kwargs.pop(k))
         return kwargs
     def restore_kwargs(self,**kwargs):
@@ -2095,7 +2095,7 @@ class RadioButtonFrame(Frame):
             if hasattr(self,k):
                 log.info(f"RadioButtonFrame found {k}:{getattr(self,k)}")
                 exit() #this should never happen
-            log.info(f"RadioButtonFrame reserving {k}:{kwargs[k]}")
+            # log.info(f"RadioButtonFrame reserving {k}:{kwargs[k]}")
             setattr(self,k,kwargs.pop(k))
         return kwargs
     def pre_tk_init(self,**kwargs):
