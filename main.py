@@ -7452,16 +7452,16 @@ class WordCollectionCitation(TaskDressing,WordCollection):
         log.info("Initializing {}".format(self.tasktitle()))
         #Status frame is 0,0
         self.getwords()
-class WordCollectionCitationwRecordings(TaskDressing,WordCollectionwRecordings):
+class WordCollectionCitationwRecordings(WordCollectionwRecordings,TaskDressing):
     def tooltip(self):
         return _("This task helps you collect words in citation form through "
                 "recordings with automatic transcription drafts.")
     def tasktitle(self):
-        return _("Add Words") # for Citation Forms
+        return _("Add Words with Audio") # for Citation Forms
     def __init__(self, parent): #frame, filename=None
         self.ftype=program['params'].ftype('lc') #lift.Entry.citationformnodeofentry
         TaskDressing.__init__(self,parent)
-        WordCollection.__init__(self,parent)
+        WordCollectionwRecordings.__init__(self,parent)
         log.info("Initializing {}".format(self.tasktitle()))
         self.getwords()
 class WordCollectionPlural(TaskDressing,WordCollection):
@@ -9278,6 +9278,8 @@ class Sort(object):
         # exitstatuses()
         if self.exitFlag.istrue(): #if the task has been shut down, stop
             return
+        if program['status'].sensestosort() is False:
+            program['settings'].updatesortingstatus() # Not just tone anymore
         if not hasattr(self,'did'):
             self.resetsortbutton()
         cvt=program['params'].cvt()
@@ -9515,14 +9517,14 @@ class Sort(object):
         self.getrunwindow(msg=_("preparing to verify {} group: {}").format(check,
                                                                         group))
         if group == 'NA':
-            oktext='These all DO NOT have the same {}'.format(program['params'].cvcheckname())
+            oktext=_(f'These all DO NOT have the same {program['params'].cvcheckname()}')
             instructions=_("These words seem to not fit the check ‘{}’. Read "
                             "down this list to verify this. If any DOES belong "
                             "in this test, click on it to remove it from this "
                             "list, and you can sort it on the next page."
                             ).format(program['params'].cvcheckname())
         else:
-            oktext='These all have the same {}'.format(program['params'].cvcheckname())
+            oktext=_(f'These all have the same {program['params'].cvcheckname()}')
             instructions=_("Read down this list to verify they all have the same "
             "{0} sound. Click on any word with a different {0} sound to "
             "remove it from the list.").format(program['params'].cvcheckname())
