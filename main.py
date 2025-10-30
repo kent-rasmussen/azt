@@ -9827,7 +9827,17 @@ class Sort(object):
         for sense in senses:
             self.removesensefromgroup(sense)
         self.runcheck()
-    def updatebygroupsense(self,oldvalue,newvalue,updateforms=False):
+    def rename_group(self,oldvalue,newvalue,updatestatus=True):
+        self.updatebygroupsense(oldvalue,newvalue,
+                                updatestatus=updatestatus,
+                                updateforms=True)
+        v=program['status'].verified()
+        if oldvalue in v:
+            log.info(f"Found verified value to change: {oldvalue}>{newvalue}") #set
+            v.remove(oldvalue)
+            v.append(newvalue)
+            program['status'].verified(v)
+    def updatebygroupsense(self,oldvalue,newvalue,updateforms=False,updatestatus=True):
         """Generalize this for segments"""
         # This function updates the field value and verification status (which
         # contains the field value) in the lift file.
@@ -9860,7 +9870,7 @@ class Sort(object):
                                         'updateforms':updateforms})
             u.start()
         u.join()
-        if updateforms:
+        if updateforms and updatestatus: #only update status if forms
             program['settings'].reloadstatusdatabycvtpsprofile()
         self.maybewrite() #once done iterating over senses
     def __init__(self, parent):
@@ -11278,9 +11288,9 @@ class Transcribe(Sound,Sort,TaskDressing):
         #actually change the data, not the group settings:
         #This method should go somewhere more reasonable:
         g=SortButtonFrame.add_int_group(self) #Don't merge groups!
-        self.updatebygroupsense(self.group,g)
-        self.updatebygroupsense(self.group_comparison,self.group,updateforms=True)
-        self.updatebygroupsense(g,self.group_comparison,updateforms=True)
+        self.rename_group(self.group,g,updatestatus=False)
+        self.rename_group(self.group_comparison,self.group,updatestatus=False)
+        self.rename_group(g,self.group_comparison)
         # program['settings'].setgroup(gc)
         self.runwindow.on_quit()
         self.makewindow() #The other group needs a name, too!
