@@ -4464,7 +4464,8 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/Eton.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/wmg/wmg.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/Demo_gnd/gnd.lift"
     # filename="/home/kentr/bin/raspy/azt/SILCAWL/SILCAWL.lift"
     lift=LiftXML(filename)
@@ -4484,8 +4485,10 @@ if __name__ == '__main__':
 		'swh':'__',
 		'fr':'__es'}
     ftype='pl'
+    # for e in lift.entries:
+    #     e.move_ph_sound_to_lc()
     # sense=lift.sensedict['daytime_b27c251c-090e-4427-aa86-22b745409f8d']
-    sense=lift.sensedict['body_791094f2-a82b-4650-81d8-c3b6145d2be4']
+    # sense=lift.sensedict['body_791094f2-a82b-4650-81d8-c3b6145d2be4']
     # sense=lift.sensedict['head_a8516acf-606c-4796-8fed-75b0c0f2c583']
     # sense=lift.sensedict['forehead_3e600f7e-74a3-4761-9bc3-09f3f01cd98b']
     # for sense in ['head_a8516acf-606c-4796-8fed-75b0c0f2c583',
@@ -4496,7 +4499,7 @@ if __name__ == '__main__':
     # exit()
     # sense=lift.senses[0]
     # print(sense.cawln)
-    lift.convert_langtag('en','en-US')
+    # lift.convert_langtag('en','en-US')
     # lift.convert_langtag('pt','en-US')
     # lift.convert_langtag('ha','en-US')
     # lift.convert_langtag('es','en-US')
@@ -4506,78 +4509,4 @@ if __name__ == '__main__':
     # lift.convert_langtag('ha-CL','en-US')
     # lift.convert_langtag('id','en-US')
     lift.write()
-    et.prettyprint(sense)
-    for lang in sense.glosses:
-        log.info("gloss fields: {}".format(sense.glosses[lang]))
-    log.info("sense.examples: {}".format(sense.examples))
-    for example in sense.examples:
-        log.info("example fields: {}".format(sense.examples[example].fields))
-    et.prettyprint(sense.examples['isolation'])
-    print(sense.db.audiolang)
-    exit()
-    print(sense.examples.keys())
-    # prettyprint(sense.examples[key])
-    for v in sense.examples.values():
-        prettyprint(v)
-    print(sense.entry.lc.getlang(shortest=True))
-    exit()
-    for entry in lift.entries:
-        # print(getattr(entry,ftype).formatted('en',['fr','shw'],
-        log.info(lift.pss)
-        log.info(entry.sense.cawln)
-        prettyprint(entry.sense)
-        log.info(entry.sense.uftonevalue("MyTone Value"))
-        log.info(entry.sense.uftonevalue())
-        prettyprint(entry.sense)
-        # entry.plvalue(ftype,'en',entry.lc.textvaluebylang('en')+'ś')
-        # print(entry.senses[0].ftypes[ftype].formatted('en',['fr','shw'],
-        #                         ftype=ftype,
-        #                         frame=frame
-        #                         )
-            # sense.formatteddictbylang('en',['fr','shw'])
-        # )
-        break
-    # for sense in lift.senses[1:]:
-    #     sense.entry.plvalue(ftype,'en',sense.textvaluebyftypelang('lc','en')+'ś')
-    #     print(sense.ftypes[ftype].formatted('en',['fr','shw'],
-    #                             ftype=ftype,
-    #                             frame=frame)
-    #         # sense.formatteddictbylang('en',['fr','shw'])
-    #     )
-    #     break
-    log.info(
-            lift.entries
-            # collections.Counter(
-                    # [i.psvalue() for i in lift.senses]
-                    # [i.sense.ps for i in lift.entries]
-                                    # ).most_common()
-            )
-    log.info(
-            lift.entriesbyps
-            # collections.Counter(
-                    # [i.psvalue() for i in lift.senses]
-                    # [i.sense.ps for i in lift.entries]
-                                    # ).most_common()
-            )
-    log.info(
-            lift.sensesbyps
-            # collections.Counter(
-                    # [i.psvalue() for i in lift.senses]
-                    # [i.sense.ps for i in lift.entries]
-                                    # ).most_common()
-            )
-    # for key in lift.entriesbylc['en']:
-    #     if key.startswith('h'):
-    #         for e in lift.entriesbylc['en'][key]:
-    #             prettyprint(e)
-    log.info("lift.sensesbyps: {}".format(lift.sensesbyps))
-    lift.write('0.txt')
-    n=0
-    print(time.time())
-    lift.slicebylx()
-    print(time.time())
-    lift.slicebylc()
-    print(time.time())
-    lift.slicebyps()
-    print(time.time())
     exit()
