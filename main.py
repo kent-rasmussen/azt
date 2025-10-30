@@ -1553,7 +1553,7 @@ class StatusFrame(ui.Frame):
                                 'cmd':self.task.getmaxpss,
                                 'parent':line,
                                 'tt':_("change this check")}
-        self.proselabel(**self.labels['maxes2'])
+        self.proselabel(**self.labels['maxpss'])
     def updatemulticheckscope(self):
         self.labels['cvgroup']['text'].set(self.multicheckscopelabel())
     def multicheckscopelabel(self):
