@@ -2131,7 +2131,7 @@ class Form(Node):
                                             if i.tag == 'annotation'
                         }
     def annotationvaluedict(self):
-        return {name:self.annotations[name].annotationvalue(name)
+        return {name:self.annotationvalue(name)
                 for name in self.annotations}
     def annotationkeys(self):
         return list(self.annotations)
