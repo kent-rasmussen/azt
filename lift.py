@@ -1887,8 +1887,8 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
     def convertlxtolc(self,**kwargs):
         # This is a move operation, removing 'from' when done, unless 'to'
         # is both there and different
-        kwargs['from']='lexical-unit'
-        kwargs['to']='citation'
+        kwargs['fromtag']='lexical-unit'
+        kwargs['totag']='citation'
         self.convertxtoy(**kwargs)
     def convert1xto1y(self,entry,lang=None,**kwargs):
         if kwargs['fromtag'] in ['definition','gloss']:
@@ -1950,9 +1950,12 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                         to.textvaluebylang(lang,rx.glossdeftoform(fft))
                         # to.text=rx.glossdeftoform(fft.text)
                     else:
-                        to.text=fft.text
+                        to.textvaluebylang(lang,fft)
                 if (to.textvaluebylang(lang) == fft and not kwargs.get('keep')):
-                    fft.textvaluebylang('')
+                    try:
+                        ff.textvaluebylang(lang,'')
+                    except AttributeError:
+                        ff.textvalue('')
                 if (f.tag in ['definition','gloss'] and
                             to.tag == 'citation'):
                     return # just do one
