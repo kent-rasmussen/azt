@@ -5518,14 +5518,15 @@ class TaskChooser(TaskDressing,ui.Window):
                     [i[1] for i in tasktuples]))
         return tasktuples
     def convertlxtolc(self,window):
-        window.destroy()
-        backup=self.filename+'_backupBeforeLx2LcConversion'
-        program['db'].write(backup)
-        program['db'].convertlxtolc()
-        # program['db'].write(self.file.name+str(now()))
-        program['db'].write()
-        conversionlogfile=logsetup.writelzma()
-        ErrorNotice(_("The conversion is done now, so {0} will quit. You may "
+        try:
+            window.destroy()
+            backup=self.filename+'_backupBeforeLx2LcConversion'
+            program['db'].write(backup)
+            program['db'].convertlxtolc()
+            # program['db'].write(self.file.name+str(now()))
+            program['db'].write()
+            conversionlogfile=logsetup.writelzma()
+            ErrorNotice(_("The conversion is done now, so {0} will quit. You may "
                     "want to inspect your current file ({1}) and the backup "
                     "({2}) to confirm this did what you wanted, before "
                     "opening {0} again. In case there are any issues, the "
@@ -5535,7 +5536,10 @@ class TaskChooser(TaskDressing,ui.Window):
                                                 conversionlogfile),
                     title=_("Conversion Done!"),
                     wait=True)
-        self.restart()
+            self.restart()
+        except Exception as e:
+            ErrorNotice(_(f"There was a problem converting fields as you asked; you "
+                "should fix this before moving on."))
     def asktoconvertlxtolc(self):
         title=_("Convert lexeme field data to citation form fields?")
         url='{}/CITATIONFORMS.md'.format(program['docsurl'])
