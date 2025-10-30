@@ -3138,7 +3138,7 @@ class Settings(object):
         # log.info("Distinguishing: \n{}".format(
         #         '\n'.join([k+': '+str(self.distinguish[k]) for k in self.distinguish])
         #         ))
-        self.setupCVrxs()
+        self.setupCVrxs() #creates self.s and self.rxdict
         for ps in program['db'].pss: #45s on English db
             self.getprofilesbyps(ps)
         """Do I want this? better to keep the adhoc groups separate"""
@@ -3387,7 +3387,7 @@ class Settings(object):
         if cvt == 'T': #we need to be able to iterate over cvt, to rebuild
             fn=Tone.getsensegroup
         else:
-            fn=Segments.getsensegroup
+            fn=Segments.getsensegroup #This pulls from annotation, not form
         """I think this is the problem why valid groupslike aʲ are getting dropped."""
         """continue here"""
         for sense in senses:
@@ -12948,7 +12948,6 @@ class SortGroupButtonFrame(ui.Frame):
             self.makerefreshbutton()
     """buttons"""
     def labelbutton(self):
-        log.info("Making Label button")
         self.label=ui.Label(self, text=self._text,
                     column=1, row=0, sticky='ew',
                     **self.buttonkwargs()
