@@ -1509,6 +1509,8 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                     'mp', 'nt', 'nk', 'ŋk',
                     # 'kw','tw',
                     'Pk','Pw' #tsh
+                    'pʰ','tʰ','kʰ','qʰ',
+                    'p̚', 't\u031A','k\u031A','q\u031A',#IPA
                     ] #gnd
         c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k','q',
                     'ç' #French
@@ -1517,23 +1519,28 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         c['fvd'][2]=['bh','vh','zh',
                     # 'zw' #gnd
                     ]
-        c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ'] #problems w x?
+        c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ','ʑ'] #problems w x?
         c['f']={}
         c['f'][3]=['sch']
         c['f'][2]=['ch','ph','sh','hh','pf','bv','ff','sc','ss','th',
                     # 'hw','sw' #gnd
                     ]
         #Assuming x is voiceless, per IPA and most useage...
-        c['f'][1]=['F','f','s','ʃ','θ','x','h'] #not 'S'
+        c['f'][1]=['F','f','s','ʃ','θ','x','h', #not 'S'
+                    'ɦ','χ','ʂ','ɕ','ʁ','ʑ','ʐ' #IPA
+                ]
         c['avd']={}
-        c['avd'][2]=['dj','dz','dʒ']
-        c['avd'][3]=['ndz',
-                    # 'dzw' #gnd
-                    ]
+        c['avd'][2]=['dj','dz','dʒ','dʐ','dʑ']
+        c['avd'][3]=['n'+i for i in c['avd'][2]]
+        # c['avd'][3]=['ndz','ndʐ','ndʑ'
+        #             # 'dzw' #gnd
+        #             ]
         # c['avd'][4]=['ndzw'] #gnd
         c['a']={}
+        c['a'][2]=['ts','tʃ','tʂ','tɕ']
         c['a'][3]=['chk','tch']
-        c['a'][2]=['ts','tʃ']
+        c['a'][3].extend([i+'ʰ' for i in c['a'][2]])
+        c['a'][3].extend(['n'+i for i in c['a'][2]])
         c['lfvd']={}
         # c['lfvd'][3]=['zlw']
         c['lfvd'][2]=['zl']
@@ -1545,10 +1552,11 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         c['pn']={}
         """If these appear, they should always be single consonants."""
         c['pn'][2]=['ᵐb','ᵐp','ᵐv','ᵐf','ⁿd','ⁿt','ᵑg','ⁿg','ᵑg','ⁿk','ᵑk',
-                    'ⁿj','ⁿs','ⁿz']
+                    'ⁿj','ⁿs','ⁿz',
+                ]
         self.hypotheticals=x={} #dict to put all hypothetical segements in, by category
         c['G']={1:['ẅ','y','Y','w','W']}
-        c['N']={1:['m','M','n','ŋ','ɲ','ɱ']} #'N', messed with profiles
+        c['N']={1:['m','M','n','ŋ','ɲ','ɱ','ɳ']} #'N', messed with profiles
         c['N'][2]=['mm','ŋŋ','ny','gn','nn']
         c['N'][3]=["ng'"]
         """Non-Nasal/Glide Sonorants"""
@@ -1601,7 +1609,8 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 'â', 'ê', 'î', 'ô', 'û',
                 'Â', 'Ê', 'Î', 'Ô', 'Û',
                 'ã', 'ẽ', 'ĩ', 'õ', 'ũ',
-                'œ','ë' #French
+                'œ','ë', #French
+                'ɯ', 'ɤ', 'ˠ', 'ø' #IPA
                 ]
         x['Vdg']=['ou','ei','ɨʉ','ai', #requested by bfj
                 'óu','éi','ɨ́ʉ','ái',
@@ -1821,8 +1830,10 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                             self.segmentsnotinregexes[lang][x]=[form]
                         # log.debug('Missing {} from {} {}'.format(x,lang,form))
             if len(self.segmentsnotinregexes[lang]) > 0:
-                log.info("The following segments are not in your {} "
-                "regex's: {}".format(lang, self.segmentsnotinregexes[lang]))
+                log.info("Some symbols do not appear as a unit in "
+                    f"your {lang} regex's. This is fine if they exist with "
+                    "other symbols exclusively: "
+                    f"{self.segmentsnotinregexes[lang]}")
             else:
                 print("No problems!")
                 log.info(_("Your regular expressions look OK for {} (there are "
