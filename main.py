@@ -2243,8 +2243,6 @@ class Settings(object):
             # fns['toneframes']=program['toneframes']
             # fns['status']=program['status']
             fns['aztrepourls']=program['repo'].remoteurls
-            fns['giturls']=self.repo['git'].remoteurls
-            fns['hgurls']=self.repo['hg'].remoteurls
             fns['ps']=program['slices'].ps
             fns['profile']=program['slices'].profile
             fns['alphabet_order']=self.alpha_order
@@ -2255,6 +2253,8 @@ class Settings(object):
             fns['profilecounts']=program['slices'].slicepriority
             fns['asr_repos']=program['soundsettings'].asr_repo_tally
             fns['asr_kwargs']=program['soundsettings'].asr_kwarg_dict
+            fns['giturls']=self.repo['git'].remoteurls
+            fns['hgurls']=self.repo['hg'].remoteurls
         except Exception as e:
             log.error("Only finished settingsobjects up to {} ({})".format(fns.keys(),e))
             return []
