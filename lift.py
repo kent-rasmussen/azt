@@ -2252,7 +2252,7 @@ class FormParent(Node):
             return
         return self.forms[lang].textvalue(value)
     def annotationvaluedictbylang(self,lang):
-        self.forms[lang].annotationvaluedict()
+        return self.forms[lang].annotationvaluedict()
     def annotationkeysbylang(self,lang):
         lang=self.getlang(lang) #This might be better more internally
         try:
