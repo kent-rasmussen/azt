@@ -2263,7 +2263,7 @@ class FormParent(Node):
             log.error("Exception! ({})".format(e))
     def annotationkeyinlang(self,check,lang=None):
         lang=self.getlang(lang) #This might be better more internally
-        return check in self.annotationkeysbylang(lang)
+        return self.annotationkeysbylang(lang) and check in self.annotationkeysbylang(lang)
     def annotationvaluebylang(self,lang,name,value=None):
         lang=self.getlang(lang) #This might be better more internally
         try:
