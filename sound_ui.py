@@ -231,7 +231,8 @@ class RecordnTranscribeButtonFrame(RecordButtonFrame):
             self.tone_melody=ui.Label(scrolling_content,
                                     text=self.recorder.tone_melody,
                                     ipadx=20, #ipady=15,
-                                    row=r, column=0, colspan=2
+                                    row=self.grid_size()[1],
+                                    column=0, colspan=2
                                     )
         # log.info(f"scrolling_content size: {scrolling_content.grid_size()}")
         if not sum(scrolling_content.grid_size()):
