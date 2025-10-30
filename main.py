@@ -7370,12 +7370,16 @@ class WordCollectionwRecordings(WordCollection,Record):
         content=self.wordframe.recordFrame.recorder.transcriptions
         log.info(f"Recorder returned {len(content)} transcriptions")
         if len(content) == 1:
-            self.var.set(content[0][1]) #value of first (only) option
+            self.var.set(list(content.values())[0]) #value of first (only) option
             return
         c,r=self.wordframe.recordFrame.grid_size()
         self.wordframe.draftFrame=ui.Frame(self.wordframe.recordFrame,
                                             column=c,
                                             row=0
+                                        )
+        self.wordframe.toneFrame=ui.Label(self.wordframe.recordFrame,
+                                            column=c,
+                                            row=1
                                         )
         # log.info(f"{content=}")
         content=sorted(content.items(),key=lambda x: len(x[1]))
@@ -7393,6 +7397,11 @@ class WordCollectionwRecordings(WordCollection,Record):
             )
             buttons+=1
         self.instructions2['text']=instructions2
+        if self.transcription_tone_var.get():
+            self.wordframe.toneFrame['text']=self.transcription_tone_var.get()
+        else:
+            self.wordframe.toneFrame['text']=''
+
     def draft_entry(self,repo,value,*args):
         # This just fills in the visible field. Dictionary may be
         # overwritten on confirmation later
@@ -7400,6 +7409,7 @@ class WordCollectionwRecordings(WordCollection,Record):
         # automatically, so it should always overwrite the entry field
         program['soundsettings'].tally_asr_repo(repo)
         self.var.set(value)
+        self.update_idletasks()
         program['settings'].storesettingsfile(setting='soundsettings')
         log.info(program['soundsettings'].asr_repo_tally())
     def store_phonetic(self,*args):
