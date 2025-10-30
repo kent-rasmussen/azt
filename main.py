@@ -6320,6 +6320,7 @@ class Sound(object):
     def setcontext(self,context=None):
         TaskDressing.setcontext(self)
         self.context.menuitem(_("Sound settings"),self._configure_sound)
+        self.analang=program['db'].analang
     def __init__(self):
         self.audiodir=program['settings'].audiodir
         self.audiolang=program['params'].audiolang()
