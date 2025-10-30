@@ -3251,7 +3251,20 @@ class Settings(object):
         # log.info("compileCVrxforsclass RXs: {}".format(self.rx))
     def setupCVrxs(self):
         self.slists() #makes s; depends on polygraphs
-        # log.info(f"self.s: {self.s[program['params'].analang()]}")
+        analang=program['db'].analang
+        glyphs_present=program['status'].all_groups_verified_anywhere()
+        for cvt in glyphs_present:
+            if cvt == 'V':
+                there=self.s[analang][cvt]
+            else:
+                there=[i
+                        for k in ({'C'}|{ki for ki in self.distinguish
+                            if not self.distinguish[ki]})&set(self.s[analang])
+                        for j in self.s[analang][k]
+                        if k in self.s[analang]
+                        for i in j
+                    ]
+            self.s[analang][cvt].extend(glyphs_present[cvt]-set(there))
         self.rxdict=rx.RegexDict(distinguish=self.distinguish,
                                 interpret=self.interpret,
                                 sdict=self.s[program['db'].analang],
