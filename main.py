@@ -4594,7 +4594,8 @@ class TaskDressing(HasMenus,ui.Window):
             ui.Label(window.frame, text=_('What ({}) syllable profile do you '
                                     'want to work with?'.format(ps))
                                     ).grid(column=0, row=0)
-            optionslist = [(x,profilecounts[(x,ps)]) for x in profiles]
+            optionslist = [{'code':x,'description':profilecounts[(x,ps)]} for x in profiles]
+            log.info(optionslist)
             """What does this extra frame do?"""
             window.scroll=ui.Frame(window.frame)
             window.scroll.grid(column=0, row=1)
