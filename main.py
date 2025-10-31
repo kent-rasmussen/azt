@@ -5656,13 +5656,16 @@ class TaskChooser(TaskDressing,ui.Window):
             enough=6 #for demonstrating; is 25 a reasonable minimum?
         # log.info("looking at sorts now: {}".format(sorts))
         for l in sorts:
-            maybeals=[i for i in program['db'].audiolangs if l in i]
-            if maybeals:
-                al=maybeals[0]
-                log.info("Using audiolang {} for analang {}"
-                            "".format(al,l))
+            if program['db'].audiolang:
+                al=program['db'].audiolang
             else:
-                log.info(_("Couldn't find plausible audiolang (among {}) "
+                maybeals=[i for i in program['db'].audiolangs if l in i]
+                if maybeals:
+                    al=maybeals[0]
+                    log.info("Using audiolang {} for analang {}"
+                                "".format(al,l))
+                else:
+                    log.info(_("Couldn't find plausible audiolang (among {}) "
                         "for analang {}").format(program['db'].audiolangs,l))
             if al not in sortsrecorded:
                 sortsrecorded[al]={}
