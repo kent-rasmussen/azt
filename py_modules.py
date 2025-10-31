@@ -94,7 +94,7 @@ def pip_install(installs=[],secondtry=False):
                         errors=[i for i in o.splitlines() if "ERROR:" in i]
                         log.info(_("Please make sure your internet is connected, then "
                         "click {}\n{}".format(_("OK"),'\n'.join(errors))))
-                        ErrorNotice(text=t,parent=ui.Root(),wait=True)
+                        # ErrorNotice(text=t,parent=ui.Root(),wait=True)
                         log.info("Trying again, hopefully with internet")
                         try:
                             o=subprocess.check_output(pyargs,shell=False,
@@ -108,7 +108,7 @@ def pip_install(installs=[],secondtry=False):
                         except Exception as e:
                             log.info(_("I'm going to give up now, sorry!\n{}"
                                 "".format('\n'.join(errors))))
-                            ErrorNotice(text=t,parent=ui.Root(),wait=True)
+                            # ErrorNotice(text=t,parent=ui.Root(),wait=True)
                             log.error("Looks like there was an error, "
                                         "after all: {}".format(e))
         if not thisinstalled:
