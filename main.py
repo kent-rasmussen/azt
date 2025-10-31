@@ -16259,6 +16259,10 @@ def pythonmodules(secondtry=False):
             ['Pillow'],
             ['lxml'],
             ['psutil'],
+            ['soundfile'],
+            ['samplerate'],
+            ['langcode'],
+            ['transformers'],
             ['packaging'],
             ['patiencediff']
             ]
