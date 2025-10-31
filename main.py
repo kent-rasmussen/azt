@@ -94,7 +94,7 @@ try:
     program['nosound']=False
 except Exception as e:
     import py_modules
-    py_modules.pip_install(['pyaudio','wav','soundfile','samplerate','whisper'])
+    py_modules.pip_install(['pyaudio','wave','soundfile','samplerate','whisper'])
     try:
         import sound
         import transcriber
