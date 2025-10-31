@@ -1131,7 +1131,8 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         elif tryname in self.analangs:
             log.info(_("Found file name base in possible analysis languages; "
                     "assuming that and moving on. To select another "
-                    "analysis language for this database, rename it first."))
+                    "analysis language for this database, change it in the "
+                    "settings."))
             self.analangs=[tryname]
         elif not self.analangs:
             if langtags.tag_is_valid(tryname):
