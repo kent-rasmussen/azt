@@ -1253,60 +1253,6 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.nentrieswlexemedata={lang:len(self.entrieswlexemedata[lang])
                                     for lang in self.entrieswlexemedata
                                     }
-    # def getfieldswithsoundfilesandtranscriptions(self):
-    #     for ftype in ['lc','lx']:
-    #         for profile in ['CVC','CVCVC','CVCV','CVCCVC']:
-    #             self.cvverificationdone(profile,ftype)
-    #     # self.nodes.findall('entry/{}/form[@lang="{}"]/text'
-    #     #                     ''.format(fieldopts[field],lang))
-    #     #                     if i.text
-    #     #                     ]
-    #     separate out functions for lexical:
-    #             fieldopts=['citation', 'lexical-unit']
-    #     examples: fieldopts=['sense/example']
-    #             fieldopts=['sense/example', 'citation', 'lexical-unit']
-    #     rows={}
-    #     for F in FormParent:
-    #         value[lang]=F.textvaluebylang(lang)
-    #     output+=[(value[lang1],value[lang2])]
-    #     for f in fieldopts:
-    #         rows[f]={}
-    #         for lang in self.analangs:
-    #             rows[f][lang]={}
-    #             for audiolang in self.audiolangs:
-    #                 # This needs to be brought into the class below:
-    #                 for l in [lang,audiolang]:
-    #                     FormParent.hastextbylang(l)
-    #                 rows[f][lang][audiolang]=[i for i in self.nodes.findall(
-    #                                     f'entry/{f}/form[@lang="{lang}"]/text'
-    #                                     f'/../../form[@lang="{audiolang}"]/text'
-    #                                     f'/../..'
-    #                                                     )
-    #                                     if getattr(i.find(
-    #                                     f'form[@lang="{lang}"]/text'
-    #                                     f'/../../form[@lang="{audiolang}"]/text'
-    #                                     # f'/../..'
-    #                                     ),'text',None)
-    #                                     and getattr(i.find(
-    #                                     f'form[@lang="{audiolang}"]/text'
-    #                                     f'/../../form[@lang="{lang}"]/text'
-    #                                     # f'/../..'
-    #                                     ),'text',None)
-    #                                         ]
-    #     # log.info(rows)
-    #     outrows=[]
-    #     for f in rows:
-    #         for lang in rows[f]:
-    #             lstring=f'form[@lang="{lang}"]/text'
-    #             for al in rows[f][lang]:
-    #                 alstring=f'form[@lang="{al}"]/text'
-    #                 log.info(f"{len(rows[f][lang][al])} {f} rows for "
-    #                             f"lang:{lang}, audiolang:{al}")
-    #                 for r in rows[f][lang][al]:
-    #                     outrows+=[(f"{r.find(alstring).text}",
-    #                         # ','
-    #                         f"{r.find(lstring).text}")]
-    #     return outrows
     def getfieldswsoundfiles(self):
         """This is NOT sensitive to sense level fields, which is where we store
         analysis and verification. This should just pick up entry form fields,
