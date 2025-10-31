@@ -1096,6 +1096,17 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.write_error=error
     def getanalangs(self,analang=None):
         """These are ordered by frequency in the database"""
+        def e_pluribus_unum(langtype):
+            langtypepl=langtype+'s'
+            if len(getattr(self,langtypepl)) == 1:
+                setattr(self,langtype,getattr(self,langtypepl)[0])
+                log.info(f'One {langtype} found: {getattr(self,langtype)}')
+            elif (hasattr(self,'analang') and
+                    self.analang+codes[langtypepl] in getattr(self,langtypepl)):
+                setattr(self,langtype,self.analang+codes[langtypepl])
+            else:
+                log.info(f'Multiple/no {langtypepl}: {getattr(self,langtypepl)}')
+                setattr(self,langtype,None)#fix this later, but have attr
         langs=[i.get('lang') for i in self.nodes.findall('entry/citation/form'
                                     )+self.nodes.findall('entry/lexical-unit/form'
                                     )+self.nodes.findall('entry/pronunciation/form')]
@@ -1133,18 +1144,16 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         # log.info(_(f"Possible analysis language codes found: {self.analangs}"))
         for glang in set(['fr','en']) & set(self.analangs):
             log.info(f"Examples of LWC lang {glang} found; is this correct?")
+        e_pluribus_unum('analang')
         for l in ['audiolangs','tonelangs','phoneticlangs']:
             if not getattr(self,l):
                 log.debug(_(f'No {l} found in Database; creating one '
                             'for each analysis language.'))
                 setattr(self,l,[i+codes[l] for i in getattr(self,'analangs')])
-        for l in ['analang','audiolang','tonelang','phoneticlang']:
-            if len(getattr(self,l+'s')) == 1:
-                setattr(self,l,getattr(self,l+'s')[0])
-                log.info(f'One {l} found: {getattr(self,l)}')
-            else:
-                log.info(f'Multiple/no {l}s: {getattr(self,l+'s')}')
-                setattr(self,l,None)#fix this later, but have attr
+            elif self.analang and self.analang+codes[l] not in getattr(self,l):
+                getattr(self,l).append(self.analang+codes[l])
+        for l in ['audiolang','tonelang','phoneticlang']:
+            e_pluribus_unum(l)
         if l_ordered:
             log.error(_(f"Language codes {l_ordered} found in data, "
                         "but not sure what to do with them"))
