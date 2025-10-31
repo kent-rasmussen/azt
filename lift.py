@@ -3181,7 +3181,9 @@ class Entry(Node,FieldParent): # what does "object do here?"
     def move_ph_sound_to_lc(self):
         try:
             wav=self.ph.find('media').get('href')
+            ph=self.ph.textvaluebylang(lang='wmg')
             self.lc.textvaluebylang(lang=self.db.audiolang,value=wav)
+            self.lc.textvaluebylang(lang='wmg',value=ph)
         except Exception as e:
             log.info(f"Exception: ({e}; {self.guid=})")
     def __init__(self, parent, node=None, **kwargs):
