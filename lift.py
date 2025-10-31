@@ -2782,7 +2782,7 @@ class Sense(Node,FieldParent):
             return self.ftypes[ftype].annotationvaluedictbylang(lang)
         except KeyError:
             # log.info("No {} type to pull annotation dict from".format(ftype))
-            pass
+            return {}
     def nodebyftype(self,ftype):
         try:
             return self.ftypes[ftype]
