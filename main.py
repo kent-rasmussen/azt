@@ -17,7 +17,12 @@ exceptiononload=False
 exceptiononloadingmymodule=False
 import platform
 program['hostname']=platform.uname().node
-import file
+try:
+    import file
+except:
+    import py_modules
+    py_modules.pip_install(['soundfile','samplerate'])
+    import file
 if file.getfile(__file__).parent.parent.stem == 'raspy': # if program['hostname'] == 'karlap':
     program['testing']=True #eliminates Error screens and zipped logs
     me=True
@@ -42,22 +47,24 @@ information than 'DEBUG' does):
 Other levels:'WARNING','ERROR','CRITICAL'
 """
 from utilities import *
+import logsetup
+log=logsetup.getlog(__name__) #not ever a module
+logsetup.setlevel(loglevel)
 try:
-    import logsetup
-    log=logsetup.getlog(__name__) #not ever a module
-    logsetup.setlevel(loglevel)
     """My modules, which should log as above"""
     import lift
     import parser
 except Exception as e:
-    log.error("Problem importing {} module. Please report this! ({})"
-                "".format(program['name'],e))
-    exceptiononloadingmymodule=True
+    import py_modules
+    py_modules.pip_install() #limit?
+    import lift
+    import parser
 try:
     import openclipart
 except Exception as e:
-    log.error("Problem importing urllib. Is it installed? {}".format(e))
-    exceptiononload=True
+    import py_modules
+    py_modules.pip_install(['urllib'])
+    import openclipart
 # import profiles
 import setdefaults
 import xlp
@@ -65,11 +72,20 @@ try:
     import urls
     import htmlfns
 except ModuleNotFoundError as e:
-    log.error("Problem importing url module. Is urllib3 installed? {}".format(e))
-    exceptiononload=True
+    import py_modules
+    py_modules.pip_install(['urllib3'])
+    import urls
+    import htmlfns
 import executables
 import export
-import langtags
+try:
+    import langtags
+    import alphabet_chart
+except Exception as e:
+    import py_modules
+    py_modules.pip_install(['langcodes','pyautogui'])
+    import langtags
+    import alphabet_chart
 program['languages']=langtags.Languages()
 try:
     import sound
@@ -77,10 +93,17 @@ try:
     import sound_ui
     program['nosound']=False
 except Exception as e:
-    program['nosound']=True
-    log.error("Problem importing Sound/pyaudio. Is it installed? {}".format(e))
-    exceptiononload=True
-import alphabet_chart
+    import py_modules
+    py_modules.pip_install(['pyaudio','wav','soundfile','samplerate','whisper'])
+    try:
+        import sound
+        import transcriber
+        import sound_ui
+        program['nosound']=False
+    except:
+        program['nosound']=True
+        log.error("Problem importing Sound/pyaudio. Is it installed? {}".format(e))
+        exceptiononload=True
 """Other people's stuff"""
 try:
     from packaging import version
@@ -105,11 +128,14 @@ if program['tkinter']:
         import tkinter #as gui
         import tkinter.font
         import tkinter.scrolledtext
-        import tkintermod
-        tkinter.CallWrapper = tkintermod.TkErrorCatcher
     except Exception as e:
-        log.exception("Problem importing GUI/tkinter. Is it installed? %s",e)
-        exceptiononload=True
+        import py_modules
+        py_modules.pip_install() #limit?
+        import tkinter #as gui
+        import tkinter.font
+        import tkinter.scrolledtext
+    import tkintermod
+    tkinter.CallWrapper = tkintermod.TkErrorCatcher
     import ui_tkinter as ui
 """else:
     import kivy
@@ -16232,105 +16258,6 @@ def praatversioncheck():
     else:
         log.info("Praat version less than {}".format(justpraatversion))
         return False
-def pythonmodules(secondtry=False):
-    if secondtry:
-        log.info("Trying a second time, with '--force-reinstall'")
-    else:
-        log.info("Installing python dependencies")
-    if platform.system() == 'Linux':
-        log.info(_("If you have errors containing ˋportaudioˊ above, you should "
-            "install pyaudio with your package manager."))
-    log.info("FYI, looking for this platform: {}_{}".format(
-                                                        platform.system(),
-                                                        platform.processor()))
-    # The above is there to see what version python will be looking for, and
-    # why it didn't find what's there. It doesn't input to any of the following.
-    installfolder='modulestoinstall/'
-    installedsomething=False
-    if not program['python']:
-        log.error("Can't find python; how am I doing this? Put it in your PATH")
-        sys.exit()
-    """Migrate this to `bin/pip install -r requirements.txt`"""
-    installs=[
-            ['--upgrade', 'pip', 'setuptools', 'wheel'], #this is probably never needed
-            ['urllib3'],
-            ['numpy'],
-            ['pyaudio'],
-            ['Pillow'],
-            ['lxml'],
-            ['psutil'],
-            ['soundfile'],
-            ['samplerate'],
-            ['langcode'],
-            ['transformers'],
-            ['packaging'],
-            ['patiencediff']
-            ]
-    log.info("Installs: {}".format(', '.join([i for j in installs for i in j])))
-    for install in installs:
-        thisinstalled=False
-        pyargs=[program['python'], '-m', 'pip', 'install',
-        '-f', installfolder, #install the one in this folder, if there
-        '--no-index' #This stops it from looking online
-        ]
-        npyargs=len(pyargs)
-        if secondtry:
-            pyargs.extend(['--force-reinstall'])
-        # if install[0] == 'pyaudio':
-        #     install[0]+='==0.2.13'
-        pyargs.extend(install)
-        log.info("Running `{}`".format(' '.join(pyargs)))
-        try:
-            o=subprocess.check_output(pyargs,shell=False,
-                                        stderr=subprocess.STDOUT)
-            o=stouttostr(o)
-            if not o or "Successfully installed" in o:
-                log.info("looks like it was successful; so I'm going to reboot "
-                            "in a bit. Output follows:")
-                thisinstalled=installedsomething=True
-        except subprocess.CalledProcessError as e:
-            o=stouttostr(e.output)
-            if 'Could not find a version' in o:
-                pyargs.remove('--no-index')
-                log.info("Running `{}`".format(' '.join(pyargs)))
-                try:
-                    o=subprocess.check_output(pyargs,shell=False,
-                                            stderr=subprocess.STDOUT)
-                    o=stouttostr(o)
-                    if not o or "Successfully installed" in o:
-                        log.info("looks like it was at last successful; so "
-                                "I'm going to reboot in a bit. Output follows:")
-                        thisinstalled=installedsomething=True
-                except subprocess.CalledProcessError as e:
-                    o=stouttostr(e.output)
-                    if "Could not find a version" in o:
-                        errors=[i for i in o.splitlines() if "ERROR:" in i]
-                        t=_("Please make sure your internet is connected, then "
-                        "click {}\n{}".format(_("OK"),'\n'.join(errors)))
-                        ErrorNotice(text=t,parent=ui.Root(),wait=True)
-                        log.info("Trying again, hopefully with internet")
-                        try:
-                            o=subprocess.check_output(pyargs,shell=False,
-                                                stderr=subprocess.STDOUT)
-                            o=stouttostr(o)
-                            if not o or "Successfully installed" in o:
-                                log.info("looks like it was at last successful;"
-                                        " so I'm going to reboot in a bit. "
-                                        "Output follows:")
-                                thisinstalled=installedsomething=True
-                        except Exception as e:
-                            t=_("I'm going to give up now, sorry!\n{}"
-                                "".format('\n'.join(errors)))
-                            ErrorNotice(text=t,parent=ui.Root(),wait=True)
-                            log.error("Looks like there was an error, "
-                                        "after all: {}".format(e))
-        if not thisinstalled:
-            log.info("Nothing installed. Output follows:")
-        log.info(o) #just give bytes, if encoding isn't correct
-    if installedsomething:
-        sysrestart()
-    elif not secondtry:
-        pythonmodules(secondtry=True) #force reinstalls, just once
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt): #ignore Ctrl-C
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
@@ -16426,27 +16353,6 @@ def uptodate(x):
         ]
     if [i for i in u if i in x if x]:
             return True
-def stouttostr(x):
-    # This fn is necessary (and problematic) because not all computers seem to
-    # reply to subprocess.check_output with the same kind of data. I have even
-    # seen a computer say it was using unicode, but not return unicode
-    # data (I think because it was replacing translated text, but didn't
-    # replace the same encoding). Another dumb thing that I need to account for.
-    if type(x) is str:
-        return x.strip()
-    if not sys.stdout.encoding:
-        log.error("I can't tell the terminal's encoding, sorry!")
-    else:
-        try:
-            return x.decode(sys.stdout.encoding,
-                            errors='backslashreplace').strip()
-        except Exception as e:
-            #if the computer doesn't know what encoding it is actually using,
-            # this should give us some info to debug.
-            log.error(_("Can't decode this (in {}; {}):"
-                        ).format(sys.stdout.encoding, e))
-            log.error(x)
-    return x #not sure if this is a good idea, but this should probably raise...
 def updateazt(event=None,**kwargs): #should only be parent, for errorroot
     def tryagain(event=None):
         updateazt(**kwargs)
