@@ -4503,6 +4503,7 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/Eton.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/bo/bo.lift"
     filename="/home/kentr/Assignment/Tools/WeSay/wmg/wmg.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/Demo_gnd/gnd.lift"
@@ -4526,6 +4527,7 @@ if __name__ == '__main__':
     ftype='pl'
     # for e in lift.entries:
     #     e.move_ph_sound_to_lc()
+    # lift.convertxtoy(lang='bo',fromtag='gloss', totag='citation')
     # sense=lift.sensedict['daytime_b27c251c-090e-4427-aa86-22b745409f8d']
     # sense=lift.sensedict['body_791094f2-a82b-4650-81d8-c3b6145d2be4']
     # sense=lift.sensedict['head_a8516acf-606c-4796-8fed-75b0c0f2c583']
