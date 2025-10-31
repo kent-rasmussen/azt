@@ -49,6 +49,7 @@ def pip_install(installs=[],secondtry=False):
             ['transformers'],
             ['langcodes'],
             ['pyautogui'],
+            ['whisper'],
             ['packaging'],
             ['patiencediff']
             ]
@@ -91,8 +92,8 @@ def pip_install(installs=[],secondtry=False):
                     o=utilities.stouttostr(e.output)
                     if "Could not find a version" in o:
                         errors=[i for i in o.splitlines() if "ERROR:" in i]
-                        t=_("Please make sure your internet is connected, then "
-                        "click {}\n{}".format(_("OK"),'\n'.join(errors)))
+                        log.info(_("Please make sure your internet is connected, then "
+                        "click {}\n{}".format(_("OK"),'\n'.join(errors))))
                         ErrorNotice(text=t,parent=ui.Root(),wait=True)
                         log.info("Trying again, hopefully with internet")
                         try:
@@ -105,8 +106,8 @@ def pip_install(installs=[],secondtry=False):
                                         "Output follows:")
                                 thisinstalled=installedsomething=True
                         except Exception as e:
-                            t=_("I'm going to give up now, sorry!\n{}"
-                                "".format('\n'.join(errors)))
+                            log.info(_("I'm going to give up now, sorry!\n{}"
+                                "".format('\n'.join(errors))))
                             ErrorNotice(text=t,parent=ui.Root(),wait=True)
                             log.error("Looks like there was an error, "
                                         "after all: {}".format(e))
