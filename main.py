@@ -3020,7 +3020,7 @@ class Settings(object):
             """These defaults are not settable, yet:"""
             if var in ["̀",'ː']: #typically word-forming
                 self.distinguish[var]=False
-            if var in ['<','=']: #typically not word-forming
+            if var in ['<','=','.']: #typically not word-forming
                 self.distinguish[var]=True
         for var in ['NC','CG','CS','VV','VN']:
             if ((var not in self.interpret) or
@@ -3230,7 +3230,7 @@ class Settings(object):
     def setvalidcharacters(self):
         """These are sent to rxdict, but the top two are also used here"""
         self.profilesegments=['N','G','S','D','C','V','ʔ']
-        self.profilelegit=['̃','N','G','S','D','C','Ṽ','V','ʔ','ː',"̀",'=','<']
+        self.profilelegit=['̃','N','G','S','D','C','Ṽ','V','ʔ','ː',"̀",'=','<','.']
         self.invalidchars=[' ','...',')','(<field type="tone"><form lang="gnd"><text>']
     def addtoCVrxs(self,s):
         """This method is just to add a new grapheme while running, so we

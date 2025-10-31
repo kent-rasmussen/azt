@@ -1502,7 +1502,11 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         c['pvd'][3]=[
                     # 'ndw', 'ŋgw' #gnd
                     ]
-        c['pvd'][1]=['b','B','d','g','ɡ'] #,'G' messes with profiles
+        c['pvd'][1]=['b','B','d','g','ɡ', #,'G' messes with profiles
+                    'ག', #/ɡa/
+                    'ད', #/da/
+                    'བ', #/ba/
+                    ]
         c['p']={}
         c['p'][2]=['kk','kp','cc','pp','pt','tt','ck',
                     'qu', #French
@@ -1513,13 +1517,22 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                     'p̚', 't\u031A','k\u031A','q\u031A',#IPA
                     ] #gnd
         c['p'][1]=['p','P','ɓ','Ɓ','t','ɗ','ɖ','c','k','q',
-                    'ç' #French
+                    'ç', #French
+                    'ཀ', #/ka/
+                    'ཁ', #/kʰa/
+                    'ཏ', #/ta/
+                    'ཐ', #/tʰa/
+                    'པ', #/pa/
+                    'ཕ', #/pʰa/
                     ]
         c['fvd']={}
         c['fvd'][2]=['bh','vh','zh',
                     # 'zw' #gnd
                     ]
-        c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ','ʑ'] #problems w x?
+        c['fvd'][1]=['j','J','v','z','Z','ʒ','ð','ɣ','ʑ',
+                    'ཇ', #/dʒa/
+                    'ཛ', #/dza/
+                    ] #problems w x?
         c['f']={}
         c['f'][3]=['sch']
         c['f'][2]=['ch','ph','sh','hh','pf','bv','ff','sc','ss','th',
@@ -1528,6 +1541,16 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         #Assuming x is voiceless, per IPA and most useage...
         c['f'][1]=['F','f','s','ʃ','θ','x','h', #not 'S'
                     'ɦ','χ','ʂ','ɕ','ʁ','ʑ','ʐ' #IPA
+                    'ཞ','ཞ', #/ʒa/
+                    'ཟ', #/za/
+                    'ར', #/ra/
+                    'ལ', #/la/
+                    'ཧ', #/ha/
+                    'འ', #/ɦa/
+                    'ཤ', #/ʃa/
+                    'ས', #/sa/
+                    'ཡ', #/ja/ #This and the next are here because these are
+                    'ཝ', #/wa/ #clearly consonants, in this syllabic form
                 ]
         c['avd']={}
         c['avd'][2]=['dj','dz','dʒ','dʐ','dʑ']
@@ -1537,6 +1560,11 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         #             ]
         # c['avd'][4]=['ndzw'] #gnd
         c['a']={}
+        c['a'][1]=['ཅ', #/tʃa/
+                    'ཆ', #/tʃʰa/
+                    'ཙ', #/tsa/
+                    'ཚ', #/tsʰa/
+                    ]
         c['a'][2]=['ts','tʃ','tʂ','tɕ']
         c['a'][3]=['chk','tch']
         c['a'][3].extend([i+'ʰ' for i in c['a'][2]])
@@ -1556,7 +1584,12 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 ]
         self.hypotheticals=x={} #dict to put all hypothetical segements in, by category
         c['G']={1:['ẅ','y','Y','w','W']}
-        c['N']={1:['m','M','n','ŋ','ɲ','ɱ','ɳ']} #'N', messed with profiles
+        c['N']={1:['m','M','n','ŋ','ɲ','ɱ','ɳ',#'N', messed with profiles
+                    'ང', #/ŋa/
+                    'ན', #/na/
+                    'མ', #/ma/
+                    'ཉ', #/ɲa/
+                    ]}
         c['N'][2]=['mm','ŋŋ','ny','gn','nn']
         c['N'][3]=["ng'"]
         """Non-Nasal/Glide Sonorants"""
@@ -1611,6 +1644,11 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 'ã', 'ẽ', 'ĩ', 'õ', 'ũ',
                 'œ','ë', #French
                 'ɯ', 'ɤ', 'ˠ', 'ø' #IPA
+                'ཨ','ཨ', #/a/
+                'ི', #/i/
+                'ུ', #/u/
+                'ེ', #/e/
+                'ོ', #/o/
                 ]
         x['Vdg']=['ou','ei','ɨʉ','ai', #requested by bfj
                 'óu','éi','ɨ́ʉ','ái',
@@ -1630,7 +1668,8 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 ,"̈" #COMBINING DIAERESIS
                 ] #"à","á","â","ǎ","ā","ã"[=́̀̌̂̃ #vowel diacritics
         x['ː']=[":","ː"] # vowel length markers
-        x['=']=['=','-'] #affix boundary markers
+        x['=']=['=','-','།','་'] #affix boundary markers (incl Tibetan)
+        x['.']=['་']
         x['<']=['<','&lt;','&gt;','>','›','»','‹','«','',
                 # ';','"','.' #pull these; they shouldn't appear in words
                 ] #macron here?
