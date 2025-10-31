@@ -8,11 +8,8 @@ import logsetup
 log=logsetup.getlog(__name__)
 # logsetup.setlevel('INFO',log) #for this file
 logsetup.setlevel('DEBUG',log) #for this file
-try:
-    import asr
-    log.info("ASR loaded OK")
-except Exception as e:
-    log.error("Exception importing ASR: {}".format(e))
+import asr
+log.info("ASR loaded OK")
 # import soundfile
 import utilities as utils
 import file
