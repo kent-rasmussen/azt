@@ -170,7 +170,8 @@ class Languages(dict):
         self.load_json()
     def load_json(self):
         try:
-            with open(localfile(self.url.split('/')[-1]),'r') as f:
+            with open(localfile(self.url.split('/')[-1]), 'r',
+                                encoding="utf8") as f:
                 data = json.load(f)
         except FileNotFoundError:
             self.reload_json()
