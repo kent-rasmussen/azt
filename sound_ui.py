@@ -241,9 +241,9 @@ class RecordnTranscribeButtonFrame(RecordButtonFrame):
         try:
             self.transcriptionframe.content.destroy()
             self.transcriptionframe.destroy()
-            self.tone_melody.destroy()
             del self.recorder.transcriptions
             del self.recorder.transcriptions_ipa
+            self.tone_melody.destroy()
             del self.recorder.tone_melody
         except Exception as e:
             log.info(f"transcription destruction failed ({e})")
