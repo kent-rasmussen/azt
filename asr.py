@@ -4,6 +4,7 @@ import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
 import numpy
+# import soundfile
 import whisper
 import torch
 import datetime, copy
@@ -355,6 +356,9 @@ class ASRtoText(object):
                     f"sister lang {self.sister_language}; not inferring.")
                 return self.do_not_return_data()
             self.lang=None
+            # data,samplerate=soundfile.read(input_file)
+            # self.raw = self.model(data, batch_size=8)['text']
+            #above two or below
             self.raw = self.model(input_file, batch_size=8)['text']
             if self.repo in self.models_that_give_IPA:
                 self.ipa=self.raw
