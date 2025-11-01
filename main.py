@@ -21,7 +21,7 @@ try:
     import file
 except:
     import py_modules
-    py_modules.pip_install(['soundfile','samplerate'])
+    py_modules.pip_install(['soundfile','librosa'])
     import file
 if file.getfile(__file__).parent.parent.stem == 'raspy': # if program['hostname'] == 'karlap':
     program['testing']=True #eliminates Error screens and zipped logs
@@ -50,15 +50,9 @@ from utilities import *
 import logsetup
 log=logsetup.getlog(__name__) #not ever a module
 logsetup.setlevel(loglevel)
-try:
-    """My modules, which should log as above"""
-    import lift
-    import parser
-except Exception as e:
-    import py_modules
-    py_modules.pip_install() #limit?
-    import lift
-    import parser
+"""My modules, which should log as above"""
+import lift
+import parser
 try:
     import openclipart
 except Exception as e:
@@ -83,7 +77,7 @@ try:
     import alphabet_chart
 except Exception as e:
     import py_modules
-    py_modules.pip_install(['langcodes','pyautogui'])
+    py_modules.pip_install(['langcodes','urllib','pyautogui'])
     import langtags
     import alphabet_chart
 program['languages']=langtags.Languages()
@@ -94,9 +88,12 @@ try:
     program['nosound']=False
 except Exception as e:
     import py_modules
-    py_modules.pip_install(['pyaudio',
-                            # 'wave',
-                            'soundfile','librosa','torch','openai-whisper'])
+    py_modules.pip_install(['numpy', 'pyaudio',
+                            'openai-whisper',
+                            'torch',
+                            'transformers',
+                            'huggingface_hub[hf_xet]'
+                            'soundfile','librosa'])
     try:
         import sound
         import transcriber
@@ -16631,11 +16628,13 @@ if __name__ == '__main__':
                     multiprocessing.cpu_count())
     try:
         import psutil
+    except ModuleNotFoundError:
+        import py_modules
+        py_modules.pip_install(['psutil'])
+    finally:
         text+=_(", at {}Mhz").format(collections.Counter(
                                                     psutil.cpu_freq(percpu=True)
                                                     ).most_common())
-    except ModuleNotFoundError:
-        log.info("No psutil; no cpu info.")
     log.info(text)
     log.info(_("Computer identifies as {}").format(platform.uname()))
     log.info(_("Loglevel is {}; started at {}").format(loglevel,

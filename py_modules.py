@@ -47,6 +47,7 @@ def pip_install(installs=[],secondtry=False):
             ['soundfile'],
             ['librosa'],
             ['transformers'],
+            ['huggingface_hub[hf_xet]'], #allow large file download
             ['langcodes'],
             ['pyautogui'],
             # ['mysql-connector-python', 'wave'], #needed for wave
