@@ -7,7 +7,8 @@ import os
 import stat
 import platform
 import soundfile
-import samplerate
+# import samplerate
+import librosa
 import io
 import tarfile
 import logsetup
@@ -382,8 +383,12 @@ class SoundFile(soundfile.SoundFile,Buffered):
     """
     def downsampled(self,hz=None):
         if hz and self.samplerate != hz:
-            return samplerate.converters.resample(self.read(),
-                hz/self.samplerate)
+            return librosa.resample(self.read(),
+                                    orig_sr=self.samplerate,
+                                    target_sr=hz)
+             # res_type='soxr_hq', fix=True, scale=False, axis=-1, **kwargs)
+            # return samplerate.converters.resample(self.read(),
+            #     hz/self.samplerate)
         else:
             return self.read()
     def __init__(self,file): # file name or object
