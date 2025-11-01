@@ -92,6 +92,7 @@ except Exception as e:
                             'openai-whisper',
                             'torch',
                             'transformers',
+                            'ffmpeg', 'ffmpeg-python', #not sure of value, but for windows
                             'huggingface_hub[hf_xet]'])
     try:
         import sound
