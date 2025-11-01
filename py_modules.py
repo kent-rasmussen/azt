@@ -49,7 +49,7 @@ def pip_install(installs=[],secondtry=False):
             ['transformers'],
             ['langcodes'],
             ['pyautogui'],
-            ['mysql-connector-python', 'wave'], #needed for wave
+            # ['mysql-connector-python', 'wave'], #needed for wave
             # 'pymysql', #or maybe this one
             ['whisper'],
             ['packaging'],
