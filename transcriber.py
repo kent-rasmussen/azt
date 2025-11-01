@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 # coding=UTF-8
-try:
-    import sound
-except ModuleNotFoundError:
-    raise
+import sound
 import ui_tkinter as ui
 import rx
 import logsetup
