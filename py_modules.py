@@ -45,7 +45,7 @@ def pip_install(installs=[],secondtry=False):
             ['lxml'],
             ['psutil'],
             ['soundfile'],
-            ['samplerate'],
+            ['librosa'],
             ['transformers'],
             ['langcodes'],
             ['pyautogui'],
