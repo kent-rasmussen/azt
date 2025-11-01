@@ -92,8 +92,7 @@ except Exception as e:
                             'openai-whisper',
                             'torch',
                             'transformers',
-                            'huggingface_hub[hf_xet]'
-                            'soundfile','librosa'])
+                            'huggingface_hub[hf_xet]'])
     try:
         import sound
         import transcriber
