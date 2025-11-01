@@ -96,7 +96,7 @@ except Exception as e:
     import py_modules
     py_modules.pip_install(['pyaudio',
                             # 'wave',
-                            'soundfile','librosa','whisper'])
+                            'soundfile','librosa','torch','whisper'])
     try:
         import sound
         import transcriber

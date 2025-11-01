@@ -51,6 +51,7 @@ def pip_install(installs=[],secondtry=False):
             ['pyautogui'],
             # ['mysql-connector-python', 'wave'], #needed for wave
             # 'pymysql', #or maybe this one
+            ['torch'],
             ['whisper'],
             ['packaging'],
             ['patiencediff']
