@@ -87,10 +87,10 @@ except Exception as e:
     import langtags
     import alphabet_chart
 program['languages']=langtags.Languages()
+import sound
+import transcriber
+import sound_ui
 try:
-    import sound
-    import transcriber
-    import sound_ui
     program['nosound']=False
 except Exception as e:
     import py_modules
