@@ -141,7 +141,6 @@ if program['tkinter']:
     import kivy
 """
 import time
-import wave
 # #for some day...
 # from PIL import Image #, ImageTk
 #import Image #, ImageTk

@@ -3,7 +3,8 @@
 # from tkinter import Frame,Tk
 # from tkinter import Tk as tkinter.Tk
 import pyaudio
-import wave
+# import wave #not working in Windows b/c depends on MySQL-python, which is depricated
+# four functions below (that depend on wave) just return for the moment
 import logsetup
 log=logsetup.getlog(__name__)
 # logsetup.setlevel('INFO',log) #for this file
@@ -441,6 +442,7 @@ class SoundFilePlayer(object):
         format=self.pa.get_format_from_width(self.wf.getsampwidth())
         return max(format,2)
     def play(self,event=None):
+        return
         log.debug("I'm playing the recording now ({})".format(self.filenameURL))
         self.streamclose() #just in case
         timeout=5 #seconds or None
@@ -638,6 +640,7 @@ class SoundFileRecorder(object):
         else:
             block(self)
     def fileopen(self):
+        return
         #This fn is for recording, not playing
         try:
             self.wf = wave.open(str(self.file_tmp), 'wb')
@@ -665,6 +668,7 @@ class SoundFileRecorder(object):
             log.error("Nothing recorded! "
                         f"(file size: {file.getsize(self.file_tmp)})")
     def toaudiosample(self):
+        return
         import io
 
         with io.BytesIO() as self.wf16k:
@@ -758,6 +762,7 @@ class BeepGenerator(object):
         ' ':0
         }
     def compile(self,pitches='˥˥ ˩˩ ˧˩'):#' ˦˧˨˩'):
+        return
         self.wavdata=numpy.zeros(int(self.secpersylbreak*self.bitrate))
         words=str(pitches).split(' ')
         # log.info("words: {}".format(words))
