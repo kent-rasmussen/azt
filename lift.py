@@ -1599,7 +1599,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 'Â', 'Ê', 'Î', 'Ô', 'Û',
                 'ã', 'ẽ', 'ĩ', 'õ', 'ũ',
                 'œ','ë', #French
-                'ɯ', 'ɤ', 'ˠ', 'ø' #IPA
+                'ɯ', 'ɤ', 'ˠ', 'ø', #IPA
                 'ཨ','ཨ', #/a/
                 'ི', #/i/
                 'ུ', #/u/
