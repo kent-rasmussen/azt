@@ -52,7 +52,7 @@ def pip_install(installs=[],secondtry=False):
             # ['mysql-connector-python', 'wave'], #needed for wave
             # 'pymysql', #or maybe this one
             ['torch'],
-            ['whisper'],
+            ['openai-whisper'], #for import whisper
             ['packaging'],
             ['patiencediff']
             ]
