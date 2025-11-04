@@ -6253,6 +6253,8 @@ class Segments(object):
             w.makewindow()
         w.destroy() #just this window, not parent
         self.deiconify()
+    def assign_groups_to_macrogroups(self):
+        self.name_new_groups()
     def getsensesincheck(self):
         return [
                 i for i in program['db'].senses
@@ -8893,6 +8895,8 @@ class Tone(object):
         return sense.uftonevalue()
     def name_new_groups(self):
         pass
+    def assign_groups_to_macrogroups():
+        pass
     def __init__(self):
         pass
 class Sort(object):
@@ -9351,7 +9355,7 @@ class Sort(object):
             else: #done; continue on
                 self.did['join']=True
                 self.updateformsbycheck()
-                self.name_new_groups()
+                self.assign_groups_to_macrogroups()
         # exitstatuses()
         # At this point, there should be nothing to sort, verify or join, so we
         # move on to the next group.
