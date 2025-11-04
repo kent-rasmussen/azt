@@ -6206,7 +6206,7 @@ class Segments(object):
                 # log.info(f"Not updating {sense.id} form {formvalue} to "
                 #         f"{check}={value}")
                 return
-            elif value is not None: #should I act on ''?
+            elif value not in [None, 'NA']: #should I act on ''?
                 f=self.rxdict.update(formvalue,check,value)
                 sense.textvaluebyftypelang(self.ftype,self.analang,f)
                 #This should update formstosearch:
