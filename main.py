@@ -6190,6 +6190,24 @@ class Segments(object):
         t.join()
         # program['status'].marksensesorted(sense) #now in marksortgroup
         self.updatestatus(group=group) # marks the group unverified.
+    def check_with_conflicting_value(self,annodict,check):
+        """This tests for data where two checks should have the same value
+        (e.g., V1 or V2 and V1=V2), but don't.
+        Any piece overlapping is a problem, e.g., C1=C2 must agree with C2=C3.
+        """
+        not_conflicting=[None, 'NA'] #these values don't conflict; move on
+        if annodict[check] in not_conflicting:
+            return
+        checkbits=check.split('=')
+        for key in [i for i in annodict.keys() if i != check]:
+            if annodict[key] in not_conflicting:
+                continue
+            keybits=key.split('=')
+            """At least one must have 2+ elements, and they must share 1+
+            element, but not their value."""
+            if (len(keybits+checkbits) > 2 and set(keybits)&set(checkbits) and
+                                    annodict[check] != annodict[key]):
+                return True
     def updateformtoannotations(self,sense,check=None,write=False):
         """This should take a sense and check, in normal usage.
         provide self.ftype prior to this
@@ -6204,11 +6222,17 @@ class Segments(object):
                     "".format(sense.id,self.ftype,self.analang))
             return
         # log.info("fnode: {}; text: {}".format(fnode,t.text))
+        annodict=sense.annotationvaluedictbyftypelang(self.ftype,self.analang)
+        conflict_text=_(f"Not updating ‘{formvalue}’ (conflict in {annodict}.")
         if check: #just update to this annotation
-            value=sense.annotationvaluebyftypelang(self.ftype,self.analang,check)
+            value=annodict[check]
+            # value=sense.annotationvaluebyftypelang(self.ftype,self.analang,check)
             if value is None or value.isdigit(): #don't update to unnamed groups
                 # log.info(f"Not updating {sense.id} form {formvalue} to "
                 #         f"{check}={value}")
+                return
+            elif self.check_with_conflicting_value(annodict,check):
+                ErrorNotice(conflict_text)
                 return
             elif value not in [None, 'NA']: #should I act on ''?
                 f=self.rxdict.update(formvalue,check,value)
@@ -6220,11 +6244,14 @@ class Segments(object):
                     sc=program['params'].cvt()
                     program['settings'].polygraphs[self.analang][sc][value]=True
         else: #update to all annotations
-            annodict=sense.annotationvaluedictbyftypelang(ftype,self.analang)
+            # annodict=sense.annotationvaluedictbyftypelang(ftype,self.analang)
             # log.info("annodict: {}".format(annodict))
             for check,value in annodict.items():
-                f=self.rxdict.update(formvalue,check,value)
-                sense.textvaluebyftypelang(self.analang,f)
+                if self.check_with_conflicting_value(annodict,check):
+                    ErrorNotice(conflict_text)
+                else:
+                    f=self.rxdict.update(formvalue,check,value)
+                    sense.textvaluebyftypelang(self.analang,f)
         if write:
             self.maybewrite()
     def setsensegroup(self,sense,ftype,check,group,**kwargs):
