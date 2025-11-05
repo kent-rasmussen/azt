@@ -1771,7 +1771,8 @@ class StatusFrame(ui.Frame):
                             # r=len(self.glyphscroll.content.winfo_children()))
         l=ui.Label(f, text=glyph, font='read', width=3, c=0, sticky="EW")
         bf=SortGroupButtonFrame(f, self.task, glyph,
-                                all_for_cvt=True, label=True,
+                                # all_for_cvt=True,
+                                label=True,
                                 column=1, sticky="W")
         if bf.examplesOK:
             fn=lambda event,x=glyph:self.task.dobuttonkwargs()['fn'](x)
@@ -1787,7 +1788,10 @@ class StatusFrame(ui.Frame):
         self.glyphbuttons={}
         self.updateglyphbuttons()
     def updateglyphbuttons(self):
-        groups=program['status'].all_groups_verified_for_cvt()
+        """This ultimately should cover all C or V, across checks and
+        ps-profiles"""
+        # groups=program['status'].all_groups_verified_for_cvt()
+        groups=set(program['status'].groups(wsorted=True))
         for k in set(self.glyphbuttons)-groups:
             self.glyphbuttons[k].destroy()
         for k in groups-set(self.glyphbuttons):
@@ -6307,6 +6311,24 @@ class Segments(Senses):
         t.join()
         # program['status'].marksensesorted(sense) #now in marksortgroup
         self.updatestatus(group=group) # marks the group unverified.
+    def check_with_conflicting_value(self,annodict,check):
+        """This tests for data where two checks should have the same value
+        (e.g., V1 or V2 and V1=V2), but don't.
+        Any piece overlapping is a problem, e.g., C1=C2 must agree with C2=C3.
+        """
+        not_conflicting=[None, 'NA'] #these values don't conflict; move on
+        if annodict[check] in not_conflicting:
+            return
+        checkbits=check.split('=')
+        for key in [i for i in annodict.keys() if i != check]:
+            if annodict[key] in not_conflicting:
+                continue
+            keybits=key.split('=')
+            """At least one must have 2+ elements, and they must share 1+
+            element, but not their value."""
+            if (len(keybits+checkbits) > 2 and set(keybits)&set(checkbits) and
+                                    annodict[check] != annodict[key]):
+                return True
     def updateformtoannotations(self,sense,check=None,write=False):
         """This should take a sense and check, in normal usage.
         provide self.ftype prior to this
@@ -6321,11 +6343,17 @@ class Segments(Senses):
                     "".format(sense.id,self.ftype,self.analang))
             return
         # log.info("fnode: {}; text: {}".format(fnode,t.text))
+        annodict=sense.annotationvaluedictbyftypelang(self.ftype,self.analang)
+        conflict_text=_(f"Not updating ‘{formvalue}’ (conflict in {annodict}.")
         if check: #just update to this annotation
-            value=sense.annotationvaluebyftypelang(self.ftype,self.analang,check)
+            value=annodict[check]
+            # value=sense.annotationvaluebyftypelang(self.ftype,self.analang,check)
             if value is None or value.isdigit(): #don't update to unnamed groups
                 # log.info(f"Not updating {sense.id} form {formvalue} to "
                 #         f"{check}={value}")
+                return
+            elif self.check_with_conflicting_value(annodict,check):
+                ErrorNotice(conflict_text)
                 return
             elif value not in [None, 'NA']: #should I act on ''?
                 f=self.rxdict.update(formvalue,check,value)
@@ -6337,11 +6365,14 @@ class Segments(Senses):
                     sc=program['params'].cvt()
                     program['settings'].polygraphs[self.analang][sc][value]=True
         else: #update to all annotations
-            annodict=sense.annotationvaluedictbyftypelang(ftype,self.analang)
+            # annodict=sense.annotationvaluedictbyftypelang(ftype,self.analang)
             # log.info("annodict: {}".format(annodict))
             for check,value in annodict.items():
-                f=self.rxdict.update(formvalue,check,value)
-                sense.textvaluebyftypelang(self.analang,f)
+                if self.check_with_conflicting_value(annodict,check):
+                    ErrorNotice(conflict_text)
+                else:
+                    f=self.rxdict.update(formvalue,check,value)
+                    sense.textvaluebyftypelang(self.analang,f)
         if write:
             self.maybewrite()
     def setsensegroup(self,sense,ftype,check,group,**kwargs):
@@ -11657,7 +11688,7 @@ class Transcribe(Sound,Sort,TaskDressing):
         program['status'].makecheckok()
         Sound.__init__(self)
 class TranscribeS(Transcribe,Segments):
-    def makewindow(self, group=None, event=None):
+    def makewindow_new(self, group=None, event=None):
         if group:
             self.group=program['status'].group(group)
         else:
@@ -11666,7 +11697,8 @@ class TranscribeS(Transcribe,Segments):
         ps=program['slices'].ps()
         profile=program['slices'].profile()
         check=program['params'].check()
-        self.groups=program['status'].all_groups_verified_for_cvt()
+        self.groups=set(program['status'].groups(wsorted=True))
+        # self.groups=program['status'].all_groups_verified_for_cvt()
         self.othergroups=self.groups-{self.group}
         padx=50
         if program['settings'].lowverticalspace:
@@ -11769,6 +11801,153 @@ class TranscribeS(Transcribe,Segments):
         self.runwindow.waitdone()
         self.sub_c.wait_window(self.runwindow) #then move to next step
         self.status.updateglyphbuttons()
+        """Store these variables above, finish with (destroying window with
+        local variables):"""
+    def makewindow(self, group=None, event=None):
+        if group:
+            self.group=program['status'].group(group)
+        """Go through this and tease apart what is needed for tone complexity,
+        and move that to tone.
+        Note to user: you can't pick these group names (switch later, not here)
+        Make another function to switch letters between groups."""
+        # log.info("Making transcribe window")
+        def changegroupnow(event=None):
+            w=program['taskchooser'].getgroup(wsorted=True)
+            self.runwindow.wait_window(w)
+            if not w.exitFlag.istrue():
+                self.runwindow.on_quit()
+                self.makewindow()
+        cvt=program['params'].cvt()
+        ps=program['slices'].ps()
+        profile=program['slices'].profile()
+        check=program['params'].check()
+        self.buttonframew=int(program['screenw']/3.5)
+        if not check:
+            self.getcheck(guess=True)
+            if check is None:
+                # log.info("I asked for a check name, but didn't get one.")
+                return
+        if not program['status'].groups(wsorted=True):
+            log.error(_("I don't have any sorted data for check: {}, "
+                        "ps-profile: {}-{},").format(check,ps,profile))
+            return
+        groupsok=self.updategroups()
+        if not groupsok:
+            log.error("Problem with log; check earlier message.")
+            return
+        padx=50
+        if program['settings'].lowverticalspace:
+            log.info("Using low vertical space setting")
+            pady=0
+        else:
+            pady=10
+        title=_("Rename {} {} {} group ‘{}’ in ‘{}’ frame"
+                        ).format(ps,profile,
+                        program['params'].cvtdict()[cvt]['sg'],
+                        self.group,check)
+        self.getrunwindow(title=title)
+        titlel=ui.Label(self.runwindow.frame,text=title,font='title',
+                        row=0,column=0,sticky='ew',padx=padx,pady=pady
+                        )
+        getformtext=_("What new name do you want to call this {} "
+                        "group?").format(program['params'].cvtdict()[cvt]['sg'])
+        if cvt == 'T':
+            getformtext+=_("\nA label that describes the surface tone form "
+                        "in this context would be best, like ‘[˥˥˥ ˨˨˨]’")
+        getform=ui.Label(self.runwindow.frame,
+                        text=getformtext,
+                        font='read',
+                        norender=True,
+                        row=1,column=0,sticky='ew',padx=padx,pady=pady
+                        )
+        getform.wrap()
+        inputfeedbackframe=ui.Frame(self.runwindow.frame,
+                            row=2,column=0,sticky=''
+                            )
+        self.transcriber=transcriber.Transcriber(inputfeedbackframe,
+                                initval=self.group,
+                                soundsettings=self.soundsettings,
+                                chars=self.glyphspossible,
+                                row=0,column=0,sticky=''
+                                )
+        self.transcriber.formfield.bind('<KeyRelease>', self.updateerror)
+        infoframe=ui.Frame(inputfeedbackframe,
+                            row=0,column=1,sticky=''
+                            )
+        """Make this a pad of buttons, rather than a label, so users can
+        go directly where they want to be"""
+        g=nn(self.othergroups,perline=len(self.othergroups)//5)
+        # log.info("There: {}, NTG: {}; g:{}".format(self.groups,
+        #                                             self.othergroups,g))
+        groupslabel=ui.Label(infoframe,
+                            text='Other Groups:\n{}'.format(g),
+                            row=0,column=1,
+                            sticky='new',
+                            padx=padx,
+                            rowspan=2
+                            )
+        groupslabel.bind('<ButtonRelease-1>',changegroupnow)
+        self.errorlabel=ui.Label(infoframe,text='',
+                            fg='red',
+                            wraplength=int(self.frame.winfo_screenwidth()/3),
+                            row=2,column=1,sticky='nsew'
+                            )
+        responseframe=ui.Frame(self.runwindow.frame,
+                                row=3,
+                                column=0,
+                                sticky='',
+                                padx=padx,
+                                pady=pady,
+                                )
+        self.oktext=_('Use this name and go to:')
+        column=0
+        sub_lbl=ui.Label(responseframe,text = self.oktext, font='read',
+                        row=0,column=column,sticky='ns'
+                        )
+        buttons=[
+                (_('main screen'), self.done),
+                # (_('next group'), self.next)
+            ]
+        # if cvt == 'T':
+        #     buttons+=[(_('next tone frame'), self.nextcheck)]
+        # else:
+        #     buttons+=[(_('next check'), self.nextcheck)]
+        # buttons+=[(_('next syllable profile'), self.nextprofile),
+        #         (_('comparison group'), self.submitandswitch)
+        #         ]
+        for button in buttons:
+            column+=1
+            ui.Button(responseframe,text = button[0], command = button[1],
+                                anchor ='c',
+                                row=0,column=column,sticky='ns'
+                                )
+        examplesframe=ui.Frame(self.runwindow.frame,
+                                row=4,column=0,sticky=''
+                                )
+        b=SortGroupButtonFrame(examplesframe, self,
+                                self.group,
+                                showtonegroup=True,
+                                # canary=entryview,
+                                playable=True,
+                                unsortable=True,
+                                alwaysrefreshable=True,
+                                row=0, column=0, sticky='w',
+                                wraplength=self.buttonframew
+                                )
+        self.compframe=ui.Frame(examplesframe,
+                    highlightthickness=10,
+                    highlightbackground=self.frame.theme.white,
+                    row=0,column=1,sticky='e'
+                    ) #no hlfg here
+        t=_('Compare with another group')
+        self.sub_c=ui.Button(self.compframe,
+                        text = t,
+                        command = self.setgroup_comparison,
+                        row=0,column=0
+                        )
+        self.comparisonbuttons()
+        self.runwindow.waitdone()
+        self.sub_c.wait_window(self.runwindow) #then move to next step
         """Store these variables above, finish with (destroying window with
         local variables):"""
     def __init__(self, parent):
