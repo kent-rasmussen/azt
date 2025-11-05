@@ -6161,6 +6161,13 @@ class AlphabetGlyphs():
         return program['alphabet'].tosort() #returns bool
     def updatesortingstatus(self):
         return program['alphabet'].updatesortingstatus()
+    def verificationcode(self,**kwargs):
+        check=kwargs.get('check',self.get_check())
+        profile=kwargs.get('group',self.get_profile())
+        ps=kwargs.get('ps',self.get_ps())
+        ftype=kwargs.get('ftype',self.get_ftype())
+        # log.info("about to return {}={}".format(check,group))
+        return '_'.join([ps,profile,check,ftype])
     def __init__(self, parent):
         program['params'].cvt('A') #Is this a bad idea?
 class Senses(object):
