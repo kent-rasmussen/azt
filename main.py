@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+self.groups(toverify=True)#!/usr/bin/env python3
 # coding=UTF-8
 """Consider making the above work for a venv"""
 """This file runs the actual GUI for lexical file manipulation/checking"""
@@ -2134,7 +2134,9 @@ class Settings(object):
                                             ]},
             'alphabet':{
                                 'file':'alphabetsettingsfile',
-                                'attributes':['alphabet_order',
+                                'attributes':[
+                                            'glyphdict',
+                                            'alphabet_order',
                                             'alphabet_ncolumns',
                                             'alphabet_exids',
                                             'alphabet_chart_title',
@@ -2228,7 +2230,7 @@ class Settings(object):
         self.profiledatafile=basename.with_suffix(".ProfileData.dat")
         self.adhocgroupsfile=basename.with_suffix(".AdHocGroups.dat")
         self.soundsettingsfile=basename.with_suffix(".SoundSettings.ini")
-        self.alphabetsettingsfile=basename.with_suffix(".AlphabetChart.ini")
+        self.alphabetsettingsfile=basename.with_suffix(".Alphabet.ini")
         self.settingsbyfile() #This just sets self.settings
         for setting in self.settings:
             savefile=self.settingsfile(setting)#self.settings[setting]['file']
@@ -2269,7 +2271,8 @@ class Settings(object):
             fns['aztrepourls']=program['repo'].remoteurls
             fns['ps']=program['slices'].ps
             fns['profile']=program['slices'].profile
-            fns['alphabet_order']=self.alpha_order
+            fns['glyphdict']=program['alphabet'].glyphdict
+            fns['alphabet_order']=program['alphabet'].order#self.alpha_order
             fns['alphabet_ncolumns']=self.alpha_ncolumns
             fns['alphabet_exids']=self.alpha_exids
             fns['alphabet_chart_title']=self.alpha_chart_title
@@ -2603,9 +2606,7 @@ class Settings(object):
                     #     u.join()
         log.info("trackuntrackedfiles finished.")
     def alpha_order(self,value=[]):
-        if value:
-            self.alphabet_order=value
-        return getattr(self,'alphabet_order',value)
+        return program['alphabet'].order(value)
     def alpha_exids(self,value=dict()):
         if value:
             self.alphabet_exids=value
@@ -5885,6 +5886,7 @@ class TaskChooser(TaskDressing,ui.Window):
         self.splash.progress(55)
         self.setmainwindow(self)
         program['settings'].post_lift_init()
+        Alphabet()
         self.splash.progress(65)
         self.whatsdone()
         self.splash.progress(80)
@@ -6040,8 +6042,60 @@ class ExportData(ui.Window):
         self.max_rows_total=None
         self.max_rows_per_file=None
         self.report_data()
+class Alphabet():
+    """this set of symbols is built up in the process of analysis:
+    1. on completing the first check (must know when this is!), all named groups
+    show up here as well. All unnamed groups are pushed through transcribe
+    until they have a name, then they show up here.
+    2. On completing successive checks, each named group is matched with
+    previously available groups, and put through the sort and verify process for
+    macrogroup assignment.
+    3. once macrogroup is assigned (either way):
+        A. verify sense with check, value, and ftype='alphabet', to populate
+        lift field with this info.
+            —build method to extract from lift and rebuild this info, as needed.
+        B. add the value for that check to the alphabet letter list of checks
+        belonging to the group. check name is sufficient, as all groups in a
+        macrogroup must have the same name (that of the macrogroup).
+        C. update the assigned group name to that of the macrogroup.
+        D. Confirm that there is not already a group with the name of the
+        macrogroup (or this can be sorted out later?)
+    """
+    my_settings=['order']
+    def order(self,order=[]):
+        if order:
+            self._order=order
+        return getattr(self,'_order',[])
+    def glyphdict(self,glyphdict={}):
+        if glyphdict:
+            self._glyphdict=glyphdict
+        return getattr(self,'_glyphdict',{})
+    def update_symbols(self):
+        order=program['settings'].alpha_order()
+        """this is a dict keyed by C,V; iterate appropriately!"""
+        self.groupdict=program['status'].all_groups_verified_anywhere()
+        # log.info(f"{groupdict=}")
+        """Extra symbols not in order"""
+        extras={i for i in groups if not i.isdecimal()}-set(self.order())
+        log.info(f"adding to {cv}: {extras=}")
+        """Add to beginning of order"""
+        order=sorted(extras)+self.order() #put new symbols first
+        #only actually present:
+        """limit to those symbols actually verified somewhere (iterate appropriately)"""
+        order=[i for i in self.order() if i in groups]
+        # for k in ['exids','order','ncolumns','chart_title']:
+        #     log.info(f"{getattr(program['settings'],'alpha_'+k)()=}")
+        # log.info(f"{order=}")
+        """store new order"""
+        self.order(order)
+    def __init__(self, **kwargs):
+        program['alphabet']=self
 class AlphabetChart(alphabet_chart.OrderAlphabet):
-    """docstring for AlphabetChart."""
+    my_settings=[
+                    'exids',
+                    # 'order',
+                    'ncolumns','chart_title'
+                ]+Alphabet.my_settings#?
     def taskicon(self):
         return program['theme'].photo['alpha_icon']
     def tooltip(self):
@@ -6060,22 +6114,89 @@ class AlphabetChart(alphabet_chart.OrderAlphabet):
             getattr(program['settings'],'alpha_'+k)(value)
         program['settings'].storesettingsfile(setting='alphabet')
     def __init__(self, parent, **kwargs):
-        order=program['settings'].alpha_order()
-        groups=program['status'].all_groups_verified_for_cvt()
-        # log.info(f"{groupdict=}")
-        extras={i for i in groups if not i.isdecimal()}-set(order if order else [])
-        log.info(f"adding to {cv}: {extras=}")
-        order=sorted(extras)+order #put new symbols first
-        #only actually present:
-        order=[i for i in order if i in groups]
-        # for k in ['exids','order','ncolumns','chart_title']:
-        #     log.info(f"{getattr(program['settings'],'alpha_'+k)()=}")
-        # log.info(f"{order=}")
-        program['settings'].alpha_order(order)
         self.program=program
         super().__init__(parent)
         self.mainwindow=False #don't exit on close
-class Segments(object):
+class AlphabetGlyphs():
+    """Glyph groups are a place to store the correlation between groups for each
+    check. These groups are also the basis for the alphabet chart.
+    """
+    def get_check(self):
+        return program['params'].check() #just one
+    def get_ps(self):
+        return #program['slices'].ps() None needs to be OK on this return
+    def get_profile(self):
+        return #program['slices'].profile() None needs to be OK on this return
+    def get_ftype(self):
+        return #program['params'].ftype() None needs to be OK on this return
+    def groups(self,**kwargs): #toverify=True
+        """Do this here, instead of at
+        return program['status'].groups(**kwargs)
+        """
+        pass
+    def group(self,value=None,**kwargs):#get/set
+        """Do this here, instead of at
+        return program['status'].group(value,**kwargs)
+        """
+        pass
+    def notdonewarning(self):
+        buttontxt=_("Sort!")
+        text=_("Hey, you're not done sorting groups by alphabet letter!"
+                "\nYou really need to finish this right away, though it's OK "
+                "if you do a couple other things first. \nRestart where "
+                "you left off by pressing ‘{}’".format(buttontxt))
+        if not program['Demo']: #Should anyone see this?
+            ErrorNotice(text=text,title=_("Not Done!"),parent=self,wait=True)
+    def checktosort(self):
+        return self.tosort() #bool tosort on cur check
+    def itemstosort(self):
+        return program['alphabet'].glyphstosort()
+    def itemssorted(self):
+        return program['alphabet'].glyphssorted()
+    def tosort(self):
+        return program['alphabet'].tosort() #returns bool
+    def updatesortingstatus(self):
+        return program['alphabet'].updatesortingstatus()
+    def __init__(self, parent):
+        program['params'].cvt('A') #Is this a bad idea?
+class Senses(object):
+    """docstring for Senses."""
+    def get_check(self):
+        return program['params'].check()
+    def get_ps(self):
+        return program['slices'].ps()
+    def get_profile(self):
+        return program['slices'].profile()
+    def get_ftype(self):
+        return program['params'].ftype()
+    def groups(self,**kwargs): #toverify=True
+        return program['status'].groups(**kwargs)
+    def group(self,value=None,**kwargs):#get/set
+        return program['status'].group(value,**kwargs)
+    def notdonewarning(self):
+        buttontxt=_("Sort!")
+        text=_("Hey, you're not done with {} {} words by {}!"
+                "\nCome back when you have time; restart where you left "
+                "off by pressing ‘{}’".format(self.ps,self.profile,self.check,
+                                                buttontxt))
+        # self.withdraw()
+        if not program['Demo']: #Should anyone see this?
+            ErrorNotice(text=text,title=_("Not Done!"),parent=self,wait=True)
+        # self.deiconify()
+    def checktosort(self):
+        return program['status'].checktosort() #bool tosort on cur check
+    def itemstosort(self):
+        return program['status'].sensestosort()
+    def itemssorted(self):
+        return program['status'].sensessorted()
+    def tosort(self):
+        return program['status'].tosort() #returns bool
+    def updatesortingstatus(self):
+        return program['settings'].updatesortingstatus()
+    def __init__(self, arg):
+        super(Senses, self).__init__()
+        self.arg = arg
+class Segments(Senses):
     """docstring for Segments."""
     def buildregex(self,**kwargs):
         """include profile (of those available for ps and check),
@@ -8782,7 +8903,7 @@ class ToneFrameDrafter(ui.Window):
         self.scroll=ui.ScrollingFrame(self.frame,row=1,column=0)
         self.content=self.scroll.content
         self.status()
-class Tone(object):
+class Tone(Senses):
     """This keeps stuff used for Tone checks."""
     def makeanalysis(self,**kwargs):
         """was, now iterable, for multiple reports at a time:"""
@@ -9178,7 +9299,7 @@ class Sort(object):
             if exit and not self.exitFlag.istrue():
                 return #if the user didn't supply a check
         self.presortgroups()
-        program['settings'].updatesortingstatus() # Not just tone anymore
+        self.updatesortingstatus() # Not just tone anymore
         self.resetsortbutton() #track what is done since each button press.
         self.maybesort()
     def confirmverificationgroup(self,sense,profile,ftype,check):
@@ -9260,16 +9381,6 @@ class Sort(object):
             self.maybewrite() #Not iterated over.
         if not nocheck:
             return newgroup
-    def notdonewarning(self):
-        buttontxt=_("Sort!")
-        text=_("Hey, you're not done with {} {} words by {}!"
-                "\nCome back when you have time; restart where you left "
-                "off by pressing ‘{}’".format(self.ps,self.profile,self.check,
-                                                buttontxt))
-        # self.withdraw()
-        if not program['Demo']: #Should anyone see this?
-            ErrorNotice(text=text,title=_("Not Done!"),parent=self,wait=True)
-        # self.deiconify()
     def resetsortbutton(self):
         # This attribute/fn is used to track whether something has been done
         # since the user last asked for a sort. We don't want the user in an
@@ -9289,9 +9400,9 @@ class Sort(object):
         def tosortupdate():
             log.info("maybesort tosortbool:{}; tosort:{}; sorted (first 5):{}"
                     "".format(
-                                program['status'].tosort(),
-                                program['status'].sensestosort(),
-                                program['status'].sensessorted()[:5]
+                                self.tosort(),
+                                self.itemstosort(),
+                                self.itemssorted()[:5]
                                 ))
         def exitstatuses():
             try:
@@ -9312,20 +9423,20 @@ class Sort(object):
         # exitstatuses()
         if self.exitFlag.istrue(): #if the task has been shut down, stop
             return
-        if program['status'].sensestosort() is False:
-            program['settings'].updatesortingstatus() # Not just tone anymore
+        if self.itemstosort() is False:
+            self.updatesortingstatus() # Not just tone anymore
         if not hasattr(self,'did'):
             self.resetsortbutton()
         cvt=program['params'].cvt()
-        self.check=program['params'].check()
-        self.ps=program['slices'].ps()
-        self.profile=program['slices'].profile()
-        self.ftype=program['params'].ftype()
+        self.check=self.get_check()
+        self.ps=self.get_ps()
+        self.profile=self.get_profile()
+        self.ftype=self.get_ftype()
         log.info("cvt:{}; ps:{}; profile:{}; check:{}".format(cvt,self.ps,
                                                     self.profile,self.check))
         tosortupdate()
         log.info("Maybe Sort (from maybesort)")
-        if program['status'].checktosort(): # w/o parameters, tests current check
+        if self.checktosort(): # w/o parameters, tests current check
             log.info("Sort (from maybesort)")
             self.sort()
             self.did['sort']=True
@@ -9333,11 +9444,11 @@ class Sort(object):
             warnorcontinue()
             return
         log.info("Maybe Verify (from maybesort)")
-        groupstoverify=program['status'].groups(toverify=True)
+        groupstoverify=self.groups(toverify=True)
         if groupstoverify:
             log.info("verify (from maybesort)")
             log.info("Going to verify the first of these groups now: {}".format(
-                                    program['status'].groups(toverify=True)))
+                                    self.groups(toverify=True)))
             if program['status'].group() not in groupstoverify:
                 program['status'].group(groupstoverify[0]) #just pick the first now
             self.verify()
@@ -9392,8 +9503,8 @@ class Sort(object):
         scaledpady=int(50*program['scale'])
         groupselected=None
         """these just pull the current lists from the object"""
-        senses=program['status'].sensestosort()
-        sorted=program['status'].sensessorted()
+        senses=self.itemstosort()
+        sorted=self.itemssorted()
         try:
             sense=senses[0]
         except IndexError:
@@ -9458,9 +9569,9 @@ class Sort(object):
         the above is changed, this variable should be reset."""
         """Can't do this test suite unless there are unsorted entries..."""
         """things that don't change in this fn"""
-        self.thissort=program['status'].sensestosort()[:] #current list
+        self.thissort=self.itemstosort()[:] #current list
         log.info("Going to sort these senses: {}"
-                "".format(program['status'].sensestosort()))
+                "".format(self.itemstosort()))
         groups=program['status'].groups(wsorted=True)
         log.info("Current groups: {}".format(groups))
         """Children of runwindow.frame"""
@@ -9494,7 +9605,7 @@ class Sort(object):
         """Stuff that changes by lexical entry
         The second frame, for the other two buttons, which also scroll"""
         while (program['status'].tosort() and
-                program['status'].sensestosort() and
+                self.itemstosort() and
                 not self.runwindow.exitFlag.istrue()):
             tosort=self.presenttosort()
             """thread here? No, this updates the UI, as well as writing data"""
@@ -9521,7 +9632,7 @@ class Sort(object):
                 log.info("I asked for a framed tone group, but didn't get one.")
                 return
         done.remove(group)
-        program['settings'].updatesortingstatus() # Not just tone anymore
+        self.updatesortingstatus() # Not just tone anymore
         self.maybesort()
     def verify(self,menu=False):
         def updatestatus(v):
@@ -9545,7 +9656,7 @@ class Sort(object):
         """
         #This function should exit 1 on a window close, 0/None on all ok.
         check=program['params'].check()
-        groups=program['status'].groups(toverify=True) #needed for progress
+        groups=self.groups(toverify=True) #needed for progress
         group=program['status'].group()
         # The title for this page changes by group, below.
         self.getrunwindow(msg=_("preparing to verify {} group: {}").format(check,
@@ -9576,10 +9687,10 @@ class Sort(object):
         self.currentsortitems=senses=program['examples'].sensesinslicegroup(group,check)
         if not senses: #then remove the group
             groups=program['status'].groups(wsorted=True) #from which to remove, put back
-            # log.info("Groups: {}".format(program['status'].groups(toverify=True)))
+            # log.info("Groups: {}".format(self.groups(toverify=True)))
             verified=False
             log.info("Group ‘{}’ has no examples; continuing.".format(group))
-            # log.info("Groups: {}".format(program['status'].groups(toverify=True)))
+            # log.info("Groups: {}".format(self.groups(toverify=True)))
             updatestatus(False)
             log.info("Group-groups: {}-{}".format(group,groups))
             if group in groups:
@@ -9588,7 +9699,7 @@ class Sort(object):
             program['status'].groups(groups,wsorted=True)
             log.info("All groups: {}".format(program['status'].groups(wsorted=True)))
             log.info("Groups to verify: {}"
-                        "".format(program['status'].groups(toverify=True)))
+                        "".format(self.groups(toverify=True)))
             return
         elif len(senses) == 1:
             log.info(_("Group ‘{}’ only has {} example; marking verified and "
@@ -11197,7 +11308,7 @@ class SortSyllables(Sort,Segments,TaskDressing):
         """further specify check check in maybesort, where you can send the user
         on to the next setting"""
         self.presortgroups()
-        program['settings'].updatesortingstatus() # Not just tone anymore
+        self.updatesortingstatus() # Not just tone anymore
         self.resetsortbutton() #track what is done since each button press.
         self.maybesort()
     def __init__(self, parent):
@@ -11307,6 +11418,12 @@ class SortT(Sort,Tone,TaskDressing):
         self.guidstosort.append(guid)
         self.guidssorted.remove(guid)
     """Doing stuff"""
+class SortGlyphMembership(Sort,AlphabetGlyphs,TaskDressing):
+    """This task allows users to sort groups from one check into a set of
+    different groups from different checks that all represent the same alphabet
+    letter. If bh=ɓ (or b=ɓ) in one place, it should be true everywhere.
+    """
+    def __init__(self,parent):
 class Transcribe(Sound,Sort,TaskDressing):
     def updateerror(self,event=None):
         self.errorlabel['text'] = ''
@@ -11566,6 +11683,9 @@ class TranscribeS(Transcribe,Segments):
                         )
         getformtext=_("What letter(s) do you want to use for this {} "
                         "group?").format(program['params'].cvtdict()[cvt]['sg'])
+        if isinteger(self.group):
+            getformtext+=_("Because this is a new group, you need to give it "
+                            "some name before moving on.")
         getform=ui.Label(self.runwindow.frame,
                         text=getformtext,
                         font='read',
@@ -14343,6 +14463,9 @@ class StatusDict(dict):
             self._presortedbool=sn['presorted']=v
         return self._presortedbool
     def tosort(self,v=None,**kwargs):
+        """This returns whether or not (bool) there are items yet to sort
+        in this group of sort items.
+        """
         kwargs=self.checkslicetypecurrent(**kwargs) # current value defaults
         sn=self.node(**kwargs)
         ok=[None,True,False]
@@ -14620,6 +14743,9 @@ class CheckParameters(object):
                 ]},
             'T':{
                 1:[('T', _("Tone Melody"))]},
+            'A':{1:[('V',_("Vowel letter")),
+                    ('C',_("Consonant letter"))
+                    ]}
             'V':{
                 1:[('V1', _("First Vowel"))],
                 2:[
