@@ -14924,7 +14924,7 @@ class CheckParameters(object):
                 1:[('T', _("Tone Melody"))]},
             'A':{1:[('V',_("Vowel letter")),
                     ('C',_("Consonant letter"))
-                    ]}
+                    ]},
             'V':{
                 1:[('V1', _("First Vowel"))],
                 2:[
