@@ -4478,19 +4478,19 @@ if __name__ == '__main__':
         f = open(str(name)+'.txt', 'w', encoding='utf-8') # to append, "a"
         f.write(prettyprint(lift.nodes))
         f.close()
-    loc="Imperative"
-    formvalue="give!"
-    lang="en"
-    transvalue="donnez!"
-    translang='fr'
-    tonevalue='16'
-    frame={'field':'pl',
-		'en':'__s',
-		'swh':'__',
-		'fr':'__es'}
-    ftype='pl'
+    # loc="Imperative"
+    # formvalue="give!"
+    # lang="en"
+    # transvalue="donnez!"
+    # translang='fr'
+    # tonevalue='16'
+    # frame={'field':'pl',
+	# 	'en':'__s',
+	# 	'swh':'__',
+	# 	'fr':'__es'}
+    # ftype='pl'
     # for e in lift.entries:
-    #     e.move_ph_sound_to_lc()
+    #     e.copy_ph_form_to_lc()
     # lift.convertxtoy(lang='bo',fromtag='gloss', totag='citation')
     # sense=lift.sensedict['daytime_b27c251c-090e-4427-aa86-22b745409f8d']
     # sense=lift.sensedict['body_791094f2-a82b-4650-81d8-c3b6145d2be4']
