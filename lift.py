@@ -3134,7 +3134,13 @@ class Entry(Node,FieldParent): # what does "object do here?"
             else:
                 return None
         return self.ph.textvaluebylang(lang,value)
-    def move_ph_sound_to_lc(self):
+    def copy_ph_form_to_lc(self):
+        try:
+            ph=self.ph.textvaluebylang(lang='wmg')
+            self.lc.textvaluebylang(lang='wmg',value=ph)
+        except Exception as e:
+            log.info(f"Exception: ({e}; {self.guid=})")
+    def copy_ph_form_and_media_to_lc(self):
         try:
             wav=self.ph.find('media').get('href')
             ph=self.ph.textvaluebylang(lang='wmg')
