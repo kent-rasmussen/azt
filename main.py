@@ -6204,9 +6204,13 @@ class Senses(object):
         return program['status'].tosort() #returns bool
     def updatesortingstatus(self):
         return program['settings'].updatesortingstatus()
-    def __init__(self, arg):
-        super(Senses, self).__init__()
-        self.arg = arg
+    def verificationcode(self,**kwargs):
+        check=kwargs.get('check',program['params'].check())
+        group=kwargs.get('group',program['status'].group())
+        # log.info("about to return {}={}".format(check,group))
+        return check+'='+group
+    def __init__(self):
+        super().__init__()
 class Segments(Senses):
     """docstring for Segments."""
     def buildregex(self,**kwargs):
@@ -6266,11 +6270,11 @@ class Segments(Senses):
         cvt=kwargs.get('cvt',program['params'].cvt())
         ps=kwargs.get('ps',program['slices'].ps())
         profile=kwargs.get('profile',program['slices'].profile())
-        check=kwargs.get('check',program['params'].check())
+        # check=kwargs.get('check',program['params'].check())
         groups=program['status'].groups(wsorted=True,**kwargs)
         groups=program['status'].groups(cvt=cvt)
         #multiprocess from here?
-        msg=_("Presorting ({}={})").format(check,groups)
+        msg=_("Presorting ({}={})").format(program['params'].check(),groups)
         log.info(msg)
         w=self.getrunwindow(msg=msg)
         program['status'].renewsensestosort([],[]) #will repopulate
@@ -6286,33 +6290,33 @@ class Segments(Senses):
         #         f"check: {check}; self.regex: {self.regex}")
         unsortedids=set(self.sensesbyforminregex(self.regex,ps=ps))
         for group in [i for i in groups if isnoninteger(i)]:
-            self.buildregex(group=group,cvt=cvt,profile=profile,check=check)
+            self.buildregex(group=group,cvt=cvt,profile=profile)
             # log.info(f"(presortgroups-buildregex) group: {group}, cvt: {cvt}, "
             #         f"profile: {profile}, "
             #         f"check: {check}; self.regex: {self.regex}")
             s=set(self.sensesbyforminregex(self.regex,ps=ps))
             if s: #senses just for this group
-                self.presort(list(s),check,group)
+                self.presort(list(s),group)
                 unsortedids-=s
         log.info("unsortedids ({}): {}".format(
                                         len(unsortedids),
                                         unsortedids
                                         ))
         if unsortedids:
-            self.presort(unsortedids,check,group='NA')
+            self.presort(unsortedids,group='NA')
             program['status'].group('NA')
             self.verify() #do this here, just this once.
         program['status'].presorted(True)
         program['status'].store() #after all the above
         self.maybewrite()
         self.runwindow.waitdone()
-    def presort(self,senses,check,group):
+    def presort(self,senses,group):
         ftype=program['params'].ftype()
         for sense in senses:
             t = threading.Thread(target=self.marksortgroup,
                             args=(sense,group),
-                            kwargs={'check':check,
-                                    'ftype':ftype,
+                            kwargs={#'check':check,
+                                    # 'ftype':ftype,
                                     })
             t.start()
         t.join()
@@ -6382,9 +6386,9 @@ class Segments(Senses):
                     sense.textvaluebyftypelang(self.analang,f)
         if write:
             self.maybewrite()
-    def setsensegroup(self,sense,ftype,check,group,**kwargs):
+    def setitemgroup(self,item,check,group,**kwargs):
         # log.info("Setting segment sort group")
-        sense.annotationvaluebyftypelang(ftype,self.analang,check,group)
+        item.annotationvaluebyftypelang(self.ftype,self.analang,check,group)
     def updateformsbycheck(self):
         for sense in self.getsensesincheck():
             u = threading.Thread(target=self.updateformtoannotations,
@@ -6426,9 +6430,9 @@ class Segments(Senses):
                 i for i in program['db'].senses
                 if i.ftypes[ftype].annotationvaluebylang(lang,check) == group
                 ]
-    def getsensegroup(self,sense,check):
-        ftype=program['params'].ftype() #not helpful for Tone.getsensegroup
-        return sense.annotationvaluebyftypelang(ftype,self.analang,check)
+    def getitemgroup(self,item,check):
+        # ftype=program['params'].ftype() #not helpful for Tone.getitemgroup
+        return item.annotationvaluebyftypelang(self.ftype,self.analang,check)
     def __init__(self, parent):
         self.dodone=True
         self.dodoneonly=False #don't give me other words
@@ -8996,14 +9000,13 @@ class Tone(Senses):
     def updateformtoannotations(self,*args,**kwargs):
         #simpler than calling and uncalling..…
         pass
-    def setsensegroup(self,sense,ftype,check,group,**kwargs):
-        """ftype is needed here to get the correct form for frame substitution
-        more critically, Segments.setsensegroup requires it, so this keeps their
-        signatures the same
+    def setitemgroup(self,item,check,group,**kwargs):
+        """ftype should be set at the beginning of work and not changed often,
+        so shouldn't need to be specified here
         """
         # """here kwargs should include framed, if you want this to update the
         # form information in the example"""
-        ps=sense.psvalue()
+        ps=item.psvalue()
         # log.info("Setting tone sort group")
         # if not ftype:
         #     log.error("No field type!")
@@ -9012,26 +9015,26 @@ class Tone(Senses):
             """Fine if check isn't there; will be caught with exception"""
             # providing both ftype and frame isn't necessary, but allows check
             # that they align:
-            assert check in sense.examples
-            f=sense.formattedform(self.analang,ftype,
+            assert check in item.examples
+            f=item.formattedform(self.analang,self.ftype,
                                 program['toneframes'][ps][check])
             # log.info("Setting form to {}".format(f))
-            sense.examples[check].textvaluebylang(
+            item.examples[check].textvaluebylang(
                                     lang=self.analang,
                                     value=f)
             log.info("Setting tone sort group to ‘{}’".format(group))
-            sense.examples[check].tonevalue(group)
+            item.examples[check].tonevalue(group)
             for g in (set(self.glosslangs)& #selected
                         set(program['toneframes'][ps][check])& #defined
-                        set(sense.ftypes[ftype])): # form in lexicon
-                for f in sense.formattedgloss(g,
+                        set(item.ftypes[self.ftype])): # form in lexicon
+                for f in item.formattedgloss(g,
                                         program['toneframes'][ps][check])[:1]:
                     # log.info("Setting {} translation to {}".format(g,f))
-                    sense.examples[check].translationvalue(g,f)
-            sense.examples[check].lastAZTsort()
+                    item.examples[check].translationvalue(g,f)
+            item.examples[check].lastAZTsort()
         except (KeyError,AssertionError) as e:
             # log.info(f"Adding a new example to store ‘{check}’ values ({e})")
-            sense.newexample(check,
+            item.newexample(check,
                             program['toneframes'][ps][check],
                             self.analang,
                             self.glosslangs,
@@ -9047,9 +9050,9 @@ class Tone(Senses):
                 i for i in program['db'].senses
                 if i.tonevaluebyframe(check) == group
                 ]
-    def getsensegroup(self,sense,check):
+    def getitemgroup(self,item,check):
         """This works without ftype, as each frame only has one"""
-        return sense.tonevaluebyframe(check)
+        return item.tonevaluebyframe(check)
     def getUFgroupofsense(self,sense):
         return sense.uftonevalue()
     def name_new_groups(self):
@@ -9065,9 +9068,9 @@ class Sort(object):
         check=kwargs.get('check',program['params'].check())
         group=kwargs.get('group',program['status'].group())
         return self.getsensesingroup(check, group)
-    def rmverification(self,sense,profile,ftype,check):
-        self.modverification(sense,profile,ftype,check)
-    def modverification(self,sense,profile,ftype,check,add=None):
+    def rmverification(self,sense,profile,check):
+        self.modverification(sense,profile,check)
+    def modverification(self,sense,profile,check,add=None):
         """
         'add' here should be a single compiled 'check=group' code
         These fns all take value kwarg, with a default lang generated there
@@ -9085,11 +9088,11 @@ class Sort(object):
         #                                                             key,add))
         # if key in sense.fields:
         #     lift.prettyprint(sense.fields[key])
-        values=sense.verificationtextvalue(profile,ftype) #always returns list
+        values=sense.verificationtextvalue(profile,self.ftype) #always returns list
         # log.info(f"Found verificationtextvalue values {values}")
         if add and not values:
             # log.info("No values found; just adding {}".format(add))
-            sense.verificationtextvalue(profile,ftype,value=[add])
+            sense.verificationtextvalue(profile,self.ftype,value=[add])
             return
         for code in [i for i in values if check in i]:
             #look for a code for the current check, replace or remove.
@@ -9103,9 +9106,9 @@ class Sort(object):
         if add: #i.e., still, after switching out current values for changes
             values.append(add)
             added=add
-        sense.verificationtextvalue(profile,ftype,value=values)
-        log.info(f"Done modifying verification node {profile}-{ftype} "
-            f"(added {add}, have {sense.verificationtextvalue(profile,ftype)})")
+        sense.verificationtextvalue(profile,self.ftype,value=values)
+        log.info(f"Done modifying verification node {profile}-{self.ftype} "
+            f"(added {add}, have {sense.verificationtextvalue(profile,self.ftype)})")
         # if key in sense.fields: #i.e., if not removed
         #     lift.prettyprint(sense.fields[key])
     def updatestatuslift(self,verified=False,**kwargs):
@@ -9262,8 +9265,8 @@ class Sort(object):
         sorting=kwargs.get('sorting',True) #Default to verify button
         log.info(_("Removing sense {} from subcheck {}".format(sense.id,group)))
         #This should only *mod* if already there
-        self.setsensegroup(sense,ftype,check,'',**kwargs)
-        tgroups=self.getsensegroup(sense,check)
+        self.setitemgroup(sense,ftype,check,'',**kwargs)
+        tgroups=self.getitemgroup(sense,check)
         log.info("Checking that removal worked")
         if tgroups in [[],'',[''],None]:
             log.info("Field removal succeeded! LIFT says '{}', = []."
@@ -9340,15 +9343,15 @@ class Sort(object):
         self.updatesortingstatus() # Not just tone anymore
         self.resetsortbutton() #track what is done since each button press.
         self.maybesort()
-    def confirmverificationgroup(self,sense,profile,ftype,check):
+    def confirmverificationgroup(self,sense,profile,check):
         """This does the one field storing a list of verified values
         for all checks"""
         """This results in NO group change where a group hasn't been confirmed!
         """
         log.info(_("Confirming that current group and verification code match "
                     "before making changes."))
-        curgroup=self.getsensegroup(sense,check) #Segment or Tone
-        vals=sense.verificationtextvalue(profile,ftype)
+        curgroup=self.getitemgroup(sense,check) #Segment or Tone
+        vals=sense.verificationtextvalue(profile,self.ftype)
         curvalues=[i.split('=')[-1]  #last (value), if multiple
                     for i in sense.verificationtextvalue(profile,ftype)
                     if check in i]
@@ -9378,12 +9381,13 @@ class Sort(object):
         # group=kwargs.get('group',program['status'].group())
         check=kwargs.get('check',program['params'].check())
         profile=kwargs.get('profile',program['slices'].profile())
-        ftype=kwargs.get('ftype',program['params'].ftype())
+        # ftype=kwargs.get('ftype',program['params'].ftype())
         nocheck=kwargs.get('nocheck',False)
         guid=None
         log.info("marking sortgroup {}={} ({})".format(check,group,sense.id))
         if kwargs.get('updateverification'):
             # log.info("updateverification {}={} ({})".format(check,group,sense.id))
+            # add ps,profile,check,ftype
             add=self.verificationcode(check=check,group=group)
             # log.info("updateverification {add=}")
             # Checking and verifying that the current group and verification
@@ -9392,13 +9396,13 @@ class Sort(object):
             # noconfirmation=False #Should test w/wo this; time difference?
             noconfirmation=True #Should test w/wo this; time difference?
             if noconfirmation or self.confirmverificationgroup(sense, profile,
-                                                                ftype, check):
+                                                                check):
                 self.modverification(sense,profile,ftype,check,add)
         else: #unless specifically doing otherwise, marking should unverify:
             self.rmverification(sense,profile,ftype,check)
-        self.setsensegroup(sense,ftype,check,group)
+        self.setitemgroup(sense,ftype,check,group)
         if not nocheck:
-            newgroup=self.getsensegroup(sense,check)
+            newgroup=self.getitemgroup(sense,check)
             if newgroup != group:
                 log.error("Field addition failed! LIFT says {}, not {}.".format(
                                                     newgroup,group))
@@ -9550,7 +9554,7 @@ class Sort(object):
             return
         progress=(str(self.thissort.index(sense)+1)+'/'+str(len(self.thissort)))
         """After the first entry, sort by groups."""
-        # log.debug('groups: {}'.format(program['status'].groups(wsorted=True)))
+        # log.debug('groups: {}'.format(self.groups(wsorted=True)))
         if self.runwindow.exitFlag.istrue():
             return #1,1
         ui.Label(self.titles, text=progress, font='report', anchor='w'
@@ -9610,7 +9614,7 @@ class Sort(object):
         self.thissort=self.itemstosort()[:] #current list
         log.info("Going to sort these senses: {}"
                 "".format(self.itemstosort()))
-        groups=program['status'].groups(wsorted=True)
+        groups=self.groups(wsorted=True)
         log.info("Current groups: {}".format(groups))
         """Children of runwindow.frame"""
         if self.exitFlag.istrue():
@@ -9724,7 +9728,7 @@ class Sort(object):
             return 1
         self.currentsortitems=senses=program['examples'].sensesinslicegroup(group,check)
         if not senses: #then remove the group
-            groups=program['status'].groups(wsorted=True) #from which to remove, put back
+            groups=self.groups(wsorted=True) #from which to remove, put back
             # log.info("Groups: {}".format(self.groups(toverify=True)))
             verified=False
             log.info("Group ‘{}’ has no examples; continuing.".format(group))
@@ -9735,7 +9739,7 @@ class Sort(object):
                 groups.remove(group)
             # log.info("Group-groups: {}-{}".format(group,groups))
             program['status'].groups(groups,wsorted=True)
-            log.info("All groups: {}".format(program['status'].groups(wsorted=True)))
+            log.info("All groups: {}".format(self.groups(wsorted=True)))
             log.info("Groups to verify: {}"
                         "".format(self.groups(toverify=True)))
             return
@@ -9878,7 +9882,7 @@ class Sort(object):
         check=program['params'].check()
         ps=program['slices'].ps()
         profile=program['slices'].profile()
-        groups=program['status'].groups(wsorted=True) #these should be verified, too.
+        groups=self.groups(wsorted=True) #these should be verified, too.
         if len(groups) <2:
             log.debug("No tone groups to distinguish!")
             if not self.exitFlag.istrue():
@@ -10045,8 +10049,8 @@ class Sort(object):
             'newfieldvalue'."""
             u = threading.Thread(target=self.marksortgroup,
                                 args=(sense,newvalue),
-                                kwargs={'check':check,
-                                        'ftype':ftype,
+                                kwargs={#'check':check,
+                                        # 'ftype':ftype,
                                         # remove for testing this fn:
                                         # 'nocheck': True, #don't verify from lift
                                         'updateverification':True,
