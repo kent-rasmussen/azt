@@ -11755,14 +11755,15 @@ class TranscribeS(Transcribe,Segments):
                         )
         buttons=[
                 (_('main screen'), self.done),
-                (_('next group'), self.next)]
-        if cvt == 'T':
-            buttons+=[(_('next tone frame'), self.nextcheck)]
-        else:
-            buttons+=[(_('next check'), self.nextcheck)]
-        buttons+=[(_('next syllable profile'), self.nextprofile),
-                (_('comparison group'), self.submitandswitch)
-                ]
+                # (_('next group'), self.next)
+            ]
+        # if cvt == 'T':
+        #     buttons+=[(_('next tone frame'), self.nextcheck)]
+        # else:
+        #     buttons+=[(_('next check'), self.nextcheck)]
+        # buttons+=[(_('next syllable profile'), self.nextprofile),
+        #         (_('comparison group'), self.submitandswitch)
+        #         ]
         for button in buttons:
             column+=1
             ui.Button(responseframe,text = button[0], command = button[1],
