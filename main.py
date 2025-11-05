@@ -11549,7 +11549,8 @@ class TranscribeS(Transcribe,Segments):
         ps=program['slices'].ps()
         profile=program['slices'].profile()
         check=program['params'].check()
-        self.groups=program['status'].all_groups_verified_for_cvt()
+        self.groups=set(program['status'].groups(wsorted=True))
+        # self.groups=program['status'].all_groups_verified_for_cvt()
         self.othergroups=self.groups-{self.group}
         padx=50
         if program['settings'].lowverticalspace:
