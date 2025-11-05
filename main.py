@@ -1771,7 +1771,8 @@ class StatusFrame(ui.Frame):
                             # r=len(self.glyphscroll.content.winfo_children()))
         l=ui.Label(f, text=glyph, font='read', width=3, c=0, sticky="EW")
         bf=SortGroupButtonFrame(f, self.task, glyph,
-                                all_for_cvt=True, label=True,
+                                # all_for_cvt=True,
+                                label=True,
                                 column=1, sticky="W")
         if bf.examplesOK:
             fn=lambda event,x=glyph:self.task.dobuttonkwargs()['fn'](x)
@@ -1787,7 +1788,10 @@ class StatusFrame(ui.Frame):
         self.glyphbuttons={}
         self.updateglyphbuttons()
     def updateglyphbuttons(self):
-        groups=program['status'].all_groups_verified_for_cvt()
+        """This ultimately should cover all C or V, across checks and
+        ps-profiles"""
+        # groups=program['status'].all_groups_verified_for_cvt()
+        groups=set(program['status'].groups(wsorted=True))
         for k in set(self.glyphbuttons)-groups:
             self.glyphbuttons[k].destroy()
         for k in groups-set(self.glyphbuttons):
