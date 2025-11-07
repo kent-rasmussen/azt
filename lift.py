@@ -2251,32 +2251,27 @@ class FormParent(Node):
     def annotationkeysbylang(self,lang):
         lang=self.getlang(lang) #This might be better more internally
         try:
-            # log.info("annotationvaluebylang returning {}".format(
-            #                     self.forms[lang].annotationvalue(name,value)))
             return self.forms[lang].annotationkeys()
+        except KeyError:
+            pass #make this check easy on the log; it iterates over all senses
+            # log.error(f"{self.sense.id}-{self.ftype} has no {lang} form "
+            #             f"(only {self.forms.keys()})")
         except Exception as e:
-            log.error("Exception! ({})".format(e))
+            log.error(f"annotationkeysbylang Exception! ({e})")
     def annotationkeyinlang(self,check,lang=None):
         lang=self.getlang(lang) #This might be better more internally
-        return self.annotationkeysbylang(lang) and check in self.annotationkeysbylang(lang)
+        keys=self.annotationkeysbylang(lang)
+        return keys and check in keys
     def annotationvaluebylang(self,lang,name,value=None):
         lang=self.getlang(lang) #This might be better more internally
         try:
-            # log.info("annotationvaluebylang returning {}".format(
-            #                     self.forms[lang].annotationvalue(name,value)))
             return self.forms[lang].annotationvalue(name,value)
         except KeyError:
-            log.error("Can't annotate; no form for {} lang! (only {})".format(
-                        lang, self.forms.keys()))
+            if value:
+                log.error(f"{self.sense.id}-{self.ftype} has no {lang} form; "
+                        f"can't apply {value=} (only {self.forms.keys()})")
         except Exception as e:
-            log.error("Exception! ({})".format(e))
-            # if value is not None: #only make if we're populating it, allow ''
-            #     self.forms[lang].annotations[name]=Annotation(self,name=name,
-            #                                                         value=value)
-            #     # Should never need this:
-            #     # self.forms[lang]=Form(self,self.makeformnode(lang,text=value))
-            # else:
-            #     return None
+            log.error("annotationvaluebylang Exception! ({})".format(e))
     def checkforsecondchildanylang(self,lang):
         if len(self.findall('form')) > 1:
             log.error("{} node in entry {} has multiple forms. "
@@ -2807,9 +2802,6 @@ class Sense(Node,FieldParent):
             # log.info("No {} type ({})".format(ftype,self.ftypes))
     def annotationvaluebyftypelang(self,ftype,lang,name,value=None):
         try:
-            # log.info("annotationvaluebyftypelang returning "
-            #     f"{self.ftypes[ftype].annotationvaluebylang(lang,name,value)} "
-            #     f"for {self.id}")
             return self.ftypes[ftype].annotationvaluebylang(lang,name,value)
         except KeyError:
             # log.info("No {} type to pull annotation from".format(ftype))
