@@ -11600,15 +11600,15 @@ class SortT(Sort,Tone,TaskDressing):
         self.guidstosort.append(guid)
         self.guidssorted.remove(guid)
     """Doing stuff"""
-class SortGlyphMembership(Sort,AlphabetGlyphs,TaskDressing):
-    """This task allows users to sort groups from one check into a set of
-    different groups from different checks that all represent the same alphabet
-    letter. If bh=ɓ (or b=ɓ) in one place, it should be true everywhere.
-    """
-    def __init__(self,parent):
 class Transcribe(Sound,Sort,TaskDressing):
     def updateerror(self,event=None):
         self.errorlabel['text'] = ''
+    def refresh_status_buttons(self,*args):
+        for i in [args]:
+            if (i in self.status.glyphbuttons 
+                    and self.status.glyphbuttons[i].winfo_exists()):
+                self.status.glyphbuttons[self.group].destroy()
+                self.status.glyphbuttons[new].destroy()
     def switchgroups(self,comparison=None):
         #this doesn't save!
         if (not hasattr(self,'group') or not hasattr(self,'group_comparison')
@@ -11620,10 +11620,15 @@ class Transcribe(Sound,Sort,TaskDressing):
                 f"‘{self.group}’")
         #actually change the data, not the group settings:
         #This method should go somewhere more reasonable:
-        g=SortButtonFrame.add_int_group(self) #Don't merge groups!
-        self.rename_group(self.group,g,updatestatus=False)
-        self.rename_group(self.group_comparison,self.group,updatestatus=False)
-        self.rename_group(g,self.group_comparison)
+        g=self.add_int_group(self) #Don't merge groups!
+        if self.cvt == 'T':
+            fn=self.rename_group
+        else:
+            fn=self.rename_macrogroup
+        fn(self.group,g,updatestatus=False)
+        fn(self.group_comparison,self.group,updatestatus=False)
+        fn(g,self.group_comparison)
+        self.refresh_status_buttons(g,self.group_comparison)
         # program['settings'].setgroup(gc)
         self.runwindow.on_quit()
         self.makewindow() #The other group needs a name, too!
@@ -11677,6 +11682,9 @@ class Transcribe(Sound,Sort,TaskDressing):
             if len(newvalue) > 1:
                 warning+=_("\n{} will add ‘{}’ to those settings."
                             ).format(program['name'],newvalue)
+                if newvalue not in program['settings'].polygraphs[self.analang][self.cvt]:
+                    program['settings'].polygraphs[self.analang][self.cvt][newvalue]=True
+                    program['settings'].storesettingsfile('profiledata')
             if len(self.group) > 1:
                 warning+=_("\n{} will *not* remove ‘{}’ from "
                             "those settings, because you may still be "
@@ -11699,22 +11707,22 @@ class Transcribe(Sound,Sort,TaskDressing):
             log.debug(noname)
             self.errorlabel['text'] = noname
             return 1
-        if newvalue == '∅': #proxy for no segments
-            newvalue=''
-        if newvalue != self.group: #only make changes!
-            showpolygraphs=False
-            diff=False
-            if newvalue in self.groups:
-                deja=_("Sorry, there is already a group with "
-                                "that label; see comparison below. \n"
-                                "If you want to join the "
-                                "groups, go back and do it in the sort task.")
-                log.debug(deja)
-                self.errorlabel['text'] = deja
-                self.setgroup_comparison(newvalue)
-                return 1
-            if program['params'].cvt() != 'T': #Warning only on segmental changes
-                self.polygraphwarn(newvalue)
+        elif newvalue != self.group and newvalue in self.groups:
+            deja=_("Sorry, there is already a group with "
+                            "that label; see comparison below. \n"
+                            "If you want to join the "
+                            "groups, go back and do it in the sort task.")
+            log.debug(deja)
+            self.errorlabel['text'] = deja
+            self.setgroup_comparison(newvalue)
+            return 1
+        if program['params'].cvt() != 'T': #Warning only on segmental changes
+            self.polygraphwarn(newvalue)
+            #These should each make one change only, checking for overwrites
+            self.rename_macrogroup(self.group,newvalue)
+            program['alphabet'].glyph(newvalue)
+            self.refresh_status_buttons(self.group,newvalue)
+        else:
             """updateforms=True doesn't seem to be working for segments"""
             self.updatebygroupsense(self.group,newvalue,updateforms=True)
             #NO: this should update formstosearch and profile data.
@@ -11724,24 +11732,19 @@ class Transcribe(Sound,Sort,TaskDressing):
             self.updategroups() #updates self.groups self.group self.othergroups self.groupsdone
             program['settings'].storesettingsfile(setting='status')
             """Update regular expressions here!!"""
-            self.maybewrite()
-        else: #move on, but notify in logs
-            log.info(f"User selected ‘{self.oktext}’, but with "
-                    "no change.")
+        self.maybewrite()
+        self.ok_done=True
         # update forms, even if group doesn't change:
         if hasattr(self,'group_comparison'):
             delattr(self,'group_comparison') # in either case
         self.runwindow.on_quit()
-        return
-    def done(self):
-        self.submitform()
-        self.donewpyaudio()
     def next(self):
         log.debug("running next group")
         error=self.submitform()
         if not error:
             # log.debug("group: {}".format(group))
-            ints=[i for i in program['status'].groups(wsorted=True) if isinteger(i)]
+            ints=[i for i in program['status'].groups(wsorted=True)
+                    if i.isdigit()]
             if ints:
                 log.info("Found integer groups: {}".format(ints))
                 program['status'].group(str(min(ints)))#Look for integers first
@@ -11772,7 +11775,7 @@ class Transcribe(Sound,Sort,TaskDressing):
             program['settings'].set('group_comparison',group)
         else:
             #this returns its window:
-            w=self.getgroup(comparison=True,wsorted=True,**kwargs)
+            w=self.getglyph(comparison=True,**kwargs)
             if w and w.winfo_exists(): #This window may be already gone
                 log.info("Waiting for {}".format(w))
                 w.wait_window(w)
@@ -11799,10 +11802,10 @@ class Transcribe(Sound,Sort,TaskDressing):
                                                 self.group_comparison))
             t=_('Compare with another group ({})').format(
                                                 self.group_comparison)
-            self.compframe.bf2=SortGroupButtonFrame(self.compframe.compframeb,
+            self.compframe.bf2=SortGlyphGroupButtonFrame(
+                                    self.compframe.compframeb,
                                     self,
-                                    self.group_comparison,
-                                    all_for_cvt=True,
+                                    group=self.group_comparison,
                                     showtonegroup=True,
                                     playable=True,
                                     unsortable=False, #no space, bad idea
@@ -11836,39 +11839,52 @@ class Transcribe(Sound,Sort,TaskDressing):
         program['settings'].makeeverythingok()
         self.ftype=program['params'].ftype()
         self.mistake=False #track when a user has made a mistake
+        self.analang=program['params'].analang()
         program['status'].makecheckok()
         Sound.__init__(self)
 class TranscribeS(Transcribe,Segments):
-    def makewindow_new(self, group=None, event=None):
-        if group:
-            self.group=program['status'].group(group)
+    macrosort=True
+    def done(self):
+        log.info("Transcribe done")
+        self.submitform()
+        program['alphabet'].save_settings()
+        self.donewpyaudio()
+    def makewindow(self, glyph=None, event=None):
+        self.ok_done=False
+        if glyph:
+            self.group=program['alphabet'].glyph(glyph)
         else:
-            self.group=program['status'].group()
+            self.group=program['alphabet'].glyph()
+        if not isinstance(self.group, str):
+            log.info(f"Group not string! ({self.group}, {type(self.group)})")
         cvt=program['params'].cvt()
-        ps=program['slices'].ps()
-        profile=program['slices'].profile()
-        check=program['params'].check()
-        self.groups=set(program['status'].groups(wsorted=True))
+        self.groups=program['alphabet'].glyphs()
         # self.groups=program['status'].all_groups_verified_for_cvt()
-        self.othergroups=self.groups-{self.group}
+        self.otherglyphs=set(self.groups)-{self.group}
         padx=50
         if program['settings'].lowverticalspace:
             log.info("Using low vertical space setting")
             pady=0
         else:
             pady=10
-        title=_(f"Rename {program['params'].cvtdict()[cvt]['sg']} group "
-                f"‘{self.group}’")
         self.buttonframew=int(program['screenw']/3.5)
-        self.getrunwindow(title=title)
-        titlel=ui.Label(self.runwindow.frame,text=title,font='title',
-                        row=0,column=0,sticky='ew',padx=padx,pady=pady
-                        )
+        title=[program['params'].cvtdict()[cvt]['sg'],_("letter")]
         getformtext=_("What letter(s) do you want to use for this {} "
                         "group?").format(program['params'].cvtdict()[cvt]['sg'])
-        if isinteger(self.group):
-            getformtext+=_("Because this is a new group, you need to give it "
-                            "some name before moving on.")
+        if self.group.isdigit():
+            title.insert(0,_("Name"))
+            getformtext+=_("\nBecause this is a new group, you need to give it "
+                            "some name now.")
+            initval=''
+        else:
+            title.insert(0,_("Rename"))
+            title.append(f"‘{self.group}’")
+            initval=self.group
+        self.getrunwindow(title=title)
+        titlel=ui.Label(self.runwindow.frame,text=' '.join(title),
+                        font='title',
+                        row=0,column=0,sticky='ew',padx=padx,pady=pady
+                        )
         getform=ui.Label(self.runwindow.frame,
                         text=getformtext,
                         font='read',
@@ -11881,7 +11897,7 @@ class TranscribeS(Transcribe,Segments):
                             )
         """extract from here"""
         self.transcriber=transcriber.Transcriber(inputfeedbackframe,
-                                initval=self.group,
+                                initval=initval,
                                 soundsettings=self.soundsettings,
                                 chars=self.glyphspossible,
                                 row=0,column=0,sticky=''
@@ -11893,10 +11909,9 @@ class TranscribeS(Transcribe,Segments):
                             )
         """Make this a pad of buttons, rather than a label, so users can
         go directly where they want to be"""
-        g=nn(self.othergroups,perline=len(self.othergroups)//5)
-        log.info("There: {}, NTG: {}; g:{}".format(self.groups,
-                                                    self.othergroups,g))
-        groupslabel=ui.Label(infoframe,
+        g=nn(self.otherglyphs,perline=len(self.otherglyphs)//5)
+        log.info(f"{self.groups=}, {self.otherglyphs=}; {g=}")
+        glyphslabel=ui.Label(infoframe,
                             text=f"Don't use Other Groups:\n{g}",
                             row=0,column=1,
                             sticky='new',
@@ -11921,21 +11936,21 @@ class TranscribeS(Transcribe,Segments):
                                 row=4,column=0,sticky='',
                                 # border=1
                                 )
-        b=SortGroupButtonFrame(examplesframe, self,
-                                self.group,
+        cmd=lambda x=self.group:self.transcriber.set_value(x)
+        b=SortGlyphGroupButtonFrame(examplesframe, self,
+                                group=self.group,
                                 showtonegroup=True,
-                                all_for_cvt=True,
-                                # canary=entryview,
+                                on_select=cmd,
                                 playable=True,
-                                unsortable=True,
                                 alwaysrefreshable=True,
                                 row=0, column=0, sticky='w',
                                 wraplength=self.buttonframew
                                 )
-        if not b.examplesOK:
-            ui.Label(examplesframe, text=_("No Examples; pick another group"),
-                    row=0, column=0, sticky='w',
-            )
+        self.window_failed=False
+        if not b.hasexample:
+            self.clear_runwindow()
+            self.window_failed=True
+            return
         self.compframe=ui.Frame(examplesframe,
                     highlightthickness=10,
                     highlightbackground=self.frame.theme.white,
@@ -11945,160 +11960,14 @@ class TranscribeS(Transcribe,Segments):
         fn=self.setgroup_comparison
         self.sub_c=ui.Button(self.compframe,
                             text = t,
-                            command = lambda:fn(all_for_cvt=True),
+                            command = lambda:fn(),
                             row=0,column=0
                             )
         self.comparisonbuttons()
         self.runwindow.waitdone()
         self.sub_c.wait_window(self.runwindow) #then move to next step
-        self.status.updateglyphbuttons()
-        """Store these variables above, finish with (destroying window with
-        local variables):"""
-    def makewindow(self, group=None, event=None):
-        if group:
-            self.group=program['status'].group(group)
-        """Go through this and tease apart what is needed for tone complexity,
-        and move that to tone.
-        Note to user: you can't pick these group names (switch later, not here)
-        Make another function to switch letters between groups."""
-        # log.info("Making transcribe window")
-        def changegroupnow(event=None):
-            w=program['taskchooser'].getgroup(wsorted=True)
-            self.runwindow.wait_window(w)
-            if not w.exitFlag.istrue():
-                self.runwindow.on_quit()
-                self.makewindow()
-        cvt=program['params'].cvt()
-        ps=program['slices'].ps()
-        profile=program['slices'].profile()
-        check=program['params'].check()
-        self.buttonframew=int(program['screenw']/3.5)
-        if not check:
-            self.getcheck(guess=True)
-            if check is None:
-                # log.info("I asked for a check name, but didn't get one.")
-                return
-        if not program['status'].groups(wsorted=True):
-            log.error(_("I don't have any sorted data for check: {}, "
-                        "ps-profile: {}-{},").format(check,ps,profile))
-            return
-        groupsok=self.updategroups()
-        if not groupsok:
-            log.error("Problem with log; check earlier message.")
-            return
-        padx=50
-        if program['settings'].lowverticalspace:
-            log.info("Using low vertical space setting")
-            pady=0
-        else:
-            pady=10
-        title=_("Rename {} {} {} group ‘{}’ in ‘{}’ frame"
-                        ).format(ps,profile,
-                        program['params'].cvtdict()[cvt]['sg'],
-                        self.group,check)
-        self.getrunwindow(title=title)
-        titlel=ui.Label(self.runwindow.frame,text=title,font='title',
-                        row=0,column=0,sticky='ew',padx=padx,pady=pady
-                        )
-        getformtext=_("What new name do you want to call this {} "
-                        "group?").format(program['params'].cvtdict()[cvt]['sg'])
-        if cvt == 'T':
-            getformtext+=_("\nA label that describes the surface tone form "
-                        "in this context would be best, like ‘[˥˥˥ ˨˨˨]’")
-        getform=ui.Label(self.runwindow.frame,
-                        text=getformtext,
-                        font='read',
-                        norender=True,
-                        row=1,column=0,sticky='ew',padx=padx,pady=pady
-                        )
-        getform.wrap()
-        inputfeedbackframe=ui.Frame(self.runwindow.frame,
-                            row=2,column=0,sticky=''
-                            )
-        self.transcriber=transcriber.Transcriber(inputfeedbackframe,
-                                initval=self.group,
-                                soundsettings=self.soundsettings,
-                                chars=self.glyphspossible,
-                                row=0,column=0,sticky=''
-                                )
-        self.transcriber.formfield.bind('<KeyRelease>', self.updateerror)
-        infoframe=ui.Frame(inputfeedbackframe,
-                            row=0,column=1,sticky=''
-                            )
-        """Make this a pad of buttons, rather than a label, so users can
-        go directly where they want to be"""
-        g=nn(self.othergroups,perline=len(self.othergroups)//5)
-        # log.info("There: {}, NTG: {}; g:{}".format(self.groups,
-        #                                             self.othergroups,g))
-        groupslabel=ui.Label(infoframe,
-                            text='Other Groups:\n{}'.format(g),
-                            row=0,column=1,
-                            sticky='new',
-                            padx=padx,
-                            rowspan=2
-                            )
-        groupslabel.bind('<ButtonRelease-1>',changegroupnow)
-        self.errorlabel=ui.Label(infoframe,text='',
-                            fg='red',
-                            wraplength=int(self.frame.winfo_screenwidth()/3),
-                            row=2,column=1,sticky='nsew'
-                            )
-        responseframe=ui.Frame(self.runwindow.frame,
-                                row=3,
-                                column=0,
-                                sticky='',
-                                padx=padx,
-                                pady=pady,
-                                )
-        self.oktext=_('Use this name and go to:')
-        column=0
-        sub_lbl=ui.Label(responseframe,text = self.oktext, font='read',
-                        row=0,column=column,sticky='ns'
-                        )
-        buttons=[
-                (_('main screen'), self.done),
-                # (_('next group'), self.next)
-            ]
-        # if cvt == 'T':
-        #     buttons+=[(_('next tone frame'), self.nextcheck)]
-        # else:
-        #     buttons+=[(_('next check'), self.nextcheck)]
-        # buttons+=[(_('next syllable profile'), self.nextprofile),
-        #         (_('comparison group'), self.submitandswitch)
-        #         ]
-        for button in buttons:
-            column+=1
-            ui.Button(responseframe,text = button[0], command = button[1],
-                                anchor ='c',
-                                row=0,column=column,sticky='ns'
-                                )
-        examplesframe=ui.Frame(self.runwindow.frame,
-                                row=4,column=0,sticky=''
-                                )
-        b=SortGroupButtonFrame(examplesframe, self,
-                                self.group,
-                                showtonegroup=True,
-                                # canary=entryview,
-                                playable=True,
-                                unsortable=True,
-                                alwaysrefreshable=True,
-                                row=0, column=0, sticky='w',
-                                wraplength=self.buttonframew
-                                )
-        self.compframe=ui.Frame(examplesframe,
-                    highlightthickness=10,
-                    highlightbackground=self.frame.theme.white,
-                    row=0,column=1,sticky='e'
-                    ) #no hlfg here
-        t=_('Compare with another group')
-        self.sub_c=ui.Button(self.compframe,
-                        text = t,
-                        command = self.setgroup_comparison,
-                        row=0,column=0
-                        )
-        self.comparisonbuttons()
-        self.runwindow.waitdone()
-        self.sub_c.wait_window(self.runwindow) #then move to next step
+        if hasattr(self,'status'): #i.e., working from Transcribe task directly
+            self.status.updateglyphbuttons()
         """Store these variables above, finish with (destroying window with
         local variables):"""
     def __init__(self, parent):
@@ -12111,14 +11980,6 @@ class TranscribeV(TranscribeS):
         return _("Vowel Letters")
     def tooltip(self):
         return _("This task helps you decide on your vowel letters.")
-    def dobuttonkwargs(self):
-        return {'text':_("Transcribe Vowel Groups"),
-                'fn':self.makewindow,
-                'font':'title',
-                'compound':'top', #image bottom, left, right, or top of text
-                'image':program['theme'].photo['TranscribeV'], #self.cvt
-                'sticky':'ew'
-                }
     def taskicon(self):
         return program['theme'].photo['iconTranscribeV']
     def __init__(self, parent): #frame, filename=None
@@ -12141,21 +12002,13 @@ class TranscribeV(TranscribeS):
         # # 'Â', 'Ê', 'Î', 'Ô', 'Û',
         # 'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
         ]
+        self.cvt=program['params'].cvt('V')
         super().__init__(parent)
-        program['params'].cvt('V')
 class TranscribeC(TranscribeS):
     def tasktitle(self):
         return _("Consonant Letters")
     def tooltip(self):
         return _("This task helps you decide on your consonant letters.")
-    def dobuttonkwargs(self):
-        return {'text':_("Transcribe Consonant Groups"),
-                'fn':self.makewindow,
-                'font':'title',
-                'compound':'top', #image bottom, left, right, or top of text
-                'image':program['theme'].photo['TranscribeC'], #self.cvt
-                'sticky':'ew'
-                }
     def taskicon(self):
         return program['theme'].photo['iconTranscribeC']
     def __init__(self, parent): #frame, filename=None
@@ -12195,8 +12048,8 @@ class TranscribeC(TranscribeS):
         'l','r',
         'rh','wh',
         ]
+        self.cvt=program['params'].cvt('C')
         super().__init__(parent)
-        program['params'].cvt('C')
 class TranscribeT(Transcribe,Tone):
     def tasktitle(self):
         return _("Transcribe Tone")
@@ -12213,6 +12066,10 @@ class TranscribeT(Transcribe,Tone):
                 }
     def taskicon(self):
         return program['theme'].photo['iconTranscribe']
+    def done(self):
+        log.info("Transcribe done")
+        self.submitform()
+        self.donewpyaudio()
     def makewindow(self, group=None, event=None):
         if group:
             self.group=program['status'].group(group)
@@ -12334,7 +12191,7 @@ class TranscribeT(Transcribe,Tone):
                                 row=4,column=0,sticky=''
                                 )
         b=SortGroupButtonFrame(examplesframe, self,
-                                self.group,
+                                group=self.group,
                                 showtonegroup=True,
                                 # canary=entryview,
                                 playable=True,
@@ -12655,7 +12512,7 @@ class ReportCitationBackground(Background,ReportCitation):
 class ReportCitationMulticheckBackground(Multicheck,Background,ReportCitation):
     """docstring for ReportCitation."""
     def tasktitle(self):
-        return _("Alphabet Report (Multicheck)") # on One Data Slice
+        return _("Alphabet Report (checks)") # on One Data Slice
     def __init__(self, parent):
         ReportCitation.__init__(self,parent)
         Multicheck.__init__(self)
@@ -12663,7 +12520,7 @@ class ReportCitationMulticheckBackground(Multicheck,Background,ReportCitation):
 class ReportCitationMultichecksliceBackground(Multicheckslice,Background,ReportCitation):
     """docstring for ReportCitation."""
     def tasktitle(self):
-        return _("Alphabet Report (Multislice, Multicheck)") # on One Data Slice
+        return _("Alphabet Report (slices/checks)") # on One Data Slice
     def __init__(self, parent):
         ReportCitation.__init__(self,parent)
         Multicheckslice.__init__(self)
@@ -12678,7 +12535,7 @@ class ReportCitationByUF(ByUF,ReportCitation):
 class ReportCitationByUFMulticheckBackground(Multicheck,Background,ReportCitationByUF):
     """docstring for ReportCitation."""
     def tasktitle(self):
-        return _("Alphabet Report by Tone group (Multicheck)") # on One Data Slice
+        return _("Alphabet Report by Tone group (checks)") # on One Data Slice
     def __init__(self, parent):
         ReportCitationByUF.__init__(self, parent)
         Multicheck.__init__(self)
@@ -12686,7 +12543,7 @@ class ReportCitationByUFMulticheckBackground(Multicheck,Background,ReportCitatio
 class ReportCitationByUFMultichecksliceBackground(Multicheckslice,Background,ReportCitationByUF):
     """docstring for ReportCitation."""
     def tasktitle(self):
-        return _("Alphabet Report by Tone Group (Multislice, Multicheck)") # on One Data Slice
+        return _("Alphabet Report by Tone Group (slices/checks)") # on One Data Slice
     def __init__(self, parent):
         ReportCitationByUF.__init__(self,parent)
         Multicheckslice.__init__(self)
@@ -13045,20 +12902,70 @@ class ExampleDict(dict):
         marks the example"""
         return node.hassoundfile()
     def exampletypeok(self,node,**kwargs):
+        # log.info(f"exampletypeok checking {node} for {kwargs=}")
         kwargs=exampletype(**kwargs)
         if node is None:
             return
         # log.info(f"exampletypeok looking at {node=}")
         if kwargs['wglosses'] and not self.hasglosses(node):
-            # log.info("Gloss check failed for {}".format(node.sense.id))
+            log.info("Gloss check failed for {}".format(node.sense.id))
             return
         if not self.hassoundfile(node) and kwargs['wsoundfile']:
             # log.info("Audio file check failed for {}".format(node.sense.id))
             return
+        # log.info(f"exampletypeok returning True")
         return True
+    def prefetch_examples(self, groups, all_for_cvt=False, **kwargs):
+        """
+        Antigravity: Optimized method to pre-fetch examples for multiple groups at once.
+        This avoids iterating over the entire database for each group.
+        """
+        check = kwargs.get('check', program['params'].check())
+        ftype = kwargs.get('ftype', program['params'].ftype())
+        log.info(f"Prefetching examples for {len(groups)} groups...")
+        # Prepare codes mapping to avoid repeated calls and initialize cache
+        group_to_code = {}
+        for group in groups:
+            code = program['alphabet'].verificationcode(**{**kwargs, 'group': group})
+            if code not in self.nodes_by_code:
+                self.nodes_by_code[code] = [] # Initialize
+                group_to_code[group] = code
+        if not group_to_code:
+            log.info("All groups already cached.")
+            return
+        # Iterate once over the database
+        if program['params'].cvt() == 'T':
+            # T: Tone examples
+            senses = program['slices'].inslice(program['db'].senses)
+            for s in senses:
+                group = s.tonevaluebyframe(check)
+                if group in group_to_code:
+                    if check in s.examples:
+                        self.nodes_by_code[group_to_code[group]].append(s.examples[check])
+        elif all_for_cvt:
+            # all_for_cvt: Any ps-profile
+            senses = program['db'].senses
+            for s in senses:
+                vals = s.annotationvaluedictbyftypelang(ftype, program['db'].analang).values()
+                # Check if any of our target groups are in this sense's values
+                # This might be slightly expensive if vals is large, but usually it's small
+                for group in groups: 
+                    if group in group_to_code and group in vals:
+                        if ftype in s.ftypes:
+                            self.nodes_by_code[group_to_code[group]].append(s.ftypes[ftype])
+        else: 
+            # Standard case: Other FormParent nodes
+            senses = program['slices'].inslice(program['db'].senses, **kwargs)
+            for s in senses:
+                val = s.annotationvaluebyftypelang(ftype, program['db'].analang, check)
+                group = str(val)
+                if group in group_to_code:
+                    if ftype in s.ftypes:
+                        self.nodes_by_code[group_to_code[group]].append(s.ftypes[ftype])
+        log.info("Prefetch complete.")
     def getexamples(self,group,all_for_cvt=False,**kwargs):
-        check=program['params'].check()
-        ftype=program['params'].ftype()
+        check=kwargs.pop('check',program['params'].check())
+        ftype=kwargs.pop('ftype',program['params'].ftype())
         if program['params'].cvt() == 'T': # example nodes
             nodes=[s.examples[check] for s in program['slices'].inslice(
                                                         program['db'].senses)
@@ -13071,81 +12978,70 @@ class ExampleDict(dict):
                     ]
         else: # Other FormParent nodes
             nodes=[s.ftypes[ftype] for s in program['slices'].inslice(
-                                                        program['db'].senses)
+                                                        program['db'].senses,
+                                                        **kwargs)
                         if s.annotationvaluebyftypelang(ftype,
                                                     program['db'].analang,
                                                     check
-                                                        ) == group
+                                                        ) == str(group) #result str
                     ]
-        if not nodes:
-            log.error(f"There don't seem to be any nodes in this {check=}-"
-                        f"{group=}/{ftype=})-slice. ({all_for_cvt=})")
-            return None #as 0,None; why?
-        # else:
-        #     log.info("Found {} examples in the {} sort group for the {} check: "
-        #         "{}.".format(len(nodes),group,check,[i.id for i in nodes]))
         return nodes
     def getexample(self,group,**kwargs):
-        nodes=self.getexamples(group,**kwargs)
+        code=program['alphabet'].verificationcode(**{**kwargs,'group':group})
+        if code in self.nodes_by_code:#don't keep rerunning this on a given boot
+            nodes=self.nodes_by_code[code]
+        else:
+            nodes=self.getexamples(group,**kwargs)
         if not nodes:
-            log.error(f"getexample has no example nodes for {group=}?")
+            # log.error(f"getexample has no example nodes for {group=}?")
             return 0,None
         n=len(nodes)
-        tries=0
-        node=None #do this once, anyway...
-        """hasglosses sets the framed and sense keys"""
-        # log.debug("ExampleDict getexample kwargs: {}".format(kwargs))
-        while not self.exampletypeok(node,**kwargs) and tries<n*2:
-            tries+=1
-            if group in self:
-                # log.info("group in self")
-                if self[group] in nodes: #if stored value is in group
-                    # log.info("self[group] in examples")
-                    if not kwargs['renew']:
-                        # log.info("Using stored value for ‘{}’ group: ‘{}’"
-                        #         "".format(group, self[group]))
-                        node=self[group]
-                        #don't do this if clause more than once
-                        kwargs['renew']=True
-                    else:
-                        # log.info("renewing")
-                        i=nodes.index(self[group])
-                        if not kwargs.get('goback'):
-                            # log.info("not going back")
-                            if i == len(nodes)-1: #loop back on last
-                                node=nodes[0]
-                            else:
-                                node=nodes[i+1]
-                        else:
-                            # log.info("going back")
-                            if i == 0: #loop back on last
-                                node=nodes[len(nodes)-1]
-                            else:
-                                node=nodes[i-1]
-                        # log.info("Using next value for ‘{}’ group: ‘{}’"
-                        #         "".format(group, self[group]))
-                else:
-                    # log.info("self[group] not in examples")
-                    node=nodes[0]
-            elif n == 1:
-                # log.info("group not in self, one exemplaire")
-                node=nodes[0]
-            else:
-                # log.info("group not in self, multiple exemplaires")
-                # log.info("n: {}".format(n))
-                node=nodes[randint(0, n-1)]
-            self[group]=node #store for next iteration
-        if tries == n*2:
-            log.info(_("Apparently I tried for a sense {} times, and couldn't "
-            "find one matching your needs ({}) glosses (out of {} possible "
-            "senses). This may be a systematic problem to fix.").format(
-                                                                tries,kwargs,n))
-            return 0,None
+        # log.info(f"{n} nodes found by ExampleDict.getexample")
+        exs_ok={i for i in nodes if self.exampletypeok(i,**kwargs)}
+        # log.info(f"found {len(exs_ok)} examples with sound files")
+        if kwargs.get('wsoundfile'):
+            exs_ok_wo_soundfile={i for i in nodes
+                            if self.exampletypeok(i,
+                                            **{**kwargs, 'wsoundfile': False}
+                                                )}
         else:
-            self[group]=node #save for next time
-            return len(nodes),node #self._outdict
+            exs_ok_wo_soundfile=set()
+        # log.info(f"found {len(exs_ok_wo_soundfile)} examples w/o sound files")
+        # include all, but with sound files first. Prioritize; give full count
+        nodes=list(exs_ok)+list(exs_ok_wo_soundfile-exs_ok)
+        if code in self and self[code] in nodes: #if stored value is in group
+            # log.info(f"found stored example")
+            if not kwargs['renew']:
+                # log.info(f"returning stored example")
+                node=self[code]
+                kwargs['renew']=True
+            else:
+                # log.info(f"renewing stored example")
+                txt=[_(f"Resetting to"),_(f"{code} example ({self[code]}), of "
+                            f"{len(nodes)} examples with {kwargs=}")]
+                i=nodes.index(self[code])
+                if not kwargs.get('goback'):
+                    txt.insert(1,_("next"))
+                    if i == len(nodes)-1: #loop back on last
+                        node=nodes[0]
+                    else:
+                        node=nodes[i+1]
+                else:
+                    txt.insert(1,_("previous"))
+                    if i == 0: #loop back on last
+                        node=nodes[len(nodes)-1]
+                    else:
+                        node=nodes[i-1]
+                log.info(' '.join(txt))
+        else:
+            # log.info(f"Did not find stored example")
+            node=nodes[0]
+        self[code]=node #store for next iteration
+        return len(nodes),node #self._outdict
     def __init__(self):
         super(ExampleDict, self).__init__({})
+        self.nodes_by_code={}
+        program['examples']=self
 class SortButtonFrame(ui.ScrollingFrame):
     """This is the frame of sort group buttons."""
     def getanotherskip(self,parent,vardict):
@@ -13171,47 +13067,46 @@ class SortButtonFrame(ui.ScrollingFrame):
             self.sortitem.destroy()
         def differentbutton():
             vardict['NONEOFTHEABOVE']=ui.BooleanVar()
-            difb=ui.Button(bf, text=newgroup,
+            difb=ui.Button(bf1, text=newgroup,
                         cmd=different,
                         anchor='w',
-                        font='instructions'
-                        )
-            difb.grid(column=0, row=0, sticky='ew')
-        row=0
+                        relief='flat',
+                        font='instructions',
+                        column=0, row=0, sticky='ew')
         firstOK=_("This word is OK in this frame")
-        newgroup=_("Different")
+        newgroup=_("Other")
         skiptext=_("Skip this item")
         if '=' in self.check:
             skiptext+=" ({})".format(self.check.replace('=','≠'))
         """This should just add a button, not reload the frame"""
-        row+=10
-        bf=ui.Frame(parent)
-        bf.grid(column=0, row=row, sticky='w')
+        bf1=ui.Frame(parent, border=True, row=parent.nrows(), sticky='w')
         if not program['status'].groups(wsorted=True):
             # log.info("Making None sorted yet button")
             vardict['ok']=ui.BooleanVar()
-            okb=ui.Button(bf, text=firstOK,
+            okb=ui.Button(bf1, text=firstOK,
                             cmd=firstok,
                             anchor='w',
-                            font='instructions'
-                            )
-            okb.grid(column=0, row=0, sticky='ew')
+                            relief='flat',
+                            font='instructions',
+                            column=0, row=0, sticky='ew')
         else:
             # log.info("Making different button")
             differentbutton()
         vardict['skip']=ui.BooleanVar()
         # log.info("Making skip button")
-        skipb=ui.Button(bf, text=skiptext,
+        bf2=ui.Frame(parent, border=True, row=parent.nrows(), sticky='w')
+        skipb=ui.Button(bf2, text=skiptext,
                         cmd=skip,
                         anchor='w',
-                        font='instructions'
-                        )
-        skipb.grid(column=0, row=1, sticky='ew')
+                        relief='flat',
+                        font='instructions',
+                        column=0, row=0, sticky='ew')
     def updatecounts(self):
         # log.info("Updating counts for each button")
         for b in self.groupbuttonlist:
             b.updatecount()
     def addgroupbutton(self,group):
+        # log.info(f"SortButtonFrame addgroupbutton for {group}")
         if self.exitFlag.istrue():
             return #just don't die
         if program['settings'].lowverticalspace:
@@ -13222,88 +13117,51 @@ class SortButtonFrame(ui.ScrollingFrame):
         # log.info(f"This button at {self.groupbuttons.row=}, {self.groupbuttons.col=}")
         nbuttons=len(self.groupbuttons.winfo_children())
         r,c=nbuttons//self.buttoncolumns,nbuttons%self.buttoncolumns
-        b=SortGroupButtonFrame(self.groupbuttons, self,
-                                group,
-                                showtonegroup=True,
-                                alwaysrefreshable=True,
-                                bpady=0,
-                                bipady=scaledpady,
-                                row=r,#self.groupbuttons.row,
-                                column=c,#self.groupbuttons.col,
-                                sticky='w')
+        kwargs={'group':group} #this may be glyph, item code, or sort group
+        if self.macrosort and not self.remove_on_click:
+            frame_class=SortGlyphGroupButtonFrame #this takes glyph, calls other
+        else:
+            frame_class=SortGroupButtonFrame #this takes item code or sort group
+        if self.macrosort and self.remove_on_click:
+            kwargs=program['alphabet'].parse_verificationcode(group)
+        b=frame_class(self.groupbuttons, self,
+                        showtonegroup=True,
+                        alwaysrefreshable=True,
+                        remove_on_click=self.remove_on_click,
+                        row=r,
+                        column=c,
+                        sticky='w',
+                        **kwargs
+                    )
+        # log.info(f'group buttons made')
         if not b.hasexample:
+            log.info(f'No example found for {group}')
+            b.destroy()
             return
+        # log.info(f'group button example found')
         self.groupvars[group]=b.var()
         self.groupbuttonlist.append(b)
-        self._configure_canvas()
-    def add_int_group(self):
-        log.info("Adding a new group!")
-        groups=program['status'].groups(wsorted=True)
-        values=[int(i) for i in groups if isinteger(i)]+[0] #in case none
-        newgroup=max(values)+1
-        groups.append(str(newgroup))
-        program['status'].groups(groups,wsorted=True)
-        program['status'].store()
-        log.info(f"Groups (appended): {groups}")
-        return str(newgroup)
-    def sortselected(self,sense):
-        selectedgroups=selected(self.groupvars)
-        # log.info("selectedgroups: {}".format(selectedgroups))
-        # for k in self.groupvars:
-        #     log.info("{} value: {}".format(k,self.groupvars[k].get()))
-        if len(selectedgroups)>1:
-            log.error("More than one group selected: {}".format(
-                                                            selectedgroups))
-            return 2
-        groupselected=unlist(selectedgroups)
-        if groupselected in self.groupvars:
-            self.groupvars[groupselected].set(False)
-        else:
-            log.error("selected {}; not in {}".format(groupselected,
-                                                        self.groupvars))
-            return
-        if groupselected:
-            if groupselected in ["NONEOFTHEABOVE",'ok']:
-                """If there are no groups yet, or if the user asks for
-                another group, make a new group."""
-                group=self.add_int_group()
-                """And give the user a button for it, for future words
-                (N.B.: This is only used for groups added during the current
-                run. At the beginning of a run, all used groups have buttons
-                created above.)"""
-                """Can't thread this; the button needs to find data"""
-                self.marksortgroup(sense,group)
-                self.addgroupbutton(group)
-                #adjust window for new button
-                self.windowsize()
-                log.debug('Group added: {}'.format(groupselected))
-                """group with the above?"""
-                """Group these last two?"""
-            else:
-                if groupselected == 'skip':
-                    group='NA'
-                else:
-                    group=groupselected
-                # log.debug(f'Group selected: {group} ({groupselected})')
-                """This needs to *not* operate on "exit" button."""
-                # self.marksortgroup(sense,group) #finish this, then update UI
-                t = threading.Thread(target=self.marksortgroup,
-                                    args=(sense,group),
-                                    kwargs={
-                                            # remove for testing this fn:
-                                            'nocheck':True
-                                            })
-                t.start()
-        else:
-            log.debug('No group selected: {}'.format(groupselected))
-            return 1 # this should only happen on Exit
-        # program['status'].marksensesorted(sense) #now in marksortgroup
-        self.maybewrite()
+        log.info(f'Group added: {group}')
+    def reset_selected(self):
+        for k in self.groupvars:
+            self.groupvars[k].set(False)
+    def get_selected(self):
+        # log.info(f"{[(i,self.groupvars[i].get()) for i in self.groupvars]}")
+        return [k for k in self.groupvars
+                if self.groupvars[k] is not None #necessary?
+                if self.groupvars[k].get() #only those marked True
+                ]
+    def set_canary(self,canary):
+        for b in self.groupbuttonlist:
+            b.setcanary(canary)
+        self.sortitem=canary    
     def __init__(self, parent, task, groups, *args, **kwargs):
+        self.macrosort=kwargs.pop('macrosort',False)
+        self.remove_on_click=kwargs.pop('remove_on_click',False)
+        self.groups=groups
         super(SortButtonFrame, self).__init__(parent, *args, **kwargs)
         """Children of self.runwindow.frame.scroll.content"""
-        self.groupbuttons=self.content.groups=ui.Frame(self.content,
-                                                row=0,column=0,sticky='ew')
+        self.groupbuttons=self.content.groups=ui.Frame(self.content,sticky='ew')
         self.content.anotherskip=ui.Frame(self.content, row=1,column=0)
         """Children of self.runwindow.frame.scroll.content.groups"""
         self.groupbuttons.row=0 #rows for this frame
@@ -13313,18 +13171,79 @@ class SortButtonFrame(ui.ScrollingFrame):
         # entryview=ui.Frame(self.runwindow.frame)
         """We need a few things from the task (which are needed still?)"""
         self.task=program['status'].task()
-        self.buttoncolumns=program['status'].task().buttoncolumns
-        self.marksortgroup=program['status'].task().marksortgroup
+        """These two methods each take an item and a category, into which the
+        item is sorted. This should be generalizable."""
         self.check=program['params'].check()
         self.maybewrite=program['taskchooser'].maybewrite
-        # self.updatestatus=task.updatestatus
-        for group in groups:
+        waiting=task
+        if self.macrosort and not self.remove_on_click:
+            msg=_("Gathering groups"
+                "\nOn the next screen, you will sort groups into letter groups")
+            self.buttoncolumns=1
+        elif self.macrosort:
+            msg=_("Verifying groups"
+                    "\nOn the next screen, you will verify groups as belonging together")
+            self.buttoncolumns=1
+        else:
+            msg=_("Sorting words"
+                    "\nOn the next screen, you will sort words into groups")
+            self.buttoncolumns=program['status'].task().buttoncolumns
+        waiting.wait(msg)
+        
+        # Prefetch examples for all groups at once to avoid O(N^2) lookup
+        program['examples'].prefetch_examples(self.groups, **kwargs)
+        
+        for group in self.groups:
             self.addgroupbutton(group)
+            waiting.waitprogress(100*self.groups.index(group)/len(self.groups))
         """Children of self.runwindow.frame.scroll.content.anotherskip"""
-        self.getanotherskip(self.content.anotherskip,self.groupvars)
-        self._configure_canvas()
-        log.info("getanotherskip vardict (1): {}".format(self.groupvars))
-class SortGroupButtonFrame(ui.Frame):
+        if not self.remove_on_click:
+            self.getanotherskip(self.content.anotherskip,self.groupvars)
+        waiting.waitprogress(100)
+        waiting.waitdone()
+class _GroupButtonFrame(object):
+    unbuttonargs=['renew','canary','labelizeonselect',
+                        'label','playable','unsortable',
+                        'alwaysrefreshable','wsoundfile',
+                        'showtonegroup', 'remove_on_click',
+                        'goback','all_for_cvt', 'on_select'
+                        ]
+    defaults={'sticky':'',
+                'rowspan': 1,
+                'columnspan': 1,
+                'border':3, #frame boarder, thickness of black line
+                'padx':2, #make this zero, or it will be 0/15... (below)
+                'pady':1
+            }
+    frameargs=['row','column','sticky',
+                'rowspan',
+                'columnspan',
+                'padx',
+                'pady',
+                'ipadx',
+                'ipady',
+                'border',
+                ]
+    def select(self):
+        self._var.set(True)
+    def sortnext(self):
+        self.canary.destroy()
+    def selectnsortnext(self):
+        self.select()
+        self.sortnext()
+    def selectnlabelize(self):
+        self.select()
+        self.labelize()
+        # self.kwargs['label']=True
+        # self.again()
+        self.sortnext()
+        # remove()
+    def labelize(self):
+        self.button_select.destroy()
+        self.labelbutton()
+    def var(self):
+        return self._var
+class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
     def again(self):
         """Do I want this? something less drastic?"""
         for child in self.winfo_children():
@@ -13334,42 +13253,33 @@ class SortGroupButtonFrame(ui.Frame):
         if self.kwargs['playable'] and self._playable:
             self.player.play()
     def backup(self,event=None):
-        log.info("Resetting tone group example ({}): {} of {} examples with "
-                "kwargs: {}".format(self.group,self.exs[self.group],self._n.get(),
-                                                                self.kwargs))
         self.kwargs['goback']=True
         self.kwargs['alwaysrefreshable']=True
         self.getexample(**self.kwargs)
         self.again()
         self.kwargs['goback']=False #don't keep going on next
-    def select(self):
-        self._var.set(True)
-    def sortnext(self):
-        self.kwargs['canary'].destroy()
     def remove(self):
+        self.task.groupbuttonlist.remove(self)
         self.destroy() # will this keep the variable around, if stored elsewhere?
+        if len(self.task.groupbuttonlist) == 1: #When removing one of two
+            # for now, let''s leave the other alone; keep glyph names
+            # which have already been decided.
+            # self.task.groupbuttonlist[0].selectnremove() #remove the other, too
+            # log.info(f"{self=} ({type(self)})")
+            # log.info(f"{self.task=} ({type(self.task)})")
+            # log.info(f"{self.task.task=} ({type(self.task.task)})")
+            self.task.task.verifycanary.destroy()
     def selectnremove(self):
         self.select()
         self.remove()
-    def selectnsortnext(self):
-        self.select()
-        self.sortnext()
-    def selectnlabelize(self):
-        self.select()
-        self.kwargs['label']=True
-        self.again()
-        self.sortnext()
-        # remove()
     def unsort(self):
-        self.task.removesensefromgroup(self._sense,sorting=False)
+        self.task.removeitemfromgroup(self._sense,sorting=False)
         self.refresh()
     def setcanary(self,canary):
         if canary.winfo_exists():
-            self.kwargs['canary']=canary
+            self.canary=canary
         else:
             log.error("Not setting non-existant canary {}; ".format(canary))
-    def var(self):
-        return self._var
     def getsenseofnode(self,node):
         if isinstance(node,lift.Example): #direct descendance
             self._sense=node.sense
@@ -13379,29 +13289,15 @@ class SortGroupButtonFrame(ui.Frame):
         kwargs=exampletype(**kwargs)
         n,node=self.exs.getexample(self.group,**kwargs)
         self.updatecount(n)
-        self.hasexample=False
-        if node is None:
-            if kwargs['wsoundfile']:
-                log.error("self.exs.getexample didn't return an example "
-                                    "with a soundfile; trying for one without")
-                kwargs['wsoundfile']=False
-                n,node=self.exs.getexample(self.group,**kwargs)
-                self.updatecount(n)
-                if node is None:
-                    log.error("self.exs.getexample didn't return an example "
-                                        "with or without sound file; returning")
-                    return
-            else:
-                log.error("self.exs.getexample didn't return an example "
-                        "(without needing a sound file); returning ({})"
-                        "".format(node))
-                return
-        self.hasexample=True
+        self.hasexample=node is not None
         """now example.audiofileURL"""
-        if node.audiofileisthere:
+        if node is not None and node.audiofileisthere:
             self._filenameURL=node.audiofileURL
         else:
             self._filenameURL=None
+        if node is None:
+            log.error(f"SortGroupButtonFrame.getexample returned None for {self.group} {kwargs}")
+            return
         self.getsenseofnode(node)
         self._text=node.formatted(program['taskchooser'].analang,
                                     program['taskchooser'].glosslangs,
@@ -13409,25 +13305,24 @@ class SortGroupButtonFrame(ui.Frame):
                                     frame=program['toneframes'].get(
                                                 program['params'].check()),
                                     showtonegroup=self.kwargs['showtonegroup'])
-        self._illustration=getimageifthere(node.sense)
+        self._illustration=scaleimageifthere(node.sense)
         return 1
     def makebuttons(self):
+        # log.info(f"Making buttons with {self.kwargs=}")
+        self._playable=False
         if self.kwargs['label']:
             self.labelbutton()
-        elif self.kwargs['playable']:
-            if self._sense is not None and self._filenameURL:
+        elif self.kwargs['playable'] and self._sense is not None and self._filenameURL:
                 self.playbutton()
                 self._playable=True
-            else: #Label if there is no sound file on any example.
-                self.getexample() #shouldn't need renew=True
-                self.labelbutton()
-                self._playable=False
         else:
             self.selectbutton()
         if self.kwargs['unsortable']:
             self.unsortbutton()
-        if self._n.get() > 1 or self.kwargs['alwaysrefreshable']:
-            self.makerefreshbutton()
+        self.makerefreshbutton()
+        if (self.check and self.kwargs.get('show_check') and
+            not isinstance(self.parent, SortGlyphGroupButtonFrame)):
+            self.make_check_button()
     """buttons"""
     def labelbutton(self):
         self.label=ui.Label(self, text=self._text,
@@ -13438,8 +13333,6 @@ class SortGroupButtonFrame(ui.Frame):
             self.label['image']=self._illustration
             self.label['compound']='left'
     def playbutton(self):
-        self.task.pyaudiocheck()
-        self.task.soundsettingscheck()
         self.player=sound.SoundFilePlayer(self._filenameURL,self.task.pyaudio,
                                             program['settings'].soundsettings)
         b=ui.Button(self, text=self._text,
@@ -13457,11 +13350,15 @@ class SortGroupButtonFrame(ui.Frame):
                     lambda x: executables.praatopen(program, self._filenameURL))
         bt=ui.ToolTip(b,bttext)
     def selectbutton(self):
-        if self.kwargs['labelizeonselect']:
+        if self.kwargs.get('on_select'):
+            cmd=self.kwargs['on_select']
+        elif self.kwargs['labelizeonselect']:
             cmd=self.selectnlabelize
+        elif self.kwargs['remove_on_click']:
+            cmd=self.selectnremove
         else:
             cmd=self.selectnsortnext
-        b=ui.Button(self, text=self._text, cmd=cmd,
+        b=self.button_select=ui.Button(self, text=self._text, cmd=cmd,
                     column=1, row=0, sticky='ew',
                     **self.buttonkwargs())
         if hasattr(self,'_illustration'):
@@ -13469,11 +13366,7 @@ class SortGroupButtonFrame(ui.Frame):
             b['compound']='left'
         bt=ui.ToolTip(b,_("Pick this group ({})").format(self.group))
     def refresh(self):
-        # if renew is True:
-        log.info("Resetting tone group example ({}): {} of {} examples with "
-                "kwargs: {}".format(self.group,self.exs[self.group],self._n.get(),
-                                                                self.kwargs))
-        # del self[self.group]
+        log.info("SGBF refresh called")
         self.kwargs['renew']=True
         self.kwargs['alwaysrefreshable']=True
         self.getexample(**self.kwargs)
@@ -13483,23 +13376,38 @@ class SortGroupButtonFrame(ui.Frame):
         if n is not None:
             self._n.set(n) #for cases where this is already calculated
         else:
-            nodes=self.exs.getexamples(self.group)
+            nodes=self.exs.getexamples(self.group,**self.kwargs)
             # log.info("Found {} examples: {}".format(len(nodes),nodes))
             self._n.set(len(nodes))
+        if hasattr(self,'refreshbutton'):
+            self.refresh_button_state()
+    def refresh_button_state(self):
+        if not self.refreshbutton.winfo_exists():
+            return
+        if self._n.get() <2:
+            self.refreshbutton['state'] = 'disabled'
+        else:
+            self.refreshbutton['state'] = 'normal'
     def makerefreshbutton(self):
         tinyfontkwargs=self.buttonkwargs()
         del tinyfontkwargs['font'] #so it will fit in the circle
+        tinyfontkwargs['borderwidth']=self.refresh_borderwidth
+        # if isinstance(self.parent,SortGlyphGroupButtonFrame):
+        #     tinyfontkwargs['column']=3 # for glyph groups
         self.refreshbutton=ui.Button(self, image=self.theme.photo['change'], #🔃 not in tck
                         cmd=self.refresh,
                         text=self._n,
                         compound='center',
-                        column=0,
+                        # column=0,
                         row=0,
                         sticky='nsew',
                         **tinyfontkwargs)
         self.refreshbutton.bind('<ButtonRelease-3>',self.backup)
         bct=ui.ToolTip(self.refreshbutton,
                         text=_("Change example word; Right click to back up"))
+        self.refresh_button_state()
+    def make_check_button(self):
+        ui.Label(self, text=self.check, column=self.ncolumns())
     def unsortbutton(self):
         t=_("<= resort *this* *word*")
         usbkwargs=self.buttonkwargs()
@@ -13512,14 +13420,23 @@ class SortGroupButtonFrame(ui.Frame):
     def buttonkwargs(self):
         """This is a method to allow pulling these args after updating kwargs"""
         bkwargs=self.kwargs.copy()
-        for arg in self.unbuttonargs:
+        for arg in self.unbuttonargs+[i
+                                    for i in ['ps', 'profile', 'ftype', 'check']
+                                    if i in bkwargs]:
             del bkwargs[arg]
+        bkwargs['relief']=self.button_relief
+        bkwargs['borderwidth']=self.button_borderwidth
         return bkwargs #only the kwargs appropriate for buttons
-    def __init__(self, parent, task, group, **kwargs):
+    def __init__(self, parent, task, **kwargs):
         # log.info("Initializing buttons for group {}".format(group))
         self.exs=program['examples']
         self.task=task #the task/check OR the scrollingframe! use self.check.task
-        self.group=group
+        try:
+            self.code=program['alphabet'].verificationcode(**kwargs)
+        except:
+            pass #don't worry if that info isn't all there
+        self.group=kwargs.pop('group') #must be here
+        self.check=kwargs.get('check',None) #must be here for glyphs only
         # self,parent,group,row,column=0,label=False,canary=None,canary2=None,
         # alwaysrefreshable=False,playable=False,renew=False,unsortable=False,
         # **kwargs
@@ -13536,28 +13453,17 @@ class SortGroupButtonFrame(ui.Frame):
         kwargs['anchor']=kwargs.get('anchor','w')
         kwargs['showtonegroup']=kwargs.pop('showtonegroup',False)
         kwargs['wraplength']=kwargs.pop('wraplength',False)
+        # self.canary=kwargs.pop('canary',None)
+        # kwargs['borderwidth']=kwargs.pop('borderwidth',5)
         # kwargs['refreshcount']=kwargs.pop('refreshcount',-1)+1
         # kwargs['sticky']=kwargs.pop('sticky',"ew")
         frameargs={} #kwargs.copy()
-        defaults={'sticky':'',
-                    'rowspan': 1,
-                    'columnspan': 1
-                    }
-        for f in ['row','column','sticky',
-                    'rowspan',
-                    'columnspan',
-                    'padx',
-                    'pady',
-                    'ipadx',
-                    'ipady',
-                    ]:
-            frameargs[f]=kwargs.pop(f,defaults.get(f,0))
-        self.unbuttonargs=['renew','canary','labelizeonselect',
-                            'label','playable','unsortable',
-                            'alwaysrefreshable','wsoundfile',
-                            'showtonegroup',
-                            'goback','all_for_cvt'
-                            ]
+        self.button_relief='raised' #groove,ridge,sunken,raised,flat
+        # self.button_borderwidth=7 # width of relief
+        self.button_borderwidth=15 # width of relief
+        self.refresh_borderwidth=10 # width of relief
+        frameargs={f:kwargs.pop(f,self.defaults.get(f,0))
+                    for f in self.frameargs}
         for arg in self.unbuttonargs:
             kwargs[arg]=kwargs.pop(arg,False)
         if kwargs['playable']:
@@ -13565,127 +13471,136 @@ class SortGroupButtonFrame(ui.Frame):
         #set this for buttons:
         if program['settings'].lowverticalspace:
             # log.info("using lowverticalspace for SortGroupButtonFrame")
-            maxpad=0
+            max=0
         else:
-            maxpad=15
-        kwargs['ipady']=kwargs.pop('bipady',defaults.get('bipady',maxpad))
-        kwargs['ipadx']=kwargs.pop('bipadx',defaults.get('bipadx',maxpad))
-        kwargs['pady']=kwargs.pop('bpady',defaults.get('bpady',0))
-        kwargs['padx']=kwargs.pop('bpadx',defaults.get('bpadx',0))
+            max=15
+        for k in ['ipady','ipadx','pady','padx']: #outer pad in defaults
+            kwargs[k]=kwargs.pop('b'+k,self.defaults.get(k,max))
         self.kwargs=kwargs
-        self._var=ui.BooleanVar()
+        self._var=kwargs.pop('var',ui.BooleanVar())
         self._n=ui.IntVar()
         super().__init__(parent, **frameargs)
         if self.getexample(**kwargs):
             self.makebuttons()
-            self.examplesOK=True
+class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
+    def make_sgbf(self, item, **kwargs):
+        """kwargs[group] (group from item) is not self.group (macro name)."""
+        kwargs.update(program['alphabet'].parse_verificationcode(item))
+        kwargs['column']=1 #specify other attributes shared with frame here
+        kwargs['row']=0
+        kwargs['gridwait']=True
+        kwargs['var']=self.var()
+        log.info(f"Ready to build SortGroupButtonFrame with {kwargs=}")
+        self.items.append(SortGroupButtonFrame(self, self.task, **kwargs))
+        log.info(f"Built SGBF for {item} ({self.items=})")
+        if self.items[-1].hasexample:
+            # log.info(f"Built {kwargs['group']} SortGroupButtonFrame with ex")
+            self.hasexample=True
         else:
-            self.examplesOK=False
-        # """Should I do this outside the class?"""
-        # self.grid(column=column, row=row, sticky=sticky)
-class AlphabetGroupButtonFrame(SortGroupButtonFrame):
-    """This is used to show examples for selection for an Alphabet chart.
-    These should always be playable (assuming there's a sound file)
-    This needs to interact with an instance (or subclass) of ExampleDict,
-    to track and store (to file!) examples (should do keyed by slice and check,
-    to preserve values across switching).
-    for each group (here), I should
-        have a list of slices with that group somewhere, and
-        be able to build quickly a list of checks with that group, given a slice
-    This provides a SortGroupButtonFrame, plus buttons to cycle (forward/back)
-        through a prioritized list of data slices
-        through a prioritized list of checks
-            always most restrictive first for a given slice
-    so unlike SortGroupButtonFrame, this class needs to depend locally on kwargs
-    for ps, profile, and check, in every function it uses. It should neither set
-    nor read 'current' values for these parameters, anywhere.
-    Tasks to do (first two may be combinable?):
-        Alphabet order
-            list of all C and V groups:
-                valid across all slices/checks
-                should have a mutable order, which defines the UI order
-                    UI (somewhere) should have buttons for reordering
-                saved to file (for use in report)
-                check for new additions each time the task is called
-                    initial order from settings file
-                    new items at the top of an already ordered list, for clarity
-        Example Selection
-        Alphabet Chart report task: should have settings for
-            how many columns (with calculated row and remainder visible)
-            title (modifyable from default)
-            some way to print to PDF
-            display status table that looks like Alpha chart,
-    """
-    def makebuttons(self):
-        self.setkwargs()
-        SortGroupButtonFrame.makebuttons(self)
-        self.slicebutton()
-    def setkwargs(self):
-        self.kwargs['ps']=self.slice[0]
-        self.kwargs['profile']=self.slice[1]
-        log.info("Setting kwargs to {}".format(kwargs))
-    def nextslice(self):
-        """This needs to check if self.group is anywhere in this slice"""
-        if self.slice in self.slices:
-            idx=self.slices.index(self.slice)
-            if idx != len(self.slices)-1:
-                self.slice=self.slices[idx+1]
-            else:
-                self.slice=self.slices[0]
-            self.refreshchecks()
-        self.getexample(**self.kwargs)
-        self.again()
-    def backslice(self):
-        if self.slice in self.slices:
-            idx=self.slices.index(self.slice)
-            if idx != 0:
-                self.slice=self.slices[-1]
-            self.refreshchecks()
-        self.getexample(**self.kwargs)
-        self.again()
-        self.getexample(**self.kwargs)
-        self.again()
-    def slicebutton(self):
-        tinyfontkwargs=self.buttonkwargs()
-        del tinyfontkwargs['font'] #so it will fit in the circle
-        bc=ui.Button(self, image=self.theme.photo['change'], #🔃 not in tck
-                        cmd=self.nextslice,
-                        text=str(self._n),
-                        compound='center',
-                        column=3, row=0,
-                        sticky='nsew',
-                        **tinyfontkwargs)
-        bc.bind('<ButtonRelease-3>',self.backslice)
-        bct=ui.ToolTip(bc,text=_("Change example word; Right click to back up"))
-    def checkbutton(self):
-        tinyfontkwargs=self.buttonkwargs()
-        del tinyfontkwargs['font'] #so it will fit in the circle
-        bc=ui.Button(self, image=self.theme.photo['change'], #🔃 not in tck
-                        cmd=self.nextslice,
-                        text=str(self._n),
-                        compound='center',
-                        column=3, row=0,
-                        sticky='nsew',
-                        **tinyfontkwargs)
-        bc.bind('<ButtonRelease-3>',self.backslice)
-        bct=ui.ToolTip(bc,text=_("Change example word; Right click to back up"))
-    def refreshchecks(self):
-        self.setkwargs()
-        self.checks=program['status'].updatechecksbycvt(**self.kwargs) #ps,profile
-        if self.check not in self.checks:
-            self.check=self.checks[0]
-    def __init__(self, parent, check, group, ps, profile, **kwargs):
-        self.kwargs=kwargs
-        self.kwargs['playable']=True
-        self.kwargs['alwaysrefreshable']=True
-        # kwargs.get('slice',)
-        self.group=group
-        self.slices=program['slices'].valid()
-        self.slice=(ps, profile)
-        self.check=check
-        self.refreshchecks()
-        log.info("Initiating AlphabetGroupButtonFrame: {}".format(self.slices))
-        super(AlphabetGroupButtonFrame, self).__init__(parent, check, group)
+            # log.info(f"No {kwargs['group']} SortGroupButtonFrame ex; removing")
+            self.items=self.items[:-1]
+    def next_item(self,event=None):
+        # log.info(f"next_item ({self.shown_index=})")
+        if self.shown_index == len(self.items)-1: #loop back on last
+            self.show_one()
+        else:
+            self.show_one(self.shown_index+1)
+    def prev_item(self,event=None):
+        # log.info(f"prev_item ({self.shown_index=})")
+        if self.shown_index == 0: #loop back on first
+            self.show_one(len(self.items)-1)
+        else:
+            self.show_one(self.shown_index-1)
+    def show_one(self,index=0):
+        for item in [i for i in self.items if self.items.index(i) != index]:
+            item.grid_remove()
+        self.items[index].grid()
+        log.info(f"Showing item with {self.items[index].code}")
+        # "={self.items[index].group}")
+        self.check_label['text']=self.items[index].check
+        self.shown_index=index
+    def make_refresh(self):
+        self.refresh_frame=ui.Frame(self,col=2,border=True,sticky='nsew')
+        # self.check_label=ui.Label(self.refresh_frame, text='', #to show check
+        #                             anchor='s',col=0)
+        self.check_label=ui.Button(self.refresh_frame, text='', #to show check
+                                        # textvariable=self._n,
+                                        cmd=self.next_item,
+                                        image=self.theme.photo['change'],
+                                        borderwidth=5,
+                                        compound='top',
+                                        col=1)
+        for w in [self.refresh_frame,self.check_label]:#,self.group_count]:
+            ui.ToolTip(w,'click to change group')
+            # w.bind('<Button-1>', self.next_item)
+            w.bind('<Button-3>', self.prev_item, add='+') #nothing on n=1
+    def updatecount(self,n=None):
+        # log.info("Updating count for group {} (n={})".format(self.group,n))
+        if n is not None:
+            self._n.set(n) #for cases where this is already calculated
+        else:
+            # nodes=self.exs.getexamples(self.group)
+            # log.info("Found {} examples: {}".format(len(nodes),nodes))
+            self._n.set(len(self.items))
+        if self._n.get() <2:
+            self.check_label['state'] = 'disabled'
+    def setcanary(self,canary):
+        """This is needed because these buttons are reused across all words
+        being sorted. so each word to sort is the canary, in tern, and it is
+        reset with each new presented word/group to sort.
+        """
+        if canary.winfo_exists():
+            for i in self.items:
+                i.canary=canary #select on group button select
+            self.canary=canary #select on glyph button select
+        else:
+            log.error("Not setting non-existant canary {}; ".format(canary))
+    def __init__(self, parent, task, **kwargs):
+        self.task=task #the task/check OR the scrollingframe! use self.check.task
+        self.group=kwargs.pop('group')
+        # self.check=kwargs.get('check')
+        log.info(f"Building SortGlyphGroupButtonFrame for {self.group}")
+        # self.showtonegroup=kwargs.pop('showtonegroup',False)
+        # self.alwaysrefreshable=kwargs.pop('alwaysrefreshable',False)
+        # self.remove_on_click=kwargs.pop('remove_on_click',False) #compatability
+        kwargs=ui.GridinGridded.promotegridbkwargs(True,**kwargs)
+        # kwargs=ui.GridinGridded.remove_gridbkwargs(True,**kwargs)
+        # for k in ['padx', 'pady']:
+        #     frameargs[k]=kwargs.get(k,1)
+        # kwargs['border']=10
+        frameargs={f:kwargs.pop(f,self.defaults.get(f,0))
+                    for f in self.frameargs}
+        super().__init__(parent, **frameargs)
+        if self.group not in program['alphabet'].glyph_members():
+            ui.Label(self,text=f"group ‘{self.group}’ isn't in glyphs! "
+                    f"({list(program['alphabet'].glyph_members())})",
+                    c=0)
+            self.hasexample=True #make this error visible
+            return
+        self.glyph_label_frame=ui.Frame(self, col=0)
+        if kwargs.get('on_select'):
+            cmd=kwargs['on_select']
+        else:
+            cmd=self.selectnsortnext
+        self.glyph_label=ui.Button(self.glyph_label_frame,
+                                cmd=cmd,
+                                text='?' if self.group.isdigit() else self.group,
+                                font='readbig',
+                                borderwidth=5,
+                                width=5, col=0)
+        self.grid_columnconfigure(0, weight=1, uniform="label")
+        self.items=list()
+        self.hasexample=False #make sure at least one of these has an example
+        self._var=ui.BooleanVar()
+        self._n=ui.IntVar()
+        self.make_refresh()
+        for item in program['alphabet'].glyph_members()[self.group]:
+            log.info(f"Making Glyph member {item} button")
+            self.make_sgbf(item, **kwargs)
+        if self.items:
+            self.updatecount()
+            self.show_one()
+        log.info(f"Built SortGlyphGroupButtonFrame for {self.group}")
 class ImageFrame(ui.Frame):
     def getimage(self,reload=False):
         specifiedurl=False
@@ -13823,7 +13738,7 @@ class Splash(ui.Window):
                         'v2':ui.Label(self.frame, text='', anchor='c',padx=25,
                         row=2,column=0,sticky='we'
                         ),
-                        'photo':ui.Label(self.frame, image=self.theme.photo['transparent'],text='',
+                        'photo':ui.Label(self.frame, image='transparent',text='',
                         row=3,column=0,sticky='we'
                         ),
                         'textl':ui.Label(self.frame, text='', padx=50,
@@ -14244,6 +14159,7 @@ class SliceDict(dict):
         """This will be redone, but should be done now, too."""
         self.makeprofileok() #so the next won't fail
         self.renewsenses()
+        program['settings'].settingsobjects() #should do this more; can be redone!
 class ToneFrames(dict):
     def addframe(self,ps,name,defn):
         """This needs to change checks"""
@@ -14511,6 +14427,8 @@ class StatusDict(dict):
                 self._groups=sn['groups']=g
             return sorted(self._groups)
         if kwargs['toverify']:
+            #done is always a subset of groupsː
+            sn['done']=sorted(set(sn['done'])&set(sn['groups']))
             return sorted(set(sn['groups'])-set(sn['done']))
         if kwargs['torecord']:
             return sorted(set(sn['groups'])-set(sn['recorded']))
@@ -14663,6 +14581,20 @@ class StatusDict(dict):
                 changed=True
         # if changed == True:
         #     self.store()
+    def clear_all_groups(self):
+        """don't do this except when reloading! This only removes sort groups,
+        which can be rebuilt from lift. Leave other stuff alone!"""
+        ts=list(self)
+        for t in ts:
+            pss=list(self[t])
+            for ps in pss:
+                profiles=list(self[t][ps]) #actual, not theoretical
+                for profile in profiles:
+                    checks=list(self[t][ps][profile]) #actual, not theoretical
+                    for check in checks:
+                        node=self[t][ps][profile][check]
+                        if 'groups' in node:
+                            node['groups'] = []
     def cull(self):
         """This iterates across the whole dictionary, and removes empty nodes.
         Only do this when you're cleaning up, not about to start new work."""
@@ -14679,9 +14611,12 @@ class StatusDict(dict):
                             if not node:
                                 del self[t][ps][profile][check]
                         elif 'groups' in node and node['groups'] == []:
-                            if 'done' in node and node['done'] != []:
-                                log.error("groups verified, but not present!")
                             del self[t][ps][profile][check]
+                        elif 'done' in node and 'groups' in node:
+                            node['done']=sorted(set(node['done']
+                                                    )&set(node['groups']))
+                        elif 'done' in node: #i.e., w/o groups
+                            node['done']=[]
                     if self[t][ps][profile] == {}:
                         del self[t][ps][profile]
                 if self[t][ps] == {}:
@@ -14727,7 +14662,7 @@ class StatusDict(dict):
             log.error("No type is set; can't renew checks!")
         if cvt not in self._checksdict:
             self._checksdict[cvt]={}
-        profile=kwargs.get('profile',program['slices'].profile())
+        profile=kwargs.get('profile',program['slices'].profile() if 'slices' in program else '')
         if cvt == 'T':
             for ps in program['slices'].pss():
                 if ps in program['toneframes']:
@@ -14761,6 +14696,7 @@ class StatusDict(dict):
             self._checksdict[cvt][profile].sort(key=len,reverse=True)
         else:
             log.info("Not Tone and no profile; not returning a check")
+        # log.info(f"{self._checksdict[cvt][profile]=}")
     def node(self,**kwargs):
         """This will fail if fed None values"""
         kwargs=self.checkslicetypecurrent(**kwargs)
@@ -14805,13 +14741,28 @@ class StatusDict(dict):
         if v is not None:
             self._tosortbool=sn['tosort']=v
         return self._tosortbool
-    def verified(self,g=None,**kwargs): #cvt=None,ps=None,profile=None,check=None):
+    def verified(self,g=None,**kwargs):
         sn=self.node(**kwargs)
         self._verified=sn['done']
         if g is not None:
-            self._verified=g
+            log.info(f"verified replacing {sn['done']} with {g} for {kwargs}")
+            self._verified=sn['done']=g
         return self._verified
-    def recorded(self,g=None,**kwargs): #cvt=None,ps=None,profile=None,check=None):
+    def distinguished(self,**kwargs):
+        sn=self.node(**kwargs)
+        if 'distinguished' not in sn or sn['distinguished'] == {}:
+            sn['distinguished']=set()
+        return sn['distinguished']
+    def distinguish(self,g, **kwargs):
+        self.distinguished(**kwargs).add(g)
+    def undistinguish(self,g, **kwargs):
+        self.distinguished(**kwargs).remove(g)
+    def undistinguish_any_with(self,g, **kwargs):
+        # log.info(f"calling self.undistinguish_any_with with {kwargs=}")
+        # log.info(f"{self.distinguished(**kwargs)=}")
+        for j in [i for i in self.distinguished(**kwargs) if g in i]:
+            self.undistinguish(j,**kwargs)
+    def recorded(self,g=None,**kwargs):
         sn=self.node(**kwargs)
         self._recorded=sn['recorded']
         if g is not None:
@@ -14822,10 +14773,9 @@ class StatusDict(dict):
         changed=False
         if group is None:
             group=self.group()
-        # log.info("Verification before update (verifying {} as {}): {}".format(
-        #                                         group,verified,self.verified()))
         self.build()
         n=self.node()
+        # log.info(f"verification update: {group=} as {verified=} in {n['done']}")
         if verified == True:
             if group not in n['done']:
                 n['done'].append(group)
@@ -14845,6 +14795,7 @@ class StatusDict(dict):
             self._group=group
         return getattr(self,'_group',None)# this needs to be booleanable
     def renamegroup(self,j,k,**kwargs):
+        # log.info(f"Status renaming {j}>{k} for {kwargs=}")
         sn=self.node(**kwargs)
         if j in sn['done']:
             sn['done'][sn['done'].index(j)]=k
@@ -14852,6 +14803,10 @@ class StatusDict(dict):
             sn['groups'][sn['groups'].index(j)]=k
         if j in sn['recorded']:
             sn['recorded'][sn['recorded'].index(j)]=k
+        if 'distinguished' in sn:
+            for i in [l for l in sn['distinguished'] if j in l]:
+                sn['distinguished'].remove(i)
+                sn['distinguished'].add(tuple(k if m == j else m for m in i))
         if self.group() == j:
             self.group(k)
     def makegroupok(self,**kwargs):
@@ -14994,6 +14949,10 @@ class CheckParameters(object):
         """This depends on nothing, so can go anywhere, and shouldn't need to
         rerun. This is a convenience wrapper only."""
         return self._cvts
+    def cvtname(self,cvt=None,n='sg'):
+        if not cvt:
+            cvt=self.cvt() #this shouldn't necessarily set current cvt.
+        return self._cvts[cvt][n]
     def check(self,check=None,unset=False):
         """This needs to change/clear subchecks"""
         if unset or check:
@@ -15004,6 +14963,19 @@ class CheckParameters(object):
             self._check=None
         # log.info("Returning check {}".format(self._check))
         return self._check
+    def checkcodes_by_cvt(self):
+        self._checkcodes_by_cvt={cvt:{code_tuple[0]
+                    for nsyl,code_list in syl_dict.items()
+                    for code_tuple in code_list
+                    }
+                for cvt,syl_dict in self._checknames.items()
+                }
+        log.info(f"{self._checkcodes_by_cvt=}")
+    def cvt_of_check(self,check):
+        for cvt,codes in self._checkcodes_by_cvt.items():
+            # log.info(f"{cvt=},{codes=}")
+            if check in codes:
+                return cvt
     def cvcheckname(self,code=None):
         if self.cvt() == 'T':
             code='T'
@@ -15073,9 +15045,6 @@ class CheckParameters(object):
                 ]},
             'T':{
                 1:[('T', _("Tone Melody"))]},
-            'A':{1:[('V',_("Vowel letter")),
-                    ('C',_("Consonant letter"))
-                    ]},
             'V':{
                 1:[('V1', _("First Vowel"))],
                 2:[
@@ -15188,6 +15157,7 @@ class CheckParameters(object):
                 },
         }
         self.cvchecknamesdict()
+        self.checkcodes_by_cvt()
 class ConfigParser(configparser.ConfigParser):
     def output(self):
         for k in self:
