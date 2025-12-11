@@ -588,10 +588,16 @@ class LiftChooser(ui.Window,HasMenus):
             # they're doing
             log.info(_("returned more or less than one lift file! ({})"
                     ).format(l))
-    def fillcawldbimages(self):
+    def fillcawldbimages(self,cawldb=None,newdirname=None,wait=None):
         log.info("Filling in empty image fields where possible")
-        todo=self.cawldb.senses
-        newimagedir=file.getimagesdir(self.newdirname)
+        if not cawldb:
+            cawldb=self.cawldb
+        if not newdirname:
+            newdirname=self.newdirname
+        if not wait:
+            wait=self.wait
+        todo=cawldb.senses
+        newimagedir=file.getimagesdir(newdirname)
         # log.info("Filling in {} image fields".format(len(todo)))
         # log.info("Writing to {}".format(file.getimagesdir(self.newdirname)))
         for sense in todo:
@@ -621,7 +627,8 @@ class LiftChooser(ui.Window,HasMenus):
                             saveimagefile(urls[0],filename, copyto=newimagedir)
                         sense.illustrationvalue(filename)
                 # log.info("Setting progress {}".format(todo.index(sense)*100/len(todo)))
-                self.wait.progress(todo.index(sense)*100/len(todo))
+                if wait:
+                    wait.progress(todo.index(sense)*100/len(todo))
     def storedefaultsettings(self,basename):
         filename=basename.with_suffix('.CheckDefaults.ini')
         config=ConfigParser()
@@ -913,6 +920,13 @@ class Menus(ui.Menu):
         self.languages()
         if isinstance(self.parent,Sort):
             self.parameterslice()
+    def fillcawl(self):
+        w=ui.Wait(program['root'],msg=_("Filling images..."))
+        try:
+            LiftChooser.fillcawldbimages(self, cawldb=program['db'], newdirname=program['db'].lift_home, wait=w)
+        except Exception as e:
+            log.error(f"Error filling images: {e}")
+        w.close()
     def languages(self):
         """Language stuff"""
         self.cascade(self.changemenu,_("Languages"),'languagemenu')
@@ -1050,6 +1064,7 @@ class Menus(ui.Menu):
                             program['settings'].reloadstatusdatabycvtps),
                 (_("Remake Status file (just this profile)"),
                         program['settings'].reloadstatusdatabycvtpsprofile),
+                (_("Fill CAWL Images"), self.fillcawl),
                 ]
         for m in options:
             self.command(self.advancedmenu,
