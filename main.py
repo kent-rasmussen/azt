@@ -123,18 +123,12 @@ import importlib.util
 import collections
 from random import randint
 if program['tkinter']:
-    try:
-        import tkinter #as gui
-        import tkinter.font
-        import tkinter.scrolledtext
-    except Exception as e:
-        import py_modules
-        py_modules.pip_install() #limit?
-        import tkinter #as gui
-        import tkinter.font
-        import tkinter.scrolledtext
-    import tkintermod
-    tkinter.CallWrapper = tkintermod.TkErrorCatcher
+    import tkinter #as gui
+    import tkinter.font
+    import tkinter.scrolledtext
+    if not program['testing']:
+        import tkintermod
+        tkinter.CallWrapper = tkintermod.TkErrorCatcher
     import ui_tkinter as ui
 """else:
     import kivy

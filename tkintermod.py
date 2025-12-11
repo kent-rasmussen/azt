@@ -9,6 +9,9 @@ class TkErrorCatcher:
     To use
     import tkinter
     tkinter.CallWrapper = TkErrorCatcher
+
+    CAUTION: this hides Tk errors from the user, so use it in production, 
+    not development.
     '''
 
     def __init__(self, func, subst, widget):
