@@ -2191,16 +2191,12 @@ class Form(Node):
     def annotationkeys(self):
         return list(self.annotations)
     def annotationvalue(self,name,value=None):
-        try:
-            # log.info("annotationvalue returning {}"
-            #         "".format(self.annotations[name].myvalue(value)))
+        if name in self.annotations:
             return self.annotations[name].myvalue(value)
-        except KeyError:
-            if value:
-                self.annotations[name]=Annotation(self,attrib={'name':name,
-                                                                'value':value})
-            # else:
-            #     return self.annotations[name].get('value')
+        elif value:
+            self.annotations[name]=Annotation(self,attrib={'name':name,
+                                                        'value':value})
+        else:                                                        
             return None
     def textquoted(self):
         r=quote(self.textnode.text)
@@ -2443,19 +2439,15 @@ class FormParent(Node):
         fully qualified filesystem path, not a relative one (e.g., 'audio')"""
         if hasattr(self,'audiofileisthere') and not recheck:
             return self.audiofileisthere
-        try: #get audiofileURL or fail
-            abs=file.getdiredurl(self.db.audiodir,
-                                self.textvaluebylang(self.db.audiolang))
+        if rel:=self.textvaluebylang(self.db.audiolang):
+            # try: #get audiofileURL or fail
+            abs=file.getdiredurl(self.db.audiodir,rel)
+                                # self.textvaluebylang(self.db.audiolang))
             # log.info(f"Working with absolute audio filename: {abs}")
             if bool(abs) and file.exists(abs):
                 self.audiofileisthere=True
                 self.audiofileURL=abs
                 return True
-        except Exception as e:
-            if "NoneType" not in str(e):
-                log.info(f"skipping because of exception ({e}) —any failure "
-                "probably means there is no sound file, so this is "
-                "probably OK.")
         self.audiofileisthere=False #If not in lift *and* file system
     def __init__(self, parent, node=None, **kwargs):
         super(FormParent, self).__init__(parent, node, **kwargs)
@@ -2570,7 +2562,7 @@ class FieldParent(object):
                 return None
         # specify value as kwarg because not specifying lang
         fv=self.fields[type].textvaluebylang(lang=lang,value=value)
-        # log.info(f"fieldvalue returning {fv=} for {self=}")
+        # log.info(f"fieldvalue returning {fv=} for {self.sense.id}-{type}")
         return fv
     def __init__(self):
         # log.info("Initializing field parent for {}".format(self))
@@ -2848,6 +2840,12 @@ class Sense(Node,FieldParent):
         except KeyError:
             # log.info("No {} type to pull annotation dict from".format(ftype))
             return {}
+    def annotationkeysbyftypelang(self,ftype,lang):
+        try:
+            return self.ftypes[ftype].annotationkeysbylang(lang)
+        except KeyError:
+            # log.info("No {} type to pull annotation dict from".format(ftype))
+            return []
     def nodebyftype(self,ftype):
         try:
             return self.ftypes[ftype]
@@ -2855,10 +2853,11 @@ class Sense(Node,FieldParent):
             # log.info("No {} type to pull ({})".format(ftype,self.ftypes))
             pass
     def textvaluebyftypelang(self,ftype,lang,value=None):
-        try:
+        if ftype in self.ftypes:
             return self.ftypes[ftype].textvaluebylang(lang,value)
-        except KeyError:
-            pass
+        # try:
+        # except KeyError:
+        #     pass
             # log.info("No {} type ({})".format(ftype,self.ftypes))
     def annotationvaluebyftypelang(self,ftype,lang,name,value=None):
         try:
@@ -3017,6 +3016,7 @@ class Sense(Node,FieldParent):
         """value here is the list of verification codes, stored as a string"""
         """Without lang arg, value must be sent as a kwarg."""
         key=self.verificationkey(profile,ftype)
+        #This is an explicit empty value=[], not the default (None)
         if value == [] and key in self.fields: #i.e., if reduced to nothing
             self.rmverificationnode(profile,ftype) #remove what's there
         #Because of the line above, or other situation with no value or field:
@@ -3031,38 +3031,41 @@ class Sense(Node,FieldParent):
             v=self.fieldvalue(key)
         else:
             v=self.fieldvalue(key,value=str(value))
+        # log.info(f"Set ‘{key}’ fieldvalue {str(value)} = {v}")
         if v: #fieldvalue returns None on no node
             v=xmlfns.stringtoobject(v) #must come and go to XML as string
-            # log.info(f"verificationtextvalue returning {value=} {v=} ({type(v)=})")
+            # log.info(f"verificationtextvalue returning {v=} ({type(v)=}; "
+            #     f"set {value=})")
             return v
         else:
             # log.info(f"verificationtextvalue returning [] ({v=}; {type(v)=})")
             return []
     def getcvverificationkeys(self,ftype):
         profile=self.cvprofilevalue(ftype=ftype)
-        if not profile:
-            # log.info("skipping verification; no analyzed profile found")
-            return 1
+        if not profile or profile in ['Invalid']:
+            # log.info(f"getcvverificationkeys returning w/o profile")
+            return {},{} #verificationtextvalue fails on None profile
         counts={c:profile.count(c) for c in profile}
         actual=self.verificationtextvalue(profile,ftype)
-        if not actual:
-            return 1
         # log.info(f"Checking if {actual} covers {profile} profile.")
-        actualkeys={i.split('=')[0]:i.split('=')[1] for i in actual}
+        #only split on last '='
+        actualkeys={'='.join(i.split('=')[:-1]):i.split('=')[-1] for i in actual}
+        # log.info(f"getcvverificationkeys: {self.id=}; {type(self.id)=}")
+        # log.info(f"getcvverificationkeys: {counts=}; {type(counts)=}")
+        # log.info(f"getcvverificationkeys: {actualkeys=}; {type(actualkeys)=}")
         return counts,actualkeys
     def cvverificationforcheck(self,ftype,check):
-        try:
-            counts,actualkeys=self.getcvverificationkeys(ftype)
-        except TypeError:
-            # print("Missing profile or verication dictionary; skipping")
-            return
+        counts,actualkeys=self.getcvverificationkeys(ftype)
+        # try:
+        # except TypeError:
+        #     # print("Missing profile or verication dictionary; skipping")
+        #     return
         if check in actualkeys:
             return actualkeys[check]
     def cvverificationdone(self,ftype):
-        try:
-            counts,actualkeys=self.getcvverificationkeys(ftype)
-        except TypeError:
-            # print("Missing profile or verication dictionary; skipping")
+        """This returns True if all segmental checks are finished."""
+        counts,actualkeys=self.getcvverificationkeys(ftype)
+        if not (counts and actualkeys):
             return
         for c in counts:
             for i in range(counts[c]):
