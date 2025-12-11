@@ -6017,58 +6017,335 @@ class ExportData(ui.Window):
         self.max_rows_per_file=None
         self.report_data()
 class Alphabet():
-    """this set of symbols is built up in the process of analysis:
-    1. on completing the first check (must know when this is!), all named groups
-    show up here as well. All unnamed groups are pushed through transcribe
-    until they have a name, then they show up here.
-    2. On completing successive checks, each named group is matched with
-    previously available groups, and put through the sort and verify process for
-    macrogroup assignment.
-    3. once macrogroup is assigned (either way):
-        A. verify sense with check, value, and ftype='alphabet', to populate
-        lift field with this info.
-            —build method to extract from lift and rebuild this info, as needed.
-        B. add the value for that check to the alphabet letter list of checks
-        belonging to the group. check name is sufficient, as all groups in a
-        macrogroup must have the same name (that of the macrogroup).
-        C. update the assigned group name to that of the macrogroup.
-        D. Confirm that there is not already a group with the name of the
-        macrogroup (or this can be sorted out later?)
+    """This class stores two dictionaries for alphabet glyphs:
+    glyphdict: keyed on C and V, values contain a list of all verified consonants
+                and vowels, respectively. Macrogroup verification means that no
+                sortgroup has been added to a macrogroup (glyph) since it was
+                verified, either through presorting or manual sorting.
+                This is the source for the AlphabetChart, so there will be a
+                period between completing a check and verifying all consonants
+                including data for that check, where AlphabetChart work will not
+                be possible. (this may not be true, but may be)
+    glyph_members: keyed on glyphs, values contain a list of codes for verified
+                groups which are currently sorted into that glyph. This is
+                saved to disk for recovery, but it's contents are rather
+                ephemeral. That is, a code such as Noun_CVCV_lc_V2_ie might not
+                remain valid for a set of words if syllable profiles are
+                reanalyzed, but more importantly, as groups are renamed.
+                That is, when sorting, one might have Noun_CVCV_lc_V2_ie and
+                Noun_CVCV_lc_V1_i in one group (e.g., 'ɨ'), but once that
+                sorting is confirmed, all words in all relevant groups should
+                have their annotations updated (C above), meaning the code
+                would be updated, too (i.e., Noun_CVCV_lc_V2_ɨ). This is
+                even before forms are updated to their annotations.
+    On verification of *all groups*, the following will be updated:
+        1. lift verification field (e.g., <field type="CVCV lc verification">).
+        2. form annotation values (e.g., <annotation name="V1" value="i" />)
+        3. forms are updated to annotations per usual (where not NA or int().)
+    Once this happens, the old sorting data is useless, and will need to be
+    reconstructed if needed, since forms and annotations have been updated.
+
+    I hope it would be sufficient to have no changes to annotations or forms
+    until all is confirmed, then force it all to happen at once (maybe backup
+    before doing so?)
+
+    program['slices'].senses() is sensitive to ps and profile, and pulls from syllableprofiles
+    iterating over that with sense.annotationvaluedictbyftypelang(ftype,lang)
+    should provide the different checks and values for each sense.
+
+    I need a button that allows iteration over a group with groups inside of it.
     """
     my_settings=['order']
     def order(self,order=[]):
         if order:
             self._order=order
         return getattr(self,'_order',[])
+    def status(self,status={}):
+        if status:
+            self._status=status
+        return getattr(self,'_status',{})
     def glyphdict(self,glyphdict={}):
+        """This dict stores glyphs which are verified. When a glyph macrogroup
+        has an item added to it, the glyph macrogroup is removed from here.
+        integer values should be stored as strings."""
         if glyphdict:
-            self._glyphdict=glyphdict
-        return getattr(self,'_glyphdict',{})
+            conflict=glyphdict['C']&glyphdict['V']
+            if conflict:
+                ErrorNotice(f"You have the glyph(s) ‘{conflict}’ as consonant "
+                            f"and as vowel! ({glyphdict})",wait=True)
+                raise
+            self._glyphdict={k:{str(i) for i in v} for k,v in glyphdict.items()}
+        return getattr(self,'_glyphdict',{'V':set(),'C': set()})
+    def glyph_members(self,gm={}):
+        """This dict stores sorting information; items are sorted in and out of
+        the values keyed by each glyph. Integer keys should be stored as
+        strings."""
+        if gm:
+            self._glyph_members={str(k):v for k,v in gm.items()}
+        return getattr(self,'_glyph_members',{})
+    def rename_glyph(self,x,y):
+        gm=self.glyph_members()
+        if y in gm:
+            log.error(f"'glyph_members' contains {y}; not renaming {x}")
+            return
+        gd=self.glyphdict()
+        for k in gd:
+            if y in gd[k]:
+                log.error(f"'glyphdict' contains {y}; not renaming {x}")
+                return
+        log.info(f"'rename_glyph' can safely rename {x} to {y}")
+        self.glyph_members({y if k == x else k:v for k,v in gm.items()})
+        # log.info(f"'glyph_members' renamed {x} to {y}")
+        self.glyphdict({k:{y if i == x else i for i in v} for k,v in gd.items()})
+        # log.info(f"'glyphdict' renamed {x} to {y}")
+        for t in list(self.distinguished_by_cvt()):
+            if x in t:
+                self.undistinguish(t)
+                self.distinguish((y if t[0]==x else t[0],y if t[1]==x else t[1]))
+    def rename_glyph_member(self,item,newitem):
+        """Leave verification status alone"""
+        d=self.glyph_members()
+        for glyph,items in d.items():
+            if item in items:
+                d[glyph].remove(item)
+                d[glyph].add(newitem)
+    def join_glyphs(self,x,y):
+        log.info(f"Running Alphabet.join_glyphs")
+        d=self.glyph_members()
+        for i in x:
+            # log.info(f"Checking {i} for conflicts in {y} {d[y]}")
+            if self.conflicting_items(i,y):
+                ErrorNotice(f"item {i} coflicts with glyph {y}",wait=True)
+                return
+        for i in y:
+            # log.info(f"Checking {i} for conflicts in {x} {d[x]}")
+            if self.conflicting_items(i,x):
+                ErrorNotice(f"item {i} coflicts with glyph {x}",wait=True)
+                return
+        # log.info(f"No conflicts found.")
+        for i in list(d[x]):
+            # log.info(f"Removing {i} from {x}.")
+            self.rm_glyph_member(i,x)
+            # log.info(f"Adding {i} to {y}.")
+            self.add_glyph_member(i,y)
+        self.save_settings()
+        log.info(f"Alphabet.join_glyphs done.")
+        # remove glyph from glyph_members
+    def distinguished(self,glyphs_distinguished={}):
+        if not hasattr(self,'_distinguished'):
+            self._distinguished={'V':set(),'C': set()}
+        if glyphs_distinguished.keys() == {'V','C'}:
+            self._distinguished=glyphs_distinguished
+        elif glyphs_distinguished:
+            log.error(f"{glyphs_distinguished=} provided, but without good keys")
+            raise
+        return self._distinguished
+    def distinguished_by_cvt(self,**kwargs):
+        cvt=kwargs.get('cvt',program['params'].cvt())
+        return self.distinguished()[cvt]
+    def distinguish(self, g, **kwargs):
+        self.distinguished_by_cvt().add(g)
+    def undistinguish(self, g, **kwargs):
+        self.distinguished_by_cvt().remove(g)
+    def undistinguish_any_with(self,g):
+        d=self.distinguished_by_cvt()
+        for j in [i for i in d if g in i]:
+            d.remove(j)
+    def add_glyph_member(self,item,glyph):
+        """This is sort into"""
+        self.mark_glyph_not_done(glyph)
+        d=self.glyph_members()
+        if glyph not in d:
+            d[glyph]=set()
+        d[glyph].add(item)
+        self.glyph_members(d)
+        log.info(f"Alphabet.add_glyph_member done.")
+    def rm_glyph_member(self,item,glyph=None):
+        #If this raises KeyError, use discard
+        d=self.glyph_members()
+        if glyph:
+            d[glyph].remove(item)
+        else:
+            for glyph in [g for g,m in d.items() if item in m]:
+                d[glyph].remove(item)
+        for glyph in [k for k,v in d.items() if v == set()]:
+            del d[glyph]
+            self.mark_glyph_not_done(glyph) #no members is also not verified
+        if d:
+            self.glyph_members(d) # Adding empty dict does nothing; see below
+        elif hasattr(self,'_glyph_members'):
+            delattr(self,'_glyph_members')
+        log.info(f"Alphabet.rm_glyph_member done.")
+    def mark_glyph_done(self,glyph,cvt):
+        """Mark Verified"""
+        d=self.glyphdict()
+        d[cvt].add(glyph)
+        return self.glyphdict(d)
+        log.info(f"‘{glyph}’ added to verified list")
+    def mark_glyph_not_done(self,glyph,cvt=None):
+        """Mark Unverified"""
+        d=self.glyphdict()
+        if cvt:
+            d[cvt].remove(glyph) #leave cvt in place, even if empty
+        else:
+            for cvt in [cvt for cvt,glyphs in d.items() if glyph in glyphs]:
+                d[cvt].remove(glyph)
+        log.info(f"‘{glyph}’ removed from verified list")
+        return self.glyphdict(d)
+    def cull_glyphdict(self):
+        """This limits the verified glyphs to those that actually have members.
+        """
+        d=self.glyph_members()
+        for cvt,glyphs in self.glyphdict().items():
+            for i in list(glyphs):
+                if i not in d:
+                    self.mark_glyph_not_done(i,cvt)
+    def cvt_of_item(self,x):
+        check=self.parse_verificationcode(x)['check']
+        return program['params'].cvt_of_check(check)
+    def verificationcode(self,**kwargs):
+        ps=kwargs.get('ps',program['slices'].ps())
+        profile=kwargs.get('profile',program['slices'].profile())
+        ftype=kwargs.get('ftype',self.ftype)
+        check=kwargs.get('check',program['params'].check())
+        group=kwargs.get('group',program['status'].group())
+        return '_'.join([ps,profile,ftype,check,group])
+    def parse_verificationcode(self,code):
+        ps,profile,ftype,check,group=code.split('_')
+        return {'ps':ps,'profile':profile,'ftype':ftype,
+                'check':check,'group':group}
+    def refresh_items(self):
+        self.items_present=set()
+        k={'ftype':self.ftype} #ftype may need to iterate some day
+        program['settings'].reloadstatusdata() # culled here
+        d=program['status'].dict()
+        for k['cvt'],ps_d in d.items(): #read cvt from status
+            for k['ps'],pr_d in ps_d.items():
+                for k['profile'],ch_d in pr_d.items():
+                    for k['check'],ch_v in ch_d.items():
+                        for k['group'] in [i for i in ch_v['done']
+                                            if i not in ['NA']]: #only verified
+                            # log.info(f"Adding item for {k}")
+                            self.items_present.add(self.verificationcode(**k))
+        self.cull_glyph_members()
+    def cull_glyph_members(self):
+        """This removes items from the sorting piles if they don't exist"""
+        for glyph,members in list(self.glyph_members().items()):
+            for i in list(members):
+                if i not in self.items_present:
+                    self.rm_glyph_member(i,glyph)
+        self.save_settings()
+    def glyphstoverify(self):
+        """Which glyphs are sorted, but not verified yet (or added to since)?"""
+        sorted=set(self.glyphs()) #this is constrained by cvt
+        return sorted-{i for k,v in self.glyphdict().items() for i in v}
+    def itemstosort(self):
+        return sorted(self._itemstomacrosort)
+    def renew_items_tomacrosort(self): 
+        self._itemsmacrosorted=set()
+        self._itemstomacrosort=set()
+        self.refresh_items()
+        for item in self.items_present:
+            if item in [i for j in self.glyph_members().values() for i in j]:
+                self._itemsmacrosorted.add(item)
+            else:
+                self._itemstomacrosort.add(item)
+        return self._itemstomacrosort
+    def mark_item_macrosorted(self,item,**kwargs):
+        self._itemsmacrosorted.add(item)
+        if item in self._itemstomacrosort:
+            self._itemstomacrosort.remove(item)
+    def mark_item_tomacrosort(self,item,**kwargs):
+        self._itemstomacrosort.add(item)
+        if item in self._itemsmacrosorted:
+            self._itemsmacrosorted.remove(item)
+    def presort_item(self,item):
+        """Because this will work automatically:
+        1. We don't want to assign groups to new int() letters
+        2. We don't want to kick out groups that are already there.
+        Let the user decide to do either, if necessary."""
+        glyph=self.parse_verificationcode(item)['group']
+        log.info(f"presort_item moving {item} into ‘{glyph}’")
+        if not glyph.isdigit() and not self.conflicting_items(item,glyph):
+            self.mark_item_glyph(item,glyph)
+    def conflicting_items(self,item,glyph):
+        d=self.glyph_members()
+        if glyph not in d:
+            return [] #keep iterable
+        compare=item.split('_')[:4]
+        r=list()
+        for i in list(d[glyph]):
+            if i.split('_')[:4] == compare:
+                r.append(i)
+        return r
+    def remove_conflicting_items(self,item,glyph):
+        conflicts=self.conflicting_items(item,glyph)
+        for i in conflicts:
+            ErrorNotice(f"Removing {i} from ‘{glyph}’ to make room for {item}",
+                        wait=True)
+            self.remove_item_from_glyph(i)
+    def mark_item_glyph(self,item,glyph):#maybe move to Alphabet Sort
+        self.rm_glyph_member(item) # in case elsewhere
+        self.remove_conflicting_items(item,glyph) #other group from same check
+        self.add_glyph_member(item,glyph)
+        self.mark_item_macrosorted(item)
+        if item in self.glyph_members()[glyph]:
+            log.info(f"mark_item_glyph added ‘{item}’ to ‘{glyph}’")
+        else:
+            log.info(f"mark_item_glyph failed to add ‘{item}’ to ‘{glyph}’")
+            # log.info(f"{self.glyph_members()=}")
+    def remove_item_from_glyph(self,item,glyph=None):
+        self.rm_glyph_member(item,glyph) # in case elsewhere
+        self.cull_glyphdict() #without knowing glyph or cvt
+        self.mark_item_tomacrosort(item)
     def update_symbols(self):
+        """I need to rethink this method entirely. How to make sure all symbols
+        are available to the alphabet chart?
+        """
         order=program['settings'].alpha_order()
         """this is a dict keyed by C,V; iterate appropriately!"""
-        self.groupdict=program['status'].all_groups_verified_anywhere()
-        # log.info(f"{groupdict=}")
+        glyphdict=self.glyphdict()
         """Extra symbols not in order"""
-        extras={i for i in groups if not i.isdecimal()}-set(self.order())
+        extras={i for i in items if not i.isdecimal()}-set(self.order())
         log.info(f"adding to {cv}: {extras=}")
         """Add to beginning of order"""
         order=sorted(extras)+self.order() #put new symbols first
         #only actually present:
         """limit to those symbols actually verified somewhere (iterate appropriately)"""
-        order=[i for i in self.order() if i in groups]
-        # for k in ['exids','order','ncolumns','chart_title']:
-        #     log.info(f"{getattr(program['settings'],'alpha_'+k)()=}")
-        # log.info(f"{order=}")
+        order=[i for i in self.order() if i in items]
         """store new order"""
         self.order(order)
+    def glyph(self,glyph=False,window=False):
+        """This maintains the glyph we are actually on:
+        False: don't set a glyph
+        None: there is no current glyph
+        """
+        if glyph is not False: #this needs to be able to be specified None
+            if glyph:
+                glyph=str(glyph)# in case an int() group gets through
+            self._glyph=glyph
+        if window and window.winfo_exists():
+            window.destroy()
+        return getattr(self,'_glyph',None)# this needs to be booleanable
+    def glyphs(self):
+        return [k for k,v in self.glyph_members().items()
+                        if [i for i in v
+                            if self.cvt_of_item(i) == program['params'].cvt()]
+                ]
+    def save_settings(self):
+        program['settings'].storesettingsfile(setting='alphabet')
     def __init__(self, **kwargs):
         program['alphabet']=self
+        self.ftype=program['params'].ftype()
+        program['settings'].settingsobjects() #should do this more; can be redone!
+        self.renew_items_tomacrosort()
+        self.save_settings()
 class AlphabetChart(alphabet_chart.OrderAlphabet):
     my_settings=[
                     'exids',
                     # 'order',
-                    'ncolumns','chart_title'
+                    'ncolumns','chart_title',
+                    'pagesize'
                 ]+Alphabet.my_settings#?
     def taskicon(self):
         return program['theme'].photo['alpha_icon']
@@ -6082,74 +6359,17 @@ class AlphabetChart(alphabet_chart.OrderAlphabet):
             value=getattr(self,k)
             if isinstance(value,ui.Variable):
                 value=value.get()
-            #     log.info(f"found ui.Variable: {value}")
-            # else:
-            #     log.info(f"Didn't find ui.Variable: {value}")
+                log.info(f"found ‘{k}’ ui.Variable: {value}")
+            else:
+                log.info(f"Didn't find ‘{k}’ ui.Variable: {value}")
             getattr(program['settings'],'alpha_'+k)(value)
         program['settings'].storesettingsfile(setting='alphabet')
     def __init__(self, parent, **kwargs):
         self.program=program
         super().__init__(parent)
         self.mainwindow=False #don't exit on close
-class AlphabetGlyphs():
-    """Glyph groups are a place to store the correlation between groups for each
-    check. These groups are also the basis for the alphabet chart.
-    """
-    def get_check(self):
-        return program['params'].check() #just one
-    def get_ps(self):
-        return #program['slices'].ps() None needs to be OK on this return
-    def get_profile(self):
-        return #program['slices'].profile() None needs to be OK on this return
-    def get_ftype(self):
-        return #program['params'].ftype() None needs to be OK on this return
-    def groups(self,**kwargs): #toverify=True
-        """Do this here, instead of at
-        return program['status'].groups(**kwargs)
-        """
-        pass
-    def group(self,value=None,**kwargs):#get/set
-        """Do this here, instead of at
-        return program['status'].group(value,**kwargs)
-        """
-        pass
-    def notdonewarning(self):
-        buttontxt=_("Sort!")
-        text=_("Hey, you're not done sorting groups by alphabet letter!"
-                "\nYou really need to finish this right away, though it's OK "
-                "if you do a couple other things first. \nRestart where "
-                "you left off by pressing ‘{}’".format(buttontxt))
-        if not program['Demo']: #Should anyone see this?
-            ErrorNotice(text=text,title=_("Not Done!"),parent=self,wait=True)
-    def checktosort(self):
-        return self.tosort() #bool tosort on cur check
-    def itemstosort(self):
-        return program['alphabet'].glyphstosort()
-    def itemssorted(self):
-        return program['alphabet'].glyphssorted()
-    def tosort(self):
-        return program['alphabet'].tosort() #returns bool
-    def updatesortingstatus(self):
-        return program['alphabet'].updatesortingstatus()
-    def verificationcode(self,**kwargs):
-        check=kwargs.get('check',self.get_check())
-        profile=kwargs.get('group',self.get_profile())
-        ps=kwargs.get('ps',self.get_ps())
-        ftype=kwargs.get('ftype',self.get_ftype())
-        # log.info("about to return {}={}".format(check,group))
-        return '_'.join([ps,profile,check,ftype])
-    def __init__(self, parent):
-        program['params'].cvt('A') #Is this a bad idea?
 class Senses(object):
     """docstring for Senses."""
-    def get_check(self):
-        return program['params'].check()
-    def get_ps(self):
-        return program['slices'].ps()
-    def get_profile(self):
-        return program['slices'].profile()
-    def get_ftype(self):
-        return program['params'].ftype()
     def groups(self,**kwargs): #toverify=True
         return program['status'].groups(**kwargs)
     def group(self,value=None,**kwargs):#get/set
@@ -6259,7 +6479,7 @@ class Segments(Senses):
         #         f"cvt: {cvt}, profile: {profile}, "
         #         f"check: {check}; self.regex: {self.regex}")
         unsortedids=set(self.sensesbyforminregex(self.regex,ps=ps))
-        for group in [i for i in groups if isnoninteger(i)]:
+        for group in [i for i in groups if not i.isdigit()]:
             self.buildregex(group=group,cvt=cvt,profile=profile)
             # log.info(f"(presortgroups-buildregex) group: {group}, cvt: {cvt}, "
             #         f"profile: {profile}, "
@@ -6320,21 +6540,24 @@ class Segments(Senses):
         formvalue=sense.textvaluebyftypelang(self.ftype,self.analang)
         if not formvalue:
             log.info("updateformtoannotations didn't return a form value for "
-                    "sense={}, ftype={}, analang={}"
-                    "".format(sense.id,self.ftype,self.analang))
+                    f"{sense.id=}, {check=}, {self.ftype=}, {self.analang=}")
             return
         # log.info("fnode: {}; text: {}".format(fnode,t.text))
         annodict=sense.annotationvaluedictbyftypelang(self.ftype,self.analang)
         conflict_text=_(f"Not updating ‘{formvalue}’ (conflict in {annodict}.")
+        error_nb=_(f"\nCheck the log for any further conflicts")
         if check: #just update to this annotation
             value=annodict[check]
-            # value=sense.annotationvaluebyftypelang(self.ftype,self.analang,check)
             if value is None or value.isdigit(): #don't update to unnamed groups
                 # log.info(f"Not updating {sense.id} form {formvalue} to "
                 #         f"{check}={value}")
                 return
             elif self.check_with_conflicting_value(annodict,check):
-                ErrorNotice(conflict_text)
+                if not self.updateconflictwarned:
+                    ErrorNotice(conflict_text+error_nb)
+                    self.updateconflictwarned=True
+                else:
+                    log.error(conflict_text)
                 return
             elif value not in [None, 'NA']: #should I act on ''?
                 f=self.rxdict.update(formvalue,check,value)
@@ -6346,11 +6569,13 @@ class Segments(Senses):
                     sc=program['params'].cvt()
                     program['settings'].polygraphs[self.analang][sc][value]=True
         else: #update to all annotations
-            # annodict=sense.annotationvaluedictbyftypelang(ftype,self.analang)
-            # log.info("annodict: {}".format(annodict))
             for check,value in annodict.items():
                 if self.check_with_conflicting_value(annodict,check):
-                    ErrorNotice(conflict_text)
+                    if not self.updateconflictwarned:
+                        ErrorNotice(conflict_text+error_nb)
+                        self.updateconflictwarned=True
+                    else:
+                        log.error(conflict_text)
                 else:
                     f=self.rxdict.update(formvalue,check,value)
                     sense.textvaluebyftypelang(self.analang,f)
@@ -6359,6 +6584,19 @@ class Segments(Senses):
     def setitemgroup(self,item,check,group,**kwargs):
         # log.info("Setting segment sort group")
         item.annotationvaluebyftypelang(self.ftype,self.analang,check,group)
+    def updateformsallchecks(self):
+        log.info("updateformsallchecks")
+        for sense in program['db'].senses: #do the whole dictionary
+            self.updateformtoannotations(sense)
+        #     u = threading.Thread(target=self.updateformtoannotations,
+        #                         args=(sense), # w/o check, all done
+        #                         )
+        #     u.start()
+        # try:
+        #     u.join()
+        # except:
+        #     pass
+        self.maybewrite()#after iteration
     def updateformsbycheck(self):
         for sense in self.getsensesincheck():
             u = threading.Thread(target=self.updateformtoannotations,
@@ -6370,24 +6608,116 @@ class Segments(Senses):
         except:
             pass
         self.maybewrite()#after iteration
-    def name_new_groups(self):
-        groups=program['status'].groups()
+    def update_annotations_to_glyphs(self):
+        for k in program['alphabet'].glyph_members():
+            self.update_annotations_by_glyph(k)
+    def update_annotations_by_glyph(self,glyph):
+        """Once all sorting into groups and macrogroups is done, align groups to
+        macrogroups.
+        I need to think how to do this without risking merging groups:
+        Go through glyph_members, and for each item with glyph≠group, change.
+            if the new item exists already, rename it (int) first.
+            int() groups will be renamed in iteration, since glyph≠group
+        this may be more efficiently done with verification fields.
+        
+        This method does more than just annotations:
+        
+        LIFT verification,
+        form data
+
+        """
+        def newform(x):
+            return '_'.join(x.split('_')[:4]+[glyph])
+        # log.info("update_annotations_by_glyph: checking if it is safe to "
+        #         f"update items in ‘{glyph}’")
+        gm=program['alphabet'].glyph_members()
+        """If an annotation change would effectively join groups, e.g., Noun_CVCVC_lc_V1_ea
+        would become Noun_CVCVC_lc_V1_ee, which already exists, stop. 
+        """
+        for item in gm[glyph]:
+            if (item.split('_')[-1] != glyph and
+                newform(item) in [i for j in gm.values() for i in j]):
+                log.error(f"Conflict: cannot rename ‘{item}’ to ‘{glyph}’; "
+                    f"‘{newform(item)}’ already exists.")
+                return
+        log.info(f"update_annotations_by_glyph safely: ‘{gm[glyph]}’ to ‘{glyph}’")
+        for item in list(gm[glyph]):
+            kwargs=program['alphabet'].parse_verificationcode(item)
+            senses=program['slices'].inslice(
+                            self.getsensesincheckgroup(**kwargs),
+                            **kwargs)
+            # log.info(f"Found {len(senses)} senses for {item}: {[i.id for i in senses]}")
+            for sense in senses: #ps-profile only
+                thread_name='_'.join([sense.id,glyph])
+                u = threading.Thread(target=self.marksortgroup,
+                                    args=(sense,glyph),
+                                    kwargs={**{k:v for k,v in kwargs.items()
+                                            if k != 'group'},
+                                    # remove for testing this fn:
+                                    # 'nocheck': True, #no lift verify
+                                            'thread_name':thread_name,
+                                            'not_sorting':True,
+                                            'updateverification':True,
+                                            'updateforms':False}) 
+                                            #update all annotations first, then forms 
+                self.track_thread(thread_name) #don't race the thread
+                u.start()
+            program['status'].renamegroup(kwargs.pop('group'),glyph,**kwargs)
+            #above should rename throughout status 
+            program['alphabet'].rename_glyph_member(item,newform(item))
+        self.thread_update()
+        try:
+            u.join()
+            log.info(f"Finished update_annotations_by_glyph threads for ‘{glyph}’")
+        except UnboundLocalError: #if u.start() never happened...
+            pass
+        log.info(f"update_annotations_by_glyph done with ‘{gm[glyph]}’ to ‘{glyph}’")
+    def name_new_glyphs(self):
+        """Everything referenced here needs to refer to macrogroups ONLY.
+        Users should never be changing the name of an individual sort group.
+        This method is for default named groups (int), to see that they have
+        some name, and is automatically enforced.
+        Changes requested by the user are handled in TranscribeC/V
+        """
+        glyphs=program['alphabet'].glyphdict()[program['params'].cvt()]
         if program['params'].cvt() == 'C':
             transcribe=TranscribeC
         elif program['params'].cvt() == 'V':
             transcribe=TranscribeV
         else:
-            log.error("Not sure what to do with this group "
-                "({program['params'].cvt()=}; {groups=})")
+            log.error("Not sure what to do with this glyph "
+                f"({program['params'].cvt()=}; {glyphs=})")
         w=transcribe(self)
         self.withdraw()
-        for group in [i for i in groups if isinteger(i)]:
-            w.group=program['status'].group(group)
-            w.makewindow()
+        w.waitdone()
+        problems=[]
+        while digits := [i for i in glyphs if i.isdigit()]:#str fn
+            glyph=digits[0]
+            log.info(f"working on {glyph=} of {digits=}")
+            w.makewindow(glyph)
+            if w.window_failed:
+                program['alphabet'].mark_glyph_not_done(glyph)
+                problems.append(glyph)
+            elif not w.ok_done: #user exits without 'OK'
+                break
+            glyphs=program['alphabet'].glyphdict()[program['params'].cvt()]
         w.destroy() #just this window, not parent
         self.deiconify()
-    def assign_groups_to_macrogroups(self):
-        self.name_new_groups()
+        if digits or problems:
+            log.error(f"User exited, or other problem: {digits=} {problems=}")
+            sysshutdown()
+            return 1
+        return 0
+    def rename_macrogroup(self,x,y,updatestatus=False):
+        for item in list(program['alphabet'].glyph_members()[x]):
+            kwargs=program['alphabet'].parse_verificationcode(item)
+            log.info(f"Updating verification from ‘{x}’ to ‘{y}’ for {kwargs=}")
+            self.rename_group_verification(x,y,**kwargs)
+        #Do the above first, before glyph_members changes
+        program['alphabet'].rename_glyph(x,y)
+        self.update_annotations_by_glyph(y)
+        if updatestatus: #only update status if forms
+            program['settings'].reloadstatusdata()
     def getsensesincheck(self):
         return [
                 i for i in program['db'].senses
@@ -6404,6 +6734,7 @@ class Segments(Senses):
         # ftype=program['params'].ftype() #not helpful for Tone.getitemgroup
         return item.annotationvaluebyftypelang(self.ftype,self.analang,check)
     def __init__(self, parent):
+        self.updateconflictwarned=False
         self.dodone=True
         self.dodoneonly=False #don't give me other words
         self.ftype=program['params'].ftype()
@@ -7200,7 +7531,7 @@ class WordCollection(Segments):
         self.selectionwindow.title(title)
         t=ui.Label(self.selectionwindow.frame,text=title, font='title',
                     row=0,column=0)
-        currentimage=getimageifthere(self.sense)
+        currentimage=scaleimageifthere(self.sense)
         if currentimage:
             t['image']=currentimage
             t['compound']='right'
