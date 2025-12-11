@@ -46,3 +46,4 @@ reports/**
 secrets.py
 *.lift*txt
 bin/
+.vscode/settings.json
