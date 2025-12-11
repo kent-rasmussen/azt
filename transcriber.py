@@ -72,10 +72,10 @@ class Transcriber(ui.Frame):
         if str(x).isdigit():
             log.info(f"Not setting transcriber default value to ‘{x}’ (was ‘{self.newname.get()}’)")
             return
-        log.info(f"Setting transcriber value to ‘{x}’ (was ‘{self.newname.get()}’, {self.formfield['text']})")
+        # log.info(f"Setting transcriber value to ‘{x}’ (was ‘{self.newname.get()}’, {self.formfield['text']})")
         self.newname.set(x)
     def __init__(self, parent, initval=None, soundsettings=None, **kwargs):
-        log.info(f"Starting transcriber with {initval=}")
+        # log.info(f"Starting transcriber with {initval=}")
         self.newname=ui.StringVar(value=initval)
         self.namehash=ui.StringVar()
         self.hash_t,self.hash_sp,self.hash_nbsp=rx.tonerxs()
