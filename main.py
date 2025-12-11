@@ -15202,10 +15202,10 @@ class ConfigParser(configparser.ConfigParser):
     def __init__(self):
         super(ConfigParser, self).__init__(
         converters={'list':list},
-        delimiters=(' = ', ' : ')
+        delimiters=(' = ', ' : '),
+        allow_no_value=True
         )
         self.optionxform=str
-        self.allow_no_value=True
         # self.converters={'list':list} #lambda x: [i.strip() for i in x.split(',')]
 class ErrorNotice(ui.Window):
     """this is for things that I want the user to know, without having
@@ -16167,7 +16167,7 @@ class GitReadOnly(Git):
     def __init__(self, url):
         super(GitReadOnly, self).__init__(url)
 class ResultWindow(ui.Window):
-    def __init__(self, parent, nowait=False,msg=None,title=None):
+    def __init__(self, parent, msg=None, title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
         but the attribute is still there after window has been killed, so we
         need to test for both."""
@@ -16175,7 +16175,7 @@ class ResultWindow(ui.Window):
             title=(_("Result Window"))
         super().__init__(parent,title=title)
         self.lift()
-        if not nowait:
+        if msg:
             self.wait(msg=msg)
 class Options:
     def alias(self,o):
@@ -16247,7 +16247,7 @@ def interfacelang(lang=None,magic=False):
                 curlang=l
                 magic=True
                 break #i.e., if it is already set up correctly
-        except:
+        except NameError:
             curlang=None
             log.debug("_ doesn't look defined yet")
             break
@@ -16259,7 +16259,7 @@ def interfacelang(lang=None,magic=False):
         else:
             log.debug("Magic seems to be installed, but not gettext: {}"
             "".format(_.__module__))
-    except:
+    except NameError:
         log.debug("Looks like translation magic isn't defined yet; making")
     if lang:
         log.info(f"Asked to set lang {lang} with curlang {curlang}")
@@ -16394,11 +16394,6 @@ def dictcompare(x,y,ignore=[]):
     else:
         r=len(pairs)/(len(pairs)+len(unpairs))
     return (r,pairs,unpairs)
-def selected(groupvars):
-    return [k for k in groupvars
-            if groupvars[k] is not None #necessary?
-            if groupvars[k].get() #only those marked True
-            ]
 def exampletype(**kwargs):
     if not kwargs:
         print("exampletype called without kwargs")
