@@ -9464,42 +9464,105 @@ class Sort(object):
         self.ps=self.get_ps()
         self.profile=self.get_profile()
         self.ftype=self.get_ftype()
-        log.info("cvt:{}; ps:{}; profile:{}; check:{}".format(cvt,self.ps,
-                                                    self.profile,self.check))
-        tosortupdate()
-        log.info("Maybe Sort (from maybesort)")
-        if self.checktosort(): # w/o parameters, tests current check
-            log.info("Sort (from maybesort)")
-            self.sort()
-            self.did['sort']=True
-            # exitstatuses()
-            warnorcontinue()
+        log.info("Maybe Sort")
+        if self.checktosort(): # w/o parameters, tests current check
+            log.info("Running Sort")
+            if warnorcontinue(self.sort()):
+                self.did['sort']=True
             return
-        log.info("Maybe Verify (from maybesort)")
+        log.info("Maybe Verify")
         groupstoverify=self.groups(toverify=True)
         if groupstoverify:
-            log.info("verify (from maybesort)")
+            log.info("Running Verify")
             log.info("Going to verify the first of these groups now: {}".format(
                                     self.groups(toverify=True)))
             if program['status'].group() not in groupstoverify:
                 program['status'].group(groupstoverify[0]) #just pick the first now
-            self.verify()
-            self.did['verify']=True
-            # exitstatuses()
-            warnorcontinue()
+            if warnorcontinue(self.verify()):
+                self.did['verify']=True
             return
-        log.info("Maybe Join (from maybesort)")
-        if program['status'].tojoin():
-            log.info("join (from maybesort)")
-            r=self.join() #0 here is done.
-            if r:
-                warnorcontinue()
-                return
-            else: #done; continue on
-                self.did['join']=True
-                self.updateformsbycheck()
-                self.assign_groups_to_macrogroups()
-        # exitstatuses()
+        log.info("Maybe Join")
+        self.did['join']=False #runs multiple times, so clear here
+        if self.to_distinguish():
+            log.info("Running Join")
+            warnorcontinue(self.join()) #1 here is now done; did.join intenally
+            return
+        """Up to this point, we sort into and out of (via verify) groups tracked
+        by lift form annotations, and track groups marked as verified in lift
+        profile-ftype verification fields (with 'check=group' values in a list).
+        So far, we have just established which words belong in which groups!
+            No forms are updated yet
+            New groups (with default integer names) still have them
+            annotation fields just track which words are in which group.
+            verification fields track group verification (and membership)
+            NONE of these group names mean ANYTHING yet —some derive from
+                their original transcription, but that is coincidental.
+        The next section will sort these group names in and out of alphabet
+        fields, as the user tells us which groups should be represented by the
+        same letter. After which all these fields will be updated.
+        """
+        log.info(f"Maybe Macrosort (with {[k for k,v in self.did.items if v]})")
+        if items := program['alphabet'].renew_items_tomacrosort():
+            if not any({v for k,v in self.did.items() if 'glyphs' in k}):
+                """only presort if arriving here before any other glyph
+                operation this run:
+                run with presort after an aborted sort run (redundant, but OK)
+                run with no presort until after verify
+                run with no presort until after join>verify
+                this variable is updated/cleared on each bigbutton press, and
+                on each automatic continue to a new profile or check.
+                """
+                for item in list(items):
+                    program['alphabet'].presort_item(item) #only if no conflict
+            # log.info(f"{program['alphabet'].itemstosort()=}")
+            log.info("Running Macrosort")
+            if warnorcontinue(self.sort(macrosort=True)):
+                self.did['macrosorttoglyphs']=True
+            return
+        log.info("Maybe Verifyglyphs")
+        glyphstoverify=program['alphabet'].glyphstoverify()
+        if glyphstoverify:
+            log.info(f"Going to verify these glyphs now: {glyphstoverify}")
+            if program['alphabet'].glyph() not in glyphstoverify:
+                program['alphabet'].glyph(list(glyphstoverify)[0])
+            log.info("Running Verifyglyphs")
+            if warnorcontinue(self.verify(macrosort=True)):
+                self.did['verifyglyphs']=True
+            log.info(f"Finished Verifyglyphs with {self.did=}")
+            return
+        log.info("Maybe Joinglyphs")
+        self.did['joinglyphs']=False #runs multiple times, so clear here
+        if self.to_distinguish(macrosort=True):
+            log.info("Running Joinglyphs")
+            warnorcontinue(self.join(macrosort=True))
+            return
+        # After all macrogroups are sorted out correctly, make all named:
+        """These last three sections sort the previously verified sort groups
+        in and out of alphabet dictionaries, so we now know:
+            which words belong in which ps-profile-ftype-check group
+            which ps-profile-ftype-check groups belong in which glyphs
+        With this in hand, we now need to
+            make sure that all glyphs have real names
+            update lift form annotations to the appropriate glyph value
+            update profile-ftype verifications to the appropriate glyph value
+        THEN
+            We can safely update forms to match their annotations.
+        """
+        """The first time user has been asked what glyph to use for a group;
+        it will allow limited switching of group names, e.g., if 1 should be
+        <b>, which already exists: b>2,1>b,2>? Do other changes later."""
+        if warnorcontinue(self.name_new_glyphs()): #iterative: all int(); forced continue or quit.
+            return
+        """all int() groups and macrogroups are gone at this point!"""
+        self.update_annotations_to_glyphs() #Iterates over all glyphs
+        # The above aligns all annotations and verifications
+        # the below updates forms IF annotations agree
+        self.updateformsallchecks() #whole db annotations>forms
+        """The following is to iterate to the next work to do. So we want
+        everything for a check to be complete to be done by now.
+        A user may want to change the name of a group; if so, they should stop
+        the sort process, and go name the macrogroup.
+        """
         # At this point, there should be nothing to sort, verify or join, so we
         # move on to the next group.
         ctosort=program['status'].checks(tosort=True)
@@ -9523,11 +9586,7 @@ class Sort(object):
                 #only on first two ifs:
         if fn:
             done+='\n'+_("Moving on to the next {}!".format(next))
-        # if hasattr(self,'runwindow'):
-        #     ErrorNotice(text=done,title=_("Done!"),wait=True,parent=self.runwindow)
-        # else:
-        if not program['Demo']: #Should anyone see this?
-            ErrorNotice(text=done,title=_("Done!"),wait=True,parent=self)
+        ErrorNotice(text=done,title=_("Done!"),wait=True,parent=self)
         self.status.maybeboard()
         if fn:
             fn() #only on first two ifs
