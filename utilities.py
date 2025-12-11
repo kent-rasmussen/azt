@@ -19,7 +19,8 @@ def marktime(f,*args,**kwargs):
     def timed(*args,**kwargs):
         start_time=datetime.datetime.now(datetime.UTC)
         r=f(*args,**kwargs)
-        print("Function",f.__class__.__name__,datetime.datetime.now(datetime.UTC)-start_time)
+        name=getattr(f,'__name__',f"of type {f.__class__.__name__}")
+        print("Function",name,datetime.datetime.now(datetime.UTC)-start_time)
         return r
     return timed
 def stouttostr(x):
