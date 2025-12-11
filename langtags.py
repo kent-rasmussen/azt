@@ -375,6 +375,7 @@ class Language(langcodes.Language):
         else:
             log.error(f"code ‘{iso}’ is not in self.languages.by_iso "
                         "or macrolanguage_members!?")
+            self.lineage = []
     def shared_lineage(self):
         result=[]
         lists=copy.deepcopy(list(self.lineages.values()))
@@ -385,6 +386,7 @@ class Language(langcodes.Language):
             else:
                 # print(f"Ancestors differ at: {this_result}")
                 return result
+        return result
     def family(self):
         try:
             return self.lineage[0]
@@ -444,13 +446,15 @@ class Language(langcodes.Language):
         # else:
         #     print(f"No regionname! ({self.languages.by_iso[tag]})")
     def full_display(self):
-        n=min(len(self.lineage),3)
-        meta='/'.join(self.lineage[-n:])
-        if hasattr(self,'regionname') and self.regionname:
-            meta=f"{self.regionname}; {meta}"
+        meta=[]
         if self.private:
-            meta=f"{self.private.removeprefix('x-')} dialect; {meta}"
-        return (f"{self.display_name()} [{self.alpha23()}] ({meta})")
+            meta+=[f"{self.private.removeprefix('x-')} dialect"]
+        if hasattr(self,'regionname') and self.regionname:
+            meta+=[f"{self.regionname}"]
+        if self.lineage:
+            n=min(len(self.lineage),3)
+            meta+=['/'.join(self.lineage[-n:])]
+        return (f"{self.display_name()} [{self.alpha23()}] ({'; '.join(meta)})")
     def supported_ancestor_objs_prioritized(self):
         return [self.languages.get_obj(i)
                     for i in self.supported_ancestor_codes_prioritized()
@@ -502,6 +506,8 @@ class Language(langcodes.Language):
             super(Language, self).__init__(**kwargs)
         except Exception as e:
             log.info(f"Language didn't init ({kwargs})")
+            self.ok=False
+            return
             kwargs['language']=languages.get_code(language)
             log.info(f"Trying init again with {kwargs}")
             super(Language, self).__init__(**kwargs)
@@ -509,6 +515,7 @@ class Language(langcodes.Language):
         self.get_lineage() #I think the kproblem is here?
         self.fill_tag()
         self.get_regionname()
+        self.ok=True
 if __name__ == '__main__':
     print(f"{tag_is_valid('sw-x-ipa_MT')=}")
     ldict=Languages()
