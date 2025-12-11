@@ -16575,12 +16575,14 @@ def compilesenseimage(sense):
                 "couldn't recognize data in image file" not in e.args[0]):
             log.info("ui.Image error: {}".format(e))
     """
-    uri=getimagelocationURI(sense)
-    if uri:
+    uri=sense.illustrationURI()
+    if uri and file.exists(uri):
         sense.image=ui.Image(uri)
     else:
         sense.image=None
-def getimageifthere(sense,pixels=70):
+def scale_image(image,pixels=65,scaleto='height'):
+    return image.scale(program['scale'],pixels=pixels,scaleto=scaleto)
+def scaleimageifthere(sense,pixels=65,scaleto='height'):
     if not getattr(sense,'image',False) or not isinstance(sense.image,ui.Image):
         try:
             compilesenseimage(sense)
@@ -16588,11 +16590,8 @@ def getimageifthere(sense,pixels=70):
             if ('value for "-file" missing' not in e.args[0] and
                     "couldn't recognize data in image file" not in e.args[0]):
                 log.info("ui.Image error: {}".format(e))
-    if getattr(sense,'image',False):
-        scaledimage(sense.image,pixels=pixels)
-        return sense.image.scaled
-    # else:
-    #     self._illustration=None
+    if sense.image:
+        return scale_image(sense.image,pixels=pixels,scaleto=scaleto)
 def pathseparate(path):
     os=platform.system()
     if os == 'Windows':
