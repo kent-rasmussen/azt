@@ -1,10 +1,10 @@
-self.groups(toverify=True)#!/usr/bin/env python3
+#!/usr/bin/env python3
 # coding=UTF-8
 """Consider making the above work for a venv"""
 """This file runs the actual GUI for lexical file manipulation/checking"""
 program={'name':'A-Z+T',
         'tkinter':True, #for some day
-        'production':True, #True for making screenshots (default theme)
+        'production':False, #True for making screenshots (default theme)
         'testing':False, #normal error screens and logs
         'Demo':False, #will get set otherwise later if it is
         'version':'0.9.16', #This is a string...
@@ -17,18 +17,14 @@ exceptiononload=False
 exceptiononloadingmymodule=False
 import platform
 program['hostname']=platform.uname().node
-try:
-    import file
-except:
-    import py_modules
-    py_modules.pip_install(['soundfile','librosa'])
-    import file
+import py_modules #This tries importing, and installs on failure
+import file
 if file.getfile(__file__).parent.parent.stem == 'raspy': # if program['hostname'] == 'karlap':
     program['testing']=True #eliminates Error screens and zipped logs
     me=True
     loglevel='INFO'
     # program['testlift']='eng' #portion of filename
-    # program['testlift']='Demo_en' #portion of filename
+    program['testlift']='Demo_en' #portion of filename
     # program['testtask']='WordCollectnParse' #Will convert from string to class later
     # program['testtask']='SortV' #Will convert from string to class later
 else:
@@ -53,56 +49,26 @@ logsetup.setlevel(loglevel)
 """My modules, which should log as above"""
 import lift
 import parser
-try:
-    import openclipart
-except Exception as e:
-    import py_modules
-    py_modules.pip_install(['urllib'])
-    import openclipart
-# import profiles
+import openclipart
+# import profiles #confirm obsolescence and remove!
 import setdefaults
 import xlp
-try:
-    import urls
-    import htmlfns
-except ModuleNotFoundError as e:
-    import py_modules
-    py_modules.pip_install(['urllib3'])
-    import urls
-    import htmlfns
+import urls
+import htmlfns
 import executables
 import export
-try:
-    import langtags
-    import alphabet_chart
-except Exception as e:
-    import py_modules
-    py_modules.pip_install(['langcodes','urllib','pyautogui'])
-    import langtags
-    import alphabet_chart
+import langtags
+import alphabet_chart
 program['languages']=langtags.Languages()
 try:
     import sound
     import transcriber
     import sound_ui
     program['nosound']=False
-except Exception as e:
-    import py_modules
-    py_modules.pip_install(['numpy', 'pyaudio',
-                            'openai-whisper',
-                            'torch',
-                            'transformers',
-                            'ffmpeg', 'ffmpeg-python', #not sure of value, but for windows
-                            'huggingface_hub[hf_xet]'])
-    try:
-        import sound
-        import transcriber
-        import sound_ui
-        program['nosound']=False
-    except:
-        program['nosound']=True
-        log.error("Problem importing Sound/pyaudio. Is it installed? {}".format(e))
-        exceptiononload=True
+except:
+    program['nosound']=True
+    log.error("Problem importing Sound/pyaudio. Is it installed? {}".format(e))
+    exceptiononload=True
 """Other people's stuff"""
 try:
     from packaging import version

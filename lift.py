@@ -31,7 +31,7 @@ import collections
 import langtags
 try: #Allow this module to be used without translation
     _
-except:
+except NameError:
     def _(x):
         return x
 """This returns the root node of an ElementTree tree (the entire tree as
