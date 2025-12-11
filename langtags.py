@@ -515,15 +515,16 @@ if __name__ == '__main__':
     for code in ['sw-x-ipa_MT','sw-TZ']:
         o=Language(code,ldict)
         print(o.full_display())
-    for s in [
+    for s,n in [
         # 'tem','temb','tembo','Tembo',
         #     'lug','lg',
-        'swh','swc','zmb','english','Swahili',
-            'tbt-x-xkivu','tbt-x-kivu-x','tbt-x-i','en'
-            # 'en','eng'
+        # 'swh','swc','zmb','english','Swahili',
+        #     'tbt-x-xkivu','tbt-x-kivu-x','tbt-x-i','en'
+        ('xog', 6213), ('en', 5295), ('lke', 3556), ('flh-x-cm', 3258), ('sjs', 2314), ('ikx', 1881), ('nan', 1842), ('myx', 933), ('iru', 807), ('ta-MY', 694), ('tcx', 650), ('ml', 360), ('en-001', 308), ('zeh-Latn-CN', 201), ('ble', 119), ('aum', 109), ('kil', 95), ('jer', 92), ('ktf', 90), ('aln', 86), ('sir', 85), ('tpi', 83), ('khx', 80), ('bbt', 73), ('mxh', 71), ('kcj', 69), ('zh-Latn', 64), ('luo', 63), ('saa', 63), ('bva', 60), ('swc', 59), ('ksy', 58), ('prx-Tibt', 58), ('acu', 53), ('ffm', 53), ('bab', 52), ('kyq', 49), ('nl', 49), ('bda', 48), ('nmk', 37), ('en-IN', 30), ('ko', 30), ('gqr', 29), ('nod-Thai', 28), ('pt', 28), ('mny', 26), ('fr', 25), ('en-CA', 24), ('id', 20), ('es', 18), ('hi', 18), ('zlj-Latn', 18), ('en-PH-fonipa', 17), ('kgw', 17), ('nti', 17), ('sbk', 16), ('zmb', 16), ('ary', 15), ('uly', 15), ('en-Runr', 14), ('zeh', 14), ('sv', 12), ('ima', 11), ('am', 10), ('kry', 10), ('lif-x-chathare', 10), ('pdc', 10), ('hwc', 9), ('nse', 9), ('bcw', 8), ('es-419', 8), ('sw-KE', 8), ('tkx', 8), ('tak', 7), ('ymm', 7), ('zlm', 7), ('bjx', 6), ('esi', 6), ('hbo', 6), ('mjz', 6), ('orc', 6), ('swh-Arab', 6), ('ur', 6), ('fon', 5), ('gjn', 5), ('gmv-Latn', 5), ('ha', 5), ('jv', 5), ('kei', 5), ('sg', 5), ('sw', 5), ('und', 5), ('yao', 5), ('zaz', 5), ('zna', 5), ('bs', 4), ('dot', 4), ('fau', 4), ('gjn-Arab', 4), ('mqg', 4), ('pbs', 4), ('xh', 4), ('aod', 3), ('cdm', 3), ('en-150', 3), ('en-ZA', 3), ('es-PE', 3), ('ewo', 3), ('lns', 3), ('okx', 3), ('pa', 3), ('swb-Latn', 3), ('yro', 3), ('ywt', 3), ('af', 2), ('arz', 2), ('bbk', 2), ('bsk', 2), ('bwi', 2), ('eky', 2), ('en-BM', 2), ('en-NG', 2), ('en-PH', 2), ('kcg', 2), ('kfe', 2), ('ku', 2), ('mcf', 2), ('mvh', 2), ('pis-fonipa', 2), ('qaa', 2), ('sej', 2), ('tr', 2), ('wlo-fonipa', 2), ('xod', 2), ('zhi', 2), ('ayk', 1), ('dag', 1), ('de-fonipa', 1), ('dja', 1), ('glh', 1), ('gsl', 1), ('gyz', 1), ('hba', 1), ('iru-Mlym', 1), ('jen', 1), ('lgm', 1), ('lgo', 1), ('nyu', 1), ('pak', 1), ('pav', 1), ('phv', 1), ('pst', 1), ('qu-BO', 1), ('qvy', 1), ('rhg-Latn', 1), ('ru', 1), ('sgc', 1), ('slu', 1), ('sxb', 1), ('tmy', 1), ('twd', 1), ('wes', 1), ('ysn', 1)    # 'en','eng'
             ]:
-        if s in ldict.by_iso:
-            print('country name:',ldict.by_iso[s]['country name'])
-        else:
-            o=ldict.get_obj(s)
-            print(o.full_display())
+        # if s in ldict.by_iso:
+        #     print('country name:',ldict.by_iso[s]['country name'])
+        # else:
+        o=ldict.get_obj(s)
+        if o.ok:
+            print(n,o.full_display(),o.supported_ancestor_codes_prioritized())
