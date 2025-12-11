@@ -9317,8 +9317,7 @@ class Sort(object):
                 return #if the user didn't supply a check
         self.presortgroups()
         self.updatesortingstatus() # Not just tone anymore
-        self.resetsortbutton() #track what is done since each button press.
-        self.maybesort()
+        self.maybesort(firstrun=True)
     def confirmverificationgroup(self,sense,profile,check):
         """This does the one field storing a list of verified values
         for all checks"""
@@ -9441,21 +9440,25 @@ class Sort(object):
                 log.info("Taskchooser exit status: {}".format(program['taskchooser'].exitFlag.istrue()))
             except Exception as e:
                 log.info("Exception: {}".format(e))
-        def warnorcontinue(): #mostly for testing
+        def warnorcontinue(return_value): #mostly for testing
             if self.exitFlag.istrue():
+                log.info("the task is exited; done with maybesort")
                 pass #just return, below, if the task is exited
-            elif self.runwindow.exitFlag.istrue():
-                self.notdonewarning() #warn if runwindow exited, but not task
+            elif return_value:
+                log.info("runwindow finished; restarting maybesort")
+                self.after(10,self.maybesort) #if neither exited, continue
             else:
-                self.maybesort() #if neither exited, continue
-            self.status.maybeboard()
-        # exitstatuses()
+                log.info("the runwindow didn't finish; Not done with maybesort")
+                self.notdonewarning() #warn if runwindow exited, but not task
+            return return_value #pass along
+        if firstrun:
+            self.resetsortbutton()
+        log.info(f"Starting maybesort with {[k for k,v in self.did.items if v]}")
         if self.exitFlag.istrue(): #if the task has been shut down, stop
             return
+        program['settings'].reloadstatusdata() # culled here
         if self.itemstosort() is False:
             self.updatesortingstatus() # Not just tone anymore
-        if not hasattr(self,'did'):
-            self.resetsortbutton()
         cvt=program['params'].cvt()
         self.check=self.get_check()
         self.ps=self.get_ps()
@@ -11338,8 +11341,8 @@ class SortSyllables(Sort,Segments,TaskDressing):
         on to the next setting"""
         self.presortgroups()
         self.updatesortingstatus() # Not just tone anymore
-        self.resetsortbutton() #track what is done since each button press.
-        self.maybesort()
+        self.maybesort(firstrun=True)
+    def __init__(self, parent):
     def __init__(self, parent):
         program['params'].cvt('S') #syllable
         TaskDressing.__init__(self,parent)
