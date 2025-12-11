@@ -9589,50 +9589,73 @@ class Sort(object):
         ErrorNotice(text=done,title=_("Done!"),wait=True,parent=self)
         self.status.maybeboard()
         if fn:
-            fn() #only on first two ifs
-    def presenttosort(self):
-        scaledpady=int(50*program['scale'])
-        groupselected=None
-        """these just pull the current lists from the object"""
-        senses=self.itemstosort()
-        sorted=self.itemssorted()
-        try:
-            sense=senses[0]
-        except IndexError:
-            log.info("maybe ran out of senses?")
-            return
-        progress=(str(self.thissort.index(sense)+1)+'/'+str(len(self.thissort)))
+            fn() #only on first two ifs, calls runcheck w/resetsortbutton
+    def present_sense(self,sense):
+        log.info(f"presenting to sort {sense.id}")
+        frame=self.get_frame()
+        text=sense.formatted(self.analang, self.glosslangs, self.ftype, frame)
+        self.buttonframe.sortitem=ui.Frame(self.runwindow.frame, column=1, row=1, sticky='nw',
+                            border=True)
+        l=ui.Label(self.buttonframe.sortitem,
+                                text=text,font='readbig', sticky='w',
+                                # pady=scaledpady
+                                )
+        l['image']=scaleimageifthere(sense)
+        l['compound']='left'
+        l.wrap()
+        return self.buttonframe.sortitem
+    def present_group(self,item):
+        log.info(f"presenting group {item}")
+        kwargs=program['alphabet'].parse_verificationcode(item)
+        self.buttonframe.sortitem=ui.Frame(self.runwindow.frame, border=True,
+                                            column=1, row=1, sticky='nw')
+        align_w_ggbfs=ui.Label(self.buttonframe.sortitem,text='',
+                                width=5,sticky='')
+        tosort_frame=SortGroupButtonFrame(self.buttonframe.sortitem,
+                                        self, label=True,
+                                        sticky='', **kwargs
+                                        )
+        if tosort_frame.hasexample:
+            return self.buttonframe.sortitem
+        else:
+            log.info(f"No example for {item}; not sorting.")
+            program['alphabet'].mark_item_macrosorted(item) #don't keep sorting
+            tosort_frame.destroy()
+    def current_tosort(self,macrosort=False):
+        """These are all ordered lists (either by order of listbuilding, or by
+        sorted(). Items not on the original list get tacked onto the end, still
+        in order. This allows the user to see a consistently rising progress
+        number, even if the to do number rises as well.)"""
+        if macrosort:
+            tosort=program['alphabet'].itemstosort()
+        else:
+            tosort=program['status'].sensestosort()
+        return self.first_sort+[i for i in tosort if i not in self.first_sort]
+    def presenttosort(self,item,macrosort=False):
+        # log.info(f"presenting to sort {item}")
+        #Keep the same total throughout a given sort:
+        tosort=self.current_tosort(macrosort=macrosort)
+        progress=(str(tosort.index(item)+1)+'/'+str(len(tosort)))
         """After the first entry, sort by groups."""
-        # log.debug('groups: {}'.format(self.groups(wsorted=True)))
         if self.runwindow.exitFlag.istrue():
             return #1,1
-        ui.Label(self.titles, text=progress, font='report', anchor='w'
-                                        ).grid(column=1, row=0, sticky='ew')
-        if self.cvt == 'T' and self.check not in program['toneframes'][self.ps]:
-            text=_("Looking for tone check ‘{}’, but not in {} frames: {}"
-                        "").format(self.check,self.ps,program['toneframes'][self.ps])
-            log.error(text)
+        ui.Label(self.groupsFrame, text=progress, font='report', anchor='e',
+                    column=1, row=0, sticky='e')
+        if macrosort:
+            self.sortitem=self.present_group(item)
         else:
-            frames=program['toneframes'].get(self.ps)
-            if frames:
-                frame=frames.get(self.check)
-            else:
-                frame=None # e.g., for segmental checks
-            text=sense.formatted(self.analang,self.glosslangs,
-                                program['params'].ftype(),frame)
-        entryview=ui.Frame(self.runwindow.frame, column=1, row=1, sticky='new')
-        self.sortitem=self.buttonframe.sortitem=ui.Label(entryview,
-                                text=text,font='readbig',
-                                column=0,row=0, sticky='w',
-                                pady=scaledpady
-                                )
-        self.sortitem['image']=getimageifthere(sense)
-        self.sortitem['compound']='left'
-        self.sortitem.wrap()
+            self.sortitem=self.present_sense(item)
         self.runwindow.waitdone()
-        for b in self.buttonframe.groupbuttonlist:
-            b.setcanary(self.sortitem)
-        self.runwindow.deiconify() # not until here
+        log.info(f"Going to wait for {self.sortitem}")
+        if not self.sortitem:
+            log.info(f"{self.sortitem=} empty; returning")
+            return
+        try:
+            self.buttonframe.set_canary(self.sortitem)
+            self.runwindow.deiconify() # not until here
+        except Exception as e:
+            log.error(f"topresent Exception: {e}")
+        self.runwindow.update_idletasks()
         self.runwindow.wait_window(window=self.sortitem)
         if not self.runwindow.exitFlag.istrue():
             return sense
