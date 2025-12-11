@@ -157,6 +157,7 @@ class Theme(object):
         log.info(text)
         return text
     def setimages(self):
+        """with PIL.ImageTk, this should probably be largely culled."""
         # Program icon(s) (First should be transparent!)
         scale=self.program['scale'] #just reading this here
         self.scalings=[]
@@ -200,16 +201,16 @@ class Theme(object):
                             self.photo[name] = Image(imgurl)
                             # keep these at full size, for now
                             if 'openclipart.org' not in filename:
-                                pixels=self.photo[name].maxhw() #max here only
+                                # pixels=self.photo[name].maxhw() #max here only
                                 """If this seems to fail inexplicably, check that
                                 the image isn't too large (>800x800 pixels)?"""
-                                self.photo[name].scale(scale, pixels=pixels,
+                                self.photo[name].scale(scale, pixels=0,
                                                         resolution=y)
-                                self.photo[name]=self.photo[name].scaled
+                                # self.photo[name]=self.photo[name]
                             if scaledalready.parent != scaledalreadydir:
                                 file.makedir(scaledalready.parent,silent=True)
                             # log.info(f"writing {name} to {scaledalready}")
-                            self.photo[name].write(scaledalready)
+                            self.photo[name].scaled_img.save(scaledalready)
                             self.scalings.append(y)
                             if file.exists(scaledalready):
                                 log.info("Scaled {} {} @{} resolution: {}"
@@ -828,17 +829,14 @@ class GridinGridded(Gridded):
         return kwargs
     def post_tk_init(self):
         super().post_tk_init()
-    def normalize_bkwarg(self,kwarg):
-        """This takes a grid kwarg for a child (preserved from use by a parent)
-        and makes it suitable to used for that child. This is done so grid
-        kwargs can be passed down, e.g., to elements of a ButtonFrame."""
-        if kwarg in Gridded.gridkwargs_for_child_buttons:
-            return kwarg[1:] #just pull the first letter, a 'b'
-        return kwarg
+    def remove_gridbkwargs(self,**kwargs):
+        return {k:v for k,v in kwargs.items()
+                    if k not in Gridded.gridkwargs_for_child_buttons}
     def promotegridbkwargs(self,**kwargs):
         """For grid kwargs that were passed down from a parent, now make them
         available to the child, typically a button"""
-        return {self.normalize_bkwarg(opt):kwargs[opt] for opt in kwargs}
+        return {opt[1:] if opt in Gridded.gridkwargs_for_child_buttons else opt
+                :kwargs[opt] for opt in kwargs}
     def __init__(self, *args, **kwargs):
         self.super_kwargs=kwargs #whenever we make a change
         super().__init__(*args, **self.promotegridbkwargs(**kwargs))
@@ -910,7 +908,7 @@ class Exitable():
         throwing an error. This doesn't do anything but set the flag value
         on exit, the logic to stop needs to be elsewhere, e.g.,
         `if self.exitFlag.istrue(): return`"""
-        log.info(f"Quitting window {self}")
+        # log.info(f"Quitting window {self}")
         self.exitFlag.true()
         if (to_root or self.mainwindow) and self.parent:
             self.parent.on_quit(to_root=True)
@@ -932,9 +930,15 @@ class Waitable(Exitable):
     def wait(self,msg=None,cancellable=False,thenshow=False):
         if self.iswaiting():
             # log.debug("There is already a wait window: {}".format(self.ww))
+            if msg:
+                self.ww.msg(msg) #update msg, even if not new wait window
+            if cancellable:
+                self.ww.make_cancellable()
             if thenshow:
                 self.showafterwait=True
             return
+        log.info(f"updating wait: {self.winfo_viewable()|thenshow=} "
+                f"{self.winfo_viewable()=} {thenshow=} ")
         self.showafterwait=self.winfo_viewable()|thenshow
         if self.showafterwait:
             self.withdraw()
@@ -948,6 +952,7 @@ class Waitable(Exitable):
         self.ww.deiconify()
         self.ww.paused=False
     def waitprogress(self,x):
+        # log.info(f"updating wait to {x}")
         try:
             self.ww.progress(x,r=4)
         except Exception as e:
@@ -958,15 +963,25 @@ class Waitable(Exitable):
     def waitdone(self):
         try:
             self.ww.close()
-            if self.showafterwait:
-                self.deiconify()
-        except (tkinter.TclError,AttributeError):
-            pass
+        except (tkinter.TclError,AttributeError) as e:
+            # pass
         # except AttributeError:
-        #     log.info("Seem to have tried stopping waiting, when I wasn't...")
+            log.info(f"{self} seems to have tried stopping waiting? {e}")
+        finally:
+            if not self.exitFlag.istrue():
+                if self.showafterwait:
+                    # log.info(f"Prepping show after wait {self.state()=}")
+                    # self.state('withdrawn')
+                    # log.info(f"Showing after wait {self.state()=}")
+                    r=self.update()
+                    rr=self.deiconify()
+                    # log.info(f"Showed after wait {self.state()=} {r=} {rr=}")
+                # else:
+                #     log.info(f"Not showing after wait {self.state()=}")
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-class Image(tkinter.PhotoImage):
+        self.showafterwait=True #in case never waited, do this anyway
+class Image(): #PIL.ImageTk.PhotoImage is for display
     def biggerby(self,x):
         #always do this one first, if doing both, to start from scratch
         try:
@@ -985,40 +1000,66 @@ class Image(tkinter.PhotoImage):
         #     log.info(f"Exception in smallerby: {e}")
     def maxhw(self,scaled=False):
         if scaled:
-            return max(self.scaled.width(),self.scaled.height())
+            return max(self.scaled_img.width,self.scaled_img.height)
         else:
-            return max(self.width(),self.height())
+            return max(self.base_img.width,self.base_img.height)
     def scale_height(self,scale,pixels=100,resolution=5):
         self.scale(scale,pixels=100,resolution=resolution,scaleto='height')
     def scale_width(self,scale,pixels=100,resolution=5):
         self.scale(scale,pixels=100,resolution=resolution,scaleto='width')
+    def compile(self):
+        self.scaled=PIL.ImageTk.PhotoImage(getattr(self,'scaled_img',
+                                                self.base_img)) #scaled or not
     def scale(self,scale,pixels=100,resolution=5,scaleto='both'):
         """'resolution*r' and 'resolution' here express a float scaling ratio
         as two integers, so r = 0.7 = 7/10, because the zoom and subsample fns
         only work on integers. To not waste computation, resolution starts
         small and increases to what is needed to keep both integers positive"""
-        def r_off_by(): #how far off does this integer division push this?
-            return abs(r-(int(resolution*r)/int(resolution)))/r
+        # def r_off_by(): #how far off does this integer division push this?
+        #     return abs(r-(int(resolution*r)/int(resolution)))/r
         # log.info("Scaling with these args: scale {}, pixels {}, resolution {}"
         #         "".format(scale,pixels,resolution))
-        s=pixels*scale #the number of pixels, scaled
-        if scaleto == 'both':
-            standard=self.maxhw()
-        elif scaleto == 'height':
-            standard=self.height()
-        elif scaleto == 'width':
-            standard=self.width()
-        r=s/standard #the ratio we need to reduce actual pixels by
-        if not r:
-            r=1 #don't scale for pixels=r=0
+        if pixels:
+            s=pixels*scale #the number of pixels, scaled
+            if scaleto == 'both':
+                standard=self.maxhw()
+            elif scaleto == 'height':
+                standard=self.base_img.height
+            elif scaleto == 'width':
+                standard=self.base_img.width
+            r=s/standard #the ratio we need to reduce actual pixels by
+        else:
+            r=scale #keep aspect, just scale for screen
+        # if not r:
+        #     r=1 #don't scale for pixels=r=0
         # int(resolution*r) must be >=1 (True) for biggerby
         # r_off_by is precision
         # If the resolution gets too high, we run out of memory...
-        while (not int(resolution*r) or r_off_by() > .02) and resolution < 100:
-            resolution=resolution*2
-        self.biggerby(int(resolution*r))
-        self.smallerby(int(resolution))
+        # while (not int(resolution*r) or r_off_by() > .02) and resolution < 100:
+        #     resolution=resolution*2
+        aspect=(int(self.base_img.width*r), int(self.base_img.height*r))
+        self.scaled_img=self.base_img.resize(aspect)
+        # log.info(f"{self.base_img.height=}")
+        # log.info(f"{self.base_img.width=}")
+        # log.info(f"{self.scaled_img.height=}")
+        # log.info(f"{self.scaled_img.width=}")
+        self.compile()
+        # self.biggerby(int(resolution*r))
+        # self.smallerby(int(resolution))
+        # self.crop_to_exact_scale(scaleto,s)
         return self.scaled # for where needed
+    def crop_to_exact_scale(self,scaleto,scaled_pixels):
+        """center crop, should be minor, just for display"""
+        left=upper=0 #make sure everything is defined
+        right=w = self.scaled.width()
+        lower=h = self.scaled.height()
+        if scaleto in ['height','both']:
+            upper=(h-scaled_pixels)//2
+            lower=upper+scaled_pixels #avoid rounding errors
+        if scaleto in ['width','both']:
+            left=(w-scaled_pixels)//2
+            right=left+scaled_pixels
+        self.scaled.crop([ left, upper, right, lower])
     def transparent(self):
         log.info("Running transparent")
         return
@@ -1043,17 +1084,26 @@ class Image(tkinter.PhotoImage):
         self.transparency.putdata(newData)
         return self.transparency
     def __init__(self,filename):
+        """This class uses three different images:
+        self.base_img: the original image as loaded from file (PIL.Image.Image)
+        self.scaled_img: the image as modified for use (PIL.Image.Image)
+        self.scaled: the version to display in tkinter (PIL.ImageTk.PhotoImage)
+        we keep these because the same image may be scaled differently for
+        different uses.
+        """
         self.filename=filename
-        try:
-            super().__init__(file=filename)
-        except tkinter.TclError as e:
-            if "couldn't recognize data in image file" in e.args[0]:
-                raise #this is processed elsewhere
-            elif 'value for "-file" missing' in e.args[0]:
-                raise #this is processed elsewhere
-            else:
-                log.info("Image error: {}".format(e))
-        self.biggerby(1)
+        with PIL.Image.open(filename) as self.base_img:
+            self.base_img.load()
+        # try:
+        #     PIL.ImageTk.PhotoImage.__init__(self.base_img)
+        # except tkinter.TclError as e:
+        #     if "couldn't recognize data in image file" in e.args[0]:
+        #         raise #this is processed elsewhere
+        #     elif 'value for "-file" missing' in e.args[0]:
+        #         raise #this is processed elsewhere
+        #     else:
+        #         log.info("Image error: {}".format(e))
+        self.compile()
 """below here has UI"""
 class Root(Waitable,UI,tkinter.Tk):
     """this is the root of the tkinter GUI."""
@@ -1064,7 +1114,8 @@ class Root(Waitable,UI,tkinter.Tk):
             assert not self.noimagescaling #otherwise, make copy theme
             assert isinstance(self.program['theme'],Theme) #use what's there
             self.theme=self.program['theme']
-        except (KeyError,AssertionError):
+        except (KeyError,AssertionError) as e:
+            log.info(f"Theme error: {e}")
             self.theme=Theme(self.program,
                             **{**kwargs,'noimagescaling':self.noimagescaling})
         super().post_tk_init()
@@ -1099,7 +1150,7 @@ class Toplevel(Childof,Waitable,UI,tkinter.Toplevel): #
         self.post_tk_init()
 class Menu(Childof,tkinter.Menu): #not Text
     def post_tk_init(self):
-        log.info("Running Menu post_tk_init")
+        # log.info("Running Menu post_tk_init")
         self['background']=self.theme.menubackground
         super().post_tk_init()
     def pad(self,label):
@@ -1125,9 +1176,11 @@ class Progressbar(Childof,Gridded,UI,tkinter.ttk.Progressbar):
     def post_tk_init(self):
         super().post_tk_init()
     def current(self,value):
+        if type(value) is not int and 0 <= value <= 1:
+            value=int(value*100)
         if 0 <= value <= 100:
             self['value']=value
-        self.update_idletasks() #updates just geometry
+        # self.update_idletasks() #updates just geometry
     def __init__(self, parent, *args, **kwargs):
         if 'orient' not in kwargs:
             kwargs['orient']='horizontal' #or 'vertical'
@@ -1169,17 +1222,22 @@ class TextBase():
         kwargs=TextBase.my_tk_kwargs(self,**kwargs) #then limit
         kwargs=super().pre_tk_init(**kwargs)
         return kwargs
+    def post_tk_init(self,**kwargs):
+        super().post_tk_init(**kwargs)
     def __init__(self,*args,**kwargs):
         kwargs=TextBase.restore_kwargs(self,**kwargs)
         t=self.textvariable=self.text='' #clear now, not all labels/buttons use
         self.text=kwargs.pop('text','')
-        tv=kwargs.pop('textvariable',None)
+        tv=kwargs.get('textvariable',None)
         for i in [self.text, tv]:
             if i and isinstance(i, tkinter.Variable):
                 self.textvariable=i
                 self.text=''
+                # log.info(f"{self.textvariable.__class__} {self.textvariable.get()=}")
                 break
         self.text=nfc(self.text) #ok empty
+        # log.info(f"TextBase found {self.textvariable} ({self.textvariable.__class__}) "
+        #             f"{self.text} ({self.text.__class__})")
         self.anchor=kwargs.pop('anchor',"w")
         if 'font' in kwargs:
             if isinstance(kwargs['font'],tkinter.font.Font):
@@ -1200,7 +1258,8 @@ class Text(TextBase):
     # tk_textkwargs=TextBase.tk_textkwargs|{'image','compound','wraplength'}
     # textkwargs=TextBase.textkwargs|tk_textkwargs|{'norender'}
     tk_textkwargs={'image','compound','wraplength'}
-    textkwargs=TextBase.textkwargs|tk_textkwargs|{'norender'}
+    textkwargs=TextBase.textkwargs|tk_textkwargs|{'norender','image_pixels',
+                                                'image_scaleto'}
     d=set(["̀","́","̂","̌","̄","̃", "᷉","̋","̄","̏","̌","̂","᷄","᷅","̌","᷆","᷇","᷉"])
     sticks=set(['˥','˦','˧','˨','˩',' '])
     def reserve_kwargs(self,**kwargs):
@@ -1212,6 +1271,7 @@ class Text(TextBase):
         and its subclasses.
         """
         kwargs=TextBase.reserve_kwargs(self,**kwargs)
+        # log.info(f"reserve_kwargs: {kwargs}")
         for k in set(kwargs)&Text.tk_textkwargs: #any kwarg used on text
             if hasattr(self,k) and getattr(self,k) != kwargs[k]:
                 log.info(f"Text attr found! {k}:{getattr(self,k)}")
@@ -1221,12 +1281,14 @@ class Text(TextBase):
     def restore_kwargs(self,**kwargs):
         """This restores kwargs needed for the tkinter classes"""
         kwargs=TextBase.restore_kwargs(self,**kwargs)
+        # log.info(f"restore_kwargs: {kwargs}")
         for k in Text.textkwargs: #all, not just those OK for Tk
             if hasattr(self,k):
                 kwargs[k]=getattr(self,k)
         return kwargs
     def my_tk_kwargs(self,**kwargs):
         kwargs=TextBase.my_tk_kwargs(self,**kwargs)
+        # log.info(f"my_tk_kwargs: {kwargs}")
         return {k:v for k,v in kwargs.items()
                 if k not in Text.textkwargs or k in Text.tk_textkwargs
                 }
@@ -1242,7 +1304,7 @@ class Text(TextBase):
         kwargs=super().pre_tk_init(**kwargs)
         return kwargs
     def post_tk_init(self,**kwargs):
-        super().post_tk_init()
+        super().post_tk_init(**kwargs)
         i=self.grid_info()
         if i and self.text:
             self.wrap()
@@ -1294,10 +1356,28 @@ class Text(TextBase):
         if isinstance(self.wraplength, str) and '%' in self.wraplength:
             percent=float(self.wraplength.strip('%'))/100
             self.wraplength=self.parent.winfo_screenwidth()*percent
-        self.norender=kwargs.pop('norender',False)
+        for reste in ['norender', 'image_pixels', 'image_scaleto']:
+            setattr(self,reste,kwargs.pop(reste,False))
         self.image=kwargs.pop('image',None) #pull image by name:
         if isinstance(self.image,str) and self.image in self.theme.photo:
             self.image=self.theme.photo[self.image]
+        if self.image_pixels:
+            img_kwargs={'pixels':self.image_pixels}
+            if (self.image_scaleto and
+                self.image_scaleto in ['both','height','width']):
+                img_kwargs['scaleto']=self.image_scaleto
+            self.image=self.image.scale(
+                        self.theme.program['scale'], #obligatory, non-kwarg
+                        **img_kwargs
+                        ) #tk ready
+        elif isinstance(self.image,Image):
+            self.image=self.image.scaled #tk ready
+        elif isinstance(self.image,PIL.ImageTk.PhotoImage):
+            name=[k for k,v in self.theme.photo.items()
+                    if self.image in [v,v.scaled]]
+            log.error(f"Found precompiled {self.image=} ({name}); OK?!")
+        elif self.image:
+            log.error(f"Found {self.image=} of type {type(self.image)}!")
         self.compound=kwargs.pop('compound','left')
         self.super_kwargs=kwargs
         super().__init__(*args,**kwargs)
@@ -1309,9 +1389,9 @@ class Frame(Childof,Gridded,UI,tkinter.Frame):
         return self.parent.iswaiting()
     def deiconify(self):
         return self.parent.deiconify()
-    def columns(self):
+    def ncolumns(self):
         return self.grid_size()[0]
-    def rows(self):
+    def nrows(self):
         return self.grid_size()[1]
     def windowsize(self):
         if not hasattr(self,'configured'):
@@ -1432,9 +1512,12 @@ class Button(Childof,GridinGridded,Text,UI,tkinter.Button):
 class EntryField(Childof,Gridded,TextBase,UI,tkinter.Entry):
     def post_tk_init(self):
         if self.render is True:
+            # log.info("Preparing to render EntryField")
             self.bind('<KeyRelease>', self.renderlabel)
             self.rendered=Label(self.parent,text='') #make a place only
         super().post_tk_init()
+        if hasattr(self,'textvariable'): #For some reason, this isn't already assigned...
+            self['textvariable']=self.textvariable
     def renderlabel(self,grid=False,event=None):
         if (Text.d|Text.sticks) & set(self.get()):
             self.rendered.render(textvariable=self.textvariable)
@@ -1443,6 +1526,8 @@ class EntryField(Childof,Gridded,TextBase,UI,tkinter.Entry):
         else:
             self.rendered.grid_remove()
     def __init__(self, parent, *args, **kwargs):
+        kwargs=TextBase.reserve_kwargs(self,**kwargs)
+        # kwargs=self.reserve_kwargs(**kwargs)
         self.render=kwargs.pop('render',False)
         # Always use a variable for this class, even if not passed one:
         kwargs['textvariable']=kwargs.get('textvariable',StringVar())
@@ -1491,9 +1576,10 @@ class CheckButton(Childof,Gridded,Text,UI,tkinter.Checkbutton):
         if not kwargs.pop('large_images',False):
             img_names=[f'{i}_sm' for i in img_names]
         kwargs['selectimage']=kwargs.get('selectimage',
-                                        parent.theme.photo[img_names[1]])
+                                        parent.theme.photo[img_names[1]].scaled)
         if kwargs.get('selectimage'):
-            kwargs['image']=kwargs.get('image',parent.theme.photo[img_names[0]])
+            kwargs['image']=kwargs.get('image',
+                        parent.theme.photo[img_names[0]].scaled)
             kwargs['norender']=True #This creates self.image
         super().__init__(parent, *args, **kwargs)
         kwargs=self.super_kwargs
@@ -1639,7 +1725,7 @@ class Window(Toplevel):
             self.grid_rowconfigure(rc, weight=3)
             self.grid_columnconfigure(rc, weight=3)
         try:
-            self.iconphoto(False, self.parent.theme.photo['icon']) #!transparent
+            self.iconphoto(False, self.parent.theme.photo['icon'].scaled) #!transparent
         except Exception as e:
             log.info(f"{e} self.theme.photo: {self.theme.photo}")
         super().post_tk_init()
@@ -1647,6 +1733,7 @@ class Window(Toplevel):
         # between 0 and 100
         try:
             self.progressbar.current(value)
+            # log.info(f"Window progress updated to {value}")
         except AttributeError:
             print("making new progressbar")
             if not parent:
@@ -1656,6 +1743,8 @@ class Window(Toplevel):
                                     mode='determinate', #or 'indeterminate'
                                     **kwargs)
             self.progress(value)
+        except Exception as e:
+            log.info(f"Exception updating progress: {e}")
     def resetframe(self):
         if self.parent.exitFlag.istrue():
             return
@@ -1674,7 +1763,7 @@ class Window(Toplevel):
         self.post_tk_init()
         self.title(title)
         self.outsideframe=Frame(self, # border=True,
-                                row=1, column=1, sticky='we',
+                                row=1, column=1, sticky='nsew',
                                 )
         self.resetframe()
         # self.exitFlag=ExitFlag() #This overwrites inherited exitFlag
@@ -1826,6 +1915,7 @@ class ButtonFrame(Frame):
             kwargs['image']=choice['image']
         if 'description' in choice:
             kwargs['text']+=f' ({str(choice['description'])})'
+        # log.info(f"returning one button {kwargs=}")
         return kwargs
     def __init__(self,parent,**kwargs):
         """optionlist can be specified as a simple iterable, or as a list of
@@ -1858,6 +1948,7 @@ class ButtonFrame(Frame):
             return
         self.buttons=dict()
         kwargs=Button.restore_kwargs(self,**kwargs)
+        # log.info(f"returning buttonFrame with {kwargs=}")
         for choice in self.optionlist:
             choice_kwargs=self.regularize_choice(choice)
             if not choice:
@@ -1899,7 +1990,7 @@ class ScrollingFrame(Frame):
         size = (self.content.winfo_reqwidth(), self.content.winfo_reqheight())
         self.canvas.config(scrollregion="0 0 %s %s" % size)
         """This makes sure the canvas is as large as what you put on it"""
-        self.windowsize() #this needs to not keep running
+        # self.windowsize() #this needs to not keep running
         self.update_idletasks()
         #     self.configured+=1
         # if self.winfo_width() < self.canvas.winfo_width():
@@ -2235,6 +2326,14 @@ class Wait(Window): #tkinter.Toplevel?
     def cancel(self):
         self.parent.waitcancel()
         log.info("Sent Wait Cancel")
+    def make_cancellable(self):
+        self.cancelbutton=Button(self.outsideframe,text='Cancel',
+                                cmd=self.cancel,
+                                row=3,column=0,sticky='e')
+    def msg(self,msg):
+        log.info(f"Waiting: {msg}")
+        self.l1['text']=msg
+        self.l1.wrap()
     def __init__(self, parent, msg=None, cancellable=False, *args, **kwargs):
         kwargs['exit']=False
         super().__init__(parent, *args, **kwargs)
@@ -2249,23 +2348,28 @@ class Wait(Window): #tkinter.Toplevel?
         self.l=Label(self.outsideframe, text=text,
                 font='title',anchor='c',
                 row=0,column=0,sticky='we')
-        if msg is not None:
-            self.l1=Label(self.outsideframe, text=msg,
-                font='default',anchor='c',row=1,column=0,sticky='we')
-            self.l1.wrap()
+        self.l1=Label(self.outsideframe, text='',
+                        font='default',anchor='c',row=1,column=0,sticky='we')
+        # if msg is not None:
+        if msg is None:
+            msg="No Particular Reason"
+        self.msg(msg)
         if not isinstance(self.parent,Root) or not self.parent.noimagescaling:
             self.l2=Label(self.outsideframe,
-                        image=self.theme.photo['small'],
+                        image='small',
                         text='',
                         row=2,column=0,sticky='we',padx=50,pady=50)
         if cancellable:
-            self.cancelbutton=Button(self.outsideframe,text='Cancel',
-                                    cmd=self.cancel,
-                                    row=3,column=0,sticky='e')
-        # log.info("Wait window appears")
-        self.deiconify() #show after the window is built
-        #for some reason this has to follow the above, or you get a blank window
-        self.update_idletasks() #updates just geometry
+            self.make_cancellable()
+        log.info("Wait window appears")
+        try:
+            self.deiconify() #show after the window is built
+            log.info("Wait window deiconified")
+            #for some reason this has to follow the above, or you get a blank window
+            # self.update_idletasks() #updates just geometry
+            log.info("Wait window creation done")
+        except Exception as e:
+            log.info(f"Wait window Exception: {e}")
 """unclassed functions"""
 def now():
     return datetime.datetime.now(datetime.UTC).isoformat()#[:-7]+'Z'
@@ -2391,7 +2495,7 @@ def nfc(x):
 def nfd(x):
     #This makes decomposed characters. e.g., vowel + accent (not used yet)
     return unicodedata.normalize('NFD', str(x))
-def testapp3(program):
+def testapp2(program):
     r=Root(program=program)
     # frame=Frame(r,r=0,c=0)
     w=Window(r) #,withdrawn=True
@@ -2412,7 +2516,7 @@ def testapp3(program):
         draggable=False
         droppable=True
     w.mainloop()
-def testapp2(program):
+def testapp3(program):
     r=Root(program=program)
     # frame=Frame(r,r=0,c=0)
     w=Window(r) #,withdrawn=True
@@ -2476,6 +2580,41 @@ def testapp4(program):
                 row=2)#len(sbf1.content.winfo_children()))
     r.mainloop()
 def testapp(program):
+    def print_vars(*args):
+        log.info(f"{var.__class__} {var.get()=}")
+        for i in (l,entry):
+            # log.info(f"{i.get()=}")
+            try:
+                log.info(f"{i.__class__} {i.get()=}")
+            except Exception as e:
+                log.info(f"exception ({i.__class__}): {e}")
+            for v in ['text','textvariable']:
+                log.info(f"{i.__class__} {v} {i[v]=}")
+                try:
+                    log.info(f"{i.__class__} {v} {i[v].get()=}")
+                except Exception as e:
+                    log.info(f"exception ({i.__class__},{v}): {e}")
+    r=Root(program=program)
+    log.info("root is {}".format(r))
+    # r.withdraw()
+    print(r.theme,r.theme.name)
+    w=Window(r) #,withdrawn=True
+    w.mainwindow=True
+    log.info(f"window is {w=}, children {w.winfo_children()=} {w._root()=}")
+    log.info(f"root is {r=}, children {r.winfo_children()=} {r._root()=}")
+    # sf=ScrollingFrame(w.outsideframe,row=0,column=0)
+    test_frame=Frame(w.frame,row=1,column=1)
+    var=StringVar(value='default')
+    var.trace_add('write',print_vars)
+    l=Label(test_frame,textvariable=var,
+                            row=1)#len(sbf1.content.winfo_children()))
+    entry=EntryField(test_frame,
+                textvariable=var,
+                render=True,
+                row=2)#len(sbf1.content.winfo_children()))
+    print_vars()
+    r.mainloop()
+def testappX(program):
     def progress(event):
         # print('running progress')
         import time
@@ -2586,6 +2725,7 @@ def testapp(program):
                 anchor='c',
                 variable = BooleanVar(),
                 onvalue = True, offvalue = False,
+                norender=True,
                 # selectimage=None,
                 font='default',
                 row=1,column=1)
