@@ -9025,15 +9025,31 @@ class Tone(Senses):
         return item.tonevaluebyframe(check)
     def getUFgroupofsense(self,sense):
         return sense.uftonevalue()
-    def name_new_groups(self):
-        pass
-    def assign_groups_to_macrogroups():
+    def name_new_glyphs(self):
         pass
     def __init__(self):
         pass
 class Sort(object):
     """This class takes methods common to all sort checks, and gives sort
     checks a common identity."""
+    def get_check(self):
+        return program['params'].check()
+    def get_ps(self):
+        return program['slices'].ps()
+    def get_profile(self):
+        return program['slices'].profile()
+    def get_ftype(self):
+        return program['params'].ftype()
+    def get_frame(self):
+        if self.cvt != 'T': # not for segmental checks
+            return 
+        frames=program['toneframes'].get(self.ps)
+        if frames and self.check in frames:
+            return frames.get(self.check)
+        else:
+            text=_(f"Looking for tone check ‘{self.check}’, but not "
+                    f"in {self.ps} frames: {frames}")
+            ErrorNotice(text,wait=True)
     def getsensesincheckgroup(self,**kwargs):
         check=kwargs.get('check',program['params'].check())
         group=kwargs.get('group',program['status'].group())
@@ -9062,25 +9078,22 @@ class Sort(object):
         # log.info(f"Found verificationtextvalue values {values}")
         if add and not values:
             # log.info("No values found; just adding {}".format(add))
-            sense.verificationtextvalue(profile,self.ftype,value=[add])
-            return
-        for code in [i for i in values if check in i]:
-            #look for a code for the current check, replace or remove.
+            v=sense.verificationtextvalue(profile,self.ftype,value=[add])
+            return #if more complex, continue
+        for code in [i for i in values if check in '='.join(i.split('=')[:-1])]:
+            #look for a code for the *whole* current check, replace or remove.
             if add:
-                log.info("Switching {} for {}".format(add,code))
-                values[values.index(code)]=add
-                added=add
+                if add != code:
+                    log.info(f"Switching {add} for {code} in {profile} {sense.id}")
+                    values[values.index(code)]=add
+                    added=add
                 add=None #only once, not also below
             else:
                 values.remove(code) #covered in the above
         if add: #i.e., still, after switching out current values for changes
             values.append(add)
             added=add
-        sense.verificationtextvalue(profile,self.ftype,value=values)
-        log.info(f"Done modifying verification node {profile}-{self.ftype} "
-            f"(added {add}, have {sense.verificationtextvalue(profile,self.ftype)})")
-        # if key in sense.fields: #i.e., if not removed
-        #     lift.prettyprint(sense.fields[key])
+        v=sense.verificationtextvalue(profile,self.ftype,value=values)
     def updatestatuslift(self,verified=False,**kwargs):
         """This should be called only by update status, when there is an actual
         change in status to write to file."""
@@ -9102,7 +9115,7 @@ class Sort(object):
                                                                     add,rms))
         """The above doesn't test for profile, so we restrict that next"""
         for sense in program['slices'].inslice(senses): #only for this ps-profile
-            self.modverification(sense,profile,ftype,check,add)
+            self.modverification(sense,profile,check,add)
         if kwargs.get('write'):
             self.maybewrite() #for when not iterated over, or on last repeat
     def updatestatus(self,verified=False,**kwargs):
@@ -9227,16 +9240,15 @@ class Sort(object):
         scroll.grid(row=3,column=0,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
-    def removesensefromgroup(self,sense,**kwargs):
+    def removeitemfromgroup(self,item,**kwargs):
         check=kwargs.get('check',program['params'].check())
         group=kwargs.get('group',program['status'].group())
-        ftype=kwargs.get('ftype',program['params'].ftype())
         write=kwargs.pop('write',True) #avoid duplicate
         sorting=kwargs.get('sorting',True) #Default to verify button
-        log.info(_("Removing sense {} from subcheck {}".format(sense.id,group)))
+        log.info(_("Removing sense {} from subcheck {}".format(item.id,group)))
         #This should only *mod* if already there
-        self.setitemgroup(sense,ftype,check,'',**kwargs)
-        tgroups=self.getitemgroup(sense,check)
+        self.setitemgroup(item,check,'',**kwargs)
+        tgroups=self.getitemgroup(item,check)
         log.info("Checking that removal worked")
         if tgroups in [[],'',[''],None]:
             log.info("Field removal succeeded! LIFT says '{}', = []."
@@ -9251,12 +9263,12 @@ class Sort(object):
             return
         rm=self.verificationcode(check=check,group=group)
         profile=kwargs.get('profile',program['slices'].profile())
-        sense.rmverificationvalue(profile,ftype,rm)
+        item.rmverificationvalue(profile,self.ftype,rm)
         program['status'].last('sort',update=True)
         if write:
             self.maybewrite()
         if sorting:
-            program['status'].marksensetosort(sense)
+            program['status'].marksensetosort(item)
     def ncheck(self):
         r=program['status'].nextcheck(tosort=True)
         if r:
@@ -9296,13 +9308,14 @@ class Sort(object):
         # t=(_('Run Check'))
         log.info("Running check...")
         cvt=program['params'].cvt()
-        check=program['params'].check()
-        profile=program['slices'].profile()
-        if not profile:
+        self.check=program['params'].check()
+        self.profile=program['slices'].profile()
+        if not self.profile:
             self.getprofile()
+            self.profile=program['slices'].profile()
         """further specify check check in maybesort, where you can send the user
         on to the next setting"""
-        if (check not in program['status'].checks() #tosort=True
+        if (self.check not in program['status'].checks() #tosort=True
                 # and check not in program['status'].checks(toverify=True)
                 # and check not in program['status'].checks(tojoin=True)
                 ):
@@ -9319,11 +9332,12 @@ class Sort(object):
         """
         log.info(_("Confirming that current group and verification code match "
                     "before making changes."))
-        curgroup=self.getitemgroup(sense,check) #Segment or Tone
+        annogroup=self.getitemgroup(sense,check) #Segment or Tone
         vals=sense.verificationtextvalue(profile,self.ftype)
         curvalues=[i.split('=')[-1]  #last (value), if multiple
                     for i in sense.verificationtextvalue(profile,ftype)
                     if check in i]
+        # Length is relevant here because V1 must match V1=V2, if present
         nvals=len(set(curvalues))
         if nvals == 1:
             curvalue=curvalues[0]
@@ -9335,17 +9349,19 @@ class Sort(object):
             log.error("No values for verification node! ({})"
                         "".format(vals))
             curvalue=None
-        if curvalue == curgroup: #only update if starting w/ same value
+        if curvalue == annogroup: #only update if starting w/ same value
+            # log.info(f"Confirmed curent verification group ‘{curvalue}’ "
+            #         f"matches annotation group ‘{curvalue}’")
             return True
         elif not curvalue:
             log.error("Problem updating verification to {}; current "
                         "value not there (should be {})"
-                        "".format(group, curgroup))
+                        "".format(group, annogroup))
         else: #not sure what to do here; maybe  throw bigger error?
             log.error("Problem updating verification to {}; current "
                         "value ({}) is there, but not the same as "
                         "current sort group ({})."
-                        "".format(group, curvalue, curgroup))
+                        "".format(group, curvalue, annogroup))
     def marksortgroup(self,sense,group,**kwargs):
         # group=kwargs.get('group',program['status'].group())
         check=kwargs.get('check',program['params'].check())
@@ -9353,23 +9369,23 @@ class Sort(object):
         # ftype=kwargs.get('ftype',program['params'].ftype())
         nocheck=kwargs.get('nocheck',False)
         guid=None
-        log.info("marking sortgroup {}={} ({})".format(check,group,sense.id))
+        # log.info(f"marksortgroup ready to updateverification {kwargs.get('thread_name')}")
         if kwargs.get('updateverification'):
-            # log.info("updateverification {}={} ({})".format(check,group,sense.id))
-            # add ps,profile,check,ftype
             add=self.verificationcode(check=check,group=group)
-            # log.info("updateverification {add=}")
             # Checking and verifying that the current group and verification
             # values match may be excessive, as well as undesirable, without
             # any other way to fix discrepancies:
-            # noconfirmation=False #Should test w/wo this; time difference?
             noconfirmation=True #Should test w/wo this; time difference?
+            # confirmverificationgroup checks if current annotation matches
+            # current verification. So this needs to happen first:
             if noconfirmation or self.confirmverificationgroup(sense, profile,
                                                                 check):
-                self.modverification(sense,profile,ftype,check,add)
+                self.modverification(sense,profile,check,add)
         else: #unless specifically doing otherwise, marking should unverify:
-            self.rmverification(sense,profile,ftype,check)
-        self.setitemgroup(sense,ftype,check,group)
+            self.rmverification(sense,profile,check)
+        # log.info(f"marksortgroup ready to set {kwargs.get('thread_name')}")
+        self.setitemgroup(sense,check,group)
+        # log.info(f"marksortgroup ready to check set worked {kwargs.get('thread_name')}")
         if not nocheck:
             newgroup=self.getitemgroup(sense,check)
             if newgroup != group:
@@ -9378,20 +9394,38 @@ class Sort(object):
             # else:
             #     log.info("Field addition succeeded! LIFT says {}, which is {}."
             #                             "".format(newgroup,group))
+        # log.info(f"marksortgroup ready to updateforms {kwargs.get('thread_name')}")
         if kwargs.get('updateforms'):
-            if ftype != program['params'].ftype():
+            if self.ftype != program['params'].ftype():
                 ErrorNotice(f"{ftype=} differs from "
                             f"{program['params'].ftype()=}; this is a problem!",
                             wait=True)
             self.updateformtoannotations(sense,check)
+        # log.info(f"marksortgroup ready to marksorted {kwargs.get('thread_name')}")
+        if not kwargs.get('not_sorting'): #default is sorting
+            #This unverifies without updateverification=True:
+            self.marksorted(sense,group,kwargs.get('updateverification'))
+        # log.info(f"marksortgroup ready to write {kwargs.get('thread_name')}")
+        if kwargs.get('write'):
+            self.maybewrite() #Not iterated over.
+        # if kwargs.get('thread_name'):
+        #     log.info(f"Finishing marksortgroup for {kwargs.get('thread_name')}")
+        log.info(f"marksortgroup ready to untrack {kwargs.get('thread_name')}")
+        if kwargs.get('thread_name'):
+            self.untrack_thread(kwargs.get('thread_name'))
+        if not nocheck:
+            return newgroup
+    def marksorted(self,sense,group,verified=False):
+        """These functions are only appropriate when sorting or unsorting senses.
+        when moving stuff around between groups (in renaming groups), these don't 
+        apply.
+        """
         program['status'].marksensesorted(sense)
         program['status'].last('sort',update=True) #this will always be a change
         program['status'].tojoin(True)
-        self.updatestatus(group=group,writestatus=True) # write just this once
-        if kwargs.get('write'):
-            self.maybewrite() #Not iterated over.
-        if not nocheck:
-            return newgroup
+        self.updatestatus(group=group,
+                            verified=verified,
+                            writestatus=True) # write just this once
     def resetsortbutton(self):
         # This attribute/fn is used to track whether something has been done
         # since the user last asked for a sort. We don't want the user in an
@@ -9408,7 +9442,6 @@ class Sort(object):
                     'joinglyphs': False,
                 }
     def redo_join(self):
-        # program['status'].tojoin(True) #obsolete
         w=self.getgroup(purpose='join')
         self.wait_window(w)
         self.group=program['status'].group()
@@ -9419,7 +9452,6 @@ class Sort(object):
         self.wait_window(w)
         self.group=program['alphabet'].glyph()
         program['alphabet'].undistinguish_any_with(g=self.group) #should be correct at this point
-        # program['alphabet'].glyphstojoin(True) #obsolete
         self.maybesort(firstrun=True)
     def maybesort(self,firstrun=False):
         """This should look for one group to verify at a time, with sorting
@@ -9453,7 +9485,7 @@ class Sort(object):
             return return_value #pass along
         if firstrun:
             self.resetsortbutton()
-        log.info(f"Starting maybesort with {[k for k,v in self.did.items if v]}")
+        log.info(f"Starting maybesort with {[k for k,v in self.did.items() if v]}")
         if self.exitFlag.istrue(): #if the task has been shut down, stop
             return
         program['settings'].reloadstatusdata() # culled here
@@ -9501,7 +9533,7 @@ class Sort(object):
         fields, as the user tells us which groups should be represented by the
         same letter. After which all these fields will be updated.
         """
-        log.info(f"Maybe Macrosort (with {[k for k,v in self.did.items if v]})")
+        log.info(f"Maybe Macrosort (with {[k for k,v in self.did.items() if v]})")
         if items := program['alphabet'].renew_items_tomacrosort():
             if not any({v for k,v in self.did.items() if 'glyphs' in k}):
                 """only presort if arriving here before any other glyph
@@ -9612,7 +9644,9 @@ class Sort(object):
         align_w_ggbfs=ui.Label(self.buttonframe.sortitem,text='',
                                 width=5,sticky='')
         tosort_frame=SortGroupButtonFrame(self.buttonframe.sortitem,
-                                        self, label=True,
+                                        self, 
+                                        show_check=True,
+                                        label=True,
                                         sticky='', **kwargs
                                         )
         if tosort_frame.hasexample:
@@ -9814,60 +9848,179 @@ class Sort(object):
                 log.info("I asked for a framed tone group, but didn't get one.")
                 return
         done.remove(group)
-        self.updatesortingstatus() # Not just tone anymore
-        self.maybesort()
-    def verify(self,menu=False):
-        def updatestatus(v):
-            log.info("Updating status with {}, {}, {}".format(check,group,v))
-            self.updatestatus(verified=v,writestatus=True)
-            self.maybewrite()
-        log.info("Running verify!")
-        """Show entries each in a row, users mark those that are different, and we
-        remove that group designation from the entry (so the entry will show up on
-        the next sorting). After all entries have been verified as "the same",
-        click a button at the bottom of the screen for "verify", or "these are
-        all the same", or some such. register with addresults (or elsewhere?).
-        To show this window for a given tone group, we need to look through the
-        tone group for any entries that aren't marked for verified (or will we
-        just mark it one place, and that we're marking faithfully?)
-        If we mark toneframes[lang][ps][name][melody]=None (v 'verified'), that
-        could be enough, if we're storing that info somewhere --writing xml?
-        on clicking 'verify', we take the user back to sort (to resort anything
-        that got pulled from the group), then on to the next largest unverified
-        pile.
-        """
-        #This function should exit 1 on a window close, 0/None on all ok.
-        check=program['params'].check()
-        groups=self.groups(toverify=True) #needed for progress
-        group=program['status'].group()
-        # The title for this page changes by group, below.
-        self.getrunwindow(msg=_("preparing to verify {} group: {}").format(check,
-                                                                        group))
-        if group == 'NA':
-            oktext=_(f'These all DO NOT have the same {program['params'].cvcheckname()}')
-            instructions=_("These words seem to not fit the check ‘{}’. Read "
-                            "down this list to verify this. If any DOES belong "
-                            "in this test, click on it to remove it from this "
-                            "list, and you can sort it on the next page."
-                            ).format(program['params'].cvcheckname())
+        program['status'].verified(done)
+        self.runcheck()
+    def verifyselected(self, macrosort=False):
+        selected=self.buttonframe.get_selected()
+        log.info(f"verifyselected removing {selected}")
+        if macrosort:
+            for item in selected:
+                program['alphabet'].remove_item_from_glyph(item, self.group)
         else:
-            oktext=_(f'These all have the same {program['params'].cvcheckname()}')
-            instructions=_("Read down this list to verify they all have the same "
-            "{0} sound. Click on any word with a different {0} sound to "
-            "remove it from the list.").format(program['params'].cvcheckname())
-        """group is set here, but probably OK"""
-        program['status'].build()
-        last=False
+            raise "This doesn't belong here yet!"# wrong: this should unsort!
+            self.marksortgroup(item, category, nocheck=True) # that marking
+        self.maybewrite()
+    def verifyglyphs(self):
+        """verify group of items sorted into a glyph."""
+        def updatestatus(verified=False):
+            log.info(f"Updating ‘{glyph}’ status as {verified=}")
+            if verified:
+                program['alphabet'].mark_glyph_done(glyph,cvt=self.cvt)
+            else:
+                program['alphabet'].mark_glyph_not_done(glyph)
+            log.info(f"{program['alphabet'].glyphstoverify()=}")
+            program['alphabet'].save_settings()
+            self.maybewrite()
+        log.info("Running verifyglyphs!")
+        glyphs=list(program['alphabet'].glyphstoverify()) #needed for progress
+        self.glyph=glyph=program['alphabet'].glyph()
+        self.currentsortitems=items=program['alphabet'].glyph_members()[glyph]
+        if (n:=len(items)) == 1:
+            log.info(_(f"The letter ‘{glyph}’ only has {n} example; verified."))
+            updatestatus(True) #on coming *in* with one
+            return
+        self.getrunwindow(msg=_(f"preparing to verify the letter ‘{glyph}’"))
+        title=_(f"Verify {program['settings'].languagenames[self.analang]}")
+        if glyph.isdigit():
+            title+=f" letter group"
+        else:
+            title+=f" letter ‘{glyph}’"
+        titles=ui.Frame(self.runwindow.frame,
+                        column=1, row=0, columnspan=1, sticky='w')
+        ui.Label(titles, text=title, font='title', column=0, row=0, sticky='w')
+        if glyph in glyphs:
+            if len(glyphs)-1:
+                prog=(f"(of {len(glyphs)} remaining)")
+            else:
+                prog=(f"(last letter)")
+            ui.Label(titles,text=prog,anchor='w',padx=10,column=1,sticky='ew')
+        ui.Label(self.runwindow.frame,
+                image=self.cvt, #self.frame.theme.photo[self.macropageicon()],
+                text='',row=0,column=0,sticky='new',anchor='center')
+        oktext=_("These all should use the same letter")
+        if not glyph.isdigit():
+            oktext+=f" (currently ‘{glyph}’)"
+        checks={program['alphabet'].parse_verificationcode(i)['check']
+            for i in items}
+        instructions=_("Read this list aloud. Note where each "
+            f"was sorted ({', '.join(sorted(checks))})."
+            "\nClick on any with a different "
+            f"{program['params'].cvtname()} sound in that place.")
+        i=ui.Label(titles, text=instructions,
+                row=1, column=0, columnspan=2, sticky='wns')
+        ui.Label(self.runwindow.frame,
+                image=self.frame.theme.photo['verifyglyphs'],
+                text='', row=1,column=0,
+                # rowspan=3,
+                sticky='nws')
+        self.buttonframe=SortButtonFrame(self.runwindow.frame, self,
+                                        list(items),
+                                        macrosort=True,
+                                        remove_on_click=True, column=1,
+                                        row=1, sticky='new', columnspan=2)
+        self.verifycanary=ui.Frame(self.buttonframe.content,
+                                row=self.buttonframe.content.nrows(),
+                                sticky='ew') #Keep on own row
+        b=ui.Button(self.verifycanary, text=oktext,
+                        cmd=self.verifycanary.destroy,
+                        anchor='w',
+                        font='instructions',
+                        column=0, row=0, sticky='ew')
         if self.runwindow.exitFlag.istrue():
             return 1
-        if group in program['status'].verified():
-            log.info("‘{}’ already verified, continuing.".format(group))
-            return
-        if program['params'].cvt() == 'T' and 'examples' not in program:
-            log.error(_("Not verifying tone examples which don't exist."))
+        self.runwindow.waitdone()
+        self.runwindow.deiconify() # not until here
+        self.runwindow.wait_window(self.verifycanary)
+        if self.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
             return 1
-        self.currentsortitems=senses=program['examples'].sensesinslicegroup(group,check)
-        if not senses: #then remove the group
+        log.debug("User selected ‘{}’, moving on.".format(oktext))
+        self.verifyselected(macrosort=True)
+        if len(self.buttonframe.groupbuttonlist) > 1:
+            updatestatus(True)
+        else:
+            updatestatus(False) #on *finishing* with one/none
+        if not self.runwindow.exitFlag.istrue():
+            self.runwindow.resetframe()
+    def verify(self,menu=False,macrosort=False):
+        def updatestatus(verified=False):
+            if macrosort:
+                log.info(f"Updating ‘{group}’ status as {verified=}")
+                if verified:
+                    program['alphabet'].mark_glyph_done(group,cvt=self.cvt)
+                else:
+                    program['alphabet'].mark_glyph_not_done(group)
+                log.info(f"{program['alphabet'].glyphstoverify()=}")
+                program['alphabet'].save_settings()
+            else:
+                log.info("Updating status with {}, {}, {}".format(check,group,verified))
+                program['status'].last('verify',update=True)
+                self.updatestatus(verified=verified,writestatus=True)
+            self.maybewrite()
+        log.info(f"Running verify! {macrosort=}")
+        """verify group of items sorted into a glyph."""
+        """Show items each in a row, users mark those that are different,
+        and we remove that group designation from the item (so it
+        will show up on the next sorting).
+        macrosort: verifying each sort group belongs in glyph
+        sort groups: verifying each sense belongs in sort group 
+        After all entries have been verified as "the same",
+        click a button at the bottom of the screen for "verify", or "these are
+        all the same", or some such. register with addresults (or elsewhere?).
+        """
+        #This function should exit 0 on a window close, 1 on all ok.
+        title=_(f"Verify {program['settings'].languagenames[self.analang]}")
+        if macrosort:
+            item_name=_("Letter")
+            img_mod='glyphs'
+            groups=list(program['alphabet'].glyphstoverify()) #needed for progress
+            self.group=group=program['alphabet'].glyph()
+            self.currentsortitems=items=program['alphabet'].glyph_members()[group]
+            if group.isdigit():
+                title+=f" letter group"
+            else:
+                title+=f" letter ‘{group}’"
+            checks={program['alphabet'].parse_verificationcode(i)['check']
+                    for i in items}
+            oktext=_("These all should use the same letter")
+            if not group.isdigit():
+                oktext+=f" (currently ‘{group}’)"
+            instructions=_("Read this list aloud. Note where each "
+                f"was sorted ({', '.join(sorted(checks))})."
+                "\nClick on any with a different "
+                f"{program['params'].cvtname()} sound in that place.")
+        else:
+            check=program['params'].check()
+            checks=[]
+            img_mod=''
+            item_name=_(f"{check} Group")
+            checkname=program['params'].cvcheckname()
+            groups=self.groups(toverify=True) #needed for progress
+            self.group=group=program['status'].group()
+            self.currentsortitems=items=program['examples'].sensesinslicegroup(group,check)
+            title+=f" for ‘{check}’ ({program['params'].cvcheckname()})"
+            if group == 'NA':
+                oktext=_(f'These all DO NOT have {checkname}')
+                instructions=_(f"These words seem to NOT have ‘{checkname}’. Read "
+                                "this list aloud, and click on any that DOES have "
+                                f"‘{checkname}’.")
+            else:
+                oktext=_(f'These all have the same {checkname}')
+                instructions=_("Read this list aloud. Click on any with a "
+                            f"different {checkname} sound.")
+            if group in program['status'].verified():
+                log.info("‘{}’ already verified, continuing.".format(group))
+                return 1
+            if program['params'].cvt() == 'T' and 'examples' not in program:
+                log.error(_("Not verifying tone examples which don't exist."))
+                return 
+        # The title for this page changes by group, below.
+        if (n:=len(items)) == 1:
+            log.info(_(f"The {item_name} ‘{group}’ only has {n} example; verified."))
+            updatestatus(True) #on coming *in* with one
+            return 1
+        program['status'].build()
+        last=False
+        if not items: #then remove the group
             groups=self.groups(wsorted=True) #from which to remove, put back
             # log.info("Groups: {}".format(self.groups(toverify=True)))
             verified=False
@@ -9883,17 +10036,12 @@ class Sort(object):
             log.info("Groups to verify: {}"
                         "".format(self.groups(toverify=True)))
             return
-        elif len(senses) == 1:
+        elif len(items) == 1:
             log.info(_("Group ‘{}’ only has {} example; marking verified and "
-                    "continuing.").format(group,len(senses)))
+                    "continuing.").format(group,len(items)))
             updatestatus(True)
-            return
-        title=_("Verify {} Group ‘{}’ for ‘{}’ ({})").format(
-                                    program['settings'].languagenames[self.analang],
-                                    group,
-                                    check,
-                                    program['params'].cvcheckname()
-                                    )
+            return 1
+        self.getrunwindow(msg=_(f"preparing to verify the {item_name} ‘{group}’"))
         titles=ui.Frame(self.runwindow.frame,
                         column=1, row=0, columnspan=1, sticky='w')
         ui.Label(titles, text=title, font='title', column=0, row=0, sticky='w')
@@ -9903,60 +10051,71 @@ class Sort(object):
         row=0
         column=0
         if group in groups:
-            progress=('('+str(groups.index(group)+1)+'/'+str(len(
-                                                            groups))+')')
-            ui.Label(titles,text=progress,anchor='w',row=0,column=1,sticky='ew')
+            if len(groups)-1:
+                prog=(f"({len(groups)} remaining)")
+            else:
+                prog=(f"(last)")
+            ui.Label(titles,text=prog,anchor='w',padx=10,column=1,sticky='ew')
+        ui.Label(self.runwindow.frame,
+                image=self.pageicon(macrosort),
+                text='',row=0,column=0,sticky='nw')
         i=ui.Label(titles, text=instructions,
                 row=1, column=0, columnspan=2, sticky='wns')
         i.wrap()
-        ui.Label(self.runwindow.frame, image=self.frame.theme.photo['verify'],
+        ui.Label(self.runwindow.frame, image=f'verify{img_mod}',
                         text='', row=1,column=0,
-                        # rowspan=3,
                         sticky='nws')
         """Scroll after instructions"""
-        self.sframe=ui.ScrollingFrame(self.runwindow.frame,
-                                    row=1,column=1,
-                                    # columnspan=2,
-                                    sticky='wsn')
         """put entry buttons here."""
-        for sense in senses:
-            if sense is None: #needed?
-                continue
-            self.verifybutton(self.sframe.content,sense,
-                                row, column,
-                                label=False)
-            if not self.buttoncolumns or (self.buttoncolumns and
-                                            row+1<self.buttoncolumns):
-                row+=1
-            else:
-                column+=1
-                column%=self.buttoncolumns # from 0 to cols-1
-                if not column:
-                    row+=1
-                elif row+1 == self.buttoncolumns:
-                    row=0
-            # log.info("Next button at r:{}, c:{}".format(row,column))
-        self.verifycanary=ui.Frame(self.sframe.content)
-        self.verifycanary.grid(row=max(row+1,self.buttoncolumns+1), column=0,
-                        sticky='ew',
-                        columnspan=self.buttoncolumns+1) #Keep on own row
+        if macrosort:
+             self.buttonframe=SortButtonFrame(self.runwindow.frame, self,
+                                        list(items),
+                                        macrosort=True,
+                                        remove_on_click=True, column=1,
+                                        row=1, sticky='new', columnspan=2)
+        else:
+            self.buttonframe=ui.ScrollingFrame(self.runwindow.frame,
+                                    row=1,column=1,
+                                    sticky='wsn')
+            bc=self.buttoncolumns if len(items) >= self.min_to_multicolumn else 1
+            for item in items:
+                if self.runwindow.exitFlag.istrue():
+                    return
+                if item is None: #needed?
+                    continue
+                n=len(self.buttonframe.content.winfo_children())
+                self.verifybutton(self.buttonframe.content,item,
+                                        row=n//bc, 
+                                        column=n%bc,
+                                        label=False)
+        self.verifycanary=ui.Frame(self.buttonframe.content,
+                            row=self.buttonframe.content.nrows(),
+                            sticky='ew') #Keep on own row
         b=ui.Button(self.verifycanary, text=oktext,
                         cmd=self.verifycanary.destroy,
                         anchor='w',
-                        font='instructions'
-                        )
-        b.grid(column=0, row=0, sticky='ew')
+                        font='instructions',
+                        column=0, row=0, sticky='ew')
         if self.runwindow.exitFlag.istrue():
-            return 1
-        self.sframe.windowsize()
+            return
         self.runwindow.waitdone()
         self.runwindow.deiconify() # not until here
-        b.wait_window(self.verifycanary)
+        self.runwindow.wait_window(self.verifycanary)
         if self.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
-            return 1
+            return
         log.debug("User selected ‘{}’, moving on.".format(oktext))
-        program['status'].last('verify',update=True)
-        updatestatus(True)
+        if macrosort:
+            self.verifyselected(macrosort=True)
+            if len(self.buttonframe.groupbuttonlist) > 1:
+                updatestatus(True)
+            else:
+                updatestatus(False) #on *finishing* with one/none
+        else:
+                updatestatus(True)
+        self.runwindow.on_quit()
+        return 1
+        # if not self.runwindow.exitFlag.istrue():
+        #     self.runwindow.resetframe()
     def verifybutton(self,parent,sense,row,column=0,label=False,**kwargs):
         """This should maybe take examples as input, rather than senses"""
         # This must run one subcheck at a time. If the subcheck changes,
@@ -9964,11 +10123,11 @@ class Sort(object):
         # should move to specify location and fieldvalue in button lambda
         def notok():
             if len(self.currentsortitems) > 2:
-                self.removesensefromgroup(sense,sorting=True,write=False)
+                self.removeitemfromgroup(sense,sorting=True,write=False)
                 self.currentsortitems.remove(sense)
             else:
                 for i in self.currentsortitems:
-                    self.removesensefromgroup(i,sorting=True,write=False)
+                    self.removeitemfromgroup(i,sorting=True,write=False)
                 self.verifycanary.destroy()
             self.maybewrite()
             bf.destroy()
@@ -9978,13 +10137,8 @@ class Sort(object):
             kwargs['anchor']='w'
         #This should be pulling from the example, as it is there already
         check=program['params'].check()
-        frames=program['toneframes'].get(program['slices'].ps())
-        if frames:
-            frame=frames.get(check)
-        else:
-            frame=None # e.g., for segmental checks before tone frames defined
-        text=sense.formatted(self.analang,self.glosslangs,
-                            program['params'].ftype(),frame)
+        frame=self.get_frame()
+        text=sense.formatted(self.analang, self.glosslangs, self.ftype, frame)
         if program['settings'].lowverticalspace:
             ipady=0
         else:
@@ -9997,8 +10151,9 @@ class Sort(object):
                     **kwargs
                     )
         else:
-            bf=ui.Frame(parent, pady='0') #This will be killed by removesensefromgroup
-            bf.grid(column=column, row=row, sticky='ew')
+            bf=ui.Frame(parent, pady=1, padx=1, column=column, row=row,
+                        sticky='w', border=True
+                        ) #This will be killed by removeitemfromgroup
             b=ui.Button(bf, text=text, pady='0',
                     cmd=notok,
                     column=column, row=0,
@@ -10006,139 +10161,155 @@ class Sort(object):
                     ipady=ipady, #Inside the buttons...
                     **kwargs
                     )
-        b['image']=getimageifthere(sense)
+        b['image']=scaleimageifthere(sense)
         b['compound']='left'
-    def join(self):
-        log.info("Running join!")
-        """This window shows up after sorting, or maybe after verification, to
-        allow the user to join groups that look the same. I think before
-        verification, as this would require the new pile to be verified again.
-        also, the joining would provide for one less group to match against
-        (hopefully semi automatically).
+    def reset_selected(self):
+        for k in self.groupvars:
+            self.groupvars[k].set(False)
+    def get_selected(self):
+        return [k for k in self.groupvars
+                if self.groupvars[k] is not None #necessary?
+                if self.groupvars[k].get() #only those marked True
+                ]
+    def group_pairs_to_distinguish(self, macrosort=False):
+        if macrosort:
+            groups=program['alphabet'].glyphs()
+        else:
+            groups=[i for i in program['status'].verified() if i != 'NA']
+        return set(itertools.combinations(groups, 2))
+    def to_distinguish(self, macrosort=False):
+        if macrosort:
+            d=program['alphabet'].distinguished_by_cvt()
+        else:
+            d=program['status'].distinguished()
+        #whatever ordering was stored, remove either if there
+        return self.group_pairs_to_distinguish(macrosort=macrosort
+                                                )-d-{(y,x) for x,y in d}
+    def join(self,macrosort=False):
+        def move_on_cleanly():
+            for w in pair_frame.winfo_children():
+                w.grid_remove() #don't destroy buttons with canary
+            self.canary.destroy()
+        def join_pair():
+            lpr=sorted(self.current_pair,key=str) #put a number first (to remove)
+            log.info(f"User selected {lpr} to join, joining them ({macrosort=}).")
+            msg=_("Now we're going to move group ‘{0}’ into "
+                "‘{1}’, removing ‘{0}’ and marking ‘{1}’ unverified.".format(*lpr))
+            self.runwindow.wait(msg=msg)
+            """All the senses we're looking at, by ps/profile"""
+            if macrosort:
+                log.info(f"Running join_pair! {macrosort=}")
+                program['alphabet'].join_glyphs(*lpr)
+                log.info(f"join_pair done {macrosort=}")
+            else:
+                self.updatebygroupsense(*lpr) #calls marksortgroup on all
+                self.updatestatus(group=lpr[1], #no longer by updatebygroupsense
+                                verified=False, #b/c joined
+                                writestatus=True)
+            self.did[f'join{img_mod}']=True
+            self.runwindow.on_quit()
+        def distinguish_pair():
+            if macrosort:
+                program['alphabet'].distinguish(self.current_pair)
+                program['alphabet'].save_settings()
+            else:
+                program['status'].distinguish(self.current_pair)
+                program['status'].store()
+            move_on_cleanly()
+        log.info(f"Running join! {macrosort=}")
+        """This window allows the user to join groups that sound the same. """
+        """This should move to a presentation of permutations (choose two), so
+        the user gets a series of "are x and y the same (or different?)?"
+        questions that can be easily answered, that we can force to be addressed
+        thoroughly (rather than let the user decide that he has looked at each).
         """
         #This function should exit 1 on a window close, 0/None on all ok.
-        self.getrunwindow()
         cvt=program['params'].cvt()
         check=program['params'].check()
         ps=program['slices'].ps()
         profile=program['slices'].profile()
-        groups=self.groups(wsorted=True) #these should be verified, too.
-        if len(groups) <2:
-            log.debug("No tone groups to distinguish!")
-            if not self.exitFlag.istrue():
-                self.runwindow.waitdone()
-            program['status'].tojoin(False)
-            return 0
-        title=_("Review Groups for {} Tone (in ‘{}’ frame)").format(
-                                        program['settings'].languagenames[self.analang],
-                                        check
-                                        )
+        pairs=list(self.to_distinguish(macrosort=macrosort))
+        npairs=len(pairs) #leave this alone, for progress
+        if not pairs:
+            log.debug("No groups to distinguish!")
+            return
+        self.getrunwindow()
         oktext=_('These are each different from the other(s)')
-        introtext=_("Congratulations! \nAll your {} with profile ‘{}’ are "
-                "sorted into the groups exemplified below (in the ‘{}’ frame). "
-                "Do any of these have the same {}? "
-                "If so, click on two groups to join. "
-                "If not, just click ‘{ok}’."
-                ).format(ps,profile,check,program['params'].cvcheckname(),ok=oktext)
-        log.debug(introtext)
-        self.runwindow.resetframe()
+        if macrosort:
+            buttonclass=SortGlyphGroupButtonFrame
+            img_mod='glyphs'
+            title_mod="Letter"
+            join_icon='joinglyphs'
+            title_mod_2=''
+        else:
+            buttonclass=SortGroupButtonFrame
+            img_mod=''
+            title_mod="Sort"
+            title_mod_2=f" (‘{check}’)"
+            join_icon='join'
+        title=_(f"Review {title_mod} Groups{title_mod_2}")
         self.runwindow.frame.titles=ui.Frame(self.runwindow.frame,
                                             column=1, row=0,
                                             columnspan=1, sticky='ew'
                                             )
         ltitle=ui.Label(self.runwindow.frame.titles, text=title,
-                font='title',
+                font='title', anchor='w',
                 column=0, row=0, sticky='ew',
                 )
-        i=ui.Label(self.runwindow.frame.titles,
-                    text=introtext,
-                    row=1,column=0, sticky='w',
-                    )
-        i.wrap()
+        self.progress=ui.Progressbar(self.runwindow.frame.titles,
+                                row=1, sticky='ew')
         ui.Label(self.runwindow.frame,
-                image=self.frame.theme.photo['join'],
+                image=self.pageicon(),
+                text='',row=0,column=0,sticky='nw')
+        ui.Label(self.runwindow.frame,
+                image=f'join{img_mod}', image_pixels=300,
+                image_scaleto='width',
                 text='',
                 row=1,column=0,rowspan=2,sticky='nw'
                 )
-        self.sframe=ui.ScrollingFrame(self.runwindow.frame,
-                                        row=1,column=1,sticky='w')
-        self.sortitem=self.sframe.content
-        row=column=0
-        groupvars={}
-        b={}
-        for group in groups:
-            b[group]=SortGroupButtonFrame(self.sortitem, self,
-                                    group,
-                                    showtonegroup=True,
-                                    labelizeonselect=True
-                                    )
-            b[group].grid(column=column, row=row, sticky='ew')
-            groupvars[group]=b[group].var()
-            if not self.buttoncolumns or (self.buttoncolumns and
-                                            row+1<self.buttoncolumns):
-                row+=1
-            else:
-                column+=1
-                column%=self.buttoncolumns # from 0 to cols-1
-                if not column:
-                    row+=1
-                elif row+1 == self.buttoncolumns:
-                    row=0
-            # log.info("Next button at r:{}, c:{}".format(row,column))
-        """If all is good, destroy this frame."""
-        self.runwindow.waitdone()
-        ngroupstojoin=0
-        while ngroupstojoin < 2:
-            bok=ui.Button(self.sortitem, text=oktext,
-                    cmd=self.sortitem.destroy,
-                    anchor='c',
-                    font='instructions',
-                    column=0,
-                    row=max(row+1,self.buttoncolumns+1),
-                    sticky='ew')
-            for group in b:
-                b[group].setcanary(bok) #this must be done after bok exists
-            log.info("making button!")
-            self.runwindow.frame.wait_window(bok)
-            groupstojoin=selected(groupvars)
-            ngroupstojoin=len(groupstojoin)
-            if ngroupstojoin == 2 or not self.sortitem.winfo_exists():
-                break
-        if self.runwindow.exitFlag.istrue():
-            return 1
-        if ngroupstojoin < 2:
-            log.info("User selected ‘{}’ with {} groups selected, moving on."
-                    "".format(oktext,ngroupstojoin))
-            #this avoids asking the user about it again, until more sorting:
-            program['status'].tojoin(False)
-            self.runwindow.on_quit()
-            return 0
-        elif ngroupstojoin > 2:
-            log.info("User selected ‘{}’ with {} groups selected, This is "
-                    "probably a mistake ({} selected)."
-                    "".format(oktext,ngroupstojoin,groupstojoin))
-            return self.join() #try again
-        else:
-            log.info("User selected {} groups selected, joining "
-                    "them. ({} selected)."
-                    "".format(ngroupstojoin,groupstojoin))
-            msg=_("Now we're going to move group ‘{0}’ into "
-                "‘{1}’, marking ‘{1}’ unverified.".format(*groupstojoin))
-            self.runwindow.wait(msg=msg)
-            log.debug(msg)
-            """All the senses we're looking at, by ps/profile"""
-            # log.info("Join about to run updatebygroupsense(*groupstojoin)")
-            groupstojoin.sort(key=str) #put a number first (to remove)
-            self.updatebygroupsense(*groupstojoin) #calls marksortgroup on all
-            groups.remove(groupstojoin[0])
-            # I think these should have been removed:
-                # self.updatestatus(group=group,write=write)
-                # write=True #For second group
-            # self.maybesort() #go back to verify, etc.
-            return 1 #not done yet, return to maybesort
-        """'These are all different' doesn't need to be saved anywhere, as this
-        can happen at any time. Just move on to verification, where each group's
-        sameness will be verified and recorded."""
+        response_button_frame=ui.Frame(self.runwindow.frame,
+                                        column=1, row=2, pady=10, sticky='news')
+        ui.Button(response_button_frame,
+                text=_("Same"), font='read',
+                image=f'join{img_mod}_same', compound="bottom",
+                image_pixels=200, image_scaleto='width',
+                cmd=join_pair,
+                column=0, padx=10, ipadx=10, sticky='nsw')
+        ui.Button(response_button_frame,
+                text=_("Different"), font='read',
+                image=f'join{img_mod}_different', compound="bottom",
+                image_pixels=200, image_scaleto='width',
+                cmd=distinguish_pair,
+                column=1, padx=10, ipadx=10, sticky='nes')
+        if pairs:
+            self.runwindow.waitdone()
+        buttons={}
+        pair_frame=ui.Frame(self.runwindow.frame, column=1, row=1)
+        while pairs:
+            self.progress.current(1 -len(pairs)/npairs)
+            self.current_pair=pairs[0]
+            log.info(f"Working on {self.current_pair} {len(pairs)} remaining "
+                    f"of {npairs}")
+            for group in self.current_pair:
+                if group in buttons:
+                    buttons[group].grid(row=pair_frame.nrows())
+                else:
+                    buttons[group]=buttonclass(pair_frame, self,
+                            group=group,
+                            showtonegroup=True,
+                            label=True,
+                            row=pair_frame.nrows(), sticky='w')
+            self.canary=ui.Label(pair_frame,text='',col=1)
+            pair_frame.wait_window(self.canary)
+            if self.did[f'join{img_mod}']:
+                return 1
+            if self.runwindow.exitFlag.istrue():
+                log.info("Runwindow exited.")
+                return
+            pairs=list(self.to_distinguish(macrosort=macrosort))
+            log.info(f"Runwindow still open, continuing to next in {pairs}.")
+        self.runwindow.on_quit()
+        return 1
     def tryNAgain(self):
         check=program['params'].check()
         if check in program['status'].checks():
@@ -10146,59 +10317,71 @@ class Sort(object):
         else:
             #Give an error window here
             log.error("Not Trying again; set a check first!")
-            self.getrunwindow(nowait=True)
+            self.getrunwindow(msg=_("Resetting unSorted items"))
             buttontxt=_("Sort!")
             text=_("Not Trying Again; set a tone frame first!")
             ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
             return
-        for sense in senses:
-            self.removesensefromgroup(sense)
+        for item in senses:
+            self.removeitemfromgroup(item)
         self.runcheck()
-    def rename_group(self,oldvalue,newvalue,updatestatus=True):
-        self.updatebygroupsense(oldvalue,newvalue,
+    def rename_group(self,x,y,updatestatus=True):
+        self.updatebygroupsense(x,y,
                                 updatestatus=updatestatus,
                                 updateforms=True)
-        v=program['status'].verified()
-        if oldvalue in v:
-            log.info(f"Found verified value to change: {oldvalue}>{newvalue}") #set
-            v.remove(oldvalue)
-            v.append(newvalue)
-            program['status'].verified(v)
-    def updatebygroupsense(self,oldvalue,newvalue,updateforms=False,updatestatus=True):
+        self.rename_group_verification(x,y)
+    def rename_group_verification(self,x,y,**kwargs):
+        v=program['status'].verified(**kwargs)
+        if x in v:
+            log.info(f"Found verified value to change: {x}>{y}")
+            v.remove(x)
+            v.append(y)
+            program['status'].verified(g=v,**kwargs)
+    def updatebygroupsense(self,x,y,updateforms=False,updatestatus=True):
+        """This needs to apply during sorting and without, when sorting variables 
+        and status may not be available.
+        This method does not change the sorting status of any sense, but moves a 
+        sense from one sort group to another.
+        use not_sorting=True to prevent requiring sorting variables.
+        """
         """Generalize this for segments"""
         # This function updates the field value and verification status (which
         # contains the field value) in the lift file.
         # This is all the words in the database with the given
         # check:value correspondence (for a given ps/profile)
         check=program['params'].check()
-        lst2=self.getsensesingroup(check,oldvalue) #by annotations, for C/V
+        lst2=self.getsensesingroup(check,x) #by annotations, for C/V
         # We are agnostic of verification status of any given entry, so just
         # use this to change names, not to mark verification status (do that
         # with self.updatestatuslift())
-        rm=self.verificationcode(check=check,group=oldvalue)
-        add=self.verificationcode(check=check,group=newvalue)
+        # rm=self.verificationcode(check=check,group=oldvalue)
+        # add=self.verificationcode(check=check,group=newvalue)
         """The above doesn't test for profile, so we restrict that next"""
         profile=program['slices'].profile()
         senses=program['slices'].inslice(lst2)
         ftype=program['params'].ftype()
         if not senses:
-            log.info("No senses for {}={}".format(check,oldvalue))
+            log.info("No senses for {}={}".format(check,x))
             return
         for sense in senses:
-            """This updates the fieldvalue from 'fieldvalue' to
-            'newfieldvalue'."""
             u = threading.Thread(target=self.marksortgroup,
-                                args=(sense,newvalue),
+                                args=(sense,y),
                                 kwargs={#'check':check,
                                         # 'ftype':ftype,
                                         # remove for testing this fn:
                                         # 'nocheck': True, #don't verify from lift
+                                        'thread_name':'_'.join([sense.id,y]),
+                                        'not_sorting':True,
                                         'updateverification':True,
                                         'updateforms':updateforms})
             u.start()
         u.join()
-        if updateforms and updatestatus: #only update status if forms
-            program['settings'].reloadstatusdatabycvtpsprofile()
+        if updatestatus: #update status even if not updating forms
+            program['settings'].reloadstatusdata()
+        for t in list(program['status'].distinguished()):
+            if x in t:
+                program['status'].undistinguish(t)
+                program['status'].distinguish((y if t[0]==x else t[0],y if t[1]==x else t[1]))
         self.maybewrite() #once done iterating over senses
     def __init__(self, parent):
         program['settings'].makeeverythingok()
@@ -10216,6 +10399,7 @@ class Sort(object):
         self.invariablesegmentalroots=True #otherwise, ask, or else just check each
         program['params'].ftype('lc') #current default
         self.cvt=program['params'].cvt()
+        self.min_to_multicolumn=6 #don't use buttoncolumns with less
         #for testing only!!
         # if program['settings'].pluralname:
         #     program['params'].ftype(program['settings'].pluralname)
@@ -10836,8 +11020,8 @@ class Report(object):
         if ('x' in kwargs['check'] and hasattr(self,'groupcomparison')
                     and self.groupcomparison):
             checkprose+='-'+self.groupcomparison
-        if isinteger(group) or (hasattr(self,'groupcomparison') and
-                                isinteger(self.groupcomparison)):
+        if group.isdigit() or (hasattr(self,'groupcomparison') and
+                                self.groupcomparison.isdigit()):
             log.info(_("Skipping check {} because it would break the regex"
                         "").format(checkprose))
             skipthisone=True
@@ -11493,7 +11677,6 @@ class SortSyllables(Sort,Segments,TaskDressing):
         self.updatesortingstatus() # Not just tone anymore
         self.maybesort(firstrun=True)
     def __init__(self, parent):
-    def __init__(self, parent):
         program['params'].cvt('S') #syllable
         TaskDressing.__init__(self,parent)
         Sort.__init__(self, parent)
@@ -11504,11 +11687,9 @@ class SortCV(Sort,Segments,TaskDressing):
         TaskDressing.__init__(self,parent)
         Sort.__init__(self, parent)
         Segments.__init__(self,parent)
-        # super(SortCV, parent).__init__()
-        # Sort.__init__(self)
 class SortV(Sort,Segments,TaskDressing):
     def taskicon(self):
-        return program['theme'].photo['iconV']
+        return 'iconV'#program['theme'].photo['iconV']
     def tasktitle(self):
         return _("Sort Vowels") #Citation Form Sorting in Tone Frames
     def tooltip(self):
@@ -11516,23 +11697,19 @@ class SortV(Sort,Segments,TaskDressing):
     def dobuttonkwargs(self):
         return {'text':_("Sort!"),
                 'fn':self.runcheck,
-                # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
                 'image':program['theme'].photo['V'], #self.cvt
                 'sticky':'ew'
                 }
     def __init__(self, parent):
-        # ui.Window.__init__(self,parent)
         program['params'].cvt('V')
         TaskDressing.__init__(self,parent)
         Sort.__init__(self, parent)
         Segments.__init__(self,parent)
-        # super(SortV, self).__init__()
-        # Sort.__init__(self)
 class SortC(Sort,Segments,TaskDressing):
     def taskicon(self):
-        return program['theme'].photo['iconC']
+        return 'iconC'#program['theme'].photo['iconC']
     def tasktitle(self):
         return _("Sort Consonants") #Citation Form Sorting in Tone Frames
     def tooltip(self):
@@ -11551,11 +11728,9 @@ class SortC(Sort,Segments,TaskDressing):
         TaskDressing.__init__(self,parent)
         Sort.__init__(self, parent)
         Segments.__init__(self,parent)
-        # super(SortC, parent).__init__()
-        # Sort.__init__(self)
 class SortT(Sort,Tone,TaskDressing):
     def taskicon(self):
-        return program['theme'].photo['iconT']
+        return 'iconT'#program['theme'].photo['iconT']
     def tasktitle(self):
         return _("Sort Tone") #Citation Form Sorting in Tone Frames
     def tooltip(self):
