@@ -7,7 +7,7 @@ log.info(f"Importing {__name__}")
 import file
 try: #Allow this module to be used without translation
     _
-except:
+except NameError:
     def _(x):
         return x
 class Exporter(object):

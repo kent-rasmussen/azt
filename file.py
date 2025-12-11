@@ -18,7 +18,7 @@ logsetup.setlevel('DEBUG',log) #for this file
 from importlib import reload as modulereload
 try: #Allow this module to be used without translation
     _
-except:
+except NameError:
     def _(x):
         return x
 def quote(x):
@@ -186,6 +186,8 @@ def getnewlifturl(dir,xyz):
     url=url.with_suffix('.lift')
     return url
 def getdiredurl(dir,filename):
+    if not dir: 
+        dir='.'
     if type(dir) is str:
         dir=getfile(dir)
     return pathlib.Path.joinpath(dir,filename)

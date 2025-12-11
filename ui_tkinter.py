@@ -18,7 +18,7 @@ from random import randint #for theme selection
 import datetime
 try: #translation
     _
-except:
+except NameError:
     def _(x):
         return x
 try: #PIL

@@ -12,7 +12,7 @@ import difflib
 import threading
 try: #translation
     _
-except:
+except NameError:
     def _(x):
         return x
 import lift

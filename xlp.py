@@ -12,7 +12,7 @@ import time
 import subprocess
 try:
     _
-except:
+except NameError:
     def _(x):
         return x
 class Report(object):

@@ -11,7 +11,7 @@ import utilities
 
 try:
      _('x')
-except:
+except NameError:
     def _(x):
         return str(x)
 
