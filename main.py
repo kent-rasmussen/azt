@@ -1740,20 +1740,16 @@ class StatusFrame(ui.Frame):
                             r=self.glyphscroll.content.nrows())
                             # r=len(self.glyphscroll.content.winfo_children()))
         l=ui.Label(f, text=glyph, font='read', width=3, c=0, sticky="EW")
-        bf=SortGroupButtonFrame(f, self.task, glyph,
-                                # all_for_cvt=True,
-                                label=True,
-                                column=1, sticky="W")
-        if bf.examplesOK:
-            fn=lambda event,x=glyph:self.task.dobuttonkwargs()['fn'](x)
-            bf.label.bind('<ButtonRelease-1>',fn)
-            l.bind('<ButtonRelease-1>',fn)
-        else:
+        fn=lambda x=glyph:self.task.dobuttonkwargs()['fn'](x)
+        bf=SortGlyphGroupButtonFrame(f, self.task,
+                                    group=glyph,
+                                    on_select=fn,
+                                    column=1, sticky="W")
+        if not bf.hasexample:
             log.info(f"deleting empty button for ‘{glyph}’")
             l.destroy()
             bf.destroy()
     def makeglyphtable(self):
-        self.boardtitle()
         self.glyphscroll=ui.ScrollingFrame(self.leaderboard,row=1,column=0)
         self.glyphbuttons={}
         self.updateglyphbuttons()
@@ -1761,7 +1757,7 @@ class StatusFrame(ui.Frame):
         """This ultimately should cover all C or V, across checks and
         ps-profiles"""
         # groups=program['status'].all_groups_verified_for_cvt()
-        groups=set(program['status'].groups(wsorted=True))
+        groups=set(program['alphabet'].glyphs())
         for k in set(self.glyphbuttons)-groups:
             self.glyphbuttons[k].destroy()
         for k in groups-set(self.glyphbuttons):
@@ -1981,12 +1977,13 @@ class StatusFrame(ui.Frame):
         self.interfacelangline()
         self.analangline()
         self.glosslangline()
-        if isinstance(self.task,Segments):
+        if isinstance(self.task,Segments) and not isinstance(self.task,TranscribeS):
             self.fieldsline()
         if ('slices' in program and
-                not isinstance(self.task,TaskChooser) and
-                not isinstance(self.task,Parse) and
-                not isinstance(self.task,WordCollection)
+                not isinstance(self.task,(TaskChooser,
+                                            Parse,
+                                            TranscribeS,
+                                            WordCollection))
                 ):
             self.makesliceattrs()
             if isinstance(self.task,Multislice): #any cvt
@@ -2109,12 +2106,16 @@ class Settings(object):
             'alphabet':{
                                 'file':'alphabetsettingsfile',
                                 'attributes':[
+                                            'status',
                                             'glyphdict',
                                             'alphabet_order',
                                             'alphabet_ncolumns',
-                                            'alphabet_exids',
                                             'alphabet_chart_title',
-                                            ]},
+                                            'alphabet_exids',
+                                            'alphabet_pagesize',
+                                            'glyph_members',
+                                            'glyphs_distinguished'
+                                        ]},
             'toneframes':{
                                 'file':'toneframesfile',
                                 'attributes':['toneframes']}
@@ -2221,13 +2222,20 @@ class Settings(object):
             self.repo[r].commit()
     def moveattrstoobjects(self):
         # log.info("Glosslangs (in moveattrstoobjects): {}".format(self.glosslangs.langs()))
-        for attr in self.fndict:
+        # log.info(f"moveattrstoobjects done: {self.attrs_moved_to_object}")
+        to_do=set(self.fndict)-self.attrs_moved_to_object
+        log.info(f"moveattrstoobjects to do: {to_do}")
+        for attr in to_do:
             if hasattr(self,attr):
                 log.info("moving attr {} to object ({})".format(attr,getattr(self,attr)))
                 self.fndict[attr](getattr(self,attr))
                 # log.info("Glosslangs (in moveattrstoobjects): {}".format(self.glosslangs.langs()))
                 if attr not in ['glosslangs']: #obj and attr have same name...
                     delattr(self,attr)
+                self.attrs_moved_to_object.add(attr)
+            else:
+                log.info(f"attr {attr} not found!")
+        log.info(f"{self.attrs_moved_to_object=}")
         # log.info("Glosslangs (in moveattrstoobjects): {}".format(self.glosslangs.langs()))
     def settingsobjects(self):
         """These should each push and pull values to/from objects"""
@@ -2243,13 +2251,18 @@ class Settings(object):
             # fns['toneframes']=program['toneframes']
             # fns['status']=program['status']
             fns['aztrepourls']=program['repo'].remoteurls
-            fns['ps']=program['slices'].ps
-            fns['profile']=program['slices'].profile
+            fns['status']=program['alphabet'].status
             fns['glyphdict']=program['alphabet'].glyphdict
+            fns['glyph_members']=program['alphabet'].glyph_members
+            fns['glyphs_distinguished']=program['alphabet'].distinguished
             fns['alphabet_order']=program['alphabet'].order#self.alpha_order
             fns['alphabet_ncolumns']=self.alpha_ncolumns
             fns['alphabet_exids']=self.alpha_exids
             fns['alphabet_chart_title']=self.alpha_chart_title
+            fns['alphabet_pagesize']=self.alpha_pagesize
+            #This seems to break here:
+            fns['ps']=program['slices'].ps
+            fns['profile']=program['slices'].profile
             # except this one, which pretends to set but doesn't (throws arg away)
             fns['profilecounts']=program['slices'].slicepriority
             fns['asr_repos']=program['soundsettings'].asr_repo_tally
@@ -2258,8 +2271,10 @@ class Settings(object):
             fns['hgurls']=self.repo['hg'].remoteurls
         except Exception as e:
             log.error("Only finished settingsobjects up to {} ({})".format(fns.keys(),e))
+            self.moveattrstoobjects() #always do this next
             return []
         log.info("Finished settingsobjects up to {}".format(fns.keys()))
+        self.moveattrstoobjects() #always do this next
     def makesettingsdict(self,setting='defaults'):
         """This returns a dictionary of values, keyed by a set of settings"""
         """It pulls from objects if it can, otherwise from self attributes
@@ -2362,7 +2377,7 @@ class Settings(object):
         filename=self.settingsfile(setting)
         config=ConfigParser()
         config.read(filename,encoding='utf-8')
-        log.debug("Trying for {} settings in {}".format(setting, filename))
+        log.info("Trying for {} settings in {}".format(setting, filename))
         if not config.sections() and setting not in ['status','toneframes']:
             if setting == 'adhocgroups':
                 self.adhocgroups={}
@@ -2382,11 +2397,10 @@ class Settings(object):
                 log.info("working in non-default section {}".format(section))
                 # log.debug("Trying for {} settings in {}".format(section, setting))
                 if len(config[section].values())>0:
-                    # log.debug("Found Dictionary value for {} ({})".format(
+                    # log.info("Found Dictionary value for {} ({})".format(
                     #                                 section,config[section]))
                     for s in config[section]:
-                        # log.debug("Found value {}: {}"
-                        #             "".format(s,config[section][s]))
+                        # log.info(f"Found value {s}: {config[section][s]}")
                         if section in ['status','toneframes']:
                             d[ofromstr(s)]=ofromstr(config[section][s])
                             # log.info(f"{s} item {ofromstr(s)} is {d[ofromstr(s)]}")
@@ -2399,8 +2413,8 @@ class Settings(object):
                                                             config[section][s])}
                         """Make sure strings become python data"""
                 else:
-                    log.debug("Found String/list/other value for {}: ({})"
-                            "".format(section,len(config[section].values())))
+                    # log.debug("Found String/list/other value for {}: ({})"
+                    #         "".format(section,len(config[section].values())))
                     d[section]=ofromstr(config[section])
         if setting == 'status':
             # log.info("setting {} is {}".format(setting,d))
@@ -2583,18 +2597,20 @@ class Settings(object):
         return program['alphabet'].order(value)
     def alpha_exids(self,value=dict()):
         if value:
-            self.alphabet_exids=value
-        return getattr(self,'alphabet_exids',value)
-    def alpha_ncolumns(self,value=5):
+            self._alphabet_exids=value
+        return getattr(self,'_alphabet_exids',value)
+    def alpha_ncolumns(self,value=0):
         if value:
-            self.alphabet_ncolumns=value
-        return getattr(self,'alphabet_ncolumns',value)
-        # if hasattr(self,'alphabet_ncolumns'):
-        #     return self.alphabet_ncolumns
+            self._alphabet_ncolumns=value
+        return getattr(self,'_alphabet_ncolumns',5)
     def alpha_chart_title(self,value=''):
         if value:
-            self.alphabet_chart_title=value
-        return getattr(self,'alphabet_chart_title',value)
+            self._alphabet_chart_title=value
+        return getattr(self,'_alphabet_chart_title',value)
+    def alpha_pagesize(self,value=''):
+        if value:
+            self._alphabet_pagesize=value
+        return getattr(self,'_alphabet_pagesize','A4')
     def pss(self):
         log.info(_("checking these lexical category names for plausible noun "
                 "and verb names: {}").format(program['db'].pss))
@@ -3067,11 +3083,8 @@ class Settings(object):
         """This adds to self.sextracted, too"""
         if not form:
             return form,None #This is just for logging
-        # log.info("getprofileofsense form: {}".format(form))
         profile=self.rxdict.profileofform(form,ps=ps)
         self.extractsegmentsfromform(form,ps=ps)
-        # log.info(f"self.sextracted: {self.sextracted}")
-        # log.info(f"getprofileofsense Profile: {profile}")
         if not set(self.profilelegit).issuperset(profile):
             profile='Invalid'
         setnesteddictval(self.profilesbysense,[sense],ps,profile,addval=True)
@@ -3079,13 +3092,13 @@ class Settings(object):
         sense.cvprofilevalue(self.profilesbysense['ftype'],profile) #store this for future reference
         return form,profile #This is just for logging
     def getprofilesbyps(self,ps):
-        start_time=nowruntime()
-        log.info("Processesing {} syllable profiles".format(ps))
+        # start_time=nowruntime()
+        # log.info("Processing {} syllable profiles".format(ps))
         senses=program['db'].sensesbyps[ps]
         self.sextracted[ps]={} #start over, don't add to if there
         n=self._getprofiles(senses,ps)
-        log.info("Processed {} forms to syllable profile".format(n))
-        logfinished(start_time)
+        log.info(f"Processed {n} forms to {ps} syllable profiles")
+        # logfinished(start_time)
     def _getprofiles(self,senses,ps):
         # This goes fast, even on a large database; do we need the wait?
         n=0
@@ -3312,39 +3325,47 @@ class Settings(object):
             self.storesettingsfile(setting='status')
         if kwargs.get('reporttime'):
             logfinished(start_time)
+    def verification_keys_in_group_dict(self,x,y):
+        """Check for problems before moving on. I don't know why, but mature
+        databases develop verification data for groups that no longer exist,
+        so we want to exclude those below. to keep from throwing errors, we
+        check that the group dictionary as all the keys the verification
+        dictionary has"""
+        def report(x,y,key=None):
+            """Is dict y a subset of dict x, wrt their key hierarchies?"""
+            if set(y)-set(x):#not (k in x and k in y):#set(x[k])^set(y[k]):
+                text=(f"{set(y)-set(x)} keys not in {key if key else 'dict'}!")
+                ErrorNotice(text,wait=True)
+                sysshutdown()
+            for k in y: #don't care about k in x but not y
+                # log.info(f"{k} is in both dictionaries! ({k in x=} {k in y=})")
+                if isinstance(x[k],dict) and isinstance(y[k],dict):
+                    report(x[k],y[k],k)
+        report(x,y)
     def reloadstatusdata(self):
-        # This fn is very inefficient, as it iterates over everything in
-        # profilesbysense, creating status dictionaries for all of that, in
-        # order to populate it if found —before removing empty entires.
-        # This also has no access to verification information, which comes only
-        # from verify()
-        start_time=nowruntime()
         log.info("Refreshing all status settings from LIFT")
-        w=ui.Wait(parent=program['root'],msg=_("Reloading status data"))
         self.storesettingsfile()
-        pss=program['slices'].pss() #this depends on nothing
-        pss=program['db'].pss
-        #This limits reload to what is there (i.e., only V, if only V has been done)
-        # cvts=[i for i in program['params'].cvts() if i in program['status']]
-        cvts=program['params'].cvts()
-        if not cvts:
-            cvts=[i for i in program['params'].cvts()]
-        kwargs={'store':False}
-        for kwargs['cvt'] in [i for i in cvts if i != 'CV']: #this depends on nothing
-            kwargs['reporttime']=True
-            # log.info("Working on {}".format(t))
-            for n,kwargs['ps'] in enumerate(pss):
-                # log.info("Working on {}".format(ps))
-                self.reloadstatusdatabycvtps(**kwargs)
-                if n:
-                    kwargs['reporttime']=False #only for first two pss
+        d=program['db'].annotation_values_by_ps_profile()
+        program['status'].clear_all_groups()
+        #The above because the following only modifies current profiles & checks
+        k={}
+        for k['ps'],profile_dict in d.items():
+            for k['profile'],check_dict in profile_dict.items():
+                for k['check'],groups in check_dict.items():
+                    k['cvt']=program['params'].cvt_of_check(k['check'])
+                    groups=[i for i in groups if i]
+                    # log.info(f"storing {k} unverified values: {groups}")
+                    program['status'].groups(groups, wsorted=True, **k)
+        """Verification data should not be read from LIFT. A single lift entry
+        may be verified to belong to a particular sort group, without that sort
+        group being verified in it's entirety, especially not since another
+        word has been added to it.
+        """
         """Now remove what didn't get data"""
-        program['status'].cull()
+        program['status'].cull() #this removes empties, and limits done to groups
         if None in program['status']: #This should never be there
             del program['status'][None]
         program['status'].store()
-        logfinished(start_time)
-        w.close()
     def categorizebygrouping(self,fn,sense,**kwargs):
         #Don't complain if more than one found:
         check=kwargs.get('check',program['params'].check())
@@ -3352,12 +3373,12 @@ class Settings(object):
             program['status'].task(),
             sense,check)
         if v in ['','None',None]: #unlist() returns strings
-            log.info("Marking sense {} tosort (v: {})".format(sense.id,v))
+            # log.info("Marking sense {} tosort (v: {})".format(sense.id,v))
             if not kwargs.get('cvt'): #default, not on iteration
                 program['status'].marksensetosort(sense)
             tosort=True
         else:
-            log.info("Marking sense {} sorted (v: {})".format(sense.id,v))
+            # log.info("Marking sense {} sorted (v: {})".format(sense.id,v))
             if not kwargs.get('cvt'): #default, not on iteration
                 program['status'].marksensesorted(sense.id)
             if v not in ['NA','ALLOK']:
@@ -3384,9 +3405,9 @@ class Settings(object):
         program['status'].renewsensestosort([],[]) #will repopulate
         self._groups=[]
         if cvt == 'T': #we need to be able to iterate over cvt, to rebuild
-            fn=Tone.getsensegroup
+            fn=Tone.getitemgroup
         else:
-            fn=Segments.getsensegroup #This pulls from annotation, not form
+            fn=Segments.getitemgroup #This pulls from annotation, not form
         """I think this is the problem why valid groupslike aʲ are getting dropped."""
         """continue here"""
         for sense in senses:
@@ -3396,12 +3417,6 @@ class Settings(object):
         """update status groups"""
         sorted=set(self._groups)
         program['status'].groups(list(sorted),**kwargs)
-        verified=set(program['status'].verified(**kwargs)) #read
-        """This should pull verification status from LIFT, someday"""
-        program['status'].verified(list(verified&sorted),**kwargs) #set
-        log.info("updatesortingstatus results ({}): sorted: {}, verified: {}, "
-                "tosort: {}".format(kwargs,sorted,verified,
-                                    program['status'].tosort(**kwargs)))
         if store:
             # log.info("updatesortingstatus kwargs: {}".format(kwargs))
             self.storesettingsfile(setting='status')
@@ -3869,8 +3884,8 @@ class Settings(object):
         self.makeglosslangs()
         self.checkglosslangs() #if stated aren't in db, guess
         self.makeparameters() #depends on nothing but self.analang
+        self.attrs_moved_to_object=set()
         self.settingsobjects() #should do this more; can be redone!
-        self.moveattrstoobjects()
         self.trackuntrackedfiles()
         if not self.buttoncolumns:
             self.setbuttoncolumns(1)
@@ -4594,7 +4609,6 @@ class TaskDressing(HasMenus,ui.Window):
                                     'want to work with?'.format(ps))
                                     ).grid(column=0, row=0)
             optionslist = [{'code':x,'description':profilecounts[(x,ps)]} for x in profiles]
-            log.info(optionslist)
             """What does this extra frame do?"""
             window.scroll=ui.Frame(window.frame)
             window.scroll.grid(column=0, row=1)
@@ -4882,7 +4896,6 @@ class TaskDressing(HasMenus,ui.Window):
         buttonFrame1.wait_window(window)
     def getcheck(self,guess=False,event=None,**kwargs):
         log.info("this sets the check")
-        # fn=inspect.currentframe().f_code.co_name
         log.info("Getting the check name...")
         checks=program['status'].checks(**kwargs)
         self.withdraw()
@@ -4945,10 +4958,43 @@ class TaskDressing(HasMenus,ui.Window):
         """Make sure we got a value"""
         if program['params'].check() not in checks:
             return 1
+    def _getglyph(self,window,event=None, **kwargs):
+        log.info(f"Asking for a group (_getglyph kwargs: {kwargs})")
+        glyphs=program['alphabet'].glyphs()
+        glyph=program['alphabet'].glyph()
+        cvt=kwargs.get('cvt',program['params'].cvt())
+        purpose=kwargs.get('purpose','to work with')
+        text=[_("What"),program['params'].cvtdict()[cvt]['sg'],
+                _(f"do you want {purpose}?")]
+        if kwargs.get('comparison'):
+            g2=list(glyphs)[:]
+            g2.remove(program['alphabet'].glyph())
+            # log.info(f"_getglyph comparison options: {g2} ({type(g2)}))")
+            if not g2:
+                window.destroy()
+                ErrorNotice(text=_("There don't seem to be any glyphs "
+                            "to compare with!"))
+                return
+            optionlist=g2
+            command=program['settings'].setgroup_comparison
+            text.insert(1,_("other"))
+        else:
+            optionlist=glyphs
+            command=program['alphabet'].glyph
+        ui.Label(window.frame,
+                      text=' '.join(text),
+                      column=0, row=0)
+        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                                 optionlist=optionlist,
+                                 command=command,
+                                 window=window,
+                                 column=0, row=4
+                                 )
+        log.info("Done making _getglyph buttonframe")
     def _getgroup(self,window,event=None, **kwargs):
-        # fn=inspect.currentframe().f_code.co_name
         """Window is called in getgroup"""
         log.info(f"Asking for a group (_getgroup kwargs: {kwargs})")
+        purpose=kwargs.get('purpose','to work with')
         ps=kwargs.get('ps',program['slices'].ps())
         cvt=kwargs.get('cvt',program['params'].cvt())
         profile=kwargs.get('profile',program['slices'].profile())
@@ -4986,6 +5032,7 @@ class TaskDressing(HasMenus,ui.Window):
             program['status'].nextgroup(cvt=cvt,**kwargs)
             window.destroy()
             return
+        cvt_name=program['params'].cvtdict()[cvt]['sg']
         if kwargs.get('comparison'):
             g2=list(groups)
             g2.remove(program['status'].group()) #group() is not cvt aware
@@ -4997,6 +5044,9 @@ class TaskDressing(HasMenus,ui.Window):
             if len(g2) == 1:
                 program['settings'].setgroup_comparison(g2[0],window)
                 return
+            ui.Label(window.frame,
+                      text=_(f"What {cvt_name} do you want to {purpose}?"),
+                      column=0, row=0)
             buttonFrame1=ui.ScrollingButtonFrame(window.frame,
                             optionlist=g2,
                             command=program['settings'].setgroup_comparison,
@@ -5005,8 +5055,7 @@ class TaskDressing(HasMenus,ui.Window):
                             )
         else:
             ui.Label(window.frame,
-                      text=_("What {} do you want to work with?").format(
-                                      program['params'].cvtdict()[cvt]['sg']),
+                      text=_(f"What {cvt_name} do you want to {purpose}?"),
                       column=0, row=0)
             # window.scroll=ui.ScrollingFrame(window.frame)
             # window.scroll.grid(column=0, row=1)
@@ -5019,24 +5068,44 @@ class TaskDressing(HasMenus,ui.Window):
                                      column=0, row=4
                                      )
         log.info("Done making _getgroup buttonframe")
+    def getglyph(self,event=None,**kwargs): #guess=False,
+        def title_mod(x):
+            if purpose_title:
+                return ' '.join([x,_("to"),purpose_title])
+            else:
+                return x
+        cvt=kwargs.get('cvt',program['params'].cvt())
+        if cvt in ['V','C']:
+            purpose_title=kwargs.get('purpose','').capitalize()
+            cvt_name=program['params'].cvtdict()[cvt]['sg']
+            w=ui.Window(self, title=title_mod(_(f'Select {cvt_name} Glyph')))
+            self._getglyph(w,**kwargs)
+            # w.wait_window(window=w)
+            return w #so others can wait for this
     def getgroup(self,event=None,**kwargs): #guess=False,
+        def title_mod(x):
+            if purpose_title:
+                return ' '.join([x,_("to"),purpose_title])
+            else:
+                return x
         """I need to think though how to get this to wait appropriately
         both for single C/V selection, and for CxV selection"""
         # log.info("this sets the group")
         kwargs=grouptype(**kwargs) #if any should be True, set in wrappers above
         # log.info("getgroup kwargs: {}".format(kwargs))
         program['settings'].refreshattributechanges()
+        purpose_title=kwargs.get('purpose','').capitalize()
         cvt=kwargs.get('cvt',program['params'].cvt())
         if cvt == 'V':
-            w=ui.Window(self,title=_('Select Vowel'))
-            self._getgroup(window=w,**kwargs)
+            w=ui.Window(self,title=title_mod(_(f'Select Vowel')))
+            self._getgroup(w,**kwargs)
             # w.wait_window(window=w)
         elif cvt == 'C':
-            w=ui.Window(self,title=_('Select Consonant'))
+            w=ui.Window(self,title=title_mod(_(f'Select Consonant')))
             self._getgroup(w,**kwargs)
             # self.frame.wait_window(window=w)
         elif cvt == 'CV':
-            w=ui.Window(self,title=_('Select Consonant/Vowel'))
+            w=ui.Window(self,title=title_mod(_(f'Select Consonant/Vowel')))
             CV=''
             for kwargs['cvt'] in ['C','V']:
                 self._getgroup(**kwargs)
@@ -5044,7 +5113,7 @@ class TaskDressing(HasMenus,ui.Window):
             program['status'].group(CV)
             # cvt = 'CV'
         elif cvt == 'T':
-            w=ui.Window(self,title=_('Select Framed Tone Group'))
+            w=ui.Window(self,title=title_mod(_(f'Select Framed Tone Group')))
             self._getgroup(window=w,**kwargs) #guess=guess,
             # windowT.wait_window(window=windowT) #?!?
         return w #so others can wait for this
@@ -5124,7 +5193,7 @@ class TaskDressing(HasMenus,ui.Window):
         else:
             log.info("No final write to lift")
         ui.Window.cleanup(self) #Exitable; currently does nothing else
-    def getrunwindow(self,nowait=False,msg=None,title=None):
+    def getrunwindow(self,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
         but the attribute is still there after window has been killed, so we
         need to test for both."""
@@ -5151,26 +5220,34 @@ class TaskDressing(HasMenus,ui.Window):
             title=(_("Run Window"))
         if self.exitFlag.istrue():
             return
-        if hasattr(self,'runwindow') and self.runwindow.winfo_exists():
-            log.info("Runwindow already there! Resetting frame...")
-            self.runwindow.resetframe() #I think I'll always want this here...
-        else:
-            self.runwindow=ui.Window(self,title=title)
+        self.clear_runwindow()
+        self.runwindow=ui.Window(self,title=title,withdrawn=True)
         self.runwindow.title(title)
         takekioskscreen(None)
         self.runwindow.bind('<Escape>', releasefullscreen)
         self.runwindow.cleanup=self.runwindowcleanup
-        if not nowait: #withdraw one way or another, but just waitdone to return
+        if msg: #withdraw one way or another, but just waitdone to return
             self.runwindow.wait(msg=msg,thenshow=True)
         self.withdraw() #this is the parent of the runwindow, the task
+    def isrunwindow(self):
+        log.info(f"{hasattr(self,'runwindow')=}")
+        widgets=[self]
+        if hasattr(self,'runwindow'):
+            widgets+=[self.runwindow]
+        for w in widgets:
+            log.info(f"{w} {w.winfo_exists()=}")
+            log.info(f"{w} {w.winfo_ismapped()=}")
+            log.info(f"{w} {w.winfo_viewable()=}")
+            log.info(f"{w} {w.iswaiting()=}")
+            log.info(f"{w} {w.state()=}")
+            log.info(f"{w} {w.winfo_toplevel() == w=}")
+    def clear_runwindow(self):
+        if hasattr(self,'runwindow'):
+            self.runwindow.destroy()
+            delattr(self,'runwindow')
     """Functions that everyone needs"""
     def updateazt(self,event=None):
         updateazt()
-    def verificationcode(self,**kwargs):
-        check=kwargs.get('check',program['params'].check())
-        group=kwargs.get('group',program['status'].group())
-        # log.info("about to return {}={}".format(check,group))
-        return check+'='+group
     def maybewrite(self,definitely=False):
         program['taskchooser'].maybewrite(definitely=definitely)
     def killall(self):
@@ -5200,6 +5277,24 @@ class TaskDressing(HasMenus,ui.Window):
         log.info("Killing window")
         ui.Window.killall(self) #Exitable
         log.info("Window killed")
+    def track_thread(self,x):
+        log.info(f"Thread for {x} started")
+        self.thread_names.append(x)
+    def untrack_thread(self,x):
+        if x in self.thread_names:
+            log.info(f"Finishing thread for {x}")
+            self.thread_names.remove(x)
+        else:
+            log.info(f"Didn't find thread for {x}; can't mark finished.")
+    def thread_update(self):
+        if self.thread_names:
+            log.info(f"{len(self.thread_names)} threads running: {self.thread_names}")
+            if (not hasattr(self,'thread_update_thread') or 
+                self.thread_update_thread not in self.tk.call('after', 'info')):
+                self.thread_update_thread=self.after(1000,self.thread_update)
+            # log.info(f"Will update by {id=} in 1s {type(id)=}")
+        else:
+            log.info(f"Finished with all threads running")
     def __init__(self,parent):
         log.info("Initializing TaskDressing")
         self.parent=parent
@@ -5232,9 +5327,8 @@ class TaskDressing(HasMenus,ui.Window):
                     setattr(self,k,False)
         self.makecvtok() #this just enforces a good cvt value
         # Make the actual window
-        ui.Window.__init__(self,parent)
+        ui.Window.__init__(self,parent,withdrawn=True)
         self.mainwindow=True
-        self.withdraw() #made visible by chooser when complete
         self.maketitle()
         ui.ContextMenu(self)
         self.tableiteration=0
@@ -5242,6 +5336,7 @@ class TaskDressing(HasMenus,ui.Window):
         self.withdraw() #made visible by chooser when complete
         self._taskchooserbutton()
         self._removemenus() #self.correlatemenus()
+        self.thread_names=list()
         # back=ui.Button(self.outsideframe,text=_("Tasks"),cmd=program['taskchooser'])
         # self.setfontsdefault()
 class TaskChooser(TaskDressing,ui.Window):
@@ -5271,7 +5366,7 @@ class TaskChooser(TaskDressing,ui.Window):
         self.setmainwindow(self)
         self.gettask()
     def makeexampledict(self):
-        program['examples']=ExampleDict()
+        ExampleDict()
     def guidtriage(self): #obsolete
         # import time
         log.info("Doing guid triage and other variables —this takes awhile...")
@@ -5342,7 +5437,7 @@ class TaskChooser(TaskDressing,ui.Window):
         if optionlist_maxi == 3:
             bpr=2
         elif optionlist_maxi > 9:
-            bpr=4
+            bpr=3
         columnspan=1
         for n,o in enumerate(optionlist):
             if n is optionlist_maxi and int(n/bpr):
@@ -5355,7 +5450,7 @@ class TaskChooser(TaskDressing,ui.Window):
                         row=int(n/bpr),
                         compound='top', #left, bottom
                         image=o[2],
-                        wraplength=int(program['root'].wraplength*.6/bpr),
+                        wraplength=int(program['root'].wraplength*.02125/bpr),
                         anchor='n',
                         sticky='nesw',
                         columnspan=columnspan
@@ -5798,7 +5893,7 @@ class TaskChooser(TaskDressing,ui.Window):
         # program['taskchooser'].after(5000, self.check_if_write_done, t)
     def check_if_write_done(self):
         # If the thread has finished, allow another write.
-        log.info("Checking if writing done to lift.")
+        # log.info("Checking if writing done to lift.")
         try:
             done=not self.writethread.is_alive()
         except AttributeError:
@@ -5817,7 +5912,7 @@ class TaskChooser(TaskDressing,ui.Window):
                 self._write()
         else:
             # Otherwise check again later.
-            log.info("schedule_write_check writing to lift.")
+            # log.info("schedule_write_check writing to lift.")
             self.schedule_write_check()
     def _write(self):
         self.towrite=False
@@ -5860,12 +5955,12 @@ class TaskChooser(TaskDressing,ui.Window):
         self.splash.progress(55)
         self.setmainwindow(self)
         program['settings'].post_lift_init()
-        Alphabet()
         self.splash.progress(65)
         self.whatsdone()
         self.splash.progress(80)
         TaskDressing.__init__(self,parent) #I think this should be after settings
         program['settings'].getprofiles()
+        Alphabet() #after slicedict is up
         # self.withdraw()
         self.splash.progress(90)
         self.setmainwindow(self)
