@@ -25,7 +25,7 @@ except ModuleNotFoundError:
     raise
 try:
     _
-except:
+except NameError:
     def _(x):
         return x
 class AudioInterface(pyaudio.PyAudio):
