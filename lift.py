@@ -4526,8 +4526,8 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/eto/Eton.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bo/bo.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/wmg/wmg.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/wmg/wmg.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/Demo_gnd/gnd.lift"
     # filename="/home/kentr/bin/raspy/azt/SILCAWL/SILCAWL.lift"
     lift=LiftXML(filename)
