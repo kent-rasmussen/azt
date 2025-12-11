@@ -79,6 +79,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.getpss() #all ps values, in a prioritized list
         self.slicebyerror()
         self.slicebyps()
+        self.slicebyps_profile()
         self.slicebyid()
         self.slicebylx()
         self.slicebylc() #1.14s
@@ -123,6 +124,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.get_audiodir()
         self.get_imgdir()
         self.get_reportdir()
+        self.get_ps_profiles()
         log.info("Language initialization done.")
     def tonelangname(self,machine=False):
         try:
@@ -517,6 +519,64 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.sensesbyps={ps:[i for i in self.senses if i.psvalue() == ps]
                             for ps in self.pss
                             }
+    def slicebyps_profile(self):
+        self.sensesbyps_profile={ps:{profile:[i for i in self.sensesbyps[ps]
+                                            if i.cvprofilevalue() == profile]
+                                    for profile in {i.cvprofilevalue()
+                                                    for i in self.sensesbyps[ps]
+                                                    }
+                                    }
+                                for ps in self.sensesbyps
+                                }
+        # log.info(f"{self.sensesbyps_profile=}")
+    def get_ps_profiles(self):
+        """just a set of each profile by ps keys"""
+        self.ps_profiles={k:{i.cvprofilevalue() for i in v if i}
+                            for k,v in self.sensesbyps.items()
+                            }
+        # log.info(f"{self.ps_profiles=}")
+    def annotation_values_by_ps_profile(self):
+        # sort out cvt (e.g., V1 is 'V') later
+        return {ps:{profile:{check:{v
+                            for sense in self.sensesbyps_profile[ps][profile]
+                            for c,v in sense.annotationvaluedictbyftypelang(
+                                            'lc',self.analang).items()
+                            if v
+                            if c==check
+                                    }
+                            for sense in self.sensesbyps_profile[ps][profile]
+                            for check in sense.annotationkeysbyftypelang(
+                                                    'lc',self.analang)
+                            }
+                    for profile in self.ps_profiles[ps]
+                    if profile
+                    }
+                for ps in self.ps_profiles
+                }
+    def verification_values_by_ps_profile(self):
+        # sort out cvt (e.g., V1 is 'V') later
+        return {ps:{profile:{check:{v for k,v
+                                    in {i for j in [
+                                    sense.getcvverificationkeys('lc')[1].items()
+                                for sense in self.sensesbyps_profile[ps][profile]
+                                                    ]
+                                    for i in j
+                                        }
+                                    if k == check
+                                    if v
+                                    }
+                            for check in {i for j in [
+                                 sense.getcvverificationkeys('lc')[1].keys()
+                            for sense in self.sensesbyps_profile[ps][profile]
+                                                    ]
+                                        for i in j
+                                            }
+                            }
+                    for profile in self.ps_profiles[ps]
+                    # if profile
+                    }
+                for ps in self.ps_profiles
+                }
     def slicebyerror(self):
         keys=set([(i.cawln,', '.join(i.collectionglosses)) for i in self.senses
                     if not i.imgselectiondir
@@ -4484,6 +4544,34 @@ if __name__ == '__main__':
 	# 	'swh':'__',
 	# 	'fr':'__es'}
     # ftype='pl'
+    for ps in lift.sensesbyps_profile:
+        for profile in lift.sensesbyps_profile[ps]:
+            print(lift.sensesbyps_profile[ps][profile])
+            print(f"{profile} in lift.ps_profiles[{ps}]: {profile in lift.ps_profiles[ps]}")
+    for ps in lift.ps_profiles:
+        for profile in lift.ps_profiles[ps]:
+            print('self.ps_profiles',ps,profile)
+            print(lift.sensesbyps_profile[ps][profile])
+    # for profile_dict in lift.sensesbyps_profile.values():
+    #     for sense_list in profile_dict.values():
+    #         for sense in sense_list:
+    # lift.senses:
+    for ps in lift.sensesbyps_profile:
+        # print([i.id for i in lift.sensesbyps_profile[ps][None] if i])
+        # continue
+        for profile,v in lift.sensesbyps_profile[ps].items():
+            print(f"Found {len(v)} senses")
+            for sense in lift.sensesbyps_profile[ps][profile]:
+                print("working on sense",sense.id)
+                i,o=sense.getcvverificationkeys('lc')
+                print(o,type(o),[type(i) for i in o])
+    print('annotation:',lift.annotation_values_by_ps_profile())
+    print('verification:',lift.verification_values_by_ps_profile())
+    # for s in lift.senses:
+    #     if s.psvalue() == 'Noun' and s.cvprofilevalue() == 'CVCV':
+    #         s.annotationvaluebyftypelang('lc','wmg','C1',value='')
+    #         value=s.annotationvaluebyftypelang('lc','wmg','C1')
+    #         log.info(f"Found noun at {s.id} w/C1=‘{value}’")
     # for e in lift.entries:
     #     e.copy_ph_form_to_lc()
     # lift.convertxtoy(lang='bo',fromtag='gloss', totag='citation')
