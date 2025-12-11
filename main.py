@@ -1111,7 +1111,8 @@ class Menus(ui.Menu):
         options.extend([(_("Resort skipped data"), self.parent.tryNAgain),
                         (_(f"Reverify current group ({group})"),
                                                         self.parent.reverify),
-                        (_("Join Groups"), self.parent.redo_join)
+                        (_("Join Sort Groups"), self.parent.redo_join),
+                        (_("Join Glyphs (Letters)"), self.parent.redo_joinglyphs)
                         ])
         for m in options:
             self.command(self.advancedmenu,
@@ -9409,9 +9410,20 @@ class Sort(object):
                     'verify': False,
                     'join': False}
     def redo_join(self):
-        program['status'].tojoin(True)
-        self.maybesort()
-    def maybesort(self):
+        # program['status'].tojoin(True) #obsolete
+        w=self.getgroup(purpose='join')
+        self.wait_window(w)
+        self.group=program['status'].group()
+        program['status'].undistinguish_any_with(g=self.group) #should be correct at this point
+        self.maybesort(firstrun=True)
+    def redo_joinglyphs(self):
+        w=self.getglyph(purpose='join')
+        self.wait_window(w)
+        self.group=program['alphabet'].glyph()
+        program['alphabet'].undistinguish_any_with(g=self.group) #should be correct at this point
+        # program['alphabet'].glyphstojoin(True) #obsolete
+        self.maybesort(firstrun=True)
+    def maybesort(self,firstrun=False):
         """This should look for one group to verify at a time, with sorting
         in between, then join and repeat"""
         def tosortupdate():
