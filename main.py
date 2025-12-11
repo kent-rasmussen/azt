@@ -1229,7 +1229,7 @@ class StatusFrame(ui.Frame):
             ipadx=self.opts['labelxpad']
         else:
             parent=kwargs.get('parent')
-            column=parent.columns() #just do the next in this line
+            column=parent.ncolumns() #just do the next in this line
             columnspan=1
             ipadx=0
         text=kwargs.get('text',kwargs.get('label'))
@@ -1742,7 +1742,7 @@ class StatusFrame(ui.Frame):
             tb.configure(command=donothing)
     def makeglyphbutton(self,glyph):
         f=self.glyphbuttons[glyph]=ui.Frame(self.glyphscroll.content,
-                            r=self.glyphscroll.content.rows())
+                            r=self.glyphscroll.content.nrows())
                             # r=len(self.glyphscroll.content.winfo_children()))
         l=ui.Label(f, text=glyph, font='read', width=3, c=0, sticky="EW")
         bf=SortGroupButtonFrame(f, self.task, glyph,
@@ -7215,30 +7215,30 @@ class WordCollection(Segments):
         parameterseparation=10
         ui.Button(imageparameters,text=_("Browse"), font='small',
             command=lambda x=self.selectionwindow:self.selectlocalimage(w=x),
-            ipady=0,row=0,column=imageparameters.columns())
+            ipady=0,row=0,column=imageparameters.ncolumns())
         ui.Label(imageparameters,text="", font=fontsize,
                     width=parameterseparation,
-                    row=0,column=imageparameters.columns())
+                    row=0,column=imageparameters.ncolumns())
         bdict={pixelopts:{},colopts:{}}
         bdict[pixelopts][-1]=ui.Button(imageparameters,text='-', font=fontsize,
                             command=lambda x=-1:makegrid(pixels=x),ipady=0,
-                            width=1,row=0,column=imageparameters.columns())
+                            width=1,row=0,column=imageparameters.ncolumns())
         ui.Label(imageparameters,text=_("Image Size"), font=fontsize, padx=2,
-                    row=0,column=imageparameters.columns())
+                    row=0,column=imageparameters.ncolumns())
         bdict[pixelopts][1]=ui.Button(imageparameters,text='+', font=fontsize,
                             command=lambda x=1:makegrid(pixels=x),ipady=0,
-                            width=1,row=0,column=imageparameters.columns())
+                            width=1,row=0,column=imageparameters.ncolumns())
         ui.Label(imageparameters,text="", font=fontsize,
                     width=parameterseparation,
-                    row=0,column=imageparameters.columns())
+                    row=0,column=imageparameters.ncolumns())
         bdict[colopts][-1]=ui.Button(imageparameters,text='-', font=fontsize,
                             command=lambda x=-1:makegrid(cols=x),ipady=0,
-                            width=1,row=0,column=imageparameters.columns())
+                            width=1,row=0,column=imageparameters.ncolumns())
         ui.Label(imageparameters,text=_("Columns"), font=fontsize, padx=2,
-                    row=0,column=imageparameters.columns())
+                    row=0,column=imageparameters.ncolumns())
         bdict[colopts][1]=ui.Button(imageparameters,text="+", font=fontsize,
                             command=lambda x=1:makegrid(cols=x),ipady=0,
-                            width=1,row=0,column=imageparameters.columns())
+                            width=1,row=0,column=imageparameters.ncolumns())
         makegrid()
     def getimagefiles(self):
         dir=file.fullpathname(self.sense.imgselectiondir)
