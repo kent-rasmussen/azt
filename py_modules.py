@@ -55,7 +55,8 @@ def pip_install(installs=[],secondtry=False):
             ['torch'],
             ['openai-whisper'], #for import whisper
             ['packaging'],
-            ['patiencediff']
+            ['patiencediff'],
+            ['reportlab'], #for PDF
             ]
     else:
         installs=[installs] #do the whole list at once, if given a list
@@ -124,7 +125,7 @@ def pip_install(installs=[],secondtry=False):
 try:
     import urllib3, numpy, pyaudio, PIL, lxml, psutil, soundfile, librosa
     import transformers, huggingface_hub, langcodes, pyautogui, torch
-    import whisper, patiencediff
+    import whisper, patiencediff, reportlab
     log.info("All necessary modules imported fine.")
 except Exception as e:
     log.error(f"Exception: {e}")
