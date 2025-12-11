@@ -1262,7 +1262,7 @@ class StatusFrame(ui.Frame):
     def makeproseframe(self):
         if hasattr(self,'proseframe'):
             self.proseframe.destroy()
-        self.proseframe=ui.Frame(self,row=0,column=0)
+        self.proseframe=ui.Frame(self,row=0,column=0,sticky='nw')
     def updateinterfacelang(self):
         self.labels['interfacelang']['text'].set(self.interfacelanglabel())
     def interfacelanglabel(self):
@@ -1636,8 +1636,11 @@ class StatusFrame(ui.Frame):
     def finalbuttons(self):
         # self.opts['row']+=6
         self.newrow()
-        if hasattr(self.task,'dobuttonkwargs') and self.task.dobuttonkwargs():
-            self.bigbutton=self.button(**self.task.dobuttonkwargs())
+        try:
+            kwargs=self.task.dobuttonkwargs()
+            self.bigbutton=self.button(**kwargs)
+        except Exception as e:
+            log.error(f"Problem: {e}")
     def makesecondfieldsOK(self):
         """Not called anywhere?"""
         for ps in [program['settings'].nominalps, program['settings'].verbalps]:
@@ -1694,17 +1697,8 @@ class StatusFrame(ui.Frame):
         titleframe=ui.Frame(self.leaderboard)
         titleframe.grid(row=0,column=0,sticky='n')
         cvtdict=program['params'].cvtdict()
-        # if not self.mainrelief:
-        #     lt=ui.Label(titleframe, text=_(cvtdict[self.cvt]['sg']),
-        #                                             font='title')
-        # else:
-        #     lt=ui.Button(titleframe, text=_(cvtdict[self.cvt]['sg']),
-        #                         font='title',relief=self.mainrelief)
-        # lt.grid(row=0,column=0,sticky='nwe')
-        # ttt=ui.ToolTip(lt,_("Change Check Type"))
-        # lt.bind('<ButtonRelease-1>',program['taskchooser'].mainwindowis.getcvt)
-        ui.Label(titleframe, text=_('Progress for'), font='title'
-            ).grid(row=0,column=1,sticky='nwe',padx=10)
+        ui.Label(titleframe, text=_('Progress for'), font='title',
+                row=0,column=1,sticky='nwe',padx=10)
         if not self.mainrelief:
             lps=ui.Label(titleframe,text=self.ps,anchor='c',font='title')
         else:
