@@ -16420,19 +16420,6 @@ def grouptype(**kwargs):
         kwargs[arg]=kwargs.get(arg,False)
     # log.info("Returning grouptype kwargs {}".format(kwargs))
     return kwargs
-def isnoninteger(x):
-    try:
-        int(x)
-    except (ValueError,TypeError):
-        return True
-def isinteger(x):
-    try:
-        int(x)
-        # log.info("‘{x}’ is an integer.")
-        return True
-    except (ValueError,TypeError):
-        # log.info("‘{x}’ is not an integer.")
-        return False
 def ifone(l,nt=None):
     if l and not len(l)-1:
         return l[0]
