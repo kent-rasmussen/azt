@@ -10,6 +10,7 @@ import file
 import lift
 import ui_tkinter as ui
 import pyautogui
+import alphabet_chart_pdf
 
 class DraggableLabel(ui.Label):
     def __init__(self, parent, *args, **kwargs):
@@ -29,7 +30,7 @@ class DroppableLabel(ui.Label):
 class OrderAlphabet(ui.Window):
     """This allows users both to order what has been analyzed already, and
     select a picturable word for each grapheme"""
-    def print_chart(self):
+    def print_chart_screenshot(self):
         log.info("Calling print_chart")
         region=(
             self.frame.winfo_x()+self.winfo_x(),
@@ -265,10 +266,61 @@ class OrderAlphabet(ui.Window):
                                         r=self.configFrame.grid_size()[1], c=0)
         for text,command in [(_("Pictured Only"), self._show_pictured_only),
                                 (_("Show All"), self._show_all),
+                                (_("Charis"), self.toggle_font),
                                 (_("Print"), self.print_chart)]:
             self.config_buttons[text]=ui.Button(self.configFrame,
                                         text=text, command=command,
                                         r=self.configFrame.grid_size()[1], c=0)
+    def toggle_font(self):
+        fonts = ["Charis", "Andika"]
+        current_font = self.config_buttons.get(_("Charis"), self.config_buttons.get(_("Andika")))
+        
+        # Find current index
+        current_text = current_name = current_font.cget('text')
+        
+        try:
+            next_index = (fonts.index(current_name) + 1) % len(fonts)
+        except ValueError:
+            next_index = 0
+            
+        new_text = next_font = fonts[next_index]
+        
+        # Remove old key
+        self.config_buttons.pop(current_text, None)
+        # Update text
+        current_font.configure(text=new_text)
+        # Add new key
+        self.config_buttons[new_text] = current_font
+        
+        self.chart_font = next_font
+        log.info(f"Switched font to {self.chart_font}")
+    def print_chart(self):
+        log.info("Calling print_chart")
+        items = []
+        for g in self.show_order:
+             sense = self.exobjs.get(g)
+             if sense is not None:
+                 word = sense.entry.lcvalue()
+                 # Get absolute path to image
+                 image_path = None
+                 uri = sense.illustrationURI()
+                 if uri and file.exists(uri):
+                     image_path = uri
+                 
+                 items.append((g, word, image_path))
+             else:
+                 items.append((g, "", None))
+        
+        title = self.chart_title.get()
+        font_name = getattr(self, 'chart_font', "Charis")
+        code=f'[{self.db.analang}]'    
+        title_bits=title.split(' ')
+        if code not in title:
+            title_bits.append(code) 
+        title_bits.extend([f'x{self.ncolumns}', font_name])
+        filename='_'.join(title_bits)+'.pdf'
+        filepath = file.getdiredurl(self.db.reportdir,filename)
+        alphabet_chart_pdf.create_chart(filepath, items, title, self.ncolumns, self.pagesize, font_name)
     def _hidden(self,value=dict()):
         for i in value:
             self.hide_vars[i].set(value[i])
@@ -295,7 +347,7 @@ class OrderAlphabet(ui.Window):
         self.title_entry.grid_remove()
         self.save_settings()
     def set_up_chart_title(self):
-        self.chart_title=ui.StringVar() #set below, in _set_chart_title
+        self.chart_title=ui.StringVar(value=self.chart_title) #set below, in _set_chart_title
         titleframe=ui.Frame(self.frame, r=0, c=1, sticky='ew')
         self.title_label=ui.Label(titleframe, textvariable=self.chart_title,
                                                                     r=0, c=1)
@@ -309,19 +361,22 @@ class OrderAlphabet(ui.Window):
         if not hasattr(self,'program'): #i.e., from calling class
             self.program=parent.program#kwargs.get('program',{})
         self.show_at_least=5
-        self.ncolopts=range(1,10)
+        self.ncolopts=range(1,15)
         self.db=self.program.get('db',kwargs.get('db'))
-        self.my_settings=['exids','order','ncolumns','chart_title']
+        self.my_settings=['exids','order','ncolumns','chart_title','pagesize']
         if 'settings' in self.program:
             for k in self.my_settings:
                 setattr(self,k,getattr(self.program['settings'],'alpha_'+k)())
+                # log.info(f"Loaded ‘{k}’ ui.Variable: {getattr(self,k)}")
             self.analangname=self.program['settings'].languagenames[
                                                                 self.db.analang]
         else:
             for k in ['exids','order']:
                 setattr(self,k,kwargs.get(k,0))
+                # log.info(f"Loaded ‘{k}’ from kwargs/default: {getattr(self,k)}")
             self.ncolumns=kwargs.get('ncolumns',8)
             self.analangname=self.db.analang
+            self.pagesize='letter'
         self.imgdir=self.db.imgdir
         log.info(f"using {self.imgdir=}")
         # self.order=program['settings'].get('alphabet_order',kwargs.get('order'))
@@ -329,6 +384,10 @@ class OrderAlphabet(ui.Window):
             log.info(f"No alphabetical order found; using all known glyphs")
             self.order=[i for j in self.db.s[self.db.analang].values() for i in j]
             self.order.sort()
+        if 'alphabet' in self.program:
+            gd={i for j in self.program['alphabet'].glyphdict().values() for i in j}
+             #pick up new letters, limit to actual but keep order
+            self.order=sorted(gd-set(self.order))+[i for i in self.order if i in gd] 
         log.info(f"Using this alphabetical order: {self.order}")
         log.info(f"Using these exids: {self.exids}")
         if self.exids:
@@ -383,12 +442,26 @@ class SelectFromPicturableWords(ui.Window):
         self.parent.deiconify
     def __init__(self, parent, db, glyph, ps='Noun'):
         self.imgdir=db.imgdir
+        analang=db.analang
+        """Think about how to constrict this to just the best examples first:
+        Only V1=V2 (if they exist) for two V profiles.
+        """
         self.examples=[i for i in db.senses
                     if i.psvalue() == ps
                     if i.entry.lcvalue()
                     if i.illustrationvalue()
-                    if glyph in i.entry.lcvalue()
+                    # if glyph in i.entry.lcvalue()
+                    if glyph in i.entry.lc.annotationvaluedictbylang(analang).values()
                     ]
+        if not self.examples:
+            examples=[i for i in db.senses
+                    # if i.psvalue() == ps
+                    # if i.entry.lcvalue()
+                    # if i.illustrationvalue()
+                    if glyph in i.entry.lc.annotationvaluedictbylang(analang).values()
+                    ]
+            log.info(f"No examples found for {glyph} with images; add to "
+                    f"{[i.id for i in examples]}")
         # print([(i.entry.lcvalue(),i.illustrationvalue()) for i in self.examples])
         title="Alphabet Chart UI for Word Selection"
         super(SelectFromPicturableWords,self).__init__(parent,
