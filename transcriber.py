@@ -23,8 +23,10 @@ class Transcriber(ui.Frame):
             y=self.hash_sp.sub('#',x)
             z=self.hash_nbsp.sub('.',y)
             self.namehash.set(z)
+            self.formfieldplay.grid()
         else:
             self.namehash.set('')
+            self.formfieldplay.grid_remove()
         self.labelcompiled=False
     def playbeeps(self,pitches):
         if not self.labelcompiled:
@@ -66,7 +68,14 @@ class Transcriber(ui.Frame):
                         row=2,column=0)
         ui.Button(w.frame,text=_("faster"),cmd=shorter,
                         row=2,column=1)
+    def set_value(self,x):
+        if str(x).isdigit():
+            log.info(f"Not setting transcriber default value to ‘{x}’ (was ‘{self.newname.get()}’)")
+            return
+        log.info(f"Setting transcriber value to ‘{x}’ (was ‘{self.newname.get()}’, {self.formfield['text']})")
+        self.newname.set(x)
     def __init__(self, parent, initval=None, soundsettings=None, **kwargs):
+        log.info(f"Starting transcriber with {initval=}")
         self.newname=ui.StringVar(value=initval)
         self.namehash=ui.StringVar()
         self.hash_t,self.hash_sp,self.hash_nbsp=rx.tonerxs()
@@ -164,6 +173,7 @@ class Transcriber(ui.Frame):
         self.formfieldplay.bind('<Button-3>', self.configurebeeps)
         tt=_("Left click to play, \nRight click to configure")
         ui.ToolTip(self.formfieldplay, text=tt)
+        self.formfieldplay.grid_remove()
         self.formhashlabel=ui.Label(fieldframe,
                                 textvariable=self.namehash,
                                 anchor ='c',
