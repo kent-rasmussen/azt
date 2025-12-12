@@ -2337,6 +2337,11 @@ class Settings(object):
                 #             "".format(s,o,v,type(v)))
                 setattr(o,s,v)
         return settingsdict
+    def no_settings_change(self,filename,d):
+        config=ConfigParser()
+        config.read(filename,encoding='utf-8')
+        if d == config:
+            return True
     def storesettingsfile(self,setting='defaults'):
         #There are too many calls to this; why?
         filename=self.settingsfile(setting)
@@ -2346,12 +2351,9 @@ class Settings(object):
             d=program[setting]
         else:
             d=self.makesettingsdict(setting=setting)
-        # config.read(filename,encoding='utf-8')
-        # if d == config:
-        #     log.info("no settings change; not writing.")
-        #     return
-        # else:
-        #     log.info("Settings from file: {}".format(dict(config['default'])))
+        if self.no_settings_change(filename,d):
+            log.info("no settings change; not writing.")
+            return
         if setting in ['soundsettings']:
             log.info("Sound settings currently: {}".format(d))
         config['default']={}
