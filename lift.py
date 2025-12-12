@@ -78,8 +78,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.getsenses()
         self.getpss() #all ps values, in a prioritized list
         self.slicebyerror()
-        self.slicebyps()
-        self.slicebyps_profile()
+        self.load_ps_profiles()
         self.slicebyid()
         self.slicebylx()
         self.slicebylc() #1.14s
@@ -124,7 +123,6 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.get_audiodir()
         self.get_imgdir()
         self.get_reportdir()
-        self.get_ps_profiles()
         log.info("Language initialization done.")
     def tonelangname(self,machine=False):
         try:
@@ -535,6 +533,10 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                             for k,v in self.sensesbyps.items()
                             }
         # log.info(f"{self.ps_profiles=}")
+    def load_ps_profiles(self):
+        self.slicebyps()
+        self.slicebyps_profile()
+        self.get_ps_profiles()
     def annotation_values_by_ps_profile(self):
         # sort out cvt (e.g., V1 is 'V') later
         return {ps:{profile:{check:{v
