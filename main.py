@@ -3420,7 +3420,7 @@ class Settings(object):
         sorted=set(self._groups)
         program['status'].groups(list(sorted),**kwargs)
         if store:
-            # log.info("updatesortingstatus kwargs: {}".format(kwargs))
+            # log.info(f"updatesortingstatus storing {kwargs=} {program['status']=}")
             self.storesettingsfile(setting='status')
     def dont_guessanalang(self):
         """Analang should be easily deduceable from the lift file, and/or
@@ -6723,7 +6723,7 @@ class Segments(Senses):
         form data
 
         """
-        def newform(x):
+        def newform(x): #move this to alphabet
             return '_'.join(x.split('_')[:4]+[glyph])
         # log.info("update_annotations_by_glyph: checking if it is safe to "
         #         f"update items in ‘{glyph}’")
