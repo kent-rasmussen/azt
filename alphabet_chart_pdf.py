@@ -69,7 +69,9 @@ def register_fonts():
         log.warning(f"Could not register fonts: {e}")
         return False
 
-def create_chart(filename, items, title, num_columns=5, pagesize='A4', font_name="Helvetica", padding=5, spacing=5):
+def create_chart(filename, items, title, num_columns=5, pagesize='A4', 
+                font_name="Helvetica", padding=5, spacing=5,
+                one_page=False):
     """
     Generate a PDF alphabet chart.
     
@@ -90,13 +92,13 @@ def create_chart(filename, items, title, num_columns=5, pagesize='A4', font_name
     # Try to register the requested font
     register_fonts()
     if pagesize.lower() in ['a4','european','default']:
-        pagesize=A4
+        _pagesize=A4
     elif pagesize.lower() in ['letter','us']:
-        pagesize=letter
+        _pagesize=letter
     if len(items)/num_columns < num_columns:
-        pagesize=landscape(pagesize)
-    c = canvas.Canvas(str(filename), pagesize=pagesize)
-    width, height = pagesize
+        _pagesize=landscape(_pagesize)
+    c = canvas.Canvas(str(filename), pagesize=_pagesize)
+    width, height = _pagesize
     
     # Margins
     margin_x = 0.5 * inch
@@ -166,6 +168,14 @@ def create_chart(filename, items, title, num_columns=5, pagesize='A4', font_name
     for i, (glyph, word, image_path) in enumerate(items):
         # Check if we need a new page
         if current_y < grid_bottom:
+            if one_page:
+                return create_chart(filename, items, title, 
+                            num_columns=num_columns+1,
+                            pagesize=pagesize,
+                            font_name=font_name,
+                            padding=padding,
+                            spacing=spacing,
+                            one_page=True)
             c.showPage()
             current_y = grid_top - row_height
             current_x = margin_x
@@ -239,3 +249,4 @@ def create_chart(filename, items, title, num_columns=5, pagesize='A4', font_name
 
     c.save()
     log.info(f"PDF saved to {filename}")
+    return num_columns

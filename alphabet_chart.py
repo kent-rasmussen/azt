@@ -69,14 +69,18 @@ class OrderAlphabet(ui.Window):
         # log.info(f"Setting {self.ncolumns} columns")
         if self.ncolumns == max(list(self.ncolopts)):
             # log.info(f"Maxed out at {self.ncolumns} columns")
-            self.config_buttons[_("More Columns")].grid_remove()
+            # self.config_buttons["col+"].grid_remove()
+            self.config_buttons["col+"]['state'] = 'disabled'
         else:
-            self.config_buttons[_("More Columns")].grid()
+            # self.config_buttons["col+"].grid()
+            self.config_buttons["col+"]['state'] = 'normal'
         if self.ncolumns == min(self.ncolopts):
             # log.info(f"Minned out at {self.ncolumns} columns")
-            self.config_buttons[_("Fewer Columns")].grid_remove()
+            self.config_buttons["col-"]['state'] = 'disabled'
+            # self.config_buttons["col-"].grid_remove()
         else:
-            self.config_buttons[_("Fewer Columns")].grid()
+            # self.config_buttons["col-"].grid()
+            self.config_buttons["col-"]['state'] = 'normal'
         self.reflow_chart()
     def reflow_chart(self):
         self.save_settings()
@@ -255,19 +259,28 @@ class OrderAlphabet(ui.Window):
     def chart_config(self):
         self.chart=ui.ScrollingFrame(self.frame,r=1,c=1,ipadx=20,ipady=20)
         self.configFrame=ui.Frame(self.outsideframe, r=1, c=2, sticky='n')
-        self.config_buttons['title']=ui.Button(self.configFrame,
-                                    text=_("Change Title"),
-                                    command=self.edit_title,
-                                    r=self.configFrame.grid_size()[1], c=0)
-        for text,choice in [(_("More Columns"),1),(_("Fewer Columns"),-1)]:
-            self.config_buttons[text]=ui.Button(self.configFrame,
+        # self.config_buttons['title']=ui.Button(self.configFrame,
+        #                             text=_("Change Title"),
+        #                             command=self.edit_title,
+        #                             r=self.configFrame.grid_size()[1], c=0)
+        # colsrow=
+        column_config=ui.Frame(self.configFrame,
+                                r=self.configFrame.grid_size()[1])
+        self.config_buttons['coll']=ui.Label(column_config,
+                                        text=_("Columns"),c=1)
+        # for text,choice in [(_("More Columns"),1),(_("Fewer Columns"),-1)]:
+        for text,choice in [('+',1),('-',-1)]:
+            self.config_buttons['col'+text]=ui.Button(column_config,
                                         text=text, choice=choice,
                                         command=self.column_config,
-                                        r=self.configFrame.grid_size()[1], c=0)
-        for text,command in [(_("Pictured Only"), self._show_pictured_only),
-                                (_("Show All"), self._show_all),
-                                (_("Charis"), self.toggle_font),
-                                (_("Print"), self.print_chart)]:
+                                        ipadx=5,
+                                        c=1+choice)
+        for text,command in [
+                (_("Fit Page"), lambda x=True:self.print_chart(one_page=x)),
+                (_("Pictured Only"), self._show_pictured_only),
+                (_("Show All"), self._show_all),
+                (_("Charis"), self.toggle_font),
+                (_("Print"), self.print_chart)]:
             self.config_buttons[text]=ui.Button(self.configFrame,
                                         text=text, command=command,
                                         r=self.configFrame.grid_size()[1], c=0)
@@ -294,7 +307,7 @@ class OrderAlphabet(ui.Window):
         
         self.chart_font = next_font
         log.info(f"Switched font to {self.chart_font}")
-    def print_chart(self):
+    def print_chart(self,one_page=False):
         log.info("Calling print_chart")
         items = []
         for g in self.show_order:
@@ -320,7 +333,10 @@ class OrderAlphabet(ui.Window):
         title_bits.extend([f'x{self.ncolumns}', font_name])
         filename='_'.join(title_bits)+'.pdf'
         filepath = file.getdiredurl(self.db.reportdir,filename)
-        alphabet_chart_pdf.create_chart(filepath, items, title, self.ncolumns, self.pagesize, font_name)
+        self.ncolumns=alphabet_chart_pdf.create_chart(filepath, items, title, 
+                        self.ncolumns, self.pagesize, font_name,
+                        one_page=one_page)
+        self.reflow_chart()
     def _hidden(self,value=dict()):
         for i in value:
             self.hide_vars[i].set(value[i])
@@ -331,9 +347,9 @@ class OrderAlphabet(ui.Window):
             return
         log.error("If you're seeing this, you have passed a settings module, "
                 "but there is no save_settings method in the parent class...")
-    def edit_title(self):
+    def edit_title(self,event=None):
         self.title_entry.grid()
-        self.title_entry.bind("<Return>",self._set_chart_title)
+        self.title_entry_field.bind("<Return>",self._set_chart_title)
         self.title_label.grid_remove()
     def _compose_page_title(self):
         self.chart_title.set(_(f"Alphabet Chart for {self.analangname} "
@@ -347,12 +363,17 @@ class OrderAlphabet(ui.Window):
         self.title_entry.grid_remove()
         self.save_settings()
     def set_up_chart_title(self):
-        self.chart_title=ui.StringVar(value=self.chart_title) #set below, in _set_chart_title
+        self.chart_title=ui.StringVar() #set below, in _set_chart_title
         titleframe=ui.Frame(self.frame, r=0, c=1, sticky='ew')
         self.title_label=ui.Label(titleframe, textvariable=self.chart_title,
                                                                     r=0, c=1)
-        self.title_entry=ui.EntryField(titleframe, textvariable=self.chart_title,
-                                                                    r=1, c=1)
+        self.title_label.bind("<Button-1>",self.edit_title)
+        self.title_entry=ui.Frame(titleframe,r=1, c=1)
+        self.title_entry_field=ui.EntryField(self.title_entry, 
+                                            textvariable=self.chart_title,
+                                            c=0)
+        ui.Button(self.title_entry, text=_("OK"), 
+                    cmd=self._set_chart_title, c=1)
         self._set_chart_title()
     def __init__(self, parent, **kwargs):
         title="Alphabet Chart UI for Glyph Ordering and Selection"
@@ -414,12 +435,13 @@ class OrderAlphabet(ui.Window):
         self.hide_vars={g:ui.BooleanVar(value=False) for g in self.order}
         for i in self.hide_vars.values():
             i.trace_add('write', self.update_shown)
-        super(OrderAlphabet,self).__init__(parent,title=title)
+        super(OrderAlphabet,self).__init__(parent,title=title,withdrawn=True)
         self.mainwindow=True
         self.set_up_chart_title()
         self.alphabet_config()
         self.chart_config()
         self._show_pictured_only() # calls update_shown>reflow_chart>?show_chart
+        self.deiconify()
         self.save_settings()
 class SelectFromPicturableWords(ui.Window):
     """This allows users to select a picturable word for one grapheme"""
