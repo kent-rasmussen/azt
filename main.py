@@ -6712,7 +6712,6 @@ class Segments(Senses):
                 return
             elif value not in [None, 'NA']: #should I act on ''?
                 formvalue=self.rxdict.update(formvalue,check,value)
-                # sense.textvaluebyftypelang(self.ftype,self.analang,f)
                 #This should update formstosearch:
                 if formvalue != f:
                     program['settings'].addtoformstosearch(sense,f,formvalue)
@@ -6731,9 +6730,9 @@ class Segments(Senses):
                 elif value in ['NA']:
                     pass #don't make changes for NA checks
                 else:
-                    log.info(f"updateformtoannotations {check}={value},{formvalue}")
+                    # log.info(f"updateformtoannotations {check}={value},{formvalue}")
                     formvalue=self.rxdict.update(formvalue,check,value)
-                    log.info(f"updateformtoannotations {check}={value},{formvalue}")
+                    # log.info(f"updateformtoannotations {check}={value},{formvalue}")
         if not error:
             sense.textvaluebyftypelang(self.ftype,self.analang,formvalue)
         if write:
@@ -6854,7 +6853,6 @@ class Segments(Senses):
         w.waitdone()
         problems=[]
         while digits := self.default_glyphs():
-            # digits := [i for i in glyphs if i.isdigit()]:#str fn
             glyph=digits[0]
             log.info(f"working on {glyph=} of {digits=}")
             w.makewindow(glyph)
@@ -6864,13 +6862,10 @@ class Segments(Senses):
                 problems.append(glyph)
             elif not w.ok_done: #user exits without 'OK'
                 break
-            # glyphs=program['alphabet'].glyphdict()[program['params'].cvt()]
         w.destroy() #just this window, not parent
         self.deiconify()
         if digits or problems:
             log.error(f"User exited with work still to do: {digits=} {problems=}")
-        #     sysshutdown()
-        #     return
         return not bool(digits)
     def rename_macrogroup(self,x,y,updatestatus=False):
         for item in list(program['alphabet'].glyph_members()[x]):
@@ -10359,87 +10354,6 @@ class Sort(object):
             raise "This doesn't belong here yet!"# wrong: this should unsort!
             self.marksortgroup(item, category, nocheck=True) # that marking
         self.maybewrite()
-    # def verifyglyphs(self):
-    #     """verify group of items sorted into a glyph."""
-    #     def updatestatus(verified=False):
-    #         log.info(f"Updating ‘{glyph}’ status as {verified=}")
-    #         if verified:
-    #             program['alphabet'].mark_glyph_done(glyph,cvt=self.cvt)
-    #         else:
-    #             program['alphabet'].mark_glyph_not_done(glyph)
-    #         log.info(f"{program['alphabet'].glyphstoverify()=}")
-    #         program['alphabet'].save_settings()
-    #         self.maybewrite()
-    #     log.info("Running verifyglyphs!")
-    #     glyphs=list(program['alphabet'].glyphstoverify()) #needed for progress
-    #     self.glyph=glyph=program['alphabet'].glyph()
-    #     self.currentsortitems=items=program['alphabet'].glyph_members()[glyph]
-    #     if (n:=len(items)) == 1:
-    #         log.info(_(f"The letter ‘{glyph}’ only has {n} example; verified."))
-    #         updatestatus(True) #on coming *in* with one
-    #         return
-    #     self.getrunwindow(msg=_(f"preparing to verify the letter ‘{glyph}’"))
-    #     title=_(f"Verify {program['settings'].languagenames[self.analang]}")
-    #     if glyph.isdigit():
-    #         title+=f" letter group"
-    #     else:
-    #         title+=f" letter ‘{glyph}’"
-    #     titles=ui.Frame(self.runwindow.frame,
-    #                     column=1, row=0, columnspan=1, sticky='w')
-    #     ui.Label(titles, text=title, font='title', column=0, row=0, sticky='w')
-    #     if glyph in glyphs:
-    #         if len(glyphs)-1:
-    #             prog=(f"(of {len(glyphs)} remaining)")
-    #         else:
-    #             prog=(f"(last letter)")
-    #         ui.Label(titles,text=prog,anchor='w',padx=10,column=1,sticky='ew')
-    #     ui.Label(self.runwindow.frame,
-    #             image=self.cvt, #self.frame.theme.photo[self.macropageicon()],
-    #             text='',row=0,column=0,sticky='new',anchor='center')
-    #     oktext=_("These all should use the same letter")
-    #     if not glyph.isdigit():
-    #         oktext+=f" (currently ‘{glyph}’)"
-    #     checks={program['alphabet'].parse_verificationcode(i)['check']
-    #         for i in items}
-    #     instructions=_("Read this list aloud. Note where each "
-    #         f"was sorted ({', '.join(sorted(checks))})."
-    #         "\nClick on any with a different "
-    #         f"{program['params'].cvtname()} sound in that place.")
-    #     i=ui.Label(titles, text=instructions,
-    #             row=1, column=0, columnspan=2, sticky='wns')
-    #     ui.Label(self.runwindow.frame,
-    #             image=self.frame.theme.photo['verifyglyphs'],
-    #             text='', row=1,column=0,
-    #             # rowspan=3,
-    #             sticky='nws')
-    #     self.buttonframe=SortButtonFrame(self.runwindow.frame, self,
-    #                                     list(items),
-    #                                     macrosort=True,
-    #                                     remove_on_click=True, column=1,
-    #                                     row=1, sticky='new', columnspan=2)
-    #     self.verifycanary=ui.Frame(self.buttonframe.content,
-    #                             row=self.buttonframe.content.nrows(),
-    #                             sticky='ew') #Keep on own row
-    #     b=ui.Button(self.verifycanary, text=oktext,
-    #                     cmd=self.verifycanary.destroy,
-    #                     anchor='w',
-    #                     font='instructions',
-    #                     column=0, row=0, sticky='ew')
-    #     if self.runwindow.exitFlag.istrue():
-    #         return 1
-    #     self.runwindow.waitdone()
-    #     self.runwindow.deiconify() # not until here
-    #     self.runwindow.wait_window(self.verifycanary)
-    #     if self.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
-    #         return 1
-    #     log.debug("User selected ‘{}’, moving on.".format(oktext))
-    #     self.verifyselected(macrosort=True)
-        # if len(self.buttonframe.groupbuttonlist) > 1:
-        #     updatestatus(True)
-        # else:
-        #     updatestatus(False) #on *finishing* with one/none
-        # if not self.runwindow.exitFlag.istrue():
-        #     self.runwindow.resetframe()
     def verify(self,menu=False,macrosort=False):
         def updatestatus(verified=False):
             if macrosort:
