@@ -1740,7 +1740,7 @@ class StatusFrame(ui.Frame):
                             r=self.glyphscroll.content.nrows())
                             # r=len(self.glyphscroll.content.winfo_children()))
         l=ui.Label(f, text=glyph, font='read', width=3, c=0, sticky="EW")
-        fn=lambda x=glyph:self.task.dobuttonkwargs()['fn'](x)
+        fn=lambda x=glyph:self.task.makewindow(x)
         bf=SortGlyphGroupButtonFrame(f, self.task,
                                     group=glyph,
                                     on_select=fn,
@@ -3346,8 +3346,11 @@ class Settings(object):
         report(x,y)
     def reloadstatusdata(self):
         log.info("Refreshing all status settings from LIFT")
-        self.storesettingsfile()
+        self.storesettingsfile() #default, not status
+        program['db'].load_ps_profiles()
         d=program['db'].annotation_values_by_ps_profile()
+        # log.info(f"Found this LIFT file: {program['db'].filename}")
+        # log.info(f"Found these LIFT annotations: {d}")
         program['status'].clear_all_groups()
         #The above because the following only modifies current profiles & checks
         k={}
@@ -6248,6 +6251,36 @@ class Alphabet():
         d=self.distinguished_by_cvt()
         for j in [i for i in d if g in i]:
             d.remove(j)
+    def predistinguish(self,tuple_set):
+        """This is here to keep users from seeing trivial glyph distinction prompts.
+        Trivial here is defined as:
+            —all members of each of a set of glyphs have already 
+                been distinguished from all members of the other glyph, 
+                when they were compared as sort groups
+        This can only apply when all members are 'conflicting' groups (i.e., 
+            same conflict_code), as they are the only ones who have been 
+            compared as sort groups
+        Given that glyph membership cannot include more than one 'conflicting' 
+            group, the easiest criteria is to exclude those with more than 
+            one group, as these would necessarily contain groups which had not been 
+            previously compared. (if this is not the case, it is a problem; 
+            it should have been removed by remove_conflicting_items on sort) 
+        so we ask, for each glyph pairing presented:
+            Is there no more than one member for each?
+            Are each 'conflicting'?
+            Are each distinguished as sort groups?
+                (the last two in have_only_distinguished_items)
+        """
+        def nmembers(g):
+            return len(gm[g])
+        gm=self.glyph_members()
+        for t in tuple_set:
+            log.info(f"Working on {t} ({[i for i in map(nmembers,t)]};{max(map(nmembers,t))=})")
+            if max(map(nmembers,t)) <= 1 and self.have_only_distinguished_items(*t):
+                log.info(f"Distinguishing {gm[t[0]]=} and {gm[t[1]]=}")
+                self.distinguish(t)
+            else:
+                log.info(f"Not distinguishing {gm[t[0]]=} and {gm[t[1]]=}")
     def add_glyph_member(self,item,glyph):
         """This is sort into"""
         self.mark_glyph_not_done(glyph)
@@ -6300,6 +6333,8 @@ class Alphabet():
     def cvt_of_item(self,x):
         check=self.parse_verificationcode(x)['check']
         return program['params'].cvt_of_check(check)
+    def conflict_code(self,code):
+        return code.split('_')[:4]
     def verificationcode(self,**kwargs):
         ps=kwargs.get('ps',program['slices'].ps())
         profile=kwargs.get('profile',program['slices'].profile())
@@ -6365,14 +6400,26 @@ class Alphabet():
         log.info(f"presort_item moving {item} into ‘{glyph}’")
         if not glyph.isdigit() and not self.conflicting_items(item,glyph):
             self.mark_item_glyph(item,glyph)
+    def have_only_distinguished_items(self,x,y):
+        log.info(f"Running have_only_distinguished_items on {x} and {y}")
+        gm=self.glyph_members()
+        for i in gm[x]:
+            for j in gm[y]:
+                if (self.conflict_code(i) != self.conflict_code(j) or
+                            not program['status'].isdistinguished(
+                                    self.parse_verificationcode(j)['group'],
+                                    **self.parse_verificationcode(i))):
+                    log.info(f"Found undistinguished items {i} and {j}")
+                    return False
+        return True
     def conflicting_items(self,item,glyph):
         d=self.glyph_members()
         if glyph not in d:
             return [] #keep iterable
-        compare=item.split('_')[:4]
+        compare=self.conflict_code(item)
         r=list()
         for i in list(d[glyph]):
-            if i.split('_')[:4] == compare:
+            if self.conflict_code(i) == compare:
                 r.append(i)
         return r
     def remove_conflicting_items(self,item,glyph):
@@ -6634,6 +6681,12 @@ class Segments(Senses):
         Iterate across a few or many senses.
         Iterate also across ftypes, to catch them all...
         that would likely need more smarts for affix and root distinction."""
+        def maybe_add_polygraph(pg):
+            sc=program['params'].cvt()
+            scvalue=program['settings'].polygraphs[self.analang][sc][value]
+            if not scvalue:
+                scvalue=True
+                program['settings'].setupCVrxs() #costly; only when needed!
         formvalue=sense.textvaluebyftypelang(self.ftype,self.analang)
         if not formvalue:
             log.info("updateformtoannotations didn't return a form value for "
@@ -6643,6 +6696,7 @@ class Segments(Senses):
         annodict=sense.annotationvaluedictbyftypelang(self.ftype,self.analang)
         conflict_text=_(f"Not updating ‘{formvalue}’ (conflict in {annodict}.")
         error_nb=_(f"\nCheck the log for any further conflicts")
+        error=False
         if check: #just update to this annotation
             value=annodict[check]
             if value is None or value.isdigit(): #don't update to unnamed groups
@@ -6657,14 +6711,14 @@ class Segments(Senses):
                     log.error(conflict_text)
                 return
             elif value not in [None, 'NA']: #should I act on ''?
-                f=self.rxdict.update(formvalue,check,value)
-                sense.textvaluebyftypelang(self.ftype,self.analang,f)
+                formvalue=self.rxdict.update(formvalue,check,value)
+                # sense.textvaluebyftypelang(self.ftype,self.analang,f)
                 #This should update formstosearch:
                 if formvalue != f:
                     program['settings'].addtoformstosearch(sense,f,formvalue)
                 if len(value)>1:
-                    sc=program['params'].cvt()
-                    program['settings'].polygraphs[self.analang][sc][value]=True
+                    maybe_add_polygraph(value)
+                    
         else: #update to all annotations
             for check,value in annodict.items():
                 if self.check_with_conflicting_value(annodict,check):
@@ -6673,9 +6727,15 @@ class Segments(Senses):
                         self.updateconflictwarned=True
                     else:
                         log.error(conflict_text)
+                    error=True
+                elif value in ['NA']:
+                    pass #don't make changes for NA checks
                 else:
-                    f=self.rxdict.update(formvalue,check,value)
-                    sense.textvaluebyftypelang(self.analang,f)
+                    log.info(f"updateformtoannotations {check}={value},{formvalue}")
+                    formvalue=self.rxdict.update(formvalue,check,value)
+                    log.info(f"updateformtoannotations {check}={value},{formvalue}")
+        if not error:
+            sense.textvaluebyftypelang(self.ftype,self.analang,formvalue)
         if write:
             self.maybewrite()
     def setitemgroup(self,item,check,group,**kwargs):
@@ -6769,6 +6829,10 @@ class Segments(Senses):
         except UnboundLocalError: #if u.start() never happened...
             pass
         log.info(f"update_annotations_by_glyph done with ‘{gm[glyph]}’ to ‘{glyph}’")
+    def default_glyphs(self):
+        return [i for i in 
+                program['alphabet'].glyphdict()[program['params'].cvt()]
+                if i.isdigit()]
     def name_new_glyphs(self):
         """Everything referenced here needs to refer to macrogroups ONLY.
         Users should never be changing the name of an individual sort group.
@@ -6776,7 +6840,8 @@ class Segments(Senses):
         some name, and is automatically enforced.
         Changes requested by the user are handled in TranscribeC/V
         """
-        glyphs=program['alphabet'].glyphdict()[program['params'].cvt()]
+        glyphs=self.default_glyphs()
+        program['alphabet'].glyphdict()[program['params'].cvt()]
         if program['params'].cvt() == 'C':
             transcribe=TranscribeC
         elif program['params'].cvt() == 'V':
@@ -6788,23 +6853,25 @@ class Segments(Senses):
         self.withdraw()
         w.waitdone()
         problems=[]
-        while digits := [i for i in glyphs if i.isdigit()]:#str fn
+        while digits := self.default_glyphs():
+            # digits := [i for i in glyphs if i.isdigit()]:#str fn
             glyph=digits[0]
             log.info(f"working on {glyph=} of {digits=}")
             w.makewindow(glyph)
             if w.window_failed:
+                #This removes verification, thus to do status:
                 program['alphabet'].mark_glyph_not_done(glyph)
                 problems.append(glyph)
             elif not w.ok_done: #user exits without 'OK'
                 break
-            glyphs=program['alphabet'].glyphdict()[program['params'].cvt()]
+            # glyphs=program['alphabet'].glyphdict()[program['params'].cvt()]
         w.destroy() #just this window, not parent
         self.deiconify()
         if digits or problems:
-            log.error(f"User exited, or other problem: {digits=} {problems=}")
-            sysshutdown()
-            return 1
-        return 0
+            log.error(f"User exited with work still to do: {digits=} {problems=}")
+        #     sysshutdown()
+        #     return
+        return not bool(digits)
     def rename_macrogroup(self,x,y,updatestatus=False):
         for item in list(program['alphabet'].glyph_members()[x]):
             kwargs=program['alphabet'].parse_verificationcode(item)
@@ -9669,6 +9736,7 @@ class Sort(object):
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
     def removeitemfromgroup(self,item,**kwargs):
+        #leave these in kwargs for use below:
         check=kwargs.get('check',program['params'].check())
         group=kwargs.get('group',program['status'].group())
         write=kwargs.pop('write',True) #avoid duplicate
@@ -9693,6 +9761,7 @@ class Sort(object):
         profile=kwargs.get('profile',program['slices'].profile())
         item.rmverificationvalue(profile,self.ftype,rm)
         program['status'].last('sort',update=True)
+        program['examples'].clear_cache(**kwargs) #anything should still be in kwargs
         if write:
             self.maybewrite()
         if sorting:
@@ -9838,7 +9907,7 @@ class Sort(object):
             self.maybewrite() #Not iterated over.
         # if kwargs.get('thread_name'):
         #     log.info(f"Finishing marksortgroup for {kwargs.get('thread_name')}")
-        log.info(f"marksortgroup ready to untrack {kwargs.get('thread_name')}")
+        # log.info(f"marksortgroup ready to untrack {kwargs.get('thread_name')}")
         if kwargs.get('thread_name'):
             self.untrack_thread(kwargs.get('thread_name'))
         if not nocheck:
@@ -9875,10 +9944,10 @@ class Sort(object):
         self.group=program['status'].group()
         program['status'].undistinguish_any_with(g=self.group) #should be correct at this point
         self.maybesort(firstrun=True)
-    def redo_joinglyphs(self):
-        w=self.getglyph(purpose='join')
-        self.wait_window(w)
-        self.group=program['alphabet'].glyph()
+    def redo_joinglyphs(self,glyph=False):
+        if not glyph:
+            self.wait_window(self.getglyph(purpose='join'))
+        self.group=program['alphabet'].glyph(glyph)
         program['alphabet'].undistinguish_any_with(g=self.group) #should be correct at this point
         self.maybesort(firstrun=True)
     def maybesort(self,firstrun=False):
@@ -9992,6 +10061,7 @@ class Sort(object):
             return
         log.info("Maybe Joinglyphs")
         self.did['joinglyphs']=False #runs multiple times, so clear here
+        program['alphabet'].predistinguish(self.to_distinguish(macrosort=True))
         if self.to_distinguish(macrosort=True):
             log.info("Running Joinglyphs")
             warnorcontinue(self.join(macrosort=True))
@@ -10011,8 +10081,9 @@ class Sort(object):
         """The first time user has been asked what glyph to use for a group;
         it will allow limited switching of group names, e.g., if 1 should be
         <b>, which already exists: b>2,1>b,2>? Do other changes later."""
-        if warnorcontinue(self.name_new_glyphs()): #iterative: all int(); forced continue or quit.
-            return
+        if self.default_glyphs():
+            if warnorcontinue(self.name_new_glyphs()): #iterative: all int(); forced continue or quit.
+                return
         """all int() groups and macrogroups are gone at this point!"""
         self.update_annotations_to_glyphs() #Iterates over all glyphs
         # The above aligns all annotations and verifications
@@ -10166,7 +10237,7 @@ class Sort(object):
             program['alphabet'].mark_item_glyph(item, category)
         else:
             self.marksortgroup(item, category, nocheck=True) # that marking worked
-        if category not in self.buttonframe.groupvars:
+        if category not in list(self.buttonframe.groupvars)+['NA']:
             self.buttonframe.addgroupbutton(category)
         self.maybewrite()
     def sort(self,macrosort=False):
@@ -10214,7 +10285,7 @@ class Sort(object):
         else:
             current_list_fn=self.itemstosort
             self.first_sort=list(current_list_fn()) #current list
-            groups=self.groups(wsorted=True)
+            groups=[i for i in self.groups(wsorted=True) if i != 'NA']
             buttonclass=SortGroupButtonFrame
             img_mod=''
             instr_mod=_(f" (by {context})")
@@ -10288,87 +10359,87 @@ class Sort(object):
             raise "This doesn't belong here yet!"# wrong: this should unsort!
             self.marksortgroup(item, category, nocheck=True) # that marking
         self.maybewrite()
-    def verifyglyphs(self):
-        """verify group of items sorted into a glyph."""
-        def updatestatus(verified=False):
-            log.info(f"Updating ‘{glyph}’ status as {verified=}")
-            if verified:
-                program['alphabet'].mark_glyph_done(glyph,cvt=self.cvt)
-            else:
-                program['alphabet'].mark_glyph_not_done(glyph)
-            log.info(f"{program['alphabet'].glyphstoverify()=}")
-            program['alphabet'].save_settings()
-            self.maybewrite()
-        log.info("Running verifyglyphs!")
-        glyphs=list(program['alphabet'].glyphstoverify()) #needed for progress
-        self.glyph=glyph=program['alphabet'].glyph()
-        self.currentsortitems=items=program['alphabet'].glyph_members()[glyph]
-        if (n:=len(items)) == 1:
-            log.info(_(f"The letter ‘{glyph}’ only has {n} example; verified."))
-            updatestatus(True) #on coming *in* with one
-            return
-        self.getrunwindow(msg=_(f"preparing to verify the letter ‘{glyph}’"))
-        title=_(f"Verify {program['settings'].languagenames[self.analang]}")
-        if glyph.isdigit():
-            title+=f" letter group"
-        else:
-            title+=f" letter ‘{glyph}’"
-        titles=ui.Frame(self.runwindow.frame,
-                        column=1, row=0, columnspan=1, sticky='w')
-        ui.Label(titles, text=title, font='title', column=0, row=0, sticky='w')
-        if glyph in glyphs:
-            if len(glyphs)-1:
-                prog=(f"(of {len(glyphs)} remaining)")
-            else:
-                prog=(f"(last letter)")
-            ui.Label(titles,text=prog,anchor='w',padx=10,column=1,sticky='ew')
-        ui.Label(self.runwindow.frame,
-                image=self.cvt, #self.frame.theme.photo[self.macropageicon()],
-                text='',row=0,column=0,sticky='new',anchor='center')
-        oktext=_("These all should use the same letter")
-        if not glyph.isdigit():
-            oktext+=f" (currently ‘{glyph}’)"
-        checks={program['alphabet'].parse_verificationcode(i)['check']
-            for i in items}
-        instructions=_("Read this list aloud. Note where each "
-            f"was sorted ({', '.join(sorted(checks))})."
-            "\nClick on any with a different "
-            f"{program['params'].cvtname()} sound in that place.")
-        i=ui.Label(titles, text=instructions,
-                row=1, column=0, columnspan=2, sticky='wns')
-        ui.Label(self.runwindow.frame,
-                image=self.frame.theme.photo['verifyglyphs'],
-                text='', row=1,column=0,
-                # rowspan=3,
-                sticky='nws')
-        self.buttonframe=SortButtonFrame(self.runwindow.frame, self,
-                                        list(items),
-                                        macrosort=True,
-                                        remove_on_click=True, column=1,
-                                        row=1, sticky='new', columnspan=2)
-        self.verifycanary=ui.Frame(self.buttonframe.content,
-                                row=self.buttonframe.content.nrows(),
-                                sticky='ew') #Keep on own row
-        b=ui.Button(self.verifycanary, text=oktext,
-                        cmd=self.verifycanary.destroy,
-                        anchor='w',
-                        font='instructions',
-                        column=0, row=0, sticky='ew')
-        if self.runwindow.exitFlag.istrue():
-            return 1
-        self.runwindow.waitdone()
-        self.runwindow.deiconify() # not until here
-        self.runwindow.wait_window(self.verifycanary)
-        if self.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
-            return 1
-        log.debug("User selected ‘{}’, moving on.".format(oktext))
-        self.verifyselected(macrosort=True)
-        if len(self.buttonframe.groupbuttonlist) > 1:
-            updatestatus(True)
-        else:
-            updatestatus(False) #on *finishing* with one/none
-        if not self.runwindow.exitFlag.istrue():
-            self.runwindow.resetframe()
+    # def verifyglyphs(self):
+    #     """verify group of items sorted into a glyph."""
+    #     def updatestatus(verified=False):
+    #         log.info(f"Updating ‘{glyph}’ status as {verified=}")
+    #         if verified:
+    #             program['alphabet'].mark_glyph_done(glyph,cvt=self.cvt)
+    #         else:
+    #             program['alphabet'].mark_glyph_not_done(glyph)
+    #         log.info(f"{program['alphabet'].glyphstoverify()=}")
+    #         program['alphabet'].save_settings()
+    #         self.maybewrite()
+    #     log.info("Running verifyglyphs!")
+    #     glyphs=list(program['alphabet'].glyphstoverify()) #needed for progress
+    #     self.glyph=glyph=program['alphabet'].glyph()
+    #     self.currentsortitems=items=program['alphabet'].glyph_members()[glyph]
+    #     if (n:=len(items)) == 1:
+    #         log.info(_(f"The letter ‘{glyph}’ only has {n} example; verified."))
+    #         updatestatus(True) #on coming *in* with one
+    #         return
+    #     self.getrunwindow(msg=_(f"preparing to verify the letter ‘{glyph}’"))
+    #     title=_(f"Verify {program['settings'].languagenames[self.analang]}")
+    #     if glyph.isdigit():
+    #         title+=f" letter group"
+    #     else:
+    #         title+=f" letter ‘{glyph}’"
+    #     titles=ui.Frame(self.runwindow.frame,
+    #                     column=1, row=0, columnspan=1, sticky='w')
+    #     ui.Label(titles, text=title, font='title', column=0, row=0, sticky='w')
+    #     if glyph in glyphs:
+    #         if len(glyphs)-1:
+    #             prog=(f"(of {len(glyphs)} remaining)")
+    #         else:
+    #             prog=(f"(last letter)")
+    #         ui.Label(titles,text=prog,anchor='w',padx=10,column=1,sticky='ew')
+    #     ui.Label(self.runwindow.frame,
+    #             image=self.cvt, #self.frame.theme.photo[self.macropageicon()],
+    #             text='',row=0,column=0,sticky='new',anchor='center')
+    #     oktext=_("These all should use the same letter")
+    #     if not glyph.isdigit():
+    #         oktext+=f" (currently ‘{glyph}’)"
+    #     checks={program['alphabet'].parse_verificationcode(i)['check']
+    #         for i in items}
+    #     instructions=_("Read this list aloud. Note where each "
+    #         f"was sorted ({', '.join(sorted(checks))})."
+    #         "\nClick on any with a different "
+    #         f"{program['params'].cvtname()} sound in that place.")
+    #     i=ui.Label(titles, text=instructions,
+    #             row=1, column=0, columnspan=2, sticky='wns')
+    #     ui.Label(self.runwindow.frame,
+    #             image=self.frame.theme.photo['verifyglyphs'],
+    #             text='', row=1,column=0,
+    #             # rowspan=3,
+    #             sticky='nws')
+    #     self.buttonframe=SortButtonFrame(self.runwindow.frame, self,
+    #                                     list(items),
+    #                                     macrosort=True,
+    #                                     remove_on_click=True, column=1,
+    #                                     row=1, sticky='new', columnspan=2)
+    #     self.verifycanary=ui.Frame(self.buttonframe.content,
+    #                             row=self.buttonframe.content.nrows(),
+    #                             sticky='ew') #Keep on own row
+    #     b=ui.Button(self.verifycanary, text=oktext,
+    #                     cmd=self.verifycanary.destroy,
+    #                     anchor='w',
+    #                     font='instructions',
+    #                     column=0, row=0, sticky='ew')
+    #     if self.runwindow.exitFlag.istrue():
+    #         return 1
+    #     self.runwindow.waitdone()
+    #     self.runwindow.deiconify() # not until here
+    #     self.runwindow.wait_window(self.verifycanary)
+    #     if self.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
+    #         return 1
+    #     log.debug("User selected ‘{}’, moving on.".format(oktext))
+    #     self.verifyselected(macrosort=True)
+        # if len(self.buttonframe.groupbuttonlist) > 1:
+        #     updatestatus(True)
+        # else:
+        #     updatestatus(False) #on *finishing* with one/none
+        # if not self.runwindow.exitFlag.istrue():
+        #     self.runwindow.resetframe()
     def verify(self,menu=False,macrosort=False):
         def updatestatus(verified=False):
             if macrosort:
@@ -10425,16 +10496,17 @@ class Sort(object):
             groups=self.groups(toverify=True) #needed for progress
             self.group=group=program['status'].group()
             self.currentsortitems=items=program['examples'].sensesinslicegroup(group,check)
-            title+=f" for ‘{check}’ ({program['params'].cvcheckname()})"
             if group == 'NA':
                 oktext=_(f'These all DO NOT have {checkname}')
-                instructions=_(f"These words seem to NOT have ‘{checkname}’. Read "
-                                "this list aloud, and click on any that DOES have "
-                                f"‘{checkname}’.")
+                #These words seem to NOT have ‘{checkname}’. 
+                instructions=_(f"Read this list aloud, and click on any that "
+                            f"DOES have ‘{checkname}’.")
+                title+=f" for ‘{check.replace('=','≠')}’ (NOT {program['params'].cvcheckname()})"
             else:
                 oktext=_(f'These all have the same {checkname}')
                 instructions=_("Read this list aloud. Click on any with a "
                             f"different {checkname} sound.")
+                title+=f" for ‘{check}’ ({program['params'].cvcheckname()})"
             if group in program['status'].verified():
                 log.info("‘{}’ already verified, continuing.".format(group))
                 return 1
@@ -10490,7 +10562,8 @@ class Sort(object):
         i=ui.Label(titles, text=instructions,
                 row=1, column=0, columnspan=2, sticky='wns')
         i.wrap()
-        ui.Label(self.runwindow.frame, image=f'verify{img_mod}',
+        if group != 'NA':
+            ui.Label(self.runwindow.frame, image=f'verify{img_mod}',
                         text='', row=1,column=0,
                         sticky='nws')
         """Scroll after instructions"""
@@ -10499,6 +10572,7 @@ class Sort(object):
              self.buttonframe=SortButtonFrame(self.runwindow.frame, self,
                                         list(items),
                                         macrosort=True,
+                                        show_check=True,
                                         remove_on_click=True, column=1,
                                         row=1, sticky='new', columnspan=2)
         else:
@@ -10542,8 +10616,6 @@ class Sort(object):
                 updatestatus(True)
         self.runwindow.on_quit()
         return 1
-        # if not self.runwindow.exitFlag.istrue():
-        #     self.runwindow.resetframe()
     def verifybutton(self,parent,sense,row,column=0,label=False,**kwargs):
         """This should maybe take examples as input, rather than senses"""
         # This must run one subcheck at a time. If the subcheck changes,
@@ -10615,8 +10687,13 @@ class Sort(object):
                                                 )-d-{(y,x) for x,y in d}
     def join(self,macrosort=False):
         def move_on_cleanly():
-            for w in pair_frame.winfo_children():
-                w.grid_remove() #don't destroy buttons with canary
+            # self.runwindow.withdraw()
+            # self.last_pair=pair_frame.winfo_children()
+            # self.last_pair=self.current_pair
+            for w in self.current_pair:
+                buttons[w].grid_remove() #don't destroy buttons with canary
+            # for w in pair_frame.winfo_children():
+            #     w.grid_remove() #don't destroy buttons with canary
             self.canary.destroy()
         def join_pair():
             lpr=sorted(self.current_pair,key=str) #put a number first (to remove)
@@ -10713,21 +10790,28 @@ class Sort(object):
             self.runwindow.waitdone()
         buttons={}
         pair_frame=ui.Frame(self.runwindow.frame, column=1, row=1)
+        # self.last_pair=[]
         while pairs:
             self.progress.current(1 -len(pairs)/npairs)
             self.current_pair=pairs[0]
             log.info(f"Working on {self.current_pair} {len(pairs)} remaining "
                     f"of {npairs}")
+            r=0
             for group in self.current_pair:
                 if group in buttons:
-                    buttons[group].grid(row=pair_frame.nrows())
+                    buttons[group].grid(row=r)
                 else:
                     buttons[group]=buttonclass(pair_frame, self,
                             group=group,
                             showtonegroup=True,
                             label=True,
-                            row=pair_frame.nrows(), sticky='w')
+                            row=r, sticky='w')
+                r=1
+            # for p in self.last_pair:
+            #     buttons[p].grid_remove() #after creation; bounce less
+            # self.last_pair=self.current_pair
             self.canary=ui.Label(pair_frame,text='',col=1)
+            # self.runwindow.deiconify()
             pair_frame.wait_window(self.canary)
             if self.did[f'join{img_mod}']:
                 return 1
@@ -12204,8 +12288,11 @@ class SortT(Sort,Tone,TaskDressing):
         self.guidssorted.remove(guid)
     """Doing stuff"""
 class Transcribe(Sound,Sort,TaskDressing):
-    def updateerror(self,event=None):
+    def updateerror(self):
         self.errorlabel['text'] = ''
+    def updateform(self,event=None):
+        self.updateerror()
+        self.set_ok_w_form()
     def refresh_status_buttons(self,*args):
         for i in [args]:
             if (i in self.status.glyphbuttons 
@@ -12418,10 +12505,10 @@ class Transcribe(Sound,Sort,TaskDressing):
                                     )
             self.compframe.bf2.grid(row=0, column=0, sticky='w')
             self.compframe.b2=ui.Button(self.compframe.compframeb,
-                                        text=_("Switch with this Group"),
+                                        text=self.switch_text,
                                         cmd=self.switchgroups,
                                         row=0, column=1, sticky='w')
-            self.compframe.b2tt=ui.ToolTip(self.compframe.b2, self.switch_text)
+            self.compframe.b2tt=ui.ToolTip(self.compframe.b2, self.switch_tt)
             # self.maybeswitchmenu=ui.ContextMenu(self.compframe)
             # self.maybeswitchmenu.menuitem(_("Switch to this group"),
             #                                 self.switchgroups)
@@ -12452,6 +12539,18 @@ class TranscribeS(Transcribe,Segments):
         self.submitform()
         program['alphabet'].save_settings()
         self.donewpyaudio()
+    def go_back(self):
+        log.info("Transcribe done for now (going back)")
+        self.runwindow.on_quit()
+        self.donewpyaudio()
+        self.parent.redo_joinglyphs(self.group)
+    def set_ok_w_form(self):
+        form=self.transcriber.formfield.get()
+        self.oktext.set(f"OK: use ‘{form}’ for this sound")
+        if form:
+            self.ok_button['state'] = 'normal'
+        else:
+            self.ok_button['state'] = 'disabled'
     def makewindow(self, glyph=None, event=None):
         self.ok_done=False
         if glyph:
@@ -12505,18 +12604,18 @@ class TranscribeS(Transcribe,Segments):
                                 chars=self.glyphspossible,
                                 row=0,column=0,sticky=''
                                 )
-        self.transcriber.formfield.bind('<KeyRelease>', self.updateerror) #apply function after key
+        self.transcriber.formfield.bind('<KeyRelease>', self.updateform) #apply function after key
         """to here"""
         infoframe=ui.Frame(inputfeedbackframe,
                             row=0,column=1,sticky=''
                             )
         """Make this a pad of buttons, rather than a label, so users can
         go directly where they want to be"""
-        g=nn(self.otherglyphs,perline=len(self.otherglyphs)//5)
-        log.info(f"{self.groups=}, {self.otherglyphs=}; {g=}")
+        g=nn(self.otherglyphs,perline=len(self.otherglyphs)//3)
+        # log.info(f"{self.groups=}, {self.otherglyphs=}; {g=}")
         glyphslabel=ui.Label(infoframe,
                             text=f"Don't use Other Groups:\n{g}",
-                            row=0,column=1,
+                            column=1,
                             sticky='new',
                             padx=padx,
                             rowspan=2
@@ -12526,19 +12625,34 @@ class TranscribeS(Transcribe,Segments):
                             wraplength=int(self.frame.winfo_screenwidth()/3),
                             row=2,column=1,sticky='nsew'
                             )
-        self.oktext=_("OK")
-        ok_button=ui.Button(self.runwindow.frame, text=self.oktext,
-                                row=3,
-                                column=0,
-                                sticky='nsew',
-                                padx=padx,
-                                pady=pady,
-                                command=self.done
-        )
+        ui.Button(infoframe, #don't make this too wide
+                    text=_("Go back and join \nwith one of\n← these groups"),
+                    command=self.go_back,
+                    column=2,
+                    rowspan=2,
+                    sticky='nsew'
+                    )
         examplesframe=ui.Frame(self.runwindow.frame,
                                 row=4,column=0,sticky='',
                                 # border=1
                                 )
+        # self.oktext=_("OK")
+        self.oktext=ui.StringVar()
+        # self.transcriber.formfield
+        self.ok_button=ui.Button(examplesframe, 
+                                # text=self.oktext,
+                                textvariable=self.oktext,
+                                font='title',
+                                row=0,
+                                column=1,
+                                sticky='ns',
+                                padx=padx,
+                                ipadx=30,
+                                ipady=20,
+                                pady=20,
+                                command=self.done
+        )
+        self.updateform() #updates button state
         cmd=lambda x=self.group:self.transcriber.set_value(x)
         b=SortGlyphGroupButtonFrame(examplesframe, self,
                                 group=self.group,
@@ -12557,7 +12671,8 @@ class TranscribeS(Transcribe,Segments):
         self.compframe=ui.Frame(examplesframe,
                     highlightthickness=10,
                     highlightbackground=self.frame.theme.white,
-                    row=0,column=1,sticky='e'
+                    pady=20, row=1, column=0, sticky='',
+                    columnspan=2
                     ) #no hlfg here
         t=_('Compare with another group')
         fn=self.setgroup_comparison
@@ -12574,10 +12689,11 @@ class TranscribeS(Transcribe,Segments):
         """Store these variables above, finish with (destroying window with
         local variables):"""
     def __init__(self, parent):
+        self.switch_text=_("Switch letters with this group")
+        self.switch_tt=_("This switches letters for the two groups, and "
+                            "updates each of them")
         Transcribe.__init__(self,parent)
         Segments.__init__(self,parent)
-        self.switch_text=_("This switches letters for the two groups, and "
-                            "updates each of them")
 class TranscribeV(TranscribeS):
     def tasktitle(self):
         return _("Vowel Letters")
@@ -12673,6 +12789,8 @@ class TranscribeT(Transcribe,Tone):
         log.info("Transcribe done")
         self.submitform()
         self.donewpyaudio()
+    def set_ok_w_form(self):
+        pass #maybe use some day?
     def makewindow(self, group=None, event=None):
         if group:
             self.group=program['status'].group(group)
@@ -12820,11 +12938,12 @@ class TranscribeT(Transcribe,Tone):
         """Store these variables above, finish with (destroying window with
         local variables):"""
     def __init__(self, parent): #frame, filename=None
+        self.switch_text=_("Switch transcriptions with this group")
+        self.switch_tt=_("This doesn't save the curent group")
         Tone.__init__(self)
         self.glyphspossible=None
         Transcribe.__init__(self,parent)
         program['params'].cvt('T')
-        self.switch_text=_("This doesn't save the curent group")
 class JoinUFgroups(Tone,TaskDressing):
     """docstring for JoinUFgroups."""
     def tasktitle(self):
@@ -13589,7 +13708,12 @@ class ExampleDict(dict):
                                                         ) == str(group) #result str
                     ]
         return nodes
+    def clear_cache(self,**kwargs):
+        code=program['alphabet'].verificationcode(**kwargs)
+        if code in self.nodes_by_code:
+            del self.nodes_by_code[code]
     def getexample(self,group,**kwargs):
+        # verificationcode fills in current values where not specified:
         code=program['alphabet'].verificationcode(**{**kwargs,'group':group})
         if code in self.nodes_by_code:#don't keep rerunning this on a given boot
             nodes=self.nodes_by_code[code]
@@ -13652,7 +13776,9 @@ class SortButtonFrame(ui.ScrollingFrame):
         from, after one for each tone group in that location/ps/profile in the
         database. It provides one for the user to indicate that the word doesn't
         belong in any of those (new group), and one to for the user to
-        indicate that the word/frame combo doesn't work (skip)."""
+        indicate that the word/frame combo doesn't work (skip).
+        This happens only on init; it doesn't need to respond to changing 
+        groups."""
         def firstok():
             vardict['ok'].set(True)
             remove(okb) #use this button exactly once
@@ -13676,14 +13802,18 @@ class SortButtonFrame(ui.ScrollingFrame):
                         relief='flat',
                         font='instructions',
                         column=0, row=0, sticky='ew')
-        firstOK=_("This word is OK in this frame")
+        if self.cvt=='T':
+            firstOK=_("This word fits in this frame")
+        else:
+            name=program['params'].cvcheckname(self.check)
+            firstOK=_(f"This word has {name}")
         newgroup=_("Other")
         skiptext=_("Skip this item")
         if '=' in self.check:
             skiptext+=" ({})".format(self.check.replace('=','≠'))
         """This should just add a button, not reload the frame"""
         bf1=ui.Frame(parent, border=True, row=parent.nrows(), sticky='w')
-        if not program['status'].groups(wsorted=True):
+        if not self.groups:
             # log.info("Making None sorted yet button")
             vardict['ok']=ui.BooleanVar()
             okb=ui.Button(bf1, text=firstOK,
@@ -13727,10 +13857,11 @@ class SortButtonFrame(ui.ScrollingFrame):
             frame_class=SortGroupButtonFrame #this takes item code or sort group
         if self.macrosort and self.remove_on_click:
             kwargs=program['alphabet'].parse_verificationcode(group)
-        b=frame_class(self.groupbuttons, self,
+        b=frame_class(self.groupbuttons, self.task,
                         showtonegroup=True,
                         alwaysrefreshable=True,
                         remove_on_click=self.remove_on_click,
+                        show_check=self.show_check,
                         row=r,
                         column=c,
                         sticky='w',
@@ -13755,12 +13886,15 @@ class SortButtonFrame(ui.ScrollingFrame):
                 if self.groupvars[k].get() #only those marked True
                 ]
     def set_canary(self,canary):
-        for b in self.groupbuttonlist:
+        for b in self.groupbuttons.winfo_children():
+            # self.groupbuttonlist: #might be necessary
             b.setcanary(canary)
         self.sortitem=canary    
     def __init__(self, parent, task, groups, *args, **kwargs):
         self.macrosort=kwargs.pop('macrosort',False)
         self.remove_on_click=kwargs.pop('remove_on_click',False)
+        self.show_check=kwargs.pop('show_check',False)
+        self.task=task
         self.groups=groups
         super(SortButtonFrame, self).__init__(parent, *args, **kwargs)
         """Children of self.runwindow.frame.scroll.content"""
@@ -13772,11 +13906,12 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.groupvars={}
         self.groupbuttonlist=list()
         # entryview=ui.Frame(self.runwindow.frame)
-        """We need a few things from the task (which are needed still?)"""
-        self.task=program['status'].task()
+        # """We need a few things from the task (which are needed still?)"""
+        # self.task=program['status'].task()
         """These two methods each take an item and a category, into which the
         item is sorted. This should be generalizable."""
         self.check=program['params'].check()
+        self.cvt=program['params'].cvt()
         self.maybewrite=program['taskchooser'].maybewrite
         waiting=task
         if self.macrosort and not self.remove_on_click:
@@ -13809,7 +13944,8 @@ class _GroupButtonFrame(object):
                         'label','playable','unsortable',
                         'alwaysrefreshable','wsoundfile',
                         'showtonegroup', 'remove_on_click',
-                        'goback','all_for_cvt', 'on_select'
+                        'goback','all_for_cvt', 'on_select',
+                        'show_check'
                         ]
     defaults={'sticky':'',
                 'rowspan': 1,
@@ -13862,16 +13998,16 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         self.again()
         self.kwargs['goback']=False #don't keep going on next
     def remove(self):
-        self.task.groupbuttonlist.remove(self)
+        # self.task.groupbuttonlist.remove(self)
         self.destroy() # will this keep the variable around, if stored elsewhere?
-        if len(self.task.groupbuttonlist) == 1: #When removing one of two
+        if len(self.parent.winfo_children()) == 1: #When removing one of two
             # for now, let''s leave the other alone; keep glyph names
             # which have already been decided.
             # self.task.groupbuttonlist[0].selectnremove() #remove the other, too
             # log.info(f"{self=} ({type(self)})")
             # log.info(f"{self.task=} ({type(self.task)})")
             # log.info(f"{self.task.task=} ({type(self.task.task)})")
-            self.task.task.verifycanary.destroy()
+            self.task.verifycanary.destroy()
     def selectnremove(self):
         self.select()
         self.remove()
@@ -15083,11 +15219,13 @@ class StatusDict(dict):
     def store(self):
         """This will just store to file; reading will come from check."""
         log.info("Saving status dict to file")
+        program['settings'].storesettingsfile('status')
+        return
         config=ConfigParser()
-        # config.read(self._filename,encoding='utf-8')
-        # if config != self:
-        #     log.info("config: {}".format(config.keys()))
-        #     log.info("self: {}".format(self.keys()))
+        config.read(self._filename,encoding='utf-8')
+        if config != self:
+            log.info("config: {}".format(config.keys()))
+            log.info("self: {}".format(self.keys()))
         for k in self:
             config[k]=indenteddict(self[k]) #getattr(o,s)
         with open(self._filename, 'w', encoding='utf-8') as file:
@@ -15351,6 +15489,11 @@ class StatusDict(dict):
             log.info(f"verified replacing {sn['done']} with {g} for {kwargs}")
             self._verified=sn['done']=g
         return self._verified
+    def isdistinguished(self,other_group,**kwargs):
+        g=kwargs.get('group') 
+        for t in itertools.permutations((g,other_group)):
+            if t in self.distinguished(**kwargs):
+                return True
     def distinguished(self,**kwargs):
         sn=self.node(**kwargs)
         if 'distinguished' not in sn or sn['distinguished'] == {}:

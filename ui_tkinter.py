@@ -1982,8 +1982,8 @@ class ScrollingFrame(Frame):
     def _on_mousewheeldown(self, event):
         self.canvas.yview_scroll(-1,"units")
     def update(self):
-        self._configure_canvas()
-        # self._configure_interior()
+        # self._configure_canvas()
+        self._configure_interior()
     def _configure_interior(self, event=None):
         log.log(4,"_configure_interior, on content change")
         self.update_idletasks()

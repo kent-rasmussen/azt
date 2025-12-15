@@ -259,16 +259,10 @@ class OrderAlphabet(ui.Window):
     def chart_config(self):
         self.chart=ui.ScrollingFrame(self.frame,r=1,c=1,ipadx=20,ipady=20)
         self.configFrame=ui.Frame(self.outsideframe, r=1, c=2, sticky='n')
-        # self.config_buttons['title']=ui.Button(self.configFrame,
-        #                             text=_("Change Title"),
-        #                             command=self.edit_title,
-        #                             r=self.configFrame.grid_size()[1], c=0)
-        # colsrow=
         column_config=ui.Frame(self.configFrame,
                                 r=self.configFrame.grid_size()[1])
         self.config_buttons['coll']=ui.Label(column_config,
                                         text=_("Columns"),c=1)
-        # for text,choice in [(_("More Columns"),1),(_("Fewer Columns"),-1)]:
         for text,choice in [('+',1),('-',-1)]:
             self.config_buttons['col'+text]=ui.Button(column_config,
                                         text=text, choice=choice,
