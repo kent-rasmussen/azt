@@ -132,11 +132,6 @@ class Transcriber(ui.Frame):
                 columnspan=int(ncols/2)
                 column=columnspan+1
                 row=1
-            elif char == '∅':
-                text=_('no segments')
-                columnspan=ncols
-                column=0
-                row=nrows+2
             elif char == '':
                 text=_('clear entry')
                 column=0
