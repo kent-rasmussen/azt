@@ -2612,6 +2612,7 @@ def testapp(program):
                 textvariable=var,
                 render=True,
                 row=2)#len(sbf1.content.winfo_children()))
+    Label(test_frame,image='transparent',column=0,row=0)
     print_vars()
     r.mainloop()
 def testappX(program):
