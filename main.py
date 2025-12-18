@@ -260,6 +260,7 @@ class LiftChooser(ui.Window,HasMenus):
                                         text='<= '+_("Use this code"),
                                         command=self._new_w.destroy,
                                         font='readbig', padx=20,
+                                        state='disabled',
                                         **{**defaults,'column':1}
                                     )
         self.entryframe=ui.Frame(self._new_w.frame, row=2, **defaults)
@@ -501,7 +502,8 @@ class LiftChooser(ui.Window,HasMenus):
         log.info("Beginning Copy of stock to new LIFT file.")
         self.cawldb=loadCAWL()
         self.stripcawldb()
-        self.cawldb.getentries()
+        self.cawldb.analang=self.analang
+        self.cawldb.getentries() #this needs analang
         self.cawldb.getsenses()
         self.fillcawldbimages()
         self.copytonewfile(newfile)
