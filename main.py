@@ -15875,15 +15875,11 @@ class ErrorNotice(ui.Window):
         self.title = title
         self.text = text
         l=ui.Label(self.frame, text=text,
+                    image=image,
+                    compound='left',
                     row=0, column=1,
                     columnspan=2,
                     ipadx=25)
-        if image:
-            if isinstance(image, ui.Image):
-                l['image']=image.scaled
-            elif isinstance(image,str):
-                l['image']=self.theme.photo[image]
-            l['compound']='left'
         l.wrap()
         if button and type(button) is tuple:
             b=ui.Button(self.frame, text=button[0],
