@@ -2,7 +2,7 @@ name: Crowdin Download Action (on demand)
 
 on:
   workflow_dispatch:
-    paths: ['translations/en_US/**']
+    paths: ['translations/**']
     branches: [ main ]
 
 jobs:

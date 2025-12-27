@@ -2,7 +2,7 @@ name: Crowdin Upload Action (on changes)
 
 on:
   push:
-    paths: ['translations/en_US/**']
+    paths: ['translations/azt.pot']
     branches: [ main ]
 
 jobs:

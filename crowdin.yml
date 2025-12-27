@@ -28,7 +28,7 @@ files: [
     # Source files filter
     # e.g. "/resources/en/*.json"
     #
-    "source": "translations/en_US/LC_MESSAGES/azt.po",
+    "source": "translations/azt.pot",
 
     #
     # Translation files filter
