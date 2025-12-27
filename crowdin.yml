@@ -34,6 +34,6 @@ files: [
     # Translation files filter
     # e.g. "/resources/%two_letters_code%/%original_file_name%"
     #
-    "translation": "translations/%two_letters_code%/LC_MESSAGES/azt.po",
+    "translation": "translations/%locale_with_underscore%/LC_MESSAGES/azt.po",
   }
 ]
