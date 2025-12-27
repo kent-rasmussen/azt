@@ -38,7 +38,7 @@ msgid "Please select where to find the media locally"
 msgstr ""
 
 #: /home/kentr/IT/azt/repo_trans/file.py:241
-msgid "Select LIFT Lexicon File"
+msgid "Select a LIFT Lexicon File"
 msgstr ""
 
 #: /home/kentr/IT/azt/repo_trans/lift.py:522
