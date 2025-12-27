@@ -1,3 +1,4 @@
+[![Crowdin](https://badges.crowdin.net/azt/localized.svg)](https://crowdin.com/project/azt)
 <a href="https://gitlocalize.com/repo/7965/fr?utm_source=badge"> <img src="https://gitlocalize.com/repo/7965/fr/badge.svg" /> </a>
 <a href="fr/README.md">Français</a>
 ### MS Windows installer [here](https://github.com/MaggieCampo/aztinstaller/blob/master/AZT_Installer.exe?raw=true), with instructions [here](https://github.com/MaggieCampo/aztinstaller)
