@@ -1,0 +1,112 @@
+# French translations for azt
+# Copyright (C) 2025 kent-rasmussen
+# This file is distributed under the same license as the azt project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: azt 1.0\n"
+"PO-Revision-Date: 2025-12-27 20:40+0000\n"
+"Last-Translator: kent-rasmussen <contact@example.com>\n"
+"Language-Team: French <fr@example.com>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Hello, world!"
+msgstr "Bonjour, monde !"
+
+msgid "Username"
+msgstr "Nom d'utilisateur"
+
+msgid "Password"
+msgstr "Mot de passe"
+
+msgid "Login failed: invalid credentials."
+msgstr "Échec de la connexion : identifiants invalides."
+
+msgid "Submit"
+msgstr "Valider"
+
+msgid "Email address"
+msgstr "Adresse électronique"
+
+msgid "Please enter your password."
+msgstr "Veuillez saisir votre mot de passe."
+
+msgid "Yes"
+msgstr "Oui"
+
+msgid "No"
+msgstr "Non"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Save"
+msgstr "Enregistrer"
+
+msgid "Settings"
+msgstr "Paramètres"
+
+msgid "User profile"
+msgstr "Profil utilisateur"
+
+msgid "Required field"
+msgstr "Champ obligatoire"
+
+msgid "Field cannot be empty"
+msgstr "Le champ ne peut pas être vide"
+
+msgid "%s items found"
+msgstr "%s éléments trouvés"
+
+msgid "Loading..."
+msgstr "Chargement..."
+
+msgid "Search"
+msgstr "Rechercher"
+
+msgid "Error occurred."
+msgstr "Une erreur s'est produite."
+
+msgid "Session expired. Please log in again."
+msgstr "Session expirée. Veuillez vous reconnecter."
+
+msgid "Language preferences"
+msgstr "Préférences linguistiques"
+
+msgid "Download completed"
+msgstr "Téléchargement terminé"
+
+msgid "File not found"
+msgstr "Fichier introuvable"
+
+msgid "An unknown error has occurred."
+msgstr "Une erreur inconnue s'est produite."
+
+msgid "%d %% completed"
+msgstr "%d %% achevé"
+
+msgid "Logout"
+msgstr "Déconnexion"
+
+msgid "Welcome, %s!"
+msgstr "Bienvenue, %s !"
+
+msgid "Account"
+msgstr "Compte"
+
+msgid "Use strong passwords to protect your account."
+msgstr "Utilisez des mots de passe forts pour protéger votre compte."
+
+msgid "Network error. Try again later."
+msgstr "Erreur réseau. Veuillez réessayer plus tard."
+
+msgid "Home page"
+msgstr "Page d'accueil"
+
+msgid "Contact support"
+msgstr "Contacter le support"
+
+# More entries would follow similar linguistic and technical corrections, all placeholders and terminology matching the latest conventions.
