@@ -55,21 +55,20 @@ jobs:
           py_files=$(git grep -l -I -z -E "_\(" -- '*.py' || true)
           if [ -n "$py_files" ]; then
             echo -n "$py_files" | run_xgettext "Python" "$TMPDIR/python.pot" -k_
-            # printf '%s' "$py_files" | run_xgettext "Python" "$TMPDIR/python.pot" -k_
             POTS+=("$TMPDIR/python.pot")
           fi
 
           # JavaScript / TypeScript / JSX / TSX / Vue
           js_files=$(git grep -l -I -z -E "_\(" -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.vue' || true)
           if [ -n "$js_files" ]; then
-            printf '%s' "$js_files" | run_xgettext "JavaScript" "$TMPDIR/js.pot" -k_ --language=JavaScript
+            echo -n "$js_files" | run_xgettext "JavaScript" "$TMPDIR/python.pot" -k_ --language=JavaScript
             POTS+=("$TMPDIR/js.pot")
           fi
 
           # PHP
           php_files=$(git grep -l -I -z -E "_\(" -- '*.php' || true)
           if [ -n "$php_files" ]; then
-            printf '%s' "$php_files" | run_xgettext "PHP" "$TMPDIR/php.pot" -k_
+            echo -n "$php_files" | run_xgettext "PHP" "$TMPDIR/python.pot" -k_
             POTS+=("$TMPDIR/php.pot")
           fi
 
