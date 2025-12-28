@@ -52,23 +52,20 @@ jobs:
           # Only look for the _(...) marker
 
           # Python
-          py_files=$(git grep -l -I -z -E "_\(" -- '*.py' || true)
-          if [ -n "$py_files" ]; then
-            echo -n "$py_files" | run_xgettext "Python" "$TMPDIR/python.pot" -k_
+          if git grep -q -I -E "_\(" -- '*.py'; then
+            git grep -l -I -z -E "_\(" -- '*.py' | run_xgettext "Python" "$TMPDIR/python.pot" -k_
             POTS+=("$TMPDIR/python.pot")
           fi
 
           # JavaScript / TypeScript / JSX / TSX / Vue
-          js_files=$(git grep -l -I -z -E "_\(" -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.vue' || true)
-          if [ -n "$js_files" ]; then
-            echo -n "$js_files" | run_xgettext "JavaScript" "$TMPDIR/python.pot" -k_ --language=JavaScript
+          if git grep -q -I -E "_\(" -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.vue'; then
+            git grep -l -I -z -E "_\(" -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.vue' | run_xgettext "JavaScript" "$TMPDIR/js.pot" -k_ --language=JavaScript
             POTS+=("$TMPDIR/js.pot")
           fi
 
           # PHP
-          php_files=$(git grep -l -I -z -E "_\(" -- '*.php' || true)
-          if [ -n "$php_files" ]; then
-            echo -n "$php_files" | run_xgettext "PHP" "$TMPDIR/python.pot" -k_
+          if git grep -q -I -E "_\(" -- '*.php'; then
+            git grep -l -I -z -E "_\(" -- '*.php' | run_xgettext "PHP" "$TMPDIR/php.pot" -k_
             POTS+=("$TMPDIR/php.pot")
           fi
 
@@ -76,7 +73,7 @@ jobs:
           if [ "${#POTS[@]}" -eq 0 ]; then
             echo "# No translatable strings detected." > "$OUT"
             echo "created=empty" >> "$OUT"
-            echo "::set-output name=changed::true"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
