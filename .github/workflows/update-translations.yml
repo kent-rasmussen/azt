@@ -54,7 +54,8 @@ jobs:
           # Python
           py_files=$(git grep -l -I -z -E "_\(" -- '*.py' || true)
           if [ -n "$py_files" ]; then
-            printf '%s' "$py_files" | run_xgettext "Python" "$TMPDIR/python.pot" -k_
+            echo -n "$py_files" | run_xgettext "Python" "$TMPDIR/python.pot" -k_
+            # printf '%s' "$py_files" | run_xgettext "Python" "$TMPDIR/python.pot" -k_
             POTS+=("$TMPDIR/python.pot")
           fi
 
