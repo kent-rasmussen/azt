@@ -1,0 +1,116 @@
+# GitHub Actions workflow to regenerate translations/azt.pot when _(...) marked strings change
+# - Searches only for the `_(` gettext marker in common source file types
+# - Uses xgettext/msgcat to build/merge POT fragments into translations/azt.pot
+# - Commits translations/azt.pot back to the branch if it changed (commit includes [skip ci])
+
+name: Update translations.pot
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-translations-pot
+  cancel-in-progress: true
+
+jobs:
+  update-pot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gettext tools
+        run: sudo apt-get update && sudo apt-get install -y gettext
+
+      - name: Generate translations.pot
+        id: extract
+        run: |
+          set -euo pipefail
+
+          OUT="translations/azt.pot"
+          mkdir -p "$(dirname "$OUT")"
+          TMPDIR="$(mktemp -d)"
+          declare -a POTS=()
+
+          # Helper to run xgettext on a list of files (null-delimited)
+          run_xgettext() {
+            lang="$1"; shift
+            out="$1"; shift
+            opts=("$@")
+            if [ -t 0 ]; then
+              return 1
+            fi
+            xargs -0 xgettext -L "$lang" "${opts[@]}" --from-code=UTF-8 -o "$out"
+          }
+
+          # Only look for the _(...) marker
+
+          # Python
+          py_files=$(git grep -l -I -z -E "_\(" -- '*.py' || true)
+          if [ -n "$py_files" ]; then
+            printf '%s' "$py_files" | run_xgettext "Python" "$TMPDIR/python.pot" -k_
+            POTS+=("$TMPDIR/python.pot")
+          fi
+
+          # JavaScript / TypeScript / JSX / TSX / Vue
+          js_files=$(git grep -l -I -z -E "_\(" -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.vue' || true)
+          if [ -n "$js_files" ]; then
+            printf '%s' "$js_files" | run_xgettext "JavaScript" "$TMPDIR/js.pot" -k_ --language=JavaScript
+            POTS+=("$TMPDIR/js.pot")
+          fi
+
+          # PHP
+          php_files=$(git grep -l -I -z -E "_\(" -- '*.php' || true)
+          if [ -n "$php_files" ]; then
+            printf '%s' "$php_files" | run_xgettext "PHP" "$TMPDIR/php.pot" -k_
+            POTS+=("$TMPDIR/php.pot")
+          fi
+
+          # If no source POTs created, create an empty POT placeholder
+          if [ "${#POTS[@]}" -eq 0 ]; then
+            echo "# No translatable strings detected." > "$OUT"
+            echo "created=empty" >> "$OUT"
+            echo "::set-output name=changed::true"
+            exit 0
+          fi
+
+          # Merge all POT fragments into the final translations file
+          msgcat --use-first --sort-output --no-wrap -o "$OUT" "${POTS[@]}"
+
+          # Normalize POT-Creation-Date to reduce spurious diffs
+          if grep -q '^"POT-Creation-Date:' "$OUT"; then
+            sed -i 's/^"POT-Creation-Date:.*$/"POT-Creation-Date: 1970-01-01 00:00+0000\\n"/' "$OUT" || true
+          fi
+
+          echo "Generated $OUT (size: $(wc -c < "$OUT") bytes)"
+          echo "::set-output name=changed::true"
+
+      - name: Commit and push translations.pot if it changed
+        if: steps.extract.outputs.changed == 'true'
+        env:
+          GIT_AUTHOR_NAME: "github-actions[bot]"
+          GIT_AUTHOR_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com"
+        run: |
+          set -euo pipefail
+
+          git config user.name "$GIT_AUTHOR_NAME"
+          git config user.email "$GIT_AUTHOR_EMAIL"
+
+          # Compare the generated file and commit if different
+          if git diff --no-ext-diff --exit-code --quiet -- translations/azt.pot; then
+            echo "No changes to translations/azt.pot — nothing to commit."
+            exit 0
+          fi
+
+          git add translations/azt.pot
+          git commit -m "Update translations/azt.pot [skip ci]"
+          git push origin HEAD
+
+      - name: Done
+        run: echo "translations/azt.pot update job finished."
