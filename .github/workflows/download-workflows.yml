@@ -5,6 +5,9 @@ on:
     paths: ['translations/**']
     branches: [ main ]
 
+permissions:
+  contents: write
+
 jobs:
   crowdin:
     runs-on: ubuntu-latest
@@ -20,11 +23,69 @@ jobs:
           download_translations: true
           localization_branch_name: l10n_crowdin_translations
 
-          create_pull_request: true
-          pull_request_title: 'New Crowdin translations'
-          pull_request_body: 'New Crowdin pull request with translations'
-          pull_request_base_branch_name: 'main'
+          create_pull_request: false
+          # pull_request_title: 'New Crowdin translations'
+          # pull_request_body: 'New Crowdin pull request with translations'
+          # pull_request_base_branch_name: 'main'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+
+      - name: Install gettext (msgfmt)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+
+      - name: Compile .po files to .mo
+        run: |
+          set -euo pipefail
+          # Find and compile all .po files to .mo next to the .po files
+          find . -name '*.po' -print0 | while IFS= read -r -d '' po; do
+            mo="${po%.po}.mo"
+            echo "Compiling $po -> $mo"
+            msgfmt "$po" -o "$mo"
+          done || true
+
+      - name: Commit and push translations branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Create or switch to the localization branch
+          if git show-ref --verify --quiet refs/heads/l10n_crowdin_translations; then
+            git checkout l10n_crowdin_translations
+          else
+            git checkout -b l10n_crowdin_translations
+          fi
+
+          git add -A translations || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "New Crowdin translations (compiled .mo files)"
+            git push --set-upstream origin l10n_crowdin_translations
+          fi
+
+      - name: Create Pull Request
+        if: github.ref != 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          # Create a PR using the REST API if one doesn't already exist
+          repo="$GITHUB_REPOSITORY"
+          head_branch="l10n_crowdin_translations"
+          base_branch="main"
+          title="New Crowdin translations"
+          body="New Crowdin pull request with translations"
+
+          existing_pr=$(curl -s -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/$repo/pulls?head=$(echo "$repo" | sed 's/^[^/]*/'):$head_branch&base=$base_branch" | jq '. | length')
+          if [ "$existing_pr" -eq 0 ]; then
+            curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$repo/pulls" \
+              -d "{\"title\":\"$title\",\"head\":\"$head_branch\",\"base\":\"$base_branch\",\"body\":\"$body\"}"
+          else
+            echo "Pull request already exists for $head_branch -> $base_branch"
+          fi
