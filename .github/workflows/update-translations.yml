@@ -86,7 +86,7 @@ jobs:
           fi
 
           echo "Generated $OUT (size: $(wc -c < "$OUT") bytes)"
-          echo "::set-output name=changed::true"
+          echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Commit and push translations.pot if it changed
         if: steps.extract.outputs.changed == 'true'
