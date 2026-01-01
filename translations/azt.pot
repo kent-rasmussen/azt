@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-31 21:07-0600\n"
+"POT-Creation-Date: 2025-12-31 22:24-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3998,6 +3998,10 @@ msgstr ""
 #: /home/kentr/bin/raspy/azt/main.py:5002
 #, python-brace-format
 msgid "do you want {purpose}?"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:234
+msgid "done with _removemenus"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:16449
