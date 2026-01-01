@@ -77,30 +77,30 @@ jobs:
           echo "Generated $OUT (size: $(wc -c < "$OUT") bytes)"
           echo "changed=true" >> $GITHUB_OUTPUT
 
-      - name: Commit and push translations.pot if it changed
-        if: steps.extract.outputs.changed == 'true'
-        env:
-          GIT_AUTHOR_NAME: "github-actions[bot]"
-          GIT_AUTHOR_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com"
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
+      # - name: Commit and push translations.pot if it changed
+      #   if: steps.extract.outputs.changed == 'true'
+      #   env:
+      #     GIT_AUTHOR_NAME: "github-actions[bot]"
+      #     GIT_AUTHOR_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com"
+      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     set -euo pipefail
 
-          git config user.name "$GIT_AUTHOR_NAME"
-          git config user.email "$GIT_AUTHOR_EMAIL"
+      #     git config user.name "$GIT_AUTHOR_NAME"
+      #     git config user.email "$GIT_AUTHOR_EMAIL"
 
-          # Compare the generated file and commit if different
-          if git diff --no-ext-diff --exit-code --quiet -- translations/azt.pot; then
-            echo "No changes to translations/azt.pot — nothing to commit."
-            exit 0
-          fi
+      #     # Compare the generated file and commit if different
+      #     if git diff --no-ext-diff --exit-code --quiet -- translations/azt.pot; then
+      #       echo "No changes to translations/azt.pot — nothing to commit."
+      #       exit 0
+      #     fi
 
-          git add translations/azt.pot
-          git commit -m "Update translations/azt.pot [skip ci]"
-          git push origin HEAD
+      #     git add translations/azt.pot
+      #     git commit -m "Update translations/azt.pot [skip ci]"
+      #     git push origin HEAD
         
-      - name: Done
-        run: echo "translations/azt.pot update job finished."
+      # - name: Done
+      #   run: echo "translations/azt.pot update job finished."
 
       - name: Crowdin push
         uses: crowdin/github-action@v2
