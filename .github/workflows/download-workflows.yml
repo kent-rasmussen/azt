@@ -21,6 +21,8 @@ jobs:
           upload_sources: false
           upload_translations: false
           download_translations: true
+          #This is the path to an up-to-date pot in the repo.
+          download_sources: true
           # localization_branch_name: l10n_crowdin_translations
 
           create_pull_request: false
