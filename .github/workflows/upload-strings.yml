@@ -1,4 +1,4 @@
-name: Crowdin Upload Action (on changes)
+name: Upload Translatable Strings to Crowdin Action (on changes)
 
 on:
   push:
