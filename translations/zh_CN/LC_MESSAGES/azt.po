@@ -841,7 +841,7 @@ msgstr "法文"
 
 #: /home/kentr/IT/azt/repo_trans/main.py:3151
 msgid "English"
-msgstr "Distr."
+msgstr ""
 
 #: /home/kentr/IT/azt/repo_trans/main.py:3153
 msgid "Spanish"
@@ -1677,8 +1677,7 @@ msgstr "选择第二个表单"
 #: /home/kentr/IT/azt/repo_trans/main.py:5994
 msgid "What is the {} or {} of \n"
 "‘{}’ ({})?"
-msgstr "\n"
-"'{}'{}'的{} 或 {} 是什么？"
+msgstr "'{}'{}'的{} 或 {} 是什么？"
 
 #: /home/kentr/IT/azt/repo_trans/main.py:6008
 #: /home/kentr/IT/azt/repo_trans/main.py:6021
@@ -3504,7 +3503,7 @@ msgid "Revert to \n"
 "main branch \n"
 "of {}"
 msgstr "恢复到 {} 的 \n"
-"主要分支 \n"
+"主要分支"
 
 #: /home/kentr/IT/azt/repo_trans/main.py:15073
 msgid "Restart \n"

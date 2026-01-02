@@ -5,7 +5,7 @@ import os, sys
 import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
-log.info(f"Importing {__name__}")
+log.info(_(f"Importing {__name__}"))
 import file
 import lift
 import ui_tkinter as ui
@@ -60,8 +60,8 @@ class OrderAlphabet(ui.Window):
                     'image':self.exobjs[g].image.scaled,
                 }
         elif self.exids[g]:
-            log.error("self.exids is there, but self.exobjs isn't? "
-                    f"{self.exobjs=} {self.exids=}")
+            log.error(_("self.exids is there, but self.exobjs isn't? "
+                    f"{self.exobjs=} {self.exids=}"))
         else:
             return {'text':"?"}
     def column_config(self,change,event=None):

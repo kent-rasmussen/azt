@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-02 16:49-0600\n"
+"POT-Creation-Date: 2026-01-02 17:01-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -4186,6 +4186,10 @@ msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:8226
 msgid "root:"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:63
+msgid "self.exids is there, but self.exobjs isn't? "
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:10949

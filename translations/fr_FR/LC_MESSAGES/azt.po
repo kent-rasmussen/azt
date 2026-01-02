@@ -3516,7 +3516,7 @@ msgid "Check for \n"
 "{} \n"
 "updates"
 msgstr "Vérifier les mises à jour \n"
-"{} \n"
+"{}"
 
 #: /home/kentr/IT/azt/repo_trans/main.py:15069
 msgid "Revert to \n"

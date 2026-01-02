@@ -231,7 +231,7 @@ class HasMenus():
             self.menu=False
             # log.info(_(f"now {vars(self)}"))
             self.setcontext()
-        log.info("done with _removemenus")
+        log.info(_("done with _removemenus"))
     def _setmenus(self,event=None):
         # check=self.check
         log.info(_("Showing menus"))
@@ -1268,10 +1268,10 @@ class StatusFrame(ui.Frame):
     def updateinterfacelang(self):
         self.labels['interfacelang']['text'].set(self.interfacelanglabel())
     def interfacelanglabel(self):
-        for l in program['taskchooser'].interfacelangs:
-            if l['code']==interfacelang():
-                interfacelanguagename=l['name']
-        return (_("Using {}").format(interfacelanguagename))
+        # for l in program['taskchooser'].interfacelangs:
+        #     if l['code']==interfacelang():
+        #         interfacelanguagename=l['name']
+        return (_(f"Using {program['settings'].languagenames[interfacelang()]}"))
     def interfacelangline(self):
         self.labels['interfacelang']={
                         'text':ui.StringVar(value=self.interfacelanglabel()),
@@ -1284,7 +1284,7 @@ class StatusFrame(ui.Frame):
     def analanglabel(self):
         analang=program['params'].analang()
         langname=program['settings'].languagenames[analang]
-        return (_("Studying {}").format(langname))
+        return (_(f"Studying {langname}"))
     def analangline(self):
         self.newrow()
         if program['params'].analang() not in program['settings'].languagenames:
@@ -1486,7 +1486,7 @@ class StatusFrame(ui.Frame):
     def updatecvcheck(self):
         self.labels['cvcheck']['text'].set(self.cvchecklabel())
     def cvchecklabel(self):
-        return (_("working on {}".format(program['params'].cvcheckname())))
+        return (_(f"working on {program['params'].cvcheckname()}"))
     def cvcheck(self,line):
         self.labels['cvcheck']={'text':ui.StringVar(value=self.cvchecklabel()),
                                 'columnplus':1,
@@ -2013,6 +2013,7 @@ class Settings(object):
         if choice:
             interfacelang(choice) #change the UI *ONLY*; no object attributes
             self.set('interfacelang',choice,window) #set variable for the future
+            self.langnames() #relocalize
             program['taskchooser'].mainwindowis.status.makeui()
             self.storesettingsfile() #>xyz.CheckDefaults.py
             #because otherwise, this stays as is...
@@ -3800,7 +3801,9 @@ class Settings(object):
         window.destroy()
     def setexamplespergrouptorecord(self,choice,window):
         self.set('examplespergrouptorecord',choice,window)
-    def langnames(self,langs=None):
+    def localize_langnames(self):
+        self.languagenames={i:_(self.languagenames[i]) for i in self.languagenames}
+    def langnames(self,langs={}):
         """This is for getting the prose name for a language from a code."""
         """It should ultimately use a xyz.ldml file, produced (at least)
         by WeSay, but for now is just a dict."""
@@ -3808,43 +3811,61 @@ class Settings(object):
         #ET.register_namespace("", 'palaso')
         ns = {'palaso': 'urn://palaso.org/ldmlExtensions/v1'}
         node=None
-        d={'fr':_("French"),
-            'en':_("English"),
-            'es':_("Spanish"),
-            'pt':_("Portuguese"),
-            'id':_("Indonesian"),
-            'ind':_("Indonesian"),
-            'ha':_("Hausa"),
-            'hau':_("Hausa"),
-            'swc':_("Congo Swahili"),
-            'swh':_("Swahili"),
-            'gnd':_("Zulgo"),
-            'fub':_("Fulfulde"),
-            'bfj':_("Chufie’")}
+        if not hasattr(self,'languagenames'):
+            self.languagenames={}
+        #return localized strings to English, so they can localize again
+        self.languagenames.update({'fr':"French", 
+                                'en':"English",
+                                'es':"Spanish",
+                                'ar':"Arabic",
+                                'zh':"Chinese",
+                                'pt':"Portuguese",
+                                'id':"Indonesian",
+                                'ind':"Indonesian",
+                                'ha':"Hausa",
+                                'hau':"Hausa",
+                                'swc':"Congo Swahili",
+                                'swh':"Swahili",
+                                'gnd':"Zulgo",
+                                'fub':"Fulfulde",
+                                'bfj':"Chufie’"})
+        self.localize_langnames()
+        if hasattr(self,'adnlangnames') and self.adnlangnames:
+            d.update(self.adnlangnames) #from settings
+        # print(type(self.analang),type(program['db'].analangs),type(program['db'].glosslangs))
         if not langs:
-            langs=[self.analang]+program['db'].analangs+program['db'].glosslangs
-        for xyz in langs:
-            default=_(f"Language with code [{xyz}]")
-            # log.info(' '.join('Looking for language name for',xyz))
-            setnesteddictobjectval(self,'languagenames',d.get(xyz,default),xyz)
-            """This provides an ldml node"""
-            #log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
-            #nsurl=tree.nodes.find(f"ldml/special/@xmlns:palaso")
-            """This doesn't seem to be working; I should fix it, but there
-            doesn't seem to be reason to generalize it for now."""
-            # tree=ET.parse(self.languagepaths[xyz])
-            # tree.nodes=tree.getroot()
-            # node=tree.nodes.find(f"special/palaso:languageName", namespaces=ns)
-            if node is not None:
-                self.languagenames[xyz]=node.get('value')
-                log.info(' '.join('found',self.languagenames[xyz]))
-            # if not hasattr(self,'adnlangnames') or self.adnlangnames is None:
-            #     self.adnlangnames={}
-            if (hasattr(self,'adnlangnames') and
-                    self.adnlangnames and
-                    xyz in self.adnlangnames and
-                    self.adnlangnames[xyz]):
-                self.languagenames[xyz]=self.adnlangnames[xyz]
+            langs=program['db'].analangs+program['db'].glosslangs
+            if hasattr(self,'analang'):
+                langs.append(self.analang)
+        langs=set(langs)
+        self.languagenames.update({i:_(f"Language with code [{i}]") 
+                                    for i in langs
+                                    if i not in self.languagenames
+                                    })
+        # for xyz in langs+program['interfacelangs']:
+        #     default=_(f"Language with code [{xyz}]")
+        #     # log.info(' '.join('Looking for language name for',xyz))
+        #     setnesteddictobjectval(self,'languagenames',
+        #                             d.get(xyz,default),
+        #                             xyz)
+        """This provides an ldml node implement this some day"""
+        #log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
+        #nsurl=tree.nodes.find(f"ldml/special/@xmlns:palaso")
+        """This doesn't seem to be working; I should fix it, but there
+        doesn't seem to be reason to generalize it for now."""
+        # tree=ET.parse(self.languagepaths[xyz])
+        # tree.nodes=tree.getroot()
+        # node=tree.nodes.find(f"special/palaso:languageName", namespaces=ns)
+        # if node is not None:
+        #     self.languagenames[xyz]=node.get('value')
+        #     log.info(' '.join('found',self.languagenames[xyz]))
+        # if not hasattr(self,'adnlangnames') or self.adnlangnames is None:
+        #     self.adnlangnames={}
+        # if (hasattr(self,'adnlangnames') and
+        #         self.adnlangnames and
+        #         xyz in self.adnlangnames and
+        #         self.adnlangnames[xyz]):
+        #     self.languagenames[xyz]=self.adnlangnames[xyz]
     def makeeverythingok(self):
         try:
             program['status'].makecvtok()
@@ -3873,9 +3894,11 @@ class Settings(object):
         self.loadsettingsfile()
         self.loadsettingsfile(setting='profiledata')
         """I think I need this before setting up regexs"""
+        self.langnames(program['interfacelangs'])
         if hasattr(taskchooser,'analang'): #i.e., new file
             self.analang=taskchooser.analang #I need to keep this alive until objects are done
             self.storesettingsfile() #write analang to file
+        log.info("Settings initialized")
     def post_lift_init(self):
         """These settings require the LIFt db be up and parsed already"""
         self.dont_guessanalang() #needed for regexs
@@ -3907,6 +3930,7 @@ class Settings(object):
         # if self.taskchooser.donew['collectionlc']:
         #     self.ifcollectionlc()
         self.attrschanged=[]
+        log.info("Settings (Post lift) initialized")
 class TaskDressing(HasMenus,ui.Window):
     """This Class covers elements that belong to (or should be available to)
     all tasks, e.g., menus and button appearance."""
@@ -4398,8 +4422,11 @@ class TaskDressing(HasMenus,ui.Window):
         ui.Label(window.frame, text=_('What language do you want {} '
                                 'to address you in?').format(program['name'])
                 ).grid(column=0, row=0)
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                optionlist=program['taskchooser'].interfacelangs,
+        options=[{'code':i,'name':program['settings'].languagenames[i]}
+                for i in program['interfacelangs']]
+        log.info(f"asking with these options: {options}")
+        ui.ButtonFrame(window.frame,
+                                optionlist=options,
                                 command=program['settings'].interfacelangwrapper,
                                 window=window,
                                 column=0, row=1
@@ -5318,6 +5345,7 @@ class TaskDressing(HasMenus,ui.Window):
         and if I can get them all into objects, read/writeable with files."""
         """These are raw attributes from file"""
         """these are objects made by the task chooser"""
+        # log.info(f"Ready to Inherit for {type(self)} ({program})")
         self.inherittaskattrs()
         if hasattr(self,'task') and isinstance(self.task,Multicheck):
             if hasattr(program['settings'],'cvtstodo'):
@@ -5346,7 +5374,7 @@ class TaskDressing(HasMenus,ui.Window):
         self.thread_names=list()
         # back=ui.Button(self.outsideframe,text=_("Tasks"),cmd=program['taskchooser'])
         # self.setfontsdefault()
-class TaskChooser(TaskDressing,ui.Window):
+class TaskChooser(TaskDressing):
     """This class stores the hierarchy of tasks to do in A-Z+T, plus the
     minimum and optimum prerequisites for each. Based on these, it presents
     to the user a default (highest in hierarchy without optimum fulfilled)
@@ -5946,6 +5974,14 @@ class TaskChooser(TaskDressing,ui.Window):
             # log.info("checking repo {} for USB drive".format(r))
             r.share()
         self.splash.draw()
+    # def getinterfacelangs(self):
+    # # global i18n
+    #     return [{'code':i,'name':program['settings'].languagenames[i]}
+    #             for i in program['interfacelangs']]
+    # # {'code':'fr','name':'Français'},
+    # #         {'code':'en','name':'English'},
+    # #         {'code':'fub','name':'Fulfulde'}
+    # #         ]
     def __init__(self,parent):
         program['taskchooser']=self
         self.towrite=False
@@ -5953,11 +5989,12 @@ class TaskChooser(TaskDressing,ui.Window):
         self.datacollection=True # everyone starts here?
         self.showreports=False
         self.showingreports=False
-        self.interfacelangs=getinterfacelangs()
         self.filename=FileChooser().name #new file self.analang set here
         self.splash = Splash(self)
         self.splash.draw()
         Settings(self) #pick up self.analang from file
+        assert 'settings' in program
+        # self.interfacelangs=self.getinterfacelangs()
         FileParser(self.filename,program['settings'].analang)
         self.splash.progress(55)
         self.setmainwindow(self)
@@ -5965,7 +6002,9 @@ class TaskChooser(TaskDressing,ui.Window):
         self.splash.progress(65)
         self.whatsdone()
         self.splash.progress(80)
-        TaskDressing.__init__(self,parent) #I think this should be after settings
+        log.info(f"{program['settings']=}")
+        super().__init__(parent)
+        # TaskDressing.__init__(self,parent) #I think this should be after settings
         program['settings'].getprofiles()
         Alphabet() #after slicedict is up
         # self.withdraw()
@@ -15644,7 +15683,7 @@ class CheckParameters(object):
         if not code:
             code=self.check()
         try:
-            return self._cvchecknames[code]
+            return _(self._cvchecknames[code])
         except KeyError:
             return None
     def cvchecknamesdict(self):
@@ -15689,13 +15728,13 @@ class CheckParameters(object):
         self._analang=program['db'].analang
         self._audiolang=program['db'].audiolang
         self._cvts={
-                'V':{'sg':_('Vowel'),'pl':_('Vowels')},
-                'C':{'sg':_('Consonant'),'pl':_('Consonants')},
-                'CV':{'sg':_('Consonant-Vowel combination'),
-                        'pl':_('Consonant-Vowel combinations')},
-                'VC':{'sg':_('Vowel-Consonant combination'),
-                        'pl':_('Vowel-Consonant combinations')},
-                'T':{'sg':_('Tone'),'pl':_('Tones')},
+                'V':{'sg':'Vowel','pl':'Vowels'},
+                'C':{'sg':'Consonant','pl':'Consonants'},
+                'CV':{'sg':'Consonant-Vowel combination',
+                        'pl':'Consonant-Vowel combinations'},
+                'VC':{'sg':'Vowel-Consonant combination',
+                        'pl':'Vowel-Consonant combinations'},
+                'T':{'sg':'Tone','pl':'Tones'},
                 }
         self._checknames={
             'S':{ 1:[('lc', _("Whole Citation Word Syllable Profile")),
@@ -17135,11 +17174,6 @@ def pickshortest(l):
     for i in l:
         if len(i) == shortestlength:
             return i
-def getinterfacelangs():
-    return [{'code':'fr','name':'Français'},
-            {'code':'en','name':'English'},
-            {'code':'fub','name':'Fulfulde'}
-            ]
 def loadCAWL():
     stockCAWL=file.fullpathname('SILCAWL/SILCAWL.lift')
     if file.exists(stockCAWL):
@@ -17669,11 +17703,21 @@ if __name__ == '__main__':
     mt=datetime.datetime.fromtimestamp(thisexe.stat().st_mtime)
     """Not translating yet"""
     transdir=file.gettranslationdirin(program['aztdir'])
-    i18n={}
-    i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'])
-    i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
-    i18n['zh'] = gettext.translation('azt', transdir, languages=['zh_CN'])
-    i18n['ar'] = gettext.translation('azt', transdir, languages=['ar_SA'])
+    print("looking in",os.listdir(transdir))
+    i18n={
+        i.split('_')[0]:gettext.translation('azt', transdir, languages=[i],
+                                    # fallback=True
+                                    )
+        for i in os.listdir(transdir)
+        if os.path.isdir(os.path.join(transdir, i))
+    }
+    i18n['en'] = gettext.translation('azt', transdir, languages=['en_US'],
+                                    fallback=True
+                                    )
+    # i18n['fr'] = gettext.translation('azt', transdir, languages=['fr_FR'])
+    # i18n['zh'] = gettext.translation('azt', transdir, languages=['zh_CN'])
+    # i18n['ar'] = gettext.translation('azt', transdir, languages=['ar_SA'])
+    program['interfacelangs']={i for i in i18n}
     interfacelang() #translation works from here
     findexecutable('git')
     program['repo']=GitReadOnly(program['aztdir']) #this needs root for errors
