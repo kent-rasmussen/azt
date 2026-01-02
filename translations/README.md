@@ -47,3 +47,5 @@ Python), there are a couple things we should all pay attention to:
 - pull the updated repo to local machine.
 - run _compile.py_ to compile the .po files into .mo files.
 - commit and push the updated .mo files to github.
+
+update-translations.yml is no longer used, though may be useful for future automation on GitHub.
