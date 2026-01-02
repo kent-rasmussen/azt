@@ -23,57 +23,57 @@ jobs:
           download_translations: true
           #This is the path to an up-to-date pot in the repo.
           download_sources: true
-          # localization_branch_name: l10n_crowdin_translations
+          localization_branch_name: l10n_crowdin_translations
 
-          create_pull_request: false
-          # pull_request_title: 'New Crowdin translations'
-          # pull_request_body: 'New Crowdin pull request with translations'
-          # pull_request_base_branch_name: 'main'
+          create_pull_request: true
+          pull_request_title: 'New Crowdin translations'
+          pull_request_body: 'New Crowdin pull request with translations'
+          pull_request_base_branch_name: 'main'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
 
-      - name: Install gettext (msgfmt)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gettext
+      # - name: Install gettext (msgfmt)
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y gettext
 
-      - name: Compile .po files to .mo
-        run: |
-          set -euo pipefail
-          # Find and compile all .po files to .mo next to the .po files
-          find . -name '*.po' -print0 | while IFS= read -r -d '' po; do
-            mo="${po%.po}.mo"
-            echo "Compiling $po -> $mo"
-            msgfmt "$po" -o "$mo" || true
-          done
+      # - name: Compile .po files to .mo
+      #   run: |
+      #     set -euo pipefail
+      #     # Find and compile all .po files to .mo next to the .po files
+      #     find . -name '*.po' -print0 | while IFS= read -r -d '' po; do
+      #       mo="${po%.po}.mo"
+      #       echo "Compiling $po -> $mo"
+      #       msgfmt "$po" -o "$mo" || true
+      #     done
 
-      - name: Commit compiled .mo files to localization branch
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+      # - name: Commit compiled .mo files to localization branch
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     git config user.name "github-actions[bot]"
+      #     git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          remote_branch=l10n_crowdin_translations
+      #     remote_branch=l10n_crowdin_translations
 
-          # Fetch remote branch if it exists
-          git fetch origin $remote_branch || true
+      #     # Fetch remote branch if it exists
+      #     git fetch origin $remote_branch || true
 
-          if git show-ref --verify --quiet refs/remotes/origin/$remote_branch; then
-            git checkout -B $remote_branch origin/$remote_branch
-          else
-            git checkout -b $remote_branch
-          fi
+      #     if git show-ref --verify --quiet refs/remotes/origin/$remote_branch; then
+      #       git checkout -B $remote_branch origin/$remote_branch
+      #     else
+      #       git checkout -b $remote_branch
+      #     fi
 
-          # Add compiled .mo files (and any translations) and push
-          git add -A translations || true
-          git add -A '*.mo' || true
+      #     # Add compiled .mo files (and any translations) and push
+      #     git add -A translations || true
+      #     git add -A '*.mo' || true
 
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Add compiled .mo files for Crowdin translations"
-            git push --set-upstream origin $remote_branch
-          fi
+      #     if git diff --cached --quiet; then
+      #       echo "No changes to commit"
+      #     else
+      #       git commit -m "Add compiled .mo files for Crowdin translations"
+      #       git push --set-upstream origin $remote_branch
+      #     fi
