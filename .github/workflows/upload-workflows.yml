@@ -8,74 +8,74 @@ on:
 jobs:
   crowdin-upload:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    # permissions:
+    #   contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         
-      - name: Install gettext tools
-        run: sudo apt-get update && sudo apt-get install -y gettext
+      # - name: Install gettext tools
+      #   run: sudo apt-get update && sudo apt-get install -y gettext
 
-      - name: Generate translations.pot
-        id: extract
-        run: |
-          set -euo pipefail
+      # - name: Generate translations.pot
+      #   id: extract
+      #   run: |
+      #     set -euo pipefail
 
-          OUT="translations/azt.pot"
-          mkdir -p "$(dirname "$OUT")"
-          TMPDIR="$(mktemp -d)"
-          declare -a POTS=()
+      #     OUT="translations/azt.pot"
+      #     mkdir -p "$(dirname "$OUT")"
+      #     TMPDIR="$(mktemp -d)"
+      #     declare -a POTS=()
 
-          # Helper to run xgettext on a list of files (null-delimited)
-          run_xgettext() {
-            lang="$1"; shift
-            out="$1"; shift
-            opts=("$@")
-            if [ -t 0 ]; then
-              return 1
-            fi
-            xargs -0 xgettext -L "$lang" "${opts[@]}" --from-code=UTF-8 -o "$out"
-          }
+      #     # Helper to run xgettext on a list of files (null-delimited)
+      #     run_xgettext() {
+      #       lang="$1"; shift
+      #       out="$1"; shift
+      #       opts=("$@")
+      #       if [ -t 0 ]; then
+      #         return 1
+      #       fi
+      #       xargs -0 xgettext -L "$lang" "${opts[@]}" --from-code=UTF-8 -o "$out"
+      #     }
 
-          # Only look for the _(...) marker
+      #     # Only look for the _(...) marker
 
-          # Python
-          if git grep -q -I -E "_\(" -- '*.py'; then
-            git grep -l -I -z -E "_\(" -- '*.py' | run_xgettext "Python" "$TMPDIR/python.pot" -k_
-            POTS+=("$TMPDIR/python.pot")
-          fi
+      #     # Python
+      #     if git grep -q -I -E "_\(" -- '*.py'; then
+      #       git grep -l -I -z -E "_\(" -- '*.py' | run_xgettext "Python" "$TMPDIR/python.pot" -k_
+      #       POTS+=("$TMPDIR/python.pot")
+      #     fi
 
-          # JavaScript / TypeScript / JSX / TSX / Vue
-          if git grep -q -I -E "_\(" -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.vue'; then
-            git grep -l -I -z -E "_\(" -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.vue' | run_xgettext "JavaScript" "$TMPDIR/js.pot" -k_ --language=JavaScript
-            POTS+=("$TMPDIR/js.pot")
-          fi
+      #     # JavaScript / TypeScript / JSX / TSX / Vue
+      #     if git grep -q -I -E "_\(" -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.vue'; then
+      #       git grep -l -I -z -E "_\(" -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.vue' | run_xgettext "JavaScript" "$TMPDIR/js.pot" -k_ --language=JavaScript
+      #       POTS+=("$TMPDIR/js.pot")
+      #     fi
 
-          # PHP
-          if git grep -q -I -E "_\(" -- '*.php'; then
-            git grep -l -I -z -E "_\(" -- '*.php' | run_xgettext "PHP" "$TMPDIR/php.pot" -k_
-            POTS+=("$TMPDIR/php.pot")
-          fi
+      #     # PHP
+      #     if git grep -q -I -E "_\(" -- '*.php'; then
+      #       git grep -l -I -z -E "_\(" -- '*.php' | run_xgettext "PHP" "$TMPDIR/php.pot" -k_
+      #       POTS+=("$TMPDIR/php.pot")
+      #     fi
 
-          # If no source POTs created, create an empty POT placeholder
-          if [ "${#POTS[@]}" -eq 0 ]; then
-            echo "# No translatable strings detected." > "$OUT"
-            echo "created=empty" >> "$OUT"
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
+      #     # If no source POTs created, create an empty POT placeholder
+      #     if [ "${#POTS[@]}" -eq 0 ]; then
+      #       echo "# No translatable strings detected." > "$OUT"
+      #       echo "created=empty" >> "$OUT"
+      #       echo "changed=true" >> "$GITHUB_OUTPUT"
+      #       exit 0
+      #     fi
 
-          # Merge all POT fragments into the final translations file
-          msgcat --use-first --sort-output --no-wrap -o "$OUT" "${POTS[@]}"
+      #     # Merge all POT fragments into the final translations file
+      #     msgcat --use-first --sort-output --no-wrap -o "$OUT" "${POTS[@]}"
 
-          # Normalize POT-Creation-Date to reduce spurious diffs
-          if grep -q '^"POT-Creation-Date:' "$OUT"; then
-            sed -i 's/^"POT-Creation-Date:.*$/"POT-Creation-Date: 1970-01-01 00:00+0000\\n"/' "$OUT" || true
-          fi
+      #     # Normalize POT-Creation-Date to reduce spurious diffs
+      #     if grep -q '^"POT-Creation-Date:' "$OUT"; then
+      #       sed -i 's/^"POT-Creation-Date:.*$/"POT-Creation-Date: 1970-01-01 00:00+0000\\n"/' "$OUT" || true
+      #     fi
 
-          echo "Generated $OUT (size: $(wc -c < "$OUT") bytes)"
-          echo "changed=true" >> $GITHUB_OUTPUT
+      #     echo "Generated $OUT (size: $(wc -c < "$OUT") bytes)"
+      #     echo "changed=true" >> $GITHUB_OUTPUT
 
       # - name: Commit and push translations.pot if it changed
       #   if: steps.extract.outputs.changed == 'true'
@@ -106,7 +106,7 @@ jobs:
         uses: crowdin/github-action@v2
         with:
           upload_sources: true
-          upload_translations: true
+          upload_translations: false
           download_translations: false
         env:
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
