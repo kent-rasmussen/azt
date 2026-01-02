@@ -206,9 +206,9 @@ class Align():
             # print("self.possible_range:",self.possible_range)
             # print(f"self.possible_range[{int(upper_range)}]:",self.possible_range[int(upper_range)])
             # print("self.intensity_threshold:",self.intensity_threshold)
-            print(f"looking for {self.intensity_threshold} in range "
-                f"{sorted([self.possible_range[int(self.upper_range)],
-                self.intensity_high_range[int(self.upper_range)]])}, "
+            r=sorted([self.possible_range[int(self.upper_range)],
+                    self.intensity_high_range[int(self.upper_range)]])
+            print(f"looking for {self.intensity_threshold} in range {r}, "
                 f"found {self.intensity_dict[self.intensity_threshold]} "
                 f"(need {self.target})"
                 )
@@ -758,9 +758,8 @@ class ExtractToArchive():
                                                 ).resample(new_frequency=16000
                                                 ).convert_to_mono()
             # print(os.path.splitext(self.textgrid.filename))
-            this_sound_name=(f'{os.path.splitext(
-                                self.files.textgrid.filename)[0]}-'
-                                f'{annotation.start_time}s.wav') #x seconds
+            base=os.path.splitext(self.files.textgrid.filename)[0]
+            this_sound_name=(f'{base}-{annotation.start_time}s.wav') #x seconds
             if kwargs.get('make_soundfiles'):
                 this_sound.save(file_path=str(this_sound_name),
                                 format=out_format)

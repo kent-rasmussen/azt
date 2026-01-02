@@ -33,3 +33,17 @@ Python), there are a couple things we should all pay attention to:
         "segment --those may not be covered by \n"
         "your regexes.".format(lang))`
         ```
+
+## Under the Hood Process
+
+*After marking new strings for translation, or whenever untranslated strings are noticed in the UI (or after any extensive coding)*:
+- run _extract.py_ to pull strings from the code for translation. This will update the _azt.pot_ file. If there are no updates, you can stop here.
+    - check and resolve errors, re-run as necessary.
+- commit and push to github, which will trigger _upload-workflows.yml_, pushing the new _azt.pot_ to Crowdin.
+
+*After new translations are approved in Crowdin*:
+- trigger _download-workflows.yml_ manually (from github.com), which will pull the new .po files from Crowdin, and create a pull request.
+- evaluate and approve the pull request 
+- pull the updated repo to local machine.
+- run _compile.py_ to compile the .po files into .mo files.
+- commit and push the updated .mo files to github.

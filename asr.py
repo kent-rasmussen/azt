@@ -381,11 +381,10 @@ class ASRtoText(object):
                 text=f"!= ‘{self.repo}’!"
             log.info(f"inferall iteration ({x} {text}: {z if z else y})")
             if x in self.transcriptions or x in self.transcriptions_ipa:
-                log.error(f"repo {x} seems to have data again? ({y},{z}, after "
-                f"{self.transcriptions[x] if x in self.transcriptions
-                                            else None}, "
-                f"{self.transcriptions_ipa[x] if x in self.transcriptions_ipa
-                                            else None})")
+                tx=self.transcriptions[x] if x in self.transcriptions else None
+                ix=self.transcriptions_ipa[x] if x in self.transcriptions_ipa else None
+                log.error(f"repo {x} seems to have data again? "
+                            f"({y},{z}, after {tx},{ix})")
                 exit()
             if y:
                 self.transcriptions[x]=y

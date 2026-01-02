@@ -755,8 +755,8 @@ class Gridded():
             y = event.widget.winfo_y() + (event.y - widget.pointer_startY)
             widget.place(x=x, y=y)
         except Exception as e:
-            log.info(f"{e}: {[i['text'].split('\n')[0]
-                                        for i in (widget,event.widget)]}")
+            lines=[i['text'].split('\n')[0] for i in (widget,event.widget)]
+            log.info(f"{e}: {lines}")
         event.widget._root()._DndHandler__dnd.initial_widget.on_motion(event)
     def dnd_end(self, target, event):
         self.initial_widget=False
