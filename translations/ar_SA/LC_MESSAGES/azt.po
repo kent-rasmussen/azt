@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: azt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-02 17:01-0600\n"
-"PO-Revision-Date: 2026-01-02 23:07\n"
+"PO-Revision-Date: 2026-01-05 17:20\n"
 "Last-Translator: \n"
 "Language-Team: Arabic\n"
 "Language: ar_SA\n"
@@ -3862,6 +3862,16 @@ msgstr "يبدو أنه كانت هناك مشكلة في العثور على ا
 #: /home/kentr/bin/raspy/azt/main.py:12851
 msgid "main screen"
 msgstr "الشاشة الرئيسية"
+
+#: /home/kentr/bin/raspy/azt/main.py:6478
+#, python-brace-format
+msgid "mark_item_glyph added ‘{item}’ to ‘{glyph}’"
+msgstr "أضاف mark_item_glyph ''{item}إلى '{glyph}"
+
+#: /home/kentr/bin/raspy/azt/main.py:6480
+#, python-brace-format
+msgid "mark_item_glyph failed to add ‘{item}’ to ‘{glyph}’"
+msgstr "عجزت mark_item_glyph عن إضافة '{item}' إلى '{glyph}"
 
 #: /home/kentr/bin/raspy/azt/transcriber.py:63
 #: /home/kentr/bin/raspy/azt/transcriberCV.py:64

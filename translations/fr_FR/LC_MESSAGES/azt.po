@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: azt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-02 17:01-0600\n"
-"PO-Revision-Date: 2026-01-02 23:07\n"
+"PO-Revision-Date: 2026-01-05 17:20\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr_FR\n"
@@ -27,7 +27,7 @@ msgstr ""
 msgid "\n\n"
 "Anywhere you have sorted a group based on your old interpretation settings, you should sort/verify that data again, as there is a possiblity that you have mixed unrelated groups."
 msgstr "\n\n"
-"Partout où vous avez trié un groupe en fonction de vos anciens paramètres d'interprétation, vous devez trier/vérifier à nouveau ces données, parce que il est possible que vous ayez mélangé des groupes non liés."
+"Partout où vous avez trié un groupe en fonction de vos anciens paramètres d'interprétation, vous devez trier/vérifier à nouveau ces données, parce qu'il est possible que vous ayez mélangé des groupes non liés."
 
 #: /home/kentr/bin/raspy/azt/main.py:17621
 msgid "\n\n"
@@ -3869,6 +3869,16 @@ msgstr "semble avoir rencontré un problème lors de la recherche de votre nouve
 #: /home/kentr/bin/raspy/azt/main.py:12851
 msgid "main screen"
 msgstr "écran principal"
+
+#: /home/kentr/bin/raspy/azt/main.py:6478
+#, python-brace-format
+msgid "mark_item_glyph added ‘{item}’ to ‘{glyph}’"
+msgstr "mark_item_glyph ajouté ‘{item}’ à ‘{glyph}’"
+
+#: /home/kentr/bin/raspy/azt/main.py:6480
+#, python-brace-format
+msgid "mark_item_glyph failed to add ‘{item}’ to ‘{glyph}’"
+msgstr "mark_item_glyph n'a pas pu ajouter ‘{item}’ à ‘{glyph}’"
 
 #: /home/kentr/bin/raspy/azt/transcriber.py:63
 #: /home/kentr/bin/raspy/azt/transcriberCV.py:64
