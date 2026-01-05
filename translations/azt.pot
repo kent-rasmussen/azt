@@ -4071,6 +4071,16 @@ msgstr ""
 msgid "main screen"
 msgstr ""
 
+#: /home/kentr/bin/raspy/azt/main.py:6478
+#, python-brace-format
+msgid "mark_item_glyph added ‘{item}’ to ‘{glyph}’"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:6480
+#, python-brace-format
+msgid "mark_item_glyph failed to add ‘{item}’ to ‘{glyph}’"
+msgstr ""
+
 #: /home/kentr/bin/raspy/azt/transcriber.py:63
 #: /home/kentr/bin/raspy/azt/transcriberCV.py:64
 msgid "more H-L difference"
