@@ -6475,9 +6475,9 @@ class Alphabet():
         self.add_glyph_member(item,glyph)
         self.mark_item_macrosorted(item)
         if item in self.glyph_members()[glyph]:
-            log.info(f"mark_item_glyph added ‘{item}’ to ‘{glyph}’")
+            log.info(_(f"mark_item_glyph added ‘{item}’ to ‘{glyph}’"))
         else:
-            log.info(f"mark_item_glyph failed to add ‘{item}’ to ‘{glyph}’")
+            log.info(_(f"mark_item_glyph failed to add ‘{item}’ to ‘{glyph}’"))
             # log.info(f"{self.glyph_members()=}")
     def remove_item_from_glyph(self,item,glyph=None):
         self.rm_glyph_member(item,glyph) # in case elsewhere
