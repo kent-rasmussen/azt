@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: azt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-02 17:01-0600\n"
-"PO-Revision-Date: 2026-01-02 23:07\n"
+"PO-Revision-Date: 2026-01-05 17:20\n"
 "Last-Translator: \n"
 "Language-Team: Chinese Simplified\n"
 "Language: zh_CN\n"
@@ -3853,6 +3853,16 @@ msgstr "看起来找不到您的新文件。({})"
 #: /home/kentr/bin/raspy/azt/main.py:12851
 msgid "main screen"
 msgstr "主屏幕"
+
+#: /home/kentr/bin/raspy/azt/main.py:6478
+#, python-brace-format
+msgid "mark_item_glyph added ‘{item}’ to ‘{glyph}’"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:6480
+#, python-brace-format
+msgid "mark_item_glyph failed to add ‘{item}’ to ‘{glyph}’"
+msgstr ""
 
 #: /home/kentr/bin/raspy/azt/transcriber.py:63
 #: /home/kentr/bin/raspy/azt/transcriberCV.py:64
