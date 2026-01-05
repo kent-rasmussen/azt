@@ -74,7 +74,7 @@ class Exporter(object):
             for i in t.populate(data[n*groupsize:min((n+1)*groupsize,ndata)]):
                 done+=1
                 yield done/ndata
-        print(f"Done with {type}.")
+        print(_("Done with {}.").format(type))
     def __init__(self, **kwargs): #lift, analang, audiolang, audiodir):
         needed=set(['lift', 'analang', 'audiolang', 'audiodir'])
         kwargset=set(kwargs)

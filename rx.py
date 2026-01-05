@@ -4,6 +4,11 @@ import re
 import time
 import logsetup
 from utilities import *
+try: #translation
+    _
+except NameError:
+    def _(x):
+        return x
 log=logsetup.getlog(__name__)
 # logsetup.setlevel('INFO',log) #for this file
 logsetup.setlevel('DEBUG',log) #for this file
@@ -364,13 +369,13 @@ class RegexDict(object):
         # log.info("updated {} > {}".format(tori,t))
         for match in matches:
             if len(match)>1:
-                txt=("NOTICE: we just matched (to remove) a set of "
+                txt=_("NOTICE: we just matched (to remove) a set of "
                 f"symbols representing one sound ({match}). Until you are done "
                 "with it, we will leave it there, so both forms will be "
                 "found. Once you are done with it, remove it from the "
                 "polygraph settings.")
                 try:
-                    log.info(_(txt))
+                    log.info(txt)
                 except NameError:
                     log.info(txt)
         return t
@@ -404,9 +409,9 @@ class RegexDict(object):
     def interpretationsanitycheck(self,x):
         for i in self.interpret:
             if i in x and i != self.interpret[i]:
-                raise ValueError("Syllable profile {} contains {}, which "
+                raise ValueError(_("Syllable profile {} contains {}, which "
                 "should be {} (according to your settings)"
-                "".format(x,i,self.interpret[i]))
+                ).format(x,i,self.interpret[i]))
     def interpreted(self,x,**kwargs):
         """This fn expands C, or V into a regex matching all that should be
         interpreted as C, with an extra optional group for each new symbol.
@@ -552,8 +557,8 @@ class RegexDict(object):
             # log.info("{} in distinguishedFalseFinal for {}".format(wd,CVs))
             s=wd.replace('wd','')
             if s in CVs and CVs.endswith(s) and len(CVs)-1: #Don't object if len=1
-                raise KeyError("CV profile {} ends with {}, which is not "
-                            "distinguished there".format(CVs_ori,s))
+                raise KeyError(_("CV profile {} ends with {}, which is not "
+                            "distinguished there").format(CVs_ori,s))
         rxthis=self.interpreted('C',final=True, **kwargs)
         if rxthis: #confirm there are segments to find first
             CVs=re.sub('C$',rxthis,CVs)
@@ -574,8 +579,8 @@ class RegexDict(object):
         for x in self.distinguished('C',False,final=False): #sanity check only
             # log.info("{} in distinguishedFalseNon-Final for {}".format(x,CVs))
             if s in CVs and x in CVs and len(CVs)-1: #Don't object if len=1
-                raise KeyError("CV profile {} contains {}, which is not "
-                                "distinguished there".format(CVs_ori,x))
+                raise KeyError(_("CV profile {} contains {}, which is not "
+                                "distinguished there").format(CVs_ori,x))
         # log.info("Replacing non-final distinguished (C): {}".format(CVs))
         # Only V and non-final C should be left at this point.
         for svar in ['C','V']: #no contrast for vowels word finally, as of now

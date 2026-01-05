@@ -178,7 +178,7 @@ def getnewlifturl(dir,xyz):
     dir=pathlib.Path(dir)
     dir=dir.joinpath(xyz)
     if exists(dir):
-        log.error("The directory {} already exists! Not Continuing.".format(dir))
+        log.error(_("The directory {} already exists! Not Continuing.").format(dir))
         return
     else:
         dir.mkdir()
@@ -341,7 +341,7 @@ def lift():
         return writefilename(filename)
     log.debug('filename:'+str(filename))
     if not filename:
-        log.warning("Sorry, did you select a file? Giving up.")
+        log.warning(_("Sorry, did you select a file? Giving up."))
         return
     log.debug('filename: {}'.format(str(filename)))
     """Assuming this file is still in lift/, this works. Once out,

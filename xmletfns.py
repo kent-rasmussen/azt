@@ -8,6 +8,11 @@ log.info(f"Importing {__name__}")
 import file
 import urllib
 import datetime
+try: #translation
+    _
+except NameError:
+    def _(x):
+        return x
 ElementTree=ET.ElementTree
 Element=ET.Element
 parse=ET.parse
@@ -24,7 +29,7 @@ def prettyprint(node):
     # This fn is for seeing the Element contents before writing them (in case of
     # ElementTree errors that aren't otherwise understandable).
     if not isinstance(node,ET.Element):
-        log.info("didn't prettyprint {}".format(node))
+        log.info(_("didn't prettyprint {}").format(node))
         return
     t=0
     lines=[]
@@ -71,7 +76,7 @@ def getincluded(filename,iterated=False):
     # log.info("{}: {}".format(len(results),results))
     for r in results:
         r=file.getdiredrelURL(dir,r.get('href'))
-        log.info("Found reference to filename {}".format(r))
+        log.info(_("Found reference to filename {}").format(r))
         getincluded(r)
 class TreeParsed(object):
     def __init__(self, lift):
@@ -89,7 +94,7 @@ class XML(object): #fns called outside of this class call self.nodes here.
         """Problems reading a valid file are dealt with elsewhere"""
         try:
             self.read() #load and parse the XML file.
-            log.info("XML read OK")
+            log.info(_("XML read OK"))
         except:
             raise BadParseError(self.filename)
         backupbits=[filename,'_',
@@ -97,20 +102,20 @@ class XML(object): #fns called outside of this class call self.nodes here.
                     '.txt']
         self.backupfilename=''.join(backupbits)
         # self.diagnostics()
-        log.info("XML initialization done.")
+        log.info(_("XML initialization done."))
     def get(self, *args,**kwargs):
-        log.info("Using my get")
+        log.info(_("Using my get"))
         ET.get(self,*args,**kwargs)
     def diagnostics(self):
         prettyprint(self.nodes)
     def read(self):
         """this parses the xml file into an entire ElementTree tree,
         for reading or writing the XML file."""
-        log.info("Reading XML file: {}".format(self.filename))
+        log.info(_("Reading XML file: {}").format(self.filename))
         self.tree,self.nodes=readxml(self.filename)
         # self.tree=ET.parse(self.filename)
         # self.nodes=self.tree.getroot()
-        log.info("Done reading XML file.")
+        log.info(_("Done reading XML file."))
         """This returns the root node of an ElementTree tree (the entire
         tree as nodes), to edit the XML."""
 if __name__ == '__main__':

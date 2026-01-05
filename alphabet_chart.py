@@ -5,7 +5,12 @@ import os, sys
 import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
-log.info(_(f"Importing {__name__}"))
+try: #translation
+    _
+except NameError:
+    def _(x):
+        return x
+log.info(_("Importing {name}").format(name=__name__))
 import file
 import lift
 import ui_tkinter as ui
@@ -346,8 +351,8 @@ class OrderAlphabet(ui.Window):
         self.title_entry_field.bind("<Return>",self._set_chart_title)
         self.title_label.grid_remove()
     def _compose_page_title(self):
-        self.chart_title.set(_(f"Alphabet Chart for {self.analangname} "
-                            f"[{self.db.analang}]"))
+        self.chart_title.set(_("Alphabet Chart for {name}").format(name=self.analangname) +
+            f" [{self.db.analang}]")
     def _set_chart_title(self,event=None):
         self.title_label.grid()
         toset=self.chart_title.get()
@@ -370,7 +375,7 @@ class OrderAlphabet(ui.Window):
                     cmd=self._set_chart_title, c=1)
         self._set_chart_title()
     def __init__(self, parent, **kwargs):
-        title="Alphabet Chart UI for Glyph Ordering and Selection"
+        title=_("Alphabet Chart UI for Glyph Ordering and Selection")
         log.info(f"Running {title}")
         self.parent=parent
         if not hasattr(self,'program'): #i.e., from calling class
@@ -442,7 +447,7 @@ class SelectFromPicturableWords(ui.Window):
     def set_up_images(self):
         """This would look faster if we made one button at a time."""
         if len(self.examples) > 5:
-            self.wait("Loading Images")
+            self.wait(_("Loading Images"))
         for n,i in enumerate(self.examples.copy()):
             self.waitprogress(n*100//len(self.examples))
             if getimagelocationURI(i):
@@ -479,7 +484,7 @@ class SelectFromPicturableWords(ui.Window):
             log.info(f"No examples found for {glyph} with images; add to "
                     f"{[i.id for i in examples]}")
         # print([(i.entry.lcvalue(),i.illustrationvalue()) for i in self.examples])
-        title="Alphabet Chart UI for Word Selection"
+        title=_("Alphabet Chart UI for Word Selection")
         super(SelectFromPicturableWords,self).__init__(parent,
                                                         title=title,
                                                         withdrawn=True)
@@ -492,7 +497,7 @@ class SelectFromPicturableWords(ui.Window):
         # print(optionlist)
         ui.Label(self.frame,text=title,font='title',c=0,r=0)
         if optionlist:
-            ui.Label(self.frame,text=f"Select a word to exemplify ‘{glyph}’",
+            ui.Label(self.frame,text=_("Select a word to exemplify ‘{glyph}’").format(glyph=glyph),
                     c=0,r=1)
             ui.ScrollingButtonFrame(self.frame,
                             optionlist=optionlist,
@@ -501,7 +506,7 @@ class SelectFromPicturableWords(ui.Window):
                             c=0,r=2
                             )
         else:
-            ui.Label(self.frame,text=f"No examples for ‘{glyph}’!",c=0,r=1)
+            ui.Label(self.frame,text=_("No examples for ‘{glyph}’!").format(glyph=glyph),c=0,r=1)
         self.deiconify()
 def getimagelocationURI(sense):
     if hasattr(sense,'image') and isinstance(sense.image,ui.Image):
@@ -530,7 +535,7 @@ if __name__ == '__main__':
             'db':lift.LiftXML(filename),#This provides imgdir and analang
         }
     r=ui.Root(program)
-    r.title('Alphabet Chart UI')
+    r.title(_('Alphabet Chart UI'))
     exids={"'": None, '-': None, 'B': None, 'I': None, 'O': None, 'P': None, 'a': 'face_50e60901-8869-495f-97cf-b9be6173f6b3', 'ai': None, 'au': None, 'ay': None, 'b': 'beard_4ad57748-4eab-49bd-ad58-72cf41e653bd', 'bb': None, 'c': 'cheek_3fb09846-1194-42a5-ac75-a48eeb9541f9', 'cc': None, 'ch': 'chest_0e7b3795-5a08-40c8-8b23-02f5879e7a3a', 'ck': None, 'ckw': None, 'd': 'body_791094f2-a82b-4650-81d8-c3b6145d2be4', 'dd': None, 'dw': None, 'e': 'neck_73d0f72c-abb2-4e6c-ac0e-122907026b06', 'ea': 'heart_626ba0f2-debb-40c2-92bd-2b0b819c28bb', 'eau': None, 'ee': None, 'ei': 'vein_56c65965-1cbe-4502-8479-fe5551b993cb', 'ey': None, 'f': None, 'ff': None, 'g': 'leg_0d765545-ed2a-4f74-aa37-4a5b7cd4b471', 'gg': None, 'gh': 'thigh_20efd25d-d864-465a-bb96-1dd47ffcef76', 'gn': None, 'gu': 'tongue_f62b2bdc-dad7-4800-9707-197bfebe108e', 'gw': None, 'h': 'hair (of head)_cfd6d8be-fe86-4b3b-9002-f0f59c89c162', 'hh': None, 'hw': None, 'i': None, 'ie': None, 'j': None, 'k': 'knee_150923de-c9a0-42b6-8106-ec01281ee523', 'kw': None, 'l': None, 'll': None, 'lw': None, 'm': None, 'mb': None, 'mm': None, 'mp': None, 'n': 'nose_c6327beb-5bb7-4ce5-9def-078dedbb79da', 'nd': None, 'nk': None, 'nn': None, 'nt': None, 'nw': None, 'ny': None, 'o': None, 'oa': None, 'oe': None, 'oi': None, 'oo': None, 'ou': None, 'ow': None, 'p': None, 'ph': None, 'pp': None, 'pt': None, 'q': None, 'qu': None, 'r': None, 'rh': None, 'rr': None, 'rw': None, 's': None, 'sc': None, 'sh': None, 'sl': None, 'ss': None, 'sw': None, 't': None, 'tch': None, 'th': None, 'thw': None, 'ts': None, 'tt': None, 'tw': None, 'u': None, 'ue': None, 'v': 'navel_d29fffce-fe19-474b-bd16-9e54058d1156', 'w': 'waist_358ed3cb-7f89-47a1-9d08-de6cd7416183', 'wh': None, 'x': None, 'y': None, 'yi': None, 'yw': None, 'z': None, 'zl': None, 'é': None}
     OrderAlphabet(r, program=program, exids=exids)
     r.mainloop()

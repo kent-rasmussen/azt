@@ -15,7 +15,11 @@ logsetup.setlevel('INFO',log) #for this file
 import urls
 import htmlfns
 import webbrowser
-
+try: #translation
+    _
+except NameError:
+    def _(x):
+        return x
 class Catalog(object):
     """docstring for Catalog."""
     def allentries(self):

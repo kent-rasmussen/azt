@@ -257,25 +257,25 @@ class Engine(object):
         lx, lc, pl, imp = self.texts()
         sf = None
         if pl and not imp:
-            log.info("looks like a noun; parsing plural")
+            log.info(_("looks like a noun; parsing plural"))
             self.sense.psvalue(self.nominalps)
             sf = pl
         elif imp and not pl:
-            log.info("looks like a verb; parsing imperative")
+            log.info(_("looks like a verb; parsing imperative"))
             self.sense.psvalue(self.verbalps)
             sf = imp
         elif imp and pl:
-            log.info("This entry has both plural and imperative??")
+            log.info(_("This entry has both plural and imperative??"))
             if self.ps == self.nominalps:
-                log.info("Found nominal ps {}; using...".format(self.ps))
+                log.info(_("Found nominal ps {ps}; using...").format(ps=self.ps))
                 sf = pl
             elif self.ps == self.verbalps:
-                log.info("Found verbal ps {}; using...".format(self.ps))
+                log.info(_("Found verbal ps {ps}; using...").format(ps=self.ps))
                 sf = imp
             else:
-                log.info("Found other ps {}; skipping...".format(self.ps))
+                log.info(_("Found other ps {ps}; skipping...").format(ps=self.ps))
         else:
-            log.info("This entry has neither plural nor imperative?? skipping.")
+            log.info(_("This entry has neither plural nor imperative?? skipping."))
         return lx, lc, sf, pl, imp
     def bestrootbyps(self,roots,ps,lc,sf):
         if not roots:
@@ -295,14 +295,15 @@ class Engine(object):
         return bestsofar
     def twoforms(self):
         if self.ask > 4:
-            log.info("Asking for the impossible!")
+            log.info(_("Asking for the impossible!"))
             return 1
         lx, lc, pl, imp = self.texts()
         if lx and not lc: #switch them, both in node and in local variables
             self.parser.entry.lc.textvaluebylang(self.analang,lx)
             self.parser.entry.lx.textvaluebylang(self.analang,'')
         if not (lc and (pl or imp)): #this only parses nouns and verbs
-            log.info("Missing forms! (lc:{}; pl:{} imp:{})".format(lc, pl, imp))
+            log.info(_("Missing forms! (lc:{lc}; pl:{pl} imp:{imp})")
+                    .format(lc=lc, pl=pl, imp=imp))
             return 1
         # log.info("Two There! (lc:{}; pl:{} imp:{}): Parse!".format(lc, pl, imp))
         # These return an empty list for empty sf
@@ -318,40 +319,41 @@ class Engine(object):
         bestn=self.bestrootbyps(nroots,self.nominalps,lc,pl)
         bestv=self.bestrootbyps(vroots,self.verbalps,lc,imp)
         if max(bestn[0], bestv[0]) < self.ask:
-            log.info("Neither Noun ({}) nor Verb ({}) is good enough (ask: {})"
-                    "".format(bestn[0], bestv[0], self.ask))
+            log.info(_("Neither Noun ({lc}) nor Verb ({pl}) is good enough (ask: {ask}) "
+                    "(bestn:{bestn}; bestv:{bestv})")
+                    .format(lc=lc, pl=pl, ask=self.ask, bestn=bestn, bestv=bestv))
             return 1 # We won't do this one anyway; give up now.
         noun=verb=False #figure this out next
         if not (bestn[1] or bestv[1]):
-            log.info("No nroot of value ({}:{}): {}".format(lc,pl,nroots))
-            log.info("No vroot of value ({}:{}): {}".format(lc,imp,vroots))
-            log.info("No root of value for either ps; suppletive?")
+            log.info(_("No nroot of value ({lc}:{pl}): {roots}").format(lc=lc,pl=pl,roots=nroots))
+            log.info(_("No vroot of value ({lc}:{imp}): {roots}").format(lc=lc,imp=imp,roots=vroots))
+            log.info(_("No root of value for either ps; suppletive?"))
             return 2 #no found affixes built either form, do manually
         if bestn[1] and bestv[1]:
             # This shouldn't happen often: both forms have lc lcs which build
             # at least one form with a known affix
-            log.info("Noun roots found ({}:{}): {}".format(lc,pl,nroots))
-            log.info("Verb roots found ({}:{}): {}".format(lc,imp,vroots))
+            log.info(_("Noun roots found ({lc}:{pl}): {roots}").format(lc=lc,pl=pl,roots=nroots))
+            log.info(_("Verb roots found ({lc}:{imp}): {roots}").format(lc=lc,imp=imp,roots=vroots))
             # As both were found, we need to decide which is better:
             if bestn[0] > bestv[0]:
-                log.info("Noun looks better (n:{}; v:{})".format(bestn,bestv))
+                log.info(_("Noun looks better (n:{n}; v:{v})").format(n=bestn,v=bestv))
                 self.askuserifweshouldaddthisps()
                 noun=True
             elif bestv[0] > bestn[0]:
-                log.info("Verb looks better (n:{}; v:{})".format(bestn,bestv))
+                log.info(_("Verb looks better (n:{n}; v:{v})").format(n=bestn,v=bestv))
                 self.askuserifweshouldaddthisps()
                 verb=True
             elif bestv[0]: #non-zero
                 if len(bestn[1]) > len(bestv[1]): #shorter roots, longer affixes
-                    log.info("Verb slightly better ({}/{})".format(bestv,bestn))
+                    log.info(_("Verb slightly better ({v}/{n})").format(v=bestv,n=bestn))
                     self.askuserifweshouldaddthisps()
                     verb=True
                 elif len(bestn[1]) < len(bestv[1]):
-                    log.info("Noun slightly better ({}/{})".format(bestn,bestv))
+                    log.info(_("Noun slightly better ({n}/{v})").format(n=bestn,v=bestv))
                     self.askuserifweshouldaddthisps()
                     noun=True
                 else:
-                    log.info("Noun=verb ({}/{})".format(bestn,bestv))
+                    log.info(_("Noun=verb ({n}/{v})").format(n=bestn,v=bestv))
                     self.reportpsproblemtouser()
                     return 1
         elif bestn[1]:
@@ -361,8 +363,8 @@ class Engine(object):
             self.sense.psvalue(self.verbalps)
             verb=True
         else:
-            log.error("Logical problem! n:{}; v:{} ({})"
-                        "".format(noun,verb,self.senseid))
+            log.error(_("Logical problem! n:{n}; v:{v} ({sense_id})")
+                        .format(n=bestn, v=bestv, sense_id=self.senseid))
             raise
         if noun:
             best=bestn
@@ -373,53 +375,53 @@ class Engine(object):
             sf=imp
             ps=self.verbalps
         else:
-            log.error("Neither noun nor verb! This shouldn't happen! ({})"
-                        "".format(self.senseid))
+            log.error(_("Neither noun nor verb! This shouldn't happen! ({sense_id})")
+                        .format(sense_id=self.senseid))
             raise
         sfafxs=tuple(sf.split(best[1]))
         lcafxs=tuple(lc.split(best[1]))
         # log.info("Best match: {}".format(best))
         if best[0] == 4:
-            log.info("Excellent match; "
-                    "Found root {} in lc: {} and sf: {}, "
-                    "with this combination of affixes ({}) already "
+            log.info(_("Excellent match; "
+                    "Found root {root} in lc: {lc} and sf: {sf}, "
+                    "with this combination of affixes {affixes} already "
                     "present, already with each other in this ps, which is "
-                    "already marked in the entry"
-                    "".format(best[1], lc, sf, (lcafxs, sfafxs))
+                    "already marked in the entry")
+                    .format(root=best[1], lc=lc, sf=sf, affixes=(lcafxs, sfafxs))
                     )
         elif best[0] == 3:
-            log.info("Very good match; "
-                    "Found root {} in lc: {} and sf: {}, "
-                    "with this combination of affixes ({}) already "
-                    "present, already with each other in this ps"
-                    "".format(best[1], lc, sf, (lcafxs, sfafxs))
+            log.info(_("Very good match; "
+                    "Found root {root} in lc: {lc} and sf: {sf}, "
+                    "with this combination of affixes {affixes} already "
+                    "present, already with each other in this ps")
+                    .format(root=best[1], lc=lc, sf=sf, affixes=(lcafxs, sfafxs))
                     )
         elif best[0] == 2:
-            log.info("Good match; found root {} in lc: {} and sf: {}, "
-                "with each combination of affixes ({}) already "
-                "present, but not with each other"
-                "".format(best[1], lc, sf, (lcafxs, sfafxs))
+            log.info(_("Good match; found root {root} in lc: {lc} and sf: {sf}, "
+                "with each combination of affixes {affixes} already "
+                "present, but not with each other")
+                .format(root=best[1], lc=lc, sf=sf, affixes=(lcafxs, sfafxs))
                     )
         elif best[0] == 1: #Good match, but with one present affix set
-            log.info("OK match; found root {} in lc: {} or sf: {}, "
-                    "but without the other set already present; asking."
-                    "".format(best[1], lc, sf, (lcafxs, sfafxs))
+            log.info(_("OK match; found root {root} in lc: {lc} or sf: {sf}, "
+                    "but without the other set already present; asking.")
+                    .format(root=best[1], lc=lc, sf=sf, affixes=(lcafxs, sfafxs))
                     )
         else: #Good match, but not with neither affix set present
-            log.info("Found root {} in lc: {} and sf: {}, but without "
-                    "matching affixes ({}) already present."
-                    "".format(best[1], lc, sf, (lcafxs, sfafxs))
+            log.info(_("Found root {root} in lc: {lc} and sf: {sf}, but without "
+                    "matching affixes {affixes} already present.")
+                    .format(root=best[1], lc=lc, sf=sf, affixes=(lcafxs, sfafxs))
                     )
         if best[0] >= self.auto:
-            log.info("Level {} match, parsing automatically (auto: {})"
-                    "".format(best[0],self.auto))
+            log.info(_("Level {level} match, parsing automatically (auto: {auto})")
+                        .format(level=best[0], auto=self.auto))
             self.doparsetolx(best[1],ps,(lcafxs, sfafxs))
             return
         elif best[0] >= self.ask:
         # and self.askusertoconfirmaffixcombo(
         #                                 lc, sf, best[1], ps, (lcafxs, sfafxs)
-            log.info("Level {} match, parsing with confirmation (ask: {})"
-                    "".format(best[0],self.ask))
+            log.info(_("Level {level} match, parsing with confirmation (ask: {ask})")
+                        .format(level=best[0], ask=self.ask))
             return *best, lc, sf, ps, (lcafxs, sfafxs)
             # self.doparsetolx(best[1],ps,(lcafxs, sfafxs))
             # return 1
@@ -454,13 +456,13 @@ class Engine(object):
                     afxs=(tuple(lc.split(lx)),tuple(imp.split(lx)))
                     sf=imp
         if afxs and 4 >= self.auto:
-            log.info("Atumatic parse on three forms with ps (auto: {})"
-                    "".format(self.auto))
+            log.info(_("Atumatic parse on three forms with ps (auto: {auto_level})")
+                        .format(auto_level=self.auto))
             self.addaffixset(self.ps,afxs)
             return
         elif afxs and 4 >= self.ask:
-            log.info("Match with three forms with ps, asking for confirmation "
-                    "(ask: {})".format(self.ask))
+            log.info(_("Match with three forms with ps, asking for confirmation "
+                    "(ask: {ask_level})").format(ask_level=self.ask))
             return 4, lx, lc, sf, self.ps, afxs
         return 1
     def doifallbutps(self, lx, lc, pl, imp):
@@ -474,13 +476,12 @@ class Engine(object):
             if lx in imp:
                 afv=(self.verbalps,(tuple(lc.split(lx)),tuple(imp.split(lx))))
             if afn and afv:
-                log.error("Parsed both pl and imp? Problem! ({})"
-                            "".format(self.senseid))
+                log.error(_("Parsed both pl and imp? Problem! ({sense_id})")
+                        .format(sense_id=self.senseid))
                 return
             elif afn or afv:
-                log.info("All There and subset! (lx:{}; lc:{}; pl:{}); "
-                        "imp:{}): Ready to mark ps and get affixes."
-                        "".format(lx, lc, pl, imp))
+                log.info(_("All There and subset! (lx:{lx}; lc:{lc}; pl:{pl}); imp:{imp}): Ready to mark ps and get affixes.")
+                        .format(lx=lx, lc=lc, pl=pl, imp=imp))
                 if afn:
                     self.sense.psvalue(self.nominalps)
                     self.catalog.addaffixset(afn)
@@ -489,11 +490,11 @@ class Engine(object):
                     self.catalog.addaffixset(afv)
                 return 1 #The only successful parse exit point
             else:
-                log.info("Looks like {} isn't a subset of {} or {} ({})"
-                            "".format(lx,pl,imp,ps.node))
+                log.info(_("Looks like {lx} isn't a subset of {pl} or {imp} ({error})")
+                            .format(lx=lx,pl=pl,imp=imp,error=ps.node))
         else:
-            log.info("Looks like a form is missing, or {} isn't a subset of {}"
-                        "({};{})".format(lx,lc,pl,imp))
+            log.info(_("Looks like a form is missing, or {lx} isn't a subset of {lc} ({pl};{imp})")
+                        .format(lx=lx,lc=lc,pl=pl,imp=imp))
     def dooneformparse(self,x,window):
         # x is (sf,ps,root,lcafxs,sfafxs)
         log.info("User selected {}".format(x))
@@ -512,7 +513,7 @@ class Engine(object):
         elif x[1] == self.verbalps:
             self.entry.impvalue(self.fieldnames[x[1]],x[0])
         else:
-            log.error("Parsed but neither noun nor verb?")
+            log.error(_("Parsed but neither noun nor verb?"))
         window.destroy() #actually a canary button
     def oneform(self):
         # log.info("This is where we set up request for the second form")
@@ -525,7 +526,7 @@ class Engine(object):
             self.parser.entry.lc.textvaluebylang(self.analang,lx)
             self.parser.entry.lx.textvaluebylang(self.analang,'')
         if not lc:
-            log.info("No citation form!")
+            log.info(_("No citation form!"))
             return
         possibilities=[]
         try:
@@ -584,7 +585,7 @@ class Engine(object):
         #     # nodes+=['pl','imp']
         for node in nodes:
             if not lift.iselement(getattr(self,node+'node')):
-                log.info("Missing {} node!".format(node))
+                log.info(_("Missing {node} node!").format(node=node))
     def pscheck(self):
         # Return False if any problem
         if not self.ps: #any value is OK
@@ -606,7 +607,7 @@ class Engine(object):
             self.entry=sense.entry
         elif senseid:
             self.senseid=senseid #save for later
-            log.error("given senseid, but can't really get sense")
+            log.error(_("given senseid, but can't really get sense"))
             self.sense=entry.sense
             self.entry=sense.entry
         elif entry:
@@ -614,7 +615,7 @@ class Engine(object):
             self.sense=self.entry.sense
             self.senseid=self.sense.id #save for later
         else:
-            log.error("Need one of sense, senseid, or entry!")
+            log.error(_("Need one of sense, senseid, or entry!"))
             return
         """Do I want to add this here? if so, must overright rigorously,
         to avoid old values"""
@@ -633,12 +634,12 @@ class Engine(object):
         ls=self.levels()
         if isinstance(l,int) and l in ls:
             self.ask=l
-        log.info("Parser set to ask for ‘{}’".format(ls[self.ask]))
+        log.info(_("Parser set to ask for ‘{ask_level}’").format(ask_level=ls[self.ask]))
     def autolevel(self,l=None):
         ls=self.levels()
         if isinstance(l,int) and l in ls:
             self.auto=l
-        log.info("Parser set to auto for ‘{}’".format(ls[self.auto]))
+        log.info(_("Parser set to auto for ‘{auto_level}’").format(auto_level=ls[self.auto]))
     def setlevels(self,auto=5,ask=4): #default for first auto run
         self.auto=auto
         self.ask=ask
@@ -676,8 +677,8 @@ def roothypgenerator(a,b):
     try:
         assert t == b[m.b:m.b+m.size]
     except AssertionError:
-        log.error("Problem with SequenceMatcher: {} != {} "
-                "(a={},b={},match={})".format(t,b[m.b:m.b+m.size],a,b,m))
+        log.error(_("Problem with SequenceMatcher: {t} != {b_match} (a={a},b={b},match={m})")
+                .format(t=t, b_match=b[m.b:m.b+m.size], a=a, b=b, m=m))
         raise #this is worth always getting right, at least for now
     l=[]
     for i in range(m.size):

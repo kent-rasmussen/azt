@@ -11,6 +11,11 @@ import tgt #TextGridTools
 import file
 from tqdm import tqdm
 import time
+try: #translation
+    _
+except NameError:
+    def _(x):
+        return x
 
 print('parselmouth.VERSION:',parselmouth.VERSION)
 print('parselmouth.PRAAT_VERSION:',parselmouth.PRAAT_VERSION)
@@ -411,29 +416,29 @@ class Align():
         self.new_breath_pitch_rise_min=15 #hz
         self.files=Files(file_name)
         if not hasattr(self.files,'sound'):
-            print("Missing sound file; can't continue!")
+            print(_("Missing sound file; can't continue!"))
         if not hasattr(self.files,'plaintext'):
-            print("Missing text file with whole text transcription!")
+            print(_("Missing text file with whole text transcription!"))
         self.textgrid_name=self.files.file_w_ext('TextGrid')
         if (not os.path.isfile(self.textgrid_name) or
                         not os.path.getsize(self.textgrid_name)):
-            print(f"Will write to {self.textgrid_name}, which isn't there yet.")
+            print(_("Will write to {}, which isn't there yet.").format(self.textgrid_name))
             self.files.start_textgrid(self.textgrid_name)
         else:
-            print(f"Will write to {self.textgrid_name}, adding tiers.")
+            print(_("Will write to {}, adding tiers.").format(self.textgrid_name))
             self.files.read_textgrid(self.textgrid_name)
         # self.untranscribed_intro=7.5
         # self.untranscribed_epilogue=4.0
         self.untranscribed_intro=kwargs.get('untranscribed_intro')
         self.untranscribed_epilogue=kwargs.get('untranscribed_epilogue')
         if self.untranscribed_intro:
-            print(f"Going to skip the first {self.untranscribed_intro} seconds "
-                "of untranscribed audio")
+            print(_("Going to skip the first {} seconds "
+                "of untranscribed audio").format(self.untranscribed_intro))
         else:
             self.untranscribed_intro=0
         if self.untranscribed_epilogue:
-            print(f"Going to skip the last {self.untranscribed_epilogue} "
-                "seconds of untranscribed audio")
+            print(_("Going to skip the last {} "
+                "seconds of untranscribed audio").format(self.untranscribed_epilogue))
         else:
             self.untranscribed_epilogue=0
         self.texts_to_align=getattr(self.files.plaintext,self.attr_to_align)
@@ -493,7 +498,7 @@ class TextGrid(tgt.core.TextGrid):
                 stg[1] != 'Object class = "TextGrid"') and
                 (stg[0] != 'File type = "ooTextFile short"' or
                     stg[1] != '"TextGrid"')):
-                raise Exception('Invalid TextGrid header: {0}\n{1}'.format(stg[0], stg[1]))
+                raise Exception(_('Invalid TextGrid header: {0}\n{1}').format(stg[0], stg[1]))
             # tgt_text_grid=tgt.io.read_short_textgrid(file_name,stg)
             tgt_text_grid=tgt.io.read_long_textgrid(file_name,stg)
             log.info("tgt.io.read_textgrid completed successfully")
@@ -511,13 +516,13 @@ class TextGrid(tgt.core.TextGrid):
         for tier in tgt_text_grid.tiers:
             # print(tier.name)
             if self.has_tier(tier.name):
-                print(f"Tier ‘{tier.name}’ is already there!")
-                print("Won't add "
-                f"{len(tier.annotations)} "
+                print(_("Tier ‘{}’ is already there!").format(tier.name))
+                print(_("Won't add "
+                "{} "
                 "annotations (first 5: "
-                f"{[i.text for i in tier.annotations[:5]]})")
+                "{})").format(len(tier.annotations),[i.text for i in tier.annotations[:5]]))
             else:
-                print(f"Tier ‘{tier.name}’ not there, adding!")
+                print(_("Tier ‘{}’ not there, adding!").format(tier.name))
                 self.add_tier(tier.name)
                 self.get_tier_by_name(tier.name).add_annotations(tier.annotations)
             print("Done with",tier.name)
@@ -719,8 +724,8 @@ class ExtractToArchive():
                 except:
                     pass
         else:
-            print("Please specify a tier name (-t) in "
-                    f"{self.files.textgrid.get_tier_names()}")
+            print(_("Please specify a tier name (-t) in "
+                    "{}").format(self.files.textgrid.get_tier_names()))
             exit()
         return tier
     def __init__(

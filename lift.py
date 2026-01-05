@@ -12,7 +12,12 @@ log.info(f"Importing {__name__}")
 #     log.info("using lxml to parse XML")
 #     lxml=True
 # except:
-log.info("using xml.etree to parse XML")
+try: #Allow this module to be used without translation
+    _
+except NameError:
+    def _(x):
+        return x
+log.info(_("using xml.etree to parse XML"))
 lxml=False
 # from xmletfns import * # from xml.etree import ElementTree as ET
 import xmletfns as et
@@ -29,11 +34,6 @@ import ast #For string list interpretation
 import copy
 import collections
 import langtags
-try: #Allow this module to be used without translation
-    _
-except NameError:
-    def _(x):
-        return x
 """This returns the root node of an ElementTree tree (the entire tree as
 nodes), to edit the XML."""
 class Object(object):
@@ -92,16 +92,12 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.getsensefieldnames() #sets self.sensefieldnames (fields of sense)
         self.legacyverificationconvert() #data to form nodes (no name changes)
         self.getfieldswsoundfiles() #sets self.nfields & self.nfieldswsoundfiles
-        log.info("Working on {} with {} entries, with lexeme data counts: {}, "
-        "citation data counts: {} and {} senses".format(filename,self.nguids,
-                                                    self.nentrieswlexemedata,
-                                                    self.nentrieswcitationdata,
-                                                    self.nsenseids))
-        log.info("Found gloss data counts: {}, definition counts: {}"
-                "".format(
-                        self.nsenseswglossdata,
-                        self.nsenseswdefndata,
-                        ))
+        log.info(_("Working on {file} with {nguids} entries, with lexeme data counts: {lex_counts}, "
+                   "citation data counts: {citation_counts} and {nsenseids} senses")
+                .format(file=filename, nguids=self.nguids, lex_counts=self.nentrieswlexemedata,
+                        citation_counts=self.nentrieswcitationdata, nsenseids=self.nsenseids))
+        log.info(_("Found gloss data counts: {gloss_counts}, definition counts: {def_counts}")
+                .format(gloss_counts=self.nsenseswglossdata, def_counts=self.nsenseswdefndata))
         #This may be superfluous:
         self.getsenseidsbyps() #sets: self.senseidsbyps and self.nsenseidsbyps
         """This is very costly on boot time, so this one line is not used:"""
@@ -123,7 +119,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.get_audiodir()
         self.get_imgdir()
         self.get_reportdir()
-        log.info("Language initialization done.")
+        log.info(_("Language initialization done."))
     def tonelangname(self,machine=False):
         try:
             bits=[self.tonelang]
@@ -159,26 +155,28 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                         filename=fp.textvaluebylang(self.audiolang)
                         totry=file.getdiredurl(self.audiodir,filename)
                         assert file.exists(totry)
-                        log.info(f"Found {totry}; assuming {self.audiodir=}")
+                        log.info(_("Found {file_url_totry}; assuming audiodir={audiodir}")
+                                .format(file_url_totry=totry, audiodir=self.audiodir))
                         return
                     except:# Exception as e:
                         # log.info(f"Exception: {e}")
                         pass
-        log.info(f"No audio found in {self.audiodir=}, but will put new audio "
-            "there; if your audio is elsewhere, fix this.")
+        log.info(_("No audio found in audiodir={audiodir}, but will put new audio "
+                "there; if your audio is elsewhere, fix this.").format(audiodir=self.audiodir))
     def get_imgdir(self):
         self.imgdir=file.getimagesdir(self.lift_home)
         for s in self.senses:
             try:
                 totry=file.getdiredurl(self.imgdir,s.illustrationvalue())
                 assert file.exists(totry)
-                log.info(f"Found {totry}; assuming {self.imgdir=}")
+                log.info(_("Found {file_url_totry}; assuming imgdir={imgdir}")
+                        .format(file_url_totry=totry, imgdir=self.imgdir))
                 return
             except:# Exception as e:
                 # log.info(f"Exception: {e}")
                 pass
-        log.info(f"No images found in {self.imgdir=}, but will put new images "
-            "there; if your images are elsewhere, fix this.")
+        log.info(_("No images found in imgdir={imgdir}, but will put new images "
+                "there; if your images are elsewhere, fix this.").format(imgdir=self.imgdir))
     def get_reportdir(self):
         self.reportdir=file.getreportdir(self.lift_home)
     def convert_langtag(self,current_lang,new_lang):
@@ -191,18 +189,22 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         lang_stats=collections.Counter(present_langs).most_common()
         langs=set(present_langs)
         if current_lang in self.glosslangs:
-            log.error(f"‘{current_lang}’ is a gloss lang! ({self.glosslangs})!")
+            log.error(_("‘{lang}’ is a gloss lang! ({langs})!").format(lang=current_lang, langs=self.glosslangs))
             return
         if current_lang == new_lang:
-            log.error(f"‘{new_lang}’ is the same as ‘{current_lang}’!")
+            log.error(_("‘{new}’ is the same as ‘{current}’!")
+                .format(new=new_lang, current=current_lang))
             return
         if current_lang not in langs:
-            log.error(f"‘{current_lang}’ not in {langs=}!")
+            log.error(_("‘{current}’ not in langs={langs}!")
+                    .format(current=current_lang, langs=langs))
             return
         if new_lang in langs:
-            log.error(f"‘{new_lang}’ already in {langs=}!")
+            log.error(_("‘{new}’ already in langs={langs}!")
+                    .format(new=new_lang, langs=langs))
             return
-        log.info(f"found ‘{current_lang}’, and not ‘{new_lang}’ in {langs=}.")
+        log.info(_("found ‘{current}’, and not ‘{new}’ in langs={langs}.")
+                .format(current=current_lang, new=new_lang, langs=langs))
         target_nodes=[i for i in
                             self.nodes.findall(f".//*[@lang='{current_lang}']")]
         for n in target_nodes:
@@ -211,8 +213,10 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                             self.nodes.findall(f".//*[@lang='{new_lang}']")]
         target_nodes=[i for i in
                             self.nodes.findall(f".//*[@lang='{current_lang}']")]
-        log.info(f'Found {len(receptor_nodes)} receptor nodes with {new_lang}.')
-        log.info(f'Found {len(target_nodes)} target nodes with {current_lang}.')
+        log.info(_('Found {n} receptor nodes with {lang}.')
+                .format(n=len(receptor_nodes), lang=new_lang))
+        log.info(_('Found {n} target nodes with {lang}.')
+                .format(n=len(target_nodes), lang=current_lang))
     def retarget(self,urlobj,target,showurl=False):
         k=self.urlkey(urlobj.kwargs)
         urlobj.kwargs['retarget']=target
@@ -1188,7 +1192,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         l_ordered=[i for i in l_ordered if i not in self.analangs]
         tryname=file.getfilenamebase(self.filename)
         if analang in self.analangs:
-            log.info(_(f"Using {analang=} from settings."))
+            log.info(_("Using analang={analang} from settings.").format(analang=analang))
             self.analangs=[analang]
         elif tryname in self.analangs:
             log.info(_("Found file name base in possible analysis languages; "
@@ -1204,31 +1208,31 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         else:
             log.error("I can't find a plausible analang! "
                         f"(from ‘{l_ordered}’)")
-        # log.info(_(f"Possible analysis language codes found: {self.analangs}"))
+        # log.info(_("Possible analysis language codes found: {langs}").format(langs=self.analangs))
         for glang in set(['fr','en']) & set(self.analangs):
             log.info(f"Examples of LWC lang {glang} found; is this correct?")
         e_pluribus_unum('analang')
         for l in ['audiolangs','tonelangs','phoneticlangs']:
             if not getattr(self,l):
-                log.debug(_(f'No {l} found in Database; creating one '
-                            'for each analysis language.'))
+                log.debug(_('No {lang} found in Database; creating one '
+                        'from settings.').format(lang=l))
                 setattr(self,l,[i+codes[l] for i in getattr(self,'analangs')])
             elif self.analang and self.analang+codes[l] not in getattr(self,l):
                 getattr(self,l).append(self.analang+codes[l])
         for l in ['audiolang','tonelang','phoneticlang']:
             e_pluribus_unum(l)
         if l_ordered:
-            log.error(_(f"Language codes {l_ordered} found in data, "
-                        "but not sure what to do with them"))
+            log.error(_("Language codes {langs} found in data, "
+                        "but not in settings. Check your settings!")
+                    .format(langs=l_ordered))
     def getglosslangs(self):
         """These are ordered by frequency in the database"""
         g=self.get('gloss').get('lang')
         d=self.get('definition/form').get('lang')
         self.glosslangs=[i[0] for i in collections.Counter(g+d).most_common()]
-        log.info(_("gloss languages found: {}".format(self.glosslangs)))
+        log.info(_("gloss languages found: {langs}").format(langs=self.glosslangs))
         self.annotationlang=self.glosslangs[0]
-        log.info(_("Using first gloss language for new annotations: {}".format(
-                                                        self.annotationlang)))
+        log.info(_("Using first gloss language for new annotations: {lang}").format(lang=self.glosslangs[0]))
     def getfieldnames(self,guid=None,lang=None): # all field types in a given entry
         self.fieldnames={l:set([k
                                     for i in self.entries
@@ -1893,9 +1897,9 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                     f"{self.segmentsnotinregexes[lang]}")
             else:
                 print("No problems!")
-                log.info(_("Your regular expressions look OK for {} (there are "
-                    "no segments in your {} data that are not in a regex). "
-                    "".format(lang,lang)))
+                log.info(_("Your regular expressions look OK for {lang} (there are "
+                    "no segments in your {lang} data that are not in a regex). "
+                    "".format(lang=lang)))
                 log.info("Note, this doesn't say anything about digraphs or "
                     "complex segments which should be counted as a single "
                     "segment.")
@@ -2422,11 +2426,11 @@ class FormParent(Node):
             log.info(_("This entry doesn't seem to have a sense."))
         except AttributeError:
             log.info(_("This doesn't seem to be called on a child of entry "
-                    "({} child of {}), or the entry's first sense ({}) doesn't "
-                    "have gloss languages."
-                    ).format(type(self),type(self.parent),
-                            self.sense.id,
-                            self.sense.glosses.keys()))
+                    "({entry} child of {parent}), or the entry's first sense ({sense}) doesn't "
+                    "have gloss languages ({glosses})."
+                    ).format(entry=type(self),parent=type(self.parent),
+                            sense=self.sense.id,
+                            glosses=self.sense.glosses.keys()))
     def getsense(self):
         if hasattr(self.parent,'senses') and self.parent.senses:
             # we want a common reference point for glosses, first sense is OK
@@ -2526,11 +2530,11 @@ class FieldParent(object):
         """use fieldvalue below"""
         raise
         if not value:
-            log.info("We normally shouldn't create empty fields: {}/{}".format(
-                                                                lang, value))
+            log.info(_("We normally shouldn't create empty fields: {lang}/{value}")
+                    .format(lang=lang, value=value))
         if type in self.fields:
-            log.error("There is already a {} field here! ({})".format(type,
-                                                                self.fields))
+            log.error(_("There is already a {type} field here! ({fields})")
+                    .format(type=type, fields=self.fields))
             return
         self.fields.update({type:Field(self,type=type)}) #make field
         # without lang here, annotationlang is used; value=None does nothing
@@ -2548,15 +2552,18 @@ class FieldParent(object):
             # log.info(f"found new XML node {found}")
             if isinstance(found,et.Element) or value:
                 if isinstance(found,et.Element):
-                    log.error("This should never happen; somehow an XML field "
+                    val_lang = found.getlang()
+                    val_val = found.textvaluebylang()
+                    log.error(_("This should never happen; somehow an XML field "
                         "was not picked up on boot, but was found just now. "
-                        f"type: {type}, lang: {found.getlang()}, "
-                        f"value: {found.textvaluebylang()}, "
-                        f"parent: {self.parent}")
+                        "type: {type}, lang: {lang}, "
+                        "value: {value}, "
+                        "parent: {parent}").format(type=type, lang=val_lang, value=val_val, parent=self.parent))
                     raise
                 if self.checkforsecondfieldbytype(type):
-                    log.error("This should definitely never happen; somehow "
-                        f"multiple XML fields are found with type {type}.")
+                    log.error(_("This should definitely never happen; somehow "
+                        "multiple XML fields are found with type {type}.")
+                        .format(type=type))
                 # node=None creates a new field node, forms nodes below
                 self.fields.update({type:Field(self,node=found,type=type)})
                 self.checkforsecondfieldbytype(type) #b/c new field made
@@ -2720,8 +2727,8 @@ class Sense(Node,FieldParent):
         self.checkforsecondchild('definition')
     def newexample(self,loc,frame,analang,glosslangs,tonevalue):
         if loc in self.examples:
-            log.error("There is already a {} example here! ({})".format(loc,
-                                                                self.examples))
+            log.error(_("There is already a {location} example here! ({examples})")
+                    .format(location=loc, examples=self.examples))
             return
         self.examples.update({loc:Example(self)})
         # without lang here, annotationlang is used; value=None does nothing
@@ -2764,15 +2771,12 @@ class Sense(Node,FieldParent):
                 if len(exs[loc]) == 1:
                     continue
                 elif len(exs[loc]) > 1:
-                    log.error("{} node in entry {} has multiple examples with "
-                        "{} location. "
-                        "\nWhile this is legal LIFT, it is probably an error, "
-                        "and will lead to unexpected behavior."
-                        "".format(self.tag,self.parent.guid,loc))
+                    log.error(_("{tag} node in entry {guid} has multiple examples with "
+                                "location {loc}. While this is legal LIFT, it is probably an error, "
+                                "and will lead to unexpected behavior.").format(tag=self.tag, guid=self.parent.guid, loc=loc))
                 else:
-                    log.error("{} node in entry {} has no examples with "
-                        "{} location? This is a logical error in A−Z+T "
-                        "".format(self.tag,self.parent.guid,loc))
+                    log.error(_("{tag} node in entry {guid} has no examples with "
+                                "location {loc}? This is a logical error in A−Z+T ").format(tag=self.tag, guid=self.parent.guid, loc=loc))
                     raise
         # only make location keys with examples where found
         self.examples={loc:Example(self, exs[loc][0]) for loc in locations}
@@ -2789,10 +2793,12 @@ class Sense(Node,FieldParent):
     def cvprofileuservalue(self,ftype='lc',value=None):
         type='cvprofile-user_'+ftype
         if value:
-            log.info(f"setting {self.id} to {type} = {value}")
+            log.info(_("setting {id} to {type} = {value}")
+                    .format(id=self.id, type=type, value=value))
         else:
-            log.info(f"returning {self.id} {type} value: "
-                        f"{self.fieldvalue(type,value=value)}")
+            val_fv = self.fieldvalue(type,value=value)
+            log.info(_("returning {id} {type} value: {value}")
+                    .format(id=self.id, type=type, value=val_fv))
         #w/o lang, 'value' must be kwarg:
         return self.fieldvalue(type,value=value)
     def cvprofilevalue(self,ftype='lc',value=None):
@@ -2818,14 +2824,14 @@ class Sense(Node,FieldParent):
                                 and self.ps in self):
             self.remove(self.ps)
         else:
-            log.info("psnode {} not found in sense {} ({})".format(self.ps,
-                                                    self,self.id))
+            log.info(_("psnode {ps} not found in sense {sense} ({id})")
+                    .format(ps=self.ps, sense=self, id=self.id))
     def rmpssubclassnode(self):
         if isinstance(self.pssubclass,et.Element):
             self.remove(self.pssubclass)
         else:
-            log.info("pssubclass {} not found in sense {} ({})"
-                    "".format(self.pssubclass,self,self.id))
+            log.info(_("pssubclass {subclass} not found in sense {sense} ({id})")
+                    .format(subclass=self.pssubclass, sense=self, id=self.id))
     def psvalue(self,value=None):
         try:
             assert isinstance(self.ps,et.Element)
@@ -2897,16 +2903,16 @@ class Sense(Node,FieldParent):
         try:
             return self.ftypes[ftype].formattedbylang(analang,frame)
         except KeyError:
-            log.info("No {} type ({})".format(ftype,self.ftypes))
+            log.info(_("No {type} type ({ftypes})").format(type=ftype, ftypes=self.ftypes))
     def formattedgloss(self,glosslang,ftype=None,frame=False,quoted=False):
         """This outputs a list that can be joined as needed"""
         # log.info("formattedgloss called with glosslang={}, ftype={}, frame={}, "
         #         "quoted={}"
         #         "".format(glosslang,ftype,frame,quoted))
         if glosslang not in self.glosses:
-            return [_(f"No {glosslang} gloss found!")]
+            return [_("No {lang} gloss found!").format(lang=glosslang)]
         if frame and glosslang not in frame:
-            return [_(f"No {glosslang} field in frame!")]
+            return [_("No {lang} field in frame!").format(lang=glosslang)]
         if not ftype:
             if frame:
                 ftype=frame['field']
@@ -2935,14 +2941,14 @@ class Sense(Node,FieldParent):
         return t
     def formatteddictbylang(self,analang,glosslangs,ftype=None,frame=None):
         if frame and ftype and not frame['field'] == ftype:
-            log.error("ftype mismatch! ({}/{})".format(frame['field'],ftype))
+            val_ff = frame['field']
+            log.error(_("ftype mismatch! ({val}/{type})").format(val=val_ff, type=ftype))
             return
         elif frame and not ftype:
             ftype=frame['field']
-        log.info("Found glosses {}".format(self.glosses))
-        log.info("asked for glosslangs {}".format(glosslangs))
-        log.info("looking for langs {}".format([i for i in glosslangs
-                                                if i in self.glosses]))
+        log.info(_("Found glosses {glosses}").format(glosses=self.glosses))
+        log.info(_("asked for glosslangs {langs}").format(langs=glosslangs))
+        log.info(_("looking for langs {langs}").format(langs=[i for i in glosslangs if i in self.glosses]))
         d={lang:', '.join(self.formattedgloss(lang,ftype,frame,quoted=True))
             for lang in [i for i in glosslangs if i in self.glosses]}
         #don't overwrite gloss in analang, if both there:
@@ -2957,7 +2963,8 @@ class Sense(Node,FieldParent):
         """This uses frame definition, not name"""
         """As a format of the sense, there should be no tonegroup to show"""
         if frame and not frame['field'] == ftype:
-            log.error("ftype mismatch! ({}/{})".format(frame['field'],ftype))
+            val_ff = frame['field']
+            log.error(_("ftype mismatch! ({val}/{type})").format(val=val_ff, type=ftype))
             return
         elif frame and not ftype:
             ftype=frame['field']
@@ -2981,7 +2988,7 @@ class Sense(Node,FieldParent):
             if frame:
                 txt+=f" and frame translations for {list(frame)}"
             log.info(txt)
-            l+=[_(f"{' & '.join(glosslangs)} gloss languages not in frame!")]
+            l+=[_("{langs} gloss languages not in frame!").format(langs=' & '.join(glosslangs))]
         # log.info("Returning forms: {}".format(l))
         return ' '.join([i for i in l if i]) #put it all together
     def unformatted(self,analang,glosslangs,ftype=0): #,showtonegroup=0):
@@ -3003,7 +3010,7 @@ class Sense(Node,FieldParent):
             v.remove(value)
             self.verificationtextvalue(profile,ftype,value=v) #remove on []
         except Exception as e:
-            log.info("tried to remove what wasn't there? ({})".format(e))
+            log.info(_("tried to remove what wasn't there? ({error})").format(error=e))
     def rmverificationnode(self,profile,ftype):
         key=self.verificationkey(profile,ftype)
         # log.info(f"Removing {key} verification from {self}")
@@ -3153,7 +3160,7 @@ class Entry(Node,FieldParent): # what does "object do here?"
             self.sense=self.senses[0] #for when I really just need one
         except IndexError:
             self.sense=[]
-            log.info("Removing entry with no senses: {}".format(self.guid))
+            log.info(_("Removing entry with no senses: {guid}").format(guid=self.guid))
             return 1
     def getlx(self):
         self.lx=Lexeme(self,self.find('lexical-unit'))
@@ -3177,10 +3184,10 @@ class Entry(Node,FieldParent): # what does "object do here?"
     def phvalue(self,ftype,lang,value=None):
         try:
             assert self.ph.get('type') == ftype
-            log.info("phonetic form is correct type ({})".format(ftype))
+            log.info(_("phonetic form is correct type ({type})").format(type=ftype))
         except AssertionError:
-            log.error("Asked for ftype {}, but found phonetic field which is {}"
-                    "".format(ftype,self.ph.get('type')))
+            log.error(_("Asked for ftype {type}, but found phonetic field which is {val}")
+                    .format(type=ftype, val=self.ph.get('type')))
         except AttributeError:
             if value:
                 # For now, this just takes the first one. We aren't using this.
@@ -3199,7 +3206,7 @@ class Entry(Node,FieldParent): # what does "object do here?"
             ph=self.ph.textvaluebylang(lang='wmg')
             self.lc.textvaluebylang(lang='wmg',value=ph)
         except Exception as e:
-            log.info(f"Exception: ({e}; {self.guid=})")
+            log.info(_("Exception: ({error}; guid={guid})").format(error=e, guid=self.guid))
     def copy_ph_form_and_media_to_lc(self):
         try:
             wav=self.ph.find('media').get('href')
@@ -3207,7 +3214,7 @@ class Entry(Node,FieldParent): # what does "object do here?"
             self.lc.textvaluebylang(lang=self.db.audiolang,value=wav)
             self.lc.textvaluebylang(lang='wmg',value=ph)
         except Exception as e:
-            log.info(f"Exception: ({e}; {self.guid=})")
+            log.info(_("Exception: ({error}; guid={guid})").format(error=e, guid=self.guid))
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='entry'
         self.annotationlang=kwargs.pop('annotationlang','en')
@@ -3221,7 +3228,7 @@ class Entry(Node,FieldParent): # what does "object do here?"
         self.getph()
         r=self.getsenses() #this needs lx and lc already
         if r: #If no senses, stop here
-            log.info("Stopping here b/c no senses found.")
+            log.info(_("Stopping here b/c no senses found."))
             return
         for l in ['lx','lc','ph']:
             if hasattr(self,l):
@@ -3250,7 +3257,8 @@ class LiftURL():
         log.log(4,self.__dict__)
         n=self.base.findall(self.url)
         if n != []:
-            log.log(4,"found: {} (x{}), looking for {}".format(n[:1],len(n),what))
+            log.log(4,_("found: {val} (x{n}), looking for {what}")
+                    .format(val=n[:1], n=len(n), what=what))
         what=self.unalias(what)
         if n == [] or what is None or what == 'node':
             return n
@@ -3289,7 +3297,7 @@ class LiftURL():
         else:
             self.level['cur']+=1
         self.level[self.getalias(tag)]=self.level['cur']
-        log.log(4,"Path so far: {}".format(self.drafturl()))
+        log.log(4,_("Path so far: {url}").format(url=self.drafturl()))
         if buildanother:
             self.build(tag)
     def parent(self):
@@ -3366,13 +3374,13 @@ class LiftURL():
         self.bearchildrenof("ps")
     def pssubclass(self):
         """<trait name='{ps}-infl-class' value='{pssubclass}'"""
-        log.log(4,"Kwargs: {}".format(self.kwargs))
+        log.log(4,_("Kwargs: {kwargs}").format(kwargs=self.kwargs))
         self.kwargs['pssubclassname']='{}-infl-class'.format(self.kwargs['ps'])
         attrs={'name': 'pssubclassname'}
         if 'pssubclass' in self.kwargs:
             self.kwargs['pssubclassvalue']='pssubclass'
             attrs['value']='pssubclassvalue'
-        log.log(4,"Attrs: {}".format(attrs))
+        log.log(4,_("Attrs: {attrs}").format(attrs=attrs))
         self.trait(attrs)
     def gloss(self):
         self.baselevel()
@@ -3411,8 +3419,8 @@ class LiftURL():
         elif 'lang' in self.kwargs:
                 self.form(lang='lang')
         else:
-            log.error("You asked for a field, without specifying ftype or "
-                        "lang; not adding form fields.")
+            log.error(_("You asked for a field, without specifying ftype or "
+                        "lang; not adding form fields."))
             return
         #This was causing duplicate form nodes for locationfield
         # self.form(ftype+"form","analang",annodict=attrs)
@@ -3452,7 +3460,7 @@ class LiftURL():
             self.kwargs['formtext']=None
             self.form(lang='glosslang')
     def cawlfield(self):
-        log.log(4,"Making CAWL field")
+        log.log(4,_("Making CAWL field"))
         self.baselevel()
         self.kwargs['ftype']='SILCAWL'
         self.level['cawlfield']=self.level['cur']+1 #so this won't repeat
@@ -3483,8 +3491,8 @@ class LiftURL():
     def show(self,nodename,parent=None): #call this directly if you know you want it
         if nodename == 'form': #args:value,lang
             if parent is None:
-                log.error("Sorry, I can't tell what form to pass to this field;"
-                            "\nWhat is its parent?")
+                log.error(_("Sorry, I can't tell what form to pass to this field;"
+                            "\nWhat is its parent?"))
                 return
             else:
                 args=self.formargsbyparent(parent)
@@ -3493,7 +3501,7 @@ class LiftURL():
         else:
             args=list()
         for arg in args:
-            log.log(4,"show arg: {}".format(arg))
+            log.log(4,_("show arg: {arg}").format(arg=arg))
         if len(args) == 0:
             getattr(self,nodename)()
         else:
@@ -3516,8 +3524,8 @@ class LiftURL():
             args.append('analang')
         return args
     def lift(self):
-        log.error("LiftURL is trying to make a lift node; this should never "
-                "happen; exiting!")
+        log.error(_("LiftURL is trying to make a lift node; this should never "
+                "happen; exiting!"))
         exit()
     def bearchildrenof(self,parent):
         # log.info("bearing children of {} ({})".format(parent,
@@ -3550,28 +3558,29 @@ class LiftURL():
                 #                                             target,self.level))
                 continue
             else:
-                log.error("last level {} (of {}) not in {}; this is a problem!"
-                            "".format(target,parents,self.level))
-                log.error("this is where we're at: {}\n  {}".format(self.kwargs,
-                                                            self.drafturl()))
+                val_url = self.drafturl()
+                log.error(_("last level {target} (of {parents}) not in {level}; this is a problem!")
+                        .format(target=target, parents=parents, level=self.level))
+                log.error(_("this is where we're at: {kwargs}\n  {url}")
+                        .format(kwargs=self.kwargs, url=val_url))
                 exit()
     def maybeshowtarget(self,parent):
         # parent here is a node ancestor to the current origin, which may
         # or may not be an ancestor of targethead. If it is, show it.
         f=self.getfamilyof(parent,x=[])
-        log.log(4,"Maybeshowtarget: {} (family: {})".format(parent,f))
+        log.log(4,_("Maybeshowtarget: {parent} (family: {family})").format(parent=parent, family=f))
         if self.targethead in f:
             if parent in self.level:
-                log.log(4,"Maybeshowtarget: leveling up to {}".format(parent))
+                log.log(4,_("Maybeshowtarget: leveling up to {parent}").format(parent=parent))
                 self.levelup(parent)
             else:
-                log.log(4,"Maybeshowtarget: showing {}".format(parent))
+                log.log(4,_("Maybeshowtarget: showing {parent}").format(parent=parent))
                 self.show(parent)
             self.showtargetinhighestdecendance(parent)
             return True
     def showtargetinlowestancestry(self,nodename):
-        log.log(4,"Running showtargetinlowestancestry for {}/{} on {}".format(
-                                    self.targethead,self.targettail,nodename))
+        log.log(4,_("Running showtargetinlowestancestry for {head}/{tail} on {node}")
+                .format(head=self.targethead, tail=self.targettail, node=nodename))
         #If were still empty at this point, just do the target if we can
         if nodename == [] and self.targethead in self.children[self.basename]:
             self.show(self.targethead)
@@ -3580,7 +3589,7 @@ class LiftURL():
         g=1
         r=giveup=False
         while not r and giveup is False:
-            log.log(4,"Trying generation {}".format(g))
+            log.log(4,_("Trying generation {g}").format(g=g))
             gen=self.parentsof(gen)
             for p in gen:
                 r=self.maybeshowtarget(p)
@@ -3590,17 +3599,17 @@ class LiftURL():
             if g>10:
                 giveup=True
         if giveup is True:
-            log.error("Hey, I've looked back {} generations, and I don't see "
-                    "an ancestor of {} (target) which is also an ancestor of "
-                    "{} (current node).".format(g,self.targethead,nodename))
+            log.error(_("Hey, I've looked back {g} generations, and I don't see "
+                    "an ancestor of {head} (target) which is also an ancestor of "
+                    "{node} (current node).").format(g=g, head=self.targethead, node=nodename))
     def showtargetinhighestdecendance(self,nodename):
-        log.log(4,"Running showtargetinhighestdecendance for {} on {}".format(
-                                                    self.targethead,nodename))
+        log.log(4,_("Running showtargetinhighestdecendance for {head} on {node}")
+                .format(head=self.targethead, node=nodename))
         if nodename in self.children:
             children=self.children[nodename]
         else:
-            log.log(4,"Node {} has no children, so not looking further for "
-                        "descendance.".format(nodename))
+            log.log(4,_("Node {node} has no children, so not looking further for "
+                        "descendance.").format(node=nodename))
             return
         grandchildren=[i for child in children
                                 if child in self.children
@@ -3620,44 +3629,46 @@ class LiftURL():
                                         if ggrandchild in self.children
                                         for i in self.children[ggrandchild]
                                     ]
-        log.log(4,"Looking for {} in children of {}: {}".format(
-                                            self.targethead,nodename,children))
-        log.log(4,"Grandchildren of {}: {}".format(nodename,grandchildren))
-        log.log(4,"Greatgrandchildren of {}: {}".format(
-                                                nodename,greatgrandchildren))
+        log.log(4,_("Looking for {head} in children of {node}: {children}")
+                .format(head=self.targethead, node=nodename, children=children))
+        log.log(4,_("Grandchildren of {node}: {grandchildren}")
+                .format(node=nodename, grandchildren=grandchildren))
+        log.log(4,_("Greatgrandchildren of {node}: {greatgrandchildren}")
+                .format(node=nodename, greatgrandchildren=greatgrandchildren))
         if self.targethead in children:
-            log.log(4,"Showing '{}', child of {}".format(self.targethead,nodename))
+            log.log(4,_("Showing '{head}', child of {node}")
+                    .format(head=self.targethead, node=nodename))
             self.show(self.targethead,nodename)
         elif self.targethead in grandchildren:
-            log.log(4,"Found target ({}) in grandchildren of {}: {}".format(
-                        self.targethead,nodename,grandchildren))
+            log.log(4,_("Found target ({head}) in grandchildren of {node}: {grandchildren}")
+                    .format(head=self.targethead, node=nodename, grandchildren=grandchildren))
             for c in children:
                 if c in self.children and self.targethead in self.children[c]:
-                    log.log(4,"Showing '{}', nearest ancenstor".format(c))
+                    log.log(4,_("Showing '{c}', nearest ancenstor").format(c=c))
                     self.show(c,nodename) #others will get picked up below
                     self.showtargetinhighestdecendance(c)
         elif self.targethead in greatgrandchildren:
-            log.log(4,"Found target ({}) in gr8grandchildren of {}: {}".format(
-                                self.targethead,nodename,greatgrandchildren))
+            log.log(4,_("Found target ({head}) in gr8grandchildren of {node}: {grandchildren}")
+                    .format(head=self.targethead, node=nodename, grandchildren=greatgrandchildren))
             for c in children:
                 for cc in grandchildren:
                     if cc in self.children and self.targethead in self.children[cc]:
-                        log.log(4,"Showing '{}', nearest ancenstor".format(c))
+                        log.log(4,_("Showing '{c}', nearest ancenstor").format(c=c))
                         self.show(c,nodename) #others will get picked up below
                         self.showtargetinhighestdecendance(c)
         elif self.targethead in gggrandchildren:
-            log.log(4,"Found target ({}) in gggrandchildren of {}: {}".format(
-                                self.targethead,nodename,gggrandchildren))
+            log.log(4,_("Found target ({head}) in gggrandchildren of {node}: {grandchildren}")
+                    .format(head=self.targethead, node=nodename, grandchildren=gggrandchildren))
             for c in children:
                 for cc in grandchildren:
                     for ccc in greatgrandchildren:
                         if ccc in self.children and self.targethead in self.children[ccc]:
-                            log.log(4,"Showing '{}', nearest ancenstor".format(c))
+                            log.log(4,_("Showing '{c}', nearest ancenstor").format(c=c))
                             self.show(c,nodename) #others will get picked up below
                             self.showtargetinhighestdecendance(c)
         else:
-            log.error("Target not found in children, grandchildren, or "
-                        "greatgrandchildren!")
+            log.error(_("Target not found in children, grandchildren, or "
+                        "greatgrandchildren!"))
     def nodesatlevel(self,levelname='cur'):
         if levelname not in self.level:
             return []
@@ -3668,7 +3679,7 @@ class LiftURL():
     def parsetargetlineage(self):
         if '/' in self.target: #if target lineage is given
             self.targetbits=self.target.split('/')
-            log.log(4,"{} : {}".format(self.target,self.targetbits))
+            log.log(4,_("{target} : {bits}").format(target=self.target, bits=self.targetbits))
             self.targethead=self.targetbits[0]
             self.targettail=self.targetbits[1:]
         else:
@@ -3677,10 +3688,10 @@ class LiftURL():
             self.targettail=[]
         if 'form' in self.targethead and 'form' not in self.children[
                                                 self.getalias(self.basename)]:
-            log.error("Looking for {} as the head of a target is going to "
+            log.error(_("Looking for {head} as the head of a target is going to "
             "cause problems, as it appears in too many places, and is likely "
             "to not give the desired results. Fix this, and try again. (whole "
-            "target: {})".format(self.targethead,self.target))
+            "target: {target})").format(head=self.targethead, target=self.target))
             exit()
     def tagonly(self,nodename):
         return nodename.split('[')[0]
@@ -3765,7 +3776,7 @@ class LiftURL():
     def printurl(self):
         print(self.url)
     def usage(self):
-        log.info("Basic usage of this class includes the following kwargs:\n"
+        log.info(_("Basic usage of this class includes the following kwargs:\n"
                 "\tbase: node from which we are pulling (should be supplied)\n"
                 "\ttarget: node we are looking for\n"
                 "\tget: thing we want: node (default)/'text'/attribute name\n"
@@ -3781,9 +3792,7 @@ class LiftURL():
                 "\tgloss: gloss (one word definition) of sense\n"
                 "Below here implies an example node:\n"
                 "\ttranslation: Translation of example forms\n"
-                "\ttonevalue: value of an example tone group (from sorting)\n"
-                ""
-                )
+                "\ttonevalue: value of an example tone group (from sorting)\n"))
     def shouldshow(self,node):
         # This fn is not called by showtargetinhighestgeneration or maketarget
         if node in self.level:
@@ -3962,10 +3971,10 @@ class LiftURL():
         self.guid=self.senseid=self.attrdonothing
         self.setattrsofnodes()
         self.bearchildrenof(basename)
-        log.log(4,"Making Target now.")
+        log.log(4,_("Making Target now."))
         self.maketarget()
         self.makeurl()
-        log.log(4,"Final URL: {}".format(self.url))
+        log.log(4,_("Final URL: {url}").format(url=self.url))
         # self.printurl()
 """Functions I'm using, but not in a class"""
 def pylanglegacy(analang):
@@ -3997,13 +4006,15 @@ def atleastoneexamplehaslangformmissing(examples,lang):
     return False
 def examplehaslangform(example,lang):
     if example.find("form[@lang='{}']".format(lang)):
-        log.debug("langform found!")
+        log.debug(_("langform found!"))
         return True
-    log.debug("No langform found!")
+    log.debug(_("No langform found!"))
     return False
 def buildurl(url):
-    log.log(2,'BaseURL: {}'.format(url[0]))
-    log.log(2,'Arguments: {}'.format(url[1]))
+    val_u0 = url[0]
+    log.log(2,_('BaseURL: {url}').format(url=val_u0))
+    val_u1 = url[1]
+    log.log(2,_('Arguments: {args}').format(args=val_u1))
     return url[0].format(**url[1]) #unpack the dictionary
 def removenone(url):
     """Remove any attribute reference whose value is 'None'. I only use

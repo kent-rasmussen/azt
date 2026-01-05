@@ -11,6 +11,11 @@ import profiles
 #import numpy
 import locale
 import gettext
+try: #Allow this module to be used without translation
+    _
+except NameError:
+    def _(x):
+        return x
 #class Check(object):
 #    pass
 def doprofiles(db):
@@ -78,7 +83,7 @@ def wordsbypsprofilechecksubcheck(check,pss=None,profs=None,checks=None,subcheck
     for check.profile in profs:
         for check.name in checks:
             if len(check.name) == 1:
-                print("Error!",checks,"Doesn't seem to be list formatted.")
+                print(_("Error!"),checks,_("Doesn't seem to be list formatted."))
             for check.subcheck in subchecks:
                 print(check.ps,check.profile,check.name,check.subcheck,':')
                 check.buildregex()
@@ -95,9 +100,9 @@ def wordsbypsprofilechecksubcheck(check,pss=None,profs=None,checks=None,subcheck
                         #print('\t',guid,entry.citation,"'"+str(entry.gloss)+"'","("+str(entry.ps)+")" )
 def wordsnotinregexes(lift,showwords=True):
     import time
-    print("Checking for words not covered by current processing.")
-    print("This includes data in regexes, or with invalid characters or no ps.")
-    print("This can take some time.")
+    print(_("Checking for words not covered by current processing."))
+    print(_("This includes data in regexes, or with invalid characters or no ps."))
+    print(_("This can take some time."))
     start_time=time.time()
     missingnum=0
     maxmissingnum=0 #20
@@ -115,8 +120,8 @@ def wordsnotinregexes(lift,showwords=True):
                 #print(guid,self.formbyid(guid),"'"+str(self.glossbyid(guid))+"'","("+str(self.psbyid(guid))+")")
             if (missingnum>maxmissingnum) and (maxmissingnum != 0):
                 return
-    print("Found "+str(missingnum)+" words not covered by current regexs in "+
-            str(time.time() - start_time)+" seconds.")
+    print(_("Found ")+str(missingnum)+_(" words not covered by current regexs in ")+
+            str(time.time() - start_time)+_(" seconds."))
 if __name__ == "__main__":
     """These modules are needed to test/run these reports"""
     import lift

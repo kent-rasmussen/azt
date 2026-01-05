@@ -19,7 +19,7 @@ class Report(object):
     def __init__(self,filename,report,langname,program):
         #use program, if only for it's name
         if 'name' not in program:
-            log.error("the program argument to xlp.Report needs a 'name' key")
+            log.error(_("the program argument to xlp.Report needs a 'name' key"))
             exit()
         self.start_time=time.time()
         self.filename=filename
@@ -35,7 +35,7 @@ class Report(object):
         self.title="{} {} output report for {}".format(report,
                                                         program['name'],
                                                         langname)
-        log.info("Starting XLingPaper report file at {} with title '{}'".format(
+        log.info(_("Starting XLingPaper report file at {} with title '{}'").format(
                                                         filename,self.title))
         self.authors=[{'name':'Kent Rasmussen',
                         'affiliation':'SIL International',
@@ -45,9 +45,9 @@ class Report(object):
                         ]
         self.langlist=list()
         self.frontmatter()
-        log.info("Done initializing Report")
+        log.info(_("Done initializing Report"))
     def close(self,me=False):
-        log.info("Done; setting back matter, etc, now.")
+        log.info(_("Done; setting back matter, etc, now."))
         self.backmatter()
         self.languages()
         self.xlptypes()
@@ -57,7 +57,7 @@ class Report(object):
         t=time.time()-self.start_time
         # m=int(t/60)
         # s=t%60
-        log.info("Finished in {:1.0f} minutes, {:2.3f} seconds.".format(*divmod(t,60)))
+        log.info(_("Finished in {:1.0f} minutes, {:2.3f} seconds.").format(*divmod(t,60)))
         if me:
             self.compile() #This isn't working yet.
     def cleanup(self):
@@ -148,7 +148,7 @@ class Report(object):
             texfile=outfile.replace('.xml','.tex')
             outdir=file.getfilenamedir(outfile)
             newdom = transform[4](dom)
-            log.info("writing to tex file {}".format(texfile))
+            log.info(_("writing to tex file {}").format(texfile))
             newdom.write_output(texfile)
         except:
             for error in transform[4].error_log:
@@ -173,7 +173,7 @@ class Report(object):
             for ext in exts:
                 file.remove(outfile.replace('.xml', '.'+ext))
         except Error as e:
-            log.info("The call to xelatex didn't work: {}".format(e))
+            log.info(_("The call to xelatex didn't work: {}").format(e))
         # Another Java class that reads the output of that transform and makes
         # sure all IDs are in a form that XeLaTeX can handle.  The class name
         # is NonASCIIIDandIDREFConversion (and it's in the file named
@@ -234,8 +234,8 @@ class Report(object):
         if 'id' in lang and 'name' in lang:
             self.langlist+=[lang]
         else:
-            log.error("Hey, not sure how this language is formatted! "
-                                                            "({})".format(lang))
+            log.error(_("Hey, not sure how this language is formatted! "
+                                                            "({})").format(lang))
     def xlptypes(self):
         tps=ET.SubElement(self.node, 'types')
         allxlptypes=[{'id':'tBold','font-weight':"bold"},
@@ -311,7 +311,7 @@ class Report(object):
         # >
 
 class Section(ET.Element):
-    def __init__(self,parent,title="No Section Title!",level=None,landscape=False):
+    def __init__(self,parent,title=_("No Section Title!"),level=None,landscape=False):
         id=rx.id(title)
         if level: #this shouldn't happen
             self.level=level
@@ -330,7 +330,7 @@ class SecTitle(ET.Element):
         self.node=ET.SubElement(parent.node,'secTitle')
         self.node.text=text
 class Paragraph(ET.Element):
-    def __init__(self,parent,text='No Paragraph text!'):
+    def __init__(self,parent,text=_('No Paragraph text!')):
         self.node=ET.SubElement(parent.node,'p')
         self.node.text=text
 class Example(ET.Element):
@@ -380,8 +380,8 @@ class Cell(ET.Element):
         elif header == True:
             tag='th'
         else:
-            log.error("Not sure what kind of cell you're looking for: {}"
-                        "".format(header))
+            log.error(_("Not sure what kind of cell you're looking for: {}"
+                        ).format(header))
         self.node=ET.SubElement(parent.node,tag)
         if linebreakwords == True:
             for i in content.split(): #this returns a list, even one ['word',].

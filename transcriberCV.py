@@ -9,7 +9,11 @@ import rx
 import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
-
+try: #translation
+    _
+except NameError:
+    def _(x):
+        return x
 class Transcriber(ui.Frame):
     def addchar(self,x):
         if x in ['','∅'] or self.formfield.get() == '∅':
@@ -181,7 +185,7 @@ if __name__ == "__main__":
         def _(x):
             return x
     r=ui.Root()
-    r.title('Transcriber')
+    r.title(_('Transcriber'))
     Transcriber(r,initval='˥˥ ˩˩ ˧˧',column=1,row=1)
     r.deiconify()# soundsettings=sound.SoundSettings()
     r.mainloop()

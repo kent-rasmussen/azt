@@ -4,6 +4,11 @@ import logsetup
 log=logsetup.getlog(__name__)
 # logsetup.setlevel('INFO',log) #for this file
 logsetup.setlevel('DEBUG',log) #for this file
+try: #translation
+    _
+except NameError:
+    def _(x):
+        return x
 class Base():
     pass
 def debug():
@@ -12,10 +17,10 @@ def debug():
 def get(db,nsyls=None):
     import time
     """db should be a lift object here, for now"""
-    log.info("Generating theoretical syllable profiles")
+    log.info(_("Generating theoretical syllable profiles"))
     theoretical=gen(nsyls=nsyls)
     log.debug(theoretical)
-    log.info("Checking real words against theoretical syllable profiles ")
+    log.info(_("Checking real words against theoretical syllable profiles "))
     start_time=time.time() #move this to function?
     words(db,theoretical) #sets db.profileswdatabyentry, db.profileswdatabysense
     # log.debug(db.profileswdata)
@@ -25,22 +30,22 @@ def get(db,nsyls=None):
     # log.debug(db.profileswdata['Verbe'])
     # log.debug(db.profileswdata['Nom']['CVCV'])
     # log.debug(db.profileswdata['Verbe']['CVCV'])
-    log.info("Finished generating db.profileswdatabyentry and profileswdatabysense "
-            "in "+str(time.time() - start_time)+" seconds.")
+    log.info(_("Finished generating db.profileswdatabyentry and profileswdatabysense "
+            "in {} seconds.").format(time.time() - start_time))
     #was: output=words(self,theoretical)
     #log.info(output)
     #exit()
     #was: self.profiles=cull(self,output,theoretical)
     #was: self.profiles=cull(self,output,theoretical)
-    log.info("Reducing profile sets to those that match real entries")
+    log.info(_("Reducing profile sets to those that match real entries"))
     db.profilesbyentry=cull(db,db.profileswdatabyentry)
     # for ps in db.profilesbyentry:
     #     log.info(db.profilesbyentry[ps])
-    log.info("Reducing profile sets to those that match real senses")
+    log.info(_("Reducing profile sets to those that match real senses"))
     db.profilesbysense=cull(db,db.profileswdatabysense)
     # for ps in db.profilesbysense:
     #     log.info(db.profilesbysense[ps])
-    log.info('Done setting up syllable profiles.')
+    log.info(_('Done setting up syllable profiles.'))
 def gen(nsyls=None): # i should add self here, for lift variable reference..
     syllables=['V','CV','CVV','CVC']
     #warning: over 3 adds 30 seconds to startup time..
@@ -48,7 +53,7 @@ def gen(nsyls=None): # i should add self here, for lift variable reference..
         nsyls=2 #default if syls=None; much faster, and 2+ isn't always wanted.
     else:
         nsyls=nsyls
-    log.info("Looking for words of",nsyls,"syllables.")
+    log.info(_("Looking for words of {} syllables.").format(nsyls))
     profilestheoretical=syllables[:]
     for s in range(1,nsyls):
         """iterate over syllables adding to total profilestheoretical"""
@@ -57,13 +62,13 @@ def gen(nsyls=None): # i should add self here, for lift variable reference..
             for prof in profilestheoreticallist:
                 profilestheoretical.append(prof+syl)
     def debugnums():
-        log.info('logical possiblities generated:',len(list(profilestheoretical)))
-        log.info('less repetitions:',len(list(dict.fromkeys(profilestheoretical))))
+        log.info(_('logical possiblities generated: {}').format(len(list(profilestheoretical))))
+        log.info(_('less repetitions: {}').format(len(list(dict.fromkeys(profilestheoretical)))))
     debugnums()
     return list(dict.fromkeys(profilestheoretical))
 
 def wordsbypsprofile(db,ps,profile,regex=None):
-    log.info("Running wordsbypsprofile...",ps,profile)
+    log.info(_("Running wordsbypsprofile... {} {}").format(ps,profile))
     if regex is None:
         regex=rx.fromCV(db, profile, word=True, compile=True)
     if ps not in db.profileswdatabyentry:
@@ -88,13 +93,13 @@ def wordsbypsprofile(db,ps,profile,regex=None):
     senseidoutput=senseidDict
     log.info('len(senseidoutput)',len(senseidoutput))
     if len(guidoutput) >0:
-        log.info(profile,'entries found:',len(guidoutput))
+        log.info(_('{} entries found: {}').format(profile,len(guidoutput)))
         if profile not in db.profileswdatabyentry[ps]:
             db.profileswdatabyentry[ps][profile]={}
         db.profileswdatabyentry[ps][profile]=guidoutput
         db.profiledguids+=db.profileswdatabyentry[ps][profile].keys()
     if len(senseidoutput) >0:
-        log.info(profile,'senses found:',len(senseidoutput))
+        log.info(_('{} senses found: {}').format(profile,len(senseidoutput)))
         if profile not in db.profileswdatabysense[ps]:
             db.profileswdatabysense[ps][profile]={}
         db.profileswdatabysense[ps][profile]=senseidoutput

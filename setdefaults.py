@@ -3,6 +3,11 @@ import logsetup
 log=logsetup.getlog(__name__)
 # logsetup.setlevel('INFO',log) #for this file
 logsetup.setlevel('DEBUG',log) #for this file
+try: #translation
+    _
+except NameError:
+    def _(x):
+        return x
 """This module is for setting defaults automatically (for either "
 "a check or database?)."""
 """It may also be where list choice options are prioritized
@@ -20,7 +25,7 @@ def getaudiolangs(self):
         log.debug('Only one audiolang!')
         self.audiolang=self.audiolangs[0]
     else:
-        log.error("More than one audiolang! Set this up! (exiting)")
+        log.error(_("More than one audiolang! Set this up! (exiting)"))
         exit()
 
 def langs(self):
@@ -32,9 +37,9 @@ def langs(self):
     log.info('Audio Recording Language: '+self.audiolang)
     log.info('Gloss Language: '+self.glosslang)
     log.info('Second Gloss Language: '+self.glosslang2)
-    log.info("If you don't like these selections, they can be changed later.")
-    log.info("If you're working on a multilingual dictionary, we need to "
-            "figure out how to deal with that, later.  :-)")
+    log.info(_("If you don't like these selections, they can be changed later."))
+    log.info(_("If you're working on a multilingual dictionary, we need to "
+            "figure out how to deal with that, later.  :-)"))
     self.languagecodes=[self.analangs]+[self.glosslangs]
 def count(self):
     """Return the number of occurrances of subcategories, for a given category.

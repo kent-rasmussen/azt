@@ -21,9 +21,9 @@ def pip_install(installs=[],secondtry=False):
     Yes, this is excessive, but better than leaving users hanging if they can't
     resolve pip install issues."""
     if secondtry:
-        log.info("Trying a second time, with '--force-reinstall'")
+        log.info(_("Trying a second time, with '--force-reinstall'"))
     else:
-        log.info("Installing python dependencies")
+        log.info(_("Installing python dependencies"))
     if platform.system() == 'Linux':
         log.info(_("If you have errors containing ˋportaudioˊ above, you should "
             "install pyaudio with your package manager."))
@@ -77,8 +77,8 @@ def pip_install(installs=[],secondtry=False):
                                         stderr=subprocess.STDOUT)
             o=utilities.stouttostr(o)
             if not o or "Successfully installed" in o:
-                log.info("looks like it was successful; so I'm going to reboot "
-                            "in a bit. Output follows:")
+                log.info(_("looks like it was successful; so I'm going to reboot "
+                            "in a bit. Output follows:"))
                 thisinstalled=installedsomething=True
         except subprocess.CalledProcessError as e:
             o=utilities.stouttostr(e.output)
@@ -90,8 +90,8 @@ def pip_install(installs=[],secondtry=False):
                                             stderr=subprocess.STDOUT)
                     o=utilities.stouttostr(o)
                     if not o or "Successfully installed" in o:
-                        log.info("looks like it was at last successful; so "
-                                "I'm going to reboot in a bit. Output follows:")
+                        log.info(_("looks like it was at last successful; so "
+                                "I'm going to reboot in a bit. Output follows:"))
                         thisinstalled=installedsomething=True
                 except subprocess.CalledProcessError as e:
                     o=utilities.stouttostr(e.output)
@@ -100,24 +100,24 @@ def pip_install(installs=[],secondtry=False):
                         log.info(_("Please make sure your internet is connected, then "
                         "click {}\n{}".format(_("OK"),'\n'.join(errors))))
                         # ErrorNotice(text=t,parent=ui.Root(),wait=True)
-                        log.info("Trying again, hopefully with internet")
+                        log.info(_("Trying again, hopefully with internet"))
                         try:
                             o=subprocess.check_output(pyargs,shell=False,
                                                 stderr=subprocess.STDOUT)
                             o=utilities.stouttostr(o)
                             if not o or "Successfully installed" in o:
-                                log.info("looks like it was at last successful;"
+                                log.info(_("looks like it was at last successful;"
                                         " so I'm going to reboot in a bit. "
-                                        "Output follows:")
+                                        "Output follows:"))
                                 thisinstalled=installedsomething=True
                         except Exception as e:
                             log.info(_("I'm going to give up now, sorry!\n{}"
                                 "".format('\n'.join(errors))))
                             # ErrorNotice(text=t,parent=ui.Root(),wait=True)
-                            log.error("Looks like there was an error, "
-                                        "after all: {}".format(e))
+                            log.error(_("Looks like there was an error, "
+                                        "after all: {}").format(e))
         if not thisinstalled:
-            log.info("Nothing installed. Output follows:")
+            log.info(_("Nothing installed. Output follows:"))
         log.info(o) #just give bytes, if encoding isn't correct
     if not installedsomething and not secondtry:
         pip_install(secondtry=True) #force reinstalls, just once
@@ -126,7 +126,7 @@ try:
     import urllib3, numpy, pyaudio, PIL, lxml, psutil, soundfile, librosa
     import transformers, huggingface_hub, langcodes, pyautogui, torch
     import whisper, patiencediff, reportlab
-    log.info("All necessary modules imported fine.")
+    log.info(_("All necessary modules imported fine."))
 except Exception as e:
     log.error(f"Exception: {e}")
     pip_install()

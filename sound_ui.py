@@ -4,6 +4,11 @@ import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
 import ui_tkinter as ui
+try: #translation
+    _
+except NameError:
+    def _(x):
+        return x
 import sound
 import file
 import utilities as utils
@@ -486,7 +491,7 @@ class ASRModelSelectionWindow(ui.Window):
         self.sister_frame=ui.Frame(self.languages_frame,
                                     row=0,column=1,
                                     sticky='ew')
-        ui.Label(self.language_frame,text="Language:",ipadx=10,row=0,column=0)
+        ui.Label(self.language_frame,text=_("Language:"),ipadx=10,row=0,column=0)
         self.lang=ui.StringVar()
         ef=ui.EntryField(self.language_frame,textvariable=self.lang,
                         row=1, sticky='ew')
@@ -515,7 +520,7 @@ class ASRModelSelectionWindow(ui.Window):
         except Exception as e:
             log.error(f"Language display error: {e}")
             self.lang_display_var.set(f"Error: ‘{self.lang_cur}’ not found")
-            self.sister_options=["Nothing"]
+            self.sister_options=[_("Nothing")]
             self.update_n_sisters()
             self.sisters_listbox.delete(0, "end")
             return

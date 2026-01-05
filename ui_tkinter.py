@@ -152,8 +152,9 @@ class Theme(object):
             msg=str(msg)+' '
         else:
             msg=''
-        text=_("Finished {}at {} ({:1.0f}m, {:2.3f}s)"
-                "").format(msg,now(),*divmod((run_time).total_seconds(),60))
+        minutes, seconds = divmod((run_time).total_seconds(), 60)
+        text=_("Finished {msg}at {time} ({minutes:1.0f}m, {seconds:2.3f}s)"
+                "").format(msg=msg, time=now(), minutes=minutes, seconds=seconds)
         log.info(text)
         return text
     def setimages(self):
@@ -271,8 +272,8 @@ class Theme(object):
             except Exception as e:
                 log.info("Assuming I'm not working from main ({}).".format(e))
         elif self.name not in self.themes:
-            print("Sorry, that theme doesn't seem to be set up. Pick from "
-            "these options:",self.themes.keys())
+            print(_("Sorry, that theme doesn't seem to be set up. Pick from "
+            "these options:"),self.themes.keys())
             exit()
         for k in self.themes[self.name]:
             setattr(self,k,self.themes[self.name][k])
@@ -1820,7 +1821,7 @@ class ContextMenu(Childof):
             # log.info("setcontext: {}".format(self.parent.setcontext))
             self.parent.setcontext(context=self.context)
         except Exception as e:
-            log.error(_("Exception in dosetcontext: {}").format(e))
+            log.error(_("Exception in dosetcontext: {error}").format(error=e))
     def do_popup(self,event):
         try:
             self.menu.tk_popup(event.x_root, event.y_root)
@@ -2341,8 +2342,8 @@ class Wait(Window): #tkinter.Toplevel?
         self.withdraw() #don't show until we're done making it
         self['background']=parent['background']
         self.attributes("-topmost", True)
-        title=(_("Please Wait! {name} Dictionary and Orthography Checker "
-                "in Process").format(name=self._root().program['name']))
+        title=_("Please Wait! {azt} Dictionary and Orthography Checker "
+                "in Process").format(azt=self._root().program['name'])
         self.title(title)
         text=_("Please Wait...")
         self.l=Label(self.outsideframe, text=text,
@@ -2506,7 +2507,7 @@ def testapp2(program):
     cols=2
     for i in range(6):
         Label(w.frame,
-                    text=f"Label {i}\ndrag:{draggable} \ndrop: {droppable}",
+                    text=_("Label {i}\ndrag:{drag} \ndrop: {drop}").format(i=i, drag=draggable, drop=droppable),
                     font='title',
                     row=i//cols, column=i%cols,
                     draggable=True,
@@ -2572,7 +2573,7 @@ def testapp4(program):
                     bsticky='ew',
                     sticky='',
                     row=0,column=0)
-    l=Label(sbf1.content,text="testing SBF",
+    l=Label(sbf1.content,text=_("testing SBF"),
                             row=1)#len(sbf1.content.winfo_children()))
     sbfb=Button(sbf1.content,
                 text="testing SBF",
@@ -2644,7 +2645,7 @@ def testappX(program):
                     optionlist=range(6,11),
                     command=print,
                     row=0,column=0)
-    sbfl=Label(sbf1.content,text="testing SBF",
+    sbfl=Label(sbf1.content,text=_("testing SBF"),
                             row=1)#len(sbf1.content.winfo_children()))
     sf=ScrollingFrame(test_frame,row=1,column=0)
     # class DragLabel(Label):
@@ -2654,7 +2655,7 @@ def testappX(program):
     #     def __init__(self, *args, **kwargs):
     #         super().__init__(*args, **kwargs)
     firstFrame=Frame(sf.content,row=0,column=0)
-    label1=Label(firstFrame,text="Seems to work!",font='title',
+    label1=Label(firstFrame,text=_("Seems to work!"),font='title',
             row=0,column=0,draggable=True,image='icon',#compound='left',
             borderwidth=1,relief='raised')
     button1=Button(firstFrame,text="Seems to work!",font='title',
@@ -2760,7 +2761,7 @@ def testappX(program):
                 # no_default_indicator_images=True,
                 font='default',
                 row=4,column=1)
-    l=Label(sf.content,text="At least this much",
+    l=Label(sf.content,text=_("At least this much"),
             row=5,column=0, font='italic',
             borderwidth=3,relief='raised')
     log.info("l _root is {}".format(l._root()))

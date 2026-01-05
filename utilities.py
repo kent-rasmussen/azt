@@ -4,12 +4,12 @@ import ast
 # import logsetup
 import datetime
 import sys
+try: #Allow this module to be used without translation
+    _
+except:
+    def _(x):
+        return x
 if __name__ == '__main__':
-    try: #Allow this module to be used without translation
-        _
-    except:
-        def _(x):
-            return x
     import logsetup
     log=logsetup.getlog(__name__)
     logsetup.setlevel('DEBUG',log) #for this file
@@ -32,7 +32,7 @@ def stouttostr(x):
     if type(x) is str:
         return x.strip()
     if not sys.stdout.encoding:
-        log.error("I can't tell the terminal's encoding, sorry!")
+        log.error(_("I can't tell the terminal's encoding, sorry!"))
     else:
         try:
             return x.decode(sys.stdout.encoding,
@@ -67,7 +67,7 @@ def quote(x):
     elif '"' not in x:
         return '"'+x+'"'
     else:
-        log.error("Looks like ˋ{}ˊ contains single and double quotes!".format(x))
+        log.error(_("Looks like ˋ{}ˊ contains single and double quotes!").format(x))
 def indenteddict(indict):
     outdict={}
     # log.info("working on dict with keys {}".format(indict.keys()))
@@ -112,11 +112,11 @@ def nesteddictadd1key(dict,key):
 def setnesteddictobjectval(object,dictname,val,*keys,addval=False):
     if not hasattr(object,dictname) or not getattr(object,dictname):
         try:
-            log.info(f"The dictionary at {object}.{dictname} doesn't seem "
-                    "to exist, or is null; creating.")
+            log.info(_("The dictionary at {}.{} doesn't seem "
+                    "to exist, or is null; creating.").format(object,dictname))
         except NameError:
-            print(f"The dictionary at {object}.{dictname} doesn't seem "
-                    "to exist, or is null; creating.")
+            print(_("The dictionary at {}.{} doesn't seem "
+                    "to exist, or is null; creating.").format(object,dictname))
         setattr(object,dictname,{})
     setnesteddictval(getattr(object,dictname),val,*keys,addval=addval)
 def setnesteddictval(dictionary,val,*keys,addval=False):
@@ -127,7 +127,7 @@ def setnesteddictval(dictionary,val,*keys,addval=False):
     or assigned if there is no current value.
     """
     if not isinstance(dictionary,dict):
-        print(f"setnesteddictval got dictionary of type {type(dictionary)}")
+        print(_("setnesteddictval got dictionary of type {}").format(type(dictionary)))
         exit() #This should never happen, would be my fault, and I should know
     dictlist=[] #keep dictionaries at each level in memory
     for n,k in enumerate(keys): #keys may repeat, can't use list.index()
@@ -142,9 +142,9 @@ def setnesteddictval(dictionary,val,*keys,addval=False):
             if type(val) == type(d[k]) == set:
                 d[k]|=val
             elif type(val) == set or type(d[k]) == set:
-                raise TypeError(f"you're trying to add {val} ({type(val)}) "
+                raise TypeError(_("you're trying to add {val} ({type(val)}) "
                                 f"to {d[k]} ({type(d[k])}), but "
-                                "one is a set and the other isn't")
+                                "one is a set and the other isn't"))
             else:
                 d[k]+=val
         else:
@@ -154,18 +154,18 @@ def iteratelistitem(l,item,val,circular=False):
     try:
         initindex=l.index(item)
     except ValueError as e:
-        return f"Item {item} not in list {l}, not iterating."
+        return _("Item {item} not in list {l}, not iterating.")
     if type(val) is int and type(initindex) is int:
         newindex=initindex+val
         if circular:
             newindex=newindex%len(l)
         elif 0 > newindex or newindex >= len(l):
-            print("requested index out of bounds; not moving.")
+            print(_("requested index out of bounds; not moving."))
             newindex=initindex
         return l[newindex]
     else:
-        return ("problem with iteration value type "
-                f"({type(val)}) or index type ({type(initindex)})")
+        return (_("problem with iteration value type "
+                f"({type(val)}) or index type ({type(initindex)})"))
 if __name__ == '__main__':
     log=logsetup.getlog(__name__)
     # logsetup.setlevel('INFO',log) #for this file
