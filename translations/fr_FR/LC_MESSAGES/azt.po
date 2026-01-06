@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: azt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-06 15:54-0600\n"
-"PO-Revision-Date: 2026-01-06 21:59\n"
+"PO-Revision-Date: 2026-01-06 22:27\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr_FR\n"
@@ -226,7 +226,7 @@ msgstr "(dé)masquer"
 #: /home/kentr/bin/raspy/azt/main.py:10522
 #, python-brace-format
 msgid "({count} remaining)"
-msgstr ""
+msgstr "({count} restant)"
 
 #: /home/kentr/bin/raspy/azt/main.py:3646
 #, python-brace-format
@@ -461,7 +461,7 @@ msgstr "Tous les groupes ‘{profile}’ de la ‘{check}’ {typename} sont vé
 
 #: /home/kentr/bin/raspy/azt/main.py:6542
 msgid "Alphabet Chart"
-msgstr "Graphique par ordre alphabétique"
+msgstr "Tableau d'alphabet"
 
 #: /home/kentr/bin/raspy/azt/alphabet_chart.py:538
 msgid "Alphabet Chart UI"
