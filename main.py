@@ -10684,6 +10684,8 @@ class Sort(object):
                 program['status'].distinguish(self.current_pair)
                 program['status'].store()
             move_on_cleanly()
+        def get_pairs():
+            return sorted(self.to_distinguish(macrosort=macrosort))
         log.info("Running join! macrosort={macrosort}".format(macrosort=macrosort))
         """This window allows the user to join groups that sound the same. """
         """This should move to a presentation of permutations (choose two), so
@@ -10696,7 +10698,7 @@ class Sort(object):
         check=program['params'].check()
         ps=program['slices'].ps()
         profile=program['slices'].profile()
-        pairs=sorted(self.to_distinguish(macrosort=macrosort))
+        pairs=get_pairs()
         npairs=len(pairs) #leave this alone, for progress
         if not pairs:
             log.debug("No groups to distinguish!")
@@ -10781,7 +10783,7 @@ class Sort(object):
             if self.runwindow.exitFlag.istrue():
                 log.info("Runwindow exited.")
                 return
-            pairs=list(self.to_distinguish(macrosort=macrosort))
+            pairs=get_pairs()
             log.info("Runwindow still open, continuing to next in {pairs}.".format(pairs=pairs))
         self.runwindow.on_quit()
         return 1
