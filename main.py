@@ -5204,7 +5204,6 @@ class TaskDressing(HasMenus,ui.Window):
                 "data not getting recorded. "
                 "Up to how many examples do you want to record for each group?"
                 "").format(name=program['name'])
-                )
         t=ui.Label(window.frame, text=title, font='title',column=0, row=0)
         l=ui.Label(window.frame, text=text, justify='left',column=0, row=1)
         t.wrap()
