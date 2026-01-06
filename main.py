@@ -5897,8 +5897,8 @@ class TaskChooser(TaskDressing):
         window.wait_window(window)
         if hasattr(self,'name') and self.name:
             self.filename=self.name
-        # text=_("{} will now exit; restart to work with the new database."
-        #         "".format(program['name']))
+        # text=_("{name} will now exit; restart to work with the new database."
+        #         "").format(name=program['name'])
         # ErrorNotice(text,title=_("Change Database"),wait=True)
         # program['root'].destroy()
         # subprocess.call?
@@ -6080,7 +6080,7 @@ class ExportData(ui.Window):
         for i in self.export.export():
             self.progress(i*100)
         self.progress(100)
-        self.done_notice['text']=_(f"Done!\n(saved to {self.export.save_dir})")
+        self.done_notice['text']=_("Done!\n(saved to {dir})").format(dir=self.export.save_dir)
     def report_data(self,check=None,event=None):
         if hasattr(self,'button') and isinstance(self.button,dict):
             for i in self.button.values():
@@ -6130,7 +6130,7 @@ class ExportData(ui.Window):
             if self.slices:
                 allchecks=program['status'].allcheckswCVdata()
                 self.button={c:ui.Button(self.button_frame,
-                                        text=_(f"Just {c} data"),
+                                        text=_("Just {check} data").format(check=c),
                                         anchor='c',padx=50,
                                         row=allchecks.index(c)+1,
                                         column=0,sticky='w'
@@ -6151,7 +6151,7 @@ class ExportData(ui.Window):
         self.switch_button.bind("<Button-1>",self.switch)
     def __init__(self, arg):
         self.exportclass=export.Lexicon
-        title=(_(f"{program['name']} Data Export"))
+        title=(_("{azt} Data Export").format(azt=program['name']))
         ui.Window.__init__(self,program['root'], title=title)
         self.slices=False #allow user to output data for each check
         self.max_rows_total=None
@@ -6256,12 +6256,12 @@ class Alphabet():
         for i in x:
             # log.info(f"Checking {i} for conflicts in {y} {d[y]}")
             if self.conflicting_items(i,y):
-                ErrorNotice(_(f"item {i} conflicts with glyph {y}"),wait=True)
+                ErrorNotice(_("item {item} conflicts with glyph {glyph}").format(item=i, glyph=y),wait=True)
                 return
         for i in y:
             # log.info(f"Checking {i} for conflicts in {x} {d[x]}")
             if self.conflicting_items(i,x):
-                ErrorNotice(_(f"item {i} coflicts with glyph {x}"),wait=True)
+                ErrorNotice(_("item {item} conflicts with glyph {glyph}").format(item=i, glyph=x),wait=True)
                 return
         # log.info(f"No conflicts found.")
         for i in list(d[x]):
@@ -6737,7 +6737,7 @@ class Segments(Senses):
         # log.info("fnode: {}; text: {}".format(fnode,t.text))
         annodict=sense.annotationvaluedictbyftypelang(self.ftype,self.analang)
         conflict_text=_("Not updating ‘{form}’ (conflict in {anno}.").format(form=formvalue, anno=annodict)
-        error_nb=_("\nCheck the log for any further conflicts")
+        error_nb=_("Check the log for any further conflicts")
         error=False
         if check: #just update to this annotation
             value=annodict[check]
@@ -6747,7 +6747,7 @@ class Segments(Senses):
                 return
             elif self.check_with_conflicting_value(annodict,check):
                 if not self.updateconflictwarned:
-                    ErrorNotice(conflict_text+error_nb)
+                    ErrorNotice('\n'.join([conflict_text,error_nb]))
                     self.updateconflictwarned=True
                 else:
                     log.error(conflict_text)
@@ -6764,7 +6764,7 @@ class Segments(Senses):
             for check,value in annodict.items():
                 if self.check_with_conflicting_value(annodict,check):
                     if not self.updateconflictwarned:
-                        ErrorNotice(conflict_text+error_nb)
+                        ErrorNotice('\n'.join([conflict_text,error_nb]))
                         self.updateconflictwarned=True
                     else:
                         log.error(conflict_text)
@@ -9694,7 +9694,7 @@ class Sort(object):
             title=_("New Ad Hoc Sort Group for {ps} Group").format(ps=ps)
         else:
             new=False
-            title=_("Modify Existing Ad Hoc Sort Group for {} Group".format(ps))
+            title=_("Modify Existing Ad Hoc Sort Group for {group} Group").format(group=ps)
         self.runwindow.title(title)
         padx=50
         pady=10
@@ -10457,7 +10457,7 @@ class Sort(object):
             check=program['params'].check()
             checks=[]
             img_mod=''
-            item_name=_(f"{check} Group")
+            item_name=_("{check} Group").format(check=check)
             checkname=program['params'].cvcheckname()
             groups=self.groups(toverify=True) #needed for progress
             self.group=group=program['status'].group()
@@ -10721,7 +10721,7 @@ class Sort(object):
             title_mod="Sort"
             title_mod_2=f" (‘{check}’)"
             join_icon='join'
-        title=_(f"Review {title_mod} Groups{title_mod_2}")
+        title=_("Review {title} Groups{mod}").format(title=title_mod,mod=title_mod_2)
         self.runwindow.frame.titles=ui.Frame(self.runwindow.frame,
                                             column=1, row=0,
                                             columnspan=1, sticky='ew'
@@ -12538,12 +12538,12 @@ class TranscribeS(Transcribe,Segments):
             pady=10
         self.buttonframew=int(program['screenw']/3.5)
         title=[program['params'].cvtdict()[cvt]['sg'],_("letter")]
-        getformtext=_("What letter(s) do you want to use for this {sg} "
-                        "group?").format(sg=program['params'].cvtdict()[cvt]['sg'])
+        getformtext=[_("What letter(s) do you want to use for this {sg} "
+                        "group?").format(sg=program['params'].cvtdict()[cvt]['sg'])]
         if self.group.isdigit():
             title.insert(0,_("Name"))
-            getformtext+=_("\nBecause this is a new group, you need to give it "
-                            "some name now.")
+            getformtext.append(_("Because this is a new group, you need to give it "
+                            "some name now."))
             initval=''
         else:
             title.insert(0,_("Rename"))
@@ -12555,7 +12555,7 @@ class TranscribeS(Transcribe,Segments):
                         row=0,column=0,sticky='ew',padx=padx,pady=pady
                         )
         getform=ui.Label(self.runwindow.frame,
-                        text=getformtext,
+                        text='\n'.join(getformtext),
                         font='read',
                         norender=True,
                         row=1,column=0,sticky='ew',padx=padx,pady=pady
@@ -12802,13 +12802,13 @@ class TranscribeT(Transcribe,Tone):
         titlel=ui.Label(self.runwindow.frame,text=title,font='title',
                         row=0,column=0,sticky='ew',padx=padx,pady=pady
                         )
-        getformtext=_("What new name do you want to call this {noun_sg} "
-                        "group?").format(noun_sg=program['params'].cvtdict()[cvt]['noun_sg'])
+        getformtext=[_("What new name do you want to call this {noun_sg} "
+                        "group?").format(noun_sg=program['params'].cvtdict()[cvt]['noun_sg'])]
         if cvt == 'T':
-            getformtext+=_("\nA label that describes the surface tone form "
-                        "in this context would be best, like ‘[˥˥˥ ˨˨˨]’")
+            getformtext.append(_("A label that describes the surface tone form "
+                        "in this context would be best, like ‘[˥˥˥ ˨˨˨]’"))
         getform=ui.Label(self.runwindow.frame,
-                        text=getformtext,
+                        text='\n'.join(getformtext),
                         font='read',
                         norender=True,
                         row=1,column=0,sticky='ew',padx=padx,pady=pady
@@ -14000,7 +14000,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         else:
             self._filenameURL=None
         if node is None:
-            log.error(f"SortGroupButtonFrame.getexample returned None for {self.group} {kwargs}")
+            log.error(_("SortGroupButtonFrame.getexample returned None for {group} {kwargs}").format(group=self.group, kwargs=kwargs))
             return
         self.getsenseofnode(node)
         self._text=node.formatted(program['taskchooser'].analang,
@@ -14068,7 +14068,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         if hasattr(self,'_illustration'):
             b['image']=self._illustration
             b['compound']='left'
-        bt=ui.ToolTip(b,_("Pick this group ({})").format(self.group))
+        bt=ui.ToolTip(b,_("Pick this group ({group})").format(group=self.group))
     def refresh(self):
         log.info("SGBF refresh called")
         self.kwargs['renew']=True
@@ -14076,12 +14076,12 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         self.getexample(**self.kwargs)
         self.again()
     def updatecount(self,n=None):
-        # log.info("Updating count for group {} (n={})".format(self.group,n))
+        # log.info(_("Updating count for group {group} (n={n})").format(group=self.group,n=n))
         if n is not None:
             self._n.set(n) #for cases where this is already calculated
         else:
             nodes=self.exs.getexamples(self.group,**self.kwargs)
-            # log.info("Found {} examples: {}".format(len(nodes),nodes))
+            # log.info(_("Found {count} examples: {nodes}").format(count=len(nodes),nodes=nodes))
             self._n.set(len(nodes))
         if hasattr(self,'refreshbutton'):
             self.refresh_button_state()
@@ -14132,7 +14132,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         bkwargs['borderwidth']=self.button_borderwidth
         return bkwargs #only the kwargs appropriate for buttons
     def __init__(self, parent, task, **kwargs):
-        # log.info("Initializing buttons for group {}".format(group))
+        # log.info(_("Initializing buttons for group {group}").format(group=group))
         self.exs=program['examples']
         self.task=task #the task/check OR the scrollingframe! use self.check.task
         try:
@@ -14174,7 +14174,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             kwargs['wsoundfile']=True
         #set this for buttons:
         if program['settings'].lowverticalspace:
-            # log.info("using lowverticalspace for SortGroupButtonFrame")
+            # log.info(_("using lowverticalspace for SortGroupButtonFrame"))
             max=0
         else:
             max=15
@@ -14194,23 +14194,23 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         kwargs['row']=0
         kwargs['gridwait']=True
         kwargs['var']=self.var()
-        log.info(f"Ready to build SortGroupButtonFrame with {kwargs=}")
+        log.info(_("Ready to build SortGroupButtonFrame with {kwargs}").format(kwargs=kwargs))
         self.items.append(SortGroupButtonFrame(self, self.task, **kwargs))
-        log.info(f"Built SGBF for {item} ({self.items=})")
+        log.info(_("Built SGBF for {item} ({items})").format(item=item, items=self.items))
         if self.items[-1].hasexample:
-            # log.info(f"Built {kwargs['group']} SortGroupButtonFrame with ex")
+            # log.info(_("Built {group} SortGroupButtonFrame with ex").format(group=kwargs['group']))
             self.hasexample=True
         else:
-            # log.info(f"No {kwargs['group']} SortGroupButtonFrame ex; removing")
+            # log.info(_("No {group} SortGroupButtonFrame ex; removing").format(group=kwargs['group']))
             self.items=self.items[:-1]
     def next_item(self,event=None):
-        # log.info(f"next_item ({self.shown_index=})")
+        # log.info(_("next_item ({index})").format(index=self.shown_index))
         if self.shown_index == len(self.items)-1: #loop back on last
             self.show_one()
         else:
             self.show_one(self.shown_index+1)
     def prev_item(self,event=None):
-        # log.info(f"prev_item ({self.shown_index=})")
+        # log.info(_("prev_item ({index})").format(index=self.shown_index))
         if self.shown_index == 0: #loop back on first
             self.show_one(len(self.items)-1)
         else:
@@ -14219,7 +14219,7 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         for item in [i for i in self.items if self.items.index(i) != index]:
             item.grid_remove()
         self.items[index].grid()
-        log.info(f"Showing item with {self.items[index].code}")
+        log.info(_("Showing item with {code}").format(code=self.items[index].code))
         # "={self.items[index].group}")
         self.check_label['text']=self.items[index].check
         self.shown_index=index
@@ -14239,12 +14239,12 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             # w.bind('<Button-1>', self.next_item)
             w.bind('<Button-3>', self.prev_item, add='+') #nothing on n=1
     def updatecount(self,n=None):
-        # log.info("Updating count for group {} (n={})".format(self.group,n))
+        # log.info(_("Updating count for group {group} (n={n})").format(group=self.group,n=n))
         if n is not None:
             self._n.set(n) #for cases where this is already calculated
         else:
             # nodes=self.exs.getexamples(self.group)
-            # log.info("Found {} examples: {}".format(len(nodes),nodes))
+            # log.info(_("Found {count} examples: {nodes}").format(count=len(nodes),nodes=nodes))
             self._n.set(len(self.items))
         if self._n.get() <2:
             self.check_label['state'] = 'disabled'
@@ -14258,12 +14258,12 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                 i.canary=canary #select on group button select
             self.canary=canary #select on glyph button select
         else:
-            log.error("Not setting non-existant canary {}; ".format(canary))
+            log.error(_("Not setting non-existant canary {canary}; ").format(canary=canary))
     def __init__(self, parent, task, **kwargs):
         self.task=task #the task/check OR the scrollingframe! use self.check.task
         self.group=kwargs.pop('group')
         # self.check=kwargs.get('check')
-        log.info(f"Building SortGlyphGroupButtonFrame for {self.group}")
+        log.info(_("Building SortGlyphGroupButtonFrame for {group}").format(group=self.group))
         # self.showtonegroup=kwargs.pop('showtonegroup',False)
         # self.alwaysrefreshable=kwargs.pop('alwaysrefreshable',False)
         # self.remove_on_click=kwargs.pop('remove_on_click',False) #compatability
@@ -14276,8 +14276,8 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                     for f in self.frameargs}
         super().__init__(parent, **frameargs)
         if self.group not in program['alphabet'].glyph_members():
-            ui.Label(self,text=f"group ‘{self.group}’ isn't in glyphs! "
-                    f"({list(program['alphabet'].glyph_members())})",
+            ui.Label(self,text=_("group ‘{group}’ isn't in glyphs! "
+                    "({members})").format(group=self.group, members=list(program['alphabet'].glyph_members())),
                     c=0)
             self.hasexample=True #make this error visible
             return
@@ -14299,12 +14299,12 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         self._n=ui.IntVar()
         self.make_refresh()
         for item in program['alphabet'].glyph_members()[self.group]:
-            log.info(f"Making Glyph member {item} button")
+            log.info(_("Making Glyph member {item} button").format(item=item))
             self.make_sgbf(item, **kwargs)
         if self.items:
             self.updatecount()
             self.show_one()
-        log.info(f"Built SortGlyphGroupButtonFrame for {self.group}")
+        log.info(_("Built SortGlyphGroupButtonFrame for {group}").format(group=self.group))
 class ImageFrame(ui.Frame):
     def getimage(self,reload=False):
         specifiedurl=False
@@ -14316,7 +14316,7 @@ class ImageFrame(ui.Frame):
             if (hasattr(self.sense,'image')
                     and isinstance(self.sense.image,ui.Image)
                     and not reload):
-                # log.info("Found Image, using")
+                # log.info(_("Found Image, using"))
                 image=self.sense.image
                 compiled=True
                 self.hasimage=True
@@ -14325,20 +14325,20 @@ class ImageFrame(ui.Frame):
         # lift.prettyprint(self.sense.illustration)
         if not compiled:
             try:
-                # log.info("trying to make image {}".format(i))
+                # log.info(_("trying to make image {image}").format(image=i))
                 image=ui.Image(i)
                 self.hasimage=True
-                # log.info("Image OK: {}".format(img))
+                # log.info(_("Image OK: {img}").format(img=img))
             except tkinter.TclError as e:
                 if ('value for "-file" missing' not in e.args[0] and
                         "couldn't recognize data in image file" not in e.args[0]):
-                    log.info("ui.Image error: {}".format(e))
+                    log.info(_("ui.Image error: {error}").format(error=e))
                 image=self.theme.photo['NoImage']
                 self.hasimage=False
-                # log.info("Image null: {}".format(img))
+                # log.info(_("Image null: {img}").format(img=img))
             if not specifiedurl and self.hasimage: #don't assign "no image"
                 self.sense.image=image
-        # log.info("Image: {} ({})".format(image,type(image)))
+        # log.info(_("Image: {image} ({type})").format(image=image,type=type(image)))
         scaledimage(image,pixels=self.pixels)
         self.image=image.scaled #Imageframe.image = sense.image.scaled
     def pluralframe(self):
@@ -14386,7 +14386,7 @@ class ImageFrame(ui.Frame):
     def __init__(self, parent, sense=None, *args, **kwargs):
         """Parent: where it goes; Sense: what it shows"""
         if not isinstance(sense,lift.Sense) and 'url' not in kwargs:
-            log.error("ImageFrame called without sense or url!")
+            log.error(_("ImageFrame called without sense or url!"))
             return
         self.sense=sense
         #These shouldn't go to frame:
@@ -14405,16 +14405,15 @@ class Splash(ui.Window):
     def maketexts(self):
         if self.exitFlag.istrue():
             return
-        self.labels['v']['text']=_("Version: {}".format(program['version']))
-        self.labels['v2']['text']=_(
-                            f"updated to {program['repo'].lastcommitdate()} " f"({program['repo'].lastcommitdaterelative()})")
+        self.labels['v']['text']=_("Version: {version}").format(version=program['version'])
+        self.labels['v2']['text']=_("updated to {date} ({date_rel})").format(date=program['repo'].lastcommitdate(), date_rel=program['repo'].lastcommitdaterelative())
         self.labels['textl']['text']=_("Your dictionary database is loading...")
-        self.labels['text']['text']=_(f"{program['name']} is a computer "
+        self.labels['text']['text']=_("{azt} is a computer "
                 "program that accelerates community-based language development "
                 "by facilitating the sorting of a beginning dictionary "
-                "by vowels, consonants and tone. (more in help:about)")
-        self.labels['titletext']['text']=(_("{name} Dictionary and Orthography "
-                                        "Checker").format(name=program['name']))
+                "by vowels, consonants and tone. (more in help:about)").format(azt=program['name'])
+        self.labels['titletext']['text']=(_("{azt} Dictionary and Orthography "
+                                        "Checker").format(azt=program['name']))
         self.update_idletasks()
     def draw(self):
         # self.update_idletasks()
@@ -14485,7 +14484,7 @@ class Analysis(object):
                                         ignore=['NA',None,'None'],
                                         flat=False)
         self.orderedUFs=flatten(self.comparisonUFs)
-        log.debug("structured groups: {}".format(self.comparisonUFs))
+        log.debug(_("structured groups: {groups}").format(groups=self.comparisonUFs))
     def comparechecks(self):
         """Prioritize locations by similarity of location:value pairings"""
         """we need to switch the hierarchy to make this comparison"""
@@ -14503,7 +14502,7 @@ class Analysis(object):
                                             ignore=['NA',None,'None'],
                                             flat=False)
         self.orderedchecks=flatten(self.comparisonchecks)
-        log.debug("structured locations: {}".format(self.comparisonchecks))
+        log.debug(_("structured locations: {locs}").format(locs=self.comparisonchecks))
     def checkgroupsbysense(self):
         """outputs dictionary keyed to [sense][location]=group"""
         self.sensedict={}
@@ -14513,7 +14512,7 @@ class Analysis(object):
                 group=sense.tonevaluebyframe(check)
                 if group: #store location:group by sense
                     self.sensedict[sense][check]=[group]
-        # log.info("Done collecting groups by location for each sense.")
+        # log.info(_("Done collecting groups by location for each sense."))
         return self.sensedict
     def sorttoUFs(self):
         """Input is a dict keyed by location, valued with location:group dicts
@@ -14523,11 +14522,11 @@ class Analysis(object):
         # underlying form (which behaves the same as others in its group,
         # across all contexts).
         if not hasattr(self,'sensedict'):
-            log.error("You have to run checkgroupsbysense first")
+            log.error(_("You have to run checkgroupsbysense first"))
             return
         unnamed={}
         # Collect all unique combinations of location:group pairings.
-        # log.info("sensedict: {}".format(self.sensedict))
+        # log.info(_("sensedict: {sensedict}").format(sensedict=self.sensedict))
         for sense in self.sensedict:
             #sort into groups by dict values (combinations location:group pairs)
             k=str(self.sensedict[sense])
@@ -14535,8 +14534,8 @@ class Analysis(object):
                 unnamed[k].append(sense)
             except KeyError:
                 unnamed[k]=[sense]
-        # log.info("Done collecting combinations of groups values "
-        #         "by location: {}".format(unnamed))
+        # log.info(_("Done collecting combinations of groups values "
+        #         "by location: {unnamed}").format(unnamed=unnamed))
         # self.groups={}
         self.valuesbygroupcheck={}
         self.sensesbygroup={}
@@ -14548,7 +14547,7 @@ class Analysis(object):
             self.sensesbygroup[name]=unnamed[k]
             for sense in unnamed[k]:
                 sense.uftonevalue(name)
-        # log.info("Done adding senses to groups.")
+        # log.info(_("Done adding senses to groups."))
         # return self.groups
     def tonegroupsbyUFcheckfromLIFT(self):
         #returns dictionary keyed by [group][location]=groupvalue
@@ -14565,25 +14564,25 @@ class Analysis(object):
             #maybe need this:
             for check in values[group]:
                 values[group][check]=[i for i in values[group][check] if i]
-            # log.info("values[{}][{}]: {}".format(group,check,
-            #                                     values[group][check]))
-        # log.info("Done collecting groups by location/check for each UF group.")
+            # log.info(_("values[{group}][{check}]: {values}").format(group=group,check=check,
+            #                                     values=values[group][check]))
+        # log.info(_("Done collecting groups by location/check for each UF group."))
     def sensesbyUFsfromLIFT(self):
         """This returns a dict of {UFtonegroup:[senses]}"""
-        log.debug(_("Looking for sensids by UF tone groups for {}-{}").format(
-                    self.profile, self.ps
+        log.debug(_("Looking for sensids by UF tone groups for {profile}-{ps}").format(
+                    profile=self.profile, ps=self.ps
                     ))
         self.sensesbygroup={g:[s for s in self.senses if s.uftonevalue() == g]
                             for g in set([s.uftonevalue() for s in self.senses])
                             if g}
         return self.sensesbygroup
     def donoUFanalysis(self):
-        log.info("Reading tone group analysis from UF tone fields")
+        log.info(_("Reading tone group analysis from UF tone fields"))
         self.sensesbyUFsfromLIFT() # > self.sensesbygroup
         self.tonegroupsbyUFcheckfromLIFT() # > self.valuesbygroupcheck
         self.doanyway()
     def do(self):
-        log.info("Starting tone group analysis from lift examples")
+        log.info(_("Starting tone group analysis from lift examples"))
         self.checkgroupsbysense() # > self.sensedict
         self.sorttoUFs() # > self.sensesbygroup and self.valuesbygroupcheck
         program['db'].write()
@@ -14622,7 +14621,7 @@ class SliceDict(dict):
         pss=self.pss()
         if not pss:
             self._ps=None #only before data collection
-            log.info("I don't have a ps to use; I hope that's OK!")
+            log.info(_("I don't have a ps to use; I hope that's OK!"))
         elif not hasattr(self,'_ps') or self._ps not in pss:
             self.ps(pss[0])
     def makeprofileok(self):
@@ -14631,12 +14630,12 @@ class SliceDict(dict):
         profiles=self.profiles()
         if not profiles:
             self._profile=None #only before data collection
-            log.info("I don't have a profile to use; I hope that's OK!")
+            log.info(_("I don't have a profile to use; I hope that's OK!"))
             return
         try:
             profiles+=self.adhoc()[self._ps].keys()
         except KeyError:
-            # log.info("There seem to be no ad hoc {} groups.".format(self._ps))
+            # log.info(_("There seem to be no ad hoc {ps} groups.").format(ps=self._ps))
             pass #don't care
         if (not hasattr(self,'_profile')
                 or self._profile not in profiles):
@@ -14651,19 +14650,19 @@ class SliceDict(dict):
             self.makeprofileok() #keyed by ps
             self.renewsenses()
         elif ps:
-            log.error(_("You asked to change to ps {}, which isn't in the list "
-                        "of pss: {}").format(ps,pss))
+            log.error(_("You asked to change to ps {ps}, which isn't in the list "
+                        "of pss: {pss}").format(ps=ps,pss=pss))
         elif hasattr(self,'_ps'):
             return self._ps
         else:
-            log.error("You asked for the ps, but I do't have any (pss: {})"
-                        "".format(pss))
+            log.error(_("You asked for the ps, but I don't have any (pss: {pss})"
+                        "").format(pss=pss))
     def profiles(self,ps=None):
         """This returns profiles for either a specified ps or the current one"""
         if not ps:
             ps=self.ps()
         if ps and ps in self._profiles:
-            # log.info("returning profiles: {}".format(self._profiles[ps]))
+            # log.info(_("returning profiles: {profiles}").format(profiles=self._profiles[ps]))
             return self._profiles[ps]
         else:
             return []
@@ -14693,17 +14692,17 @@ class SliceDict(dict):
         try:
             s=self._slicepriority=[x for x in self._valid.items()]
             s.sort(key=lambda x: int(x[1]),reverse=True)
-            # log.info("self._slicepriority: {}".format(self._slicepriority))
-            # log.debug("self._valid: {}".format(self._valid))
+            # log.info(_("self._slicepriority: {priority}").format(priority=self._slicepriority))
+            # log.debug(_("self._valid: {valid}").format(valid=self._valid))
             for ps in dict.fromkeys([x[1] for x in self._valid]):
                 s=self._sliceprioritybyps[ps]=[x for x in self._valid.items()
                                                             if x[0][1] == ps]
                 s.sort(key=lambda x: int(x[1]),reverse=True)
-                # log.info("self._sliceprioritybyps[{}]: {}"
-                #             "".format(ps,self._sliceprioritybyps[ps]))
+                # log.info(_("self._sliceprioritybyps[{ps}]: {priority}"
+                #             "").format(ps=ps,priority=self._sliceprioritybyps[ps]))
         except Exception as e:
-            log.error("Most likely a non-integer found when looking for an "
-                        "integer in {} (error: {})".format(s,e))
+            log.error(_("Most likely a non-integer found when looking for an "
+                        "integer in {s} (error: {e})").format(s=s,e=e))
     def pspriority(self):
         if self._slicepriority is not None:
             self._pss=list(dict.fromkeys([x[0][1]
@@ -14722,22 +14721,22 @@ class SliceDict(dict):
         elif ps in self._validbyps:
             return self._validbyps[ps]
         else:
-            log.error("You asked for valid ps data, but that ps isn't there.")
+            log.error(_("You asked for valid ps data, but that ps isn't there."))
     def validate(self):
         #These are keyed by (profile,ps) tuples
         self._valid={}
         self._validbyps={}
-        # log.info("slices: {} ({})".format(len(self),list(self)[:10]))
+        # log.info(_("slices: {length} ({content})").format(length=len(self),content=list(self)[:10]))
         for k in [x for x in self if x[0] != 'Invalid']:
             self._valid[k]=self[k]
-        # log.info("slices valid: {} ({})".format(len(self._valid),
-        #                                         list(self._valid)[:10]))
+        # log.info(_("slices valid: {length} ({content})").format(length=len(self._valid),
+        #                                         content=list(self._valid)[:10]))
         for ps in dict.fromkeys([x[1] for x in self._valid]):
             self._validbyps[ps]=[x for x in self._valid if x[1] == ps]
-        # log.info("slices validbyps: {} ({})".format(len(self._validbyps),
-        #                                             list(self._validbyps)[:10]))
-        # log.info("valid: {}".format(self._valid))
-        # log.info("validbyps: {}".format(self._validbyps))
+        # log.info(_("slices validbyps: {length} ({content})").format(length=len(self._validbyps),
+        #                                             content=list(self._validbyps)[:10]))
+        # log.info(_("valid: {valid}").format(valid=self._valid))
+        # log.info(_("validbyps: {validbyps}").format(validbyps=self._validbyps))
     def inslice(self,s=None,**kwargs):
         senses=self.senses(**kwargs) #if no kwargs, returns current
         if not s:
@@ -14747,7 +14746,7 @@ class SliceDict(dict):
         elif hasattr(s, '__iter__'):
             return set(senses).intersection(set(s))
         else:
-            log.error("Not sure what happened here!")
+            log.error(_("Not sure what happened here!"))
     def senses(self,**kwargs): #ps=None,profile=None,
         if not kwargs:
             return self._senses #this is always the current slice
@@ -14770,11 +14769,11 @@ class SliceDict(dict):
         try:
             self._senses+=list(self._profilesbysense[self._ps][self._profile])
         except KeyError:
-            log.info("assuming {} is an ad hoc profile.".format(self._profile))
+            log.info(_("assuming {profile} is an ad hoc profile.").format(profile=self._profile))
         try:
             self._senses+=list(self._adhoc[self._ps][self._profile])
         except KeyError:
-            log.info("assuming {} is a regular profile.".format(self._profile))
+            log.info(_("assuming {profile} is a regular profile.").format(profile=self._profile))
     def adhoc(self,ids=None, **kwargs):
         """If passed ids, add them. Otherwise, return dictionary."""
         if ids is not None:
@@ -14822,13 +14821,13 @@ class SliceDict(dict):
                     wcounts.append((count, profile, ps))
         for i in sorted(wcounts,reverse=True):
             self[(i[1],i[2])]=i[0] #[(profile, ps)]=count
-        e=_("Found {} valid data slices: {}").format(len(wcounts),self.keys())
-        e+='\n'+_("Invalid entries found: {}/{}").format(profilecountInvalid,
-                                                        sum(self.values(),
+        e=_("Found {count} valid data slices: {keys}").format(count=len(wcounts),keys=self.keys())
+        e+='\n'+_("Invalid entries found: {invalid}/{total}").format(invalid=profilecountInvalid,
+                                                        total=sum(self.values(),
                                                         profilecountInvalid))
         if program['db'].analangs and not len(wcounts):
-            e+='\n'+_("This may be a problem with your analysis language: {}"
-                    "").format(program['db'].analang)
+            e+='\n'+_("This may be a problem with your analysis language: {lang}"
+                    "").format(lang=program['db'].analang)
             e+='\n'+_("Or a problem with your database.")
             ErrorNotice(e,title=_("Data Problem!"),wait=True)
         log.info(e)
@@ -14846,7 +14845,7 @@ class SliceDict(dict):
         self._adhoc=adhoc
         self.analang=program['db'].analang
         if self.analang != profilesbysense['analang']:
-            log.error(f"Problem: {self.analang=} != {profilesbysense['analang']=}")
+            log.error(_("Problem: {analang} != {profile_analang}").format(analang=self.analang, profile_analang=profilesbysense['analang']))
             raise
         self._profilesbysense={k:v for k,v in profilesbysense.items()
                                                 if k not in ['analang','ftype']}
@@ -14868,11 +14867,11 @@ class ToneFrames(dict):
     def addframe(self,ps,name,defn):
         """This needs to change checks"""
         if not isinstance(defn,dict):
-            log.error("The supplied frame definition isn't a dictionary: {}"
-                        "".format(defn))
+            log.error(_("The supplied frame definition isn't a dictionary: {defn}"
+                        "").format(defn=defn))
         elif name in self:
-            log.error("The supplied frame name is already there: {} ({})"
-                        "".format(name,defn))
+            log.error(_("The supplied frame name is already there: {name} ({defn})"
+                        "").format(name=name,defn=defn))
         else:
             if not ps in self:
                 self[ps]={}
@@ -14889,10 +14888,10 @@ class ToneFrames(dict):
                             updated=True
                             self[ps][name]['field']='lc'
                     except TypeError as e:
-                        log.info("problem with frame at ps:{}, name:{} ({})"
-                                "".format(ps,name,e))
+                        log.info(_("problem with frame at ps:{ps}, name:{name} ({error})"
+                                "").format(ps=ps,name=name,error=e))
             if updated:
-                log.info("updated toneframes for field; you should save it!")
+                log.info(_("updated toneframes for field; you should save it!"))
         return self
     def __init__(self, dict):
         program['toneframes']=self
@@ -14906,10 +14905,10 @@ class StatusDict(dict):
         #showing type here is just as good, since it's an object in any case
         #printing the object fails if it is a window that hasn't inited yet
         if task:
-            log.info("Setting task {}".format(type(task)))
+            # log.info(_("Setting task {type}").format(type=type(task)))
             self._task=task
         else:
-            # log.info("Returning task {}".format(type(self._task)))
+            # log.info(_("Returning task {type}").format(type=type(self._task)))
             return self._task
     def profiletosort(self):
         """Return whether there is a profile that has been unsorted"""
@@ -14969,7 +14968,7 @@ class StatusDict(dict):
         # self.makeprofileok()
         profiles=self.profiles(**kwargs)
         if not profiles:
-            log.error("There are no such profiles! kwargs: {}".format(kwargs))
+            log.error(_("There are no such profiles! kwargs: {kwargs}").format(kwargs=kwargs))
             return
         """"TypeError: string indices must be integers"""
         profile=program['slices'].profile()
@@ -14985,7 +14984,7 @@ class StatusDict(dict):
         check=program['params'].check()
         checks=self.checks(**kwargs)
         if not checks:
-            log.error("There are no such checks! kwargs: {}".format(kwargs))
+            log.error(_("There are no such checks! kwargs: {kwargs}").format(kwargs=kwargs))
             return
         nextcheck=checks[0] #default
         if check in checks:
@@ -14998,9 +14997,9 @@ class StatusDict(dict):
         kwargs=grouptype(**kwargs)
         group=self.group()
         groups=self.groups(**kwargs)
-        log.info("At {} of ({}) groups.".format(group,groups))
+        log.info(_("At {group} of ({groups}) groups.").format(group=group,groups=groups))
         if not groups:
-            log.error("There are no such groups! kwargs: {}".format(kwargs))
+            log.error(_("There are no such groups! kwargs: {kwargs}").format(kwargs=kwargs))
             return
         nextgroup=groups[0] #default
         if group in groups:
@@ -15009,7 +15008,7 @@ class StatusDict(dict):
                 nextgroup=groups[idx+1] #overwrite default in this one case
         self.group(nextgroup)
         group=self.group()
-        log.info("At {} of ({}) groups.".format(group,groups))
+        log.info(_("At {group} of ({groups}) groups.").format(group=group,groups=groups))
     def profiles(self, **kwargs):
         kwargs=grouptype(**kwargs)
         profiles=program['slices'].profiles() #already limited to current ps
@@ -15017,7 +15016,7 @@ class StatusDict(dict):
         for kwargs['profile'] in profiles:
             checks=self.checks(**kwargs)
             if kwargs['wsorted'] and not checks:
-                log.log(4,"No Checks for this profile, returning.")
+                log.log(4,_("No Checks for this profile, returning."))
                 continue #you won't find any profiles to do, either...
             if (
                 (not kwargs['wsorted'] and not kwargs['tosort']
@@ -15041,7 +15040,7 @@ class StatusDict(dict):
                 kwargs['tojoin'] and self.profiletojoin(**kwargs)
                 ):
                 p+=[kwargs['profile']]
-        # log.info("Profiles with kwargs {}: {}".format(kwargs,p))
+        # log.info(_("Profiles with kwargs {kwargs}: {profiles}").format(kwargs=kwargs,profiles=p))
         return p
     def allcheckswCVdata(self):
         return list(set([i for j in [program['status'][cvt][ps][profile]
@@ -15099,7 +15098,7 @@ class StatusDict(dict):
                     )
                 ):
                 cs+=[kwargs['check']]
-        # log.info("Checks with {}: {}".format(kwargs,cs))
+        # log.info(_("Checks with {kwargs}: {checks}").format(kwargs=kwargs,checks=cs))
         return cs
     def all_groups_verified_anywhere(self):
         d=self.dict()
@@ -15114,7 +15113,7 @@ class StatusDict(dict):
     def all_groups_verified_for_cvt(self):
         return self.all_groups_verified_anywhere()[program['params'].cvt()]
     def groups(self,g=None, **kwargs):
-        # log.info("groups kwargs: {}".format(kwargs))
+        # log.info(_("groups kwargs: {kwargs}").format(kwargs=kwargs))
         if kwargs.get('all_for_cvt'): #in this case, nothing else is relevant
             return self.all_groups_verified_for_cvt()
         kwargs=grouptype(**kwargs)
@@ -15150,7 +15149,7 @@ class StatusDict(dict):
                     if s != 'V':
                         todo.extend([i[0] for i in thispsdict[s]])
             todo=sorted(set(todo)|set(sn['groups'])) #either way, add current groups
-            # log.info("Returning groups: {}".format(todo))
+            # log.info(_("Returning groups: {groups}").format(groups=todo))
             return todo
     def sensestosort(self):
         return getattr(self,'_sensestosort',False) #always return, even w/o attr
@@ -15174,23 +15173,23 @@ class StatusDict(dict):
             self._sensestosort.remove(sense)
         if not self._sensestosort:
             self.tosort(False,**kwargs) #this marks current, unless specified
-            # log.info("Tosort now {} (marksensesorted)".format(self.tosort()))
+            # log.info(_("Tosort now {tosort} (marksensesorted)").format(tosort=self.tosort()))
     def marksensetosort(self,sense,**kwargs):
         self._sensestosort.append(sense)
         if sense in self._sensessorted:
             self._sensessorted.remove(sense)
         self.tosort(True,**kwargs) #this marks current, unless specified
-        # log.info("Tosort now {} (marksensetosort)".format(self.tosort()))
+        # log.info(_("Tosort now {tosort} (marksensetosort)").format(tosort=self.tosort()))
     def store(self):
         """This will just store to file; reading will come from check."""
-        log.info("Saving status dict to file")
+        log.info(_("Saving status dict to file"))
         program['settings'].storesettingsfile('status')
         return
         config=ConfigParser()
         config.read(self._filename,encoding='utf-8')
         if config != self:
-            log.info("config: {}".format(config.keys()))
-            log.info("self: {}".format(self.keys()))
+            log.info(_("config: {keys}").format(keys=config.keys()))
+            log.info(_("self: {keys}").format(keys=self.keys()))
         for k in self:
             config[k]=indenteddict(self[k]) #getattr(o,s)
         with open(self._filename, 'w', encoding='utf-8') as file:
@@ -15222,11 +15221,11 @@ class StatusDict(dict):
                 or kwargs['ps'] is None and kwargs['profile'] is not None
                 or kwargs['profile'] is None and kwargs['check'] is not None
                 ):
-            log.error("You have to define all values prior to the last: "
-                                    "{}".format(kwargs))
+            log.error(_("You have to define all values prior to the last: "
+                                    "{kwargs}").format(kwargs=kwargs))
         elif kwargs['cvt'] is not None:
-            log.log(4,"At least cvt value defined; using them: {}"
-                                            "".format(kwargs))
+            log.log(4,_("At least cvt value defined; using them: {kwargs}"
+                                            "").format(kwargs=kwargs))
         else: #all None:
             for k in ['cvt','ps','profile','check']:
                 del kwargs[k]
@@ -15235,7 +15234,7 @@ class StatusDict(dict):
         """cvt should never be None here. Once an attribute is None, the rest
         should be, too."""
         if not kwargs['cvt']:
-            log.error("Sorry, no cvt defined! ({})".format(kwargs['cvt']))
+            log.error(_("Sorry, no cvt defined! ({cvt})").format(cvt=kwargs['cvt']))
             return
         if kwargs['cvt'] not in self:
             self[kwargs['cvt']]={}
@@ -15258,8 +15257,8 @@ class StatusDict(dict):
             base=base[kwargs['check']]
         if None not in [kwargs['ps'],kwargs['profile'],kwargs['check']]:
             if isinstance(base,list):
-                log.info("Updating {}-{} status dict to new schema".format(
-                                            kwargs['profile'],kwargs['check']))
+                log.info(_("Updating {profile}-{check} status dict to new schema").format(
+                                            profile=kwargs['profile'],check=kwargs['check']))
                 groups=base
                 base=self[kwargs['cvt']][kwargs['ps']][kwargs['profile']][
                                                         kwargs['check']]={}
@@ -15271,18 +15270,18 @@ class StatusDict(dict):
                 changed=True
             for key in ['groups','done','recorded']:
                 if key not in base:
-                    log.log(4,"Adding {} key to {}-{} status dict".format(
-                                        key,kwargs['profile'],kwargs['check']))
+                    log.log(4,_("Adding {key} key to {profile}-{check} status dict").format(
+                                        key=key,profile=kwargs['profile'],check=kwargs['check']))
                     base[key]=list()
                     changed=True
             if 'tosort' not in base:
-                log.log(4,"Adding tosort key to {}-{} status dict".format(
-                                        key,kwargs['profile'],kwargs['check']))
+                log.log(4,_("Adding tosort key to {profile}-{check} status dict").format(
+                                        profile=kwargs['profile'],check=kwargs['check']))
                 base['tosort']=True
                 changed=True
             if 'presorted' not in base:
-                log.log(4,"Adding presorted key to {}-{} status dict".format(
-                                        key,kwargs['profile'],kwargs['check']))
+                log.log(4,_("Adding presorted key to {profile}-{check} status dict").format(
+                                        profile=kwargs['profile'],check=kwargs['check']))
                 base['presorted']=False
                 changed=True
         # if changed == True:
@@ -15385,13 +15384,17 @@ class StatusDict(dict):
                 if i+1 >6:
                     c=0
                     for ps in program['slices'].pss():
-                        if (profile,ps) in program['slices']:
-                            c+=program['slices'][(profile,ps)]
+                            if (profile,ps) in program['slices']:
+                                c+=program['slices'][(profile,ps)]
                     log.info(_("Not doing checks with more than 6 "
-                            f"consonants or vowels; there are {i+1} " f"{program['params'].cvtdict()[cvt]['pl']} "
-                            f"in {profile}); "
+                            "consonants or vowels; there are {count} " "{type} "
+                            "in {profile}); "
                             "If you need that, please let me know. "
-                            f"({c} word(s).)"))
+                            "({words} word(s).)").format(
+                                count=i+1,
+                                type=program['params'].cvtdict()[cvt]['pl'],
+                                profile=profile,
+                                words=c))
                     continue
                 """This is a list of (code, name) tuples"""
                 syltuples=program['params']._checknames[cvt][i+1] #range+1 = syl
@@ -15408,9 +15411,9 @@ class StatusDict(dict):
         kwargs=self.checkslicetypecurrent(**kwargs)
         if None in [kwargs['cvt'],kwargs['ps'],kwargs['profile'],
                                                             kwargs['check']]:
-            log.error("None found in {} kwarg ({})".format([i for i in kwargs
+            log.error(_("None found in {missing} kwarg ({kwargs})").format(missing=[i for i in kwargs
                                                             if not kwargs[i]],
-                                                            kwargs))
+                                                            kwargs=kwargs))
         self.dictcheck(**kwargs)
         return self[kwargs['cvt']][kwargs['ps']][kwargs['profile']][
                                                                 kwargs['check']]
@@ -15429,7 +15432,7 @@ class StatusDict(dict):
         sn=self.node(**kwargs)
         ok=[None,True,False]
         if v not in ok:
-            log.error("presorted value ({}) invalid: OK values: {}".format(v,ok))
+            log.error(_("presorted value ({value}) invalid: OK values: {ok}").format(value=v,ok=ok))
         self._presortedbool=sn['presorted']
         if v is not None:
             self._presortedbool=sn['presorted']=v
@@ -15442,7 +15445,7 @@ class StatusDict(dict):
         sn=self.node(**kwargs)
         ok=[None,True,False]
         if v not in ok:
-            log.error("Tosort value ({}) invalid: OK values: {}".format(v,ok))
+            log.error(_("Tosort value ({value}) invalid: OK values: {ok}").format(value=v,ok=ok))
         self._tosortbool=sn['tosort']
         if v is not None:
             self._tosortbool=sn['tosort']=v
@@ -15451,7 +15454,7 @@ class StatusDict(dict):
         sn=self.node(**kwargs)
         self._verified=sn['done']
         if g is not None:
-            log.info(f"verified replacing {sn['done']} with {g} for {kwargs}")
+            log.info(_("verified replacing {done} with {group} for {kwargs}").format(done=sn['done'],group=g,kwargs=kwargs))
             self._verified=sn['done']=g
         return self._verified
     def isdistinguished(self,other_group,**kwargs):
@@ -15554,7 +15557,7 @@ class StatusDict(dict):
         kwargs['ps']=kwargs.get('ps',program['slices'].ps())
         kwargs['profile']=kwargs.get('profile',program['slices'].profile())
         kwargs['check']=kwargs.get('check',program['params'].check())
-        log.log(4,"Returning checkslicetypecurrent kwargs {}".format(kwargs))
+        log.log(4,_("Returning checkslicetypecurrent kwargs {kwargs}").format(kwargs=kwargs))
         return kwargs
     def last(self,task,update=False,**kwargs):
         if update and not kwargs.get('check'): #write cross-check tone analysis
@@ -15576,7 +15579,7 @@ class StatusDict(dict):
             s=self.last('sort',**kwargs)
             j=self.last('joinUF',**kwargs)
         else:
-            log.info("checking for an OK analysis across all checks")
+            log.info(_("checking for an OK analysis across all checks"))
             analysisl=[]
             sortl=[]
             ufjoinl=[]
@@ -15584,13 +15587,13 @@ class StatusDict(dict):
             # log.info(f"Working on checks ‘{self.checks()}’")
             # log.info(f"Working on updatechecksbycvt ‘{self.updatechecksbycvt()}’")
             for check in self.updatechecksbycvt():
-                log.info(f"Working on check ‘{check}’")
+                log.info(_("Working on check ‘{check}’").format(check=check))
                 analysisl.append(self.last('analysis',**{**kwargs,'check':check}))
                 sortl.append(self.last('sort',**{**kwargs,'check':check}))
                 ufjoinl.append(self.last('joinUF',**{**kwargs,'check':check}))
-            log.info(f"Collected analysisl: {analysisl}")
-            log.info(f"Collected sortl: {sortl}")
-            log.info(f"Collected ufjoinl: {ufjoinl}")
+            log.info(_("Collected analysisl: {list}").format(list=analysisl))
+            log.info(_("Collected sortl: {list}").format(list=sortl))
+            log.info(_("Collected ufjoinl: {list}").format(list=ufjoinl))
             # These are stored on file as strings
             a=min([datetime.datetime.fromisoformat(i) for i in analysisl if i],
                                                                     default='')
@@ -15598,7 +15601,7 @@ class StatusDict(dict):
                                                                     default='')
             j=max([datetime.datetime.fromisoformat(i) for i in ufjoinl if i],
                                                                     default='')
-        log.info(f"{a}>{s}?")
+        log.info(_("{a}>{s}?").format(a=a,s=s))
         if a and s:
             ok=fixnaivedatetime(a)>fixnaivedatetime(s)
         elif a:
@@ -15609,10 +15612,13 @@ class StatusDict(dict):
             joinsinceanalysis=True #show groups on all non-default reports
         else:
             joinsinceanalysis=False
-        annalysisoknotice=_("Last analysis at {};\n"
-                    "last join at {}\n"
-                    "last sort at {}\n(analysisOK={})"
-                    "").format(a,j,s,ok)
+        annalysisoknotice=_("Last analysis at {analysis_time};\n"
+                    "last join at {join_time}\n"
+                    "last sort at {sort_time}\n(analysisOK={ok})"
+                    "").format(analysis_time=a,
+                                join_time=j,
+                                sort_time=s,
+                                ok=ok)
         log.info(annalysisoknotice)
         return ok, joinsinceanalysis, annalysisoknotice
     def source(self,dict=None):
@@ -15667,12 +15673,12 @@ class CheckParameters(object):
     def check(self,check=None,unset=False):
         """This needs to change/clear subchecks"""
         if unset or check:
-            log.info("Setting check {}".format(check))
+            log.info(_("Setting check {check}").format(check=check))
             self._check=check
         elif not hasattr(self,'_check'):
-            log.info("Making check attribute ({})".format(check))
+            log.info(_("Making check attribute ({check})").format(check=check))
             self._check=None
-        # log.info("Returning check {}".format(self._check))
+        # log.info(_("Returning check {check}").format(check=self._check))
         return self._check
     def checkcodes_by_cvt(self):
         self._checkcodes_by_cvt={cvt:{code_tuple[0]
@@ -15681,7 +15687,7 @@ class CheckParameters(object):
                     }
                 for cvt,syl_dict in self._checknames.items()
                 }
-        log.info(f"{self._checkcodes_by_cvt=}")
+        log.info(_("self._checkcodes_by_cvt={codes}").format(codes=self._checkcodes_by_cvt))
     def cvt_of_check(self,check):
         for cvt,codes in self._checkcodes_by_cvt.items():
             # log.info(f"{cvt=},{codes=}")
@@ -15707,9 +15713,9 @@ class CheckParameters(object):
         return self._cvchecknames
     def analang(self,analang=None):
         if analang:
-            log.info(f"Setting analysis language as {analang} ({self})")
+            log.info(_("Setting analysis language as {analang} ({self})").format(analang=analang, self=self))
             self._analang=analang
-        # log.info(f"Returning analysis language as {self._analang} ({self})")
+        # log.info(_("Returning analysis language as {analang} ({self})").format(analang=self._analang, self=self))
         return self._analang
     def audiolang(self,audiolang=None):
         if audiolang:
@@ -15749,10 +15755,10 @@ class CheckParameters(object):
         self._checknames={
             'S':{ 1:[('lc', _("Whole Citation Word Syllable Profile")),
                 ('lx', _("Whole Root Syllable Profile")),
-                ('pl', _(f"Whole {self.nominalpsfield()} Word "
-                            "Syllable Profile")),
-                ('imp', _(f"Whole {self.verbalpsfield()} Word "
-                            "Syllable Profile")),
+                ('pl', _("Whole {field} Word "
+                            "Syllable Profile").format(field=self.nominalpsfield())),
+                ('imp', _("Whole {field} Word "
+                            "Syllable Profile").format(field=self.verbalpsfield())),
                 ]},
             'T':{
                 1:[('T', _("Tone Melody"))]},
@@ -15829,7 +15835,7 @@ class CheckParameters(object):
                     ],
                 4:[
                     ('CV1=CV2=CV3=CV4',_("Same First/only Four CVs")),
-                    ('CV4', ("Fourth CV"))
+                    ('CV4', _("Fourth CV"))
                     ],
                 5:[
                     ('CV1=CV2=CV3=CV4=CV5',_("Same First/only Five CVs")),
@@ -15873,10 +15879,10 @@ class ConfigParser(configparser.ConfigParser):
     def output(self):
         for k in self:
             if isinstance(self[k],str):
-                log.info(f"Config {k}: {self[k]}")
+                log.info(_("Config {k}: {v}").format(k=k,v=self[k]))
             else:
                 for j in self[k]:
-                    log.info(f"Config {k}/{j}: {self[k][j]}")
+                    log.info(_("Config {k}/{j}: {v}").format(k=k,j=j,v=self[k][j]))
     def write(self,*args,**kwargs):
         configparser.ConfigParser.write(self,*args,**kwargs,
                                             space_around_delimiters=False)
@@ -15900,7 +15906,7 @@ class ErrorNotice(ui.Window):
         if not text:
             log.error(_("ErrorNotice got no text?"))
             return
-        log.error(f"ErrorNotice: “{text}”")
+        log.error(_("ErrorNotice: “{text}”").format(text=text))
         # log.info("parent: {}".format(kwargs['parent']))
         # log.info("program: {}".format(program))
         # log.info("program['root']: {}".format(program['root']))
@@ -15910,7 +15916,7 @@ class ErrorNotice(ui.Window):
             assert not program['root'].exitFlag.istrue()
         except Exception as e:
             if 'parent' not in kwargs:
-                log.info("Exception: {}".format(e))
+                log.info(_("Exception: {error}").format(error=e))
                 log.error(_("Couldn't find a parent; error message follows"))
                 log.error(text)
                 return
@@ -15966,15 +15972,15 @@ class Repository(object):
         # log.info("self.bare: {}".format(self.bare))
         if not self.bare:
             if not self.alreadythere(file):
-                log.info(_("Adding {}, which is not already there.").format(file))
+                log.info(_("Adding {file}, which is not already there.").format(file=file))
                 self.files+=[file] #keep this up to date
                 # self.getfiles() #this was more work
             else:
-                log.info(_("Adding {}, which is already there.").format(file))
+                log.info(_("Adding {file}, which is already there.").format(file=file))
             args=['add', str(file)]
             self.do(args)
         else:
-            log.info("Not adding {} to bare repo {}".format(file,self.url))
+            log.info(_("Not adding {file} to bare repo {url}").format(file=file,url=self.url))
     def commitconfirm(self,diff): #don't run the diff again...
         def ok(event=None):
             self.commitconfirmed=nowruntime()
@@ -15993,8 +15999,7 @@ class Repository(object):
             return False
         log.info(_("Asked for commit confirm; asking user"))
         w=ui.Window(program['root'],title=_("Commit Confirm"),exit=False)
-        text=_("Do you want to commit language data via {} now?"
-                ).format(self.repotypename)+'\n'+diff[:300]
+        text=_("Do you want to commit language data via {repo} now?").format(repo=self.repotypename)+'\n'+diff[:300]
         prompt=ui.Label(w,text=text,row=0,column=0,sticky='')
         bf=ui.Frame(w,row=1,column=0,sticky='')
         yes=ui.Button(bf,text=_("Yes"),command=ok,
@@ -16007,8 +16012,8 @@ class Repository(object):
         yes.wait_window(yes)
         if not w.exitFlag.istrue():
             w.on_quit()
-            log.info("Me not committing when asked to by {}".format(
-                                                            program['name']))
+            log.info(_("Me not committing when asked to by {name}").format(
+                                                            name=program['name']))
             return True
     def commit(self,file=None):
         #I may need to rearrange these args:
@@ -16041,13 +16046,13 @@ class Repository(object):
         args=['status']
         log.info(self.do(args))
     def clonefromUSB(self,directory):
-        log.info("Preparing to clone to {} from USB repo".format(directory))
+        log.info(_("Preparing to clone to {dir} from USB repo").format(dir=directory))
         #this should be a pathlib object
         # log.info("Continuing to clone to {} from USB repo".format(directory))
         # this needs from-to args
         args=['clone', self.nonbareclonearg, self.url, str(directory)]
-        msg=_("Copying from {} to {}; this may take some time."
-                    "").format(self.url, directory)
+        msg=_("Copying from {source} to {dest}; this may take some time."
+                    "").format(source=self.url, dest=directory)
         log.info(msg)
         w=ui.Wait(program['root'],msg=msg)
         log.info(self.do(args))
@@ -16055,12 +16060,12 @@ class Repository(object):
     def clonetoUSB(self,event=None):
         # log.info("Trying to run clonetoUSB")
         directory=self.clonetobaredirname()
-        log.info("directory: {}".format(directory))
+        log.info(_("directory: {dir}").format(dir=directory))
         if directory:
             if not self.addifis(directory):
                 args=['clone', self.bareclonearg, '.', directory] #this needs from-to
-                msg=_("Copying to {}; this may take some time."
-                            "").format(directory)
+                msg=_("Copying to {dir}; this may take some time."
+                            "").format(dir=directory)
                 w=ui.Wait(program['root'],msg=msg)
                 log.info(self.do(args))
                 self.addremote(directory)
@@ -16077,11 +16082,11 @@ class Repository(object):
         if not url:
             url=self.url
         if r and 'fatal' not in r:
-            log.info("Found {} commits for {}".format(len(r),url))
+            log.info(_("Found {count} commits for {url}").format(count=len(r),url=url))
             return r.split('\n')
         else:
-            log.info("Found no commits; is {} a {} repo?".format(url,
-                                                            self.repotypename))
+            log.info(_("Found no commits; is {url} a {repo} repo?").format(url=url,
+                                                            repo=self.repotypename))
             # log.info("commithashes: {}".format(r))
             if r:
                 return r #need to pass errors for processing
@@ -16091,8 +16096,8 @@ class Repository(object):
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
-            log.info("Couldn't find a local drive to share with via {}; "
-                    "giving up".format(self.repotypename))
+            log.info(_("Couldn't find a local drive to share with via {repo}; "
+                    "giving up").format(repo=self.repotypename))
             return
         r=self.commit() #should always before pulling, at least here
         if r:
@@ -16116,8 +16121,8 @@ class Repository(object):
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
-            log.info(_("Couldn't find a local drive to pull from via {}; "
-                    "giving up").format(self.repotypename))
+            log.info(_("Couldn't find a local drive to pull from via {repo}; "
+                    "giving up").format(repo=self.repotypename))
             return
         for remote in remotes:
             if self.code == 'git':
@@ -16132,8 +16137,8 @@ class Repository(object):
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
-            log.info(_("Couldn't find a local drive to push to via {}; "
-                    "giving up").format(self.repotypename))
+            log.info(_("Couldn't find a local drive to push to via {repo}; "
+                    "giving up").format(repo=self.repotypename))
             return
         for remote in remotes:
             args=['push']
@@ -16152,7 +16157,7 @@ class Repository(object):
         #                                                         self.url))
         # log.info(self.remotenames)
         if self.remotenames and directory in self.remotenames:
-            log.info("Found {} in settings; assuming related".format(directory))
+            log.info(_("Found {dir} in settings; assuming related").format(dir=directory))
             return True #This should always be
         #Git doesn't seem to care if repos are related, but I do...
         thatrepohashes=self.commithashes(directory)
@@ -16174,18 +16179,18 @@ class Repository(object):
         #     for l in thatrepohashes:
         #         f.write(l+'\n')
         commonhashes=set(thisrepohashes)&set(thatrepohashes)
-        log.info("found {} common commits: {}".format(len(commonhashes),
-                                                    list(commonhashes)[:10]))
+        log.info(_("found {count} common commits: {hashes}").format(count=len(commonhashes),
+                                                    hashes=list(commonhashes)[:10]))
         if len(commonhashes) >1: #just in case we find one...
             return True
         elif not len(thatrepohashes):
-            log.info(_("Repository at {} looks empty, so I'm assuming you "
-            "just initialized it").format(directory))
+            log.info(_("Repository at {dir} looks empty, so I'm assuming you "
+            "just initialized it").format(dir=directory))
             log.info("This use case should probably go away!! Are we "
                 "initializing empty repos somewhere, or asking the user to?")
             return True
-        error=_("The directory {} doesn't seem to have a repository related "
-                "to {}; removing.").format(directory,self.url)
+        error=_("The directory {dir} doesn't seem to have a repository related "
+                "to {url}; removing.").format(dir=directory,url=self.url)
         log.info(error)
         self.removeremote(directory)
     def addifis(self,directory):
@@ -16222,7 +16227,7 @@ class Repository(object):
             l.extend(self.remotenames)
         # log.info("remotesinsettings there: {}".format(l))
         if l:
-            log.info("returning remotes:{}".format(l))
+            log.info(_("returning remotes:{remotes}").format(remotes=l))
             return l
         # If we're still here, offer the user one chance to plug in a drive.
         # but just do this once; don't annoy the user.
@@ -16231,13 +16236,8 @@ class Repository(object):
             if remotesinsettings or not self.directorydontask:
                 program['taskchooser'].withdraw()
                 text=_(
-                # "{} can't find your {} {} backup. "
-                # "If you have a USB drive for your {} {} backup, insert it now."
-                "Please insert your {} USB now." #, if you have it
-                "").format(
-                # program['name'],
-                # self.repotypename,
-                self.description)
+                "Please insert your {desc} USB now." #, if you have it
+                "").format(desc=self.description)
                 # clonetoUSB here will ask for a directory to put it, but won't
                 # clone if the target would be there, related or not.
                 # Either way, we check again for present remotes, so the cost
@@ -16246,9 +16246,9 @@ class Repository(object):
                 button=(_("Create new USB"),clonetoUSB)
                 if not program['Demo']:
                     e=ErrorNotice(text,
-                            title=_("No {} {} USB backup found"
-                                    ).format(self.repotypename,
-                                            self.description),
+                            title=_("No {repo} {desc} USB backup found"
+                                    ).format(repo=self.repotypename,
+                                            desc=self.description),
                             button=button,
                             image='USBdrive',
                             wait=True
@@ -16296,7 +16296,7 @@ class Repository(object):
             cmd.extend(self.usernameargs)
         except AttributeError as e:
             if hasattr(self,'files'): #only complain if initialized
-                log.info("usernameargs not found ({})".format(e))
+                log.info(_("usernameargs not found ({error})").format(error=e))
                     # "; OK if initializing "
                     # "the repo."
                     # "\nYou may also get a 'fatal: not a git repository...' "
@@ -16314,17 +16314,17 @@ class Repository(object):
             if me and (iwascalledby in ['pull'] and
                         'rejected' not in output and
                         self.code == 'git'):
-                log.info(_("Call to {} ({}) gave error: \n{}\nMerging.").format(
-                                                        self.repotypename,
-                                                        ' '.join(args),
-                                                        output))
+                log.info(_("Call to {repo} ({args}) gave error: \n{output}\nMerging.").format(
+                                                        repo=self.repotypename,
+                                                        args=' '.join(args),
+                                                        output=output))
                 if output and 'fatal' not in output:
                     r=self.mergetool(**kwargs)
                     if r and 'fatal' not in r:
                         self.pull(**kwargs)
             if 'The current branch master has no upstream branch.' in output:
-                log.info("iwascalledby {}, but don't have upstream."
-                            "".format(iwascalledby))
+                log.info(_("iwascalledby {caller}, but don't have upstream."
+                            "").format(caller=iwascalledby))
                 if iwascalledby not in ['push']:
                     try:
                         assert self.code == 'git' #don't give hg notices here
@@ -16335,14 +16335,14 @@ class Repository(object):
             if iwascalledby in ['pull']: #needed for logic and reporting
                 return output
             if iwascalledby not in ['getusernameargs','log']:
-                txt=_("Call to {} ({}) gave error: \n{}").format(
-                                                        self.repotypename,
-                                                        ' '.join(
+                txt=_("Call to {repo} ({args}) gave error: \n{output}").format(
+                                                        repo=self.repotypename,
+                                                        args=' '.join(
                                                         [str(i) for i in
                                                         args #one or the other
                                                         # cmd #this gives git ...
                                                         ]),
-                                                        output)
+                                                        output=output)
                 try:
                     assert self.code == 'git' #don't give hg notices here
                     #these are states we don't want to bother the user with:
@@ -16358,9 +16358,9 @@ class Repository(object):
                     return output
             return
         except Exception as e:
-            text=_("Call to {} ({}) failed: {}").format(
-                                                        self.repotypename,
-                                                        args,e)
+            text=_("Call to {repo} ({args}) failed: {error}").format(
+                                                        repo=self.repotypename,
+                                                        args=args,error=e)
             try:
                 assert self.code == 'git' #don't give hg notices here
                 ErrorNotice(text)
@@ -16377,22 +16377,22 @@ class Repository(object):
         elif t and iwascalledby not in ['diff', #These give massive output!
                                         'getfiles',
                                         ]:
-            log.info("{} {} {}: {}".format(self.repotypename,
-                                            iwascalledby,args[1:],t))
+            log.info(_("{repo} {caller} {args}: {output}").format(repo=self.repotypename,
+                                            caller=iwascalledby,args=args[1:],output=t))
         elif iwascalledby not in ['add', #these should log only w/output
                                     'commit',
                                     ]:
-            log.info("{} {} {} OK".format(self.repotypename,
-                                            iwascalledby,args[1:]))
+            log.info(_("{repo} {caller} {args} OK").format(repo=self.repotypename,
+                                            caller=iwascalledby,args=args[1:]))
         return t
     def alreadythere(self,url):
         self.getfiles()
         if file.getreldir(self.url,url) in self.files: # as str
-            # log.info(_("URL {} is already in repo {}".format(url,self.url)))
+            # log.info(_("URL {url} is already in repo {repo}").format(url=url,repo=self.url))
             return True
         # else:
-        #     log.info(_("URL {} is not already in repo {}:\n{}"
-        #                 "".format(url,self.url,self.files)))
+        #     log.info(_("URL {url} is not already in repo {repo}:\n{files}"
+        #                 "").format(url=url,repo=self.url,files=self.files))
     def ignore(self,file):
         if not hasattr(self,'ignored') or file not in self.ignored:
             with open(self.ignorefile,'a') as f:
@@ -16413,11 +16413,11 @@ class Repository(object):
                 self.ignored=[i.rstrip() for i in f.readlines()]
             # log.info("self.ignored for {} now {}".format(self.code,self.ignored))
         except FileNotFoundError as e:
-            log.info("Hope this is OK: {}".format(e))
+            log.info(_("Hope this is OK: {error}").format(error=e))
     def exists(self,f=None):
         if not f:
             f=self.deltadir
-            log.info("Checking repo existence via {}".format(f))
+            log.info(_("Checking repo existence via {path}").format(path=f))
         return file.exists(f)
     def exewarning(self):
         title=_("Warning: {type} Executable Missing!").format(type=self.repotypename)
@@ -16425,10 +16425,10 @@ class Repository(object):
                 # "seem to be working on a repository of data ({0}), "
                 # "\nwhich may be tracked by {1}, "
                 # "\nbut "
-                "you don't seem to have the {} executable installed in "
+                "you don't seem to have the {repo} executable installed in "
                 "your computer's PATH.").format(
                                                 # self.url,
-                                                self.repotypename)
+                                                repo=self.repotypename)
         if self.repotypename == 'Mercurial':
              text+='\n'+_("(Mercurial is used by Chorus and languagedepot.org)")
              if not self.exists():
@@ -16438,11 +16438,11 @@ class Repository(object):
         w=ui.Window(program.get('root',ui.Root()),title=title)
         w.withdraw()
         if self.repotypename == 'Git':
-             text+='\n'+_("(Git is used by {0} to track changes in your "
-                        "data, and to keep {0} up to date)"
-                        ).format(program['name'])
-        clickable=_("Please see {} for installation recommendations"
-                    ).format(self.installpage)
+             text+='\n'+_("(Git is used by {name} to track changes in your "
+                        "data, and to keep {name} up to date)"
+                        ).format(name=program['name'])
+        clickable=_("Please see {url} for installation recommendations"
+                    ).format(url=self.installpage)
         l=ui.Label(w.frame, text=text, column=0, row=0)
         l.wrap()
         m=ui.Label(w.frame, text=clickable, column=0, row=1)
@@ -16451,9 +16451,9 @@ class Repository(object):
         mtt=ui.ToolTip(m,_("Go to {url}").format(url=self.installpage))
         if self.thisos == 'Windows':
             clickable1=_("(e.g., in Windows, install *this* file),"
-                        ).format(self.wexeurl)
-            clickable2=_("or see all your options at {}."
-                        ).format(self.wdownloadsurl)
+                        ).format(url=self.wexeurl)
+            clickable2=_("or see all your options at {url}."
+                        ).format(url=self.wdownloadsurl)
             n=ui.Label(w.frame, text=clickable1, column=0, row=2)
             n.bind("<Button-1>", lambda e: openweburl(self.wexeurl))
             ntt=ui.ToolTip(n,_("download {url}").format(url=self.wexeurl))
@@ -16461,20 +16461,20 @@ class Repository(object):
             o.bind("<Button-1>", lambda e: openweburl(self.wdownloadsurl))
             mtt=ui.ToolTip(o,_("Go to {url}").format(url=self.wdownloadsurl))
         # button=(_("Restart Now"),sysrestart) #This should be in task/chooser
-        text=_("After you install {}, you should restart."
-                ).format(self.repotypename)
+        text=_("After you install {repo}, you should restart."
+                ).format(repo=self.repotypename)
         if self.repotypename == 'Git':
-            text+='\n'+_("You can keep using {} without installing {}, but "
+            text+='\n'+_("You can keep using {name} without installing {repo}, but "
                         "it is not recommended, and you will continue to see "
                         "this warning."
                         " And sooner or later that's going to get really annoying"
-                        ).format(program['name'],self.repotypename)
+                        ).format(name=program['name'],repo=self.repotypename)
         r=ui.Label(w.frame, text=text, column=0, row=4)
         r.wrap()
         rb=ui.Button(w.frame, text=_("Restart Now"), column=1, row=4,
                     cmd=sysrestart) #This should be in task/chooser
-        rbtt=ui.ToolTip(rb,_("Install {} first, then do this"
-                            ).format(self.repotypename))
+        rbtt=ui.ToolTip(rb,_("Install {repo} first, then do this"
+                            ).format(repo=self.repotypename))
         w.deiconify()
         w.lift()
     def getusernameargs(self):
@@ -16484,17 +16484,17 @@ class Repository(object):
         if hasattr(self,'argstogetuseremail'):
             re=self.do(self.argstogetuseremail)
         if r:
-            log.info("Using {} username '{}'".format(self.repotypename,r))
+            log.info(_("Using {repo} username '{name}'").format(repo=self.repotypename,name=r))
             if re:
-                log.info("Using {} useremail '{}'".format(self.repotypename,re))
+                log.info(_("Using {repo} useremail '{email}'").format(repo=self.repotypename,email=re))
         else:
             r=program['name']+'-'+program['hostname']
-            log.info("No {} username found; using '{}'"
-                    "".format(self.repotypename,r))
+            log.info(_("No {repo} username found; using '{name}'"
+                    "").format(repo=self.repotypename,name=r))
         if not re:
             re=program['name']+'@'+program['hostname']
-            log.info("No {} useremail found; using '{}'"
-            "".format(self.repotypename,re))
+            log.info(_("No {repo} useremail found; using '{email}'"
+            "").format(repo=self.repotypename,email=re))
         self.usernameargs=self.argstoputuserids(r,re)
     def addUSBremote(self):
         # This should be a directory (or parent) with existing repo
@@ -16509,10 +16509,10 @@ class Repository(object):
             return
         for key in ['Thing'+str(i) for i in range(1,20)]:
             if key not in remotes: #don't overwrite keys
-                log.info("Setting {} key with {} value".format(key,remote))
+                log.info(_("Setting {key} key with {value} value").format(key=key,value=remote))
                 remotes[key]=str(remote)
                 self.remoteurls(remotes) #save
-                log.info("URL Settings now {}".format(self.remoteurls()))
+                log.info(_("URL Settings now {urls}").format(urls=self.remoteurls()))
                 return
     def localremotes(self):
         return [i for d in self.remoteurls().values()
@@ -16520,7 +16520,7 @@ class Repository(object):
                 if i
                 if not self.isinternet(i)]
     def isinternet(self,remote):
-        log.info("self.remotenames: {}; remote: {}".format(self.remotenames,remote))
+        log.info(_("self.remotenames: {names}; remote: {remote}").format(names=self.remotenames,remote=remote))
         if remote in self.remotenames:
             remote=self.getremotenameurl(remote)
         if isinterneturl(remote):
@@ -16538,7 +16538,7 @@ class Repository(object):
         if remotes and type(remotes) is dict:
             self._remotes=remotes
         elif remotes:
-            log.info("You passed me a remotes value that isn't a dict?")
+            log.info(_("You passed me a remotes value that isn't a dict?"))
         else:
             return getattr(self,'_remotes',{}).copy() #so I can iterate and change
     def branchname(self):
@@ -16547,15 +16547,15 @@ class Repository(object):
             repoheadfile=self.branchnamefile
         else:
             repoheadfile='.'+self.code+'/'+self.branchnamefile
-        log.info("Looking for {} branch name in {}".format(self.repotypename,
-                                                            repoheadfile))
+        log.info(_("Looking for {repo} branch name in {file}").format(repo=self.repotypename,
+                                                            file=repoheadfile))
         try:
             with file.getdiredurl(self.url,repoheadfile).open() as f:
                 c=f.read()
                 # log.info("Found repo head info {}".format(c))
                 if c:
                     self.branch=c.split('/')[-1].strip()
-                    log.info("Found branch: {}".format(self.branch))
+                    log.info(_("Found branch: {branch}").format(branch=self.branch))
             # return self.branch
         except Exception as e:
             log.error(_("Problem finding branch name: {error}").format(error=e))
@@ -16565,22 +16565,22 @@ class Repository(object):
         #this is done on normal __init__, or after an init later on.
         #These are things that need an actual repository there
         self.bare=bool(self.isbare())
-        log.info("Repo {} is bare: {}".format(self.url,self.bare))
+        log.info(_("Repo {url} is bare: {bare}").format(url=self.url,bare=self.bare))
         self.remotenames=self.getremotenames()
         self.branchname() #This is needed for the following
         self.getusernameargs()
         self.getfiles()
         self.ignorecheck()
         try:
-            log.info(_("{} repository object initialized on branch {} at {} "
-                    "for {}, with {} files."
-                    "").format(self.repotypename, self.branch, self.url,
-                        self.description, len(self.files)))
+            log.info(_("{repo} repository object initialized on branch {branch} at {url} "
+                    "for {desc}, with {count} files."
+                    "").format(repo=self.repotypename, branch=self.branch, url=self.url,
+                        desc=self.description, count=len(self.files)))
         except FileNotFoundError:
-            log.info("{} repository object initialized at {} "
-                    "for {}, with {} files."
-                    "".format(self.repotypename, self.url,
-                        self.description, len(self.files)))
+            log.info(_("{repo} repository object initialized at {url} "
+                    "for {desc}, with {count} files."
+                    "").format(repo=self.repotypename, url=self.url,
+                        desc=self.description, count=len(self.files)))
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
@@ -16603,11 +16603,11 @@ class Repository(object):
             and str(self.url).endswith('.'+self.code)):# or self.code == 'hg':
             self.deltadir=self.url
         if not file.exists(self.deltadir):
-            log.info("Not a {} repo ({})? Returning".format(self.repotypename,
-                                                            self.url))
+            log.info(_("Not a {repo} repo ({url})? Returning").format(repo=self.repotypename,
+                                                            url=self.url))
             return
         if not self.cmd:
-            log.info("Found no {} executable!".format(self.repotypename))
+            log.info(_("Found no {repo} executable!").format(repo=self.repotypename))
             self.exewarning()
             return #before getting a file list!
         self.populate() #get files, etc.
@@ -16619,16 +16619,16 @@ class Mercurial(Repository):
     def leaveunicodealonesargs(self):
         return []
     def argstoputuserids(self,username,email):
-        return ['--config','ui.username={}'.format(username)] # just one field
+        return ['--config','ui.username={username}'.format(username=username)] # just one field
     def choruscheck(self):
         rescues=[]
         for file in self.files:
             if str(file).endswith('.ChorusRescuedFile'):
                 rescues.append(file)
         if rescues:
-            error=_("You have the following files ( in {}) that need to be "
-                    "resolved from Chorus merges:\n {}"
-                    "").format(self.url,'\n'.join(rescues))
+            error=_("You have the following files (in {url}) that need to be "
+                    "resolved from Chorus merges:\n {files}"
+                    "").format(url=self.url,files='\n'.join(rescues))
             log.error(error)
             ErrorNotice(error,title=_("Chorus Rescue files found!"))
             if me:
@@ -16646,8 +16646,8 @@ class Mercurial(Repository):
         # self.cmd=program['hg']
         self.wdownloadsurl='https://www.mercurial-scm.org/wiki/Download'
         self.wexename='Mercurial-6.0-x64.exe'
-        self.wexeurl=('https://www.mercurial-scm.org/release/windows/{}'
-                        ''.format(self.wexename))
+        self.wexeurl=('https://www.mercurial-scm.org/release/windows/{exe}'
+                        ''.format(exe=self.wexename))
         self.pwd='--cwd'
         self.lsfiles='files'
         self.argstogetusername=['config', 'ui.username']
@@ -16712,15 +16712,15 @@ class Git(Repository):
     def leaveunicodealonesargs(self):
         return ['-c','core.quotePath=false']
     def argstoputuserids(self,username,email):
-        return ['-c', 'user.name={}'.format(username),
-                '-c', 'user.email={}'.format(str(email))]
+        return ['-c', 'user.name={name}'.format(name=username),
+                '-c', 'user.email={email}'.format(email=str(email))]
     def init(self):
         args=['init', '--initial-branch=main']
         r=self.do(args)
         if 'unknown option' in r:
             args=['init']
             r=self.do(args)
-        log.info("init: {}".format(r))
+        log.info(_("init: {result}").format(result=r))
         self.populate() #because this won't have been done yet
         # git config branch.$branchname.mergeoptions '-X ignore-space-change'
     def lastcommitdate(self):
@@ -16740,7 +16740,7 @@ class Git(Repository):
             r=r.split('\n')
         else:
             r=[] # This should always be iterable
-        log.info("Using these remotes: {}".format(r))
+        log.info(_("Using these remotes: {remotes}").format(remotes=r))
         return r
     def getremotenameurl(self,remotename):
         args=['remote', 'get-url', remotename]
@@ -16753,7 +16753,7 @@ class Git(Repository):
         self.wdownloadsurl='https://git-scm.com/download/win'
         self.wexename='Git-2.33.0.2-64-bit.exe'
         self.wexeurl=('https://github.com/git-for-windows/git/releases/'
-                        'download/v2.33.0.windows.2/{}').format(self.wexename)
+                        'download/v2.33.0.windows.2/{exe}').format(exe=self.wexename)
         self.pwd='-C'
         self.lsfiles='ls-files'
         self.argstogetusername=['config', '--get', 'user.name']
@@ -16774,7 +16774,7 @@ class GitReadOnly(Git):
             method=Repository.push
             # This doesn't mind if there is no USB:
             remotes=self.localremotes() #don't publish to internet this way
-            log.info("remotes: {}".format(remotes))
+            log.info(_("remotes: {remotes}").format(remotes=remotes))
             for remote in remotes: #iterate here to keep results
                 r[remote+'/'+self.branch]=method(self,remotes=[remote])
             # self.stash()
@@ -16790,7 +16790,7 @@ class GitReadOnly(Git):
             remotes=self.findpresentremotes(firsttry=False) #don't ask
             homeurl=program['url']+'.git'
             remotes.extend([homeurl])
-            log.info("remotes: {}".format(remotes))
+            log.info(_("remotes: {remotes}").format(remotes=remotes))
             self.fetch(remotes)
             for remote in remotes:
                 r[remote+'/'+self.branch]=method(self,remotes=[remote])
@@ -16806,7 +16806,7 @@ class GitReadOnly(Git):
             fns.reverse()
         try:
             for i in range(2):
-                log.info("Running index {} ({} {})".format(i,branches[i],fns[i]))
+                log.info(_("Running index {index} ({branch} {fn})").format(index=i,branch=branches[i],fn=fns[i]))
                 #not pulling here, as not sharing in that direction.
                 r=Repository.push(self,remotes=remotes,branch=branches[i])
                 if r:
@@ -16936,12 +16936,12 @@ def interfacelang(lang=None,magic=False):
             # log.debug("Magic: {}".format(_.__module__))
             magic=True
         else:
-            log.debug("Magic seems to be installed, but not gettext: {}"
-            "".format(_.__module__))
+            log.debug("Magic seems to be installed, but not gettext: {module}"
+            ).format(module=_.__module__)
     except NameError:
         log.debug("Looks like translation magic isn't defined yet; making")
     if lang:
-        log.info(f"Asked to set lang {lang} with curlang {curlang}")
+        log.info("Asked to set lang {lang} with curlang {curlang}").format(lang=lang,curlang=curlang)
     if not lang and not curlang: #deduce, but don't override current setting.
         # log.info("checking for a local setting")
         code=file.uilang()
@@ -16950,18 +16950,19 @@ def interfacelang(lang=None,magic=False):
             #         f"results ({code})")
             code=getlangfromlocale()
             if not code:
-                log.debug("locale.getlocale doesn't seem to have "
+                log.debug(_("locale.getlocale doesn't seem to have "
                 "returned any results: "
-                f"{locale.getlocale()} (OS: {platform.system()})"
-                "Using English user interface")
-                log.debug("locale.getdefaultlocale output for "
-                            f"comparison: {locale.getdefaultlocale()}")
+                "{locale} (OS: {os})"
+                "Using English user interface").format(locale=locale.getlocale(),
+                                                        os=platform.system()))
+                log.debug(_("locale.getdefaultlocale output for "
+                            "comparison: {locale}").format(locale=locale.getdefaultlocale()))
                 code='en' #I think loc=None normally means English on macOS
         if code in i18n:
             # log.info("returning {} (of {})".format(code,list(i18n)))
             lang=code
     if lang and lang != curlang and lang in i18n: # or not magic:
-        log.debug("Setting Interface language: {}".format(lang))
+        log.debug("Setting Interface language: {lang}".format(lang=lang))
         i18n[lang].install()
         file.uilang(lang)
         return lang
@@ -16969,7 +16970,7 @@ def interfacelang(lang=None,magic=False):
 def getlangfromlocale():
     # log.debug("Looking for interface language in locale.")
     loc,enc=locale.getlocale()
-    log.info("Found locale {}, encoding {}".format(loc,enc))
+    log.info(_("Found locale {loc}, encoding {enc}").format(loc=loc,enc=enc))
     if loc:
         code=loc.split('_')[0]
         if code not in i18n and code in ['English','Français','French']:
@@ -17005,11 +17006,11 @@ def dictofchilddicts(dict,remove=None):
 def flatten(l):
     log.debug("list to flatten: {}".format(l))
     if type(l) is not list:
-        log.debug("{} is not a list; returning nothing.".format(l))
+        log.debug(_("{item} is not a list; returning nothing.").format(item=l))
         return
     if l == [] or type(l[0]) is not list:
-        log.debug("The first element of {} is not a list; returning nothing."
-                    "".format(l))
+        log.debug(_("The first element of {list} is not a list; returning nothing."
+                    "").format(list=l))
         return
     return [i for j in l for i in j] #flatten list of lists
 def addxofytocorrectplaceinlistoflists(x,y,o):
@@ -17036,7 +17037,7 @@ def addxofytolistoflists(x,y,o):
 def dictscompare(dicts,ignore=[],flat=True):
     keyswoignore=[k for k in dicts if dicts[k] not in ignore]
     if len(keyswoignore) <= 1:
-        log.debug("One or less dict: {}; just returning key.".format(dicts))
+        log.debug(_("One or less dict: {dicts}; just returning key.").format(dicts=dicts))
         return [keyswoignore] #This should be a list of lists
     l=dictscompare11(dicts,ignore=ignore)
     o=list([],)
@@ -17099,9 +17100,9 @@ def ifone(l,nt=None):
         return l[0]
 def unlist(l,ignore=[None]):
     if l and isinstance(l[0],lift.et.Element):
-         log.error("unlist should only be used on text (not node) lists ({})"
-                    "".format(l))
-         log.error("Element[0] text: {}".format(l[0].text))
+         log.error(_("unlist should only be used on text (not node) lists ({list})"
+                    "").format(list=l))
+         log.error(_("Element[0] text: {text}").format(text=l[0].text))
          return
     return firstoflist(l,all=True,ignore=ignore)
 def firstoflist(l,othersOK=False,all=False,ignore=[None]):
@@ -17126,9 +17127,9 @@ def firstoflist(l,othersOK=False,all=False,ignore=[None]):
     elif len(l) == 1 or (othersOK == True):
         return l[0]
     elif othersOK == False: #(i.e., with `len(list) != 1`)
-        log.info(_('Sorry, something other than one list item found: {}'
+        log.info(_('Sorry, something other than one list item found: {list}'
                 '\nDid you mean to use "othersOK=True"? Returning nothing!'
-                '').format(l))
+                '').format(list=l))
 def t(element):
     if type(element) is str:
         return element
@@ -17139,8 +17140,8 @@ def t(element):
             return element.text
         except:
             log.debug(_("Apparently you tried to pull text out of a non "
-                        "element, and it's not a simple string, either: {}"
-                        ).format(element))
+                        "element, and it's not a simple string, either: {element}"
+                        ).format(element=element))
 def nonspace(x):
     """Return a space instead of None (for the GUI)"""
     if x is not None:
@@ -17179,7 +17180,7 @@ def propagate(self,attr):
             setattr(child,attr,getattr(self,attr))
             propagate(child,attr=attr)
 def donothing():
-    log.debug("Doing Nothing!")
+    log.debug(_("Doing Nothing!"))
     pass
 def pickshortest(l):
     shortestlength=min([len(i) for i in l])
@@ -17189,20 +17190,20 @@ def pickshortest(l):
 def loadCAWL():
     stockCAWL=file.fullpathname('SILCAWL/SILCAWL.lift')
     if file.exists(stockCAWL):
-        log.info("Found stock LIFT file: {}".format(stockCAWL))
+        log.info(_("Found stock LIFT file: {file}").format(file=stockCAWL))
     try:
         # cawldb=lift.Lift(str(stockCAWL))
         cawldb=lift.LiftXML(str(stockCAWL),tostrip=True)
-        log.info("Parsed ET.")
-        log.info("Got ET Root.")
+        log.info(_("Parsed ET."))
+        log.info(_("Got ET Root."))
     except lift.BadParseError as e:
-        text=_("{} doesn't look like a well formed lift file; please "
-                "try again. ({})").format(stockCAWL,e)
+        text=_("{file} doesn't look like a well formed lift file; please "
+                "try again. ({error})").format(file=stockCAWL,error=e)
         ErrorNotice(text,wait=True)
         return
     except Exception as e:
-        log.info("Error: {}".format(e))
-    log.info("Parsed stock LIFT file to tree/nodes.")
+        log.info(_("Error: {error}").format(error=e))
+    log.info(_("Parsed stock LIFT file to tree/nodes."))
     return cawldb
 def saveimagefile(url,filename,copyto=None):
     # log.info("Preparing to write image to new file")
@@ -17229,7 +17230,7 @@ def compilesenseimage(sense):
     except tkinter.TclError as e:
         if ('value for "-file" missing' not in e.args[0] and
                 "couldn't recognize data in image file" not in e.args[0]):
-            log.info("ui.Image error: {}".format(e))
+            log.info(_("ui.Image error: {error}").format(error=e))
     """
     uri=sense.illustrationURI()
     if uri and file.exists(uri):
@@ -17245,7 +17246,7 @@ def scaleimageifthere(sense,pixels=65,scaleto='height'):
         except tkinter.TclError as e:
             if ('value for "-file" missing' not in e.args[0] and
                     "couldn't recognize data in image file" not in e.args[0]):
-                log.info("ui.Image error: {}".format(e))
+                log.info(_("ui.Image error: {error}").format(error=e))
     if sense.image:
         return scale_image(sense.image,pixels=pixels,scaleto=scaleto)
 def pathseparate(path):
@@ -17255,7 +17256,7 @@ def pathseparate(path):
     elif os == 'Linux':
         sep=':'
     else:
-        log.error("What operating system are you running? ({})".format(os))
+        log.error(_("What operating system are you running? ({os})").format(os=os))
     return path.split(sep)
 def findpath():
     spargs={
@@ -17268,10 +17269,10 @@ def findpath():
         # CSIDL_DESKTOPDIRECTORY
         # CSIDL_DESKTOP
         #subprocess.check_output(['echo',"%PATH%"], **spargs)
-        log.info("PATH is {}".format(path))
+        log.info(_("PATH is {path}").format(path=path))
         return path
     except Exception as e:
-        log.info("No path found! ({})".format(e))
+        log.info(_("No path found! ({error})").format(error=e))
 def findexecutable(exe):
     exeOS=exe
     os=platform.system()
@@ -17292,13 +17293,13 @@ def findexecutable(exe):
          if exe == 'sendpraat':
              exeOS='sendpraat-mac'
     else:
-        log.error("Sorry, I don't know this OS: {}".format(os))
+        log.error(_("Sorry, I don't know this OS: {os}").format(os=os))
     # log.info("Looking for {} on {}...".format(exe,os))
     try:
         exeURL=subprocess.check_output([which,exeOS], shell=False)
         program[exe]=stouttostr(exeURL)
     except subprocess.CalledProcessError as e:
-        log.info("Executable {} search output: {}".format(exe,e.output))
+        log.info(_("Executable {exe} search output: {output}").format(exe=exe,output=e.output))
     except Exception as e:
         log.info(_("Search for {exe} on {os} failed: {error}").format(exe=exe, os=os, error=e))
         return e
@@ -17317,11 +17318,11 @@ def findexecutable(exe):
         program[exe]=None
     elif len(program[exe]) == 1:
         program[exe]=unlist(program[exe])
-        log.info("Executable {} found at {}".format(exe,program[exe]))
+        log.info(_("Executable {exe} found at {path}").format(exe=exe,path=program[exe]))
     else:
-        log.info("Executable {} found multiple items: {}".format(exe,program[exe]))
+        log.info(_("Executable {exe} found multiple items: {items}").format(exe=exe,items=program[exe]))
         program[exe]=pickshortest(program[exe])
-        log.info("Using shortest executable path: {}".format(program[exe]))
+        log.info(_("Using shortest executable path: {path}").format(path=program[exe]))
     if (exe == 'praat' and program[exe]
             and not exceptiononload
             and not praatversioncheck()):
@@ -17348,7 +17349,7 @@ def praatversioncheck():
         #         except Exception as e:
         #             log.info("{},{} error".format(encoding, errortag))
     except Exception as e:
-        log.info("Problem with praat version ({}), assuming recent".format(e))
+        log.info(_("Problem with praat version ({error}), assuming recent").format(error=e))
         return True
     try:
         if b'\x00' in versionraw:
@@ -17358,13 +17359,13 @@ def praatversioncheck():
         # log.info("characters={}".format(characters))
         out=version.Version(parseversion(characters))
     except Exception as e:
-        log.info("Problem getting parseable praat version ({})".format(e))
+        log.info(_("Problem getting parseable praat version ({error})").format(error=e))
         out=versionraw
     # This is the version at which we don't need sendpraat anymore
     # and where '--hide-picture' becomes available.
     justpraatversion=version.Version(parseversion(
                                             'Praat 6.2.04 (December 18 2021)'))
-    log.info("Found Praat version {}".format(str(out)))
+    log.info(_("Found Praat version {version}").format(version=str(out)))
     if out>=justpraatversion:
         log.info("Praat version at or greater than {}".format(justpraatversion))
         return True
@@ -17383,7 +17384,7 @@ def sysshutdown():
     sys.exit()
 def sysrestart(event=None):
     osys=platform.system()
-    log.info("Hard shutting down now.")
+    log.info(_("Hard shutting down now."))
     logsetup.shutdown()
     if osys == 'Linux':
         # log.info(f"restarting with {sys.argv[0]}?={program['python']} ({sys.argv}?)")
@@ -17477,7 +17478,7 @@ def updateazt(event=None,**kwargs): #should only be parent, for errorroot
                 kwargs['parent']=program['taskchooser'].mainwindowis
             else:
                 kwargs['parent']=program['root']
-        log.info("parent title: {}".format(kwargs['parent'].title()))
+        log.info(_("parent title: {title}").format(title=kwargs['parent'].title()))
         w=ui.Wait(msg=_("Updating {azt}").format(azt=program['name']), **kwargs)
         r=program['repo'].share() #t is a dict of main and testing results
         w.close()
@@ -17485,12 +17486,12 @@ def updateazt(event=None,**kwargs): #should only be parent, for errorroot
             t='\n'.join([i for j in r.items() #each tuple
                         for k in j #each tuple item
                         if k #don't give empty items
-                        for i in [l for l in k.split('\n')# each tuple item line
+                        for i in [l for l in k.split('\n')# each tuple item line
                                 if 'hint: ' not in l][:10] #first 10 w/o hint
                                 ])
         else:
-            t=_("No results! Is there a {} source available?"
-                ).format(program['name'])
+            t=_("No results! Is there a {azt} source available?"
+                ).format(azt=program['name'])
         # log.info("git raw output: {} ({})".format(r,type(r)))
         # log.info("git output: {} ({})".format(t,type(t)))
         button=False
@@ -17501,8 +17502,8 @@ def updateazt(event=None,**kwargs): #should only be parent, for errorroot
             if [i for i in r.values() if 'fatal: ' in i]: #any fatal problem
                 t+='\n'+_("(Problem! You will likely need help with this.)")
             elif [i for i in r.values() if updated(i)]: #anything updated
-                t+='\n'+_("(Restart {} to use this update)"
-                        ).format(program['name'])
+                t+='\n'+_("(Restart {name} to use this update)"
+                        ).format(name=program['name'])
             if [i for i in r.values() if not uptodate(i)]:
                 button=(_("Restart Now"),sysrestart)
         try:
@@ -17522,7 +17523,7 @@ def main():
     try:
         root = ui.Root(program=program)
     except tkinter.TclError as e:
-        log.info("Evidently you can't make a root window? ({})".format(e))
+        log.info(_("Evidently you can't make a root window? ({error})").format(error=e))
         return
     # log.info("Theme ipady: {}".format(program['theme'].ipady))
     # log.info("Theme ipadx: {}".format(program['theme'].ipadx))
@@ -17545,7 +17546,7 @@ def main():
         except: # Windows 8 or before
             pass
         screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
-        log.info("MS Windows screen size: {}".format(screensize))
+        log.info(_("MS Windows screen size: {size}").format(size=screensize))
     # log.info(root.winfo_class())
     # root.className='azt'
     # root.winfo_class("azt")
@@ -17577,7 +17578,7 @@ def mainproblem():
     try: #Make this work whether root has run/still runs or not.
         newtk=False
         program['root'].winfo_exists()
-        log.info("Root there!")
+        log.info(_("Root there!"))
         errorroot = program['root']
         for w in errorroot.winfo_children():
             w.destroy()
@@ -17588,8 +17589,8 @@ def mainproblem():
             newtk=True
             log.info(_("Starting with new root"))
         except tkinter.TclError as e:
-            log.info("Evidently you can't make a root window? ({})".format(e))
-            log.info("This was your error:\n{}".format(logsetup.contents(50)))
+            log.info(_("Evidently you can't make a root window? ({error})").format(error=e))
+            log.info(_("This was your error:\n{error}").format(error=logsetup.contents(50)))
             return
     errorroot.withdraw()
     errorw=ui.Window(errorroot)
@@ -17601,7 +17602,7 @@ def mainproblem():
             )
     if False and exceptiononload:
         durl='{}/INSTALL.md#dependencies'.format(program['docsurl'])
-        m=ui.Label(errorw.frame,text=_("\nPlease see {}").format(durl),
+        m=ui.Label(errorw.frame,text=_("\nPlease see {url}").format(url=durl),
             justify='left', font='instructions',
             row=1,column=0
             )
@@ -17609,35 +17610,35 @@ def mainproblem():
         m2=ui.Label(errorw.frame,
             text=_("I have tried to install some Python dependencies for you. "
                     "If everything but ‘patiencediff’ installed "
-                    "(see log below), just close this window and {0} "
+                    "(see log below), just close this window and {azt} "
                     "will restart. "
                     "\nIf you see connectivity errors, check your internet "
-                    "connection before running {0} again; we need to "
-                    "download some stuff for this.").format(program['name']),
+                    "connection before running {azt} again; we need to "
+                    "download some stuff for this.").format(azt=program['name']),
             justify='left', font='instructions',
             wraplength=errorroot.wraplength,
             row=2,column=0
             )
     lcontents=logsetup.contents(50)
     addr=program['Email']
-    eurl='mailto:{}?subject=Please help with {} installation'.format(addr,
-                                                                program['name'])
+    eurl='mailto:{addr}?subject=Please help with {name} installation'.format(addr=addr,
+                                                                name=program['name'])
     eurl+='&body='
     eurl+=_("Please replace this text with a description of what you just did.")
     eurl+='%0d%0a'
-    eurl+=_("If the log below doesn't include the text '{}', or if it happened "
+    eurl+=_("If the log below doesn't include the text '{text}', or if it happened "
             "after a longer work session, please attach "
             "your compressed log file").format(
-            'Traceback (most recent call last): ')+' ('+(file)+')'
-    eurl+='%0d%0a--log info--%0d%0a{}'.format('%0d%0a'.join(lcontents))
+            text='Traceback (most recent call last): ')+' ('+(file)+')'
+    eurl+='%0d%0a--log info--%0d%0a{info}'.format(info='%0d%0a'.join(lcontents))
     n=ui.Label(errorw.frame,text=_("\n\nIf this information doesn't help "
-        "you fix this, please click on this text to Email me your log (to {})"
-        "").format(addr),justify='left', font='default',
+        "you fix this, please click on this text to Email me your log (to {addr})"
+        "").format(addr=addr),justify='left', font='default',
         row=3,column=0
         )
     n.bind("<Button-1>", lambda e: openweburl(eurl))
-    o=ui.Label(errorw.frame,text=_("The end of {} / {} are below:"
-                                "").format(logsetup.getlogfilename(),file),
+    o=ui.Label(errorw.frame,text=_("The end of {log} / {file} are below:"
+                                "").format(log=logsetup.getlogfilename(),file=file),
                                 justify='left',
                                 font='report',
                                 row=3,column=0,
@@ -17655,8 +17656,9 @@ def mainproblem():
     f=ui.Frame(errorw.outsideframe,row=1,column=2)
     if program['git']:
         ui.Button(f,
-                text=_("Check for \n{azt} \nupdates").format(azt=program['name']),
+                text=_("Check for {azt} updates").format(azt=program['name']),
                 cmd=lambda x=errorw:updateazt(parent=x),
+                wraplength=10,
                 row=0,column=0,
                 pady=20)
         if program['repo'].branch != 'main':
@@ -17701,8 +17703,8 @@ if __name__ == '__main__':
     # log.info("ui.Exitable MRO: {}".format(ui.Exitable.mro()))
     try:
         import ctypes
-        log.debug("Scale factor: {}".format(
-                    ctypes.windll.shcore.GetScaleFactorForDevice(0)))
+        log.debug("Scale factor: {factor}".format(
+                    factor=ctypes.windll.shcore.GetScaleFactorForDevice(0)))
     except:
         pass
     sys.excepthook = handle_exception
@@ -17736,22 +17738,25 @@ if __name__ == '__main__':
         branch=program['repo'].branch
     except AttributeError:
         branch='main'
-        log.info("Repo has no branch attribute; assuming main branch.")
+        log.info(_("Repo has no branch attribute; assuming main branch."))
     if branch != 'main':
-        program['version'] += " ({})".format(branch)
-    program['docsurl']=('https://github.com/kent-rasmussen/azt/blob/{}/docs'
-                        '').format(branch)
+        program['version'] += " ({branch})".format(branch=branch)
+    program['docsurl']=('https://github.com/kent-rasmussen/azt/blob/{branch}/docs'
+                        '').format(branch=branch)
     mt=program['repo'].lastcommitdate()
     mtrel=program['repo'].lastcommitdaterelative()
-    log.info(_("Running {} v{}, updated {} ({})").format(
-                                program['name'],program['version'],mtrel,mt))
-    log.info(_("Called with arguments {} {} / {}").format(sys.executable,
-                                                    sys.argv[0], sys.argv))
-    log.info("Executed by {}".format(sysexecutableversion()))
-    text=_("Working directory is {} on {}, running on {} cores"
-            ).format(program['aztdir'],
-                    program['hostname'],
-                    multiprocessing.cpu_count())
+    log.info(_("Running {azt} v{version}, updated {rel} ({date})").format(
+                                azt=program['name'],
+                                version=program['version'],
+                                rel=mtrel,
+                                date=mt))
+    log.info(_("Called with arguments {exe} {script} / {args}").format(exe=sys.executable,
+                                                    script=sys.argv[0], args=sys.argv))
+    log.info(_("Executed by {version}").format(version=sysexecutableversion()))
+    text=_("Working directory is {dir} on {host}, running on {cores} cores"
+            ).format(dir=program['aztdir'],
+                    host=program['hostname'],
+                    cores=multiprocessing.cpu_count())
     try:
         import psutil
     except ModuleNotFoundError:
@@ -17774,7 +17779,7 @@ if __name__ == '__main__':
     # if not program['python']:
     program['python']=sys.executable
     if 'testtask' in program and type(program['testtask']) is str:
-        log.info("Converting string ‘{}’ to class".format(program['testtask']))
+        log.info(_("Converting string ‘{task}’ to class").format(task=program['testtask']))
         program['testtask']=getattr(sys.modules[__name__],
                                         program['testtask'])
     # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
@@ -17795,11 +17800,11 @@ if __name__ == '__main__':
             # main()
         # except FileNotFoundError:
         except SystemExit:
-            log.info("Shutting down by user request")
+            log.info(_("Shutting down by user request"))
         except KeyboardInterrupt:
-            log.info("Shutting down by keyboard interrupt")
+            log.info(_("Shutting down by keyboard interrupt"))
         except Exception as e:
-            log.exception("Unexpected exception! %s",e)
+            log.exception(_("Unexpected exception! {error}").format(error=e))
             mainproblem()
         except:
             import traceback
