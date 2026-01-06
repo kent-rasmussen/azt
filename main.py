@@ -119,21 +119,21 @@ import webbrowser
 
 class HasMenus():
     def helpnewinterface(self):
-        title=(_("{} Dictionary and Orthography Checker"
-                "".format(program['name'])))
+        title=_("{azt} Dictionary and Orthography Checker") \
+                .format(azt=program['name'])
         window=ui.Window(self, title=title)
-        text=_("{0} has a new interface, starting mid January 2022. You "
+        text=_("{name} has a new interface, starting mid January 2022. You "
                 "should still be able to do everything you did before, though "
                 "you will probably get to each function a bit differently "
                 "—hopefully more intuitively."
                 "\nTasks are organized into Data Collection and Analysis, "
                 "and you can switch between them with the button in the upper "
-                "right of the main {0} window."
+                "right of the main {name} window."
                 "\nEither window allows you to run reports."
-                "").format(program['name'])
+                "").format(name=program['name'])
         url='{}/TASKS.md'.format(program['docsurl'])
-        webtext=_("For more information on {} tasks, please check out the "
-                "documentation at {} ").format(program['name'],url)
+        webtext=_("For more information on {name} tasks, please check out the "
+                "documentation at {url} ").format(name=program['name'],url=url)
         ui.Label(window.frame, image=self.frame.theme.photo['icon'],
                 text=title, font='title',compound='bottom',
                 row=0,column=0,sticky='we'
@@ -148,15 +148,17 @@ class HasMenus():
                 )
         webl.bind("<Button-1>", lambda e: openweburl(url))
     def helpabout(self):
-        title=(_(f"{program['name']} Dictionary and Orthography Checker"))
+        title=(_("{azt} Dictionary and Orthography Checker").format(azt=program['name']))
         window=ui.Window(self, title=title)
+        version=program['version']
         ui.Label(window.frame,
-                text=_("version: {}").format(program['version']),
+                text=_("version: {version}").format(version=version),
                 anchor='c',padx=50,
                 row=1,column=0,sticky='we'
                         )
-        versiondate=_(
-                        f"updated to {program['repo'].lastcommitdate()} " f"({program['repo'].lastcommitdaterelative()})")
+        versiondate=_("updated to {date} ({relative_date})").format(
+                        date=program['repo'].lastcommitdate(),
+                        relative_date=program['repo'].lastcommitdaterelative())
         ui.Label(window.frame,
                 text=versiondate,
                 anchor='c',padx=50,
@@ -181,7 +183,7 @@ class HasMenus():
                                                     name=program['name'])
         webtext=_("For help with this tool, please check out the documentation "
                 "at {url} ").format(url=program['url'])
-        mailtext=_("or write me at {}.").format(program['Email'])
+        mailtext=_("or write me at {email}.").format(email=program['Email'])
         ui.Label(window.frame, text=title,
                 font='title',anchor='c',padx=50,
                 row=0,column=0,sticky='we')
@@ -204,11 +206,11 @@ class HasMenus():
                 row=3,column=0,sticky='we'
                 )
         webl.bind("<Button-1>", lambda e: openweburl(program['url']))
-        ui.ToolTip(webl, _(f"See {program['name']} online"))
+        ui.ToolTip(webl, _("See {azt} online").format(azt=program['name']))
         murl='mailto:{}?subject= {} question'.format(program['Email'],
                                                     program['name'])
         maill.bind("<Button-1>", lambda e: openweburl(murl))
-        ui.ToolTip(maill, _(f"Send me an Email (from your mail client)"))
+        ui.ToolTip(maill, _("Send me an Email (from your mail client)"))
     def reverttomainazt(self,event=None):
         #This doesn't care which (test) version one is on
         r=program['repo'].reverttomain()
@@ -224,12 +226,13 @@ class HasMenus():
         if r:
             program['taskchooser'].restart()
     def _removemenus(self,event=None):
-        # log.info(_(f"Hiding menus? (vars={vars(self)}, self:{self}, event={event})"))
+        # log.info(_("Hiding menus? (vars={vars}, self:{self}, event={event})")
+        #             .format(vars=vars(self), self=self, event=event))
         if hasattr(self,'menubar'):
             self.menubar.destroy()
-            # log.info(_(f"now {vars(self)}"))
+            # log.info(_("now {vars}").format(vars=vars(self)))
             self.menu=False
-            # log.info(_(f"now {vars(self)}"))
+            # log.info(_("now {vars}").format(vars=vars(self)))
             self.setcontext()
         log.info(_("done with _removemenus"))
     def _setmenus(self,event=None):
@@ -254,7 +257,7 @@ class LiftChooser(ui.Window,HasMenus):
         defaults={'pady':20,'column':0,'sticky':'w','gridwait':True}
         self.title_frame=ui.Frame(self._new_w.frame, row=0, **defaults)
         self.code_frame=ui.Frame(self._new_w.frame, row=1, **defaults)
-        self.code_label=ui.Label(self.code_frame, text='code: ',
+        self.code_label=ui.Label(self.code_frame, text=_('code: '),
                                 font='readbig', row=0, **defaults)
         self.use_code_button=ui.Button(self.code_frame,
                                         text='<= '+_("Use this code"),
@@ -485,8 +488,8 @@ class LiftChooser(ui.Window,HasMenus):
             log.error(f"It looks like your code ({self.analang}) isn't valid "
                         f"({self.analang_obj.full_display()})")
         if not langtags.tag_is_valid(self.analang):
-            e=ErrorNotice("That doesn't look like an ethnologue code "
-                        f"({self.analang=})",wait=True)
+            e=ErrorNotice(_("That doesn't look like an ethnologue code ({analang})")
+                        .format(analang=self.analang),wait=True)
         dir=file.gethome()
         newfile=file.getnewlifturl(dir,self.analang)
         if not newfile:
@@ -494,7 +497,7 @@ class LiftChooser(ui.Window,HasMenus):
                         "already exist?"),wait=True)
             return
         if file.exists(newfile):
-            ErrorNotice(_("The file {} already exists! {}").format(newfile),
+            ErrorNotice(_("The file {newfile} already exists!").format(newfile=newfile),
                                                                 wait=True)
             return
         self.newdirname=newfile.parent
@@ -516,8 +519,7 @@ class LiftChooser(ui.Window,HasMenus):
             repo=repoclass(mediadir)
             if (hasattr(repo,'files') #fails if no exe
                 and repo.exists()): #tests for .code dir
-                    log.info(_("Found {} Repository! ({})").format(repo.code,
-                                                                    mediadir))
+                    log.info(_("Found {code} Repository! ({mediadir})").format(code=repo.code, mediadir=mediadir))
                     dirname=repo.dirname
                     # log.info("repo in {} directory".format(dirname))
                     newdirname=file.getfile(homedir).joinpath(dirname)
@@ -525,11 +527,11 @@ class LiftChooser(ui.Window,HasMenus):
                         newdirname=newdirname.with_suffix('')
                     if file.exists(newdirname):
                         # log.info("Exists!")
-                        msg=_("The directory {} already exists, so I'm "
+                        msg=_("The directory {newdirname} already exists, so I'm "
                                 "not going to copy your data there."
                                 "\nDo you already have your data on your "
-                                "computer? \nIf so, click '{}' on the next "
-                                "screen.").format(newdirname,self.other)
+                                "computer? \nIf so, click '{other}' on the next "
+                                "screen.").format(newdirname=newdirname,other=self.other)
                         log.info(msg)
                         ErrorNotice(msg,wait=True)
                         return
@@ -547,15 +549,15 @@ class LiftChooser(ui.Window,HasMenus):
         if not mediadir:
             return
         if not file.exists(homedir): #this should never happen
-            ErrorNotice(_("I can't find your home directory ({}); please "
-                        "submit a bug report!").format(homedir))
+            ErrorNotice(_("I can't find your home directory ({homedir}); please "
+                        "submit a bug report!").format(homedir=homedir))
         newrepo=None
         newrepo=makenewrepo(Git,mediadir)
         if not newrepo:
             log.info("trying with Mercurial")
             newrepo=makenewrepo(Mercurial,mediadir)
         if not newrepo: # if there, already exists
-            log.error(_("Couldn't find a repository at {}").format(mediadir))
+            log.error(_("Couldn't find a repository at {mediadir}").format(mediadir=mediadir))
         filename=self.findrepolift(newrepo) #find the lift file
         # log.info("found filename {}".format(filename))
         if filename: #this will be None, if no or multiple *.lift files
@@ -569,12 +571,12 @@ class LiftChooser(ui.Window,HasMenus):
                 return newfile
             else:
                 log.error(_("looks like there was a problem finding "
-                            "your new file. ({})").format(newfile))
+                            "your new file. ({newfile})").format(newfile=newfile))
         else:
             msg=_("It looks like the repository was cloned, but "
                         "I can't find just one lift file."
-                        "\nTell {} which file you want to "
-                        "Analyze on the next page.").format(program['name'])
+                        "\nTell {azt} which file you want to "
+                        "Analyze on the next page.").format(azt=program['name'])
             # log.info(msg)
             ErrorNotice(msg,wait=True)
     def findrepolift(self,repo):
@@ -588,8 +590,8 @@ class LiftChooser(ui.Window,HasMenus):
             # or on that contains the ISO code, but I think this is sane enough
             # for now —anyone with more than one *.lift file should know what
             # they're doing
-            log.info(_("returned more or less than one lift file! ({})"
-                    ).format(l))
+            log.info(_("returned more or less than one lift file! ({list})")
+                    .format(list=l))
     def fillcawldbimages(self,cawldb=None,newdirname=None,wait=None):
         log.info("Filling in empty image fields where possible")
         if not cawldb:
@@ -638,8 +640,8 @@ class LiftChooser(ui.Window,HasMenus):
                             'glosslangs':['fr'],
                             'buttoncolumns':2
                             }
-        header=(_("# This transitional settings file was made on {} on {}").format(
-                                                    now(),platform.uname().node)
+        header=(_("# This transitional settings file was made on {date} on {node}").format(
+                                                    date=now(),node=platform.uname().node)
                 )
         header+=(_("\n# It should only be used to get a new demo started."))
         with open(filename, 'w', encoding='utf-8') as file:
@@ -653,7 +655,7 @@ class LiftChooser(ui.Window,HasMenus):
         w.mainwindow=False
         t=ui.Label(w.frame, text=title, font='title', row=0, column=0)
         inst=_("Which language would you like to study, in this demonstration "
-                "of what {} can do?").format(program['name'])
+                "of what {azt} can do?").format(azt=program['name'])
         t=ui.Label(w.frame, text=inst, row=1, column=0, columnspan=2)
         self.cawldb=loadCAWL()
         Settings.langnames(self,self.cawldb.glosslangs)
@@ -681,7 +683,7 @@ class LiftChooser(ui.Window,HasMenus):
         newfile=newfilebasename.with_suffix('.lift')
         if file.exists(newfile):
             self.wait.close()
-            ErrorNotice(_(f"File {newfile} already exists! \nUse it?"),
+            ErrorNotice(_("File {newfile} already exists! \nUse it?").format(newfile=newfile),
                         wait=True,
                         button=(_("Yes!"),lambda event,x=str(newfile):
                                 self.setfilenameandcontinue(x,restart=True))
@@ -709,7 +711,7 @@ class LiftChooser(ui.Window,HasMenus):
                 n.remove(f)
         log.info("Stripped stock LIFT file.")
     def submitdemolang(self,choice,window): #event=None):
-        log.info(_("picked {}, from {}").format(choice,self.cawldb.glosslangs))
+        log.info(_("picked {choice}, from {glosslangs}").format(choice=choice, glosslangs=self.cawldb.glosslangs))
         if choice in self.cawldb.glosslangs:
             self.demolang=choice
             window.destroy()
@@ -718,23 +720,23 @@ class LiftChooser(ui.Window,HasMenus):
             type=_("demo")
         else:
             type=_("empty")
-        log.info(_("Trying to write {} LIFT file to {}").format(type,newfile))
+        log.info(_("Trying to write {type} LIFT file to {newfile}").format(type=type, newfile=newfile))
         try:
             self.cawldb.write(str(newfile))
         except Exception as e:
             log.error("Exception: {}".format(e))
-        log.info(_("Tried to write {} LIFT file to {}").format(type,newfile))
+        log.info(_("Tried to write {type} LIFT file to {newfile}").format(type=type, newfile=newfile))
         if file.exists(newfile):
             log.info("Wrote {} LIFT file to {}".format(type,newfile))
     def newfilelocation(self,newfile):
         #Do users care about this?
         return #not for now
-        msg=_("Your new LIFT file is at {n}."
+        msg=_("Your new LIFT file is at {newfile}."
                 "\nIf you don't want it there, close {azt} and move the whole "
-                "{f} folder wherever you like."
+                "{folder} folder wherever you like."
                 "\nThen open {azt} and tell it where you put the LIFT file."
-                ).format(n=newfile,
-                        f=file.getfilenamedir(newfile),
+                ).format(newfile=newfile,
+                        folder=file.getfilenamedir(newfile),
                         azt=program['name'])
         # log.info(msg)
         ErrorNotice(msg,title=_("New LIFT file location"),wait=True)
@@ -764,7 +766,7 @@ class LiftChooser(ui.Window,HasMenus):
             self.deiconify() #let user pick again
     def setfilenameandcontinue(self,name,restart=False,event=None):
         log.info(_("Running setfilenameandcontinue with "
-                    f"name={name} and restart={restart}"))
+                    "name={name} and restart={restart}").format(name=name, restart=restart))
         self.name=self.filechooser.name=name
         file.writefilename(name)
         self.destroy()
@@ -797,8 +799,8 @@ class LiftChooser(ui.Window,HasMenus):
         else:
             self.other=_("Select a database on my computer") #use later
         optionlist+=[('Other',self.other)]
-        optionlist+=[('Demo',_("Make a demo database to try out {}"
-                                ).format(program['name']))]
+        optionlist+=[('Demo',_("Make a demo database to try out {azt}"
+                                ).format(azt=program['name']))]
         buttonFrame1=ui.ScrollingButtonFrame(self.frame,
                                 optionlist=optionlist,
                                 command=self.setfilename,
@@ -860,22 +862,22 @@ class FileParser(object):
             #This program key will only be available after this finishes
             program['db']=lift.LiftXML(str(self.name),analang)
         except lift.BadParseError:
-            text=_("{} doesn't look like a well formed lift file; please "
-                    "try again.").format(self.name)
+            text=_("{filename} doesn't look like a well formed lift file; please "
+                    "try again.").format(filename=self.name)
             log.info("'lift_url.py' removed.")
             if program['root'].exitFlag.istrue():
                 log.info(text)
                 return
             else:
-                ErrorNotice(text,title='LIFT parse error',wait=True)
+                ErrorNotice(text,title=_('LIFT parse error'),wait=True)
             file.writefilename() #just clear the default
             raise #Then force a quit and retry
         except Exception as e:
             text=_("There seems to be a (non-XML) problem loading your "
-            "database ({}); I will remove it as default so you can open "
-            "another").format(self.name)
+            "database ({filename}); I will remove it as default so you can open "
+            "another").format(filename=self.name)
             log.error(text)
-            ErrorNotice(text,title='LIFT non-parse error',wait=True)
+            ErrorNotice(text,title=_('LIFT non-parse error'),wait=True)
             file.writefilename()
             raise
     def dailybackup(self):
@@ -1111,7 +1113,7 @@ class Menus(ui.Menu):
         if not group:
             group=_("Select")
         options.extend([(_("Resort skipped data"), self.parent.tryNAgain),
-                        (_(f"Reverify current group ({group})"),
+                        (_("Reverify current group ({group})").format(group=group),
                                                         self.parent.reverify),
                         (_("Join Sort Groups"), self.parent.redo_join),
                         (_("Join Glyphs (Letters)"), self.parent.redo_joinglyphs)
@@ -1182,18 +1184,16 @@ class Menus(ui.Menu):
         helpitems=[(_("About"), self.parent.helpabout)]
         if program['git']:
             if not program['repo'].localremotes():
-                helpitems+=[(_("Set up {} source on USB"
-                                ).format(program['name']),
+                helpitems+=[(_("Set up {azt} source on USB").format(azt=program['name']),
                                 program['repo'].clonetoUSB)]
-            helpitems+=[(_("Update {}").format(program['name']), updateazt)]
+            helpitems+=[(_("Update {azt}").format(azt=program['name']), updateazt)]
             if program['repo'].branch == 'main':
-                helpitems+=[(_("Try {} test version").format(program['name']),
+                helpitems+=[(_("Try {azt} test version").format(azt=program['name']),
                                 self.parent.trytestazt)]
             else:
-                helpitems+=[(_("Revert to {} main version"
-                                ).format(program['name']),
+                helpitems+=[(_("Revert to {azt} main version").format(azt=program['name']),
                                 self.parent.reverttomainazt)]
-        helpitems+=[("What's with the New Interface?",
+        helpitems+=[(_("What's with the New Interface?"),
                         self.parent.helpnewinterface)
                     ]
         for m in helpitems:
@@ -1271,7 +1271,7 @@ class StatusFrame(ui.Frame):
         # for l in program['taskchooser'].interfacelangs:
         #     if l['code']==interfacelang():
         #         interfacelanguagename=l['name']
-        return (_(f"Using {program['settings'].languagenames[interfacelang()]}"))
+        return (_("Using {lang}").format(lang=program['settings'].languagenames[interfacelang()]))
     def interfacelangline(self):
         self.labels['interfacelang']={
                         'text':ui.StringVar(value=self.interfacelanglabel()),
@@ -1284,7 +1284,7 @@ class StatusFrame(ui.Frame):
     def analanglabel(self):
         analang=program['params'].analang()
         langname=program['settings'].languagenames[analang]
-        return (_(f"Studying {langname}"))
+        return (_("Studying {lang}").format(lang=langname))
     def analangline(self):
         self.newrow()
         if program['params'].analang() not in program['settings'].languagenames:
@@ -1304,11 +1304,11 @@ class StatusFrame(ui.Frame):
         self.labels['glosslang2']['text'].set(self.glosslanglabel2())
     def glosslanglabel(self):
         lang=program['settings'].glosslangs.lang1()
-        return (_(f"Meanings in {program['settings'].languagenames[lang]}"))
+        return (_("Meanings in {lang}").format(lang=program['settings'].languagenames[lang]))
     def glosslanglabel2(self):
         if len(program['settings'].glosslangs) >1:
             glosslang2=program['settings'].glosslangs.lang2()
-            return (_(f"and {program['settings'].languagenames[glosslang2]}"))
+            return (_("and {lang}").format(lang=program['settings'].languagenames[glosslang2]))
         else:
             return _("only")
     def glosslangline(self):
@@ -1340,7 +1340,7 @@ class StatusFrame(ui.Frame):
             field=program['settings'].secondformfield[ps]
         else:
             field='<unset>'
-        return (_("Using second form field ‘{}’ ({})").format(field,ps))
+        return (_("Using second form field ‘{field}’ ({ps})").format(field=field, ps=ps))
     def fieldsline(self):
         # log.info("Starting fieldsline w/self {} ({})".format(self,type(self)))
         # log.info("Starting fieldsline w/task {} ({})".format(self.task,
@@ -1374,7 +1374,7 @@ class StatusFrame(ui.Frame):
         profile=program['slices'].profile()
         if not profile:
             profile=_("<no syllable profile>")
-        return (_(f"Looking at {profile}"))
+        return (_("Looking at {profile}").format(profile=profile))
     def updateps(self):
         self.labels['ps']['text'].set(self.pslabel())
         self.makesliceattrs()
@@ -1384,7 +1384,7 @@ class StatusFrame(ui.Frame):
         ps=program['slices'].ps()
         if not ps:
             ps=_("<no grammatical category>")
-        return (_(f"{ps} words ({count})"))
+        return (_("{ps} words ({count})").format(ps=ps, count=count))
     def sliceline(self):
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
@@ -1407,7 +1407,7 @@ class StatusFrame(ui.Frame):
         self.makesliceattrs()
         self.maybeboard()
     def cvtlabel(self):
-        return (_(f"Checking {program['params'].cvtdict()[self.cvt]['pl']},"))
+        return (_("Checking {cvt},").format(cvt=program['params'].cvtdict()[self.cvt]['pl']))
     def cvtline(self):
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
@@ -1437,7 +1437,7 @@ class StatusFrame(ui.Frame):
         elif check not in checks:
             return _("no tone frame selected.")
         else:
-            return (_("working on ‘{}’ tone frame").format(check))
+            return (_("working on ‘{check}’ tone frame").format(check=check))
     def toneframe(self,line):
         # log.info("toneframes: {}".format(program['toneframes']))
         # log.info("maketoneframes: {}".format(program['toneframes']))
@@ -1456,7 +1456,7 @@ class StatusFrame(ui.Frame):
             program['params'].check(), program['status'].group()
             return _("(no framed group)")
         else:
-            return (_(f"(framed group: ‘{program['status'].group()}’)"))
+            return (_("(framed group: ‘{group}’)").format(group=program['status'].group()))
     def tonegroup(self,line):
         check=program['params'].check()
         group=program['status'].group()
@@ -1486,7 +1486,7 @@ class StatusFrame(ui.Frame):
     def updatecvcheck(self):
         self.labels['cvcheck']['text'].set(self.cvchecklabel())
     def cvchecklabel(self):
-        return (_(f"working on {program['params'].cvcheckname()}"))
+        return (_("working on {check}").format(check=program['params'].cvcheckname()))
     def cvcheck(self,line):
         self.labels['cvcheck']={'text':ui.StringVar(value=self.cvchecklabel()),
                                 'columnplus':1,
@@ -1500,7 +1500,7 @@ class StatusFrame(ui.Frame):
         if not program['params'].check() or 'x' in program['params'].check():
             return
         if program['status'].group():
-            return (_("= {}".format(program['status'].group())))
+            return (f"= {program['status'].group()}")
         else:
             return (_("(All groups)"))
     def cvgroup(self,line):
@@ -1518,7 +1518,7 @@ class StatusFrame(ui.Frame):
     def buttoncolumnslabel(self):
         b=program['settings'].buttoncolumns
         if b:
-            return (_(f"Using {b} button columns"))
+            return (_("Using {n} button columns").format(n=b))
         else:
             return (_("Not using multiple button columns"))
     def buttoncolumnsline(self):
@@ -1533,11 +1533,11 @@ class StatusFrame(ui.Frame):
     def updatemaxprofiles(self):
         self.labels['maxes']['text'].set(self.maxprofileslabel())
     def maxprofileslabel(self):
-        return (_(f"Max profiles: {program['settings'].maxprofiles}; "))
+        return (_("Max profiles: {max_profiles}; ").format(max_profiles=program['settings'].maxprofiles))
     def updatemaxpss(self):
         self.labels['maxes']['text'].set(self.maxpsslabel())
     def maxpsslabel(self):
-        return (_(f"Max lexical categories: {program['settings'].maxpss}"))
+        return (_("Max lexical categories: {max_pss}").format(max_pss=program['settings'].maxpss))
     def maxes(self):
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
@@ -1559,7 +1559,7 @@ class StatusFrame(ui.Frame):
     def updatemulticheckscope(self):
         self.labels['cvgroup']['text'].set(self.multicheckscopelabel())
     def multicheckscopelabel(self):
-        t=(_("Run all checks for {}").format(unlist(self.task.cvtstodoprose())))
+        t=(_("Run all checks for {checks}").format(checks=unlist(self.task.cvtstodoprose())))
     def multicheckscope(self):
         if not hasattr(self.task,'cvtstodo'):
             self.task.cvtstodo=['V']
@@ -1578,7 +1578,7 @@ class StatusFrame(ui.Frame):
     def parserasklevellabel(self):
         try:
             ls=self.task.parser.levels() # we need this anyway, and a parser test
-            return (_(f"Parse with confirmation at {ls[self.task.parser.ask]}"))
+            return (_("Parse with confirmation at {parser_levels}").format(parser_levels=ls[self.task.parser.ask]))
         except AttributeError as e:
             log.info(f"Error loading parser levels: {e}")
             return
@@ -1587,7 +1587,7 @@ class StatusFrame(ui.Frame):
     def parserautolevellabel(self):
         try:
             ls=self.task.parser.levels()
-            return (_(f"Parse automatically at {ls[self.task.parser.auto]}"))
+            return (_("Parse automatically at {parser_levels}").format(parser_levels=ls[self.task.parser.auto]))
         except AttributeError as e:
             log.info(f"Error loading parser levels: {e}")
             return
@@ -1617,7 +1617,7 @@ class StatusFrame(ui.Frame):
     def sensetodolabel(self):
         t=self.task
         if hasattr(t,'sensetodo') and t.sensetodo is not None:
-            return _(f"Parsing {t.sensetodo.formatted(t.analang,t.glosslangs)}")
+            return _("Parsing {sense}").format(sense=t.sensetodo.formatted(t.analang,t.glosslangs))
         else:
             return _("Parsing all words")
     def sensetodo(self):
@@ -1814,12 +1814,12 @@ class StatusFrame(ui.Frame):
         profiles.sort(key=lambda x:(x.count(self.cvt),len(x)))
         self.profiles=['colheader']+profiles+['next']
         ungroups=0
-        unsortedtext='[X]'
+        unsorted_icon='[X]'
         if program['settings'].showdetails:
-            tv=_("verified")
-            tu=_("unsorted")
+            verified=_("verified")
+            unsorted=_("unsorted")
             # t='+ = {} \n! = {}'.format(tv,tu)
-            t='+ = {} \n{} = {}'.format(tv,unsortedtext,tu)
+            t=f"+ = {verified} \n{unsorted_icon} = {unsorted}"
             h=ui.Label(self.leaderboardtable,text=t,font='small')
             h.grid(row=row,column=0,sticky='e')
             h.bind('<ButtonRelease-1>', refresh)
@@ -1840,8 +1840,7 @@ class StatusFrame(ui.Frame):
                     #Make row header
                     t=profile
                     if program['settings'].showdetails:
-                        t+=" ({})".format(
-                                len(program['settings'].profilesbysense[ps][profile]))
+                        t+=(" ({len(program['settings'].profilesbysense[ps][profile])})")
                     h=ui.Label(self.leaderboardtable,text=t,
                                 row=row,
                                 column=column,
@@ -1942,8 +1941,8 @@ class StatusFrame(ui.Frame):
                                 tb.configure(highlightthickness=3)
                                 tb.configure(highlightbackground=tb.theme.white)
                         if nunverified:
-                            tips.extend([_("{} groups to verify!"
-                                        ).format(nunverified)])
+                            tips.extend([(_("{count} groups to verify!")
+                                        ).format(count=nunverified)])
                         if not tips:
                             tips.extend([_("Sorted and verified!")])
                         tip='\n'.join(tips)
@@ -1952,8 +1951,8 @@ class StatusFrame(ui.Frame):
                         ttb=ui.ToolTip(tb,tip)
             row+=1
         if ungroups > 0:
-            log.error(_("You have more groups verified than there are, in {} "
-                        "cells".format(ungroups)))
+            log.error(_("You have more groups verified than there are, in {count} "
+                        "cells").format(count=ungroups))
         # self.frame.update()
     def __init__(self, parent, task, **kwargs):
         # log.info("Remaking status frame")
@@ -2033,8 +2032,8 @@ class Settings(object):
             for r in repo:
                 if (hasattr(repo[r],'files') #fails if no exe
                         and repo[r].exists()): #tests for .code dir
-                    log.info(_("Found {} Repository!"
-                                ).format(repo[r].repotypename))
+                    log.info(_("Found {name} Repository!"
+                                ).format(name=repo[r].repotypename))
                     self.repo[r]=repo[r]
                 elif r == 'git' and 'git' in program and program['git']:
                     #don't worry about hg, if not there already
@@ -2128,12 +2127,12 @@ class Settings(object):
         if hasattr(self,fileattr):
             return getattr(self,fileattr)
         else:
-            log.error("No file name for setting {}!".format(setting))
+            log.error(_("No file name for setting {setting}!").format(setting=setting))
     def loadandconvertlegacysettingsfile(self,setting='defaults'):
         #This should be removed at some point Only used when find old file NAME
         savefile=self.settingsfile(setting)
         legacy=savefile.with_suffix('.py')
-        log.info("Going to make {} into {}".format(legacy,savefile))
+        log.info(_("Going to make {legacy_name} into {savefile}").format(legacy_name=legacy,savefile=savefile))
         if setting == 'soundsettings':
             self.soundsettings=sound.SoundSettings()
             o=self.soundsettings
@@ -2144,7 +2143,7 @@ class Settings(object):
                     'group':'subcheck'
                     }
         try:
-            log.debug("Trying for {} settings in {}".format(setting, legacy))
+            log.debug(_("Trying for {setting} settings in {legacy_name}").format(setting=setting, legacy_name=legacy))
             spec = importlib.util.spec_from_file_location(setting,legacy)
             module = importlib.util.module_from_spec(spec)
             sys.modules[setting] = module
@@ -2152,16 +2151,16 @@ class Settings(object):
             for s in self.settings[setting]['attributes']:
                 if s in oldnames and hasattr(module,oldnames[s]):
                     setattr(o,s,getattr(module,oldnames[s]))
-                    log.info("Imported and upgraded {}/{}: {}".format(
-                                                    s,oldnames[s],getattr(o,s)))
+                    log.info(_("Imported and upgraded {s}/{old}: {val}").format(
+                                                    s=s,old=oldnames[s],val=getattr(o,s)))
                 elif hasattr(module,s):
                     setattr(o,s,getattr(module,s))
-                    log.info("Imported {}: {}".format(s,getattr(o,s)))
+                    log.info(_("Imported {s}: {val}").format(s=s,val=getattr(o,s)))
                 else:
-                    log.info("Attribute {} not found".format(s))
-            log.info("Importing {} settings done.".format(setting))
+                    log.info(_("Attribute {s} not found").format(s=s))
+            log.info(_("Importing {setting} settings done.").format(setting=setting))
         except Exception as e:
-            log.error("Problem importing {} ({})".format(legacy,e))
+            log.error(_("Problem importing {legacy} ({error})").format(legacy=legacy,error=e))
         # b/c structure changed:
         if 'glosslangs' in self.settings[setting]['attributes']:
             self.glosslangs=[]
@@ -2171,7 +2170,7 @@ class Settings(object):
                     try:
                         delattr(self,lang) #because this would be made above
                     except AttributeError:
-                        log.info("attribute {} doesn't seem to be there".format(lang))
+                        log.info(_("attribute {lang} doesn't seem to be there").format(lang=lang))
         dict1=self.makesettingsdict(setting=setting)
         self.storesettingsfile(setting=setting) #do last
         self.loadsettingsfile(setting=setting) #verify write and read
@@ -2179,17 +2178,17 @@ class Settings(object):
         """Now we verify that each value read the same each time"""
         for s in dict1:
             if s in dict2 and str(dict1[s]) == str(dict2[s]):
-                log.info("Attribute {} verified as {}={}".format(s,
-                                            str(dict1[s]), str(dict2[s])))
+                log.info(_("Attribute {s} verified as {val1}={val2}").format(s=s,
+                                            val1=str(dict1[s]), val2=str(dict2[s])))
             elif s in dict2:
-                log.error("Problem with attribute {}; {}≠{}".format(s,
-                                            str(dict1[s]), str(dict2[s])))
+                log.error(_("Problem with attribute {s}; {val1}≠{val2}").format(s=s,
+                                            val1=str(dict1[s]), val2=str(dict2[s])))
             else:
-                log.error("Attribute {} didn't make it back".format(s))
-                log.error("You should send in an error report for this.")
+                log.error(_("Attribute {s} didn't make it back").format(s=s))
+                log.error(_("You should send in an error report for this."))
                 exit()
-        log.info("Settings file {} converted to {}, with each value verified."
-                "".format(legacy,savefile))
+        log.info(_("Settings file {legacy} converted to {savefile}, with each value verified.")
+                .format(legacy=legacy,savefile=savefile))
         if setting == 'soundsettings':
             self.soundsettings.pyaudio.stop() # when done here
     def settingsfilecheck(self):
@@ -2213,10 +2212,10 @@ class Settings(object):
         for setting in self.settings:
             savefile=self.settingsfile(setting)#self.settings[setting]['file']
             if not file.exists(savefile):
-                log.debug("{} doesn't exist!".format(savefile))
+                log.debug(_("{file} doesn't exist!").format(file=savefile))
                 legacy=savefile.with_suffix('.py')
                 if file.exists(legacy):
-                    log.debug("But legacy file {} does; converting!".format(legacy))
+                    log.debug(_("But legacy file {legacy} does; converting!").format(legacy=legacy))
                     self.loadandconvertlegacysettingsfile(setting=setting)
             if str(savefile).endswith('.dat') and file.exists(savefile):
                 for r in self.repo:
@@ -2230,15 +2229,15 @@ class Settings(object):
         log.info(f"moveattrstoobjects to do: {to_do}")
         for attr in to_do:
             if hasattr(self,attr):
-                log.info("moving attr {} to object ({})".format(attr,getattr(self,attr)))
+                log.info(_("moving attr {attr} to object ({val})").format(attr=attr,val=getattr(self,attr)))
                 self.fndict[attr](getattr(self,attr))
                 # log.info("Glosslangs (in moveattrstoobjects): {}".format(self.glosslangs.langs()))
                 if attr not in ['glosslangs']: #obj and attr have same name...
                     delattr(self,attr)
                 self.attrs_moved_to_object.add(attr)
             else:
-                log.info(f"attr {attr} not found!")
-        log.info(f"{self.attrs_moved_to_object=}")
+                log.info(_("attr {attr} not found!").format(attr=attr))
+        log.info(_("attrs_moved_to_object={val}").format(val=self.attrs_moved_to_object))
         # log.info("Glosslangs (in moveattrstoobjects): {}".format(self.glosslangs.langs()))
     def settingsobjects(self):
         """These should each push and pull values to/from objects"""
@@ -2273,10 +2272,10 @@ class Settings(object):
             fns['giturls']=self.repo['git'].remoteurls
             fns['hgurls']=self.repo['hg'].remoteurls
         except Exception as e:
-            log.error("Only finished settingsobjects up to {} ({})".format(fns.keys(),e))
+            log.error(_("Only finished settingsobjects up to {keys} ({error})").format(keys=fns.keys(),error=e))
             self.moveattrstoobjects() #always do this next
             return []
-        log.info("Finished settingsobjects up to {}".format(fns.keys()))
+        log.info(_("Finished settingsobjects up to {keys}").format(keys=fns.keys()))
         self.moveattrstoobjects() #always do this next
     def makesettingsdict(self,setting='defaults'):
         """This returns a dictionary of values, keyed by a set of settings"""
@@ -2300,7 +2299,7 @@ class Settings(object):
                     d[s]=self.fndict[s]()
                     # log.info("Value {}={} found in object".format(s,d[s]))
                 except:
-                    log.error("Value of {} not found in object".format(s))
+                    log.error(_("Value of {attr} not found in object").format(attr=s))
             elif hasattr(o,s):
                 if getattr(o,s) or setting == 'soundsettings': #store Falses
                     d[s]=getattr(o,s)
@@ -2355,10 +2354,10 @@ class Settings(object):
         else:
             d=self.makesettingsdict(setting=setting)
         if self.no_settings_change(filename,d):
-            log.info("no settings change; not writing.")
+            log.info(_("no settings change; not writing."))
             return
         if setting in ['soundsettings']:
-            log.info("Sound settings currently: {}".format(d))
+            log.info(_("Sound settings currently: {settings}").format(settings=d))
         config['default']={}
         # log.info("storing settings file {}".format(setting))
         for s in [i for i in d if i not in [None,'None']]:
@@ -2370,8 +2369,9 @@ class Settings(object):
                 config['default'][s]=str(v)
         if config['default'] == {}:
             del config['default']
-        header=(_("# This settings file was made on {} on {}").format(
-                                                    now(),platform.uname().node)
+        header=(_("# This settings file was made on {date} on {node}").format(
+                                                    date=now(),
+                                                    node=platform.uname().node)
                 )
         # log.info(f"Ready to write {type(config)} type data: {config}")
         # config.output() #this logs out the whole config
@@ -2382,7 +2382,7 @@ class Settings(object):
         filename=self.settingsfile(setting)
         config=ConfigParser()
         config.read(filename,encoding='utf-8')
-        log.info("Trying for {} settings in {}".format(setting, filename))
+        log.info(_("Trying for {setting} settings in {file}").format(setting=setting, file=filename))
         if not config.sections() and setting not in ['status','toneframes']:
             if setting == 'adhocgroups':
                 self.adhocgroups={}
@@ -2399,7 +2399,7 @@ class Settings(object):
                     d[k]=ofromstr(config['default'][k])
                 # d[section]=ofromstr(config['default'][section])
             else:
-                log.info("working in non-default section {}".format(section))
+                log.info(_("working in non-default section {section}").format(section=section))
                 # log.debug("Trying for {} settings in {}".format(section, setting))
                 if len(config[section].values())>0:
                     # log.info("Found Dictionary value for {} ({})".format(
@@ -2424,11 +2424,11 @@ class Settings(object):
         if setting == 'status':
             # log.info("setting {} is {}".format(setting,d))
             self.makestatus({k:d[k] for k in d if k != 'DEFAULT'})
-            log.info("makestatus: {}".format(program['status']))
+            log.info(_("makestatus: {status}").format(status=program['status']))
         elif setting == 'toneframes':
             # log.info("setting {} is {}".format(setting,d))
             self.maketoneframes({k:d[k] for k in d if k != 'DEFAULT'})
-            log.info("maketoneframes: {}".format(program['toneframes']))
+            log.info(_("maketoneframes: {frames}").format(frames=program['toneframes']))
         else:
             self.readsettingsdict(d)
     def initdefaults(self):
@@ -2487,15 +2487,15 @@ class Settings(object):
             else:
                 setattr(self, default, None)
     def settingsinit(self):
-        log.info("Initializing settings.")
+        log.info(_("Initializing settings."))
         # self.defaults is already there, from settingsfilecheck
         self.initdefaults() #provides self.defaultstoclear, needed?
         self.cleardefaults() #this resets all to none (to be set below)
     def getdirectories(self):
         self.directory=file.getfilenamedir(self.liftfilename)
         if not file.exists(self.directory):
-            log.info(_("Looks like there's a problem with your directory... {}"
-                    '\n{}').format(self.liftfilename,self.directory))
+            log.info(_("Looks like there's a problem with your directory... {file}\n{dir}")
+                    .format(file=self.liftfilename,dir=self.directory))
             exit()
         self.repocheck()
         self.settingsfilecheck()
@@ -2540,11 +2540,11 @@ class Settings(object):
         if r in self.repo:
             t=u=None
             present=set(self.repo[r].files)
-            log.info("{} currently has {} files".format(r,len(present)))
+            log.info(_("{repo} currently has {count} files").format(repo=r,count=len(present)))
             for f in maindirfiles:
                 # log.info("{}".format([file.getreldirposix(self.repo[r].url,f)]))
                 # log.info("working on {}".format(file.getreldirposix(self.repo[r].url,f)))
-                log.info("working on {}".format(file.getfile(f)))
+                log.info(_("working on {file}").format(file=file.getfile(f)))
                 # f=file.getreldirposix(self.repo[r].url,f)
                 if file.exists(f):# They won't always be there
                     self.repo[r].add(file.getreldirposix(self.repo[r].url,f))
@@ -2562,23 +2562,23 @@ class Settings(object):
                     for i in file.getfilesofdirectory(self.audiodir,
                                                         '*.wav')])
             audio=audiohere-present
-            log.info("{} wav files to check for the {} repo (of {} files total "
-                    "here)".format(len(audio),r,len(audiohere)))
-            log.info("head of wav files in repo: {}".format(list(present)[:10]))
-            log.info("head of wav files here: {}".format(list(audiohere)[:10]))
-            log.info("head of wav files to check: {}".format(list(audio)[:10]))
+            log.info(_("{wav_count} wav files to check for the {repo} repo (of {total_count} files total "
+                    "here)").format(wav_count=len(audio),r=r,total_count=len(audiohere)))
+            log.info(_("head of wav files in repo: {files}").format(files=list(present)[:10]))
+            log.info(_("head of wav files here: {files}").format(files=list(audiohere)[:10]))
+            log.info(_("head of wav files to check: {files}").format(files=list(audio)[:10]))
             for f in audio:
                 self.repo[r].add(f) #These should exist, from ls above
                 # if threading.active_count()<maxthreads:
                 #     t = threading.Thread(target=ifnotthereadd, args=(f,r))
                 #     t.start()
-                # log.info(_("trackuntrackedfiles waiting for {} audio file threads."
-                #         ).format(threading.active_count()))
+                # log.info(_("trackuntrackedfiles waiting for {count} audio file threads."
+                #         ).format(count=threading.active_count()))
                 # if t:
                 #     t.join()
                 # self.repo[r].add(f)
             for ext in ['png','jpg','gif']:
-                # log.info("Image Directory: {}".format(self.imagesdir))
+                # log.info(_("Image Directory: {dir}").format(dir=self.imagesdir))
                 # log.info("Found image files: {}".format(nn([i for i in
                 # file.getfilesofdirectory(self.imagesdir,
                 #                         '*.'+ext)], oneperline=True)))
@@ -2586,8 +2586,8 @@ class Settings(object):
                         for i in file.getfilesofdirectory(self.imagesdir,
                                                 '*.'+ext)]
                         )-present
-                log.info("{} {} files to check for the {} repo"
-                        "".format(len(i),ext,r))
+                log.info(_("{count} {extension} files to check for the {repo} repo")
+                        .format(count=len(i),extension=ext,repo=r))
                 for f in i:
                     self.repo[r].add(f) #These should exist, from ls above
                     # if threading.active_count()<maxthreads:
@@ -2595,9 +2595,9 @@ class Settings(object):
                     #     u.start()
                     # log.info("trackuntrackedfiles waiting for {} {} file "
                     #     "threads.".format(threading.active_count(),ext))
-                    # if u:
-                    #     u.join()
-        log.info("trackuntrackedfiles finished.")
+                        # if u:
+                        #     u.join()
+        log.info(_("trackuntrackedfiles finished."))
     def alpha_order(self,value=[]):
         return program['alphabet'].order(value)
     def alpha_exids(self,value=dict()):
@@ -2618,11 +2618,11 @@ class Settings(object):
         return getattr(self,'_alphabet_pagesize','A4')
     def pss(self):
         log.info(_("checking these lexical category names for plausible noun "
-                "and verb names: {}").format(program['db'].pss))
+                "and verb names: {pss}").format(pss=program['db'].pss))
         topn=3 #just in case N and V aren't the first two, finish with top
-        log.info("Looking at pss {}".format(program['db'].pss))
+        log.info(_("Looking at pss {pss}").format(pss=program['db'].pss))
         for ps in reversed(program['db'].pss[:topn]):
-            log.info("Looking at ps {}".format(ps))
+            log.info(_("Looking at ps {ps}").format(ps=ps))
             if ps in ['N','n','Noun','noun',
                     'Nom','nom',
                     'S','s','Sustantivo','sustantivo'
@@ -2641,13 +2641,13 @@ class Settings(object):
         if not hasattr(self,'verbalps'):
                 self.verbalps='Verb'
         try:
-            log.info("Using ‘{}’ for nouns, and ‘{}’ for verbs".format(
-                self.nominalps,
-                self.verbalps))
+            log.info(_("Using ‘{noun}’ for nouns, and ‘{verb}’ for verbs").format(
+                noun=self.nominalps,
+                verb=self.verbalps))
         except AttributeError:
-            log.info("Problem with finding a nominal and verbal lexical "
-            "category (looked in first two of [{}])"
-            "".format(program['db'].pss))
+            log.info(_("Problem with finding a nominal and verbal lexical "
+            "category (looked in first two of [{pss}])")
+            .format(pss=program['db'].pss))
         if self.secondformfield:
             if self.nominalps in self.secondformfield:
                 self.pluralname=self.secondformfield[self.nominalps]
@@ -2670,7 +2670,7 @@ class Settings(object):
         except KeyError:
             fieldnames=[]
         self.secondformfield={}
-        log.info(_("Fields found in lexicon: {}".format(str(fieldnames))))
+        log.info(_("Fields found in lexicon: {fields}").format(fields=fieldnames))
         self.plopts=['Plural', 'plural', 'pl', 'Pluriel', 'pluriel']
         self.impopts=['Imperative', 'imperative', 'imp', 'Imp', 'Imperatif',
                                                     'imperatif']
@@ -2678,7 +2678,7 @@ class Settings(object):
             if opt in fieldnames:
                 self.secondformfield[self.nominalps]=self.pluralname=opt
         try:
-            log.info(_('Plural field name: {}').format(self.pluralname))
+            log.info(_("Plural field name: {name}").format(name=self.pluralname))
             for entry in program['db'].entries:
                 entry.fieldvalue(self.pluralname,self.analang) # get the right field!
         except AttributeError:
@@ -2688,7 +2688,7 @@ class Settings(object):
             if opt in fieldnames:
                 self.secondformfield[self.verbalps]=self.imperativename=opt
         try:
-            log.info(_('Imperative field name: {}'.format(self.imperativename)))
+            log.info(_("Imperative field name: {name}").format(name=self.imperativename))
             for entry in program['db'].entries:
                 entry.fieldvalue(self.imperativename,self.analang) # get the right field!
         except AttributeError:
@@ -2702,11 +2702,11 @@ class Settings(object):
                     return True
     def askaboutpolygraphs(self,onboot=False):
         def nochanges():
-            log.info("Trying to make no changes")
+            log.info(_("Trying to make no changes"))
             if not pgw.exitFlag.istrue():
                 pgw.destroy()
             if foundchanges():
-                log.info("Found changes, but not storing them; returning 1.")
+                log.info(_("Found changes, but not storing them; returning 1."))
                 return 1
         def makechanges():
             log.info(_("Changes called for; like it or not, redoing analysis."))
@@ -2734,28 +2734,29 @@ class Settings(object):
                         v=vars[lang][pc][pg].get()
                         if self.polygraphs[lang][pc][pg]!=v:
                             return True
-            log.info("No changes found to polygraph settings, continuing.")
+            log.info(_("No changes found to polygraph settings, continuing."))
         oktext=_("OK")
+        azt=program['name']
         if onboot:
-            nochangetext=_("Exit {} with no changes".format(program['name']))
+            nochangetext=_("Exit {azt} with no changes").format(azt=program['name'])
         else:
             nochangetext=_("Exit with no changes")
-        log.info("Asking about Digraphs and Trigraphs!")
-        titlet=_("{} Digraphs and Trigraphs").format(program['name'])
+        log.info(_("Asking about Digraphs and Trigraphs!"))
+        titlet=_("{azt} Digraphs and Trigraphs").format(azt=program['name'])
         hasdata=self.checkforpolygraphsindata()
         #From wherever this is opened, it should withdraw and deiconify that
         pgw=ui.Window(program['taskchooser'].mainwindowis,title=titlet,exit=False)
         t=_("Which of the following letter sequences from your data "
             "refer to a single sound?")
-        log.info(f"working with db.analangs: {program['db'].analangs} "
-                f"and params.analang: {program['params'].analang()}")
+        log.info(_("working with db.analangs: {analangs} and params.analang: {analang}")
+                .format(analangs=program['db'].analangs, analang=program['params'].analang()))
         lnames=[self.languagenames[y] for y in set(
                     program['db'].analangs+[program['params'].analang()]
                                                 )]
         if len(lnames)>1:
-            t+=_(" (Answer for each of {}.)".format(unlist(lnames)))
+            t+=(_(" (Answer for each of {names}.)").format(names=unlist(lnames)))
         else:
-            t+=_(" (in {})".format(unlist(lnames)))
+            t+=(_(" (in {names})").format(names=unlist(lnames)))
         row=0
         title=ui.Label(pgw.frame,text=titlet, font='title',
                         column=0, row=row
@@ -2777,16 +2778,15 @@ class Settings(object):
                                                             program['Email'])
         t2.bind("<Button-1>", lambda e: openweburl(eurl))
         if hasdata:
-            t=_(f"Making changes will restart {program['name']} "
-                "and trigger another syllable profile analysis. \n"
-                f"If you don't want that, click ‘{nochangetext}’.")
+            t=_("Making changes will restart {name} and trigger another syllable profile analysis. \n"
+                "If you don't want that, click ‘{btn}’.").format(name=program['name'], btn=nochangetext)
         else:
             t=_("\n*** There don't seem to be any possible digraphs or trigraphs "
                 "in your data ***\n")
         row+=1
         t3=ui.Label(pgw.frame,text=t,column=0, row=row)
         helpurl='{}/POLYGRAPHS.md'.format(program['docsurl'],program['Email'])
-        t=_("See {} for further instructions.").format(helpurl)
+        t=_("See {url} for further instructions.").format(url=helpurl)
         row+=1
         t4=ui.Label(pgw.frame,text=t,column=0, row=row)
         t4.bind("<Button-1>", lambda e: openweburl(helpurl))
@@ -2976,23 +2976,21 @@ class Settings(object):
                          		'eau':True}
                     }   }
         if program['params'].analang in lwcdefaults:
-            log.info("It looks like you're working on your LWC; using "
-                    f"{self.languagenames[program['params'].analang]} "
-                    "digraph defaults")
+            log.info(_("It looks like you're working on your LWC; using {lang} digraph defaults")
+                    .format(lang=self.languagenames[program['params'].analang]))
             return lwcdefaults[program['params'].analang] #in case trying out a demo
         try:
-            log.info("Using your interface language "
-                    f"({self.languagenames[interfacelang()]}) digraph defaults")
+            log.info(_("Using your interface language ({lang}) digraph defaults")
+                    .format(lang=self.languagenames[interfacelang()]))
             return lwcdefaults[interfacelang()] #assume this general framework
         except KeyError:
-            log.info("It looks like neither your LWC "
-                    f"({self.languagenames[program['params'].analang]}) "
-                    "nor your interface language "
-                    f"({self.languagenames[interfacelang()]}) has a set of "
-                    "digraph defaults, so not providing any")
+            log.info(_("It looks like neither your LWC ({analang}) nor your interface language ({interlang}) "
+                    "has a set of digraph defaults, so not providing any")
+                    .format(analang=self.languagenames[program['params'].analang],
+                            interlang=self.languagenames[interfacelang()]))
             return {} #let users build from scratch
     def polygraphcheck(self):
-        log.info("Checking for Digraphs and Trigraphs!")
+        log.info(_("Checking for Digraphs and Trigraphs!"))
         # log.info("Language settings: {}".format(program['db'].s))
         firstrun=False
         if not hasattr(self,'polygraphs'):
@@ -3000,8 +2998,8 @@ class Settings(object):
             self.polygraphs={}
         for lang in program['db'].analangs:
             if lang not in program['db'].s:
-                log.error(_("Language {} found without segment settings."
-                            ).format(lang))
+                log.error(_("Language {lang} found without segment settings."
+                            ).format(lang=lang))
                 continue
             if lang not in self.polygraphs:
                 self.polygraphs[lang]=self.polygraphLWCdefaults()
@@ -3016,12 +3014,12 @@ class Settings(object):
                     # Don't show user this on first boot; only when new
                     # characters show up
                     if not firstrun and pg not in self.polygraphs[lang][pclass]:
-                        log.info(_("{} ({}/{}) has no Di/Trigraph setting; "
-                        "prompting user for info.").format(pg,pclass,sclass))
+                        log.info(_("{polygraph} ({pclass}/{sclass}) has no Di/Trigraph setting; "
+                        "prompting user for info.").format(polygraph=pg,pclass=pclass,sclass=sclass))
                         if self.askaboutpolygraphs(onboot=True):
                             log.info(_("Asked about polgraphs, but user "
-                                        "exited, so exiting {}"
-                                        ).format(program['name']))
+                                        "exited, so exiting {name}"
+                                        ).format(name=program['name']))
                             program['taskchooser'].mainwindowis.on_quit()
                         return
         log.info("Di/Trigraph settings seem complete; moving on.")
@@ -3071,12 +3069,12 @@ class Settings(object):
         if oldform:
             try:
                 self.formstosearch[ps][oldform].remove(sense)
-                log.info("Removed {} ({})".format(form,self.formstosearch[ps][form]))
+                log.info(_("Removed {form} ({val})").format(form=form,val=self.formstosearch[ps][form]))
             except ValueError:
-                log.error(_("Apparently {} isn't under {}?".format(sense,form)))
+                log.error(_("Apparently {sense} isn't under {form}?").format(sense=sense, form=form))
             if not self.formstosearch[ps][oldform]:
                 del self.formstosearch[ps][oldform] #don't leave form wo sense
-                log.info("Deleted key of empty list")
+                log.info(_("Deleted key of empty list"))
     def getprofileofentry(self,entry):
         getattr(entry,ftype).textvaluebylang(self.analang)
         #CONTINUE HERE
@@ -3098,18 +3096,18 @@ class Settings(object):
         return form,profile #This is just for logging
     def getprofilesbyps(self,ps):
         # start_time=nowruntime()
-        # log.info("Processing {} syllable profiles".format(ps))
+        # log.info(_("Processing {ps} syllable profiles").format(ps=ps))
         senses=program['db'].sensesbyps[ps]
         self.sextracted[ps]={} #start over, don't add to if there
         n=self._getprofiles(senses,ps)
-        log.info(f"Processed {n} forms to {ps} syllable profiles")
+        log.info(_("Processed {n} forms to {ps} syllable profiles").format(n=n,ps=ps))
         # logfinished(start_time)
     def _getprofiles(self,senses,ps):
         # This goes fast, even on a large database; do we need the wait?
         n=0
         todo=len(senses)
         # if todo>750:
-        #     msg=_("getting profiles for {} lexical category").format(ps)
+        #     msg=_("getting profiles for {ps} lexical category").format(ps=ps)
         #     program['taskchooser'].wait(msg)
         for sense in senses:
             n+=1
@@ -3120,8 +3118,8 @@ class Settings(object):
                 t.start()
             else:
                 form,profile=self.getprofileofsense(sense,ps)
-                log.debug("{}: {} > {}".format(str(n)+'/'+str(todo),form,
-                                            profile))
+                log.debug(_("{count}: {form} > {profile}").format(count=str(n)+'/'+str(todo),form=form,
+                                            profile=profile))
             # if todo>750:
             #     program['taskchooser'].waitprogress(n*100/todo)
         try:
@@ -3197,8 +3195,8 @@ class Settings(object):
                                                                 reverse=True)
                 except KeyError as e:
                     pass
-                    # log.info(_("{} KeyError reading {}-{} from sextracted"
-                    #             "").format(e,ps,s))
+                    # log.info(_("{error} KeyError reading {ps}-{s} from sextracted"
+                    #             "").format(error=e,ps=ps,s=s))
         program['slices'].scount(scount) #send to object
     def notifyuserofextrasegments(self):
         analang=program['db'].analang
@@ -3208,16 +3206,16 @@ class Settings(object):
         ninvalids=len(invalids)
         extras=list(dict.fromkeys(invalids).keys())
         if ninvalids >10 and analang != 'en':
-            text=_("Your {} database has the following symbols, which are "
-                "excluding {} words from being analyzed: \n{}"
-                "".format(analang,ninvalids,extras))
+            text=_("Your {lang} database has the following symbols, which are "
+                "excluding {count} words from being analyzed: \n{symbols}") \
+                .format(lang=analang,count=ninvalids,symbols=extras)
             title=_("More than Ten Invalid Characters Found!")
             self.warning=ErrorNotice(text,title=title)
     def slists(self):
         """This sets up the lists of segments, by types. For the moment, it
         just pulls from the segment types in the lift database."""
-        log.info("Found db.analangs: {}".format(program['db'].analangs))
-        log.info("Found params analang: {}".format(program['params'].analang()))
+        log.info(_("Found db.analangs: {langs}").format(langs=program['db'].analangs))
+        log.info(_("Found params analang: {lang}").format(lang=program['params'].analang()))
         self.s={l:{} for l in set(program['db'].analangs+ #analang from database
                                 [program['db'].analang]) #inferred analang
                 }
@@ -3231,19 +3229,19 @@ class Settings(object):
                 try:
                     assert sclass in self.polygraphs[lang]
                     pgthere=[k for k,v in self.polygraphs[lang][sclass].items() if v]
-                    log.debug("Polygraphs for {} in {}: {}".format(lang,sclass,
-                                                                    pgthere))
+                    log.debug(_("Polygraphs for {lang} in {sclass}: {pgs}").format(lang=lang,sclass=sclass,
+                                                                    pgs=pgthere))
                     self.s[lang][sclass]=pgthere
                 except (AssertionError,AttributeError):
                     self.s[lang][sclass]=list()
                 self.s[lang][sclass]+=program['db'].s[lang][sclass]
                 """These lines just add to a C list, for a later regex"""
-            log.info("Segment lists for {} language: {}".format(lang,
-                                                                self.s[lang]))
+            log.info(_("Segment lists for {lang} language: {segments}").format(lang=lang,
+                                                                segments=self.s[lang]))
         for lang in set(self.s)-set(program['db'].s): #in case no language data
             self.s[lang]=program['db'].hypotheticals
-            log.info("Segment lists for {} language: {}".format(lang,
-                                                                self.s[lang]))
+            log.info(_("Segment lists for {lang} language: {segments}").format(lang=lang,
+                                                                segments=self.s[lang]))
     def setvalidcharacters(self):
         """These are sent to rxdict, but the top two are also used here"""
         self.profilesegments=['N','G','S','D','C','V','ʔ']
@@ -3299,8 +3297,8 @@ class Settings(object):
         kwargs['ps']=kwargs.get('ps',program['slices'].ps())
         kwargs['profile']=kwargs.get('profile',program['slices'].profile())
         if kwargs.get('reporttime'):
-            log.info("Refreshing {} {} {} status settings from LIFT"
-                "".format(kwargs['cvt'],kwargs['ps'],kwargs['profile']))
+            log.info(_("Refreshing {cvt} {ps} {profile} status settings from LIFT")
+                .format(cvt=kwargs['cvt'],ps=kwargs['ps'],profile=kwargs['profile']))
         checks=program['status'].checks(**kwargs)
         kwargs['store']=False #do below
         for kwargs['check'] in checks:
@@ -3319,9 +3317,9 @@ class Settings(object):
             start_time=nowruntime()
         kwargs['cvt']=kwargs.get('cvt',program['params'].cvt())
         kwargs['ps']=kwargs.get('ps',program['slices'].ps())
-        log.info("Refreshing {} {} status settings from LIFT".format(
-                                                                kwargs['ps'],
-                                                                kwargs['cvt']))
+        log.info(_("Refreshing {ps} {cvt} status settings from LIFT").format(
+                                                                ps=kwargs['ps'],
+                                                                cvt=kwargs['cvt']))
         profiles=program['slices'].profiles(ps=kwargs['ps']) #This depends on ps only
         for kwargs['profile'] in profiles:
             # log.info("Working on {}".format(p))
@@ -3348,7 +3346,7 @@ class Settings(object):
                     report(x[k],y[k],k)
         report(x,y)
     def reloadstatusdata(self):
-        log.info("Refreshing all status settings from LIFT")
+        log.info(_("Refreshing all status settings from LIFT"))
         self.storesettingsfile() #default, not status
         program['db'].load_ps_profiles()
         d=program['db'].annotation_values_by_ps_profile()
@@ -3408,8 +3406,8 @@ class Settings(object):
         # log.info("Working on {} {} {} senses (first 5): {}".format(len(senses),
         #                                                             ps,profile,
         #                                                             senses[:5]))
-        log.info("Working on {} sense.ids (first 5): {}".format(len(senses),
-                                                    [i.id for i in senses[:5]]))
+        log.info(_("Working on {count} sense.ids (first 5): {ids}").format(count=len(senses),
+                                                    ids=[i.id for i in senses[:5]]))
         program['status'].renewsensestosort([],[]) #will repopulate
         self._groups=[]
         if cvt == 'T': #we need to be able to iterate over cvt, to rebuild
@@ -3432,23 +3430,23 @@ class Settings(object):
         """Analang should be easily deduceable from the lift file, and/or
         explicit in the settings."""
         self.analang=program['db'].analang
-        log.info(_(f"analang in use: {self.analang} (If you don't like this, change it in the menus)"))
+        log.info(_("analang in use: {analang} (If you don't like this, change it in the menus)").format(analang=self.analang))
         return
         #have this call set()?
         """if there's only one analysis language, use it."""
         nlangs=len(program['db'].analangs)
-        log.debug(_("Found {} analangs: {}".format(nlangs,program['db'].analangs)))
+        log.debug(_("Found {n} analangs: {langs}").format(n=nlangs, langs=program['db'].analangs))
         lxwdata=program['db'].nentrieswlexemedata
         lcwdata=program['db'].nentrieswcitationdata
         lxwdatamax=lcwdatamax=None
-        for lang in [l for l in lxwdata if lxwdata[l] > 0]:
-            if not lxwdatamax or lxwdata[lxwdatamax] < lxwdata[lang]:
-                lxwdatamax=lang
         for lang in [l for l in lcwdata if lcwdata[l] > 0]:
             if not lcwdatamax or lcwdata[lcwdatamax] < lcwdata[lang]:
                 lcwdatamax=lang
-        log.info("Most citation data in [{}] ({})".format(lcwdatamax,lcwdata))
-        log.info("Most lexeme data in [{}] ({})".format(lxwdatamax,lxwdata))
+        for lang in [l for l in lxwdata if lxwdata[l] > 0]:
+            if not lxwdatamax or lxwdata[lxwdatamax] < lxwdata[lang]:
+                lxwdatamax=lang
+        log.info(_("Most citation data in [{lang}] ({data})").format(lang=lcwdatamax,data=lcwdata))
+        log.info(_("Most lexeme data in [{lang}] ({data})").format(lang=lxwdatamax,data=lxwdata))
         if not nlangs:
             errortext=_("There don't seem to be any language forms in your "
             "database!")
@@ -3456,26 +3454,26 @@ class Settings(object):
             parent=file.getfilenamebase(file.getfilenamedir(self.liftfilename))
             if parent == basename and langtags.tag_is_valid(basename):
                 self.analang=parent
-                errortext+=_("\n(guessing [{}]; if that's not correct, exit now "
-                            "and fix it!)").format(self.analang)
+                errortext+=_("\n(guessing [{lang}]; if that's not correct, exit now "
+                            "and fix it!)").format(lang=self.analang)
                 log.info(errortext)
             else:
                 program['taskchooser'].splash.withdraw()
                 errortext+=_("\nFurthermore, your LIFT file doesn't seem to "
-                            "indicate your language code: \n{} "
+                            "indicate your language code: \n{file} "
                             "\nchange that or add some data "
                             "to your database, so I know what language we're "
                             "working on. "
                             "\nOr select a different database on "
                             "the next screen."
-                            ).format(self.liftfilename)
+                            ).format(file=self.liftfilename)
                 e=ErrorNotice(errortext,title=_("Error!"),wait=True)
                 file.writefilename() #just clear the default; let user move on
                 sysrestart()
         elif nlangs == 1:
             self.analang=program['db'].analangs[0]
-            log.debug(_('Only one analang in file; using it: ({})'.format(
-                                                        program['db'].analangs[0])))
+            log.debug(_("Only one analang in file; using it: ({lang})").format(
+                                                        lang=program['db'].analangs[0]))
             """If there are more than two analangs in the database, check if one
             of the first two is three letters long, and the other isn't"""
         elif nlangs == 2:
@@ -3484,8 +3482,8 @@ class Settings(object):
                 (lcwdatamax == program['db'].analangs[0] or
                     lxwdatamax == program['db'].analangs[0]) and
                 (len(program['db'].analangs[1]) != 3)):
-                log.debug(_('Looks like I found an iso code with data for '
-                                'analang! ({})'.format(program['db'].analangs[0])))
+                log.debug(_("Looks like I found an iso code with data for "
+                                "analang! ({lang})").format(lang=program['db'].analangs[0]))
                 self.analang=program['db'].analangs[0] #assume this is the iso code
                 self.analangdefault=program['db'].analangs[0] #In case it gets changed.
             elif ((len(program['db'].analangs[1]) == 3) and
@@ -3493,50 +3491,50 @@ class Settings(object):
                 (lcwdatamax == program['db'].analangs[1] or
                     lxwdatamax == program['db'].analangs[1]) and
                     (len(program['db'].analangs[0]) != 3)):
-                log.debug(_('Looks like I found an iso code with data for '
-                                'analang! ({})'.format(program['db'].analangs[1])))
+                log.debug(_("Looks like I found an iso code with data for "
+                                "analang! ({lang})").format(lang=program['db'].analangs[1]))
                 self.analang=program['db'].analangs[1] #assume this is the iso code
                 self.analangdefault=program['db'].analangs[1] #In case it gets changed.
             elif (lcwdatamax in program['db'].analangs and
                             langtags.tag_is_valid(lcwdatamax)):
                 self.analang=lcwdatamax
-                log.debug('Neither analang looks like an iso code, taking the '
-                'one with most citation data: {}'.format(program['db'].analangs))
+                log.debug(_("Neither analang looks like an iso code, taking the "
+                "one with most citation data: {langs}").format(langs=program['db'].analangs))
             elif (lxwdatamax in program['db'].analangs and
                             langtags.tag_is_valid(lxwdatamax)):
                 self.analang=lxwdatamax
-                log.debug('Neither analang looks like an iso code, taking the '
-                'one with most lexeme data: {}'.format(program['db'].analangs))
+                log.debug(_("Neither analang looks like an iso code, taking the "
+                "one with most lexeme data: {langs}").format(langs=program['db'].analangs))
             else:
                 self.analang=program['db'].analangs[0]
-                log.debug('Neither analang looks like an iso code, nor has much'
-                'data; taking the first one: {}'.format(program['db'].analangs))
+                log.debug(_("Neither analang looks like an iso code, nor has much"
+                "data; taking the first one: {langs}").format(langs=program['db'].analangs))
         else: #for three or more analangs, take the first plausible iso code
             if (lcwdatamax in program['db'].analangs and
                         langtags.tag_is_valid(lxwdatamax)):
                 self.analang=lcwdatamax
-                log.debug('The language with the most citation data looks like '
-                'an iso code; using: {}'.format(program['db'].analangs))
+                log.debug(_("The language with the most citation data looks like "
+                "an iso code; using: {langs}").format(langs=program['db'].analangs))
             elif lcwdatamax == lxwdatamax and lxwdatamax in program['db'].analangs:
                 self.analang=lxwdatamax
-                log.debug('The language with the most citation data is also '
-                    'the language with the most lexeme data; using: {}'.format(
-                                                            program['db'].analangs))
+                log.debug(_("The language with the most citation data is also "
+                    "the language with the most lexeme data; using: {langs}").format(
+                                                            langs=program['db'].analangs))
             elif (lxwdatamax in program['db'].analangs and
                         langtags.tag_is_valid(lxwdatamax)):
                 self.analang=lxwdatamax
-                log.debug('The language with the most lexeme data looks like '
-                'an iso code; using: {}'.format(program['db'].analangs))
+                log.debug(_("The language with the most lexeme data looks like "
+                "an iso code; using: {langs}").format(langs=program['db'].analangs))
             else:
                 for n in range(1,nlangs+1): # end with first
                     self.analang=program['db'].analangs[-n]
-                    log.debug(_('trying {}').format(self.analang))
+                    log.debug(_('trying {analang}').format(analang=self.analang))
                     if len(program['db'].analangs[-n]) == 3:
-                        log.debug(_('Looks like I found an iso code for '
-                                'analang! ({})'.format(program['db'].analangs[n-1])))
+                        log.debug(_("Looks like I found an iso code for "
+                                "analang! ({lang})").format(lang=program['db'].analangs[n-1]))
                         break #stop iterating, and keep this one.
-        log.info(_("analang guessed: {} (If you don't like this, change it in "
-                    "the menus)").format(self.analang))
+        log.info(_("analang guessed: {lang} (If you don't like this, change it in "
+                    "the menus)").format(lang=self.analang))
     def guessaudiolang(self):
         nlangs=len(program['db'].audiolangs)
         """if there's only one audio language, use it."""
@@ -3562,7 +3560,7 @@ class Settings(object):
     def guessglosslangs(self):
         """if there's only one gloss language, use it."""
         if len(program['db'].glosslangs) == 1:
-            log.info('Only one glosslang!')
+            log.info(_("Only one glosslang!"))
             self.glosslangs.lang1(program['db'].glosslangs[0])
             """if there are two or more gloss languages, just pick the first
             two, and the user can select something else later (the gloss
@@ -3614,8 +3612,8 @@ class Settings(object):
             self.attrschanged.remove(a)
             break
         if self.attrschanged != []:
-            log.error("Remaining changed attribute! ({})".format(
-                                                        self.attrschanged))
+            log.error(_("Remaining changed attribute! ({attr})").format(
+                                                        attr=self.attrschanged))
     def makeparameters(self):
         CheckParameters()
     def maketoneframes(self,dict={}):
@@ -3630,9 +3628,9 @@ class Settings(object):
         #otherwise, don't set window (which would be destroyed)
         #Set refresh=False (or anything but True) to not redo the main window
         #afterwards. Do this to save time if you are setting multiple variables.
-        log.info("Setting {} variable with value: {} ({})".format(
-                attribute,choice,
-                getattr(self,attribute,"Not Present")))
+        log.info(_("Setting {attr} variable with value: {val} ({old})").format(
+                attr=attribute,val=choice,
+                old=getattr(self,attribute,"Not Present")))
         if window is not None:
             window.destroy()
         if not hasattr(self,attribute) or getattr(self,attribute) != choice: #only set if different
@@ -3644,11 +3642,11 @@ class Settings(object):
             if attribute in ['analang',  #do the last two cause problems?
                                 'interpret','distinguish']:
                 # self.reloadprofiledata()
-                log.info("**Changed {}; should restart!**".format(attribute))
+                log.info(_("**Changed {attr}; should restart!**").format(attr=attribute))
             elif refresh == True:
                 self.refreshattributechanges()
         else:
-            log.debug(_('No change: {} == {}'.format(attribute,choice)))
+            log.debug(_("No change: {attr} == {val}").format(attr=attribute,val=choice))
     def statusisup(self):
         """Use this for when a setting should ignore status frame updates"""
         return (hasattr(program['taskchooser'].mainwindowis,'status') and
@@ -3697,9 +3695,9 @@ class Settings(object):
         self.refreshattributechanges()
         if (not hasattr(program['taskchooser'],'task') or
                 not program['taskchooser'].task.mainwindow):
-            log.info("No task, apparently, so not worried about changing cvt")
+            log.info(_("No task, apparently, so not worried about changing cvt"))
         elif isinstance(program['taskchooser'].task,Transcribe):
-            log.info("Switching Transcribe tasks")
+            log.info(_("Switching Transcribe tasks"))
             newtaskclass=getattr(sys.modules[__name__],'Transcribe'+choice)
             program['status'].makecheckok() #this is intentionally broad: *any* check
             program['taskchooser'].maketask(newtaskclass)
@@ -3709,12 +3707,12 @@ class Settings(object):
             program['status'].makecheckok() #this is intentionally broad: *any* check
             program['taskchooser'].maketask(newtaskclass)
         else:
-            log.info("Not Sorting or Transcribing; chilling with cvt change.")
+            log.info(_("Not Sorting or Transcribing; chilling with cvt change."))
         if window:
             window.destroy()
     def setanalang(self,choice,window):
         """This is only used when more than one analang exists in the database"""
-        log.info(f"Setting Analysis Language to {choice}")
+        log.info(_("Setting Analysis Language to {lang}").format(lang=choice))
         program['params'].analang(choice)
         program['taskchooser'].mainwindowis.status.updateanalang()
         self.attrschanged.append('analang')
@@ -3722,7 +3720,7 @@ class Settings(object):
         window.destroy()
         program['taskchooser'].restart()
     def setgroup(self,choice,window):
-        log.debug("setting group: {}".format(choice))
+        log.debug(_("setting group: {group}").format(group=choice))
         program['status'].group(choice)
         if program['params'].cvt() == 'T':
             program['taskchooser'].mainwindowis.status.updatetonegroup()
@@ -3733,13 +3731,13 @@ class Settings(object):
                         program['taskchooser'].task.menu):
             program['taskchooser'].task.menubar.redoadvanced()
         window.destroy()
-        log.debug(f"group {choice} set: {program['status'].group()}")
+        log.debug(_("group {group} set: {val}").format(group=choice, val=program['status'].group()))
     def setgroup_comparison(self,choice,window):
         """This doesn't show up on the status window"""
         if hasattr(self,'group_comparison'):
-            log.debug("group_comparison: {}".format(self.group_comparison))
+            log.debug(_("group_comparison: {val}").format(val=self.group_comparison))
         self.set('group_comparison',choice,window,refresh=False)
-        log.debug("group_comparison: {}".format(self.group_comparison))
+        log.debug(_("group_comparison: {val}").format(val=self.group_comparison))
     def setcheck(self,choice=None,window=None,**kwargs):
         if not choice:
             choice=program['status'].nextcheck(**kwargs)
@@ -3807,7 +3805,7 @@ class Settings(object):
         """This is for getting the prose name for a language from a code."""
         """It should ultimately use a xyz.ldml file, produced (at least)
         by WeSay, but for now is just a dict."""
-        log.info("Setting up language names")
+        log.info(_("Setting up language names"))
         #ET.register_namespace("", 'palaso')
         ns = {'palaso': 'urn://palaso.org/ldmlExtensions/v1'}
         node=None
@@ -3838,12 +3836,12 @@ class Settings(object):
             if hasattr(self,'analang'):
                 langs.append(self.analang)
         langs=set(langs)
-        self.languagenames.update({i:_(f"Language with code [{i}]") 
+        self.languagenames.update({i:_("Language with code [{code}]").format(code=i) 
                                     for i in langs
                                     if i not in self.languagenames
                                     })
         # for xyz in langs+program['interfacelangs']:
-        #     default=_(f"Language with code [{xyz}]")
+        #     default=_("Language with code [{code}]").format(code=xyz)
         #     # log.info(' '.join('Looking for language name for',xyz))
         #     setnesteddictobjectval(self,'languagenames',
         #                             d.get(xyz,default),
@@ -3898,12 +3896,12 @@ class Settings(object):
         if hasattr(taskchooser,'analang'): #i.e., new file
             self.analang=taskchooser.analang #I need to keep this alive until objects are done
             self.storesettingsfile() #write analang to file
-        log.info("Settings initialized")
+        log.info(_("Settings initialized"))
     def post_lift_init(self):
         """These settings require the LIFt db be up and parsed already"""
         self.dont_guessanalang() #needed for regexs
         if not self.analang:
-            log.error("No analysis language; exiting.")
+            log.error(_("No analysis language; exiting."))
             return
         #set the field names used in this db:
         self.pss() #sets self.nominalps and self.verbalps
@@ -3930,15 +3928,15 @@ class Settings(object):
         # if self.taskchooser.donew['collectionlc']:
         #     self.ifcollectionlc()
         self.attrschanged=[]
-        log.info("Settings (Post lift) initialized")
+        log.info(_("Settings (Post lift) initialized"))
 class TaskDressing(HasMenus,ui.Window):
     """This Class covers elements that belong to (or should be available to)
     all tasks, e.g., menus and button appearance."""
     def taskicon(self):
         return program['theme'].photo['icon'] #default
     def tasktitle(self):
-        return _("Unnamed {} Task ({})".format(program['name'],
-                                                type(self).__name__))
+        return _("Unnamed {name} Task ({type})").format(name=program['name'],
+                                                type=type(self).__name__)
     def _taskchooserbutton(self):
         if isinstance(self,TaskChooser) and not self.showreports:
             if self.datacollection:
@@ -3969,8 +3967,8 @@ class TaskDressing(HasMenus,ui.Window):
             program['taskchooser'].task.mainreliefnext=\
             self.mainreliefnext=reliefs[(reliefs.index(self.mainrelief)+1
                                                             )%len(reliefs)]
-        log.info("setting button relief to {}, with refresh={}".format(relief,
-                                                                    refresh))
+        log.info(_("setting button relief to {relief}, with refresh={refresh}").format(relief=relief,
+                                                                    refresh=refresh))
         # None "raised" "groove" "sunken" "ridge" "flat"
         self.status.mainrelief=\
         program['taskchooser'].mainrelief=\
@@ -3987,9 +3985,9 @@ class TaskDressing(HasMenus,ui.Window):
         self.setcontext()
     def correlatemenus(self):
         """I don't think I want this. Rather, menus must always be asked for."""
-        log.info("Menus: {}; {} (chooser)".format(self.menu,program['taskchooser'].menu))
+        log.info(_("Menus: {menu}; {chooser_menu} (chooser)").format(menu=self.menu,chooser_menu=program['taskchooser'].menu))
         if hasattr(self,'task'):
-            log.info("Menus: {}; {} (task)".format(self.menu,self.task.menu))
+            log.info(_("Menus: {menu}; {task_menu} (task)").format(menu=self.menu,task_menu=self.task.menu))
         if self.menu != program['taskchooser'].menu: #for tasks
             if self.menu:
                 self._removemenus()
@@ -4042,18 +4040,18 @@ class TaskDressing(HasMenus,ui.Window):
         else:
             self.context.menuitem(_("Show details"),self._showdetails)
     def maketitle(self):
-        title=_("{} Dictionary and Orthography Checker: {}").format(
-                                            program['name'],self.tasktitle())
+        title=_("{name} Dictionary and Orthography Checker: {task}").format(
+                                            name=program['name'],task=self.tasktitle())
         if program['theme'].name != 'greygreen':
-            log.info("Using theme ‘{}’ on {}.".format(program['theme'].name,
-                                                        self.tasktitle()))
-            title+=_(' ('+program['theme'].name+')')
+            log.info(_("Using theme ‘{theme}’ on {task}.").format(theme=program['theme'].name,
+                                                        task=self.tasktitle()))
+            title+=f' ({program['theme'].name})'
         self.title(title)
         t=ui.Label(self.frame, font='title',
                 text=self.tasktitle(),
                 row=0, column=0, columnspan=2)
         tasks=_("Tasks")
-        t.tt=ui.ToolTip(t,text=_("click on the task you want to do").format(tasks))
+        t.tt=ui.ToolTip(t,text=_("click on the task you want to do"))
         # t.bind("<Button-1>",program['taskchooser'].gettask)
     def fullscreen(self):
         w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
@@ -4080,7 +4078,7 @@ class TaskDressing(HasMenus,ui.Window):
             if hasattr(program['settings'],attr):
                 setattr(self,attr,getattr(program['settings'],attr))
             else:
-                log.info("Didn't find {} in {}".format(attr,program['settings']))
+                log.info(_("Didn't find {attr} in {settings}").format(attr=attr,settings=program['settings']))
         #For convenience:
         self.analang=program['params'].analang()
     def makecvtok(self):
@@ -4136,14 +4134,14 @@ class TaskDressing(HasMenus,ui.Window):
                     'sense.id':self.task.sensetodo,
                     })
             except AttributeError as e:
-                log.info("looks like the parser isn't up yet ({})".format(e))
+                log.info(_("looks like the parser isn't up yet ({error})").format(error=e))
         """Call this just once. If nothing changed, wait; if changes, run,
         then run again."""
         if dict == dictnow:
             # log.info("No dict changes; no updating the UI: {}".format(dictnow))
             self.trystatusframelater(dictnow)
             return
-        log.info("Dict changes; checking attributes and updating the UI.")
+        log.info(_("Dict changes; checking attributes and updating the UI."))
         # log.info(f"dictori: {dict}")
         # log.info(f"dictnow: {dictnow}")
         if program['taskchooser'].donew['collectionlc']:
@@ -4165,7 +4163,7 @@ class TaskDressing(HasMenus,ui.Window):
             self.deiconify()
         program['settings'].storesettingsfile()
         self.makestatusframe(dictnow) #this method
-        log.info(f"{type(self)} makestatusframe iteration finished")
+        log.info(_("{type} makestatusframe iteration finished").format(type=type(self)))
     def setSdistinctions(self):
         def notice(changed):
             def confirm():
@@ -4180,25 +4178,25 @@ class TaskDressing(HasMenus,ui.Window):
             d=[x for x in changed.keys()
                                             if changed[x][1] is False]
             if len(d) >0:
-                t+=_("\n=> You are no longer distinguishing {}.").format(
-                                    unlist([x.replace('wd','#') for x in d]))
+                t+=_("\n=> You are no longer distinguishing {items}.").format(
+                                    items=unlist([x.replace('wd','#') for x in d]))
             i=[y for y in changed.keys() if changed[y][1] is not False]
             if len(i) >0:
-                t+=_("\n=> Your interpretation of {} changed.").format(
-                                                            unlist(i))
-            t+=_("\nHere is the full info, in form setting: (from, to): {}."
-                    "").format(changed)
+                t+=_("\n=> Your interpretation of {items} changed.").format(
+                                                            items=unlist(i))
+            t+=_("\nHere is the full info, in form setting: (from, to): {changed}."
+                    "").format(changed=changed)
             t+=_("\n\nAnywhere you have sorted a group based on your "
             "old interpretation settings, you should sort/verify "
             "that data again, as there is a possiblity that "
-            "you have mixed unrelated groups.").format(changed)
+            "you have mixed unrelated groups.").format(changed=changed)
             ui.Label(w.frame,text=t,wraplength=int(
                         self.frame.winfo_screenwidth()/2)).grid(row=1,column=0)
             for n,ps in enumerate(program['slices'].pss()):
                 i=[x for x in program['slices'].profiles(ps)
                                     if set(d).intersection(set(x))]
                 if i:
-                    p=_("{} Profiles to check: {}").format(ps,i)
+                    p=_("{ps} Profiles to check: {profiles}").format(ps=ps,profiles=i)
                     log.info(p)
                     l=ui.Label(w.frame,text=p,row=2+n,column=0)
                     l.wrap()
@@ -4214,16 +4212,16 @@ class TaskDressing(HasMenus,ui.Window):
                         if program['settings'].distinguish[s]==changed[s][1]:
                             program['settings'].distinguish[s]=changed[s][0] #(oldvar,newvar):
                         else:
-                            log.error(_("Changed to value ({}) doesn't match "
-                            "current setting for ‘{}’: {}").format(changed[s][1],
-                                                        s,self.distinguish[s]))
+                            log.error(_("Changed to value ({new}) doesn't match "
+                            "current setting for ‘{setting}’: {current}").format(new=changed[s][1],
+                                                        setting=s,current=self.distinguish[s]))
                     elif s in program['settings'].interpret:
                         if program['settings'].interpret[s]==changed[s][1]:
                             program['settings'].interpret[s]=changed[s][0] #(oldvar,newvar):
                         else:
-                            log.error(_("Changed to value ({}) doesn't match "
-                            "current setting for ‘{}’: {}").format(changed[s][1],
-                                                        s,self.interpret[s]))
+                            log.error(_("Changed to value ({new}) doesn't match "
+                            "current setting for ‘{setting}’: {current}").format(new=changed[s][1],
+                                                        setting=s,current=self.interpret[s]))
             r=True #only false if changes made, and user exits notice
             changed={}
             for typ in ['distinguish', 'interpret']:
@@ -4238,7 +4236,7 @@ class TaskDressing(HasMenus,ui.Window):
             # log.debug('self.interpret: {}'.format(program['settings'].interpret))
             if changed:
                 # log.info('There was a change; we need to redo the analysis now.')
-                log.info('The following changed (from,to): {}'.format(changed))
+                log.info(_('The following changed (from,to): {changed}').format(changed=changed))
                 r=notice(changed)
                 if r:
                     self.runwindow.on_quit()
@@ -4268,7 +4266,7 @@ class TaskDressing(HasMenus,ui.Window):
                                         row=1,column=1)
             options.next('r')
         def exsframe(x):
-            text=_("In your data, {} includes {}".format(x,', '.join(exsdict[x])))
+            text=_("In your data, {item} includes {examples}").format(item=x,examples=', '.join(exsdict[x]))
             f=ui.Frame(self.runwindow.scroll.content,
                         row=options.get('r'),
                         column=options.get('c'),
@@ -4295,16 +4293,16 @@ class TaskDressing(HasMenus,ui.Window):
         """Page title and instructions"""
         self.runwindow.title(_("Set Parameters for Segment Interpretation"))
         mwframe=self.runwindow.frame
-        title=_("Interpret {} Segments"
-                ).format(program['settings'].languagenames[analang])
+        title=_("Interpret {lang} Segments"
+                ).format(lang=program['settings'].languagenames[analang])
         titl=ui.Label(mwframe,text=title,font='title',
                 justify=ui.LEFT,anchor='c',
                 row=options.get('r'), column=options.get('c'),
                 sticky='ew', padx=options.padx, pady=10)
         options.next('r')
-        text=_("Here you can view and set parameters that change how {} "
-        "interprets {} segments (consonant and vowel glyphs/characters)"
-                ).format(program['name'],program['settings'].languagenames[analang])
+        text=_("Here you can view and set parameters that change how {name} "
+        "interprets {lang} segments (consonant and vowel glyphs/characters)"
+                ).format(name=program['name'],lang=program['settings'].languagenames[analang])
         instr=ui.Label(mwframe,text=text,justify=ui.LEFT,anchor='c',
                     row=options.get('r'), column=options.get('c'),
                     sticky='ew', padx=options.padx, pady=options.pady)
@@ -4325,7 +4323,7 @@ class TaskDressing(HasMenus,ui.Window):
                     if not 'tg' in k
                     if not 'qg' in k
                     ]
-            log.info("Variable keys to check: {}".format(vars))
+            log.info(_("Variable keys to check: {vars}").format(vars=vars))
         else:
             ErrorNotice(_("Something happened! "
                         "(language not keyed in segment dictionary)"))
@@ -4405,7 +4403,7 @@ class TaskDressing(HasMenus,ui.Window):
                                         column=options.get('c'),
                                         sticky='e', padx=options.padx,
                                         pady=options.pady)
-        sub_btn=ui.Button(self.runwindow.frame2d, text='Use these settings',
+        sub_btn=ui.Button(self.runwindow.frame2d, text=_('Use these settings'),
                           command = submitform,
                           row=0,column=1,sticky='nw',
                           pady=options.pady)
@@ -4417,14 +4415,15 @@ class TaskDressing(HasMenus,ui.Window):
                         pady=options.pady)
         self.runwindow.waitdone()
     def getinterfacelang(self,event=None):
-        log.info("Asking for interface language...")
+        log.info(_("Asking for interface language..."))
+        azt=program['name']
         window=ui.Window(self, title=_('Select Interface Language'))
-        ui.Label(window.frame, text=_('What language do you want {} '
-                                'to address you in?').format(program['name'])
+        ui.Label(window.frame, text=_('What language do you want {name} '
+                                'to address you in?').format(name=azt)
                 ).grid(column=0, row=0)
         options=[{'code':i,'name':program['settings'].languagenames[i]}
                 for i in program['interfacelangs']]
-        log.info(f"asking with these options: {options}")
+        log.info(_("asking with these options: {options}").format(options=options))
         ui.ButtonFrame(window.frame,
                                 optionlist=options,
                                 command=program['settings'].interfacelangwrapper,
@@ -4432,7 +4431,7 @@ class TaskDressing(HasMenus,ui.Window):
                                 column=0, row=1
                                 )
     def getanalangname(self,event=None):
-        log.info("this sets the language name")
+        log.info(_("this sets the language name"))
         def submit(event=None):
             if namevar.get():
                 program['settings'].languagenames[self.analang]=namevar.get()
@@ -4450,12 +4449,12 @@ class TaskDressing(HasMenus,ui.Window):
             window.destroy()
         window=ui.Window(self,title=_('Enter Analysis Language Name'))
         curname=program['settings'].languagenames[self.analang]
-        defaultname=_(f"Language with code [{self.analang}]")
-        t=_("How do you want to display the name of {}").format(curname)
+        defaultname=_("Language with code [{code}]").format(code=self.analang)
+        t=_("How do you want to display the name of {name}").format(name=curname)
         namevar=ui.StringVar()
         log.info(f"{curname} = {defaultname}? {curname == defaultname}")
         if curname != defaultname:
-            t+=_(", with ISO 639-3 code [{}]").format(self.analang)
+            t+=_(", with ISO 639-3 code [{code}]").format(code=self.analang)
             namevar.set(curname)
         t+='?' # _("Language with code [{}]").format(xyz)
         ui.Label(window.frame,text=t,row=0,column=0,sticky='e',columnspan=2)
@@ -4464,18 +4463,18 @@ class TaskDressing(HasMenus,ui.Window):
                             sticky='e')
         name.focus_set()
         name.bind('<Return>',submit)
-        ui.Button(window.frame,text='OK',cmd=submit,row=1,column=1,sticky='w')
+        ui.Button(window.frame,text=_('OK'),cmd=submit,row=1,column=1,sticky='w')
     def getanalang(self,event=None):
         if len(program['db'].analangs) <2: #The user probably wants to change display.
             self.getanalangname()
             return
-        log.info("this sets the language")
+        log.info(_("this sets the language"))
         # fn=inspect.currentframe().f_code.co_name
         window=ui.Window(self,title=_('Select Analysis Language'))
         if program['db'].analangs is None :
             ui.Label(window.frame,
-                          text='Error: please set Lift file first! ('
-                          +str(program['db'].filename)+')'
+                          text=_('Error: please set Lift file first! ({file})').format(
+                          file=program['db'].filename)
                           ).grid(column=0, row=0)
         else:
             ui.Label(window.frame,
@@ -4503,8 +4502,8 @@ class TaskDressing(HasMenus,ui.Window):
                             'name':program['settings'].languagenames[lang]})
         if program['settings'].glosslangs.lang2():
             langs.append({'code':None,
-                    'name':'just use '+program['settings'].languagenames[
-                                    program['settings'].glosslangs.lang2()]})
+                    'name':_('just use {name}').format(name=program['settings'].languagenames[
+                                    program['settings'].glosslangs.lang2()])})
         buttonFrame1=ui.ButtonFrame(window.frame,
                                  optionlist=langs,
                                  command=program['settings'].setglosslang,
@@ -4512,7 +4511,7 @@ class TaskDressing(HasMenus,ui.Window):
                                  column=0, row=4
                                  )
     def getglosslang2(self,event=None):
-        window=ui.Window(self,title='Select Second Gloss Language')
+        window=ui.Window(self,title=_('Select Second Gloss Language'))
         text=_('What other language do you want to use for glosses?')
         ui.Label(window.frame, text=text, column=0, row=1)
         langs=list()
@@ -4522,8 +4521,8 @@ class TaskDressing(HasMenus,ui.Window):
             langs.append({'code':lang,
                             'name':program['settings'].languagenames[lang]})
         langs.append({'code':None,
-                    'name':'just use '+program['settings'].languagenames[
-                                    program['settings'].glosslangs.lang1()]})
+                    'name':_('just use {name}').format(name=program['settings'].languagenames[
+                                    program['settings'].glosslangs.lang1()])})
         buttonFrame1=ui.ButtonFrame(window.frame,
                                     optionlist=langs,
                                     command=program['settings'].setglosslang2,
@@ -4561,10 +4560,10 @@ class TaskDressing(HasMenus,ui.Window):
             levels.sort(key=lambda x:x[0],reverse=True)
             return levels
         except AttributeError as e:
-            log.info("Evidently there isn't a parser running ({})".format(e))
+            log.info(_("Evidently there isn't a parser running ({error})").format(error=e))
             return
     def getparserasklevel(self,event=None):
-        log.info("Asking for parserasklevel...")
+        log.info(_("Asking for parserasklevel..."))
         levels=self.getparserlevels()
         if not levels:
             return
@@ -4580,7 +4579,7 @@ class TaskDressing(HasMenus,ui.Window):
                                 column=0, row=1
                                             )
     def getparserautolevel(self,event=None):
-        log.info("Asking for parserautolevel...")
+        log.info(_("Asking for parserautolevel..."))
         levels=self.getparserlevels()
         if not levels:
             return
@@ -4596,7 +4595,7 @@ class TaskDressing(HasMenus,ui.Window):
                                 column=0, row=1
                                             )
     def getps(self,event=None):
-        log.info("Asking for ps...")
+        log.info(_("Asking for ps..."))
         # self.refreshattributechanges()
         window=ui.Window(self, title=_('Select Lexical Category'))
         ui.Label(window.frame, text=_('What lexical category do you '
@@ -4613,7 +4612,7 @@ class TaskDressing(HasMenus,ui.Window):
                                             column=0, row=1
                                             )
     def getprofile(self,event=None,**kwargs):
-        log.info("Asking for profile...")
+        log.info(_("Asking for profile..."))
         # self.refreshattributechanges()
         ps=program['slices'].ps()
         if not ps:
@@ -4622,7 +4621,7 @@ class TaskDressing(HasMenus,ui.Window):
             ErrorNotice(text, parent=self, wait=True)
         elif program['settings'].profilesbysense[ps] is None: #likely never happen...
             text=_('Error: please set Grammatical category with profiles '
-                    'first!')+' (not '+str(ps)+')'
+                    'first! (not {ps})').format(ps=ps)
             ErrorNotice(text, parent=self, wait=True)
         else:
             profilecounts=program['slices'].valid()
@@ -4635,12 +4634,12 @@ class TaskDressing(HasMenus,ui.Window):
                     profiles+=program['slices'].adhoc()[ps].keys()
             profiles=dict.fromkeys(profiles)
             if not profiles:
-                log.error("No profiles of {} type found!".format(kwargs))
+                log.error(_("No profiles of {type} type found!").format(type=kwargs))
             # log.info("count types: {}, {}".format(type(profilecounts),
             #                                         type(profilecountsAdHoc)))
             window=ui.Window(self,title=_('Select Syllable Profile'))
-            ui.Label(window.frame, text=_('What ({}) syllable profile do you '
-                                    'want to work with?'.format(ps))
+            ui.Label(window.frame, text=_('What ({ps}) syllable profile do you '
+                                    'want to work with?').format(ps=ps)
                                     ).grid(column=0, row=0)
             optionslist = [{'code':x,'description':profilecounts[(x,ps)]} for x in profiles]
             """What does this extra frame do?"""
@@ -4707,7 +4706,7 @@ class TaskDressing(HasMenus,ui.Window):
         # letters=list([(k,k,v) for k,v in kcounts])
         log.info("letters: {}".format(letters))
         if not letters:
-            log.info("No senses; sort something?")
+            log.info(_("No senses; sort something?"))
             return
         letters=[{'code':None,'description':_("All words")}
         ]+letters
@@ -4739,7 +4738,7 @@ class TaskDressing(HasMenus,ui.Window):
             if event.keysym != 'Return':
                 self.errorlabel['text'] = ''
         def submitform(event=None):
-            log.info("setting {} (not {})".format(custom.get(), othername))
+            log.info(_("setting {custom} (not {other})").format(custom=custom.get(), other=othername))
             if custom.get() == othername:
                 text=_("That name is already used!")
                 log.error(text)
@@ -4747,12 +4746,12 @@ class TaskDressing(HasMenus,ui.Window):
                 return
             setcmd(custom.get())
             window.on_quit()
-        title=_('Make Custom Second Form Field for {}').format(ps)
+        title=_('Make Custom Second Form Field for {ps}').format(ps=ps)
         window=ui.Window(self,title=title)
         #should never be othername
         l=ui.Label(window,
-                text=_("What field name do you want to use for {} words?"
-                        ).format(ps),
+                text=_("What field name do you want to use for {ps} words?"
+                        ).format(ps=ps),
                 row=0,column=0)
         custom=ui.StringVar()
         formfield = ui.EntryField(window, render=True,
@@ -4792,7 +4791,7 @@ class TaskDressing(HasMenus,ui.Window):
                                     setcmd=setcmd,
                                     # other=True
                                     )
-        log.info("Asking for ‘{}’ second form field...".format(ps))
+        log.info(_("Asking for ‘{ps}’ second form field...").format(ps=ps))
         try:
             assert other == False
             othernames=[i for i in program['db'].fieldnames[self.analang]
@@ -4802,11 +4801,11 @@ class TaskDressing(HasMenus,ui.Window):
         if othernames:
             if len(othernames)-1:
                 text=_("Select a database field "
-                        f"to use for second forms of ‘{ps}’ words")
+                        "to use for second forms of ‘{ps}’ words").format(ps=ps)
                 otherbuttontext=_("None of these; make a new field")
             else:
-                text=_(f"Select the ‘{othernames[0]}’ database field "
-                        f"for second forms of ‘{ps}’ words")
+                text=_("Select the ‘{field}’ database field "
+                        "for second forms of ‘{ps}’ words").format(field=othernames[0],ps=ps)
                 otherbuttontext=_("No; make a new field")
             cmd=getother
             optionslist=othernames
@@ -4820,7 +4819,7 @@ class TaskDressing(HasMenus,ui.Window):
             # otherbuttontext=_("None of these work; make my own field")
             # cmd=getcustom
             # optionslist=opts
-        title=_('Select Second Form Field for {}').format(ps)
+        title=_('Select Second Form Field for {ps}').format(ps=ps)
         window=ui.Window(self,title=title)
         ui.Label(window.frame, text=text, column=0, row=0)
         """What does this extra frame do?"""
@@ -4844,7 +4843,7 @@ class TaskDressing(HasMenus,ui.Window):
         else:
             window.wait_window(window)
     def getmulticheckscope(self,event=None):
-            log.info("Asking for multicheckscope...")
+            log.info(_("Asking for multicheckscope..."))
             window=ui.Window(self, title=_('Select Scope of Checks'))
             ui.Label(window.frame,
                     text=_('What kinds of checks to you want to run?')
@@ -4889,7 +4888,7 @@ class TaskDressing(HasMenus,ui.Window):
         return (program['settings'].secondformfield[program['settings'].verbalps],
                 program['settings'].secondformfield[program['settings'].nominalps])
     def getbuttoncolumns(self,event=None):
-        log.info("Asking for number of button columns...")
+        log.info(_("Asking for number of button columns..."))
         window=ui.Window(self,title=_('Select Button Columns'))
         ui.Label(window.frame, text=_('How many columns do you want to use for '
                                         'the sort buttons?')
@@ -4929,28 +4928,28 @@ class TaskDressing(HasMenus,ui.Window):
                                 )
         buttonFrame1.wait_window(window)
     def getcheck(self,guess=False,event=None,**kwargs):
-        log.info("this sets the check")
-        log.info("Getting the check name...")
+        log.info(_("this sets the check"))
+        log.info(_("Getting the check name..."))
         checks=program['status'].checks(**kwargs)
         self.withdraw()
-        window=ui.Window(self,title='Select Check')
+        window=ui.Window(self,title=_('Select Check'))
         window.withdraw()
         if not checks:
             if program['params'].cvt() == 'T':
                 btext=_("Define a New Tone Frame")
                 text=_("You don't seem to have any tone frames set up.\n"
-                "Click '{}' below to define a tone frame. \nPlease "
+                "Click '{button}' below to define a tone frame. \nPlease "
                 "pay attention to the instructions, and if \nthere's anything "
                 "you don't understand, or if you're not \nsure what a tone "
                 "frame is, please ask for help. \nWhen you are done making "
-                "frames, click ‘Exit’ to continue.".format(btext))
+                "frames, click ‘Exit’ to continue.").format(button=btext)
                 cmd=lambda w=window: self.addframe(window=w)
             else:
-                btext=_("Return to {}, to fix settings").format(program['name'])
-                text=_("I can't find any checks for type {}, ps {}, profile {}."
+                btext=_("Return to {name}, to fix settings").format(name=program['name'])
+                text=_("I can't find any checks for type {cvt}, ps {ps}, profile {profile}."
                         " Probably that means there is a problem with your "
                         " settings, or with your syllable profile analysis"
-                        "".format(cvt,ps,profile))
+                        "").format(cvt=cvt,ps=ps,profile=profile)
                 cmd=window.destroy
             ui.Label(window.frame, text=text, column=0, row=0, ipady=25)
             b=ui.Button(window.frame, text=btext,
@@ -4993,13 +4992,13 @@ class TaskDressing(HasMenus,ui.Window):
         if program['params'].check() not in checks:
             return 1
     def _getglyph(self,window,event=None, **kwargs):
-        log.info(f"Asking for a group (_getglyph kwargs: {kwargs})")
+        log.info(_("Asking for a group (_getglyph kwargs: {kwargs})").format(kwargs=kwargs))
         glyphs=program['alphabet'].glyphs()
         glyph=program['alphabet'].glyph()
         cvt=kwargs.get('cvt',program['params'].cvt())
         purpose=kwargs.get('purpose','to work with')
         text=[_("What"),program['params'].cvtdict()[cvt]['sg'],
-                _(f"do you want {purpose}?")]
+                _("do you want {purpose}?").format(purpose=purpose)]
         if kwargs.get('comparison'):
             g2=list(glyphs)[:]
             g2.remove(program['alphabet'].glyph())
@@ -5027,7 +5026,7 @@ class TaskDressing(HasMenus,ui.Window):
         log.info("Done making _getglyph buttonframe")
     def _getgroup(self,window,event=None, **kwargs):
         """Window is called in getgroup"""
-        log.info(f"Asking for a group (_getgroup kwargs: {kwargs})")
+        log.info(_("Asking for a group (_getgroup kwargs: {kwargs})").format(kwargs=kwargs))
         purpose=kwargs.get('purpose','to work with')
         ps=kwargs.get('ps',program['slices'].ps())
         cvt=kwargs.get('cvt',program['params'].cvt())
@@ -5036,21 +5035,21 @@ class TaskDressing(HasMenus,ui.Window):
         if (cvt == 'T' and None in [cvt, ps, profile, check]):
             ErrorNotice(parent=window.frame,
                           text=_("You need to set "
-                          "\nCheck type (as Tone, currently {}) "
-                          "\nGrammatical category (currently {})"
-                          "\nSyllable Profile (currently {}), and "
-                          "\nTone Frame (currently {})"
+                          "\nCheck type (as Tone, currently {type}) "
+                          "\nGrammatical category (currently {ps})"
+                          "\nSyllable Profile (currently {profile}), and "
+                          "\nTone Frame (currently {check})"
                           "\nBefore choosing a sort group!"
-                          "").format(program['params'].cvtdict()[cvt]['sg'], ps,
-                          profile, check), column=0, row=0)
+                          "").format(type=program['params'].cvtdict()[cvt]['sg'], ps=ps,
+                          profile=profile, check=check), column=0, row=0)
             return 1
         kwargs=grouptype(**kwargs) #this just fills in False
         groups=program['status'].groups(cvt=cvt,**kwargs)
         if not groups:
             ErrorNotice(parent=window.frame,
-                          text=_("It looks like you don't have {}-{} lexemes "
-                          "grouped in the ‘{}’ check yet \n({})."
-                          "").format(ps,profile,check,kwargs, column=0, row=0))
+                          text=_("It looks like you don't have {ps}-{profile} lexemes "
+                          "grouped in the ‘{check}’ check yet \n({kwargs})."
+                          "").format(ps=ps,profile=profile,check=check,kwargs=kwargs), column=0, row=0)
             return
         if kwargs.get('intfirst') and kwargs.get('guess'):
             l=[int(i) for i in program['status'].groups(cvt=cvt,**kwargs)
@@ -5089,7 +5088,7 @@ class TaskDressing(HasMenus,ui.Window):
                             )
         else:
             ui.Label(window.frame,
-                      text=_(f"What {cvt_name} do you want to {purpose}?"),
+                      text=_("What {type} do you want to {purpose}?").format(type=cvt_name,purpose=purpose),
                       column=0, row=0)
             # window.scroll=ui.ScrollingFrame(window.frame)
             # window.scroll.grid(column=0, row=1)
@@ -5112,7 +5111,7 @@ class TaskDressing(HasMenus,ui.Window):
         if cvt in ['V','C']:
             purpose_title=kwargs.get('purpose','').capitalize()
             cvt_name=program['params'].cvtdict()[cvt]['sg']
-            w=ui.Window(self, title=title_mod(_(f'Select {cvt_name} Glyph')))
+            w=ui.Window(self, title=title_mod(_('Select {type} Glyph').format(type=cvt_name)))
             self._getglyph(w,**kwargs)
             # w.wait_window(window=w)
             return w #so others can wait for this
@@ -5131,15 +5130,15 @@ class TaskDressing(HasMenus,ui.Window):
         purpose_title=kwargs.get('purpose','').capitalize()
         cvt=kwargs.get('cvt',program['params'].cvt())
         if cvt == 'V':
-            w=ui.Window(self,title=title_mod(_(f'Select Vowel')))
+            w=ui.Window(self,title=title_mod(_('Select Vowel')))
             self._getgroup(w,**kwargs)
             # w.wait_window(window=w)
         elif cvt == 'C':
-            w=ui.Window(self,title=title_mod(_(f'Select Consonant')))
+            w=ui.Window(self,title=title_mod(_('Select Consonant')))
             self._getgroup(w,**kwargs)
             # self.frame.wait_window(window=w)
         elif cvt == 'CV':
-            w=ui.Window(self,title=title_mod(_(f'Select Consonant/Vowel')))
+            w=ui.Window(self,title=title_mod(_('Select Consonant/Vowel')))
             CV=''
             for kwargs['cvt'] in ['C','V']:
                 self._getgroup(**kwargs)
@@ -5147,7 +5146,7 @@ class TaskDressing(HasMenus,ui.Window):
             program['status'].group(CV)
             # cvt = 'CV'
         elif cvt == 'T':
-            w=ui.Window(self,title=title_mod(_(f'Select Framed Tone Group')))
+            w=ui.Window(self,title=title_mod(_('Select Framed Tone Group')))
             self._getgroup(window=w,**kwargs) #guess=guess,
             # windowT.wait_window(window=windowT) #?!?
         return w #so others can wait for this
@@ -5168,7 +5167,7 @@ class TaskDressing(HasMenus,ui.Window):
         kwargs=grouptype(**kwargs)
         return self.getgroup(**kwargs)
     def getexamplespergrouptorecord(self):
-        log.info("this sets the number of examples per group to record")
+        log.info(_("this sets the number of examples per group to record"))
         self.npossible=[
             {'code':1,'name':_("1 - Bare minimum, just one per group")},
             {'code':5,'name':_("5 - Some, but not all, of most groups")},
@@ -5177,7 +5176,7 @@ class TaskDressing(HasMenus,ui.Window):
                         ]
         title=_('Select Number of Examples per Group to Record')
         window=ui.Window(self, title=title)
-        text=_("The {0} tone report splits sorted data into "
+        text=_("The {name} tone report splits sorted data into "
                 "draft underlying tone melody groups. "
                 # ", with distinct values for each of your tone frames. This "
                 # "exhaustively finds differences between groups of lexical "
@@ -5187,14 +5186,14 @@ class TaskDressing(HasMenus,ui.Window):
                 # "incorrectly.\n\n"
                 "Even before a linguist has been able to evaluate these "
                 "groups, it may be helpful to record your sorted data. "
-                "{0} can give you a window for each lexicon sense in a tone "
+                "{name} can give you a window for each lexicon sense in a tone "
                 "group, with a record button for each sorted sense-frame "
                 "combination. "
                 "\n\nThose "
                 "windows will be presented to the user from one tone report "
                 "group after "
                 "another, until all groups have had one page presented. Then "
-                "{0} will "
+                "{name} will "
                 "repeat this process, until it has done a number of "
                 "rounds equal to the number selected below. "
                 # "\n\nIf a "
@@ -5204,7 +5203,7 @@ class TaskDressing(HasMenus,ui.Window):
                 "the recording window; picking a smaller number could mean "
                 "data not getting recorded. "
                 "Up to how many examples do you want to record for each group?"
-                "".format(program['name'])
+                "").format(name=program['name'])
                 )
         t=ui.Label(window.frame, text=title, font='title',column=0, row=0)
         l=ui.Label(window.frame, text=text, justify='left',column=0, row=1)
@@ -5218,14 +5217,14 @@ class TaskDressing(HasMenus,ui.Window):
                                 )
         buttonFrame1.wait_window(window)
     def runwindowcleanup(self):
-        log.info("Shutting down runwindow")
+        log.info(_("Shutting down runwindow"))
         if not self.exitFlag.istrue():
             self.deiconify()
         if program['taskchooser'].towrite:
-            log.info("Final write to lift")
+            log.info(_("Final write to lift"))
             self.maybewrite(definitely=True)
         else:
-            log.info("No final write to lift")
+            log.info(_("No final write to lift"))
         ui.Window.cleanup(self) #Exitable; currently does nothing else
     def getrunwindow(self,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
@@ -5285,52 +5284,52 @@ class TaskDressing(HasMenus,ui.Window):
     def maybewrite(self,definitely=False):
         program['taskchooser'].maybewrite(definitely=definitely)
     def killall(self):
-        log.info("Shutting down Task")
+        log.info(_("Shutting down Task"))
         try:
             towrite=program['taskchooser'].towrite
         except AttributeError:
             towrite=self.towrite #if taskchooser; shouldn't happen, but in case.
-        self.wait(msg=_("Closing down {} and storing changes").format(
-                                                                program['name']
+        self.wait(msg=_("Closing down {name} and storing changes").format(
+                                                                name=program['name']
                                                                 ))
         if towrite:
-            log.info("Final write to lift")
+            log.info(_("Final write to lift"))
             self.maybewrite(definitely=True)
         else:
-            log.info("No final write to lift")
+            log.info(_("No final write to lift"))
         program['settings'].trackuntrackedfiles()
         self.waitdone() #Don't confuse user; there's more input to come, maybe
         for r in program['settings'].repo:
             program['settings'].repo[r].share()
-            log.info("Done maybe committing/pushing to {}".format(r))
-        log.info("Saving settings for next time")
+            log.info(_("Done maybe committing/pushing to {repo}").format(repo=r))
+        log.info(_("Saving settings for next time"))
         program['settings'].storesettingsfile() #in case we added repos
         if isinstance(self,Sound):
             program['settings'].storesettingsfile(setting='soundsettings')
-        log.info("Settings saved")
-        log.info("Killing window")
+        log.info(_("Settings saved"))
+        log.info(_("Killing window"))
         ui.Window.killall(self) #Exitable
-        log.info("Window killed")
+        log.info(_("Window killed"))
     def track_thread(self,x):
-        log.info(f"Thread for {x} started")
+        log.info(_("Thread for {thread} started").format(thread=x))
         self.thread_names.append(x)
     def untrack_thread(self,x):
         if x in self.thread_names:
-            log.info(f"Finishing thread for {x}")
+            log.info(_("Finishing thread for {thread}").format(thread=x))
             self.thread_names.remove(x)
         else:
-            log.info(f"Didn't find thread for {x}; can't mark finished.")
+            log.info(_("Didn't find thread for {thread}; can't mark finished.").format(thread=x))
     def thread_update(self):
         if self.thread_names:
-            log.info(f"{len(self.thread_names)} threads running: {self.thread_names}")
+            log.info(_("{count} threads running: {threads}").format(count=len(self.thread_names), threads=self.thread_names))
             if (not hasattr(self,'thread_update_thread') or 
                 self.thread_update_thread not in self.tk.call('after', 'info')):
                 self.thread_update_thread=self.after(1000,self.thread_update)
             # log.info(f"Will update by {id=} in 1s {type(id)=}")
         else:
-            log.info(f"Finished with all threads running")
+            log.info(_("Finished with all threads running"))
     def __init__(self,parent):
-        log.info("Initializing TaskDressing")
+        log.info(_("Initializing TaskDressing"))
         self.parent=parent
         self.menu=False #initialize once
         if isinstance(self,TaskChooser):
@@ -5404,7 +5403,7 @@ class TaskChooser(TaskDressing):
         ExampleDict()
     def guidtriage(self): #obsolete
         # import time
-        log.info("Doing guid triage and other variables —this takes awhile...")
+        log.info(_("Doing guid triage and other variables —this takes awhile..."))
         start_time=nowruntime()
         self.guids=program['db'].guids
         self.guidsinvalid=[] #nothing, for now...
@@ -5435,7 +5434,7 @@ class TaskChooser(TaskDressing):
         # print(len(guids),guids)
         logfinished(start_time)
     def guidtriagebyps(self): #obsolete
-        log.info("Doing guid triage by ps... This also takes awhile?...")
+        log.info(_("Doing guid triage by ps... This also takes awhile?..."))
         self.guidsvalidbyps={}
         """use program['db'].entriesbyps or program['db'].sensesbyps"""
         for ps in program['db'].pss:
@@ -5448,7 +5447,7 @@ class TaskChooser(TaskDressing):
         try:
                 self.status.bigbutton.destroy()
         except AttributeError:
-            log.info("There doesn't seem to be a big button")
+            log.info(_("There doesn't seem to be a big button"))
         if not self.showreports:
             self.status.finalbuttons()
         if not self.mainwindow:
@@ -5493,7 +5492,7 @@ class TaskChooser(TaskDressing):
             try:
                 ui.ToolTip(b, o[0].tooltip(None))
             except AttributeError:
-                log.info("Task {} doesn't seem to have a tooltip.".format(o[0]))
+                log.info(_("Task {task} doesn't seem to have a tooltip.").format(task=o[0]))
         for c in range(bpr):
             self.optionsframe.grid_columnconfigure(c, weight=1, uniform='a')
         self.setmainwindow(self) #deiconify here
@@ -5508,7 +5507,7 @@ class TaskChooser(TaskDressing):
         elsewhere, but that led to numerous repetitions."""
         optionlist=self.makeoptions()
         # task,title,icon
-        log.info("starting from option list {}".format(optionlist))
+        log.info(_("starting from option list {options}").format(options=optionlist))
         optionlist=[i for i in optionlist if not issubclass(i[0],Sound)]
         # log.info("getting default from option list {}".format(
         #                                             [i[1] for i in optionlist]))
@@ -5540,7 +5539,7 @@ class TaskChooser(TaskDressing):
             self.mainwindowis.withdraw()
             self.mainwindowis.mainwindow=False #keep only one of these
         else:
-            log.info("No mainwindowis found.")
+            log.info(_("No mainwindowis found."))
     def setmainwindow(self,window):
         """This is really only useful for the taskChooser; others live or die"""
         self.mainwindowis=window
@@ -5645,8 +5644,8 @@ class TaskChooser(TaskDressing):
                     tasktuples.append((task,str(task), task.taskicon(task)))
                 else:
                     tasktuples.append((task,str(task),None))
-        log.info("Tasks available ({}): {}".format(len(tasktuples),
-                    [i[1] for i in tasktuples]))
+        log.info(_("Tasks available ({count}): {tasks}").format(count=len(tasktuples),
+                    tasks=[i[1] for i in tasktuples]))
         return tasktuples
     def convertlxtolc(self,window):
         try:
@@ -5657,14 +5656,14 @@ class TaskChooser(TaskDressing):
             # program['db'].write(self.file.name+str(now()))
             program['db'].write()
             conversionlogfile=logsetup.writelzma()
-            ErrorNotice(_("The conversion is done now, so {0} will quit. You may "
-                    "want to inspect your current file ({1}) and the backup "
-                    "({2}) to confirm this did what you wanted, before "
-                    "opening {0} again. In case there are any issues, the "
-                    "log file is also saved in {3}").format(program['name'],
-                                                self.filename,
-                                                backup,
-                                                conversionlogfile),
+            ErrorNotice(_("The conversion is done now, so {name} will quit. You may "
+                    "want to inspect your current file ({file}) and the backup "
+                    "({backup}) to confirm this did what you wanted, before "
+                    "opening {name} again. In case there are any issues, the "
+                    "log file is also saved in {log}").format(name=program['name'],
+                                                file=self.filename,
+                                                backup=backup,
+                                                log=conversionlogfile),
                     title=_("Conversion Done!"),
                     wait=True)
             self.restart()
@@ -5677,21 +5676,21 @@ class TaskChooser(TaskDressing):
         w=ui.Window(program['root'],title=title,exit=False)
         lexemesdone=list(program['db'].nentrieswlexemedata.values())#[program['settings'].analang]
         citationsdone=list(program['db'].nentrieswcitationdata.values())#[program['settings'].analang]
-        nbtext1=_("You have {} entries with lexeme data, and only {} with "
-                "citation data.").format(lexemesdone,citationsdone)
+        nbtext1=_("You have {lexemes} entries with lexeme data, and only {citations} with "
+                "citation data.").format(lexemes=lexemesdone,citations=citationsdone)
         instructions=_("Typically, dictionary work starts by collecting "
                         "citation forms, and later moves to analyzing those "
                         "forms into lexemes (meaningful, but not necessarily "
                         "pronounceable, word parts). Sometimes, people store "
                         "those citation forms in lexeme fields, though this "
-                        "is typically in error. {} can help you analyze your "
+                        "is typically in error. {name} can help you analyze your "
                         "citation forms into lexeme forms, but they first need "
                         "to be moved to the correct fields in your database."
-                        "".format(program['name']))
-        Question=_("Do you want {} to move data from your lexeme fields to "
+                        "".format(name=program['name']))
+        Question=_("Do you want {name} to move data from your lexeme fields to "
                     "citation fields, for each entry with no citation field "
-                    "data?".format(program['name']))
-        infot=_("See {} for more information.".format(url))
+                    "data?").format(name=program['name'])
+        infot=_("See {url} for more information.").format(url=url)
         oktext=_("Move lexeme field data to citation fields")
         noktext=_("No thanks; I'll manage this myself")
         nbtext=_("N.B.: This is a fairly radical change to your database, "
@@ -5718,7 +5717,7 @@ class TaskChooser(TaskDressing):
         lnb=ui.Label(w.frame, text=nbtext, row=5, column=0, columnspan=2)
         info=ui.Label(w.frame, text=infot, font='default',
                     row=7, column=0, columnspan=2)
-        info.tt=ui.ToolTip(info, text=_("go to {}").format(url))
+        info.tt=ui.ToolTip(info, text=_("go to {url}").format(url=url))
         info.bind('<Button-1>', lambda e: openweburl(url))
         for l in [lt,nb,lq,lnb]:
             l.wrap()
@@ -5731,8 +5730,8 @@ class TaskChooser(TaskDressing):
             if '{:04}'.format(i+1) not in cawls:
                 self.cawlmissing.append(i+1)
         if len(self.cawlmissing) < 10:
-            log.info("CAWL missing ({}): {}".format(len(self.cawlmissing),
-                                                        self.cawlmissing))
+            log.info(_("CAWL missing ({count}): {missing}").format(count=len(self.cawlmissing),
+                                                        missing=self.cawlmissing))
     def whatsdone(self):
         """I should probably have a roundtable with people to discuss these
         numbers, to see that we agree the decision points are rational."""
@@ -5792,11 +5791,11 @@ class TaskChooser(TaskDressing):
                 maybeals=[i for i in program['db'].audiolangs if l in i]
                 if maybeals:
                     al=maybeals[0]
-                    log.info("Using audiolang {} for analang {}"
-                                "".format(al,l))
+                    log.info(_("Using audiolang {audio} for analang {analang}")
+                                .format(audio=al,analang=l))
                 else:
-                    log.info(_("Couldn't find plausible audiolang (among {}) "
-                        "for analang {}").format(program['db'].audiolangs,l))
+                    log.info(_("Couldn't find plausible audiolang (among {audios}) "
+                        "for analang {analang}").format(audios=program['db'].audiolangs,analang=l))
             if al not in sortsrecorded:
                 sortsrecorded[al]={}
             sortsnotrecorded[l]={}
@@ -5833,6 +5832,7 @@ class TaskChooser(TaskDressing):
                     if sortsnotrecorded[l][f] < enough:
                         self.doneenough['torecord']=True
                 # log.info("Finished looking at [{}]{} field: {}".format(l,f,self.doneenough))
+                log.info(_("Finished looking at [{lang}]{field} field: {status}").format(lang=l, field=f, status=self.doneenough))
         # log.info("nfieldswosoundfiles by lang: {}".format(sortsnotrecorded))
         for lang in program['db'].nentrieswlexemedata:
             remaining=program['db'].nentrieswcitationdata[lang
@@ -5858,16 +5858,16 @@ class TaskChooser(TaskDressing):
                 self.doneenough['analysis']=True
                 break
             # log.info("‘verification’ not in ‘{}’".format(f))
-        log.info("Analysis of what you're done with: {}".format(self.donew))
-        log.info("You're done enough with: {}".format(self.doneenough))
+        log.info(_("Analysis of what you're done with: {status}").format(status=self.donew))
+        log.info(_("You're done enough with: {status}").format(status=self.doneenough))
     def restart(self,filename=None):
-        log.info("Restarting from TaskChooser")
+        log.info(_("Restarting from TaskChooser"))
         file.writefilename(self.filename)
         if hasattr(self,'warning') and self.warning.winfo_exists():
             self.warning.destroy()
         # log.info("towrite: {}; writing: {}".format(self.towrite,self.writing))
         if self.towrite: #Do even if not closed by user
-            log.info("Final write to lift")
+            log.info(_("Final write to lift"))
             self.maybewrite(definitely=True)
         try:
             self.task.withdraw() #so users don't do stuff while waiting
@@ -5876,11 +5876,11 @@ class TaskChooser(TaskDressing):
         try:
             self.task.runwindow.withdraw() #so users don't do stuff while waiting
         except (AttributeError,tkinter.TclError):
-            log.info("There doesn't seem to be a runwindow to hide; moving on.")
+            log.info(_("There doesn't seem to be a runwindow to hide; moving on."))
         while self.writing:
             # log.info("towrite: {}; writing: {}; taskwrite: {}".format(
             #     self.towrite,self.writing,program['taskchooser'].writing))
-            log.info("Waiting to finish writing to lift")
+            log.info(_("Waiting to finish writing to lift"))
             time.sleep(1)
             self.check_if_write_done() #because after() isn't working here...
         # log.info("Not writing to lift")
@@ -5890,9 +5890,9 @@ class TaskChooser(TaskDressing):
         try:
             self.task.withdraw() #so users don't do stuff while waiting
         except (AttributeError,tkinter.TclError):
-            log.info("There doesn't seem to be a task to hide; moving on.")
+            log.info(_("There doesn't seem to be a task to hide; moving on."))
         curname = self.filename
-        log.info(_("Current database: {}").format(curname))
+        log.info(_("Current database: {name}").format(name=curname))
         window=LiftChooser(self,file.getfilenames())
         window.wait_window(window)
         if hasattr(self,'name') and self.name:
@@ -5904,7 +5904,7 @@ class TaskChooser(TaskDressing):
         # subprocess.call?
         # __name__
         # main()
-        log.info(_("Current database: {}").format(self.filename))
+        log.info(_("Current database: {name}").format(name=self.filename))
         if self.filename and curname != self.filename:
             log.info(_("User selected a new database; restarting with it."))
             self.restart()
@@ -5934,16 +5934,16 @@ class TaskChooser(TaskDressing):
         except AttributeError:
             done=True
         except Exception as e:
-            log.info("Exception: {}".format(e))
-            log.info("writethread: {}".format(hasattr(self,'writethread')))
+            log.info(_("Exception: {error}").format(error=e))
+            log.info(_("writethread: {exists}").format(exists=hasattr(self,'writethread')))
         if done:
-            log.info(f"Done writing to lift ({program['db'].write_OK=}).")
+            log.info(_("Done writing to lift ({status}).").format(status=program['db'].write_OK))
             if not program['db'].write_OK:
-                ErrorNotice(_(f"Write to lift returned "
-                            f"‘{program['db'].write_error}’."),wait=True)
+                ErrorNotice(_("Write to lift returned "
+                            "‘{error}’.").format(error=program['db'].write_error),wait=True)
             self.writing=False
             if self.towrite:
-                log.info(f"Found previous request to write; doing again.")
+                log.info(_("Found previous request to write; doing again."))
                 self._write()
         else:
             # Otherwise check again later.
@@ -5953,7 +5953,7 @@ class TaskChooser(TaskDressing):
         self.towrite=False
         self.writethread = threading.Thread(target=program['db'].write)
         self.writing=True
-        log.info("Writing to lift...")
+        log.info(_("Writing to lift..."))
         self.writethread.start()
         self.schedule_write_check()
     def maybewrite(self,definitely=False):
@@ -6002,7 +6002,7 @@ class TaskChooser(TaskDressing):
         self.splash.progress(65)
         self.whatsdone()
         self.splash.progress(80)
-        log.info(f"{program['settings']=}")
+        log.info(_("Settings: {settings}").format(settings=program['settings']))
         super().__init__(parent)
         # TaskDressing.__init__(self,parent) #I think this should be after settings
         program['settings'].getprofiles()
@@ -6023,11 +6023,11 @@ class TaskChooser(TaskDressing):
         self.usbcheck()
         self.writeable=0 #start the count
         if program['nosound']:
-            e=_("You don't have the sound module installed. For best use of {},"
+            e=_("You don't have the sound module installed. For best use of {name},"
                 "you should switch back to the main branch, connect to the "
                 "internet, and restart. In the mean time. You won't be able "
                 "to record or play audio!"
-                ).format(program['name'])
+                ).format(name=program['name'])
             ErrorNotice(e)
         self.splash.progress(100)
         if self.splash.exitFlag.istrue():
@@ -6036,7 +6036,7 @@ class TaskChooser(TaskDressing):
         self.makeexampledict() #needed for makestatus, needs params,slices,data
         self.maxprofiles=5 # how many profiles to check before moving on to another ps
         self.maxpss=2 #don't automatically give more than two grammatical categories
-        log.info("done setting up taskChooser")
+        log.info(_("done setting up taskChooser"))
         self.makedefaulttask() #normal default
         # self.gettask() # let the user pick
         """Do I want this? Rather give errors..."""
@@ -6212,8 +6212,8 @@ class Alphabet():
         if glyphdict:
             conflict=glyphdict['C']&glyphdict['V']
             if conflict:
-                ErrorNotice(f"You have the glyph(s) ‘{conflict}’ as consonant "
-                            f"and as vowel! ({glyphdict})",wait=True)
+                ErrorNotice(_("You have the glyph(s) ‘{conflict}’ as consonant "
+                            "and as vowel! ({glyphs})").format(conflict=conflict,glyphs=glyphdict),wait=True)
                 raise
             self._glyphdict={k:{str(i) for i in v} for k,v in glyphdict.items()}
         return getattr(self,'_glyphdict',{'V':set(),'C': set()})
@@ -6227,14 +6227,14 @@ class Alphabet():
     def rename_glyph(self,x,y):
         gm=self.glyph_members()
         if y in gm:
-            log.error(f"'glyph_members' contains {y}; not renaming {x}")
+            log.error(_("'glyph_members' contains {new}; not renaming {old}").format(new=y, old=x))
             return
         gd=self.glyphdict()
         for k in gd:
             if y in gd[k]:
-                log.error(f"'glyphdict' contains {y}; not renaming {x}")
+                log.error(_("'glyphdict' contains {new}; not renaming {old}").format(new=y, old=x))
                 return
-        log.info(f"'rename_glyph' can safely rename {x} to {y}")
+        log.info(_("'rename_glyph' can safely rename {old} to {new}").format(old=x, new=y))
         self.glyph_members({y if k == x else k:v for k,v in gm.items()})
         # log.info(f"'glyph_members' renamed {x} to {y}")
         self.glyphdict({k:{y if i == x else i for i in v} for k,v in gd.items()})
@@ -6256,12 +6256,12 @@ class Alphabet():
         for i in x:
             # log.info(f"Checking {i} for conflicts in {y} {d[y]}")
             if self.conflicting_items(i,y):
-                ErrorNotice(f"item {i} coflicts with glyph {y}",wait=True)
+                ErrorNotice(_(f"item {i} conflicts with glyph {y}"),wait=True)
                 return
         for i in y:
             # log.info(f"Checking {i} for conflicts in {x} {d[x]}")
             if self.conflicting_items(i,x):
-                ErrorNotice(f"item {i} coflicts with glyph {x}",wait=True)
+                ErrorNotice(_(f"item {i} coflicts with glyph {x}"),wait=True)
                 return
         # log.info(f"No conflicts found.")
         for i in list(d[x]):
@@ -6278,7 +6278,7 @@ class Alphabet():
         if glyphs_distinguished.keys() == {'V','C'}:
             self._distinguished=glyphs_distinguished
         elif glyphs_distinguished:
-            log.error(f"{glyphs_distinguished=} provided, but without good keys")
+            log.error(_("{glyphs} provided, but without good keys").format(glyphs=glyphs_distinguished))
             raise
         return self._distinguished
     def distinguished_by_cvt(self,**kwargs):
@@ -6316,12 +6316,13 @@ class Alphabet():
             return len(gm[g])
         gm=self.glyph_members()
         for t in tuple_set:
-            log.info(f"Working on {t} ({[i for i in map(nmembers,t)]};{max(map(nmembers,t))=})")
+            log.info(_("Working on {tuple} ({counts};{max}=)").format(tuple=t, counts=[i for i in map(nmembers,t)], max=max(map(nmembers,t))))
             if max(map(nmembers,t)) <= 1 and self.have_only_distinguished_items(*t):
-                log.info(f"Distinguishing {gm[t[0]]=} and {gm[t[1]]=}")
+                log.info(_("Distinguishing {glyph1} and {glyph2}").format(glyph1=gm[t[0]], glyph2=gm[t[1]]))
                 self.distinguish(t)
             else:
-                log.info(f"Not distinguishing {gm[t[0]]=} and {gm[t[1]]=}")
+                log.info(_("Not distinguishing {glyph1} and {glyph2}").format(glyph1=gm[t[0]], glyph2=gm[t[1]]))
+                self.distinguish(t)
     def add_glyph_member(self,item,glyph):
         """This is sort into"""
         self.mark_glyph_not_done(glyph)
@@ -6330,7 +6331,7 @@ class Alphabet():
             d[glyph]=set()
         d[glyph].add(item)
         self.glyph_members(d)
-        log.info(f"Alphabet.add_glyph_member done.")
+        log.info(_("Alphabet.add_glyph_member done."))
     def rm_glyph_member(self,item,glyph=None):
         #If this raises KeyError, use discard
         d=self.glyph_members()
@@ -6346,13 +6347,13 @@ class Alphabet():
             self.glyph_members(d) # Adding empty dict does nothing; see below
         elif hasattr(self,'_glyph_members'):
             delattr(self,'_glyph_members')
-        log.info(f"Alphabet.rm_glyph_member done.")
+        log.info(_("Alphabet.rm_glyph_member done."))
     def mark_glyph_done(self,glyph,cvt):
         """Mark Verified"""
         d=self.glyphdict()
         d[cvt].add(glyph)
+        log.info(_("‘{glyph}’ added to verified list").format(glyph=glyph))
         return self.glyphdict(d)
-        log.info(f"‘{glyph}’ added to verified list")
     def mark_glyph_not_done(self,glyph,cvt=None):
         """Mark Unverified"""
         d=self.glyphdict()
@@ -6361,7 +6362,7 @@ class Alphabet():
         else:
             for cvt in [cvt for cvt,glyphs in d.items() if glyph in glyphs]:
                 d[cvt].remove(glyph)
-        log.info(f"‘{glyph}’ removed from verified list")
+        log.info(_("‘{glyph}’ removed from verified list").format(glyph=glyph))
         return self.glyphdict(d)
     def cull_glyphdict(self):
         """This limits the verified glyphs to those that actually have members.
@@ -6436,13 +6437,13 @@ class Alphabet():
         """Because this will work automatically:
         1. We don't want to assign groups to new int() letters
         2. We don't want to kick out groups that are already there.
-        Let the user decide to do either, if necessary."""
+        Let the user decide to do either, if necessary.        """
         glyph=self.parse_verificationcode(item)['group']
-        log.info(f"presort_item moving {item} into ‘{glyph}’")
+        log.info(_("presort_item moving {item} into ‘{glyph}’").format(item=item, glyph=glyph))
         if not glyph.isdigit() and not self.conflicting_items(item,glyph):
             self.mark_item_glyph(item,glyph)
     def have_only_distinguished_items(self,x,y):
-        log.info(f"Running have_only_distinguished_items on {x} and {y}")
+        log.info(_("Running have_only_distinguished_items on {x} and {y}").format(x=x, y=y))
         gm=self.glyph_members()
         for i in gm[x]:
             for j in gm[y]:
@@ -6450,7 +6451,7 @@ class Alphabet():
                             not program['status'].isdistinguished(
                                     self.parse_verificationcode(j)['group'],
                                     **self.parse_verificationcode(i))):
-                    log.info(f"Found undistinguished items {i} and {j}")
+                    log.info(_("Found undistinguished items {item1} and {item2}").format(item1=i, item2=j))
                     return False
         return True
     def conflicting_items(self,item,glyph):
@@ -6466,7 +6467,7 @@ class Alphabet():
     def remove_conflicting_items(self,item,glyph):
         conflicts=self.conflicting_items(item,glyph)
         for i in conflicts:
-            ErrorNotice(f"Removing {i} from ‘{glyph}’ to make room for {item}",
+            ErrorNotice(_("Removing {item} from ‘{glyph}’ to make room for {new}").format(item=i,glyph=glyph,new=item),
                         wait=True)
             self.remove_item_from_glyph(i)
     def mark_item_glyph(self,item,glyph):#maybe move to Alphabet Sort
@@ -6475,9 +6476,9 @@ class Alphabet():
         self.add_glyph_member(item,glyph)
         self.mark_item_macrosorted(item)
         if item in self.glyph_members()[glyph]:
-            log.info(_(f"mark_item_glyph added ‘{item}’ to ‘{glyph}’"))
+            log.info(_("mark_item_glyph added ‘{item}’ to ‘{glyph}’").format(item=item, glyph=glyph))
         else:
-            log.info(_(f"mark_item_glyph failed to add ‘{item}’ to ‘{glyph}’"))
+            log.info(_("mark_item_glyph failed to add ‘{item}’ to ‘{glyph}’").format(item=item, glyph=glyph))
             # log.info(f"{self.glyph_members()=}")
     def remove_item_from_glyph(self,item,glyph=None):
         self.rm_glyph_member(item,glyph) # in case elsewhere
@@ -6544,9 +6545,9 @@ class AlphabetChart(alphabet_chart.OrderAlphabet):
             value=getattr(self,k)
             if isinstance(value,ui.Variable):
                 value=value.get()
-                log.info(f"found ‘{k}’ ui.Variable: {value}")
+                log.info(_("found ‘{key}’ ui.Variable: {value}").format(key=k, value=value))
             else:
-                log.info(f"Didn't find ‘{k}’ ui.Variable: {value}")
+                log.info(_("Didn't find ‘{key}’ ui.Variable: {value}").format(key=k, value=value))
             getattr(program['settings'],'alpha_'+k)(value)
         program['settings'].storesettingsfile(setting='alphabet')
     def __init__(self, parent, **kwargs):
@@ -6561,10 +6562,10 @@ class Senses(object):
         return program['status'].group(value,**kwargs)
     def notdonewarning(self):
         buttontxt=_("Sort!")
-        text=_("Hey, you're not done with {} {} words by {}!"
+        text=_("Hey, you're not done with {ps} {profile} words by {check}!"
                 "\nCome back when you have time; restart where you left "
-                "off by pressing ‘{}’".format(self.ps,self.profile,self.check,
-                                                buttontxt))
+                "off by pressing ‘{button}’").format(ps=self.ps,profile=self.profile,check=self.check,
+                                                button=buttontxt)
         # self.withdraw()
         if not program['Demo']: #Should anyone see this?
             ErrorNotice(text=text,title=_("Not Done!"),parent=self,wait=True)
@@ -6613,7 +6614,7 @@ class Segments(Senses):
             self.output+=id
     def formspsprofile(self,**kwargs):
         """I think I want to move away from this"""
-        log.info("Asked for forms to search for a data slice (only do once!)")
+        log.info(_("Asked for forms to search for a data slice (only do once!)"))
         ps=kwargs.get('ps',program['slices'].ps())
         d=program['settings'].formstosearch[ps] #{form:sense}
         # log.info("Looking at {} entries".format(len(d)))
@@ -6638,8 +6639,8 @@ class Segments(Senses):
         return self.output
     def presortgroups(self,**kwargs):
         if program['status'].presorted(**kwargs):
-            log.info(_("Presorting for this check/slice already done! ({})"
-                        "").format(kwargs))
+            log.info(_("Presorting for this check/slice already done! ({args})"
+                        "").format(args=kwargs))
             return
         log.info(_("Presorting"))
         cvt=kwargs.get('cvt',program['params'].cvt())
@@ -6649,7 +6650,7 @@ class Segments(Senses):
         groups=program['status'].groups(wsorted=True,**kwargs)
         groups=program['status'].groups(cvt=cvt)
         #multiprocess from here?
-        msg=_("Presorting ({}={})").format(program['params'].check(),groups)
+        msg=_("Presorting ({check}={groups})").format(check=program['params'].check(),groups=groups)
         log.info(msg)
         w=self.getrunwindow(msg=msg)
         program['status'].renewsensestosort([],[]) #will repopulate
@@ -6673,9 +6674,9 @@ class Segments(Senses):
             if s: #senses just for this group
                 self.presort(list(s),group)
                 unsortedids-=s
-        log.info("unsortedids ({}): {}".format(
-                                        len(unsortedids),
-                                        unsortedids
+        log.info(_("unsortedids ({count}): {ids}").format(
+                                        count=len(unsortedids),
+                                        ids=unsortedids
                                         ))
         if unsortedids:
             self.presort(unsortedids,group='NA')
@@ -6730,13 +6731,13 @@ class Segments(Senses):
                 program['settings'].setupCVrxs() #costly; only when needed!
         formvalue=sense.textvaluebyftypelang(self.ftype,self.analang)
         if not formvalue:
-            log.info("updateformtoannotations didn't return a form value for "
-                    f"{sense.id=}, {check=}, {self.ftype=}, {self.analang=}")
+            log.info(_("updateformtoannotations didn't return a form value for "
+                    "{id}, {check}, {ftype}, {ana}").format(id=sense.id, check=check, ftype=self.ftype, ana=self.analang))
             return
         # log.info("fnode: {}; text: {}".format(fnode,t.text))
         annodict=sense.annotationvaluedictbyftypelang(self.ftype,self.analang)
-        conflict_text=_(f"Not updating ‘{formvalue}’ (conflict in {annodict}.")
-        error_nb=_(f"\nCheck the log for any further conflicts")
+        conflict_text=_("Not updating ‘{form}’ (conflict in {anno}.").format(form=formvalue, anno=annodict)
+        error_nb=_("\nCheck the log for any further conflicts")
         error=False
         if check: #just update to this annotation
             value=annodict[check]
@@ -6779,10 +6780,10 @@ class Segments(Senses):
         if write:
             self.maybewrite()
     def setitemgroup(self,item,check,group,**kwargs):
-        # log.info("Setting segment sort group")
+        # log.info(_("Setting segment sort group"))
         item.annotationvaluebyftypelang(self.ftype,self.analang,check,group)
     def updateformsallchecks(self):
-        log.info("updateformsallchecks")
+        log.info(_("updateformsallchecks"))
         for sense in program['db'].senses: #do the whole dictionary
             self.updateformtoannotations(sense)
         #     u = threading.Thread(target=self.updateformtoannotations,
@@ -6834,10 +6835,10 @@ class Segments(Senses):
         for item in gm[glyph]:
             if (item.split('_')[-1] != glyph and
                 newform(item) in [i for j in gm.values() for i in j]):
-                log.error(f"Conflict: cannot rename ‘{item}’ to ‘{glyph}’; "
-                    f"‘{newform(item)}’ already exists.")
+                log.error(_("Conflict: cannot rename ‘{item}’ to ‘{glyph}’; "
+                    "‘{new}’ already exists.").format(item=item, glyph=glyph, new=newform(item)))
                 return
-        log.info(f"update_annotations_by_glyph safely: ‘{gm[glyph]}’ to ‘{glyph}’")
+        log.info(_("update_annotations_by_glyph safely: ‘{members}’ to ‘{glyph}’").format(members=gm[glyph], glyph=glyph))
         for item in list(gm[glyph]):
             kwargs=program['alphabet'].parse_verificationcode(item)
             senses=program['slices'].inslice(
@@ -6865,10 +6866,10 @@ class Segments(Senses):
         self.thread_update()
         try:
             u.join()
-            log.info(f"Finished update_annotations_by_glyph threads for ‘{glyph}’")
+            log.info(_("Finished update_annotations_by_glyph threads for ‘{glyph}’").format(glyph=glyph))
         except UnboundLocalError: #if u.start() never happened...
             pass
-        log.info(f"update_annotations_by_glyph done with ‘{gm[glyph]}’ to ‘{glyph}’")
+        log.info(_("update_annotations_by_glyph done with ‘{members}’ to ‘{glyph}’").format(members=gm[glyph], glyph=glyph))
     def default_glyphs(self):
         return [i for i in 
                 program['alphabet'].glyphdict()[program['params'].cvt()]
@@ -6887,15 +6888,15 @@ class Segments(Senses):
         elif program['params'].cvt() == 'V':
             transcribe=TranscribeV
         else:
-            log.error("Not sure what to do with this glyph "
-                f"({program['params'].cvt()=}; {glyphs=})")
+            log.error(_("Not sure what to do with this glyph "
+                "({cvt}; {glyphs})").format(cvt=program['params'].cvt(), glyphs=glyphs))
         w=transcribe(self)
         self.withdraw()
         w.waitdone()
         problems=[]
         while digits := self.default_glyphs():
             glyph=digits[0]
-            log.info(f"working on {glyph=} of {digits=}")
+            log.info(_("working on {glyph} of {digits}").format(glyph=glyph, digits=digits))
             w.makewindow(glyph)
             if w.window_failed:
                 #This removes verification, thus to do status:
@@ -6906,12 +6907,12 @@ class Segments(Senses):
         w.destroy() #just this window, not parent
         self.deiconify()
         if digits or problems:
-            log.error(f"User exited with work still to do: {digits=} {problems=}")
+            log.error(_("User exited with work still to do: {digits} {problems}").format(digits=digits, problems=problems))
         return not bool(digits)
     def rename_macrogroup(self,x,y,updatestatus=False):
         for item in list(program['alphabet'].glyph_members()[x]):
             kwargs=program['alphabet'].parse_verificationcode(item)
-            log.info(f"Updating verification from ‘{x}’ to ‘{y}’ for {kwargs=}")
+            log.info(_("Updating verification from ‘{old}’ to ‘{new}’ for {args}").format(old=x, new=y, args=kwargs))
             self.rename_group_verification(x,y,**kwargs)
         #Do the above first, before glyph_members changes
         program['alphabet'].rename_glyph(x,y)
@@ -6945,7 +6946,7 @@ class Sound(object):
         try:
             self.pyaudio.terminate()
         except:
-            log.info("Apparently self.pyaudio doesn't exist, or isn't initialized.")
+            log.info(_("Apparently self.pyaudio doesn't exist, or isn't initialized."))
     def pyaudiocheck(self):
         try:
             self.pyaudio.pa.get_format_from_width(1) #just check if its OK
@@ -6984,14 +6985,14 @@ class Sound(object):
             if hasattr(ss,s):
                 if s+'s' in ss.hypothetical and (getattr(ss,s)
                                                 not in ss.hypothetical[s+'s']):
-                    log.info("Sound setting {} invalid; asking again".format(s))
+                    log.info(_("Sound setting {setting} invalid; asking again").format(setting=s))
                     return True
                 elif 'audio_card' in s and (getattr(ss,s)
                                                     not in ss.cards['dict']):
-                    log.info("Sound setting {} invalid; asking again".format(s))
+                    log.info(_("Sound setting {setting} invalid; asking again").format(setting=s))
                     return True
             else:
-                log.info("Missing sound setting {}; asking again".format(s))
+                log.info(_("Missing sound setting {setting}; asking again").format(setting=s))
                 return True
         program['settings'].soundsettingsok=True
     def soundcheck(self):
@@ -7039,18 +7040,18 @@ class Record(Sound): #TaskDressing
     def showentryformstorecordpage(self):
         #The info we're going for is stored above sense, hence guid.
         if self.runwindow.exitFlag.istrue():
-            log.info('no runwindow; quitting!')
+            log.info(_('no runwindow; quitting!'))
             return
         if not self.runwindow.frame.winfo_exists():
-            log.info('no runwindow frame; quitting!')
+            log.info(_('no runwindow frame; quitting!'))
             return
         self.runwindow.resetframe()
         ps=program['slices'].ps()
         profile=program['slices'].profile()
         count=program['slices'].count()
-        text=_("Record {} {} Words: click ‘Record’, talk, "
-                "and release ({} words)".format(profile,ps,
-                                                count))
+        text=_("Record {profile} {ps} Words: click ‘Record’, talk, "
+                "and release ({count} words)").format(profile=profile,ps=ps,
+                                                count=count)
         log.info(text)
         instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
         instr.grid(row=0,column=0,sticky='w')
@@ -7059,7 +7060,7 @@ class Record(Sound): #TaskDressing
             senses=program['db'].senses
         nperpage=5
         pages=[senses[i:i+nperpage] for i in range(0,len(senses),nperpage)]
-        log.info("pages: {}".format(pages))
+        log.info(_("pages: {pages}").format(pages=pages))
         for page in pages:
             if self.runwindow.exitFlag.istrue():
                 return
@@ -7091,7 +7092,7 @@ class Record(Sound): #TaskDressing
                 # row+=1
             # log.info("Done iterating for one page")
             ui.Button(buttonframes.content,column=1,row=row,
-                        text=_("Next {} words").format(nperpage),
+                        text=_("Next {count} words").format(count=nperpage),
                         cmd=lambda x=buttonframes:self.cleanup_pa(x))
             # log.info("Showing waitwindow now")
             self.runwindow.waitdone()
@@ -7195,7 +7196,7 @@ class Record(Sound): #TaskDressing
                 text=example.formatted(self.analang,self.glosslangs)
                 if not text:
                     #Don't show the whole dictionary of frames here:
-                    log.info("Not showing example with text {}".format(text))
+                    log.info(_("Not showing example with text {text}").format(text=text))
                     continue
                 row+=1
                 """If I end up pulling from example nodes elsewhere, I should
@@ -7230,15 +7231,15 @@ class Record(Sound): #TaskDressing
         ntorecord=len(torecord) #number of groups
         nexs=len([k for i in torecord for j in torecord[i] for k in j])
         nslice=program['slices'].count()
-        log.info("Found {} analyzed of {} examples in slice".format(nexs,nslice))
+        log.info(_("Found {analyzed} analyzed of {total} examples in slice").format(analyzed=nexs, total=nslice))
         skip=False
         if ntorecord == 0:
-            log.error(_("How did we get no UR tone groups? {}-{}"
+            log.error(_("How did we get no UR tone groups? {profile}-{ps}"
                     "\nHave you run the tone report recently?"
                     "\nDoing that for you now...").format(
-                            program['slices'].profile(),
-                            program['slices'].ps()
-                                                        ))
+                            profile=program['slices'].profile(),
+                            ps=program['slices'].ps()
+                                                         ))
             self.analysis.do()
             self.showtonegroupexs()
             return
@@ -7255,8 +7256,8 @@ class Record(Sound): #TaskDressing
                 else:
                     print("Not enough examples, moving on:",i,ufgroup)
                     continue
-                log.info(_('Giving user the number {} example from tone '
-                        'group {}'.format(i,ufgroup)))
+                log.info(_('Giving user the number {count} example from tone '
+                        'group {group}').format(count=i,group=ufgroup))
                 exited=self.showsenseswithexamplestorecord([sense],
                             (ufgroup, i+1, self.examplespergrouptorecord),
                             skip=skip)
@@ -7279,7 +7280,7 @@ class Record(Sound): #TaskDressing
         # could be moved to a FieldParent method
         """This should generate possible filenames, with preferred (current
         schema) last, as that will be used if none are found."""
-        print(f"Looking for file names for {node} ({node.tag})")
+        log.info(_("Looking for file names for {node} ({tag})").format(node=node, tag=node.tag))
         ps=program['slices'].ps()
         print("ps:",ps)
         if ps:
@@ -7301,7 +7302,7 @@ class Record(Sound): #TaskDressing
             pslocopts.insert(0,ps+'-'+l) #the first option.
             fieldlocopts.append(l) #make this the last option.
         except AttributeError:
-            # log.info("doesn't look like an example node; not offering location")
+            # log.info(_("doesn't look like an example node; not offering location"))
             pass
                     # Yes, these allow for location to be present twice, but
                 # that should never be found, nor offered
@@ -7326,9 +7327,11 @@ class Record(Sound): #TaskDressing
                                 args+=[node.ftype]
                         form=node.textvaluebylang(self.analang)
                         if not form:
-                            log.error(f"No {self.analang} analang in "
-                                f"{node.sense.id}! (OK if recording first; "
-                                f"forms: {node.textvaluedict()})")
+                            log.error(_("No {ana} analang in "
+                                "{id}! (OK if recording first; "
+                                "forms: {forms})").format(ana=self.analang,
+                                id=node.sense.id,
+                                forms=node.textvaluedict()))
                         args+=[form] #[self.ftype]]
                         for l in self.glosslangs:
                             args+=[node.glossbylang(l)]
@@ -7351,7 +7354,7 @@ class Record(Sound): #TaskDressing
         """if any of the generated filenames are there, stop at the first one"""
         for f in filenames:
             if self.audioexists(f):
-                log.info("Audiofile {} found at {}".format(f, self.audioURL(f)))
+                log.info(_("Audiofile {file} found at {url}").format(file=f, url=self.audioURL(f)))
                 node.textvaluebylang(lang=program['params'].audiolang(),value=f)
                 if self.hassoundfile(node,recheck=True):
                     log.info("file {} linked in LIFT".format(node.audiofileURL))
@@ -7359,12 +7362,12 @@ class Record(Sound): #TaskDressing
         """If none found, be ready to write with last/highest priority option"""
         f=filenames[-1]
         log.debug(_("No audio file found, but ready to record: "
-                    )+"{}; {}:{}".format(f, _("url"), self.audioURL(f)))
+                    )+"{file}; {url_label}:{url}".format(file=f, url_label=_("url"), url=self.audioURL(f)))
         """Should be able to just send f"""
         node.audiofilenametoput=f #don't write this until we actually record
         node.audiofileURL=self.audioURL(f)
-        log.info(f"Finishing makeaudiofilename with {node.audiofilenametoput=} "
-                f"and {node.audiofileURL=}")
+        log.info(_("Finishing makeaudiofilename with {file} "
+                "and {url}").format(file=node.audiofilenametoput, url=node.audiofileURL))
     def mikecheck(self):
         """This starts and stops the UI"""
         self.withdraw()
@@ -7421,7 +7424,7 @@ class WordCollection(Segments):
         """Whichever field is being asked for (self.nodetag), this fn returns
         which are left to do."""
         if hasattr(self,'byslice') and self.byslice:
-            log.info("Limiting segment work to this slice")
+            log.info(_("Limiting segment work to this slice"))
             all=[i.entry for i in program['slices'].senses()]
         else:
             all=program['db'].entries
@@ -7433,7 +7436,7 @@ class WordCollection(Segments):
             return done
         # At this point, done isn't wanted
         todo=[x for x in all if x not in done] #set-set may be better
-        log.info("To do: ({}) First 5: {}".format(len(todo),todo[:5]))
+        log.info(_("To do: ({count}) First 5: {items}").format(count=len(todo),items=todo[:5]))
         return todo
     def getinstructions(self):
         return _("Type the word in your language that goes with these meanings."
@@ -7453,19 +7456,19 @@ class WordCollection(Segments):
     def promptstrings(self,lang):
         if lang == self.analang:
             text=_("What is the form of the new "
-                    "morpheme in {} \n(consonants and vowels only)?"
-                    "".format(program['settings'].languagenames[lang]))
+                    "morpheme in {name} \n(consonants and vowels only)?"
+                    "").format(name=program['settings'].languagenames[lang])
             ok=_('Use this form')
             skip=None
         else:
-            text=_("What does ‘{}’ mean in {}?".format(
-                            self.runwindow.form[self.analang],
-                            program['settings'].languagenames[lang]))
-            ok=_('Use this {} gloss for ‘{}’'.format(
-                            program['settings'].languagenames[lang],
-                            self.runwindow.form[self.analang]))
+            text=_("What does ‘{form}’ mean in {lang}?").format(
+                            form=self.runwindow.form[self.analang],
+                            lang=program['settings'].languagenames[lang])
+            ok=_("Use this {lang} gloss for ‘{form}’").format(
+                            lang=program['settings'].languagenames[lang],
+                            form=self.runwindow.form[self.analang])
             self.runwindow.glosslangs.append(lang)
-            skip = _('Skip {} gloss').format(program['settings'].languagenames[lang])
+            skip = _("Skip {lang} gloss").format(lang=program['settings'].languagenames[lang])
         return {'lang':lang, 'prompt':text, 'ok':ok, 'skip':skip}
     def submitform(self,lang):
         self.runwindow.form[lang]=self.runwindow.form[lang].get()
@@ -7514,8 +7517,8 @@ class WordCollection(Segments):
         self.runwindow.padx=50
         self.runwindow.pady=10
         self.runwindow.title(_("Add Morpheme to Dictionary"))
-        title=_("Add {} morpheme to the dictionary").format(
-                            program['settings'].languagenames[self.analang])
+        title=_("Add {lang} morpheme to the dictionary").format(
+                            lang=program['settings'].languagenames[self.analang])
         ui.Label(self.runwindow.frame,text=title,font='title',
                 justify=ui.LEFT,
                 anchor='c',sticky='ew',
@@ -7550,7 +7553,7 @@ class WordCollection(Segments):
         added=[]
         modded=[]
         for n in program['taskchooser'].cawlmissing:
-            log.info("Working on SILCAWL line #{:04}.".format(n))
+            log.info(_("Working on SILCAWL line #{line:04}.").format(line=n))
             e=self.cawldb.get('entry', path=['cawlfield'],
                                     cawlvalue='{:04}'.format(n),
                                     ).get('node')[0] #certain to be there
@@ -7561,16 +7564,16 @@ class WordCollection(Segments):
                 #This is reading values from template, which are 'Noun' & 'Verb'
                 epsv=eps.get('value')
             except IndexError:
-                log.info("line {} w/o lexical category; leaving.".format(n))
+                log.info(_("line {line} w/o lexical category; leaving.").format(line=n))
                 eps=epsv=None
             if epsv == 'Noun': #don't translate!
-                log.info("Found a noun, using {}".format(program['settings'].nominalps))
+                log.info(_("Found a noun, using {ps}").format(ps=program['settings'].nominalps))
                 eps.set('value',program['settings'].nominalps)
             elif epsv == 'Verb': #don't translate!
-                log.info("Found a verb, using {}".format(program['settings'].verbalps))
+                log.info(_("Found a verb, using {ps}").format(ps=program['settings'].verbalps))
                 eps.set('value',program['settings'].verbalps)
             else:
-                log.error("Not sure what to do with ps {} ({})".format(epsv,eps))
+                log.error(_("Not sure what to do with ps {ps} ({node})").format(ps=epsv,node=eps))
             entry=None #in case no selected glosslangs in CAWL
             for lang in self.glosslangs:
                 g=e.findall("sense/gloss[@lang='{}']/text".format(lang))
@@ -7582,8 +7585,8 @@ class WordCollection(Segments):
                 entry=program['db'].get('entry',gloss=g,glosslang=lang,
                                         ).get('node') #maybe []
                 if entry:
-                    log.info(_("Found gloss of SILCAWL line #{:04} ({}); "
-                            "adding info to that entry.").format(n,g))
+                    log.info(_("Found gloss of SILCAWL line #{line:04} ({gloss}); "
+                            "adding info to that entry.").format(line=n,gloss=g))
                     program['db'].fillentryAwB(entry[0],e)
                     modded.append(n)
                     break
@@ -7591,14 +7594,14 @@ class WordCollection(Segments):
                 tnodes=e.findall('lexical-unit/form/text')
                 for tn in tnodes:
                     tn.text=''
-                log.info(_("Gloss of SILCAWL line #{:04} ({}) not found; "
-                        "copying over that entry.").format(n,g))
+                log.info(_("Gloss of SILCAWL line #{line:04} ({gloss}) not found; "
+                        "copying over that entry.").format(line=n,gloss=g))
                 program['db'].nodes.append(e)
                 added.append(n)
         if added or modded:
             program['db'].write()
             title=_("Entries Added!")
-            text=_("Added {} entries from the SILCAWL").format(len(added))
+            text=_("Added {count} entries from the SILCAWL").format(count=len(added))
             if len(added)<100:
                 text+=': ({})'.format(added)
             text+=_("\nModded {} entries with new information from the "
@@ -7610,8 +7613,8 @@ class WordCollection(Segments):
         else:
             title=_("Error trying to add SILCAWL entries")
             text=_("We seem to have not added or modded any entries, which "
-                    "shouldn't happen! (missing: {})"
-                    "".format(program['taskchooser'].cawlmissing))
+                    "shouldn't happen! (missing: {missing})"
+                    "").format(missing=program['taskchooser'].cawlmissing)
         self.waitdone()
         log.info(text)
         ErrorNotice(text,title=title)
@@ -7622,7 +7625,7 @@ class WordCollection(Segments):
             # log.info("storing nextword (nostore = {})".format(nostore))
             self.storethisword()
         else:
-            log.info("Not storing {}, by request".format(self.sense.id))
+            log.info(_("Not storing {id}, by request").format(id=self.sense.id))
         if self.index < len(self.entries)-1:
             self.index+=1
         else:
@@ -7633,14 +7636,14 @@ class WordCollection(Segments):
         if not nostore:
             self.storethisword()
         else:
-            log.info("Not storing {}, by request".format(self.sense.id))
+            log.info(_("Not storing {id}, by request").format(id=self.sense.id))
         if self.index == 0:
             self.index=len(self.entries)-1
         else:
             self.index-=1
         self.getword()
     def storethisword(self):
-        log.info("Trying to store {} ({})".format(self.var.get(),self.ftype))
+        log.info(_("Trying to store {value} ({type})").format(value=self.var.get(),type=self.ftype))
         try:
             if self.ftype in ['lc','lx']:
                 self.sense.textvaluebyftypelang(self.ftype,
@@ -7660,7 +7663,7 @@ class WordCollection(Segments):
             # lift.prettyprint(self.entry)
         # except KeyError:
         except AttributeError as e:
-            log.info("Not storing word (WordCollection): {}".format(e))
+            log.info(_("Not storing word (WordCollection): {error}").format(error=e))
     def markimage(self,url,w=None):
         """return to file, LIFT"""
         log.info("Selected image {}".format(url))
@@ -7673,7 +7676,7 @@ class WordCollection(Segments):
         self.wordframe.pic.reloadimage()
         self.updatereturnbind()
     def selectlocalimage(self,w=None,event=None):#w is window to close on OK
-        log.info("Select a local image")
+        log.info(_("Select a local image"))
         title = _("Select Example Image File"),
         filetypes=[
                 ("PNG Image File",'.[Pp][Nn][Gg]'),
@@ -7724,10 +7727,10 @@ class WordCollection(Segments):
                     else:
                         bdict[t][v]["state"] = "disabled"
             self.selectionwindow.update_idletasks()
-        log.info("Select from these images: \n{}".format('\n'.join(
+        log.info(_("Select from these images: \n{files}").format(files='\n'.join(
                                                     [str(i) for i in files])))
         self.selectionwindow=ui.Window(self)
-        title=_("Select a good image for {}".format(self.glossesthere))
+        title=_("Select a good image for {glosses}").format(glosses=self.glossesthere)
         self.selectionwindow.title(title)
         t=ui.Label(self.selectionwindow.frame,text=title, font='title',
                     row=0,column=0)
@@ -7772,43 +7775,43 @@ class WordCollection(Segments):
             return dir,[i for i in file.getfilesofdirectory(dir)
                                 if "terms.txt" not in str(i)]
         else:
-            log.info(f"{dir} doesn't seem to exist.")
+            log.info(_("{dir} doesn't seem to exist.").format(dir=dir))
     def selectimageormoveon(self,event=None):
         if self.selectimage():
             self.nextword(nostore=False)
     def selectimage(self,event=None):
         dir,files=self.getimagefiles()
-        if len(files) >50:
-            ErrorNotice(f"There are too many images to show! ({len(files)})")
+        n=len(files)
+        if n >50:
+            ErrorNotice(_("There are too many images to show! ({count})").format(count=n))
             files=files[:10]
         if not files:
-            log.info(f"{dir} seems there, but empty.")
+            log.info(_("{dir} seems there, but empty.").format(dir=dir))
             self.getopenclipart()
             dir,files=self.getimagefiles()
         if files:
             self.showimagestoselect(files)
         else:
-            log.info("There don't seem to be any images to show.")
+            log.info(_("There don't seem to be any images to show."))
             return 1
     def downloadallCAWLimages(self):
         for self.sense in program['db'].senses:
             if not file.exists(self.sense.imgselectiondir):
                 self.getopenclipart(nogui=True)
     def getopenclipart(self,event=None,nogui=False):
-        log.info("Not getting from openclipart.org")
+        log.info(_("Not getting from openclipart.org"))
         return #this isn't really what we want right now
         if not self.sense.collectionglosses:
-            log.info("No English glosses to search OpenClipart.org! ({})"
-                    "".format(self.sense.glosses))
+            log.info(_("No English glosses to search OpenClipart.org! ({glosses})").format(glosses=self.sense.glosses))
             if self.sense.imgselectiondir:
                 # logic to pull English terms from folder names
                 self.sense.collectionglosses=[i for i in
                                         str(self.sense.imgselectiondir).split('/')[-1].split('_')
                                         if not isinteger(i)]
-        self.wait(msg=_("Dowloading images from OpenClipart.org\n{}"
-                        "").format(" ".join(self.sense.collectionglosses)),
+        self.wait(msg=_("Dowloading images from OpenClipart.org\n{glosses}"
+                        "").format(glosses=" ".join(self.sense.collectionglosses)),
                     cancellable=True)
-        log.info("Glosses: {}".format(self.sense.collectionglosses))
+        log.info(_("Glosses: {glosses}").format(glosses=self.sense.collectionglosses))
         scraper=htmlfns.ImageScraper()
         for gloss in self.sense.collectionglosses:
             kwargs={'per_page':50,
@@ -7825,7 +7828,7 @@ class WordCollection(Segments):
             except urls.MaxRetryError as e:
                 self.waitdone()
                 msg=_("Problem downloading webpage; check your "
-                            "internet connection!\n\n{}".format(e))
+                            "internet connection!\n\n{error}").format(error=e)
                 log.error(msg)
                 ErrorNotice(msg)
                 return
@@ -7841,7 +7844,7 @@ class WordCollection(Segments):
         for i in scraper.images:
             if i not in self.images:
                 self.images.append(i)
-        log.info("Found {} images: {}".format(len(self.images),self.images))
+        log.info(_("Found {count} images: {images}").format(count=len(self.images),images=self.images))
         if self.images:
             file.makedir(self.sense.imgselectiondir)
         problems=0
@@ -7861,13 +7864,13 @@ class WordCollection(Segments):
                 with open(i['fqdn'],'wb') as d:
                     d.write(pic)
             except urls.MaxRetryError as e:
-                log.error("Problem downloading image: {}".format(e))
+                log.error(_("Problem downloading image: {error}").format(error=e))
                 problems+=1
             self.waitprogress(self.images.index(i)*100/len(self.images))
         if (me and not nogui) or len(self.images) < 5:
-            text=_("Found {} images!").format(len(self.images))
+            text=_("Found {count} images!").format(count=len(self.images))
             if problems:
-                text+=_("\nProblems downloading {} images".format(problems))
+                text+=_("\nProblems downloading {count} images").format(count=problems)
             ErrorNotice(text,
                         button=(_("Select local image"),self.selectlocalimage))
         self.waitdone()
@@ -7887,7 +7890,7 @@ class WordCollection(Segments):
         if isinstance(f,ui.Frame) and f.winfo_exists():
             # log.info("Skipping word frame; already exists!")
             return
-        log.info("doing word frame")
+        log.info(_("doing word frame"))
         self.wordframe=ui.Frame(self.wordsframe,row=1,column=0,sticky='ew')
         self.prog=ui.Label(self.wordframe, text='', row=1, column=3,
                             font='small')
@@ -7916,7 +7919,7 @@ class WordCollection(Segments):
         next.bind_all('<Down>',lambda event: self.nextword(nostore=True))
         next.bind_all('<Next>',lambda event: self.nextword(nostore=True))
     def updatereturnbind(self):
-        log.info("Updating binding ({})".format(self.state()))
+        log.info(_("Updating binding ({state})").format(state=self.state()))
         if self.state() == 'withdrawn':
             self.unbind_all('<Return>')
         else: #only bind to non-withdrawn window
@@ -7944,14 +7947,14 @@ class WordCollection(Segments):
             try:
                 self.index=self.entries.index(self.entry)
             except Exception as e:
-                log.info("self.entry doesn't seem to be in entries; OK for now")
+                log.info(_("self.entry doesn't seem to be in entries; OK for now"))
             self.instructions['text']=self.getinstructions() #in case changed
             self.dowordframe()
         elif not self.entries:
             text=_("It looks like you're done filling out the empty "
             "entries in your database! Congratulations! \nYou can still add words "
-            "through the button on the left ({})."
-            "".format(self.dobuttonkwargs()['text']))
+            "through the button on the left ({text})."
+            "").format(text=self.dobuttonkwargs()['text'])
             self.killwordframe()
             self.instructions['text']=text
             self.instructions.wrap()
@@ -7959,11 +7962,11 @@ class WordCollection(Segments):
         else:
             self.dowordframe()
             self.entry=self.entries[self.index]
-        log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
-        log.info("wordframe: {}".format(getattr(self,'wordframe',None)))
+        log.info(_("sensetodo: {todo}").format(todo=getattr(self,'sensetodo',None)))
+        log.info(_("wordframe: {frame}").format(frame=getattr(self,'wordframe',None)))
         self.prog['text']='({}/{})'.format(self.index+1,self.nentries)
         # log.info("entries: {}".format(self.entries))
-        log.info("index: {}".format(self.index))
+        log.info(_("index: {index}").format(index=self.index))
         self.sense=self.entry.sense
         glosses={}
         for g in set(self.glosslangs) & set(self.sense.glosses):
@@ -7971,8 +7974,7 @@ class WordCollection(Segments):
         self.glossesthere=' — '.join([glosses[i] for i in glosses if i])
         # log.info("glosses there: {}".format(self.glossesthere))
         if not self.glossesthere:
-            log.info("entry {} doesn't have glosses; not showing."
-                    "".format(self.entry.get('id')))
+            log.info(_("entry {id} doesn't have glosses; not showing.").format(id=self.entry.get('id')))
             self.dirfn(nostore=True)
         self.glossesline['text']=self.glossesthere
         self.glossesline.wrap()
@@ -16410,7 +16412,7 @@ class Repository(object):
             log.info("Checking repo existence via {}".format(f))
         return file.exists(f)
     def exewarning(self):
-        title=_("Warning: {} Executable Missing!".format(self.repotypename))
+        title=_("Warning: {type} Executable Missing!").format(type=self.repotypename)
         text=_("You "
                 # "seem to be working on a repository of data ({0}), "
                 # "\nwhich may be tracked by {1}, "
@@ -16438,7 +16440,7 @@ class Repository(object):
         m=ui.Label(w.frame, text=clickable, column=0, row=1)
         m.wrap()
         m.bind("<Button-1>", lambda e: openweburl(self.installpage))
-        mtt=ui.ToolTip(m,_("Go to {}").format(self.installpage))
+        mtt=ui.ToolTip(m,_("Go to {url}").format(url=self.installpage))
         if self.thisos == 'Windows':
             clickable1=_("(e.g., in Windows, install *this* file),"
                         ).format(self.wexeurl)
@@ -16446,10 +16448,10 @@ class Repository(object):
                         ).format(self.wdownloadsurl)
             n=ui.Label(w.frame, text=clickable1, column=0, row=2)
             n.bind("<Button-1>", lambda e: openweburl(self.wexeurl))
-            ntt=ui.ToolTip(n,_("download {}").format(self.wexeurl))
+            ntt=ui.ToolTip(n,_("download {url}").format(url=self.wexeurl))
             o=ui.Label(w.frame, text=clickable2, column=0, row=3)
             o.bind("<Button-1>", lambda e: openweburl(self.wdownloadsurl))
-            mtt=ui.ToolTip(o,_("Go to {}").format(self.wdownloadsurl))
+            mtt=ui.ToolTip(o,_("Go to {url}").format(url=self.wdownloadsurl))
         # button=(_("Restart Now"),sysrestart) #This should be in task/chooser
         text=_("After you install {}, you should restart."
                 ).format(self.repotypename)
@@ -16548,7 +16550,7 @@ class Repository(object):
                     log.info("Found branch: {}".format(self.branch))
             # return self.branch
         except Exception as e:
-            log.error(_("Problem finding branch name: {}").format(e))
+            log.error(_("Problem finding branch name: {error}").format(error=e))
     def setdescription(self):
         self.description=_("language data")
     def populate(self):
@@ -16895,10 +16897,12 @@ def logfinished(start=program['start_time'],msg=None):
     else:
         msg=''
     try:
-        text=_("Finished {}at {} ({:1.0f}m, {:2.3f}s)"
-            "").format(msg,now(),*divmod((run_time-start).total_seconds(),60))
+        m, s = divmod((run_time-start).total_seconds(), 60)
+        text=_("Finished {msg}at {now} ({m:1.0f}m, {s:2.3f}s)").format(
+            msg=msg, now=now(), m=m, s=s)
     except AttributeError:
-        text=_("Finished {msg}at {now()}, after {run_time-start} seconds")
+        text=_("Finished {msg}at {now}, after {duration} seconds").format(
+            msg=msg, now=now(), duration=run_time-start)
     log.info(text)
     return text
 def interfacelang(lang=None,magic=False):
@@ -17288,7 +17292,7 @@ def findexecutable(exe):
     except subprocess.CalledProcessError as e:
         log.info("Executable {} search output: {}".format(exe,e.output))
     except Exception as e:
-        log.info(_("Search for {} on {} failed: {}").format(exe,os,e))
+        log.info(_("Search for {exe} on {os} failed: {error}").format(exe=exe, os=os, error=e))
         return e
     """This needs to be able to handle two answers in series; is this a list of
     two items, or just a long string, maybe with \n?"""
@@ -17457,7 +17461,7 @@ def uptodate(x):
 def updateazt(event=None,**kwargs): #should only be parent, for errorroot
     def tryagain(event=None):
         updateazt(**kwargs)
-    log.info(_("Updating {}").format(program['name']))
+    log.info(_("Updating {azt}").format(azt=program['name']))
     if 'git' in program:
         parent=kwargs.get('parent')
         if not parent or not parent.winfo_exists(): #take kwarg if there
@@ -17466,7 +17470,7 @@ def updateazt(event=None,**kwargs): #should only be parent, for errorroot
             else:
                 kwargs['parent']=program['root']
         log.info("parent title: {}".format(kwargs['parent'].title()))
-        w=ui.Wait(msg=_("Updating {}").format(program['name']), **kwargs)
+        w=ui.Wait(msg=_("Updating {azt}").format(azt=program['name']), **kwargs)
         r=program['repo'].share() #t is a dict of main and testing results
         w.close()
         if r:
@@ -17643,23 +17647,23 @@ def mainproblem():
     f=ui.Frame(errorw.outsideframe,row=1,column=2)
     if program['git']:
         ui.Button(f,
-                text=_("Check for \n{} \nupdates").format(program['name']),
+                text=_("Check for \n{azt} \nupdates").format(azt=program['name']),
                 cmd=lambda x=errorw:updateazt(parent=x),
                 row=0,column=0,
                 pady=20)
         if program['repo'].branch != 'main':
             revertb=ui.Button(f,
-                    text=_("Revert to \nmain branch \nof {}").format(program['name']),
+                    text=_("Revert to \nmain branch \nof {azt}").format(azt=program['name']),
                     cmd=reverttomain,
                     row=1,column=0,
                     pady=20)
         else:
             tryb=ui.Button(f,
-                    text=_("Try \ntesting branch \nof {}").format(program['name']),
+                    text=_("Try \ntesting branch \nof {azt}").format(azt=program['name']),
                     cmd=testversion,
                     row=1,column=0,
                     pady=20)
-    ui.Button(f,text=_("Restart \n{}").format(program['name']),
+    ui.Button(f,text=_("Restart \n{azt}").format(azt=program['name']),
                 cmd=sysrestart, #This should be in task/chooser
                 row=2,column=0,
                 pady=20)
@@ -17703,7 +17707,8 @@ if __name__ == '__main__':
     mt=datetime.datetime.fromtimestamp(thisexe.stat().st_mtime)
     """Not translating yet"""
     transdir=file.gettranslationdirin(program['aztdir'])
-    print("looking in",os.listdir(transdir))
+    print("looking in",transdir)
+    print("with contents",os.listdir(transdir))
     i18n={
         i.split('_')[0]:gettext.translation('azt', transdir, languages=[i],
                                     # fallback=True
@@ -17747,13 +17752,12 @@ if __name__ == '__main__':
         import py_modules
         py_modules.pip_install(['psutil'])
     finally:
-        text+=_(", at {}Mhz").format(collections.Counter(
-                                                    psutil.cpu_freq(percpu=True)
-                                                    ).most_common())
+        text+=_(", at {mhz}Mhz").format(mhz=collections.Counter(
+                [i.current for i in psutil.cpu_freq(percpu=True)]).most_common(1)[0][0])
     log.info(text)
-    log.info(_("Computer identifies as {}").format(platform.uname()))
-    log.info(_("Loglevel is {}; started at {}").format(loglevel,
-                                        program['start_time'].isoformat()))
+    log.info(_("Computer identifies as {platform}").format(platform=platform.uname()))
+    log.info(_("Loglevel is {level}; started at {time}")
+            .format(level=loglevel, time=datetime.datetime.now(datetime.UTC).isoformat()[:-7]+'Z'))
     #'sendpraat' now in 'praat', if useful
     for exe in ['praat','hg','ffmpeg','lame',
                 # 'python','python3'
