@@ -1113,6 +1113,7 @@ class Menus(ui.Menu):
         if not group:
             group=_("Select")
         options.extend([(_("Resort skipped data"), self.parent.tryNAgain),
+                        (_("Presort this group again"), self.parent.re_presort),
                         (_("Reverify current group ({group})").format(group=group),
                                                         self.parent.reverify),
                         (_("Join Sort Groups"), self.parent.redo_join),
@@ -10370,6 +10371,9 @@ class Sort(object):
             program['settings'].storesettingsfile('alphabet')
         self.runwindow.on_quit()
         return 1
+    def re_presort(self):
+        program['status'].presorted(False)
+        self.runcheck()
     def reverify(self):
         group=program['status'].group()
         check=program['params'].check()
