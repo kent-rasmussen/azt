@@ -17654,27 +17654,31 @@ def mainproblem():
         o.bind("<Button-1>", lambda e: openweburl(eurl))
     scroll.tobottom()
     f=ui.Frame(errorw.outsideframe,row=1,column=2)
+    buttonwraplength=75
     if program['git']:
         ui.Button(f,
                 text=_("Check for {azt} updates").format(azt=program['name']),
                 cmd=lambda x=errorw:updateazt(parent=x),
-                wraplength=10,
+                wraplength=buttonwraplength,
                 row=0,column=0,
                 pady=20)
         if program['repo'].branch != 'main':
             revertb=ui.Button(f,
-                    text=_("Revert to \nmain branch \nof {azt}").format(azt=program['name']),
+                    text=_("Revert to main branch of {azt}").format(azt=program['name']),
                     cmd=reverttomain,
+                    wraplength=buttonwraplength,
                     row=1,column=0,
                     pady=20)
         else:
             tryb=ui.Button(f,
-                    text=_("Try \ntesting branch \nof {azt}").format(azt=program['name']),
+                    text=_("Try testing branch of {azt}").format(azt=program['name']),
                     cmd=testversion,
+                    wraplength=buttonwraplength,
                     row=1,column=0,
                     pady=20)
-    ui.Button(f,text=_("Restart \n{azt}").format(azt=program['name']),
+    ui.Button(f,text=_("Restart {azt}").format(azt=program['name']),
                 cmd=sysrestart, #This should be in task/chooser
+                wraplength=buttonwraplength,
                 row=2,column=0,
                 pady=20)
         # log.info(_("Done making update menu"))
