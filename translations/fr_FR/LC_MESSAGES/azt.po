@@ -69,22 +69,26 @@ msgstr ""
 #, python-brace-format
 msgid "\n"
 "=> Your interpretation of {items} changed."
-msgstr ""
+msgstr "\n"
+"=> Votre interprétation de {items} a changé."
 
 #: /home/kentr/bin/raspy/azt/main.py:12803
 msgid "\n"
 "A label that describes the surface tone form in this context would be best, like ‘[˥˥˥ ˨˨˨]’"
-msgstr "Une étiquette décrivant la forme du ton de surface dans ce contexte serait idéale, par ex. ‘[˥˥˥ ˨˨˨]’"
+msgstr "\n"
+"Une étiquette décrivant la forme du ton de surface dans ce contexte serait idéale, par ex. ‘[˥˥˥ ˨˨˨]’"
 
 #: /home/kentr/bin/raspy/azt/main.py:12538
 msgid "\n"
 "Because this is a new group, you need to give it some name now."
-msgstr "Comme il s'agit d'un nouveau groupe, vous devez lui donner un nom dès maintenant."
+msgstr "\n"
+"Comme il s'agit d'un nouveau groupe, vous devez lui donner un nom dès maintenant."
 
 #: /home/kentr/bin/raspy/azt/main.py:6739
 msgid "\n"
 "Check the log for any further conflicts"
-msgstr "Vérifiez le journal pour détecter d'éventuels conflits supplémentaires"
+msgstr "\n"
+"Vérifiez le journal pour détecter d'éventuels conflits supplémentaires"
 
 #: /home/kentr/bin/raspy/azt/main.py:3462
 #, python-brace-format
@@ -840,8 +844,8 @@ msgstr "Vérifier le lexique"
 msgid "Check for \n"
 "{azt} \n"
 "updates"
-msgstr "Vérifier les mises à jour \n"
-"{azt} \n"
+msgstr "Vérifier \n les mises à jour \n"
+"{azt}"
 
 #: /home/kentr/bin/raspy/azt/main.py:2993
 msgid "Checking for Digraphs and Trigraphs!"
@@ -5026,7 +5030,7 @@ msgstr "Très bon match ; Racine {root} trouvée dans lc: {lc} et sf : {sf}, ave
 
 #: /home/kentr/bin/raspy/azt/main.py:12659
 msgid "Vowel Letters"
-msgstr "Vowel Letters"
+msgstr "Lettres Voyelles"
 
 #: /home/kentr/bin/raspy/azt/main.py:5882
 msgid "Waiting to finish writing to lift"
