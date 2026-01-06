@@ -1716,7 +1716,7 @@ msgid "Go back and join \n"
 "← these groups"
 msgstr "Revenez en arrière et rejoignez \n"
 "avec l'un des groupes suivants :\n"
-"<unk> ces groupes"
+"← ces groupes"
 
 #: /home/kentr/bin/raspy/azt/main.py:1880
 msgid "Go to the next check"

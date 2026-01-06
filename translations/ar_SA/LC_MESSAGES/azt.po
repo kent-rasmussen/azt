@@ -830,7 +830,7 @@ msgid "Check for \n"
 "{azt} \n"
 "updates"
 msgstr "تحقق من التحديثات \n"
-"{azt} \n"
+"{azt}"
 
 #: /home/kentr/bin/raspy/azt/main.py:2993
 msgid "Checking for Digraphs and Trigraphs!"
