@@ -12351,8 +12351,8 @@ class Transcribe(Sound,Sort,TaskDressing):
                         "digraph and trigraph settings."
                         ).format(group=self.group,new=newvalue)]
             if len(newvalue) > 1:
-                warning.append(_("{program} will add ‘{new}’ to those settings."
-                            ).format(new=newvalue))
+                warning.append(_("{azt} will add ‘{new}’ to those settings."
+                            ).format(azt=program['name'],new=newvalue))
                 if newvalue not in program['settings'].polygraphs[self.analang][self.cvt]:
                     program['settings'].polygraphs[self.analang][self.cvt][newvalue]=True
                     program['settings'].storesettingsfile('profiledata')
@@ -13774,7 +13774,7 @@ class SortButtonFrame(ui.ScrollingFrame):
             firstOK=_("This word has {name}").format(name=name)
         newgroup=_("Other")
         skiptext=_("Skip this item")
-        if '=' in self.check:
+        if '=' in self.check and not self.macrosort:
             skiptext+=f" ({self.check.replace('=','≠')})"
         """This should just add a button, not reload the frame"""
         bf1=ui.Frame(parent, border=True, row=parent.nrows(), sticky='w')
