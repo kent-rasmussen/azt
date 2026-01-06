@@ -6,6 +6,7 @@ ui_lang.py
 userlogs/*
 test*wav
 test.py
+translations_test/
 excess/
 images/archive
 images/scaled
