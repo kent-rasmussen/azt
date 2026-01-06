@@ -5,12 +5,7 @@ import os, sys
 import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
-try: #translation
-    _
-except NameError:
-    def _(x):
-        return x
-log.info(_("Importing {name}").format(name=__name__))
+log.info(f"Importing {__name__}")
 import file
 import lift
 import ui_tkinter as ui

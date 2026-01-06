@@ -16,11 +16,6 @@ log=logsetup.getlog(__name__)
 # logsetup.setlevel('INFO',log) #for this file
 logsetup.setlevel('DEBUG',log) #for this file
 from importlib import reload as modulereload
-try: #Allow this module to be used without translation
-    _
-except NameError:
-    def _(x):
-        return x
 def quote(x):
     x=str(x) #going to return a string anyway
     if '"' not in x:
@@ -547,6 +542,11 @@ def writefilename(filename=''):
     f.close()
     return filename
 if __name__ == "__main__":
+    try: #Allow this module to be used without translation
+        _
+    except NameError:
+        def _(x):
+            return x
     files=[
         (r"C:\Users\camha\Documents\WeSay\bfj\audio\Verb-_HL_like_this_711e77ec-"
         "86ee-4c49-ba5b-2af75076798c_example_sɨ̀_pɛʼ_change_like_this_(IMP)_.wav"),

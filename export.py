@@ -5,11 +5,6 @@ log=logsetup.getlog(__name__)
 logsetup.setlevel('DEBUG',log) #for this file
 log.info(f"Importing {__name__}")
 import file
-try: #Allow this module to be used without translation
-    _
-except NameError:
-    def _(x):
-        return x
 class Exporter(object):
     """This class contains most of what is needed to pull data out of lift
     to create a tarball for ASR training."""
@@ -108,6 +103,11 @@ class Examples(Exporter):
     def __init__(self, *args, **kwargs):
         super(Examples, self).__init__(*args, **kwargs)
 if __name__ == '__main__':
+    try: #Allow this module to be used without translation
+        _
+    except NameError:
+        def _(x):
+            return x
     import lift
     l=Examples(lift=lift.Lift("/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"),
             analang='gnd',
