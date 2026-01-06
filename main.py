@@ -12252,10 +12252,22 @@ class SortT(Sort,Tone,TaskDressing):
     """Doing stuff"""
 class Transcribe(Sound,Sort,TaskDressing):
     def updateerror(self):
+        newvalue=self.transcriber.formfield.get()
+        if newvalue == '':
+            noname=_("Give a name for this group!")
+            log.debug(noname)
+            self.errorlabel['text'] = noname
+            return 1
+        elif newvalue != self.group and newvalue in self.groups:
+            deja=[_("Sorry, there is already a group with that label"),
+                _("see comparison below.")]
+            log.debug('; '.join(deja))
+            self.errorlabel['text'] = ';\n '.join(deja)
+            self.setgroup_comparison(newvalue)
+            return 1
         self.errorlabel['text'] = ''
-    def updateform(self,event=None):
-        self.updateerror()
-        self.set_ok_w_form()
+    def updateform(self,*args):
+        self.set_ok_w_form(self.updateerror())
     def refresh_status_buttons(self,*args):
         for i in [args]:
             if (i in self.status.glyphbuttons 
@@ -12355,20 +12367,6 @@ class Transcribe(Sound,Sort,TaskDressing):
             # self.err=ErrorNotice(warning,parent=self,title=title)
     def submitform(self):
         newvalue=self.transcriber.formfield.get()
-        if newvalue == '':
-            noname=_("Give a name for this group!")
-            log.debug(noname)
-            self.errorlabel['text'] = noname
-            return 1
-        elif newvalue != self.group and newvalue in self.groups:
-            deja=_("Sorry, there is already a group with "
-                            "that label; see comparison below. \n"
-                            "If you want to join the "
-                            "groups, go back and do it in the sort task.")
-            log.debug(deja)
-            self.errorlabel['text'] = deja
-            self.setgroup_comparison(newvalue)
-            return 1
         if program['params'].cvt() != 'T': #Warning only on segmental changes
             self.polygraphwarn(newvalue)
             #These should each make one change only, checking for overwrites
@@ -12507,10 +12505,10 @@ class TranscribeS(Transcribe,Segments):
         self.runwindow.on_quit()
         self.donewpyaudio()
         self.parent.redo_joinglyphs(self.group)
-    def set_ok_w_form(self):
+    def set_ok_w_form(self,error=False):
         form=self.transcriber.formfield.get()
         self.oktext.set(_("OK: use ‘{form}’ for this sound").format(form=form))
-        if form:
+        if form and not error:
             self.ok_button['state'] = 'normal'
         else:
             self.ok_button['state'] = 'disabled'
@@ -12560,15 +12558,13 @@ class TranscribeS(Transcribe,Segments):
         inputfeedbackframe=ui.Frame(self.runwindow.frame,
                             row=2,column=0,sticky=''
                             )
-        """extract from here"""
         self.transcriber=transcriber.Transcriber(inputfeedbackframe,
                                 initval=initval,
                                 soundsettings=self.soundsettings,
                                 chars=self.glyphspossible,
                                 row=0,column=0,sticky=''
                                 )
-        self.transcriber.formfield.bind('<KeyRelease>', self.updateform) #apply function after key
-        """to here"""
+        self.transcriber.newname.trace_add('write', self.updateform)
         infoframe=ui.Frame(inputfeedbackframe,
                             row=0,column=1,sticky=''
                             )
