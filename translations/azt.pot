@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-06 15:10-0600\n"
+"POT-Creation-Date: 2026-01-06 15:54-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -257,7 +257,7 @@ msgid ""
 "(this will make {azt} restart and redo the syllable profile analysis)."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17766
+#: /home/kentr/bin/raspy/azt/main.py:17770
 #, python-brace-format
 msgid ", at {mhz}Mhz"
 msgstr ""
@@ -839,7 +839,7 @@ msgid ""
 "Merging."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17753
+#: /home/kentr/bin/raspy/azt/main.py:17757
 #, python-brace-format
 msgid "Called with arguments {exe} {script} / {args}"
 msgstr ""
@@ -899,7 +899,7 @@ msgstr ""
 msgid "Check Lexicon"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17659
+#: /home/kentr/bin/raspy/azt/main.py:17660
 #, python-brace-format
 msgid "Check for {azt} updates"
 msgstr ""
@@ -1012,7 +1012,7 @@ msgstr ""
 msgid "Compare with another group ({group})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17769
+#: /home/kentr/bin/raspy/azt/main.py:17773
 #, python-brace-format
 msgid "Computer identifies as {platform}"
 msgstr ""
@@ -1067,7 +1067,7 @@ msgstr ""
 msgid "Convert lexeme field data to citation form fields?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17782
+#: /home/kentr/bin/raspy/azt/main.py:17786
 #, python-brace-format
 msgid "Converting string ‘{task}’ to class"
 msgstr ""
@@ -1489,7 +1489,7 @@ msgstr ""
 msgid "Executable {exe} search output: {output}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17755
+#: /home/kentr/bin/raspy/azt/main.py:17759
 #, python-brace-format
 msgid "Executed by {version}"
 msgstr ""
@@ -2495,7 +2495,7 @@ msgstr ""
 msgid "Logical problem! n:{n}; v:{v} ({sense_id})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17770
+#: /home/kentr/bin/raspy/azt/main.py:17774
 #, python-brace-format
 msgid "Loglevel is {level}; started at {time}"
 msgstr ""
@@ -3847,7 +3847,7 @@ msgstr ""
 msgid "Rename {ps} {profile} {noun_sg} group ‘{group}’ in ‘{check}’ frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17741
+#: /home/kentr/bin/raspy/azt/main.py:17745
 msgid "Repo has no branch attribute; assuming main branch."
 msgstr ""
 
@@ -3895,16 +3895,14 @@ msgstr ""
 msgid "Resort skipped data"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17676
-#, python-brace-format
-msgid ""
-"Restart \n"
-"{azt}"
-msgstr ""
-
 #: /home/kentr/bin/raspy/azt/main.py:16474
 #: /home/kentr/bin/raspy/azt/main.py:17508
 msgid "Restart Now"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:17679
+#, python-brace-format
+msgid "Restart {azt}"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:5864
@@ -3930,12 +3928,9 @@ msgstr ""
 msgid "Reverify current group ({group})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17666
+#: /home/kentr/bin/raspy/azt/main.py:17667
 #, python-brace-format
-msgid ""
-"Revert to \n"
-"main branch \n"
-"of {azt}"
+msgid "Revert to main branch of {azt}"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:1195
@@ -4002,7 +3997,7 @@ msgstr ""
 msgid "Running wordsbypsprofile... {} {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17748
+#: /home/kentr/bin/raspy/azt/main.py:17752
 #, python-brace-format
 msgid "Running {azt} v{version}, updated {rel} ({date})"
 msgstr ""
@@ -4483,11 +4478,11 @@ msgstr ""
 msgid "Shutting down Task"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17805
+#: /home/kentr/bin/raspy/azt/main.py:17809
 msgid "Shutting down by keyboard interrupt"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17803
+#: /home/kentr/bin/raspy/azt/main.py:17807
 msgid "Shutting down by user request"
 msgstr ""
 
@@ -5536,20 +5531,17 @@ msgstr ""
 msgid "Tried to write {type} LIFT file to {newfile}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17672
-#, python-brace-format
-msgid ""
-"Try \n"
-"testing branch \n"
-"of {azt}"
-msgstr ""
-
 #: /home/kentr/bin/raspy/azt/main.py:17500
 msgid "Try Again"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/sound_ui.py:84
 msgid "Try again"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:17674
+#, python-brace-format
+msgid "Try testing branch of {azt}"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:1192
@@ -5643,7 +5635,7 @@ msgstr ""
 msgid "URL Settings now {urls}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17807
+#: /home/kentr/bin/raspy/azt/main.py:17811
 #, python-brace-format
 msgid "Unexpected exception! {error}"
 msgstr ""
@@ -6110,7 +6102,7 @@ msgstr ""
 msgid "Words to sort!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17756
+#: /home/kentr/bin/raspy/azt/main.py:17760
 #, python-brace-format
 msgid "Working directory is {dir} on {host}, running on {cores} cores"
 msgstr ""
