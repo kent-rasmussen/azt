@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-05 18:23-0600\n"
+"POT-Creation-Date: 2026-01-06 13:30-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,16 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: /home/kentr/bin/raspy/azt/main.py:12343
-msgid ""
-"\n"
-"\n"
-"**If this isn't what you wanted, fix and confirm your digraph and trigraph "
-"settings in the menu \n"
-"(this will make {} restart and redo the syllable profile analysis)."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:4189
+#: /home/kentr/bin/raspy/azt/main.py:4190
 msgid ""
 "\n"
 "\n"
@@ -35,7 +26,7 @@ msgid ""
 "have mixed unrelated groups."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17628
+#: /home/kentr/bin/raspy/azt/main.py:17633
 msgid ""
 "\n"
 "\n"
@@ -49,60 +40,60 @@ msgid ""
 "# It should only be used to get a new demo started."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17493
+#: /home/kentr/bin/raspy/azt/main.py:17498
 msgid ""
 "\n"
 "(Check your internet connection and try again)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3457
+#: /home/kentr/bin/raspy/azt/main.py:3458
 #, python-brace-format
 msgid ""
 "\n"
 "(guessing [{lang}]; if that's not correct, exit now and fix it!)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2784
+#: /home/kentr/bin/raspy/azt/main.py:2785
 msgid ""
 "\n"
 "*** There don't seem to be any possible digraphs or trigraphs in your data "
 "***\n"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4181
+#: /home/kentr/bin/raspy/azt/main.py:4182
 #, python-brace-format
 msgid ""
 "\n"
 "=> You are no longer distinguishing {items}."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4185
+#: /home/kentr/bin/raspy/azt/main.py:4186
 #, python-brace-format
 msgid ""
 "\n"
 "=> Your interpretation of {items} changed."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12803
+#: /home/kentr/bin/raspy/azt/main.py:12808
 msgid ""
 "\n"
 "A label that describes the surface tone form in this context would be best, "
 "like ‘[˥˥˥ ˨˨˨]’"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12538
+#: /home/kentr/bin/raspy/azt/main.py:12545
 msgid ""
 "\n"
 "Because this is a new group, you need to give it some name now."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6739
+#: /home/kentr/bin/raspy/azt/main.py:6740
 msgid ""
 "\n"
 "Check the log for any further conflicts"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3462
+#: /home/kentr/bin/raspy/azt/main.py:3463
 #, python-brace-format
 msgid ""
 "\n"
@@ -113,63 +104,44 @@ msgid ""
 "Or select a different database on the next screen."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4187
+#: /home/kentr/bin/raspy/azt/main.py:4188
 #, python-brace-format
 msgid ""
 "\n"
 "Here is the full info, in form setting: (from, to): {changed}."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7606
+#: /home/kentr/bin/raspy/azt/main.py:7607
 #, python-brace-format
 msgid ""
 "\n"
 "Modded {count} entries with new information from the SILCAWL"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17599
+#: /home/kentr/bin/raspy/azt/main.py:17604
 msgid ""
 "\n"
 "Please see {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7872
+#: /home/kentr/bin/raspy/azt/main.py:7873
 #, python-brace-format
 msgid ""
 "\n"
 "Problems downloading {count} images"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11164
-msgid ""
-"\n"
-"{}"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:12339
-msgid ""
-"\n"
-"{} will *not* remove ‘{}’ from those settings, because you may still be "
-"using it elsewhere."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:12333
-msgid ""
-"\n"
-"{} will add ‘{}’ to those settings."
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:2757
+#: /home/kentr/bin/raspy/azt/main.py:2758
 #, python-brace-format
 msgid " (Answer for each of {names}.)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10332
+#: /home/kentr/bin/raspy/azt/main.py:10449
 #, python-brace-format
-msgid " (by {context})"
+msgid " (currently ‘{group}’)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2759
+#: /home/kentr/bin/raspy/azt/main.py:2760
 #, python-brace-format
 msgid " (in {names})"
 msgstr ""
@@ -178,7 +150,7 @@ msgstr ""
 msgid " (pl)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17114
+#: /home/kentr/bin/raspy/azt/main.py:17119
 msgid " and "
 msgstr ""
 
@@ -190,7 +162,7 @@ msgstr ""
 msgid " words not covered by current regexs in "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2372
+#: /home/kentr/bin/raspy/azt/main.py:2373
 #, python-brace-format
 msgid "# This settings file was made on {date} on {node}"
 msgstr ""
@@ -200,45 +172,46 @@ msgstr ""
 msgid "# This transitional settings file was made on {date} on {node}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6229
+#: /home/kentr/bin/raspy/azt/main.py:6230
 #, python-brace-format
 msgid "'glyph_members' contains {new}; not renaming {old}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6234
+#: /home/kentr/bin/raspy/azt/main.py:6235
 #, python-brace-format
 msgid "'glyphdict' contains {new}; not renaming {old}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6236
+#: /home/kentr/bin/raspy/azt/main.py:6237
 #, python-brace-format
 msgid "'rename_glyph' can safely rename {old} to {new}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1505
+#: /home/kentr/bin/raspy/azt/main.py:1506
 msgid "(All groups)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16436
+#: /home/kentr/bin/raspy/azt/main.py:16441
 #, python-brace-format
 msgid ""
 "(Git is used by {0} to track changes in your data, and to keep {0} up to "
 "date)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16428
+#: /home/kentr/bin/raspy/azt/main.py:16433
 msgid "(Mercurial is used by Chorus and languagedepot.org)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17497
+#: /home/kentr/bin/raspy/azt/main.py:17502
 msgid "(Problem! You will likely need help with this.)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11247
-msgid "(Report is also available at ({})"
+#: /home/kentr/bin/raspy/azt/main.py:11256
+#, python-brace-format
+msgid "(Report is also available at {file}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17499
+#: /home/kentr/bin/raspy/azt/main.py:17504
 msgid "(Restart {} to use this update)"
 msgstr ""
 
@@ -246,24 +219,33 @@ msgstr ""
 msgid "(This may require a large download)"
 msgstr ""
 
+#: /home/kentr/bin/raspy/azt/main.py:10334
+#, python-brace-format
+msgid "(by {context})"
+msgstr ""
+
 #: /home/kentr/bin/raspy/azt/sound_ui.py:420
 msgid "(click any to change)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16448
+#: /home/kentr/bin/raspy/azt/main.py:16453
 msgid "(e.g., in Windows, install *this* file),"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1459
+#: /home/kentr/bin/raspy/azt/main.py:1460
 #, python-brace-format
 msgid "(framed group: ‘{group}’)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1457
+#: /home/kentr/bin/raspy/azt/main.py:10524
+msgid "(last group)"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1458
 msgid "(no framed group)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4868
+#: /home/kentr/bin/raspy/azt/main.py:4869
 msgid "(only)"
 msgstr ""
 
@@ -273,82 +255,94 @@ msgstr ""
 msgid "(un)hide"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3645
+#: /home/kentr/bin/raspy/azt/main.py:10522
+#, python-brace-format
+msgid "({count} remaining)"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:3646
 #, python-brace-format
 msgid "**Changed {attr}; should restart!**"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17758
+#: /home/kentr/bin/raspy/azt/main.py:12364
+#, python-brace-format
+msgid ""
+"**If this isn't what you wanted, fix and confirm your digraph and trigraph "
+"settings in the menu \n"
+"(this will make {azt} restart and redo the syllable profile analysis)."
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:17761
 #, python-brace-format
 msgid ", at {mhz}Mhz"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4457
+#: /home/kentr/bin/raspy/azt/main.py:4458
 #, python-brace-format
 msgid ", with ISO 639-3 code [{code}]"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10333
-#, python-brace-format
-msgid "...belongs in which group{instr_mod}?"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:5172
-msgid "1 - Bare minimum, just one per group"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:5174
-msgid "100 - All examples in most databases"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:5175
-msgid "1000 - All examples in VERY large databases"
+#: /home/kentr/bin/raspy/azt/main.py:10319
+msgid "...belongs in which group?"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:5173
+msgid "1 - Bare minimum, just one per group"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:5175
+msgid "100 - All examples in most databases"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:5176
+msgid "1000 - All examples in VERY large databases"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:5174
 msgid "5 - Some, but not all, of most groups"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9266
+#: /home/kentr/bin/raspy/azt/main.py:9267
 msgid ""
 "<= No changes after this! \n"
 "Please check that the above looks good on several examples!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:14111
+#: /home/kentr/bin/raspy/azt/main.py:14116
 msgid "<= resort *this* *word*"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11176
+#: /home/kentr/bin/raspy/azt/main.py:11185
 msgid "<no frames with a sort value>"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1386
+#: /home/kentr/bin/raspy/azt/main.py:1387
 msgid "<no grammatical category>"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1376
+#: /home/kentr/bin/raspy/azt/main.py:1377
 msgid "<no syllable profile>"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9100
+#: /home/kentr/bin/raspy/azt/main.py:9101
 msgid "<word>"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9102
+#: /home/kentr/bin/raspy/azt/main.py:9103
 #, python-brace-format
 msgid "<{lang} word>"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16838
+#: /home/kentr/bin/raspy/azt/main.py:16843
 msgid "AZT source"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1184
+#: /home/kentr/bin/raspy/azt/main.py:1185
 msgid "About"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7518
+#: /home/kentr/bin/raspy/azt/main.py:7519
 msgid "Add Morpheme to Dictionary"
 msgstr ""
 
@@ -356,69 +350,69 @@ msgstr ""
 msgid "Add Tone frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8144
+#: /home/kentr/bin/raspy/azt/main.py:8145
 msgid "Add Words"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8157
+#: /home/kentr/bin/raspy/azt/main.py:8158
 msgid "Add Words with Audio"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7408
-#: /home/kentr/bin/raspy/azt/main.py:8842
-#: /home/kentr/bin/raspy/azt/main.py:8887
+#: /home/kentr/bin/raspy/azt/main.py:7409
+#: /home/kentr/bin/raspy/azt/main.py:8843
+#: /home/kentr/bin/raspy/azt/main.py:8888
 msgid "Add a Word"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8857
+#: /home/kentr/bin/raspy/azt/main.py:8858
 msgid "Add and Parse Words"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8902
+#: /home/kentr/bin/raspy/azt/main.py:8903
 msgid "Add and Parse Words with Audio"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8187
+#: /home/kentr/bin/raspy/azt/main.py:8188
 msgid "Add imperative forms"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8168
+#: /home/kentr/bin/raspy/azt/main.py:8169
 msgid "Add plural forms"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7399
-#: /home/kentr/bin/raspy/azt/main.py:8833
-#: /home/kentr/bin/raspy/azt/main.py:8878
-#: /home/kentr/bin/raspy/azt/main.py:8970
+#: /home/kentr/bin/raspy/azt/main.py:7400
+#: /home/kentr/bin/raspy/azt/main.py:8834
+#: /home/kentr/bin/raspy/azt/main.py:8879
+#: /home/kentr/bin/raspy/azt/main.py:8971
 msgid "Add remaining CAWL entries"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9138
+#: /home/kentr/bin/raspy/azt/main.py:9139
 #, python-brace-format
 msgid "Add {lang} gloss"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7519
+#: /home/kentr/bin/raspy/azt/main.py:7520
 #, python-brace-format
 msgid "Add {lang} morpheme to the dictionary"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9144
+#: /home/kentr/bin/raspy/azt/main.py:9145
 #, python-brace-format
 msgid "Add {lang} values for this frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9448
+#: /home/kentr/bin/raspy/azt/main.py:9449
 #, python-brace-format
 msgid "Add {ps} Tone Frame for {lang}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7603
+#: /home/kentr/bin/raspy/azt/main.py:7604
 #, python-brace-format
 msgid "Added {count} entries from the SILCAWL"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7548
+#: /home/kentr/bin/raspy/azt/main.py:7549
 msgid "Adding CAWL entries to fill out, in established database."
 msgstr ""
 
@@ -426,11 +420,11 @@ msgstr ""
 msgid "Adding values (in lift.py) : {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15968
+#: /home/kentr/bin/raspy/azt/main.py:15973
 msgid "Adding {}, which is already there."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15964
+#: /home/kentr/bin/raspy/azt/main.py:15969
 msgid "Adding {}, which is not already there."
 msgstr ""
 
@@ -440,13 +434,13 @@ msgstr ""
 msgid "Advanced"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16459
+#: /home/kentr/bin/raspy/azt/main.py:16464
 msgid "After you install {}, you should restart."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5098
-#: /home/kentr/bin/raspy/azt/main.py:11346
-#: /home/kentr/bin/raspy/azt/main.py:11786
+#: /home/kentr/bin/raspy/azt/main.py:5099
+#: /home/kentr/bin/raspy/azt/main.py:11355
+#: /home/kentr/bin/raspy/azt/main.py:11795
 msgid "All"
 msgstr ""
 
@@ -457,7 +451,7 @@ msgid ""
 "ps and get affixes."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7271
+#: /home/kentr/bin/raspy/azt/main.py:7272
 msgid "All done! Sort some more words, and come back."
 msgstr ""
 
@@ -469,16 +463,17 @@ msgstr ""
 msgid "All of the below"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4711
+#: /home/kentr/bin/raspy/azt/main.py:4712
 msgid "All words"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10156
+#: /home/kentr/bin/raspy/azt/main.py:10157
 #, python-brace-format
-msgid "All ‘{self.profile}’ groups in the ‘{self.check}’ "
+msgid ""
+"All ‘{profile}’ groups in the ‘{check}’ {typename} are verified and distinct!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6541
+#: /home/kentr/bin/raspy/azt/main.py:6542
 msgid "Alphabet Chart"
 msgstr ""
 
@@ -499,56 +494,56 @@ msgstr ""
 msgid "Alphabet Chart for {name}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13187
+#: /home/kentr/bin/raspy/azt/main.py:13192
 msgid "Alphabet Report"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13128
+#: /home/kentr/bin/raspy/azt/main.py:13133
 msgid "Alphabet Report (Not background)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13197
+#: /home/kentr/bin/raspy/azt/main.py:13202
 msgid "Alphabet Report (checks)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13205
+#: /home/kentr/bin/raspy/azt/main.py:13210
 msgid "Alphabet Report (slices/checks)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13228
+#: /home/kentr/bin/raspy/azt/main.py:13233
 msgid "Alphabet Report by Tone Group (slices/checks)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13236
+#: /home/kentr/bin/raspy/azt/main.py:13241
 msgid "Alphabet Report by Tone group"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13220
+#: /home/kentr/bin/raspy/azt/main.py:13225
 msgid "Alphabet Report by Tone group (checks)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13213
+#: /home/kentr/bin/raspy/azt/main.py:13218
 msgid "Alphabet Report by Tone group (not background)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6333
+#: /home/kentr/bin/raspy/azt/main.py:6334
 msgid "Alphabet.add_glyph_member done."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6349
+#: /home/kentr/bin/raspy/azt/main.py:6350
 msgid "Alphabet.rm_glyph_member done."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5387
+#: /home/kentr/bin/raspy/azt/main.py:5388
 msgid "Analysis & Decision Tasks"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5860
+#: /home/kentr/bin/raspy/azt/main.py:5861
 #, python-brace-format
 msgid "Analysis of what you're done with: {status}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3943
+#: /home/kentr/bin/raspy/azt/main.py:3944
 msgid "Analyze & Decide"
 msgstr ""
 
@@ -556,7 +551,7 @@ msgstr ""
 msgid "Andika"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6948
+#: /home/kentr/bin/raspy/azt/main.py:6949
 msgid "Apparently self.pyaudio doesn't exist, or isn't initialized."
 msgstr ""
 
@@ -564,13 +559,13 @@ msgstr ""
 msgid "Apparently we've run this before today; not backing up again."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17136
+#: /home/kentr/bin/raspy/azt/main.py:17141
 msgid ""
 "Apparently you tried to pull text out of a non element, and it's not a "
 "simple string, either: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3074
+#: /home/kentr/bin/raspy/azt/main.py:3075
 #, python-brace-format
 msgid "Apparently {sense} isn't under {form}?"
 msgstr ""
@@ -580,7 +575,7 @@ msgstr ""
 msgid "Arguments: {args}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11091
+#: /home/kentr/bin/raspy/azt/main.py:11100
 msgid ""
 "As a warning to the analyst who may not understand the implications of this "
 "*automated analysis*, you may have too few groupings here, particularly if "
@@ -596,24 +591,24 @@ msgid ""
 "each of these better than a computer could)."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3020
+#: /home/kentr/bin/raspy/azt/main.py:3021
 #, python-brace-format
 msgid "Asked about polgraphs, but user exited, so exiting {name}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15989
+#: /home/kentr/bin/raspy/azt/main.py:15994
 msgid "Asked for commit confirm; asking user"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15987
+#: /home/kentr/bin/raspy/azt/main.py:15992
 msgid "Asked for commit confirm; returning auto False"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15984
+#: /home/kentr/bin/raspy/azt/main.py:15989
 msgid "Asked for commit confirm; returning auto True"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6616
+#: /home/kentr/bin/raspy/azt/main.py:6617
 msgid "Asked for forms to search for a data slice (only do once!)"
 msgstr ""
 
@@ -622,61 +617,62 @@ msgstr ""
 msgid "Asked for ftype {type}, but found phonetic field which is {val}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2744
+#: /home/kentr/bin/raspy/azt/main.py:2745
 msgid "Asking about Digraphs and Trigraphs!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4995
+#: /home/kentr/bin/raspy/azt/main.py:4996
 #, python-brace-format
 msgid "Asking for a group (_getglyph kwargs: {kwargs})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5029
+#: /home/kentr/bin/raspy/azt/main.py:5030
 #, python-brace-format
 msgid "Asking for a group (_getgroup kwargs: {kwargs})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4533
+#: /home/kentr/bin/raspy/azt/main.py:4534
 msgid "Asking for check cvt/type"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4418
+#: /home/kentr/bin/raspy/azt/main.py:4419
 msgid "Asking for interface language..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4846
+#: /home/kentr/bin/raspy/azt/main.py:4847
 msgid "Asking for multicheckscope..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4891
+#: /home/kentr/bin/raspy/azt/main.py:4892
 msgid "Asking for number of button columns..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4566
+#: /home/kentr/bin/raspy/azt/main.py:4567
 msgid "Asking for parserasklevel..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4582
+#: /home/kentr/bin/raspy/azt/main.py:4583
 msgid "Asking for parserautolevel..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4615
+#: /home/kentr/bin/raspy/azt/main.py:4616
 msgid "Asking for profile..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4598
+#: /home/kentr/bin/raspy/azt/main.py:4599
 msgid "Asking for ps..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11216
-msgid "Asking for the following {} examples from id {}: {}"
+#: /home/kentr/bin/raspy/azt/main.py:11225
+#, python-brace-format
+msgid "Asking for the following {n} examples from id {id}: {examples}"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/parser.py:298
 msgid "Asking for the impossible!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4794
+#: /home/kentr/bin/raspy/azt/main.py:4795
 #, python-brace-format
 msgid "Asking for ‘{ps}’ second form field..."
 msgstr ""
@@ -685,17 +681,17 @@ msgstr ""
 msgid "At least this much"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2187
+#: /home/kentr/bin/raspy/azt/main.py:2188
 #, python-brace-format
 msgid "Attribute {s} didn't make it back"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2160
+#: /home/kentr/bin/raspy/azt/main.py:2161
 #, python-brace-format
 msgid "Attribute {s} not found"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2181
+#: /home/kentr/bin/raspy/azt/main.py:2182
 #, python-brace-format
 msgid "Attribute {s} verified as {val1}={val2}"
 msgstr ""
@@ -710,12 +706,12 @@ msgstr ""
 msgid "Atumatic parse on three forms with ps (auto: {auto_level})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7356
+#: /home/kentr/bin/raspy/azt/main.py:7357
 #, python-brace-format
 msgid "Audiofile {file} found at {url}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7899
+#: /home/kentr/bin/raspy/azt/main.py:7900
 #: /home/kentr/bin/raspy/azt/ui_tkinter.py:1779
 msgid "Back"
 msgstr ""
@@ -758,20 +754,20 @@ msgid ""
 "\ttonevalue: value of an example tone group (from sorting)\n"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7744
+#: /home/kentr/bin/raspy/azt/main.py:7745
 msgid "Browse"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2218
+#: /home/kentr/bin/raspy/azt/main.py:2219
 #, python-brace-format
 msgid "But legacy file {legacy} does; converting!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12958
+#: /home/kentr/bin/raspy/azt/main.py:12963
 msgid "By manual request"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5732
+#: /home/kentr/bin/raspy/azt/main.py:5733
 #, python-brace-format
 msgid "CAWL missing ({count}): {missing}"
 msgstr ""
@@ -784,24 +780,24 @@ msgstr ""
 msgid "CV profile {} ends with {}, which is not distinguished there"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16356
+#: /home/kentr/bin/raspy/azt/main.py:16361
 msgid "Call to {} ({}) failed: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16333
+#: /home/kentr/bin/raspy/azt/main.py:16338
 msgid ""
 "Call to {} ({}) gave error: \n"
 "{}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16312
+#: /home/kentr/bin/raspy/azt/main.py:16317
 msgid ""
 "Call to {} ({}) gave error: \n"
 "{}\n"
 "Merging."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17745
+#: /home/kentr/bin/raspy/azt/main.py:17748
 msgid "Called with arguments {} {} / {}"
 msgstr ""
 
@@ -814,15 +810,15 @@ msgstr ""
 msgid "Change"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1710
+#: /home/kentr/bin/raspy/azt/main.py:1711
 msgid "Change Part of Speech"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1295
+#: /home/kentr/bin/raspy/azt/main.py:1296
 msgid "Change analysis language"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:14106
+#: /home/kentr/bin/raspy/azt/main.py:14111
 msgid "Change example word; Right click to back up"
 msgstr ""
 
@@ -830,20 +826,21 @@ msgstr ""
 msgid "Change to another Database (Restart)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4215
-#: /home/kentr/bin/raspy/azt/main.py:4222
+#: /home/kentr/bin/raspy/azt/main.py:4216
+#: /home/kentr/bin/raspy/azt/main.py:4223
 #, python-brace-format
 msgid ""
 "Changed to value ({new}) doesn't match current setting for ‘{setting}’: "
 "{current}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2712
+#: /home/kentr/bin/raspy/azt/main.py:2713
 msgid "Changes called for; like it or not, redoing analysis."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12948
-msgid "Changing values from {} to {} for the following sense.ids: {}"
+#: /home/kentr/bin/raspy/azt/main.py:12953
+#, python-brace-format
+msgid "Changing values from {group} to {uf} for the following sense.ids: {ids}"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/alphabet_chart.py:281
@@ -851,15 +848,15 @@ msgstr ""
 msgid "Charis"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6125
+#: /home/kentr/bin/raspy/azt/main.py:6126
 msgid "Check Examples"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6145
+#: /home/kentr/bin/raspy/azt/main.py:6146
 msgid "Check Lexicon"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17653
+#: /home/kentr/bin/raspy/azt/main.py:17658
 #, python-brace-format
 msgid ""
 "Check for \n"
@@ -867,11 +864,11 @@ msgid ""
 "updates"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2993
+#: /home/kentr/bin/raspy/azt/main.py:2994
 msgid "Checking for Digraphs and Trigraphs!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2023
+#: /home/kentr/bin/raspy/azt/main.py:2024
 msgid "Checking for a data repository"
 msgstr ""
 
@@ -883,34 +880,34 @@ msgstr ""
 msgid "Checking real words against theoretical syllable profiles "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6107
+#: /home/kentr/bin/raspy/azt/main.py:6108
 msgid "Checking work done..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1410
+#: /home/kentr/bin/raspy/azt/main.py:1411
 #, python-brace-format
 msgid "Checking {cvt},"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16628
+#: /home/kentr/bin/raspy/azt/main.py:16633
 msgid "Chorus Rescue files found!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9168
+#: /home/kentr/bin/raspy/azt/main.py:9169
 msgid "Citation form"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8475
+#: /home/kentr/bin/raspy/azt/main.py:8476
 #, python-brace-format
 msgid "Citation: {citation}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8466
+#: /home/kentr/bin/raspy/azt/main.py:8467
 #, python-brace-format
 msgid "Citation: {citation}, {sfname}: {forms}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1526
+#: /home/kentr/bin/raspy/azt/main.py:1527
 msgid "Click here to change the number of columns used for sort buttons"
 msgstr ""
 
@@ -918,39 +915,40 @@ msgstr ""
 msgid "Click to hear"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:14045
+#: /home/kentr/bin/raspy/azt/main.py:14050
 msgid "Click to hear this utterance"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5291
+#: /home/kentr/bin/raspy/azt/main.py:5292
 #, python-brace-format
 msgid "Closing down {name} and storing changes"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3945
+#: /home/kentr/bin/raspy/azt/main.py:3946
 msgid "Collect Data"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7765
+#: /home/kentr/bin/raspy/azt/main.py:7766
 #: /home/kentr/bin/raspy/azt/alphabet_chart.py:270
 msgid "Columns"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15990
+#: /home/kentr/bin/raspy/azt/main.py:15995
 msgid "Commit Confirm"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12447
-#: /home/kentr/bin/raspy/azt/main.py:12637
-#: /home/kentr/bin/raspy/azt/main.py:12889
+#: /home/kentr/bin/raspy/azt/main.py:12454
+#: /home/kentr/bin/raspy/azt/main.py:12642
+#: /home/kentr/bin/raspy/azt/main.py:12894
 msgid "Compare with another group"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12453
-msgid "Compare with another group ({})"
+#: /home/kentr/bin/raspy/azt/main.py:12460
+#, python-brace-format
+msgid "Compare with another group ({group})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17761
+#: /home/kentr/bin/raspy/azt/main.py:17764
 #, python-brace-format
 msgid "Computer identifies as {platform}"
 msgstr ""
@@ -960,38 +958,38 @@ msgstr ""
 msgid "Configure Tone Beeps"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8256
+#: /home/kentr/bin/raspy/azt/main.py:8257
 msgid "Confirm this combination of affixes?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9871
+#: /home/kentr/bin/raspy/azt/main.py:9872
 msgid ""
 "Confirming that current group and verification code match before making "
 "changes."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6837
+#: /home/kentr/bin/raspy/azt/main.py:6838
 #, python-brace-format
 msgid "Conflict: cannot rename ‘{item}’ to ‘{glyph}’; ‘{new}’ already exists."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12688
+#: /home/kentr/bin/raspy/azt/main.py:12693
 msgid "Consonant Letters"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13260
+#: /home/kentr/bin/raspy/azt/main.py:13265
 msgid "Consultant Check"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7274
+#: /home/kentr/bin/raspy/azt/main.py:7275
 msgid "Continue to next syllable profile"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5666
+#: /home/kentr/bin/raspy/azt/main.py:5667
 msgid "Conversion Done!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5673
+#: /home/kentr/bin/raspy/azt/main.py:5674
 msgid "Convert lexeme field data to citation form fields?"
 msgstr ""
 
@@ -999,67 +997,67 @@ msgstr ""
 msgid "Copy work from a USB drive"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16044
+#: /home/kentr/bin/raspy/azt/main.py:16049
 msgid "Copying from {} to {}; this may take some time."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16057
+#: /home/kentr/bin/raspy/azt/main.py:16062
 msgid "Copying to {}; this may take some time."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15758
+#: /home/kentr/bin/raspy/azt/main.py:15763
 msgid "Correspondence of First Two Vowels"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15787
+#: /home/kentr/bin/raspy/azt/main.py:15792
 msgid "Correspondence of First/only Two Consonants"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15791
+#: /home/kentr/bin/raspy/azt/main.py:15796
 msgid "Correspondence of Second Two Consonants"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15765
+#: /home/kentr/bin/raspy/azt/main.py:15770
 msgid "Correspondence of Second and Third Vowels"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15770
+#: /home/kentr/bin/raspy/azt/main.py:15775
 msgid "Correspondence of Third and Fourth Vowels"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15811
+#: /home/kentr/bin/raspy/azt/main.py:15816
 msgid "Correspondence of first CV"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15840
+#: /home/kentr/bin/raspy/azt/main.py:15845
 msgid "Correspondence of first VC"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15816
+#: /home/kentr/bin/raspy/azt/main.py:15821
 msgid "Correspondence of second CV"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15843
+#: /home/kentr/bin/raspy/azt/main.py:15848
 msgid "Correspondence of second VC"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15821
+#: /home/kentr/bin/raspy/azt/main.py:15826
 msgid "Correspondence of third CV"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15847
+#: /home/kentr/bin/raspy/azt/main.py:15852
 msgid "Correspondence of third VC"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16114
+#: /home/kentr/bin/raspy/azt/main.py:16119
 msgid "Couldn't find a local drive to pull from via {}; giving up"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16130
+#: /home/kentr/bin/raspy/azt/main.py:16135
 msgid "Couldn't find a local drive to push to via {}; giving up"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15909
+#: /home/kentr/bin/raspy/azt/main.py:15914
 msgid "Couldn't find a parent; error message follows"
 msgstr ""
 
@@ -1068,7 +1066,7 @@ msgstr ""
 msgid "Couldn't find a repository at {mediadir}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5796
+#: /home/kentr/bin/raspy/azt/main.py:5797
 #, python-brace-format
 msgid ""
 "Couldn't find plausible audiolang (among {audios}) for analang {analang}"
@@ -1078,63 +1076,63 @@ msgstr ""
 msgid "Couldn't find/import lxml, so not compiling report."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16241
+#: /home/kentr/bin/raspy/azt/main.py:16246
 msgid "Create new USB"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5894
-#: /home/kentr/bin/raspy/azt/main.py:5906
+#: /home/kentr/bin/raspy/azt/main.py:5895
+#: /home/kentr/bin/raspy/azt/main.py:5907
 #, python-brace-format
 msgid "Current database: {name}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1851
+#: /home/kentr/bin/raspy/azt/main.py:1852
 msgid ""
 "Current profile \n"
 "(no check set)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5385
+#: /home/kentr/bin/raspy/azt/main.py:5386
 msgid "Data Collection Tasks"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:14828
+#: /home/kentr/bin/raspy/azt/main.py:14833
 msgid "Data Problem!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4939
+#: /home/kentr/bin/raspy/azt/main.py:4940
 msgid "Define a New Tone Frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9445
+#: /home/kentr/bin/raspy/azt/main.py:9446
 #, python-brace-format
 msgid "Define a New {ps} Tone Frame for {lang}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3077
+#: /home/kentr/bin/raspy/azt/main.py:3078
 msgid "Deleted key of empty list"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4144
+#: /home/kentr/bin/raspy/azt/main.py:4145
 msgid "Dict changes; checking attributes and updating the UI."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5320
+#: /home/kentr/bin/raspy/azt/main.py:5321
 #, python-brace-format
 msgid "Didn't find thread for {thread}; can't mark finished."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4081
+#: /home/kentr/bin/raspy/azt/main.py:4082
 #, python-brace-format
 msgid "Didn't find {attr} in {settings}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6549
+#: /home/kentr/bin/raspy/azt/main.py:6550
 #, python-brace-format
 msgid "Didn't find ‘{key}’ ui.Variable: {value}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10744
+#: /home/kentr/bin/raspy/azt/main.py:10753
 msgid "Different"
 msgstr ""
 
@@ -1142,56 +1140,56 @@ msgstr ""
 msgid "Digraph and Trigraph settings"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4351
+#: /home/kentr/bin/raspy/azt/main.py:4352
 msgid "Distinguish Glides (G) initially and medially?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4352
+#: /home/kentr/bin/raspy/azt/main.py:4353
 msgid "Distinguish Glides word finally (G#)?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4344
+#: /home/kentr/bin/raspy/azt/main.py:4345
 msgid "Distinguish Nasals (N) initially and medially?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4345
+#: /home/kentr/bin/raspy/azt/main.py:4346
 msgid "Distinguish Nasals word finally (N#)?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4354
+#: /home/kentr/bin/raspy/azt/main.py:4355
 msgid "Distinguish Non-Nasal/Glide Sonorants (S) initially and medially?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4356
+#: /home/kentr/bin/raspy/azt/main.py:4357
 msgid "Distinguish Non-Nasal/Glide Sonorants word finally (S#)?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4341
+#: /home/kentr/bin/raspy/azt/main.py:4342
 msgid "Distinguish glottal stops (ʔ) initially and medially?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4343
+#: /home/kentr/bin/raspy/azt/main.py:4344
 msgid "Distinguish glottal stops word finally (ʔ#)?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4347
+#: /home/kentr/bin/raspy/azt/main.py:4348
 msgid "Distinguish likely depressor consonants (D) initially and medially?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4349
+#: /home/kentr/bin/raspy/azt/main.py:4350
 msgid "Distinguish likely depressor consonants word finally (D#)?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6320
+#: /home/kentr/bin/raspy/azt/main.py:6321
 #, python-brace-format
 msgid "Distinguishing {glyph1} and {glyph2}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11230
+#: /home/kentr/bin/raspy/azt/main.py:11239
 msgid "Div/0"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11234
+#: /home/kentr/bin/raspy/azt/main.py:11243
 msgid "Div/0%"
 msgstr ""
 
@@ -1199,11 +1197,11 @@ msgstr ""
 msgid "Do"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15991
+#: /home/kentr/bin/raspy/azt/main.py:15996
 msgid "Do you want to commit language data via {} now?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5689
+#: /home/kentr/bin/raspy/azt/main.py:5690
 #, python-brace-format
 msgid ""
 "Do you want {name} to move data from your lexeme fields to citation fields, "
@@ -1214,15 +1212,19 @@ msgstr ""
 msgid "Doesn't seem to be list formatted."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5405
+#: /home/kentr/bin/raspy/azt/main.py:5406
 msgid "Doing guid triage and other variables —this takes awhile..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5436
+#: /home/kentr/bin/raspy/azt/main.py:5437
 msgid "Doing guid triage by ps... This also takes awhile?..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8128
+#: /home/kentr/bin/raspy/azt/main.py:12582
+msgid "Don't use Other Groups:"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:8129
 msgid "Don't use this task."
 msgstr ""
 
@@ -1234,7 +1236,7 @@ msgstr ""
 msgid "Done initializing Report"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5303
+#: /home/kentr/bin/raspy/azt/main.py:5304
 #, python-brace-format
 msgid "Done maybe committing/pushing to {repo}"
 msgstr ""
@@ -1251,27 +1253,27 @@ msgstr ""
 msgid "Done with {}."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5939
+#: /home/kentr/bin/raspy/azt/main.py:5940
 #, python-brace-format
 msgid "Done writing to lift ({status})."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13033
+#: /home/kentr/bin/raspy/azt/main.py:13038
 msgid "Done —no change"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10161
+#: /home/kentr/bin/raspy/azt/main.py:10163
 msgid "Done!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6082
+#: /home/kentr/bin/raspy/azt/main.py:6083
 #, python-brace-format
 msgid ""
 "Done!\n"
 "(saved to {self.export.save_dir})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7210
+#: /home/kentr/bin/raspy/azt/main.py:7211
 msgid "Done/Next"
 msgstr ""
 
@@ -1279,55 +1281,56 @@ msgstr ""
 msgid "Done; setting back matter, etc, now."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7810
+#: /home/kentr/bin/raspy/azt/main.py:7811
 #, python-brace-format
 msgid ""
 "Dowloading images from OpenClipart.org\n"
 "{glosses}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4450
+#: /home/kentr/bin/raspy/azt/main.py:4451
 msgid "Enter Analysis Language Name"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7602
+#: /home/kentr/bin/raspy/azt/main.py:7603
 msgid "Entries Added!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7613
+#: /home/kentr/bin/raspy/azt/main.py:7614
 msgid "Error trying to add SILCAWL entries"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3470
-#: /home/kentr/bin/raspy/azt/main.py:15914
+#: /home/kentr/bin/raspy/azt/main.py:3471
+#: /home/kentr/bin/raspy/azt/main.py:15919
 #: /home/kentr/bin/raspy/azt/reports.py:86
 msgid "Error!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4623
+#: /home/kentr/bin/raspy/azt/main.py:4624
 #, python-brace-format
 msgid "Error: please set Grammatical category with profiles first! (not {ps})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4476
+#: /home/kentr/bin/raspy/azt/main.py:4477
 #, python-brace-format
 msgid "Error: please set Lift file first! ({file})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13169
-msgid "Error: please set Ps-Profile first! ({}/{}/{})"
+#: /home/kentr/bin/raspy/azt/main.py:13174
+#, python-brace-format
+msgid "Error: please set Ps-Profile first! ({ps}/{check}/{profile})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15896
+#: /home/kentr/bin/raspy/azt/main.py:15901
 msgid "ErrorNotice got no text?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4563
+#: /home/kentr/bin/raspy/azt/main.py:4564
 #, python-brace-format
 msgid "Evidently there isn't a parser running ({error})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9222
+#: /home/kentr/bin/raspy/azt/main.py:9223
 #, python-brace-format
 msgid "Examples for {name} {field} tone frame"
 msgstr ""
@@ -1351,7 +1354,7 @@ msgstr ""
 msgid "Exception: ({error}; guid={guid})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5936
+#: /home/kentr/bin/raspy/azt/main.py:5937
 #, python-brace-format
 msgid "Exception: {error}"
 msgstr ""
@@ -1360,43 +1363,43 @@ msgstr ""
 msgid "Exit"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2743
+#: /home/kentr/bin/raspy/azt/main.py:2744
 msgid "Exit with no changes"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2741
+#: /home/kentr/bin/raspy/azt/main.py:2742
 #, python-brace-format
 msgid "Exit {azt} with no changes"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6119
+#: /home/kentr/bin/raspy/azt/main.py:6120
 msgid "Export"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6050
-#: /home/kentr/bin/raspy/azt/main.py:6052
+#: /home/kentr/bin/raspy/azt/main.py:6051
+#: /home/kentr/bin/raspy/azt/main.py:6053
 msgid "Export Data"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9055
+#: /home/kentr/bin/raspy/azt/main.py:9056
 msgid "Field to frame:"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2673
+#: /home/kentr/bin/raspy/azt/main.py:2674
 #, python-brace-format
 msgid "Fields found in lexicon: {fields}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15831
-#: /home/kentr/bin/raspy/azt/main.py:15857
+#: /home/kentr/bin/raspy/azt/main.py:15836
+#: /home/kentr/bin/raspy/azt/main.py:15862
 msgid "Fifth CV"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15800
+#: /home/kentr/bin/raspy/azt/main.py:15805
 msgid "Fifth Consonant"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15775
+#: /home/kentr/bin/raspy/azt/main.py:15780
 msgid "Fifth Vowel"
 msgstr ""
 
@@ -1411,7 +1414,7 @@ msgstr ""
 msgid "Fill CAWL Images"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9275
+#: /home/kentr/bin/raspy/azt/main.py:9276
 #, python-brace-format
 msgid ""
 "Fill in the {lang} frame forms below.\n"
@@ -1427,9 +1430,9 @@ msgstr ""
 msgid "Final URL: {url}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5223
-#: /home/kentr/bin/raspy/azt/main.py:5295
-#: /home/kentr/bin/raspy/azt/main.py:5869
+#: /home/kentr/bin/raspy/azt/main.py:5224
+#: /home/kentr/bin/raspy/azt/main.py:5296
+#: /home/kentr/bin/raspy/azt/main.py:5870
 msgid "Final write to lift"
 msgstr ""
 
@@ -1443,35 +1446,36 @@ msgstr ""
 msgid "Finished in {:1.0f} minutes, {:2.3f} seconds."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11243
-msgid "Finished in {} seconds."
+#: /home/kentr/bin/raspy/azt/main.py:11252
+#, python-brace-format
+msgid "Finished in {seconds} seconds."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5834
+#: /home/kentr/bin/raspy/azt/main.py:5835
 #, python-brace-format
 msgid "Finished looking at [{lang}]{field} field: {status}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2278
+#: /home/kentr/bin/raspy/azt/main.py:2279
 #, python-brace-format
 msgid "Finished settingsobjects up to {keys}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6868
+#: /home/kentr/bin/raspy/azt/main.py:6869
 #, python-brace-format
 msgid "Finished update_annotations_by_glyph threads for ‘{glyph}’"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5329
+#: /home/kentr/bin/raspy/azt/main.py:5330
 msgid "Finished with all threads running"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16904
+#: /home/kentr/bin/raspy/azt/main.py:16909
 #, python-brace-format
 msgid "Finished {msg}at {now} ({m:1.0f}m, {s:2.3f}s)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16907
+#: /home/kentr/bin/raspy/azt/main.py:16912
 #, python-brace-format
 msgid "Finished {msg}at {now}, after {duration} seconds"
 msgstr ""
@@ -1481,21 +1485,21 @@ msgstr ""
 msgid "Finished {msg}at {time} ({minutes:1.0f}m, {seconds:2.3f}s)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7368
+#: /home/kentr/bin/raspy/azt/main.py:7369
 #, python-brace-format
 msgid "Finishing makeaudiofilename with {file} and {url}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5317
+#: /home/kentr/bin/raspy/azt/main.py:5318
 #, python-brace-format
 msgid "Finishing thread for {thread}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15755
+#: /home/kentr/bin/raspy/azt/main.py:15760
 msgid "First Vowel"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15783
+#: /home/kentr/bin/raspy/azt/main.py:15788
 msgid "First/only Consonant"
 msgstr ""
 
@@ -1519,25 +1523,25 @@ msgstr ""
 msgid "Found "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7569
+#: /home/kentr/bin/raspy/azt/main.py:7570
 #, python-brace-format
 msgid "Found a noun, using {ps}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16064
+#: /home/kentr/bin/raspy/azt/main.py:16069
 msgid "Found a related repository; added to settings."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7572
+#: /home/kentr/bin/raspy/azt/main.py:7573
 #, python-brace-format
 msgid "Found a verb, using {ps}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2709
+#: /home/kentr/bin/raspy/azt/main.py:2710
 msgid "Found changes, but not storing them; returning 1."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3217
+#: /home/kentr/bin/raspy/azt/main.py:3218
 #, python-brace-format
 msgid "Found db.analangs: {langs}"
 msgstr ""
@@ -1555,7 +1559,7 @@ msgid ""
 "Found gloss data counts: {gloss_counts}, definition counts: {def_counts}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7587
+#: /home/kentr/bin/raspy/azt/main.py:7588
 #, python-brace-format
 msgid ""
 "Found gloss of SILCAWL line #{line:04} ({gloss}); adding info to that entry."
@@ -1576,12 +1580,12 @@ msgstr ""
 msgid "Found other ps {ps}; skipping..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3218
+#: /home/kentr/bin/raspy/azt/main.py:3219
 #, python-brace-format
 msgid "Found params analang: {lang}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5945
+#: /home/kentr/bin/raspy/azt/main.py:5946
 msgid "Found previous request to write; doing again."
 msgstr ""
 
@@ -1611,7 +1615,7 @@ msgstr ""
 msgid "Found target ({head}) in grandchildren of {node}: {grandchildren}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6453
+#: /home/kentr/bin/raspy/azt/main.py:6454
 #, python-brace-format
 msgid "Found undistinguished items {item1} and {item2}"
 msgstr ""
@@ -1621,7 +1625,7 @@ msgstr ""
 msgid "Found verbal ps {ps}; using..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7233
+#: /home/kentr/bin/raspy/azt/main.py:7234
 #, python-brace-format
 msgid "Found {analyzed} analyzed of {total} examples in slice"
 msgstr ""
@@ -1631,12 +1635,12 @@ msgstr ""
 msgid "Found {code} Repository! ({mediadir})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7870
+#: /home/kentr/bin/raspy/azt/main.py:7871
 #, python-brace-format
 msgid "Found {count} images!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7846
+#: /home/kentr/bin/raspy/azt/main.py:7847
 #, python-brace-format
 msgid "Found {count} images: {images}"
 msgstr ""
@@ -1651,12 +1655,12 @@ msgstr ""
 msgid "Found {file_url_totry}; assuming imgdir={imgdir}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2035
+#: /home/kentr/bin/raspy/azt/main.py:2036
 #, python-brace-format
 msgid "Found {name} Repository!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3438
+#: /home/kentr/bin/raspy/azt/main.py:3439
 #, python-brace-format
 msgid "Found {n} analangs: {langs}"
 msgstr ""
@@ -1671,23 +1675,23 @@ msgstr ""
 msgid "Found {n} target nodes with {lang}."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:14820
+#: /home/kentr/bin/raspy/azt/main.py:14825
 msgid "Found {} valid data slices: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15853
+#: /home/kentr/bin/raspy/azt/main.py:15858
 msgid "Fourth CV"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15796
+#: /home/kentr/bin/raspy/azt/main.py:15801
 msgid "Fourth Consonant"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15771
+#: /home/kentr/bin/raspy/azt/main.py:15776
 msgid "Fourth Vowel"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9041
+#: /home/kentr/bin/raspy/azt/main.py:9042
 msgid "Frame name:"
 msgstr ""
 
@@ -1695,7 +1699,7 @@ msgstr ""
 msgid "Fully checked lexical"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13878
+#: /home/kentr/bin/raspy/azt/main.py:13883
 msgid ""
 "Gathering groups\n"
 "On the next screen, you will sort groups into letter groups"
@@ -1705,74 +1709,74 @@ msgstr ""
 msgid "Generating theoretical syllable profiles"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9147
+#: /home/kentr/bin/raspy/azt/main.py:9148
 msgid "Get Example"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11318
+#: /home/kentr/bin/raspy/azt/main.py:11327
 msgid "Getting results of Search request"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4932
+#: /home/kentr/bin/raspy/azt/main.py:4933
 msgid "Getting the check name..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9040
+#: /home/kentr/bin/raspy/azt/main.py:9041
 msgid "Give a frame name!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12931
+#: /home/kentr/bin/raspy/azt/main.py:12936
 msgid "Give a name for this UF tone group!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12356
+#: /home/kentr/bin/raspy/azt/main.py:12263
 msgid "Give a name for this group!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7258
+#: /home/kentr/bin/raspy/azt/main.py:7259
 #, python-brace-format
 msgid "Giving user the number {count} example from tone group {group}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9084
+#: /home/kentr/bin/raspy/azt/main.py:9085
 #, python-brace-format
 msgid "Gloss in {lang}:"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7596
+#: /home/kentr/bin/raspy/azt/main.py:7597
 #, python-brace-format
 msgid ""
 "Gloss of SILCAWL line #{line:04} ({gloss}) not found; copying over that "
 "entry."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7813
+#: /home/kentr/bin/raspy/azt/main.py:7814
 #, python-brace-format
 msgid "Glosses: {glosses}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12589
+#: /home/kentr/bin/raspy/azt/main.py:12594
 msgid ""
 "Go back and join \n"
 "with one of\n"
 "← these groups"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1880
+#: /home/kentr/bin/raspy/azt/main.py:1881
 msgid "Go to the next check"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1858
+#: /home/kentr/bin/raspy/azt/main.py:1859
 msgid "Go to the next syllable profile"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16446
-#: /home/kentr/bin/raspy/azt/main.py:16457
+#: /home/kentr/bin/raspy/azt/main.py:16451
+#: /home/kentr/bin/raspy/azt/main.py:16462
 #, python-brace-format
 msgid "Go to {url}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2135
+#: /home/kentr/bin/raspy/azt/main.py:2136
 #, python-brace-format
 msgid "Going to make {legacy_name} into {savefile}"
 msgstr ""
@@ -1802,22 +1806,29 @@ msgstr ""
 msgid "Greatgrandchildren of {node}: {greatgrandchildren}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10500
-msgid "Group ‘{}’ only has {} example; marking verified and continuing."
+#: /home/kentr/bin/raspy/azt/main.py:10507
+#, python-brace-format
+msgid ""
+"Group ‘{group}’ only has {count} example; marking verified and continuing."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1183
+#: /home/kentr/bin/raspy/azt/main.py:12439
+#, python-brace-format
+msgid "Groups: {group} (of {groups}); {comp}?"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1184
 msgid "Help"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4303
+#: /home/kentr/bin/raspy/azt/main.py:4304
 #, python-brace-format
 msgid ""
 "Here you can view and set parameters that change how {name} interprets "
 "{lang} segments (consonant and vowel glyphs/characters)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17593
+#: /home/kentr/bin/raspy/azt/main.py:17598
 msgid "Hey! You found a problem! (details and solution below)"
 msgstr ""
 
@@ -1832,17 +1843,17 @@ msgstr ""
 msgid "Hey, not sure how this language is formatted! ({})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11007
+#: /home/kentr/bin/raspy/azt/main.py:11016
 msgid ""
 "Hey, sort some morphemes in at least one frame before trying to make a tone "
 "report!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13465
+#: /home/kentr/bin/raspy/azt/main.py:13470
 msgid "Hey, you have no gloss languages set!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6564
+#: /home/kentr/bin/raspy/azt/main.py:6565
 #, python-brace-format
 msgid ""
 "Hey, you're not done with {ps} {profile} words by {check}!\n"
@@ -1850,19 +1861,19 @@ msgid ""
 "‘{button}’"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4033
+#: /home/kentr/bin/raspy/azt/main.py:4034
 msgid "Hide Buttons"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:251 /home/kentr/bin/raspy/azt/main.py:4029
+#: /home/kentr/bin/raspy/azt/main.py:251 /home/kentr/bin/raspy/azt/main.py:4030
 msgid "Hide Menus"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4039
+#: /home/kentr/bin/raspy/azt/main.py:4040
 msgid "Hide details"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7236
+#: /home/kentr/bin/raspy/azt/main.py:7237
 #, python-brace-format
 msgid ""
 "How did we get no UR tone groups? {profile}-{ps}\n"
@@ -1870,45 +1881,45 @@ msgid ""
 "Doing that for you now..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4453
+#: /home/kentr/bin/raspy/azt/main.py:4454
 #, python-brace-format
 msgid "How do you want to display the name of {name}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4893
+#: /home/kentr/bin/raspy/azt/main.py:4894
 msgid "How many columns do you want to use for the sort buttons?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4907
+#: /home/kentr/bin/raspy/azt/main.py:4908
 msgid "How many lexical categories to report (2 = Noun and Verb) ?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4920
+#: /home/kentr/bin/raspy/azt/main.py:4921
 msgid "How many syllable profiles to report?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4353
+#: /home/kentr/bin/raspy/azt/main.py:4354
 msgid "How to interpret Consonant-Glide (CG) sequences?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4358
+#: /home/kentr/bin/raspy/azt/main.py:4359
 msgid "How to interpret Consonant-Sonorant (CS) sequences?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4346
+#: /home/kentr/bin/raspy/azt/main.py:4347
 msgid "How to interpret Nasal-Consonant (NC) sequences?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4359
+#: /home/kentr/bin/raspy/azt/main.py:4360
 msgid ""
 "How to interpret Vowel-Nasal (VN) sequences? (after NC interpretation above)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4361
+#: /home/kentr/bin/raspy/azt/main.py:4362
 msgid "How to interpret the *same* vowel letter twice in a row (VV)? "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4949
+#: /home/kentr/bin/raspy/azt/main.py:4950
 #, python-brace-format
 msgid ""
 "I can't find any checks for type {cvt}, ps {ps}, profile {profile}. Probably "
@@ -1926,11 +1937,13 @@ msgstr ""
 msgid "I can't tell the terminal's encoding, sorry!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12779
-msgid "I don't have any sorted data for check: {}, ps-profile: {}-{},"
+#: /home/kentr/bin/raspy/azt/main.py:12784
+#, python-brace-format
+msgid ""
+"I don't have any sorted data for check: {check}, ps-profile: {ps}-{profile},"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17605
+#: /home/kentr/bin/raspy/azt/main.py:17610
 #, python-brace-format
 msgid ""
 "I have tried to install some Python dependencies for you. If everything but "
@@ -1950,7 +1963,7 @@ msgstr ""
 msgid "I'm working on a dialect of this language"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9419
+#: /home/kentr/bin/raspy/azt/main.py:9420
 #, python-brace-format
 msgid ""
 "I've tried (randomly, then through each) {count} times, and not found one of "
@@ -1966,7 +1979,7 @@ msgid ""
 "Praat."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17623
+#: /home/kentr/bin/raspy/azt/main.py:17628
 msgid ""
 "If the log below doesn't include the text '{}', or if it happened after a "
 "longer work session, please attach your compressed log file"
@@ -1976,7 +1989,7 @@ msgstr ""
 msgid "If you don't like these selections, they can be changed later."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2773
+#: /home/kentr/bin/raspy/azt/main.py:2774
 msgid ""
 "If you expect one (already in your data) that isn't listed here, please "
 "click here to Email me, and I can add it."
@@ -1988,7 +2001,7 @@ msgid ""
 "with your package manager."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4410
+#: /home/kentr/bin/raspy/azt/main.py:4411
 msgid ""
 "If you make changes, this button==> \n"
 "will restart the program to reanalyze your data."
@@ -2000,29 +2013,29 @@ msgid ""
 "deal with that, later.  :-)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7754
+#: /home/kentr/bin/raspy/azt/main.py:7755
 msgid "Image Size"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2691
+#: /home/kentr/bin/raspy/azt/main.py:2692
 #, python-brace-format
 msgid "Imperative field name: {name}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9175
+#: /home/kentr/bin/raspy/azt/main.py:9176
 msgid "Imperative form"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4172
+#: /home/kentr/bin/raspy/azt/main.py:4173
 msgid "Important Notice!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2154
+#: /home/kentr/bin/raspy/azt/main.py:2155
 #, python-brace-format
 msgid "Imported and upgraded {s}/{old}: {val}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2158
+#: /home/kentr/bin/raspy/azt/main.py:2159
 #, python-brace-format
 msgid "Imported {s}: {val}"
 msgstr ""
@@ -2032,25 +2045,25 @@ msgstr ""
 msgid "Importing {name}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2161
+#: /home/kentr/bin/raspy/azt/main.py:2162
 #, python-brace-format
 msgid "Importing {setting} settings done."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6075
+#: /home/kentr/bin/raspy/azt/main.py:6076
 msgid "In Progress..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4269
+#: /home/kentr/bin/raspy/azt/main.py:4270
 #, python-brace-format
 msgid "In your data, {item} includes {examples}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5331
+#: /home/kentr/bin/raspy/azt/main.py:5332
 msgid "Initializing TaskDressing"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2490
+#: /home/kentr/bin/raspy/azt/main.py:2491
 msgid "Initializing settings."
 msgstr ""
 
@@ -2058,7 +2071,7 @@ msgstr ""
 msgid "Initiate Consultant Check"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16471
+#: /home/kentr/bin/raspy/azt/main.py:16476
 msgid "Install {} first, then do this"
 msgstr ""
 
@@ -2066,13 +2079,14 @@ msgstr ""
 msgid "Installing python dependencies"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4296
+#: /home/kentr/bin/raspy/azt/main.py:4297
 #, python-brace-format
 msgid "Interpret {lang} Segments"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11079
-msgid "Introduction to {} {}"
+#: /home/kentr/bin/raspy/azt/main.py:11088
+#, python-brace-format
+msgid "Introduction to {ps} {profile}"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/praatfns.py:501
@@ -2082,11 +2096,11 @@ msgid ""
 "{1}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:14821
+#: /home/kentr/bin/raspy/azt/main.py:14826
 msgid "Invalid entries found: {}/{}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2987
+#: /home/kentr/bin/raspy/azt/main.py:2988
 #, python-brace-format
 msgid ""
 "It looks like neither your LWC ({analang}) nor your interface language "
@@ -2101,7 +2115,7 @@ msgid ""
 "Tell {azt} which file you want to Analyze on the next page."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5050
+#: /home/kentr/bin/raspy/azt/main.py:5051
 #, python-brace-format
 msgid ""
 "It looks like you don't have {ps}-{profile} lexemes grouped in the ‘{check}’ "
@@ -2109,7 +2123,7 @@ msgid ""
 "({kwargs})."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7953
+#: /home/kentr/bin/raspy/azt/main.py:7954
 #, python-brace-format
 msgid ""
 "It looks like you're done filling out the empty entries in your database! "
@@ -2117,7 +2131,7 @@ msgid ""
 "You can still add words through the button on the left ({text})."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2979
+#: /home/kentr/bin/raspy/azt/main.py:2980
 #, python-brace-format
 msgid "It looks like you're working on your LWC; using {lang} digraph defaults"
 msgstr ""
@@ -2127,7 +2141,7 @@ msgstr ""
 msgid "Item {item} not in list {l}, not iterating."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1119
+#: /home/kentr/bin/raspy/azt/main.py:1120
 msgid "Join Glyphs (Letters)"
 msgstr ""
 
@@ -2135,28 +2149,29 @@ msgstr ""
 msgid "Join Groups"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1118
+#: /home/kentr/bin/raspy/azt/main.py:1119
 msgid "Join Sort Groups"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12910
+#: /home/kentr/bin/raspy/azt/main.py:12915
 msgid "Join Underlying Form Groups"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12915
+#: /home/kentr/bin/raspy/azt/main.py:12920
 msgid "Join draft UF Groups"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12982
-msgid "Join/Rename Draft Underlying {}-{} tone groups"
+#: /home/kentr/bin/raspy/azt/main.py:12987
+#, python-brace-format
+msgid "Join/Rename Draft Underlying {ps}-{profile} tone groups"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6132
+#: /home/kentr/bin/raspy/azt/main.py:6133
 #, python-brace-format
 msgid "Just {c} data"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5309
+#: /home/kentr/bin/raspy/azt/main.py:5310
 msgid "Killing window"
 msgstr ""
 
@@ -2192,13 +2207,13 @@ msgstr ""
 msgid "Language initialization done."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3839
-#: /home/kentr/bin/raspy/azt/main.py:4452
+#: /home/kentr/bin/raspy/azt/main.py:3840
+#: /home/kentr/bin/raspy/azt/main.py:4453
 #, python-brace-format
 msgid "Language with code [{code}]"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3001
+#: /home/kentr/bin/raspy/azt/main.py:3002
 #, python-brace-format
 msgid "Language {lang} found without segment settings."
 msgstr ""
@@ -2211,11 +2226,11 @@ msgstr ""
 msgid "Languages"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4037
+#: /home/kentr/bin/raspy/azt/main.py:4038
 msgid "Larger Fonts"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15607
+#: /home/kentr/bin/raspy/azt/main.py:15612
 msgid ""
 "Last analysis at {};\n"
 "last join at {}\n"
@@ -2230,7 +2245,7 @@ msgid ""
 "Right click to configure"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10432
+#: /home/kentr/bin/raspy/azt/main.py:10436
 msgid "Letter"
 msgstr ""
 
@@ -2244,7 +2259,7 @@ msgstr ""
 msgid "Level {level} match, parsing with confirmation (ask: {ask})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9169
+#: /home/kentr/bin/raspy/azt/main.py:9170
 msgid "Lexeme form"
 msgstr ""
 
@@ -2253,11 +2268,11 @@ msgid ""
 "LiftURL is trying to make a lift node; this should never happen; exiting!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7426
+#: /home/kentr/bin/raspy/azt/main.py:7427
 msgid "Limiting segment work to this slice"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8735
+#: /home/kentr/bin/raspy/azt/main.py:8736
 msgid "Loading Affixes"
 msgstr ""
 
@@ -2274,41 +2289,41 @@ msgstr ""
 msgid "Logical problem! n:{n}; v:{v} ({sense_id})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17762
+#: /home/kentr/bin/raspy/azt/main.py:17765
 #, python-brace-format
 msgid "Loglevel is {level}; started at {time}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2625
+#: /home/kentr/bin/raspy/azt/main.py:2626
 #, python-brace-format
 msgid "Looking at ps {ps}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2623
+#: /home/kentr/bin/raspy/azt/main.py:2624
 #, python-brace-format
 msgid "Looking at pss {pss}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1377
+#: /home/kentr/bin/raspy/azt/main.py:1378
 #, python-brace-format
 msgid "Looking at {profile}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7282
+#: /home/kentr/bin/raspy/azt/main.py:7283
 #, python-brace-format
 msgid "Looking for file names for {node} ({tag})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:14568
+#: /home/kentr/bin/raspy/azt/main.py:14573
 msgid "Looking for sensids by UF tone groups for {}-{}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9586
+#: /home/kentr/bin/raspy/azt/main.py:9587
 #, python-brace-format
 msgid "Looking for tone check ‘{check}’, but not in {ps} frames: {frames}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2526
+#: /home/kentr/bin/raspy/azt/main.py:2527
 msgid "Looking for untracked files to add to repositories"
 msgstr ""
 
@@ -2333,13 +2348,13 @@ msgstr ""
 msgid "Looks like I couln't find Praat..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3533
+#: /home/kentr/bin/raspy/azt/main.py:3534
 #, python-brace-format
 msgid "Looks like I found an iso code for analang! ({lang})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3485
-#: /home/kentr/bin/raspy/azt/main.py:3494
+#: /home/kentr/bin/raspy/azt/main.py:3486
+#: /home/kentr/bin/raspy/azt/main.py:3495
 #, python-brace-format
 msgid "Looks like I found an iso code with data for analang! ({lang})"
 msgstr ""
@@ -2350,31 +2365,34 @@ msgid ""
 "Looks like a form is missing, or {lx} isn't a subset of {lc} ({pl};{imp})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11276
-msgid "Looks like that didn't work; trying again not in the background ({})."
+#: /home/kentr/bin/raspy/azt/main.py:11285
+#, python-brace-format
+msgid ""
+"Looks like that didn't work; trying again not in the background ({kwargs})."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10946
+#: /home/kentr/bin/raspy/azt/main.py:10955
+#, python-brace-format
 msgid ""
 "Looks like that didn't work; you may need to run a report first, or not do "
-"it in the background ({})."
+"it in the background ({kwargs})."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11020
+#: /home/kentr/bin/raspy/azt/main.py:11029
 msgid "Looks like the analysis is good; moving on."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11028
+#: /home/kentr/bin/raspy/azt/main.py:11037
 msgid ""
 "Looks like the analysis isn't good, but we're not in the background, so I'm "
 "doing a new analysis now."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2695
+#: /home/kentr/bin/raspy/azt/main.py:2696
 msgid "Looks like there is no Imperative field in the database"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2685
+#: /home/kentr/bin/raspy/azt/main.py:2686
 msgid "Looks like there is no Plural field in the database"
 msgstr ""
 
@@ -2382,7 +2400,7 @@ msgstr ""
 msgid "Looks like there was an error, after all: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2497
+#: /home/kentr/bin/raspy/azt/main.py:2498
 #, python-brace-format
 msgid ""
 "Looks like there's a problem with your directory... {file}\n"
@@ -2398,7 +2416,7 @@ msgstr ""
 msgid "Looks like ˋ{}ˊ contains single and double quotes!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4749
+#: /home/kentr/bin/raspy/azt/main.py:4750
 #, python-brace-format
 msgid "Make Custom Second Form Field for {ps}"
 msgstr ""
@@ -2426,7 +2444,7 @@ msgstr ""
 msgid "Making Target now."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2781
+#: /home/kentr/bin/raspy/azt/main.py:2782
 #, python-brace-format
 msgid ""
 "Making changes will restart {name} and trigger another syllable profile "
@@ -2440,17 +2458,17 @@ msgid ""
 "Match with three forms with ps, asking for confirmation (ask: {ask_level})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1540
+#: /home/kentr/bin/raspy/azt/main.py:1541
 #, python-brace-format
 msgid "Max lexical categories: {max_pss}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1536
+#: /home/kentr/bin/raspy/azt/main.py:1537
 #, python-brace-format
 msgid "Max profiles: {max_profiles}; "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3874
+#: /home/kentr/bin/raspy/azt/main.py:3875
 msgid "Maybe status/slices aren't set up yet."
 msgstr ""
 
@@ -2469,17 +2487,17 @@ msgstr ""
 msgid "Maybeshowtarget: {parent} (family: {family})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1307
+#: /home/kentr/bin/raspy/azt/main.py:1308
 #, python-brace-format
 msgid "Meanings in {lang}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3988
+#: /home/kentr/bin/raspy/azt/main.py:3989
 #, python-brace-format
 msgid "Menus: {menu}; {chooser_menu} (chooser)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3990
+#: /home/kentr/bin/raspy/azt/main.py:3991
 #, python-brace-format
 msgid "Menus: {menu}; {task_menu} (task)"
 msgstr ""
@@ -2489,7 +2507,7 @@ msgstr ""
 msgid "Microphone: ‘{cur}’"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12266
+#: /home/kentr/bin/raspy/azt/main.py:12287
 msgid ""
 "Missing either group or comparison, without value specified; can't switch "
 "them."
@@ -2504,7 +2522,7 @@ msgstr ""
 msgid "Missing sound file; can't continue!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6994
+#: /home/kentr/bin/raspy/azt/main.py:6995
 #, python-brace-format
 msgid "Missing sound setting {setting}; asking again"
 msgstr ""
@@ -2518,11 +2536,11 @@ msgstr ""
 msgid "Missing {node} node!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9696
+#: /home/kentr/bin/raspy/azt/main.py:9697
 msgid "Modify Existing Ad Hoc Sort Group for {} Group"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3212
+#: /home/kentr/bin/raspy/azt/main.py:3213
 msgid "More than Ten Invalid Characters Found!"
 msgstr ""
 
@@ -2530,46 +2548,52 @@ msgstr ""
 msgid "More than one audiolang! Set this up! (exiting)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3448
+#: /home/kentr/bin/raspy/azt/main.py:10264
 #, python-brace-format
-msgid "Most citation data in [{lang}] ({data})"
+msgid "More than one group selected: {groups}"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:3449
 #, python-brace-format
+msgid "Most citation data in [{lang}] ({data})"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:3450
+#, python-brace-format
 msgid "Most lexeme data in [{lang}] ({data})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5693
+#: /home/kentr/bin/raspy/azt/main.py:5694
 msgid "Move lexeme field data to citation fields"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10160
-msgid "Moving on to the next {}!"
+#: /home/kentr/bin/raspy/azt/main.py:10162
+#, python-brace-format
+msgid "Moving on to the next {next_thing}!"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:281
 msgid "Multiple/all territories"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13243
+#: /home/kentr/bin/raspy/azt/main.py:13248
 msgid "Multislice Alphabet Report"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13402
+#: /home/kentr/bin/raspy/azt/main.py:13407
 msgid "Multislice Tone Report"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13423
+#: /home/kentr/bin/raspy/azt/main.py:13428
 msgid "Multislice Tone Report (by location)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13360
-#: /home/kentr/bin/raspy/azt/main.py:13381
+#: /home/kentr/bin/raspy/azt/main.py:13365
+#: /home/kentr/bin/raspy/azt/main.py:13386
 msgid "Multislice Tone Report (not background)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5695
+#: /home/kentr/bin/raspy/azt/main.py:5696
 msgid ""
 "N.B.: This is a fairly radical change to your database, so it would be wise "
 "to back up your data."
@@ -2579,7 +2603,7 @@ msgstr ""
 msgid "NOTICE: we just matched (to remove) a set of "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12537
+#: /home/kentr/bin/raspy/azt/main.py:12544
 msgid "Name"
 msgstr ""
 
@@ -2587,7 +2611,7 @@ msgstr ""
 msgid "Need one of sense, senseid, or entry!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8424
+#: /home/kentr/bin/raspy/azt/main.py:8425
 msgid "Neither"
 msgstr ""
 
@@ -2598,21 +2622,21 @@ msgid ""
 "{bestn}; bestv:{bestv})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3510
+#: /home/kentr/bin/raspy/azt/main.py:3511
 #, python-brace-format
 msgid ""
 "Neither analang looks like an iso code, nor has muchdata; taking the first "
 "one: {langs}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3501
+#: /home/kentr/bin/raspy/azt/main.py:3502
 #, python-brace-format
 msgid ""
 "Neither analang looks like an iso code, taking the one with most citation "
 "data: {langs}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3506
+#: /home/kentr/bin/raspy/azt/main.py:3507
 #, python-brace-format
 msgid ""
 "Neither analang looks like an iso code, taking the one with most lexeme "
@@ -2628,12 +2652,12 @@ msgstr ""
 msgid "Never"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9693
+#: /home/kentr/bin/raspy/azt/main.py:9694
 #, python-brace-format
 msgid "New Ad Hoc Sort Group for {ps} Group"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4985
+#: /home/kentr/bin/raspy/azt/main.py:4986
 msgid "New Frame"
 msgstr ""
 
@@ -2641,38 +2665,38 @@ msgstr ""
 msgid "New LIFT file location"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9329
+#: /home/kentr/bin/raspy/azt/main.py:9330
 #, python-brace-format
 msgid "New {ps} Tone frame for {lang}: Name the Frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7903
+#: /home/kentr/bin/raspy/azt/main.py:7904
 msgid "Next"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7116
+#: /home/kentr/bin/raspy/azt/main.py:7117
 msgid "Next Group"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7094
+#: /home/kentr/bin/raspy/azt/main.py:7095
 #, python-brace-format
 msgid "Next {count} words"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15998
+#: /home/kentr/bin/raspy/azt/main.py:16003
 msgid "No"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7804
+#: /home/kentr/bin/raspy/azt/main.py:7805
 #, python-brace-format
 msgid "No English glosses to search OpenClipart.org! ({glosses})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2040
+#: /home/kentr/bin/raspy/azt/main.py:2041
 msgid "No Git data repository found; creating."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4619
+#: /home/kentr/bin/raspy/azt/main.py:4620
 msgid "No Grammatical Category? "
 msgstr ""
 
@@ -2684,11 +2708,11 @@ msgstr ""
 msgid "No Section Title!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3904
+#: /home/kentr/bin/raspy/azt/main.py:3905
 msgid "No analysis language; exiting."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7363
+#: /home/kentr/bin/raspy/azt/main.py:7364
 msgid "No audio file found, but ready to record: "
 msgstr ""
 
@@ -2699,12 +2723,12 @@ msgid ""
 "audio is elsewhere, fix this."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3649
+#: /home/kentr/bin/raspy/azt/main.py:3650
 #, python-brace-format
 msgid "No change: {attr} == {val}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2737
+#: /home/kentr/bin/raspy/azt/main.py:2738
 msgid "No changes found to polygraph settings, continuing."
 msgstr ""
 
@@ -2712,12 +2736,13 @@ msgstr ""
 msgid "No citation form!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16066
+#: /home/kentr/bin/raspy/azt/main.py:16071
 msgid "No directory given; not cloning."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13045
-msgid "No draft UF groups found for {} words!"
+#: /home/kentr/bin/raspy/azt/main.py:13050
+#, python-brace-format
+msgid "No draft UF groups found for {ps} words!"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/alphabet_chart.py:509
@@ -2725,17 +2750,17 @@ msgstr ""
 msgid "No examples for ‘{glyph}’!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7159
+#: /home/kentr/bin/raspy/azt/main.py:7160
 msgid "No examples! Add some, then come back."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2130
+#: /home/kentr/bin/raspy/azt/main.py:2131
 #, python-brace-format
 msgid "No file name for setting {setting}!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5226
-#: /home/kentr/bin/raspy/azt/main.py:5298
+#: /home/kentr/bin/raspy/azt/main.py:5227
+#: /home/kentr/bin/raspy/azt/main.py:5299
 msgid "No final write to lift"
 msgstr ""
 
@@ -2743,7 +2768,7 @@ msgstr ""
 msgid "No framed value, nor testing; can't continue..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12302
+#: /home/kentr/bin/raspy/azt/main.py:12323
 msgid "No groups in that slice; try another!"
 msgstr ""
 
@@ -2762,7 +2787,7 @@ msgstr ""
 msgid "No language data yet: extrapolating analysis "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5541
+#: /home/kentr/bin/raspy/azt/main.py:5542
 msgid "No mainwindowis found."
 msgstr ""
 
@@ -2771,16 +2796,17 @@ msgstr ""
 msgid "No nroot of value ({lc}:{pl}): {roots}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4637
+#: /home/kentr/bin/raspy/azt/main.py:4638
 #, python-brace-format
 msgid "No profiles of {type} type found!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11371
-msgid "No results for {}/{} ({})!"
+#: /home/kentr/bin/raspy/azt/main.py:11380
+#, python-brace-format
+msgid "No results for {profile}/{check} ({ps})!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17487
+#: /home/kentr/bin/raspy/azt/main.py:17492
 msgid "No results! Is there a {} source available?"
 msgstr ""
 
@@ -2788,19 +2814,19 @@ msgstr ""
 msgid "No root of value for either ps; suppletive?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4709
+#: /home/kentr/bin/raspy/azt/main.py:4710
 msgid "No senses; sort something?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3698
+#: /home/kentr/bin/raspy/azt/main.py:3699
 msgid "No task, apparently, so not worried about changing cvt"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5528
+#: /home/kentr/bin/raspy/azt/main.py:5529
 msgid "No task, apparently; not destroying."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5694
+#: /home/kentr/bin/raspy/azt/main.py:5695
 msgid "No thanks; I'll manage this myself"
 msgstr ""
 
@@ -2809,12 +2835,12 @@ msgstr ""
 msgid "No vroot of value ({lc}:{imp}): {roots}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16430
+#: /home/kentr/bin/raspy/azt/main.py:16435
 #, python-brace-format
 msgid "No {0} repo, nor {0} executable; moving on."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7329
+#: /home/kentr/bin/raspy/azt/main.py:7330
 #, python-brace-format
 msgid "No {ana} analang in {id}! (OK if recording first; forms: {forms})"
 msgstr ""
@@ -2829,7 +2855,7 @@ msgstr ""
 msgid "No {lang} found in Database; creating one from settings."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9112
+#: /home/kentr/bin/raspy/azt/main.py:9113
 #, python-brace-format
 msgid "No {lang} frame info"
 msgstr ""
@@ -2844,15 +2870,15 @@ msgstr ""
 msgid "No {type} type ({ftypes})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16244
+#: /home/kentr/bin/raspy/azt/main.py:16249
 msgid "No {} {} USB backup found"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8310
+#: /home/kentr/bin/raspy/azt/main.py:8311
 msgid "No!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4809
+#: /home/kentr/bin/raspy/azt/main.py:4810
 msgid "No; make a new field"
 msgstr ""
 
@@ -2871,56 +2897,56 @@ msgstr ""
 msgid "Node {node} has no children, so not looking further for descendance."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4805
+#: /home/kentr/bin/raspy/azt/main.py:4806
 msgid "None of these; make a new field"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9233
+#: /home/kentr/bin/raspy/azt/main.py:9234
 msgid "None!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6570
+#: /home/kentr/bin/raspy/azt/main.py:6571
 msgid "Not Done!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3710
+#: /home/kentr/bin/raspy/azt/main.py:3711
 msgid "Not Sorting or Transcribing; chilling with cvt change."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10794
+#: /home/kentr/bin/raspy/azt/main.py:10803
 msgid "Not Trying Again; set a tone frame first!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8541
+#: /home/kentr/bin/raspy/azt/main.py:8542
 #, python-brace-format
 msgid "Not a {ps}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6323
+#: /home/kentr/bin/raspy/azt/main.py:6324
 #, python-brace-format
 msgid "Not distinguishing {glyph1} and {glyph2}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15385
+#: /home/kentr/bin/raspy/azt/main.py:15390
 msgid "Not doing checks with more than 6 "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7801
+#: /home/kentr/bin/raspy/azt/main.py:7802
 msgid "Not getting from openclipart.org"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7198
+#: /home/kentr/bin/raspy/azt/main.py:7199
 #, python-brace-format
 msgid "Not showing example with text {text}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7665
+#: /home/kentr/bin/raspy/azt/main.py:7666
 #, python-brace-format
 msgid "Not storing word (WordCollection): {error}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7627
-#: /home/kentr/bin/raspy/azt/main.py:7638
+#: /home/kentr/bin/raspy/azt/main.py:7628
+#: /home/kentr/bin/raspy/azt/main.py:7639
 #, python-brace-format
 msgid "Not storing {id}, by request"
 msgstr ""
@@ -2929,26 +2955,26 @@ msgstr ""
 msgid "Not sure what kind of cell you're looking for: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7575
+#: /home/kentr/bin/raspy/azt/main.py:7576
 #, python-brace-format
 msgid "Not sure what to do with ps {ps} ({node})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6890
+#: /home/kentr/bin/raspy/azt/main.py:6891
 #, python-brace-format
 msgid "Not sure what to do with this glyph ({cvt}; {glyphs})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6738
+#: /home/kentr/bin/raspy/azt/main.py:6739
 #, python-brace-format
 msgid "Not updating ‘{form}’ (conflict in {anno}."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1523
+#: /home/kentr/bin/raspy/azt/main.py:1524
 msgid "Not using multiple button columns"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10474
+#: /home/kentr/bin/raspy/azt/main.py:10481
 msgid "Not verifying tone examples which don't exist."
 msgstr ""
 
@@ -2960,7 +2986,7 @@ msgstr ""
 msgid "Nothing installed. Output follows:"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1728
+#: /home/kentr/bin/raspy/azt/main.py:1729
 msgid "Nothing to see here..."
 msgstr ""
 
@@ -2984,11 +3010,11 @@ msgstr ""
 msgid "Noun=verb ({n}/{v})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10661
+#: /home/kentr/bin/raspy/azt/main.py:10668
 #, python-brace-format
 msgid ""
-"Now we're going to move group ‘{0}’ into ‘{1}’, removing ‘{0}’ and marking "
-"‘{1}’ unverified."
+"Now we're going to move group ‘{group1}’ into ‘{group2}’, removing "
+"‘{group1}’ and marking ‘{group2}’ unverified."
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:1087
@@ -2997,14 +3023,14 @@ msgid "Number of Examples to Record"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/py_modules.py:101
-#: /home/kentr/bin/raspy/azt/main.py:2738
-#: /home/kentr/bin/raspy/azt/main.py:4466
-#: /home/kentr/bin/raspy/azt/main.py:8234
-#: /home/kentr/bin/raspy/azt/main.py:8539
-#: /home/kentr/bin/raspy/azt/main.py:9710
-#: /home/kentr/bin/raspy/azt/main.py:9753
-#: /home/kentr/bin/raspy/azt/main.py:13031
-#: /home/kentr/bin/raspy/azt/main.py:15937
+#: /home/kentr/bin/raspy/azt/main.py:2739
+#: /home/kentr/bin/raspy/azt/main.py:4467
+#: /home/kentr/bin/raspy/azt/main.py:8235
+#: /home/kentr/bin/raspy/azt/main.py:8540
+#: /home/kentr/bin/raspy/azt/main.py:9711
+#: /home/kentr/bin/raspy/azt/main.py:9754
+#: /home/kentr/bin/raspy/azt/main.py:13036
+#: /home/kentr/bin/raspy/azt/main.py:15942
 #: /home/kentr/bin/raspy/azt/alphabet_chart.py:374
 #: /home/kentr/bin/raspy/azt/ui_tkinter.py:218
 msgid "OK"
@@ -3017,69 +3043,78 @@ msgid ""
 "set already present; asking."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4204
+#: /home/kentr/bin/raspy/azt/main.py:4205
 msgid "OK, go ahead"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:12516
+#, python-brace-format
+msgid "OK: use ‘{form}’ for this sound"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/parser.py:189
 msgid "One field of two parses"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2275
+#: /home/kentr/bin/raspy/azt/main.py:2276
 #, python-brace-format
 msgid "Only finished settingsobjects up to {keys} ({error})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3475
+#: /home/kentr/bin/raspy/azt/main.py:3476
 #, python-brace-format
 msgid "Only one analang in file; using it: ({lang})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3563
+#: /home/kentr/bin/raspy/azt/main.py:3564
 msgid "Only one glosslang!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:14827
+#: /home/kentr/bin/raspy/azt/main.py:14832
 msgid "Or a problem with your database."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13770
+#: /home/kentr/bin/raspy/azt/main.py:13775
 msgid "Other"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8382
-#: /home/kentr/bin/raspy/azt/main.py:8386
+#: /home/kentr/bin/raspy/azt/main.py:12836
+msgid "Other Groups:"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:8383
+#: /home/kentr/bin/raspy/azt/main.py:8387
 #, python-brace-format
 msgid "Other {field}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8918
+#: /home/kentr/bin/raspy/azt/main.py:8919
 msgid "Parse Already Collected Words"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8946
+#: /home/kentr/bin/raspy/azt/main.py:8947
 msgid "Parse One Slice"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8955
+#: /home/kentr/bin/raspy/azt/main.py:8956
 msgid "Parse One Slice, word by word"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8817
+#: /home/kentr/bin/raspy/azt/main.py:8818
 msgid "Parse Words"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1590
+#: /home/kentr/bin/raspy/azt/main.py:1591
 #, python-brace-format
 msgid "Parse automatically at {parser_levels}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1581
+#: /home/kentr/bin/raspy/azt/main.py:1582
 #, python-brace-format
 msgid "Parse with confirmation at {parser_levels}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8803
+#: /home/kentr/bin/raspy/azt/main.py:8804
 msgid "Parse!"
 msgstr ""
 
@@ -3102,16 +3137,16 @@ msgstr ""
 msgid "Parser set to auto for ‘{auto_level}’"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8698
+#: /home/kentr/bin/raspy/azt/main.py:8699
 #, python-brace-format
 msgid "Parsing (ask: {ask} auto: {auto})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1622
+#: /home/kentr/bin/raspy/azt/main.py:1623
 msgid "Parsing all words"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1620
+#: /home/kentr/bin/raspy/azt/main.py:1621
 #, python-brace-format
 msgid "Parsing {sense}"
 msgstr ""
@@ -3121,11 +3156,11 @@ msgstr ""
 msgid "Path so far: {url}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13158
+#: /home/kentr/bin/raspy/azt/main.py:13163
 msgid "Pick Consonants, Vowels, or CV for this report."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:14066
+#: /home/kentr/bin/raspy/azt/main.py:14071
 msgid "Pick this group ({})"
 msgstr ""
 
@@ -3135,7 +3170,7 @@ msgstr ""
 msgid "Pictured Only"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8988
+#: /home/kentr/bin/raspy/azt/main.py:8989
 msgid "Placeholder Check2"
 msgstr ""
 
@@ -3152,7 +3187,7 @@ msgstr ""
 msgid "Please Wait..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16231
+#: /home/kentr/bin/raspy/azt/main.py:16236
 msgid "Please insert your {} USB now."
 msgstr ""
 
@@ -3162,11 +3197,11 @@ msgid ""
 "{}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17621
+#: /home/kentr/bin/raspy/azt/main.py:17626
 msgid "Please replace this text with a description of what you just did."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16439
+#: /home/kentr/bin/raspy/azt/main.py:16444
 msgid "Please see {} for installation recommendations"
 msgstr ""
 
@@ -3192,42 +3227,46 @@ msgid ""
 "before recording real data!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2681
+#: /home/kentr/bin/raspy/azt/main.py:2682
 #, python-brace-format
 msgid "Plural field name: {name}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9173
+#: /home/kentr/bin/raspy/azt/main.py:9174
 msgid "Plural form"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3232
+#: /home/kentr/bin/raspy/azt/main.py:3233
 #, python-brace-format
 msgid "Polygraphs for {lang} in {sclass}: {pgs}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4684
+#: /home/kentr/bin/raspy/azt/main.py:4685
 msgid "Preparing to ask for a sense letter..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4664
+#: /home/kentr/bin/raspy/azt/main.py:4665
 msgid "Preparing to ask for a sense..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12979
+#: /home/kentr/bin/raspy/azt/main.py:12984
 msgid "Preparing to join draft underlying form groups"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6644
+#: /home/kentr/bin/raspy/azt/main.py:1116
+msgid "Presort this group again"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:6645
 msgid "Presorting"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6652
+#: /home/kentr/bin/raspy/azt/main.py:6653
 #, python-brace-format
 msgid "Presorting ({check}={groups})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6641
+#: /home/kentr/bin/raspy/azt/main.py:6642
 #, python-brace-format
 msgid "Presorting for this check/slice already done! ({args})"
 msgstr ""
@@ -3240,18 +3279,18 @@ msgstr ""
 msgid "Problem creating file; does the directory already exist?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11074
-#: /home/kentr/bin/raspy/azt/main.py:11312
-#: /home/kentr/bin/raspy/azt/main.py:11820
+#: /home/kentr/bin/raspy/azt/main.py:11083
+#: /home/kentr/bin/raspy/azt/main.py:11321
+#: /home/kentr/bin/raspy/azt/main.py:11829
 msgid "Problem creating report; see previous messages."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7866
+#: /home/kentr/bin/raspy/azt/main.py:7867
 #, python-brace-format
 msgid "Problem downloading image: {error}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7829
+#: /home/kentr/bin/raspy/azt/main.py:7830
 #, python-brace-format
 msgid ""
 "Problem downloading webpage; check your internet connection!\n"
@@ -3266,12 +3305,12 @@ msgid ""
 "{}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16556
+#: /home/kentr/bin/raspy/azt/main.py:16561
 #, python-brace-format
 msgid "Problem finding branch name: {error}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2163
+#: /home/kentr/bin/raspy/azt/main.py:2164
 #, python-brace-format
 msgid "Problem importing {legacy} ({error})"
 msgstr ""
@@ -3281,64 +3320,74 @@ msgstr ""
 msgid "Problem with SequenceMatcher: {t} != {b_match} (a={a},b={b},match={m})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2184
+#: /home/kentr/bin/raspy/azt/main.py:2185
 #, python-brace-format
 msgid "Problem with attribute {s}; {val1}≠{val2}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2648
+#: /home/kentr/bin/raspy/azt/main.py:2649
 #, python-brace-format
 msgid ""
 "Problem with finding a nominal and verbal lexical category (looked in first "
 "two of [{pss}])"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3103
+#: /home/kentr/bin/raspy/azt/main.py:3104
 #, python-brace-format
 msgid "Processed {n} forms to {ps} syllable profiles"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1702
+#: /home/kentr/bin/raspy/azt/main.py:13273
+msgid "Profiles first!"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1703
 msgid "Progress for"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13174
-msgid "Ps-Profile-Check OK; doing getresults! ({}/{}/{})"
+#: /home/kentr/bin/raspy/azt/main.py:13179
+#, python-brace-format
+msgid "Ps-Profile-Check OK; doing getresults! ({ps}/{check}/{profile})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10462
-msgid "Read this list aloud, and click on any that "
+#: /home/kentr/bin/raspy/azt/main.py:10468
+#, python-brace-format
+msgid "Read this list aloud, and click on any that DOES have ‘{checkname}’."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10467
-msgid "Read this list aloud. Click on any with a "
+#: /home/kentr/bin/raspy/azt/main.py:10474
+#, python-brace-format
+msgid "Read this list aloud. Click on any with a different {checkname} sound."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10446
-msgid "Read this list aloud. Note where each "
+#: /home/kentr/bin/raspy/azt/main.py:10450
+#, python-brace-format
+msgid ""
+"Read this list aloud. Note where each was sorted ({checks}).\n"
+"Click on any with a different {cvtname} sound in that place."
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/xmletfns.py:114
 msgid "Reading XML file: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13091
+#: /home/kentr/bin/raspy/azt/main.py:13096
 msgid "Record Dictionary Words"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13121
+#: /home/kentr/bin/raspy/azt/main.py:13126
 msgid "Record Tone"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13099
+#: /home/kentr/bin/raspy/azt/main.py:13104
 msgid "Record Words"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13111
+#: /home/kentr/bin/raspy/azt/main.py:13116
 msgid "Record Words in Tone Frames"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8015
+#: /home/kentr/bin/raspy/azt/main.py:8016
 msgid ""
 "Record a word in your language that goes with these meanings.\n"
 "Give just a single word (not a phrase) wherever possible."
@@ -3356,7 +3405,7 @@ msgstr ""
 msgid "Record tone group examples"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7051
+#: /home/kentr/bin/raspy/azt/main.py:7052
 #, python-brace-format
 msgid ""
 "Record {profile} {ps} Words: click ‘Record’, talk, and release ({count} "
@@ -3367,13 +3416,13 @@ msgstr ""
 msgid "Recording"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12990
+#: /home/kentr/bin/raspy/azt/main.py:12995
 msgid ""
 "Redo the analysis;\n"
 "start these groups over"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12959
+#: /home/kentr/bin/raspy/azt/main.py:12964
 msgid "Redoing Tone Analysis"
 msgstr ""
 
@@ -3385,22 +3434,22 @@ msgstr ""
 msgid "Reducing profile sets to those that match real senses"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1826
+#: /home/kentr/bin/raspy/azt/main.py:1827
 msgid ""
 "Refresh table, \n"
 "save settings"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3349
+#: /home/kentr/bin/raspy/azt/main.py:3350
 msgid "Refreshing all status settings from LIFT"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3300
+#: /home/kentr/bin/raspy/azt/main.py:3301
 #, python-brace-format
 msgid "Refreshing {cvt} {ps} {profile} status settings from LIFT"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3320
+#: /home/kentr/bin/raspy/azt/main.py:3321
 #, python-brace-format
 msgid "Refreshing {ps} {cvt} status settings from LIFT"
 msgstr ""
@@ -3413,7 +3462,7 @@ msgstr ""
 msgid "Reloading ASR model(s)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3615
+#: /home/kentr/bin/raspy/azt/main.py:3616
 #, python-brace-format
 msgid "Remaining changed attribute! ({attr})"
 msgstr ""
@@ -3430,7 +3479,7 @@ msgstr ""
 msgid "Remake Status file (just this profile)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3072
+#: /home/kentr/bin/raspy/azt/main.py:3073
 #, python-brace-format
 msgid "Removed {form} ({val})"
 msgstr ""
@@ -3440,43 +3489,55 @@ msgstr ""
 msgid "Removing entry with no senses: {guid}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9785
+#: /home/kentr/bin/raspy/azt/main.py:9786
 #, python-brace-format
 msgid "Removing sense {id} from subcheck {group}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6469
+#: /home/kentr/bin/raspy/azt/main.py:6470
 #, python-brace-format
 msgid "Removing {item} from ‘{glyph}’ to make room for {new}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12542
+#: /home/kentr/bin/raspy/azt/main.py:12549
 msgid "Rename"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12792
-msgid "Rename {} {} {} group ‘{}’ in ‘{}’ frame"
+#: /home/kentr/bin/raspy/azt/main.py:12797
+#, python-brace-format
+msgid "Rename {ps} {profile} {noun_sg} group ‘{group}’ in ‘{check}’ frame"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/xlp.py:28
 msgid "Report {} already in process; not doing again."
 msgstr ""
 
+#: /home/kentr/bin/raspy/azt/main.py:13142
+#: /home/kentr/bin/raspy/azt/main.py:13250
+#: /home/kentr/bin/raspy/azt/main.py:13296
+#: /home/kentr/bin/raspy/azt/main.py:13320
+#: /home/kentr/bin/raspy/azt/main.py:13352
+#: /home/kentr/bin/raspy/azt/main.py:13373
+#: /home/kentr/bin/raspy/azt/main.py:13394
+#: /home/kentr/bin/raspy/azt/main.py:13415
+msgid "Report!"
+msgstr ""
+
 #: /home/kentr/bin/raspy/azt/main.py:1028
-#: /home/kentr/bin/raspy/azt/main.py:3947
-#: /home/kentr/bin/raspy/azt/main.py:5389
+#: /home/kentr/bin/raspy/azt/main.py:3948
+#: /home/kentr/bin/raspy/azt/main.py:5390
 msgid "Reports"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16177
+#: /home/kentr/bin/raspy/azt/main.py:16182
 msgid "Repository at {} looks empty, so I'm assuming you just initialized it"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13707
+#: /home/kentr/bin/raspy/azt/main.py:13712
 msgid "Resetting to"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10792
+#: /home/kentr/bin/raspy/azt/main.py:10801
 msgid "Resetting unSorted items"
 msgstr ""
 
@@ -3484,37 +3545,37 @@ msgstr ""
 msgid "Resort skipped data"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17669
+#: /home/kentr/bin/raspy/azt/main.py:17674
 #, python-brace-format
 msgid ""
 "Restart \n"
 "{azt}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16469
-#: /home/kentr/bin/raspy/azt/main.py:17502
+#: /home/kentr/bin/raspy/azt/main.py:16474
+#: /home/kentr/bin/raspy/azt/main.py:17507
 msgid "Restart Now"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5863
+#: /home/kentr/bin/raspy/azt/main.py:5864
 msgid "Restarting from TaskChooser"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16847
+#: /home/kentr/bin/raspy/azt/main.py:16852
 msgid "Result Window"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4948
+#: /home/kentr/bin/raspy/azt/main.py:4949
 #, python-brace-format
 msgid "Return to {name}, to fix settings"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1116
+#: /home/kentr/bin/raspy/azt/main.py:1117
 #, python-brace-format
 msgid "Reverify current group ({group})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17659
+#: /home/kentr/bin/raspy/azt/main.py:17664
 #, python-brace-format
 msgid ""
 "Revert to \n"
@@ -3522,38 +3583,38 @@ msgid ""
 "of {azt}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1194
+#: /home/kentr/bin/raspy/azt/main.py:1195
 #, python-brace-format
 msgid "Revert to {azt} main version"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10715
+#: /home/kentr/bin/raspy/azt/main.py:10724
 #, python-brace-format
 msgid "Review {title_mod} Groups{title_mod_2}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8460
+#: /home/kentr/bin/raspy/azt/main.py:8461
 msgid "Root"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13147
+#: /home/kentr/bin/raspy/azt/main.py:13152
 msgid "Run Check"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5383
+#: /home/kentr/bin/raspy/azt/main.py:5384
 msgid "Run Reports"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5252
+#: /home/kentr/bin/raspy/azt/main.py:5253
 msgid "Run Window"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1562
+#: /home/kentr/bin/raspy/azt/main.py:1563
 #, python-brace-format
 msgid "Run all checks for {checks}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6445
+#: /home/kentr/bin/raspy/azt/main.py:6446
 #, python-brace-format
 msgid "Running have_only_distinguished_items on {x} and {y}"
 msgstr ""
@@ -3577,107 +3638,108 @@ msgstr ""
 msgid "Running wordsbypsprofile... {} {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11811
-msgid "Running {}"
+#: /home/kentr/bin/raspy/azt/main.py:11820
+#, python-brace-format
+msgid "Running {task}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17743
+#: /home/kentr/bin/raspy/azt/main.py:17746
 msgid "Running {} v{}, updated {} ({})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10738
+#: /home/kentr/bin/raspy/azt/main.py:10747
 msgid "Same"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15801
+#: /home/kentr/bin/raspy/azt/main.py:15806
 msgid "Same First Five Consonants"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15774
+#: /home/kentr/bin/raspy/azt/main.py:15779
 msgid "Same First Five Vowels"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15797
+#: /home/kentr/bin/raspy/azt/main.py:15802
 msgid "Same First Four Consonants"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15768
+#: /home/kentr/bin/raspy/azt/main.py:15773
 msgid "Same First Four Vowels"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15805
+#: /home/kentr/bin/raspy/azt/main.py:15810
 msgid "Same First Six Consonants"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15778
+#: /home/kentr/bin/raspy/azt/main.py:15783
 msgid "Same First Six Vowels"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15793
+#: /home/kentr/bin/raspy/azt/main.py:15798
 msgid "Same First Three Consonants"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15762
+#: /home/kentr/bin/raspy/azt/main.py:15767
 msgid "Same First Three Vowels"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15757
+#: /home/kentr/bin/raspy/azt/main.py:15762
 msgid "Same First Two Vowels"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15830
-#: /home/kentr/bin/raspy/azt/main.py:15856
+#: /home/kentr/bin/raspy/azt/main.py:15835
+#: /home/kentr/bin/raspy/azt/main.py:15861
 msgid "Same First/only Five CVs"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15826
-#: /home/kentr/bin/raspy/azt/main.py:15852
+#: /home/kentr/bin/raspy/azt/main.py:15831
+#: /home/kentr/bin/raspy/azt/main.py:15857
 msgid "Same First/only Four CVs"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15834
-#: /home/kentr/bin/raspy/azt/main.py:15860
+#: /home/kentr/bin/raspy/azt/main.py:15839
+#: /home/kentr/bin/raspy/azt/main.py:15865
 msgid "Same First/only Six CVs"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15822
+#: /home/kentr/bin/raspy/azt/main.py:15827
 msgid "Same First/only Three CVs"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15817
+#: /home/kentr/bin/raspy/azt/main.py:15822
 msgid "Same First/only Two CVs"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15786
+#: /home/kentr/bin/raspy/azt/main.py:15791
 msgid "Same First/only Two Consonants"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15790
+#: /home/kentr/bin/raspy/azt/main.py:15795
 msgid "Same Second Two Consonants"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15764
+#: /home/kentr/bin/raspy/azt/main.py:15769
 msgid "Same Second and Third Vowels"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15769
+#: /home/kentr/bin/raspy/azt/main.py:15774
 msgid "Same Third and Fourth Vowels"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5304
+#: /home/kentr/bin/raspy/azt/main.py:5305
 msgid "Saving settings for next time"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17298
+#: /home/kentr/bin/raspy/azt/main.py:17303
 #, python-brace-format
 msgid "Search for {exe} on {os} failed: {error}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15785
+#: /home/kentr/bin/raspy/azt/main.py:15790
 msgid "Second Consonant"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15759
+#: /home/kentr/bin/raspy/azt/main.py:15764
 msgid "Second Vowel"
 msgstr ""
 
@@ -3686,12 +3748,12 @@ msgstr ""
 msgid "See {azt} online"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2789
+#: /home/kentr/bin/raspy/azt/main.py:2790
 #, python-brace-format
 msgid "See {url} for further instructions."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5692
+#: /home/kentr/bin/raspy/azt/main.py:5693
 #, python-brace-format
 msgid "See {url} for more information."
 msgstr ""
@@ -3704,8 +3766,8 @@ msgstr ""
 msgid "Segment Interpretation Settings"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3239
-#: /home/kentr/bin/raspy/azt/main.py:3243
+#: /home/kentr/bin/raspy/azt/main.py:3240
+#: /home/kentr/bin/raspy/azt/main.py:3244
 #, python-brace-format
 msgid "Segment lists for {lang} language: {segments}"
 msgstr ""
@@ -3722,7 +3784,7 @@ msgstr ""
 msgid "Select ASR Settings"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4473
+#: /home/kentr/bin/raspy/azt/main.py:4474
 msgid "Select Analysis Language"
 msgstr ""
 
@@ -3730,35 +3792,35 @@ msgstr ""
 msgid "Select Audio Format"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4892
+#: /home/kentr/bin/raspy/azt/main.py:4893
 msgid "Select Button Columns"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4935
+#: /home/kentr/bin/raspy/azt/main.py:4936
 msgid "Select Check"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4534
+#: /home/kentr/bin/raspy/azt/main.py:4535
 msgid "Select Check Type"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5137
+#: /home/kentr/bin/raspy/azt/main.py:5138
 msgid "Select Consonant"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5141
+#: /home/kentr/bin/raspy/azt/main.py:5142
 msgid "Select Consonant/Vowel"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7679
+#: /home/kentr/bin/raspy/azt/main.py:7680
 msgid "Select Example Image File"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5149
+#: /home/kentr/bin/raspy/azt/main.py:5150
 msgid "Select Framed Tone Group"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4495
+#: /home/kentr/bin/raspy/azt/main.py:4496
 msgid "Select Gloss Language"
 msgstr ""
 
@@ -3766,7 +3828,7 @@ msgstr ""
 msgid "Select Input Sound Card"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4420
+#: /home/kentr/bin/raspy/azt/main.py:4421
 msgid "Select Interface Language"
 msgstr ""
 
@@ -3778,24 +3840,24 @@ msgstr ""
 msgid "Select LIFT Lexicon File"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4600
+#: /home/kentr/bin/raspy/azt/main.py:4601
 msgid "Select Lexical Category"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4673
-#: /home/kentr/bin/raspy/azt/main.py:4713
+#: /home/kentr/bin/raspy/azt/main.py:4674
+#: /home/kentr/bin/raspy/azt/main.py:4714
 msgid "Select Lexical Item"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4905
+#: /home/kentr/bin/raspy/azt/main.py:4906
 msgid "Select Maximum Number of Lexical Categories"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4918
+#: /home/kentr/bin/raspy/azt/main.py:4919
 msgid "Select Maximum Number of Syllable Profiles"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5177
+#: /home/kentr/bin/raspy/azt/main.py:5178
 msgid "Select Number of Examples per Group to Record"
 msgstr ""
 
@@ -3803,11 +3865,11 @@ msgstr ""
 msgid "Select Output Sound Card"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4570
+#: /home/kentr/bin/raspy/azt/main.py:4571
 msgid "Select Parser Ask Level"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4586
+#: /home/kentr/bin/raspy/azt/main.py:4587
 msgid "Select Parser Auto Level"
 msgstr ""
 
@@ -3815,28 +3877,28 @@ msgstr ""
 msgid "Select Sampling Frequency"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4847
+#: /home/kentr/bin/raspy/azt/main.py:4848
 msgid "Select Scope of Checks"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4822
+#: /home/kentr/bin/raspy/azt/main.py:4823
 #, python-brace-format
 msgid "Select Second Form Field for {ps}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4514
+#: /home/kentr/bin/raspy/azt/main.py:4515
 msgid "Select Second Gloss Language"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4640
+#: /home/kentr/bin/raspy/azt/main.py:4641
 msgid "Select Syllable Profile"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5133
+#: /home/kentr/bin/raspy/azt/main.py:5134
 msgid "Select Vowel"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4803
+#: /home/kentr/bin/raspy/azt/main.py:4804
 #, python-brace-format
 msgid "Select a database field to use for second forms of ‘{ps}’ words"
 msgstr ""
@@ -3845,12 +3907,12 @@ msgstr ""
 msgid "Select a database on my computer"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7732
+#: /home/kentr/bin/raspy/azt/main.py:7733
 #, python-brace-format
 msgid "Select a good image for {glosses}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7678
+#: /home/kentr/bin/raspy/azt/main.py:7679
 msgid "Select a local image"
 msgstr ""
 
@@ -3867,46 +3929,48 @@ msgstr ""
 msgid "Select another database on my computer"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7729
+#: /home/kentr/bin/raspy/azt/main.py:7730
 #, python-brace-format
 msgid ""
 "Select from these images: \n"
 "{files}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7874
+#: /home/kentr/bin/raspy/azt/main.py:7875
 msgid "Select local image"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8389
+#: /home/kentr/bin/raspy/azt/main.py:8390
 msgid "Select second form"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13026
-msgid "Select the groups below that you want in this {} group, then click ==>"
+#: /home/kentr/bin/raspy/azt/main.py:13031
+#, python-brace-format
+msgid ""
+"Select the groups below that you want in this {ps} group, then click ==>"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9750
+#: /home/kentr/bin/raspy/azt/main.py:9751
 #, python-brace-format
 msgid "Select the {ps} words below that you want in this group, then click ==>"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4807
+#: /home/kentr/bin/raspy/azt/main.py:4808
 #, python-brace-format
 msgid "Select the ‘{field}’ database field for second forms of ‘{ps}’ words"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9182
+#: /home/kentr/bin/raspy/azt/main.py:9183
 msgid "Select which field to frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8405
-#: /home/kentr/bin/raspy/azt/main.py:8418
+#: /home/kentr/bin/raspy/azt/main.py:8406
+#: /home/kentr/bin/raspy/azt/main.py:8419
 #, python-brace-format
 msgid "Select {field} form"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5114
+#: /home/kentr/bin/raspy/azt/main.py:5115
 #, python-brace-format
 msgid "Select {type} Glyph"
 msgstr ""
@@ -3915,11 +3979,11 @@ msgstr ""
 msgid "Send me an Email (from your mail client)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17591
+#: /home/kentr/bin/raspy/azt/main.py:17596
 msgid "Serious Problem!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4294
+#: /home/kentr/bin/raspy/azt/main.py:4295
 msgid "Set Parameters for Segment Interpretation"
 msgstr ""
 
@@ -3930,7 +3994,7 @@ msgid ""
 "and a record button will be here."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1292
+#: /home/kentr/bin/raspy/azt/main.py:1293
 msgid "Set analysis language Name"
 msgstr ""
 
@@ -3938,21 +4002,21 @@ msgstr ""
 msgid "Set audio language to get record buttons!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9053
+#: /home/kentr/bin/raspy/azt/main.py:9054
 msgid "Set the frame name for status table and reports"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1187
+#: /home/kentr/bin/raspy/azt/main.py:1188
 #, python-brace-format
 msgid "Set up {azt} source on USB"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3715
+#: /home/kentr/bin/raspy/azt/main.py:3716
 #, python-brace-format
 msgid "Setting Analysis Language to {lang}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3808
+#: /home/kentr/bin/raspy/azt/main.py:3809
 msgid "Setting up language names"
 msgstr ""
 
@@ -3960,16 +4024,16 @@ msgstr ""
 msgid "Setting up new LIFT file now."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3631
+#: /home/kentr/bin/raspy/azt/main.py:3632
 #, python-brace-format
 msgid "Setting {attr} variable with value: {val} ({old})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3931
+#: /home/kentr/bin/raspy/azt/main.py:3932
 msgid "Settings (Post lift) initialized"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2190
+#: /home/kentr/bin/raspy/azt/main.py:2191
 #, python-brace-format
 msgid ""
 "Settings file {legacy} converted to {savefile}, with each value verified."
@@ -3979,15 +4043,15 @@ msgstr ""
 msgid "Settings for Transcription Model"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3899
+#: /home/kentr/bin/raspy/azt/main.py:3900
 msgid "Settings initialized"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5308
+#: /home/kentr/bin/raspy/azt/main.py:5309
 msgid "Settings saved"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6004
+#: /home/kentr/bin/raspy/azt/main.py:6005
 #, python-brace-format
 msgid "Settings: {settings}"
 msgstr ""
@@ -3998,15 +4062,15 @@ msgstr ""
 msgid "Show All"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4031
+#: /home/kentr/bin/raspy/azt/main.py:4032
 msgid "Show Buttons"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:249 /home/kentr/bin/raspy/azt/main.py:4027
+#: /home/kentr/bin/raspy/azt/main.py:249 /home/kentr/bin/raspy/azt/main.py:4028
 msgid "Show Menus"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4041
+#: /home/kentr/bin/raspy/azt/main.py:4042
 msgid "Show details"
 msgstr ""
 
@@ -4026,54 +4090,55 @@ msgstr ""
 msgid "Showing menus"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5286
+#: /home/kentr/bin/raspy/azt/main.py:5287
 msgid "Shutting down Task"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5219
+#: /home/kentr/bin/raspy/azt/main.py:5220
 msgid "Shutting down runwindow"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15835
-#: /home/kentr/bin/raspy/azt/main.py:15861
+#: /home/kentr/bin/raspy/azt/main.py:15840
+#: /home/kentr/bin/raspy/azt/main.py:15866
 msgid "Sixth CV"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15804
+#: /home/kentr/bin/raspy/azt/main.py:15809
 msgid "Sixth Consonant"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15779
+#: /home/kentr/bin/raspy/azt/main.py:15784
 msgid "Sixth Vowel"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13771
+#: /home/kentr/bin/raspy/azt/main.py:13776
 msgid "Skip this item"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7147
+#: /home/kentr/bin/raspy/azt/main.py:7148
 msgid "Skip to next undone"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9092
+#: /home/kentr/bin/raspy/azt/main.py:9093
 #, python-brace-format
 msgid "Skip {lang}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7470
+#: /home/kentr/bin/raspy/azt/main.py:7471
 #, python-brace-format
 msgid "Skip {lang} gloss"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11497
-msgid "Skipping check {} because it would break the regex"
+#: /home/kentr/bin/raspy/azt/main.py:11506
+#, python-brace-format
+msgid "Skipping check {check} because it would break the regex"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4035
+#: /home/kentr/bin/raspy/azt/main.py:4036
 msgid "Smaller Fonts"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4328
+#: /home/kentr/bin/raspy/azt/main.py:4329
 msgid "Something happened! (language not keyed in segment dictionary)"
 msgstr ""
 
@@ -4087,7 +4152,7 @@ msgstr ""
 msgid "Sorry, did you select a file? Giving up."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9194
+#: /home/kentr/bin/raspy/azt/main.py:9195
 msgid ""
 "Sorry, empty name! \n"
 "Please provide at least \n"
@@ -4095,12 +4160,12 @@ msgid ""
 "from other frames."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12289
-#: /home/kentr/bin/raspy/azt/main.py:12436
+#: /home/kentr/bin/raspy/azt/main.py:12310
+#: /home/kentr/bin/raspy/azt/main.py:12443
 msgid "Sorry, pick a comparison first!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17124
+#: /home/kentr/bin/raspy/azt/main.py:17129
 msgid ""
 "Sorry, something other than one list item found: {}\n"
 "Did you mean to use \"othersOK=True\"? Returning nothing!"
@@ -4110,52 +4175,50 @@ msgstr ""
 msgid "Sorry, that theme doesn't seem to be set up. Pick from these options:"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11023
+#: /home/kentr/bin/raspy/azt/main.py:11032
 msgid ""
 "Sorry, the analysis isn't good, and we're running in the background. That "
 "isn't going to work, so I'm stopping here."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7141
+#: /home/kentr/bin/raspy/azt/main.py:7142
 msgid "Sorry, there are no entries to show!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12361
-msgid ""
-"Sorry, there is already a group with that label; see comparison below. \n"
-"If you want to join the groups, go back and do it in the sort task."
+#: /home/kentr/bin/raspy/azt/main.py:12268
+msgid "Sorry, there is already a group with that label"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12186
+#: /home/kentr/bin/raspy/azt/main.py:12195
 msgid "Sort Consonants"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12207
+#: /home/kentr/bin/raspy/azt/main.py:12216
 msgid "Sort Tone"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12166
+#: /home/kentr/bin/raspy/azt/main.py:12175
 msgid "Sort Vowels"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12111
+#: /home/kentr/bin/raspy/azt/main.py:12120
 msgid "Sort Word Syllables"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6563
-#: /home/kentr/bin/raspy/azt/main.py:10793
-#: /home/kentr/bin/raspy/azt/main.py:12116
-#: /home/kentr/bin/raspy/azt/main.py:12170
-#: /home/kentr/bin/raspy/azt/main.py:12190
-#: /home/kentr/bin/raspy/azt/main.py:12211
+#: /home/kentr/bin/raspy/azt/main.py:6564
+#: /home/kentr/bin/raspy/azt/main.py:10802
+#: /home/kentr/bin/raspy/azt/main.py:12125
+#: /home/kentr/bin/raspy/azt/main.py:12179
+#: /home/kentr/bin/raspy/azt/main.py:12199
+#: /home/kentr/bin/raspy/azt/main.py:12220
 msgid "Sort!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1947
+#: /home/kentr/bin/raspy/azt/main.py:1948
 msgid "Sorted and verified!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13886
+#: /home/kentr/bin/raspy/azt/main.py:13891
 msgid ""
 "Sorting words\n"
 "On the next screen, you will sort words into groups"
@@ -4170,17 +4233,17 @@ msgstr ""
 msgid "Sound Settings"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6987
-#: /home/kentr/bin/raspy/azt/main.py:6991
+#: /home/kentr/bin/raspy/azt/main.py:6988
+#: /home/kentr/bin/raspy/azt/main.py:6992
 #, python-brace-format
 msgid "Sound setting {setting} invalid; asking again"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7016
+#: /home/kentr/bin/raspy/azt/main.py:7017
 msgid "Sound settings"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2360
+#: /home/kentr/bin/raspy/azt/main.py:2361
 #, python-brace-format
 msgid "Sound settings currently: {settings}"
 msgstr ""
@@ -4198,29 +4261,36 @@ msgstr ""
 msgid "Start work on a new language"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10941
-#: /home/kentr/bin/raspy/azt/main.py:11272
-msgid "Starting XLP background report with kwargs {}"
+#: /home/kentr/bin/raspy/azt/main.py:13273
+msgid "Start!"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:10950
+#: /home/kentr/bin/raspy/azt/main.py:11281
+#, python-brace-format
+msgid "Starting XLP background report with kwargs {kwargs}"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/xlp.py:38
 msgid "Starting XLingPaper report file at {} with title '{}'"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10991
-msgid "Starting report {} {}"
+#: /home/kentr/bin/raspy/azt/main.py:11000
+#, python-brace-format
+msgid "Starting report {ps} {profile}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10955
-msgid "Starting reports that didn't work in the background: {}"
+#: /home/kentr/bin/raspy/azt/main.py:10964
+#, python-brace-format
+msgid "Starting reports that didn't work in the background: {reports}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17562
 #: /home/kentr/bin/raspy/azt/main.py:17567
+#: /home/kentr/bin/raspy/azt/main.py:17572
 msgid "Starting up help line..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17584
+#: /home/kentr/bin/raspy/azt/main.py:17589
 msgid "Starting with new root"
 msgstr ""
 
@@ -4228,36 +4298,42 @@ msgstr ""
 msgid "Stopping here b/c no senses found."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1287
+#: /home/kentr/bin/raspy/azt/main.py:1288
 #, python-brace-format
 msgid "Studying {lang}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11892
+#: /home/kentr/bin/raspy/azt/main.py:11901
 msgid "Summary Co-ocurrence Tables"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11113
-msgid "Summary of Frames by {} {} Draft Underlying Melody"
+#: /home/kentr/bin/raspy/azt/main.py:11122
+#, python-brace-format
+msgid "Summary of Frames by {ps} {profile} Draft Underlying Melody"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12652
+#: /home/kentr/bin/raspy/azt/main.py:12657
 msgid "Switch letters with this group"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12901
+#: /home/kentr/bin/raspy/azt/main.py:12906
 msgid "Switch transcriptions with this group"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3700
+#: /home/kentr/bin/raspy/azt/main.py:3701
 msgid "Switching Transcribe tasks"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:12290
+#, python-brace-format
+msgid "Swtiching groups; using ‘{comp}’ for ‘{group}’"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:955
 msgid "Syllable profile"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12349
+#: /home/kentr/bin/raspy/azt/main.py:12370
 msgid "Syllable profile change?"
 msgstr ""
 
@@ -4271,17 +4347,17 @@ msgstr ""
 msgid "Target not found in children, grandchildren, or greatgrandchildren!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5494
+#: /home/kentr/bin/raspy/azt/main.py:5495
 #, python-brace-format
 msgid "Task {task} doesn't seem to have a tooltip."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3950
-#: /home/kentr/bin/raspy/azt/main.py:4053
+#: /home/kentr/bin/raspy/azt/main.py:3951
+#: /home/kentr/bin/raspy/azt/main.py:4054
 msgid "Tasks"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5646
+#: /home/kentr/bin/raspy/azt/main.py:5647
 #, python-brace-format
 msgid "Tasks available ({count}): {tasks}"
 msgstr ""
@@ -4295,23 +4371,28 @@ msgstr ""
 msgid "That doesn't look like an ethnologue code ({analang})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12941
-msgid "That name is already there! (did you forget to include the ‘{}’ group?)"
+#: /home/kentr/bin/raspy/azt/main.py:12946
+#, python-brace-format
+msgid ""
+"That name is already there! (did you forget to include the ‘{uf}’ group?)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4743
+#: /home/kentr/bin/raspy/azt/main.py:4744
 msgid "That name is already used!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12974
-msgid "The analysis still isn't OK after retrying; "
+#: /home/kentr/bin/raspy/azt/main.py:12979
+#, python-brace-format
+msgid ""
+"The analysis still isn't OK after retrying; Check your settings and try "
+"again (e.g., {ps} {profile} checks: {checks})"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/xlp.py:176
 msgid "The call to xelatex didn't work: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5658
+#: /home/kentr/bin/raspy/azt/main.py:5659
 #, python-brace-format
 msgid ""
 "The conversion is done now, so {name} will quit. You may want to inspect "
@@ -4320,7 +4401,7 @@ msgid ""
 "the log file is also saved in {log}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11800
+#: /home/kentr/bin/raspy/azt/main.py:11809
 msgid ""
 "The data in this report is given by most restrictive test first, followed by "
 "less restrictive tests (e.g., V1=V2 before V1 or V2). Additionally, each "
@@ -4349,12 +4430,12 @@ msgstr ""
 msgid "The directory {} already exists! Not Continuing."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16182
+#: /home/kentr/bin/raspy/azt/main.py:16187
 msgid ""
 "The directory {} doesn't seem to have a repository related to {}; removing."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17634
+#: /home/kentr/bin/raspy/azt/main.py:17639
 msgid "The end of {} / {} are below:"
 msgstr ""
 
@@ -4363,43 +4444,43 @@ msgstr ""
 msgid "The file {newfile} already exists!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4239
+#: /home/kentr/bin/raspy/azt/main.py:4240
 #, python-brace-format
 msgid "The following changed (from,to): {changed}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11122
+#: /home/kentr/bin/raspy/azt/main.py:11131
 msgid ""
 "The following table shows correspondences across sortings by tone frames, "
 "with a row for each unique pairing. "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3520
+#: /home/kentr/bin/raspy/azt/main.py:3521
 #, python-brace-format
 msgid ""
 "The language with the most citation data is also the language with the most "
 "lexeme data; using: {langs}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3516
+#: /home/kentr/bin/raspy/azt/main.py:3517
 #, python-brace-format
 msgid ""
 "The language with the most citation data looks like an iso code; using: "
 "{langs}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3526
+#: /home/kentr/bin/raspy/azt/main.py:3527
 #, python-brace-format
 msgid ""
 "The language with the most lexeme data looks like an iso code; using: {langs}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10478
+#: /home/kentr/bin/raspy/azt/main.py:10485
 #, python-brace-format
 msgid "The {item_name} ‘{group}’ only has {n} example; verified."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5179
+#: /home/kentr/bin/raspy/azt/main.py:5180
 #, python-brace-format
 msgid ""
 "The {name} tone report splits sorted data into draft underlying tone melody "
@@ -4417,42 +4498,42 @@ msgid ""
 "do you want to record for each group?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7785
+#: /home/kentr/bin/raspy/azt/main.py:7786
 #, python-brace-format
 msgid "There are too many images to show! ({count})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5449
+#: /home/kentr/bin/raspy/azt/main.py:5450
 msgid "There doesn't seem to be a big button"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5878
+#: /home/kentr/bin/raspy/azt/main.py:5879
 msgid "There doesn't seem to be a runwindow to hide; moving on."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5892
+#: /home/kentr/bin/raspy/azt/main.py:5893
 msgid "There doesn't seem to be a task to hide; moving on."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:14849
+#: /home/kentr/bin/raspy/azt/main.py:14854
 msgid ""
 "There doesn't seem to be any profile data, but you asked for a slice "
 "dictionary. This is a problem; please report it!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5008
+#: /home/kentr/bin/raspy/azt/main.py:5009
 msgid "There don't seem to be any glyphs to compare with!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5074
+#: /home/kentr/bin/raspy/azt/main.py:5075
 msgid "There don't seem to be any groups to compare with!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7794
+#: /home/kentr/bin/raspy/azt/main.py:7795
 msgid "There don't seem to be any images to show."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3451
+#: /home/kentr/bin/raspy/azt/main.py:3452
 msgid "There don't seem to be any language forms in your database!"
 msgstr ""
 
@@ -4473,7 +4554,7 @@ msgid ""
 "will remove it as default so you can open another"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5670
+#: /home/kentr/bin/raspy/azt/main.py:5671
 msgid ""
 "There was a problem converting fields as you asked; you should fix this "
 "before moving on."
@@ -4487,39 +4568,39 @@ msgstr ""
 msgid "There was a problem writing to partial file: "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10460
+#: /home/kentr/bin/raspy/azt/main.py:10466
 #, python-brace-format
 msgid "These all DO NOT have {checkname}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10466
+#: /home/kentr/bin/raspy/azt/main.py:10473
 #, python-brace-format
 msgid "These all have the same {checkname}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10443
+#: /home/kentr/bin/raspy/azt/main.py:10447
 msgid "These all should use the same letter"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10702
+#: /home/kentr/bin/raspy/azt/main.py:10711
 msgid "These are each different from the other(s)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15823
+#: /home/kentr/bin/raspy/azt/main.py:15828
 msgid "Third CV"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15792
+#: /home/kentr/bin/raspy/azt/main.py:15797
 msgid "Third Consonant"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15763
+#: /home/kentr/bin/raspy/azt/main.py:15768
 msgid "Third Vowel"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7410
-#: /home/kentr/bin/raspy/azt/main.py:8844
-#: /home/kentr/bin/raspy/azt/main.py:8889
+#: /home/kentr/bin/raspy/azt/main.py:7411
+#: /home/kentr/bin/raspy/azt/main.py:8845
+#: /home/kentr/bin/raspy/azt/main.py:8890
 msgid ""
 "This adds any word, but is best used after filling out a wordlist, if the "
 "word you want to add isn't there already."
@@ -4529,7 +4610,7 @@ msgstr ""
 msgid "This can take some time."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12902
+#: /home/kentr/bin/raspy/azt/main.py:12907
 msgid "This doesn't save the curent group"
 msgstr ""
 
@@ -4557,63 +4638,69 @@ msgstr ""
 msgid "This includes data in regexes, or with invalid characters or no ps."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8994
+#: /home/kentr/bin/raspy/azt/main.py:8995
 msgid "This is a check placeholder."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11125
+#: /home/kentr/bin/raspy/azt/main.py:11134
+#, python-brace-format
 msgid ""
-"This is a default report, where {} intentionally splits these groups, so you "
-"can see wherever differences lie, even if those differences are likely "
-"meaningless (e.g., 'NA' means the user skipped sorting those words in that "
-"frame, but this will still distinguish one group from another). To help the "
-"qualified analyst navigate such a large selection of small slices of the "
+"This is a default report, where {program} intentionally splits these groups, "
+"so you can see wherever differences lie, even if those differences are "
+"likely meaningless (e.g., 'NA' means the user skipped sorting those words in "
+"that frame, but this will still distinguish one group from another). To help "
+"the qualified analyst navigate such a large selection of small slices of the "
 "data, the data is sorted (both here and in the section ordering) by "
 "similarity of groups. That similarity is structured, and it is provided "
-"here, so you can see the analysis of group relationships for yourself: {}. "
-"And here are the structured similarity relationships for the Frames: {}"
+"here, so you can see the analysis of group relationships for yourself: "
+"{ufs}. And here are the structured similarity relationships for the Frames: "
+"{checks}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9705
+#: /home/kentr/bin/raspy/azt/main.py:9706
 #, python-brace-format
 msgid "This is a large group ({count})! Are you in the right lexical category?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11142
+#: /home/kentr/bin/raspy/azt/main.py:11151
+#, python-brace-format
 msgid ""
 "This is a non-default report, where a user has changed the default (hyper-"
-"split) groups created by {}."
+"split) groups created by {program}."
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:438
 msgid "This language is spoken in multiple territories; where are you working?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:14825
+#: /home/kentr/bin/raspy/azt/main.py:14830
 msgid "This may be a problem with your analysis language: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12329
+#: /home/kentr/bin/raspy/azt/main.py:12350
+#, python-brace-format
 msgid ""
-"This name change (‘{}’ > ‘{}’) impacts your digraph and trigraph settings."
+"This name change (‘{group}’ > ‘{new}’) impacts your digraph and trigraph "
+"settings."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12991
+#: /home/kentr/bin/raspy/azt/main.py:12996
+#, python-brace-format
 msgid ""
-"This page allows you to join the {}-{} draft underlying tone groups created "
-"for you by {}, \n"
+"This page allows you to join the {ps}-{profile} draft underlying tone groups "
+"created for you by {program}, \n"
 "which are almost certainly too small for you. \n"
 "Looking at a draft report, and making your own judgement about which groups "
 "belong together, select all the groups that belong together in one group, "
 "and give that new group a name. You can then repeat this for other groups "
 "that should be joined. \n"
 "If for any reason you want to undo the groups you create here, you can start "
-"over with an new analysis by pressing the ‘{}’ button. \n"
+"over with an new analysis by pressing the ‘{redo}’ button. \n"
 "Otherwise, these joined groups will be reflected in reports until you sort "
 "more data."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9720
+#: /home/kentr/bin/raspy/azt/main.py:9721
 #, python-brace-format
 msgid ""
 "This page will allow you to set up your own sets of dictionary senses to "
@@ -4628,67 +4715,72 @@ msgid ""
 "profile, and try this window again."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8326
+#: /home/kentr/bin/raspy/azt/main.py:8327
 #, python-brace-format
 msgid "This parse looks good ({level})\n"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11235
+#: /home/kentr/bin/raspy/azt/main.py:11244
+#, python-brace-format
 msgid ""
-"This report contains {} senses, {} examples, and {} sound files. That is an "
-"average of {} examples/sense, and {} of examples with sound files."
+"This report contains {senses} senses, {examples} examples, and {audio} sound "
+"files. That is an average of {eps} examples/sense, and {audiopercent} of "
+"examples with sound files."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11835
+#: /home/kentr/bin/raspy/azt/main.py:11844
+#, python-brace-format
 msgid ""
-"This report covers {} Grammatical categories, with {} syllable profiles in "
-"each. This is of course configurable, but I assume you don't want everything."
+"This report covers {pss} Grammatical categories, with {profiles} syllable "
+"profiles in each. This is of course configurable, but I assume you don't "
+"want everything."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11081
+#: /home/kentr/bin/raspy/azt/main.py:11090
+#, python-brace-format
 msgid ""
-"This report follows an analysis of sortings of {} morphemes (roots or "
-"affixes) across the following frames: {}. {} stores these sortings in lift "
-"examples, which are output here, with any glossing and sound file links "
-"found in each lift sense example. Each group in this report is distinct from "
-"the others, in terms of its grouping across the multiple frames used. Sound "
-"files should be available through links, if the audio directory with those "
-"files is in the same directory as this file."
+"This report follows an analysis of sortings of {ps} morphemes (roots or "
+"affixes) across the following frames: {checks}. {program} stores these "
+"sortings in lift examples, which are output here, with any glossing and "
+"sound file links found in each lift sense example. Each group in this report "
+"is distinct from the others, in terms of its grouping across the multiple "
+"frames used. Sound files should be available through links, if the audio "
+"directory with those files is in the same directory as this file."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13330
-#: /home/kentr/bin/raspy/azt/main.py:13343
+#: /home/kentr/bin/raspy/azt/main.py:13335
+#: /home/kentr/bin/raspy/azt/main.py:13348
 msgid ""
 "This report gives you report for one lexical category, in one syllable "
 "profile. \n"
 "It does this for all data sorted in tone frames, organized by frame."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13287
+#: /home/kentr/bin/raspy/azt/main.py:13292
 msgid ""
 "This report gives you report for one lexical category, in one syllable "
 "profile. \n"
 "It does this for all data sorted in tone frames, organized by word."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13311
+#: /home/kentr/bin/raspy/azt/main.py:13316
 msgid ""
 "This report gives you report for one lexical category, in one syllable "
 "profile. \n"
 "It does this for all data sorted in tone frames."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13364
-#: /home/kentr/bin/raspy/azt/main.py:13385
-#: /home/kentr/bin/raspy/azt/main.py:13406
-#: /home/kentr/bin/raspy/azt/main.py:13427
+#: /home/kentr/bin/raspy/azt/main.py:13369
+#: /home/kentr/bin/raspy/azt/main.py:13390
+#: /home/kentr/bin/raspy/azt/main.py:13411
+#: /home/kentr/bin/raspy/azt/main.py:13432
 msgid ""
 "This report gives you reports across multiple lexical categories, and across "
 "multiple syllable profiles. \n"
 "It does this for all data sorted in tone frames, organized by word."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13132
+#: /home/kentr/bin/raspy/azt/main.py:13137
 msgid ""
 "This report gives you reports for one lexical category, in one syllable "
 "profile. \n"
@@ -4698,10 +4790,11 @@ msgid ""
 "- Consonant-Vowel Correspondence"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11854
+#: /home/kentr/bin/raspy/azt/main.py:11863
+#, python-brace-format
 msgid ""
-"This section covers the following top syllable profiles which are found in {}"
-"s: {}"
+"This section covers the following top syllable profiles which are found in "
+"{ps}s: {profiles}"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/lift.py:2564
@@ -4711,7 +4804,7 @@ msgid ""
 "with type {type}."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12484
+#: /home/kentr/bin/raspy/azt/main.py:12491
 msgid "This should never happen (renamegroup/comparisonbuttons)"
 msgstr ""
 
@@ -4723,11 +4816,11 @@ msgid ""
 "{parent}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12653
+#: /home/kentr/bin/raspy/azt/main.py:12658
 msgid "This switches letters for the two groups, and updates each of them"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13264
+#: /home/kentr/bin/raspy/azt/main.py:13269
 msgid ""
 "This task automates work normally done before a consultant check: \n"
 "- reloads status data, and \n"
@@ -4736,116 +4829,116 @@ msgid ""
 "  - by lexeme sense."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8873
+#: /home/kentr/bin/raspy/azt/main.py:8874
 msgid ""
 "This task helps you collect and parse words by recording them, with an "
 "automatic draft."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8829
+#: /home/kentr/bin/raspy/azt/main.py:8830
 msgid "This task helps you collect and parse words."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8185
+#: /home/kentr/bin/raspy/azt/main.py:8186
 msgid "This task helps you collect imperative word forms."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8166
+#: /home/kentr/bin/raspy/azt/main.py:8167
 msgid "This task helps you collect plural word forms."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8154
+#: /home/kentr/bin/raspy/azt/main.py:8155
 msgid ""
 "This task helps you collect words in citation form through recordings with "
 "automatic transcription drafts."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8142
+#: /home/kentr/bin/raspy/azt/main.py:8143
 msgid "This task helps you collect words in citation form."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12690
+#: /home/kentr/bin/raspy/azt/main.py:12695
 msgid "This task helps you decide on your consonant letters."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12661
+#: /home/kentr/bin/raspy/azt/main.py:12666
 msgid "This task helps you decide on your vowel letters."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12912
+#: /home/kentr/bin/raspy/azt/main.py:12917
 msgid ""
 "This task helps you join hypersplit UF groups, as well as giving them "
 "meaniningful names (e.g., High or Low)."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6538
+#: /home/kentr/bin/raspy/azt/main.py:6539
 msgid ""
 "This task helps you organize an alphabet and select words with pictures to "
 "represent each letter."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8916
+#: /home/kentr/bin/raspy/azt/main.py:8917
 msgid "This task helps you parse words you collected earlier."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13089
+#: /home/kentr/bin/raspy/azt/main.py:13094
 msgid "This task helps you record words in isolation forms."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13109
+#: /home/kentr/bin/raspy/azt/main.py:13114
 msgid "This task helps you record words in tone frames, in citation form."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12188
+#: /home/kentr/bin/raspy/azt/main.py:12197
 msgid "This task helps you sort words in citation form by consonants."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12168
+#: /home/kentr/bin/raspy/azt/main.py:12177
 msgid "This task helps you sort words in citation form by vowels."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12113
+#: /home/kentr/bin/raspy/azt/main.py:12122
 msgid ""
 "This task helps you sort words in citation form by whole word syllable "
 "profiles."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12209
+#: /home/kentr/bin/raspy/azt/main.py:12218
 msgid "This task helps you sort words in citation form tone frames."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12736
+#: /home/kentr/bin/raspy/azt/main.py:12741
 msgid ""
 "This task helps you transcribe your surface groups, giving them meaniningful "
 "names (e.g., [˥˥ ˨˨]) instead of numbers."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8799
+#: /home/kentr/bin/raspy/azt/main.py:8800
 msgid ""
 "This task will help you parse your citation forms, automatically and with "
 "confirmation."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8957
+#: /home/kentr/bin/raspy/azt/main.py:8958
 msgid ""
 "This task will help you parse your citation forms, for one slice of the "
 "dictionary at a time."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8948
+#: /home/kentr/bin/raspy/azt/main.py:8949
 msgid ""
 "This task will help you parse your citation forms, for one slice(?PS??!?) of "
 "the dictionary at a time."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6047
-#: /home/kentr/bin/raspy/azt/main.py:6053
+#: /home/kentr/bin/raspy/azt/main.py:6048
+#: /home/kentr/bin/raspy/azt/main.py:6054
 msgid ""
 "This tells you how much data you could export now, and allows you to export "
 "it."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8834
+#: /home/kentr/bin/raspy/azt/main.py:8835
 #, python-brace-format
 msgid ""
 "This will add entries from the Comparative African Wordlist (CAWL) which "
@@ -4855,9 +4948,9 @@ msgid ""
 "Depending on the number of entries, this may take awhile."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7400
-#: /home/kentr/bin/raspy/azt/main.py:8879
-#: /home/kentr/bin/raspy/azt/main.py:8971
+#: /home/kentr/bin/raspy/azt/main.py:7401
+#: /home/kentr/bin/raspy/azt/main.py:8880
+#: /home/kentr/bin/raspy/azt/main.py:8972
 msgid ""
 "This will add entries from the Comparative African Wordlist (CAWL) which "
 "aren't already in your database (you are missing {} CAWL tags). If the "
@@ -4866,16 +4959,16 @@ msgid ""
 "Depending on the number of entries, this may take awhile."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13766
+#: /home/kentr/bin/raspy/azt/main.py:13771
 msgid "This word fits in this frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13769
+#: /home/kentr/bin/raspy/azt/main.py:13774
 #, python-brace-format
 msgid "This word has {name}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5313
+#: /home/kentr/bin/raspy/azt/main.py:5314
 #, python-brace-format
 msgid "Thread for {thread} started"
 msgstr ""
@@ -4892,19 +4985,19 @@ msgstr ""
 msgid "Tier ‘{}’ not there, adding!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8193
+#: /home/kentr/bin/raspy/azt/main.py:8194
 msgid ""
 "To collect Imperative forms, you must first define which fields should "
 "contain those forms"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8174
+#: /home/kentr/bin/raspy/azt/main.py:8175
 msgid ""
 "To collect Plural forms, you must first define which fields should contain "
 "those forms"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7438
+#: /home/kentr/bin/raspy/azt/main.py:7439
 #, python-brace-format
 msgid "To do: ({count}) First 5: {items}"
 msgstr ""
@@ -4913,24 +5006,24 @@ msgstr ""
 msgid "Tone Frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15753
+#: /home/kentr/bin/raspy/azt/main.py:15758
 msgid "Tone Melody"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11055
-#: /home/kentr/bin/raspy/azt/main.py:13307
+#: /home/kentr/bin/raspy/azt/main.py:11064
+#: /home/kentr/bin/raspy/azt/main.py:13312
 msgid "Tone Report"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13339
+#: /home/kentr/bin/raspy/azt/main.py:13344
 msgid "Tone Report (by frames)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13328
+#: /home/kentr/bin/raspy/azt/main.py:13333
 msgid "Tone Report (by frames, not backgrounded)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13283
+#: /home/kentr/bin/raspy/azt/main.py:13288
 msgid "Tone Report (not backgrounded)"
 msgstr ""
 
@@ -4946,15 +5039,15 @@ msgstr ""
 msgid "Tone by sense (comprehensive)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8967
+#: /home/kentr/bin/raspy/azt/main.py:8968
 msgid "Tooltip here."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12739
+#: /home/kentr/bin/raspy/azt/main.py:12744
 msgid "Transcribe Surface Tone Groups"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12734
+#: /home/kentr/bin/raspy/azt/main.py:12739
 msgid "Transcribe Tone"
 msgstr ""
 
@@ -4963,7 +5056,7 @@ msgstr ""
 msgid "Transcriber"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7387
+#: /home/kentr/bin/raspy/azt/main.py:7388
 msgid "Transcription settings"
 msgstr ""
 
@@ -4980,7 +5073,7 @@ msgstr ""
 msgid "Tried to write {type} LIFT file to {newfile}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17665
+#: /home/kentr/bin/raspy/azt/main.py:17670
 #, python-brace-format
 msgid ""
 "Try \n"
@@ -4988,7 +5081,7 @@ msgid ""
 "of {azt}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17494
+#: /home/kentr/bin/raspy/azt/main.py:17499
 msgid "Try Again"
 msgstr ""
 
@@ -4996,7 +5089,7 @@ msgstr ""
 msgid "Try again"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1191
+#: /home/kentr/bin/raspy/azt/main.py:1192
 #, python-brace-format
 msgid "Try {azt} test version"
 msgstr ""
@@ -5009,12 +5102,12 @@ msgstr ""
 msgid "Trying again, hopefully with internet"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2385
+#: /home/kentr/bin/raspy/azt/main.py:2386
 #, python-brace-format
 msgid "Trying for {setting} settings in {file}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2146
+#: /home/kentr/bin/raspy/azt/main.py:2147
 #, python-brace-format
 msgid "Trying for {setting} settings in {legacy_name}"
 msgstr ""
@@ -5028,11 +5121,11 @@ msgstr ""
 msgid "Trying to call Praat at {}..."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2705
+#: /home/kentr/bin/raspy/azt/main.py:2706
 msgid "Trying to make no changes"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7645
+#: /home/kentr/bin/raspy/azt/main.py:7646
 #, python-brace-format
 msgid "Trying to store {value} ({type})"
 msgstr ""
@@ -5054,7 +5147,7 @@ msgstr ""
 msgid "Two fields, which don't parse"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8521
+#: /home/kentr/bin/raspy/azt/main.py:8522
 msgid "Type second form"
 msgstr ""
 
@@ -5064,14 +5157,14 @@ msgid ""
 "name below."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7441
+#: /home/kentr/bin/raspy/azt/main.py:7442
 msgid ""
 "Type the word in your language that goes with these meanings.\n"
 "Give a single word (not a phrase) wherever possible.\n"
 "Just type consonants and vowels; don't worry about tone for now."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5680
+#: /home/kentr/bin/raspy/azt/main.py:5681
 #, python-brace-format
 msgid ""
 "Typically, dictionary work starts by collecting citation forms, and later "
@@ -5082,37 +5175,37 @@ msgid ""
 "moved to the correct fields in your database."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3938
+#: /home/kentr/bin/raspy/azt/main.py:3939
 #, python-brace-format
 msgid "Unnamed {name} Task ({type})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17505
+#: /home/kentr/bin/raspy/azt/main.py:17510
 msgid "Update (Git) output"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1189
+#: /home/kentr/bin/raspy/azt/main.py:1190
 #, python-brace-format
 msgid "Update {azt}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7921
+#: /home/kentr/bin/raspy/azt/main.py:7922
 #, python-brace-format
 msgid "Updating binding ({state})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6914
+#: /home/kentr/bin/raspy/azt/main.py:6915
 #, python-brace-format
 msgid "Updating verification from ‘{old}’ to ‘{new}’ for {args}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17467
-#: /home/kentr/bin/raspy/azt/main.py:17476
+#: /home/kentr/bin/raspy/azt/main.py:17472
+#: /home/kentr/bin/raspy/azt/main.py:17481
 #, python-brace-format
 msgid "Updating {azt}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4406
+#: /home/kentr/bin/raspy/azt/main.py:4407
 msgid "Use these settings"
 msgstr ""
 
@@ -5120,48 +5213,48 @@ msgstr ""
 msgid "Use this code"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7460
-#: /home/kentr/bin/raspy/azt/main.py:9280
+#: /home/kentr/bin/raspy/azt/main.py:7461
+#: /home/kentr/bin/raspy/azt/main.py:9281
 msgid "Use this form"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9296
+#: /home/kentr/bin/raspy/azt/main.py:9297
 msgid "Use this name"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12850
+#: /home/kentr/bin/raspy/azt/main.py:12855
 msgid "Use this name and go to:"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9283
+#: /home/kentr/bin/raspy/azt/main.py:9284
 #, python-brace-format
 msgid "Use this {lang} form {context} the dictionary gloss"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7466
+#: /home/kentr/bin/raspy/azt/main.py:7467
 #, python-brace-format
 msgid "Use this {lang} gloss for ‘{form}’"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9259
+#: /home/kentr/bin/raspy/azt/main.py:9260
 #, python-brace-format
 msgid "Use {name} tone frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2715
+#: /home/kentr/bin/raspy/azt/main.py:2716
 msgid "User asked for changes to polygraph settings, but no changes found."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5911
+#: /home/kentr/bin/raspy/azt/main.py:5912
 msgid "User didn't select a new database; continuing."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6909
+#: /home/kentr/bin/raspy/azt/main.py:6910
 #, python-brace-format
 msgid "User exited with work still to do: {digits} {problems}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5908
+#: /home/kentr/bin/raspy/azt/main.py:5909
 msgid "User selected a new database; restarting with it."
 msgstr ""
 
@@ -5170,7 +5263,7 @@ msgstr ""
 msgid "Using analang={analang} from settings."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5793
+#: /home/kentr/bin/raspy/azt/main.py:5794
 #, python-brace-format
 msgid "Using audiolang {audio} for analang {analang}"
 msgstr ""
@@ -5184,46 +5277,47 @@ msgstr ""
 msgid "Using my get"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1343
+#: /home/kentr/bin/raspy/azt/main.py:1344
 #, python-brace-format
 msgid "Using second form field ‘{field}’ ({ps})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4046
+#: /home/kentr/bin/raspy/azt/main.py:4047
 #, python-brace-format
 msgid "Using theme ‘{theme}’ on {task}."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2983
+#: /home/kentr/bin/raspy/azt/main.py:2984
 #, python-brace-format
 msgid "Using your interface language ({lang}) digraph defaults"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1274
+#: /home/kentr/bin/raspy/azt/main.py:1275
 #, python-brace-format
 msgid "Using {lang}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1521
+#: /home/kentr/bin/raspy/azt/main.py:1522
 #, python-brace-format
 msgid "Using {n} button columns"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2644
+#: /home/kentr/bin/raspy/azt/main.py:2645
 #, python-brace-format
 msgid "Using ‘{noun}’ for nouns, and ‘{verb}’ for verbs"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2302
+#: /home/kentr/bin/raspy/azt/main.py:2303
 #, python-brace-format
 msgid "Value of {attr} not found in object"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11178
-msgid "Values by frame: {}"
+#: /home/kentr/bin/raspy/azt/main.py:11187
+#, python-brace-format
+msgid "Values by frame: {values}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4326
+#: /home/kentr/bin/raspy/azt/main.py:4327
 #, python-brace-format
 msgid "Variable keys to check: {vars}"
 msgstr ""
@@ -5243,17 +5337,18 @@ msgstr ""
 msgid "Verb slightly better ({v}/{n})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10430
-msgid "Verify {program['settings'].languagenames[self.analang]}"
+#: /home/kentr/bin/raspy/azt/main.py:10434
+#, python-brace-format
+msgid "Verify {language}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13882
+#: /home/kentr/bin/raspy/azt/main.py:13887
 msgid ""
 "Verifying groups\n"
 "On the next screen, you will verify groups as belonging together"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:14403
+#: /home/kentr/bin/raspy/azt/main.py:14408
 msgid "Version: {}"
 msgstr ""
 
@@ -5265,15 +5360,15 @@ msgid ""
 "this ps"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12659
+#: /home/kentr/bin/raspy/azt/main.py:12664
 msgid "Vowel Letters"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5882
+#: /home/kentr/bin/raspy/azt/main.py:5883
 msgid "Waiting to finish writing to lift"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16418
+#: /home/kentr/bin/raspy/azt/main.py:16423
 #, python-brace-format
 msgid "Warning: {type} Executable Missing!"
 msgstr ""
@@ -5283,23 +5378,23 @@ msgstr ""
 msgid "We normally shouldn't create empty fields: {lang}/{value}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7614
+#: /home/kentr/bin/raspy/azt/main.py:7615
 #, python-brace-format
 msgid ""
 "We seem to have not added or modded any entries, which shouldn't happen! "
 "(missing: {missing})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5000
+#: /home/kentr/bin/raspy/azt/main.py:5001
 msgid "What"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4641
+#: /home/kentr/bin/raspy/azt/main.py:4642
 #, python-brace-format
 msgid "What ({ps}) syllable profile do you want to work with?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4496
+#: /home/kentr/bin/raspy/azt/main.py:4497
 msgid "What Language do you want to use for glosses?"
 msgstr ""
 
@@ -5307,20 +5402,21 @@ msgstr ""
 msgid "What audio format do you want to work with?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4974
+#: /home/kentr/bin/raspy/azt/main.py:4975
 msgid "What check do you want to do?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13013
-msgid "What do you want to call this UF tone group for {}-{} words?"
+#: /home/kentr/bin/raspy/azt/main.py:13018
+#, python-brace-format
+msgid "What do you want to call this UF tone group for {ps}-{profile} words?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9739
+#: /home/kentr/bin/raspy/azt/main.py:9740
 #, python-brace-format
 msgid "What do you want to call this group for sorting {ps} words?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9293
+#: /home/kentr/bin/raspy/azt/main.py:9294
 #, python-brace-format
 msgid "What do you want to call this new {ps} tone frame for {lang}?"
 msgstr ""
@@ -5329,24 +5425,24 @@ msgstr ""
 msgid "What do you want to work on?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7463
+#: /home/kentr/bin/raspy/azt/main.py:7464
 #, python-brace-format
 msgid "What does ‘{form}’ mean in {lang}?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4753
+#: /home/kentr/bin/raspy/azt/main.py:4754
 #, python-brace-format
 msgid "What field name do you want to use for {ps} words?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7457
+#: /home/kentr/bin/raspy/azt/main.py:7458
 #, python-brace-format
 msgid ""
 "What is the form of the new morpheme in {name} \n"
 "(consonants and vowels only)?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8391
+#: /home/kentr/bin/raspy/azt/main.py:8392
 #, python-brace-format
 msgid ""
 "What is the {sfname} or {sfname2} of \n"
@@ -5357,48 +5453,50 @@ msgstr ""
 msgid "What is your language code?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4849
+#: /home/kentr/bin/raspy/azt/main.py:4850
 msgid "What kinds of checks to you want to run?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4481
+#: /home/kentr/bin/raspy/azt/main.py:4482
 msgid "What language do you want to analyze?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4421
+#: /home/kentr/bin/raspy/azt/main.py:4422
 #, python-brace-format
 msgid "What language do you want {name} to address you in?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4714
+#: /home/kentr/bin/raspy/azt/main.py:4715
 msgid "What letter does your sense start with?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12534
-msgid "What letter(s) do you want to use for this {} group?"
+#: /home/kentr/bin/raspy/azt/main.py:12541
+#, python-brace-format
+msgid "What letter(s) do you want to use for this {sg} group?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4571
+#: /home/kentr/bin/raspy/azt/main.py:4572
 msgid "What level of parsing match do you want the parser to confirm with you?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4587
+#: /home/kentr/bin/raspy/azt/main.py:4588
 msgid "What level of parsing match do you want the parser to do automatically?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4601
+#: /home/kentr/bin/raspy/azt/main.py:4602
 msgid "What lexical category do you want to work with (Part of speech)?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12800
-msgid "What new name do you want to call this {} group?"
+#: /home/kentr/bin/raspy/azt/main.py:12805
+#, python-brace-format
+msgid "What new name do you want to call this {noun_sg} group?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4515
+#: /home/kentr/bin/raspy/azt/main.py:4516
 msgid "What other language do you want to use for glosses?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4546
+#: /home/kentr/bin/raspy/azt/main.py:4547
 msgid "What part of the sound system do you want to work with?"
 msgstr ""
 
@@ -5406,7 +5504,7 @@ msgstr ""
 msgid "What sampling frequency you want to work with?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4674
+#: /home/kentr/bin/raspy/azt/main.py:4675
 msgid "What sense do you want to work with?"
 msgstr ""
 
@@ -5418,7 +5516,7 @@ msgstr ""
 msgid "What sound card do you want to record sound with with?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9290
+#: /home/kentr/bin/raspy/azt/main.py:9291
 #, python-brace-format
 msgid ""
 "What text goes *after* \n"
@@ -5426,7 +5524,7 @@ msgid ""
 "in the frame?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9287
+#: /home/kentr/bin/raspy/azt/main.py:9288
 #, python-brace-format
 msgid ""
 "What text goes *before* \n"
@@ -5434,22 +5532,22 @@ msgid ""
 "in the frame?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5081
+#: /home/kentr/bin/raspy/azt/main.py:5082
 #, python-brace-format
 msgid "What {cvt_name} do you want to {purpose}?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8523
+#: /home/kentr/bin/raspy/azt/main.py:8524
 #, python-brace-format
 msgid "What {sfname} form goes with ‘{lc}’ ({gloss})?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5091
+#: /home/kentr/bin/raspy/azt/main.py:5092
 #, python-brace-format
 msgid "What {type} do you want to {purpose}?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1196
+#: /home/kentr/bin/raspy/azt/main.py:1197
 msgid "What's with the New Interface?"
 msgstr ""
 
@@ -5460,25 +5558,25 @@ msgid ""
 "can do?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2749
+#: /home/kentr/bin/raspy/azt/main.py:2750
 msgid ""
 "Which of the following letter sequences from your data refer to a single "
 "sound?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15745
+#: /home/kentr/bin/raspy/azt/main.py:15750
 msgid "Whole Citation Word Syllable Profile"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15746
+#: /home/kentr/bin/raspy/azt/main.py:15751
 msgid "Whole Root Syllable Profile"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15747
+#: /home/kentr/bin/raspy/azt/main.py:15752
 msgid "Whole {self.nominalpsfield()} Word Syllable Profile"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15749
+#: /home/kentr/bin/raspy/azt/main.py:15754
 msgid "Whole {self.verbalpsfield()} Word Syllable Profile"
 msgstr ""
 
@@ -5490,7 +5588,7 @@ msgstr ""
 msgid "Will write to {}, which isn't there yet."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5311
+#: /home/kentr/bin/raspy/azt/main.py:5312
 msgid "Window killed"
 msgstr ""
 
@@ -5498,28 +5596,28 @@ msgstr ""
 msgid "Won't add {} annotations (first 5: {})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8130
+#: /home/kentr/bin/raspy/azt/main.py:8131
 msgid "Word Collection for Lexeme Forms"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7136
+#: /home/kentr/bin/raspy/azt/main.py:7137
 msgid "Words and phrases to record: click ‘Record’, talk, and release"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1939
+#: /home/kentr/bin/raspy/azt/main.py:1940
 msgid "Words to sort!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:17748
+#: /home/kentr/bin/raspy/azt/main.py:17751
 msgid "Working directory is {} on {}, running on {} cores"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7555
+#: /home/kentr/bin/raspy/azt/main.py:7556
 #, python-brace-format
 msgid "Working on SILCAWL line #{line:04}."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3409
+#: /home/kentr/bin/raspy/azt/main.py:3410
 #, python-brace-format
 msgid "Working on {count} sense.ids (first 5): {ids}"
 msgstr ""
@@ -5531,17 +5629,17 @@ msgid ""
 "{lex_counts}, citation data counts: {citation_counts} and {nsenseids} senses"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6318
+#: /home/kentr/bin/raspy/azt/main.py:6319
 #, python-brace-format
 msgid "Working on {tuple} ({counts};{max}=)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5941
+#: /home/kentr/bin/raspy/azt/main.py:5942
 #, python-brace-format
 msgid "Write to lift returned ‘{error}’."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5955
+#: /home/kentr/bin/raspy/azt/main.py:5956
 msgid "Writing to lift..."
 msgstr ""
 
@@ -5553,15 +5651,15 @@ msgstr ""
 msgid "XML read OK"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:15995
+#: /home/kentr/bin/raspy/azt/main.py:16000
 msgid "Yes"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:688 /home/kentr/bin/raspy/azt/main.py:8305
+#: /home/kentr/bin/raspy/azt/main.py:688 /home/kentr/bin/raspy/azt/main.py:8306
 msgid "Yes!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4176
+#: /home/kentr/bin/raspy/azt/main.py:4177
 msgid ""
 "You are changing segment interpretation settings in a way that could cause "
 "you problems: "
@@ -5573,18 +5671,18 @@ msgid ""
 "fields."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:14649
+#: /home/kentr/bin/raspy/azt/main.py:14654
 msgid "You asked to change to ps {}, which isn't in the list of pss: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16462
+#: /home/kentr/bin/raspy/azt/main.py:16467
 msgid ""
 "You can keep using {} without installing {}, but it is not recommended, and "
 "you will continue to see this warning. And sooner or later that's going to "
 "get really annoying"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6025
+#: /home/kentr/bin/raspy/azt/main.py:6026
 #, python-brace-format
 msgid ""
 "You don't have the sound module installed. For best use of {name},you should "
@@ -5592,14 +5690,14 @@ msgid ""
 "mean time. You won't be able to record or play audio!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13047
+#: /home/kentr/bin/raspy/azt/main.py:13052
 #, python-brace-format
 msgid ""
-"You don't seem to have any analyzed {0} groups to join/rename. Have you done "
-"a tone analyis for {0} words?"
+"You don't seem to have any analyzed {ps} groups to join/rename. Have you "
+"done a tone analyis for {ps} words?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4940
+#: /home/kentr/bin/raspy/azt/main.py:4941
 #, python-brace-format
 msgid ""
 "You don't seem to have any tone frames set up.\n"
@@ -5610,36 +5708,36 @@ msgid ""
 "When you are done making frames, click ‘Exit’ to continue."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1954
+#: /home/kentr/bin/raspy/azt/main.py:1955
 #, python-brace-format
 msgid "You have more groups verified than there are, in {count} cells"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16624
+#: /home/kentr/bin/raspy/azt/main.py:16629
 msgid ""
 "You have the following files ( in {}) that need to be resolved from Chorus "
 "merges:\n"
 " {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6214
+#: /home/kentr/bin/raspy/azt/main.py:6215
 #, python-brace-format
 msgid ""
 "You have the glyph(s) ‘{conflict}’ as consonant and as vowel! ({glyphs})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5678
+#: /home/kentr/bin/raspy/azt/main.py:5679
 #, python-brace-format
 msgid ""
 "You have {lexemes} entries with lexeme data, and only {citations} with "
 "citation data."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6597
+#: /home/kentr/bin/raspy/azt/main.py:6598
 msgid "You haven't picked a syllable profile yet."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5037
+#: /home/kentr/bin/raspy/azt/main.py:5038
 #, python-brace-format
 msgid ""
 "You need to set \n"
@@ -5650,26 +5748,26 @@ msgid ""
 "Before choosing a sort group!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2188
+#: /home/kentr/bin/raspy/azt/main.py:2189
 msgid "You should send in an error report for this."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5697
+#: /home/kentr/bin/raspy/azt/main.py:5698
 msgid "You will need to do this yourself, either in FLEx, or with expert help."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16419
+#: /home/kentr/bin/raspy/azt/main.py:16424
 msgid ""
 "You you don't seem to have the {} executable installed in your computer's "
 "PATH."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5861
+#: /home/kentr/bin/raspy/azt/main.py:5862
 #, python-brace-format
 msgid "You're done enough with: {status}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:14406
+#: /home/kentr/bin/raspy/azt/main.py:14411
 msgid "Your dictionary database is loading..."
 msgstr ""
 
@@ -5689,7 +5787,7 @@ msgid ""
 "{lang} data that are not in a regex). "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3209
+#: /home/kentr/bin/raspy/azt/main.py:3210
 #, python-brace-format
 msgid ""
 "Your {lang} database has the following symbols, which are excluding {count} "
@@ -5697,35 +5795,41 @@ msgid ""
 "{symbols}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1332
+#: /home/kentr/bin/raspy/azt/main.py:1333
 msgid "add another gloss language"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9088
+#: /home/kentr/bin/raspy/azt/main.py:9089
 msgid "additional gloss language"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10961
-msgid "all reports ({})"
+#: /home/kentr/bin/raspy/azt/main.py:11850
+#: /home/kentr/bin/raspy/azt/main.py:11853
+msgid "all"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3536
+#: /home/kentr/bin/raspy/azt/main.py:10970
+#, python-brace-format
+msgid "all reports ({reports})"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:3537
 #, python-brace-format
 msgid ""
 "analang guessed: {lang} (If you don't like this, change it in the menus)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3433
+#: /home/kentr/bin/raspy/azt/main.py:3434
 #, python-brace-format
 msgid ""
 "analang in use: {analang} (If you don't like this, change it in the menus)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9095
+#: /home/kentr/bin/raspy/azt/main.py:9096
 msgid "analysis language"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1311
+#: /home/kentr/bin/raspy/azt/main.py:1312
 #, python-brace-format
 msgid "and {lang}"
 msgstr ""
@@ -5735,31 +5839,32 @@ msgstr ""
 msgid "asked for glosslangs {langs}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4426
+#: /home/kentr/bin/raspy/azt/main.py:4427
 #, python-brace-format
 msgid "asking with these options: {options}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2239
+#: /home/kentr/bin/raspy/azt/main.py:2240
 #, python-brace-format
 msgid "attr {attr} not found!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2173
+#: /home/kentr/bin/raspy/azt/main.py:2174
 #, python-brace-format
 msgid "attribute {lang} doesn't seem to be there"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2240
+#: /home/kentr/bin/raspy/azt/main.py:2241
 #, python-brace-format
 msgid "attrs_moved_to_object={val}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10316
-msgid "by {}"
+#: /home/kentr/bin/raspy/azt/main.py:10318
+#, python-brace-format
+msgid "by {check}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1280
+#: /home/kentr/bin/raspy/azt/main.py:1281
 msgid "change the interface language"
 msgstr ""
 
@@ -5767,66 +5872,66 @@ msgstr ""
 msgid "change this"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1613
+#: /home/kentr/bin/raspy/azt/main.py:1614
 msgid "change this auto parse level"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1484
-#: /home/kentr/bin/raspy/azt/main.py:1495
-#: /home/kentr/bin/raspy/azt/main.py:1557
-#: /home/kentr/bin/raspy/azt/main.py:1574
+#: /home/kentr/bin/raspy/azt/main.py:1485
+#: /home/kentr/bin/raspy/azt/main.py:1496
+#: /home/kentr/bin/raspy/azt/main.py:1558
+#: /home/kentr/bin/raspy/azt/main.py:1575
 msgid "change this check"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1603
+#: /home/kentr/bin/raspy/azt/main.py:1604
 msgid "change this confirmed parse level"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1368
+#: /home/kentr/bin/raspy/azt/main.py:1369
 msgid "change this field"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1323
+#: /home/kentr/bin/raspy/azt/main.py:1324
 msgid "change this gloss language"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1325
+#: /home/kentr/bin/raspy/azt/main.py:1326
 msgid "change this glosslang"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1403
+#: /home/kentr/bin/raspy/azt/main.py:1404
 msgid "change this grammatical category"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1511
+#: /home/kentr/bin/raspy/azt/main.py:1512
 msgid "change this group"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1550
+#: /home/kentr/bin/raspy/azt/main.py:1551
 msgid "change this max"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1632
+#: /home/kentr/bin/raspy/azt/main.py:1633
 msgid "change this sense to do"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1397
+#: /home/kentr/bin/raspy/azt/main.py:1398
 msgid "change this syllable profile"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1450
+#: /home/kentr/bin/raspy/azt/main.py:1451
 msgid "change this tone frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1420
+#: /home/kentr/bin/raspy/azt/main.py:1421
 msgid "change to other check types"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10147
+#: /home/kentr/bin/raspy/azt/main.py:10148
 msgid "check"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2620
+#: /home/kentr/bin/raspy/azt/main.py:2621
 #, python-brace-format
 msgid ""
 "checking these lexical category names for plausible noun and verb names: "
@@ -5838,7 +5943,7 @@ msgstr ""
 msgid "clear entry"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4054
+#: /home/kentr/bin/raspy/azt/main.py:4055
 msgid "click on the task you want to do"
 msgstr ""
 
@@ -5846,22 +5951,23 @@ msgstr ""
 msgid "code: "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12863
+#: /home/kentr/bin/raspy/azt/main.py:12868
 msgid "comparison group"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9086
+#: /home/kentr/bin/raspy/azt/main.py:9087
 msgid "current gloss language"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12318
+#: /home/kentr/bin/raspy/azt/main.py:12339
+#, python-brace-format
 msgid ""
-"current group ({}) doesn't seem to be in list of groups: ({})\n"
+"current group ({group}) doesn't seem to be in list of groups: ({groups})\n"
 "\tThis may be because we're looking for data that isn't there, or maybe a "
 "setting is off."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8480
+#: /home/kentr/bin/raspy/azt/main.py:8481
 msgid "currently: "
 msgstr ""
 
@@ -5873,16 +5979,16 @@ msgstr ""
 msgid "didn't prettyprint {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5001
+#: /home/kentr/bin/raspy/azt/main.py:5002
 #, python-brace-format
 msgid "do you want {purpose}?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7892
+#: /home/kentr/bin/raspy/azt/main.py:7893
 msgid "doing word frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6038
+#: /home/kentr/bin/raspy/azt/main.py:6039
 msgid "done setting up taskChooser"
 msgstr ""
 
@@ -5890,7 +5996,7 @@ msgstr ""
 msgid "done with _removemenus"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16454
+#: /home/kentr/bin/raspy/azt/main.py:16459
 #, python-brace-format
 msgid "download {url}"
 msgstr ""
@@ -5899,7 +6005,7 @@ msgstr ""
 msgid "empty"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7976
+#: /home/kentr/bin/raspy/azt/main.py:7977
 #, python-brace-format
 msgid "entry {id} doesn't have glosses; not showing."
 msgstr ""
@@ -5913,7 +6019,17 @@ msgstr ""
 msgid "faster"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9279
+#: /home/kentr/bin/raspy/azt/main.py:10470
+#, python-brace-format
+msgid "for ‘{check}’ (NOT {checkname})"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:10476
+#, python-brace-format
+msgid "for ‘{check}’ ({checkname})"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:9280
 msgid "form"
 msgstr ""
 
@@ -5922,7 +6038,7 @@ msgstr ""
 msgid "found ‘{current}’, and not ‘{new}’ in langs={langs}."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6547
+#: /home/kentr/bin/raspy/azt/main.py:6548
 #, python-brace-format
 msgid "found ‘{key}’ ui.Variable: {value}"
 msgstr ""
@@ -5946,7 +6062,7 @@ msgstr ""
 msgid "given senseid, but can't really get sense"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9282
+#: /home/kentr/bin/raspy/azt/main.py:9283
 msgid "gloss"
 msgstr ""
 
@@ -5955,58 +6071,59 @@ msgstr ""
 msgid "gloss languages found: {langs}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5719
+#: /home/kentr/bin/raspy/azt/main.py:5720
 #, python-brace-format
 msgid "go to {url}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3734
+#: /home/kentr/bin/raspy/azt/main.py:3735
 #, python-brace-format
 msgid "group {group} set: {val}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3738
-#: /home/kentr/bin/raspy/azt/main.py:3740
+#: /home/kentr/bin/raspy/azt/main.py:3739
+#: /home/kentr/bin/raspy/azt/main.py:3741
 #, python-brace-format
 msgid "group_comparison: {val}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2568
+#: /home/kentr/bin/raspy/azt/main.py:2569
 #, python-brace-format
 msgid "head of wav files here: {files}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2567
+#: /home/kentr/bin/raspy/azt/main.py:2568
 #, python-brace-format
 msgid "head of wav files in repo: {files}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2569
+#: /home/kentr/bin/raspy/azt/main.py:2570
 #, python-brace-format
 msgid "head of wav files to check: {files}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10313
-msgid "in ‘{}’ frame"
+#: /home/kentr/bin/raspy/azt/main.py:10315
+#, python-brace-format
+msgid "in ‘{check}’ frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7968
+#: /home/kentr/bin/raspy/azt/main.py:7969
 #, python-brace-format
 msgid "index: {index}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6263
+#: /home/kentr/bin/raspy/azt/main.py:6264
 #, python-brace-format
 msgid "item {i} coflicts with glyph {x}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6258
+#: /home/kentr/bin/raspy/azt/main.py:6259
 #, python-brace-format
 msgid "item {i} conflicts with glyph {y}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4505
-#: /home/kentr/bin/raspy/azt/main.py:4524
+#: /home/kentr/bin/raspy/azt/main.py:4506
+#: /home/kentr/bin/raspy/azt/main.py:4525
 #, python-brace-format
 msgid "just use {name}"
 msgstr ""
@@ -6015,7 +6132,7 @@ msgstr ""
 msgid "langform found!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16558
+#: /home/kentr/bin/raspy/azt/main.py:16563
 msgid "language data"
 msgstr ""
 
@@ -6033,11 +6150,20 @@ msgstr ""
 msgid "less repetitions: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12533
+#: /home/kentr/bin/raspy/azt/main.py:12540
 msgid "letter"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7566
+#: /home/kentr/bin/raspy/azt/main.py:10442
+msgid "letter group"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:10444
+#, python-brace-format
+msgid "letter ‘{group}’"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:7567
 #, python-brace-format
 msgid "line {line} w/o lexical category; leaving."
 msgstr ""
@@ -6072,7 +6198,7 @@ msgid ""
 "follows:"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4137
+#: /home/kentr/bin/raspy/azt/main.py:4138
 #, python-brace-format
 msgid "looks like the parser isn't up yet ({error})"
 msgstr ""
@@ -6082,26 +6208,26 @@ msgstr ""
 msgid "looks like there was a problem finding your new file. ({newfile})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12856
+#: /home/kentr/bin/raspy/azt/main.py:12861
 msgid "main screen"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2427
+#: /home/kentr/bin/raspy/azt/main.py:2428
 #, python-brace-format
 msgid "makestatus: {status}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2431
+#: /home/kentr/bin/raspy/azt/main.py:2432
 #, python-brace-format
 msgid "maketoneframes: {frames}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6478
+#: /home/kentr/bin/raspy/azt/main.py:6479
 #, python-brace-format
 msgid "mark_item_glyph added ‘{item}’ to ‘{glyph}’"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6480
+#: /home/kentr/bin/raspy/azt/main.py:6481
 #, python-brace-format
 msgid "mark_item_glyph failed to add ‘{item}’ to ‘{glyph}’"
 msgstr ""
@@ -6111,36 +6237,36 @@ msgstr ""
 msgid "more H-L difference"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2232
+#: /home/kentr/bin/raspy/azt/main.py:2233
 #, python-brace-format
 msgid "moving attr {attr} to object ({val})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13711
+#: /home/kentr/bin/raspy/azt/main.py:13716
 msgid "next"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12861
+#: /home/kentr/bin/raspy/azt/main.py:12866
 msgid "next check"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12857
+#: /home/kentr/bin/raspy/azt/main.py:12862
 msgid "next group"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12862
+#: /home/kentr/bin/raspy/azt/main.py:12867
 msgid "next syllable profile"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:12859
+#: /home/kentr/bin/raspy/azt/main.py:12864
 msgid "next tone frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7045
+#: /home/kentr/bin/raspy/azt/main.py:7046
 msgid "no runwindow frame; quitting!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7042
+#: /home/kentr/bin/raspy/azt/main.py:7043
 msgid "no runwindow; quitting!"
 msgstr ""
 
@@ -6148,23 +6274,23 @@ msgstr ""
 msgid "no segments"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2357
+#: /home/kentr/bin/raspy/azt/main.py:2358
 msgid "no settings change; not writing."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1438
+#: /home/kentr/bin/raspy/azt/main.py:1439
 msgid "no tone frame selected."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1436
+#: /home/kentr/bin/raspy/azt/main.py:1437
 msgid "no tone frames defined."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1313
+#: /home/kentr/bin/raspy/azt/main.py:1314
 msgid "only"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16450
+#: /home/kentr/bin/raspy/azt/main.py:16455
 msgid "or see all your options at {}."
 msgstr ""
 
@@ -6173,11 +6299,11 @@ msgstr ""
 msgid "or write me at {email}."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5013
+#: /home/kentr/bin/raspy/azt/main.py:5014
 msgid "other"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7062
+#: /home/kentr/bin/raspy/azt/main.py:7063
 #, python-brace-format
 msgid "pages: {pages}"
 msgstr ""
@@ -6202,12 +6328,12 @@ msgstr ""
 msgid "pitch up"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10504
+#: /home/kentr/bin/raspy/azt/main.py:10511
 #, python-brace-format
 msgid "preparing to verify the {item_name} ‘{group}’"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6441
+#: /home/kentr/bin/raspy/azt/main.py:6442
 #, python-brace-format
 msgid "presort_item moving {item} into ‘{glyph}’"
 msgstr ""
@@ -6216,7 +6342,7 @@ msgstr ""
 msgid "press-speak-release"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13717
+#: /home/kentr/bin/raspy/azt/main.py:13722
 msgid "previous"
 msgstr ""
 
@@ -6224,7 +6350,7 @@ msgstr ""
 msgid "problem with iteration value type "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10152
+#: /home/kentr/bin/raspy/azt/main.py:10153
 msgid "profile"
 msgstr ""
 
@@ -6250,8 +6376,9 @@ msgstr ""
 msgid "reorder"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11244
-msgid "report {} {}"
+#: /home/kentr/bin/raspy/azt/main.py:11253
+#, python-brace-format
+msgid "report {ps} {profile}"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/utilities.py:163
@@ -6269,19 +6396,23 @@ msgid "returning {id} {type} value: {value}"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/sound_ui.py:74
-#: /home/kentr/bin/raspy/azt/main.py:14047
+#: /home/kentr/bin/raspy/azt/main.py:14052
 msgid "right click to open in praat"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8482
+#: /home/kentr/bin/raspy/azt/main.py:8483
 msgid "root"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8227
+#: /home/kentr/bin/raspy/azt/main.py:8228
 msgid "root:"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7949
+#: /home/kentr/bin/raspy/azt/main.py:12269
+msgid "see comparison below."
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:7950
 msgid "self.entry doesn't seem to be in entries; OK for now"
 msgstr ""
 
@@ -6289,7 +6420,7 @@ msgstr ""
 msgid "self.exids is there, but self.exobjs isn't? "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7964
+#: /home/kentr/bin/raspy/azt/main.py:7965
 #, python-brace-format
 msgid "sensetodo: {todo}"
 msgstr ""
@@ -6298,21 +6429,22 @@ msgstr ""
 msgid "setnesteddictval got dictionary of type {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3970
+#: /home/kentr/bin/raspy/azt/main.py:3971
 #, python-brace-format
 msgid "setting button relief to {relief}, with refresh={refresh}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3723
+#: /home/kentr/bin/raspy/azt/main.py:3724
 #, python-brace-format
 msgid "setting group: {group}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10954
-msgid "setting up background reports {}"
+#: /home/kentr/bin/raspy/azt/main.py:10963
+#, python-brace-format
+msgid "setting up background reports {reports}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4741
+#: /home/kentr/bin/raspy/azt/main.py:4742
 #, python-brace-format
 msgid "setting {custom} (not {other})"
 msgstr ""
@@ -6332,11 +6464,11 @@ msgstr ""
 msgid "slower"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1513
+#: /home/kentr/bin/raspy/azt/main.py:1514
 msgid "specify one group"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5509
+#: /home/kentr/bin/raspy/azt/main.py:5510
 #, python-brace-format
 msgid "starting from option list {options}"
 msgstr ""
@@ -6355,6 +6487,12 @@ msgstr ""
 msgid "the program argument to xlp.Report needs a 'name' key"
 msgstr ""
 
+#: /home/kentr/bin/raspy/azt/main.py:11848
+#: /home/kentr/bin/raspy/azt/main.py:11851
+#, python-brace-format
+msgid "the top {n}"
+msgstr ""
+
 #: /home/kentr/bin/raspy/azt/lift.py:3564
 #, python-brace-format
 msgid ""
@@ -6362,32 +6500,32 @@ msgid ""
 "  {url}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4931
+#: /home/kentr/bin/raspy/azt/main.py:4932
 msgid "this sets the check"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4471
+#: /home/kentr/bin/raspy/azt/main.py:4472
 msgid "this sets the language"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4434
+#: /home/kentr/bin/raspy/azt/main.py:4435
 msgid "this sets the language name"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5170
+#: /home/kentr/bin/raspy/azt/main.py:5171
 msgid "this sets the number of examples per group to record"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5107
-#: /home/kentr/bin/raspy/azt/main.py:5121
+#: /home/kentr/bin/raspy/azt/main.py:5108
+#: /home/kentr/bin/raspy/azt/main.py:5122
 msgid "to"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10312
+#: /home/kentr/bin/raspy/azt/main.py:10314
 msgid "tone melody"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2600
+#: /home/kentr/bin/raspy/azt/main.py:2601
 msgid "trackuntrackedfiles finished."
 msgstr ""
 
@@ -6396,7 +6534,7 @@ msgstr ""
 msgid "tried to remove what wasn't there? ({error})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3531
+#: /home/kentr/bin/raspy/azt/main.py:3532
 #, python-brace-format
 msgid "trying {analang}"
 msgstr ""
@@ -6405,21 +6543,21 @@ msgstr ""
 msgid "unchecked lexical"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1820
+#: /home/kentr/bin/raspy/azt/main.py:1821
 msgid "unsorted"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6676
+#: /home/kentr/bin/raspy/azt/main.py:6677
 #, python-brace-format
 msgid "unsortedids ({count}): {ids}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6871
+#: /home/kentr/bin/raspy/azt/main.py:6872
 #, python-brace-format
 msgid "update_annotations_by_glyph done with ‘{members}’ to ‘{glyph}’"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6840
+#: /home/kentr/bin/raspy/azt/main.py:6841
 #, python-brace-format
 msgid "update_annotations_by_glyph safely: ‘{members}’ to ‘{glyph}’"
 msgstr ""
@@ -6429,22 +6567,22 @@ msgstr ""
 msgid "updated to {date} ({relative_date})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:14405
+#: /home/kentr/bin/raspy/azt/main.py:14410
 msgid "updated to {program['repo'].lastcommitdate()} "
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6785
+#: /home/kentr/bin/raspy/azt/main.py:6786
 msgid "updateformsallchecks"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6733
+#: /home/kentr/bin/raspy/azt/main.py:6734
 #, python-brace-format
 msgid ""
 "updateformtoannotations didn't return a form value for {id}, {check}, "
 "{ftype}, {ana}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7364
+#: /home/kentr/bin/raspy/azt/main.py:7365
 msgid "url"
 msgstr ""
 
@@ -6452,7 +6590,7 @@ msgstr ""
 msgid "using xml.etree to parse XML"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1819
+#: /home/kentr/bin/raspy/azt/main.py:1820
 msgid "verified"
 msgstr ""
 
@@ -6466,42 +6604,42 @@ msgstr ""
 msgid "word break"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7965
+#: /home/kentr/bin/raspy/azt/main.py:7966
 #, python-brace-format
 msgid "wordframe: {frame}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2402
+#: /home/kentr/bin/raspy/azt/main.py:2403
 #, python-brace-format
 msgid "working in non-default section {section}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1489
+#: /home/kentr/bin/raspy/azt/main.py:1490
 #, python-brace-format
 msgid "working on {check}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2547
+#: /home/kentr/bin/raspy/azt/main.py:2548
 #, python-brace-format
 msgid "working on {file}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6898
+#: /home/kentr/bin/raspy/azt/main.py:6899
 #, python-brace-format
 msgid "working on {glyph} of {digits}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1440
+#: /home/kentr/bin/raspy/azt/main.py:1441
 #, python-brace-format
 msgid "working on ‘{check}’ tone frame"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2751
+#: /home/kentr/bin/raspy/azt/main.py:2752
 #, python-brace-format
 msgid "working with db.analangs: {analangs} and params.analang: {analang}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5937
+#: /home/kentr/bin/raspy/azt/main.py:5938
 #, python-brace-format
 msgid "writethread: {exists}"
 msgstr ""
@@ -6510,11 +6648,11 @@ msgstr ""
 msgid "writing to tex file {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8318
+#: /home/kentr/bin/raspy/azt/main.py:8319
 msgid "wrong root!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8322
+#: /home/kentr/bin/raspy/azt/main.py:8323
 #, python-brace-format
 msgid "wrong {field}!"
 msgstr ""
@@ -6532,44 +6670,62 @@ msgstr ""
 msgid "{azt} Dictionary and Orthography Checker"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2745
+#: /home/kentr/bin/raspy/azt/main.py:2746
 #, python-brace-format
 msgid "{azt} Digraphs and Trigraphs"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8804
+#: /home/kentr/bin/raspy/azt/main.py:8805
 #, python-brace-format
 msgid ""
 "{azt} tries to do as much as possible automatically, and according to the "
 "level you have set for confirmation."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:10454
+#: /home/kentr/bin/raspy/azt/main.py:12360
+#, python-brace-format
+msgid ""
+"{azt} will *not* remove ‘{group}’ from those settings, because you may still "
+"be using it elsewhere."
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:12354
+#, python-brace-format
+msgid "{azt} will add ‘{new}’ to those settings."
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:10460
 #, python-brace-format
 msgid "{check} Group"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:13707
+#: /home/kentr/bin/raspy/azt/main.py:13712
 #, python-brace-format
-msgid "{code} example ({self[code]}), of "
+msgid "{code} example ({value}), of {n} examples with kwargs={kwargs}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1944
+#: /home/kentr/bin/raspy/azt/main.py:11345
+#: /home/kentr/bin/raspy/azt/main.py:11797
+#, python-brace-format
+msgid "{count} checks"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1945
 #, python-brace-format
 msgid "{count} groups to verify!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:5323
+#: /home/kentr/bin/raspy/azt/main.py:5324
 #, python-brace-format
 msgid "{count} threads running: {threads}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2589
+#: /home/kentr/bin/raspy/azt/main.py:2590
 #, python-brace-format
 msgid "{count} {extension} files to check for the {repo} repo"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3121
+#: /home/kentr/bin/raspy/azt/main.py:3122
 #, python-brace-format
 msgid "{count}: {form} > {profile}"
 msgstr ""
@@ -6579,12 +6735,12 @@ msgstr ""
 msgid "{cur}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7777
+#: /home/kentr/bin/raspy/azt/main.py:7778
 #, python-brace-format
 msgid "{dir} doesn't seem to exist."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:7788
+#: /home/kentr/bin/raspy/azt/main.py:7789
 #, python-brace-format
 msgid "{dir} seems there, but empty."
 msgstr ""
@@ -6594,17 +6750,17 @@ msgstr ""
 msgid "{filename} doesn't look like a well formed lift file; please try again."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2215
+#: /home/kentr/bin/raspy/azt/main.py:2216
 #, python-brace-format
 msgid "{file} doesn't exist!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9938
+#: /home/kentr/bin/raspy/azt/main.py:9939
 #, python-brace-format
 msgid "{ftype} differs from {pftype}; this is a problem!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6280
+#: /home/kentr/bin/raspy/azt/main.py:6281
 #, python-brace-format
 msgid "{glyphs} provided, but without good keys"
 msgstr ""
@@ -6614,17 +6770,17 @@ msgstr ""
 msgid "{langs} gloss languages not in frame!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:9094
+#: /home/kentr/bin/raspy/azt/main.py:9095
 #, python-brace-format
 msgid "{lang}:"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:14411
+#: /home/kentr/bin/raspy/azt/main.py:14416
 #, python-brace-format
 msgid "{name} Dictionary and Orthography Checker"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4043
+#: /home/kentr/bin/raspy/azt/main.py:4044
 #, python-brace-format
 msgid "{name} Dictionary and Orthography Checker: {task}"
 msgstr ""
@@ -6659,40 +6815,62 @@ msgid ""
 "192khz/32float, according to your recording equipment's capacity."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:3017
+#: /home/kentr/bin/raspy/azt/main.py:3018
 #, python-brace-format
 msgid ""
 "{polygraph} ({pclass}/{sclass}) has no Di/Trigraph setting; prompting user "
 "for info."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6153
+#: /home/kentr/bin/raspy/azt/main.py:6154
 msgid "{program['name']} Data Export"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:14407
+#: /home/kentr/bin/raspy/azt/main.py:14412
 msgid ""
 "{program['name']} is a computer program that accelerates community-based "
 "language development by facilitating the sorting of a beginning dictionary "
 "by vowels, consonants and tone. (more in help:about)"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4199
+#: /home/kentr/bin/raspy/azt/main.py:4200
 #, python-brace-format
 msgid "{ps} Profiles to check: {profiles}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:1387
+#: /home/kentr/bin/raspy/azt/main.py:11859
+#, python-brace-format
+msgid "{ps} data: (profiles: {profiles})"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:11333
+#, python-brace-format
+msgid "{ps} roots of form {profile} by {check}"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:1388
 #, python-brace-format
 msgid "{ps} words ({count})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2543
+#: /home/kentr/bin/raspy/azt/main.py:11234
+#, python-brace-format
+msgid "{ps} {profile} Data Summary"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:11003
+#, python-brace-format
+msgid ""
+"{ps} {profile} Tone Report in Process\n"
+"({timestamps})"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:2544
 #, python-brace-format
 msgid "{repo} currently has {count} files"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:8456
+#: /home/kentr/bin/raspy/azt/main.py:8457
 #, python-brace-format
 msgid "{root}: {forms} ({ps}), {sfname}: {forms2}"
 msgstr ""
@@ -6717,21 +6895,16 @@ msgstr ""
 msgid "{target} : {bits}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:4166
+#: /home/kentr/bin/raspy/azt/main.py:4167
 #, python-brace-format
 msgid "{type} makestatusframe iteration finished"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:2565
+#: /home/kentr/bin/raspy/azt/main.py:2566
 #, python-brace-format
 msgid ""
 "{wav_count} wav files to check for the {repo} repo (of {total_count} files "
 "total here)"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:11336
-#: /home/kentr/bin/raspy/azt/main.py:11788
-msgid "{} checks"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/utilities.py:59
@@ -6740,11 +6913,7 @@ msgid ""
 "({})"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11850
-msgid "{} data: (profiles: {})"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:17194
+#: /home/kentr/bin/raspy/azt/main.py:17199
 msgid "{} doesn't look like a well formed lift file; please try again. ({})"
 msgstr ""
 
@@ -6752,31 +6921,13 @@ msgstr ""
 msgid "{} entries found: {}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:16570
+#: /home/kentr/bin/raspy/azt/main.py:16575
 msgid ""
 "{} repository object initialized on branch {} at {} for {}, with {} files."
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:11324
-msgid "{} roots of form {} by {}"
-msgstr ""
-
 #: /home/kentr/bin/raspy/azt/profiles.py:102
 msgid "{} senses found: {}"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:11225
-msgid "{} {} Data Summary"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:10994
-msgid ""
-"{} {} Tone Report in Process\n"
-"({})"
-msgstr ""
-
-#: /home/kentr/bin/raspy/azt/main.py:11860
-msgid "{} {}s"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/lift.py:199
@@ -6784,14 +6935,19 @@ msgstr ""
 msgid "‘{current}’ not in langs={langs}!"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6354
+#: /home/kentr/bin/raspy/azt/main.py:6355
 #, python-brace-format
 msgid "‘{glyph}’ added to verified list"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/main.py:6364
+#: /home/kentr/bin/raspy/azt/main.py:6365
 #, python-brace-format
 msgid "‘{glyph}’ removed from verified list"
+msgstr ""
+
+#: /home/kentr/bin/raspy/azt/main.py:10478
+#, python-brace-format
+msgid "‘{group}’ already verified, continuing."
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/lift.py:192
