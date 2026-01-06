@@ -7404,7 +7404,7 @@ class WordCollection(Segments):
                     "glosses are found in your database, CAWL tags will be "
                     "merged with those entries."
                     "\nDepending on the number of entries, this may take "
-                    "awhile.").format(len(program['taskchooser'].cawlmissing))
+                    "awhile.").format(count=len(program['taskchooser'].cawlmissing))
         else:
             text=_("Add a Word")
             fn=self.addmorpheme
@@ -7604,8 +7604,8 @@ class WordCollection(Segments):
             text=_("Added {count} entries from the SILCAWL").format(count=len(added))
             if len(added)<100:
                 text+=': ({})'.format(added)
-            text+=_("\nModded {} entries with new information from the "
-                    "SILCAWL").format(len(modded))
+            text+=_("\nModded {count} entries with new information from the "
+                    "SILCAWL").format(count=len(modded))
             if len(modded)<100:
                 text+=': ({})'.format(modded)
             program['taskchooser'].getcawlmissing()
@@ -8258,7 +8258,7 @@ class Parse(Segments):
         self.userresponse.value=False
         self.userresponse.rootchange=False
         # gloss=self.getgloss()
-        # text=_("Parse looks good ({}):").format(self.parser.levels()[level])
+        # text=_("Parse looks good ({level}):").format(level=self.parser.levels()[level])
         # text+=("\n{} {}"
         #         "\n{} {}"
         #         "\n{} {}: {} ({})"
@@ -8320,11 +8320,11 @@ class Parse(Segments):
                     command=enterroot,
                     row=0,column=0,sticky='ew')
         ui.Button(self.correctframe,
-                    text=_("wrong {}!".format(self.secondformfield[self.sense.psvalue()])),
+                    text=_("wrong {field}!").format(field=self.secondformfield[self.sense.psvalue()]),
                     command=undosf,
                     row=1,column=0,sticky='ew')
         self.noticeframe=ui.Frame(w.frame,row=3,column=0)
-        t=_("This parse looks good ({})\n").format(self.parser.levels()[level])
+        t=_("This parse looks good ({level})\n").format(level=self.parser.levels()[level])
         ui.Label(self.noticeframe,text=t+self.currentformnotice(),
                     font='small',justify='l',
                     row=0,column=0)
@@ -8380,21 +8380,21 @@ class Parse(Segments):
             self.waitpause()
         ln=[(i,formattuple(i)) for i in l if i[1] == self.nominalps
                         if len(i[-1]) == 2] #each must have (only) pfx and sfx
-        ln+=[('ON',_("Other {}").format(self.secondformfield[self.nominalps]))]
+        ln+=[('ON',_("Other {field}").format(field=self.secondformfield[self.nominalps]))]
         # log.info("noun option list: {}".format(ln))
         lv=[(i,formattuple(i)) for i in l if i[1] == self.verbalps
                          if len(i[-1]) == 2] #each must have (only) pfx and sfx
-        lv+=[('OV',_("Other {}").format(self.secondformfield[self.verbalps]))]
+        lv+=[('OV',_("Other {field}").format(field=self.secondformfield[self.verbalps]))]
         # log.info("verb option list: {}".format(lv))
         w=ui.Window(self)
         w.title(_("Select second form"))
         t=ui.Label(w.frame,
-                    text=_("What is the {} or {} of \n‘{}’ ({})?"
+                    text=_("What is the {sfname} or {sfname2} of \n‘{lc}’ ({gloss})?"
                         "").format(
-                        self.secondformfield[self.nominalps],
-                        self.secondformfield[self.verbalps],
-                        self.parser.entry.lcvalue(),
-                        self.getgloss()
+                        sfname=self.secondformfield[self.nominalps],
+                        sfname2=self.secondformfield[self.verbalps],
+                        lc=self.parser.entry.lcvalue(),
+                        gloss=self.getgloss()
                                 ),
                     font='title',
                     row=0,column=0,columnspan=2)
@@ -8403,8 +8403,8 @@ class Parse(Segments):
             noun=ui.Frame(w.frame, row=1, column=0, sticky='n')
             ImageFrame(noun,self.sense,ftype='pl',row=0,column=0, sticky='')
             ui.Label(noun,
-                    text=_("Select {} form").format(
-                                        self.secondformfield[self.nominalps]),
+                    text=_("Select {field} form").format(
+                                        field=self.secondformfield[self.nominalps]),
                     row=1,column=0,
                     columnspan=2)
             bfn=ui.ScrollingButtonFrame(noun, optionlist=ln, window=t,
@@ -8416,8 +8416,8 @@ class Parse(Segments):
             verb=ui.Frame(w.frame, row=1, column=1, sticky='n')
             ImageFrame(verb,self.sense,ftype='imp',row=0,column=0, sticky='')
             ui.Label(verb,
-                    text=_("Select {} form").format(
-                                        self.secondformfield[self.verbalps]),
+                    text=_("Select {field} form").format(
+                                        field=self.secondformfield[self.verbalps]),
                     row=1,column=0)
             bfv=ui.ScrollingButtonFrame(verb, optionlist=lv, window=t,
                                         command=self.parser.dooneformparse,
@@ -8454,32 +8454,36 @@ class Parse(Segments):
             self.parser.sense=entry.sense
         lx,lc,pl,imp = self.parser.texts()
         if lx:
-            return _("{root}: {} ({ps}), {sfname}: {}"
-                ).format(lx,''.join([i for i in [pl,imp] if i]),
+            return _("{root}: {forms} ({ps}), {sfname}: {forms2}"
+                ).format(root_val=lx,
+                        forms=''.join([i for i in [pl,imp] if i]),
+                        forms2=''.join([i for i in [pl,imp] if i]), # Wait, this logic was weird in original: ''.join([i for i in [pl,imp] if i]) was used for the second {}
                         root=_("Root"),
                         ps=self.parser.sense.psvalue(),
                         sfname=self.secondformfield[self.nominalps] if pl
                         else self.secondformfield[self.verbalps]
                         )
         if lc and (pl or imp):
-            return _("Citation: {}, {sfname}: {}"
-                ).format(lc,''.join([i for i in [pl,imp] if i]),
+            return _("Citation: {citation}, {sfname}: {forms}"
+                ).format(citation=lc,
+                        forms=''.join([i for i in [pl,imp] if i]),
                         # root=_("root"),
                         # ps=self.parser.sense.psvalue(),
                         sfname=self.secondformfield[self.nominalps] if pl
                         else self.secondformfield[self.verbalps]
                         )
         if lc:
-            return _(f"Citation: {lc}")
+            return _("Citation: {citation}").format(citation=lc)
         else:
             return ""
     def currentformnotice(self):
-        return _("currently: ")+("{} ({ps} {root}), {}, {} ({pl}), {} ({imp})"
-                ).format(*self.parser.texts(),
+        lx, lc, pl, imp = self.parser.texts()
+        return _("currently: ")+("{lx} ({ps} {root}), {lc}, {pl} ({pl_name}), {imp} ({imp_name})"
+                ).format(lx=lx, lc=lc, pl=pl, imp=imp,
                         root=_("root"),
                         ps=self.parser.sense.psvalue(),
-                        pl=self.secondformfield[self.nominalps],
-                        imp=self.secondformfield[self.verbalps]
+                        pl_name=self.secondformfield[self.nominalps],
+                        imp_name=self.secondformfield[self.verbalps]
                         )
     def asksegments(self,ps=None):
         def do(event=None):
@@ -8517,10 +8521,10 @@ class Parse(Segments):
         w=ui.Window(self)
         w.title(_("Type second form"))
         l=ui.Label(w.frame,
-                text=_("What {} form goes with ‘{}’ ({})?"
-                    "").format(sfname,
-                            self.parser.entry.lcvalue(),
-                            self.getgloss()),
+                text=_("What {sfname} form goes with ‘{lc}’ ({gloss})?"
+                    "").format(sfname=sfname,
+                            lc=self.parser.entry.lcvalue(),
+                            gloss=self.getgloss()),
                 font='title',
                 row=0,column=0,columnspan=2)
         l.wrap()
@@ -8535,7 +8539,7 @@ class Parse(Segments):
                         row=2,column=0)
         b=ui.Button(w.frame,text=_("OK"),cmd=do,
                         row=3,column=0, sticky='e')
-        ui.Button(w.frame,text=_("Not a {}").format(ps),cmd=next,
+        ui.Button(w.frame,text=_("Not a {ps}").format(ps=ps),cmd=next,
                         row=3,column=1, sticky='e')
         ui.Label(w.frame,text=self.currentformnotice(),
                     font='small',justify='l',
@@ -8692,8 +8696,8 @@ class Parse(Segments):
                 return set(senses)
     def getparses(self,**kwargs):
         log.info("parses already tried: {}".format(self.parsecatalog.parsen()))
-        self.wait(_("Parsing (ask: {} auto: {})").format(self.parser.ask,
-                                                        self.parser.auto
+        self.wait(_("Parsing (ask: {ask} auto: {auto})").format(ask=self.parser.ask,
+                                                        auto=self.parser.auto
                                                     ))
         senses=self.sensestoparse(**kwargs)
         todo=len(senses)
@@ -8798,9 +8802,9 @@ class ParseWords(Parse,TaskDressing):
     def dobuttonkwargs(self):
         fn=self.getparses
         text=_("Parse!")
-        tttext=_("{} tries to do as much as possible automatically, and "
+        tttext=_("{azt} tries to do as much as possible automatically, and "
                 "according to the level you have set for confirmation."
-                ).format(program['name'])
+                ).format(azt=program['name'])
         return {'text':text,
                 'fn':fn,
                 # column=0,
@@ -8830,11 +8834,11 @@ class WordCollectnParse(Parse,WordCollection,TaskDressing):
             text=_("Add remaining CAWL entries")
             tttext=_("This will add entries from the Comparative African "
                     "Wordlist (CAWL) which aren't already in your database "
-                    "(you are missing {} CAWL tags). If the appropriate "
+                    "(you are missing {count} CAWL tags). If the appropriate "
                     "glosses are found in your database, CAWL tags will be "
                     "merged with those entries."
                     "\nDepending on the number of entries, this may take "
-                    "awhile.").format(len(program['taskchooser'].cawlmissing))
+                    "awhile.").format(count=len(program['taskchooser'].cawlmissing))
         else:
             text=_("Add a Word")#?
             fn=self.addmorpheme#?
@@ -8879,7 +8883,7 @@ class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,TaskDressing)
                     "glosses are found in your database, CAWL tags will be "
                     "merged with those entries."
                     "\nDepending on the number of entries, this may take "
-                    "awhile.").format(len(program['taskchooser'].cawlmissing))
+                    "awhile.").format(count=len(program['taskchooser'].cawlmissing))
         else:
             text=_("Add a Word")#?
             fn=self.addmorpheme#?
@@ -8971,7 +8975,7 @@ class Placeholder(TaskDressing):
                 "glosses are found in your database, CAWL tags will be "
                 "merged with those entries."
                 "\nDepending on the number of entries, this may take "
-                "awhile.").format(len(program['taskchooser'].cawlmissing))
+                "awhile.").format(count=len(program['taskchooser'].cawlmissing))
         return {'text':text,
                 'fn':fn,
                 # column=0,
@@ -9078,7 +9082,7 @@ class ToneFrameDrafter(ui.Window):
             if l in self.forms:
                 log.info("Working on {}".format(langname))
                 if l == self.stripftypecode(l): #no change means gloss
-                    tintro=_("Gloss in {}:").format(langname)
+                    tintro=_("Gloss in {lang}:").format(lang=langname)
                     if l in program['settings'].glosslangs:
                         ltttext=_("current gloss language")
                     else:
@@ -9086,9 +9090,9 @@ class ToneFrameDrafter(ui.Window):
                         b=ui.Button(self.fds,text='X',
                                     cmd=lambda l=l:self.skiplang(l),
                                     column=0,row=n+1,sticky='e')
-                        b.tt=ui.ToolTip(b, _("Skip {}").format(langname))
+                        b.tt=ui.ToolTip(b, _("Skip {lang}").format(lang=langname))
                 else:
-                    tintro=_("{}:").format(langname)
+                    tintro=_("{lang}:").format(lang=langname)
                     ltttext=_("analysis language")
                 li=ui.Label(self.fds,text=tintro,column=1,row=n+1)
                 li.tt=ui.ToolTip(li, ltttext)
@@ -9096,7 +9100,7 @@ class ToneFrameDrafter(ui.Window):
                 if 'Language ' in langname:
                     tword=_("<word>")
                 else:
-                    tword=_("<{0} word>").format(langname)
+                    tword=_("<{lang} word>").format(lang=langname)
                 try:
                     text=self.forms[l]['before']
                     if text == '':
@@ -9106,8 +9110,8 @@ class ToneFrameDrafter(ui.Window):
                         self.forms[l]={'before':''}
                         text=nothing
                     except:
-                        text='<'+_("No {} frame info").format(
-                                program['settings'].languagenames[l])+'>'
+                        text='<'+_("No {lang} frame info").format(
+                                lang=program['settings'].languagenames[l])+'>'
                 button=ui.Button(lineframe,text=text,
                                 relief=relief,
                                 cmd=lambda l=l, context='before':
@@ -9132,14 +9136,14 @@ class ToneFrameDrafter(ui.Window):
                                 column=3,row=0,padx=0,ipadx=0)
                 ui.ToolTip(button)
             else:
-                text=_("Add {0} gloss").format(langname)
+                text=_("Add {lang} gloss").format(lang=langname)
                 button=ui.Button(self.fds,text=text,
                                 relief=relief,
                                 font='small',
                                 cmd=lambda l=l: self.addback(l),
                                 columnspan=2,column=0,row=n+1,padx=0,ipadx=0)
-                ui.ToolTip(button,_("Add {} values for this frame").format(
-                                    langname
+                ui.ToolTip(button,_("Add {lang} values for this frame").format(
+                                    lang=langname
                                     ))
         text=_("Get Example")
         exemplify=ui.Button(self.fds,text=text,cmd=self.exemplified,
@@ -9216,8 +9220,8 @@ class ToneFrameDrafter(ui.Window):
         padx=50
         pady=10
         row=0
-        text=_("Examples for {} {} tone frame").format(checktoadd,
-                                                        self.fieldtypename())
+        text=_("Examples for {name} {field} tone frame").format(name=checktoadd,
+                                                        field=self.fieldtypename())
         lt=ui.Label(self.exf,
                 text=text,
                 font='readbig',
@@ -9253,7 +9257,7 @@ class ToneFrameDrafter(ui.Window):
                     }   }
         """
         row+=1
-        stext=_('Use {} tone frame'.format(checktoadd))
+        stext=_('Use {name} tone frame').format(name=checktoadd)
         subframe=ui.Frame(self.exf,row=row,column=0,sticky='w')
         sub_btn=ui.Button(subframe,text = stext,
                           command = lambda x=checkdefntoadd,
@@ -9269,27 +9273,27 @@ class ToneFrameDrafter(ui.Window):
         #None of this changes in editing. Is that what we want?
         if lang:
             lname=program['settings'].languagenames[self.stripftypecode(lang)]
-            text=_("Fill in the {} frame forms below.\n(include a "
+            text=_("Fill in the {lang} frame forms below.\n(include a "
                 "space to separate word forms)"
-                ).format(lname)
+                ).format(lang=lname)
             if lang != self.stripftypecode(lang): #i.e., analang
                 kind=_('form')
                 ok=_('Use this form')
             else:
                 kind=_('gloss')
-                ok=_('Use this {} form {} the dictionary gloss'.format(lname,
-                                _(context)))
+                ok=_("Use this {lang} form {context} the dictionary gloss").format(lang=lname,
+                                context=_(context))
                 self.glosslangs.append(lang)
             if context == 'before':
-                text+='\n'+_("What text goes *before* \n<==the {} word *{}* "
-                        "\nin the frame?").format(lname,kind)
+                text+='\n'+_("What text goes *before* \n<==the {lang} word *{kind}* "
+                        "\nin the frame?").format(lang=lname,kind=kind)
             elif context == 'after':
-                text+='\n'+_("What text goes *after* \nthe {} word *{}*==> "
-                        "\nin the frame?").format(lname,kind)
+                text+='\n'+_("What text goes *after* \nthe {lang} word *{kind}*==> "
+                        "\nin the frame?").format(lang=lname,kind=kind)
         else:
-            text=_("What do you want to call this new {} tone frame for {}?"
-                    ).format(self.ps,
-                            program['settings'].languagenames[self.analang])
+            text=_("What do you want to call this new {ps} tone frame for {lang}?"
+                    ).format(ps=self.ps,
+                            lang=program['settings'].languagenames[self.analang])
             ok=_("Use this name")
         return {'lang':lang, 'prompt':text, 'ok':ok}
     def promptwindow(self,lang=None,context=None,event=None):
@@ -9323,8 +9327,8 @@ class ToneFrameDrafter(ui.Window):
         if lang and context:
             self.w.title('{} {}'.format(context,lang))
         else:
-            self.w.title(_("New {} Tone frame for {}: Name the Frame").format(
-                        self.ps,program['settings'].languagenames[self.analang]))
+            self.w.title(_("New {ps} Tone frame for {lang}: Name the Frame").format(
+                        ps=self.ps,lang=program['settings'].languagenames[self.analang]))
         self.withdraw() #Don't show status when asking for a value
         getform=ui.Label(self.w.frame,text=strings['prompt'],
                         font='read',row=0,column=0,
@@ -9413,13 +9417,13 @@ class ToneFrameDrafter(ui.Window):
             tried+=1
             log.info("Values found: {}".format(f))
             if tried> program['db'].nsenses*3.5:
-                errortext=_("I've tried (randomly, then through each) {} "
+                errortext=_("I've tried (randomly, then through each) {count} "
                 "times, and not found one "
-                "of your {} senses with data in each of these languages: "
-                "{}. \nAre you asking for gloss "
+                "of your {total} senses with data in each of these languages: "
+                "{langs}. \nAre you asking for gloss "
                 "languages which actually have data in your database? \nOr, are "
                 "you missing gloss fields (i.e., you have only 'definition' "
-                "fields)?").format(tried,program['db'].nsenses,langs)
+                "fields)?").format(count=tried,total=program['db'].nsenses,langs=langs)
                 log.error(errortext)
                 return #errortext
         log.debug("Found entry {} with glosses {}".format(sense.id,f))
@@ -9439,11 +9443,11 @@ class ToneFrameDrafter(ui.Window):
         self.glosslangs=list()
         self.padx=50
         self.pady=10
-        title=_("Define a New {} Tone Frame for {}").format(self.ps,
-                        program['settings'].languagenames[self.analang])
+        title=_("Define a New {ps} Tone Frame for {lang}").format(ps=self.ps,
+                        lang=program['settings'].languagenames[self.analang])
         self.title(title)
-        t=(_("Add {} Tone Frame for {}").format(self.ps,
-                        program['settings'].languagenames[self.analang]))#+'\n'?
+        t=(_("Add {ps} Tone Frame for {lang}").format(ps=self.ps,
+                        lang=program['settings'].languagenames[self.analang]))#+'\n'?
         ui.Label(self.frame,text=t,font='title',row=0,column=0)
         self.scroll=ui.ScrollingFrame(self.frame,row=1,column=0)
         self.content=self.scroll.content
@@ -9580,8 +9584,8 @@ class Sort(object):
         if frames and self.check in frames:
             return frames.get(self.check)
         else:
-            text=_(f"Looking for tone check ‘{self.check}’, but not "
-                    f"in {self.ps} frames: {frames}")
+            text=_("Looking for tone check ‘{check}’, but not "
+                    "in {ps} frames: {frames}").format(check=self.check, ps=self.ps, frames=frames)
             ErrorNotice(text,wait=True)
     def getsensesincheckgroup(self,**kwargs):
         check=kwargs.get('check',program['params'].check())
@@ -9687,7 +9691,7 @@ class Sort(object):
         ps=program['slices'].ps()
         if profile in [x[0] for x in program['slices'].profiles()]: #profilecountsValid]:
             new=True
-            title=_("New Ad Hoc Sort Group for {} Group".format(ps))
+            title=_("New Ad Hoc Sort Group for {ps} Group").format(ps=ps)
         else:
             new=False
             title=_("Modify Existing Ad Hoc Sort Group for {} Group".format(ps))
@@ -9699,8 +9703,8 @@ class Sort(object):
         allpssenses=program['slices'].sensesbyps(ps)
         if len(allpssenses)>70:
             self.runwindow.waitdone()
-            text=_("This is a large group ({})! Are you in the right "
-                    "lexical category?".format(len(allpssensids)))
+            text=_("This is a large group ({count})! Are you in the right "
+                    "lexical category?").format(count=len(allpssensids))
             log.error(text)
             w=ui.Label(self.runwindow.frame,text=text)
             w.grid(row=1,column=0,sticky='ew')
@@ -9726,15 +9730,15 @@ class Sort(object):
                 # "\nIf you're looking at a group you created earlier, and "
                 "\nIf you want to create a new group, exit here, select a "
                 "non-Ad Hoc syllable profile, and try this window again."
-                "".format(ps))
+                "").format(ps=ps)
         inst=ui.Label(self.runwindow.frame,text=text,
                 row=1,column=0,sticky='ew'
                 )
         inst.wrap()
         qframe=ui.Frame(self.runwindow.frame)
         qframe.grid(row=2,column=0,sticky='ew')
-        text=_("What do you want to call this group for sorting {} words?"
-                "".format(ps))
+        text=_("What do you want to call this group for sorting {ps} words?"
+                "").format(ps=ps)
         instq=ui.Label(qframe,text=text,
                 row=0,column=0,sticky='ew',pady=20)
         if new:
@@ -9744,8 +9748,8 @@ class Sort(object):
         profilevar=ui.StringVar(value=default)
         namefield = ui.EntryField(qframe,text=profilevar)
         namefield.grid(row=0,column=1)
-        text=_("Select the {} words below that you want in this group, then "
-                "click ==>".format(ps))
+        text=_("Select the {ps} words below that you want in this group, then "
+                "click ==>").format(ps=ps)
         ui.Label(qframe,text=text).grid(row=1,column=0,sticky='ew',pady=20)
         sub_btn=ui.Button(qframe,text = _("OK"),
                   command = submitform,anchor ='c')
@@ -9779,7 +9783,7 @@ class Sort(object):
         group=kwargs.get('group',program['status'].group())
         write=kwargs.pop('write',True) #avoid duplicate
         sorting=kwargs.get('sorting',True) #Default to verify button
-        log.info(_("Removing sense {} from subcheck {}".format(item.id,group)))
+        log.info(_("Removing sense {id} from subcheck {group}").format(id=item.id,group=group))
         #This should only *mod* if already there
         self.setitemgroup(item,check,'',**kwargs)
         tgroups=self.getitemgroup(item,check)
@@ -9924,16 +9928,16 @@ class Sort(object):
         if not nocheck:
             newgroup=self.getitemgroup(sense,check)
             if newgroup != group:
-                log.error("Field addition failed! LIFT says {}, not {}.".format(
-                                                    newgroup,group))
+                log.error("Field addition failed! LIFT says {new}, not {old}.".format(
+                                                    new=newgroup,old=group))
             # else:
             #     log.info("Field addition succeeded! LIFT says {}, which is {}."
             #                             "".format(newgroup,group))
         # log.info(f"marksortgroup ready to updateforms {kwargs.get('thread_name')}")
         if kwargs.get('updateforms'):
             if self.ftype != program['params'].ftype():
-                ErrorNotice(f"{ftype=} differs from "
-                            f"{program['params'].ftype()=}; this is a problem!",
+                ErrorNotice(_("{ftype} differs from {pftype}; this is a problem!").format(
+                            ftype=ftype, pftype=program['params'].ftype()),
                             wait=True)
             self.updateformtoannotations(sense,check)
         # log.info(f"marksortgroup ready to marksorted {kwargs.get('thread_name')}")
@@ -9992,11 +9996,11 @@ class Sort(object):
         """This should look for one group to verify at a time, with sorting
         in between, then join and repeat"""
         def tosortupdate():
-            log.info("maybesort tosortbool:{}; tosort:{}; sorted (first 5):{}"
+            log.info("maybesort tosortbool:{tosortbool}; tosort:{tosort}; sorted (first 5):{sorted}"
                     "".format(
-                                self.tosort(),
-                                self.itemstosort(),
-                                self.itemssorted()[:5]
+                                tosortbool=self.tosort(),
+                                tosort=self.itemstosort(),
+                                sorted=self.itemssorted()[:5]
                                 ))
         def exitstatuses():
             try:
