@@ -19,6 +19,12 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.0.0
+- Alphabet chart up and printing
+- ps-profile sort groups now sorting in to glyph/letter groups
+- French translation 80% done
+- Machine translations for some of Chinese, Spanish, and Arabic
+
 # Version 0.9.11
 - Finished parsing, though not always used. There is now a task to add and parse words in one step, and another to parse words added earlier.
 - use of pictures (some from open clipart, first 110 from stability)

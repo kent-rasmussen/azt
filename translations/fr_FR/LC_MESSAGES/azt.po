@@ -327,7 +327,7 @@ msgstr "Ajouter des Mots"
 
 #: /home/kentr/bin/raspy/azt/main.py:8158
 msgid "Add Words with Audio"
-msgstr "Ajouter des mots avec un son"
+msgstr "Ajouter des mots par audio"
 
 #: /home/kentr/bin/raspy/azt/main.py:7409
 #: /home/kentr/bin/raspy/azt/main.py:8843
@@ -341,7 +341,7 @@ msgstr "Ajouter et analyser des mots"
 
 #: /home/kentr/bin/raspy/azt/main.py:8903
 msgid "Add and Parse Words with Audio"
-msgstr "Ajouter et analyser des mots avec du son"
+msgstr "Ajouter et analyser des mots par audio"
 
 #: /home/kentr/bin/raspy/azt/main.py:8188
 msgid "Add imperative forms"
