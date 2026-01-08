@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: azt\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-06 15:54-0600\n"
-"PO-Revision-Date: 2026-01-06 22:27\n"
+"POT-Creation-Date: 2026-01-08 15:52-0600\n"
+"PO-Revision-Date: 2026-01-08 21:57\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr_FR\n"
@@ -183,7 +183,7 @@ msgstr "(Rapport est également disponible sur {file}"
 msgid "(Restart {name} to use this update)"
 msgstr "(Forteresse {name} pour utiliser cette mise à jour)"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:737
+#: /home/kentr/bin/raspy/azt/sound_ui.py:738
 msgid "(This may require a large download)"
 msgstr "(Cela peut nécessiter un téléchargement volumineux)"
 
@@ -192,7 +192,7 @@ msgstr "(Cela peut nécessiter un téléchargement volumineux)"
 msgid "(by {context})"
 msgstr "(par {context})"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:420
+#: /home/kentr/bin/raspy/azt/sound_ui.py:417
 msgid "(click any to change)"
 msgstr "(cliquez sur n'importe lequel pour changer)"
 
@@ -217,9 +217,9 @@ msgstr "(pas de groupe encadré)"
 msgid "(only)"
 msgstr "(seulement)"
 
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:107
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:140
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:199
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:102
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:135
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:194
 msgid "(un)hide"
 msgstr "(dé)masquer"
 
@@ -446,7 +446,7 @@ msgstr "Tout fini! Trier encore de mots, et revenir."
 msgid "All necessary modules imported fine."
 msgstr "Tous les modules nécessaires ont été importés correctement."
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:770
+#: /home/kentr/bin/raspy/azt/sound_ui.py:771
 msgid "All of the below"
 msgstr "Tout ce qui est ci-dessous"
 
@@ -463,19 +463,19 @@ msgstr "Tous les groupes ‘{profile}’ de la ‘{check}’ {typename} sont vé
 msgid "Alphabet Chart"
 msgstr "Tableau d'alphabet"
 
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:538
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:533
 msgid "Alphabet Chart UI"
 msgstr "Alphabet Chart UI"
 
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:378
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:373
 msgid "Alphabet Chart UI for Glyph Ordering and Selection"
 msgstr "Interface graphique alphabet pour l'ordre et la sélection des glyphes"
 
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:487
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:482
 msgid "Alphabet Chart UI for Word Selection"
 msgstr "Interface graphique par ordre alphabétique pour la sélection de mots"
 
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:354
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:349
 #, python-brace-format
 msgid "Alphabet Chart for {name}"
 msgstr "Graphique alphabet pour {name}"
@@ -533,7 +533,7 @@ msgstr "Analyse de ce que vous avez fait : {status}"
 msgid "Analyze & Decide"
 msgstr "Analyser & Décider"
 
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:288
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:283
 msgid "Andika"
 msgstr "Andika"
 
@@ -828,7 +828,7 @@ msgstr "Appelé avec des arguments {exe} {script} / {args}"
 msgid "Can't decode this (in {}; {}):"
 msgstr "Impossible de décoder ceci (dans {}; {}):"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:430
+#: /home/kentr/bin/raspy/azt/sound_ui.py:426
 #: /home/kentr/bin/raspy/azt/main.py:921
 msgid "Change"
 msgstr "Modifier"
@@ -864,8 +864,8 @@ msgstr "Changements appelés; que cela plaise ou non, refaisant l'analyse."
 msgid "Changing values from {group} to {uf} for the following sense.ids: {ids}"
 msgstr "Changement des valeurs de {group} à {uf} pour les identifiants sense.ids suivants : {ids}"
 
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:281
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:288
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:276
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:283
 msgid "Charis"
 msgstr "Charis"
 
@@ -938,7 +938,7 @@ msgstr "Citation: {citation}, {sfname}: {forms}"
 msgid "Click here to change the number of columns used for sort buttons"
 msgstr "Cliquez ici pour modifier le nombre de colonnes utilisées pour les boutons de tri"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:72
+#: /home/kentr/bin/raspy/azt/sound_ui.py:71
 msgid "Click to hear"
 msgstr "Cliquez pour entendre"
 
@@ -971,7 +971,7 @@ msgid "Collected ufjoinl: {list}"
 msgstr "ufjoinl récupéré : {list}"
 
 #: /home/kentr/bin/raspy/azt/main.py:7766
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:270
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:265
 msgid "Columns"
 msgstr "Colonnes"
 
@@ -1294,10 +1294,6 @@ msgstr "Ne pas utiliser les autres groupes :"
 msgid "Don't use this task."
 msgstr "Ne pas utiliser cette tâche."
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:459
-msgid "Done"
-msgstr "Terminé"
-
 #: /home/kentr/bin/raspy/azt/xlp.py:48
 msgid "Done initializing Report"
 msgstr "Fin d'initialisation du rapport"
@@ -1315,7 +1311,7 @@ msgstr "Lecture du fichier XML terminée."
 msgid "Done setting up syllable profiles."
 msgstr "Mise en place des profils de syllabe."
 
-#: /home/kentr/bin/raspy/azt/export.py:77
+#: /home/kentr/bin/raspy/azt/export.py:72
 msgid "Done with {}."
 msgstr "Fait avec {}."
 
@@ -1606,7 +1602,7 @@ msgstr "Première voyelle"
 msgid "First/only Consonant"
 msgstr "Première/Seule Consonne"
 
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:278
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:273
 msgid "Fit Page"
 msgstr "Ajuster la page"
 
@@ -1831,7 +1827,7 @@ msgstr "Quatrième voyelle"
 msgid "Frame name:"
 msgstr "Nom du cadre :"
 
-#: /home/kentr/bin/raspy/azt/export.py:28
+#: /home/kentr/bin/raspy/azt/export.py:23
 msgid "Fully checked lexical"
 msgstr "lexicale entièrement vérifiée"
 
@@ -2107,7 +2103,7 @@ msgid "I've tried (randomly, then through each) {count} times, and not found one
 "Or, are you missing gloss fields (i.e., you have only 'definition' fields)?"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:451
+#: /home/kentr/bin/raspy/azt/sound_ui.py:462
 msgid "If Praat is installed in your OS path, right click on ‘{}’ above to open in Praat."
 msgstr "Si Praat est installé dans le chemin de votre système d'exploitation, cliquez avec le bouton droit sur « {} » ci-dessus pour ouvrir dans Praat."
 
@@ -2168,11 +2164,6 @@ msgstr "Importé et mis à jour {s}/{old}: {val}"
 #, python-brace-format
 msgid "Imported {s}: {val}"
 msgstr "{s}importé : {val}"
-
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:13
-#, python-brace-format
-msgid "Importing {name}"
-msgstr "Importation de {name}"
 
 #: /home/kentr/bin/raspy/azt/main.py:2162
 #, python-brace-format
@@ -2341,7 +2332,7 @@ msgstr "Langue avec code [{code}]"
 msgid "Language {lang} found without segment settings."
 msgstr "La langue {lang} n'a pas de paramètres de segment."
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:494
+#: /home/kentr/bin/raspy/azt/sound_ui.py:495
 msgid "Language:"
 msgstr "Langue :"
 
@@ -2401,7 +2392,7 @@ msgstr "Limiter le travail du segment à cette tranche"
 msgid "Loading Affixes"
 msgstr "Chargement des affixes"
 
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:450
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:445
 msgid "Loading Images"
 msgstr "Chargement des images"
 
@@ -2471,10 +2462,6 @@ msgstr "Recherche de {head} dans les enfants de {node}: {children}"
 #, python-brace-format
 msgid "Looking for {repo} branch name in {file}"
 msgstr "Recherche du nom de la branche {repo} en {file}"
-
-#: /home/kentr/bin/raspy/azt/executables.py:43
-msgid "Looks like I couln't find Praat..."
-msgstr "On dirait que je n'ai pas trouvé Praat..."
 
 #: /home/kentr/bin/raspy/azt/main.py:3534
 #, python-brace-format
@@ -2642,7 +2629,7 @@ msgstr "Menus : {menu}; {chooser_menu} (choisisseur)"
 msgid "Menus: {menu}; {task_menu} (task)"
 msgstr "Menus: {menu}; {task_menu} (task)"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:302
+#: /home/kentr/bin/raspy/azt/sound_ui.py:303
 #, python-brace-format
 msgid "Microphone: ‘{cur}’"
 msgstr "Microphone: ‘{cur}’"
@@ -2881,7 +2868,7 @@ msgstr "Pas de répertoire, pas de clonage."
 msgid "No draft UF groups found for {ps} words!"
 msgstr "Aucun brouillon de groupes UF trouvé pour les mots {ps}!"
 
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:509
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:504
 #, python-brace-format
 msgid "No examples for ‘{glyph}’!"
 msgstr "Aucun exemple pour «{glyph}»!"
@@ -3154,7 +3141,7 @@ msgstr "Ne pas utiliser les colonnes de plusieurs boutons"
 msgid "Not verifying tone examples which don't exist."
 msgstr "Ne pas vérifier les exemples de tonalités qui n'existent pas."
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:523
+#: /home/kentr/bin/raspy/azt/sound_ui.py:524
 msgid "Nothing"
 msgstr "Rien"
 
@@ -3205,7 +3192,7 @@ msgstr "Le Nombre d'Examples à Enregistrer"
 #: /home/kentr/bin/raspy/azt/main.py:9754
 #: /home/kentr/bin/raspy/azt/main.py:13036
 #: /home/kentr/bin/raspy/azt/main.py:15948
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:374
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:369
 #: /home/kentr/bin/raspy/azt/ui_tkinter.py:218
 msgid "OK"
 msgstr "Bon"
@@ -3355,9 +3342,9 @@ msgstr "Choisissez Consonnes, Voyelles ou CV pour ce rapport."
 msgid "Pick this group ({group})"
 msgstr "Choisir ce groupe ({group})"
 
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:225
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:234
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:279
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:220
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:229
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:274
 msgid "Pictured Only"
 msgstr "Photos uniquement"
 
@@ -3365,7 +3352,7 @@ msgstr "Photos uniquement"
 msgid "Placeholder Check2"
 msgstr "Vérification2 de l'espace réservé"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:450
+#: /home/kentr/bin/raspy/azt/sound_ui.py:454
 msgid "Play"
 msgstr "Lecture"
 
@@ -3398,15 +3385,15 @@ msgstr "Veuillez remplacer ce texte par une description de ce que vous venez de 
 msgid "Please see {url} for installation recommendations"
 msgstr "Veuillez consulter {url} pour les recommandations d'installation"
 
-#: /home/kentr/bin/raspy/azt/file.py:81
+#: /home/kentr/bin/raspy/azt/file.py:76
 msgid "Please select a LIFT lexicon file to check"
 msgstr "Veuillez sélectionner un fichier de lexique LIFT à vérifier"
 
-#: /home/kentr/bin/raspy/azt/file.py:311
+#: /home/kentr/bin/raspy/azt/file.py:306
 msgid "Please select where to find the media locally"
 msgstr "Veuillez sélectionner où trouver les médias localement"
 
-#: /home/kentr/bin/raspy/azt/file.py:308
+#: /home/kentr/bin/raspy/azt/file.py:303
 msgid "Please select where to find the {} media locally"
 msgstr "Veuillez sélectionner où trouver le média {} localement"
 
@@ -3414,9 +3401,10 @@ msgstr "Veuillez sélectionner où trouver le média {} localement"
 msgid "Please specify a tier name (-t) in {}"
 msgstr "Veuillez spécifier un nom de palier (-t) dans {}"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:443
-msgid "Plug in your microphone, and make sure ‘record’ and ‘play’ work well here, before recording real data!"
-msgstr "Branchez votre microphone, et assurez-vous que « enregistrement» et « lecture» fonctionnent bien ici, avant d'enregistrer de vraies données!"
+#: /home/kentr/bin/raspy/azt/sound_ui.py:455
+#, python-brace-format
+msgid "Plug in your microphone, and make sure ‘record’ and ‘{play}’ work well here, before recording real data!"
+msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:2682
 #, python-brace-format
@@ -3467,7 +3455,7 @@ msgstr "Préparation ({check}={groups})"
 msgid "Presorting for this check/slice already done! ({args})"
 msgstr "Préparation pour cette vérification/tranche déjà effectuée ! ({args})"
 
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:282
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:277
 msgid "Print"
 msgstr "Imprimer"
 
@@ -3668,11 +3656,11 @@ msgstr "Actualisation des paramètres de statut {cvt} {ps} {profile} depuis LIFT
 msgid "Refreshing {ps} {cvt} status settings from LIFT"
 msgstr "Actualisation des paramètres de statut {ps} {cvt} depuis LIFT"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:696
+#: /home/kentr/bin/raspy/azt/sound_ui.py:697
 msgid "Reload Model"
 msgstr "Recharger le modèle"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:736
+#: /home/kentr/bin/raspy/azt/sound_ui.py:737
 msgid "Reloading ASR model(s)"
 msgstr "Rechargement du/des modèle(s) ASR"
 
@@ -4018,7 +4006,7 @@ msgstr "Segment(s) à vérifier"
 msgid "Select"
 msgstr "Sélectionner"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:750
+#: /home/kentr/bin/raspy/azt/sound_ui.py:751
 msgid "Select ASR Settings"
 msgstr "Sélectionnez les paramètres ASR"
 
@@ -4026,7 +4014,7 @@ msgstr "Sélectionnez les paramètres ASR"
 msgid "Select Analysis Language"
 msgstr "Sélectionner la Langue à Analyser"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:361
+#: /home/kentr/bin/raspy/azt/sound_ui.py:362
 msgid "Select Audio Format"
 msgstr "Sélectionner le Format Audio"
 
@@ -4062,7 +4050,7 @@ msgstr "Sélectionner le Groupe de Tons Encadrés"
 msgid "Select Gloss Language"
 msgstr "Sélectionner la Langue du Gloss"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:327
+#: /home/kentr/bin/raspy/azt/sound_ui.py:328
 msgid "Select Input Sound Card"
 msgstr "Sélectionner la Carte Son à Enregistrer"
 
@@ -4074,7 +4062,7 @@ msgstr "Sélectionner la langue de l'interface"
 msgid "Select LIFT Database"
 msgstr "Sélectionnez la Base de Données LIFT"
 
-#: /home/kentr/bin/raspy/azt/file.py:329
+#: /home/kentr/bin/raspy/azt/file.py:324
 msgid "Select LIFT Lexicon File"
 msgstr "Sélectionnez le fichier de lexique LIFT"
 
@@ -4099,7 +4087,7 @@ msgstr "Sélectionner Nombre maximum des Profils de Syllabe à Rechercher"
 msgid "Select Number of Examples per Group to Record"
 msgstr "Selectionner le nombre d'examples par group pour enregistrer"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:344
+#: /home/kentr/bin/raspy/azt/sound_ui.py:345
 msgid "Select Output Sound Card"
 msgstr "Sélectionner la Carte Son à Jouer"
 
@@ -4111,7 +4099,7 @@ msgstr "Sélectionnez le niveau de demande de l'Analyseur"
 msgid "Select Parser Auto Level"
 msgstr "Sélectionner le niveau automatique de l'analyseur"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:379
+#: /home/kentr/bin/raspy/azt/sound_ui.py:380
 msgid "Select Sampling Frequency"
 msgstr "Sélectionner la Fréquence d'Echantillonnage"
 
@@ -4154,11 +4142,11 @@ msgstr "Sélectionnez une bonne image pour {glosses}"
 msgid "Select a local image"
 msgstr "Sélectionnez une image locale"
 
-#: /home/kentr/bin/raspy/azt/file.py:284
+#: /home/kentr/bin/raspy/azt/file.py:279
 msgid "Select a new location for your LIFT Lexicon and other Files"
 msgstr "Sélectionnez un nouvel emplacement pour votre lexique LIFT et d'autres fichiers"
 
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:500
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:495
 #, python-brace-format
 msgid "Select a word to exemplify ‘{glyph}’"
 msgstr "Sélectionnez un mot pour illustrer «{glyph}»"
@@ -4291,7 +4279,7 @@ msgstr "Paramètres (Post-lift) initialisés"
 msgid "Settings file {legacy} converted to {savefile}, with each value verified."
 msgstr "Fichier de paramètres {legacy} converti en {savefile}, avec chaque valeur vérifiée."
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:751
+#: /home/kentr/bin/raspy/azt/sound_ui.py:752
 msgid "Settings for Transcription Model"
 msgstr "Paramètres pour le modèle de transcription"
 
@@ -4308,9 +4296,9 @@ msgstr "Paramètres enregistrés"
 msgid "Settings: {settings}"
 msgstr "Paramètres: {settings}"
 
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:226
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:235
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:280
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:221
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:230
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:275
 msgid "Show All"
 msgstr "Tout afficher"
 
@@ -4418,7 +4406,7 @@ msgstr "Désolé, je ne peux pas dire quel formulaire passer à ce champ;\n"
 msgid "Sorry, I don't know this OS: {os}"
 msgstr "Désolé, je ne connais pas cet OS : {os}"
 
-#: /home/kentr/bin/raspy/azt/file.py:344
+#: /home/kentr/bin/raspy/azt/file.py:339
 msgid "Sorry, did you select a file? Giving up."
 msgstr "Désolé, avez-vous sélectionné un fichier ? Rebondissez."
 
@@ -4529,7 +4517,7 @@ msgstr "Paramètres du son"
 msgid "Sound settings currently: {settings}"
 msgstr "Réglages sonores actuels: {settings}"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:313
+#: /home/kentr/bin/raspy/azt/sound_ui.py:314
 #, python-brace-format
 msgid "Speakers: ‘{cur}’"
 msgstr "Haut-parleurs : «{cur}»"
@@ -4645,7 +4633,7 @@ msgstr "Tâches"
 msgid "Tasks available ({count}): {tasks}"
 msgstr "Tâches disponibles ({count}): {tasks}"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:794
+#: /home/kentr/bin/raspy/azt/sound_ui.py:795
 msgid "Test Task (Does nothing)"
 msgstr "Tâche de test (ne fait rien)"
 
@@ -4700,7 +4688,7 @@ msgstr "Le répertoire {newdirname} existe déjà, donc je ne vais pas y copier 
 "Avez-vous déjà vos données sur votre ordinateur ? \n"
 "Si oui, cliquez sur '{other}' sur l'écran suivant."
 
-#: /home/kentr/bin/raspy/azt/file.py:181
+#: /home/kentr/bin/raspy/azt/file.py:176
 msgid "The directory {} already exists! Not Continuing."
 msgstr "Le répertoire {} existe déjà ! Ne pas continuer."
 
@@ -5267,11 +5255,11 @@ msgstr "Transcripteur"
 msgid "Transcription settings"
 msgstr "Paramètres de transcription"
 
-#: /home/kentr/bin/raspy/azt/file.py:160
+#: /home/kentr/bin/raspy/azt/file.py:155
 msgid "Tried to move {} to {}, but I can't find it (or overwrite?)."
 msgstr "Vous avez essayé de déplacer {} vers {}, mais je ne peux pas le trouver (ou l'écraser ?)."
 
-#: /home/kentr/bin/raspy/azt/file.py:168
+#: /home/kentr/bin/raspy/azt/file.py:163
 msgid "Tried to remove {}, but I can't find it."
 msgstr "Essayé enlever {}, mais je ne l'ai pas trouver."
 
@@ -5284,7 +5272,7 @@ msgstr "Tentative d'écriture du fichier {type} LIFT sur {newfile}"
 msgid "Try Again"
 msgstr "Réessayez"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:84
+#: /home/kentr/bin/raspy/azt/sound_ui.py:83
 msgid "Try again"
 msgstr "Réessayez"
 
@@ -5320,10 +5308,6 @@ msgstr "Essai pour les paramètres {setting} dans {legacy_name}"
 #, python-brace-format
 msgid "Trying generation {g}"
 msgstr "Tentative de génération {g}"
-
-#: /home/kentr/bin/raspy/azt/executables.py:36
-msgid "Trying to call Praat at {}..."
-msgstr "J'essaie d'appeler Praat au {}..."
 
 #: /home/kentr/bin/raspy/azt/main.py:2706
 msgid "Trying to make no changes"
@@ -5626,7 +5610,7 @@ msgstr "Avec quel profil de syllabe ({ps}) voulez-vous travailler ?"
 msgid "What Language do you want to use for glosses?"
 msgstr "Quelle langue voulez-vous utiliser pour les gloses?"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:362
+#: /home/kentr/bin/raspy/azt/sound_ui.py:363
 msgid "What audio format do you want to work with?"
 msgstr "Avec quel format audio voulez-vous travailler?"
 
@@ -5733,7 +5717,7 @@ msgstr "Quelle autre langue souhaitez-vous utiliser pour les gloses?"
 msgid "What part of the sound system do you want to work with?"
 msgstr "Avec quelle partie du système audio voulez-vous travailler?"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:380
+#: /home/kentr/bin/raspy/azt/sound_ui.py:381
 msgid "What sampling frequency you want to work with?"
 msgstr "Avec quelle fréquence d'échantillonnage voulez-vous travailler?"
 
@@ -5741,11 +5725,11 @@ msgstr "Avec quelle fréquence d'échantillonnage voulez-vous travailler?"
 msgid "What sense do you want to work with?"
 msgstr "Avec quel sens voulez-vous travailler ?"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:345
+#: /home/kentr/bin/raspy/azt/sound_ui.py:346
 msgid "What sound card do you want to play sound with?"
 msgstr "Avec quel carte de sons voulez-vous jouer son?"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:328
+#: /home/kentr/bin/raspy/azt/sound_ui.py:329
 msgid "What sound card do you want to record sound with with?"
 msgstr "Avec quel carte de sons voulez-vous enregistrer?"
 
@@ -6187,6 +6171,10 @@ msgstr "vérification des noms de catégories lexicales pour les noms de noms de
 msgid "clear entry"
 msgstr "entrée claire"
 
+#: /home/kentr/bin/raspy/azt/main.py:8062
+msgid "click on the best option(s) above"
+msgstr "cliquez sur la/les meilleur(s) option(s) en haut"
+
 #: /home/kentr/bin/raspy/azt/main.py:4055
 msgid "click on the task you want to do"
 msgstr "cliquez sur la tâche que vous voulez faire"
@@ -6203,6 +6191,10 @@ msgstr "groupe de comparaison"
 #, python-brace-format
 msgid "config: {keys}"
 msgstr "config: {keys}"
+
+#: /home/kentr/bin/raspy/azt/main.py:8063
+msgid "correct the consonants and vowels below."
+msgstr "Corrigez les consonnes et voyelles en bas."
 
 #: /home/kentr/bin/raspy/azt/main.py:9087
 msgid "current gloss language"
@@ -6263,7 +6255,7 @@ msgstr "vide"
 msgid "entry {id} doesn't have glosses; not showing."
 msgstr "l'entrée {id} n'a pas de gloses; ne s'affichent pas."
 
-#: /home/kentr/bin/raspy/azt/export.py:30
+#: /home/kentr/bin/raspy/azt/export.py:25
 msgid "example (unsorted)"
 msgstr "exemple (non trié)"
 
@@ -6624,7 +6616,7 @@ msgstr "presort_item déplaçant {item} dans ‘{glyph}’"
 msgid "presorted value ({value}) invalid: OK values: {ok}"
 msgstr "valeur préenregistrée ({value}) invalide : Valeurs OK : {ok}"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:59
+#: /home/kentr/bin/raspy/azt/sound_ui.py:58
 msgid "press-speak-release"
 msgstr "press-speak-release"
 
@@ -6655,9 +6647,9 @@ msgstr "psnode {ps} introuvable dans le sens {sense} ({id})"
 msgid "pssubclass {subclass} not found in sense {sense} ({id})"
 msgstr "pssubclass {subclass} introuvable dans le sens {sense} ({id})"
 
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:109
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:141
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:200
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:104
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:136
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:195
 msgid "re-alphabetize"
 msgstr "ré-alphabétiser"
 
@@ -6667,9 +6659,9 @@ msgstr "ré-alphabétiser"
 msgid "remotes: {remotes}"
 msgstr "télécommandes : {remotes}"
 
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:108
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:139
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:198
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:103
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:134
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:193
 msgid "reorder"
 msgstr "réordonner"
 
@@ -6697,7 +6689,7 @@ msgstr "retour des télécommandes :{remotes}"
 msgid "returning {id} {type} value: {value}"
 msgstr "valeur {id} {type} retournée: {value}"
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:74
+#: /home/kentr/bin/raspy/azt/sound_ui.py:73
 #: /home/kentr/bin/raspy/azt/main.py:14052
 msgid "right click to open in praat"
 msgstr "clic droit pour ouvrir en praat"
@@ -6723,7 +6715,7 @@ msgstr "self._checkcodes_by_cvt={codes}"
 msgid "self.entry doesn't seem to be in entries; OK for now"
 msgstr "self.entry ne semble pas être dans les entrées ; OK pour l'instant"
 
-#: /home/kentr/bin/raspy/azt/alphabet_chart.py:68
+#: /home/kentr/bin/raspy/azt/alphabet_chart.py:63
 msgid "self.exids is there, but self.exobjs isn't? "
 msgstr "self.exids est là, mais self.exobjs ne l'est pas? "
 
@@ -6872,7 +6864,7 @@ msgstr "essai de {analang}"
 msgid "ui.Image error: {error}"
 msgstr "ui.Image error: {error}"
 
-#: /home/kentr/bin/raspy/azt/export.py:26
+#: /home/kentr/bin/raspy/azt/export.py:21
 msgid "unchecked lexical"
 msgstr "lexique non coché"
 
@@ -7093,7 +7085,7 @@ msgstr "Fichiers {count} {extension} pour vérifier le dépôt {repo}"
 msgid "{count}: {form} > {profile}"
 msgstr ""
 
-#: /home/kentr/bin/raspy/azt/sound_ui.py:282
+#: /home/kentr/bin/raspy/azt/sound_ui.py:283
 #, python-brace-format
 msgid "{cur}"
 msgstr ""
