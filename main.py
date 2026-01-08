@@ -8059,8 +8059,8 @@ class WordCollectionwRecordings(WordCollection,Record):
                     )
     def show_drafts(self,*args):
         # log.info(f"show_drafts got args {args}")
-        instructions2=("click on the best option(s) above\n "
-                        "correct the consonants and vowels below.")
+        instructions2=(_"click on the best option(s) above"),
+                        _("correct the consonants and vowels below."))
         try:
             self.wordframe.draftFrame.destroy()
         except:
@@ -8094,7 +8094,7 @@ class WordCollectionwRecordings(WordCollection,Record):
                 row=buttons%nrows,
             )
             buttons+=1
-        self.instructions2['text']=instructions2
+        self.instructions2['text']='\n'.join(instructions2)
         if self.transcription_tone_var.get():
             self.wordframe.toneFrame['text']=self.transcription_tone_var.get()
         else:
