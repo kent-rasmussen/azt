@@ -402,19 +402,14 @@ class SoundSettingsWindow(ui.Window):
             return
         log.info("sound settings dict: {}".format(dict))
         self.resetframe()
-        self.scroll=ui.ScrollingFrame(
-                                                self.frame,
-                                                row=0,column=0)
+        self.scroll=ui.ScrollingFrame(self.frame, row=0, column=0)
         self.content=self.scroll.content
-        row=0
         ui.Label(self.content, font='title',
                 text=self.tasktitle(),
-                row=row,column=0)
-        row+=1
+                row=self.content.nrows())
         ui.Label(self.content, #font='title',
                 text=_("(click any to change)"),
-                row=row,column=0)
-        row+=1
+                row=self.content.nrows())
         self.labeltext={}
         for varname, cmd in [
             ('audio_card_in', self.getsoundcardindex),
@@ -425,38 +420,37 @@ class SoundSettingsWindow(ui.Window):
             text=_("Change")
             self.labeltext[varname]=ui.StringVar()
             l=ui.Label(self.content,text=self.labeltext[varname],
-                        row=row,column=0)
+                        row=self.content.nrows())
             l.bind('<ButtonRelease-1>',cmd) #getattr(self,str(cmd)))
-            row+=1
+        log.info("Done setting up labels")
         self.updatesoundcard()
         self.updatesoundhz()
         self.updatesoundformat()
         self.updatesoundcardoutindex()
-        br=RecordButtonFrame(self.content,self,test=True)
-        br.grid(row=row,column=0)
-        row+=1
-        l=_("Plug in your microphone, and make sure ‘record’ and ‘play’ work "
-            "well here, before recording real data!")
+        for k in self.labeltext:
+            log.info(f"{k}: {self.labeltext[k].get()}")
+        br=RecordButtonFrame(self.content,self,test=True,
+                            row=self.content.nrows(),
+                            sticky='')
+        play=_("Play")
+        l=_("Plug in your microphone, and make sure ‘record’ and ‘{play}’ work "
+            "well here, before recording real data!".format(play=play))
         caveat=ui.Label(self.content,
                 text=l,font='read',
-                row=row,column=0)
+                row=self.content.nrows(),
+                sticky='')
         caveat.wrap()
-        row+=1
-        play=_("Play")
         l=_("If Praat is installed in your OS path, right click on ‘{}’ above "
             "to open in Praat.".format(play))
         caveat3=ui.Label(self.content,
                 text=l,font='default',
-                row=row,column=0)
+                row=self.content.nrows())
         caveat3.wrap()
-        row+=1
         bd=ui.Button(self.content,
                     text=_("Done"),
                     cmd=self.soundcheckrefreshdone,
-                    # anchor='c',
-                    row=row,column=0,
-                    sticky=''
-                    )
+                    row=self.content.nrows(),
+                    sticky='')
     def soundcheckrefreshdone(self):
         self.task.storesoundsettings()
         self.on_quit()
