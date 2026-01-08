@@ -2564,7 +2564,7 @@ class Settings(object):
                                                         '*.wav')])
             audio=audiohere-present
             log.info(_("{wav_count} wav files to check for the {repo} repo (of {total_count} files total "
-                    "here)").format(wav_count=len(audio),r=r,total_count=len(audiohere)))
+                    "here)").format(wav_count=len(audio),repo=r,total_count=len(audiohere)))
             log.info(_("head of wav files in repo: {files}").format(files=list(present)[:10]))
             log.info(_("head of wav files here: {files}").format(files=list(audiohere)[:10]))
             log.info(_("head of wav files to check: {files}").format(files=list(audio)[:10]))
