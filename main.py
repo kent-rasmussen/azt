@@ -8059,7 +8059,7 @@ class WordCollectionwRecordings(WordCollection,Record):
                     )
     def show_drafts(self,*args):
         # log.info(f"show_drafts got args {args}")
-        instructions2=(_"click on the best option(s) above"),
+        instructions2=(_("click on the best option(s) above"),
                         _("correct the consonants and vowels below."))
         try:
             self.wordframe.draftFrame.destroy()
