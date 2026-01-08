@@ -6,6 +6,7 @@ logsetup.setlevel('INFO',log) #for this file
 import subprocess
 """This module should eventually old everything that depends on subprocess,
 maybe including a class to store program, or other common dependencies"""
+"""Translation isn't working here; depending on where/how this is imported!!"""
 
 def praatopen(program,file,newpraat=False,event=None):
     """sendpraat is now looked for only where praat version is before
@@ -33,11 +34,17 @@ def praatopen(program,file,newpraat=False,event=None):
         else:
             log.info("praatoutput: {}".format(t))
     elif program['praat']:
-        log.info(_("Trying to call Praat at {}...").format(program['praat']))
+        log.info("Trying to call Praat at {}...").format(program['praat'])
         if 'sendpraat' not in program: #don't care about exe, just version check
             praatargs=[program['praat'], '--hide-picture','--open', file]
         else:
             praatargs=[program['praat'], '--open', file]
         subprocess.Popen(praatargs,shell=False) #not run; continue here
     else:
-        log.info(_("Looks like I couln't find Praat..."))
+        log.info("Looks like I couln't find Praat...")
+if __name__ == "__main__":
+    try:
+        _
+    except:
+        def _(x):
+            return x

@@ -4,11 +4,6 @@ import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
 import ui_tkinter as ui
-try: #translation
-    _
-except NameError:
-    def _(x):
-        return x
 import sound
 import file
 import utilities as utils
