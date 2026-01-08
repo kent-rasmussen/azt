@@ -740,13 +740,13 @@ msgstr "L'utilisation de base de cette classe inclut les kwargs suivants :\n"
 "\ttarget: node que nous recherchons\n"
 "\tobtenir: chose que nous voulons: node (par défaut)/'text'/attribute name\n"
 "Au-dessous implique un nœud d'entrée:\n"
-"\tguid: id utilisé pour identifier une entrée de ascenseur\n"
+"\tguid: id utilisé pour identifier une entrée de LIFT\n"
 "\tlxform: formulaire à trouver dans les champs de formulaire de lexème\n"
 "\tlcform: formulaire à trouver dans les champs de formulaire de citation\n"
 "\tmorphtype: type de morphème (tige, affix, etc)\n"
 "\tpronunciation: forme à trouver dans les champs de formulaire de prononciation\n"
 "ci-dessous implique un nœud de sens\n"
-"\tsenséid: id utilisé pour identifier un ascenseur\n"
+"\tsenséid: id utilisé pour identifier un LIFT\n"
 "\tdéfinition : définition du sens\n"
 "\tgloss: glose (un mot définition) du sens\n"
 "Ci-dessous implique un nœud d'exemple :\n"
@@ -4568,7 +4568,7 @@ msgstr "Rapports de démarrage qui n'ont pas fonctionné en arrière-plan : {rep
 
 #: /home/kentr/bin/raspy/azt/main.py:14585
 msgid "Starting tone group analysis from lift examples"
-msgstr "Démarrage de l'analyse de groupe de tonalités à partir d'exemples de ascenseurs"
+msgstr "Démarrage de l'analyse de groupe de tonalités à partir d'exemples de LIFTs"
 
 #: /home/kentr/bin/raspy/azt/main.py:17568
 #: /home/kentr/bin/raspy/azt/main.py:17573
@@ -4977,7 +4977,7 @@ msgstr "Ce rapport couvre les catégories grammaticales {pss} , avec des profils
 #: /home/kentr/bin/raspy/azt/main.py:11090
 #, python-brace-format
 msgid "This report follows an analysis of sortings of {ps} morphemes (roots or affixes) across the following frames: {checks}. {program} stores these sortings in lift examples, which are output here, with any glossing and sound file links found in each lift sense example. Each group in this report is distinct from the others, in terms of its grouping across the multiple frames used. Sound files should be available through links, if the audio directory with those files is in the same directory as this file."
-msgstr "Ce rapport fait suite à une analyse de tri des morphèmes {ps} (racines ou affixes) sur les cadres suivants : {checks}. {program} stocke ces tris dans des exemples élévatrices, qui sont sortis ici, avec tous les liens de fichiers de glose et de son trouvés dans chaque exemple de détecteur de ascenseur. Chaque groupe de ce rapport est distinct des autres, en termes de regroupement entre les multiples images utilisées. Les fichiers sonores devraient être disponibles via des liens, si le répertoire audio contenant ces fichiers se trouve dans le même répertoire que ce fichier."
+msgstr "Ce rapport fait suite à une analyse de tri des morphèmes {ps} (racines ou affixes) sur les cadres suivants : {checks}. {program} stocke ces tris dans des exemples élévatrices, qui sont sortis ici, avec tous les liens de fichiers de glose et de son trouvés dans chaque exemple de détecteur de LIFT. Chaque groupe de ce rapport est distinct des autres, en termes de regroupement entre les multiples images utilisées. Les fichiers sonores devraient être disponibles via des liens, si le répertoire audio contenant ces fichiers se trouve dans le même répertoire que ce fichier."
 
 #: /home/kentr/bin/raspy/azt/main.py:13335
 #: /home/kentr/bin/raspy/azt/main.py:13348
@@ -5874,7 +5874,7 @@ msgstr "Écrivez pour lever le montant retourné ‘{error}’."
 
 #: /home/kentr/bin/raspy/azt/main.py:5956
 msgid "Writing to lift..."
-msgstr "Écriture vers l'ascenseur..."
+msgstr "Écriture vers LIFT..."
 
 #: /home/kentr/bin/raspy/azt/xmletfns.py:105
 msgid "XML initialization done."
@@ -6685,7 +6685,7 @@ msgstr "index demandé en dehors des limites ; pas de déplacement."
 #: /home/kentr/bin/raspy/azt/main.py:593
 #, python-brace-format
 msgid "returned more or less than one lift file! ({list})"
-msgstr "a retourné plus ou moins d'un fichier ascenseur ! ({list})"
+msgstr "a retourné plus ou moins d'un fichier LIFT ! ({list})"
 
 #: /home/kentr/bin/raspy/azt/main.py:16230
 #, python-brace-format
