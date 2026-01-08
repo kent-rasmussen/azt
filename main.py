@@ -19,7 +19,7 @@ import platform
 program['hostname']=platform.uname().node
 import py_modules #This tries importing, and installs on failure
 import file
-if file.getfile(__file__).parent.parent.stem == 'raspy': # if program['hostname'] == 'karlap':
+if False and file.getfile(__file__).parent.parent.stem == 'raspy': # if program['hostname'] == 'karlap':
     program['testing']=True #eliminates Error screens and zipped logs
     me=True
     loglevel='INFO'
