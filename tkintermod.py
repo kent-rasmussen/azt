@@ -20,7 +20,7 @@ class TkErrorCatcher:
         self.widget = widget
 
     def __call__(self, *args):
-        print(f"{self.func=} {self.subst=} {self.widget=}")
+        # print(f"{self.func=} {self.subst=} {self.widget=}")
         try:
             if self.subst:
                 args = self.subst(*args)
