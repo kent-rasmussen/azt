@@ -8253,7 +8253,7 @@ class Parse(Segments):
         level, lx, lc, sf, ps, afxs = args
         if self.exitFlag.istrue():
             return
-        w=ui.Window(self,noexit=True)
+        w=ui.Window(self,exit=False)
         w.title(_("Confirm this combination of affixes?"))
         self.userresponse.value=False
         self.userresponse.rootchange=False
@@ -16970,7 +16970,7 @@ def interfacelang(lang=None,magic=False):
 def getlangfromlocale():
     # log.debug("Looking for interface language in locale.")
     loc,enc=locale.getlocale()
-    log.info(_("Found locale {loc}, encoding {enc}").format(loc=loc,enc=enc))
+    log.info(f"Found locale {loc}, encoding {enc}")
     if loc:
         code=loc.split('_')[0]
         if code not in i18n and code in ['English','Français','French']:
