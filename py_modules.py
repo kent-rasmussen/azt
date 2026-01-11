@@ -125,7 +125,7 @@ def pip_install(installs=[],secondtry=False):
 try:
     import urllib3, numpy, pyaudio, PIL, lxml, psutil, soundfile, librosa
     import transformers, huggingface_hub, langcodes, pyautogui, torch
-    import whisper, patiencediff, reportlab
+    import whisper, patiencediff, reportlab, language_data
     log.info(_("All necessary modules imported fine."))
 except Exception as e:
     log.error(f"Exception: {e}")
