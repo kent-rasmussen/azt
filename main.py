@@ -356,7 +356,7 @@ class LiftChooser(ui.Window,HasMenus):
         # log.info(f"self.options: {self.options}")
         for i in self.options:
             self.list_of_possibles.insert("end", i)
-        max_value_len=max([len(self.list_of_possibles.get(i))
+        max_value_len=max([0]+[len(self.list_of_possibles.get(i))
                     for i in range(len(self.list_of_possibles.get(0,'end')))])
         self.list_of_possibles.configure(width=max(10,max_value_len),
                                         height=min(4,len(self.options)))
