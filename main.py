@@ -8493,7 +8493,7 @@ class Parse(Segments):
                 fn=self.parser.entry.plvalue
             elif ps == self.verbalps:
                 # tag='imp'
-                fn=self.parser.entry.fieldvalue
+                fn=self.parser.entry.impvalue
             # lift.prettyprint(self.parser.entry.imp)
             # lift.prettyprint(self.parser.entry.pl)
             # log.info("value: {}".format(segments.get()))
@@ -8551,9 +8551,9 @@ class Parse(Segments):
             self.exited=True
         if self.iswaiting():
             self.waitunpause()
-        # w.on_quit()
+        segments_ok=bool(segments.get())
         w.destroy()
-        if not segments.get():
+        if not segments_ok:
             return 1
         elif not self.exited:
             self.trytwoforms()
