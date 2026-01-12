@@ -1092,6 +1092,9 @@ class Image(): #PIL.ImageTk.PhotoImage is for display
         we keep these because the same image may be scaled differently for
         different uses.
         """
+        if not filename:
+            log.error("No filename given to Image")
+            return
         self.filename=filename
         try:
             with PIL.Image.open(filename) as self.base_img:
