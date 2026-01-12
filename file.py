@@ -268,6 +268,7 @@ def getfilename():
         return getfilenames()
 def gethome():
     home=pathlib.Path.home()
+    print(home)
     if platform.uname().node == 'karlap':
         home=pathlib.Path.joinpath(home, "Assignment","Tools","WeSay")
     return home

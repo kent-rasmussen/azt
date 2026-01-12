@@ -544,6 +544,7 @@ class LiftChooser(ui.Window,HasMenus):
                 log.info("No {} repo at {}".format(repoclass,mediadir))
         log.info("starting clone from USB")
         mediadir=file.getmediadirectory() #ask where it is
+        log.info(f"{mediadir=}")
         homedir=file.gethome() #don't ask where to put it
         # log.info("Media dir: {}; home: {}".format(mediadir,homedir))
         if not mediadir:
