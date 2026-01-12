@@ -279,7 +279,7 @@ def getdirectory(title=None,home=None):
     if not title:
         title=_("Select a new location for your LIFT Lexicon and other Files")
     f=filedialog.askdirectory(initialdir = home, title = title)
-    log.info(f"getdirectory: {f}")
+    log.info(f"getdirectory: {f} {bool(f)=}")
     if f:
         return f
 def getfilesofdirectory(dir,regex='*'):
