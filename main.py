@@ -14331,7 +14331,7 @@ class ImageFrame(ui.Frame):
                 self.hasimage=True
                 # log.info(_("Image OK: {img}").format(img=img))
             except (tkinter.TclError,AssertionError) as e:
-                if ('value for "-file" missing' not in e.args[0] and
+                if e.args and ('value for "-file" missing' not in e.args[0] and
                         "couldn't recognize data in image file" not in e.args[0]):
                     log.info(_("ui.Image error: {error}").format(error=e))
                 log.info(f"No image for {self.sense}")
