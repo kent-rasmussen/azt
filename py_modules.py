@@ -124,8 +124,24 @@ def pip_install(installs=[],secondtry=False):
 
 try:
     import urllib3, numpy, pyaudio, PIL, lxml, psutil, soundfile, librosa
-    import transformers, huggingface_hub, langcodes, pyautogui, torch
+    import transformers, huggingface_hub, langcodes, pyautogui
     import whisper, patiencediff, reportlab, language_data
+    import os
+    # import platform
+    if platform.system() == "Windows":
+        import ctypes
+        from importlib.util import find_spec
+        try:
+            if (spec := find_spec("torch")) and spec.origin and os.path.exists(
+                dll_path := os.path.join(os.path.dirname(spec.origin), "lib", "c10.dll")
+            ):
+                ctypes.CDLL(os.path.normpath(dll_path))
+        except Exception as e:
+            log.info(f"Exception loading torch dll: {e}")
+
+    # Testing
+    # from PyQt6.QtWidgets import QApplication
+    import torch
     log.info(_("All necessary modules imported fine."))
 except Exception as e:
     log.error(f"Exception: {e}")
