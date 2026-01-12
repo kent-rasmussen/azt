@@ -279,6 +279,7 @@ def getdirectory(title=None,home=None):
     if not title:
         title=_("Select a new location for your LIFT Lexicon and other Files")
     f=filedialog.askdirectory(initialdir = home, title = title)
+    log.info(f"getdirectory: {f}")
     if f:
         return f
 def getfilesofdirectory(dir,regex='*'):
@@ -297,9 +298,9 @@ def getmediadirectory(mediatype=None):
     log.info("Looking for media directory")
     if platform.system() == 'Linux':
         media=getdiredurl('/media/',os.getlogin())
-        log.info("media: {} ".format(media))
     else:
         media=None
+    log.info(f"media: {media}")
     if mediatype:
         prompt=_("Please select where to find the {} media locally"
                 ).format(mediatype)
