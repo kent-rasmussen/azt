@@ -352,7 +352,9 @@ class SoundSettings(object):
                     'sister_languages':self.changed_kwargs['sister_languages']}
     def file_ok(self,filename):
         return (file.exists(filename) and
-                file.getsize(filename) > self.min_audio_file_size)
+                file.getsize(filename) > self.min_audio_file_size())
+    def min_audio_file_size(self):
+        return self.fs*self.min_audio_length_ms/1000
     def __init__(self,pyaudio=None,analang_obj=None):
         if not pyaudio:
             pyaudio = AudioInterface()
@@ -362,7 +364,7 @@ class SoundSettings(object):
         self.makedefaultifnot()
         #I may want to tweak this; the point is to exclude accidental recordings
         # 44.8khz @1s = 14.6k
-        self.min_audio_file_size=5000
+        self.min_audio_length_ms=500 #1/2 s
         # self.defaults() #pick best of actuals
         try:
             assert 'asr' in sys.modules
