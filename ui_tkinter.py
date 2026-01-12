@@ -1093,8 +1093,11 @@ class Image(): #PIL.ImageTk.PhotoImage is for display
         different uses.
         """
         self.filename=filename
-        with PIL.Image.open(filename) as self.base_img:
-            self.base_img.load()
+        try:
+            with PIL.Image.open(filename) as self.base_img:
+                self.base_img.load()
+        except Exception as e:
+            log.error(f"Exception opening image {filename}: {e}")
         # try:
         #     PIL.ImageTk.PhotoImage.__init__(self.base_img)
         # except tkinter.TclError as e:
