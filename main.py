@@ -8611,11 +8611,15 @@ class Parse(Segments):
             self.parser.addaffixset(*r[4:])#self.ps,afxs)
             self.parser.sense.pssubclassvalue(r[-1])
             return
+        log.info("{self.exited=}")
+        log.info("{self.done()=}")
+        log.info("{self.userresponse.rootchange=}")
         if (not self.exited and
             not self.done() and
             # rootchange kicks back, so just finish here on rootchange:
             not self.userresponse.rootchange):
             self.trytwoforms()
+        log.info("Finished trying three forms")
     def fixroot(self,root):
         log.info("Fixing Root {} > {}".format(
                             self.parser.entry.lxvalue(),
