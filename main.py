@@ -14326,13 +14326,15 @@ class ImageFrame(ui.Frame):
         if not compiled:
             try:
                 # log.info(_("trying to make image {image}").format(image=i))
+                assert i
                 image=ui.Image(i)
                 self.hasimage=True
                 # log.info(_("Image OK: {img}").format(img=img))
-            except tkinter.TclError as e:
+            except (tkinter.TclError,AssertionError) as e:
                 if ('value for "-file" missing' not in e.args[0] and
                         "couldn't recognize data in image file" not in e.args[0]):
                     log.info(_("ui.Image error: {error}").format(error=e))
+                log.info(f"No image for {self.sense}")
                 image=self.theme.photo['NoImage']
                 self.hasimage=False
                 # log.info(_("Image null: {img}").format(img=img))
