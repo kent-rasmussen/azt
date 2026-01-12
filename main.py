@@ -17566,13 +17566,14 @@ def mainproblem():
         program['repo'].testversion()
         sysrestart()
         tryb.destroy()
+    global _
     try:
-        log.info(_("Starting up help line..."))
+        log.info(_("Starting up help line (with translation)..."))
         # _
-    except:
+    except Exception as e:
         def _(x):
             return x
-        log.info(_("Starting up help line..."))
+        log.info(_("Starting up help line (without translation)... {}".format(e)))
     if program['testing'] and me:
         sys.exit()
         exit()

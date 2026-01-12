@@ -880,7 +880,7 @@ msgstr "Vérifier le lexique"
 #: /home/kentr/bin/raspy/azt/main.py:17660
 #, python-brace-format
 msgid "Check for {azt} updates"
-msgstr "Vérifier les mises à jour {azt}"
+msgstr "Chercher les mises à jour {azt}"
 
 #: /home/kentr/bin/raspy/azt/main.py:6740
 msgid "Check the log for any further conflicts"
