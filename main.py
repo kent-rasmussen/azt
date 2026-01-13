@@ -8614,9 +8614,9 @@ class Parse(Segments):
             self.parser.addaffixset(*r[4:])#self.ps,afxs)
             self.parser.sense.pssubclassvalue(r[-1])
             return
-        log.info("{self.exited=}")
-        log.info("{self.done()=}")
-        log.info("{self.userresponse.rootchange=}")
+        log.info(f"{self.exited=}")
+        log.info(f"{self.done()=}")
+        log.info(f"{self.userresponse.rootchange=}")
         if (not self.exited and
             not self.done() and
             # rootchange kicks back, so just finish here on rootchange:
