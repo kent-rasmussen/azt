@@ -440,6 +440,11 @@ class OrderAlphabet(ui.Window):
 class SelectFromPicturableWords(ui.Window):
     """This allows users to select a picturable word for one grapheme"""
     def set_up_images(self):
+        try:
+            _
+        except:
+            def _(x):
+                return x
         """This would look faster if we made one button at a time."""
         if len(self.examples) > 5:
             self.wait(_("Loading Images"))
@@ -457,6 +462,11 @@ class SelectFromPicturableWords(ui.Window):
         self.destroy()
         self.parent.deiconify
     def __init__(self, parent, db, glyph, ps='Noun'):
+        try:
+            _
+        except:
+            def _(x):
+                return x
         self.imgdir=db.imgdir
         analang=db.analang
         """Think about how to constrict this to just the best examples first:
