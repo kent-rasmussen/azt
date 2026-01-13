@@ -8614,6 +8614,8 @@ class Parse(Segments):
             self.parser.addaffixset(*r[4:])#self.ps,afxs)
             self.parser.sense.pssubclassvalue(r[-1])
             return
+        else:
+            log.info(f"No parse (trythreeforms).")
         log.info(f"{self.exited=}")
         log.info(f"{self.done()=}")
         log.info(f"{self.userresponse.rootchange=}")
@@ -8632,6 +8634,7 @@ class Parse(Segments):
     def parse_foreground(self,**kwargs):
         self.withdraw()
         self.updatereturnbind()
+        self.userresponse.rootchange=False #reset for each root
         self.parse(**kwargs)
         self.updateparseUI()
         if self.iswaiting():
@@ -8767,6 +8770,8 @@ class Parse(Segments):
             log.info(f"Storing word: {self.sense.id} ({self.analang}:{v})")
         except AttributeError as e:
             log.info("Not storing word (Parse): {}".format(e))
+        except Exception as e:
+            log.info("Exception storing word (Parse): {}".format(e))
     def waitforOKsecondfields(self):
         while not program['settings'].secondformfieldsOK():
             after(10*100,callback=self.waitforOKsecondfields) # wait a second
