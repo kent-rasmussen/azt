@@ -16071,6 +16071,7 @@ class Repository(object):
         directory=self.clonetobaredirname()
         log.info(_("directory: {dir}").format(dir=directory))
         if directory:
+            self.mark_safe(directory)
             if not self.addifis(directory):
                 args=['clone', self.bareclonearg, '.', directory] #this needs from-to
                 msg=_("Copying to {dir}; this may take some time."
@@ -16649,6 +16650,8 @@ class Mercurial(Repository):
         return not self.do(['parent'])
     def getremotenames(self):
         pass
+    def mark_safe(self,directory):
+        pass
     def __init__(self, url):
         self.code='hg'
         self.branchnamefile='branch'
@@ -16755,6 +16758,18 @@ class Git(Repository):
         args=['remote', 'get-url', remotename]
         r=self.do(args)
         if 'error: No such remote ' not in r:
+            return r
+    def mark_safe(self,directory):
+        if str(directory) not in self.get_all_safe():
+            args=['config', '--add', 'safe.directory', directory]
+            r=self.do(args)
+            if r:
+                log.info(_("Mark_safe returned {result} for {directory}").format(result=r,directory=directory))
+    def get_all_safe(self):
+        args=['config', '--get-all', 'safe.directory']
+        r=self.do(args)
+        if r:
+            log.info(_("get_all_safe returned {result}").format(result=r)) #str
             return r
     def __init__(self, url):
         self.code='git'
