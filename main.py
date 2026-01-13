@@ -59,6 +59,7 @@ import executables
 import export
 import langtags
 import alphabet_chart
+import alphabet_comparison
 program['languages']=langtags.Languages()
 try:
     import sound
@@ -5560,6 +5561,7 @@ class TaskChooser(TaskDressing):
             tasks=[
                     ExportData,
                     AlphabetChart,
+                    AlphabetComparisonPages,
                     ReportCitationBackground,
                     ReportCitationMulticheckBackground,
                     ReportCitationMultichecksliceBackground
@@ -6543,6 +6545,34 @@ class AlphabetChart(alphabet_chart.OrderAlphabet):
             "with pictures to represent each letter.")
     def tasktitle(self):
         return _("Alphabet Chart") # for Citation Forms
+    def save_settings(self):
+        for k in self.my_settings: #defined in module
+            value=getattr(self,k)
+            if isinstance(value,ui.Variable):
+                value=value.get()
+                log.info(_("found ‘{key}’ ui.Variable: {value}").format(key=k, value=value))
+            else:
+                log.info(_("Didn't find ‘{key}’ ui.Variable: {value}").format(key=k, value=value))
+            getattr(program['settings'],'alpha_'+k)(value)
+        program['settings'].storesettingsfile(setting='alphabet')
+    def __init__(self, parent, **kwargs):
+        self.program=program
+        super().__init__(parent)
+        self.mainwindow=False #don't exit on close
+class AlphabetComparisonPages(alphabet_comparison.PageSetup):
+    my_settings=[
+                    'comparison_exids',
+                    # 'order',
+                    # 'ncolumns','chart_title',
+                    'pagesize'
+                ]
+    def taskicon(self):
+        return program['theme'].photo['iconTranscribeV']
+    def tooltip(self):
+        return _("This task helps you compare alphabet letters with example words "
+            "and pictures to represent each letter.")
+    def tasktitle(self):
+        return _("Alphabet Comparison Pages")
     def save_settings(self):
         for k in self.my_settings: #defined in module
             value=getattr(self,k)
@@ -8102,7 +8132,6 @@ class WordCollectionwRecordings(WordCollection,Record):
             self.wordframe.toneFrame['text']=self.transcription_tone_var.get()
         else:
             self.wordframe.toneFrame['text']=''
-
     def draft_entry(self,repo,value,*args):
         # This just fills in the visible field. Dictionary may be
         # overwritten on confirmation later

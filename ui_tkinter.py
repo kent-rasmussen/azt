@@ -1617,8 +1617,9 @@ class ListBox(Childof,Gridded,UI,tkinter.Listbox): #TextBase?
                 "This module can create a default 'listvariable' and fill it "
                 "with 'optionlist' contents, if you don't provide a "
                 "'listvariable' with contents set to a list.")
+            raise
         self.optionlist=kwargs.pop('optionlist',[])
-        self.command=kwargs.pop('command')
+        self.command=kwargs.pop('command',None)
         #selectforeground is font color for selected items
         kwargs['selectbackground']=kwargs.get('selectbackground',
                                             parent.theme.activebackground)
@@ -1708,7 +1709,7 @@ class Combobox(Childof,Gridded,TextBase,UI,tkinter.ttk.Combobox):
             self._handle_popdown_font()
     def __init__(self, parent, *args, **kwargs):
         kwargs['values']=kwargs.pop('optionlist')
-        self.command=kwargs.pop('command')
+        self.command=kwargs.pop('command',None)
         super().__init__(parent, *args, **kwargs)
         self.post_tk_init()
 class Scrollbar(Childof,Gridded,UI,tkinter.Scrollbar):
@@ -2586,7 +2587,7 @@ def testapp4(program):
                 cmd=lambda x='.':textadd(x),
                 row=2)#len(sbf1.content.winfo_children()))
     r.mainloop()
-def testapp(program):
+def testappY(program):
     def print_vars(*args):
         log.info(f"{var.__class__} {var.get()=}")
         for i in (l,entry):
@@ -2622,7 +2623,7 @@ def testapp(program):
     Label(test_frame,image='transparent',column=0,row=0)
     print_vars()
     r.mainloop()
-def testappX(program):
+def testapp(program):
     def progress(event):
         # print('running progress')
         import time
