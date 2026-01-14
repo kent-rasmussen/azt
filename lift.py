@@ -4556,15 +4556,24 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bo/bo.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/wmg/wmg.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/lol-x-his30103/lol-x-his30253.lift"
+    import glob 
+    filenames=glob.glob("/home/kentr/Assignment/Tools/WeSay/*-x-*/*.lift")
+    lifts={}
+    for filename in filenames:
+        lifts[filename]=LiftXML(filename)
+    for filename in filenames:
+        lifts[filename].report_counts()
+    exit()
     # filename="/home/kentr/Assignment/Tools/WeSay/Demo_gnd/gnd.lift"
     # filename="/home/kentr/bin/raspy/azt/SILCAWL/SILCAWL.lift"
-    lift=LiftXML(filename)
     print(time.time())
     def writetofile(name):
         f = open(str(name)+'.txt', 'w', encoding='utf-8') # to append, "a"
         f.write(prettyprint(lift.nodes))
         f.close()
+    lift.report_counts()
     # loc="Imperative"
     # formvalue="give!"
     # lang="en"
@@ -4576,29 +4585,29 @@ if __name__ == '__main__':
 	# 	'swh':'__',
 	# 	'fr':'__es'}
     # ftype='pl'
-    for ps in lift.sensesbyps_profile:
-        for profile in lift.sensesbyps_profile[ps]:
-            print(lift.sensesbyps_profile[ps][profile])
-            print(f"{profile} in lift.ps_profiles[{ps}]: {profile in lift.ps_profiles[ps]}")
-    for ps in lift.ps_profiles:
-        for profile in lift.ps_profiles[ps]:
-            print('self.ps_profiles',ps,profile)
-            print(lift.sensesbyps_profile[ps][profile])
+    # for ps in lift.sensesbyps_profile:
+    #     for profile in lift.sensesbyps_profile[ps]:
+    #         print(lift.sensesbyps_profile[ps][profile])
+    #         print(f"{profile} in lift.ps_profiles[{ps}]: {profile in lift.ps_profiles[ps]}")
+    # for ps in lift.ps_profiles:
+    #     for profile in lift.ps_profiles[ps]:
+    #         print('self.ps_profiles',ps,profile)
+    #         print(lift.sensesbyps_profile[ps][profile])
     # for profile_dict in lift.sensesbyps_profile.values():
     #     for sense_list in profile_dict.values():
     #         for sense in sense_list:
     # lift.senses:
-    for ps in lift.sensesbyps_profile:
-        # print([i.id for i in lift.sensesbyps_profile[ps][None] if i])
-        # continue
-        for profile,v in lift.sensesbyps_profile[ps].items():
-            print(f"Found {len(v)} senses")
-            for sense in lift.sensesbyps_profile[ps][profile]:
-                print("working on sense",sense.id)
-                i,o=sense.getcvverificationkeys('lc')
-                print(o,type(o),[type(i) for i in o])
-    print('annotation:',lift.annotation_values_by_ps_profile())
-    print('verification:',lift.verification_values_by_ps_profile())
+    # for ps in lift.sensesbyps_profile:
+    #     # print([i.id for i in lift.sensesbyps_profile[ps][None] if i])
+    #     # continue
+    #     for profile,v in lift.sensesbyps_profile[ps].items():
+    #         print(f"Found {len(v)} senses")
+    #         for sense in lift.sensesbyps_profile[ps][profile]:
+    #             print("working on sense",sense.id)
+    #             i,o=sense.getcvverificationkeys('lc')
+    #             print(o,type(o),[type(i) for i in o])
+    # print('annotation:',lift.annotation_values_by_ps_profile())
+    # print('verification:',lift.verification_values_by_ps_profile())
     # for s in lift.senses:
     #     if s.psvalue() == 'Noun' and s.cvprofilevalue() == 'CVCV':
     #         s.annotationvaluebyftypelang('lc','wmg','C1',value='')
@@ -4619,6 +4628,7 @@ if __name__ == '__main__':
     # exit()
     # sense=lift.senses[0]
     # print(sense.cawln)
+    # lift.convert_langtag('lol-x-his30253','lol-x-his30103')
     # lift.convert_langtag('en','en-US')
     # lift.convert_langtag('pt','en-US')
     # lift.convert_langtag('ha','en-US')
@@ -4628,5 +4638,6 @@ if __name__ == '__main__':
     # lift.convert_langtag('en','en')
     # lift.convert_langtag('ha-CL','en-US')
     # lift.convert_langtag('id','en-US')
-    lift.write()
-    exit()
+
+    # lift.write()
+    # exit()
