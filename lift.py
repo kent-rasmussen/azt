@@ -1387,6 +1387,22 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 log.info("Found {} fieldswsoundfiles for {}/{}".format(
                             self.nfieldswsoundfiles[lang][field],field,lang))
         # log.info("Found {} fieldswsoundfiles".format(self.nfieldswsoundfiles))
+    def report_counts(self):
+        # log.info(f"{self.nentrieswcitationdata=}")# in nfields
+        # log.info(f"{self.nentrieswlexemedata=}")# in nfields
+        if self.analang not in self.nfields:
+            log.info(f"{self.analang=} not found in {self.nfields=}")
+            return
+        counts=self.nfields[self.analang]
+        ps_profile_counts={ps:{profile:len(self.sensesbyps_profile[ps][profile])
+                                    for profile in self.sensesbyps_profile[ps]
+                                } 
+                                    for ps in self.sensesbyps_profile 
+                                    }
+        log.info(f"{self.nfields=} \n"
+                f"{counts['Plural']+counts.get('Imperative',0)==counts['lexical-unit']=} \n"
+                f"{ps_profile_counts=}")
+        # log.info(f"{self.nfieldswannotations=}")
     def getsenseswglosslangdata(self):
         #do each of these, then cull in the second one
         self.getsenseswglossdata() #sets: self.nentrieswglossdata
