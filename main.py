@@ -1191,11 +1191,9 @@ class Menus(ui.Menu):
         self.cascade(self,_("Help"),'helpmenu')
         helpitems=[(_("About"), self.parent.helpabout)]
         if program['git']:
-            if not program['repo'].localremotes():
-                helpitems+=[(_("Set up {azt} source on USB").format(azt=program['name']),
-                                program['repo'].clonetoUSB)]
+            # clonetoUSB should be called if updateazt doesn't have a source (incl internet)
             helpitems+=[(_("Update {azt}").format(azt=program['name']), updateazt)]
-            helpitems+=[(_("Clone data to USB"), program['settings'].repo['git'].clonetoUSB)]
+            helpitems+=[(_("Share data to USB"), program['settings'].repo['git'].share)]
             if program['repo'].branch == 'main':
                 helpitems+=[(_("Try {azt} test version").format(azt=program['name']),
                                 self.parent.trytestazt)]
@@ -16157,8 +16155,7 @@ class Repository(object):
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
-            log.info(_("Couldn't find a local drive to share with via {repo}; "
-                    "giving up").format(repo=self.repotypename))
+            self.clonetoUSB()
             return
         r=self.commit() #should always before pulling, at least here
         if r:
@@ -17567,10 +17564,9 @@ def updateazt(event=None,**kwargs): #should only be parent, for errorroot
                                 if 'hint: ' not in l][:10] #first 10 w/o hint
                                 ])
         else:
-            t=_("No results! Is there a {azt} source available?"
-                ).format(azt=program['name'])
-        # log.info("git raw output: {} ({})".format(r,type(r)))
-        # log.info("git output: {} ({})".format(t,type(t)))
+            program['repo'].clonetoUSB()
+            tryagain()
+            return
         button=False
         if internetconnectionproblemin(t):
             t=t+_('\n(Check your internet connection and try again)')
