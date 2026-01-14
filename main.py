@@ -1192,6 +1192,7 @@ class Menus(ui.Menu):
                 helpitems+=[(_("Set up {azt} source on USB").format(azt=program['name']),
                                 program['repo'].clonetoUSB)]
             helpitems+=[(_("Update {azt}").format(azt=program['name']), updateazt)]
+            helpitems+=[(_("Clone data to USB"), program['settings'].repo['git'].clonetoUSB)]
             if program['repo'].branch == 'main':
                 helpitems+=[(_("Try {azt} test version").format(azt=program['name']),
                                 self.parent.trytestazt)]
@@ -16818,6 +16819,8 @@ class Git(Repository):
         if r:
             log.info(_("get_all_safe returned {result}").format(result=r)) #str
             return r
+        else:
+            return []
     def __init__(self, url):
         self.code='git'
         self.branchnamefile='HEAD'
