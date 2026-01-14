@@ -16809,7 +16809,7 @@ class Git(Repository):
             return r
     def mark_safe(self,directory):
         if str(directory) not in self.get_all_safe():
-            args=['config', '--add', 'safe.directory', directory]
+            args=['config', '--global', '--add', 'safe.directory', directory]
             r=self.do(args)
             if r:
                 log.info(_("Mark_safe returned {result} for {directory}").format(result=r,directory=directory))
