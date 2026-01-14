@@ -2,6 +2,9 @@
 # coding=UTF-8
 """Consider making the above work for a venv"""
 """This file runs the actual GUI for lexical file manipulation/checking"""
+import duplicates
+if duplicates.running_file(__file__):
+    exit()
 program={'name':'A-Z+T',
         'tkinter':True, #for some day
         'production':False, #True for making screenshots (default theme)
