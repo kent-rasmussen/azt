@@ -1623,6 +1623,12 @@ class ListBox(Childof,Gridded,UI,tkinter.Listbox): #TextBase?
         #selectforeground is font color for selected items
         kwargs['selectbackground']=kwargs.get('selectbackground',
                                             parent.theme.activebackground)
+        #is this ever *not* the right thing? Normally, don't conflict w/others on page!
+        # You may want to set this otherwise if you want a listbox selection to be 
+        # immediately available to the clipboard, or to cancel another listbox 
+        # selection.  
+        kwargs['exportselection']=kwargs.get('exportselection',False) 
+        
         super().__init__(parent, *args, **kwargs)
         self.post_tk_init()
 class SearchableComboBox(Childof,Gridded,Text,UI):

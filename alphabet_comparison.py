@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 """
-UI for Alphabet Comparison Chart generation.
-Allows selecting two symbols (C/C or V/V) and 3 examples for each.
+UI for Alphabet Comparison Booklet generation.
+Allows selecting comparative pages (C/C or V/V) with 3 examples for each.
 """
 import os
 import sys
@@ -22,206 +22,35 @@ log = logsetup.getlog(__name__)
 
 SETTINGS_FILE = "alphabet_comparison_settings.json"
 
-class PageSetup(ui.Window):
-    def __init__(self, parent, **kwargs):
-        title = "Alphabet Comparison Setup"
-        self.parent = parent
-        if not hasattr(self,'program'): #i.e., from calling class
-            self.program=parent.program#kwargs.get('program',{})
-        self.db = self.program.get('db')
-        super().__init__(parent, title=title)
-        
-        # Data
-        if 'alphabet' in self.program:
-            glyphdict=self.program['alphabet'].glyphdict()
-        else:
-            glyphdict=self.program['glyphdict']
-        self.symbols = [i for j in glyphdict.values() for i in j]
-        self.vowels = list(glyphdict['V']) #self.identify_vowels()
-        self.consonants = list(glyphdict['C']) #[s for s in self.symbols if s not in self.vowels]
-        
-        # State
-        self.sym1_var = ui.StringVar()
-        self.sym2_var = ui.StringVar()
-        self.prose_count_var = ui.IntVar(value=20)
-        
-        # Store example IDs: { 'sym1': [id1, id2, id3], 'sym2': [id1, id2, id3] }
-        # Only for current session/selection
-        self.current_examples = {
-            'left': [None, None, None],
-            'right': [None, None, None]
-        }
-        
-        # Load persisted settings
-        self.settings = self.load_settings()
-        
-        # UI Layout
-        self.setup_ui()
-        
-        # Traces
-        self.sym1_var.trace_add('write', self.on_sym1_changed)
-        self.sym2_var.trace_add('write', self.on_sym2_changed)
-        
-        # Restore last session
-        if self.settings.get('last_sym1'):
-            self.sym1_var.set(self.settings['last_sym1'])
-        if self.settings.get('last_sym2'):
-            self.sym2_var.set(self.settings['last_sym2'])
-            
-    def collect_symbols(self):
-        """Collects all symbols from the LIFT database."""
-        # Similar logic to alphabet_chart.py
-        if 's' in dir(self.db) and self.db.analang in self.db.s:
-             # self.db.s[lang] is dict of glyphs?
-             # actually alphabet_chart says:
-             # self.order=[i for j in self.db.s[self.db.analang].values() for i in j]
-             try:
-                 return sorted({i for j in self.db.s[self.db.analang].values() for i in j})
-             except:
-                 pass
-        # Fallback or if structure differs
-        return []
-
-    # def identify_vowels(self):
-    #     """Heuristic to identify vowels. 
-    #      Ideally this comes from a profile or settings, but for now strict list or user config."""
-    #     # Simple default list + anything defined in program settings if available
-    #     # TODO: Check if there's a better source in `self.db` or `program`.
-    #     defaults = {'a', 'e', 'i', 'o', 'u', 'ä', 'ö', 'ü', 'à', 'è', 'ì', 'ò', 'ù'}
-    #     return {s for s in self.symbols if s.lower() in defaults} 
-
-    def is_vowel(self, sym):
-        return sym in self.vowels
-
-    def setup_ui(self):
-        # 1. Symbol Selection Frame
-        frame_top = ui.Frame(self.frame, r=0, c=0, sticky='ew')
-        
-        ui.Label(frame_top, text="Left Page", c=0, r=0)
-        self.cb_sym1 = ui.ListBox(frame_top, command=self.on_sym1_select,
-                                 font='read',
-                                 optionlist=self.symbols, c=0, r=1)
-        
-        ui.Label(frame_top, text="Right Page", c=2, r=0)
-        self.cb_sym2 = ui.ListBox(frame_top, command=self.on_sym2_select,
-                                 font='big',
-                                 optionlist=self.symbols, c=2, r=1) # Values updated dynamically
-                                 
-        # 2. Example Selection Frame (Split Left/Right)
-        frame_examples = ui.Frame(self.frame, r=1, c=0, sticky='news')
-        
-        # Left Side (Sym1)
-        self.frame_left = ui.Label(frame_examples, text="Left Examples", c=0, r=0, sticky='n')
-        self.btn_left = []
-        for i in range(3):
-            b = ui.Button(self.frame_left, text=f"Select Example {i+1}", 
-                          choice=('left', i),
-                          command=self.select_example,
-                          r=i, c=0, sticky='ew')
-            self.btn_left.append(b)
-            
-        # Right Side (Sym2)
-        self.frame_right = ui.Label(frame_examples, text="Right Examples", c=1, r=0, sticky='n')
-        self.btn_right = []
-        for i in range(3):
-            b = ui.Button(self.frame_right, text=f"Select Example {i+1}", 
-                          choice=('right', i),
-                          command=self.select_example,
-                          r=i, c=0, sticky='ew')
-            self.btn_right.append(b)
-
-        # 3. Settings & Actions
-        frame_bottom = ui.Frame(self.frame, r=2, c=0, sticky='ew')
-        
-        ui.Label(frame_bottom, text="Repetitions:", c=0, r=0)
-        ui.EntryField(frame_bottom, textvariable=self.prose_count_var, width=5, c=1, r=0)
-        
-        ui.Button(frame_bottom, text="PDF", command=self.generate_pdf, c=2, r=0)
-        # ui.Button(frame_bottom, text="Close", command=self.on_close, c=3, r=0)
-
-    def on_sym1_select(self, event=None):
-        if self.cb_sym1.curselection():
-            val = self.cb_sym1.get(self.cb_sym1.curselection()[0])
-            self.sym1_var.set(val)
-
-    def on_sym2_select(self, event=None):
-        if self.cb_sym2.curselection():
-            val = self.cb_sym2.get(self.cb_sym2.curselection()[0])
-            self.sym2_var.set(val)
-
-    def on_sym1_changed(self, *args):
-        sym1 = self.sym1_var.get()
-        if not sym1: return
-        
-        # Update Sym2 options based on type
-        if self.is_vowel(sym1):
-            valid_b=self.vowels[:]
-        else:
-            valid_b=self.consonants[:]
-        if sym1 in valid_b: 
-            valid_b.remove(sym1)
-        self.cb_sym2.delete(0, "end")
-        for i in valid_b:
-            self.cb_sym2.insert("end", i)
-        # self.cb_sym2['listvariable'].set(valid_b)
-        
-        # Update Title
-        self.frame_left.config(text=f"Examples for '{sym1}'")
-        
-        # Load stored examples if any
-        self.restore_examples('left', sym1)
-        
-        # Clear/Reset Sym2 if it's now invalid
-        # curr_sym2 = 
-        if self.sym2_var.get() not in valid_b:
-            self.sym2_var.set('')
-        # if curr_sym2 and (self.is_vowel(curr_sym2) != is_v or curr_sym2 == sym1):
-        #      self.sym2_var.set('')
-        
-        self.save_current_settings()
-
-    def on_sym2_changed(self, *args):
-        sym2 = self.sym2_var.get()
-        if sym2:
-            self.frame_right.config(text=f"Examples for '{sym2}'")
-            self.restore_examples('right', sym2)
-        self.save_current_settings()
-
-    def select_example(self, selection):
-        side, index = selection
-        # self.cb_sym1
-        # sym = self.sym1_var.get() if side == 'left' else self.sym2_var.get()
-        if side == 'left':
-            box=self.cb_sym1
-        else:
-            box=self.cb_sym2
-        if box.curselection():
-            sym = box.get(box.curselection()[0]) 
+class PageFrameUI(ui.Frame):
+    def select_example(self, index):
+        log.info("Calling select_example")
+        if self.glyph_choice.curselection():
+            sym = self.glyph_choice.get(self.glyph_choice.curselection()[0]) 
         else:
             sym = ''
-        print("side:", side, "index:", index, "sym:", sym)
+        print("index:", index, "sym:", sym)
         if not sym:
             return
             
         # Temporarily withdraw to show selection dialog
-        self.withdraw()
+        self.parent.withdraw()
         
-        w = SelectFromPicturableWords(self, self.db, sym)
+        w = SelectFromPicturableWords(self, self.parent.db, sym)
         w.wait_window(w)
         
         if hasattr(w, 'selected'):
             sense_id = w.selected
-            self.current_examples[side][index] = sense_id
-            self.update_button(side, index, sense_id)
-            self.save_examples(side, sym)
+            self.current_examples[index] = sense_id
+            self.update_button(index, sense_id)
+            self.parent.save_examples()
             
-        self.deiconify()
-
-    def update_button(self, side, index, sense_id):
-        btn = self.btn_left[index] if side == 'left' else self.btn_right[index]
+        self.parent.deiconify()
+    def update_button(self, index, sense_id):
+        btn = self.exs[index]
         
-        if sense_id and sense_id in self.db.sensedict:
-            sense = self.db.sensedict[sense_id]
+        if sense_id and sense_id in self.parent.db.sensedict:
+            sense = self.parent.db.sensedict[sense_id]
             word = sense.entry.lcvalue()
             
             # Prepare image
@@ -232,28 +61,140 @@ class PageSetup(ui.Window):
             else:
                 btn.config(text=word, image='', compound='none')
         else:
-            btn.config(text=f"Select Example {index+1}", image='', compound='none')
-
-    def save_examples(self, side, sym):
-        """Save current examples for this symbol to settings."""
-        key = f"examples_{sym}"
-        self.settings[key] = self.current_examples[side]
-        self.save_settings_file()
-
-    def restore_examples(self, side, sym):
+            btn.config(text=f"Select Example", image='', compound='none')
+    
+    def restore_examples(self):
         """Restore examples for this symbol from settings."""
-        key = f"examples_{sym}"
-        saved_ids = self.settings.get(key, [None, None, None])
+        saved_ids = self.parent.settings.get(self.glyph, [None, None, None])
         
         # Ensure list is length 3
         if len(saved_ids) < 3:
             saved_ids.extend([None]*(3-len(saved_ids)))
         
-        self.current_examples[side] = saved_ids
+        self.current_examples = saved_ids
         
         for i, sense_id in enumerate(saved_ids):
-            self.update_button(side, i, sense_id)
+            self.update_button(i, sense_id)
+    def on_select(self,event=None):
+        if sel:=self.glyph_choice.curselection():
+            self.glyph=self.glyph_choice.get(sel[0])
+        else:
+            self.glyph=None
+        self.restore_examples()
+        self.parent.save_pages()
+    def reset_choices(self,valid_b):
+        self.glyph_choice.delete(0, "end")
+        for i in valid_b:
+            self.glyph_choice.insert("end", i)
+    def index(self):
+        return self.parent.pageFrames.index(self)
+    def __init__(self, parent, glyph=None,**kwargs):
+        super().__init__(parent.pageframesFrame, **kwargs) #gui parent
+        self.parent = parent # parent object
+        self.glyph = glyph # Make available to parent
+        self.glyph_choice = ui.ListBox(self, command=self.on_select,
+                                 font='readbig', height=4, width=5,
+                                 optionlist=self.parent.symbols[:], r=0)
+        self.exs = [ui.Button(self, choice=i,
+                                command=self.select_example,
+                                r=i+1, sticky='ew')
+                            for i in range(3)
+                ]
+        if glyph and glyph in self.glyph_choice.get(0, "end"):
+            self.glyph_choice.selection_set(self.glyph_choice.get(0, "end").index(glyph))
+        self.restore_examples()
+class PageSetup(ui.Window):
+    def __init__(self, parent, **kwargs):
+        title = "Alphabet Comparison Setup"
+        self.parent = parent
+        if not hasattr(self,'program'): #i.e., from calling class
+            self.program=parent.program
+        self.db = self.program.get('db')
+        super().__init__(parent, title=title)
+        self.fpr=6 #even allows pairs together
+        
+        # Data
+        if 'alphabet' in self.program:
+            glyphdict=self.program['alphabet'].glyphdict()
+        else:
+            glyphdict=self.program['glyphdict']
+        self.symbols = [i for j in glyphdict.values() for i in j]
+        self.vowels = list(glyphdict['V']) 
+        self.consonants = list(glyphdict['C'])
+        self.prose_count_var = ui.IntVar(value=20)
+        
+        # Load persisted settings
+        self.settings = self.load_settings()
+        
+        # UI Layout
+        self.setup_ui()
+        
+    def n_pages(self):
+        return len(self.pageframesFrame.winfo_children())-1
 
+    def add_pages(self,*glyphs):
+        if not glyphs:
+            glyphs=[None,None]#always start with, or add, two pages
+        self.pageFrames.extend([PageFrameUI(self, glyph, 
+                                    r=self.n_pages()//self.fpr, 
+                                    c=self.n_pages()%self.fpr, 
+                                    sticky='nsew', 
+                                    border=1)
+                                for glyph in glyphs
+                                ])
+        self.add_more_button.grid(row=self.n_pages()//self.fpr, 
+                                column=self.n_pages()%self.fpr, 
+                                )
+    def setup_ui(self):
+        self.pageframesFrame=ui.Frame(self.frame, r=0, c=0, sticky='nsew')
+        self.add_more_button=ui.Button(self.pageframesFrame, 
+                                        text="+2 Pages", 
+                                        command=self.add_pages)
+        self.pageFrames=[]
+        self.add_pages(*self.settings.get('pages',[]))
+
+        # 3. Settings & Actions
+        frame_bottom = ui.Frame(self.frame, r=2, c=0, sticky='ew')
+        
+        ui.Label(frame_bottom, text="Repetitions:", c=0, r=0)
+        ui.EntryField(frame_bottom, textvariable=self.prose_count_var, width=5, c=1, r=0)
+        
+        ui.Button(frame_bottom, text="PDF", command=self.generate_pdf, c=2, r=0)
+
+    def on_glyph_change(self, page):
+        log.info(f"Page {page.index()} changed (on_glyph_change)")
+        if page not in self.pageFrames:
+            log.info(f"Page {page} not in {self.pageFrames}")
+            return
+        index=self.pageFrames.index(page)
+        if index%2:
+            log.info(f"Page {index} is an odd (right hand) page")
+            return
+        else:
+            log.info(f"Page {index} is an even (left hand) page; restricting the next")
+
+        if page.glyph in self.vowels:
+            valid_b=self.vowels[:]
+        elif page.glyph in self.consonants:
+            valid_b=self.consonants[:]
+        else:
+            valid_b=self.symbols[:]
+        if page.glyph in valid_b: 
+            valid_b.remove(page.glyph)
+        self.pageFrames[index+1].reset_choices(valid_b)
+        log.info(f"Page {index} change finished, with page {index+1} constrained to {valid_b}")
+
+    def save_pages(self):
+        """Save current page list to settings."""
+        self.settings['pages'] = [i.glyph for i in self.pageFrames]
+        self.save_settings_file()
+
+    def save_examples(self):
+        """Save current examples for each symbol to settings."""
+        example_dict={i.glyph:i.current_examples for i in self.pageFrames}
+        self.settings.update(example_dict)
+        self.save_settings_file()
+    
     def load_settings(self):
         try:
             path = file.getdiredurl(self.db.reportdir, SETTINGS_FILE)
@@ -272,43 +213,29 @@ class PageSetup(ui.Window):
         except Exception as e:
             log.warning(f"Could not save settings: {e}")
             
-    def save_current_settings(self):
-        self.settings['last_sym1'] = self.sym1_var.get()
-        self.settings['last_sym2'] = self.sym2_var.get()
-        self.save_settings_file()
-        
     def generate_pdf(self):
-        sym1 = self.sym1_var.get()
-        sym2 = self.sym2_var.get()
-        
-        if not sym1 or not sym2:
-            return # Maybe show error
-            
-        def prepare_data(sym, ex_ids):
+        def prepare_data(page):
             items = []
-            for eid in ex_ids:
+            for eid in page.current_examples:
                 if eid and eid in self.db.sensedict:
                     sense = self.db.sensedict[eid]
                     word = sense.entry.lcvalue()
                     uri = sense.illustrationURI()
-                    items.append((sym, word, uri))
-            return {'symbol': sym, 'items': items}
+                    items.append((page.glyph, word, uri))
+            return {'symbol': page.glyph, 'items': items}
             
-        left_data = prepare_data(sym1, self.current_examples['left'])
-        right_data = prepare_data(sym2, self.current_examples['right'])
-        
-        filename = f"Comparison_{sym1}_vs_{sym2}_{self.db.analang}.pdf"
+        pages=[prepare_data(i) for i in self.pageFrames if i.glyph]
+        page_names=[i['symbol'] for i in pages]
+        filename = '_'.join([_("Booklet"),*page_names,f'[{self.db.analang}].pdf'])
         filepath = file.getdiredurl(self.db.reportdir, filename)
         
         alphabet_comparison_pdf.create_comparison_chart(
-            filepath, left_data, right_data, 
+            filepath, *pages, 
             prose_count=self.prose_count_var.get()
         )
-        # Maybe show success message or open file
         log.info(f"Generated {filepath}")
         
     def on_close(self):
-        self.save_current_settings()
         self.destroy()
         sys.exit()
 
@@ -320,7 +247,6 @@ if __name__ == '__main__':
             _
         except:
             def _(x): return x
-            
         filename = "/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
         if not os.path.exists(filename):
              # Try to find a local lift file to test

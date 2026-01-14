@@ -148,7 +148,12 @@ def generate_prose_text(words, count):
     random.shuffle(all_words)
     return " ".join(all_words)
 
-def create_comparison_chart(filename, left_data, right_data, 
+def add_comparative_data(data):
+    for i in range(0, len(data), 2):
+        data[i]['comparative'] = False
+        data[i+1]['comparative'] = data[i]
+    return data
+def create_comparison_chart(filename, *data, 
                           pagesize='letter', font_name="Charis", 
                           prose_count=20, title="Comparison"):
     """
@@ -160,6 +165,7 @@ def create_comparison_chart(filename, left_data, right_data,
         font_name: Font family
         prose_count: Number of times each word appears in prose
     """
+    log.info(f"Creating comparison chart called with {data=} {filename=}")
     font_size = 12
     register_fonts()
     
@@ -171,7 +177,9 @@ def create_comparison_chart(filename, left_data, right_data,
     # Create Canvas
     c = canvas.Canvas(str(filename), pagesize=_pagesize)
     width, height = _pagesize
-    
+    c.setAuthor(f"A−Z+T via {__file__}")
+    c.setTitle(' '.join(str(filename.stem).split('_')))
+
     # Global Margins
     margin = 0.5 * inch
     
@@ -185,7 +193,10 @@ def create_comparison_chart(filename, left_data, right_data,
     c.setStrokeColor(colors.black)
     
     # Helper to draw one side
-    def draw_side(base_x, data):
+    def draw_side(base_x, data, prev_data=None):
+        if not data:
+            return # Blank page
+            
         symbol = data.get('symbol', '?')
         items = data.get('items', [])
         
@@ -236,9 +247,9 @@ def create_comparison_chart(filename, left_data, right_data,
             text_obj.textLine(line)
             
         c.drawText(text_obj)
-        if base_x: #put both on second page
+        if prev_data: #put both on second page
             both_words = [item[1] for item 
-                        in left_data.get('items', [])+right_data.get('items', []) 
+                        in prev_data.get('items', [])+data.get('items', []) 
                         if len(item) > 1]
             prose_text = generate_prose_text(both_words, prose_count)
             prose_top = text_obj.getY() - font_size*3/2
@@ -255,15 +266,70 @@ def create_comparison_chart(filename, left_data, right_data,
                 text_obj.textLine(line)
                 
             c.drawText(text_obj)
+    data = add_comparative_data(data)
+    # Re-order for booklet signature
+    data = make_signatures(data)
     # Draw Left Side
-    draw_side(0, left_data)
-    
-    # Draw Right Side
-    draw_side(half_width, right_data)
-    
-    c.showPage()
+    for n,page_data in enumerate(data):
+        if not n%2:
+            start_at=prev_data=0
+        else:
+            start_at=half_width
+            prev_data=data[n-1]
+        draw_side(start_at, page_data, prev_data)
+        if n%2:
+            c.showPage()
     c.save()
     log.info(f"Comparison chart saved to {filename}")
+
+def make_signatures(pages):
+    """
+    Reorders a list of pages for a single saddle-stitch booklet.
+    Input: [1, 2, 3, 4, 5, 6, 7, 8] (8 pages, 2 sheets)
+    
+    Sheet 1 Front: [8, 1]
+    Sheet 1 Back:  [2, 7]
+    Sheet 2 Front: [6, 3]
+    Sheet 2 Back:  [4, 5]
+    
+    Output: [8, 1, 2, 7, 6, 3, 4, 5]
+    """
+    pages = list(pages)
+    
+    # 1. Pad to multiple of 4
+    n = len(pages)
+    rem = n % 4
+    if rem > 0:
+        pages.extend([None] * (4 - rem))
+    
+    n = len(pages)
+    reordered = []
+    
+    # Use 0-based indexing pointers
+    p_start = 0
+    p_end = n - 1
+    
+    while p_start < p_end:
+        # Sheet Side A (Front): First and Last remaining
+        # Left side of page is Last (p_end), Right side is First (p_start)
+        reordered.append(pages[p_end])
+        reordered.append(pages[p_start])
+        
+        p_start += 1
+        p_end -= 1
+        
+        # Sheet Side B (Back): Next First and Next Last
+        # Left side of page is Next First (p_start), Right side is Next Last (p_end)
+        if p_start >= p_end:
+            break
+            
+        reordered.append(pages[p_start])
+        reordered.append(pages[p_end])
+        
+        p_start += 1
+        p_end -= 1
+        
+    return reordered
 
 if __name__ == "__main__":
     # Basic test
