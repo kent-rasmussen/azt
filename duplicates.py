@@ -9,7 +9,8 @@ def running_file(path):
     # psutil.process_iter.cache_clear() #doesn't seem to help
 
     l=[q.info['cmdline'] for q in psutil.process_iter(['cmdline'])
-            if q.info['cmdline'] is not None and '-X' not in q.info['cmdline']
+            if q.info['cmdline'] and '-X' not in q.info['cmdline']
+                    and not [c for c in q.info['cmdline'] if 'py.exe' in c]
             and resolved in [pathlib.Path(c).resolve() for c in q.info['cmdline']]
             ]
     # l=list() #may be less efficient
