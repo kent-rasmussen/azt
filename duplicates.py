@@ -22,8 +22,9 @@ def running_file(path):
         else:
             l=list() #may be less efficient
             for q in psutil.process_iter(['cmdline']):
-                qcmd=q.info['cmdline']
-                if qcmd is None or '-X' in qcmd: #avoids need for try/except
+                qcmd=q.info['cmdline'] 
+                if qcmd is None or '-X' in qcmd or [i for i in qcmd 
+                                                if 'py.exe' in i]: #avoids need for try/except
                     continue
                 for c in qcmd:
                     if resolved == pathlib.Path(c).resolve():
