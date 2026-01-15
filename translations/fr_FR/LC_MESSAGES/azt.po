@@ -1318,7 +1318,7 @@ msgstr "Fait avec {}."
 #: /home/kentr/bin/raspy/azt/main.py:5940
 #, python-brace-format
 msgid "Done writing to lift ({status})."
-msgstr "Terminé d'écrire pour soulever ({status})."
+msgstr "Terminé d'écrire à LIFT ({status})."
 
 #: /home/kentr/bin/raspy/azt/main.py:13038
 msgid "Done —no change"
