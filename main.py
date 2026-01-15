@@ -7955,7 +7955,7 @@ class WordCollection(Segments):
         next=ui.Button(self.wordframe,text=_("Next"),cmd=self.nextword,
                         row=4, column=2, sticky='e',anchor='e')
         self.var=ui.StringVar()
-        self.lxenter=ui.EntryField(self.wordframe,text=self.var,
+        self.lxenter=ui.EntryField(self.wordframe,textvariable=self.var,
                                 font='readbig',
                                 row=5,column=0,columnspan=3,
                                 sticky='ew')
