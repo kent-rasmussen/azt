@@ -7366,6 +7366,13 @@ class Record(Sound): #TaskDressing
         If there is a link to a real sound file, that is covered above.
         If there is no sound file, then the below will result in the default
         (current) schema."""
+        form=node.textvaluebylang(self.analang)
+        if not form:
+            log.error(_("filenameoptions: no {ana} analang in "
+                "{id}! (OK if recording first; "
+                "forms: {forms})").format(ana=self.analang,
+                id=node.sense.id,
+                forms=node.textvaluedict()))
         # log.info("forms at this point: {}".format(self.forms))
         for pslocopt in pslocopts:
             for fieldlocopt in fieldlocopts: #for older name schema
@@ -7376,13 +7383,6 @@ class Record(Sound): #TaskDressing
                             args+=[node.tag]
                             if node.tag == 'field':
                                 args+=[node.ftype]
-                        form=node.textvaluebylang(self.analang)
-                        if not form:
-                            log.error(_("No {ana} analang in "
-                                "{id}! (OK if recording first; "
-                                "forms: {forms})").format(ana=self.analang,
-                                id=node.sense.id,
-                                forms=node.textvaluedict()))
                         args+=[form] #[self.ftype]]
                         for l in self.glosslangs:
                             args+=[node.glossbylang(l)]
