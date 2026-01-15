@@ -7694,7 +7694,7 @@ class WordCollection(Segments):
             self.index-=1
         self.getword()
     def storethisword(self):
-        log.info(_("Trying to store {value} ({type})").format(value=self.var.get(),type=self.ftype))
+        log.info(_("WordCollection trying to store {value} ({type})").format(value=self.var.get(),type=self.ftype))
         try:
             if self.ftype in ['lc','lx']:
                 self.sense.textvaluebyftypelang(self.ftype,
@@ -7714,7 +7714,12 @@ class WordCollection(Segments):
             # lift.prettyprint(self.entry)
         # except KeyError:
         except AttributeError as e:
-            log.info(_("Not storing word (WordCollection): {error}").format(error=e))
+            log.info(f"Not storing word (WordCollection): {e}")
+        except AssertionError as e:
+            log.info(f"Not storing empty value (WordCollection): {e} {self.var=} "
+                    f"{type(self.var)=}")
+        except Exception as e:
+            log.info(f"Exception storing word (WordCollection): {e}")
     def markimage(self,url,w=None):
         """return to file, LIFT"""
         log.info("Selected image {}".format(url))
@@ -8806,6 +8811,7 @@ class Parse(Segments):
             log.info("not showing")
             self.after(1,self.showwhenready)
     def storethisword(self):
+        log.info(_("Parse trying to store {value} ({type})").format(value=self.var.get(),type=self.ftype))
         try:
             v=self.var.get()
             assert v
