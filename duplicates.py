@@ -17,7 +17,7 @@ def running_file(path):
             for c in qcmd:
                 if resolved == pathlib.Path(c).resolve():
                     l.append(qcmd)
-        except psutil.ZombieProcess:
+        except (psutil.ZombieProcess,psutil.AccessDenied):
             continue
     if len(l)>1:
         import locale
