@@ -1331,6 +1331,9 @@ msgstr "Terminé!"
 msgid "Show Report"
 msgstr "Faire Rapport"
 
+msgid "Share data to USB"
+msgstr "Partager les données vers USB"
+
 #: /home/kentr/bin/raspy/azt/main.py:6083
 #, python-brace-format
 msgid "Done!\n"

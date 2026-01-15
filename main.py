@@ -16134,7 +16134,7 @@ class Repository(object):
         #this should be a pathlib object
         # log.info("Continuing to clone to {} from USB repo".format(directory))
         # this needs from-to args
-        args=['clone', self.nonbareclonearg, self.url, str(directory)]
+        args=['clone', self.nonbareclonearg, self.url, self.abs_path(directory)]
         msg=_("Copying from {source} to {dest}; this may take some time."
                     "").format(source=self.url, dest=directory)
         log.info(msg)
@@ -16143,7 +16143,7 @@ class Repository(object):
         w.close()
     def clonetoUSB(self,event=None):
         # log.info("Trying to run clonetoUSB")
-        directory=self.clonetobaredirname()
+        directory=self.abs_path(self.clonetobaredirname())
         log.info(_("directory: {dir}").format(dir=directory))
         if directory:
             self.mark_safe(directory)
@@ -16315,7 +16315,7 @@ class Repository(object):
         # log.info("remotesinsettings there: {}".format(l))
         if l:
             log.info(_("returning remotes:{remotes}").format(remotes=l))
-            return l
+            return [self.abs_path(i) for i in l]
         # If we're still here, offer the user one chance to plug in a drive.
         # but just do this once; don't annoy the user.
         elif self.code == 'git' and firsttry: # and me:
@@ -16668,6 +16668,11 @@ class Repository(object):
                     "for {desc}, with {count} files."
                     "").format(repo=self.repotypename, url=self.url,
                         desc=self.description, count=len(self.files)))
+    def abs_path(self,url):
+        try:
+            return url.resolve()
+        except Exception: #if not already pathlib.Path
+            return file.getfile(url).resolve()
     def __init__(self, url):
         super(Repository, self).__init__()
         self.url = url
@@ -16836,21 +16841,27 @@ class Git(Repository):
         r=self.do(args)
         if 'error: No such remote ' not in r:
             return r
-    def mark_safe(self,directory):
-        if str(directory) not in self.get_all_safe():
-            args=['config', '--global', '--add', 'safe.directory', directory]
-            r=self.do(args)
-            if r:
-                log.info(_("Mark_safe returned {result} for {directory}").format(result=r,directory=directory))
+    def mark_safe(self,directory=None):
+        if not directory:
+            directory=self.url
+        directory=self.abs_path(directory)
+        if directory in self.get_all_safe():
+            log.info(_("Mark_safe: {directory} already safe").format(directory=directory))
+            return
+        args=['config', '--global', '--add', 'safe.directory', directory]
+        r=self.do(args)
+        if r:
+            log.info(_("Mark_safe returned {result} for {directory}").format(result=r,directory=directory))
     def get_all_safe(self):
         args=['config', '--get-all', 'safe.directory']
-        r=self.do(args)
+        r=[self.abs_path(i) for i in self.do(args)]
         if r:
             log.info(_("get_all_safe returned {result}").format(result=r)) #str
             return r
         else:
             return []
     def __init__(self, url):
+        self.url=url
         self.code='git'
         self.branchnamefile='HEAD'
         self.wdownloadsurl='https://git-scm.com/download/win'
@@ -16864,6 +16875,7 @@ class Git(Repository):
         self.bareclonearg='--bare'
         self.nonbareclonearg=''
         super(Git, self).__init__(url)
+        self.mark_safe()
 class GitReadOnly(Git):
     def exewarning(self):
         pass #don't worry about it for this one
