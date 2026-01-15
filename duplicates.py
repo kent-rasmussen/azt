@@ -6,19 +6,20 @@ import pathlib
 
 def running_file(path):
     resolved=pathlib.Path(path).resolve()
-    psutil.process_iter.cache_clear()
+    # psutil.process_iter.cache_clear() #doesn't seem to help
 
-    l=list()
-    for q in psutil.process_iter():
-        try:
-            qcmd=q.cmdline()
-            if '-X' not in qcmd:
-                continue
-            for c in qcmd:
-                if resolved == pathlib.Path(c).resolve():
-                    l.append(qcmd)
-        except (psutil.ZombieProcess,psutil.AccessDenied):
-            continue
+    l=[q.info['cmdline'] for q in psutil.process_iter(['cmdline'])
+            if q.info['cmdline'] is not None and '-X' not in q.info['cmdline']
+            and resolved in [pathlib.Path(c).resolve() for c in q.info['cmdline']]
+            ]
+    # l=list() #may be less efficient
+    # for q in psutil.process_iter(['cmdline']):
+    #     qcmd=q.info['cmdline']
+    #     if qcmd is None or '-X' in qcmd: #avoids need for try/except
+    #         continue
+    #     for c in qcmd:
+    #         if resolved == pathlib.Path(c).resolve():
+    #             l.append(qcmd)
     if len(l)>1:
         import locale
         loc,enc=locale.getlocale()
