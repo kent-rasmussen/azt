@@ -2274,9 +2274,9 @@ class Settings(object):
             fns['profile']=program['slices'].profile
             # except this one, which pretends to set but doesn't (throws arg away)
             fns['profilecounts']=program['slices'].slicepriority
+            fns['giturls']=self.repo['git'].remoteurls
             fns['asr_repos']=program['soundsettings'].asr_repo_tally
             fns['asr_kwargs']=program['soundsettings'].asr_kwarg_dict
-            fns['giturls']=self.repo['git'].remoteurls
             fns['hgurls']=self.repo['hg'].remoteurls
         except Exception as e:
             log.error(_("Only finished settingsobjects up to {keys} ({error})").format(keys=fns.keys(),error=e))
@@ -4030,6 +4030,8 @@ class TaskDressing(HasMenus,ui.Window):
         if self.exitFlag.istrue() or not self.winfo_exists():
             return
         self.context.menuinit() #This is a ContextMenu() method
+        self.context.menuitem(_("Share data to USB"), 
+                                program['settings'].repo['git'].share)
         if not hasattr(self,'menu') or not self.menu:
             self.context.menuitem(_("Show Menus"),self._setmenus)
         else:
@@ -16182,7 +16184,6 @@ class Repository(object):
             remotes=self.findpresentremotes() #do once
         if not remotes and not noclone:
             self.clonetoUSB()
-            return
         r=self.commit() #should always before pulling, at least here
         if r:
             r=self.pull(remotes)
@@ -16854,7 +16855,7 @@ class Git(Repository):
             log.info(_("Mark_safe returned {result} for {directory}").format(result=r,directory=directory))
     def get_all_safe(self):
         args=['config', '--get-all', 'safe.directory']
-        r=[self.abs_path(i) for i in self.do(args)]
+        r=[self.abs_path(i) for i in self.do(args).split('\n')]
         if r:
             log.info(_("get_all_safe returned {result}").format(result=r)) #str
             return r
