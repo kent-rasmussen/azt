@@ -16670,9 +16670,14 @@ class Repository(object):
                     "").format(repo=self.repotypename, url=self.url,
                         desc=self.description, count=len(self.files)))
     def abs_path(self,url):
+        log.info(f"abs_path given {url}")
         try:
+            log.info(f"abs_path returning {url.resolve()} "
+                    f"({str(url.resolve())})")
             return url.resolve()
         except Exception: #if not already pathlib.Path
+            log.info(f"actually, abs_path returning {file.getfile(url).resolve()} "
+                    f"({str(file.getfile(url).resolve())})")
             return file.getfile(url).resolve()
     def __init__(self, url):
         super(Repository, self).__init__()
