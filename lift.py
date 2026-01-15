@@ -1402,6 +1402,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         log.info(f"{self.nfields=} \n"
                 f"{counts['Plural']+counts.get('Imperative',0)==counts['lexical-unit']=} \n"
                 f"{ps_profile_counts=}")
+        return counts,ps_profile_counts
         # log.info(f"{self.nfieldswannotations=}")
     def getsenseswglosslangdata(self):
         #do each of these, then cull in the second one

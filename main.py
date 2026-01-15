@@ -5300,6 +5300,17 @@ class TaskDressing(HasMenus,ui.Window):
             self.runwindow.destroy()
             delattr(self,'runwindow')
     """Functions that everyone needs"""
+    def show_report(self,event=None):
+        counts,ps_profile_counts=program['db'].report_counts()
+        fields=['citation', 'lexical-unit', 'Plural', 'Imperative']
+        l=[f"{field}:\t{counts[field]}" for field in fields 
+                        if field in counts]
+        ErrorNotice("\n".join(l))
+        for ps in [i for i in ps_profile_counts if i in ['Noun','Verb']]:
+            l=[f"{ps}:\n{'\n'.join([f'{profile}:\t{ps_profile_counts[ps][profile]}' 
+                                for profile in ps_profile_counts[ps]])}" 
+               ]
+            ErrorNotice("\n".join(l))
     def updateazt(self,event=None):
         updateazt()
     def maybewrite(self,definitely=False):
@@ -8064,6 +8075,9 @@ class WordCollection(Segments):
         self.deiconify()
         self.lift()
         self.wordframe.update_idletasks()
+    def setcontext(self,context=None):
+        TaskDressing.setcontext(self)
+        self.context.menuitem(_("Show Report"),self.show_report)
     def __init__(self, parent):
         Segments.__init__(self,parent)
         self.dodone=False

@@ -1328,6 +1328,9 @@ msgstr "Terminé — pas de changement"
 msgid "Done!"
 msgstr "Terminé!"
 
+msgid "Show Report"
+msgstr "Faire Rapport"
+
 #: /home/kentr/bin/raspy/azt/main.py:6083
 #, python-brace-format
 msgid "Done!\n"
