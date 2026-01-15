@@ -9,7 +9,7 @@ def running_file(path):
     psutil.process_iter.cache_clear()
 
     l=list()
-    for q in psutil.process_iter([]):
+    for q in psutil.process_iter():
         try:
             qcmd=q.cmdline()
             if '-X' not in qcmd:
