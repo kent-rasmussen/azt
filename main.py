@@ -8808,17 +8808,20 @@ class Parse(Segments):
     def storethisword(self):
         try:
             v=self.var.get()
-            if v:
-                self.entry.fields[self.ftype].textvaluebylang(self.analang,v)
-                if not self.done():
-                    self.parse_foreground(entry=self.entry)
+            assert v
+            self.entry.fields[self.ftype].textvaluebylang(self.analang,v)
+            if not self.done():
+                self.parse_foreground(entry=self.entry)
             self.maybewrite() #only if above is successful
             self.updateparseUI()
             log.info(f"Storing word: {self.sense.id} ({self.analang}:{v})")
+        except AssertionError as e:
+            log.info(f"Not storing empty value (Parse): {e} {self.var=} "
+                    f"{type(self.var)=}")
         except AttributeError as e:
-            log.info("Not storing word (Parse): {}".format(e))
+            log.info(f"Not storing word (Parse): {e}")
         except Exception as e:
-            log.info("Exception storing word (Parse): {}".format(e))
+            log.info(f"Exception storing word (Parse): {e}")
     def waitforOKsecondfields(self):
         while not program['settings'].secondformfieldsOK():
             after(10*100,callback=self.waitforOKsecondfields) # wait a second
