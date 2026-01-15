@@ -3,8 +3,12 @@
 
 import psutil
 import pathlib
-
+import sys
+# print(sys.argv)
 def running_file(path):
+    ok_processes=1
+    if '--restart' in sys.argv:
+        ok_processes+=1
     resolved=pathlib.Path(path).resolve()
     # psutil.process_iter.cache_clear() #doesn't seem to help
 
@@ -21,7 +25,7 @@ def running_file(path):
     #     for c in qcmd:
     #         if resolved == pathlib.Path(c).resolve():
     #             l.append(qcmd)
-    if len(l)>1:
+    if len(l)>ok_processes:
         import locale
         loc,enc=locale.getlocale()
         code=loc.split('_')[0]

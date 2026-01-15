@@ -17472,7 +17472,7 @@ def sysrestart(event=None):
     if osys == 'Linux':
         # log.info(f"restarting with {sys.argv[0]}?={program['python']} ({sys.argv}?)")
         # log.info(f"os.execl({sys.executable}, {sys.argv})")
-        os.execl(sys.executable, sys.executable, *sys.argv)
+        os.execl(sys.executable, sys.executable, *sys.argv, '--restart')
         # log.info("Trying argv[0] with args {}, {} and {}".format(sys.executable,
         #                                                         sys.argv[0],
         #                                                         sys.argv))
@@ -17484,7 +17484,7 @@ def sysrestart(event=None):
         #     os.execv(sys.executable, sys.argv)
     elif osys == 'Windows':
         # log.info("Trying subprocess.run with executable".format(e))
-        subprocess.run([sys.executable,*sys.argv])
+        subprocess.run([sys.executable, *sys.argv, '--restart'])
         # log.info("Trying execv")
         # # try:
         # #     os.execv(sys.executable, sys.argv)
