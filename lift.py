@@ -1394,14 +1394,25 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             log.info(f"{self.analang=} not found in {self.nfields=}")
             return
         counts=self.nfields[self.analang]
+        fields=['citation', 'lexical-unit', 'Plural', 'Imperative']
+        l=[f"{field}:\t{counts[field]}" for field in fields 
+                        if field in counts]
+        log.info("\n".join(l))
         ps_profile_counts={ps:{profile:len(self.sensesbyps_profile[ps][profile])
                                     for profile in self.sensesbyps_profile[ps]
                                 } 
                                     for ps in self.sensesbyps_profile 
                                     }
-        log.info(f"{self.nfields=} \n"
-                f"{counts['Plural']+counts.get('Imperative',0)==counts['lexical-unit']=} \n"
-                f"{ps_profile_counts=}")
+        for ps in [i for i in ps_profile_counts if i in ['Noun','Verb']]:
+            l=[f"{ps}:\n{'\n'.join([f'{profile}:\t{ps_profile_counts[ps][profile]}' 
+                                for profile in ps_profile_counts[ps]
+                                ])}" 
+               ]
+            log.info("\n".join(l))
+        
+        # log.info(f"{self.nfields=} \n"
+        #         f"{counts['Plural']+counts.get('Imperative',0)==counts['lexical-unit']=} \n"
+        #         f"{ps_profile_counts=}")
         return counts,ps_profile_counts
         # log.info(f"{self.nfieldswannotations=}")
     def getsenseswglosslangdata(self):
