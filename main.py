@@ -5992,7 +5992,7 @@ class TaskChooser(TaskDressing):
         self.splash.withdraw()
         for r in program['settings'].repo.values():
             # log.info("checking repo {} for USB drive".format(r))
-            r.share()
+            r.share(noclone=True)
         self.splash.draw()
     # def getinterfacelangs(self):
     # # global i18n
@@ -16151,10 +16151,10 @@ class Repository(object):
                 return r #need to pass errors for processing
             else:
                 return []
-    def share(self,remotes=None):
+    def share(self,remotes=None,noclone=False):
         if not remotes:
             remotes=self.findpresentremotes() #do once
-        if not remotes:
+        if not remotes and not noclone:
             self.clonetoUSB()
             return
         r=self.commit() #should always before pulling, at least here
@@ -16163,9 +16163,12 @@ class Repository(object):
         if r:
             r=self.push(remotes)
         return r #ok if we don't track results for each
-    def fetch(self,remotes=None):
+    def fetch(self,remotes=None,noclone=False):
         if not remotes:
             remotes=self.findpresentremotes() #do once
+        if not remotes and not noclone:
+            self.clonetoUSB()
+            return
         for remote in remotes:
             if self.code == 'git':
                 args=['fetch',remote]
@@ -17543,8 +17546,10 @@ def uptodate(x):
             return True
 def updateazt(event=None,**kwargs): #should only be parent, for errorroot
     def tryagain(event=None):
+        kwargs['tryagain']=True
         updateazt(**kwargs)
     log.info(_("Updating {azt}").format(azt=program['name']))
+    tryagain=kwargs.get('tryagain')
     if 'git' in program:
         parent=kwargs.get('parent')
         if not parent or not parent.winfo_exists(): #take kwarg if there
@@ -17569,8 +17574,12 @@ def updateazt(event=None,**kwargs): #should only be parent, for errorroot
             return
         button=False
         if internetconnectionproblemin(t):
-            t=t+_('\n(Check your internet connection and try again)')
-            button=(_("Try Again"),tryagain)
+            if tryagain:
+                t=t+'\n'+_("Insert USB with A−Z+T source")
+                button=(_("USB inserted"),program['repo'].clonetoUSB)
+            else:
+                t=t+_('\n(Check your internet connection and try again)')
+                button=(_("Try Again"),tryagain)
         elif not me:
             if [i for i in r.values() if 'fatal: ' in i]: #any fatal problem
                 t+='\n'+_("(Problem! You will likely need help with this.)")
