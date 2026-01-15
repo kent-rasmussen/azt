@@ -20,7 +20,17 @@ def running_file(path):
         except psutil.ZombieProcess:
             continue
     if len(l)>1:
-        print(f"\n{pathlib.Path(path).resolve()} is already running:\n\n",
+        import locale
+        loc,enc=locale.getlocale()
+        code=loc.split('_')[0]
+        code='fr'
+        if code in ['fr','FR','Fr','Français','French']:
+            running="est déjà en cours"
+            enter="Appuyer ENTER pour quitter"
+        else:
+            running="is already running"
+            enter="Press ENTER to exit"
+        print(f"\n{pathlib.Path(path).resolve()} {running}:\n\n",
                 '\n'.join([str(i) for i in l]))
-        input('\nPress ENTER to exit\n')
+        input('\n' + enter + '\n')
         return True
