@@ -5242,8 +5242,11 @@ class TaskDressing(HasMenus,ui.Window):
         self.bind('<Double-Button-1>', self.releasefullscreen)
     def takefullscreen(self,event=None):
         #This maximizes window, though leaves dressing in place:
-        self.wm_attributes('-zoomed', True)
-        self.bind('<Double-Button-1>', self.releasefullscreen)
+        try:
+            self.wm_attributes('-zoomed', True)
+            self.bind('<Double-Button-1>', self.releasefullscreen)
+        except:
+            self.takekioskscreen()
     def getrunwindow(self,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
         but the attribute is still there after window has been killed, so we
