@@ -5,26 +5,28 @@ import psutil
 import pathlib
 import sys
 # print(sys.argv)
+use_list_comprehension=False
 def running_file(path):
     ok_processes=1
     if '--restart' in sys.argv:
         ok_processes+=1
     resolved=pathlib.Path(path).resolve()
     # psutil.process_iter.cache_clear() #doesn't seem to help
-
-    l=[q.info['cmdline'] for q in psutil.process_iter(['cmdline'])
+    if use_list_comprehension:
+        l=[q.info['cmdline'] for q in psutil.process_iter(['cmdline'])
             if q.info['cmdline'] and '-X' not in q.info['cmdline']
                     and not [c for c in q.info['cmdline'] if 'py.exe' in c]
             and resolved in [pathlib.Path(c).resolve() for c in q.info['cmdline']]
             ]
-    # l=list() #may be less efficient
-    # for q in psutil.process_iter(['cmdline']):
-    #     qcmd=q.info['cmdline']
-    #     if qcmd is None or '-X' in qcmd: #avoids need for try/except
-    #         continue
-    #     for c in qcmd:
-    #         if resolved == pathlib.Path(c).resolve():
-    #             l.append(qcmd)
+    else:
+        l=list() #may be less efficient
+        for q in psutil.process_iter(['cmdline']):
+            qcmd=q.info['cmdline']
+            if qcmd is None or '-X' in qcmd: #avoids need for try/except
+                continue
+            for c in qcmd:
+                if resolved == pathlib.Path(c).resolve():
+                    l.append(qcmd)
     if len(l)>ok_processes:
         import locale
         loc,enc=locale.getlocale()
