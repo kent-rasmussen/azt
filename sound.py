@@ -74,8 +74,11 @@ class SoundSettings(object):
                                     if 'default' in v]
         if self.audio_card_in:
             self.audio_card_in=self.audio_card_in[0]
-        else:
+        elif self.cards['in']:
             self.audio_card_in=min(self.cards['in'])
+        else:
+            log.error("I can't find any input card!")
+            raise
     def default_out(self):
         self.audio_card_out=[k for k,v in self.cards['dict'].items()
                                     if k in self.cards['out']
