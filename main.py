@@ -16674,7 +16674,7 @@ class Repository(object):
     def abs_path(self,url):
         log.info(f"abs_path given {url}")
         if not url:
-           log.info(f"returning nothing for nothing: {url} ({url})") 
+           log.info(f"returning nothing for nothing: {url} ({type(url)})") 
            return
         try:
             log.info(f"abs_path returning {url.resolve()} "
