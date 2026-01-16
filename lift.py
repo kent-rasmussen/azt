@@ -120,30 +120,30 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.get_imgdir()
         self.get_reportdir()
         log.info(_("Language initialization done."))
-    def tonelangname(self,machine=False):
+    def tonelangname(self,lang=None,machine=False):
         try:
+            assert self.analang == lang, "Not asking for analang"
             bits=[self.tonelang]
-        except AttributeError:
-            bits=[self.analang,langtags.tone_code]
+        except (AttributeError,AssertionError):
+            bits=[lang if lang else self.analang,langtags.tone_code]
         if machine:
             bits+=[langtags.machine_transcription_code]
-        log.info(f"{bits=}")
         return ''.join(bits)
-    def audiolangname(self):
+    def audiolangname(self,lang=None,machine=False): #machine just keeps compatability
         try:
+            assert self.analang == lang, "Not asking for analang"
             return self.audiolang
-        except AttributeError:
-            bits=[self.analang,langtags.audio_code]
-            log.info(f"{bits=}")
+        except (AttributeError,AssertionError):
+            bits=[lang if lang else self.analang,langtags.audio_code]
             return ''.join(bits)
-    def phoneticlangname(self,machine=False):
+    def phoneticlangname(self,lang=None,machine=False):
         try:
+            assert self.analang == lang, "Not asking for analang"
             bits=[self.phoneticlang]
-        except AttributeError:
-            bits=[self.analang,langtags.phonetic_code]
+        except (AttributeError,AssertionError):
+            bits=[lang if lang else self.analang,langtags.phonetic_code]
         if machine:
             bits+=[langtags.machine_transcription_code]
-        log.info(f"{bits=}")
         return ''.join(bits)
     def get_audiodir(self):
         self.lift_home=file.getparent(self.filename)
@@ -179,12 +179,23 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 "there; if your images are elsewhere, fix this.").format(imgdir=self.imgdir))
     def get_reportdir(self):
         self.reportdir=file.getreportdir(self.lift_home)
-    def convert_langtag(self,current_lang,new_lang):
+    def convert_langtag(self,current_lang,new_lang,new_already_ok=False):
         """This method is only for established databases who need to change
         langauge codes, typically because of an error or underdifferentiated
         code. It will only be available by manual calling in this module, not anywhere in the UI —at least until I can come up with a way to prevent
         its abuse.
         """
+        def targets(code):
+            target_nodes=[i for i in
+                            self.nodes.findall(f".//*[@lang='{code}']")]
+            log.info(f'Found {len(target_nodes)} target nodes with language {code=}.')
+            return target_nodes
+        def move_and_report(cur,new):
+            targets(new)
+            for n in targets(cur):
+                n.set('lang',new)
+            targets(cur)
+            targets(new)
         present_langs=[i.get('lang') for i in self.nodes.findall(".//*[@lang]")]
         lang_stats=collections.Counter(present_langs).most_common()
         langs=set(present_langs)
@@ -199,24 +210,22 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             log.error(_("‘{current}’ not in langs={langs}!")
                     .format(current=current_lang, langs=langs))
             return
-        if new_lang in langs:
+        if new_lang in langs and not new_already_ok:
             log.error(_("‘{new}’ already in langs={langs}!")
                     .format(new=new_lang, langs=langs))
             return
         log.info(_("found ‘{current}’, and not ‘{new}’ in langs={langs}.")
                 .format(current=current_lang, new=new_lang, langs=langs))
-        target_nodes=[i for i in
-                            self.nodes.findall(f".//*[@lang='{current_lang}']")]
-        for n in target_nodes:
-            n.set('lang',new_lang)
-        receptor_nodes=[i for i in
-                            self.nodes.findall(f".//*[@lang='{new_lang}']")]
-        target_nodes=[i for i in
-                            self.nodes.findall(f".//*[@lang='{current_lang}']")]
-        log.info(_('Found {n} receptor nodes with {lang}.')
-                .format(n=len(receptor_nodes), lang=new_lang))
-        log.info(_('Found {n} target nodes with {lang}.')
-                .format(n=len(target_nodes), lang=current_lang))
+        for fn in [None,self.tonelangname,
+                    self.audiolangname,
+                    self.phoneticlangname,
+                    profilelang]:
+            if fn:
+                move_and_report(fn(current_lang),fn(new_lang))
+                move_and_report(fn(current_lang,machine=True),
+                                fn(new_lang,machine=True))
+            else:
+                move_and_report(current_lang,new_lang)
     def retarget(self,urlobj,target,showurl=False):
         k=self.urlkey(urlobj.kwargs)
         urlobj.kwargs['retarget']=target
@@ -1409,7 +1418,6 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                                 ])}" 
                ]
             log.info("\n".join(l))
-        
         # log.info(f"{self.nfields=} \n"
         #         f"{counts['Plural']+counts.get('Imperative',0)==counts['lexical-unit']=} \n"
         #         f"{ps_profile_counts=}")
@@ -4011,7 +4019,7 @@ def pylanglegacy2(analang):
      return analang+'-py'
 def pylang(analang):
      return analang+'-x-py'
-def profilelang(analang):
+def profilelang(analang,machine=False): #Machine for script compatability
      return analang+'-x-cvprofile'
 def quote(x):
     return "‘"+str(x)+"’"
