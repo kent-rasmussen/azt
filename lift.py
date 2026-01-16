@@ -4569,15 +4569,19 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/bo/bo.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/wmg/wmg.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/lol-x-his30103/lol-x-his30253.lift"
-    import glob 
-    filenames=glob.glob("/home/kentr/Assignment/Tools/WeSay/*-x-*/*.lift")
-    lifts={}
-    for filename in filenames:
-        lifts[filename]=LiftXML(filename)
-    for filename in filenames:
-        lifts[filename].report_counts()
-    exit()
+    filename="/home/kentr/Assignment/Tools/WeSay/lol-x-his30100/lol-x-his30100.lift"
+    lift=LiftXML(filename)
+    def report():
+        import glob 
+        filenames=[i for i in glob.glob("/home/kentr/Assignment/Tools/WeSay/*-x-*/*.lift")
+                    if '101' not in i and '242' not in i]
+        lifts={}
+        for filename in filenames:
+            lifts[filename]=LiftXML(filename)
+        for filename in filenames:
+            lifts[filename].report_counts()
+    # report()
+    # exit()
     # filename="/home/kentr/Assignment/Tools/WeSay/Demo_gnd/gnd.lift"
     # filename="/home/kentr/bin/raspy/azt/SILCAWL/SILCAWL.lift"
     print(time.time())
@@ -4585,61 +4589,9 @@ if __name__ == '__main__':
         f = open(str(name)+'.txt', 'w', encoding='utf-8') # to append, "a"
         f.write(prettyprint(lift.nodes))
         f.close()
-    lift.report_counts()
-    # loc="Imperative"
-    # formvalue="give!"
-    # lang="en"
-    # transvalue="donnez!"
-    # translang='fr'
-    # tonevalue='16'
-    # frame={'field':'pl',
-	# 	'en':'__s',
-	# 	'swh':'__',
-	# 	'fr':'__es'}
-    # ftype='pl'
-    # for ps in lift.sensesbyps_profile:
-    #     for profile in lift.sensesbyps_profile[ps]:
-    #         print(lift.sensesbyps_profile[ps][profile])
-    #         print(f"{profile} in lift.ps_profiles[{ps}]: {profile in lift.ps_profiles[ps]}")
-    # for ps in lift.ps_profiles:
-    #     for profile in lift.ps_profiles[ps]:
-    #         print('self.ps_profiles',ps,profile)
-    #         print(lift.sensesbyps_profile[ps][profile])
-    # for profile_dict in lift.sensesbyps_profile.values():
-    #     for sense_list in profile_dict.values():
-    #         for sense in sense_list:
-    # lift.senses:
-    # for ps in lift.sensesbyps_profile:
-    #     # print([i.id for i in lift.sensesbyps_profile[ps][None] if i])
-    #     # continue
-    #     for profile,v in lift.sensesbyps_profile[ps].items():
-    #         print(f"Found {len(v)} senses")
-    #         for sense in lift.sensesbyps_profile[ps][profile]:
-    #             print("working on sense",sense.id)
-    #             i,o=sense.getcvverificationkeys('lc')
-    #             print(o,type(o),[type(i) for i in o])
-    # print('annotation:',lift.annotation_values_by_ps_profile())
-    # print('verification:',lift.verification_values_by_ps_profile())
-    # for s in lift.senses:
-    #     if s.psvalue() == 'Noun' and s.cvprofilevalue() == 'CVCV':
-    #         s.annotationvaluebyftypelang('lc','wmg','C1',value='')
-    #         value=s.annotationvaluebyftypelang('lc','wmg','C1')
-    #         log.info(f"Found noun at {s.id} w/C1=‘{value}’")
-    # for e in lift.entries:
-    #     e.copy_ph_form_to_lc()
-    # lift.convertxtoy(lang='bo',fromtag='gloss', totag='citation')
-    # sense=lift.sensedict['daytime_b27c251c-090e-4427-aa86-22b745409f8d']
-    # sense=lift.sensedict['body_791094f2-a82b-4650-81d8-c3b6145d2be4']
-    # sense=lift.sensedict['head_a8516acf-606c-4796-8fed-75b0c0f2c583']
-    # sense=lift.sensedict['forehead_3e600f7e-74a3-4761-9bc3-09f3f01cd98b']
-    # for sense in ['head_a8516acf-606c-4796-8fed-75b0c0f2c583',
-    #                 'forehead_3e600f7e-74a3-4761-9bc3-09f3f01cd98b',
-    #                 "voice box, larynx, Adam's apple_931554d7-b054-4f75-894c-2c28e2c6121f"]:
-    #     sense=lift.sensedict[sense]
-    #     print(sense.collectionglosses)
-    # exit()
-    # sense=lift.senses[0]
-    # print(sense.cawln)
+    # lift.report_counts()
+    # lift.convert_langtag('lol-x-his30100','lol-x-his30101')
+    # lift.convert_langtag('lol-x-his30101','lol-x-his30100',new_already_ok=True)
     # lift.convert_langtag('lol-x-his30253','lol-x-his30103')
     # lift.convert_langtag('en','en-US')
     # lift.convert_langtag('pt','en-US')
