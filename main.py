@@ -16673,6 +16673,9 @@ class Repository(object):
                         desc=self.description, count=len(self.files)))
     def abs_path(self,url):
         log.info(f"abs_path given {url}")
+        if not url:
+           log.info(f"returning nothing for nothing: {url} ({url})") 
+           return
         try:
             log.info(f"abs_path returning {url.resolve()} "
                     f"({str(url.resolve())})")
