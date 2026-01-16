@@ -1847,7 +1847,7 @@ class StatusFrame(ui.Frame):
                     #Make row header
                     t=profile
                     if program['settings'].showdetails:
-                        t+=(" ({len(program['settings'].profilesbysense[ps][profile])})")
+                        t+=(f" ({len(program['settings'].profilesbysense[ps][profile])})")
                     h=ui.Label(self.leaderboardtable,text=t,
                                 row=row,
                                 column=column,
@@ -1918,7 +1918,7 @@ class StatusFrame(ui.Frame):
                         if (not totalnum and
                                 tosort and
                                 program['settings'].showdetails): #these should go together
-                            donenum=unsortedtext #don't say '0'
+                            donenum=unsorted_icon #don't say '0'
                         elif not totalnum and tosort:
                             donenum=''
                         elif (not program['settings'].showdetails or
@@ -1928,7 +1928,7 @@ class StatusFrame(ui.Frame):
                         else:
                             donenum=nn(totalwverified,oneperline=True)
                         if (tosort and totalnum and program['settings'].showdetails):
-                            donenum=str(donenum)+'\n'+unsortedtext
+                            donenum=str(donenum)+'\n'+unsorted_icon
                         tb=ui.Button(self.leaderboardtable,
                                 relief='flat',
                                 bd=0, #border
@@ -4099,7 +4099,9 @@ class TaskDressing(HasMenus,ui.Window):
             program['settings'].setcvt('V')
     def trystatusframelater(self,dict):
         program['settings'].setrefreshdelay()
-        self.parent.after(program['settings'].refreshdelay,self.makestatusframe,dict)
+        self.parent.after(program['settings'].refreshdelay,
+                        self.makestatusframe,
+                        dict)
     def makestatusframe(self,dict=None):
         """There are two threads of this method running or waiting at all times,
         one for the taskchooser and another for the task. this should probably
