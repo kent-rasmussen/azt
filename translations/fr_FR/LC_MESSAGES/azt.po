@@ -3881,78 +3881,78 @@ msgstr "Même chose"
 
 #: /home/kentr/bin/raspy/azt/main.py:15812
 msgid "Same First Five Consonants"
-msgstr "Même les cinq premiers Consonants"
+msgstr "les même cinq premiers Consonants"
 
 #: /home/kentr/bin/raspy/azt/main.py:15785
 msgid "Same First Five Vowels"
-msgstr "Même les cinq premiers vowels"
+msgstr "les même cinq premiers vowels"
 
 #: /home/kentr/bin/raspy/azt/main.py:15808
 msgid "Same First Four Consonants"
-msgstr "Même les quatre premiers Consonants"
+msgstr "les même les quatre premiers Consonants"
 
 #: /home/kentr/bin/raspy/azt/main.py:15779
 msgid "Same First Four Vowels"
-msgstr "Même les quatre premiers vowels"
+msgstr "les même les quatre premiers vowels"
 
 #: /home/kentr/bin/raspy/azt/main.py:15816
 msgid "Same First Six Consonants"
-msgstr "Même les six premiers Consonants"
+msgstr "les même les six premiers Consonants"
 
 #: /home/kentr/bin/raspy/azt/main.py:15789
 msgid "Same First Six Vowels"
-msgstr "Même les six premiers vowels"
+msgstr "les même les six premiers vowels"
 
 #: /home/kentr/bin/raspy/azt/main.py:15804
 msgid "Same First Three Consonants"
-msgstr "Même Premières Trois Consonnes"
+msgstr "les même les premières Trois Consonnes"
 
 #: /home/kentr/bin/raspy/azt/main.py:15773
 msgid "Same First Three Vowels"
-msgstr "Même les trois premiers vowels"
+msgstr "les même les trois premiers vowels"
 
 #: /home/kentr/bin/raspy/azt/main.py:15768
 msgid "Same First Two Vowels"
-msgstr "Même les deux premiers vowels"
+msgstr "les même les deux premiers vowels"
 
 #: /home/kentr/bin/raspy/azt/main.py:15841
 #: /home/kentr/bin/raspy/azt/main.py:15867
 msgid "Same First/only Five CVs"
-msgstr "Même premier/seul cinq CV"
+msgstr "les même premier/seul cinq CV"
 
 #: /home/kentr/bin/raspy/azt/main.py:15837
 #: /home/kentr/bin/raspy/azt/main.py:15863
 msgid "Same First/only Four CVs"
-msgstr "Même premier/seul quatre CV"
+msgstr "les même premier/seul quatre CV"
 
 #: /home/kentr/bin/raspy/azt/main.py:15845
 #: /home/kentr/bin/raspy/azt/main.py:15871
 msgid "Same First/only Six CVs"
-msgstr "Même premier/seul les six CV"
+msgstr "les même premier/seul les six CV"
 
 #: /home/kentr/bin/raspy/azt/main.py:15833
 msgid "Same First/only Three CVs"
-msgstr "Même Premier/seulement Trois CVs"
+msgstr "les même premier/seul Trois CVs"
 
 #: /home/kentr/bin/raspy/azt/main.py:15828
 msgid "Same First/only Two CVs"
-msgstr "Même Premier/seulement Deux CV"
+msgstr "les même premier/seul Deux CVs"
 
 #: /home/kentr/bin/raspy/azt/main.py:15797
 msgid "Same First/only Two Consonants"
-msgstr "Même Première/Seule Deux Consonnes"
+msgstr "les même premier/seul Deux Consonnes"
 
 #: /home/kentr/bin/raspy/azt/main.py:15801
 msgid "Same Second Two Consonants"
-msgstr "Même Deuxieme Deux Consonnes"
+msgstr "les même Deuxieme Deux Consonnes"
 
 #: /home/kentr/bin/raspy/azt/main.py:15775
 msgid "Same Second and Third Vowels"
-msgstr "Même deuxième et troisième vowels"
+msgstr "les même deuxième et troisième vowels"
 
 #: /home/kentr/bin/raspy/azt/main.py:15780
 msgid "Same Third and Fourth Vowels"
-msgstr "Même Troisième et Quatrième Vowels"
+msgstr "les même troisième et quatrième vowels"
 
 #: /home/kentr/bin/raspy/azt/main.py:5305
 msgid "Saving settings for next time"
