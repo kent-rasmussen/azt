@@ -16985,6 +16985,8 @@ class GitReadOnly(Git):
         pass
     def setdescription(self):
         self.description=_("AZT source")
+    def unignore(self):
+        pass #don't mess with this repo!
     def __init__(self, url):
         super(GitReadOnly, self).__init__(url)
 class ResultWindow(ui.Window):
