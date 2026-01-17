@@ -43,7 +43,6 @@ reports/**
 *.WeSayUserConfig
 *.ChorusRescuedFile
 *.git
-*.ini
 secrets.py
 *.lift*txt
 bin/
