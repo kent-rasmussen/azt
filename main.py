@@ -6837,15 +6837,15 @@ class Segments(Senses):
                     
         else: #update to all annotations
             for check,value in annodict.items():
-                if self.check_with_conflicting_value(annodict,check):
+                if not value or value.isdigit() or value in ['NA']:
+                    continue #don't make changes for NA checks
+                elif self.check_with_conflicting_value(annodict,check):
                     if not self.updateconflictwarned:
                         ErrorNotice('\n'.join([conflict_text,error_nb]))
                         self.updateconflictwarned=True
                     else:
                         log.error(conflict_text)
                     error=True
-                elif value in ['NA']:
-                    pass #don't make changes for NA checks
                 else:
                     # log.info(f"updateformtoannotations {check}={value},{formvalue}")
                     formvalue=self.rxdict.update(formvalue,check,value)
