@@ -12614,6 +12614,7 @@ class TranscribeS(Transcribe,Segments):
         else:
             self.ok_button['state'] = 'disabled'
     def makewindow(self, glyph=None, event=None):
+        self.pyaudiocheck() # seems to dissapear sometimes
         self.ok_done=False
         if glyph:
             self.group=program['alphabet'].glyph(glyph)
