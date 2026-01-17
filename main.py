@@ -16492,11 +16492,14 @@ class Repository(object):
         # else:
         #     log.info(_("URL {url} is not already in repo {repo}:\n{files}"
         #                 "").format(url=url,repo=self.url,files=self.files))
-    def ignore(self,file):
-        if not hasattr(self,'ignored') or file not in self.ignored:
-            with open(self.ignorefile,'a') as f:
-                f.write(file+'\n')
-            self.getignorecontents() #make sure this is up to date
+    def ignore(self,expression):
+        if not hasattr(self,'ignored') or expression not in self.ignored:
+            self.ignored.append(expression)
+            self.write_ignore_contents()
+    def unignore(self,expression):
+        if hasattr(self,'ignored') and expression in self.ignored:
+            self.ignored.remove(expression)
+            self.write_ignore_contents()
     def ignorecheck(self):
         self.ignorefile=file.getdiredurl(self.url,'.'+self.code+'ignore')
         self.getignorecontents() #make sure this is up to date
@@ -16513,6 +16516,10 @@ class Repository(object):
             # log.info("self.ignored for {} now {}".format(self.code,self.ignored))
         except FileNotFoundError as e:
             log.info(_("Hope this is OK: {error}").format(error=e))
+    def write_ignore_contents(self):
+        with open(self.ignorefile,'w') as f:
+            for i in self.ignored:
+                f.write(i+'\n')
     def exists(self,f=None):
         if not f:
             f=self.deltadir
@@ -16896,6 +16903,7 @@ class Git(Repository):
         self.bareclonearg='--bare'
         self.nonbareclonearg=''
         super(Git, self).__init__(url)
+        self.unignore('*.ini') #used to ignore this
         self.mark_safe()
 class GitReadOnly(Git):
     def exewarning(self):
