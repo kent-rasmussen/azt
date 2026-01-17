@@ -293,7 +293,10 @@ class SoundSettingsWindow(ui.Window):
         self.labeltext['audio_card_in'].set(self.soundcardlabel())
     def soundcardlabel(self):
         self.soundsettings.check()
-        cur=self.soundsettings.cards['dict'][self.soundsettings.audio_card_in]
+        if self.soundsettings.audio_card_in in self.soundsettings.cards['dict']:
+            cur=self.soundsettings.cards['dict'][self.soundsettings.audio_card_in]
+        else:
+            cur=None
         return _(f"Microphone: ‘{cur}’")
     def setsoundcardoutindex(self,choice,window):
         # log.info("setsoundcardoutindex: {}".format(choice))

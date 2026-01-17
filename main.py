@@ -7017,6 +7017,8 @@ class Segments(Senses):
         self.rxdict=program['settings'].rxdict
 class Sound(object):
     """This holds all the Sound methods, mostly for playing."""
+    settings_attrs=['fs', 'sample_format',
+                    'audio_card_out']
     def donewpyaudio(self):
         try:
             self.pyaudio.terminate()
@@ -7054,9 +7056,7 @@ class Sound(object):
     def missingsoundattr(self):
         # log.info(dir(program['settings'].soundsettings))
         ss=program['settings'].soundsettings
-        for s in ['fs', 'sample_format',
-                    'audio_card_in',
-                    'audio_card_out']:
+        for s in self.settings_attrs:
             if hasattr(ss,s):
                 if s+'s' in ss.hypothetical and (getattr(ss,s)
                                                 not in ss.hypothetical[s+'s']):
@@ -7098,6 +7098,7 @@ class Sound(object):
         self.soundcheck()
 class Record(Sound): #TaskDressing
     """This holds all the Sound methods specific for Recording."""
+    settings_attrs=['audio_card_in']+Sound.settings_attrs
     def makelabelsnrecordingbuttons(self,parent,node,r,c):
         # log.info("Making buttons for {} (in {})".format(node,parent))
         t=node.formatted(self.analang,self.glosslangs)

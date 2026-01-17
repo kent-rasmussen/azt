@@ -88,14 +88,23 @@ class SoundSettings(object):
         else:
             self.audio_card_out=min(self.cards['out'])
     def default_fs(self):
-        self.fs=max(self.cards['in'][self.audio_card_in])
+        if self.audio_card_in in self.cards['in']:
+            self.fs=max(self.cards['in'][self.audio_card_in])
+        else:
+            self.fs=max(self.cards['out'][self.audio_card_out])
     def default_sf(self):
-        self.sample_format=min(self.cards['in'][self.audio_card_in][self.fs])
+        if self.audio_card_in in self.cards['in']:
+            self.sample_format=min(self.cards['in'][self.audio_card_in][self.fs])
+        else:
+            self.sample_format=max(self.cards['out'][self.audio_card_out][self.fs])
     def max_sf(self):
-        self.sample_format=max(self.cards['in'][self.audio_card_in][self.fs])
+        if self.audio_card_in in self.cards['in']:
+            self.sample_format=max(self.cards['in'][self.audio_card_in][self.fs])
+        else:
+            self.sample_format=max(self.cards['out'][self.audio_card_out][self.fs])
     def defaults(self):
-        self.default_in()
-        self.default_out()
+        self.default_out() #set audio_card_out, which should always be there
+        self.default_in() #set audio_card_in afterwards, to allow for broken mics
         self.default_fs()
         self.default_sf()
     def next_card_in(self):
@@ -240,23 +249,33 @@ class SoundSettings(object):
                                             # pyaudio.paInt8:'8 bit integer'
                                             }
     def makedefaultifnot(self):
+        if (not hasattr(self,'audio_card_out')
+                or self.audio_card_out not in self.cards['out']
+                or self.audio_card_out not in self.cards['dict']
+                ):
+            self.default_out()
+        #do the above first, because speakers without a mic is sensible, but not the 
+        # other way around
         if (not hasattr(self,'audio_card_in')
                 or self.audio_card_in not in self.cards['in']
                 or self.audio_card_in not in self.cards['dict']
                 ):
             self.default_in()
         if (not hasattr(self,'fs') or
-                self.fs not in self.cards['in'][self.audio_card_in]):
+                ((self.audio_card_in not in self.cards['in'] or 
+                self.fs not in self.cards['in'][self.audio_card_in]) and 
+                self.fs not in self.cards['out'][self.audio_card_out] 
+                )):
             self.default_fs()
         if (not hasattr(self,'sample_format') or
+                ((self.audio_card_in not in self.cards['in'] or 
+                self.fs not in self.cards['in'][self.audio_card_in] or 
                 self.sample_format not in self.cards['in'][self.audio_card_in][
-                                                                    self.fs]):
+                                                                    self.fs]) and 
+                self.sample_format not in self.cards['out'][self.audio_card_out][
+                                                                    self.fs]
+                )):
             self.default_sf()
-        if (not hasattr(self,'audio_card_out')
-                or self.audio_card_out not in self.cards['out']
-                or self.audio_card_out not in self.cards['dict']
-                ):
-            self.default_out()
     def check(self):
         # log.info(_("Testing speaker settings:"))
         # self.max_sf()
