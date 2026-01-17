@@ -2131,6 +2131,9 @@ class Settings(object):
                                 }
     def settingsfile(self,setting):
         fileattr=self.settings[setting]['file']
+        legacy=fileattr+'_legacy'
+        if (hasattr(self,legacy) and file.exists(getattr(self,legacy))):
+            file.move(getattr(self,legacy), getattr(self,fileattr))
         if hasattr(self,fileattr):
             return getattr(self,fileattr)
         else:
@@ -2208,12 +2211,18 @@ class Settings(object):
                                                             self.liftfilename))
         # re.sub('\.','_', str(
         basename=file.getdiredurl(self.directory,self.liftnamebase)
-        self.defaultfile=basename.with_suffix('.CheckDefaults.ini')
+        self.defaultfile_legacy=basename.with_suffix(f'.CheckDefaults.ini')
+        self.defaultfile=basename.with_suffix(f'.{program["repo"].username}'
+                                                f'.{program["hostname"]}'
+                                                '.CheckDefaults.ini')
         self.toneframesfile=basename.with_suffix(".ToneFrames.dat")
         self.statusfile=basename.with_suffix(".VerificationStatus.dat")
         self.profiledatafile=basename.with_suffix(".ProfileData.dat")
         self.adhocgroupsfile=basename.with_suffix(".AdHocGroups.dat")
-        self.soundsettingsfile=basename.with_suffix(".SoundSettings.ini")
+        self.soundsettingsfile_legacy=basename.with_suffix(".SoundSettings.ini")
+        self.soundsettingsfile=basename.with_suffix(f'.{program["repo"].username}'
+                                                    f'.{program["hostname"]}'
+                                                    ".SoundSettings.ini")
         self.alphabetsettingsfile=basename.with_suffix(".Alphabet.ini")
         self.settingsbyfile() #This just sets self.settings
         for setting in self.settings:
@@ -2224,7 +2233,7 @@ class Settings(object):
                 if file.exists(legacy):
                     log.debug(_("But legacy file {legacy} does; converting!").format(legacy=legacy))
                     self.loadandconvertlegacysettingsfile(setting=setting)
-            if str(savefile).endswith('.dat') and file.exists(savefile):
+            if file.exists(savefile): #Keep around .ini and .dat
                 for r in self.repo:
                     self.repo[r].add(savefile)
         for r in self.repo:
@@ -16569,23 +16578,24 @@ class Repository(object):
         w.lift()
     def getusernameargs(self):
         #This populates self.usernameargs, once per init.
-        re=None
-        r=self.do(self.argstogetusername)
+        self.useremail=None
+        self.username=self.do(self.argstogetusername)
         if hasattr(self,'argstogetuseremail'):
-            re=self.do(self.argstogetuseremail)
-        if r:
-            log.info(_("Using {repo} username '{name}'").format(repo=self.repotypename,name=r))
-            if re:
-                log.info(_("Using {repo} useremail '{email}'").format(repo=self.repotypename,email=re))
+            self.useremail=self.do(self.argstogetuseremail)
+        if self.username:
+            log.info(_("Using {repo} username '{name}'").format(repo=self.repotypename,
+                                                                name=self.username))
+            if self.useremail:
+                log.info(_("Using {repo} useremail '{email}'").format(repo=self.repotypename,email=self.useremail))
         else:
-            r=program['name']+'-'+program['hostname']
+            self.username=program['name']+'-'+program['hostname']
             log.info(_("No {repo} username found; using '{name}'"
-                    "").format(repo=self.repotypename,name=r))
-        if not re:
-            re=program['name']+'@'+program['hostname']
+                    "").format(repo=self.repotypename,name=self.username))
+        if not self.useremail:
+            self.useremail=program['name']+'@'+program['hostname']
             log.info(_("No {repo} useremail found; using '{email}'"
-            "").format(repo=self.repotypename,email=re))
-        self.usernameargs=self.argstoputuserids(r,re)
+            "").format(repo=self.repotypename,email=self.useremail))
+        self.usernameargs=self.argstoputuserids(self.username,self.useremail)
     def addUSBremote(self):
         # This should be a directory (or parent) with existing repo
         self.addremote(self.clonetobaredirname())
@@ -16793,7 +16803,7 @@ class Git(Repository):
                 '*.WeSayUserConfig',
                 '*.ChorusRescuedFile',
                 '*.git',
-                '*.ini',
+                # '*.ini',
                 # '*lift.*',
                 '*.lift*txt',
                 ]
