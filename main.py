@@ -10566,7 +10566,8 @@ class Sort(object):
                 title.append(_("for ‘{check}’ (NOT {checkname})").format(check=check.replace('=','≠'), 
                                                             checkname=program['params'].cvcheckname()))
             else:
-                oktext=_('These all have the same {checkname}').format(checkname=checkname)
+                oktext=_('These all have the same {checkname} ({check})'
+                            ).format(checkname=checkname,check=check)
                 instructions=_("Read this list aloud. Click on any with a "
                             "different {checkname} sound.").format(checkname=checkname)
                 title.append(_("for ‘{check}’ ({checkname})").format(check=check, checkname=program['params'].cvcheckname()))
@@ -13869,7 +13870,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         else:
             name=program['params'].cvcheckname(self.check)
             firstOK=_("This word has {name}").format(name=name)
-        newgroup=_("Other")
+        newgroup=_("Other {check}").format(check=self.check)
         skiptext=_("Skip this item")
         if '=' in self.check and not self.macrosort:
             skiptext+=f" ({self.check.replace('=','≠')})"
@@ -14291,6 +14292,7 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         kwargs['row']=0
         kwargs['gridwait']=True
         kwargs['var']=self.var()
+        kwargs['playable']=True
         log.info(_("Ready to build SortGroupButtonFrame with {kwargs}").format(kwargs=kwargs))
         self.items.append(SortGroupButtonFrame(self, self.task, **kwargs))
         log.info(_("Built SGBF for {item} ({items})").format(item=item, items=self.items))
@@ -15864,28 +15866,28 @@ class CheckParameters(object):
             'V':{
                 1:[('V1', _("First Vowel"))],
                 2:[
-                    ('V1=V2', _("Same First Two Vowels")),
+                    ('V1=V2', _("First Two Same Vowels")),
                     ('V1xV2', _("Correspondence of First Two Vowels")),
                     ('V2', _("Second Vowel"))
                     ],
                 3:[
-                    ('V1=V2=V3', _("Same First Three Vowels")),
+                    ('V1=V2=V3', _("First Three Same Vowels")),
                     ('V3', _("Third Vowel")),
-                    ('V2=V3', _("Same Second and Third Vowels")),
+                    ('V2=V3', _("Second and Third Same Vowels")),
                     ('V2xV3', _("Correspondence of Second and Third Vowels"))
                     ],
                 4:[
-                    ('V1=V2=V3=V4', _("Same First Four Vowels")),
-                    ('V3=V4', _("Same Third and Fourth Vowels")),
+                    ('V1=V2=V3=V4', _("First Four Same Vowels")),
+                    ('V3=V4', _("Third and Fourth Same Vowels")),
                     ('V3xV4', _("Correspondence of Third and Fourth Vowels")),
                     ('V4', _("Fourth Vowel"))
                     ],
                 5:[
-                    ('V1=V2=V3=V4=V5', _("Same First Five Vowels")),
+                    ('V1=V2=V3=V4=V5', _("First Five Same Vowels")),
                     ('V5', _("Fifth Vowel"))
                     ],
                 6:[
-                    ('V1=V2=V3=V4=V5=V6', _("Same First Six Vowels")),
+                    ('V1=V2=V3=V4=V5=V6', _("First Six Same Vowels")),
                     ('V6', _("Sixth Vowel"))
                     ]
                 },
@@ -15893,26 +15895,26 @@ class CheckParameters(object):
                 1:[('C1', _("First/only Consonant"))],
                 2:[
                     ('C2', _("Second Consonant")),
-                    ('C1=C2',_("Same First/only Two Consonants")),
-                    ('C1xC2', _("Correspondence of First/only Two Consonants"))
+                    ('C1=C2',_("First Two Same Consonants")),
+                    ('C1xC2', _("Correspondence of First Two Consonants"))
                     ],
                 3:[
-                    ('C2=C3',_("Same Second Two Consonants")),
-                    ('C2xC3', _("Correspondence of Second Two Consonants")),
+                    ('C2=C3',_("Second and Third Same Consonants")),
+                    ('C2xC3', _("Correspondence of Second and Third Consonants")),
                     ('C3', _("Third Consonant")),
-                    ('C1=C2=C3',_("Same First Three Consonants"))
+                    ('C1=C2=C3',_("First Three Same Consonants"))
                     ],
                 4:[
                     ('C4', _("Fourth Consonant")),
-                    ('C1=C2=C3=C4',_("Same First Four Consonants"))
+                    ('C1=C2=C3=C4',_("First Four Same Consonants"))
                     ],
                 5:[
                     ('C5', _("Fifth Consonant")),
-                    ('C1=C2=C3=C4=C5',_("Same First Five Consonants"))
+                    ('C1=C2=C3=C4=C5',_("First Five Same Consonants"))
                     ],
                 6:[
                     ('C6', _("Sixth Consonant")),
-                    ('C1=C2=C3=C4=C5=C6',_("Same First Six Consonants"))
+                    ('C1=C2=C3=C4=C5=C6',_("First Six Same Consonants"))
                     ]
                 },
             'CV':{

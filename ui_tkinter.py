@@ -16,11 +16,6 @@ import tkinter.dnd
 import file #for image pathnames
 from random import randint #for theme selection
 import datetime
-try: #translation
-    _
-except NameError:
-    def _(x):
-        return x
 try: #PIL
     import PIL.ImageFont
     import PIL.ImageTk
@@ -2860,6 +2855,11 @@ def testapp(program):
                 print(m)
     r.mainloop()
 if __name__ == '__main__':
+    try: #translation
+        _
+    except NameError:
+        def _(x):
+            return x
     program={'name':'tkinter UI module',
             'url':'https://github.com/kent-rasmussen/azt',
             'Email':'kent_rasmussen@sil.org',

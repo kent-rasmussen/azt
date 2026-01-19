@@ -3245,8 +3245,8 @@ msgid "Or a problem with your database."
 msgstr "Ou un problème avec votre base de données."
 
 #: /home/kentr/bin/raspy/azt/main.py:13775
-msgid "Other"
-msgstr "Autres"
+msgid "Other {check}"
+msgstr "Autre {check}"
 
 #: /home/kentr/bin/raspy/azt/main.py:12836
 msgid "Other Groups:"
@@ -3880,49 +3880,49 @@ msgid "Same"
 msgstr "Même chose"
 
 #: /home/kentr/bin/raspy/azt/main.py:15812
-msgid "Same First Five Consonants"
-msgstr "les même cinq premiers Consonants"
+msgid "First Five Same Consonants"
+msgstr "les cinq premiers et même Consonants"
 
 #: /home/kentr/bin/raspy/azt/main.py:15785
-msgid "Same First Five Vowels"
-msgstr "les même cinq premiers vowels"
+msgid "First Five Same Vowels"
+msgstr "les cinq premiers et même Vowels"
 
 #: /home/kentr/bin/raspy/azt/main.py:15808
-msgid "Same First Four Consonants"
-msgstr "les même les quatre premiers Consonants"
+msgid "First Four Same Consonants"
+msgstr "les quatre premiers et même Consonants"
 
 #: /home/kentr/bin/raspy/azt/main.py:15779
-msgid "Same First Four Vowels"
-msgstr "les même les quatre premiers vowels"
+msgid "First Four Same Vowels"
+msgstr "les quatre premiers et même Vowels"
 
 #: /home/kentr/bin/raspy/azt/main.py:15816
-msgid "Same First Six Consonants"
-msgstr "les même les six premiers Consonants"
+msgid "First Six Same Consonants"
+msgstr "les six premiers et même Consonants"
 
 #: /home/kentr/bin/raspy/azt/main.py:15789
-msgid "Same First Six Vowels"
-msgstr "les même les six premiers vowels"
+msgid "First Six Same Vowels"
+msgstr "les six premiers et même Vowels"
 
 #: /home/kentr/bin/raspy/azt/main.py:15804
-msgid "Same First Three Consonants"
-msgstr "les même les premières Trois Consonnes"
+msgid "First Three Same Consonants"
+msgstr "les trois premiers et même Consonants"
 
 #: /home/kentr/bin/raspy/azt/main.py:15773
-msgid "Same First Three Vowels"
-msgstr "les même les trois premiers vowels"
+msgid "First Three Same Vowels"
+msgstr "les trois premiers et même Vowels"
 
 #: /home/kentr/bin/raspy/azt/main.py:15768
-msgid "Same First Two Vowels"
-msgstr "les même les deux premiers vowels"
+msgid "First Two Same Vowels"
+msgstr "les deux premiers et même Vowels"
 
 #: /home/kentr/bin/raspy/azt/main.py:15841
 #: /home/kentr/bin/raspy/azt/main.py:15867
-msgid "Same First/only Five CVs"
-msgstr "les même premier/seul cinq CV"
+msgid "First Five CVs"
+msgstr "les cinq premiers CVs"
 
 #: /home/kentr/bin/raspy/azt/main.py:15837
 #: /home/kentr/bin/raspy/azt/main.py:15863
-msgid "Same First/only Four CVs"
+msgid "First Four CVs"
 msgstr "les même premier/seul quatre CV"
 
 #: /home/kentr/bin/raspy/azt/main.py:15845
@@ -3939,8 +3939,8 @@ msgid "Same First/only Two CVs"
 msgstr "les même premier/seul Deux CVs"
 
 #: /home/kentr/bin/raspy/azt/main.py:15797
-msgid "Same First/only Two Consonants"
-msgstr "les même premier/seul Deux Consonnes"
+msgid "Same First Two Same Consonants"
+msgstr "les même premier Deux et même Consonnes"
 
 #: /home/kentr/bin/raspy/azt/main.py:15801
 msgid "Same Second Two Consonants"
@@ -4845,8 +4845,8 @@ msgstr "Tous ces éléments n'ont PAS {checkname}"
 
 #: /home/kentr/bin/raspy/azt/main.py:10473
 #, python-brace-format
-msgid "These all have the same {checkname}"
-msgstr "Tous ces éléments ont le même {checkname}"
+msgid "These all have the same {checkname} ({check})"
+msgstr "Tous ces éléments ont tous le même {checkname} ({check})"
 
 #: /home/kentr/bin/raspy/azt/main.py:10447
 msgid "These all should use the same letter"
