@@ -6810,7 +6810,7 @@ class Segments(Senses):
             if not scvalue:
                 scvalue=True
                 program['settings'].setupCVrxs() #costly; only when needed!
-        formvalue=sense.textvaluebyftypelang(self.ftype,self.analang)
+        form_ori=formvalue=sense.textvaluebyftypelang(self.ftype,self.analang)
         if not formvalue:
             log.info(_("updateformtoannotations didn't return a form value for "
                     "{id}, {check}, {ftype}, {ana}").format(id=sense.id, check=check, ftype=self.ftype, ana=self.analang))
@@ -6843,7 +6843,7 @@ class Segments(Senses):
                     
         else: #update to all annotations
             for check,value in annodict.items():
-                if not value or value.isdigit() or value in ['NA']:
+                if check.isdigit() or not value or value.isdigit() or value in ['NA']:
                     continue #don't make changes for NA checks
                 elif self.check_with_conflicting_value(annodict,check):
                     if not self.updateconflictwarned:
@@ -6858,6 +6858,10 @@ class Segments(Senses):
                     # log.info(f"updateformtoannotations {check}={value},{formvalue}")
         if not error:
             sense.textvaluebyftypelang(self.ftype,self.analang,formvalue)
+            if form_ori != formvalue:
+                key=max([int(i) for i in annodict.keys() if i.isdigit()]+[-1])+1
+                sense.annotationvaluebyftypelang(self.ftype,self.analang,
+                                                    str(key),form_ori)
         if write:
             self.maybewrite()
     def setitemgroup(self,item,check,group,**kwargs):
