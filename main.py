@@ -16118,6 +16118,8 @@ class Repository(object):
                                                             name=program['name']))
             return True
     def commit_would_conflict(self):
+        pass
+        """git fetch origin
         git merge --no-commit <branch>
     def commit(self,file=None):
         #I may need to rearrange these args:
@@ -16143,7 +16145,7 @@ class Repository(object):
         return True
     def checkout_new_branch(self,branchname=None):
         if not branchname:
-            branchname=f"to_merge_from_{self.username}"
+            branchname=f"work_from_{self.username}"
         args=['checkout', '-b', branchname]
         r=self.do([i for i in args if i is not None])
         return r
