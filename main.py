@@ -16957,7 +16957,6 @@ class GitReadOnly(Git):
             for remote in remotes:
                 r[remote+'/'+self.branch]=method(self,remotes=[remote])
         return r
-        """I'm going to need to stash and stash apply here, I think"""
         remotes=self.findpresentremotes() #do once
         if not remotes:
             return
