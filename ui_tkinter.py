@@ -2263,7 +2263,7 @@ class ToolTip(object):
     """
     def post_tk_init(self):
         super().post_tk_init()
-    def __init__(self, widget, text=_("change this")):
+    def __init__(self, widget, text="change this"):
         self.waittime = 500     #miliseconds before showing tip
         self.showtime = 2000    #miliseconds to show tip
         self.wraplength = 180   #pixels
