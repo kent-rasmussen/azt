@@ -10496,6 +10496,7 @@ class Sort(object):
                 return
         done.remove(group)
         program['status'].verified(done)
+        self.reverifying=True
         self.runcheck()
     def verifyselected(self, macrosort=False):
         selected=self.buttonframe.get_selected()
@@ -10522,7 +10523,8 @@ class Sort(object):
                 program['status'].last('verify',update=True)
                 self.updatestatus(verified=verified,writestatus=True)
             self.maybewrite()
-        log.info("Running verify! macrosort={macrosort}".format(macrosort=macrosort))
+        log.info(f"Running verify! {macrosort=} {getattr(self,'reverifying',False)=} "
+                f"{type(getattr(self,'reverifying',False))=}")
         """verify group of items sorted into a glyph."""
         """Show items each in a row, users mark those that are different,
         and we remove that group designation from the item (so it
@@ -10585,10 +10587,6 @@ class Sort(object):
                 log.error(_("Not verifying tone examples which don't exist."))
                 return 
         # The title for this page changes by group, below.
-        if (n:=len(items)) == 1:
-            log.info(_("The {item_name} ‘{group}’ only has {n} example; verified.").format(item_name=item_name, group=group, n=n))
-            updatestatus(True) #on coming *in* with one
-            return 1
         program['status'].build()
         last=False
         if not items: #then remove the group
@@ -10607,11 +10605,12 @@ class Sort(object):
             log.info("Groups to verify: {groups}"
                         "".format(groups=self.groups(toverify=True)))
             return
-        elif len(items) == 1:
+        elif len(items) == 1 and not getattr(self,'reverifying',False):
             log.info(_("Group ‘{group}’ only has {count} example; marking verified and "
                     "continuing.").format(group=group,count=len(items)))
             updatestatus(True)
             return 1
+        self.reverifying=False
         self.getrunwindow(msg=_("preparing to verify the {item_name} ‘{group}’").format(item_name=item_name, group=group))
         titles=ui.Frame(self.runwindow.frame,
                         column=1, row=0, columnspan=1, sticky='w')
