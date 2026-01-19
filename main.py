@@ -6376,7 +6376,6 @@ class Alphabet():
                 self.distinguish(t)
             else:
                 log.info(_("Not distinguishing {glyph1} and {glyph2}").format(glyph1=gm[t[0]], glyph2=gm[t[1]]))
-                self.distinguish(t)
     def add_glyph_member(self,item,glyph):
         """This is sort into"""
         self.mark_glyph_not_done(glyph)
