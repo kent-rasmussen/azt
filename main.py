@@ -16121,6 +16121,7 @@ class Repository(object):
         pass
         """git fetch origin
         git merge --no-commit <branch>
+        git merge --abort"""
     def commit(self,file=None):
         #I may need to rearrange these args:
         if self.bare or self.code == 'hg': #don't commit here, at least for now
@@ -17008,7 +17009,7 @@ class GitReadOnly(Git):
         super(GitReadOnly, self).__init__(url)
 class ResultWindow(ui.Window):
     def __init__(self, parent, msg=None, title=None):
-        """Can't test for widget/window if the attribute hasn't been assigned,"
+        """Can't test for widget/window if the attribute hasn't been assigned,
         but the attribute is still there after window has been killed, so we
         need to test for both."""
         if title is None:
