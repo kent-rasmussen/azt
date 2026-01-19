@@ -22,8 +22,9 @@ import platform
 program['hostname']=platform.uname().node
 import py_modules #This tries importing, and installs on failure
 import file
-if False and file.getfile(__file__).parent.parent.stem == 'raspy': # if program['hostname'] == 'karlap':
+if file.getfile(__file__).parent.parent.stem == 'raspy': # if program['hostname'] == 'karlap':
     program['testing']=True #eliminates Error screens and zipped logs
+    program['production']=True #True for making screenshots (default theme)
     me=True
     loglevel='INFO'
     # program['testlift']='eng' #portion of filename
