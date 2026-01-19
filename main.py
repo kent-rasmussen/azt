@@ -1822,6 +1822,7 @@ class StatusFrame(ui.Frame):
         self.profiles=['colheader']+profiles+['next']
         ungroups=0
         unsorted_icon='[X]'
+        dont_show=['NA']
         if program['settings'].showdetails:
             verified=_("verified")
             unsorted=_("unsorted")
@@ -1902,8 +1903,8 @@ class StatusFrame(ui.Frame):
                         if len(node['done']) > len(node['groups']):
                             ungroups+=1
                         #At this point, these should be there
-                        done=node['done']
-                        total=node['groups']
+                        done=[i for i in node['done'] if i not in dont_show]
+                        total=[i for i in node['groups'] if i not in dont_show]
                         tosort=node['tosort']
                         totalwverified=[]
                         nunverified=len(set(total)-set(done))
