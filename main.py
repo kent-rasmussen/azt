@@ -16117,6 +16117,8 @@ class Repository(object):
             log.info(_("Me not committing when asked to by {name}").format(
                                                             name=program['name']))
             return True
+    def commit_would_conflict(self):
+        git merge --no-commit <branch>
     def commit(self,file=None):
         #I may need to rearrange these args:
         if self.bare or self.code == 'hg': #don't commit here, at least for now
