@@ -16136,6 +16136,12 @@ class Repository(object):
             return r
         # if theres no diff, or I don't want to commit, still share commits:
         return True
+    def checkout_new_branch(self,branchname=None):
+        if not branchname:
+            branchname=f"to_merge_from_{self.username}"
+        args=['checkout', '-b', branchname]
+        r=self.do([i for i in args if i is not None])
+        return r
     def diff(self,cached=False):
         if not self.bare:
             args=['diff']
