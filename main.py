@@ -13876,7 +13876,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         else:
             name=program['params'].cvcheckname(self.check)
             firstOK=_("This word has {name}").format(name=name)
-        newgroup=_("Other {check}").format(check=self.check)
+        newgroup=_("Other {check}").format(check=self.check if not self.macrosort else _("Letter"))
         skiptext=_("Skip this item")
         if '=' in self.check and not self.macrosort:
             skiptext+=f" ({self.check.replace('=','≠')})"
