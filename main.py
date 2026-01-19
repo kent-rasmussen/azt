@@ -1194,7 +1194,8 @@ class Menus(ui.Menu):
         if program['git']:
             # clonetoUSB should be called if updateazt doesn't have a source (incl internet)
             helpitems+=[(_("Update {azt}").format(azt=program['name']), updateazt)]
-            helpitems+=[(_("Share data to USB"), program['settings'].repo['git'].share)]
+            if 'git' in program['settings'].repo:
+                helpitems+=[(_("Share data to USB"), program['settings'].repo['git'].share)]
             if program['repo'].branch == 'main':
                 helpitems+=[(_("Try {azt} test version").format(azt=program['name']),
                                 self.parent.trytestazt)]
@@ -4041,7 +4042,11 @@ class TaskDressing(HasMenus,ui.Window):
         if self.exitFlag.istrue() or not self.winfo_exists():
             return
         self.context.menuinit() #This is a ContextMenu() method
-        self.context.menuitem(_("Share data to USB"), 
+        if me:
+            self.context.menuitem(_("Change to another Database (Restart)"),
+                            program['taskchooser'].changedatabase)
+        if 'git' in program['settings'].repo:
+            self.context.menuitem(_("Share data to USB"), 
                                 program['settings'].repo['git'].share)
         if not hasattr(self,'menu') or not self.menu:
             self.context.menuitem(_("Show Menus"),self._setmenus)
