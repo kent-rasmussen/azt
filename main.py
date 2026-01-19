@@ -16128,6 +16128,9 @@ class Repository(object):
         for d in [diff,diffcached]:
             if d:
                 difftext+=d
+        if '=======' in difftext:
+            ErrorNotice(f"Merge needs to happen! {difftext}",wait=True)
+            return
         if difftext and (not me or self.commitconfirm(difftext)):
             r=self.do([i for i in args if i is not None])
             return r
