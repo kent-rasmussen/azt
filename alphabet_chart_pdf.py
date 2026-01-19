@@ -90,7 +90,9 @@ def create_chart(filename, items, title, num_columns=5, pagesize='A4',
         return
 
     # Try to register the requested font
-    register_fonts()
+    if not register_fonts():
+        log.error("Problem loading fonts (is Charis installed?)")
+        raise
     if pagesize.lower() in ['a4','european','default']:
         _pagesize=A4
     elif pagesize.lower() in ['letter','us']:

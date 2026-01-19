@@ -167,7 +167,9 @@ def create_comparison_chart(filename, *data,
     """
     log.info(f"Creating comparison chart called with {data=} {filename=}")
     font_size = 12
-    register_fonts()
+    if not register_fonts():
+        log.error("Problem loading fonts (is Charis installed?)")
+        raise
     
     if pagesize.lower() == 'a4':
         _pagesize = landscape(A4)
