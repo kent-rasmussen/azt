@@ -757,48 +757,50 @@ if __name__ == '__main__':
                 profilelegit=profilelegit,
                 profilesegments=profilesegments
     )
-    log.info(d.distinguish)
-    log.info(d.sdict)
-    log.info(d.glyphsforvariable('C+D'))
+    log.info(f"{d.distinguish=}")
+    log.info(f"{d.sdict=}")
+    log.info(f"{d.glyphsforvariable('C+D')=}")
     # exit()
-    log.info(d.interpret)
+    log.info(f"{d.interpret=}")
     log.info("distinguished Final (True): {}".format(d.distinguished('C',True,final=True)))
     log.info("distinguished Final (False): {}".format(d.distinguished('C',False,final=True)))
     log.info("distinguished (True): {}".format(d.distinguished('C',True,final=False)))
     log.info("distinguished (False): {}".format(d.distinguished('C',False,final=False)))
-    # d.interpreted('C',final="True")
-    # d.interpreted('V',final="True")
-    # d.interpreted('C',final="False")
-    # d.interpreted('V',final="False")
-    # exit()
-    for CVs in ['C'+str(i) for i in range(1,6)]:
-    # [
-    # 'CVCVC','CVCV','CVCVS','CVCCVC','CVCCCVC','CACV','CACCVC','CVC'
-    # # 'CaNCVC',
-    # # 'CaCV','CaCVʔ',
-    # # 'CaCVS','CaGVC'
-    # ]:
-        # print(d.rxuncompiled[CVs])
-        print('\n'+CVs,'\t(not)')
-        # r=d.fromCV(CVs, word=True, compile=True, caseinsensitive=True)
-        r=d.rx[CVs]
-        for w in [
-            # 'bambat','wambut','wambat',
-            # 'bablat','wabwut','wablwat','wabwlat',
-            # 'babat','wawut','walat',
-            'no', 'non', 'bon', 'bono', 'bonopo', 'bogon', 'bogono',
-            'nonomon', 'pokemon', 'mblano', 'mbwana', 'mpsyaka'
-            # "pa'at",'wapput','nappall',
-            # 'bamban','wambun','wama',
-            # 'bambay','wambuy','waya',
-            # 'bambal','wambul','wala','wal',
-            # 'wat','tat','taw','lat'
-                ]:
-            # print(type(r),r)
-            if bool(r.match(w)):
-                print(w,'>',d.update(w,CVs,'B'))
-            else:
-                print('\t'+w)#,r.match(w))
-    # s='ááààééèèííììóóòòúúùù'
-    # s2=makeprecomposed(s)
-    # print(s,s2)
+    log.info(f"{d.fromCV('CVCV',compile=False)}")
+    log.info(f"{d.rxuncompiled['C2']}")
+    log.info(f"{d.rxuncompiled['V2']}")
+    f='phyeimaka'
+    for i in range(4):
+        f=d.update(f,'V2','ɨ')
+        log.info(f'V2: {f}')# for CVs in ['C'+str(i) for i in range(1,6)]:
+    for i in range(6):
+        f=d.update(f,'C2','bh')
+        log.info(f'C2: {f}')
+    # for CVs in ['C'+str(i) for i in range(1,6)]:
+    # # [
+    # # 'CVCVC','CVCV','CVCVS','CVCCVC','CVCCCVC','CACV','CACCVC','CVC'
+    # # # 'CaNCVC',
+    # # # 'CaCV','CaCVʔ',
+    # # # 'CaCVS','CaGVC'
+    # # ]:
+    #     # print(d.rxuncompiled[CVs])
+    #     print('\n'+CVs,'\t(not)')
+    #     # r=d.fromCV(CVs, word=True, compile=True, caseinsensitive=True)
+    #     r=d.rx[CVs]
+    #     for w in [
+    #         # 'bambat','wambut','wambat',
+    #         # 'bablat','wabwut','wablwat','wabwlat',
+    #         # 'babat','wawut','walat',
+    #         'no', 'non', 'bon', 'bono', 'bonopo', 'bogon', 'bogono',
+    #         'nonomon', 'pokemon', 'mblano', 'mbwana', 'mpsyaka'
+    #         # "pa'at",'wapput','nappall',
+    #         # 'bamban','wambun','wama',
+    #         # 'bambay','wambuy','waya',
+    #         # 'bambal','wambul','wala','wal',
+    #         # 'wat','tat','taw','lat'
+    #             ]:
+    #         # print(type(r),r)
+    #         if bool(r.match(w)):
+    #             print(w,'>',d.update(w,CVs,'B'))
+    #         else:
+    #             print('\t'+w)#,r.match(w))
