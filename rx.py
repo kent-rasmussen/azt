@@ -324,7 +324,8 @@ class RegexDict(object):
         # Convert those value lists to a string of alternations, for each key
         #This needs to multiply as a unit, while getting each subpart separately:
         nocap={'nocapture':True}
-        oneS=group(group(sout, **nocap) + '*?' + group(sin, **nocap), **nocap)
+        # one or more of the sout possiblities, be greedy
+        oneS=group(group(sout, **nocap) + '*' + group(sin, **nocap), **nocap)
         # log.info(f"oneS: {oneS}")
         #We need to keep each alternation set a unit, and keep all but last in \1
         if n-1:
@@ -332,7 +333,8 @@ class RegexDict(object):
         else:
             priors=''
         # only this one (last) group should ever capture:
-        nS=group(priors + group(sout, **nocap) + '*?') + group(sin)
+        # one or more of the sout possiblities, be greedy
+        nS=group(priors + group(sout, **nocap) + '*') + group(sin)
         if nxisfinal:
             nS=anchor(nS,anchorend=True)
         else: #anchor the begining, not the end:
@@ -369,11 +371,8 @@ class RegexDict(object):
         # log.info("updated {} > {}".format(tori,t))
         for match in matches:
             if len(match)>1:
-                txt=_("NOTICE: we just matched (to remove) a set of "
-                f"symbols representing one sound ({match}). Until you are done "
-                "with it, we will leave it there, so both forms will be "
-                "found. Once you are done with it, remove it from the "
-                "polygraph settings.")
+                txt=_("NOTICE: ‘{match}’ was removed from this form. Remove it from the "
+                "polygraph settings once it is gone altogether.")
                 try:
                     log.info(txt)
                 except NameError:
@@ -446,7 +445,7 @@ class RegexDict(object):
                                     self.undistinguished(i,**kwargs),
                                     **{**kwargs, 'compile': False,
                                                 'nocapture': True})
-                                if r in ['()','(?:)']:
+                                if r in ['()','(?:)']: # empty, capturing or not
                                     # log.info(f"r is {r}, so returning empty")
                                     return r #don't add to nothing
                                 # log.info(f"r is {r} {type(r)}; continuing")
@@ -501,7 +500,7 @@ class RegexDict(object):
         self.rx[s+str(n)]=make(nS, compile=True)
     def setrx(self, c, crx, **kwargs):
         polyn=kwargs.get('polyn') #put this in the correct place
-        if not crx or crx in ['()', '(?:)']:
+        if not crx or crx in ['()', '(?:)']: # empty, capturing or not
             return #don't make or store empty regexs; they match everywhere
         # log.info("Setting {} with {} value {}".format(c,polyn,crx))
         if len(c) == 1:
