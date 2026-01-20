@@ -6842,7 +6842,7 @@ class Segments(Senses):
                     maybe_add_polygraph(value)
         else: #update to all annotations
             for check,value in annodict.items():
-                if check.isdigit() or not value or value.isdigit() or value in ['NA']:
+                if value in ['NA',None] or check.isdigit() or value.isdigit() :
                     continue #don't make changes for NA checks
                 elif self.check_with_conflicting_value(annodict,check):
                     if not self.updateconflictwarned:
@@ -6852,7 +6852,7 @@ class Segments(Senses):
                         log.error(conflict_text)
                     error=True
                 else:
-                    # log.info(f"updateformtoannotations {check}={value},{formvalue}")
+                    log.info(f"updateformtoannotations {check}={value},{formvalue}")
                     formvalue=self.rxdict.update(formvalue,check,value)
                     # log.info(f"updateformtoannotations {check}={value},{formvalue}")
         if not error:
