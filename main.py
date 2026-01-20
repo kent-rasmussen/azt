@@ -14303,7 +14303,7 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         kwargs['row']=0
         kwargs['gridwait']=True
         kwargs['var']=self.var()
-        kwargs['playable']=True
+        # kwargs['playable']=True #This needs to apply with Sound...
         log.info(_("Ready to build SortGroupButtonFrame with {kwargs}").format(kwargs=kwargs))
         self.items.append(SortGroupButtonFrame(self, self.task, **kwargs))
         log.info(_("Built SGBF for {item} ({items})").format(item=item, items=self.items))
