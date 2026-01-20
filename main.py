@@ -6840,7 +6840,6 @@ class Segments(Senses):
                     program['settings'].addtoformstosearch(sense,f,formvalue)
                 if len(value)>1:
                     maybe_add_polygraph(value)
-                    
         else: #update to all annotations
             for check,value in annodict.items():
                 if check.isdigit() or not value or value.isdigit() or value in ['NA']:
@@ -8105,6 +8104,9 @@ class WordCollection(Segments):
     def __init__(self, parent):
         Segments.__init__(self,parent)
         self.dodone=False
+class Transcription(object):
+    def __init__(self):
+        pass
 class WordCollectionwRecordings(WordCollection,Record):
     def getinstructions(self):
         return _("Record a word in your language that goes with these "
@@ -16758,6 +16760,7 @@ class Repository(object):
             self.exewarning()
             return #before getting a file list!
         self.populate() #get files, etc.
+        # self.pull() # in case there's a source available
 class Mercurial(Repository):
     def ignorelist(self):
         return ['*.pdf','*.xcf',
