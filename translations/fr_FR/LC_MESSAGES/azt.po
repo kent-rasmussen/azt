@@ -299,7 +299,7 @@ msgstr "<word>"
 #: /home/kentr/bin/raspy/azt/main.py:9103
 #, python-brace-format
 msgid "<{lang} word>"
-msgstr "< Mots{lang}>"
+msgstr "< Mots {lang} >"
 
 #: /home/kentr/bin/raspy/azt/main.py:12808
 msgid "A label that describes the surface tone form in this context would be best, like ‘[˥˥˥ ˨˨˨]’"
@@ -5165,7 +5165,7 @@ msgstr "Cela ajoutera des entrées de la Comparative African Wordlist (CAWL) qui
 
 #: /home/kentr/bin/raspy/azt/main.py:13771
 msgid "This word fits in this frame"
-msgstr "Ce mot s'inscrit dans ce cadre"
+msgstr "Ce mot se prononce dans ce cadre"
 
 #: /home/kentr/bin/raspy/azt/main.py:13774
 #, python-brace-format
@@ -5641,7 +5641,7 @@ msgstr "Comment voulez-vous appeler ce groupe pour trier les mots {ps}?"
 #: /home/kentr/bin/raspy/azt/main.py:9294
 #, python-brace-format
 msgid "What do you want to call this new {ps} tone frame for {lang}?"
-msgstr "Comment voulez-vous appeler cette nouvelle image de tonalité {ps} pour {lang}?"
+msgstr "Comment voulez-vous appeler cette nouvelle cadre de tonalité {ps} pour {lang}?"
 
 #: /home/kentr/bin/raspy/azt/main.py:792
 msgid "What do you want to work on?"
@@ -6985,7 +6985,7 @@ msgstr "travail sur {glyph} de {digits}"
 #: /home/kentr/bin/raspy/azt/main.py:1441
 #, python-brace-format
 msgid "working on ‘{check}’ tone frame"
-msgstr "travail sur le cadre de tonalité ‘{check}’"
+msgstr "travailer sur le cadre de tonalité ‘{check}’"
 
 #: /home/kentr/bin/raspy/azt/main.py:2752
 #, python-brace-format
