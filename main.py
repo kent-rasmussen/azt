@@ -6494,7 +6494,7 @@ class Alphabet():
         2. We don't want to kick out groups that are already there.
         Let the user decide to do either, if necessary.        """
         glyph=self.parse_verificationcode(item)['group']
-        if item in self.conflicts[glyph]:
+        if glyph in self.conflicts and item in self.conflicts[glyph]:
             log.error("Not presorting, since it looks like we kicked this one out already.")
             return
         log.info(_("presort_item moving {item} into ‘{glyph}’").format(item=item, glyph=glyph))
