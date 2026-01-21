@@ -1125,7 +1125,8 @@ class Menus(ui.Menu):
                         (_("Reverify current group ({group})").format(group=group),
                                                         self.parent.reverify),
                         (_("Join Sort Groups"), self.parent.redo_join),
-                        (_("Join Glyphs (Letters)"), self.parent.redo_joinglyphs)
+                        (_("Join Glyphs (Letters)"), self.parent.redo_joinglyphs),
+                        (_("Update Forms"), self.parent.manual_form_update)
                         ])
         for m in options:
             self.command(self.advancedmenu,
@@ -6427,9 +6428,16 @@ class Alphabet():
             for i in list(glyphs):
                 if i not in d:
                     self.mark_glyph_not_done(i,cvt)
+    def cvt_of_glyph(self,glyph):
+        """This should only be needed for glyphs that don't appear in glyphdict"""
+        return {self.cvt_of_item(m) for m in self.glyph_members()[glyph]}
     def cvt_of_item(self,x):
         check=self.parse_verificationcode(x)['check']
         return program['params'].cvt_of_check(check)
+    def glyph_of_item(self,item):
+        for glyph in self.glyph_members():
+            if item in self.glyph_members()[glyph]:
+                return glyph
     def conflict_code(self,code):
         return code.split('_')[:4]
     def verificationcode(self,**kwargs):
@@ -6472,6 +6480,10 @@ class Alphabet():
         return sorted(self._itemstomacrosort)
     def items_present_in_cvt(self,cvt):
         return [i for i in self.items_present if self.cvt_of_item(i) == cvt]
+    def item_is_tomacrosort(self,item):
+        """This is for one off checking, where a refresh is needed, as well as 
+        confirmation what we're working with the correct cvt."""
+        return item in self.renew_items_tomacrosort(self.cvt_of_item(item))
     def renew_items_tomacrosort(self,cvt): 
         self._itemsmacrosorted=set()
         self._itemstomacrosort=set()
@@ -6683,8 +6695,8 @@ class Senses(object):
         return program['status'].sensessorted()
     def tosort(self):
         return program['status'].tosort() #returns bool
-    def updatesortingstatus(self):
-        return program['settings'].updatesortingstatus()
+    def updatesortingstatus(self,**kwargs):
+        return program['settings'].updatesortingstatus(**kwargs)
     def verificationcode(self,**kwargs):
         check=kwargs.get('check',program['params'].check())
         group=kwargs.get('group',program['status'].group())
@@ -6915,8 +6927,8 @@ class Segments(Senses):
             pass
         self.maybewrite()#after iteration
     def update_annotations_to_glyphs(self):
-        for k in program['alphabet'].glyph_members():
-            self.update_annotations_by_glyph(k)
+        return [i for i in [self.update_annotations_by_glyph(k)
+                    for k in program['alphabet'].glyph_members()] if not i]
     def update_annotations_by_glyph(self,glyph):
         """Once all sorting into groups and macrogroups is done, align groups to
         macrogroups.
@@ -6978,6 +6990,7 @@ class Segments(Senses):
         except UnboundLocalError: #if u.start() never happened...
             pass
         log.info(_("update_annotations_by_glyph done with ‘{members}’ to ‘{glyph}’").format(members=gm[glyph], glyph=glyph))
+        return True
     def default_glyphs(self):
         return [i for i in 
                 program['alphabet'].glyphdict()[program['params'].cvt()]
@@ -10296,6 +10309,97 @@ class Sort(object):
         self.status.maybeboard()
         if fn:
             fn() #only on first two ifs, calls runcheck w/resetsortbutton
+    def update_to_cvt(self):
+        log.info(_("Group is on a different CVT; updating to that to sort."))
+        try:
+            self.runwindow.on_quit()
+        except:
+            pass
+        program['taskchooser'].maketask(f"Sort{program['params'].cvt()}",
+                                        sort_immediately=self.group)
+    def sort_on_group_by_item(self,item):
+        kwargs=program['alphabet'].parse_verificationcode(item)
+        log.info(_("Found a group that needs sorting ({item}); switch to sort on it.").format(item))
+        program['params'].check(kwargs.get('check'))
+        program['slices'].ps(kwargs.get('ps'))
+        program['slices'].profile(kwargs.get('profile'))
+        program['params'].ftype(kwargs.get('ftype'))
+        cvt=program['params'].cvt(kwargs.get('cvt'))
+        if cvt != self.cvt:
+            self.update_to_cvt() #this calls runcheck later
+        else:
+            self.runcheck()
+    def item_needs_sorting(self,item):
+        #Check if the item needs to sort into a glyph
+        if program['alphabet'].item_is_tomacrosort(item): #refresh and check by cvt!
+            log.info(f"{item} needs to macrosort")
+            return True
+        #Check if the glyph of the item is fully distinct
+        glyph=program['alphabet'].glyph_of_item(item)
+        if glyph in [i for j in self.to_distinguish(macrosort=True) for i in j]:
+            log.info(f"{item} needs to distinguish")
+            return True
+        #check if the item is in a ps-profile group with unsorted senses
+        kwargs=program['alphabet'].parse_verificationcode(item)
+        self.updatesortingstatus(**kwargs) #this might not be the most efficient
+        if self.itemstosort():
+            log.info(f"{kwargs['group']} needs to sort (with {kwargs=})")
+            return True
+        #check if the sort group is fully distinct in its ps-profile group 
+        group=kwargs['group']
+        if group in [i for j in self.to_distinguish(**kwargs) for i in j]:
+            log.info(f"{kwargs['group']} needs to distinguish (with {kwargs=})")
+            return True
+    def manual_form_update(self):
+        default_glyphs=[k for k in program['alphabet'].glyph_members() if k.isdigit()]
+        cvts=[program['alphabet'].cvt_of_glyph(i) for i in default_glyphs]
+        #These shouldn't die on empty groups:
+        if max([len(i) for i in cvts]+[1]) > 1:
+            ErrorNotice(_("You have at least one unnamed glyph with ambiguous status as "
+                        "Consonant or Vowel: {cvts}").format(cvts=cvts),
+                        wait=True)
+            return
+        if min([len(i) for i in cvts]+[1]) < 1:
+            ErrorNotice(_("You have at least one unnamed glyph with NO status as "
+                        "Consonant or Vowel: {cvts}").format(cvts=cvts),
+                        wait=True)
+            return
+        #Iterate across what's there, and sort on first problem. Come back and 
+        # get the others later
+        for glyph in default_glyphs:
+            for item in program['alphabet'].glyph_members()[glyph]:
+                if self.item_needs_sorting(item):
+                    ErrorNotice(_("Item {i} needs sorting (check log for details), so "
+                                "not updating forms yet. "
+                                "\nFinish sorting, then ask again.").format(i=item),
+                        wait=True)
+                    self.sort_on_group_by_item(item) #this ends on runcheck
+                    return
+        for i in default_glyphs:
+            cvt=list(program['alphabet'].cvt_of_glyph(i))[0] #should be exactly one already
+        # cvt={next(iter(i)) for i in cvts}
+        # if default_glyphs:
+            ErrorNotice(_("You have {cvts} glyphs that need names still "
+                        "({default_glyphs})!"
+                        "\nGoing to start with {i} ({cvt})"
+                            ).format(cvts=cvts,cvt=cvt,
+                                    default_glyphs=default_glyphs,
+                                    i=i),
+                            wait=True)
+            if self.cvt != cvt:
+                program['params'].cvt(cvt)
+            self.name_new_glyphs() #keep cvt the same
+            return
+        if self.update_annotations_to_glyphs(): #Iterates over all glyphs
+            ErrorNotice(_("Problem updating annotations to glyphs; try again?"),
+                        wait=True)
+            return
+        log.info(_("Glyph annotations updated OK"))
+        # The above aligns all annotations and verifications
+        # the below updates forms IF annotations agree
+        log.info("Going to update forms now")
+        self.updateformsallchecks() #whole db annotations>forms
+        log.info("Done updating forms")
     def present_sense(self,sense):
         log.info("presenting to sort {sense_id}".format(sense_id=sense.id))
         frame=self.get_frame()
@@ -10788,11 +10892,11 @@ class Sort(object):
         else:
             groups=[i for i in program['status'].verified() if i != 'NA']
         return set(itertools.combinations(groups, 2))
-    def to_distinguish(self, macrosort=False):
+    def to_distinguish(self, macrosort=False, **kwargs):
         if macrosort:
             d=program['alphabet'].distinguished_by_cvt()
         else:
-            d=program['status'].distinguished()
+            d=program['status'].distinguished(**kwargs)
         #whatever ordering was stored, remove either if there
         return self.group_pairs_to_distinguish(macrosort=macrosort
                                                 )-d-{(y,x) for x,y in d}
@@ -12334,6 +12438,8 @@ class SortV(Sort,Segments,TaskDressing):
         Segments.__init__(self,parent)
         if g:=kwargs.get("redo_glyph"):
             self.redo_joinglyphs(g)
+        elif g:=kwargs.get("sort_immediately"):
+            self.runcheck()
 class SortC(Sort,Segments,TaskDressing):
     def taskicon(self):
         return 'iconC'#program['theme'].photo['iconC']
@@ -12357,6 +12463,8 @@ class SortC(Sort,Segments,TaskDressing):
         Segments.__init__(self,parent)
         if g:=kwargs.get("redo_glyph"):
             self.redo_joinglyphs(g)
+        elif g:=kwargs.get("sort_immediately"):
+            self.runcheck()
 class SortT(Sort,Tone,TaskDressing):
     def taskicon(self):
         return 'iconT'#program['theme'].photo['iconT']
