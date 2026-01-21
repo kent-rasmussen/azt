@@ -6596,6 +6596,7 @@ class Alphabet():
         program['settings'].settingsobjects() #should do this more; can be redone!
         self.renew_items_tomacrosort()
         self.save_settings()
+        self.conflicts={} #keep track of what has been kicked out of a group before
 class AlphabetChart(alphabet_chart.OrderAlphabet):
     my_settings=[
                     'exids',
