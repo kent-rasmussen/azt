@@ -9304,8 +9304,8 @@ class ToneFrameDrafter(ui.Window):
         return [(i,j) for (i,j) in opts if i]
     def getfieldtype(self,event=None):
         w=ui.Window(self,
-                        row=1,column=0,
-                        sticky='ew',
+                        # row=1,column=0,
+                        # sticky='ew',
                         padx=25,pady=25)
         w.title(_("Select which field to frame"))
         ui.ButtonFrame(w.frame,optionlist=self.fieldtypes(),
@@ -9448,8 +9448,8 @@ class ToneFrameDrafter(ui.Window):
         log.info("context: {}; lang: {}".format(context,lang))
         strings=self.promptstrings(lang,context)
         self.w=ui.Window(self,
-                        row=1,column=0,
-                        sticky='ew',
+                        # row=1,column=0,
+                        # sticky='ew',
                         padx=25,pady=25)
         if lang and context:
             self.w.title('{} {}'.format(context,lang))
@@ -15256,7 +15256,7 @@ class StatusDict(dict):
                         for check in d[cvt][ps][profile]
                         for i in d[cvt][ps][profile][check]['done']
                         if i not in ['NA']])
-                for cvt in d
+                for cvt in d if cvt != 'T'
                 }
     def all_groups_verified_for_cvt(self):
         return self.all_groups_verified_anywhere()[program['params'].cvt()]
