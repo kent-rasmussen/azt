@@ -17152,7 +17152,7 @@ def interfacelang(lang=None,magic=False):
     except NameError:
         log.debug("Looks like translation magic isn't defined yet; making")
     if lang:
-        log.info("Asked to set lang {lang} with curlang {curlang}").format(lang=lang,curlang=curlang)
+        log.info("Asked to set lang {lang} with curlang {curlang}".format(lang=lang,curlang=curlang))
     if not lang and not curlang: #deduce, but don't override current setting.
         # log.info("checking for a local setting")
         code=file.uilang()
