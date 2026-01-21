@@ -6496,7 +6496,7 @@ class Alphabet():
         glyph=self.parse_verificationcode(item)['group']
         log.info(_("presort_item moving {item} into ‘{glyph}’").format(item=item, glyph=glyph))
         if not glyph.isdigit() and not self.conflicting_items(item,glyph):
-            self.mark_item_glyph(item,glyph)
+            self.mark_item_glyph(item,glyph) #This should never produce conflicts
     def have_only_distinguished_items(self,x,y):
         log.info(_("Running have_only_distinguished_items on {x} and {y}").format(x=x, y=y))
         gm=self.glyph_members()
@@ -6520,6 +6520,7 @@ class Alphabet():
                 r.append(i)
         return r
     def remove_conflicting_items(self,item,glyph):
+        """This doesn't currently update SortGlyphGroupButtonFrame, but should"""
         conflicts=self.conflicting_items(item,glyph)
         if glyph in self.conflicts:
             recurring_conflicts=set(conflicts) & self.conflicts[glyph]

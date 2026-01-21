@@ -3707,6 +3707,10 @@ msgstr "Suppression du sens {id} de la sous-vérification {group}"
 msgid "Removing {item} from ‘{glyph}’ to make room for {new}"
 msgstr "Retirer {item} de ‘{glyph}’ pour faire de la place pour {new}"
 
+msgid "This is the second time I've removed this item recently; "
+"so I'm going to ask you to consider joining them now."
+msgstr "C'est maintenant la deuxieme fois que j'ai supprimé cet element; "
+"donc je vais vous demander de considérer de les joindre maintenant."
 #: /home/kentr/bin/raspy/azt/main.py:12549
 msgid "Rename"
 msgstr "Renommer"
