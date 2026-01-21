@@ -15617,7 +15617,7 @@ class StatusDict(dict):
     def distinguish(self,g, **kwargs):
         self.distinguished(**kwargs).add(g)
     def undistinguish(self,g, **kwargs):
-        self.distinguished(**kwargs).remove(g)
+        self.distinguished(**kwargs).discard(g)
     def undistinguish_any_with(self,g, **kwargs):
         # log.info(f"calling self.undistinguish_any_with with {kwargs=}")
         # log.info(f"{self.distinguished(**kwargs)=}")
