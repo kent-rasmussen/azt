@@ -10392,9 +10392,10 @@ class Sort(object):
             return
         error=self.update_annotations_to_glyphs() #Iterates over all glyphs
         if error:
-            ErrorNotice(_("Problem updating annotations to glyphs: \n{error}"
-                        "try again?").format(error=error),
-                        wait=True)
+            txt=_("Problem updating annotations to glyphs:")
+            txt+=f'\n{'\n'.join(error)}\n\n'
+            txt+=_("try again?")
+            ErrorNotice(txt,wait=True)
             return
         log.info(_("Glyph annotations updated OK"))
         # The above aligns all annotations and verifications
