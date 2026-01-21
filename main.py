@@ -6521,13 +6521,27 @@ class Alphabet():
         return r
     def remove_conflicting_items(self,item,glyph):
         conflicts=self.conflicting_items(item,glyph)
+        if glyph in self.conflicts:
+            recurring_conflicts=set(conflicts) & self.conflicts[glyph]
+            self.conflicts[glyph]|=set(conflicts)
+        else:
+            recurring_conflicts=set()
+            self.conflicts[glyph]=set(conflicts)
+        if conflicts:
+            if recurring_conflicts:
+                text='\n'+_("This is the second time I've removed this item recently; "
+                "so I'm going to ask you to consider joining them now.")
+            else:
+                text=''
+            ErrorNotice(_("Removing {items} from ‘{glyph}’ to make room for {new}{text}"
+                        ).format(items=conflicts,glyph=glyph,new=item,text=text),
+                                wait=True)
         for i in conflicts:
-            ErrorNotice(_("Removing {item} from ‘{glyph}’ to make room for {new}").format(item=i,glyph=glyph,new=item),
-                        wait=True)
             self.remove_item_from_glyph(i)
+        return recurring_conflicts
     def mark_item_glyph(self,item,glyph):#maybe move to Alphabet Sort
         self.rm_glyph_member(item) # in case elsewhere
-        self.remove_conflicting_items(item,glyph) #other group from same check
+        recurring_conflicts=self.remove_conflicting_items(item,glyph) #other group from same check
         self.add_glyph_member(item,glyph)
         self.mark_item_macrosorted(item)
         if item in self.glyph_members()[glyph]:
@@ -6535,6 +6549,7 @@ class Alphabet():
         else:
             log.info(_("mark_item_glyph failed to add ‘{item}’ to ‘{glyph}’").format(item=item, glyph=glyph))
             # log.info(f"{self.glyph_members()=}")
+        return recurring_conflicts
     def remove_item_from_glyph(self,item,glyph=None):
         self.rm_glyph_member(item,glyph) # in case elsewhere
         self.cull_glyphdict() #without knowing glyph or cvt
