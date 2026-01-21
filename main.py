@@ -6341,11 +6341,11 @@ class Alphabet():
     def distinguish(self, g, **kwargs):
         self.distinguished_by_cvt().add(g)
     def undistinguish(self, g, **kwargs):
-        self.distinguished_by_cvt().remove(g)
+        self.distinguished_by_cvt().discard(g) #don't throw error on remove
     def undistinguish_any_with(self,g):
         d=self.distinguished_by_cvt()
         for j in [i for i in d if g in i]:
-            d.remove(j)
+            d.discard(j) #don't throw error on remove
     def predistinguish(self,tuple_set):
         """This is here to keep users from seeing trivial glyph distinction prompts.
         Trivial here is defined as:
