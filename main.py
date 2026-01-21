@@ -1120,11 +1120,16 @@ class Menus(ui.Menu):
         group=program['status'].group()
         if not group:
             group=_("Select")
+        glyph=program['alphabet'].glyph()
+        if not glyph:
+            glyph=_("Select")
         options.extend([(_("Resort skipped data"), self.parent.tryNAgain),
                         (_("Presort this group again"), self.parent.re_presort),
                         (_("Reverify current group ({group})").format(group=group),
                                                         self.parent.reverify),
                         (_("Join Sort Groups"), self.parent.redo_join),
+                        (_("Reverify Glyph (Letters; {glyph})").format(glyph=glyph), 
+                                                    self.parent.reverify_glyph),
                         (_("Join Glyphs (Letters)"), self.parent.redo_joinglyphs),
                         (_("Update Forms"), self.parent.manual_form_update)
                         ])
@@ -5021,9 +5026,12 @@ class TaskDressing(HasMenus,ui.Window):
             return 1
     def _getglyph(self,window,event=None, **kwargs):
         log.info(_("Asking for a group (_getglyph kwargs: {kwargs})").format(kwargs=kwargs))
-        glyphs=program['alphabet'].glyphs()
-        glyph=program['alphabet'].glyph()
         cvt=kwargs.get('cvt',program['params'].cvt())
+        if kwargs.get('toverify'):
+            glyphs=program['alphabet'].glyphdict()[cvt]
+        else:
+            glyphs=program['alphabet'].glyphs()
+        glyph=program['alphabet'].glyph()
         purpose=kwargs.get('purpose','to work with')
         text=[_("What"),program['params'].cvtdict()[cvt]['sg'],
                 _("do you want {purpose}?").format(purpose=purpose)]
@@ -10624,6 +10632,21 @@ class Sort(object):
         return 1
     def re_presort(self):
         program['status'].presorted(False)
+        self.runcheck()
+    def reverify_glyph(self):
+        done=program['alphabet'].glyphdict()[self.cvt]
+        if not program['alphabet'].glyph() in program['alphabet'].glyphdict()[self.cvt]:
+            w=self.getglyph(toverify=True) #assumes system cvt
+            w.wait_window(w)
+            glyph=program['alphabet'].glyph()
+            if glyph not in done: #i.e., still
+                log.info(_("I asked for a glyph, but didn't get one ")+''
+                        f"({glyph} not in {done}).")
+                return
+        program['alphabet'].mark_glyph_not_done(glyph)
+        # done.remove(group)
+        # program['status'].verified(done)
+        self.reverifying=True
         self.runcheck()
     def reverify(self):
         group=program['status'].group()
