@@ -5580,7 +5580,9 @@ class TaskChooser(TaskDressing):
             self.task.on_quit() #destroy and set flag
         except AttributeError:
             log.info(_("No task, apparently; not destroying."))
-        self.task=taskclass(self) #filename
+        if type(taskclass) is str:
+            taskclass=getattr(sys.modules[__name__],taskclass)
+        self.task=taskclass(self,**kwargs) #filename
         if not self.task.exitFlag.istrue():# and not isinstance(self.task,Parse):
             self.task.deiconify()
     def unsetmainwindow(self):
@@ -17963,11 +17965,6 @@ if __name__ == '__main__':
     #     program['python']=program.pop('python3')
     # if not program['python']:
     program['python']=sys.executable
-    if 'testtask' in program and type(program['testtask']) is str:
-        log.info(_("Converting string ‘{task}’ to class").format(task=program['testtask']))
-        program['testtask']=getattr(sys.modules[__name__],
-                                        program['testtask'])
-    # i18n['fub'] = gettext.azttranslation('azt', transdir, languages=['fub'])
     if exceptiononload and not me:
         pythonmodules()
         # sysrestart()
