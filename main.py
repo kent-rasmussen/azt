@@ -6470,11 +6470,13 @@ class Alphabet():
         return sorted-{i for k,v in self.glyphdict().items() for i in v}
     def itemstosort(self):
         return sorted(self._itemstomacrosort)
-    def renew_items_tomacrosort(self): 
+    def items_present_in_cvt(self,cvt):
+        return [i for i in self.items_present if self.cvt_of_item(i) == cvt]
+    def renew_items_tomacrosort(self,cvt): 
         self._itemsmacrosorted=set()
         self._itemstomacrosort=set()
         self.refresh_items()
-        for item in self.items_present:
+        for item in self.items_present_in_cvt(cvt):
             if item in [i for j in self.glyph_members().values() for i in j]:
                 self._itemsmacrosorted.add(item)
             else:
@@ -6598,7 +6600,7 @@ class Alphabet():
         program['alphabet']=self
         self.ftype=program['params'].ftype()
         program['settings'].settingsobjects() #should do this more; can be redone!
-        self.renew_items_tomacrosort()
+        # self.renew_items_tomacrosort() #if needed, run then, with cvt
         self.save_settings()
         self.conflicts={} #keep track of what has been kicked out of a group before
 class AlphabetChart(alphabet_chart.OrderAlphabet):
@@ -10203,7 +10205,7 @@ class Sort(object):
         same letter. After which all these fields will be updated.
         """
         log.info("Maybe Macrosort (with {did})".format(did=[k for k,v in self.did.items() if v]))
-        if items := program['alphabet'].renew_items_tomacrosort():
+        if items := program['alphabet'].renew_items_tomacrosort(self.cvt):
             if not any({v for k,v in self.did.items() if 'glyphs' in k}):
                 """only presort if arriving here before any other glyph
                 operation this run:
