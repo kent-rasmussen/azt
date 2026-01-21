@@ -6928,7 +6928,7 @@ class Segments(Senses):
         self.maybewrite()#after iteration
     def update_annotations_to_glyphs(self):
         return [i for i in [self.update_annotations_by_glyph(k)
-                    for k in program['alphabet'].glyph_members()] if not i]
+                    for k in program['alphabet'].glyph_members()] if i]
     def update_annotations_by_glyph(self,glyph):
         """Once all sorting into groups and macrogroups is done, align groups to
         macrogroups.
@@ -6955,9 +6955,10 @@ class Segments(Senses):
         for item in gm[glyph]:
             if (item.split('_')[-1] != glyph and
                 newform(item) in [i for j in gm.values() for i in j]):
-                log.error(_("Conflict: cannot rename ‘{item}’ to ‘{glyph}’; "
-                    "‘{new}’ already exists.").format(item=item, glyph=glyph, new=newform(item)))
-                return
+                txt=_("Conflict: cannot rename ‘{item}’ to ‘{glyph}’; "
+                    "‘{new}’ already exists.").format(item=item, glyph=glyph, new=newform(item))
+                log.error(txt)
+                return txt
         log.info(_("update_annotations_by_glyph safely: ‘{members}’ to ‘{glyph}’").format(members=gm[glyph], glyph=glyph))
         for item in list(gm[glyph]):
             kwargs=program['alphabet'].parse_verificationcode(item)
@@ -6990,7 +6991,6 @@ class Segments(Senses):
         except UnboundLocalError: #if u.start() never happened...
             pass
         log.info(_("update_annotations_by_glyph done with ‘{members}’ to ‘{glyph}’").format(members=gm[glyph], glyph=glyph))
-        return True
     def default_glyphs(self):
         return [i for i in 
                 program['alphabet'].glyphdict()[program['params'].cvt()]
@@ -10390,8 +10390,10 @@ class Sort(object):
                 program['params'].cvt(cvt)
             self.name_new_glyphs() #keep cvt the same
             return
-        if self.update_annotations_to_glyphs(): #Iterates over all glyphs
-            ErrorNotice(_("Problem updating annotations to glyphs; try again?"),
+        error=self.update_annotations_to_glyphs() #Iterates over all glyphs
+        if error:
+            ErrorNotice(_("Problem updating annotations to glyphs: \n{error}"
+                        "try again?").format(error=error),
                         wait=True)
             return
         log.info(_("Glyph annotations updated OK"))
