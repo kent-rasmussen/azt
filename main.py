@@ -10403,7 +10403,17 @@ class Sort(object):
             if category == 'skip':
                 category='NA'
         if macrosort:
-            program['alphabet'].mark_item_glyph(item, category)
+            recurring_conflicts=program['alphabet'].mark_item_glyph(item, category)
+            if recurring_conflicts:
+                kwargs=program['alphabet'].parse_verificationcode(item)
+                item_group=kwargs.pop('group')
+            for i in recurring_conflicts:
+                i_group=program['alphabet'].parse_verificationcode(i)['group']
+                program['status'].undistinguish((i_group,item_group),**kwargs)
+                program['status'].undistinguish((item_group,i_group),**kwargs)
+            if recurring_conflicts:
+                self.maybesort(firstrun=True)
+                return
         else:
             self.marksortgroup(item, category, nocheck=True) # that marking worked
         if category not in list(self.buttonframe.groupvars)+['NA']:
@@ -10490,7 +10500,9 @@ class Sort(object):
             item=self.presenttosort(current_list_fn()[0], macrosort=macrosort)
             # log.info("presenttosort done")
             if not self.runwindow.exitFlag.istrue() and item is not None:
-                self.sortselected(item, macrosort=macrosort)
+                r=self.sortselected(item, macrosort=macrosort)
+                if r: #on restarting to maybesort
+                    return
                 self.buttonframe.updatecounts()
         if macrosort: #generalize
             program['alphabet'].save_settings()
