@@ -2295,7 +2295,7 @@ class FormParent(Node):
                 return pylang(analang)
                 # log.info("using verification pylang {}".format(lang))
             elif 'tone' in self.ftype:
-                return tonelang(analang)
+                return self.db.tonelangname(analang)
             elif 'cvprofile' in self.ftype:
                 return profilelang(analang)
             elif self.ftype in ['location', 'SILCAWL']:
