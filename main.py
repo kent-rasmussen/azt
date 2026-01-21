@@ -5572,7 +5572,7 @@ class TaskChooser(TaskDressing):
             else:
                 self.maketask(WordCollectnParsewRecordings)
                 #optionlist[-1][0]) #last item, the code
-    def maketask(self,taskclass): #,filename=None
+    def maketask(self,taskclass,**kwargs): #,filename=None
         self.unsetmainwindow()
         try:
             if self.task.waiting():
@@ -12321,11 +12321,13 @@ class SortV(Sort,Segments,TaskDressing):
                 'image':program['theme'].photo['V'], #self.cvt
                 'sticky':'ew'
                 }
-    def __init__(self, parent):
+    def __init__(self, parent, **kwargs):
         program['params'].cvt('V')
         TaskDressing.__init__(self,parent)
         Sort.__init__(self, parent)
         Segments.__init__(self,parent)
+        if g:=kwargs.get("redo_glyph"):
+            self.redo_joinglyphs(g)
 class SortC(Sort,Segments,TaskDressing):
     def taskicon(self):
         return 'iconC'#program['theme'].photo['iconC']
@@ -12342,11 +12344,13 @@ class SortC(Sort,Segments,TaskDressing):
                 'image':program['theme'].photo['C'], #self.cvt
                 'sticky':'ew'
                 }
-    def __init__(self, parent):
+    def __init__(self, parent, **kwargs):
         program['params'].cvt('C')
         TaskDressing.__init__(self,parent)
         Sort.__init__(self, parent)
         Segments.__init__(self,parent)
+        if g:=kwargs.get("redo_glyph"):
+            self.redo_joinglyphs(g)
 class SortT(Sort,Tone,TaskDressing):
     def taskicon(self):
         return 'iconT'#program['theme'].photo['iconT']
@@ -12648,7 +12652,8 @@ class TranscribeS(Transcribe,Segments):
         log.info("Transcribe done for now (going back)")
         self.runwindow.on_quit()
         self.donewpyaudio()
-        self.parent.redo_joinglyphs(self.group)
+        program['taskchooser'].maketask(f"Sort{program['params'].cvt()}",
+                                        redo_glyph=self.group)
     def set_ok_w_form(self,error=False):
         form=self.transcriber.formfield.get()
         self.oktext.set(_("OK: use ‘{form}’ for this sound").format(form=form))
@@ -14386,7 +14391,7 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             # nodes=self.exs.getexamples(self.group)
             # log.info(_("Found {count} examples: {nodes}").format(count=len(nodes),nodes=nodes))
             self._n.set(len(self.items))
-        if self._n.get() <2:
+        if self._n.get() <2 and self.check_label.winfo_exists():
             self.check_label['state'] = 'disabled'
     def setcanary(self,canary):
         """This is needed because these buttons are reused across all words
