@@ -6052,7 +6052,8 @@ class TaskChooser(TaskDressing):
         self.splash.withdraw()
         for r in program['settings'].repo.values():
             # log.info("checking repo {} for USB drive".format(r))
-            r.share(noclone=True)
+            #on boot, pull in changes becore committing
+            r.share(noclone=True,nocommit=True) 
         self.splash.draw()
     # def getinterfacelangs(self):
     # # global i18n
@@ -16411,13 +16412,14 @@ class Repository(object):
                 return r #need to pass errors for processing
             else:
                 return []
-    def share(self,remotes=None,noclone=False):
+    def share(self,remotes=None,noclone=False,nocommit=False):
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes and not noclone:
             self.clonetoUSB()
-        r=self.commit() #should always before pulling, at least here
-        if r:
+        if not nocommit:
+            r=self.commit() #should always before pulling, at least here
+        if (r|nocommit):
             r=self.pull(remotes)
         if r:
             r=self.push(remotes)
