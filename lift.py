@@ -2252,6 +2252,45 @@ class Form(Node):
             self.textnode.text=value
         else:
             return self.textnode.text
+    def revertif(self,expression=None,bad_values=[]):
+        # f=self.textvalue()
+        if not (f:=self.textvalue()):
+            return #nothing to do without form
+        # d=self.annotationvaluedict()
+        if '0' not in (d:=self.annotationvaluedict()) or f == d['0']: 
+            #can't revert form without
+            return #NO
+        if expression and expression in f:
+            print('\n'.join([str(x)+'\t'+str(y) for x,y in d.items()]))
+            fd='; '.join([str(x)+':'+str(y) for x,y in d.items()
+                        if x.isdigit() and int(x) in range(4)])
+            r=input(f"Do you want to revert {f} to {fd}? (0/n)")
+            if not r.lower() == 'n':
+                print("Reverting form")#sense.revertftypelang(ftype,lang)
+                if r not in d or not r.isdigit():
+                    r='0'
+                self.textvalue(d[r])
+                for k in [i for i in d if i.isdigit() and int(i) > int(r)]:
+                    print(f"Reverting {k}={d[k]}")
+                    self.remove(self.annotations[k]) # pull object from XML
+                    del self.annotations[k] # pull key from Python dict
+            else:
+                print("Not reverting form")
+        if bad_values:
+            bad_items=[i for i in d.items() if i[1] in bad_values]
+            if not bad_items:
+                return
+            fbad_items=', '.join([str(x)+'='+str(y) for x,y in bad_items])
+            r=input(f"Do you want to remove {fbad_items}? (Y/n)")
+            if not r.lower() == 'n':
+                for k,v in bad_items:
+                    print(f"Reverting {k}={v}")
+                    self.remove(self.annotations[k]) # pull object from XML
+                    del self.annotations[k] # pull key from Python dict
+                print('Final:',self.annotationvaluedict())
+            else:
+                print("Not reverting annotations")
+        self.db.write()
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='form'
         super(Form, self).__init__(parent, node, **kwargs)
@@ -4577,8 +4616,6 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/bo/bo.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/wmg/wmg.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/lol-x-his30100/lol-x-his30100.lift"
-    lift=LiftXML(filename)
     def report():
         import glob 
         filenames=[i for i in glob.glob("/home/kentr/Assignment/Tools/WeSay/*-x-*/*.lift")
@@ -4588,6 +4625,18 @@ if __name__ == '__main__':
             lifts[filename]=LiftXML(filename)
         for filename in filenames:
             lifts[filename].report_counts()
+    code=102
+    filename=f"/home/kentr/Assignment/Tools/WeSay/lol-x-his30{str(code)}/"
+    filename+=f"lol-x-his30{str(code)}.lift"
+    lift=LiftXML(filename)
+    
+    kwargs={'expression':'yy',
+            'bad_values':['yi','yu']
+            }
+    for sense in lift.senses:
+        for ftype in sense.ftypes:
+            for lang in sense.ftypes[ftype].forms:
+                sense.ftypes[ftype].forms[lang].revertif(**kwargs)
     # report()
     # exit()
     # filename="/home/kentr/Assignment/Tools/WeSay/Demo_gnd/gnd.lift"
