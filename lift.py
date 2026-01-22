@@ -4624,14 +4624,14 @@ if __name__ == '__main__':
             lifts[filename]=LiftXML(filename)
         for filename in filenames:
             lifts[filename].report_counts()
-    code=242#243 #100,101,102,231,253,255
+    code=103#240#242#243 #100,101,102,231,253,255
     filename=f"/home/kentr/Assignment/Tools/WeSay/lol-x-his30{str(code)}/"
     filename+=f"lol-x-his30{str(code)}.lift"
     lift=LiftXML(filename)
     
-    kwargs={'expressions':["ggg","iii","ɔɔɔ",'ooo','lll','aaa','sss','---','___',"555",
+    kwargs={'expressions':["ggg", "yyy", "eee", "iii","ɔɔɔ",'ooo','lll','aaa','sss','---','___',"555",
                             'ʔ'],
-            'bad_values':["ie","oi",'ʔ','lɔsɔpɔ']
+            'bad_values':["ue","ie","oo","oi",'ʔ','lɔsɔpɔ']
             }
     for sense in lift.senses:
         for ftype in sense.ftypes:
