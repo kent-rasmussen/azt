@@ -169,11 +169,72 @@ def add_comparative_data(data):
             data[idx2]['comparative'] = data[idx1] 
     return data
 
+def draw_svg(canvas, path, x, y, width=None, height=None, center=False):
+    """
+    Draws an SVG file onto the canvas.
+    Requires svglib.
+    """
+    try:
+        from svglib.svglib import svg2rlg
+        from reportlab.graphics import renderPDF
+        
+        drawing = svg2rlg(path)
+        if not drawing:
+            return
+            
+        # Original size
+        dw = drawing.width
+        dh = drawing.height
+        
+        # Determine scale
+        scale_x = 1.0
+        scale_y = 1.0
+        
+        if width and height:
+            scale_x = width / dw
+            scale_y = height / dh
+            scale = min(scale_x, scale_y) # preserve aspect ratio
+        elif width:
+            scale = width / dw
+        elif height:
+            scale = height / dh
+        else:
+            scale = 1.0
+            
+        drawing.scale(scale, scale)
+        
+        # Calculate final dimensions
+        fw = dw * scale
+        fh = dh * scale
+        
+        # Position
+        dx = x
+        dy = y
+        
+        if center:
+            dx = x - (fw / 2)
+            # dy is usually bottom, so if we want to center vertically?
+            # drawing draws from bottom-left usually? 
+            # reportlab graphics drawing: 0,0 is bottom left of drawing.
+        
+        # renderPDF.draw(drawing, canvas, x, y) draws at x,y.
+        # But we scaled it. scaling happens around 0,0?
+        # usually need to translate?
+        # renderPDF.draw takes drawing, canvas, x, y. 
+        # It translates canvas to x,y and draws.
+        
+        renderPDF.draw(drawing, canvas, dx, dy)
+        
+    except ImportError:
+        logging.getLogger(__name__).warning("svglib not installed. Cannot render SVG.")
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Error rendering SVG {path}: {e}")
+
 def create_comparison_chart(filename, *data, 
                           pagesize='letter', font_name="Charis", 
                           prose_count=20, title="Comparison",
-                          cover_image=None, contributors=None, 
-                          copyright_text=None, made_with=None):
+                          cover_image=None, logo_image=None, contributors=None, 
+                          description=None, copyright_text=None, made_with=None):
     """
     Args:
         filename: Output path
@@ -182,7 +243,9 @@ def create_comparison_chart(filename, *data,
         font_name: Font family
         prose_count: Number of times each word appears in prose
         cover_image: Path to cover image
+        logo_image: Path to logo image
         contributors: List of contributor names
+        description: Description text for imprint page
         copyright_text: Copyright string
         made_with: Attribution string
     """
@@ -225,25 +288,94 @@ def create_comparison_chart(filename, *data,
         if page_type == 'cover':
             # --- Cover Page ---
             # Title
+            title_y = height - margin - 200
             c.setFont(f"{font_name}-Bold", 36)
-            c.drawCentredString(base_x + half_width/2, height - margin - 100, data.get('title', ''))
+            c.drawCentredString(base_x + half_width/2, title_y, data.get('title', ''))
             
-            # Image
+            # Logo (Above Title)
+            logo_path = data.get('logo')
+            if logo_path and os.path.exists(logo_path):
+                if logo_path.lower().endswith('.svg'):
+                    # Center above title
+                    # title_y defined above
+                    logo_bottom_y = title_y + 40
+                    # For SVG, we pass x as center if center=True?
+                    # My draw_svg helper implementation needs defined behavior.
+                    # Let's assume draw_svg(canvas, path, x, y, width=avail_w, height=avail_h, center=False)
+                    # draws at x,y (bottom-left).
+                    
+                    l_avail_w = half_width - (margin * 2)
+                    l_avail_h = 100
+                    
+                    # We want to center it.
+                    # draw_svg helper supports center=True.
+                    # We pass the center X coordinate.
+                    draw_svg(c, logo_path, base_x + half_width/2, logo_bottom_y + 10, 
+                             width=l_avail_w, height=l_avail_h, center=True)
+                    
+                else:
+                    try:
+                        l_img = ImageReader(logo_path)
+                        lw, lh = l_img.getSize()
+                        l_aspect = lh / float(lw)
+                        # Limit logo size
+                        l_avail_w = half_width - (margin * 2)
+                        l_avail_h = 100 # Adjusted max height
+                        
+                        l_disp_w = l_avail_w
+                        l_disp_h = l_disp_w * l_aspect
+                        if l_disp_h > l_avail_h:
+                            l_disp_h = l_avail_h
+                            l_disp_w = l_disp_h / l_aspect
+                        
+                        # Center above title
+                        logo_bottom_y = title_y + 40 
+                        
+                        c.drawImage(l_img, base_x + (half_width - l_disp_w)/2, logo_bottom_y + 10, width=l_disp_w, height=l_disp_h, mask='auto', preserveAspectRatio=True)
+                    except Exception as e:
+                        log.error(f"Error drawing logo {logo_path}: {e}")
+
+            # Cover Image (Below Title)
             img_path = data.get('image')
             if img_path and os.path.exists(img_path):
-                img = ImageReader(img_path)
-                iw, ih = img.getSize()
-                aspect = ih / float(iw)
+                img = ImageReader(img_path) if not img_path.lower().endswith('.svg') else None
+                
+                # Area below title
+                start_y = title_y - 20
+                avail_h = start_y - margin
                 avail_w = half_width - (margin * 2)
-                avail_h = height / 2.0
-                
-                disp_w = avail_w
-                disp_h = disp_w * aspect
-                if disp_h > avail_h:
-                    disp_h = avail_h
-                    disp_w = disp_h / aspect
-                
-                c.drawImage(img, base_x + (half_width - disp_w)/2, (height - disp_h)/2, width=disp_w, height=disp_h, mask='auto', preserveAspectRatio=True)
+
+                if avail_h > 0:
+                     if img_path.lower().endswith('.svg'):
+                          # Center vertically/horizontally in available space
+                          # For vertical centering, we'd need to know the height.
+                          # draw_svg renders at y (bottom).
+                          # If we simply pass available box, it scales to fit.
+                          # But if it scales to width, height might be small.
+                          # Unlike drawImage, we don't easily know resulting height beforehand without parsing.
+                          # However, draw_svg *does* calculate scale. 
+                          # Ideally we'd center vertically too.
+                          # For now, let's just center horizontally and place at margin (bottom of area).
+                          # Or we could improve draw_svg to return size or handle vertical center?
+                          # Let's start with horizontal centering.
+                          draw_svg(c, img_path, base_x + half_width/2, margin, width=avail_w, height=avail_h, center=True)
+                     else:
+                        img = ImageReader(img_path)
+                        iw, ih = img.getSize()
+                        aspect = ih / float(iw)
+                        
+                        disp_w = avail_w
+                        disp_h = disp_w * aspect
+                        
+                        # If image is too tall, scale down
+                        if disp_h > avail_h:
+                            disp_h = avail_h
+                            disp_w = disp_h / aspect
+                        
+                        # Centered in the specific available area:
+                        area_center_y = margin + (avail_h / 2)
+                        
+                        c.drawImage(img, base_x + (half_width - disp_w)/2, area_center_y - (disp_h/2), width=disp_w, height=disp_h, mask='auto', preserveAspectRatio=True)
 
         elif page_type == 'imprint':
             # --- Imprint Page (Inside Front) ---
@@ -259,6 +391,20 @@ def create_comparison_chart(filename, *data,
                 for name in contribs:
                     c.drawCentredString(base_x + half_width/2, current_y, name)
                     current_y -= 15
+            
+            current_y -= 20 # Gap
+            
+            # Description Text (Between Contributors and Copyright)
+            desc = data.get('description', '')
+            if desc:
+                c.setFont(f"{font_name}-Regular", 11)
+                # Word wrap description
+                from reportlab.lib.utils import simpleSplit
+                desc_width = half_width - (margin * 2)
+                lines = simpleSplit(desc, f"{font_name}-Regular", 11, desc_width)
+                for line in lines:
+                    c.drawCentredString(base_x + half_width/2, current_y, line)
+                    current_y -= 13
             
             # Copyright (Bottom)
             copy = data.get('copyright', '')
@@ -279,6 +425,15 @@ def create_comparison_chart(filename, *data,
             symbol = data.get('symbol', '')
             items = data.get('items', [])
             
+            # Page Numbering
+            # Only for content pages.
+            # data['_page_num'] should be set during preparation or we calculate here.
+            # Easier to pass it in via data dict.
+            page_num = data.get('_page_num')
+            if page_num:
+                 c.setFont(f"{font_name}-Regular", 10)
+                 c.drawCentredString(base_x + half_width/2, margin - 10, str(page_num))
+
             # Safe extraction of words for prose (from tuple)
             words = [item[1] for item in items if len(item) > 1]
             
@@ -343,14 +498,20 @@ def create_comparison_chart(filename, *data,
     # Convert tuple to list
     data_list = list(data)
     
-    # Label existing pages as content
+    # Label existing pages as content and assign page numbers
+    # Content pages start at 1? Or physically page 3.
+    # User said "Only give page numbers where there is content, starting after the imprint page."
+    # So the first CONTENT page gets "1".
+    content_page_counter = 1
     for d in data_list:
         if 'type' not in d:
             d['type'] = 'content'
+            d['_page_num'] = content_page_counter
+            content_page_counter += 1
 
     # Insert Cover & Imprint
-    cover_page = {'type': 'cover', 'title': title, 'image': cover_image}
-    imprint_page = {'type': 'imprint', 'contributors': contributors, 'copyright': copyright_text}
+    cover_page = {'type': 'cover', 'title': title, 'image': cover_image, 'logo': logo_image}
+    imprint_page = {'type': 'imprint', 'contributors': contributors, 'copyright': copyright_text, 'description': description}
     
     # We want Cover at the very start (Physically Front Cover) -> Logic Page 1
     # We want Imprint at Logic Page 2 (Physically Inside Front Cover)

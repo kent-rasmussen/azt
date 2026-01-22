@@ -50,6 +50,7 @@ def pip_install(installs=[],secondtry=False):
             ['huggingface_hub[hf_xet]'], #allow large file download
             ['langcodes[data]'],
             ['pyautogui'],
+            ['svglib'],
             # ['mysql-connector-python', 'wave'], #needed for wave
             # 'pymysql', #or maybe this one
             ['torch'],
@@ -126,7 +127,7 @@ try:
     import urllib3, numpy, pyaudio, PIL, lxml, psutil, soundfile, librosa
     import transformers, huggingface_hub, langcodes, pyautogui
     import whisper, patiencediff, reportlab, language_data
-    import os
+    import os, svglib
     # import platform
     if platform.system() == "Windows":
         import ctypes

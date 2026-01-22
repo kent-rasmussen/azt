@@ -30,24 +30,67 @@ log = logsetup.getlog(__name__)
 
 SETTINGS_FILE = "alphabet_comparison_settings.json"
 
-class CoverSelector(ui.Window):
-    def select_cover(self, path):
-        log.info(f"Selected cover: {path}")
-        self.selected_cover = path
+class ImageSelector(ui.Window):
+    def select_image(self, path):
+        log.info(f"Selected image: {path}")
+        self.selected_image = path
         self.destroy()
 
-    def __init__(self, parent):
-        super().__init__(parent, title=_("Select Cover Image"))
-        self.selected_cover = None
+    def browse_and_select(self):
+        try:
+            from tkinter import filedialog
+            import shutil
+        except ImportError:
+            log.error("Could not import filedialog")
+            return
+            
+        file_path = filedialog.askopenfilename(
+            parent=self,
+            title=_("Select Image File"),
+            filetypes=[("Image files", "*.jpg *.jpeg *.png *.svg"), ("All files", "*.*")]
+        )
         
-        # Find covers
-        # Assuming images/toselect/covers is relative to the binary or a standard location
-        # Using a broader search or a fixed path relative to known locations
-        # For now, let's try to find it relative to the script or common media dirs
-        # If running from bin/raspy/azt, maybe it's ../../../images...?
-        # Let's assume absolute path or strictly relative for now given the user instruction
-        # "sourced from images/toselect/covers"
+        if file_path and os.path.exists(file_path):
+            # Target directory
+            # self.image_dir_path is stored during init now
+            if not getattr(self, 'image_dir_path', None):
+                 # Fail safe if init changed
+                 possible_roots = [
+                    os.path.dirname(__file__),
+                    os.getcwd(),
+                 ]
+                 for root in possible_roots:
+                    candidate = os.path.join(root, 'images', 'toselect', self.folder_name)
+                    if os.path.exists(os.path.dirname(candidate)): # at least parent exists
+                         self.image_dir_path = candidate
+                         break
+            
+            if self.image_dir_path:
+                if not os.path.exists(self.image_dir_path):
+                    try:
+                        os.makedirs(self.image_dir_path)
+                    except Exception as e:
+                        log.error(f"Could not create directory {self.image_dir_path}: {e}")
+                        return
+
+                target_name = os.path.basename(file_path)
+                target_path = os.path.join(self.image_dir_path, target_name)
+                
+                # Copy file
+                try:
+                    shutil.copy2(file_path, target_path)
+                    log.info(f"Copied {file_path} to {target_path}")
+                    self.select_image(target_path)
+                except Exception as e:
+                    log.error(f"Error copying file: {e}")
+                    ui.messagebox.showerror(_("Error"), f"Could not copy file: {e}")
+
+    def __init__(self, parent, title="Select Image", folder="covers"):
+        super().__init__(parent, title=title)
+        self.selected_image = None
+        self.folder_name = folder
         
+        # Find images
         # Try to locate the directory
         possible_roots = [
             os.path.dirname(__file__),
@@ -55,47 +98,89 @@ class CoverSelector(ui.Window):
             os.path.join(file.gethome(), '.gemini'), # fallback?
         ]
         
-        cover_dir = None
+        image_dir = None
         for root in possible_roots:
-            candidate = os.path.join(root, 'images', 'toselect', 'covers')
+            candidate = os.path.join(root, 'images', 'toselect', folder)
             if os.path.exists(candidate):
-                cover_dir = candidate
+                image_dir = candidate
                 break
         
         # Fallback search if not found directly
-        if not cover_dir:
+        if not image_dir:
              # Just try current directory if all else fails
-             cover_dir = "images/toselect/covers"
-
-        self.covers = []
-        if os.path.exists(cover_dir):
-            types = ('*.jpg', '*.jpeg', '*.png')
-            for t in types:
-                self.covers.extend(glob.glob(os.path.join(cover_dir, t)))
+             image_dir = f"images/toselect/{folder}"
         
-        if not self.covers:
-            ui.Label(self.frame, text=_("No covers found in images/toselect/covers"), r=0, c=0)
+        self.image_dir_path = image_dir # Store for browse
+
+        self.images = []
+        if os.path.exists(image_dir):
+            types = ('*.jpg', '*.jpeg', '*.png', '*.svg')
+            for t in types:
+                self.images.extend(glob.glob(os.path.join(image_dir, t)))
+        
+        # Fallback to general 'images/toselect' if specific folder empty/missing
+        if not self.images:
+            fallback_dir = os.path.dirname(image_dir)
+            if os.path.exists(fallback_dir) and folder != 'covers': # covers usually strict
+                 for t in ('*.jpg', '*.jpeg', '*.png', '*.svg'):
+                     self.images.extend(glob.glob(os.path.join(fallback_dir, t)))
+
+        # Browse Button at top
+        ui.Button(self.frame, text=_("Browse for other file..."), command=self.browse_and_select, r=0, c=0, colspan=3, sticky='ew')
+
+        if not self.images:
+            ui.Label(self.frame, text=_("No images found in {dir}").format(dir=image_dir), r=1, c=0)
             return
 
         # Grid view
-        scroll = ui.ScrollingFrame(self.frame, r=0, c=0, sticky='nsew')
+        scroll = ui.ScrollingFrame(self.frame, r=1, c=0, sticky='nsew', colspan=3)
         columns = 3
-        for i, cover_path in enumerate(self.covers):
+        for i, img_path in enumerate(self.images):
             r, c = divmod(i, columns)
             f = ui.Frame(scroll.content, r=r, c=c, padx=5, pady=5)
             
             # Helper to load image
             try:
-                img = ui.Image(cover_path)
+                img = ui.Image(img_path)
                 img.scale(1, pixels=300, scaleto='height')
                 ui.Button(f, image=img.scaled, 
-                         command=partial(self.select_cover, cover_path),
+                         command=partial(self.select_image, img_path),
                          r=0, c=0)
             except Exception as e:
-                log.error(f"Error loading cover {cover_path}: {e}")
-                ui.Button(f, text=os.path.basename(cover_path), 
-                         command=partial(self.select_cover, cover_path),
+                log.error(f"Error loading image {img_path}: {e}")
+                ui.Button(f, text=os.path.basename(img_path), 
+                         command=partial(self.select_image, img_path),
                          r=0, c=0)
+
+class DescriptionEditor(ui.Window):
+    def save(self):
+        val = self.text_widget.get("1.0", "end-1c")
+        self.parent.description_var.set(val)
+        self.parent.save_settings_file()
+        self.destroy()
+
+    def __init__(self, parent):
+        super().__init__(parent, title=_("Edit Description"))
+        self.parent = parent
+        
+        ui.Label(self.frame, text=_("Enter descriptive text for the imprint page:"), r=0, c=0)
+        
+        # Using standard Tkinter text widget directly if ui wrapper not available or complex
+        # ui_tkinter usually has Text or similar. Assuming ui.Text exists or falling back to Frame+tk.Text
+        # Checking ui_tkinter usage... usually ui.Text isn't standard in minimal wrapper, 
+        # let's assume we can access tk widget via ui.Frame or similar if needed. 
+        # But wait, ui.Label/EntryField exist. Let's try ui.Text if it exists in library, 
+        # otherwise use a simple specialized Frame.
+        
+        self.text_frame = ui.Frame(self.frame, r=1, c=0)
+        import tkinter as tk
+        self.text_widget = tk.Text(self.text_frame, height=10, width=40)
+        self.text_widget.pack()
+        
+        current_val = self.parent.description_var.get()
+        self.text_widget.insert("1.0", current_val)
+        
+        ui.Button(self.frame, text=_("Save"), command=self.save, r=2, c=0)
 
 class ContributorsManager(ui.Window):
     def add_contributor(self, event=None):
@@ -208,8 +293,8 @@ class PageFrameUI(ui.Frame):
         self.parent = parent # parent object
         self.glyph = glyph # Make available to parent
         self.glyph_choice = ui.ListBox(self, command=self.on_select,
-                                 font='readbig', height=4, width=5,
-                                 optionlist=self.parent.symbols[:], r=0)
+                                  font='readbig', height=4, width=5,
+                                  optionlist=self.parent.symbols[:], r=0)
         self.exs = [ui.Button(self, choice=i,
                                 command=self.select_example,
                                 r=i+1, sticky='ew')
@@ -241,16 +326,20 @@ class PageSetup(ui.Window):
         # Persisted UI State
         self.title_var = ui.StringVar()
         self.copyright_var = ui.StringVar()
+        self.description_var = ui.StringVar()
         # Initialize from global settings
         if 'alphabet_copyright' in self.program['settings'].settings['alphabet']['attributes']:
              self.copyright_var.set(self.program['settings'].alpha_copyright())
         
         self.selected_cover_path = None
+        self.selected_logo_path = None
         
         # Load persisted settings (local)
         self.settings = self.load_settings()
         self.title_var.set(self.settings.get('booklet_title', ''))
         self.selected_cover_path = self.settings.get('cover_image', None)
+        self.selected_logo_path = self.settings.get('logo_image', None)
+        self.description_var.set(self.settings.get('description_text', ''))
 
         # UI Layout
         self.setup_ui()
@@ -272,10 +361,10 @@ class PageSetup(ui.Window):
                                 column=self.n_pages()%self.fpr, 
                                 )
     def open_cover_selector(self):
-        w = CoverSelector(self)
+        w = ImageSelector(self, title=_("Select Cover Image"), folder="covers")
         w.wait_window(w)
-        if w.selected_cover:
-            self.selected_cover_path = w.selected_cover
+        if w.selected_image:
+            self.selected_cover_path = w.selected_image
             self.update_cover_button()
             self.save_settings_file() # Save cover choice
 
@@ -292,6 +381,30 @@ class PageSetup(ui.Window):
                 self.cover_btn.configure(text=txt + f" ({os.path.basename(self.selected_cover_path)})", image='', compound='none')
         else:
             self.cover_btn.configure(text=_("Select Cover"), image='', compound='none')
+
+    def open_logo_selector(self):
+        w = ImageSelector(self, title=_("Select Logo"), folder="logos")
+        w.wait_window(w)
+        if w.selected_image:
+            self.selected_logo_path = w.selected_image
+            self.update_logo_button()
+            self.save_settings_file() # Save logo choice
+
+    def update_logo_button(self):
+        if self.selected_logo_path:
+            txt = ""
+            try:
+                img = ui.Image(self.selected_logo_path)
+                img.scale(1, pixels=100, scaleto='height')
+                self.logo_btn.configure(text=txt, image=img.scaled, compound='left')
+                self.logo_btn.image = img # Keep reference!
+            except:
+                self.logo_btn.configure(text=txt + f" ({os.path.basename(self.selected_logo_path)})", image='', compound='none')
+        else:
+            self.logo_btn.configure(text=_("Select Logo"), image='', compound='none')
+
+    def open_description_editor(self):
+        DescriptionEditor(self)
 
     def open_contributors(self):
         # Ensure settings are loaded before managing
@@ -325,7 +438,7 @@ class PageSetup(ui.Window):
         # Top Config Frame
         config_frame = ui.Frame(self.frame, r=0, c=0, sticky='ew', border=1, relief='groove')
         
-        # Row 0: Basic Config
+        # Row 0: Basic Config (Title)
         self.title_config=ui.Frame(config_frame, r=0, c=0, columnspan=2, sticky='w')
         ui.Label(self.title_config, text=_("Title:"), r=0, c=0)
         ui.EntryField(self.title_config, textvariable=self.title_var,
@@ -336,27 +449,32 @@ class PageSetup(ui.Window):
         self.title_label.bind('<Button-1>',self.edit_title)
         self.save_title()
 
+        # Row 1: Images
         self.cover_config=ui.Frame(config_frame, r=1, c=0)
         self.cover_btn = ui.Button(self.cover_config, command=self.open_cover_selector, 
                                 r=0, c=2)
         self.update_cover_button()
         
-        self.contributors_config=ui.Frame(config_frame, r=1, c=1, sticky='e')
-        ui.Button(self.contributors_config, text=_("Contributors..."), command=self.open_contributors, r=0, c=3)
+        self.logo_config = ui.Frame(config_frame, r=1, c=1)
+        self.logo_btn = ui.Button(self.logo_config, command=self.open_logo_selector, r=0, c=0)
+        self.update_logo_button()
+
+        # Row 2: People/Text
+        self.contributors_config=ui.Frame(config_frame, r=2, c=0, sticky='w')
+        ui.Button(self.contributors_config, text=_("Contributors..."), command=self.open_contributors, r=0, c=0)
         
-        ui.Label(config_frame, text=_("© "), r=2, c=0, sticky='e')
-        self.copyright_config=ui.Frame(config_frame, r=2, c=1, sticky='w')
+        self.desc_config = ui.Frame(config_frame, r=2, c=1, sticky='w')
+        ui.Button(self.desc_config, text=_("Description Text..."), command=self.open_description_editor, r=0, c=0)
+
+        # Row 3: Copyright
+        ui.Label(config_frame, text=_("© "), r=3, c=0, sticky='e')
+        self.copyright_config=ui.Frame(config_frame, r=3, c=1, sticky='w')
         ui.EntryField(self.copyright_config, textvariable=self.copyright_var, width=20, r=0, c=1)
         ui.Button(self.copyright_config,text=_("OK"),command=self.save_copyright,r=0, c=2)
         self.copyright_label=ui.Label(config_frame, textvariable=self.copyright_var,
-                                    r=2, c=1, sticky='w')
+                                    r=3, c=1, sticky='w')
         self.copyright_label.bind('<Button-1>',self.edit_copyright)
         self.save_copyright()
-        # Row 1: Copyright
-        # ui.Label(config_frame, text=_("© "), r=1, c=0)
-        # ef = ui.EntryField(config_frame, textvariable=self.copyright_var, width=40, r=1, c=1, colspan=3, sticky='ew')
-        # Bind copyright change to save
-        # self.copyright_var.trace_add('write', self.save_copyright)
 
         # Pages Frame
         self.pageframesFrame=ui.Frame(self.frame, r=1, c=0, sticky='nsew')
@@ -422,6 +540,8 @@ class PageSetup(ui.Window):
         # Update extra fields
         self.settings['booklet_title'] = self.title_var.get()
         self.settings['cover_image'] = self.selected_cover_path
+        self.settings['logo_image'] = self.selected_logo_path
+        self.settings['description_text'] = self.description_var.get()
         
         try:
             path = file.getdiredurl(self.db.reportdir, SETTINGS_FILE)
@@ -447,9 +567,13 @@ class PageSetup(ui.Window):
         filepath = file.getdiredurl(self.db.reportdir, filename)
         
         # Gather all needed info
+        if hasattr(self.program['settings'], 'loadsettingsfile'):
+             # Ensure loaded (double-check for persistence issues)
+             self.program['settings'].loadsettingsfile(setting='contributors')
         contributors_list = self.program['settings'].alphabet_contributors()
         copyright_text = self.copyright_var.get()
         title_text = self.title_var.get()
+        description_text = self.description_var.get()
         
         # Made with attribution (as per plan, using program defaults, passed here for flexibility or added in PDF module)
         # We'll pass it into options
@@ -460,7 +584,9 @@ class PageSetup(ui.Window):
             prose_count=self.prose_count_var.get(),
             title=title_text,
             cover_image=self.selected_cover_path,
+            logo_image=self.selected_logo_path,
             contributors=contributors_list,
+            description=description_text,
             copyright_text=copyright_text,
             made_with=made_with
         )

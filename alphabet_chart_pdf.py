@@ -28,15 +28,19 @@ def register_fonts():
         return False
     
     try:
-        pdfmetrics.registerFont(TTFont('Charis-Regular', 'CharisSIL-Regular.ttf'))
-        pdfmetrics.registerFont(TTFont('Charis-Bold', 'CharisSIL-Bold.ttf'))
-        pdfmetrics.registerFont(TTFont('Charis-Italic', 'CharisSIL-Italic.ttf'))
-        pdfmetrics.registerFont(TTFont('Charis-BoldItalic', 'CharisSIL-BoldItalic.ttf'))
-        registerFontFamily('Charis',
+        for filename in ['CharisSIL','Charis']:
+            try:
+                pdfmetrics.registerFont(TTFont('Charis-Regular', f'{filename}-Regular.ttf'))
+                pdfmetrics.registerFont(TTFont('Charis-Bold', f'{filename}-Bold.ttf'))
+                pdfmetrics.registerFont(TTFont('Charis-Italic', f'{filename}-Italic.ttf'))
+                pdfmetrics.registerFont(TTFont('Charis-BoldItalic', f'{filename}-BoldItalic.ttf'))
+                registerFontFamily('Charis',
                             normal='Charis-Regular',
                             bold='Charis-Bold',
                             italic='Charis-Italic',
                             boldItalic='Charis-BoldItalic')
+            except Exception as e:
+                log.warning(f"Could not register Charis fonts: {e}")
         pdfmetrics.registerFont(TTFont('Andika-Regular', 'Andika-Regular.ttf'))
         pdfmetrics.registerFont(TTFont('Andika-Bold', 'Andika-Bold.ttf'))
         pdfmetrics.registerFont(TTFont('Andika-Italic', 'Andika-Italic.ttf'))
