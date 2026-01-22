@@ -2,6 +2,7 @@
 # coding=UTF-8
 """Consider making the above work for a venv"""
 """This file runs the actual GUI for lexical file manipulation/checking"""
+import py_modules #This tries importing, and installs on failure
 import duplicates
 if duplicates.running_file(__file__):
     exit()
@@ -20,7 +21,6 @@ exceptiononload=False
 exceptiononloadingmymodule=False
 import platform
 program['hostname']=platform.uname().node
-import py_modules #This tries importing, and installs on failure
 import file
 if file.getfile(__file__).parent.parent.stem == 'raspy': # if program['hostname'] == 'karlap':
     program['testing']=True #eliminates Error screens and zipped logs
