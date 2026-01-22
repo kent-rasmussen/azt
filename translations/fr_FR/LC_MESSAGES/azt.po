@@ -1897,7 +1897,7 @@ msgid "Go back and join \n"
 "← these groups"
 msgstr "Revenez en arrière et rejoignez \n"
 "avec l'un des groupes suivants :\n"
-"<unk> ces groupes"
+"← ces groupes"
 
 #: /home/kentr/bin/raspy/azt/main.py:1881
 msgid "Go to the next check"
@@ -6987,6 +6987,9 @@ msgstr "Mise à jour des formes"
 
 msgid "Reverify Glyph (Letters; {glyph})"
 msgstr "Reverifier des glyphs/lettres ({glyph})"
+
+msgid "OK: Add the letter ‘{form}’ {newline}to my alphabet {newline}for this sound"
+msgstr "OK: Ajouter la lettre ‘{form}’ {newline}à mon alphabet {newline}pour ce son"
 
 #: /home/kentr/bin/raspy/azt/main.py:1441
 #, python-brace-format

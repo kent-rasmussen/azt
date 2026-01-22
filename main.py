@@ -12812,7 +12812,8 @@ class TranscribeS(Transcribe,Segments):
                                         redo_glyph=self.group)
     def set_ok_w_form(self,error=False):
         form=self.transcriber.formfield.get()
-        self.oktext.set(_("OK: use ‘{form}’ for this sound").format(form=form))
+        self.oktext.set(_("OK: Add the letter ‘{form}’ {newline}to my alphabet "
+                        "{newline}for this sound").format(form=form,newline="\n"))
         if form and not error:
             self.ok_button['state'] = 'normal'
         else:
