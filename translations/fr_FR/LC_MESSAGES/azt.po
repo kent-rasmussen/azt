@@ -6985,6 +6985,9 @@ msgstr "travail sur {glyph} de {digits}"
 msgid "Update Forms"
 msgstr "Mise à jour des formes"
 
+msgid "Reverify Glyph (Letters; {glyph})"
+msgstr "Reverifier des glyphs/lettres ({glyph})"
+
 #: /home/kentr/bin/raspy/azt/main.py:1441
 #, python-brace-format
 msgid "working on ‘{check}’ tone frame"

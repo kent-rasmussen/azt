@@ -19,16 +19,6 @@ except ImportError:
     REPORTLAB_AVAILABLE = False
     log.warning("ReportLab not installed. PDF generation will not work.")
 
-# FONTS = {
-#     'Charis SIL': {
-#         'regular': '/usr/share/fonts/truetype/charis/CharisSIL-Regular.ttf',
-#         'bold': '/usr/share/fonts/truetype/charis/CharisSIL-Bold.ttf'
-#     },
-#     'Andika': {
-#         'regular': '/usr/share/fonts/truetype/andika/Andika-Regular.ttf',
-#         'bold': '/usr/share/fonts/truetype/andika/Andika-Bold.ttf'
-#     }
-# }
 # enable font subdirectories:
 for i in list(TTFSearchPath):
     TTFSearchPath.append(i+'/*')
@@ -37,8 +27,6 @@ def register_fonts():
     if not REPORTLAB_AVAILABLE:
         return False
     
-    # if font_name not in FONTS:
-    #     return False
     try:
         pdfmetrics.registerFont(TTFont('Charis-Regular', 'CharisSIL-Regular.ttf'))
         pdfmetrics.registerFont(TTFont('Charis-Bold', 'CharisSIL-Bold.ttf'))
@@ -58,12 +46,6 @@ def register_fonts():
                             bold='Andika-Bold',
                             italic='Andika-Italic',
                             boldItalic='Andika-BoldItalic')
-        # Register Regular
-        # pdfmetrics.registerFont(TTFont(font_name, FONTS[font_name]['regular']))
-        # # Register Bold (as separate font name for simplicity, or use mapping)
-        # # ReportLab allows mapping, but for now let's just register 'FontName-Bold'
-        # if 'bold' in FONTS[font_name]:
-        #     pdfmetrics.registerFont(TTFont(f"{font_name}-Bold", FONTS[font_name]['bold']))
         return True
     except Exception as e:
         log.warning(f"Could not register fonts: {e}")
@@ -71,7 +53,7 @@ def register_fonts():
 
 def create_chart(filename, items, title, num_columns=5, pagesize='A4', 
                 font_name="Helvetica", padding=5, spacing=5,
-                one_page=False):
+                one_page=False, copyright_text=None, made_with=None):
     """
     Generate a PDF alphabet chart.
     
@@ -84,6 +66,8 @@ def create_chart(filename, items, title, num_columns=5, pagesize='A4',
         font_name (str): Font family to use (Helvetica, Charis SIL, Andika).
         padding (float): Padding inside the cell (points).
         spacing (float): Spacing between elements (points).
+        copyright_text (str): Text for bottom left.
+        made_with (str): Text for bottom right.
     """
     if not REPORTLAB_AVAILABLE:
         log.error("Cannot generate PDF: ReportLab is not installed.")
@@ -115,6 +99,18 @@ def create_chart(filename, items, title, num_columns=5, pagesize='A4',
     c.setFont(title_font, 24)
     c.drawCentredString(width / 2, height - margin_y - 20, title)
     
+    # Footer Helper
+    def draw_footer():
+        footer_y = margin_y / 2
+        c.setFont(text_font, 10)
+        
+        if copyright_text:
+            c.drawString(margin_x, footer_y, f'© {copyright_text}')
+        
+        if made_with:
+            mw_width = c.stringWidth(made_with, text_font, 10)
+            c.drawString(width - margin_x - mw_width, footer_y, made_with)
+
     # Grid calculations
     grid_top = height - margin_y - 60
     grid_bottom = margin_y
@@ -160,7 +156,7 @@ def create_chart(filename, items, title, num_columns=5, pagesize='A4',
     # Adjust if required height is larger
     row_height = max(row_height, required_height)
     
-    num_rows = (len(items) + num_columns - 1) // num_columns
+    # num_rows = (len(items) + num_columns - 1) // num_columns
     
     current_x = margin_x
     current_y = grid_top - row_height
@@ -177,7 +173,11 @@ def create_chart(filename, items, title, num_columns=5, pagesize='A4',
                             font_name=font_name,
                             padding=padding,
                             spacing=spacing,
-                            one_page=True)
+                            one_page=True,
+                            copyright_text=copyright_text,
+                            made_with=made_with)
+            
+            draw_footer() # Footer on current page
             c.showPage()
             current_y = grid_top - row_height
             current_x = margin_x
@@ -239,7 +239,7 @@ def create_chart(filename, items, title, num_columns=5, pagesize='A4',
                 img_x = current_x + (col_width - display_width) / 2
                 img_y = image_area_bottom + (avail_img_height - display_height) / 2
                 
-                c.drawImage(img, img_x, img_y, width=display_width, height=display_height, mask='auto')
+                c.drawImage(img, img_x, img_y, width=display_width, height=display_height, mask='auto', preserveAspectRatio=True)
             except Exception as e:
                 log.error(f"Error drawing image {image_path}: {e}")
         
@@ -248,7 +248,8 @@ def create_chart(filename, items, title, num_columns=5, pagesize='A4',
         if (i + 1) % num_columns == 0:
             current_x = margin_x
             current_y -= row_height
-
+            
+    draw_footer() # Footer on last page
     c.save()
     log.info(f"PDF saved to {filename}")
     return num_columns

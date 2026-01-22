@@ -3,6 +3,7 @@
 """This module controls manipulation of alphabet charts from LIFt databases"""
 import os, sys
 import logsetup
+import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
 log.info(f"Importing {__name__}")
@@ -257,7 +258,7 @@ class OrderAlphabet(ui.Window):
                                         **self.get_kwargs(g))
         self.chart.update()
     def chart_config(self):
-        self.chart=ui.ScrollingFrame(self.frame,r=1,c=1,ipadx=20,ipady=20)
+        self.chart=ui.ScrollingFrame(self.frame,r=2,c=1,ipadx=20,ipady=20)
         self.configFrame=ui.Frame(self.outsideframe, r=1, c=2, sticky='n')
         column_config=ui.Frame(self.configFrame,
                                 r=self.configFrame.grid_size()[1])
@@ -327,9 +328,14 @@ class OrderAlphabet(ui.Window):
         title_bits.extend([f'x{self.ncolumns}', font_name])
         filename='_'.join(title_bits)+'.pdf'
         filepath = file.getdiredurl(self.db.reportdir,filename)
+        
+        made_with = f"Made with {self.program['name']} ({self.program['url']})"
+        
         self.ncolumns=alphabet_chart_pdf.create_chart(filepath, items, title, 
                         self.ncolumns, self.pagesize, font_name,
-                        one_page=one_page)
+                        one_page=one_page,
+                        copyright_text=self.chart_copyright.get(),
+                        made_with=made_with)
         self.reflow_chart()
     def _hidden(self,value=dict()):
         for i in value:
@@ -342,32 +348,76 @@ class OrderAlphabet(ui.Window):
         log.error("If you're seeing this, you have passed a settings module, "
                 "but there is no save_settings method in the parent class...")
     def edit_title(self,event=None):
+        self.title_entry_field['width']=len(self.chart_title.get())+5
         self.title_entry.grid()
         self.title_entry_field.bind("<Return>",self._set_chart_title)
         self.title_label.grid_remove()
+    def edit_copyright(self,event=None):
+        self.copyright_entry_field['width']=len(self.chart_copyright.get())+5
+        self.copyright_entry.grid()
+        self.copyright_entry_field.bind("<Return>", self._set_copyright)
+        self.copyright_label.grid_remove()
     def _compose_page_title(self):
         self.chart_title.set(_("Alphabet Chart for {name}").format(name=self.analangname) +
             f" [{self.db.analang}]")
+    def _set_copyright(self,event=None):
+        self.copyright_label.grid()
+        
+        # Save copyright to global settings
+        copy = self.chart_copyright.get()
+        self.program['settings'].alpha_copyright(copy)
+        # Trigger save if possible, similar to other settings logic
+        if hasattr(self.program['settings'], 'storesettingsfile'):
+             self.program['settings'].storesettingsfile(setting='alphabet')
+        self.copyright_entry_field.unbind("<Return>")
+        self.copyright_entry.grid_remove()
+        self.save_settings()
     def _set_chart_title(self,event=None):
         self.title_label.grid()
         toset=self.chart_title.get()
         if not toset:
             self._compose_page_title()
+
         self.title_entry.unbind("<Return>")
         self.title_entry.grid_remove()
         self.save_settings()
+    def set_up_copyright(self):
+        self.chart_copyright=ui.StringVar()
+        # Init Copyright from settings
+        if 'alphabet_copyright' in self.program['settings'].settings['alphabet']['attributes']:
+             self.chart_copyright.set(self.program['settings'].alpha_copyright())
+        
+        self.copyrightframe=ui.Frame(self.frame, r=1, c=1, sticky='ew')
+        ui.Label(self.copyrightframe, text='© ', font="small", c=0)
+        self.copyright_label=ui.Label(self.copyrightframe, textvariable=self.chart_copyright, font="small", c=1)
+        self.copyright_label.bind("<Button-1>",self.edit_copyright)
+        
+        self.copyright_entry=ui.Frame(self.copyrightframe, c=1)
+        # ui.Label(self.copyright_entry, text=_("Copyright:"), c=1)
+        self.copyright_entry_field=ui.EntryField(self.copyright_entry,
+                                                textvariable=self.chart_copyright,
+                                                width=len(self.chart_copyright.get()),
+                                                c=2)
+        ui.Button(self.copyright_entry, text=_("OK"), 
+                    cmd=self._set_copyright, c=3)   
+        self._set_copyright()
+                                             
     def set_up_chart_title(self):
         self.chart_title=ui.StringVar() #set below, in _set_chart_title
-        titleframe=ui.Frame(self.frame, r=0, c=1, sticky='ew')
-        self.title_label=ui.Label(titleframe, textvariable=self.chart_title,
-                                                                    r=0, c=1)
+
+        self.titleframe=ui.Frame(self.frame, r=0, c=1, sticky='ew')
+        self.title_label=ui.Label(self.titleframe, textvariable=self.chart_title, r=0, c=1)
         self.title_label.bind("<Button-1>",self.edit_title)
-        self.title_entry=ui.Frame(titleframe,r=1, c=1)
+
+        # Entry Fields (Hidden by default)
+        self.title_entry=ui.Frame(self.titleframe,r=2, c=1)
         self.title_entry_field=ui.EntryField(self.title_entry, 
                                             textvariable=self.chart_title,
+                                            width=len(self.chart_title.get()),
                                             c=0)
+        
         ui.Button(self.title_entry, text=_("OK"), 
-                    cmd=self._set_chart_title, c=1)
+                    cmd=self._set_chart_title, c=3)
         self._set_chart_title()
     def __init__(self, parent, **kwargs):
         title=_("Alphabet Chart UI for Glyph Ordering and Selection")
@@ -401,7 +451,7 @@ class OrderAlphabet(ui.Window):
             self.order.sort()
         if 'alphabet' in self.program:
             gd={i for j in self.program['alphabet'].glyphdict().values() for i in j}
-             #pick up new letters, limit to actual but keep order
+        #pick up new letters, limit to actual but keep order
             self.order=sorted(gd-set(self.order))+[i for i in self.order if i in gd] 
         log.info(f"Using this alphabetical order: {self.order}")
         log.info(f"Using these exids: {self.exids}")
@@ -432,6 +482,7 @@ class OrderAlphabet(ui.Window):
         super(OrderAlphabet,self).__init__(parent,title=title,withdrawn=True)
         self.mainwindow=True
         self.set_up_chart_title()
+        self.set_up_copyright()
         self.alphabet_config()
         self.chart_config()
         self._show_pictured_only() # calls update_shown>reflow_chart>?show_chart

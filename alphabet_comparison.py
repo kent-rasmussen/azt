@@ -9,7 +9,15 @@ import sys
 import json
 import logging
 from functools import partial
-
+import glob
+import math
+# if __name__ == '__main__':
+#     global _
+#     try:
+#         _
+#     except NameError:
+#         def _(x): 
+#             return x
 # Local module imports (assuming we are in the same directory)
 import logsetup
 import file
@@ -21,6 +29,113 @@ from alphabet_chart import SelectFromPicturableWords, getimagelocationURI
 log = logsetup.getlog(__name__)
 
 SETTINGS_FILE = "alphabet_comparison_settings.json"
+
+class CoverSelector(ui.Window):
+    def select_cover(self, path):
+        log.info(f"Selected cover: {path}")
+        self.selected_cover = path
+        self.destroy()
+
+    def __init__(self, parent):
+        super().__init__(parent, title=_("Select Cover Image"))
+        self.selected_cover = None
+        
+        # Find covers
+        # Assuming images/toselect/covers is relative to the binary or a standard location
+        # Using a broader search or a fixed path relative to known locations
+        # For now, let's try to find it relative to the script or common media dirs
+        # If running from bin/raspy/azt, maybe it's ../../../images...?
+        # Let's assume absolute path or strictly relative for now given the user instruction
+        # "sourced from images/toselect/covers"
+        
+        # Try to locate the directory
+        possible_roots = [
+            os.path.dirname(__file__),
+            os.getcwd(),
+            os.path.join(file.gethome(), '.gemini'), # fallback?
+        ]
+        
+        cover_dir = None
+        for root in possible_roots:
+            candidate = os.path.join(root, 'images', 'toselect', 'covers')
+            if os.path.exists(candidate):
+                cover_dir = candidate
+                break
+        
+        # Fallback search if not found directly
+        if not cover_dir:
+             # Just try current directory if all else fails
+             cover_dir = "images/toselect/covers"
+
+        self.covers = []
+        if os.path.exists(cover_dir):
+            types = ('*.jpg', '*.jpeg', '*.png')
+            for t in types:
+                self.covers.extend(glob.glob(os.path.join(cover_dir, t)))
+        
+        if not self.covers:
+            ui.Label(self.frame, text=_("No covers found in images/toselect/covers"), r=0, c=0)
+            return
+
+        # Grid view
+        scroll = ui.ScrollingFrame(self.frame, r=0, c=0, sticky='nsew')
+        columns = 3
+        for i, cover_path in enumerate(self.covers):
+            r, c = divmod(i, columns)
+            f = ui.Frame(scroll.content, r=r, c=c, padx=5, pady=5)
+            
+            # Helper to load image
+            try:
+                img = ui.Image(cover_path)
+                img.scale(1, pixels=300, scaleto='height')
+                ui.Button(f, image=img.scaled, 
+                         command=partial(self.select_cover, cover_path),
+                         r=0, c=0)
+            except Exception as e:
+                log.error(f"Error loading cover {cover_path}: {e}")
+                ui.Button(f, text=os.path.basename(cover_path), 
+                         command=partial(self.select_cover, cover_path),
+                         r=0, c=0)
+
+class ContributorsManager(ui.Window):
+    def add_contributor(self, event=None):
+        name = self.entry_var.get().strip()
+        if name:
+            self.contributors.append(name)
+            self.listbox.insert("end", name)
+            self.entry_var.set("")
+            self.save()
+
+    def save(self):
+        # Update settings
+        self.program['settings'].alphabet_contributors(self.contributors)
+        # Force save (main.py settings logic handles persistence via 'settings.contributors(val)')
+        # But we might need to trigger a file write if it doesn't happen automatically on set
+        # The main.py Setting.contributors is a method that sets a private var.
+        # It relies on specific save triggers usually.
+        # We'll trust the main app flow or trigger a save if available.
+        if hasattr(self.program['settings'], 'storesettingsfile'):
+             self.program['settings'].storesettingsfile(setting='contributors')
+
+    def __init__(self, parent, program):
+        super().__init__(parent, title=_("People Involved"))
+        self.program = program
+        self.contributors = self.program['settings'].alphabet_contributors() # Get list
+        if not isinstance(self.contributors, list):
+             self.contributors = []
+
+        ui.Label(self.frame, text=_("Contributors"), font='title', r=0, c=0, colspan=2)
+        
+        self.listbox = ui.ListBox(self.frame, r=1, c=0, colspan=2, width=30, height=10)
+        for name in self.contributors:
+            self.listbox.insert("end", name)
+            
+        self.entry_var = ui.StringVar()
+        ui.EntryField(self.frame, textvariable=self.entry_var, r=2, c=0)
+        ui.Button(self.frame, text=_("Add"), command=self.add_contributor, r=2, c=1)
+        
+        ui.Label(self.frame, text=_("Names cannot be removed once added."), font='small', r=3, c=0, colspan=2)
+
 
 class PageFrameUI(ui.Frame):
     def select_example(self, index):
@@ -123,9 +238,20 @@ class PageSetup(ui.Window):
         self.consonants = list(glyphdict['C'])
         self.prose_count_var = ui.IntVar(value=20)
         
-        # Load persisted settings
-        self.settings = self.load_settings()
+        # Persisted UI State
+        self.title_var = ui.StringVar()
+        self.copyright_var = ui.StringVar()
+        # Initialize from global settings
+        if 'alphabet_copyright' in self.program['settings'].settings['alphabet']['attributes']:
+             self.copyright_var.set(self.program['settings'].alpha_copyright())
         
+        self.selected_cover_path = None
+        
+        # Load persisted settings (local)
+        self.settings = self.load_settings()
+        self.title_var.set(self.settings.get('booklet_title', ''))
+        self.selected_cover_path = self.settings.get('cover_image', None)
+
         # UI Layout
         self.setup_ui()
         
@@ -145,15 +271,102 @@ class PageSetup(ui.Window):
         self.add_more_button.grid(row=self.n_pages()//self.fpr, 
                                 column=self.n_pages()%self.fpr, 
                                 )
+    def open_cover_selector(self):
+        w = CoverSelector(self)
+        w.wait_window(w)
+        if w.selected_cover:
+            self.selected_cover_path = w.selected_cover
+            self.update_cover_button()
+            self.save_settings_file() # Save cover choice
+
+    def update_cover_button(self):
+        if self.selected_cover_path:
+            txt = ""
+            try:
+                # Show thumbnail on button if possible? or just text
+                img = ui.Image(self.selected_cover_path)
+                img.scale(1, pixels=100, scaleto='height')
+                self.cover_btn.configure(text=txt, image=img.scaled, compound='left')
+                self.cover_btn.image = img # Keep reference!
+            except:
+                self.cover_btn.configure(text=txt + f" ({os.path.basename(self.selected_cover_path)})", image='', compound='none')
+        else:
+            self.cover_btn.configure(text=_("Select Cover"), image='', compound='none')
+
+    def open_contributors(self):
+        # Ensure settings are loaded before managing
+        if hasattr(self.program['settings'], 'loadsettingsfile'):
+             self.program['settings'].loadsettingsfile(setting='contributors')
+        ContributorsManager(self, self.program)
+
+    def save_copyright(self, *args):
+        # Update global setting
+        self.program['settings'].alpha_copyright(self.copyright_var.get())
+        # Ideally trigger a save, similar to ContributorsManager
+        if hasattr(self.program['settings'], 'storesettingsfile'):
+             self.program['settings'].storesettingsfile(setting='alphabet')
+        self.copyright_config.grid_remove()
+        self.copyright_label.grid()
+    def edit_copyright(self,event=None):
+        self.copyright_label.grid_remove()
+        self.copyright_config.grid()
+        self.copyright_config.bind("<Return>", self.save_copyright)
+    def save_title(self, event=None):
+        self.save_settings_file()
+        self.title_config.grid_remove()
+        self.title_label.grid()
+        self.title_label.bind("<Button-1>", self.edit_title)
+    def edit_title(self,event=None):
+        self.title_label.grid_remove()
+        self.title_config.grid()
+        self.title_config.bind("<Return>", self.save_title)
+
     def setup_ui(self):
-        self.pageframesFrame=ui.Frame(self.frame, r=0, c=0, sticky='nsew')
+        # Top Config Frame
+        config_frame = ui.Frame(self.frame, r=0, c=0, sticky='ew', border=1, relief='groove')
+        
+        # Row 0: Basic Config
+        self.title_config=ui.Frame(config_frame, r=0, c=0, columnspan=2, sticky='w')
+        ui.Label(self.title_config, text=_("Title:"), r=0, c=0)
+        ui.EntryField(self.title_config, textvariable=self.title_var,
+                        width=len(self.title_var.get())+3, r=0, c=1)
+        ui.Button(self.title_config,text=_("OK"),command=self.save_title,r=0, c=2)
+        self.title_label=ui.Label(config_frame, textvariable=self.title_var, 
+                                 font='title', r=0, c=0, columnspan=2, sticky='w')
+        self.title_label.bind('<Button-1>',self.edit_title)
+        self.save_title()
+
+        self.cover_config=ui.Frame(config_frame, r=1, c=0)
+        self.cover_btn = ui.Button(self.cover_config, command=self.open_cover_selector, 
+                                r=0, c=2)
+        self.update_cover_button()
+        
+        self.contributors_config=ui.Frame(config_frame, r=1, c=1, sticky='e')
+        ui.Button(self.contributors_config, text=_("Contributors..."), command=self.open_contributors, r=0, c=3)
+        
+        ui.Label(config_frame, text=_("© "), r=2, c=0, sticky='e')
+        self.copyright_config=ui.Frame(config_frame, r=2, c=1, sticky='w')
+        ui.EntryField(self.copyright_config, textvariable=self.copyright_var, width=20, r=0, c=1)
+        ui.Button(self.copyright_config,text=_("OK"),command=self.save_copyright,r=0, c=2)
+        self.copyright_label=ui.Label(config_frame, textvariable=self.copyright_var,
+                                    r=2, c=1, sticky='w')
+        self.copyright_label.bind('<Button-1>',self.edit_copyright)
+        self.save_copyright()
+        # Row 1: Copyright
+        # ui.Label(config_frame, text=_("© "), r=1, c=0)
+        # ef = ui.EntryField(config_frame, textvariable=self.copyright_var, width=40, r=1, c=1, colspan=3, sticky='ew')
+        # Bind copyright change to save
+        # self.copyright_var.trace_add('write', self.save_copyright)
+
+        # Pages Frame
+        self.pageframesFrame=ui.Frame(self.frame, r=1, c=0, sticky='nsew')
         self.add_more_button=ui.Button(self.pageframesFrame, 
                                         text="+2 Pages", 
                                         command=self.add_pages)
         self.pageFrames=[]
-        self.add_pages(*self.settings.get('pages',[]))
+        self.add_pages(*self.settings.get('pages',['a']))
 
-        # 3. Settings & Actions
+        # Bottom Frame
         frame_bottom = ui.Frame(self.frame, r=2, c=0, sticky='ew')
         
         ui.Label(frame_bottom, text="Repetitions:", c=0, r=0)
@@ -206,6 +419,10 @@ class PageSetup(ui.Window):
         return {}
 
     def save_settings_file(self):
+        # Update extra fields
+        self.settings['booklet_title'] = self.title_var.get()
+        self.settings['cover_image'] = self.selected_cover_path
+        
         try:
             path = file.getdiredurl(self.db.reportdir, SETTINGS_FILE)
             with open(path, 'w') as f:
@@ -229,9 +446,23 @@ class PageSetup(ui.Window):
         filename = '_'.join([_("Booklet"),*page_names,f'[{self.db.analang}].pdf'])
         filepath = file.getdiredurl(self.db.reportdir, filename)
         
+        # Gather all needed info
+        contributors_list = self.program['settings'].alphabet_contributors()
+        copyright_text = self.copyright_var.get()
+        title_text = self.title_var.get()
+        
+        # Made with attribution (as per plan, using program defaults, passed here for flexibility or added in PDF module)
+        # We'll pass it into options
+        made_with = f"Made with {self.program['name']} ({self.program['url']})"
+        
         alphabet_comparison_pdf.create_comparison_chart(
             filepath, *pages, 
-            prose_count=self.prose_count_var.get()
+            prose_count=self.prose_count_var.get(),
+            title=title_text,
+            cover_image=self.selected_cover_path,
+            contributors=contributors_list,
+            copyright_text=copyright_text,
+            made_with=made_with
         )
         log.info(f"Generated {filepath}")
         
@@ -241,12 +472,14 @@ class PageSetup(ui.Window):
 
 if __name__ == '__main__':
     # Demo Mock if run directly
+    # global _
+    try:
+        _
+    except NameError:
+        def _(x): 
+            return x
     try:
         # Assuming run from raspy/azt folder with env
-        try:
-            _
-        except:
-            def _(x): return x
         filename = "/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
         if not os.path.exists(filename):
              # Try to find a local lift file to test
@@ -254,11 +487,28 @@ if __name__ == '__main__':
              lifts = glob.glob("*.lift")
              if lifts: filename = lifts[0]
              
+        # Mock settings class for testing global settings interaction
+        class MockSettings:
+            def __init__(self):
+                self.settings = {'alphabet':{'attributes':['alphabet_copyright']}}
+                self._contributors = ["John Doe", "Jane Smith"]
+                self._copyright = "© 2023 Community"
+            def contributors(self, val=None):
+                if val: self._contributors=val
+                return self._contributors
+            def alphabet_copyright(self, val=None):
+                if val: self._copyright=val
+                return self._copyright
+            def storesettingsfile(self, setting=''):
+                print(f"Mock saving {setting}")
+
         program = {
             'name': 'Compare UI',
             'theme': 'highcontrast',
             'db': lift.LiftXML(filename),
-            'glyphdict': {'V': ['a', 'e', 'i', 'o', 'u'], 'C': ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z']}
+            'glyphdict': {'V': ['a', 'e', 'i', 'o', 'u'], 'C': ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z']},
+            'settings': MockSettings(),
+            'url': 'http://example.com'
         }
         r = ui.Root(program)
         r.title('Alphabet Comparison')

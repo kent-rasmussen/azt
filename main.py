@@ -2132,8 +2132,12 @@ class Settings(object):
                                             'alphabet_exids',
                                             'alphabet_pagesize',
                                             'glyph_members',
-                                            'glyphs_distinguished'
+                                            'glyphs_distinguished',
+                                            'alphabet_copyright'
                                         ]},
+            'contributors':{
+                                'file':'contributorsfile',
+                                'attributes':['contributors']},
             'toneframes':{
                                 'file':'toneframesfile',
                                 'attributes':['toneframes']}
@@ -2228,6 +2232,7 @@ class Settings(object):
         self.statusfile=basename.with_suffix(".VerificationStatus.dat")
         self.profiledatafile=basename.with_suffix(".ProfileData.dat")
         self.adhocgroupsfile=basename.with_suffix(".AdHocGroups.dat")
+        self.contributorsfile=basename.with_suffix(".Contributors.ini")
         self.soundsettingsfile_legacy=basename.with_suffix(".SoundSettings.ini")
         self.soundsettingsfile=basename.with_suffix(f'.{program["repo"].username}'
                                                     f'.{program["hostname"]}'
@@ -2286,7 +2291,9 @@ class Settings(object):
             fns['alphabet_ncolumns']=self.alpha_ncolumns
             fns['alphabet_exids']=self.alpha_exids
             fns['alphabet_chart_title']=self.alpha_chart_title
+            fns['alphabet_copyright']=self.alpha_copyright
             fns['alphabet_pagesize']=self.alpha_pagesize
+            fns['contributors']=self.alphabet_contributors
             #This seems to break here:
             fns['ps']=program['slices'].ps
             fns['profile']=program['slices'].profile
@@ -2637,6 +2644,14 @@ class Settings(object):
         if value:
             self._alphabet_chart_title=value
         return getattr(self,'_alphabet_chart_title',value)
+    def alpha_copyright(self,value=''):
+        if value:
+            self._alphabet_copyright=value
+        return getattr(self,'_alphabet_copyright',_("Set Alphabet Copyright!"))
+    def alphabet_contributors(self,value=None):
+        if value is not None:
+            self._contributors=value
+        return getattr(self,'_contributors',[])
     def alpha_pagesize(self,value=''):
         if value:
             self._alphabet_pagesize=value
@@ -6628,6 +6643,7 @@ class AlphabetChart(alphabet_chart.OrderAlphabet):
                     'exids',
                     # 'order',
                     'ncolumns','chart_title',
+                    'copyright',
                     'pagesize'
                 ]+Alphabet.my_settings#?
     def taskicon(self):

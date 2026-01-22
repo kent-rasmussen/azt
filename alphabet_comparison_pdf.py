@@ -3,15 +3,20 @@
 import os
 import random
 import logging
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4, letter, landscape
-from reportlab.lib.units import inch, cm
-from reportlab.lib.utils import ImageReader
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase.pdfmetrics import registerFontFamily
-from reportlab.rl_config import TTFSearchPath
-from reportlab.lib import colors
+try:
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4, letter, landscape
+    from reportlab.lib.units import inch, cm
+    from reportlab.lib.utils import ImageReader
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.pdfbase.pdfmetrics import registerFontFamily
+    from reportlab.rl_config import TTFSearchPath
+    from reportlab.lib import colors
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
+    logging.getLogger(__name__).warning("ReportLab not installed. PDF generation will not work.")
 
 log = logging.getLogger(__name__)
 
@@ -149,23 +154,39 @@ def generate_prose_text(words, count):
     return " ".join(all_words)
 
 def add_comparative_data(data):
-    for i in range(0, len(data), 2):
-        data[i]['comparative'] = False
-        data[i+1]['comparative'] = data[i]
+    # This logic assumes simple pairing, but we are injecting Cover/Imprint now.
+    # We should only apply comparative logic to content pages.
+    # Content pages are those without a special type.
+    
+    # Find indices of content pages
+    content_indices = [i for i, d in enumerate(data) if d.get('type') == 'content']
+    
+    for k in range(0, len(content_indices), 2):
+        if k+1 < len(content_indices):
+            idx1 = content_indices[k]
+            idx2 = content_indices[k+1]
+            data[idx1]['comparative'] = False
+            data[idx2]['comparative'] = data[idx1] 
     return data
+
 def create_comparison_chart(filename, *data, 
                           pagesize='letter', font_name="Charis", 
-                          prose_count=20, title="Comparison"):
+                          prose_count=20, title="Comparison",
+                          cover_image=None, contributors=None, 
+                          copyright_text=None, made_with=None):
     """
     Args:
         filename: Output path
-        left_data: dict with 'symbol', 'items' [(glyph, word, img)...]
-        right_data: dict with 'symbol', 'items' [(glyph, word, img)...]
+        data: list of dicts with 'symbol', 'items' [(glyph, word, img)...]
         pagesize: 'A4' or 'letter'
         font_name: Font family
         prose_count: Number of times each word appears in prose
+        cover_image: Path to cover image
+        contributors: List of contributor names
+        copyright_text: Copyright string
+        made_with: Attribution string
     """
-    log.info(f"Creating comparison chart called with {data=} {filename=}")
+    log.info(f"Creating comparison chart called with {filename=}")
     font_size = 12
     if not register_fonts():
         log.error("Problem loading fonts (is Charis installed?)")
@@ -199,68 +220,98 @@ def create_comparison_chart(filename, *data,
         if not data:
             return # Blank page
             
-        symbol = data.get('symbol', '?')
-        items = data.get('items', [])
-        
-        # Safe extraction of words for prose (from tuple)
-        words = [item[1] for item in items if len(item) > 1]
-        
-        # --- Layout Areas ---
-        # Top-Half: Images
-        # Bottom-Half: Prose
-        # Header: Symbol
-        
-        content_width = half_width - (margin * 2)
-        content_left = base_x + margin
-        
-        # 1. Symbol Header
-        header_y = height - margin - 40
-        c.setFont(f"{font_name}-Bold", 72)
-        c.drawCentredString(base_x + half_width/2, header_y, symbol)
-        
-        # 2. Top Half (Examples)
-        # Allocate space from below header to middle of page
-        mid_page_y = height / 2.0
-        examples_top = header_y - 20 # Spacing
-        examples_height = examples_top - mid_page_y
-        
-        draw_triangular_examples(c, content_left, mid_page_y, content_width, examples_height, 
-                               items, font_name, font_size)
-        
-        # 3. Bottom Half (Prose)
-        # Allocate space from mid page to bottom margin
-        prose_top = mid_page_y - 30 # Spacing
-        prose_bottom = margin
-        prose_width = content_width
-        
-        prose_text = generate_prose_text(words, prose_count)
-        
-        text_obj = c.beginText(content_left, prose_top)
-        text_obj.setFont(f"{font_name}-Regular", font_size)
-        text_obj.setTextOrigin(content_left, prose_top)
-        
-        # Simple word wrap
-        from reportlab.lib.utils import simpleSplit
-        lines = simpleSplit(prose_text, f"{font_name}-Regular", font_size, prose_width)
-        
-        for line in lines:
-            if text_obj.getY() < prose_bottom:
-                break # Stop if overflowing
-            text_obj.textLine(line)
+        page_type = data.get('type', 'content')
+
+        if page_type == 'cover':
+            # --- Cover Page ---
+            # Title
+            c.setFont(f"{font_name}-Bold", 36)
+            c.drawCentredString(base_x + half_width/2, height - margin - 100, data.get('title', ''))
             
-        c.drawText(text_obj)
-        if prev_data: #put both on second page
-            both_words = [item[1] for item 
-                        in prev_data.get('items', [])+data.get('items', []) 
-                        if len(item) > 1]
-            prose_text = generate_prose_text(both_words, prose_count)
-            prose_top = text_obj.getY() - font_size*3/2
+            # Image
+            img_path = data.get('image')
+            if img_path and os.path.exists(img_path):
+                img = ImageReader(img_path)
+                iw, ih = img.getSize()
+                aspect = ih / float(iw)
+                avail_w = half_width - (margin * 2)
+                avail_h = height / 2.0
+                
+                disp_w = avail_w
+                disp_h = disp_w * aspect
+                if disp_h > avail_h:
+                    disp_h = avail_h
+                    disp_w = disp_h / aspect
+                
+                c.drawImage(img, base_x + (half_width - disp_w)/2, (height - disp_h)/2, width=disp_w, height=disp_h, mask='auto', preserveAspectRatio=True)
+
+        elif page_type == 'imprint':
+            # --- Imprint Page (Inside Front) ---
+            # Contributors (Top)
+            c.setFont(f"{font_name}-Bold", 14)
+            current_y = height - margin - 40
+            c.drawCentredString(base_x + half_width/2, current_y, "People Involved")
+            current_y -= 25
+            
+            c.setFont(f"{font_name}-Regular", 12)
+            contribs = data.get('contributors', [])
+            if contribs:
+                for name in contribs:
+                    c.drawCentredString(base_x + half_width/2, current_y, name)
+                    current_y -= 15
+            
+            # Copyright (Bottom)
+            copy = data.get('copyright', '')
+            if copy:
+                c.setFont(f"{font_name}-Regular", 10)
+                c.drawCentredString(base_x + half_width/2, margin + 20, f'© {copy}')
+
+        elif page_type == 'back':
+            # --- Back Cover ---
+            # Made With (Bottom)
+            mw = data.get('made_with', '')
+            if mw:
+                c.setFont(f"{font_name}-Regular", 10)
+                c.drawCentredString(base_x + half_width/2, margin + 20, mw)
+        
+        else:
+            # --- Content Page ---
+            symbol = data.get('symbol', '')
+            items = data.get('items', [])
+            
+            # Safe extraction of words for prose (from tuple)
+            words = [item[1] for item in items if len(item) > 1]
+            
+            content_width = half_width - (margin * 2)
+            content_left = base_x + margin
+            
+            # 1. Symbol Header
+            header_y = height - margin - 40
+            c.setFont(f"{font_name}-Bold", 72)
+            c.drawCentredString(base_x + half_width/2, header_y, symbol)
+            
+            # 2. Top Half (Examples)
+            mid_page_y = height / 2.0
+            examples_top = header_y - 20 # Spacing
+            examples_height = examples_top - mid_page_y
+            
+            draw_triangular_examples(c, content_left, mid_page_y, content_width, examples_height, 
+                                items, font_name, font_size)
+            
+            # 3. Bottom Half (Prose)
+            prose_top = mid_page_y - 30 # Spacing
+            prose_bottom = margin
+            prose_width = content_width
+            
+            prose_text = generate_prose_text(words, prose_count)
+            
             text_obj = c.beginText(content_left, prose_top)
             text_obj.setFont(f"{font_name}-Regular", font_size)
             text_obj.setTextOrigin(content_left, prose_top)
-        
+            
             # Simple word wrap
-            lines = simpleSplit(prose_text, f"{font_name}-Regular", 12, prose_width)
+            from reportlab.lib.utils import simpleSplit
+            lines = simpleSplit(prose_text, f"{font_name}-Regular", font_size, prose_width)
             
             for line in lines:
                 if text_obj.getY() < prose_bottom:
@@ -268,17 +319,78 @@ def create_comparison_chart(filename, *data,
                 text_obj.textLine(line)
                 
             c.drawText(text_obj)
-    data = add_comparative_data(data)
+            if prev_data and prev_data.get('type', 'content') == 'content': #put both on second page
+                both_words = [item[1] for item 
+                            in prev_data.get('items', [])+data.get('items', []) 
+                            if len(item) > 1]
+                prose_text = generate_prose_text(both_words, prose_count)
+                prose_top = text_obj.getY() - font_size*3/2
+                text_obj = c.beginText(content_left, prose_top)
+                text_obj.setFont(f"{font_name}-Regular", font_size)
+                text_obj.setTextOrigin(content_left, prose_top)
+            
+                # Simple word wrap
+                lines = simpleSplit(prose_text, f"{font_name}-Regular", 12, prose_width)
+                
+                for line in lines:
+                    if text_obj.getY() < prose_bottom:
+                        break # Stop if overflowing
+                    text_obj.textLine(line)
+                    
+                c.drawText(text_obj)
+
+    # --- Prepare Data List ---
+    # Convert tuple to list
+    data_list = list(data)
+    
+    # Label existing pages as content
+    for d in data_list:
+        if 'type' not in d:
+            d['type'] = 'content'
+
+    # Insert Cover & Imprint
+    cover_page = {'type': 'cover', 'title': title, 'image': cover_image}
+    imprint_page = {'type': 'imprint', 'contributors': contributors, 'copyright': copyright_text}
+    
+    # We want Cover at the very start (Physically Front Cover) -> Logic Page 1
+    # We want Imprint at Logic Page 2 (Physically Inside Front Cover)
+    data_list.insert(0, imprint_page)
+    data_list.insert(0, cover_page)
+    
+    # Apply comparison data logic to Content pages only
+    add_comparative_data(data_list) # Updated helper
+    
+    # Handle Back Cover
+    # Pad to multiple of 4
+    rem = len(data_list) % 4
+    if rem > 0:
+        for _ in range(4 - rem):
+            data_list.append({'type': 'empty'}) # Filler
+    
+    # Now valid multiple of 4.
+    # The last page is index -1. This is the physical Back Cover.
+    # Set its type/content to back
+    data_list[-1]['type'] = 'back'
+    data_list[-1]['made_with'] = made_with
+
     # Re-order for booklet signature
-    data = make_signatures(data)
-    # Draw Left Side
-    for n,page_data in enumerate(data):
+    # Note: make_signatures expects a list and returns reordered list
+    # It might add padding if needed, but we already padded.
+    # We need to ensure make_signatures handles our dicts.
+    final_data = make_signatures(data_list)
+    
+    # Draw Pages
+    for n,page_data in enumerate(final_data):
         if not n%2:
             start_at=prev_data=0
         else:
             start_at=half_width
-            prev_data=data[n-1]
-        draw_side(start_at, page_data, prev_data)
+            prev_data=final_data[n-1]
+        
+        # Check if page_data is valid dict or None (make_signatures pad)
+        if page_data:
+            draw_side(start_at, page_data, prev_data)
+            
         if n%2:
             c.showPage()
     c.save()
@@ -298,7 +410,7 @@ def make_signatures(pages):
     """
     pages = list(pages)
     
-    # 1. Pad to multiple of 4
+    # 1. Pad to multiple of 4 (Safety check, though we did it)
     n = len(pages)
     rem = n % 4
     if rem > 0:
@@ -339,7 +451,7 @@ if __name__ == "__main__":
     l_data = {
         'symbol': 'b',
         'items': [
-            ('b', 'ball', 'images/ball.png'), # Dummy paths
+            ('b', 'ball', 'images/ball.png'), 
             ('b', 'bat', 'images/bat.png'),
             ('b', 'boy', 'images/boy.png'),
         ]
@@ -352,4 +464,9 @@ if __name__ == "__main__":
             ('d', 'door', 'images/door.png'),
         ]
     }
-    create_comparison_chart("test_comp.pdf", l_data, r_data)
+    # Test with mockup of new features
+    create_comparison_chart("test_comp.pdf", l_data, r_data, 
+                            title="My Test Booklet",
+                            contributors=["Kent Rasmussen", "Jane Doe"],
+                            copyright_text="(c) 2023",
+                            made_with="Made with AZT")
