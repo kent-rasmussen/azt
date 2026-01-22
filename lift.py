@@ -2252,7 +2252,7 @@ class Form(Node):
             self.textnode.text=value
         else:
             return self.textnode.text
-    def revertif(self,expression=None,bad_values=[]):
+    def revertif(self,expressions=None,bad_values=[]):
         # f=self.textvalue()
         if not (f:=self.textvalue()):
             return #nothing to do without form
@@ -2260,7 +2260,7 @@ class Form(Node):
         if '0' not in (d:=self.annotationvaluedict()) or f == d['0']: 
             #can't revert form without
             return #NO
-        if expression and expression in f:
+        if expressions and any([expression in f for expression in expressions]):
             print('\n'.join([str(x)+'\t'+str(y) for x,y in d.items()]))
             fd='; '.join([str(x)+':'+str(y) for x,y in d.items()
                         if x.isdigit() and int(x) in range(4)])
@@ -2278,18 +2278,17 @@ class Form(Node):
                 print("Not reverting form")
         if bad_values:
             bad_items=[i for i in d.items() if i[1] in bad_values]
-            if not bad_items:
-                return
-            fbad_items=', '.join([str(x)+'='+str(y) for x,y in bad_items])
-            r=input(f"Do you want to remove {fbad_items}? (Y/n)")
-            if not r.lower() == 'n':
-                for k,v in bad_items:
-                    print(f"Reverting {k}={v}")
-                    self.remove(self.annotations[k]) # pull object from XML
-                    del self.annotations[k] # pull key from Python dict
-                print('Final:',self.annotationvaluedict())
-            else:
-                print("Not reverting annotations")
+            if bad_items:
+                fbad_items=', '.join([str(x)+'='+str(y) for x,y in bad_items])
+                r=input(f"Do you want to remove {fbad_items}? (Y/n)")
+                if not r.lower() == 'n':
+                    for k,v in bad_items:
+                        print(f"Reverting {k}={v}")
+                        self.remove(self.annotations[k]) # pull object from XML
+                        del self.annotations[k] # pull key from Python dict
+                    print('Final:',self.annotationvaluedict())
+                else:
+                    print("Not reverting annotations")
         self.db.write()
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='form'
