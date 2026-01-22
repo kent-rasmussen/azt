@@ -406,7 +406,8 @@ class OrderAlphabet(ui.Window):
         self.chart_title=ui.StringVar() #set below, in _set_chart_title
 
         self.titleframe=ui.Frame(self.frame, r=0, c=1, sticky='ew')
-        self.title_label=ui.Label(self.titleframe, textvariable=self.chart_title, r=0, c=1)
+        self.title_label=ui.Label(self.titleframe, textvariable=self.chart_title, 
+                                    font='title', r=0, c=1)
         self.title_label.bind("<Button-1>",self.edit_title)
 
         # Entry Fields (Hidden by default)
