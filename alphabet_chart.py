@@ -446,21 +446,23 @@ class OrderAlphabet(ui.Window):
         self.imgdir=self.db.imgdir
         log.info(f"using {self.imgdir=}")
         # self.order=program['settings'].get('alphabet_order',kwargs.get('order'))
+        #In the following, we convert all integers to strings, since we're 
+        # using them as keys written to file in exids and exobjs
         if not self.order:
             log.info(f"No alphabetical order found; using all known glyphs")
-            self.order=[i for j in self.db.s[self.db.analang].values() for i in j]
+            self.order=[str(i) for j in self.db.s[self.db.analang].values() for i in j]
             self.order.sort()
         if 'alphabet' in self.program:
-            gd={i for j in self.program['alphabet'].glyphdict().values() for i in j}
+            gd={str(i) for j in self.program['alphabet'].glyphdict().values() for i in j}
         #pick up new letters, limit to actual but keep order
-            self.order=sorted(gd-set(self.order))+[i for i in self.order if i in gd] 
+            self.order=sorted(gd-set(self.order))+[str(i) for i in self.order if i in gd] 
         log.info(f"Using this alphabetical order: {self.order}")
         log.info(f"Using these exids: {self.exids}")
         if self.exids:
             # self.exids=exids
             for k in set(self.order)-set(self.exids):
-                self.exids[k]=None #only fill in examples, don't remove them.
-            self.exobjs={g:(self.db.sensedict[self.exids[g]]
+                self.exids[str(k)]=None #only fill in examples, don't remove them.
+            self.exobjs={str(g):(self.db.sensedict[self.exids[g]]
                             if self.exids[g] in self.db.sensedict
                             else None)
                         for g in self.exids}
@@ -469,11 +471,11 @@ class OrderAlphabet(ui.Window):
                 if hasattr(sense,'image'):
                     sense.image.scale(1,pixels=100,scaleto='height')
                 else: #Don't keep examples without images
-                    self.exobjs[glyph]=None
-                    self.exids[glyph]=None
+                    self.exobjs[str(glyph)]=None
+                    self.exids[str(glyph)]=None
         else:
-            self.exids={g:None for g in self.order}
-            self.exobjs={g:None for g in self.order}
+            self.exids={str(g):None for g in self.order}
+            self.exobjs={str(g):None for g in self.order}
         self.buttons={} #some place to store these
         self.order_bits={}
         self.show_bits={}
