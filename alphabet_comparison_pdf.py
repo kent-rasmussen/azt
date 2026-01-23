@@ -21,6 +21,14 @@ except ImportError:
 log = logging.getLogger(__name__)
 
 # Re-use font registration logic from alphabet_chart_pdf.py
+if platform.system() == 'Windows':
+    for path in [r'C:\Windows\Fonts',
+            r''.join([r'C:\Users\\',
+                    str(os.getlogin()),
+                    r'\AppData\Local\Microsoft\Windows\Fonts'
+                    ])
+            ]:
+    TTFSearchPath.append(path)
 try:
     for i in list(TTFSearchPath):
         TTFSearchPath.append(i+'/*')

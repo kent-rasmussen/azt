@@ -32,8 +32,8 @@ if platform.system() == 'Windows':
                 ]:
         TTFSearchPath.append(path)
 log.info(f"Looking for fonts in {TTFSearchPath}")
-for f in TTFSearchPath:
-    log.info(f"in {f} found {glob.glob(f)}")
+# for f in TTFSearchPath:
+#     log.info(f"in {f} found {glob.glob(f)}")
 def register_fonts():
     """Registers the specified font family if available."""
     if not REPORTLAB_AVAILABLE:

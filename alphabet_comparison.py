@@ -351,7 +351,7 @@ class PageSetup(ui.Window):
         
         # Load persisted settings (local)
         self.settings = self.load_settings()
-        self.title_var.set(self.settings.get('booklet_title', ''))
+        self.title_var.set(self.settings.get('booklet_title', 'Our Alphabet'))
         self.selected_cover_path = self.settings.get('cover_image', None)
         self.selected_logo_path = self.settings.get('logo_image', None)
         self.selected_logo_path = self.settings.get('logo_image', None)
@@ -493,6 +493,7 @@ class PageSetup(ui.Window):
         self.copyright_label.grid()
     def edit_copyright(self,event=None):
         self.copyright_label.grid_remove()
+        self.copyright_entry_widget['width']=len(self.copyright_var.get())+3
         self.copyright_config.grid()
         self.copyright_config.bind("<Return>", self.save_copyright)
     def save_title(self, event=None):
@@ -502,15 +503,16 @@ class PageSetup(ui.Window):
         self.title_label.bind("<Button-1>", self.edit_title)
     def edit_title(self,event=None):
         self.title_label.grid_remove()
+        self.title_entry_widget['width']=len(self.title_var.get())+3
         self.title_config.grid()
         self.title_config.bind("<Return>", self.save_title)
 
     def setup_ui(self):
         # Top Config Frame
         config_frame = ui.Frame(self.frame, r=0, c=0, sticky='ew', border=1, relief='groove')
-        
+        config_frame_cols=6
         # Row 0: Basic Config (Title)
-        title_grid={'r':0, 'c':0, 'columnspan':6, 'sticky':'w'}
+        title_grid={'r':0, 'c':0, 'columnspan':config_frame_cols, 'sticky':'ew'}
         self.title_config=ui.Frame(config_frame, **title_grid)
         ui.Label(self.title_config, text=_("Title:"), r=0, c=0)
         self.title_entry_widget = ui.EntryField(self.title_config, textvariable=self.title_var,
@@ -520,33 +522,32 @@ class PageSetup(ui.Window):
         self.title_label=ui.Label(config_frame, textvariable=self.title_var, 
                                  font='title', **title_grid)
         self.title_label.bind('<Button-1>',self.edit_title)
-        self.title_label.bind('<Button-1>',self.edit_title)
         self.save_title()
         
-        # Font Switcher
-        self.font_config = ui.Frame(config_frame, r=0, c=3)
-        self.font_btn = ui.Button(self.font_config, text=self.font_var.get(), command=self.toggle_font, r=0, c=0)
-
         # Row 1: Images
-        self.cover_config=ui.Frame(config_frame, r=1, c=1)
+        self.cover_config=ui.Frame(config_frame, r=1, c=1, sticky='ew')
         self.cover_btn = ui.Button(self.cover_config, command=self.open_cover_selector, 
                                 r=0, c=2)
         self.update_cover_button()
         
-        self.logo_config = ui.Frame(config_frame, r=1, c=2)
+        self.logo_config = ui.Frame(config_frame, r=1, c=2, sticky='ew')
         self.logo_btn = ui.Button(self.logo_config, command=self.open_logo_selector, r=0, c=0)
         self.update_logo_button()
 
         # Row 2: People/Text
-        self.contributors_config=ui.Frame(config_frame, r=1, c=3, sticky='w')
+        self.contributors_config=ui.Frame(config_frame, r=1, c=3, sticky='ew')
         ui.Button(self.contributors_config, text=_("Contributors")+'...', command=self.open_contributors, r=0, c=0)
         
-        self.desc_config = ui.Frame(config_frame, r=1, c=4, sticky='w')
+        self.desc_config = ui.Frame(config_frame, r=1, c=4, sticky='ew')
         ui.Button(self.desc_config, text=_("Description Text")+'...', command=self.open_description_editor, r=0, c=0)
 
+        # Font Switcher
+        self.font_config = ui.Frame(config_frame, r=1, c=5)
+        self.font_btn = ui.Button(self.font_config, text=self.font_var.get(), command=self.toggle_font, r=0, c=0)
+
         # Row 3: Copyright
-        copyright_grid={'r':3, 'c':1, 'sticky':'w'}
-        ui.Label(config_frame, text=_("© "), r=3, c=0, sticky='e')
+        copyright_grid={'r':3, 'c':1, 'columnspan':config_frame_cols-1, 'sticky':'ew'}
+        ui.Label(config_frame, text=_("© "), r=3, c=0, sticky='ew')
         self.copyright_config=ui.Frame(config_frame, **copyright_grid)
         self.copyright_entry_widget = ui.EntryField(self.copyright_config, textvariable=self.copyright_var, width=20, r=0, c=1)
         self.copyright_entry_widget.bind('<Return>', self.save_copyright)
@@ -643,7 +644,7 @@ class PageSetup(ui.Window):
             
         pages=[prepare_data(i) for i in self.pageFrames if i.glyph]
         page_names=[i['symbol'] for i in pages]
-        filename = '_'.join([_("Booklet"),*page_names,f'[{self.db.analang}].pdf'])
+        filename = '_'.join([_("Booklet"),*page_names,f'[{self.db.analang}]{self.font_var.get()}.pdf'])
         filepath = file.getdiredurl(self.db.reportdir, filename)
         
         # Gather all needed info
