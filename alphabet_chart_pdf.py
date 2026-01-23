@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 import os
-import logging
+import logsetup
+import glob
 import platform
-log = logging.getLogger(__name__)
-
+log = logsetup.getlog(__name__)
+logsetup.setlevel('INFO')
 try:
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import A4, letter, landscape
@@ -26,6 +27,9 @@ if platform.system() == 'Windows':
     for path in [r'C:\Windows\Fonts',
                 r'C:\Users\User\AppData\Local\Microsoft\Windows\Fonts']:
         TTFSearchPath.append(path)
+log.info(f"Looking for fonts in {TTFSearchPath}")
+for f in TTFSearchPath:
+    log.info(f"in {f} found {glob.glob(f)}")
 def register_fonts():
     """Registers the specified font family if available."""
     if not REPORTLAB_AVAILABLE:
