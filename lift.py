@@ -4624,7 +4624,7 @@ if __name__ == '__main__':
             lifts[filename]=LiftXML(filename)
         for filename in filenames:
             lifts[filename].report_counts()
-    code=103#240#242#243 #100,101,102,231,253,255
+    code=100 #103#240#242#243 #100,101,102,231,253,255
     filename=f"/home/kentr/Assignment/Tools/WeSay/lol-x-his30{str(code)}/"
     filename+=f"lol-x-his30{str(code)}.lift"
     lift=LiftXML(filename)

@@ -61,8 +61,8 @@ class OrderAlphabet(ui.Window):
                     'image':self.exobjs[g].image.scaled,
                 }
         elif self.exids[g]:
-            log.error(_("self.exids is there, but self.exobjs isn't? "
-                    f"{self.exobjs=} {self.exids=}"))
+            log.error(_("self.exids for ‘{g}’ is there, but self.exobjs isn't? "
+                    "{objs} {ids}").format(g=g,objs=self.exobjs,ids=self.exids))
         else:
             return {'text':"?"}
     def column_config(self,change,event=None):
@@ -458,7 +458,8 @@ class OrderAlphabet(ui.Window):
         if 'alphabet' in self.program:
             gd={str(i) for j in self.program['alphabet'].glyphdict().values() for i in j}
         #pick up new letters, limit to actual but keep order
-            self.order=sorted(gd-set(self.order))+[str(i) for i in self.order if i in gd] 
+            self.order=sorted(gd-set([str(i) for i in self.order])
+                            )+[str(i) for i in self.order if i in gd] 
         log.info(f"Using this alphabetical order: {self.order}")
         log.info(f"Using these exids: {self.exids}")
         if self.exids:

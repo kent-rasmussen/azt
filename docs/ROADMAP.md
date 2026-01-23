@@ -1,4 +1,27 @@
 #Roadmap
+
+## Large Structural Changes for Better Future Development
+
+- Separate into their own module(s):
+    - All UI elements
+    - Analysis (maybe confirm this still works first?)
+
+- Separate out Backend from Frontend, especially in main.py
+    - Separate out:
+        - sort
+        - verify
+        - join 
+- Separate out settings
+    - convert all dictionary settings to json, perhaps in their own files
+        - make sure all integers are converted to strings internally
+    - make modifications more straightforward
+    - make sourcing settings from different modules possible
+    - make path to conversion for legacy settings, removable
+
+- distinguish between ErrorNotice and Notice (or InfoNotice?)
+
+## Other Changes
+
 check out objects with .text attrs, vs returning text.
 
 form values don't seem to keep in step with the consonant and vowel transcriptions. Change one, then return to it, and the forms are not found.
