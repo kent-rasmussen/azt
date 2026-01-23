@@ -2739,8 +2739,12 @@ msgid "NOTICE: we just matched (to remove) a set of "
 msgstr "AVIS : nous avons juste mis en correspondance (pour supprimer) un ensemble de "
 
 #: /home/kentr/bin/raspy/azt/main.py:12544
+
 msgid "Name"
 msgstr "Nom"
+
+msgid "Name New"
+msgstr "Nommer Nouveau"
 
 #: /home/kentr/bin/raspy/azt/parser.py:618
 msgid "Need one of sense, senseid, or entry!"
@@ -5694,8 +5698,8 @@ msgstr "Par quelle lettre votre sens commence-t-elle?"
 
 #: /home/kentr/bin/raspy/azt/main.py:12541
 #, python-brace-format
-msgid "What letter(s) do you want to use for this {sg} group?"
-msgstr "Quelles lettres voulez-vous utiliser pour ce groupe {sg}?"
+msgid "What letter(s) will you use for this {sg} group?"
+msgstr "Quelle(s) lettre(s) utiliserez pour ce groupe de {sg}?"
 
 #: /home/kentr/bin/raspy/azt/main.py:4572
 msgid "What level of parsing match do you want the parser to confirm with you?"

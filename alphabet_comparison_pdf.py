@@ -288,52 +288,66 @@ def create_comparison_chart(filename, *data,
         if page_type == 'cover':
             # --- Cover Page ---
             # Title
-            title_y = height - margin - 200
-            c.setFont(f"{font_name}-Bold", 36)
-            c.drawCentredString(base_x + half_width/2, title_y, data.get('title', ''))
+            # Layout:
+            # We want Logo above Title.
+            # Current title_y starts at height - margin - 200.
+            # We preserve this to leave room at top.
             
-            # Logo (Above Title)
+            title_top_y = height - margin - 200
+            
+            # --- Draw Logo (Above Title) ---
             logo_path = data.get('logo')
             if logo_path and os.path.exists(logo_path):
-                if logo_path.lower().endswith('.svg'):
-                    # Center above title
-                    # title_y defined above
-                    logo_bottom_y = title_y + 40
-                    # For SVG, we pass x as center if center=True?
-                    # My draw_svg helper implementation needs defined behavior.
-                    # Let's assume draw_svg(canvas, path, x, y, width=avail_w, height=avail_h, center=False)
-                    # draws at x,y (bottom-left).
-                    
+                # Available space for logo: from title_top_y up to top margin
+                # top margin Y = height - margin
+                # Leave a little padding (10) above title
+                logo_space_bottom = title_top_y + 20
+                logo_space_top = height - margin - 10
+                logo_space_h = logo_space_top - logo_space_bottom
+                
+                if logo_space_h > 20: # If we have decent space
                     l_avail_w = half_width - (margin * 2)
-                    l_avail_h = 100
                     
-                    # We want to center it.
-                    # draw_svg helper supports center=True.
-                    # We pass the center X coordinate.
-                    draw_svg(c, logo_path, base_x + half_width/2, logo_bottom_y + 10, 
-                             width=l_avail_w, height=l_avail_h, center=True)
-                    
-                else:
-                    try:
-                        l_img = ImageReader(logo_path)
-                        lw, lh = l_img.getSize()
-                        l_aspect = lh / float(lw)
-                        # Limit logo size
-                        l_avail_w = half_width - (margin * 2)
-                        l_avail_h = 100 # Adjusted max height
-                        
-                        l_disp_w = l_avail_w
-                        l_disp_h = l_disp_w * l_aspect
-                        if l_disp_h > l_avail_h:
-                            l_disp_h = l_avail_h
-                            l_disp_w = l_disp_h / l_aspect
-                        
-                        # Center above title
-                        logo_bottom_y = title_y + 40 
-                        
-                        c.drawImage(l_img, base_x + (half_width - l_disp_w)/2, logo_bottom_y + 10, width=l_disp_w, height=l_disp_h, mask='auto', preserveAspectRatio=True)
-                    except Exception as e:
-                        log.error(f"Error drawing logo {logo_path}: {e}")
+                    if logo_path.lower().endswith('.svg'):
+                        # Center in the available vertical space
+                        draw_svg(c, logo_path, base_x + half_width/2, logo_space_bottom + (logo_space_h/2), 
+                                 width=l_avail_w, height=logo_space_h, center=True)
+                    else:
+                        try:
+                            l_img = ImageReader(logo_path)
+                            lw, lh = l_img.getSize()
+                            l_aspect = lh / float(lw)
+                            
+                            l_disp_w = l_avail_w
+                            l_disp_h = l_disp_w * l_aspect
+                            if l_disp_h > logo_space_h:
+                                l_disp_h = logo_space_h
+                                l_disp_w = l_disp_h / l_aspect
+                            
+                            # Center horizontally
+                            lx = base_x + (half_width - l_disp_w) / 2
+                            # Center vertically in the space
+                            ly = logo_space_bottom + (logo_space_h - l_disp_h)/2
+                            
+                            c.drawImage(l_img, lx, ly, width=l_disp_w, height=l_disp_h, mask='auto')
+                        except Exception as e:
+                            log.error(f"Error drawing logo: {e}")
+
+            # --- Draw Title ---
+            # Title starts at title_top_y and goes DOWN
+            c.setFont(f"{font_name}-Bold", 36)
+            title_text = data.get('title', '')
+            
+            from reportlab.lib.utils import simpleSplit
+            available_width = half_width - (2 * margin)
+            lines = simpleSplit(title_text, f"{font_name}-Bold", 36, available_width)
+            
+            current_y = title_top_y
+            line_height = 40
+            
+            for line in lines:
+                c.drawCentredString(base_x + half_width/2, current_y, line)
+                current_y -= line_height
 
             # Cover Image (Below Title)
             img_path = data.get('image')
@@ -341,7 +355,12 @@ def create_comparison_chart(filename, *data,
                 img = ImageReader(img_path) if not img_path.lower().endswith('.svg') else None
                 
                 # Area below title
-                start_y = title_y - 20
+                # current_y is where the last line was drawn minus line_height.
+                # So the bottom of the text is roughly current_y + line_height (since it decreased).
+                # Actually, in the loop: draw at current_y, then decrement.
+                # So current_y is now one line_height BELOW the last line baseline.
+                # We can essentially use current_y as the start for the next section.
+                start_y = current_y - 20
                 avail_h = start_y - margin
                 avail_w = half_width - (margin * 2)
 

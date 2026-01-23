@@ -384,15 +384,18 @@ class OrderAlphabet(ui.Window):
     def set_up_copyright(self):
         self.chart_copyright=ui.StringVar()
         # Init Copyright from settings
+        copyright_grid={'c':1}
         if 'alphabet_copyright' in self.program['settings'].settings['alphabet']['attributes']:
              self.chart_copyright.set(self.program['settings'].alpha_copyright())
         
         self.copyrightframe=ui.Frame(self.frame, r=1, c=1, sticky='ew')
         ui.Label(self.copyrightframe, text='© ', font="small", c=0)
-        self.copyright_label=ui.Label(self.copyrightframe, textvariable=self.chart_copyright, font="small", c=1)
+        self.copyright_label=ui.Label(self.copyrightframe, 
+                                        textvariable=self.chart_copyright, 
+                                        font="small", **copyright_grid)
         self.copyright_label.bind("<Button-1>",self.edit_copyright)
         
-        self.copyright_entry=ui.Frame(self.copyrightframe, c=1)
+        self.copyright_entry=ui.Frame(self.copyrightframe, **copyright_grid)
         # ui.Label(self.copyright_entry, text=_("Copyright:"), c=1)
         self.copyright_entry_field=ui.EntryField(self.copyright_entry,
                                                 textvariable=self.chart_copyright,
@@ -404,14 +407,14 @@ class OrderAlphabet(ui.Window):
                                              
     def set_up_chart_title(self):
         self.chart_title=ui.StringVar() #set below, in _set_chart_title
-
+        title_grid={'r':0, 'c':1}
         self.titleframe=ui.Frame(self.frame, r=0, c=1, sticky='ew')
         self.title_label=ui.Label(self.titleframe, textvariable=self.chart_title, 
-                                    font='title', r=0, c=1)
+                                    font='title', **title_grid)
         self.title_label.bind("<Button-1>",self.edit_title)
 
         # Entry Fields (Hidden by default)
-        self.title_entry=ui.Frame(self.titleframe,r=2, c=1)
+        self.title_entry=ui.Frame(self.titleframe, **title_grid)
         self.title_entry_field=ui.EntryField(self.title_entry, 
                                             textvariable=self.chart_title,
                                             width=len(self.chart_title.get()),

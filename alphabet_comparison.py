@@ -32,6 +32,23 @@ SETTINGS_FILE = "alphabet_comparison_settings.json"
 
 class ImageSelector(ui.Window):
     def select_image(self, path):
+        # Ensure image is in self.target_dir
+        if self.target_dir and os.path.dirname(path) != self.target_dir:
+            try:
+                if not os.path.exists(self.target_dir):
+                    os.makedirs(self.target_dir)
+                filename = os.path.basename(path)
+                target_path = os.path.join(self.target_dir, filename)
+                
+                # Copy if not same
+                if path != target_path:
+                    import shutil
+                    shutil.copy2(path, target_path)
+                    log.info(f"Copied {path} to {target_path}")
+                    path = target_path
+            except Exception as e:
+                log.error(f"Could not copy selected image to target dir: {e}")
+                
         log.info(f"Selected image: {path}")
         self.selected_image = path
         self.destroy()
@@ -51,85 +68,83 @@ class ImageSelector(ui.Window):
         )
         
         if file_path and os.path.exists(file_path):
-            # Target directory
-            # self.image_dir_path is stored during init now
-            if not getattr(self, 'image_dir_path', None):
-                 # Fail safe if init changed
-                 possible_roots = [
-                    os.path.dirname(__file__),
-                    os.getcwd(),
-                 ]
-                 for root in possible_roots:
-                    candidate = os.path.join(root, 'images', 'toselect', self.folder_name)
-                    if os.path.exists(os.path.dirname(candidate)): # at least parent exists
-                         self.image_dir_path = candidate
-                         break
-            
-            if self.image_dir_path:
-                if not os.path.exists(self.image_dir_path):
-                    try:
-                        os.makedirs(self.image_dir_path)
-                    except Exception as e:
-                        log.error(f"Could not create directory {self.image_dir_path}: {e}")
-                        return
+             self.select_image(file_path)
 
-                target_name = os.path.basename(file_path)
-                target_path = os.path.join(self.image_dir_path, target_name)
-                
-                # Copy file
-                try:
-                    shutil.copy2(file_path, target_path)
-                    log.info(f"Copied {file_path} to {target_path}")
-                    self.select_image(target_path)
-                except Exception as e:
-                    log.error(f"Error copying file: {e}")
-                    ui.messagebox.showerror(_("Error"), f"Could not copy file: {e}")
-
-    def __init__(self, parent, title="Select Image", folder="covers"):
+    def __init__(self, parent, title="Select Image", folder="covers", base_dir=None, exclude=None):
         super().__init__(parent, title=title)
         self.selected_image = None
         self.folder_name = folder
         
-        # Find images
-        # Try to locate the directory
+        # Target directory (Project Data)
+        # We treat base_dir AS the target directory (e.g. .../images/booklet)
+        self.target_dir = base_dir 
+        if self.target_dir and not os.path.exists(self.target_dir):
+             try:
+                 os.makedirs(self.target_dir)
+             except:
+                 pass
+
+        self.images = []
+        
+        # 1. Scan Target Directory (Project specific)
+        if self.target_dir and os.path.exists(self.target_dir):
+            types = ('*.jpg', '*.jpeg', '*.png', '*.svg')
+            for t in types:
+                self.images.extend(glob.glob(os.path.join(self.target_dir, t)))
+                
+        # 2. Scan Program Defaults
         possible_roots = [
             os.path.dirname(__file__),
             os.getcwd(),
-            os.path.join(file.gethome(), '.gemini'), # fallback?
+            os.path.join(file.gethome(), '.gemini'), 
         ]
         
-        image_dir = None
+        program_dir = None
         for root in possible_roots:
             candidate = os.path.join(root, 'images', 'toselect', folder)
             if os.path.exists(candidate):
-                image_dir = candidate
+                program_dir = candidate
                 break
         
-        # Fallback search if not found directly
-        if not image_dir:
-             # Just try current directory if all else fails
-             image_dir = f"images/toselect/{folder}"
+        if not program_dir:
+             program_dir = f"images/toselect/{folder}"
         
-        self.image_dir_path = image_dir # Store for browse
+        if os.path.exists(program_dir):
+             types = ('*.jpg', '*.jpeg', '*.png', '*.svg')
+             for t in types:
+                 found = glob.glob(os.path.join(program_dir, t))
+                 # Only add if not already in list (by filename?) 
+                 # Actually, allow distinct paths. Visuals will show dupes if same file exists in both.
+                 # Prioritize project images (already added).
+                 self.images.extend(found)
+        
+        # Filter exclusions
+        if exclude:
+            # Normalize for comparison? Just checking basenames or full paths might be tricky 
+            # if one is absolute and other is relative or different dirs.
+            # Let's assume absolute paths if possible, or basenames if that's safer for "same image".
+            # User request: "if a file is selected for the logo, filter it out from the cover selection"
+            # It's likely the same file if it's in the booklet dir.
+            # Let's filter by checking if path is in exclude list.
+            filtered = []
+            exclude_set = set(os.path.abspath(p) for p in exclude if p)
+            # Also exclude by filename if it helps avoid visual duplicates?
+            # But the requirement is about the LOGO file.
+            
+            for img in self.images:
+                abs_img = os.path.abspath(img)
+                if abs_img not in exclude_set:
+                     filtered.append(img)
+            self.images = filtered
 
-        self.images = []
-        if os.path.exists(image_dir):
-            types = ('*.jpg', '*.jpeg', '*.png', '*.svg')
-            for t in types:
-                self.images.extend(glob.glob(os.path.join(image_dir, t)))
-        
-        # Fallback to general 'images/toselect' if specific folder empty/missing
-        if not self.images:
-            fallback_dir = os.path.dirname(image_dir)
-            if os.path.exists(fallback_dir) and folder != 'covers': # covers usually strict
-                 for t in ('*.jpg', '*.jpeg', '*.png', '*.svg'):
-                     self.images.extend(glob.glob(os.path.join(fallback_dir, t)))
+        # Compatibility/Fallback for image_dir_path usage in browse (though browse now calls select_image)
+        self.image_dir_path = self.target_dir if self.target_dir else program_dir
 
         # Browse Button at top
         ui.Button(self.frame, text=_("Browse for other file..."), command=self.browse_and_select, r=0, c=0, colspan=3, sticky='ew')
-
+        
         if not self.images:
-            ui.Label(self.frame, text=_("No images found in {dir}").format(dir=image_dir), r=1, c=0)
+            ui.Label(self.frame, text=_("No images found."), r=1, c=0)
             return
 
         # Grid view
@@ -361,7 +376,21 @@ class PageSetup(ui.Window):
                                 column=self.n_pages()%self.fpr, 
                                 )
     def open_cover_selector(self):
-        w = ImageSelector(self, title=_("Select Cover Image"), folder="covers")
+        # Calculate base dir: reportdir/../images/booklet
+        # This is where we want to save selected images
+        base_dir = os.path.join(os.path.dirname(self.db.reportdir), 'images', 'booklet')
+        # We pass this as base_dir. ImageSelector will treat this as target.
+        # We pass folder="covers" so it looks in program's images/toselect/covers
+        # and copies TO base_dir.
+        # Wait, my ImageSelector logic uses base_dir as target. 
+        # And searches program's defaults based on 'folder'.
+        # So passing folder="covers" is correct for finding defaults.
+        # Passing base_dir=.../images/booklet is correct for target.
+        exclude = []
+        if self.selected_logo_path:
+             exclude.append(self.selected_logo_path)
+             
+        w = ImageSelector(self, title=_("Select Cover Image"), folder="covers", base_dir=base_dir, exclude=exclude)
         w.wait_window(w)
         if w.selected_image:
             self.selected_cover_path = w.selected_image
@@ -383,12 +412,43 @@ class PageSetup(ui.Window):
             self.cover_btn.configure(text=_("Select Cover"), image='', compound='none')
 
     def open_logo_selector(self):
-        w = ImageSelector(self, title=_("Select Logo"), folder="logos")
-        w.wait_window(w)
-        if w.selected_image:
-            self.selected_logo_path = w.selected_image
-            self.update_logo_button()
-            self.save_settings_file() # Save logo choice
+        try:
+            from tkinter import filedialog
+            import shutil
+        except ImportError:
+            return
+
+        file_path = filedialog.askopenfilename(
+            parent=self,
+            title=_("Select Logo File"),
+            filetypes=[("Image files", "*.jpg *.jpeg *.png *.svg"), ("All files", "*.*")]
+        )
+        
+        if file_path and os.path.exists(file_path):
+             # Target dir
+             base_dir = os.path.join(os.path.dirname(self.db.reportdir), 'images', 'booklet')
+             if not os.path.exists(base_dir):
+                 try:
+                     os.makedirs(base_dir)
+                 except:
+                     pass
+             
+             filename = os.path.basename(file_path)
+             target_path = os.path.join(base_dir, filename)
+             
+             try:
+                 if file_path != target_path:
+                     shutil.copy2(file_path, target_path)
+                     log.info(f"Copied logo to {target_path}")
+                     self.selected_logo_path = target_path
+                 else:
+                     self.selected_logo_path = file_path
+                     
+                 self.update_logo_button()
+                 self.save_settings_file()
+             except Exception as e:
+                 log.error(f"Error copying logo: {e}")
+                 ui.messagebox.showerror(_("Error"), f"Could not copy file: {e}")
 
     def update_logo_button(self):
         if self.selected_logo_path:
@@ -439,40 +499,44 @@ class PageSetup(ui.Window):
         config_frame = ui.Frame(self.frame, r=0, c=0, sticky='ew', border=1, relief='groove')
         
         # Row 0: Basic Config (Title)
-        self.title_config=ui.Frame(config_frame, r=0, c=0, columnspan=2, sticky='w')
+        title_grid={'r':0, 'c':0, 'columnspan':6, 'sticky':'w'}
+        self.title_config=ui.Frame(config_frame, **title_grid)
         ui.Label(self.title_config, text=_("Title:"), r=0, c=0)
-        ui.EntryField(self.title_config, textvariable=self.title_var,
+        self.title_entry_widget = ui.EntryField(self.title_config, textvariable=self.title_var,
                         width=len(self.title_var.get())+3, r=0, c=1)
+        self.title_entry_widget.bind('<Return>', self.save_title)
         ui.Button(self.title_config,text=_("OK"),command=self.save_title,r=0, c=2)
         self.title_label=ui.Label(config_frame, textvariable=self.title_var, 
-                                 font='title', r=0, c=0, columnspan=2, sticky='w')
+                                 font='title', **title_grid)
         self.title_label.bind('<Button-1>',self.edit_title)
         self.save_title()
 
         # Row 1: Images
-        self.cover_config=ui.Frame(config_frame, r=1, c=0)
+        self.cover_config=ui.Frame(config_frame, r=1, c=1)
         self.cover_btn = ui.Button(self.cover_config, command=self.open_cover_selector, 
                                 r=0, c=2)
         self.update_cover_button()
         
-        self.logo_config = ui.Frame(config_frame, r=1, c=1)
+        self.logo_config = ui.Frame(config_frame, r=1, c=2)
         self.logo_btn = ui.Button(self.logo_config, command=self.open_logo_selector, r=0, c=0)
         self.update_logo_button()
 
         # Row 2: People/Text
-        self.contributors_config=ui.Frame(config_frame, r=2, c=0, sticky='w')
-        ui.Button(self.contributors_config, text=_("Contributors..."), command=self.open_contributors, r=0, c=0)
+        self.contributors_config=ui.Frame(config_frame, r=1, c=3, sticky='w')
+        ui.Button(self.contributors_config, text=_("Contributors")+'...', command=self.open_contributors, r=0, c=0)
         
-        self.desc_config = ui.Frame(config_frame, r=2, c=1, sticky='w')
-        ui.Button(self.desc_config, text=_("Description Text..."), command=self.open_description_editor, r=0, c=0)
+        self.desc_config = ui.Frame(config_frame, r=1, c=4, sticky='w')
+        ui.Button(self.desc_config, text=_("Description Text")+'...', command=self.open_description_editor, r=0, c=0)
 
         # Row 3: Copyright
+        copyright_grid={'r':3, 'c':1, 'sticky':'w'}
         ui.Label(config_frame, text=_("© "), r=3, c=0, sticky='e')
-        self.copyright_config=ui.Frame(config_frame, r=3, c=1, sticky='w')
-        ui.EntryField(self.copyright_config, textvariable=self.copyright_var, width=20, r=0, c=1)
+        self.copyright_config=ui.Frame(config_frame, **copyright_grid)
+        self.copyright_entry_widget = ui.EntryField(self.copyright_config, textvariable=self.copyright_var, width=20, r=0, c=1)
+        self.copyright_entry_widget.bind('<Return>', self.save_copyright)
         ui.Button(self.copyright_config,text=_("OK"),command=self.save_copyright,r=0, c=2)
         self.copyright_label=ui.Label(config_frame, textvariable=self.copyright_var,
-                                    r=3, c=1, sticky='w')
+                                    **copyright_grid)
         self.copyright_label.bind('<Button-1>',self.edit_copyright)
         self.save_copyright()
 
