@@ -1507,11 +1507,13 @@ class Button(Childof,GridinGridded,Text,UI,tkinter.Button):
         return kwargs
     def post_tk_init(self):
         super().post_tk_init()
-        self.bind("<Enter>", func=lambda e: self.config(
-        background=self.theme.activebackground))
-
-        self.bind("<Leave>", func=lambda e: self.config(
-            background=self.theme.background))
+        try:
+            self.bind("<Enter>", func=lambda e: self.config(
+                background=self.theme.activebackground))
+            self.bind("<Leave>", func=lambda e: self.config(
+                background=self.theme.background))
+        except _tkinter.TclError as e:
+            log.info(f"Error in binding enter and leave: {e}")
     def nofn(self):
         pass
     def __init__(self, parent, **kwargs):
@@ -2880,6 +2882,7 @@ def testapp(program):
                 print(m)
     r.mainloop()
 if __name__ == '__main__':
+    global _
     try: #translation
         _
     except NameError:

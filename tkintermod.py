@@ -29,4 +29,5 @@ class TkErrorCatcher:
             print(f"not raising {msg}")
             # raise SystemExit(msg)
         except Exception as err:
-            raise err
+            print(f"not raising Exception {err}")
+            # raise err
