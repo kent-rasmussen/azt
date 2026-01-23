@@ -2,7 +2,7 @@
 # coding=UTF-8
 import os
 import logging
-
+import platform
 log = logging.getLogger(__name__)
 
 try:
@@ -22,6 +22,10 @@ except ImportError:
 # enable font subdirectories:
 for i in list(TTFSearchPath):
     TTFSearchPath.append(i+'/*')
+if platform.system() == 'Windows':
+    for path in [r'C:\Windows\Fonts',
+                r'C:\Users\User\AppData\Local\Microsoft\Windows\Fonts']:
+        TTFSearchPath.append(path)
 def register_fonts():
     """Registers the specified font family if available."""
     if not REPORTLAB_AVAILABLE:
