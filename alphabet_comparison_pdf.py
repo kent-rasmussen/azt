@@ -3,6 +3,7 @@
 import os
 import random
 import logging
+import platform
 try:
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import A4, letter, landscape
@@ -28,7 +29,7 @@ if platform.system() == 'Windows':
                     r'\AppData\Local\Microsoft\Windows\Fonts'
                     ])
             ]:
-    TTFSearchPath.append(path)
+        TTFSearchPath.append(path)
 try:
     for i in list(TTFSearchPath):
         TTFSearchPath.append(i+'/*')
