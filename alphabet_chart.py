@@ -534,16 +534,16 @@ class SelectFromPicturableWords(ui.Window):
                     if i.entry.lcvalue()
                     if i.illustrationvalue()
                     # if glyph in i.entry.lcvalue()
-                    if glyph in i.entry.lc.annotationvaluedictbylang(analang).values()
                     if analang in i.entry.lc.forms
+                    if glyph in i.entry.lc.annotationvaluedictbylang(analang).values()
                     ]
         if not self.examples:
             examples=[i for i in db.senses
                     # if i.psvalue() == ps
                     # if i.entry.lcvalue()
                     # if i.illustrationvalue()
-                    if glyph in i.entry.lc.annotationvaluedictbylang(analang).values()
                     if analang in i.entry.lc.forms
+                    if glyph in i.entry.lc.annotationvaluedictbylang(analang).values()
                     ]
             log.info(f"No examples found for {glyph} with images; add to "
                     f"{[i.id for i in examples]}")
