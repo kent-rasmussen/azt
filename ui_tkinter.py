@@ -970,7 +970,10 @@ class Waitable(Exitable):
                     # self.state('withdrawn')
                     # log.info(f"Showing after wait {self.state()=}")
                     r=self.update()
-                    rr=self.deiconify()
+                    try:
+                        rr=self.deiconify()
+                    except:
+                        pass
                     # log.info(f"Showed after wait {self.state()=} {r=} {rr=}")
                 # else:
                 #     log.info(f"Not showing after wait {self.state()=}")
