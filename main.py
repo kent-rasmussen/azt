@@ -2250,6 +2250,9 @@ class Settings(object):
             if file.exists(savefile): #Keep around .ini and .dat
                 for r in self.repo:
                     self.repo[r].add(savefile)
+        #This line as is causes merge conflicts unnecessarilyː
+        # self.repo_commit() #this will be taken up later, or else done again
+    def repo_commit(self):
         for r in self.repo:
             self.repo[r].commit()
     def moveattrstoobjects(self):
@@ -6025,6 +6028,8 @@ class TaskChooser(TaskDressing):
             if self.towrite:
                 log.info(_("Found previous request to write; doing again."))
                 self._write()
+            else:
+                program['settings'].repo_commit()
         else:
             # Otherwise check again later.
             # log.info("schedule_write_check writing to lift.")
@@ -16417,9 +16422,10 @@ class Repository(object):
             remotes=self.findpresentremotes() #do once
         if not remotes and not noclone:
             self.clonetoUSB()
+        r=False
         if not nocommit:
             r=self.commit() #should always before pulling, at least here
-        if (r|nocommit):
+        if nocommit|r:
             r=self.pull(remotes)
         if r:
             r=self.push(remotes)
@@ -16730,7 +16736,7 @@ class Repository(object):
         for x in self.ignorelist():
             self.ignore(x)
         self.add(self.ignorefile)
-        self.commit()
+        # self.commit() #unnecessary on most occasions, can cause merge conflicts
     def getignorecontents(self):
         #This reads file contents to attribute
         try: #in case the file doesn't exist yet
