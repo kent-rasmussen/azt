@@ -10362,7 +10362,8 @@ class Sort(object):
                                         sort_immediately=self.group)
     def sort_on_group_by_item(self,item):
         kwargs=program['alphabet'].parse_verificationcode(item)
-        log.info(_("Found a group that needs sorting ({item}); switch to sort on it.").format(item))
+        log.info(_("Found a group that needs sorting ({item}); switch to sort on it."
+                ).format(item=item))
         program['params'].check(kwargs.get('check'))
         program['slices'].ps(kwargs.get('ps'))
         program['slices'].profile(kwargs.get('profile'))
