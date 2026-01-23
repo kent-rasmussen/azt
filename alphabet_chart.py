@@ -61,8 +61,8 @@ class OrderAlphabet(ui.Window):
                     'image':self.exobjs[g].image.scaled,
                 }
         elif self.exids[g]:
-            log.error(_("self.exids for ‘{g}’ is there, but self.exobjs isn't? "
-                    "{objs} {ids}").format(g=g,objs=self.exobjs,ids=self.exids))
+            log.error(_("self.exids for ‘{g}’ is there ({i}), but self.exobjs isn't? "
+                    "{objs} {ids}").format(g=g,i=self.exids[g],objs=self.exobjs,ids=self.exids))
         else:
             return {'text':"?"}
     def column_config(self,change,event=None):
