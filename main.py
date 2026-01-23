@@ -23,7 +23,7 @@ import platform
 program['hostname']=platform.uname().node
 import file
 if file.getfile(__file__).parent.parent.stem == 'raspy': # if program['hostname'] == 'karlap':
-    program['testing']=True #eliminates Error screens and zipped logs
+    # program['testing']=True #eliminates Error screens and zipped logs and repo commits
     program['production']=True #True for making screenshots (default theme)
     me=True
     loglevel='INFO'
@@ -6435,6 +6435,8 @@ class Alphabet():
         log.info(_("Alphabet.rm_glyph_member done."))
     def mark_glyph_done(self,glyph,cvt):
         """Mark Verified"""
+        if glyph in ['NA']:
+            ErrorNotice("Never mark NA glyphs done!")
         d=self.glyphdict()
         d[cvt].add(glyph)
         log.info(_("‘{glyph}’ added to verified list").format(glyph=glyph))
@@ -6537,6 +6539,9 @@ class Alphabet():
         2. We don't want to kick out groups that are already there.
         Let the user decide to do either, if necessary.        """
         glyph=self.parse_verificationcode(item)['group']
+        if glyph in ['NA']: #just do this; no glyph for NA groups!
+            self.mark_item_glyph(item,glyph) 
+            return
         if glyph in self.conflicts and item in self.conflicts[glyph]:
             log.error("Not presorting, since it looks like we kicked this one out already.")
             return
@@ -6587,6 +6592,8 @@ class Alphabet():
             self.remove_item_from_glyph(i)
         return recurring_conflicts
     def mark_item_glyph(self,item,glyph):#maybe move to Alphabet Sort
+        if self.parse_verificationcode(item)['group'] in ['NA'] and glyph not in ['NA']:
+            ErrorNotice("Never mark NA sort groups other than in NA glyph!")
         self.rm_glyph_member(item) # in case elsewhere
         recurring_conflicts=self.remove_conflicting_items(item,glyph) #other group from same check
         self.add_glyph_member(item,glyph)
@@ -6983,6 +6990,9 @@ class Segments(Senses):
         would become Noun_CVCVC_lc_V1_ee, which already exists, stop. 
         """
         for item in gm[glyph]:
+            #groups must be sorted before then can belong to a glyph:
+            if item.split('_')[-1] in ['NA']: 
+                continue
             if (item.split('_')[-1] != glyph and
                 newform(item) in [i for j in gm.values() for i in j]):
                 txt=_("Conflict: cannot rename ‘{item}’ to ‘{glyph}’; "
