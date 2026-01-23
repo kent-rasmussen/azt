@@ -1505,10 +1505,10 @@ class Button(Childof,GridinGridded,Text,UI,tkinter.Button):
     def post_tk_init(self):
         super().post_tk_init()
         self.bind("<Enter>", func=lambda e: self.config(
-        background=self.theme['activebackground']))
+        background=self.theme.activebackground))
 
         self.bind("<Leave>", func=lambda e: self.config(
-            background=self.theme['background']))
+            background=self.theme.background))
     def nofn(self):
         pass
     def __init__(self, parent, **kwargs):
