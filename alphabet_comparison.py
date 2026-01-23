@@ -354,11 +354,22 @@ class PageSetup(ui.Window):
         self.title_var.set(self.settings.get('booklet_title', ''))
         self.selected_cover_path = self.settings.get('cover_image', None)
         self.selected_logo_path = self.settings.get('logo_image', None)
+        self.selected_logo_path = self.settings.get('logo_image', None)
         self.description_var.set(self.settings.get('description_text', ''))
+        
+        self.font_var = ui.StringVar()
+        self.font_var.set(self.settings.get('booklet_font', 'Charis'))
 
         # UI Layout
         self.setup_ui()
         
+    def toggle_font(self):
+        current = self.font_var.get()
+        new = "Andika" if current == "Charis" else "Charis"
+        self.font_var.set(new)
+        self.font_btn.config(text=new)
+        self.save_settings_file()
+
     def n_pages(self):
         return len(self.pageframesFrame.winfo_children())-1
 
@@ -509,7 +520,12 @@ class PageSetup(ui.Window):
         self.title_label=ui.Label(config_frame, textvariable=self.title_var, 
                                  font='title', **title_grid)
         self.title_label.bind('<Button-1>',self.edit_title)
+        self.title_label.bind('<Button-1>',self.edit_title)
         self.save_title()
+        
+        # Font Switcher
+        self.font_config = ui.Frame(config_frame, r=0, c=3)
+        self.font_btn = ui.Button(self.font_config, text=self.font_var.get(), command=self.toggle_font, r=0, c=0)
 
         # Row 1: Images
         self.cover_config=ui.Frame(config_frame, r=1, c=1)
@@ -643,16 +659,20 @@ class PageSetup(ui.Window):
         # We'll pass it into options
         made_with = f"Made with {self.program['name']} ({self.program['url']})"
         
+        # Determine Font
+        font_name = getattr(self, 'font_var', ui.StringVar(value='Charis')).get()
+
         alphabet_comparison_pdf.create_comparison_chart(
-            filepath, *pages, 
-            prose_count=self.prose_count_var.get(),
-            title=title_text,
-            cover_image=self.selected_cover_path,
-            logo_image=self.selected_logo_path,
-            contributors=contributors_list,
-            description=description_text,
-            copyright_text=copyright_text,
-            made_with=made_with
+             filepath, *pages, 
+             prose_count=self.prose_count_var.get(),
+             title=title_text,
+             cover_image=self.selected_cover_path,
+             logo_image=self.selected_logo_path,
+             contributors=contributors_list,
+             description=description_text,
+             copyright_text=copyright_text,
+             made_with=made_with,
+             font_name=font_name
         )
         log.info(f"Generated {filepath}")
         
