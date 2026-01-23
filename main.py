@@ -6883,6 +6883,8 @@ class Segments(Senses):
             if not scvalue:
                 scvalue=True
                 program['settings'].setupCVrxs() #costly; only when needed!
+        def do_not_do_these(value,check=None):
+            return value in ['NA',None] or (check and check.isdigit()) or value.isdigit()
         form_ori=formvalue=sense.textvaluebyftypelang(self.ftype,self.analang)
         if not formvalue:
             log.info(_("updateformtoannotations didn't return a form value for "
@@ -6906,7 +6908,8 @@ class Segments(Senses):
                 else:
                     log.error(conflict_text)
                 return
-            elif value not in [None, 'NA']: #should I act on ''?
+            elif not do_not_do_these(value,check): 
+                #value not in [None, 'NA']: #should I act on ''?
                 formvalue=self.rxdict.update(formvalue,check,value)
                 #This should update formstosearch:
                 if formvalue != f:
@@ -6915,7 +6918,7 @@ class Segments(Senses):
                     maybe_add_polygraph(value)
         else: #update to all annotations
             for check,value in annodict.items():
-                if value in ['NA',None] or check.isdigit() or value.isdigit() :
+                if do_not_do_these(value,check):
                     continue #don't make changes for NA checks
                 elif self.check_with_conflicting_value(annodict,check):
                     if not self.updateconflictwarned:
@@ -6927,7 +6930,7 @@ class Segments(Senses):
                 else:
                     log.info(f"updateformtoannotations {check}={value},{formvalue}")
                     formvalue=self.rxdict.update(formvalue,check,value)
-                    # log.info(f"updateformtoannotations {check}={value},{formvalue}")
+                    log.info(f"updateformtoannotations {check}={value},{formvalue}")
         if not error:
             sense.textvaluebyftypelang(self.ftype,self.analang,formvalue)
             if form_ori != formvalue:
@@ -10558,6 +10561,10 @@ class Sort(object):
         if macrosort:
             recurring_conflicts=program['alphabet'].mark_item_glyph(item, category)
             if recurring_conflicts:
+                log.info("Recurring conflicts marking {item} into {category}: "
+                        "{recurring_conflicts}"
+                        "".format(item=item, category=category,
+                                    recurring_conflicts=recurring_conflicts))
                 kwargs=program['alphabet'].parse_verificationcode(item)
                 item_group=kwargs.pop('group')
             for i in recurring_conflicts:
@@ -10565,7 +10572,8 @@ class Sort(object):
                 program['status'].undistinguish((i_group,item_group),**kwargs)
                 program['status'].undistinguish((item_group,i_group),**kwargs)
             if recurring_conflicts:
-                self.maybesort(firstrun=True)
+                self.sort_on_group_by_item(item)
+                # self.maybesort(firstrun=True)
                 return
         else:
             self.marksortgroup(item, category, nocheck=True) # that marking worked
