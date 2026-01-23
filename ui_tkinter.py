@@ -1771,6 +1771,23 @@ class Window(Toplevel):
             self.frame=Frame(self.outsideframe, #border=5,
                             row=1, column=1, sticky='nsew',
                             )
+    def releasefullscreen(self,event=None):
+        self.attributes('-fullscreen', False)
+        self.bind('<Double-Button-1>', self.takefullscreen)
+    def takekioskscreen(self,event=None):
+        ##This provides a kiosk mode, with no window dressings and all
+        ##screen real estate used.
+        self.attributes('-fullscreen', True)
+        self.bind('<Double-Button-1>', self.releasefullscreen)
+        self.bind('<Escape>', self.releasefullscreen)
+    def takefullscreen(self,event=None):
+        #This maximizes window, though leaves dressing in place:
+        try:
+            self.wm_attributes('-zoomed', True)
+            self.bind('<Double-Button-1>', self.releasefullscreen)
+            self.bind('<Escape>', self.releasefullscreen)
+        except:
+            self.takekioskscreen()
     def __init__(self, parent, backcmd=False, exit=True, title="No Title Yet!",
                 choice=None, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)

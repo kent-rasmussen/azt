@@ -5279,44 +5279,10 @@ class TaskDressing(HasMenus,ui.Window):
         else:
             log.info(_("No final write to lift"))
         ui.Window.cleanup(self) #Exitable; currently does nothing else
-    def releasefullscreen(self,event=None):
-            self.attributes('-fullscreen', False)
-            self.bind('<Double-Button-1>', self.takefullscreen)
-    def takekioskscreen(self,event=None):
-        ##This provides a kiosk mode, with no window dressings and all
-        ##screen real estate used.
-        self.attributes('-fullscreen', True)
-        self.bind('<Double-Button-1>', self.releasefullscreen)
-    def takefullscreen(self,event=None):
-        #This maximizes window, though leaves dressing in place:
-        try:
-            self.wm_attributes('-zoomed', True)
-            self.bind('<Double-Button-1>', self.releasefullscreen)
-        except:
-            self.takekioskscreen()
     def getrunwindow(self,msg=None,title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,"
         but the attribute is still there after window has been killed, so we
         need to test for both."""
-        def releasefullscreen(event):
-            self.runwindow.attributes('-fullscreen', False)
-            self.runwindow.bind('<Double-Button-1>', takefullscreen)
-        def takekioskscreen(event):
-            ##This provides a kiosk mode, with no window dressings and all
-            ##screen real estate used.
-            self.runwindow.attributes('-fullscreen', True)
-            ##This seems the same as above, but doesn't remove on fullscreen=F:
-            # screen_width = program['root'].winfo_screenwidth()
-            # screen_height = program['root'].winfo_screenheight()
-            # self.runwindow.geometry(f"{screen_width}x{screen_height}+0+0")
-            self.runwindow.bind('<Double-Button-1>', releasefullscreen)
-        def takefullscreen(event):
-            #This maximizes window, though leaves dressing in place:
-            # self.runwindow.update_idletasks() #necessary?
-            # self.runwindow.attributes('-zoomed', True)
-            # seems the same as above:
-            self.runwindow.wm_attributes('-zoomed', True)
-            self.runwindow.bind('<Double-Button-1>', releasefullscreen)
         if title is None:
             title=(_("Run Window"))
         if self.exitFlag.istrue():
@@ -5324,8 +5290,7 @@ class TaskDressing(HasMenus,ui.Window):
         self.clear_runwindow()
         self.runwindow=ui.Window(self,title=title,withdrawn=True)
         self.runwindow.title(title)
-        takekioskscreen(None)
-        self.runwindow.bind('<Escape>', releasefullscreen)
+        self.runwindow.takekioskscreen()
         self.runwindow.cleanup=self.runwindowcleanup
         if msg: #withdraw one way or another, but just waitdone to return
             self.runwindow.wait(msg=msg,thenshow=True)
