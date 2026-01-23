@@ -16411,7 +16411,7 @@ class Repository(object):
         r=False
         if not nocommit:
             r=self.commit() #should always before pulling, at least here
-        if nocommit|r:
+        if nocommit|bool(r):
             r=self.pull(remotes)
         if r:
             r=self.push(remotes)
