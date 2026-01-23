@@ -2636,8 +2636,10 @@ class Settings(object):
     def alpha_order(self,value=[]):
         return program['alphabet'].order(value)
     def alpha_exids(self,value=dict()):
-        if value:
-            self._alphabet_exids=value
+        if value: #don't allow integer keys; load them first, converting, then
+            # overwrite if that string is elsewhere in the dict
+            self._alphabet_exids={str(k):value[k] for k in value if type(k) is int}
+            self._alphabet_exids.update({str(k):value[k] for k in value if type(k) is not int})
         return getattr(self,'_alphabet_exids',value)
     def alpha_ncolumns(self,value=0):
         if value:
