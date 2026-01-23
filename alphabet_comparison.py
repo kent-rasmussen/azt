@@ -522,8 +522,10 @@ class PageSetup(ui.Window):
         self.title_label=ui.Label(config_frame, textvariable=self.title_var, 
                                  font='title', **title_grid)
         self.title_label.bind('<Button-1>',self.edit_title)
-        self.save_title()
-        
+        if self.title_var.get():
+            self.save_title()
+        else:
+            self.edit_title()
         # Row 1: Images
         self.cover_config=ui.Frame(config_frame, r=1, c=1, sticky='ew')
         self.cover_btn = ui.Button(self.cover_config, command=self.open_cover_selector, 
