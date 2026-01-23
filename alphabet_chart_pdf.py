@@ -25,7 +25,7 @@ for i in list(TTFSearchPath):
     TTFSearchPath.append(i+'/*')
 if platform.system() == 'Windows':
     for path in [r'C:\Windows\Fonts',
-                r'C:\Users\User\AppData\Local\Microsoft\Windows\Fonts']:
+                r'C:\Users\{os.getlogin()}\AppData\Local\Microsoft\Windows\Fonts']:
         TTFSearchPath.append(path)
 log.info(f"Looking for fonts in {TTFSearchPath}")
 for f in TTFSearchPath:
