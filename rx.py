@@ -325,7 +325,7 @@ class RegexDict(object):
         #This needs to multiply as a unit, while getting each subpart separately:
         nocap={'nocapture':True}
         # one or more of the sout possiblities, be greedy
-        oneS=group(group(sout, **nocap) + '*' + group(sin, **nocap), **nocap)
+        oneS=group(group(sout, **nocap) + '*?' + group(sin, **nocap), **nocap)
         # log.info(f"oneS: {oneS}")
         #We need to keep each alternation set a unit, and keep all but last in \1
         if n-1:
@@ -334,7 +334,7 @@ class RegexDict(object):
             priors=''
         # only this one (last) group should ever capture:
         # one or more of the sout possiblities, be greedy
-        nS=group(priors + group(sout, **nocap) + '*') + group(sin)
+        nS=group(priors + group(sout, **nocap) + '*?') + group(sin)
         if nxisfinal:
             nS=anchor(nS,anchorend=True)
         else: #anchor the begining, not the end:
