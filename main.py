@@ -12845,12 +12845,12 @@ class TranscribeS(Transcribe,Segments):
             pady=10
         self.buttonframew=int(program['screenw']/3.5)
         title=[program['params'].cvtdict()[cvt]['sg'],_("letter")]
-        getformtext=[_("What letter(s) do you want to use for this {sg} "
+        getformtext=[_("What letter(s) will you use for this {sg} "
                         "group?").format(sg=program['params'].cvtdict()[cvt]['sg'])]
         if self.group.isdigit():
-            title.insert(0,_("Name"))
-            getformtext.append(_("Because this is a new group, you need to give it "
-                            "some name now."))
+            title.insert(0,_("Name New"))
+            # getformtext.append(_("Because this is a new group, you need to give it "
+            #                 "some name now."))
             initval=''
         else:
             title.insert(0,_("Rename"))
