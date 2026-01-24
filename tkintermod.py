@@ -29,7 +29,6 @@ class TkErrorCatcher:
         except SystemExit as msg:
             print(f"Shutting down system{msg}")
             raise SystemExit(msg)
-            # sys.exit()
         except Exception as err:
             print(f"not raising Exception {err}")
-            raise err
+            # raise err
