@@ -6010,7 +6010,8 @@ class TaskChooser(TaskDressing):
         self.schedule_write_check()
     def maybewrite(self,definitely=False):
         write=self.timetowrite() #just call this once!
-        if (write and not self.writing):# or definitely:bad idea to overwrite write
+        #this currently defaults to write every time asked; can up writeeverynwrites when stable.
+        if (write or definitely) and not self.writing:# or definitely:bad idea to overwrite write
             self._write()
         elif write:
             # log.info(_("Already writing to lift; I trust this new mod will "
