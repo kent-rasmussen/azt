@@ -471,7 +471,7 @@ def create_comparison_chart(filename, *data,
             # Contributors (Top)
             c.setFont(f"{font_name}-Bold", 14)
             current_y = height - margin - 40
-            c.drawCentredString(base_x + half_width/2, current_y, "People Involved")
+            c.drawCentredString(base_x + half_width/2, current_y, _("People Involved"))
             current_y -= 25
             
             c.setFont(f"{font_name}-Regular", 12)
@@ -651,14 +651,22 @@ def create_comparison_chart(filename, *data,
         content_w = half_width - (margin * 2)
         o_h = height - (2 * margin) - 50 # Height with title area
         
-        for ep in extra_pages:
-            # First page height depends on image
-            image_h = (height / 3.0) if (ep.get('image') and os.path.exists(ep['image'])) else 0
-            # title takes 50, image margin 20
-            f_h = height - (2 * margin) - 50 - image_h - (20 if image_h > 0 else 0)
-            
-            chunks = split_extra_text(ep.get('title',''), ep.get('text',''), ep.get('image'), font_name, 12, content_w, f_h, o_h)
-            processed_extra.extend(chunks)
+        try:
+            for ep in extra_pages:
+                # First page height depends on image
+                image_h = (height / 3.0) if (ep.get('image') and os.path.exists(ep['image'])) else 0
+                # title takes 50, image margin 20
+                f_h = height - (2 * margin) - 50 - image_h - (20 if image_h > 0 else 0)
+                
+                chunks = split_extra_text(ep.get('title',''), ep.get('text',''), ep.get('image'), font_name, 12, content_w, f_h, o_h)
+                log.info(f"Split extra page '{ep.get('title')}' into {len(chunks)} chunks")
+                processed_extra.extend(chunks)
+        except Exception as e:
+            log.error(f"Critical error splitting extra pages: {e}")
+            import traceback
+            log.error(traceback.format_exc())
+    
+    log.info(f"Total processed extra pages: {len(processed_extra)}")
 
     # Label existing pages as content
     for d in data_list:
@@ -691,7 +699,7 @@ def create_comparison_chart(filename, *data,
     # Pad to multiple of 4
     rem = len(data_list) % 4
     if rem > 0:
-        for _ in range(4 - rem):
+        for i in range(4 - rem):
             data_list.append({'type': 'empty'}) # Filler
     
     # Now valid multiple of 4.

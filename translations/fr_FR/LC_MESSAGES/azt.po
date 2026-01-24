@@ -5705,6 +5705,9 @@ msgstr "Quelle(s) lettre(s) utiliserez pour ce groupe de {sg}?"
 msgid "What level of parsing match do you want the parser to confirm with you?"
 msgstr "Quel niveau d'analyse voulez-vous que l'analyseur confirme avec vous ?"
 
+msgid "People Involved"
+msgstr "Equipe du Travail"
+
 #: /home/kentr/bin/raspy/azt/main.py:4588
 msgid "What level of parsing match do you want the parser to do automatically?"
 msgstr "Quel niveau d'analyse voulez-vous que l'analyseur fasse automatiquement?"

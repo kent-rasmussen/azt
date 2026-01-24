@@ -660,11 +660,14 @@ class PageSetup(ui.Window):
         if texts_dir:
             from glob import glob
             txt_files = sorted(glob(os.path.join(texts_dir, "*.txt")))
+            log.info(f"Found {len(txt_files)} extra text files in {texts_dir}")
             for txt_path in txt_files:
                 try:
                     with open(txt_path, 'r', encoding='utf-8') as f:
                         lines = f.readlines()
                     if not lines: continue
+                    if 'repo' in self.program:
+                        self.program['git'].add(txt_path)
                     title = lines[0].strip()
                     body = "".join(lines[1:]).strip()
                     
