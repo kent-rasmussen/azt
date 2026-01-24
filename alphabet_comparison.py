@@ -651,7 +651,7 @@ class PageSetup(ui.Window):
         texts_dir = None
         # Look for 'texts' or 'textes' sibling to reports
         parent_dir = os.path.dirname(self.db.reportdir)
-        for folder in ['texts', 'textes']:
+        for folder in ['texts', 'textes', 'text', 'texte']:
             candidate = os.path.join(parent_dir, folder)
             if os.path.exists(candidate) and os.path.isdir(candidate):
                 texts_dir = candidate
@@ -675,6 +675,8 @@ class PageSetup(ui.Window):
                         img_cand = os.path.join(texts_dir, base_name + ext)
                         if os.path.exists(img_cand):
                             img_path = img_cand
+                            if 'git' in self.program:
+                                self.program['git'].add(img_cand)
                             break
                     
                     # We'll let the PDF generator split this if it's too long, 
