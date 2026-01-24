@@ -20,9 +20,6 @@ except ImportError:
     REPORTLAB_AVAILABLE = False
     log.warning("ReportLab not installed. PDF generation will not work.")
 
-# enable font subdirectories:
-for i in list(TTFSearchPath):
-    TTFSearchPath.append(i+'/*')
 if platform.system() == 'Windows':
     for path in [r'C:\Windows\Fonts',
                 r''.join([r'C:\Users\\',
@@ -31,7 +28,10 @@ if platform.system() == 'Windows':
                         ])
                 ]:
         TTFSearchPath.append(path)
-log.info(f"Looking for fonts in {TTFSearchPath}")
+# enable font subdirectories:
+for i in list(TTFSearchPath):
+    TTFSearchPath.append(i+'/*')
+# log.info(f"Looking for fonts in {TTFSearchPath}")
 # for f in TTFSearchPath:
 #     log.info(f"in {f} found {glob.glob(f)}")
 def register_fonts():

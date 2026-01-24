@@ -30,11 +30,11 @@ if platform.system() == 'Windows':
                     ])
             ]:
         TTFSearchPath.append(path)
-try:
-    for i in list(TTFSearchPath):
-        TTFSearchPath.append(i+'/*')
-except:
-    pass
+for i in list(TTFSearchPath):
+    TTFSearchPath.append(i+'/*')
+# log.info(f"Looking for fonts in {TTFSearchPath}")
+# for f in TTFSearchPath:
+#     log.info(f"in {f} found {glob.glob(f)}")
 
 def register_fonts():
     """Registers the specified font family if available."""
