@@ -386,6 +386,8 @@ class PageSetup(ui.Window):
         self.add_more_button.grid(row=self.n_pages()//self.fpr, 
                                 column=self.n_pages()%self.fpr, 
                                 )
+        self.scrollFrame.totop()
+        self.scrollFrame.tobottom()
     def open_cover_selector(self):
         # Calculate base dir: reportdir/../images/booklet
         # This is where we want to save selected images
@@ -560,7 +562,8 @@ class PageSetup(ui.Window):
         self.save_copyright()
 
         # Pages Frame
-        self.pageframesFrame=ui.Frame(self.frame, r=1, c=0, sticky='nsew')
+        self.scrollFrame=ui.ScrollingFrame(self.frame, r=1, c=0, sticky='nsew')
+        self.pageframesFrame=self.scrollFrame.content
         self.add_more_button=ui.Button(self.pageframesFrame, 
                                         text="+2 Pages", 
                                         command=self.add_pages)
