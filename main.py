@@ -17009,7 +17009,7 @@ class Git(Repository):
         return ['*.pdf','*.xcf',
                 'XLingPaperPDFTemp/**',
                 '*backupBeforeLx2LcConversion',
-                '*.txt', '*.7z', '*.zip','*ori',
+                './*.txt', '*.7z', '*.zip','*ori',
                 '__pycache__/**', '*(copy)*',
                 'lift_url.py',
                 'ui_lang.py',
@@ -17120,6 +17120,7 @@ class Git(Repository):
         self.nonbareclonearg=''
         super(Git, self).__init__(url)
         self.unignore('*.ini') #used to ignore this
+        self.unignore('*.txt') #used to ignore this
         self.mark_safe()
 class GitReadOnly(Git):
     def exewarning(self):

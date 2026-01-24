@@ -239,15 +239,76 @@ def draw_svg(canvas, path, x, y, width=None, height=None, center=False):
     except Exception as e:
         logging.getLogger(__name__).error(f"Error rendering SVG {path}: {e}")
 
+def split_extra_text(title, body, image_path, font_name, font_size, width, first_page_h, other_page_h):
+    """Splits body text into page-sized chunks with spacing between paragraphs."""
+    from reportlab.lib.utils import simpleSplit
+    
+    line_height = font_size * 1.2
+    spacer_height = line_height * 0.5
+    
+    # Process text into lines and spacers
+    paragraphs = [p for p in body.split('\n') if p.strip()]
+    all_items = []
+    
+    for i, p in enumerate(paragraphs):
+        p_lines = simpleSplit(p, f"{font_name}-Regular", font_size, width)
+        for line in p_lines:
+            all_items.append((line, line_height))
+        # Add half-line spacer between paragraphs
+        if i < len(paragraphs) - 1:
+            all_items.append(("", spacer_height))
+    
+    pages = []
+    
+    def chunk_items(items, max_h, page_title, is_first, img=None):
+        current_h = 0
+        chunk = []
+        remaining = []
+        for j, (text, h) in enumerate(items):
+            if current_h + h > max_h:
+                remaining = items[j:]
+                break
+            chunk.append((text, h))
+            current_h += h
+        
+        pages.append({
+            'type': 'extra_text',
+            'title': page_title,
+            'image': img if is_first else None,
+            'items': chunk,
+            'is_first': is_first
+        })
+        return remaining
+
+    # Page 1
+    remaining = chunk_items(all_items, first_page_h, title, True, image_path)
+    
+    # Subsequent pages
+    while remaining:
+        remaining = chunk_items(remaining, other_page_h, "", False)
+        
+    return pages
+
 def create_comparison_chart(filename, *data, 
                           pagesize='letter', font_name="Charis", 
                           prose_count=20, title="Comparison",
                           cover_image=None, logo_image=None, contributors=None, 
-                          description=None, copyright_text=None, made_with=None):
+                          description=None, copyright_text=None, made_with=None,
+                          extra_pages=None):
     """
     Args:
         filename: Output path
         data: list of dicts with 'symbol', 'items' [(glyph, word, img)...]
+        pagesize: 'A4' or 'letter'
+        font_name: Font family
+        prose_count: Number of times each word appears in prose
+        cover_image: Path to cover image
+        logo_image: Path to logo image
+        contributors: List of contributor names
+        description: Description text for imprint page
+        copyright_text: Copyright string
+        made_with: Attribution string
+        extra_pages: list of {'title', 'text', 'image'}
         pagesize: 'A4' or 'letter'
         font_name: Font family
         prose_count: Number of times each word appears in prose
@@ -440,6 +501,63 @@ def create_comparison_chart(filename, *data,
                 c.setFont(f"{font_name}-Regular", 10)
                 c.drawCentredString(base_x + half_width/2, margin + 20, f'© {copy}')
 
+        elif page_type == 'extra_text':
+            # --- Extra Text Page ---
+            title = data.get('title', '')
+            lines = data.get('lines', [])
+            img_path = data.get('image')
+            is_first = data.get('is_first', False)
+            
+            current_y = height - margin
+            
+            # 1. Title
+            if title:
+                c.setFont(f"{font_name}-Bold", 18)
+                c.drawCentredString(base_x + half_width/2, current_y - 20, title)
+                current_y -= 50
+            
+            # 2. Image (First page only, if exists)
+            if is_first and img_path and os.path.exists(img_path):
+                # Max image height 1/3 of page?
+                max_img_h = height / 3.0
+                avail_w = half_width - (margin * 2)
+                
+                if img_path.lower().endswith('.svg'):
+                    draw_svg(c, img_path, base_x + half_width/2, current_y - max_img_h, width=avail_w, height=max_img_h, center=True)
+                    current_y -= (max_img_h + 20)
+                else:
+                    try:
+                        img = ImageReader(img_path)
+                        iw, ih = img.getSize()
+                        aspect = ih / float(iw)
+                        
+                        disp_w = avail_w
+                        disp_h = disp_w * aspect
+                        if disp_h > max_img_h:
+                            disp_h = max_img_h
+                            disp_w = disp_h / aspect
+                        
+                        lx = base_x + (half_width - disp_w) / 2
+                        ly = current_y - disp_h
+                        c.drawImage(img, lx, ly, width=disp_w, height=disp_h, mask='auto', preserveAspectRatio=True)
+                        current_y -= (disp_h + 20)
+                    except Exception as e:
+                        log.error(f"Error drawing extra image: {e}")
+
+            # 2.5 Page Numbering
+            page_num = data.get('_page_num')
+            if page_num:
+                 c.setFont(f"{font_name}-Regular", 10)
+                 c.drawCentredString(base_x + half_width/2, margin - 10, str(page_num))
+
+            # 3. Text
+            c.setFont(f"{font_name}-Regular", 12)
+            for text, h in data.get('items', []):
+                if text:
+                    # Left-align with margin.
+                    c.drawString(base_x + margin, current_y, text)
+                current_y -= h
+
         elif page_type == 'back':
             # --- Back Cover ---
             # Made With (Bottom)
@@ -526,23 +644,43 @@ def create_comparison_chart(filename, *data,
     # Convert tuple to list
     data_list = list(data)
     
-    # Label existing pages as content and assign page numbers
-    # Content pages start at 1? Or physically page 3.
-    # User said "Only give page numbers where there is content, starting after the imprint page."
-    # So the first CONTENT page gets "1".
-    content_page_counter = 1
+    # Process Extra Text Pages
+    processed_extra = []
+    if extra_pages:
+        # Dimensions for splitting
+        content_w = half_width - (margin * 2)
+        o_h = height - (2 * margin) - 50 # Height with title area
+        
+        for ep in extra_pages:
+            # First page height depends on image
+            image_h = (height / 3.0) if (ep.get('image') and os.path.exists(ep['image'])) else 0
+            # title takes 50, image margin 20
+            f_h = height - (2 * margin) - 50 - image_h - (20 if image_h > 0 else 0)
+            
+            chunks = split_extra_text(ep.get('title',''), ep.get('text',''), ep.get('image'), font_name, 12, content_w, f_h, o_h)
+            processed_extra.extend(chunks)
+
+    # Label existing pages as content
     for d in data_list:
         if 'type' not in d:
             d['type'] = 'content'
+
+    # Append extra text pages AFTER content
+    data_list.extend(processed_extra)
+    
+    # Assign page numbers to content AND extra_text
+    # User said "Only give page numbers where there is content, starting after the imprint page."
+    content_page_counter = 1
+    for d in data_list:
+        if d.get('type') in ['content', 'extra_text']:
             d['_page_num'] = content_page_counter
             content_page_counter += 1
 
-    # Insert Cover & Imprint
+    # Insert Cover & Imprint at start (these shouldn't have numbers per user rule, 
+    # and they aren't in the loop above which only checks 'content'/'extra_text')
     cover_page = {'type': 'cover', 'title': title, 'image': cover_image, 'logo': logo_image}
     imprint_page = {'type': 'imprint', 'contributors': contributors, 'copyright': copyright_text, 'description': description}
     
-    # We want Cover at the very start (Physically Front Cover) -> Logic Page 1
-    # We want Imprint at Logic Page 2 (Physically Inside Front Cover)
     data_list.insert(0, imprint_page)
     data_list.insert(0, cover_page)
     

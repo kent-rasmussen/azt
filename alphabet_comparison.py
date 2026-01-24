@@ -645,8 +645,54 @@ class PageSetup(ui.Window):
             return {'symbol': page.glyph, 'items': items}
             
         pages=[prepare_data(i) for i in self.pageFrames if i.glyph]
+        
+        # --- Extra Text Pages ---
+        extra_pages = []
+        texts_dir = None
+        # Look for 'texts' or 'textes' sibling to reports
+        parent_dir = os.path.dirname(self.db.reportdir)
+        for folder in ['texts', 'textes']:
+            candidate = os.path.join(parent_dir, folder)
+            if os.path.exists(candidate) and os.path.isdir(candidate):
+                texts_dir = candidate
+                break
+        
+        if texts_dir:
+            from glob import glob
+            txt_files = sorted(glob(os.path.join(texts_dir, "*.txt")))
+            for txt_path in txt_files:
+                try:
+                    with open(txt_path, 'r', encoding='utf-8') as f:
+                        lines = f.readlines()
+                    if not lines: continue
+                    title = lines[0].strip()
+                    body = "".join(lines[1:]).strip()
+                    
+                    # Look for matching image
+                    base_name = os.path.splitext(os.path.basename(txt_path))[0]
+                    img_path = None
+                    for ext in ['.jpg', '.jpeg', '.png', '.svg']:
+                        img_cand = os.path.join(texts_dir, base_name + ext)
+                        if os.path.exists(img_cand):
+                            img_path = img_cand
+                            break
+                    
+                    # We'll let the PDF generator split this if it's too long, 
+                    # but for signatures we need to know how many pages it TAKES.
+                    # This is tricky. Let's assume for now one side per text unless we 
+                    # implement a pre-split helper in the PDF module.
+                    extra_pages.append({
+                        'type': 'extra_text',
+                        'title': title,
+                        'text': body,
+                        'image': img_path
+                    })
+                except Exception as e:
+                    log.error(f"Error reading extra text file {txt_path}: {e}")
+
         page_names=[i['symbol'] for i in pages]
-        filename = '_'.join([_("Booklet"),*page_names,f'[{self.db.analang}]{self.font_var.get()}.pdf'])
+        suffix = "wTexts" if extra_pages else ""
+        filename = '_'.join([_("Booklet"),*page_names,f'{suffix}[{self.db.analang}]{self.font_var.get()}.pdf'])
         filepath = file.getdiredurl(self.db.reportdir, filename)
         
         # Gather all needed info
@@ -667,6 +713,7 @@ class PageSetup(ui.Window):
 
         alphabet_comparison_pdf.create_comparison_chart(
              filepath, *pages, 
+             extra_pages=extra_pages,
              prose_count=self.prose_count_var.get(),
              title=title_text,
              cover_image=self.selected_cover_path,
