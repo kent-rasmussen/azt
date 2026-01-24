@@ -884,9 +884,6 @@ class Exitable():
     def post_tk_init(self):
         self.protocol("WM_DELETE_WINDOW", self.on_quit)
         super().post_tk_init()
-    def killall(self):
-        self.destroy()
-        sys.exit()
     def cleanup(self):
         pass
     def exittoroot(self):
@@ -908,16 +905,14 @@ class Exitable():
         self.exitFlag.true()
         if (to_root or self.mainwindow) and self.parent:
             self.parent.on_quit(to_root=True)
-        elif isinstance(self,Root): #exit afterwards if main window
-            self.killall()
         else:
             if (self.parent and
                 self.parent.winfo_exists() and
                 not isinstance(self.parent,Root)):
                 if not self.parent.iswaiting():
                     self.parent.deiconify()
-            self.cleanup()
-            self.destroy() #do this for everything
+        self.cleanup()
+        self.destroy() #do this for everything
     def __init__(self, *args, **kwargs):
         self.exitFlag = ExitFlag()
         super().__init__(*args, **kwargs)
@@ -1112,6 +1107,10 @@ class Image(): #PIL.ImageTk.PhotoImage is for display
 """below here has UI"""
 class Root(Waitable,UI,tkinter.Tk):
     """this is the root of the tkinter GUI."""
+    def on_quit(self,to_root=False):
+        super().on_quit(to_root=to_root)
+        logsetup.shutdown()
+        sys.exit()
     def post_tk_init(self,**kwargs):
         """This needs Tk to be instantiated already, but must precede UI
         application"""

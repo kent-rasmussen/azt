@@ -4141,14 +4141,20 @@ class TaskDressing(HasMenus,ui.Window):
             program['settings'].setcvt('V')
     def trystatusframelater(self,dict):
         program['settings'].setrefreshdelay()
-        self.parent.after(program['settings'].refreshdelay,
-                        self.makestatusframe,
-                        dict)
+        self.makestatusframe_after_id=self.after(
+                                            program['settings'].refreshdelay,
+                                            self.makestatusframe,
+                                            dict)
+    def on_quit(self,**kwargs):
+        self.after_cancel(self.makestatusframe_after_id)
+        super().on_quit(**kwargs)
     def makestatusframe(self,dict=None):
         """There are two threads of this method running or waiting at all times,
         one for the taskchooser and another for the task. this should probably
         be converted to a more tkinter native update, like with
         StringVar().set()"""
+        if self.exitFlag.istrue():
+            return
         if 'slices' not in program:
             # slices is done by taskchooser on boot, but later
             # don't update both taskchooser and task, just the visible one
@@ -4175,7 +4181,7 @@ class TaskDressing(HasMenus,ui.Window):
             # 'ps':program['slices'].ps(),
             # 'profile':program['slices'].profile(),
             # 'group':program['status'].group(),
-            'tableiteration':self.tableiteration,
+            'tableiteration':self.tableiteration
             })
         if isinstance(self,Multicheck):
             dictnow.update({'cvtstodo':self.task.cvtstodo})
@@ -4184,7 +4190,7 @@ class TaskDressing(HasMenus,ui.Window):
                 dictnow.update({
                     # 'parserasklevel':self.parser.ask,
                     # 'parserautolevel':self.parser.auto,
-                    'sense.id':self.task.sensetodo,
+                    'sense.id':self.task.sensetodo
                     })
             except AttributeError as e:
                 log.info(_("looks like the parser isn't up yet ({error})").format(error=e))
@@ -6028,6 +6034,9 @@ class TaskChooser(TaskDressing):
             #on boot, pull in changes becore committing
             r.share(noclone=True,nocommit=True) 
         self.splash.draw()
+    def on_quit(self,**kwargs):
+        super().on_quit(**kwargs)
+        self.parent.on_quit(**kwargs)
     # def getinterfacelangs(self):
     # # global i18n
     #     return [{'code':i,'name':program['settings'].languagenames[i]}

@@ -39,10 +39,10 @@ def running_file(path):
         code='fr'
         if code in ['fr','FR','Fr','Français','French']:
             running="est déjà en cours"
-            enter="Appuyer ENTER pour quitter"
+            enter="Appuyer ENTER, ou fermer ce fenetre, pour quitter"
         else:
             running="is already running"
-            enter="Press ENTER to exit"
+            enter="Press ENTER, or close this window, to exit"
         print(f"\n{pathlib.Path(path).resolve()} {running}:\n\n",
                 '\n'.join([str(i) for i in l]))
         input('\n' + enter + '\n')
