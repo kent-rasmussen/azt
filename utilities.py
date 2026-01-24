@@ -166,6 +166,17 @@ def iteratelistitem(l,item,val,circular=False):
     else:
         return (_("problem with iteration value type "
                 f"({type(val)}) or index type ({type(initindex)})"))
+
+def open_file(path):
+    """Opens a file with the default application in a cross-platform way."""
+    import subprocess, os, platform
+    
+    if platform.system() == 'Darwin':       # macOS
+        subprocess.call(('open', path))
+    elif platform.system() == 'Windows':    # Windows
+        os.startfile(path)
+    else:                                   # linux variants
+        subprocess.call(('xdg-open', path))
 if __name__ == '__main__':
     log=logsetup.getlog(__name__)
     # logsetup.setlevel('INFO',log) #for this file

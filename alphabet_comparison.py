@@ -679,6 +679,12 @@ class PageSetup(ui.Window):
         )
         log.info(f"Generated {filepath}")
         
+        try:
+            from utilities import open_file
+            open_file(filepath)
+        except Exception as e:
+            log.warning(f"Could not open PDF automatically: {e}")
+        
     def on_close(self):
         self.destroy()
         sys.exit()

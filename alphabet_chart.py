@@ -336,6 +336,13 @@ class OrderAlphabet(ui.Window):
                         one_page=one_page,
                         copyright_text=self.chart_copyright.get(),
                         made_with=made_with)
+        
+        try:
+            from utilities import open_file
+            open_file(filepath)
+        except Exception as e:
+            log.warning(f"Could not open PDF automatically: {e}")
+
         self.reflow_chart()
     def _hidden(self,value=dict()):
         for i in value:
