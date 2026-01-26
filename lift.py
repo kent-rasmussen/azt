@@ -1423,6 +1423,18 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         #         f"{ps_profile_counts=}")
         return counts,ps_profile_counts
         # log.info(f"{self.nfieldswannotations=}")
+    def get_segments_annotated(self):
+        d_all=dict()
+        for sense in self.senses:
+            for ftype in sense.ftypes:
+                for lang in sense.ftypes[ftype].forms:
+                    d=sense.ftypes[ftype].annotationvaluedictbylang(lang)
+                    for k in d:
+                        try:
+                            d_all[k].add(d[k])
+                        except KeyError:
+                            d_all[k]={d[k]}
+        return d_all
     def getsenseswglosslangdata(self):
         #do each of these, then cull in the second one
         self.getsenseswglossdata() #sets: self.nentrieswglossdata
