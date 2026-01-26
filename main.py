@@ -16462,7 +16462,7 @@ class Repository(object):
             return
         try:
             r=self.pull(remotes,branch=self.main)
-            log.info(_("Pulled from {repo} {branch}; {result}").format(
+            log.info(_("Pulled from {repo} {branch} ; {result}").format(
                         repo=self.repotypename,
                         branch=self.main,
                         result=r))
@@ -16484,7 +16484,7 @@ class Repository(object):
             elif self.code == 'hg':
                 args=['pull','-u',remote,self.branch]
             # log.info("Pulling: {}".format(args))
-            self.try_pull_main(remote
+            self.try_pull_main(remote)
             r=self.do(args)
             log.info("Pull return: {}".format(r))
             if "Automatic merge failed" in r:
