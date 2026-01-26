@@ -16279,8 +16279,12 @@ class ErrorNotice(ui.Window):
             self.parent.deiconify()
 class Repository(object):
     """SuperClass for Repository classes"""
-    def checkout(self,branchname):
-        args=['checkout',branchname]
+    def checkout(self,branchname=None):
+        args=['checkout']
+        if not branchname:
+            branchname=f"work_from_{self.username}"
+            args.append('-b')
+        args.append(branchname)
         r=self.do(args)
         log.info(r)
         self.branchname() #because this changes
@@ -16364,12 +16368,6 @@ class Repository(object):
         log.info("commit return: {}".format(r))
         # if theres no diff, or I don't want to commit, still share commits:
         return True
-    def checkout_new_branch(self,branchname=None):
-        if not branchname:
-            branchname=f"work_from_{self.username}"
-        args=['checkout', '-b', branchname]
-        r=self.do([i for i in args if i is not None])
-        return r
     def diff(self,cached=False):
         if not self.bare:
             args=['diff']
@@ -16476,7 +16474,8 @@ class Repository(object):
             log.info("Pull return: {}".format(r))
             if "Automatic merge failed" in r:
                 self.undo_pull()
-                self.checkout_new_branch()
+                self.checkout()
+                self.push(remotes,setupstream=True)
                 return self.pull(remotes)
         return r #if we want results for each, do this once for each
     def push(self,remotes=None,setupstream=False):
