@@ -31,5 +31,9 @@ class TkErrorCatcher:
             # raise SystemExit(msg)
             sys.exit()
         except Exception as err:
-            print(f"not raising Exception {err}")
+            print(str(err),type(err))
+            if "local variable" in str(err):
+                raise err
+            else:
+                print(f"not raising Exception {err}")
             # raise err
