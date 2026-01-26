@@ -36,6 +36,7 @@ else:
     program['production']=True #True for making screenshots (default theme)
     program['testing']=False #True eliminates Error screens and zipped logs
     loglevel='INFO'
+    program['default_task']='WordCollectnParse'
 """Integers here are more fine grained than 'DEBUG'. I.e., 1-9 show you more
 information than 'DEBUG' does):
 1. Information I probably never want to see.
@@ -5570,7 +5571,7 @@ class TaskChooser(TaskDressing):
             if SortV in [i[0] for i in optionlist]:
                 self.maketask(SortV)
             else:
-                self.maketask(WordCollectnParsewRecordings)
+                self.maketask(program['default_task'])
                 #optionlist[-1][0]) #last item, the code
     def maketask(self,taskclass,**kwargs): #,filename=None
         self.unsetmainwindow()
