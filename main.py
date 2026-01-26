@@ -16364,8 +16364,8 @@ class Repository(object):
             return
         if difftext and (not me or self.commitconfirm(difftext)):
             r=self.do([i for i in args if i is not None])
-            return r
             log.info("commit return: {}".format(r))
+            return r
         # if theres no diff, or I don't want to commit, still share commits:
         return True
     def diff(self,cached=False):
