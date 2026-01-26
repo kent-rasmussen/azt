@@ -7585,7 +7585,6 @@ class WordCollection(Segments):
             log.info("Working on {} entries".format(len(all)))
         else:
             log.info("start_at_entry not found")
-
         if self.dodone and not self.dodoneonly: #i.e., all data
             return all
         done=[i for i in all
