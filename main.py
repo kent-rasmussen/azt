@@ -16457,7 +16457,21 @@ class Repository(object):
             r=self.do(args)
             # log.info("Pull return: {}".format(r))
         return r #if we want results for each, do this once for each
-    def pull(self,remotes=None):
+    def try_pull_main(self,remotes):
+        if self.branch == self.main:
+            return
+        try:
+            r=self.pull(remotes,branch=self.main)
+            log.info(_("Pulled from {repo} {branch}; {result}").format(
+                        repo=self.repotypename,
+                        branch=self.main,
+                        result=r))
+            self.checkout(self.main)
+        except Exception as err:
+            self.undo_pull()
+    def pull(self,remotes=None,branch=None):
+        if not branch:
+            branch=self.branch
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
@@ -16470,6 +16484,7 @@ class Repository(object):
             elif self.code == 'hg':
                 args=['pull','-u',remote,self.branch]
             # log.info("Pulling: {}".format(args))
+            self.try_pull_main()
             r=self.do(args)
             log.info("Pull return: {}".format(r))
             if "Automatic merge failed" in r:
@@ -16950,6 +16965,7 @@ class Repository(object):
             return file.getfile(url).resolve()
     def __init__(self, url):
         super(Repository, self).__init__()
+        self.main='main'
         self.url = url
         self.dirname = file.getfilenamefrompath(self.url)
         self.repotypename=self.__class__.__name__
