@@ -4063,6 +4063,17 @@ class LiftURL():
         log.log(4,_("Final URL: {url}").format(url=self.url))
         # self.printurl()
 """Functions I'm using, but not in a class"""
+def copy_lc_to_new_lift_gloss(lift_w_lc,lift_target,analang='ln-CD'):
+    l_w_lc=LiftXML(lift_w_lc)
+    l_target=LiftXML(lift_target)
+    # This is a copy operation, leaving lc in place
+    for e in l_w_lc.entries:
+        lc=e.lc.textvaluebylang(analang)
+        cawln=e.sense.cawln
+        for s_target in [i for i in l_target.senses if i.cawln == cawln]:
+            s_target.glosses[analang]=Gloss(s_target,lang=analang)
+            s_target.glosses[analang].textvalue(lc)
+    l_target.write()
 def pylanglegacy(analang):
      return 'py-'+analang
 def pylanglegacy2(analang):
@@ -4626,7 +4637,7 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bo/bo.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/wmg/wmg.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
+    filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
     def report():
         import glob 
         filenames=[i for i in glob.glob("/home/kentr/Assignment/Tools/WeSay/*-x-*/*.lift")
@@ -4636,11 +4647,14 @@ if __name__ == '__main__':
             lifts[filename]=LiftXML(filename)
         for filename in filenames:
             lifts[filename].report_counts()
-    code=255 #103#240#242#243 #100,101,102,231,253,255
-    filename=f"/home/kentr/Assignment/Tools/WeSay/lol-x-his30{str(code)}/"
-    filename+=f"lol-x-his30{str(code)}.lift"
-    lift=LiftXML(filename)
-    
+    lc_source='/home/kentr/Assignment/Tools/WeSay/ln-CD/ln-CD.lift'
+    # code=255 #103#240#242#243 #100,101,102,231,253,255
+    # filename=f"/home/kentr/Assignment/Tools/WeSay/lol-x-his30{str(code)}/"
+    # filename+=f"lol-x-his30{str(code)}.lift"
+    # lift=LiftXML(filename)
+    copy_lc_to_new_lift_gloss(lift_w_lc=lc_source,
+                                lift_target=filename,
+                                analang='ln-CD')
     def revert_stuff():
         kwargs={'expressions':["yi","mwãsasi","ggg", "yyy", "eee", "iii","ɔɔɔ",'ooo','lll','aaa','sss','---','___',"555",
                                 'ʔ'],
@@ -4650,7 +4664,7 @@ if __name__ == '__main__':
             for ftype in sense.ftypes:
                 for lang in sense.ftypes[ftype].forms:
                     sense.ftypes[ftype].forms[lang].revertif(**kwargs)
-    revert_stuff()
+    # revert_stuff()
     # print(lift.get_segments_annotated())
     # report()
     # exit()
