@@ -16429,6 +16429,8 @@ class Repository(object):
                 return r #need to pass errors for processing
             else:
                 return []
+    def undo_pull(self):
+        self.do(['reset','--hard','@{1}'])
     def share(self,remotes=None,noclone=False,nocommit=False):
         if not remotes:
             remotes=self.findpresentremotes() #do once
@@ -16472,6 +16474,10 @@ class Repository(object):
             # log.info("Pulling: {}".format(args))
             r=self.do(args)
             log.info("Pull return: {}".format(r))
+            if "Automatic merge failed" in r:
+                self.undo_pull()
+                self.checkout_new_branch()
+                return self.pull(remotes)
         return r #if we want results for each, do this once for each
     def push(self,remotes=None,setupstream=False):
         if not remotes:
