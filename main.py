@@ -16742,6 +16742,7 @@ class Repository(object):
             # log.info("self.ignored for {} now {}".format(self.code,self.ignored))
         except FileNotFoundError as e:
             log.info(_("Hope this is OK: {error}").format(error=e))
+            self.ignored=[]
     def write_ignore_contents(self):
         with open(self.ignorefile,'w') as f:
             for i in self.ignored:
