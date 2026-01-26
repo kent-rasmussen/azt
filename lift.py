@@ -4636,19 +4636,22 @@ if __name__ == '__main__':
             lifts[filename]=LiftXML(filename)
         for filename in filenames:
             lifts[filename].report_counts()
-    code=100 #103#240#242#243 #100,101,102,231,253,255
+    code=255 #103#240#242#243 #100,101,102,231,253,255
     filename=f"/home/kentr/Assignment/Tools/WeSay/lol-x-his30{str(code)}/"
     filename+=f"lol-x-his30{str(code)}.lift"
     lift=LiftXML(filename)
     
-    kwargs={'expressions':["ggg", "yyy", "eee", "iii","ɔɔɔ",'ooo','lll','aaa','sss','---','___',"555",
-                            'ʔ'],
-            'bad_values':["ue","ie","oo","oi",'ʔ','lɔsɔpɔ']
-            }
-    for sense in lift.senses:
-        for ftype in sense.ftypes:
-            for lang in sense.ftypes[ftype].forms:
-                sense.ftypes[ftype].forms[lang].revertif(**kwargs)
+    def revert_stuff():
+        kwargs={'expressions':["yi","mwãsasi","ggg", "yyy", "eee", "iii","ɔɔɔ",'ooo','lll','aaa','sss','---','___',"555",
+                                'ʔ'],
+                'bad_values':["yu",'yi',"ue","ie","oo","oi",'ʔ','lɔsɔpɔ']
+                }
+        for sense in lift.senses:
+            for ftype in sense.ftypes:
+                for lang in sense.ftypes[ftype].forms:
+                    sense.ftypes[ftype].forms[lang].revertif(**kwargs)
+    revert_stuff()
+    # print(lift.get_segments_annotated())
     # report()
     # exit()
     # filename="/home/kentr/Assignment/Tools/WeSay/Demo_gnd/gnd.lift"
