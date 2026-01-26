@@ -16484,7 +16484,7 @@ class Repository(object):
             elif self.code == 'hg':
                 args=['pull','-u',remote,self.branch]
             # log.info("Pulling: {}".format(args))
-            self.try_pull_main()
+            self.try_pull_main(remote
             r=self.do(args)
             log.info("Pull return: {}".format(r))
             if "Automatic merge failed" in r:
