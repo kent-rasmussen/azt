@@ -17109,7 +17109,8 @@ class Git(Repository):
             log.info(_("Mark_safe returned {result} for {directory}").format(result=r,directory=directory))
     def get_all_safe(self):
         args=['config', '--get-all', 'safe.directory']
-        r=[self.abs_path(i) for i in self.do(args).split('\n')]
+        r=self.do(args)
+        r=[self.abs_path(i) for i in r.split('\n') if r]
         if r:
             log.info(_("get_all_safe returned {result}").format(result=r)) #str
             return r

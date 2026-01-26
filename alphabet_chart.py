@@ -467,7 +467,8 @@ class OrderAlphabet(ui.Window):
         #pick up new letters, limit to actual but keep order
             self.order=sorted(gd-set([str(i) for i in self.order])
                             )+[str(i) for i in self.order if i in gd] 
-        self.order=[i for n,i in enumerate(self.order) if n==self.order.index(i)]
+        self.order=[i for n,i in enumerate(self.order) if n==self.order.index(i) 
+                        if i not in ['NA']]
         log.info(f"Using this alphabetical order: {self.order}")
         log.info(f"Using these exids: {self.exids}")
         if self.exids:
