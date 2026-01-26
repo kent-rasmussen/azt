@@ -2094,6 +2094,8 @@ class Settings(object):
                                 'aztrepourls',
                                 'minimumwordstoreportUFgroup',
                                 'askedlxtolc',
+                                'start_at_entry',
+                                'end_at_entry',
                                 'writeeverynwrites'
                                 ]},
             'profiledata':{
@@ -7572,6 +7574,18 @@ class WordCollection(Segments):
             all=[i.entry for i in program['slices'].senses()]
         else:
             all=program['db'].entries
+        if program['settings'].start_at_entry:
+            log.info("Starting at entry {}".format(program['settings'].start_at_entry))
+            if not program['settings'].end_at_entry:
+                log.info("end_at_entry not found; finishing to the end")
+                program['settings'].end_at_entry=len(all)
+            else:
+                log.info("Ending at entry {}".format(program['settings'].end_at_entry))
+            all=all[program['settings'].start_at_entry:program['settings'].end_at_entry]
+            log.info("Working on {} entries".format(len(all)))
+        else:
+            log.info("start_at_entry not found")
+
         if self.dodone and not self.dodoneonly: #i.e., all data
             return all
         done=[i for i in all
