@@ -16346,6 +16346,7 @@ class Repository(object):
         if difftext and (not me or self.commitconfirm(difftext)):
             r=self.do([i for i in args if i is not None])
             return r
+        log.info("commit return: {}".format(r))
         # if theres no diff, or I don't want to commit, still share commits:
         return True
     def checkout_new_branch(self,branchname=None):
@@ -16455,7 +16456,7 @@ class Repository(object):
                 args=['pull','-u',remote,self.branch]
             # log.info("Pulling: {}".format(args))
             r=self.do(args)
-            # log.info("Pull return: {}".format(r))
+            log.info("Pull return: {}".format(r))
         return r #if we want results for each, do this once for each
     def push(self,remotes=None,setupstream=False):
         if not remotes:
@@ -16820,11 +16821,11 @@ class Repository(object):
             if self.useremail:
                 log.info(_("Using {repo} useremail '{email}'").format(repo=self.repotypename,email=self.useremail))
         else:
-            self.username=program['name']+'-'+program['hostname']
+            self.username='-'.join([program['name'],os.getlogin(),program['hostname']])
             log.info(_("No {repo} username found; using '{name}'"
                     "").format(repo=self.repotypename,name=self.username))
         if not self.useremail:
-            self.useremail=program['name']+'@'+program['hostname']
+            self.useremail=program['name']+'-'+os.getlogin()+'@'+program['hostname']
             log.info(_("No {repo} useremail found; using '{email}'"
             "").format(repo=self.repotypename,email=self.useremail))
         self.usernameargs=self.argstoputuserids(self.username,self.useremail)
