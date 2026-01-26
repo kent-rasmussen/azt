@@ -2303,7 +2303,7 @@ class Form(Node):
                     print("Not reverting annotations")
         self.db.write()
     def __init__(self, parent, node=None, **kwargs):
-        kwargs['tag']='form'
+        kwargs['tag']=kwargs.get('tag','form')
         super(Form, self).__init__(parent, node, **kwargs)
         self.gettext()
         self.getannotations()
