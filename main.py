@@ -17110,7 +17110,8 @@ class Git(Repository):
     def get_all_safe(self):
         args=['config', '--get-all', 'safe.directory']
         r=self.do(args)
-        r=[self.abs_path(i) for i in r.split('\n') if r]
+        if r:
+            r=[self.abs_path(i) for i in r.split('\n') if r]
         if r:
             log.info(_("get_all_safe returned {result}").format(result=r)) #str
             return r
