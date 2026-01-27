@@ -1176,7 +1176,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             if len(getattr(self,langtypepl)) == 1:
                 setattr(self,langtype,getattr(self,langtypepl)[0])
                 log.info(f'One {langtype} found: {getattr(self,langtype)}')
-            elif (hasattr(self,'analang') and
+            elif (hasattr(self,'analang') and self.analang and
                     self.analang+codes[langtypepl] in getattr(self,langtypepl)):
                 setattr(self,langtype,self.analang+codes[langtypepl])
             else:
@@ -4682,12 +4682,16 @@ if __name__ == '__main__':
     lc_source='/home/kentr/Assignment/Tools/WeSay/ln-CD/ln-CD.lift'
     # code= #103 #240 #255 lingala
     lift=LiftXML(lc_source)
-    for code in [100,101,102,231,253,242,243]: #103#240#242#243 #100,101,102,231,253,255
-        filename=f"/home/kentr/Assignment/Tools/WeSay/lol-x-his30{str(code)}/"
-        filename+=f"lol-x-his30{str(code)}.lift"
-        copy_lc_to_new_lift_gloss(lift_w_lc=lift,
-                                lift_target=filename,
+    gloss_target='/home/kentr/bin/raspy/azt/SILCAWL/SILCAWL.lift'
+    copy_lc_to_new_lift_gloss(lift_w_lc=lift,
+                                lift_target=gloss_target,
                                 analang='ln-CD')
+    # for code in [100,101,102,231,253,242,243]: #103#240#242#243 #100,101,102,231,253,255
+    #     filename=f"/home/kentr/Assignment/Tools/WeSay/lol-x-his30{str(code)}/"
+    #     filename+=f"lol-x-his30{str(code)}.lift"
+    #     copy_lc_to_new_lift_gloss(lift_w_lc=lift,
+    #                             lift_target=filename,
+    #                             analang='ln-CD')
     def revert_stuff():
         kwargs={'expressions':["yi","mwãsasi","ggg", "yyy", "eee", "iii","ɔɔɔ",'ooo','lll','aaa','sss','---','___',"555",
                                 'ʔ'],
