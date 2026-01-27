@@ -3219,10 +3219,6 @@ class Sense(Node,FieldParent):
                 if lang == self.db.analang
                 if all_forms or ftype == 'lc' 
                 ]
-        for ftype in self.ftypes:
-            d=self.ftypes[ftype].forms[self.db.analang]
-            # for lang in self.ftypes[ftype].forms:
-            log.info(f"{d.textvalue()} {d.annotationvaluedict()}")
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='sense'
         Node.__init__(self, parent, node, **kwargs)
