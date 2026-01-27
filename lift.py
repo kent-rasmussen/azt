@@ -4070,12 +4070,41 @@ def copy_lc_to_new_lift_gloss(lift_w_lc,lift_target,analang='ln-CD'):
         l_w_lc=lift_w_lc
     l_target=LiftXML(lift_target)
     # This is a copy operation, leaving lc in place
+    count=0
+    cawls=[]
     for e in l_w_lc.entries:
         lc=e.lc.textvaluebylang(analang)
+        if not lc:
+            continue
         cawln=e.sense.cawln
         for s_target in [i for i in l_target.senses if i.cawln == cawln]:
-            s_target.glosses[analang]=Gloss(s_target,lang=analang)
-            s_target.glosses[analang].textvalue(lc)
+            try:
+                assert s_target.glosses[analang][0].textvalue() == lc
+                s_target.glosses[analang][0].textvalue(lc)
+            except AssertionError:
+                g=Gloss(s_target,lang=analang)
+                s_target.glosses[analang].append(g)
+                g.textvalue(lc)
+            except KeyError:
+                g=Gloss(s_target,lang=analang)
+                s_target.glosses[analang]=[g]
+                g.textvalue(lc)
+            if len(s_target.glosses[analang])>1:
+                # index=len(s_target.glosses[analang])-1
+                for i in range(len(s_target.glosses[analang])-1,0,-1):
+                    # for i in s_target.glosses[analang][1:]:
+                    print(f"looking at number {i}")
+                    try:
+                        assert s_target.glosses[analang][i].textvalue() == lc, f"{s_target.glosses[analang][i].textvalue()} != {lc}!"
+                        s_target.remove(s_target.glosses[analang][i])
+                        del s_target.glosses[analang][i]
+                    except AssertionError as e:
+                        log.info(e)
+            cawls.append(cawln)
+            count+=1
+    log.info(f"Copied these CAWL lines: {cawls}")
+    log.info(f"Copied {count} glosses to {lift_target}")
+    log.info(f"Copied {len(set(cawls))} cawls to {lift_target}")
     l_target.write()
 def pylanglegacy(analang):
      return 'py-'+analang
