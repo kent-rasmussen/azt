@@ -4064,7 +4064,10 @@ class LiftURL():
         # self.printurl()
 """Functions I'm using, but not in a class"""
 def copy_lc_to_new_lift_gloss(lift_w_lc,lift_target,analang='ln-CD'):
-    l_w_lc=LiftXML(lift_w_lc)
+    if type(lift_w_lc) is str:
+        l_w_lc=LiftXML(lift_w_lc)
+    elif type(lift_w_lc) is LiftXML:
+        l_w_lc=lift_w_lc
     l_target=LiftXML(lift_target)
     # This is a copy operation, leaving lc in place
     for e in l_w_lc.entries:
@@ -4648,11 +4651,12 @@ if __name__ == '__main__':
         for filename in filenames:
             lifts[filename].report_counts()
     lc_source='/home/kentr/Assignment/Tools/WeSay/ln-CD/ln-CD.lift'
-    # code=255 #103#240#242#243 #100,101,102,231,253,255
-    # filename=f"/home/kentr/Assignment/Tools/WeSay/lol-x-his30{str(code)}/"
-    # filename+=f"lol-x-his30{str(code)}.lift"
-    # lift=LiftXML(filename)
-    copy_lc_to_new_lift_gloss(lift_w_lc=lc_source,
+    # code= #103 #240 #255 lingala
+    lift=LiftXML(lc_source)
+    for code in [100,101,102,231,253,242,243]: #103#240#242#243 #100,101,102,231,253,255
+        filename=f"/home/kentr/Assignment/Tools/WeSay/lol-x-his30{str(code)}/"
+        filename+=f"lol-x-his30{str(code)}.lift"
+        copy_lc_to_new_lift_gloss(lift_w_lc=lift,
                                 lift_target=filename,
                                 analang='ln-CD')
     def revert_stuff():
