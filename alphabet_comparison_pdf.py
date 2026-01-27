@@ -696,17 +696,25 @@ def create_comparison_chart(filename, *data,
     add_comparative_data(data_list) # Updated helper
     
     # Handle Back Cover
-    # Pad to multiple of 4
+    # Ensure at least one slot for the back cover, and pad to multiple of 4.
+    # This prevents overwriting the last content/extra page.
     rem = len(data_list) % 4
-    if rem > 0:
-        for i in range(4 - rem):
-            data_list.append({'type': 'empty'}) # Filler
+    if rem == 0 and len(data_list) > 0:
+        # Exactly full, so add 4 more pages (one of which will be the back cover)
+        needed = 4
+    elif rem > 0:
+        # Pad up to the next multiple of 4
+        needed = 4 - rem
+    else:
+        needed = 0
+
+    for i in range(needed):
+        data_list.append({'type': 'empty'}) # Filler
     
-    # Now valid multiple of 4.
-    # The last page is index -1. This is the physical Back Cover.
-    # Set its type/content to back
-    data_list[-1]['type'] = 'back'
-    data_list[-1]['made_with'] = made_with
+    if data_list:
+        # The very last page is the physical Back Cover.
+        data_list[-1]['type'] = 'back'
+        data_list[-1]['made_with'] = made_with
 
     # Re-order for booklet signature
     # Note: make_signatures expects a list and returns reordered list

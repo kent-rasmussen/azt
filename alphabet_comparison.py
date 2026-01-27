@@ -633,6 +633,8 @@ class PageSetup(ui.Window):
             path = file.getdiredurl(self.db.reportdir, SETTINGS_FILE)
             with open(path, 'w') as f:
                 json.dump(self.settings, f)
+            if 'git' in self.program:
+                self.program['settings'].repo['git'].add(path)                
         except Exception as e:
             log.warning(f"Could not save settings: {e}")
             
