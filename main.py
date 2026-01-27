@@ -5551,7 +5551,7 @@ class TaskChooser(TaskDressing):
             except AttributeError:
                 log.info(_("Task {task} doesn't seem to have a tooltip.").format(task=o[0]))
         for c in range(bpr):
-            self.optionsframe.grid_columnconfigure(c, weight=1, uniform='a')
+            self.optionsframe.grid_columnconfigure(c, weight=1, uniform=c)
         self.setmainwindow(self) #deiconify here
         if self.showreports:
             self.showreports=False #just do this once each button click
