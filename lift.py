@@ -4669,7 +4669,7 @@ if __name__ == '__main__':
     # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/bo/bo.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/wmg/wmg.lift"
-    filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
+    # filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
     def report():
         import glob 
         filenames=[i for i in glob.glob("/home/kentr/Assignment/Tools/WeSay/*-x-*/*.lift")
