@@ -6526,6 +6526,9 @@ class Alphabet():
         if glyph in self.conflicts and item in self.conflicts[glyph]:
             log.error("Not presorting, since it looks like we kicked this one out already.")
             return
+        if glyph in self.unsorted and item in self.unsorted[glyph]:
+            log.error("Not presorting, since it looks like we unsorted this one before.")
+            return
         log.info(_("presort_item moving {item} into ‘{glyph}’").format(item=item, glyph=glyph))
         if not glyph.isdigit() and not self.conflicting_items(item,glyph):
             self.mark_item_glyph(item,glyph) #This should never produce conflicts
@@ -6586,6 +6589,10 @@ class Alphabet():
             # log.info(f"{self.glyph_members()=}")
         return recurring_conflicts
     def remove_item_from_glyph(self,item,glyph=None):
+        try:
+            self.unsorted[glyph].add(item)
+        except KeyError:
+            self.unsorted[glyph]={item}
         self.rm_glyph_member(item,glyph) # in case elsewhere
         self.cull_glyphdict() #without knowing glyph or cvt
         self.mark_item_tomacrosort(item)
@@ -6632,6 +6639,7 @@ class Alphabet():
         # self.renew_items_tomacrosort() #if needed, run then, with cvt
         self.save_settings()
         self.conflicts={} #keep track of what has been kicked out of a group before
+        self.unsorted={}
 class AlphabetChart(alphabet_chart.OrderAlphabet):
     my_settings=[
                     'exids',
