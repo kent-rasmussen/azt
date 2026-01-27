@@ -670,7 +670,7 @@ class PageSetup(ui.Window):
                         lines = f.readlines()
                     if not lines: continue
                     if 'repo' in self.program:
-                        self.program['git'].add(txt_path)
+                        self.program['settings'].repo['git'].add(txt_path)
                     title = lines[0].strip()
                     body = "".join(lines[1:]).strip()
                     
@@ -682,7 +682,7 @@ class PageSetup(ui.Window):
                         if os.path.exists(img_cand):
                             img_path = img_cand
                             if 'git' in self.program:
-                                self.program['git'].add(img_cand)
+                                self.program['settings'].repo['git'].add(img_cand)
                             break
                     
                     # We'll let the PDF generator split this if it's too long, 
