@@ -344,6 +344,16 @@ class OrderAlphabet(ui.Window):
             log.warning(f"Could not open PDF automatically: {e}")
 
         self.reflow_chart()
+        
+        text=("Printed chart with these examples:\n")
+        text_list=[f"{k}: {self.exobjs[k].annotations_to_update()}"
+            for k in [i for i in self.order if i in self.exids and i in self.exobjs]
+        ]
+        for i in range(0,len(text_list),10):
+            text_this=text+'\n'.join(text_list[i:i+9])
+            notice=ui.Window(self)
+            ui.Label(notice.frame,text=text_this,sticky='news')
+            log.info(text)
     def _hidden(self,value=dict()):
         for i in value:
             self.hide_vars[i].set(value[i])
