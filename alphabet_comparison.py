@@ -319,6 +319,25 @@ class PageFrameUI(ui.Frame):
             self.glyph_choice.selection_set(self.glyph_choice.get(0, "end").index(glyph))
         self.restore_examples()
 class PageSetup(ui.Window):
+    def order_by_frequency(self):
+        counts=self.program['slices'].scount()
+        log.info(f"{counts}")
+        log.info(f"{counts.values()} {[type(i) for i in counts.values()]}")
+        totals=[(sum([c for psv in counts.values()
+            for cvtv in psv.values()
+            for glyph,c in cvtv
+            if glyph==g]),g) 
+            for g in self.program['alphabet'].order()]
+        totals.sort(reverse=True)
+        notice=ui.Window(self,title=_("Glyph Frenquency"))
+        for i in range(0,len(totals),10):
+            # text_this=text+'\n'.join(text_list[i:i+9])
+            text_this='\n'.join([f"{x}: {y}" for y,x in totals[i:i+9]])
+            # if the lack of justification here bothers, make this 
+            # into individual labels by row, as well
+            ui.Label(notice.frame,text=text_this,anchor='w',c=i,padx=5)
+            log.info(text_this)
+        # log.info(f"{sorted(totals,reverse=True)}")
     def __init__(self, parent, **kwargs):
         title = "Alphabet Comparison Setup"
         self.parent = parent
@@ -362,6 +381,7 @@ class PageSetup(ui.Window):
 
         # UI Layout
         self.setup_ui()
+        self.order_by_frequency()
         
     def toggle_font(self):
         current = self.font_var.get()
