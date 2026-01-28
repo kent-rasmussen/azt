@@ -16490,11 +16490,11 @@ class Repository(object):
             return
         for remote in remotes:
             if self.code == 'git':
-                args=['pull',remote,self.branch]
+                args=['pull',str(remote),self.branch]
             elif self.code == 'hg':
-                args=['pull','-u',remote,self.branch]
-            # log.info("Pulling: {}".format(args))
-            self.try_pull_main(remote)
+                args=['pull','-u',str(remote),self.branch]
+            log.info("Pulling: {}".format(args))
+            self.try_pull_main(str(remote))
             r=self.do(args)
             log.info("Pull return: {}".format(r))
             if "Automatic merge failed" in r:
@@ -16566,6 +16566,9 @@ class Repository(object):
     def addifis(self,directory):
         # N.B.: I think file.exists will always fail for internet repos
         # For now, add them to git
+        if isinterneturl(directory): #don't rigorously test this yet; would require internet
+            self.addremote(directory)
+            return str(directory)
         if directory and file.exists(directory):
             # log.info("Found existing directory: {}".format(directory))
             if self.isrelated(directory):
@@ -16965,6 +16968,8 @@ class Repository(object):
         if not url:
            log.info(f"returning nothing for nothing: {url} ({type(url)})") 
            return
+        if isinterneturl(str(url)):
+            return str(url) #assume this is already fully qualified
         try:
             log.info(f"abs_path returning {url.resolve()} "
                     f"({str(url.resolve())})")
@@ -17874,7 +17879,8 @@ def internetconnectionproblemin(x):
 def isinterneturl(x):
     u=['ssh:',
         'https:',
-        'http:'
+        'http:',
+        'git@github.com:'
         ]
     if [i for i in u if i in x if x]:
             return True
