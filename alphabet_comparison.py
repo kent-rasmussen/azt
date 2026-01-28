@@ -761,7 +761,17 @@ class PageSetup(ui.Window):
             open_file(filepath)
         except Exception as e:
             log.warning(f"Could not open PDF automatically: {e}")
-        
+        q=ui.Window(self,title=_("Is this a final PDF?"))
+        q_text=_("Are you done with this PDF?")
+        q_button_text=_("Yes")
+        q_text+='\n'+_("Click {yes} to store and share with your data."
+                        "").format(yes=q_button_text)
+        ui.Label(q.frame,text=q_text,sticky='news')
+        ui.Button(q.frame,text=q_button_text,
+                    cmd=lambda x=filepath:self.program['settings'].repo['git'].add(x,
+                                                                        force=True),
+                    r=1,sticky='news')
+        q.lift()
     def on_close(self):
         self.destroy()
         sys.exit()

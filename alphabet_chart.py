@@ -354,6 +354,17 @@ class OrderAlphabet(ui.Window):
             notice=ui.Window(self)
             ui.Label(notice.frame,text=text_this,sticky='news')
             log.info(text)
+        q=ui.Window(self,title=_("Is this a final PDF?"))
+        q_text=_("Are you done with this PDF?")
+        q_button_text=_("Yes")
+        q_text+='\n'+_("Click {yes} to store and share with your data."
+                        "").format(yes=q_button_text)
+        ui.Label(q.frame,text=q_text,sticky='news')
+        ui.Button(q.frame,text=q_button_text,
+                    cmd=lambda x=filepath:self.program['settings'].repo['git'].add(x,
+                                                                        force=True),
+                    r=1,sticky='news')
+        q.lift()
     def _hidden(self,value=dict()):
         for i in value:
             self.hide_vars[i].set(value[i])
