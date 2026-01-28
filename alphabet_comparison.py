@@ -634,7 +634,7 @@ class PageSetup(ui.Window):
             with open(path, 'w') as f:
                 json.dump(self.settings, f)
             if 'git' in self.program:
-                self.program['settings'].repo['git'].add(path)                
+                self.program['settings'].repo['git'].add(path,force=True)                
         except Exception as e:
             log.warning(f"Could not save settings: {e}")
             
@@ -672,7 +672,7 @@ class PageSetup(ui.Window):
                         lines = f.readlines()
                     if not lines: continue
                     if 'repo' in self.program:
-                        self.program['settings'].repo['git'].add(txt_path)
+                        self.program['settings'].repo['git'].add(txt_path,force=True)
                     title = lines[0].strip()
                     body = "".join(lines[1:]).strip()
                     
@@ -684,7 +684,7 @@ class PageSetup(ui.Window):
                         if os.path.exists(img_cand):
                             img_path = img_cand
                             if 'git' in self.program:
-                                self.program['settings'].repo['git'].add(img_cand)
+                                self.program['settings'].repo['git'].add(img_cand,force=True)
                             break
                     
                     # We'll let the PDF generator split this if it's too long, 

@@ -16300,7 +16300,7 @@ class Repository(object):
         #     r=self.pull()
         #     log.info(r)
         return r
-    def add(self,file):
+    def add(self,file,force=False):
         #This function must be used to see changes
         # log.info("self.bare: {}".format(self.bare))
         if not self.bare:
@@ -16311,6 +16311,8 @@ class Repository(object):
             else:
                 log.info(_("Adding {file}, which is already there.").format(file=file))
             args=['add', str(file)]
+            if force:
+                args.insert(1, '-f')
             self.do(args)
         else:
             log.info(_("Not adding {file} to bare repo {url}").format(file=file,url=self.url))
