@@ -37,3 +37,5 @@ class TkErrorCatcher:
             else:
                 print(f"not raising Exception {err}")
             # raise err
+        except KeyboardInterrupt:
+            pass

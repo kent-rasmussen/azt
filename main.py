@@ -16314,8 +16314,8 @@ class Repository(object):
             if force:
                 args.insert(1, '-f')
             self.do(args)
-        else:
-            log.info(_("Not adding {file} to bare repo {url}").format(file=file,url=self.url))
+        # else:
+        #     log.info(_("Not adding {file} to bare repo {url}").format(file=file,url=self.url))
     def commitconfirm(self,diff): #don't run the diff again...
         def ok(event=None):
             self.commitconfirmed=nowruntime()
