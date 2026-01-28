@@ -5710,6 +5710,12 @@ msgstr "Est-ce que vouz avez fini avec ce PDF?"
 msgid "Click {yes} to store and share with your data."
 msgstr "Cliquez {yes} pour guarder et partager ceci avec vos données."
 
+msgid "Data in this booklet comes from language [{a}]"
+msgstr "Les données de ce livre viennent de la langue [{a}]"
+
+msgid "All on One Page"
+msgstr "Tous sur une page"
+
 #: /home/kentr/bin/raspy/azt/main.py:4572
 msgid "What level of parsing match do you want the parser to confirm with you?"
 msgstr "Quel niveau d'analyse voulez-vous que l'analyseur confirme avec vous ?"

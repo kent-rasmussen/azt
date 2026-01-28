@@ -69,7 +69,7 @@ def register_fonts():
 
 def create_chart(filename, items, title, num_columns=5, pagesize='A4', 
                 font_name="Helvetica", padding=5, spacing=5,
-                one_page=False, copyright_text=None, made_with=None):
+                one_page=False, copyright_text=None, made_with=None,analang=None):
     """
     Generate a PDF alphabet chart.
     
@@ -123,6 +123,10 @@ def create_chart(filename, items, title, num_columns=5, pagesize='A4',
         if copyright_text:
             c.drawString(margin_x, footer_y, f'© {copyright_text}')
         
+        if analang:
+            analang_width = c.stringWidth(analang, text_font, 10)
+            c.drawCentredString(width / 2, footer_y, f"[{analang}]")
+
         if made_with:
             mw_width = c.stringWidth(made_with, text_font, 10)
             c.drawString(width - margin_x - mw_width, footer_y, made_with)
@@ -191,7 +195,8 @@ def create_chart(filename, items, title, num_columns=5, pagesize='A4',
                             spacing=spacing,
                             one_page=True,
                             copyright_text=copyright_text,
-                            made_with=made_with)
+                            made_with=made_with,
+                            analang=analang)
             
             draw_footer() # Footer on current page
             c.showPage()

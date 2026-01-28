@@ -294,7 +294,7 @@ def create_comparison_chart(filename, *data,
                           prose_count=20, title="Comparison",
                           cover_image=None, logo_image=None, contributors=None, 
                           description=None, copyright_text=None, made_with=None,
-                          extra_pages=None):
+                          extra_pages=None, analang=None):
     """
     Args:
         filename: Output path
@@ -500,7 +500,11 @@ def create_comparison_chart(filename, *data,
             if copy:
                 c.setFont(f"{font_name}-Regular", 10)
                 c.drawCentredString(base_x + half_width/2, margin + 20, f'© {copy}')
-
+            analang = data.get('analang', '')
+            if analang:
+                analang=_("Data in this booklet comes from language [{a}]").format(a=analang)
+                # analang_width = c.stringWidth(analang, text_font, 10)
+                c.drawCentredString(base_x + half_width/2, margin + 40, analang)
         elif page_type == 'extra_text':
             # --- Extra Text Page ---
             title = data.get('title', '')
@@ -687,7 +691,9 @@ def create_comparison_chart(filename, *data,
     # Insert Cover & Imprint at start (these shouldn't have numbers per user rule, 
     # and they aren't in the loop above which only checks 'content'/'extra_text')
     cover_page = {'type': 'cover', 'title': title, 'image': cover_image, 'logo': logo_image}
-    imprint_page = {'type': 'imprint', 'contributors': contributors, 'copyright': copyright_text, 'description': description}
+    imprint_page = {'type': 'imprint', 'contributors': contributors, 
+                    'copyright': copyright_text, 'description': description,
+                    'analang': analang}
     
     data_list.insert(0, imprint_page)
     data_list.insert(0, cover_page)

@@ -271,7 +271,7 @@ class OrderAlphabet(ui.Window):
                                         ipadx=5,
                                         c=1+choice)
         for text,command in [
-                (_("Fit Page"), lambda x=True:self.print_chart(one_page=x)),
+                (_("All on One Page"), lambda x=True:self.print_chart(one_page=x)),
                 (_("Pictured Only"), self._show_pictured_only),
                 (_("Show All"), self._show_all),
                 (_("Charis"), self.toggle_font),
@@ -335,7 +335,8 @@ class OrderAlphabet(ui.Window):
                         self.ncolumns, self.pagesize, font_name,
                         one_page=one_page,
                         copyright_text=self.chart_copyright.get(),
-                        made_with=made_with)
+                        made_with=made_with,
+                        analang=self.db.analang)
         
         try:
             from utilities import open_file
@@ -412,7 +413,7 @@ class OrderAlphabet(ui.Window):
     def set_up_copyright(self):
         self.chart_copyright=ui.StringVar()
         # Init Copyright from settings
-        copyright_grid={'c':1}
+        copyright_grid={'c':1,'sticky':'w'}
         if 'alphabet_copyright' in self.program['settings'].settings['alphabet']['attributes']:
              self.chart_copyright.set(self.program['settings'].alpha_copyright())
         

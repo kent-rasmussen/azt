@@ -752,7 +752,8 @@ class PageSetup(ui.Window):
              description=description_text,
              copyright_text=copyright_text,
              made_with=made_with,
-             font_name=font_name
+             font_name=font_name,
+             analang=self.db.analang
         )
         log.info(f"Generated {filepath}")
         
