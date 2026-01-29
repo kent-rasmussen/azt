@@ -349,6 +349,7 @@ class OrderAlphabet(ui.Window):
         text=("Printed chart with these examples:\n")
         text_list=[f"{k}: {self.exobjs[k].annotations_to_update()}"
             for k in [i for i in self.order if i in self.exids and i in self.exobjs]
+            if self.exobjs[k]
         ]
         for i in range(0,len(text_list),10):
             text_this=text+'\n'.join(text_list[i:i+9])
