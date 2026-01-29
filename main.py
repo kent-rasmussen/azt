@@ -16566,7 +16566,7 @@ class Repository(object):
     def addifis(self,directory):
         # N.B.: I think file.exists will always fail for internet repos
         # For now, add them to git
-        if isinterneturl(directory): #don't rigorously test this yet; would require internet
+        if isinterneturl(str(directory)): #don't rigorously test this yet; would require internet
             self.addremote(directory)
             return str(directory)
         if directory and file.exists(directory):
@@ -16905,7 +16905,7 @@ class Repository(object):
         log.info(_("self.remotenames: {names}; remote: {remote}").format(names=self.remotenames,remote=remote))
         if remote in self.remotenames:
             remote=self.getremotenameurl(remote)
-        if isinterneturl(remote):
+        if isinterneturl(str(remote)):
             return True
     def removeremote(self,remote):
         # This is one of two functions that touch self._remotes directly
@@ -17155,7 +17155,7 @@ class Git(Repository):
         if directory in self.get_all_safe():
             log.info(_("Mark_safe: {directory} already safe").format(directory=directory))
             return
-        args=['config', '--global', '--add', 'safe.directory', directory]
+        args=['config', '--global', '--add', 'safe.directory', str(directory)]
         r=self.do(args)
         if r:
             log.info(_("Mark_safe returned {result} for {directory}").format(result=r,directory=directory))
