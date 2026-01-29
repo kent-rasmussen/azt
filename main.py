@@ -16287,10 +16287,18 @@ class ErrorNotice(ui.Window):
             self.parent.deiconify()
 class Repository(object):
     """SuperClass for Repository classes"""
+    def legalize(self,s):
+        # space, tilde ~, caret ^, or colon :
+        # question-mark ?, asterisk *, or open bracket [
+        # '@{','\'
+        return s.replace(' ','_').replace('/','_').replace(':','_').replace('*','_'
+                ).replace('?','_').replace('"','_').replace('<','_').replace('>','_'
+                ).replace('|','_').replace('~','_').replace('^','_').replace('[','_'
+                ).replace('@{','_').replace('\','_')
     def checkout(self,branchname=None):
         args=['checkout']
         if not branchname:
-            branchname=f"work_from_{self.username}"
+            branchname=self.legalize(f"work_from_{self.username}")
             args.append('-b')
         args.append(branchname)
         r=self.do(args)
