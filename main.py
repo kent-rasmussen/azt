@@ -16294,7 +16294,7 @@ class Repository(object):
         return s.replace(' ','_').replace('/','_').replace(':','_').replace('*','_'
                 ).replace('?','_').replace('"','_').replace('<','_').replace('>','_'
                 ).replace('|','_').replace('~','_').replace('^','_').replace('[','_'
-                ).replace('@{','_').replace('\','_')
+                ).replace('@{','_').replace('\\','_')
     def checkout(self,branchname=None):
         args=['checkout']
         if not branchname:
