@@ -4764,14 +4764,15 @@ if __name__ == '__main__':
                 ]
     codes=[
         'ksv-x-1564',
-        'lol-x-his30100',
+        'mdq-x-1592',
         'lol-x-his30101',
         'lol-x-his30102',
+        'lol-x-HIS30146',
         'lol-x-his30103',
+        'lol-x-his30100',
         'lol-x-his30255',
         'lse-x-his30249',
         'lal-x-3886',
-        'lol-x-HIS30146',
         'lol-x-HIS30147',
         'lol-x-HIS30148',
         'lol-x-his30231',
@@ -4779,7 +4780,6 @@ if __name__ == '__main__':
         'lol-x-his30242',
         'lol-x-his30243',
         'lol-x-his30253',
-        'mdq-x-1592',
     ]
     filenames=[f"/home/kentr/Assignment/Tools/WeSay/{d}/{d}.lift" for d in codes]
 
