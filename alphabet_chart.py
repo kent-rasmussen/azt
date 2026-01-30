@@ -346,6 +346,22 @@ class OrderAlphabet(ui.Window):
 
         self.reflow_chart()
         
+        q=ui.Window(self,title=_("Is this a final PDF?"))
+        q_text=_("Are you done with this PDF?")
+        q_button_text=_("Yes, it's perfect")
+        q_text+='\n'+_("Click {yes} to store and share with your data."
+                        "").format(yes=q_button_text)
+        ui.Label(q.frame,text=q_text,sticky='news')
+        ui.Button(q.frame,text=q_button_text,
+                    cmd=lambda x=filepath:self.program['settings'].repo['git'].add(x,
+                                                                        force=True),
+                    r=1,sticky='news')
+        b2_text=_("I see spelling problems; \nshow me word data")
+        ui.Button(q.frame,text=b2_text,
+                    cmd=self.show_sort_data,
+                    r=2,sticky='news')
+        q.lift()
+    def show_sort_data(self):
         text=("Printed chart with these examples:\n")
         text_list=[f"{k}: {self.exobjs[k].annotations_to_update()}"
             for k in [i for i in self.order if i in self.exids and i in self.exobjs]
@@ -356,17 +372,7 @@ class OrderAlphabet(ui.Window):
             notice=ui.Window(self)
             ui.Label(notice.frame,text=text_this,sticky='news')
             log.info(text)
-        q=ui.Window(self,title=_("Is this a final PDF?"))
-        q_text=_("Are you done with this PDF?")
-        q_button_text=_("Yes")
-        q_text+='\n'+_("Click {yes} to store and share with your data."
-                        "").format(yes=q_button_text)
-        ui.Label(q.frame,text=q_text,sticky='news')
-        ui.Button(q.frame,text=q_button_text,
-                    cmd=lambda x=filepath:self.program['settings'].repo['git'].add(x,
-                                                                        force=True),
-                    r=1,sticky='news')
-        q.lift()
+        
     def _hidden(self,value=dict()):
         for i in value:
             self.hide_vars[i].set(value[i])
@@ -551,7 +557,7 @@ class SelectFromPicturableWords(ui.Window):
         self.selected=x
         self.destroy()
         self.parent.deiconify
-    def __init__(self, parent, db, glyph, ps='Noun'):
+    def __init__(self, parent, db, glyph, ps=None):
         try:
             _
         except:
@@ -562,24 +568,34 @@ class SelectFromPicturableWords(ui.Window):
         """Think about how to constrict this to just the best examples first:
         Only V1=V2 (if they exist) for two V profiles.
         """
-        self.examples=[i for i in db.senses
-                    if i.psvalue() == ps
+        examples=[(c,i.entry.lcvalue(),i) for i in db.senses #must sort before sense object
+                    for c,v in i.entry.lc.annotationvaluedictbylang(analang).items()
+                    if glyph == v
+                    if not ps or i.psvalue() == ps
                     if i.entry.lcvalue()
                     if i.illustrationvalue()
-                    # if glyph in i.entry.lcvalue()
                     if analang in i.entry.lc.forms
-                    if glyph in i.entry.lc.annotationvaluedictbylang(analang).values()
+                    # if glyph in i.entry.lc.annotationvaluedictbylang(analang).values()
                     ]
+        #give longest key values first, then sort wordforms (will fail on senses)
+        # log.info(f"Found {examples[:10]}")
+        examples_prioritized=sorted(examples, key=lambda x: (-len(x[0]),len(x[1])))#, reverse=True)
+        log.info(f"Found {len(examples)} examples for {glyph}: {examples_prioritized[:5]}")
+        examples_only=[i for c,f,i in examples_prioritized]
+        # log.info(f"Found {examples_only[:10]}")
+        self.examples=[i for n,i in enumerate(examples_only) 
+                                        if n==examples_only.index(i)]
+        # log.info(f"Found {self.examples[:10]}")
         if not self.examples:
-            examples=[i for i in db.senses
-                    # if i.psvalue() == ps
-                    # if i.entry.lcvalue()
-                    # if i.illustrationvalue()
+            examples=[(c,i) for i in db.senses
+                    for c,v in i.entry.lc.annotationvaluedictbylang(analang).items()
+                    if glyph == v
+                    if i.entry.lcvalue()
                     if analang in i.entry.lc.forms
-                    if glyph in i.entry.lc.annotationvaluedictbylang(analang).values()
+                    # if glyph in i.entry.lc.annotationvaluedictbylang(analang).values()
                     ]
-            log.info(f"No examples found for {glyph} with images; add to "
-                    f"{[i.id for i in examples]}")
+            log.info(f"No examples found for {glyph} with images in ps {ps}; add to "
+                    f"{[i.id for c,i in examples]}")
         # print([(i.entry.lcvalue(),i.illustrationvalue()) for i in self.examples])
         title=_("Alphabet Chart UI for Word Selection")
         super(SelectFromPicturableWords,self).__init__(parent,
