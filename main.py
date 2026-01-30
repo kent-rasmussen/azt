@@ -16300,6 +16300,9 @@ class Repository(object):
         if not branchname:
             branchname=self.legalize(f"work_from_{self.username}")
             args.append('-b')
+            if self.branch_exists(branchname):
+                if not self.remove_branch(branchname):
+                    self.checkout(branchname+'_')
         args.append(branchname)
         r=self.do(args)
         log.info(r)
@@ -16308,6 +16311,10 @@ class Repository(object):
         #     r=self.pull()
         #     log.info(r)
         return r
+    def branch_exists(self,branchname):
+        return self.do(['branch','--list',branchname])
+    def remove_branch(self,branchname):
+        return self.do(['branch','-d',branchname])
     def add(self,file,force=False):
         #This function must be used to see changes
         # log.info("self.bare: {}".format(self.bare))
@@ -16484,7 +16491,9 @@ class Repository(object):
                         repo=self.repotypename,
                         branch=self.main,
                         result=r))
+            old_branch=self.branch
             self.checkout(self.main)
+            self.remove_branch(old_branch) #only if fully merged
         except Exception as err:
             self.undo_pull()
     def pull(self,remotes=None,branch=None):
@@ -16498,16 +16507,17 @@ class Repository(object):
             return
         for remote in remotes:
             if self.code == 'git':
-                args=['pull',str(remote),self.branch]
+                args=['pull',str(remote),branch]
             elif self.code == 'hg':
-                args=['pull','-u',str(remote),self.branch]
+                args=['pull','-u',str(remote),branch]
             log.info("Pulling: {}".format(args))
             self.try_pull_main(str(remote))
             r=self.do(args)
             log.info("Pull return: {}".format(r))
             if "Automatic merge failed" in r:
                 self.undo_pull()
-                self.checkout()
+                if branch != self.branch:
+                    self.checkout()
                 self.push(remotes,setupstream=True)
                 return self.pull(remotes)
         return r #if we want results for each, do this once for each
