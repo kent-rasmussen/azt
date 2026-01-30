@@ -1,5 +1,9 @@
 #Roadmap
 
+## Urgent
+
+bring tone up to speed.
+
 ## Large Structural Changes for Better Future Development
 
 - Separate into their own module(s):
@@ -12,7 +16,8 @@
         - verify
         - join 
 - Separate out settings
-    - convert all dictionary settings to json, perhaps in their own files
+    - convert all dictionary settings to json (or other? do research), 
+        - perhaps in their own files
         - make sure all integers are converted to strings internally
     - make modifications more straightforward
     - make sourcing settings from different modules possible
