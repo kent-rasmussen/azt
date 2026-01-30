@@ -16299,10 +16299,11 @@ class Repository(object):
         args=['checkout']
         if not branchname:
             branchname=self.legalize(f"work_from_{self.username}")
+        if self.branch_exists(branchname):
+            if branchname != self.main and not self.remove_branch(branchname):
+                return self.checkout(branchname+'_')
+        else:
             args.append('-b')
-            if self.branch_exists(branchname):
-                if not self.remove_branch(branchname):
-                    self.checkout(branchname+'_')
         args.append(branchname)
         r=self.do(args)
         log.info(r)
