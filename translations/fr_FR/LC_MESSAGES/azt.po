@@ -5904,6 +5904,16 @@ msgstr "XML lu OK"
 msgid "Yes"
 msgstr "Oui"
 
+msgid "Yes, it's perfect"
+msgstr "Oui, c'est parfait"
+
+msgid "I see spelling problems; \nshow me word data"
+msgstr "Je vois des problèmes d'orthographe; \nmontrer moi les données des mots"
+
+msgid "This PDF uses Helvetica because neither Charis nor Andika were found; "
+            "install one of them for better glyph treatment."
+msgstr "Ce PDF utilise Helvetica car ni Charis ni Andika n'ont été trouvés; "
+            "installez l'un d'eux pour une meilleure traitement des glyphes."
 #: /home/kentr/bin/raspy/azt/main.py:688 /home/kentr/bin/raspy/azt/main.py:8306
 msgid "Yes!"
 msgstr "Oui !"

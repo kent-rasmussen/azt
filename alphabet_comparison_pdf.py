@@ -40,21 +40,22 @@ def register_fonts():
     """Registers the specified font family if available."""
     try:
         # Check if already registered to avoid errors or re-registering
-        try:
-            pdfmetrics.getFont('Charis-Regular')
-            return True
-        except:
-            pass
+        for filename in ['CharisSIL','Charis']:
+            try:
+                pdfmetrics.getFont(f'{filename}-Regular')
+                return True
+            except:
+                pass
 
-        pdfmetrics.registerFont(TTFont('Charis-Regular', 'CharisSIL-Regular.ttf'))
-        pdfmetrics.registerFont(TTFont('Charis-Bold', 'CharisSIL-Bold.ttf'))
-        pdfmetrics.registerFont(TTFont('Charis-Italic', 'CharisSIL-Italic.ttf'))
-        pdfmetrics.registerFont(TTFont('Charis-BoldItalic', 'CharisSIL-BoldItalic.ttf'))
-        registerFontFamily('Charis',
-                            normal='Charis-Regular',
-                            bold='Charis-Bold',
-                            italic='Charis-Italic',
-                            boldItalic='Charis-BoldItalic')
+            pdfmetrics.registerFont(TTFont('Charis-Regular', f'{filename}-Regular.ttf'))
+            pdfmetrics.registerFont(TTFont('Charis-Bold', f'{filename}-Bold.ttf'))
+            pdfmetrics.registerFont(TTFont('Charis-Italic', f'{filename}-Italic.ttf'))
+            pdfmetrics.registerFont(TTFont('Charis-BoldItalic', f'{filename}-BoldItalic.ttf'))
+            registerFontFamily('Charis',
+                                normal='Charis-Regular',
+                                bold='Charis-Bold',
+                                italic='Charis-Italic',
+                                boldItalic='Charis-BoldItalic')
         
         pdfmetrics.registerFont(TTFont('Andika-Regular', 'Andika-Regular.ttf'))
         pdfmetrics.registerFont(TTFont('Andika-Bold', 'Andika-Bold.ttf'))
@@ -70,7 +71,7 @@ def register_fonts():
         log.warning(f"Could not register fonts: {e}")
         return False
 
-def draw_triangular_examples(c, x, y, width, height, items, font_name, font_size):
+def draw_triangular_examples(c, x, y, width, height, items, text_font, font_size):
     """
     Draws 3 items in a triangular layout:
       [Img1]   [Img2]
@@ -98,8 +99,8 @@ def draw_triangular_examples(c, x, y, width, height, items, font_name, font_size
         glyph, word, image_path = item
         
         # Calculate text height
-        c.setFont(f"{font_name}-Regular", font_size)
-        text_w = c.stringWidth(word, f"{font_name}-Regular", font_size)
+        c.setFont(text_font, font_size)
+        text_w = c.stringWidth(word, text_font, font_size)
         text_h = font_size * 1.2 # Approx line height
         
         # Image area
@@ -239,7 +240,7 @@ def draw_svg(canvas, path, x, y, width=None, height=None, center=False):
     except Exception as e:
         logging.getLogger(__name__).error(f"Error rendering SVG {path}: {e}")
 
-def split_extra_text(title, body, image_path, font_name, font_size, width, first_page_h, other_page_h):
+def split_extra_text(title, body, image_path, text_font, font_size, width, first_page_h, other_page_h):
     """Splits body text into page-sized chunks with spacing between paragraphs."""
     from reportlab.lib.utils import simpleSplit
     
@@ -251,7 +252,7 @@ def split_extra_text(title, body, image_path, font_name, font_size, width, first
     all_items = []
     
     for i, p in enumerate(paragraphs):
-        p_lines = simpleSplit(p, f"{font_name}-Regular", font_size, width)
+        p_lines = simpleSplit(p, text_font, font_size, width)
         for line in p_lines:
             all_items.append((line, line_height))
         # Add half-line spacer between paragraphs
@@ -321,9 +322,20 @@ def create_comparison_chart(filename, *data,
     """
     log.info(f"Creating comparison chart called with {filename=}")
     font_size = 12
-    if not register_fonts():
+    # if not register_fonts():
+    #     log.error("Problem loading fonts (is Charis installed?)")
+    #     raise
+    if register_fonts():
+        title_font = f"{font_name}-Bold"
+        text_font = f"{font_name}-Regular"
+        using_helvetica=False
+    else:
+        using_helvetica=True
         log.error("Problem loading fonts (is Charis installed?)")
-        raise
+        # log.warning(f"Could not register fonts: {e}")
+        log.warning("Proceeding with Helvetica")
+        title_font = "Helvetica-Bold"
+        text_font = "Helvetica"
     
     if pagesize.lower() == 'a4':
         _pagesize = landscape(A4)
@@ -405,12 +417,12 @@ def create_comparison_chart(filename, *data,
 
             # --- Draw Title ---
             # Title starts at title_top_y and goes DOWN
-            c.setFont(f"{font_name}-Bold", 36)
+            c.setFont(title_font, 36)
             title_text = data.get('title', '')
             
             from reportlab.lib.utils import simpleSplit
             available_width = half_width - (2 * margin)
-            lines = simpleSplit(title_text, f"{font_name}-Bold", 36, available_width)
+            lines = simpleSplit(title_text, title_font, 36, available_width)
             
             current_y = title_top_y
             line_height = 40
@@ -469,12 +481,12 @@ def create_comparison_chart(filename, *data,
         elif page_type == 'imprint':
             # --- Imprint Page (Inside Front) ---
             # Contributors (Top)
-            c.setFont(f"{font_name}-Bold", 14)
+            c.setFont(title_font, 14)
             current_y = height - margin - 40
             c.drawCentredString(base_x + half_width/2, current_y, _("People Involved"))
             current_y -= 25
             
-            c.setFont(f"{font_name}-Regular", 12)
+            c.setFont(text_font, 12)
             contribs = data.get('contributors', [])
             if contribs:
                 for name in contribs:
@@ -486,11 +498,11 @@ def create_comparison_chart(filename, *data,
             # Description Text (Between Contributors and Copyright)
             desc = data.get('description', '')
             if desc:
-                c.setFont(f"{font_name}-Regular", 11)
+                c.setFont(text_font, 11)
                 # Word wrap description
                 from reportlab.lib.utils import simpleSplit
                 desc_width = half_width - (margin * 2)
-                lines = simpleSplit(desc, f"{font_name}-Regular", 11, desc_width)
+                lines = simpleSplit(desc, text_font, 11, desc_width)
                 for line in lines:
                     c.drawCentredString(base_x + half_width/2, current_y, line)
                     current_y -= 13
@@ -498,7 +510,7 @@ def create_comparison_chart(filename, *data,
             # Copyright (Bottom)
             copy = data.get('copyright', '')
             if copy:
-                c.setFont(f"{font_name}-Regular", 10)
+                c.setFont(text_font, 10)
                 c.drawCentredString(base_x + half_width/2, margin + 20, f'© {copy}')
             analang = data.get('analang', '')
             if analang:
@@ -516,7 +528,7 @@ def create_comparison_chart(filename, *data,
             
             # 1. Title
             if title:
-                c.setFont(f"{font_name}-Bold", 18)
+                c.setFont(title_font, 18)
                 c.drawCentredString(base_x + half_width/2, current_y - 20, title)
                 current_y -= 50
             
@@ -551,11 +563,11 @@ def create_comparison_chart(filename, *data,
             # 2.5 Page Numbering
             page_num = data.get('_page_num')
             if page_num:
-                 c.setFont(f"{font_name}-Regular", 10)
+                 c.setFont(text_font, 10)
                  c.drawCentredString(base_x + half_width/2, margin - 10, str(page_num))
 
             # 3. Text
-            c.setFont(f"{font_name}-Regular", 12)
+            c.setFont(text_font, 12)
             for text, h in data.get('items', []):
                 if text:
                     # Left-align with margin.
@@ -567,7 +579,7 @@ def create_comparison_chart(filename, *data,
             # Made With (Bottom)
             mw = data.get('made_with', '')
             if mw:
-                c.setFont(f"{font_name}-Regular", 10)
+                c.setFont(text_font, 10)
                 c.drawCentredString(base_x + half_width/2, margin + 20, mw)
         
         else:
@@ -581,7 +593,7 @@ def create_comparison_chart(filename, *data,
             # Easier to pass it in via data dict.
             page_num = data.get('_page_num')
             if page_num:
-                 c.setFont(f"{font_name}-Regular", 10)
+                 c.setFont(text_font, 10)
                  c.drawCentredString(base_x + half_width/2, margin - 10, str(page_num))
 
             # Safe extraction of words for prose (from tuple)
@@ -592,7 +604,7 @@ def create_comparison_chart(filename, *data,
             
             # 1. Symbol Header
             header_y = height - margin - 40
-            c.setFont(f"{font_name}-Bold", 72)
+            c.setFont(title_font, 72)
             c.drawCentredString(base_x + half_width/2, header_y, symbol)
             
             # 2. Top Half (Examples)
@@ -601,7 +613,7 @@ def create_comparison_chart(filename, *data,
             examples_height = examples_top - mid_page_y
             
             draw_triangular_examples(c, content_left, mid_page_y, content_width, examples_height, 
-                                items, font_name, font_size)
+                                items, text_font, font_size)
             
             # 3. Bottom Half (Prose)
             prose_top = mid_page_y - 30 # Spacing
@@ -611,12 +623,12 @@ def create_comparison_chart(filename, *data,
             prose_text = generate_prose_text(words, prose_count)
             
             text_obj = c.beginText(content_left, prose_top)
-            text_obj.setFont(f"{font_name}-Regular", font_size)
+            text_obj.setFont(text_font, font_size)
             text_obj.setTextOrigin(content_left, prose_top)
             
             # Simple word wrap
             from reportlab.lib.utils import simpleSplit
-            lines = simpleSplit(prose_text, f"{font_name}-Regular", font_size, prose_width)
+            lines = simpleSplit(prose_text, text_font, font_size, prose_width)
             
             for line in lines:
                 if text_obj.getY() < prose_bottom:
@@ -631,11 +643,11 @@ def create_comparison_chart(filename, *data,
                 prose_text = generate_prose_text(both_words, prose_count)
                 prose_top = text_obj.getY() - font_size*3/2
                 text_obj = c.beginText(content_left, prose_top)
-                text_obj.setFont(f"{font_name}-Regular", font_size)
+                text_obj.setFont(text_font, font_size)
                 text_obj.setTextOrigin(content_left, prose_top)
             
                 # Simple word wrap
-                lines = simpleSplit(prose_text, f"{font_name}-Regular", 12, prose_width)
+                lines = simpleSplit(prose_text, text_font, 12, prose_width)
                 
                 for line in lines:
                     if text_obj.getY() < prose_bottom:
@@ -662,7 +674,7 @@ def create_comparison_chart(filename, *data,
                 # title takes 50, image margin 20
                 f_h = height - (2 * margin) - 50 - image_h - (20 if image_h > 0 else 0)
                 
-                chunks = split_extra_text(ep.get('title',''), ep.get('text',''), ep.get('image'), font_name, 12, content_w, f_h, o_h)
+                chunks = split_extra_text(ep.get('title',''), ep.get('text',''), ep.get('image'), text_font, 12, content_w, f_h, o_h)
                 log.info(f"Split extra page '{ep.get('title')}' into {len(chunks)} chunks")
                 processed_extra.extend(chunks)
         except Exception as e:
@@ -744,7 +756,8 @@ def create_comparison_chart(filename, *data,
             c.showPage()
     c.save()
     log.info(f"Comparison chart saved to {filename}")
-
+    if using_helvetica:
+        return 'using_helvetica'
 def make_signatures(pages):
     """
     Reorders a list of pages for a single saddle-stitch booklet.

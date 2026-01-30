@@ -319,7 +319,7 @@ class PageFrameUI(ui.Frame):
             self.glyph_choice.selection_set(self.glyph_choice.get(0, "end").index(glyph))
         self.restore_examples()
 class PageSetup(ui.Window):
-    def order_by_frequency(self):
+    def show_frequencies(self):
         counts=self.program['slices'].scount()
         log.info(f"{counts}")
         log.info(f"{counts.values()} {[type(i) for i in counts.values()]}")
@@ -381,7 +381,6 @@ class PageSetup(ui.Window):
 
         # UI Layout
         self.setup_ui()
-        self.order_by_frequency()
         
     def toggle_font(self):
         current = self.font_var.get()
@@ -532,7 +531,7 @@ class PageSetup(ui.Window):
     def setup_ui(self):
         # Top Config Frame
         config_frame = ui.Frame(self.frame, r=0, c=0, sticky='ew', border=1, relief='groove')
-        config_frame_cols=6
+        config_frame_cols=7
         # Row 0: Basic Config (Title)
         title_grid={'r':0, 'c':0, 'columnspan':config_frame_cols, 'sticky':'ew'}
         self.title_config=ui.Frame(config_frame, **title_grid)
@@ -568,6 +567,8 @@ class PageSetup(ui.Window):
         # Font Switcher
         self.font_config = ui.Frame(config_frame, r=1, c=5)
         self.font_btn = ui.Button(self.font_config, text=self.font_var.get(), command=self.toggle_font, r=0, c=0)
+
+        ui.Button(config_frame,text=_("Show Frequencies"),command=self.show_frequencies,r=1, c=6)
 
         # Row 3: Copyright
         copyright_grid={'r':3, 'c':1, 'columnspan':config_frame_cols-1, 'sticky':'ew'}
@@ -741,7 +742,7 @@ class PageSetup(ui.Window):
         # Determine Font
         font_name = getattr(self, 'font_var', ui.StringVar(value='Charis')).get()
 
-        alphabet_comparison_pdf.create_comparison_chart(
+        r=alphabet_comparison_pdf.create_comparison_chart(
              filepath, *pages, 
              extra_pages=extra_pages,
              prose_count=self.prose_count_var.get(),
@@ -762,6 +763,13 @@ class PageSetup(ui.Window):
             open_file(filepath)
         except Exception as e:
             log.warning(f"Could not open PDF automatically: {e}")
+        if r == 'using_helvetica':
+            q=ui.Window(self,title=_("Using Helvetica"))
+            q_text=_("This PDF uses Helvetica because neither Charis nor Andika were found; "
+                "install one of them for better glyph treatment.")
+            ui.Label(q.frame,text=q_text,sticky='news')
+            q.lift()
+            return
         q=ui.Window(self,title=_("Is this a final PDF?"))
         q_text=_("Are you done with this PDF?")
         q_button_text=_("Yes")

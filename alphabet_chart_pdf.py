@@ -90,9 +90,21 @@ def create_chart(filename, items, title, num_columns=5, pagesize='A4',
         return
 
     # Try to register the requested font
-    if not register_fonts():
+    if register_fonts():
+        title_font = f"{font_name}-Bold"
+        text_font = f"{font_name}-Regular"
+        glyph_font = f"{font_name}-Bold"
+        using_helvetica=False
+    else:
+        using_helvetica=True
         log.error("Problem loading fonts (is Charis installed?)")
-        raise
+        # log.warning(f"Could not register fonts: {e}")
+        log.warning("Proceeding with Helvetica")
+        title_font = "Helvetica-Bold"
+        text_font = "Helvetica"
+        glyph_font = "Helvetica-Bold"
+        # raise
+    
     if pagesize.lower() in ['a4','european','default']:
         _pagesize=A4
     elif pagesize.lower() in ['letter','us']:
@@ -106,10 +118,7 @@ def create_chart(filename, items, title, num_columns=5, pagesize='A4',
     margin_x = 0.5 * inch
     margin_y = 0.5 * inch
     
-    # Fonts
-    title_font = f"{font_name}-Bold"
-    text_font = f"{font_name}-Regular"
-    glyph_font = f"{font_name}-Bold"
+        
 
     # Title
     c.setFont(title_font, 24)
@@ -273,4 +282,6 @@ def create_chart(filename, items, title, num_columns=5, pagesize='A4',
     draw_footer() # Footer on last page
     c.save()
     log.info(f"PDF saved to {filename}")
+    if using_helvetica:
+        return "using_helvetica"
     return num_columns

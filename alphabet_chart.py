@@ -344,8 +344,14 @@ class OrderAlphabet(ui.Window):
         except Exception as e:
             log.warning(f"Could not open PDF automatically: {e}")
 
-        self.reflow_chart()
-        
+        if self.ncolumns == "using_helvetica":
+            q=ui.Window(self,title=_("Helvetica warning"))
+            ui.Label(q.frame,text=_("This PDF uses Helvetica because neither Charis nor Andika were found; "
+            "install one of them for better glyph treatment."),sticky='news')
+            # ui.Button(q.frame,text=_("OK"),cmd=q.destroy,r=1,sticky='news')
+            q.lift()
+            return
+        self.reflow_chart() #don't do this if self.columns is messed with
         q=ui.Window(self,title=_("Is this a final PDF?"))
         q_text=_("Are you done with this PDF?")
         q_button_text=_("Yes, it's perfect")
@@ -479,7 +485,9 @@ class OrderAlphabet(ui.Window):
             for k in ['exids','order']:
                 setattr(self,k,kwargs.get(k,0))
                 # log.info(f"Loaded ‘{k}’ from kwargs/default: {getattr(self,k)}")
-            self.ncolumns=kwargs.get('ncolumns',8)
+            self.ncolumns=kwargs.get('ncolumns',False)
+            if type(self.ncolumns) != int and not self.columns.isdigit():
+                self.columns=8
             self.analangname=self.db.analang
             self.pagesize='letter'
         self.imgdir=self.db.imgdir
