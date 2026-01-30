@@ -16516,8 +16516,7 @@ class Repository(object):
             log.info("Pull return: {}".format(r))
             if "Automatic merge failed" in r:
                 self.undo_pull()
-                if branch != self.branch:
-                    self.checkout()
+                self.checkout()
                 self.push(remotes,setupstream=True)
                 return self.pull(remotes)
         return r #if we want results for each, do this once for each
