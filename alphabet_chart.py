@@ -569,12 +569,12 @@ class SelectFromPicturableWords(ui.Window):
         Only V1=V2 (if they exist) for two V profiles.
         """
         examples=[(c,i.entry.lcvalue(),i) for i in db.senses #must sort before sense object
+                    if analang in i.entry.lc.forms
                     for c,v in i.entry.lc.annotationvaluedictbylang(analang).items()
                     if glyph == v
                     if not ps or i.psvalue() == ps
                     if i.entry.lcvalue()
                     if i.illustrationvalue()
-                    if analang in i.entry.lc.forms
                     # if glyph in i.entry.lc.annotationvaluedictbylang(analang).values()
                     ]
         #give longest key values first, then sort wordforms (will fail on senses)
