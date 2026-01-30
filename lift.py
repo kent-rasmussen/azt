@@ -100,6 +100,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 .format(gloss_counts=self.nsenseswglossdata, def_counts=self.nsenseswdefndata))
         #This may be superfluous:
         self.getsenseidsbyps() #sets: self.senseidsbyps and self.nsenseidsbyps
+        self.get_senses_by_cawln()
         """This is very costly on boot time, so this one line is not used:"""
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
         self.lcs=self.citations()
@@ -530,6 +531,8 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.sensesbyps={ps:[i for i in self.senses if i.psvalue() == ps]
                             for ps in self.pss
                             }
+    def get_senses_by_cawln(self):
+        self.sensesbycawln={s.cawln:s for s in self.senses}
     def slicebyps_profile(self):
         self.sensesbyps_profile={ps:{profile:[i for i in self.sensesbyps[ps]
                                             if i.cvprofilevalue() == profile]
@@ -4653,38 +4656,136 @@ def another():
         'attr':'nodetext'}
 def printurllog(lift):
     log.info('\n'+'\n'.join([str(x)+'\n  '+str(y.url) for x,y in lift.urls.items()]))
+def form_similarity(x,y):
+    # log.info(f'similarity between {x} and {y} is {str(len(set(x)&set(y))/(len(x)+len(y)/2))}')
+    if x and y:
+        return len(set(x)&set(y))/(len(x)+len(y)/2)
+def analyze_relationships(filenames,list_all=False,do_pairs=False):
+    # codes=[pathlib.Path(filename).stem for filename in filenames]
+    lifts={pathlib.Path(filename).stem:LiftXML(filename) for filename in filenames}
+    lifts_ordered=sorted(lifts)
+    lifts_reversed=lifts_ordered[-1:-len(lifts_ordered)-1:-1]
+    print(lifts_ordered)
+    import itertools
+    language_pairs=[i for i in itertools.combinations(lifts_ordered, 2)]
+    print(language_pairs)
+    for i in language_pairs: #for x,y doesn't work here, despite this producing tuples
+        print('i:',i, type(i))
+    stats_by_language_pair={i:[] for i in language_pairs}
+    if list_all:
+        log.info('\t'.join(['code:']+lifts_ordered))
+    for i in range(1,1701):
+        i='0'*(4-len(str(i)))+str(i)
+        #just pull these once each:
+        forms={f:lifts[f].sensesbycawln[i].ftypes['lc'].textvaluebylang() 
+                for f in lifts_ordered}
+        # log.info(f"Found {len(forms)} form keys")
+        # log.info(f"Found {len([v for k,v in forms.items() if v])} form values: \n"
+        #         f"{[v for k,v in forms.items() if v]}")
+        if list_all:
+            text_bits=[i]+[forms[f] for f in lifts_ordered]
+            log.info('\t'.join([i if i else '' for i in text_bits]))
+        if do_pairs:
+            for x,y in language_pairs:
+                stats_by_language_pair[(x,y)].append(form_similarity(forms[x],forms[y]))
+        # for l in language_pairs:
+        #     log.info(f"{l}\t{stats_by_language_pair[l]}")
+        # if int(i)>2:
+        #     break
+    if do_pairs:
+        stats_by_language_pair={k:[i for i in v if i] 
+                                for k,v in stats_by_language_pair.items()}
+        import numpy as np
+        #just list, probably not needed:
+        # for i in language_pairs:
+        #     log.info(f"{i}\t{np.mean(stats_by_language_pair[i]):.2f}"
+        #             f"±{np.std(stats_by_language_pair[i]):.2f}")
+
+        # make a table with mean and stdev:
+        log.info('\t'.join(['']+lifts_reversed)) #column headers
+        for r in lifts_ordered:
+            text=[r]+[f"{np.mean(stats_by_language_pair[(r,y)]):.2f}"
+                    f"±{np.std(stats_by_language_pair[(r,y)]):.2f}" 
+                    for y in lifts_reversed
+                    if (r,y) in stats_by_language_pair]
+            log.info('\t'.join(text))
+def revert_stuff(**kwargs):
+    for sense in lift.senses:
+        for ftype in sense.ftypes:
+            for lang in sense.ftypes[ftype].forms:
+                sense.ftypes[ftype].forms[lang].revertif(**kwargs)
+def update_langtags(codes_to_change):
+    def make_filename():
+        if 'folder' in lang:
+            return home+lang['folder']+'/'+away
+        else:
+            return home+away
+    for lang in codes_to_change:
+        print("Not doing anything yet!")    
+        home="/home/kentr/Assignment/Tools/WeSay/"
+        away=lang['fromcode']+'/'+lang['fromcode']+'.lift'
+        lift=LiftXML(make_filename())
+        lift.convert_langtag(lang['fromcode'],lang['tocode'])
+        away=lang['fromcode']+'/'+lang['tocode']+'.lift' #leave dir alone
+        lift.write(filename=make_filename())
 if __name__ == '__main__':
     import time #for testing; remove in production
+    logsetup.setlevel('INFO',log) #for this file
     # def _(x):
     #     return str(x)
     """To Test:"""
     # loglevel='Debug'
-    # filename="/home/kentr/Assignment/Tools/WeSay/dkx/MazHidi_Lift.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/bse/SIL CAWL Wushi.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/bfj/bfj.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/blm-x-rundu/blm-x-rundu.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/gnd/gnd.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/cky/Mushere Exported AZT file.lift"
-    # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift_backupBeforeLx2LcConversion"
-    # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL.lift"
-    # filename="/home/kentr/bin/raspy/azt/userlogs/SILCAWL_test.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/tiv/tiv.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/ETON_propre/Eton.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/tsp/TdN.lift_2021-12-06.txt"
-    # filename="/home/kentr/Assignment/Tools/WeSay/eto/eto.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/eto/Eton.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/bqg/Kusuntu.lift"
-    # filename="/home/kentr/Assignment/Tools/WeSay/bo/bo.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/wmg/wmg.lift"
     # filename="/home/kentr/Assignment/Tools/WeSay/Demo_en/Demo_en.lift"
+    codes_to_change=[
+                    {'folder':'LALIA','fromcode':'lal', 'tocode':'lal-x-3886'},
+                    {'folder':'LOKUTSHU','fromcode':'ksv', 'tocode':'ksv-x-1564'},
+                    #This was done in error, not just updating to fuller codes:
+                    {'folder':'LOMBOLE','fromcode':'lol', 'tocode':'mdq-x-1592'},
+                    {'folder':'LOMOMA','fromcode':'lol', 'tocode':'lol-x-HIS30149'},
+                    {'folder':'LONGALE','fromcode':'lol', 'tocode':'lol-x-HIS30148'},
+                    {'folder':'LOTSWA NORTH','fromcode':'lol', 'tocode':'lol-x-HIS30147'},
+                    {'folder':'LOEKI','fromcode':'lol', 'tocode':'lol-x-HIS30146'},
+                    #also an error (mine):
+                    {'fromcode':'lol-x-his30249', 'tocode':'lse-x-his30249'},
+                    ]
+    """LALIA   lal-x-3886
+    LOEKI   lol-x-HIS30146
+    LOKUTSHU   ksv-x-1564
+    LOMBOLE   mdq-x-1592
+    LOMOMA   lol-x-HIS30149
+    LONGALE  lol-x-HIS30148
+    'LOTSWA NORTH' lol-x-HIS30147
+    """
+    # update_langtags(codes_to_change)
+    import glob 
+    filenames=[i for d in ['lol','lse','lal','ksv','mdq']    # if '101' not in i and '242' not in i
+            for i in glob.glob(f"/home/kentr/Assignment/Tools/WeSay/{d}-x-*/{d}*.lift")
+                ]
+    codes=[
+        'ksv-x-1564',
+        'lol-x-his30100',
+        'lol-x-his30101',
+        'lol-x-his30102',
+        'lol-x-his30103',
+        'lol-x-his30255',
+        'lse-x-his30249',
+        'lal-x-3886',
+        'lol-x-HIS30146',
+        'lol-x-HIS30147',
+        'lol-x-HIS30148',
+        'lol-x-his30231',
+        'lol-x-his30240',
+        'lol-x-his30242',
+        'lol-x-his30243',
+        'lol-x-his30253',
+        'mdq-x-1592',
+    ]
+    filenames=[f"/home/kentr/Assignment/Tools/WeSay/{d}/{d}.lift" for d in codes]
+
+    # analyze_relationships(filenames,list_all=False,do_pairs=True)
     def report():
-        import glob 
-        filenames=[i for i in glob.glob("/home/kentr/Assignment/Tools/WeSay/*-x-*/*.lift")
-                    if '101' not in i and '242' not in i]
         lifts={}
-        for filename in filenames:
-            lifts[filename]=LiftXML(filename)
         for filename in filenames:
             lifts[filename].report_counts()
     # lc_source='/home/kentr/Assignment/Tools/WeSay/ln-CD/ln-CD.lift'
@@ -4694,13 +4795,15 @@ if __name__ == '__main__':
     # copy_lc_to_new_lift_gloss(lift_w_lc=lift,
     #                             lift_target=gloss_target,
     #                             analang='ln-CD')
-    code=102
-    filename=f"/home/kentr/Assignment/Tools/WeSay/lol-x-his30{str(code)}/"
-    filename+=f"lol-x-his30{str(code)}.lift"
+    code_number=249 #lol-x-HIS30148
+    code=f"lol-x-his30{str(code_number)}"
+    code="lol-x-his30147"
+    filename=f"/home/kentr/Assignment/Tools/WeSay/{code}/{code}.lift"
     lift=LiftXML(filename)
-    for sid in ['eye_5e67f88d-f0f0-42d1-a10e-6a7abaac05a4', 'cheek_3fb09846-1194-42a5-ac75-a48eeb9541f9', 'deaf (mute) person_16a6f5e4-9597-4a3b-9331-fb7af5760aae', 'body_791094f2-a82b-4650-81d8-c3b6145d2be4', 'market (n)_a2e9cd5b-fdc4-4646-9c65-beec5380703f', 'anvil_90ce0211-ae56-48d9-8331-722bdd9a15f5', 'fist_0e0fc867-e56a-4df5-861a-1cb24d861037', 'snore_85715999-b0c2-435e-9b76-faa0ac8cb8ef', 'stupid person_603cf053-b6ea-4330-b241-a3c67fa02910', 'molar tooth_3358ff15-0d02-4667-aa39-8cc1dd46c496', 'beard_4ad57748-4eab-49bd-ad58-72cf41e653bd', 'death_4aa78a64-4e70-48b2-99be-e75783c1ae64', 'namesake_fdf18d0d-05ae-407b-b435-a6f740f4b5e6', 'labret, lip plug, lip disk_6fba2be0-1651-43ee-a425-1af030ea7cef', 'news_1754ff73-86be-4029-a1bf-00626b0bd5b0', 'nose_c6327beb-5bb7-4ce5-9def-078dedbb79da', 'shoulder_84c5c175-f73b-4c0f-acdd-78cde3a43d31', 'ring (finger)_2e427051-a799-40d2-b726-4c098d74b3e9', 'startle, surprise_4368e622-37cd-4e77-a45b-052c3ab3e5e5', 'cheek_3fb09846-1194-42a5-ac75-a48eeb9541f9', 'breastbone_6198bc00-ea9a-42ee-9dda-dbb6509fe66b', 'thigh_20efd25d-d864-465a-bb96-1dd47ffcef76', 'bone_0380a162-8a06-432d-822a-e4d157ec427d', 'ear_eb5309e8-d195-49d7-98f8-dda716e2e0ac', 'vagina_204835a3-9283-4857-b4df-cd3a1bb78bd6', 'hammer_75ba703b-ebe7-488e-b85d-707d0c1cc6bb', 'breast_0d1c046d-e7d0-48e6-b34f-0461b8590f92', 'eyelid_19d4a1a6-a714-42f3-964b-2e35e972b636', 'camp, encampment_97f9b465-e0c4-4579-8232-5661637a5182', 'tendon_dda99e32-47f6-424e-99ed-3a11fdf95c37', 'eyebrow_0dcd17d1-880f-4749-9454-97377ef6e551', 'cheek_3fb09846-1194-42a5-ac75-a48eeb9541f9', 'lime, whitewash_ab2486d1-b568-43c5-a1f7-7d2f66c87b39', 'vagina_204835a3-9283-4857-b4df-cd3a1bb78bd6', 'calabash_9a45649f-6bf2-46e7-b078-baee176cb40d'
-                ]:
-        print(lift.sensedict[sid].annotations_to_update())
+    # sids=['eye_5e67f88d-f0f0-42d1-a10e-6a7abaac05a4', 'cheek_3fb09846-1194-42a5-ac75-a48eeb9541f9', 'deaf (mute) person_16a6f5e4-9597-4a3b-9331-fb7af5760aae', 'body_791094f2-a82b-4650-81d8-c3b6145d2be4', 'market (n)_a2e9cd5b-fdc4-4646-9c65-beec5380703f', 'anvil_90ce0211-ae56-48d9-8331-722bdd9a15f5', 'fist_0e0fc867-e56a-4df5-861a-1cb24d861037', 'snore_85715999-b0c2-435e-9b76-faa0ac8cb8ef', 'stupid person_603cf053-b6ea-4330-b241-a3c67fa02910', 'molar tooth_3358ff15-0d02-4667-aa39-8cc1dd46c496', 'beard_4ad57748-4eab-49bd-ad58-72cf41e653bd', 'death_4aa78a64-4e70-48b2-99be-e75783c1ae64', 'namesake_fdf18d0d-05ae-407b-b435-a6f740f4b5e6', 'labret, lip plug, lip disk_6fba2be0-1651-43ee-a425-1af030ea7cef', 'news_1754ff73-86be-4029-a1bf-00626b0bd5b0', 'nose_c6327beb-5bb7-4ce5-9def-078dedbb79da', 'shoulder_84c5c175-f73b-4c0f-acdd-78cde3a43d31', 'ring (finger)_2e427051-a799-40d2-b726-4c098d74b3e9', 'startle, surprise_4368e622-37cd-4e77-a45b-052c3ab3e5e5', 'cheek_3fb09846-1194-42a5-ac75-a48eeb9541f9', 'breastbone_6198bc00-ea9a-42ee-9dda-dbb6509fe66b', 'thigh_20efd25d-d864-465a-bb96-1dd47ffcef76', 'bone_0380a162-8a06-432d-822a-e4d157ec427d', 'ear_eb5309e8-d195-49d7-98f8-dda716e2e0ac', 'vagina_204835a3-9283-4857-b4df-cd3a1bb78bd6', 'hammer_75ba703b-ebe7-488e-b85d-707d0c1cc6bb', 'breast_0d1c046d-e7d0-48e6-b34f-0461b8590f92', 'eyelid_19d4a1a6-a714-42f3-964b-2e35e972b636', 'camp, encampment_97f9b465-e0c4-4579-8232-5661637a5182', 'tendon_dda99e32-47f6-424e-99ed-3a11fdf95c37', 'eyebrow_0dcd17d1-880f-4749-9454-97377ef6e551', 'cheek_3fb09846-1194-42a5-ac75-a48eeb9541f9', 'lime, whitewash_ab2486d1-b568-43c5-a1f7-7d2f66c87b39', 'vagina_204835a3-9283-4857-b4df-cd3a1bb78bd6', 'calabash_9a45649f-6bf2-46e7-b078-baee176cb40d'
+    #                 ]:
+    # for sid in sids
+    #     print(lift.sensedict[sid].annotations_to_update())
     #     
 # for code in [100,101,102,231,253,242,243]: #103#240#242#243 #100,101,102,231,253,255
     #     filename=f"/home/kentr/Assignment/Tools/WeSay/lol-x-his30{str(code)}/"
@@ -4708,39 +4811,22 @@ if __name__ == '__main__':
     #     copy_lc_to_new_lift_gloss(lift_w_lc=lift,
     #                             lift_target=filename,
     #                             analang='ln-CD')
-    def revert_stuff():
-        kwargs={'expressions':["yi","mwãsasi","ggg", "yyy", "eee", "iii","ɔɔɔ",'ooo','lll','aaa','sss','---','___',"555",
-                                'ʔ'],
-                'bad_values':["yu",'yi',"ue","ie","oo","oi",'ʔ','lɔsɔpɔ']
-                }
-        for sense in lift.senses:
-            for ftype in sense.ftypes:
-                for lang in sense.ftypes[ftype].forms:
-                    sense.ftypes[ftype].forms[lang].revertif(**kwargs)
-    # revert_stuff()
+    kwargs={'expressions':['nttt',"yi","mwãsasi","ggg", "yyy", "eee", "iii","ɔɔɔ",'ooo','lll','aaa','sss','---','___',"555",
+                            'ʔ'],
+            'bad_values':["yu",'yi',"ue","ie","oo","oi",'ʔ','lɔsɔpɔ']
+            }
+    # revert_stuff(**kwargs)
     # print(lift.get_segments_annotated())
     # report()
-    # exit()
-    # filename="/home/kentr/Assignment/Tools/WeSay/Demo_gnd/gnd.lift"
-    # filename="/home/kentr/bin/raspy/azt/SILCAWL/SILCAWL.lift"
-    print(time.time())
     def writetofile(name):
         f = open(str(name)+'.txt', 'w', encoding='utf-8') # to append, "a"
         f.write(prettyprint(lift.nodes))
         f.close()
     # lift.report_counts()
-    # lift.convert_langtag('lol-x-his30100','lol-x-his30101')
+    lift.convert_langtag('lol-x-HIS30147','lol-x-his30147')
     # lift.convert_langtag('lol-x-his30101','lol-x-his30100',new_already_ok=True)
-    # lift.convert_langtag('lol-x-his30253','lol-x-his30103')
-    # lift.convert_langtag('en','en-US')
-    # lift.convert_langtag('pt','en-US')
-    # lift.convert_langtag('ha','en-US')
-    # lift.convert_langtag('es','en-US')
-    # lift.convert_langtag('xyz','en-US')
-    # lift.convert_langtag('en','fr')
-    # lift.convert_langtag('en','en')
-    # lift.convert_langtag('ha-CL','en-US')
     # lift.convert_langtag('id','en-US')
 
-    # lift.write()
+    lift.write()
+    print(time.time())
     # exit()
