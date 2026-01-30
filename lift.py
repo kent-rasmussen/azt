@@ -4795,9 +4795,9 @@ if __name__ == '__main__':
     # copy_lc_to_new_lift_gloss(lift_w_lc=lift,
     #                             lift_target=gloss_target,
     #                             analang='ln-CD')
-    code_number=249 #lol-x-HIS30148
+    code_number=100 #lol-x-HIS30148
     code=f"lol-x-his30{str(code_number)}"
-    code="lol-x-his30147"
+    # code="lol-x-his30147"
     filename=f"/home/kentr/Assignment/Tools/WeSay/{code}/{code}.lift"
     lift=LiftXML(filename)
     # sids=['eye_5e67f88d-f0f0-42d1-a10e-6a7abaac05a4', 'cheek_3fb09846-1194-42a5-ac75-a48eeb9541f9', 'deaf (mute) person_16a6f5e4-9597-4a3b-9331-fb7af5760aae', 'body_791094f2-a82b-4650-81d8-c3b6145d2be4', 'market (n)_a2e9cd5b-fdc4-4646-9c65-beec5380703f', 'anvil_90ce0211-ae56-48d9-8331-722bdd9a15f5', 'fist_0e0fc867-e56a-4df5-861a-1cb24d861037', 'snore_85715999-b0c2-435e-9b76-faa0ac8cb8ef', 'stupid person_603cf053-b6ea-4330-b241-a3c67fa02910', 'molar tooth_3358ff15-0d02-4667-aa39-8cc1dd46c496', 'beard_4ad57748-4eab-49bd-ad58-72cf41e653bd', 'death_4aa78a64-4e70-48b2-99be-e75783c1ae64', 'namesake_fdf18d0d-05ae-407b-b435-a6f740f4b5e6', 'labret, lip plug, lip disk_6fba2be0-1651-43ee-a425-1af030ea7cef', 'news_1754ff73-86be-4029-a1bf-00626b0bd5b0', 'nose_c6327beb-5bb7-4ce5-9def-078dedbb79da', 'shoulder_84c5c175-f73b-4c0f-acdd-78cde3a43d31', 'ring (finger)_2e427051-a799-40d2-b726-4c098d74b3e9', 'startle, surprise_4368e622-37cd-4e77-a45b-052c3ab3e5e5', 'cheek_3fb09846-1194-42a5-ac75-a48eeb9541f9', 'breastbone_6198bc00-ea9a-42ee-9dda-dbb6509fe66b', 'thigh_20efd25d-d864-465a-bb96-1dd47ffcef76', 'bone_0380a162-8a06-432d-822a-e4d157ec427d', 'ear_eb5309e8-d195-49d7-98f8-dda716e2e0ac', 'vagina_204835a3-9283-4857-b4df-cd3a1bb78bd6', 'hammer_75ba703b-ebe7-488e-b85d-707d0c1cc6bb', 'breast_0d1c046d-e7d0-48e6-b34f-0461b8590f92', 'eyelid_19d4a1a6-a714-42f3-964b-2e35e972b636', 'camp, encampment_97f9b465-e0c4-4579-8232-5661637a5182', 'tendon_dda99e32-47f6-424e-99ed-3a11fdf95c37', 'eyebrow_0dcd17d1-880f-4749-9454-97377ef6e551', 'cheek_3fb09846-1194-42a5-ac75-a48eeb9541f9', 'lime, whitewash_ab2486d1-b568-43c5-a1f7-7d2f66c87b39', 'vagina_204835a3-9283-4857-b4df-cd3a1bb78bd6', 'calabash_9a45649f-6bf2-46e7-b078-baee176cb40d'
@@ -4823,10 +4823,10 @@ if __name__ == '__main__':
         f.write(prettyprint(lift.nodes))
         f.close()
     # lift.report_counts()
-    lift.convert_langtag('lol-x-HIS30147','lol-x-his30147')
+    # lift.convert_langtag('lol-x-HIS30147','lol-x-his30147')
     # lift.convert_langtag('lol-x-his30101','lol-x-his30100',new_already_ok=True)
     # lift.convert_langtag('id','en-US')
 
-    lift.write()
+    # lift.write()
     print(time.time())
     # exit()
