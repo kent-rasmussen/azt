@@ -30,7 +30,7 @@ class TkErrorCatcher:
             print(f"Shutting down system{msg}")
             # raise SystemExit(msg)
             sys.exit()
-        except (KeyError,NameError) as e:
+        except (KeyError,NameError,AttributeError) as e:
             raise e
         except Exception as err:
             print(str(err),type(err))

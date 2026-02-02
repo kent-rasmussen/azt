@@ -11,7 +11,7 @@ program={'name':'A-Z+T',
         'production':False, #True for making screenshots (default theme)
         'testing':False, #normal error screens and logs
         'Demo':False, #will get set otherwise later if it is
-        'version':'1.0.4', #This is a string...
+        'version':'1.0.5', #This is a string...
         'testversionname':'testing', #always have some real test branch here
         'url':'https://github.com/kent-rasmussen/azt',
         'Email':'kent_rasmussen@sil.org'
@@ -668,6 +668,7 @@ class LiftChooser(ui.Window,HasMenus):
                 "of what {azt} can do?").format(azt=program['name'])
         t=ui.Label(w.frame, text=inst, row=1, column=0, columnspan=2)
         self.cawldb=loadCAWL()
+        # program['settings'].langnames(self.cawldb.glosslangs)
         Settings.langnames(self,self.cawldb.glosslangs)
         opts=[(i,self.languagenames[i]) for i in self.cawldb.glosslangs]
         # log.info("Options: {}".format(opts))
@@ -3884,7 +3885,8 @@ class Settings(object):
                                 'gnd':"Zulgo",
                                 'fub':"Fulfulde",
                                 'bfj':"Chufie’"})
-        self.localize_langnames()
+        Settings.localize_langnames(self) #in case run by Taskchooser
+        # self.localize_langnames()
         if hasattr(self,'adnlangnames') and self.adnlangnames:
             self.languagenames.update(self.adnlangnames) #from settings
         # print(type(self.analang),type(program['db'].analangs),type(program['db'].glosslangs))
@@ -13137,8 +13139,8 @@ class TranscribeT(Transcribe,Tone):
         titlel=ui.Label(self.runwindow.frame,text=title,font='title',
                         row=0,column=0,sticky='ew',padx=padx,pady=pady
                         )
-        getformtext=[_("What new name do you want to call this {noun_sg} "
-                        "group?").format(noun_sg=program['params'].cvtdict()[cvt]['noun_sg'])]
+        getformtext=[_("What new name do you want to call this {sg} "
+                        "group?").format(sg=program['params'].cvtdict()[cvt]['sg'])]
         if cvt == 'T':
             getformtext.append(_("A label that describes the surface tone form "
                         "in this context would be best, like ‘[˥˥˥ ˨˨˨]’"))
