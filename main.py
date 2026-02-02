@@ -3399,6 +3399,7 @@ class Settings(object):
         self.storesettingsfile() #default, not status
         program['db'].load_ps_profiles()
         d=program['db'].annotation_values_by_ps_profile()
+        t=program['db'].tone_values_by_ps_profile()
         # log.info(f"Found this LIFT file: {program['db'].filename}")
         # log.info(f"Found these LIFT annotations: {d}")
         program['status'].clear_all_groups()
@@ -3407,9 +3408,16 @@ class Settings(object):
         for k['ps'],profile_dict in d.items():
             for k['profile'],check_dict in profile_dict.items():
                 for k['check'],groups in check_dict.items():
+                    if k['check'].isdigit():
+                        continue
                     k['cvt']=program['params'].cvt_of_check(k['check'])
                     groups=[i for i in groups if i]
                     # log.info(f"storing {k} unverified values: {groups}")
+                    program['status'].groups(groups, wsorted=True, **k)
+        k['cvt']='T'
+        for k['ps'],profile_dict in t.items():
+            for k['profile'],check_dict in profile_dict.items():
+                for k['check'],groups in check_dict.items():
                     program['status'].groups(groups, wsorted=True, **k)
         """Verification data should not be read from LIFT. A single lift entry
         may be verified to belong to a particular sort group, without that sort
@@ -10260,65 +10268,66 @@ class Sort(object):
         fields, as the user tells us which groups should be represented by the
         same letter. After which all these fields will be updated.
         """
-        log.info("Maybe Macrosort (with {did})".format(did=[k for k,v in self.did.items() if v]))
-        if items := program['alphabet'].renew_items_tomacrosort(self.cvt):
-            if not any({v for k,v in self.did.items() if 'glyphs' in k}):
-                """only presort if arriving here before any other glyph
-                operation this run:
-                run with presort after an aborted sort run (redundant, but OK)
-                run with no presort until after verify
-                run with no presort until after join>verify
-                this variable is updated/cleared on each bigbutton press, and
-                on each automatic continue to a new profile or check.
-                """
-                for item in list(items):
-                    program['alphabet'].presort_item(item) #only if no conflict
-            # log.info("{items}".format(items=program['alphabet'].itemstosort()))
-            log.info("Running Macrosort")
-            if warnorcontinue(self.sort(macrosort=True)):
-                self.did['macrosorttoglyphs']=True
-            return
-        log.info("Maybe Verifyglyphs")
-        glyphstoverify=program['alphabet'].glyphstoverify()
-        if glyphstoverify:
-            log.info("Going to verify these glyphs now: {glyphs}".format(glyphs=glyphstoverify))
-            if program['alphabet'].glyph() not in glyphstoverify:
-                program['alphabet'].glyph(list(glyphstoverify)[0])
-            log.info("Running Verifyglyphs")
-            if warnorcontinue(self.verify(macrosort=True)):
-                self.did['verifyglyphs']=True
-            log.info("Finished Verifyglyphs with {did}".format(did=self.did))
-            return
-        log.info("Maybe Joinglyphs")
-        self.did['joinglyphs']=False #runs multiple times, so clear here
-        program['alphabet'].predistinguish(self.to_distinguish(macrosort=True))
-        if self.to_distinguish(macrosort=True):
-            log.info("Running Joinglyphs")
-            warnorcontinue(self.join(macrosort=True))
-            return
-        # After all macrogroups are sorted out correctly, make all named:
-        """These last three sections sort the previously verified sort groups
-        in and out of alphabet dictionaries, so we now know:
-            which words belong in which ps-profile-ftype-check group
-            which ps-profile-ftype-check groups belong in which glyphs
-        With this in hand, we now need to
-            make sure that all glyphs have real names
-            update lift form annotations to the appropriate glyph value
-            update profile-ftype verifications to the appropriate glyph value
-        THEN
-            We can safely update forms to match their annotations.
-        """
-        """The first time user has been asked what glyph to use for a group;
-        it will allow limited switching of group names, e.g., if 1 should be
-        <b>, which already exists: b>2,1>b,2>? Do other changes later."""
-        if self.default_glyphs():
-            if warnorcontinue(self.name_new_glyphs()): #iterative: all int(); forced continue or quit.
+        if self.cvt != 'T':
+            log.info("Maybe Macrosort (with {did})".format(did=[k for k,v in self.did.items() if v]))
+            if items := program['alphabet'].renew_items_tomacrosort(self.cvt):
+                if not any({v for k,v in self.did.items() if 'glyphs' in k}):
+                    """only presort if arriving here before any other glyph
+                    operation this run:
+                    run with presort after an aborted sort run (redundant, but OK)
+                    run with no presort until after verify
+                    run with no presort until after join>verify
+                    this variable is updated/cleared on each bigbutton press, and
+                    on each automatic continue to a new profile or check.
+                    """
+                    for item in list(items):
+                        program['alphabet'].presort_item(item) #only if no conflict
+                # log.info("{items}".format(items=program['alphabet'].itemstosort()))
+                log.info("Running Macrosort")
+                if warnorcontinue(self.sort(macrosort=True)):
+                    self.did['macrosorttoglyphs']=True
                 return
-        """all int() groups and macrogroups are gone at this point!"""
-        self.update_annotations_to_glyphs() #Iterates over all glyphs
-        # The above aligns all annotations and verifications
-        # the below updates forms IF annotations agree
-        self.updateformsallchecks() #whole db annotations>forms
+            log.info("Maybe Verifyglyphs")
+            glyphstoverify=program['alphabet'].glyphstoverify()
+            if glyphstoverify:
+                log.info("Going to verify these glyphs now: {glyphs}".format(glyphs=glyphstoverify))
+                if program['alphabet'].glyph() not in glyphstoverify:
+                    program['alphabet'].glyph(list(glyphstoverify)[0])
+                log.info("Running Verifyglyphs")
+                if warnorcontinue(self.verify(macrosort=True)):
+                    self.did['verifyglyphs']=True
+                log.info("Finished Verifyglyphs with {did}".format(did=self.did))
+                return
+            log.info("Maybe Joinglyphs")
+            self.did['joinglyphs']=False #runs multiple times, so clear here
+            program['alphabet'].predistinguish(self.to_distinguish(macrosort=True))
+            if self.to_distinguish(macrosort=True):
+                log.info("Running Joinglyphs")
+                warnorcontinue(self.join(macrosort=True))
+                return
+            # After all macrogroups are sorted out correctly, make all named:
+            """These last three sections sort the previously verified sort groups
+            in and out of alphabet dictionaries, so we now know:
+                which words belong in which ps-profile-ftype-check group
+                which ps-profile-ftype-check groups belong in which glyphs
+            With this in hand, we now need to
+                make sure that all glyphs have real names
+                update lift form annotations to the appropriate glyph value
+                update profile-ftype verifications to the appropriate glyph value
+            THEN
+                We can safely update forms to match their annotations.
+            """
+            """The first time user has been asked what glyph to use for a group;
+            it will allow limited switching of group names, e.g., if 1 should be
+            <b>, which already exists: b>2,1>b,2>? Do other changes later."""
+            if self.default_glyphs():
+                if warnorcontinue(self.name_new_glyphs()): #iterative: all int(); forced continue or quit.
+                    return
+            """all int() groups and macrogroups are gone at this point!"""
+            self.update_annotations_to_glyphs() #Iterates over all glyphs
+            # The above aligns all annotations and verifications
+            # the below updates forms IF annotations agree
+            self.updateformsallchecks() #whole db annotations>forms
         """The following is to iterate to the next work to do. So we want
         everything for a check to be complete to be done by now.
         A user may want to change the name of a group; if so, they should stop
@@ -15843,7 +15852,9 @@ class StatusDict(dict):
         if j in sn['done']:
             sn['done'][sn['done'].index(j)]=k
         if j in sn['groups']:
-            sn['groups'][sn['groups'].index(j)]=k
+            # sn['groups'][sn['groups'].index(j)]=k
+            sn['groups'].remove(j)
+            sn['groups'].add(k)
         if j in sn['recorded']:
             sn['recorded'][sn['recorded'].index(j)]=k
         if 'distinguished' in sn:

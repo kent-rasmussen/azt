@@ -571,6 +571,21 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                     }
                 for ps in self.ps_profiles
                 }
+    def tone_values_by_ps_profile(self):
+        return {ps:{profile:{check:{v
+                            for sense in self.sensesbyps_profile[ps][profile]
+                            for c,v in sense.tonevaluedict().items()
+                            if v
+                            if c==check
+                                    }
+                            for sense in self.sensesbyps_profile[ps][profile]
+                            for check in sense.tonevaluedict().keys()
+                            }
+                    for profile in self.ps_profiles[ps]
+                    if profile
+                    }
+                for ps in self.ps_profiles
+                }
     def verification_values_by_ps_profile(self):
         # sort out cvt (e.g., V1 is 'V') later
         return {ps:{profile:{check:{v for k,v
@@ -2931,6 +2946,8 @@ class Sense(Node,FieldParent):
             else:
                 return None
         return self.ps.myvalue(value)
+    def tonevaluedict(self):
+        return {f: self.examples[f].tonevalue() for f in self.examples}
     def annotationvaluedictbyftypelang(self,ftype,lang):
         try:
             return self.ftypes[ftype].annotationvaluedictbylang(lang)
