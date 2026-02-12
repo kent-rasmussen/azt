@@ -66,6 +66,8 @@ import export
 import langtags
 import alphabet_chart
 import alphabet_comparison
+import settings
+import migration
 program['languages']=langtags.Languages()
 try:
     import sound
@@ -2385,24 +2387,48 @@ class Settings(object):
         if d == config:
             return True
     def storesettingsfile(self,setting='defaults'):
-        #There are too many calls to this; why?
-        filename=self.settingsfile(setting)
-        config=ConfigParser()
         if setting in ['status', 'toneframes']:
-            # log.info("storesettingsfile for {}".format(setting))
             d=program[setting]
         else:
             d=self.makesettingsdict(setting=setting)
+
+        # Synchronize with new modular domains
+        domain_mapping = {
+            'defaults': ['project', 'ui'],
+            'soundsettings': ['audio'],
+            'alphabet': ['alphabet'],
+            'contributors': ['contributors'],
+            'status': ['data'],
+            'toneframes': ['data'],
+            'adhocgroups': ['data'],
+            'profiledata': ['data']
+        }
+
+        if setting in domain_mapping:
+            for domain_name in domain_mapping[setting]:
+                domain_mgr = getattr(self.mgr, domain_name)
+                # We need to filter and update the domain data
+                domain_attrs = migration.converters.Converter.DOMAIN_MAPPING[domain_name]
+                domain_data = {k: v for k, v in d.items() if k in domain_attrs}
+                if domain_data:
+                    current_data = domain_mgr.load()
+                    current_data.update(domain_data)
+                    domain_mgr.save(current_data)
+                    log.info(_("Stored {setting} settings in new {domain} domain").format(setting=setting, domain=domain_name))
+
+        # Legacy storage for backup/compatibility
+        filename=self.settingsfile(setting)
+        if not filename:
+             return
+        
+        config=ConfigParser()
         if self.no_settings_change(filename,d):
-            log.info(_("no settings change; not writing."))
+            # log.info(_("no settings change; not writing."))
             return
-        if setting in ['soundsettings']:
-            log.info(_("Sound settings currently: {settings}").format(settings=d))
+        
         config['default']={}
-        # log.info("storing settings file {}".format(setting))
         for s in [i for i in d if i not in [None,'None']]:
             v=d[s]
-            # log.info(f"Ready to store {type(v)} type data for {s}: {v}")
             if isinstance(v, dict):
                 config[s]=indenteddict(v)
             else:
@@ -2413,60 +2439,62 @@ class Settings(object):
                                                     date=now(),
                                                     node=platform.uname().node)
                 )
-        # log.info(f"Ready to write {type(config)} type data: {config}")
-        # config.output() #this logs out the whole config
         with open(filename, 'w', encoding='utf-8') as file:
             file.write(header+'\n\n')
             config.write(file)
     def loadsettingsfile(self,setting='defaults'):
+        # Check domain-specific manager first
+        domain_mapping = {
+            'defaults': ['project', 'ui'],
+            'soundsettings': ['audio'],
+            'alphabet': ['alphabet'],
+            'contributors': ['contributors'],
+            'status': ['data'],
+            'toneframes': ['data'],
+            'adhocgroups': ['data'],
+            'profiledata': ['data']
+        }
+
+        if setting in domain_mapping:
+            for domain_name in domain_mapping[setting]:
+                domain_mgr = getattr(self.mgr, domain_name)
+                data = domain_mgr.load()
+                if data:
+                    log.info(_("Loaded {setting} settings from new {domain} domain").format(setting=setting, domain=domain_name))
+                    self.readsettingsdict(data)
+
+        # Still fallback to legacy reader for now to ensure absolute compatibility 
+        # during the transition if JSON files were not yet created or migrated.
         filename=self.settingsfile(setting)
+        if not filename or not filename.exists():
+            return
+
         config=ConfigParser()
         config.read(filename,encoding='utf-8')
-        log.info(_("Trying for {setting} settings in {file}").format(setting=setting, file=filename))
+        log.info(_("Fallback check for {setting} settings in {file}").format(setting=setting, file=filename))
         if not config.sections() and setting not in ['status','toneframes']:
             if setting == 'adhocgroups':
                 self.adhocgroups={}
             return
         d={}
-        # log.info("Found {} sections: {}".format(setting,config.sections()))
-        for section in config: #self.settings[setting]['attributes']:
-            # log.info('\n'.join([': '.join([k,config[section][k]])
-            #                             for k in config[section]]))
+        for section in config:
             if 'default' in config and section in ['default','DEFAULT']:
                 for k in config[section]:
-                    # log.info("Moving {}.{}={} to object".format(section,k,
-                    #                                         config[section][k]))
                     d[k]=ofromstr(config['default'][k])
-                # d[section]=ofromstr(config['default'][section])
             else:
                 log.info(_("working in non-default section {section}").format(section=section))
-                # log.debug("Trying for {} settings in {}".format(section, setting))
                 if len(config[section].values())>0:
-                    # log.info("Found Dictionary value for {} ({})".format(
-                    #                                 section,config[section]))
                     for s in config[section]:
-                        # log.info(f"Found value {s}: {config[section][s]}")
-                        if section in ['status','toneframes']:
+                        if setting in ['status','toneframes']:
                             d[ofromstr(s)]=ofromstr(config[section][s])
-                            # log.info(f"{s} item {ofromstr(s)} is {d[ofromstr(s)]}")
                         else:
-                            try:
-                                d[section][ofromstr(s)]=ofromstr(
-                                                            config[section][s])
-                            except KeyError:
-                                d[section]={ofromstr(s):ofromstr(
-                                                            config[section][s])}
-                        """Make sure strings become python data"""
-                else:
-                    # log.debug("Found String/list/other value for {}: ({})"
-                    #         "".format(section,len(config[section].values())))
-                    d[section]=ofromstr(config[section])
+                            if section not in d:
+                                d[section]={}
+                            d[section][s]=ofromstr(config[section][s])
         if setting == 'status':
-            # log.info("setting {} is {}".format(setting,d))
             self.makestatus({k:d[k] for k in d if k != 'DEFAULT'})
             log.info(_("makestatus: {status}").format(status=program['status']))
         elif setting == 'toneframes':
-            # log.info("setting {} is {}".format(setting,d))
             self.maketoneframes({k:d[k] for k in d if k != 'DEFAULT'})
             log.info(_("maketoneframes: {frames}").format(frames=program['toneframes']))
         else:
@@ -3943,10 +3971,24 @@ class Settings(object):
             self.refreshdelay=1000 #one second if not working in another window
     def __init__(self,taskchooser):
         program['settings']=self
+        self.taskchooser = taskchooser
         self.liftfilename=taskchooser.filename
+        self.directory=file.getfilenamedir(self.liftfilename)
+        
+        # Get base path for settings files
+        self.liftnamebase=rx.pymoduleable(file.getfilenamebase(self.liftfilename))
+        basename=file.getdiredurl(self.directory,self.liftnamebase)
+        
+        # Trigger migration if necessary
+        migrator = migration.MigrationManager(basename)
+        if migrator.migrate():
+            log.info(_("Settings migrated to new format."))
+        
+        # Initialize new modular SettingsManager
+        self.mgr = settings.SettingsManager(basename)
+        
         self.getdirectories() #incl settingsfilecheck and repocheck
         self.setvalidcharacters()
-        # self.settingsfilecheck()
         self.settingsinit() #init, clear, fields
         self.loadsettingsfile()
         self.loadsettingsfile(setting='profiledata')
@@ -15447,6 +15489,7 @@ class StatusDict(dict):
                         for profile in d[cvt][ps]
                         for check in d[cvt][ps][profile]
                         for i in d[cvt][ps][profile][check]['done']
+                        if 'done' in d[cvt][ps][profile][check]
                         if i not in ['NA']])
                 for cvt in d if cvt != 'T'
                 }

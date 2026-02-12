@@ -635,12 +635,11 @@ class PageSetup(ui.Window):
     
     def load_settings(self):
         try:
-            path = file.getdiredurl(self.db.reportdir, SETTINGS_FILE)
-            if os.path.exists(path):
-                with open(path, 'r') as f:
-                    return json.load(f)
+            # Use the new SettingsManager reports domain
+            reports_mgr = self.program['settings'].mgr.reports
+            return reports_mgr.load()
         except Exception as e:
-            log.warning(f"Could not load settings: {e}")
+            log.warning(f"Could not load settings via manager: {e}")
         return {}
 
     def save_settings_file(self):
@@ -651,13 +650,15 @@ class PageSetup(ui.Window):
         self.settings['description_text'] = self.description_var.get()
         
         try:
-            path = file.getdiredurl(self.db.reportdir, SETTINGS_FILE)
-            with open(path, 'w') as f:
-                json.dump(self.settings, f)
+            # Use the new SettingsManager reports domain
+            reports_mgr = self.program['settings'].mgr.reports
+            reports_mgr.save(self.settings)
+            
             if 'git' in self.program:
-                self.program['settings'].repo['git'].add(path,force=True)                
+                 # The manager determines the filename, we can get it via reports_mgr.filename
+                self.program['settings'].repo['git'].add(reports_mgr.filename, force=True)                
         except Exception as e:
-            log.warning(f"Could not save settings: {e}")
+            log.warning(f"Could not save settings via manager: {e}")
             
     def generate_pdf(self):
         def prepare_data(page):
