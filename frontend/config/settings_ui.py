@@ -25,6 +25,7 @@ from utilities import file, htmlfns
 # import multiprocessing
 import migration
 import settings
+from settings import ConfigParser
 
 
 def __getattr__(name):

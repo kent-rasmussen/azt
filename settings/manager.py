@@ -1,4 +1,10 @@
 
+from utilities import logsetup
+log = logsetup.getlog(__name__)
+import gettext
+_ = gettext.gettext
+
+import configparser
 import json
 import os
 import platform
@@ -78,3 +84,23 @@ class ConfigManager:
             self.save()
         else:
             super().__setattr__(name, value)
+
+class ConfigParser(configparser.ConfigParser):
+    def output(self):
+        for k in self:
+            if isinstance(self[k],str):
+                log.info(_("Config {k}: {v}").format(k=k,v=self[k]))
+            else:
+                for j in self[k]:
+                    log.info(_("Config {k}/{j}: {v}").format(k=k,j=j,v=self[k][j]))
+    def write(self,*args,**kwargs):
+        configparser.ConfigParser.write(self,*args,**kwargs,
+                                            space_around_delimiters=False)
+    def __init__(self):
+        super(ConfigParser, self).__init__(
+        converters={'list':list},
+        delimiters=(' = ', ' : '),
+        allow_no_value=True
+        )
+        self.optionxform=str
+        # self.converters={'list':list} #lambda x: [i.strip() for i in x.split(',')]

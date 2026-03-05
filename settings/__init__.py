@@ -1,4 +1,5 @@
 
+from .manager import ConfigParser
 from .project import ProjectConfig
 from .ui import UIConfig
 from .audio import AudioConfig

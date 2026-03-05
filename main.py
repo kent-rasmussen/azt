@@ -88,7 +88,6 @@ import time
 # #for some day...
 # from PIL import Image #, ImageTk
 #import Image #, ImageTk
-import configparser
 # import reports
 import sys
 """for tr:"""
@@ -496,20 +495,10 @@ class LiftChooser(ui.Window,HasMenus):
                 if wait:
                     wait.progress(todo.index(sense)*100/len(todo))
     def storedefaultsettings(self,basename):
-        filename=basename.with_suffix('.CheckDefaults.ini')
-        config=ConfigParser()
-        config['default']={
-                            'glosslangs':['fr'],
-                            'buttoncolumns':2
-                            }
-        header=(_("# This transitional settings file was made on {date} on {node}").format(
-                                                    date=times.now(),node=platform.uname().node)
-                )
-        header+=(_("\n# It should only be used to get a new demo started."))
-        with open(filename, 'w', encoding='utf-8') as file:
-            file.write(header+'\n\n')
-            config.write(file)
-        log.info(f"Stored config {dict(config['default'])} for next run.")
+        mgr=settings.SettingsManager(basename)
+        mgr.project.set('glosslangs',['fr'])
+        mgr.ui.set('buttoncolumns',2)
+        log.info(f"Stored default settings for next run.")
     def makeCAWLdemo(self):
         title=_("Make a Demo LIFT Database")
         w=ui.Window(program.root,title=title)
@@ -4782,25 +4771,6 @@ class Splash(ui.Window):
         y=int(self.master.winfo_screenheight()/2 -(self.h/2))
         self.geometry('+%d+%d' % (x, y))
         self.labels['v'].bind('<Button-1>', lambda e,x=self:updateazt(parent=x))
-class ConfigParser(configparser.ConfigParser):
-    def output(self):
-        for k in self:
-            if isinstance(self[k],str):
-                log.info(_("Config {k}: {v}").format(k=k,v=self[k]))
-            else:
-                for j in self[k]:
-                    log.info(_("Config {k}/{j}: {v}").format(k=k,j=j,v=self[k][j]))
-    def write(self,*args,**kwargs):
-        configparser.ConfigParser.write(self,*args,**kwargs,
-                                            space_around_delimiters=False)
-    def __init__(self):
-        super(ConfigParser, self).__init__(
-        converters={'list':list},
-        delimiters=(' = ', ' : '),
-        allow_no_value=True
-        )
-        self.optionxform=str
-        # self.converters={'list':list} #lambda x: [i.strip() for i in x.split(',')]
 class ErrorNotice(ui.Window):
     """this is for things that I want the user to know, without having
     to find it in the logs."""

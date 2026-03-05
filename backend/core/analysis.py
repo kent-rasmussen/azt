@@ -975,16 +975,6 @@ class StatusDict(dict):
         """This will just store to file; reading will come from check."""
         log.info(_("Saving status dict to file"))
         self.program.settings.storesettingsfile('status')
-        return
-        config=ConfigParser()
-        config.read(self._filename,encoding='utf-8')
-        if config != self:
-            log.info(_("config: {keys}").format(keys=config.keys()))
-            log.info(_("self: {keys}").format(keys=self.keys()))
-        for k in self:
-            config[k]=indenteddict(self[k]) #getattr(o,s)
-        with open(self._filename, 'w', encoding='utf-8') as file:
-            config.write(file)
     def dict(self): #needed?
         return {k:self[k] for k in self}
     def dictcheck(self,**kwargs):
