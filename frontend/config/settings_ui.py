@@ -380,7 +380,7 @@ class Settings(object):
             o=self
         for s in settingsdict:
             v=settingsdict[s]
-            if isinstance(v,setting.manager.configparser.SectionProxy):
+            if isinstance(v,settings.manager.configparser.SectionProxy):
                 continue #don't store expty section headers
             elif hasattr(self,'fndict') and s in self.fndict:
                 # log.info("Trying to read {} to object with value {} and fn "

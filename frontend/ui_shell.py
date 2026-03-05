@@ -3356,7 +3356,7 @@ class TaskChooser(TaskDressing):
         self.showingreports=False
         self.splash = Splash(self)
         self.splash.draw()
-        assert 'settings' in program
+        assert hasattr(program,'settings')
         # self.interfacelangs=self.getinterfacelangs()
         FileParser(self.filename,self.program.settings.analang)
         self.splash.progress(55)
