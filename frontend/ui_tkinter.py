@@ -162,10 +162,10 @@ class Theme(object):
         #do these once:
         if scale-1: #x != y: #should be the same as scale != 1
             log.info("Maybe scaling images; please wait...")
-            scaledalreadydir=file.fullpathname('images/scaled/'+str(scale)+'/')
+            scaledalreadydir=file.pathname_from_base_dir('images/scaled/'+str(scale)+'/')
             file.makedir(scaledalreadydir) #in case not there
         def mkimg(name,filename):
-            imgurl=file.fullpathname(
+            imgurl=file.pathname_from_base_dir(
                             file.getdiredurl('../images/',filename))
             # log.info("scale: {}".format(scale))
             # log.info(f"making image {name} ({filename}) with imgurl {imgurl}")

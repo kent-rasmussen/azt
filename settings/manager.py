@@ -1,5 +1,7 @@
 
 from utilities import logsetup
+from utilities.times import now
+from utilities.utilities import indenteddict, ofromstr
 log = logsetup.getlog(__name__)
 import gettext
 _ = gettext.gettext
@@ -104,3 +106,48 @@ class ConfigParser(configparser.ConfigParser):
         )
         self.optionxform=str
         # self.converters={'list':list} #lambda x: [i.strip() for i in x.split(',')]
+
+def write_ini(filename, d):
+    """Write d to a legacy .ini file, skipping if unchanged."""
+    existing = ConfigParser()
+    if Path(filename).exists():
+        existing.read(filename, encoding='utf-8')
+    if d == existing:
+        return
+    config = ConfigParser()
+    config['default'] = {}
+    for s in [i for i in d if i not in [None, 'None']]:
+        v = d[s]
+        if isinstance(v, dict):
+            config[s] = indenteddict(v)
+        else:
+            config['default'][s] = str(v)
+    if config['default'] == {}:
+        del config['default']
+    header = _("# This settings file was made on {date} on {node}").format(
+        date=now(), node=platform.uname().node)
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write(header + '\n\n')
+        config.write(f)
+
+def read_ini(filename, setting=None):
+    """Read a legacy .ini file; return (sections, d)."""
+    config = ConfigParser()
+    config.read(filename, encoding='utf-8')
+    sections = config.sections()
+    d = {}
+    for section in config:
+        if 'default' in config and section in ['default', 'DEFAULT']:
+            for k in config[section]:
+                d[k] = ofromstr(config['default'][k])
+        else:
+            log.info(_("working in non-default section {section}").format(section=section))
+            if len(config[section].values()) > 0:
+                for s in config[section]:
+                    if setting in ['status', 'toneframes']:
+                        d[ofromstr(s)] = ofromstr(config[section][s])
+                    else:
+                        if section not in d:
+                            d[section] = {}
+                        d[section][s] = ofromstr(config[section][s])
+    return sections, d

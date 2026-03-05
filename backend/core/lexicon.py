@@ -828,7 +828,7 @@ class WordCollection(Segments):
                             width=1,row=0,column=imageparameters.ncolumns())
         makegrid()
     def getimagefiles(self):
-        dir=file.fullpathname(self.sense.imgselectiondir)
+        dir=file.pathname_from_base_dir(self.sense.imgselectiondir)
         if file.exists(dir):
             return dir,[i for i in file.getfilesofdirectory(dir)
                                 if "terms.txt" not in str(i)]

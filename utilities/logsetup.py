@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # coding=UTF-8
-"""we cannot import file; file imports this module!"""
-import tarfile
-import datetime
+"""file is imported lazily inside functions to avoid circular import."""
+
 import logging
 import logging.handlers
+import tarfile
+import datetime
 import lzma
 import re
 import pathlib
@@ -32,15 +33,6 @@ def setlevel(loglevel,thislog=None):
         thislog=logging.root
     thislog.setLevel(loglevel)
     # log.info("Current {} logger level: {}".format(thislog,thislog.level))
-def getlogdir():
-    """Can't do this in file, which depends on this..."""
-    logdir=pathlib.Path.joinpath(pathlib.Path(__file__).parent,'userlogs')
-    if not os.path.exists(logdir):
-        log.debug("{} not there, making it!".format(logdir))
-        os.mkdir(logdir)
-    else:
-        log.debug("Found {}".format(logdir))
-    return logdir
 def getlogfilename():
     for h in [i for i in logging.root.handlers if isinstance(i,logging.FileHandler)]:
         return h.baseFilename
@@ -63,18 +55,18 @@ def dorootloghandlers(self):
     self.addHandler(console)
     tryfilehandler(self)
 def tryfilehandler(self,lessiso=16):
+    from utilities import file as _file
     logfile='log_'+datetime.datetime.utcnow().isoformat()[:-lessiso]+'.txt'
-    logdir=getlogdir()
-    filename=pathlib.Path.joinpath(logdir,logfile)
+    filename=pathlib.Path.joinpath(_file.getlogdir(),logfile)
     try:
-        file = logging.handlers.RotatingFileHandler(filename, mode='w',
+        handler = logging.handlers.RotatingFileHandler(filename, mode='w',
                                                     encoding='utf-8',
                                                     maxBytes=500000,
                                                     backupCount=5)
-        file.doRollover()# start at the beginning of a file
-        file.setLevel(0) #Let the loglevel determine what to show
-        file.setFormatter(logformat('timelessformat'))
-        self.addHandler(file)
+        handler.doRollover()# start at the beginning of a file
+        handler.setLevel(0) #Let the loglevel determine what to show
+        handler.setFormatter(logformat('timelessformat'))
+        self.addHandler(handler)
     except PermissionError as e:
         log.info(f"Logfile permission problem ({e}); trying again.")
         tryfilehandler(self,lessiso=lessiso-3)
@@ -89,6 +81,7 @@ def contents(self,lastlines=0):
     with open(getlogfilename(),'r', encoding='utf-8') as d:
         return d.readlines()[-lastlines:]
 def writelzma(filename=None):
+    from utilities import file as _file
     try:
         import lzma
         log.debug("LZMA imported fine.")
@@ -99,12 +92,12 @@ def writelzma(filename=None):
     """When this goes into production, change this:"""
     compressed='log_'+datetime.datetime.utcnow().isoformat()[:-7]+'Z'+'.xz'
     compressed=re.sub(':','-',compressed)
-    logdir=getlogdir()
-    compressedurl=pathlib.Path.joinpath(logdir,compressed)
+    logdir=_file.getlogdir()
+    compressedurl=logdir.joinpath(compressed)
     if not filename:
         filename=getlogfilename()
     log.info("Using filename {}".format(filename))
-    filenames=list(pathlib.Path(logdir).glob(pathlib.Path(filename).name+'*'))
+    filenames=list(logdir.glob(pathlib.Path(filename).name+'*'))
     f=tarfile.open(name=str(compressedurl)+'.tar.xz', mode='x:xz',
                     encoding='utf-8', preset=9,
                     debug=3

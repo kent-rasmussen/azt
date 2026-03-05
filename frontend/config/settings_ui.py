@@ -25,7 +25,6 @@ from utilities import file, htmlfns
 # import multiprocessing
 import migration
 import settings
-from settings import ConfigParser
 
 
 def __getattr__(name):
@@ -395,11 +394,6 @@ class Settings(object):
                 #             "".format(s,o,v,type(v)))
                 setattr(o,s,v)
         return settingsdict
-    def no_settings_change(self,filename,d):
-        config=ConfigParser()
-        config.read(filename,encoding='utf-8')
-        if d == config:
-            return True
     def storesettingsfile(self,setting='defaults'):
         if setting in ['status', 'toneframes']:
             d=program[setting]
@@ -434,28 +428,7 @@ class Settings(object):
         filename=self.settingsfile(setting)
         if not filename:
              return
-        
-        config=ConfigParser()
-        if self.no_settings_change(filename,d):
-            # log.info(_("no settings change; not writing."))
-            return
-        
-        config['default']={}
-        for s in [i for i in d if i not in [None,'None']]:
-            v=d[s]
-            if isinstance(v, dict):
-                config[s]=indenteddict(v)
-            else:
-                config['default'][s]=str(v)
-        if config['default'] == {}:
-            del config['default']
-        header=(_("# This settings file was made on {date} on {node}").format(
-                                                    date=now(),
-                                                    node=platform.uname().node)
-                )
-        with open(filename, 'w', encoding='utf-8') as file:
-            file.write(header+'\n\n')
-            config.write(file)
+        settings.write_ini(filename, d)
     def loadsettingsfile(self,setting='defaults'):
         # Check domain-specific manager first
         domain_mapping = {
@@ -483,28 +456,12 @@ class Settings(object):
         if not filename or not filename.exists():
             return
 
-        config=ConfigParser()
-        config.read(filename,encoding='utf-8')
         log.info(_("Fallback check for {setting} settings in {file}").format(setting=setting, file=filename))
-        if not config.sections() and setting not in ['status','toneframes']:
+        sections, d = settings.read_ini(filename, setting)
+        if not sections and setting not in ['status','toneframes']:
             if setting == 'adhocgroups':
                 self.adhocgroups={}
             return
-        d={}
-        for section in config:
-            if 'default' in config and section in ['default','DEFAULT']:
-                for k in config[section]:
-                    d[k]=ofromstr(config['default'][k])
-            else:
-                log.info(_("working in non-default section {section}").format(section=section))
-                if len(config[section].values())>0:
-                    for s in config[section]:
-                        if setting in ['status','toneframes']:
-                            d[ofromstr(s)]=ofromstr(config[section][s])
-                        else:
-                            if section not in d:
-                                d[section]={}
-                            d[section][s]=ofromstr(config[section][s])
         if setting == 'status':
             self.makestatus({k:d[k] for k in d if k != 'DEFAULT'})
             log.info(_("makestatus: {status}").format(status=self.program.status))

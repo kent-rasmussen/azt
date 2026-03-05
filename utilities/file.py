@@ -7,6 +7,7 @@ from utilities import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('DEBUG',log) #for this file
 
+from utilities import source_base_dir
 from tkinter import filedialog
 from tkinter import Tk
 import pathlib
@@ -49,17 +50,11 @@ def fileandparentfrompath(url):
     return getreldir(pathlib.Path(url).parent.parent, pathlib.Path(url))
 def parentfrompath(url):
     return getreldir(pathlib.Path(url).parent.parent, pathlib.Path(url).parent)
-def fullpathname(filename):
+def pathname_from_base_dir(filename):
     """This is full, relative to this file (in the program repo root)"""
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-        log.info("using base_path {}".format(base_path))
-    except Exception:
-        base_path = pathlib.Path(__file__).parent
-    return pathlib.Path.joinpath(
-                                base_path,
-                                filename)
+    return pathlib.Path(source_base_dir).joinpath(filename)
+def make_pathname_from_base_dir(filename):
+    return makedir(pathname_from_base_dir(filename),silent=True)
 def fullpathnamewrt(db,filename):
     """This is full, relative to the db file (use for lift or other non-program
     references)"""
@@ -80,6 +75,8 @@ def getfilenamedir(filename):
     return pathlib.Path(filename).parent
 def getfilenamebase(filename):
     return pathlib.Path(filename).stem
+def getlogdir():
+    return make_pathname_from_base_dir('userlogs')
 def gettranslationdirin(exedir):
     dir=pathlib.Path.joinpath(exedir,'translations')
     return dir
@@ -156,8 +153,8 @@ def move(file,newfile):
 def remove(file):
     if exists(file):
         os.remove(file)
-    elif exists(fullpathname(file)):
-        os.remove(fullpathname(file))
+    elif exists(pathname_from_base_dir(file)):
+        os.remove(pathname_from_base_dir(file))
     else:
         log.debug(_("Tried to remove {}, but I can't find it.").format(file))
 def makedir(dir,**kwargs):
