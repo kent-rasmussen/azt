@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+# coding=UTF-8
+from utilities import logsetup
+log=logsetup.getlog(__name__)
+logsetup.setlevel('INFO',log) #for this file
+import platform
+import sys
+import subprocess
+from utilities.utilities import stouttostr
+
+try:
+     _('x')
+except NameError:
+    def _(x):
+        return str(x)
+
+def pip_install(installs=[],secondtry=False):
+    """With a list provided in installs, this installs only those modules.
+    Otherwise, it tries to install everything needed by A−Z+T.
+    Yes, this is excessive, but better than leaving users hanging if they can't
+    resolve pip install issues."""
+    if secondtry:
+        log.info(_("Trying a second time, with '--force-reinstall'"))
+    else:
+        log.info(_("Installing python dependencies"))
+    if platform.system() == 'Linux':
+        log.info(_("If you have errors containing ˋportaudioˊ above, you should "
+            "install pyaudio with your package manager."))
+    # The following is here to see what version python will be looking for, and
+    # why it didn't find what's there. It doesn't input to anything afterwards.
+    log.info("FYI, looking for this platform: {}_{}".format(
+                                                        platform.system(),
+                                                        platform.processor()))
+    installfolder='modulestoinstall/'
+    installedsomething=False
+    """Migrate this to `bin/pip install -r requirements.txt`"""
+    if not installs:
+        installs=[
+            ['--upgrade', 'pip', 'setuptools', 'wheel'], #this is probably never needed
+            ['urllib3'],
+            ['numpy'],
+            ['pyaudio'],
+            ['Pillow'], #for PIL
+            ['lxml'],
+            ['psutil'],
+            ['soundfile'],
+            ['librosa'],
+            ['transformers'],
+            ['huggingface_hub[hf_xet]'], #allow large file download
+            ['langcodes[data]'],
+            ['pyautogui'],
+            ['svglib'],
+            # ['mysql-connector-python', 'wave'], #needed for wave
+            # 'pymysql', #or maybe this one
+            ['torch'],
+            ['openai-whisper'], #for import whisper
+            ['packaging'],
+            ['patiencediff'],
+            ['reportlab'], #for PDF
+            ]
+    else:
+        installs=[installs] #do the whole list at once, if given a list
+    log.info("Installs: {}".format(', '.join([i for j in installs for i in j])))
+    for install in installs:
+        thisinstalled=False
+        pyargs=[sys.executable, '-m', 'pip', 'install',
+        '-f', installfolder, #install the one in this folder, if there
+        '--no-index' #This stops it from looking online
+        ]
+        npyargs=len(pyargs)
+        if secondtry:
+            pyargs.extend(['--force-reinstall'])
+        pyargs.extend(install)
+        log.info("Running `{}`".format(' '.join(pyargs)))
+        try:
+            o=subprocess.check_output(pyargs,shell=False,
+                                        stderr=subprocess.STDOUT)
+            o=stouttostr(o)
+            if not o or "Successfully installed" in o:
+                log.info(_("looks like it was successful; so I'm going to reboot "
+                            "in a bit. Output follows:"))
+                thisinstalled=installedsomething=True
+        except subprocess.CalledProcessError as e:
+            o=stouttostr(e.output)
+            if 'Could not find a version' in o:
+                pyargs.remove('--no-index')
+                log.info("Running `{}`".format(' '.join(pyargs)))
+                try:
+                    o=subprocess.check_output(pyargs,shell=False,
+                                            stderr=subprocess.STDOUT)
+                    o=stouttostr(o)
+                    if not o or "Successfully installed" in o:
+                        log.info(_("looks like it was at last successful; so "
+                                "I'm going to reboot in a bit. Output follows:"))
+                        thisinstalled=installedsomething=True
+                except subprocess.CalledProcessError as e:
+                    o=stouttostr(e.output)
+                    if "Could not find a version" in o:
+                        errors=[i for i in o.splitlines() if "ERROR:" in i]
+                        log.info(_("Please make sure your internet is connected, then "
+                        "click {}\n{}".format(_("OK"),'\n'.join(errors))))
+                        # ErrorNotice(text=t,parent=ui.Root(),wait=True)
+                        log.info(_("Trying again, hopefully with internet"))
+                        try:
+                            o=subprocess.check_output(pyargs,shell=False,
+                                                stderr=subprocess.STDOUT)
+                            o=stouttostr(o)
+                            if not o or "Successfully installed" in o:
+                                log.info(_("looks like it was at last successful;"
+                                        " so I'm going to reboot in a bit. "
+                                        "Output follows:"))
+                                thisinstalled=installedsomething=True
+                        except Exception as e:
+                            log.info(_("I'm going to give up now, sorry!\n{}"
+                                "".format('\n'.join(errors))))
+                            # ErrorNotice(text=t,parent=ui.Root(),wait=True)
+                            log.error(_("Looks like there was an error, "
+                                        "after all: {}").format(e))
+        if not thisinstalled:
+            log.info(_("Nothing installed. Output follows:"))
+        log.info(o) #just give bytes, if encoding isn't correct
+    if not installedsomething and not secondtry:
+        pip_install(secondtry=True) #force reinstalls, just once
+
+try:
+    o=[]
+    import urllib3, numpy, pyaudio, PIL, lxml, psutil, soundfile, librosa
+    o.append("urllib3, numpy, pyaudio, PIL, lxml, psutil, soundfile, librosa imported fine")
+    import transformers, huggingface_hub, langcodes #, pyautogui
+    o.append("transformers, huggingface_hub, langcodes imported fine")
+    import whisper, patiencediff, reportlab, language_data
+    o.append("whisper, patiencediff, reportlab, language_data imported fine")
+    import os, svglib
+    o.append("os, svglib imported fine")
+    # import platform
+    if platform.system() == "Windows":
+        import ctypes
+        from importlib.util import find_spec
+        try:
+            if (spec := find_spec("torch")) and spec.origin and os.path.exists(
+                dll_path := os.path.join(os.path.dirname(spec.origin), "lib", "c10.dll")
+            ):
+                ctypes.CDLL(os.path.normpath(dll_path))
+        except Exception as e:
+            log.info(f"Exception loading torch dll: {e}")
+
+    # Testing
+    # from PyQt6.QtWidgets import QApplication
+    import torch
+    log.info(_("All necessary modules imported fine."))
+except Exception as e:
+    log.info('\n'.join(o))
+    log.error(f"Exception: {e}")
+    if '--help' in sys.argv or '-h' in sys.argv:
+        log.error("Not all modules installed, but not installing them because you asked for help.")
+        sys.exit(0)
+    pip_install()

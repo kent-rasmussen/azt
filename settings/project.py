@@ -2,8 +2,8 @@
 from .manager import ConfigManager
 
 class ProjectConfig(ConfigManager):
-    def __init__(self, base_path, hostname=None):
-        super().__init__('project', base_path, hostname)
+    def __init__(self, base_path, hostname=None, user=None):
+        super().__init__('project', base_path, hostname, user)
         self.load()
 
     def get_analang(self):

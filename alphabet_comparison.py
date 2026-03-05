@@ -19,14 +19,13 @@ import math
 #         def _(x): 
 #             return x
 # Local module imports (assuming we are in the same directory)
-import logsetup
-import file
-import lift
-import ui_tkinter as ui
-import alphabet_comparison_pdf
+from utilities import logsetup
+log = logsetup.getlog(__name__)
+from utilities import file
+from io_put import lift, alphabet_comparison_pdf
+from frontend import ui_tkinter as ui
 from alphabet_chart import SelectFromPicturableWords, getimagelocationURI
 
-log = logsetup.getlog(__name__)
 
 SETTINGS_FILE = "alphabet_comparison_settings.json"
 
@@ -362,7 +361,8 @@ class PageSetup(ui.Window):
         self.copyright_var = ui.StringVar()
         self.description_var = ui.StringVar()
         # Initialize from global settings
-        if 'alphabet_copyright' in self.program['settings'].settings['alphabet']['attributes']:
+        import migration.converters
+        if 'alphabet_copyright' in migration.converters.Converter.attrs_for_legacy_setting('alphabet'):
              self.copyright_var.set(self.program['settings'].alpha_copyright())
         
         self.selected_cover_path = None

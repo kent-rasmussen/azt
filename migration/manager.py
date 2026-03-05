@@ -31,9 +31,10 @@ class MigrationManager:
 
     def migrate(self):
         legacy_files = self.get_legacy_filenames()
-        all_legacy_data = {}
-
-        # Read all legacy files and merge data
+        # Read all legacy files and collect data
+        special_data = {}
+        generic_data = {}
+        
         for key, path in legacy_files.items():
             if not path.exists():
                 continue
@@ -49,13 +50,15 @@ class MigrationManager:
             else:
                 continue
             
-            # Merge data into a flat dict for the converter
-            # For .dat files that have multiple sections, we might need to be more careful
             if key in ['toneframes', 'status', 'adhocgroups', 'profiledata']:
-                # These are usually dictionary-like or sections
-                all_legacy_data[key] = data
+                special_data[key] = data
             else:
-                all_legacy_data.update(data)
+                generic_data.update(data)
+
+        # Combine data, giving priority to special data to avoid collisions 
+        # (e.g. from generic sections in Alphabet.ini)
+        all_legacy_data = generic_data
+        all_legacy_data.update(special_data)
 
         if not all_legacy_data:
             return False
@@ -66,7 +69,7 @@ class MigrationManager:
         # Save to new format
         for domain, data in domain_data.items():
             if data:
-                mgr = ConfigManager(domain, self.base_path, self.hostname)
+                mgr = ConfigManager(domain, self.base_path, self.hostname, self.username)
                 mgr.save(data)
         
         return True

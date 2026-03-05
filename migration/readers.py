@@ -1,4 +1,3 @@
-
 import configparser
 import ast
 from pathlib import Path
@@ -6,7 +5,7 @@ from pathlib import Path
 class LegacyReader:
     @staticmethod
     def read_ini(filename):
-        from utilities import ofromstr
+        from utilities.utilities import ofromstr
         config = configparser.ConfigParser(interpolation=None)
         config.optionxform = str # Preserve case
         if Path(filename).exists():
@@ -28,7 +27,9 @@ class LegacyReader:
 
     @staticmethod
     def read_dat(filename):
-        # Manual parsing for .dat files to handle keys like '=' which break ConfigParser
+        # Manual parsing for .dat files to handle:
+        # 1. Keys like '=' which break ConfigParser
+        # 2. Multi-line values (indented lines)
         res = {}
         current_section = 'default'
         res[current_section] = {}
@@ -38,39 +39,55 @@ class LegacyReader:
             
         try:
             with open(filename, 'r', encoding='utf-8') as f:
+                last_key = None
                 for line in f:
-                    line = line.strip()
-                    if not line or line.startswith(('#', ';')):
+                    if not line.strip():
                         continue
-                    if line.startswith('[') and line.endswith(']'):
-                        current_section = line[1:-1]
+                    
+                    # Continuation of a value?
+                    if line.startswith(('\t', ' ')) and last_key is not None:
+                        res[current_section][last_key] += " " + line.strip()
+                        continue
+
+                    stripped = line.strip()
+                    if stripped.startswith(('#', ';')):
+                        continue
+                        
+                    if stripped.startswith('[') and stripped.endswith(']'):
+                        current_section = stripped[1:-1]
                         if current_section not in res:
                             res[current_section] = {}
+                        last_key = None
                         continue
                     
                     if '=' in line:
+                        # Target established patterns like 'key = value'
                         if ' = ' in line:
                             parts = line.split(' = ', 1)
                         else:
-                            # Fallback if no spaces, split on first '=' but handle leading case
+                            # Fallback if no spaces, handle leading '=' case (e.g. "= = True")
                             if line.startswith('='):
-                                # If it starts with =, then the next part after another = is the value
-                                # e.g. "= = True" -> key is "=", val is "= True" ? 
-                                # Actually, looking at the file it was "= = True"
                                 parts = line.split('=', 1)
                                 if not parts[0] and '=' in parts[1]:
-                                    # Try to split again
                                     p2 = parts[1].strip().split('=', 1)
                                     parts = ['=', p2[1].strip()]
                             else:
                                 parts = line.split('=', 1)
-                                
-                        key, val = [i.strip() for i in parts]
-                        try:
-                            # Use ast.literal_eval for fidelity, fallback to string
-                            res[current_section][key] = ast.literal_eval(val)
-                        except (SyntaxError, ValueError):
+                        
+                        if len(parts) == 2:
+                            key, val = [i.strip() for i in parts]
                             res[current_section][key] = val
+                            last_key = key
+            
+            # Process all values with ast.literal_eval for fidelity
+            for section in res:
+                for key in list(res[section].keys()):
+                    val = res[section][key]
+                    try:
+                        res[section][key] = ast.literal_eval(val)
+                    except (SyntaxError, ValueError):
+                        # Keep as string if literal_eval fails
+                        pass
             
             # Lift 'default' or 'DEFAULT' values to top level
             for def_sec in ['default', 'DEFAULT']:

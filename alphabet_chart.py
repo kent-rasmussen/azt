@@ -2,16 +2,14 @@
 # coding=UTF-8
 """This module controls manipulation of alphabet charts from LIFt databases"""
 import os, sys
-import logsetup
-import logsetup
+from utilities import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
 log.info(f"Importing {__name__}")
-import file
-import lift
-import ui_tkinter as ui
-import pyautogui
-import alphabet_chart_pdf
+from utilities import file
+from io_put import lift, alphabet_chart_pdf
+from frontend import ui_tkinter as ui
+# import pyautogui
 
 class DraggableLabel(ui.Label):
     def __init__(self, parent, *args, **kwargs):
@@ -31,17 +29,17 @@ class DroppableLabel(ui.Label):
 class OrderAlphabet(ui.Window):
     """This allows users both to order what has been analyzed already, and
     select a picturable word for each grapheme"""
-    def print_chart_screenshot(self):
-        log.info("Calling print_chart")
-        region=(
-            self.frame.winfo_x()+self.winfo_x(),
-            self.frame.winfo_y()+self.winfo_y(),
-            self.frame.winfo_width(),
-            self.frame.winfo_height()
-        )
-        self.screenshot=pyautogui.screenshot(region=region)
-        filename=f"AlpabetChart[{self.db.analang}]x{self.ncolumns}.pdf"
-        self.screenshot.save(file.getdiredurl(self.db.reportdir,filename))
+    # def print_chart_screenshot(self):
+    #     log.info("Calling print_chart")
+    #     region=(
+    #         self.frame.winfo_x()+self.winfo_x(),
+    #         self.frame.winfo_y()+self.winfo_y(),
+    #         self.frame.winfo_width(),
+    #         self.frame.winfo_height()
+    #     )
+    #     self.screenshot=pyautogui.screenshot(region=region)
+    #     filename=f"AlpabetChart[{self.db.analang}]x{self.ncolumns}.pdf"
+    #     self.screenshot.save(file.getdiredurl(self.db.reportdir,filename))
     def select_example(self,glyph):
         self.withdraw()
         w=SelectFromPicturableWords(self,self.db,glyph)
@@ -407,7 +405,7 @@ class OrderAlphabet(ui.Window):
         
         # Save copyright to global settings
         copy = self.chart_copyright.get()
-        self.program['settings'].alpha_copyright(copy)
+        self.program['settings'].mgr.set('alphabet_copyright', copy)
         # Trigger save if possible, similar to other settings logic
         if hasattr(self.program['settings'], 'storesettingsfile'):
              self.program['settings'].storesettingsfile(setting='alphabet')
@@ -427,8 +425,10 @@ class OrderAlphabet(ui.Window):
         self.chart_copyright=ui.StringVar()
         # Init Copyright from settings
         copyright_grid={'c':1,'sticky':'w'}
-        if 'alphabet_copyright' in self.program['settings'].settings['alphabet']['attributes']:
-             self.chart_copyright.set(self.program['settings'].alpha_copyright())
+        import migration.converters
+        if 'alphabet_copyright' in migration.converters.Converter.attrs_for_legacy_setting('alphabet'):
+             default_copyright = getattr(self.program['settings'], 'alpha_copyright', lambda: "Set Alphabet Copyright!")() if hasattr(self.program['settings'], 'alpha_copyright') else "Set Alphabet Copyright!"
+             self.chart_copyright.set(self.program['settings'].mgr.get('alphabet_copyright', default_copyright))
         
         self.copyrightframe=ui.Frame(self.frame, r=1, c=1, sticky='ew')
         ui.Label(self.copyrightframe, text='© ', font="small", c=0)
@@ -476,8 +476,9 @@ class OrderAlphabet(ui.Window):
         self.db=self.program.get('db',kwargs.get('db'))
         self.my_settings=['exids','order','ncolumns','chart_title','pagesize']
         if 'settings' in self.program:
+            defs = {'ncolumns': 5, 'pagesize': 'A4', 'order': [], 'exids': {}, 'chart_title': ''}
             for k in self.my_settings:
-                setattr(self,k,getattr(self.program['settings'],'alpha_'+k)())
+                setattr(self,k,self.program['settings'].mgr.get('alphabet_'+k, defs.get(k)))
                 # log.info(f"Loaded ‘{k}’ ui.Variable: {getattr(self,k)}")
             self.analangname=self.program['settings'].languagenames[
                                                                 self.db.analang]
