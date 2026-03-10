@@ -338,7 +338,8 @@ class PageSetup(ui.Window):
             log.info(text_this)
         # log.info(f"{sorted(totals,reverse=True)}")
     def __init__(self, parent, **kwargs):
-        """This is not the same signature as parent class; is that a problem?"""title = "Alphabet Comparison Setup"
+        """This is not the same signature as parent class; is that a problem?"""
+        title = "Alphabet Comparison Setup"
         self.parent = parent
         if not hasattr(self,'program'): #i.e., from calling class
             raise AttributeError(f"{__class__} has not program attribute?")

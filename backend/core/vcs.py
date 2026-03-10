@@ -1056,6 +1056,6 @@ class GitReadOnly(Git):
             if hasattr(program,'aztdir'):
                 url=program.aztdir
             else:
-                raise ValueError(_("No url provided to {class_name} and program 
-                                    has no aztdir").format(class_name=self.__class__.__name__,program=program.name))
+                raise ValueError(_("No url provided to {class_name} and program "
+                                    "has no aztdir").format(class_name=self.__class__.__name__,program=program.name))
         super().__init__(program, url)

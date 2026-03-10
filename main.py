@@ -38,7 +38,7 @@ log=logsetup.getlog(__name__) #not ever a module
 logsetup.setlevel(loglevel)
 """My modules, which should log as above"""
 from io_put import lift, xlp, export
-import openclipart
+#import openclipart
 # import profiles #confirm obsolescence and remove!
 # import setdefaults
 # import urls
@@ -115,7 +115,7 @@ from backend.core.analysis_inputs import ToneFrames, CheckParameters, Glosslangs
 from backend.core.alphabet import Alphabet
 from backend.core.file_parser import FileParser
 from frontend.config.settings_ui import Settings
-from frontend.tasks import (ExportData, AlphabetChart, AlphabetComparisonPages,
+from tasks.tasks import (ExportData, AlphabetChart, AlphabetComparisonPages,
     Sound, Record, Transcription, WordCollectionwRecordings,
     WordCollectionLexeme, WordCollectionCitation, WordCollectionCitationwRecordings,
     WordCollectionPlural, WordCollectionImperative, ParseWords, WordCollectnParse,

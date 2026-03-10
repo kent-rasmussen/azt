@@ -4,7 +4,7 @@ from utilities import logsetup
 log=logsetup.getlog(__name__)
 import html.parser
 from utilities import file
-import urls
+from utilities import urls
 
 """general download functions"""
 def getdecoded(url, **kwargs):
