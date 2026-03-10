@@ -7,6 +7,36 @@ from .alphabet import AlphabetConfig
 from .contributors import ContributorsConfig
 from .data import DataConfig
 from .reports import ReportsConfig
+from .app import AppConfig
+
+
+class AppSettingsManager:
+    """Pre-project settings manager (before any LIFT file is loaded).
+    Stores last opened filename, list of known filenames, and UI language.
+    Config file: <aztdir>/azt.<user>.<hostname>.preproject.json
+    """
+    def __init__(self, base_path, hostname=None, user=None):
+        self.app = AppConfig(base_path, hostname, user)
+
+    @property
+    def filename(self):
+        return self.app.get_filename()
+
+    @filename.setter
+    def filename(self, value):
+        self.app.set_filename(value)
+
+    @property
+    def filenames(self):
+        return self.app.get_filenames()
+
+    @property
+    def ui_lang(self):
+        return self.app.get_ui_lang()
+
+    @ui_lang.setter
+    def ui_lang(self, value):
+        self.app.set_ui_lang(value)
 
 class SettingsManager:
     """

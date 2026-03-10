@@ -37,9 +37,9 @@ for name in ('program', 'counts', 'me', '_', 'ErrorNotice', 'askerror', 'sysrest
 class Senses(object):
     """docstring for Senses."""
     def groups(self,**kwargs): #toverify=True
-        return program['status'].groups(**kwargs)
+        return self.program.status.groups(**kwargs)
     def group(self,value=None,**kwargs):#get/set
-        return program['status'].group(value,**kwargs)
+        return self.program.status.group(value,**kwargs)
     def notdonewarning(self):
         buttontxt=_("Sort!")
         text=_("Hey, you're not done with {ps} {profile} words by {check}!"
@@ -47,22 +47,22 @@ class Senses(object):
                 "off by pressing ‘{button}’").format(ps=self.ps,profile=self.profile,check=self.check,
                                                 button=buttontxt)
         # self.withdraw()
-        if not program['Demo']: #Should anyone see this?
+        if not self.program.Demo: #Should anyone see this?
             ErrorNotice(text=text,title=_("Not Done!"),parent=self,wait=True)
         # self.deiconify()
     def checktosort(self):
-        return program['status'].checktosort() #bool tosort on cur check
+        return self.program.status.checktosort() #bool tosort on cur check
     def itemstosort(self):
-        return program['status'].sensestosort()
+        return self.program.status.sensestosort()
     def itemssorted(self):
-        return program['status'].sensessorted()
+        return self.program.status.sensessorted()
     def tosort(self):
-        return program['status'].tosort() #returns bool
+        return self.program.status.tosort() #returns bool
     def updatesortingstatus(self,**kwargs):
-        return program['settings'].updatesortingstatus(**kwargs)
+        return self.program.settings.updatesortingstatus(**kwargs)
     def verificationcode(self,**kwargs):
-        check=kwargs.get('check',program['params'].check())
-        group=kwargs.get('group',program['status'].group())
+        check=kwargs.get('check',self.program.params.check())
+        group=kwargs.get('group',self.program.status.group())
         # log.info("about to return {}={}".format(check,group))
         return check+'='+group
     def __init__(self):
@@ -74,19 +74,19 @@ class Segments(Senses):
         """include profile (of those available for ps and check),
         and subcheck (e.g., a: CaC\2)."""
         """Provides self.regex"""
-        profile=kwargs.get('profile',program['slices'].profile())
+        profile=kwargs.get('profile',self.program.slices.profile())
         if profile is None:
             log.info(_("You haven't picked a syllable profile yet."))
             return
         self.regex=self.rxdict.makeprofileforcheck(
                         profile=profile,
-                        check=kwargs.get('check',program['params'].check()),
-                        group=kwargs.get('group',program['status'].group()),
+                        check=kwargs.get('check',self.program.params.check()),
+                        group=kwargs.get('group',self.program.status.group()),
                         groupcomparison=getattr(self,'groupcomparison',False)
                                                     )
     def buildregexnocheck(self,**kwargs):
         """This is the same as above, but should get all senses of a profile, regardless of check and value"""
-        profile=kwargs.get('profile',program['slices'].profile())
+        profile=kwargs.get('profile',self.program.slices.profile())
         self.regex=self.rxdict.fromCV(profile,
                             word=True, compile=True, caseinsensitive=True)
     def ifregexadd(self,regex,form,id):
@@ -96,21 +96,21 @@ class Segments(Senses):
     def formspsprofile(self,**kwargs):
         """I think I want to move away from this"""
         log.info(_("Asked for forms to search for a data slice (only do once!)"))
-        ps=kwargs.get('ps',program['slices'].ps())
-        d=program['settings'].formstosearch[ps] #{form:sense}
+        ps=kwargs.get('ps',self.program.slices.ps())
+        d=self.program.settings.formstosearch[ps] #{form:sense}
         # log.info("Looking at {} entries".format(len(d)))
         return {k:d[k] for k in d
-                        if set(d[k]) & set(program['slices'].senses(**kwargs))}
+                        if set(d[k]) & set(self.program.slices.senses(**kwargs))}
     def sensesbyforminregex(self,regex,**kwargs):
         """This function takes in a compiled regex,
         and outputs a list of senses."""
-        ps=kwargs.get('ps',program['slices'].ps())
+        ps=kwargs.get('ps',self.program.slices.ps())
         # log.info("Kwargs keys: {} (formstosearch n={})".format(kwargs.keys(),
         #                                 len(kwargs['formstosearch'])))
         # log.info("Reduced to {} entries".format(len(dicttosearch)))
         # log.info("Looking for senses by regex {}".format(regex))
-        self.output=[s for s in program['slices'].senses(**kwargs)
-                                                    # program['db'].senses
+        self.output=[s for s in self.program.slices.senses(**kwargs)
+                                                    # self.program.db.senses
                         if s.ftypes[self.ftype].textvaluebylang(self.analang)
                         if regex.search(
                         s.ftypes[self.ftype].textvaluebylang(self.analang)
@@ -119,22 +119,22 @@ class Segments(Senses):
         # log.info("Found senses: {}".format(self.output))
         return self.output
     def presortgroups(self,**kwargs):
-        if program['status'].presorted(**kwargs):
+        if self.program.status.presorted(**kwargs):
             log.info(_("Presorting for this check/slice already done! ({args})"
                         "").format(args=kwargs))
             return
         log.info(_("Presorting"))
-        cvt=kwargs.get('cvt',program['params'].cvt())
-        ps=kwargs.get('ps',program['slices'].ps())
-        profile=kwargs.get('profile',program['slices'].profile())
-        # check=kwargs.get('check',program['params'].check())
-        groups=program['status'].groups(wsorted=True,**kwargs)
-        groups=program['status'].groups(cvt=cvt)
+        cvt=kwargs.get('cvt',self.program.params.cvt())
+        ps=kwargs.get('ps',self.program.slices.ps())
+        profile=kwargs.get('profile',self.program.slices.profile())
+        # check=kwargs.get('check',self.program.params.check())
+        groups=self.program.status.groups(wsorted=True,**kwargs)
+        groups=self.program.status.groups(cvt=cvt)
         #multiprocess from here?
-        msg=_("Presorting ({check}={groups})").format(check=program['params'].check(),groups=groups)
+        msg=_("Presorting ({check}={groups})").format(check=self.program.params.check(),groups=groups)
         log.info(msg)
         w=self.getrunwindow(msg=msg)
-        program['status'].renewsensestosort([],[]) #will repopulate
+        self.program.status.renewsensestosort([],[]) #will repopulate
         # test this before implementing it:
         # kwargs['formstosearch']=self.formsthisprofile(**kwargs)
         """Find all relevant senseids, remove sorted ids for each group,
@@ -161,14 +161,14 @@ class Segments(Senses):
                                         ))
         if unsortedids:
             self.presort(unsortedids,group='NA')
-            program['status'].group('NA')
+            self.program.status.group('NA')
             self.verify() #do this here, just this once.
-        program['status'].presorted(True)
-        program['status'].store() #after all the above
+        self.program.status.presorted(True)
+        self.program.status.store() #after all the above
         self.maybewrite()
         self.runwindow.waitdone()
     def presort(self,senses,group):
-        ftype=program['params'].ftype()
+        ftype=self.program.params.ftype()
         for sense in senses:
             t = threading.Thread(target=self.marksortgroup,
                             args=(sense,group),
@@ -177,7 +177,7 @@ class Segments(Senses):
                                     })
             t.start()
         t.join()
-        # program['status'].marksensesorted(sense) #now in marksortgroup
+        # self.program.status.marksensesorted(sense) #now in marksortgroup
         self.updatestatus(group=group) # marks the group unverified.
     def check_with_conflicting_value(self,annodict,check):
         """This tests for data where two checks should have the same value
@@ -205,11 +205,11 @@ class Segments(Senses):
         Iterate also across ftypes, to catch them all...
         that would likely need more smarts for affix and root distinction."""
         def maybe_add_polygraph(pg):
-            sc=program['params'].cvt()
-            scvalue=program['settings'].polygraphs[self.analang][sc][value]
+            sc=self.program.params.cvt()
+            scvalue=self.program.settings.polygraphs[self.analang][sc][value]
             if not scvalue:
                 scvalue=True
-                program['settings'].setupCVrxs() #costly; only when needed!
+                self.program.settings.setupCVrxs() #costly; only when needed!
         def do_not_do_these(value,check=None):
             return value in ['NA',None] or (check and check.isdigit()) or value.isdigit()
         form_ori=formvalue=sense.textvaluebyftypelang(self.ftype,self.analang)
@@ -240,7 +240,7 @@ class Segments(Senses):
                 formvalue=self.rxdict.update(formvalue,check,value)
                 #This should update formstosearch:
                 if formvalue != f:
-                    program['settings'].addtoformstosearch(sense,f,formvalue)
+                    self.program.settings.addtoformstosearch(sense,f,formvalue)
                 if len(value)>1:
                     maybe_add_polygraph(value)
         else: #update to all annotations
@@ -271,7 +271,7 @@ class Segments(Senses):
         item.annotationvaluebyftypelang(self.ftype,self.analang,check,group)
     def updateformsallchecks(self):
         log.info(_("updateformsallchecks"))
-        for sense in program['db'].senses: #do the whole dictionary
+        for sense in self.program.db.senses: #do the whole dictionary
             self.updateformtoannotations(sense)
         #     u = threading.Thread(target=self.updateformtoannotations,
         #                         args=(sense), # w/o check, all done
@@ -295,7 +295,7 @@ class Segments(Senses):
         self.maybewrite()#after iteration
     def update_annotations_to_glyphs(self):
         return [i for i in [self.update_annotations_by_glyph(k)
-                    for k in program['alphabet'].glyph_members()] if i]
+                    for k in self.program.alphabet.glyph_members()] if i]
     def update_annotations_by_glyph(self,glyph):
         """Once all sorting into groups and macrogroups is done, align groups to
         macrogroups.
@@ -315,7 +315,7 @@ class Segments(Senses):
             return '_'.join(x.split('_')[:4]+[glyph])
         # log.info("update_annotations_by_glyph: checking if it is safe to "
         #         f"update items in ‘{glyph}’")
-        gm=program['alphabet'].glyph_members()
+        gm=self.program.alphabet.glyph_members()
         """If an annotation change would effectively join groups, e.g., Noun_CVCVC_lc_V1_ea
         would become Noun_CVCVC_lc_V1_ee, which already exists, stop. 
         """
@@ -331,8 +331,8 @@ class Segments(Senses):
                 return txt
         log.info(_("update_annotations_by_glyph safely: ‘{members}’ to ‘{glyph}’").format(members=gm[glyph], glyph=glyph))
         for item in list(gm[glyph]):
-            kwargs=program['alphabet'].parse_verificationcode(item)
-            senses=program['slices'].inslice(
+            kwargs=self.program.alphabet.parse_verificationcode(item)
+            senses=self.program.slices.inslice(
                             self.getsensesincheckgroup(**kwargs),
                             **kwargs)
             # log.info(f"Found {len(senses)} senses for {item}: {[i.id for i in senses]}")
@@ -351,9 +351,9 @@ class Segments(Senses):
                                             #update all annotations first, then forms 
                 self.track_thread(thread_name) #don't race the thread
                 u.start()
-            program['status'].renamegroup(kwargs.pop('group'),glyph,**kwargs)
+            self.program.status.renamegroup(kwargs.pop('group'),glyph,**kwargs)
             #above should rename throughout status 
-            program['alphabet'].rename_glyph_member(item,newform(item))
+            self.program.alphabet.rename_glyph_member(item,newform(item))
         self.thread_update()
         try:
             u.join()
@@ -363,7 +363,7 @@ class Segments(Senses):
         log.info(_("update_annotations_by_glyph done with ‘{members}’ to ‘{glyph}’").format(members=gm[glyph], glyph=glyph))
     def default_glyphs(self):
         return [i for i in 
-                program['alphabet'].glyphdict()[program['params'].cvt()]
+                self.program.alphabet.glyphdict()[self.program.params.cvt()]
                 if i.isdigit()]
     def name_new_glyphs(self):
         """Everything referenced here needs to refer to macrogroups ONLY.
@@ -373,14 +373,14 @@ class Segments(Senses):
         Changes requested by the user are handled in TranscribeC/V
         """
         glyphs=self.default_glyphs()
-        program['alphabet'].glyphdict()[program['params'].cvt()]
-        if program['params'].cvt() == 'C':
+        self.program.alphabet.glyphdict()[self.program.params.cvt()]
+        if self.program.params.cvt() == 'C':
             transcribe=TranscribeC
-        elif program['params'].cvt() == 'V':
+        elif self.program.params.cvt() == 'V':
             transcribe=TranscribeV
         else:
             log.error(_("Not sure what to do with this glyph "
-                "({cvt}; {glyphs})").format(cvt=program['params'].cvt(), glyphs=glyphs))
+                "({cvt}; {glyphs})").format(cvt=self.program.params.cvt(), glyphs=glyphs))
         w=transcribe(self)
         self.withdraw()
         w.waitdone()
@@ -391,7 +391,7 @@ class Segments(Senses):
             w.makewindow(glyph)
             if w.window_failed:
                 #This removes verification, thus to do status:
-                program['alphabet'].mark_glyph_not_done(glyph)
+                self.program.alphabet.mark_glyph_not_done(glyph)
                 problems.append(glyph)
             elif not w.ok_done: #user exits without 'OK'
                 break
@@ -401,43 +401,44 @@ class Segments(Senses):
             log.error(_("User exited with work still to do: {digits} {problems}").format(digits=digits, problems=problems))
         return not bool(digits)
     def rename_macrogroup(self,x,y,updatestatus=False):
-        for item in list(program['alphabet'].glyph_members()[x]):
-            kwargs=program['alphabet'].parse_verificationcode(item)
+        for item in list(self.program.alphabet.glyph_members()[x]):
+            kwargs=self.program.alphabet.parse_verificationcode(item)
             log.info(_("Updating verification from ‘{old}’ to ‘{new}’ for {args}").format(old=x, new=y, args=kwargs))
             self.rename_group_verification(x,y,**kwargs)
         #Do the above first, before glyph_members changes
-        program['alphabet'].rename_glyph(x,y)
+        self.program.alphabet.rename_glyph(x,y)
         self.update_annotations_by_glyph(y)
         if updatestatus: #only update status if forms
-            program['settings'].reloadstatusdata()
+            self.program.settings.reloadstatusdata()
     def getsensesincheck(self):
         return [
-                i for i in program['db'].senses
+                i for i in self.program.db.senses
                 if i.ftypes[self.ftype].annotationkeyinlang(self.check)
                 ]
     def getsensesingroup(self,check,group):
-        ftype=program['params'].ftype()
-        lang=program['params'].analang()
+        ftype=self.program.params.ftype()
+        lang=self.program.params.analang()
         return [
-                i for i in program['db'].senses
+                i for i in self.program.db.senses
                 if i.ftypes[ftype].annotationvaluebylang(lang,check) == group
                 ]
     def getitemgroup(self,item,check):
-        # ftype=program['params'].ftype() #not helpful for Tone.getitemgroup
+        # ftype=self.program.params.ftype() #not helpful for Tone.getitemgroup
         return item.annotationvaluebyftypelang(self.ftype,self.analang,check)
-    def __init__(self, parent):
+    def __init__(self):
+        super().__init__()
         self.updateconflictwarned=False
         self.dodone=True
         self.dodoneonly=False #don't give me other words
-        self.ftype=program['params'].ftype()
-        self.rxdict=program['settings'].rxdict
+        self.ftype=self.program.params.ftype()
+        self.rxdict=self.program.settings.rxdict
 
 class WordCollection(Segments):
     """This task collects words, from the SIL CAWL, or one by one."""
     def taskicon(self):
-        return program['theme'].photo['iconWord']
+        return self.program.theme.photo['iconWord']
     def dobuttonkwargs(self):
-        if program['taskchooser'].cawlmissing:
+        if self.program.taskchooser.cawlmissing:
             fn=self.addCAWLentries
             text=_("Add remaining CAWL entries")
             tttext=_("This will add entries from the Comparative African "
@@ -446,7 +447,7 @@ class WordCollection(Segments):
                     "glosses are found in your database, CAWL tags will be "
                     "merged with those entries."
                     "\nDepending on the number of entries, this may take "
-                    "awhile.").format(count=len(program['taskchooser'].cawlmissing))
+                    "awhile.").format(count=len(self.program.taskchooser.cawlmissing))
         else:
             text=_("Add a Word")
             fn=self.addmorpheme
@@ -458,7 +459,7 @@ class WordCollection(Segments):
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program['taskchooser'].theme.photo['Word'],
+                'image':self.program.taskchooser.theme.photo['Word'],
                 'sticky':'ew',
                 'tttext':tttext
                 }
@@ -467,17 +468,17 @@ class WordCollection(Segments):
         which are left to do."""
         if hasattr(self,'byslice') and self.byslice:
             log.info(_("Limiting segment work to this slice"))
-            all=[i.entry for i in program['slices'].senses()]
+            all=[i.entry for i in self.program.slices.senses()]
         else:
-            all=program['db'].entries
-        if program['settings'].start_at_entry:
-            log.info("Starting at entry {}".format(program['settings'].start_at_entry))
-            if not program['settings'].end_at_entry:
+            all=self.program.db.entries
+        if self.program.settings.start_at_entry:
+            log.info("Starting at entry {}".format(self.program.settings.start_at_entry))
+            if not self.program.settings.end_at_entry:
                 log.info("end_at_entry not found; finishing to the end")
-                program['settings'].end_at_entry=len(all)
+                self.program.settings.end_at_entry=len(all)
             else:
-                log.info("Ending at entry {}".format(program['settings'].end_at_entry))
-            all=all[program['settings'].start_at_entry:program['settings'].end_at_entry]
+                log.info("Ending at entry {}".format(self.program.settings.end_at_entry))
+            all=all[self.program.settings.start_at_entry:self.program.settings.end_at_entry]
             log.info("Working on {} entries".format(len(all)))
         else:
             log.info("start_at_entry not found")
@@ -510,18 +511,18 @@ class WordCollection(Segments):
         if lang == self.analang:
             text=_("What is the form of the new "
                     "morpheme in {name} \n(consonants and vowels only)?"
-                    "").format(name=program['settings'].languagenames[lang])
+                    "").format(name=self.program.settings.languagenames[lang])
             ok=_('Use this form')
             skip=None
         else:
             text=_("What does ‘{form}’ mean in {lang}?").format(
                             form=self.runwindow.form[self.analang],
-                            lang=program['settings'].languagenames[lang])
+                            lang=self.program.settings.languagenames[lang])
             ok=_("Use this {lang} gloss for ‘{form}’").format(
-                            lang=program['settings'].languagenames[lang],
+                            lang=self.program.settings.languagenames[lang],
                             form=self.runwindow.form[self.analang])
             self.runwindow.glosslangs.append(lang)
-            skip = _("Skip {lang} gloss").format(lang=program['settings'].languagenames[lang])
+            skip = _("Skip {lang} gloss").format(lang=self.program.settings.languagenames[lang])
         return {'lang':lang, 'prompt':text, 'ok':ok, 'skip':skip}
     def submitform(self,lang):
         self.runwindow.form[lang]=self.runwindow.form[lang].get()
@@ -571,7 +572,7 @@ class WordCollection(Segments):
         self.runwindow.pady=10
         self.runwindow.title(_("Add Morpheme to Dictionary"))
         title=_("Add {lang} morpheme to the dictionary").format(
-                            lang=program['settings'].languagenames[self.analang])
+                            lang=self.program.settings.languagenames[self.analang])
         ui.Label(self.runwindow.frame,text=title,font='title',
                 justify=ui.LEFT,
                 anchor='c',sticky='ew',
@@ -581,7 +582,7 @@ class WordCollection(Segments):
         # Run the above script (makewindow) for each language, analang first.
         # The user has a chance to enter a gloss for any gloss language
         # already in the datbase, and to skip any as needed/desired.
-        for lang in [self.analang]+program['db'].glosslangs:
+        for lang in [self.analang]+self.program.db.glosslangs:
             if lang in self.runwindow.form:
                 continue #Someday: how to do monolingual form/gloss here
             if not self.runwindow.exitFlag.istrue():
@@ -591,7 +592,7 @@ class WordCollection(Segments):
         """get the new sense back from this function, which generates it"""
         if not self.runwindow.exitFlag.istrue(): #don't do this if exited
             self.runwindow.withdraw() #or wait?
-            sense=program['db'].addentry(ps='',analang=self.analang,
+            sense=self.program.db.addentry(ps='',analang=self.analang,
                             glosslangs=self.runwindow.glosslangs,
                             form=self.runwindow.form)
             # Update profile information in the running instance, and in the file.
@@ -605,7 +606,7 @@ class WordCollection(Segments):
         self.cawldb=loadCAWL()
         added=[]
         modded=[]
-        for n in program['taskchooser'].cawlmissing:
+        for n in self.program.taskchooser.cawlmissing:
             log.info(_("Working on SILCAWL line #{line:04}.").format(line=n))
             e=self.cawldb.get('entry', path=['cawlfield'],
                                     cawlvalue='{:04}'.format(n),
@@ -620,11 +621,11 @@ class WordCollection(Segments):
                 log.info(_("line {line} w/o lexical category; leaving.").format(line=n))
                 eps=epsv=None
             if epsv == 'Noun': #don't translate!
-                log.info(_("Found a noun, using {ps}").format(ps=program['settings'].nominalps))
-                eps.set('value',program['settings'].nominalps)
+                log.info(_("Found a noun, using {ps}").format(ps=self.program.settings.nominalps))
+                eps.set('value',self.program.settings.nominalps)
             elif epsv == 'Verb': #don't translate!
-                log.info(_("Found a verb, using {ps}").format(ps=program['settings'].verbalps))
-                eps.set('value',program['settings'].verbalps)
+                log.info(_("Found a verb, using {ps}").format(ps=self.program.settings.verbalps))
+                eps.set('value',self.program.settings.verbalps)
             else:
                 log.error(_("Not sure what to do with ps {ps} ({node})").format(ps=epsv,node=eps))
             entry=None #in case no selected glosslangs in CAWL
@@ -635,12 +636,12 @@ class WordCollection(Segments):
                 else:
                     g=g[0].text
                 """any entry with a matching gloss"""
-                entry=program['db'].get('entry',gloss=g,glosslang=lang,
+                entry=self.program.db.get('entry',gloss=g,glosslang=lang,
                                         ).get('node') #maybe []
                 if entry:
                     log.info(_("Found gloss of SILCAWL line #{line:04} ({gloss}); "
                             "adding info to that entry.").format(line=n,gloss=g))
-                    program['db'].fillentryAwB(entry[0],e)
+                    self.program.db.fillentryAwB(entry[0],e)
                     modded.append(n)
                     break
             if not entry: #i.e., no match for any self.glosslangs gloss
@@ -649,10 +650,10 @@ class WordCollection(Segments):
                     tn.text=''
                 log.info(_("Gloss of SILCAWL line #{line:04} ({gloss}) not found; "
                         "copying over that entry.").format(line=n,gloss=g))
-                program['db'].nodes.append(e)
+                self.program.db.nodes.append(e)
                 added.append(n)
         if added or modded:
-            program['db'].write()
+            self.program.db.write()
             title=_("Entries Added!")
             text=_("Added {count} entries from the SILCAWL").format(count=len(added))
             if len(added)<100:
@@ -661,13 +662,13 @@ class WordCollection(Segments):
                     "SILCAWL").format(count=len(modded))
             if len(modded)<100:
                 text+=': ({})'.format(modded)
-            program['taskchooser'].getcawlmissing()
+            self.program.taskchooser.getcawlmissing()
             self.dobuttonkwargs()
         else:
             title=_("Error trying to add SILCAWL entries")
             text=_("We seem to have not added or modded any entries, which "
                     "shouldn't happen! (missing: {missing})"
-                    "").format(missing=program['taskchooser'].cawlmissing)
+                    "").format(missing=self.program.taskchooser.cawlmissing)
         self.waitdone()
         log.info(text)
         ErrorNotice(text,title=title)
@@ -704,12 +705,12 @@ class WordCollection(Segments):
                                             self.var.get())
             elif self.ftype == 'pl':
                 self.entry.plvalue(
-                    program['settings'].secondformfield[program['settings'].nominalps],
+                    self.program.settings.secondformfield[self.program.settings.nominalps],
                     self.var.get())
                 # lift.prettyprint(self.entry.pl)
             elif self.ftype == 'imp':
                 self.entry.fieldvalue(
-                        program['settings'].secondformfield[program['settings'].verbalps],
+                        self.program.settings.secondformfield[self.program.settings.verbalps],
                         self.var.get())
             # self.entry.lc.textvaluebylang(self.analang,self.var.get())
             self.maybewrite() #only if above is successful
@@ -853,7 +854,7 @@ class WordCollection(Segments):
             log.info(_("There don't seem to be any images to show."))
             return 1
     def downloadallCAWLimages(self):
-        for self.sense in program['db'].senses:
+        for self.sense in self.program.db.senses:
             if not file.exists(self.sense.imgselectiondir):
                 self.getopenclipart(nogui=True)
     def getopenclipart(self,event=None,nogui=False):
@@ -993,7 +994,7 @@ class WordCollection(Segments):
     def set_up_transcription(self):
         pass
     def getword(self):
-        program['taskchooser'].withdraw()# not sure why necessary
+        self.program.taskchooser.withdraw()# not sure why necessary
         # log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
         # log.info("wordframe: {}".format(getattr(self,'wordframe',None)))
         # log.info("index: {}".format(self.index))
@@ -1067,10 +1068,10 @@ class WordCollection(Segments):
         self.lift()
         self.wordframe.update_idletasks()
     def setcontext(self,context=None):
-        TaskDressing.setcontext(self)
+        super().setcontext(context)
         self.context.menuitem(_("Show Report"),self.show_report)
-    def __init__(self, parent):
-        Segments.__init__(self,parent)
+    def __init__(self):
+        super().__init__()
         self.dodone=False
 
 class Parse(Segments):
@@ -1116,11 +1117,11 @@ class Parse(Segments):
             log.info("Running undosf")
             log.info(self.currentformnotice())
             if self.sense.psvalue() == self.nominalps: #unset value
-                self.entry.plvalue(program.settings.pluralname, value=False)
+                self.entry.plvalue(self.program.settings.pluralname, value=False)
             elif self.sense.psvalue() == self.verbalps:
-                self.entry.fieldvalue(program.settings.imperativename,
+                self.entry.fieldvalue(self.program.settings.imperativename,
                                             self.analang, value=False) #unset value
-            program.db.write()
+            self.program.db.write()
             log.info(self.currentformnotice())
             do(False)
         level, lx, lc, sf, ps, afxs = args
@@ -1566,7 +1567,7 @@ class Parse(Segments):
         if s:
             return s
         if not senses:
-            senses=program.db.senses[:n]
+            senses=self.program.db.senses[:n]
         if all:
             return senses #if provided, assume all
         else:
@@ -1608,9 +1609,9 @@ class Parse(Segments):
         self.parser.setlevels(auto=auto,ask=ask)
     def initparsecatalog(self):
         # like if there is a bad affix making bad autoparses...
-        self.pss=program.db.pss
-        self.parsecatalog=self.parent.parsecatalog=parser.Catalog(self)
-        collector=parser.AffixCollector(self.parsecatalog,program.db)
+        self.pss=self.program.db.pss
+        self.parsecatalog=parser.Catalog(self)
+        collector=parser.AffixCollector(self.parsecatalog,self.program.db)
         if self.loadfromlift:
             self.wait(_("Loading Affixes"))
             # for i in collector.do():
@@ -1646,18 +1647,17 @@ class Parse(Segments):
         except Exception as e:
             log.info(f"Exception storing word (Parse): {e}")
     def waitforOKsecondfields(self):
-        while not program.settings.secondformfieldsOK():
+        while not self.program.settings.secondformfieldsOK():
             after(10*100,callback=self.waitforOKsecondfields) # wait a second
-    def __init__(self, parent): #frame, filename=None
+    def __init__(self): #frame, filename=None
         self.byslice=False
         self.initsensetodo()
-        Segments.__init__(self,parent)
-        self.parent=parent
-        self.secondformfield=program.settings.secondformfield
-        self.nominalps=program.settings.nominalps
-        self.verbalps=program.settings.verbalps
+        super().__init__()
+        self.secondformfield=self.program.settings.secondformfield
+        self.nominalps=self.program.settings.nominalps
+        self.verbalps=self.program.settings.verbalps
         self.loadfromlift=True
-        # program.settings.makesecondformfieldsOK() #do elsewhere
+        # self.program.settings.makesecondformfieldsOK() #do elsewhere
         if hasattr(parent,'parsecatalog'):
             self.parsecatalog=parent.parsecatalog
         else:
@@ -1669,8 +1669,8 @@ class Parse(Segments):
             #These should come from settings
             self.parser.autolevel(5) #no auto
             self.parser.asklevel(0)
-        self.ftype=program.params.ftype('lc') #Is this always correct?
-        # self.ftype=program.params.ftype('lx') #I think once we parse, we want this
+        self.ftype=self.program.params.ftype('lc') #Is this always correct?
+        # self.ftype=self.program.params.ftype('lx') #I think once we parse, we want this
         # self.nodetag='citation'
         self.dodone=True #give me words with citation done
         self.checkeach=False #don't confirm each word (default)
@@ -1693,21 +1693,21 @@ class Tone(Senses):
         """use if sorting sense lists aren't needed"""
         """This is redundant with updatesortingstatus()"""
         if cvt is None:
-            cvt=program.slices.cvt()
+            cvt=self.program.slices.cvt()
         if ps is None:
-            ps=program.slices.ps()
+            ps=self.program.slices.ps()
         if profile is None:
-            profile=program.slices.profile()
+            profile=self.program.slices.profile()
         if check is None:
-            check=program.slices.check()
-        senses=program.slices.senses(ps=ps,profile=profile)
+            check=self.program.slices.check()
+        senses=self.program.slices.senses(ps=ps,profile=profile)
         vts=False
         for sense in senses:
             if sense.tonevaluebyframe(self,frame):
                 vts=True
                 break #This is just a True/False for the group, not lists
-        program.status.dictcheck(cvt=cvt,ps=ps,profile=profile,check=check)
-        program.status.tosort(vts,cvt=cvt,ps=ps,profile=profile,check=check)
+        self.program.status.dictcheck(cvt=cvt,ps=ps,profile=profile,check=check)
+        self.program.status.tosort(vts,cvt=cvt,ps=ps,profile=profile,check=check)
     def settonevariablesiterable(self,cvt='T',ps=None,profile=None,check=None):
         """This is currently called in iteration, but doesn't refresh groups,
         so it probably isn't useful anymore."""
@@ -1751,7 +1751,7 @@ class Tone(Senses):
             # that they align:
             assert check in item.examples
             f=item.formattedform(self.analang,self.ftype,
-                                program.toneframes[ps][check])
+                                self.program.toneframes[ps][check])
             # log.info("Setting form to {}".format(f))
             item.examples[check].textvaluebylang(
                                     lang=self.analang,
@@ -1759,29 +1759,29 @@ class Tone(Senses):
             log.info("Setting tone sort group to ‘{}’".format(group))
             item.examples[check].tonevalue(group)
             for g in (set(self.glosslangs)& #selected
-                        set(program.toneframes[ps][check])& #defined
+                        set(self.program.toneframes[ps][check])& #defined
                         set(item.ftypes[self.ftype])): # form in lexicon
                 for f in item.formattedgloss(g,
-                                        program.toneframes[ps][check])[:1]:
+                                        self.program.toneframes[ps][check])[:1]:
                     # log.info("Setting {} translation to {}".format(g,f))
                     item.examples[check].translationvalue(g,f)
             item.examples[check].lastAZTsort()
         except (KeyError,AssertionError) as e:
             # log.info(f"Adding a new example to store ‘{check}’ values ({e})")
             item.newexample(check,
-                            program.toneframes[ps][check],
+                            self.program.toneframes[ps][check],
                             self.analang,
                             self.glosslangs,
                             group)
         # log.info("Done setting tone sort group")
     def getsensesinUFgroup(self,group):
         return [
-                i for i in program.db.senses
+                i for i in self.program.db.senses
                 if i.uftonevalue() == group
                 ]
     def getsensesingroup(self,check,group):
         return [
-                i for i in program.db.senses
+                i for i in self.program.db.senses
                 if i.tonevaluebyframe(check) == group
                 ]
     def getitemgroup(self,item,check):
@@ -1792,5 +1792,6 @@ class Tone(Senses):
     def name_new_glyphs(self):
         pass
     def __init__(self,program):
+        super().__init__()
         self.program=program
 

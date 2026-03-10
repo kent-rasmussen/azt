@@ -4,7 +4,6 @@ import collections
 # import re
 # import datetime
 # import tkinter as tk
-from frontend import ui_tkinter as ui
 from utilities.utilities import *
 from io_put import lift
 from utilities import logsetup, htmlfns

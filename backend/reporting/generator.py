@@ -34,7 +34,7 @@ for name in ('program', 'counts', 'me', '_', 'ErrorNotice', 'askerror', 'sysrest
 
 class Report(object):
     def consultantcheck(self):
-        program['settings'].reloadstatusdata()
+        self.program.settings.reloadstatusdata()
         self.bylocation=False
         self.tonegroupreportcomprehensive()
         self.bylocation=True
@@ -65,17 +65,17 @@ class Report(object):
                     fn=self.reportfn.__name__,kwargs=kwargs))
         kwargs['usegui']=False
         # log.info("reportmulti continuing with kwargs {}".format(kwargs))
-        if hasattr(program['settings'],'maxpss') and program['settings'].maxpss:
-            pss=program['slices'].pss()[:program['settings'].maxpss]
+        if hasattr(self.program.settings,'maxpss') and self.program.settings.maxpss:
+            pss=self.program.slices.pss()[:self.program.settings.maxpss]
         else:
-            pss=[program['slices'].ps()]
+            pss=[self.program.slices.ps()]
         d={}
         for ps in pss:
-            if (hasattr(program['settings'],'maxprofiles') and
-                    program['settings'].maxprofiles):
-                d[ps]=program['slices'].profiles(ps=ps)[:program['settings'].maxprofiles]
+            if (hasattr(self.program.settings,'maxprofiles') and
+                    self.program.settings.maxprofiles):
+                d[ps]=self.program.slices.profiles(ps=ps)[:self.program.settings.maxprofiles]
             else:
-                d[ps]=[program['slices'].profile()]
+                d[ps]=[self.program.slices.profile()]
         log.info("Starting background reports for {reports}".format(reports=d))
         unbackground=[]
         all=[]
@@ -113,7 +113,7 @@ class Report(object):
         those with 2-4 verified frames? Selectable with radio buttons?"""
         start_time=nowruntime()
         #default=True redoes the UF analysis (removing any joining/renaming)
-        ftype=kwargs.get('ftype',program['params'].ftype())
+        ftype=kwargs.get('ftype',self.program.params.ftype())
         def examplestoXLP(examples,parent):
             # log.info("examples : {examples} ({type})".format(examples=examples,type=type(examples)))
             counts['senses']+=1
@@ -122,16 +122,16 @@ class Report(object):
                 # if self.analang not in example.forms:
                 #     continue
                 counts['examples']+=1
-                if program['settings'].audiolang in example.forms:
+                if self.program.settings.audiolang in example.forms:
                     counts['audio']+=1
                 self.nodetoXLP(example,parent=parent,listword=True,
                                                 showgroups=showgroups)
-        analysisOK,showgroups,timestamps=program['status'].isanalysisOK(**kwargs)
+        analysisOK,showgroups,timestamps=self.program.status.isanalysisOK(**kwargs)
         silent=kwargs.get('silent',False)
         default=kwargs.get('default',True)
-        ps=kwargs.get('ps',program['slices'].ps())
-        profile=kwargs.get('profile',program['slices'].profile())
-        checks=program['status'].checks(wsorted=True,**kwargs)
+        ps=kwargs.get('ps',self.program.slices.ps())
+        profile=kwargs.get('profile',self.program.slices.profile())
+        checks=self.program.status.checks(wsorted=True,**kwargs)
         if not checks:
             if 'profile' in kwargs:
                 log.error("{ps} {profile} came up with no checks.".format(ps=ps,profile=profile))
@@ -139,7 +139,7 @@ class Report(object):
             self.getprofile(wsorted=True)
         startnotice=_("Starting report {ps} {profile}").format(ps=ps,profile=profile)
         log.info(startnotice)
-        program['settings'].storesettingsfile()
+        self.program.settings.storesettingsfile()
         waitmsg=_("{ps} {profile} Tone Report in Process\n({timestamps})").format(ps=ps,profile=profile,
                                                                 timestamps=timestamps)
         if usegui:
@@ -151,7 +151,7 @@ class Report(object):
         if not default:
             bits.append('mod')
         self.tonereportfile='_'.join(bits)+'.txt'
-        checks=program['status'].checks(wsorted=True,**kwargs)
+        checks=self.program.status.checks(wsorted=True,**kwargs)
         if not checks:
             error=_("Hey, sort some morphemes in at least one frame before "
                         "trying to make a tone report!")
@@ -235,7 +235,7 @@ class Report(object):
         "this report is distinct from the others, in terms of its grouping "
         "across the multiple frames used. Sound files should be available "
         "through links, if the audio directory with those files is in the same "
-        "directory as this file.").format(ps=ps,checks=checks,program=program['name'])
+        "directory as this file.").format(ps=ps,checks=checks,program=self.program.name)
         p1=xlp.Paragraph(s1,text=text)
         text=_("As a warning to the analyst who may not understand the "
         "implications of this *automated analysis*, you may have too few "
@@ -284,13 +284,13 @@ class Report(object):
                 "relationships for yourself: {ufs}. "
                 "And here are the structured similarity relationships for the "
                 "Frames: {checks}"
-                "").format(program=program['name'],
+                "").format(program=self.program.name,
                         ufs=str(self.analysis.comparisonUFs),
                         checks=str(self.analysis.comparisonchecks))
         else:
             ptext+=_("This is a non-default report, where a user has changed "
             "the default (hyper-split) groups created by {program}.".format(
-                                                        program=program['name']))
+                                                        program=self.program.name))
         p0=xlp.Paragraph(s1s,text=ptext)
         self.analysis.orderedchecks=list(self.analysis.valuesbycheckgroup)
         for slice in range(int(len(self.analysis.orderedchecks)/m)+1):
@@ -341,7 +341,7 @@ class Report(object):
                                                             ))
                     e1=xlp.Example(s1,id,heading=headtext)
                     for sense in self.analysis.sensesbygroup[group]:
-                        # sense=program['db'].sensedict[sense]
+                        # sense=self.program.db.sensedict[sense]
                         #This is for window/text output only, not in XLP file
                         text=sense.formatted(self.analang,self.glosslangs)
                         #This is put in XLP file:
@@ -400,7 +400,7 @@ class Report(object):
             resultswindow.waitdone()
             if me:
                 resultswindow.on_quit()
-        program['status'].last('report',update=True)
+        self.program.status.last('report',update=True)
     def makeresultsframe(self):
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
             self.results = ui.Frame(self.runwindow.frame,width=800)
@@ -446,10 +446,10 @@ class Report(object):
         if usegui:
             self.getrunwindow()
             self.makeresultsframe() #not for now, causing problems
-        kwargs['cvt']=kwargs.get('cvt',program['params'].cvt())
-        kwargs['ps']=kwargs.get('ps',program['slices'].ps())
-        kwargs['profile']=kwargs.get('profile',program['slices'].profile())
-        kwargs['check']=kwargs.get('check',program['params'].check())
+        kwargs['cvt']=kwargs.get('cvt',self.program.params.cvt())
+        kwargs['ps']=kwargs.get('ps',self.program.slices.ps())
+        kwargs['profile']=kwargs.get('profile',self.program.slices.profile())
+        kwargs['check']=kwargs.get('check',self.program.params.check())
         self.adhocreportfileXLP='_'.join([str(self.reportbasefilename)
                                         ,str(kwargs['ps'])+'-'+str(kwargs['profile'])
                                         ,str(kwargs['check'])
@@ -482,11 +482,11 @@ class Report(object):
             self.analysis.donoUFanalysis()
             ufgroupsnsenses=analysis.sensesbygroup.items()
             kwargs['sectlevel']=4
-            t=_("{count} checks").format(count=program['params'].cvtdict()[kwargs['cvt']]['sg'])
+            t=_("{count} checks").format(count=self.program.params.cvtdict()[kwargs['cvt']]['sg'])
             for kwargs['ufgroup'],kwargs['ufsenses'] in ufgroupsnsenses:
                 if 'ufgroup' in kwargs:
                     log.info("Going to run {sg} report for UF group {group}"
-                            "".format(sg=program['params'].cvtdict()[kwargs['cvt']]['sg'],
+                            "".format(sg=self.program.params.cvtdict()[kwargs['cvt']]['sg'],
                                     group=kwargs['ufgroup']))
                 sid=' '.join([t,"for",kwargs['ufgroup']])
                 s2=xlp.Section(si,sid) #,level=2
@@ -579,11 +579,11 @@ class Report(object):
                     finally: # we need each cell to be there...
                         cell=xlp.Cell(r,content=value)
     def xlpstart(self,**kwargs):
-        ps=kwargs.get('ps',program['slices'].ps())
-        profile=kwargs.get('profile',program['slices'].profile())
+        ps=kwargs.get('ps',self.program.slices.ps())
+        profile=kwargs.get('profile',self.program.slices.profile())
         default=kwargs.get('default',True)
-        check=kwargs.get('check',program['params'].check())
-        group=kwargs.get('group',program['status'].group())
+        check=kwargs.get('check',self.program.params.check())
+        group=kwargs.get('group',self.program.status.group())
             #this is only for adhoc "big button" reports.
 
         if isinstance(self, Multislice) and 'psprofiles' in kwargs:
@@ -614,24 +614,24 @@ class Report(object):
             bits.append('mod')
         reportfileXLP='_'.join(bits)+'.xml'
         xlpreport=xlp.Report(reportfileXLP,reporttype,
-                        program['settings'].languagenames[self.analang],
+                        self.program.settings.languagenames[self.analang],
                         program # who is calling this report?
                         )
         # langsalreadythere=[]
         if hasattr(xlpreport,'node'): #otherwise, this will fail
             for lang in set([self.analang]+self.glosslangs)-set([None]):
                 xlpreport.addlang({'id':lang,
-                                    'name': program['settings'].languagenames[lang]})
+                                    'name': self.program.settings.languagenames[lang]})
         return xlpreport
     def wordsbypsprofilechecksubcheckp(self,parent,**kwargs):
         # log.info("Kwargs (wordsbypsprofilechecksubcheckp): {kwargs}".format(kwargs=kwargs))
         usegui=kwargs['usegui']=kwargs.get('usegui',True)
-        cvt=kwargs['cvt']=kwargs.get('cvt',program['params'].cvt())
-        ps=kwargs['ps']=kwargs.get('ps',program['slices'].ps())
-        profile=kwargs['profile']=kwargs.get('profile',program['slices'].profile())
-        check=kwargs['check']=kwargs.get('check',program['params'].check())
-        group=kwargs['group']=kwargs.get('group',program['status'].group())
-        ftype=kwargs['ftype']=kwargs.get('ftype',program['params'].ftype())
+        cvt=kwargs['cvt']=kwargs.get('cvt',self.program.params.cvt())
+        ps=kwargs['ps']=kwargs.get('ps',self.program.slices.ps())
+        profile=kwargs['profile']=kwargs.get('profile',self.program.slices.profile())
+        check=kwargs['check']=kwargs.get('check',self.program.params.check())
+        group=kwargs['group']=kwargs.get('group',self.program.status.group())
+        ftype=kwargs['ftype']=kwargs.get('ftype',self.program.params.ftype())
         skipthisone=False
         checkprose='{ps} {profile} {ufgroup} {check}={group}'.format(ps=kwargs['ps'],
                                     profile=kwargs['profile'],
@@ -745,17 +745,17 @@ class Report(object):
         possible values (as above), then restore the value."""
         """I need to find a way to limit these tests to appropriate
         profiles..."""
-        kwargs['cvt']=kwargs.get('cvt',program['params'].cvt()) #only send on one
-        ps=kwargs.get('ps',program['slices'].ps())
-        kwargs['profile']=kwargs.get('profile',program['slices'].profile())
+        kwargs['cvt']=kwargs.get('cvt',self.program.params.cvt()) #only send on one
+        ps=kwargs.get('ps',self.program.slices.ps())
+        kwargs['profile']=kwargs.get('profile',self.program.slices.profile())
         #CV checks depend on profile, too
         if isinstance(self,Multicheck):
-            checksunordered=program['status'].checks(**kwargs)
+            checksunordered=self.program.status.checks(**kwargs)
             checks=self.orderchecks(checksunordered)
             # log.info("Going to do these checks: {checks}".format(checks=checksunordered))
             log.info("Going to do checks in this order: {checks}".format(checks=checks))
         else:
-            checks=[kwargs.get('check',program['params'].check())]
+            checks=[kwargs.get('check',self.program.params.check())]
             """check set here"""
         for kwargs['check'] in checks: #self.checkcodesbyprofile:
             """multithread here"""
@@ -767,24 +767,24 @@ class Report(object):
         checks+=sorted([i for i in checklist if 'x' in i], key=len)
         return checks
     def docheckreport(self,parent,**kwargs):
-        kwargs['cvt']=kwargs.get('cvt',program['params'].cvt())
-        kwargs['ps']=kwargs.get('ps',program['slices'].ps())
-        kwargs['profile']=kwargs.get('profile',program['slices'].profile())
-        kwargs['check']=kwargs.get('check',program['params'].check())
+        kwargs['cvt']=kwargs.get('cvt',self.program.params.cvt())
+        kwargs['ps']=kwargs.get('ps',self.program.slices.ps())
+        kwargs['profile']=kwargs.get('profile',self.program.slices.profile())
+        kwargs['check']=kwargs.get('check',self.program.params.check())
         # log.info("docheckreport starting with kwargs {kwargs}".format(kwargs=kwargs))
-        groups=program['status'].groups(**kwargs)
-        group=program['status'].group()
+        groups=self.program.status.groups(**kwargs)
+        group=self.program.status.group()
         self.ncvts=rx.split('[=x]',kwargs['check'])
         if 'x' in kwargs['check']:
             log.debug('Hey, I cound a correspondence number!')
             if kwargs['cvt'] in ['V','C']:
                 groupcomparisons=groups
             elif kwargs['cvt'] == 'CV':
-                groups=program['status'].groups(cvt='C')
-                groupcomparisons=program['status'].groups(cvt='V')
+                groups=self.program.status.groups(cvt='C')
+                groupcomparisons=self.program.status.groups(cvt='V')
             elif kwargs['cvt'] == 'VC':
-                groups=program['status'].groups(cvt='V')
-                groupcomparisons=program['status'].groups(cvt='C')
+                groups=self.program.status.groups(cvt='V')
+                groupcomparisons=self.program.status.groups(cvt='C')
             else:
                 log.error("Sorry, I don't know how to compare cvt: {cvt}"
                                                     "".format(cvt=kwargs['cvt']))
@@ -807,9 +807,9 @@ class Report(object):
         """node here is either a ftype node or example"""
         id='x' #string!
         bits=[
-            program['params'].cvt(),
-            program['slices'].ps(),
-            program['slices'].profile(),
+            self.program.params.cvt(),
+            self.program.slices.ps(),
+            self.program.slices.profile(),
             ]
         try:
             bits.append(node.locationvalue()) #for examples
@@ -840,7 +840,7 @@ class Report(object):
         else:
             exx=xlp.Example(parent,id) #the id goes here...
             ex=xlp.Word(exx) #This doesn't have an id
-        audio=node.textvaluebylang(program['db'].audiolang)
+        audio=node.textvaluebylang(self.program.db.audiolang)
         form=node.textvaluebylang(self.analang)
         # log.info("Found form {form} and audio {audio}".format(form=form,audio=audio))
         if audio:
@@ -851,7 +851,7 @@ class Report(object):
             # log.info("Found audio not!")
             el=xlp.LangData(ex,self.analang,form)
         phonetic=node.parent.sense.textvaluebyftypelang('ph',self.analang)
-        if program['settings'].showoriginalorthographyinreports and phonetic:
+        if self.program.settings.showoriginalorthographyinreports and phonetic:
             elph=xlp.LangData(ex,self.analang,phonetic)
         if hasattr(node,'tonevalue') and showgroups: #joined groups show each
             elt=xlp.LangData(ex,self.analang,node.tonevalue())
@@ -869,16 +869,16 @@ class Report(object):
         else:
             exx=xlp.Example(parent,id) #the id goes here...
             ex=xlp.Word(exx) #This doesn't have an id
-        if (program['settings'].audiolang in framed.forms and
-                    ftype in framed.forms[program['settings'].audiolang] and
-                    framed.forms[program['settings'].audiolang][ftype]):
+        if (self.program.settings.audiolang in framed.forms and
+                    ftype in framed.forms[self.program.settings.audiolang] and
+                    framed.forms[self.program.settings.audiolang][ftype]):
             url=file.getdiredrelURLposix(self.reporttoaudiorelURL,
-                                framed.forms[program['settings'].audiolang][ftype])
+                                framed.forms[self.program.settings.audiolang][ftype])
             el=xlp.LinkedData(ex,self.analang,framed.forms[self.analang][ftype],
                                                                     str(url))
         else:
             el=xlp.LangData(ex,self.analang,framed.forms[self.analang][ftype])
-        if program['settings'].showoriginalorthographyinreports and (
+        if self.program.settings.showoriginalorthographyinreports and (
                     'ph' in framed.forms[self.analang] and
                     framed.forms[self.analang]['ph']):
             elph=xlp.LangData(ex,self.analang,framed.forms[self.analang]['ph'])
@@ -892,23 +892,23 @@ class Report(object):
         log.info("Ranked and numbered syllable profiles, by lexical category:")
         nTotal=0
         nTotals={}
-        for line in program['slices']: #profilecounts:
+        for line in self.program.slices: #profilecounts:
             profile=line[0]
             ps=line[1]
-            nTotal+=program['slices'][line]
+            nTotal+=self.program.slices[line]
             if ps not in nTotals:
                 nTotals[ps]=0
-            nTotals[ps]+=program['slices'][line]
+            nTotals[ps]+=self.program.slices[line]
         print('Profiled data:',nTotal)
         """Pull this?"""
-        for ps in program['slices'].pss():
+        for ps in self.program.slices.pss():
             if ps == 'Invalid':
                 continue
             log.info("Part of Speech {ps}:".format(ps=ps))
-            for line in program['slices'].valid(ps=ps):
+            for line in self.program.slices.valid(ps=ps):
                 profile=line[0]
                 ps=line[1]
-                log.info("{profile}: {count}".format(profile=profile,count=program['slices'][line]))
+                log.info("{profile}: {count}".format(profile=profile,count=self.program.slices[line]))
             print(ps,"(total):",nTotals[ps])
     def printprofilesbyps(self):
         #This is only used in the basic report
@@ -919,11 +919,11 @@ class Report(object):
             print(ps, [i.id for i in self.profilesbysense[ps]])
     def psprofilestodo(self):
         if isinstance(self,Multislice):
-            return {ps:program['slices'].profiles(ps=ps)[:program['settings'].maxprofiles]
-                for ps in program['slices'].pss()[:program['settings'].maxpss]
+            return {ps:self.program.slices.profiles(ps=ps)[:self.program.settings.maxprofiles]
+                for ps in self.program.slices.pss()[:self.program.settings.maxpss]
                 }
         else:
-            return {program['slices'].ps():[program['slices'].profile()]}
+            return {self.program.slices.ps():[self.program.slices.profile()]}
     def basicreport(self,usegui=True,**kwargs):
         """This does both multiple slices (starting with largest) and
         multiple checks (all available per profile).
@@ -934,7 +934,7 @@ class Report(object):
             if 'ufgroup' not in kwargs:
                 kwargs['ufgroup']=_("All")
             for kwargs['cvt'] in self.cvtstodo:
-                t=_("{count} checks").format(count=program['params'].cvtdict()[
+                t=_("{count} checks").format(count=self.program.params.cvtdict()[
                                                         kwargs['cvt']]['sg'])
                 # print(t)
                 log.info(t)
@@ -985,11 +985,11 @@ class Report(object):
             "with {profiles} syllable profiles in each. "
             "This is of course configurable, but I assume you don't want "
             "everything."
-            "").format(pss=_("the top {n}").format(n=program['settings'].maxpss)
-                        if program['settings'].maxpss
+            "").format(pss=_("the top {n}").format(n=self.program.settings.maxpss)
+                        if self.program.settings.maxpss
                         else _('all'), #fix this!
-                        profiles=_("the top {n}").format(n=program['settings'].maxprofiles)
-                                    if program['settings'].maxprofiles
+                        profiles=_("the top {n}").format(n=self.program.settings.maxprofiles)
+                                    if self.program.settings.maxprofiles
                                     else _('all'))
         log.info(t)
         print(t)
@@ -1201,16 +1201,16 @@ class Report(object):
                         value=''
                     cell=xlp.Cell(h,content=value)
     def __init__(self):
-        self.reportbasefilename=program['settings'].reportbasefilename
-        self.reporttoaudiorelURL=program['settings'].reporttoaudiorelURL
-        self.distinguish=program['settings'].distinguish
-        self.profilesbysense=program['settings'].profilesbysense
-        if program['settings'].minimumwordstoreportUFgroup:
-            self.minwords=program['settings'].minimumwordstoreportUFgroup
+        self.reportbasefilename=self.program.settings.reportbasefilename
+        self.reporttoaudiorelURL=self.program.settings.reporttoaudiorelURL
+        self.distinguish=self.program.settings.distinguish
+        self.profilesbysense=self.program.settings.profilesbysense
+        if self.program.settings.minimumwordstoreportUFgroup:
+            self.minwords=self.program.settings.minimumwordstoreportUFgroup
         else: #provide a default, return to settings file for modification
-            self.minwords=program['settings'].minimumwordstoreportUFgroup=3
-        self.s=program['settings'].s
+            self.minwords=self.program.settings.minimumwordstoreportUFgroup=3
+        self.s=self.program.settings.s
         self.byUFgroup=False
-        if not isinstance(self,Multicheck) and not program['params'].check():
+        if not isinstance(self,Multicheck) and not self.program.params.check():
             self.getcheck()
 

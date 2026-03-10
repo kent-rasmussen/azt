@@ -24,7 +24,7 @@ log = logsetup.getlog(__name__)
 from utilities import file
 from io_put import lift, alphabet_comparison_pdf
 from frontend import ui_tkinter as ui
-from alphabet_chart import SelectFromPicturableWords, getimagelocationURI
+from frontend.alphabet_chart import SelectFromPicturableWords, getimagelocationURI
 
 
 SETTINGS_FILE = "alphabet_comparison_settings.json"
@@ -207,19 +207,19 @@ class ContributorsManager(ui.Window):
 
     def save(self):
         # Update settings
-        self.program['settings'].alphabet_contributors(self.contributors)
+        self.program.settings.alphabet_contributors(self.contributors)
         # Force save (main.py settings logic handles persistence via 'settings.contributors(val)')
         # But we might need to trigger a file write if it doesn't happen automatically on set
         # The main.py Setting.contributors is a method that sets a private var.
         # It relies on specific save triggers usually.
         # We'll trust the main app flow or trigger a save if available.
-        if hasattr(self.program['settings'], 'storesettingsfile'):
-             self.program['settings'].storesettingsfile(setting='contributors')
+        if hasattr(self.program.settings, 'storesettingsfile'):
+             self.program.settings.storesettingsfile(setting='contributors')
 
     def __init__(self, parent, program):
         super().__init__(parent, title=_("People Involved"))
         self.program = program
-        self.contributors = self.program['settings'].alphabet_contributors() # Get list
+        self.contributors = self.program.settings.alphabet_contributors() # Get list
         if not isinstance(self.contributors, list):
              self.contributors = []
 
@@ -319,14 +319,14 @@ class PageFrameUI(ui.Frame):
         self.restore_examples()
 class PageSetup(ui.Window):
     def show_frequencies(self):
-        counts=self.program['slices'].scount()
+        counts=self.program.slices.scount()
         log.info(f"{counts}")
         log.info(f"{counts.values()} {[type(i) for i in counts.values()]}")
         totals=[(sum([c for psv in counts.values()
             for cvtv in psv.values()
             for glyph,c in cvtv
             if glyph==g]),g) 
-            for g in self.program['alphabet'].order()]
+            for g in self.program.alphabet.order()]
         totals.sort(reverse=True)
         notice=ui.Window(self,title=_("Glyph Frenquency"))
         for i in range(0,len(totals),10):
@@ -338,19 +338,20 @@ class PageSetup(ui.Window):
             log.info(text_this)
         # log.info(f"{sorted(totals,reverse=True)}")
     def __init__(self, parent, **kwargs):
-        title = "Alphabet Comparison Setup"
+        """This is not the same signature as parent class; is that a problem?"""title = "Alphabet Comparison Setup"
         self.parent = parent
         if not hasattr(self,'program'): #i.e., from calling class
-            self.program=parent.program
+            raise AttributeError(f"{__class__} has not program attribute?")
+            # self.program=parent.program
         self.db = self.program.get('db')
         super().__init__(parent, title=title)
         self.fpr=6 #even allows pairs together
         
         # Data
         if 'alphabet' in self.program:
-            glyphdict=self.program['alphabet'].glyphdict()
+            glyphdict=self.program.alphabet.glyphdict()
         else:
-            glyphdict=self.program['glyphdict']
+            glyphdict=self.program.glyphdict
         self.symbols = [i for j in glyphdict.values() for i in j]
         self.vowels = list(glyphdict['V']) 
         self.consonants = list(glyphdict['C'])
@@ -363,7 +364,7 @@ class PageSetup(ui.Window):
         # Initialize from global settings
         import migration.converters
         if 'alphabet_copyright' in migration.converters.Converter.attrs_for_legacy_setting('alphabet'):
-             self.copyright_var.set(self.program['settings'].alpha_copyright())
+             self.copyright_var.set(self.program.settings.alpha_copyright())
         
         self.selected_cover_path = None
         self.selected_logo_path = None
@@ -500,16 +501,16 @@ class PageSetup(ui.Window):
 
     def open_contributors(self):
         # Ensure settings are loaded before managing
-        if hasattr(self.program['settings'], 'loadsettingsfile'):
-             self.program['settings'].loadsettingsfile(setting='contributors')
+        if hasattr(self.program.settings, 'loadsettingsfile'):
+             self.program.settings.loadsettingsfile(setting='contributors')
         ContributorsManager(self, self.program)
 
     def save_copyright(self, *args):
         # Update global setting
-        self.program['settings'].alpha_copyright(self.copyright_var.get())
+        self.program.settings.alpha_copyright(self.copyright_var.get())
         # Ideally trigger a save, similar to ContributorsManager
-        if hasattr(self.program['settings'], 'storesettingsfile'):
-             self.program['settings'].storesettingsfile(setting='alphabet')
+        if hasattr(self.program.settings, 'storesettingsfile'):
+             self.program.settings.storesettingsfile(setting='alphabet')
         self.copyright_config.grid_remove()
         self.copyright_label.grid()
     def edit_copyright(self,event=None):
@@ -636,7 +637,7 @@ class PageSetup(ui.Window):
     def load_settings(self):
         try:
             # Use the new SettingsManager reports domain
-            reports_mgr = self.program['settings'].mgr.reports
+            reports_mgr = self.program.settings.mgr.reports
             return reports_mgr.load()
         except Exception as e:
             log.warning(f"Could not load settings via manager: {e}")
@@ -651,12 +652,12 @@ class PageSetup(ui.Window):
         
         try:
             # Use the new SettingsManager reports domain
-            reports_mgr = self.program['settings'].mgr.reports
+            reports_mgr = self.program.settings.mgr.reports
             reports_mgr.save(self.settings)
             
             if 'git' in self.program:
                  # The manager determines the filename, we can get it via reports_mgr.filename
-                self.program['settings'].repo['git'].add(reports_mgr.filename, force=True)                
+                self.program.settings.repo['git'].add(reports_mgr.filename, force=True)                
         except Exception as e:
             log.warning(f"Could not save settings via manager: {e}")
             
@@ -694,7 +695,7 @@ class PageSetup(ui.Window):
                         lines = f.readlines()
                     if not lines: continue
                     if 'repo' in self.program:
-                        self.program['settings'].repo['git'].add(txt_path,force=True)
+                        self.program.settings.repo['git'].add(txt_path,force=True)
                     title = lines[0].strip()
                     body = "".join(lines[1:]).strip()
                     
@@ -706,7 +707,7 @@ class PageSetup(ui.Window):
                         if os.path.exists(img_cand):
                             img_path = img_cand
                             if 'git' in self.program:
-                                self.program['settings'].repo['git'].add(img_cand,force=True)
+                                self.program.settings.repo['git'].add(img_cand,force=True)
                             break
                     
                     # We'll let the PDF generator split this if it's too long, 
@@ -728,17 +729,17 @@ class PageSetup(ui.Window):
         filepath = file.getdiredurl(self.db.reportdir, filename)
         
         # Gather all needed info
-        if hasattr(self.program['settings'], 'loadsettingsfile'):
+        if hasattr(self.program.settings, 'loadsettingsfile'):
              # Ensure loaded (double-check for persistence issues)
-             self.program['settings'].loadsettingsfile(setting='contributors')
-        contributors_list = self.program['settings'].alphabet_contributors()
+             self.program.settings.loadsettingsfile(setting='contributors')
+        contributors_list = self.program.settings.alphabet_contributors()
         copyright_text = self.copyright_var.get()
         title_text = self.title_var.get()
         description_text = self.description_var.get()
         
         # Made with attribution (as per plan, using program defaults, passed here for flexibility or added in PDF module)
         # We'll pass it into options
-        made_with = f"Made with {self.program['name']} ({self.program['url']})"
+        made_with = f"Made with {self.program.name} ({self.program.url})"
         
         # Determine Font
         font_name = getattr(self, 'font_var', ui.StringVar(value='Charis')).get()
@@ -778,7 +779,7 @@ class PageSetup(ui.Window):
                         "").format(yes=q_button_text)
         ui.Label(q.frame,text=q_text,sticky='news')
         ui.Button(q.frame,text=q_button_text,
-                    cmd=lambda x=filepath:self.program['settings'].repo['git'].add(x,
+                    cmd=lambda x=filepath:self.program.settings.repo['git'].add(x,
                                                                         force=True),
                     r=1,sticky='news')
         q.lift()

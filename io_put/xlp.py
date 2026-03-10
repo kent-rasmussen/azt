@@ -29,14 +29,14 @@ class Report(object):
         # self.tree=ET.ElementTree(ET.Element('lingPaper'))
         self.node=ET.Element('lingPaper') #self.tree.getroot()
         self.title="{} {} output report for {}".format(report,
-                                                        program['name'],
+                                                        program.name,
                                                         langname)
         log.info(_("Starting XLingPaper report file at {} with title '{}'").format(
                                                         filename,self.title))
         self.authors=[{'name':'Kent Rasmussen',
                         'affiliation':'SIL International',
                         'Email':'kent_rasmussen@sil.org'},
-                        {'name':program['name'],
+                        {'name':program.name,
                         'Email': 'https://github.com/kent-rasmussen/azt'}
                         ]
         self.langlist=list()

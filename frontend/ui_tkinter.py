@@ -179,9 +179,9 @@ class Theme(object):
                     try:
                         assert self.fakeroot.winfo_exists()
                     except:
-                        program=copy.copy(self.program) #does copy work on App()?
-                        program.theme=None
-                        self.fakeroot=Root(program, withdrawn=True,
+                        program_copy=copy.copy(self.program) #does copy work on App()?
+                        program_copy.theme=None
+                        self.fakeroot=Root(program_copy, withdrawn=True,
                                             noimagescaling=True)
                         self.fakeroot.wait(msg="Scaling Images (Just this once)")
                     if not self.scalings:
@@ -431,11 +431,11 @@ class Theme(object):
         overstrike - font strikeout (0 - none, 1 - strikeout)
         """
     def setscale(self):
-        program=self.program #reading and setting here
+        # program=self.program #reading and setting here
         root=tkinter.Tk() #just to get these values
         modifier=2 #This became necessary with xwayland; no idea why
-        h = program.screenh = root.winfo_screenheight()/modifier
-        w = program.screenw = root.winfo_screenwidth()/modifier
+        h = self.program.screenh = root.winfo_screenheight()/modifier
+        w = self.program.screenw = root.winfo_screenwidth()/modifier
         log.info(f'{root.winfo_screenmmwidth()=}')
         log.info(f'{root.winfo_screenmmheight()=}')
         log.info(f'{root.winfo_screenheight()=}')
@@ -1130,7 +1130,7 @@ class Root(Waitable,UI,tkinter.Tk):
             self.theme=Theme(self.program,
                             **{**kwargs,'noimagescaling':self.noimagescaling})
         super().post_tk_init()
-    def __init__(self, program, *args, **kwargs):
+    def __init__(self, program=None, *args, **kwargs):
         """specify theme name in self.program.theme
         bring in program here, send it to theme, everyone accesses scale
         from there.
@@ -1140,6 +1140,10 @@ class Root(Waitable,UI,tkinter.Tk):
         """
         log.info("Root called with program {program} ({type})".format(
                         program=program,type=type(program)))
+        if not program:
+            from dummy import App
+            log.info("Launching Root with dummy program; OK in few cases.")
+            program=App()
         self.program=program
         self.parent=None
         self.mainwindow=False
@@ -2658,7 +2662,7 @@ def testappY(program):
     Label(test_frame,image='transparent',column=0,row=0)
     print_vars()
     r.mainloop()
-def testapp(program):
+def testapp(program=None):
     def progress(event):
         # print('running progress')
         import time
@@ -2895,9 +2899,10 @@ if __name__ == '__main__':
     except NameError:
         def _(x):
             return x
-    from dummy import App
-    program=App()
-    """To Test:"""
-    # loglevel='Debug'
-    testapp(program)
+    # from dummy import App
+    # program=App()
+    # """To Test:"""
+    # # loglevel='Debug'
+    # testapp(program)
+    testapp()
     sys.exit()

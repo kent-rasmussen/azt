@@ -81,12 +81,12 @@ class RecordButtonFrame(ui.Frame):
     def addlink(self):
         if self.test:
             return
-        self.program['db'].addmediafields(self.node,self.filename,
-                                self.program['params'].audiolang(),
+        self.program.db.addmediafields(self.node,self.filename,
+                                self.program.params.audiolang(),
                                 # ftype=ftype,
                                 write=False)
         self.task.maybewrite()
-        self.program['status'].last('recording',update=True)
+        self.program.status.last('recording',update=True)
     def __init__(self,parent,task,node=None,**kwargs): #filenames
         """Uses node to make framed data, just for soundfile name"""
         """Without node, this just populates a sound file, with URL as
@@ -122,7 +122,7 @@ class RecordButtonFrame(ui.Frame):
         if node is not None and node.isnode():
             task.makeaudiofilename(node) #should fill out the following
             self.filename=node.textvaluebylang(
-                                            self.program['params'].audiolang())
+                                            self.program.params.audiolang())
             if not self.filename: #should have above or below
                 self.filename=node.audiofilenametoput
             self._filenameURL=node.audiofileURL
@@ -142,7 +142,7 @@ class RecordButtonFrame(ui.Frame):
         ui.Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
         might cause the init to stop."""
-        if not self.test and not self.program['settings'].mgr.get('audiolang'):
+        if not self.test and not self.program.settings.mgr.get('audiolang'):
             tlang=_("Set audio language to get record buttons!")
             log.error(tlang)
             ui.Label(self,text=tlang,borderwidth=1,
@@ -457,21 +457,21 @@ class SoundSettingsWindow(ui.Window):
         self.on_quit()
     def tasktitle(self):
         return _('Sound Card Settings')
-    def __init__(self,task,**kwargs):
+    def __init__(self,program,**kwargs):
         self.refreshdelay=1000 # wait 1s for a refresh check, always mainwindow
-        self.program=task.program #needed to find praat
-        log.info(f"Theme of task: {task.program['theme']}")
+        self.program=program #needed to find praat
+        log.info(f"Theme of task: {program.theme}")
         ui.Window.__init__(self,
-                            task, #this show be called from a task now
+                            program.tk_root, #this show be called from a task now
                             exit=False,
                             title=self.tasktitle(),
                             withdrawn=True
                         )
-        self.task=task
-        self.soundsettings=self.program['soundsettings']
+        self.task=self.program.task
+        self.soundsettings=self.program.soundsettings
         self.soundcheckrefresh()
         if not kwargs.get("withdrawn"):
-            task.withdraw()
+            self.task.withdraw()
             self.deiconify()
 class ASRModelSelectionWindow(ui.Window):
     def language_entry(self):
@@ -747,7 +747,7 @@ class ASRModelSelectionWindow(ui.Window):
                             withdrawn=True
                             )
         self.program=task.program #needed to find praat
-        self.soundsettings=self.program['soundsettings']
+        self.soundsettings=self.program.soundsettings
         if 'cache_dir' in self.soundsettings.asr_kwargs and not file.exists(self.soundsettings.asr_kwargs['cache_dir']):
             log.error(f"Cache dir {self.soundsettings.asr_kwargs['cache_dir']} "
                     "not found; exiting.")
@@ -780,19 +780,19 @@ class Task(ui.Window):
         print("Not actually storing settings")
     def __init__(self,program):
         self.program=program
-        self.theme=program['theme']
+        self.theme=program.theme
         window_title=_('Test Task (Does nothing)')
         ui.Window.__init__(self,
-                            program['root'],
-                            # program['root'],
+                            program.tk_root,
+                            # program.root,
                             exit=False,
                             title=window_title,
                             withdrawn=True
                             # state='withdrawn'
                             )
         #any sound task should find settings at self.soundsettings:
-        self.soundsettings=program['soundsettings'] #Each task with sound should have this
-        self.pyaudio=program['soundsettings'].pyaudio
+        self.soundsettings=program.soundsettings #Each task with sound should have this
+        self.pyaudio=program.soundsettings.pyaudio
         self.audiolang=True
 if __name__ == "__main__":
     try:
@@ -800,29 +800,31 @@ if __name__ == "__main__":
     except:
         def _(x):
             return x
-    r=ui.Root()
-    r.program['praat']='/home/kentr/bin/praat'
-    r.program['hostname']='karlap'
-    r.program['name']='A−Z+T'
-    r.program['analang']='tbt-CD'
+    from dummy import App
+    program=App()
+    program.praat='/home/kentr/bin/praat'
+    program.hostname='karlap'
+    program.name='A−Z+T'
+    program.analang='tbt-CD'
     import langtags
-    r.program['languages']=langtags.Languages()
+    program.languages=langtags.Languages()
     #This will normally pass self.pyaudio from task to SoundSettings, to keep
     # one pyaudio instance, but if not, settings will create one.
-    language=r.program['languages'].get_obj(r.program['analang'])
-    r.program['soundsettings']=sound.SoundSettings(analang_obj=language)
-    log.info(f"asr_kwargs: {r.program['soundsettings'].asr_kwargs}")
+    language=program.languages.get_obj(program.analang)
+    program.soundsettings=sound.SoundSettings(analang_obj=language)
+    log.info(f"asr_kwargs: {r.program.soundsettings.asr_kwargs}")
+    r=ui.Root(program=program)
     r.title('Test Sound UI')
     task=Task(program=r.program)
-    if r.program['hostname'] == 'karlap':
-        r.program['soundsettings'].asr_kwargs['cache_dir']='/media/kentr/hfcache'
+    if r.program.hostname == 'karlap':
+        r.program.soundsettings.asr_kwargs['cache_dir']='/media/kentr/hfcache'
     ssw=SoundSettingsWindow(task,withdrawn=True)
     ssw.setsoundcard_byname('default')
     ssw.destroy() #since not waiting
-    log.info(f"asr_kwargs: {r.program['soundsettings'].asr_kwargs}")
+    log.info(f"asr_kwargs: {r.program.soundsettings.asr_kwargs}")
     # ssw.wait_window(ssw) #only if need to change stuff
     ssw=ASRModelSelectionWindow(task)
-    log.info(f"asr_kwargs: {r.program['soundsettings'].asr_kwargs}")
+    log.info(f"asr_kwargs: {r.program.soundsettings.asr_kwargs}")
     ui.Label(r,text="Record sound to test Automatic Speech Recognition engines",row=0,column=0)
     RecordnTranscribeButtonFrame(r,task,test=True,
         show_transcriptions=True, #this typically in Entry

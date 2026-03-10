@@ -101,7 +101,7 @@ class Repository(object):
             log.info(_("Asked for commit confirm; returning auto False"))
             return False
         log.info(_("Asked for commit confirm; asking user"))
-        w=ui.Window(program['root'],title=_("Commit Confirm"),exit=False)
+        w=ui.Window(self.program.tk_root,title=_("Commit Confirm"),exit=False)
         text=_("Do you want to commit language data via {repo} now?").format(repo=self.repotypename)+'\n'+diff[:300]
         prompt=ui.Label(w,text=text,row=0,column=0,sticky='')
         bf=ui.Frame(w,row=1,column=0,sticky='')
@@ -116,7 +116,7 @@ class Repository(object):
         if not w.exitFlag.istrue():
             w.on_quit()
             log.info(_("Me not committing when asked to by {name}").format(
-                                                            name=program['name']))
+                                                            name=self.program.name))
             return True
     def commit_would_conflict(self):
         pass
@@ -166,7 +166,7 @@ class Repository(object):
         msg=_("Copying from {source} to {dest}; this may take some time."
                     "").format(source=self.url, dest=directory)
         log.info(msg)
-        w=ui.Wait(program['root'],msg=msg)
+        w=ui.Wait(self.program.tk_root,msg=msg)
         log.info(self.do(args))
         w.close()
     def clonetoUSB(self,event=None):
@@ -179,7 +179,7 @@ class Repository(object):
                 args=['clone', self.bareclonearg, '.', directory] #this needs from-to
                 msg=_("Copying to {dir}; this may take some time."
                             "").format(dir=directory)
-                w=ui.Wait(program['root'],msg=msg)
+                w=ui.Wait(self.program.tk_root,msg=msg)
                 log.info(self.do(args))
                 self.addremote(directory)
                 w.close()
@@ -377,7 +377,7 @@ class Repository(object):
         elif self.code == 'git' and firsttry: # and me:
             # Show this only once per run, if a user doesn't have settings
             if remotesinsettings or not self.directorydontask:
-                program['taskchooser'].withdraw()
+                self.program.taskchooser.withdraw()
                 text=_(
                 "Please insert your {desc} USB now." #, if you have it
                 "").format(desc=self.description)
@@ -387,7 +387,7 @@ class Repository(object):
                 # of clicking this button (instead of 'exit') when you have a
                 # drive already set up is an extra file dialog —hopefully OK.
                 button=(_("Create new USB"),clonetoUSB)
-                if not program['Demo']:
+                if not self.program.Demo:
                     e=ErrorNotice(text,
                             title=_("No {repo} {desc} USB backup found"
                                     ).format(repo=self.repotypename,
@@ -592,12 +592,12 @@ class Repository(object):
                  log.info(_("No {0} repo, nor {0} executable; moving on."
                             ).format(self.repotypename))
                  return
-        w=ui.Window(program.get('root',ui.Root()),title=title)
+        w=ui.Window(self.program.get('tk_root',ui.Root()),title=title)
         w.withdraw()
         if self.repotypename == 'Git':
              text+='\n'+_("(Git is used by {name} to track changes in your "
                         "data, and to keep {name} up to date)"
-                        ).format(name=program['name'])
+                        ).format(name=self.program.name)
         clickable=_("Please see {url} for installation recommendations"
                     ).format(url=self.installpage)
         l=ui.Label(w.frame, text=text, column=0, row=0)
@@ -625,7 +625,7 @@ class Repository(object):
                         "it is not recommended, and you will continue to see "
                         "this warning."
                         " And sooner or later that's going to get really annoying"
-                        ).format(name=program['name'],repo=self.repotypename)
+                        ).format(name=self.program.name,repo=self.repotypename)
         r=ui.Label(w.frame, text=text, column=0, row=4)
         r.wrap()
         rb=ui.Button(w.frame, text=_("Restart Now"), column=1, row=4,
@@ -646,11 +646,11 @@ class Repository(object):
             if self.useremail:
                 log.info(_("Using {repo} useremail '{email}'").format(repo=self.repotypename,email=self.useremail))
         else:
-            self.username='-'.join([program['name'],os.getlogin(),program['hostname']])
+            self.username='-'.join([self.program.name,os.getlogin(),self.program.hostname])
             log.info(_("No {repo} username found; using '{name}'"
                     "").format(repo=self.repotypename,name=self.username))
         if not self.useremail:
-            self.useremail=program['name']+'-'+os.getlogin()+'@'+program['hostname']
+            self.useremail=self.program.name+'-'+os.getlogin()+'@'+self.program.hostname
             log.info(_("No {repo} useremail found; using '{email}'"
             "").format(repo=self.repotypename,email=self.useremail))
         self.usernameargs=self.argstoputuserids(self.username,self.useremail)
@@ -753,11 +753,12 @@ class Repository(object):
             url=file.getfile(url).resolve()
         log.info(f"abs_path returning {url} ({type(url)})")
         return url
-    def __init__(self, url):
-        super(Repository, self).__init__()
+    def __init__(self, program, url=None):
+        super().__init__()
+        self.program=program
         self.main='main'
-        self.url = url
-        self.dirname = file.getfilenamefrompath(self.url)
+        self.url = url if url else program.data_directory
+        self.dirname = self.program.data_directory
         self.repotypename=self.__class__.__name__
         self.thisos=platform.system()
         self.directorydontask=False #set on init, track first request rejection
@@ -820,10 +821,10 @@ class Mercurial(Repository):
         pass
     def mark_safe(self,directory):
         pass
-    def __init__(self, url):
+    def __init__(self, program, url=None):
         self.code='hg'
         self.branchnamefile='branch'
-        # self.cmd=program['hg']
+        # self.cmd=self.program.hg
         self.wdownloadsurl='https://www.mercurial-scm.org/wiki/Download'
         self.wexename='Mercurial-6.0-x64.exe'
         self.wexeurl=('https://www.mercurial-scm.org/release/windows/{exe}'
@@ -833,7 +834,7 @@ class Mercurial(Repository):
         self.argstogetusername=['config', 'ui.username']
         self.bareclonearg='-U'
         self.nonbareclonearg=''
-        super(Mercurial, self).__init__(url)
+        super().__init__(program, url)
         # These files are just ignored in git, but if Chorus put something
         # there, we want to know
         if hasattr(self,'files'):
@@ -949,8 +950,8 @@ class Git(Repository):
             return r
         else:
             return []
-    def __init__(self, url):
-        self.url=url
+    def __init__(self, program, url=None):
+        # self.url=url
         self.code='git'
         self.branchnamefile='HEAD'
         self.wdownloadsurl='https://git-scm.com/download/win'
@@ -963,7 +964,7 @@ class Git(Repository):
         self.argstogetuseremail=['config', '--get', 'user.email']
         self.bareclonearg='--bare'
         self.nonbareclonearg=''
-        super(Git, self).__init__(url)
+        super().__init__(program, url)
         self.unignore('*.ini') #used to ignore this
         self.unignore('*.txt') #used to ignore this
         self.mark_safe()
@@ -995,7 +996,7 @@ class GitReadOnly(Git):
             #make sure we at least try the github remote:
             # User is asked for a USB if nothing is found here:
             remotes=self.findpresentremotes(firsttry=False) #don't ask
-            homeurl=program['url']+'.git'
+            homeurl=self.program.url+'.git'
             remotes.extend([homeurl])
             log.info(_("remotes: {remotes}").format(remotes=remotes))
             self.fetch(remotes)
@@ -1005,7 +1006,7 @@ class GitReadOnly(Git):
         remotes=self.findpresentremotes() #do once
         if not remotes:
             return
-        branches = ['main',program['testversionname']]
+        branches = ['main',self.program.testversionname]
         fns = [self.testversion, self.reverttomain]
         if self.branch != 'main':
             branches.reverse()
@@ -1035,9 +1036,9 @@ class GitReadOnly(Git):
         else:
             ErrorNotice(r)
     def testversion(self,event=None):
-        r=self.checkout(program['testversionname'])
+        r=self.checkout(self.program.testversionname)
         log.info(r)
-        if self.branch == program['testversionname']:
+        if self.branch == self.program.testversionname:
             return True
         else:
             ErrorNotice(r)
@@ -1049,6 +1050,12 @@ class GitReadOnly(Git):
         self.description=_("AZT source")
     def unignore(self,expression):
         pass #don't mess with this repo!
-    def __init__(self, url):
-        super(GitReadOnly, self).__init__(url)
-
+    def __init__(self, program, url=None):
+        self.program=program
+        if url is None: 
+            if hasattr(program,'aztdir'):
+                url=program.aztdir
+            else:
+                raise ValueError(_("No url provided to {class_name} and program 
+                                    has no aztdir").format(class_name=self.__class__.__name__,program=program.name))
+        super().__init__(program, url)

@@ -10,7 +10,6 @@ import collections
 # import re
 # import datetime
 # import tkinter as tk
-from frontend import ui_tkinter as ui
 from utilities.utilities import *
 from utilities import file, htmlfns
 from io_put import lift
@@ -101,7 +100,7 @@ class ToneFrames(dict):
             self[ps][name]=defn
     def store(self):
         log.info(_("Saving toneframes dict to file"))
-        program['settings'].storesettingsfile('toneframes')
+        program.settings.storesettingsfile('toneframes')
     #def write
     def source(self,dict=None):
         if dict:
@@ -219,13 +218,13 @@ class CheckParameters(object):
             self._ftype='lc'
         return self._ftype
     def secondfield(self,ps):
-        fields=program['settings'].secondformfield
+        fields=program.settings.secondformfield
         if ps in fields:
             return fields[ps]
     def nominalpsfield(self):
-        return self.secondfield(program['settings'].nominalps)
+        return self.secondfield(program.settings.nominalps)
     def verbalpsfield(self):
-        return self.secondfield(program['settings'].verbalps)
+        return self.secondfield(program.settings.verbalps)
     def __init__(self, program):
         self.program=program
         program.params=self

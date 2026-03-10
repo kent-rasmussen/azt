@@ -37,17 +37,17 @@ class Sort(object):
     """This class takes methods common to all sort checks, and gives sort
     checks a common identity."""
     def get_check(self):
-        return program['params'].check()
+        return self.program.params.check()
     def get_ps(self):
-        return program['slices'].ps()
+        return self.program.slices.ps()
     def get_profile(self):
-        return program['slices'].profile()
+        return self.program.slices.profile()
     def get_ftype(self):
-        return program['params'].ftype()
+        return self.program.params.ftype()
     def get_frame(self):
         if self.cvt != 'T': # not for segmental checks
             return 
-        frames=program['toneframes'].get(self.ps)
+        frames=self.program.toneframes.get(self.ps)
         if frames and self.check in frames:
             return frames.get(self.check)
         else:
@@ -55,8 +55,8 @@ class Sort(object):
                     "in {ps} frames: {frames}").format(check=self.check, ps=self.ps, frames=frames)
             ErrorNotice(text,wait=True)
     def getsensesincheckgroup(self,**kwargs):
-        check=kwargs.get('check',program['params'].check())
-        group=kwargs.get('group',program['status'].group())
+        check=kwargs.get('check',self.program.params.check())
+        group=kwargs.get('group',self.program.status.group())
         return self.getsensesingroup(check, group)
     def rmverification(self,sense,profile,check):
         self.modverification(sense,profile,check)
@@ -101,11 +101,11 @@ class Sort(object):
     def updatestatuslift(self,verified=False,**kwargs):
         """This should be called only by update status, when there is an actual
         change in status to write to file."""
-        check=kwargs.get('check',program['params'].check())
-        group=kwargs.get('group',program['status'].group())
-        profile=kwargs.get('profile',program['slices'].profile())
-        ftype=kwargs.get('ftype',program['params'].ftype())
-        # profile=program['slices'].profile()
+        check=kwargs.get('check',self.program.params.check())
+        group=kwargs.get('group',self.program.status.group())
+        profile=kwargs.get('profile',self.program.slices.profile())
+        ftype=kwargs.get('ftype',self.program.params.ftype())
+        # profile=self.program.slices.profile()
         senses=self.getsensesincheckgroup()
         value=self.verificationcode(check=check,group=group)
         # The above gives a check=group string, which should be escaped later
@@ -118,16 +118,16 @@ class Sort(object):
         log.info("Modding {} verification add {}, remove {}".format(profile,
                                                                     add,rms))
         """The above doesn't test for profile, so we restrict that next"""
-        for sense in program['slices'].inslice(senses): #only for this ps-profile
+        for sense in self.program.slices.inslice(senses): #only for this ps-profile
             self.modverification(sense,profile,check,add)
         if kwargs.get('write'):
             self.maybewrite() #for when not iterated over, or on last repeat
     def updatestatus(self,verified=False,**kwargs):
         #This function updates the status variable, not the lift file.
-        group=kwargs.get('group',program['status'].group())
+        group=kwargs.get('group',self.program.status.group())
         write=kwargs.get('write')
         wstatus=kwargs.get('writestatus')
-        r=program['status'].update(group=group,verified=verified,writestatus=wstatus)
+        r=self.program.status.update(group=group,verified=verified,writestatus=wstatus)
         if r: #only do this if there is a change in status
             self.updatestatuslift(group=group,verified=verified,write=write)
             return r
@@ -143,7 +143,7 @@ class Sort(object):
                 ids.append(var.get())
             # log.info("ids: {}".format(ids))
             newprofile=profilevar.get()
-            program['settings'].set('profile',newprofile,refresh=False)
+            self.program.settings.set('profile',newprofile,refresh=False)
             #Add to dictionaries before updating them below
             log.debug("profile: {}".format(newprofile))
             """Fix this!"""

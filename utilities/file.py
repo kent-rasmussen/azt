@@ -11,6 +11,15 @@ from utilities import source_base_dir
 from tkinter import filedialog
 from tkinter import Tk
 import pathlib
+
+def _app_settings():
+    """Lazy singleton for AppSettingsManager, keyed to the AZT root dir."""
+    if not hasattr(_app_settings, '_instance') or _app_settings._instance is None:
+        from settings import AppSettingsManager
+        base = pathlib.Path(source_base_dir) / 'azt' if source_base_dir else None
+        _app_settings._instance = AppSettingsManager(base) if base else None
+    return _app_settings._instance
+_app_settings._instance = None
 import os
 import stat
 import platform
@@ -221,47 +230,35 @@ def writeinterfacelangtofile(lang):
     f.write('interfacelang="'+lang+'"'+'\n')
     f.close()
 def getfilenames():
-    """This just returns the list, if there."""
-    try: #b/c sometimes we come directly here
-        import lift_url
-    except:
-        log.debug("getfilename lift_url didn't import")
-    # log.info("returning: {}".format(
-    #                                 [i for i in
-    #                                 getattr(lift_url,'filenames',[])
-    #                                 if exists(i)]
-    #                                 ))
-    return [i for i in getattr(lift_url,'filenames',[]) if exists(i)]
+    """Return the list of known LIFT filenames that still exist on disk."""
+    mgr = _app_settings()
+    if mgr is None:
+        return []
+    return [i for i in mgr.filenames if exists(i)]
 def uilang(lang=None):
-    """So far, there is just one value here; no need to load before writing"""
+    """Get or set the UI language in app-level config."""
+    mgr = _app_settings()
+    if mgr is None:
+        return None
     if not lang:
-        try:
-            import ui_lang
-            log.info(f"Found ui_lang value {ui_lang.ui_lang}")
-            return ui_lang.ui_lang
-        except:
-            log.debug("ui_lang didn't import, or didn't have a value to return")
-            return
-    file=fullpathnamewrt(getfilenamedir(__file__),"ui_lang.py")
-    # pathlib.Path.joinpath(pathlib.Path(__file__).parent, "ui_lang.py")
-    with open(file, 'w', encoding='utf-8') as f:
-        f.write('ui_lang="'+str(lang)+'"\n')
+        value = mgr.ui_lang
+        if value:
+            log.info(f"Found ui_lang value {value}")
+        else:
+            log.debug("No ui_lang value found in app settings")
+        return value or None
+    mgr.ui_lang = lang
 def getfilename():
-    """This returns a single filename, if there, else a list if there"""
-    try:
-        import lift_url
-    except:
-        log.debug("getfilename lift_url didn't import")
-        return [] #this should always be iterable
-    if (hasattr(lift_url,'filename') and lift_url.filename and
-            exists(lift_url.filename)):
-        log.debug("lift_url.py imported fine, and url points to a file.")
-        return lift_url.filename
-    else:
-        log.debug("lift_url imported, but didn't contain a url that points "
-                    "to an existing file "
-                    f"({getattr(lift_url,'filename',None)}): {dir(lift_url)}")
-        return getfilenames()
+    """Return a single filename if it exists on disk, else return the list."""
+    mgr = _app_settings()
+    if mgr is None:
+        return []
+    fn = mgr.filename
+    if fn and exists(fn):
+        log.debug("lift_url config imported fine, and url points to a file.")
+        return fn
+    log.debug(f"lift_url config: no single file found ({fn!r}), returning list")
+    return getfilenames()
 def gethome():
     home=pathlib.Path.home()
     print(home)
@@ -610,20 +607,11 @@ class TarBall(Buffered):
                 print(f"Going to overwrite non-tarfile {self.archivename}")
         self.open_archive()
 def writefilename(filename=''):
-    filenames=[]
-    try:
-        import lift_url
-        if hasattr(lift_url,'filenames') and lift_url.filenames:
-            filenames=lift_url.filenames
-    except:
-        log.error("writefilename lift_url didn't import.")
-    if filename and str(filename) not in filenames:
-        filenames.append(str(filename))
-    file=pathlib.Path.joinpath(pathlib.Path(__file__).parent, "lift_url.py")
-    f = open(file, 'w', encoding='utf-8') # to append, "a"
-    f.write('filename="'+str(filename)+'"\n')
-    f.write('filenames='+str(filenames)+'\n')
-    f.close()
+    mgr = _app_settings()
+    if mgr is None:
+        log.error("writefilename: app settings not available.")
+        return filename
+    mgr.filename = filename
     return filename
 if __name__ == "__main__":
     try: #Allow this module to be used without translation

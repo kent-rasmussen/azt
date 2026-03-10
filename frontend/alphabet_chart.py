@@ -327,7 +327,7 @@ class OrderAlphabet(ui.Window):
         filename='_'.join(title_bits)+'.pdf'
         filepath = file.getdiredurl(self.db.reportdir,filename)
         
-        made_with = f"Made with {self.program['name']} ({self.program['url']})"
+        made_with = f"Made with {self.program.name} ({self.program.url})"
         
         self.ncolumns=alphabet_chart_pdf.create_chart(filepath, items, title, 
                         self.ncolumns, self.pagesize, font_name,
@@ -357,7 +357,7 @@ class OrderAlphabet(ui.Window):
                         "").format(yes=q_button_text)
         ui.Label(q.frame,text=q_text,sticky='news')
         ui.Button(q.frame,text=q_button_text,
-                    cmd=lambda x=filepath:self.program['settings'].repo['git'].add(x,
+                    cmd=lambda x=filepath:self.program.settings.repo['git'].add(x,
                                                                         force=True),
                     r=1,sticky='news')
         b2_text=_("I see spelling problems; \nshow me word data")
@@ -405,10 +405,10 @@ class OrderAlphabet(ui.Window):
         
         # Save copyright to global settings
         copy = self.chart_copyright.get()
-        self.program['settings'].mgr.set('alphabet_copyright', copy)
+        self.program.settings.mgr.set('alphabet_copyright', copy)
         # Trigger save if possible, similar to other settings logic
-        if hasattr(self.program['settings'], 'storesettingsfile'):
-             self.program['settings'].storesettingsfile(setting='alphabet')
+        if hasattr(self.program.settings, 'storesettingsfile'):
+             self.program.settings.storesettingsfile(setting='alphabet')
         self.copyright_entry_field.unbind("<Return>")
         self.copyright_entry.grid_remove()
         self.save_settings()
@@ -427,8 +427,8 @@ class OrderAlphabet(ui.Window):
         copyright_grid={'c':1,'sticky':'w'}
         import migration.converters
         if 'alphabet_copyright' in migration.converters.Converter.attrs_for_legacy_setting('alphabet'):
-             default_copyright = getattr(self.program['settings'], 'alpha_copyright', lambda: "Set Alphabet Copyright!")() if hasattr(self.program['settings'], 'alpha_copyright') else "Set Alphabet Copyright!"
-             self.chart_copyright.set(self.program['settings'].mgr.get('alphabet_copyright', default_copyright))
+             default_copyright = getattr(self.program.settings, 'alpha_copyright', lambda: "Set Alphabet Copyright!")() if hasattr(self.program.settings, 'alpha_copyright') else "Set Alphabet Copyright!"
+             self.chart_copyright.set(self.program.settings.mgr.get('alphabet_copyright', default_copyright))
         
         self.copyrightframe=ui.Frame(self.frame, r=1, c=1, sticky='ew')
         ui.Label(self.copyrightframe, text='© ', font="small", c=0)
@@ -478,9 +478,9 @@ class OrderAlphabet(ui.Window):
         if 'settings' in self.program:
             defs = {'ncolumns': 5, 'pagesize': 'A4', 'order': [], 'exids': {}, 'chart_title': ''}
             for k in self.my_settings:
-                setattr(self,k,self.program['settings'].mgr.get('alphabet_'+k, defs.get(k)))
+                setattr(self,k,self.program.settings.mgr.get('alphabet_'+k, defs.get(k)))
                 # log.info(f"Loaded ‘{k}’ ui.Variable: {getattr(self,k)}")
-            self.analangname=self.program['settings'].languagenames[
+            self.analangname=self.program.settings.languagenames[
                                                                 self.db.analang]
         else:
             for k in ['exids','order']:
@@ -493,7 +493,7 @@ class OrderAlphabet(ui.Window):
             self.pagesize='letter'
         self.imgdir=self.db.imgdir
         log.info(f"using {self.imgdir=}")
-        # self.order=program['settings'].get('alphabet_order',kwargs.get('order'))
+        # self.order=self.program.settings.get('alphabet_order',kwargs.get('order'))
         #In the following, we convert all integers to strings, since we're 
         # using them as keys written to file in exids and exobjs
         if not self.order:
@@ -501,7 +501,7 @@ class OrderAlphabet(ui.Window):
             self.order=[str(i) for j in self.db.s[self.db.analang].values() for i in j]
             self.order.sort()
         if 'alphabet' in self.program:
-            gd={str(i) for j in self.program['alphabet'].glyphdict().values() for i in j}
+            gd={str(i) for j in self.program.alphabet.glyphdict().values() for i in j}
         #pick up new letters, limit to actual but keep order
             self.order=sorted(gd-set([str(i) for i in self.order])
                             )+[str(i) for i in self.order if i in gd] 

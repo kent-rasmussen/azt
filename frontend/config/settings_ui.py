@@ -53,29 +53,6 @@ class Settings(object):
             self.program.taskchooser.mainwindowis.maketitle()
         else:
             return interfacelang()
-    def repocheck(self):
-        log.info(_("Checking for a data repository"))
-        # self.repo={}
-        self.repo=dict() #then copy to class attribute if there
-        # return #for now, until fixed
-        if not self.program.testing:
-            repo={ #start with local variable:
-                    'git': Git(self.directory),
-                    'hg': Mercurial(self.directory),
-                    }
-            for r in repo:
-                if (hasattr(repo[r],'files') #fails if no exe
-                        and repo[r].exists()): #tests for .code dir
-                    log.info(_("Found {name} Repository!"
-                                ).format(name=repo[r].repotypename))
-                    self.repo[r]=repo[r]
-                elif r == 'git' and 'git' in program and self.program.git:
-                    #don't worry about hg, if not there already
-                    log.info(_("No Git data repository found; creating."))
-                    repo[r].init()
-                    repo[r].add(self.liftfilename)
-                    repo[r].commit()
-                    self.repo[r]=repo[r]
     def settingsbyfile(self):
         #Here we set which settings are stored in which files
         self.settings={'defaults':{
@@ -1966,8 +1943,9 @@ class Settings(object):
         self.loadsettingsfile(setting='profiledata')
         """I think I need this before setting up regexs"""
         self.langnames(self.program.interfacelangs)
-        if hasattr(taskchooser,'analang'): #i.e., new file
-            self.analang=taskchooser.analang #I need to keep this alive until objects are done
+        _tc = getattr(self.program, 'taskchooser', None)
+        if _tc is not None and hasattr(_tc,'analang'): #i.e., new file
+            self.analang=_tc.analang #I need to keep this alive until objects are done
             self.storesettingsfile() #write analang to file
         log.info(_("Settings initialized"))
     def post_lift_init(self):
