@@ -47,5 +47,5 @@ secrets.py
 *.lift*txt
 bin/
 .vscode/settings.json
-.preproject.json
+*.preproject.json
 ./*.txt

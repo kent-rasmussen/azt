@@ -41,7 +41,7 @@ from io_put import lift, xlp, export
 import openclipart
 # import profiles #confirm obsolescence and remove!
 # import setdefaults
-import urls
+# import urls
 from utilities import htmlfns, rx, executables
 from backend import langtags,parser
 from frontend import alphabet_chart
