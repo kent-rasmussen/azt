@@ -42,16 +42,16 @@ class FileParser(object):
             file.writefilename()
             raise
     def dailybackup(self):
-        if not file.exists(program.db.backupfilename):
-            program.db.write(program.db.backupfilename)
+        if not file.exists(self.program.db.backupfilename):
+            self.program.db.write(self.program.db.backupfilename)
         else:
             print(_("Apparently we've run this before today; not backing "
             "up again."))
     def getwritingsystemsinfo(self):
         """This doesn't actually do anything yet, as we can't parse ldml."""
-        program.db.languagecodes=program.db.analangs+program.db.glosslangs
-        program.db.languagepaths=file.getlangnamepaths(self.filename,
-                                                    program.db.languagecodes)
+        self.program.db.languagecodes=self.program.db.analangs+self.program.db.glosslangs
+        self.program.db.languagepaths=file.getlangnamepaths(self.filename,
+                                                    self.program.db.languagecodes)
     def __init__(self,program):
         super(FileParser, self).__init__()
         self.program=program
@@ -60,12 +60,12 @@ class FileParser(object):
         # splash.progress(15)
         self.loaddatabase()
         # splash.progress(25)
-        # if program.tk_root.exitFlag.istrue():
+        # if self.program.tk_root.exitFlag.istrue():
         #     return
         self.dailybackup()
         # splash.progress(35)
         # splash.progress(45)
         self.getwritingsystemsinfo()
         # self.dogrid()
-        # back=ui.Button(self.outsideframe,text=_("Tasks"),cmd=program.taskchooser)
+        # back=ui.Button(self.outsideframe,text=_("Tasks"),cmd=self.program.taskchooser)
         # self.setfontsdefault()
