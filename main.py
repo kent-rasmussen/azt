@@ -556,8 +556,8 @@ class App:
         #This isn't helpful where things are copied to disk later:
         self.modified_time=times.modified(self.file)
         self.modified_time_relative=f'{times.now()-self.modified_time} ago'
-        self.find_source_repo()
         self.disclosure()
+        self.find_source_repo()
         #'sendpraat' now in 'praat', if useful
         try:
             assert not self.exceptiononload or self.me
