@@ -118,8 +118,8 @@ class ToneFrames(dict):
             if updated:
                 log.info(_("updated toneframes for field; you should save it!"))
         return self
-    def __init__(self, dict, self.program):
-        self.program=self.program
+    def __init__(self, dict, program):
+        self.program=program
         self.program.toneframes=self
         super(ToneFrames, self).__init__()
         self.source(dict)
@@ -225,8 +225,8 @@ class CheckParameters(object):
         return self.secondfield(self.program.settings.nominalps)
     def verbalpsfield(self):
         return self.secondfield(self.program.settings.verbalps)
-    def __init__(self, self.program):
-        self.program=self.program
+    def __init__(self, program):
+        self.program=program
         self.program.params=self
         """replaces setnamesall"""
         """replaces self.checknamesall"""
