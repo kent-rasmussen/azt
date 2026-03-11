@@ -644,5 +644,5 @@ if __name__ == "__main__":
         ]
     for i in files:
         print(i,"OK" if exists(i) else "doesn't exist on this filesystem")
-praat=findexecutable('praat')
+    praat=findexecutable('praat')
 # praatversioncheck(praat)
