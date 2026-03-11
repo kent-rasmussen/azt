@@ -245,13 +245,13 @@ class Settings(object):
                     log.debug(_("But legacy file {legacy} does; converting!").format(legacy=legacy))
                     self.loadandconvertlegacysettingsfile(setting=setting)
             if file.exists(savefile): #Keep around .ini and .dat
-                for r in self.repo:
-                    self.repo[r].add(savefile)
+                for r in self.program.data_repo:
+                    self.program.data_repo[r].add(savefile)
         #This line as is causes merge conflicts unnecessarilyː
         # self.repo_commit() #this will be taken up later, or else done again
     def repo_commit(self):
-        for r in self.repo:
-            self.repo[r].commit()
+        for r in self.program.data_repo:
+            self.program.data_repo[r].commit()
     def moveattrstoobjects(self):
         # log.info("Glosslangs (in moveattrstoobjects): {}".format(self.glosslangs.langs()))
         # log.info(f"moveattrstoobjects done: {self.attrs_moved_to_object}")
@@ -299,10 +299,10 @@ class Settings(object):
             fns['profile']=self.program.slices.profile
             # except this one, which pretends to set but doesn't (throws arg away)
             fns['profilecounts']=self.program.slices.slicepriority
-            fns['giturls']=self.repo['git'].remoteurls
+            fns['giturls']=self.program.data_repo['git'].remoteurls
             fns['asr_repos']=self.program.soundsettings.asr_repo_tally
             fns['asr_kwargs']=self.program.soundsettings.asr_kwarg_dict
-            fns['hgurls']=self.repo['hg'].remoteurls
+            fns['hgurls']=self.program.data_repo['hg'].remoteurls
         except Exception as e:
             log.error(_("Only finished settingsobjects up to {keys} ({error})").format(keys=fns.keys(),error=e))
             self.moveattrstoobjects() #always do this next
@@ -552,28 +552,28 @@ class Settings(object):
         self.program.tk_root.update() #update GUI before threading
         # for r in self.repo:
         r='git' #only look for this; don't duplicate repos unnecessarily
-        if r in self.repo:
+        if r in self.program.data_repo:
             t=u=None
-            present=set(self.repo[r].files)
+            present=set(self.program.data_repo[r].files)
             log.info(_("{repo} currently has {count} files").format(repo=r,count=len(present)))
             for f in maindirfiles:
-                # log.info("{}".format([file.getreldirposix(self.repo[r].url,f)]))
-                # log.info("working on {}".format(file.getreldirposix(self.repo[r].url,f)))
+                # log.info("{}".format([file.getreldirposix(self.program.data_repo[r].url,f)]))
+                # log.info("working on {}".format(file.getreldirposix(self.program.data_repo[r].url,f)))
                 log.info(_("working on {file}").format(file=file.getfile(f)))
-                # f=file.getreldirposix(self.repo[r].url,f)
+                # f=file.getreldirposix(self.program.data_repo[r].url,f)
                 if file.exists(f):# They won't always be there
-                    self.repo[r].add(file.getreldirposix(self.repo[r].url,f))
+                    self.program.data_repo[r].add(file.getreldirposix(self.program.data_repo[r].url,f))
             # In case I run into formatting issues again:
-            # log.info(', '.join(list(self.repo[r].files)[:5]))
-            # log.info(', '.join([file.getreldir(self.repo[r].url,i) for i in file.getfilesofdirectory(self.audiodir, '*.wav')][:5]))
+            # log.info(', '.join(list(self.program.data_repo[r].files)[:5]))
+            # log.info(', '.join([file.getreldir(self.program.data_repo[r].url,i) for i in file.getfilesofdirectory(self.audiodir, '*.wav')][:5]))
             # If we ever support mp3, we should add it here:
-            # log.info("{}".format([file.getreldirposix(self.repo[r].url,i)
+            # log.info("{}".format([file.getreldirposix(self.program.data_repo[r].url,i)
             #         for i in file.getfilesofdirectory(self.audiodir,
             #                                             '*.wav')]))
-            # log.info("{}".format(set(file.getreldirposix(self.repo[r].url,i)
+            # log.info("{}".format(set(file.getreldirposix(self.program.data_repo[r].url,i)
             #         for i in file.getfilesofdirectory(self.audiodir,
             #                                             '*.wav'))))
-            audiohere=set([file.getreldirposix(self.repo[r].url,i)
+            audiohere=set([file.getreldirposix(self.program.data_repo[r].url,i)
                     for i in file.getfilesofdirectory(self.audiodir,
                                                         '*.wav')])
             audio=audiohere-present
@@ -583,7 +583,7 @@ class Settings(object):
             log.info(_("head of wav files here: {files}").format(files=list(audiohere)[:10]))
             log.info(_("head of wav files to check: {files}").format(files=list(audio)[:10]))
             for f in audio:
-                self.repo[r].add(f) #These should exist, from ls above
+                self.program.data_repo[r].add(f) #These should exist, from ls above
                 # if threading.active_count()<maxthreads:
                 #     t = threading.Thread(target=ifnotthereadd, args=(f,r))
                 #     t.start()
@@ -591,20 +591,20 @@ class Settings(object):
                 #         ).format(count=threading.active_count()))
                 # if t:
                 #     t.join()
-                # self.repo[r].add(f)
+                # self.program.data_repo[r].add(f)
             for ext in ['png','jpg','gif']:
                 # log.info(_("Image Directory: {dir}").format(dir=self.imagesdir))
                 # log.info("Found image files: {}".format(nn([i for i in
                 # file.getfilesofdirectory(self.imagesdir,
                 #                         '*.'+ext)], oneperline=True)))
-                i=set([file.getreldirposix(self.repo[r].url,i)
+                i=set([file.getreldirposix(self.program.data_repo[r].url,i)
                         for i in file.getfilesofdirectory(self.imagesdir,
                                                 '*.'+ext)]
                         )-present
                 log.info(_("{count} {extension} files to check for the {repo} repo")
                         .format(count=len(i),extension=ext,repo=r))
                 for f in i:
-                    self.repo[r].add(f) #These should exist, from ls above
+                    self.program.data_repo[r].add(f) #These should exist, from ls above
                     # if threading.active_count()<maxthreads:
                     #     u = threading.Thread(target=ifnotthereadd, args=(f,r))
                     #     u.start()
