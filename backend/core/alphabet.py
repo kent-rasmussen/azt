@@ -434,3 +434,232 @@ class Alphabet():
         self.save_settings()
         self.conflicts={} #keep track of what has been kicked out of a group before
         self.unsorted={}
+
+class AlphabetChartData:
+    """Backend data/logic mixin for alphabet chart. No UI imports."""
+    my_settings = ['exids', 'order', 'ncolumns', 'chart_title', 'pagesize']
+
+    def init_chart_data(self, program, **kwargs):
+        self.program = program
+        self.show_at_least = 5
+        self.ncolopts = range(1, 15)
+        self.db = program.get('db', kwargs.get('db'))
+        if 'settings' in program:
+            defs = {'ncolumns': 5, 'pagesize': 'A4', 'order': [], 'exids': {}, 'chart_title': ''}
+            for k in self.my_settings:
+                setattr(self, k, program.settings.mgr.get('alphabet_' + k, defs.get(k)))
+            self.analangname = program.settings.languagenames[self.db.analang]
+        else:
+            for k in ['exids', 'order']:
+                setattr(self, k, kwargs.get(k, 0))
+            self.ncolumns = kwargs.get('ncolumns', False)
+            if type(self.ncolumns) != int and not str(self.ncolumns).isdigit():
+                self.ncolumns = 8
+            self.analangname = self.db.analang
+            self.pagesize = 'letter'
+        self.imgdir = self.db.imgdir
+        log.info(f"using {self.imgdir=}")
+        if not self.order:
+            log.info(f"No alphabetical order found; using all known glyphs")
+            self.order = [str(i) for j in self.db.s[self.db.analang].values() for i in j]
+            self.order.sort()
+        if 'alphabet' in program:
+            gd = {str(i) for j in program.alphabet.glyphdict().values() for i in j}
+            self.order = sorted(gd - set([str(i) for i in self.order])) + [str(i) for i in self.order if i in gd]
+        self.order = [i for n, i in enumerate(self.order) if n == self.order.index(i)
+                      if i not in ['NA']]
+        log.info(f"Using this alphabetical order: {self.order}")
+        log.info(f"Using these exids: {self.exids}")
+        # getimagelocationURI uses ui.Image, imported here from frontend
+        from frontend.alphabet_chart import getimagelocationURI
+        if self.exids:
+            for k in set(self.order) - set(self.exids):
+                self.exids[str(k)] = None
+            self.exobjs = {str(g): (self.db.sensedict[self.exids[g]]
+                                    if self.exids[g] in self.db.sensedict
+                                    else None)
+                           for g in self.exids}
+            for glyph, sense in [(k, v) for k, v in self.exobjs.items() if v is not None]:
+                getimagelocationURI(sense)
+                if hasattr(sense, 'image'):
+                    sense.image.scale(1, pixels=100, scaleto='height')
+                else:
+                    self.exobjs[str(glyph)] = None
+                    self.exids[str(glyph)] = None
+        else:
+            self.exids = {str(g): None for g in self.order}
+            self.exobjs = {str(g): None for g in self.order}
+        self.buttons = {}
+        self.order_bits = {}
+        self.show_bits = {}
+        self.show_pictured_only = False
+        self.hide_vars = {}  # UI BooleanVars set up by task/UI class
+
+    def save_settings(self):
+        if 'settings' not in self.program:
+            return
+        log.error("If you're seeing this, you have passed a settings module, "
+                  "but there is no save_settings method in the parent class...")
+
+    def _hidden(self, value=dict()):
+        for i in value:
+            self.hide_vars[i].set(value[i])
+        return {i: self.hide_vars[i].get() for i in self.hide_vars}
+
+
+class AlphabetComparisonData:
+    """Backend data/logic mixin for alphabet comparison. No UI imports."""
+
+    def init_comparison_data(self, program, **kwargs):
+        self.program = program
+        self.db = program.get('db')
+        if 'alphabet' in program:
+            glyphdict = program.alphabet.glyphdict()
+        else:
+            glyphdict = program.glyphdict
+        self.symbols = [i for j in glyphdict.values() for i in j]
+        self.vowels = list(glyphdict['V'])
+        self.consonants = list(glyphdict['C'])
+        self.settings = self.load_settings()
+
+    def load_settings(self):
+        try:
+            reports_mgr = self.program.settings.mgr.reports
+            return reports_mgr.load()
+        except Exception as e:
+            log.warning(f"Could not load settings via manager: {e}")
+        return {}
+
+    def save_settings_file(self):
+        self.settings['booklet_title'] = self.title_var.get()
+        self.settings['cover_image'] = self.selected_cover_path
+        self.settings['logo_image'] = self.selected_logo_path
+        self.settings['description_text'] = self.description_var.get()
+        try:
+            reports_mgr = self.program.settings.mgr.reports
+            reports_mgr.save(self.settings)
+            if 'git' in self.program:
+                self.program.settings.repo['git'].add(reports_mgr.filename, force=True)
+        except Exception as e:
+            log.warning(f"Could not save settings via manager: {e}")
+
+    def save_pages(self):
+        self.settings['pages'] = [i.glyph for i in self.pageFrames]
+        self.save_settings_file()
+
+    def save_examples(self):
+        example_dict = {i.glyph: i.current_examples for i in self.pageFrames}
+        self.settings.update(example_dict)
+        self.save_settings_file()
+
+    def generate_pdf(self):
+        from io_put import alphabet_comparison_pdf
+        from utilities import file
+        import os
+
+        def prepare_data(page):
+            items = []
+            for eid in page.current_examples:
+                if eid and eid in self.db.sensedict:
+                    sense = self.db.sensedict[eid]
+                    word = sense.entry.lcvalue()
+                    uri = sense.illustrationURI()
+                    items.append((page.glyph, word, uri))
+            return {'symbol': page.glyph, 'items': items}
+
+        pages = [prepare_data(i) for i in self.pageFrames if i.glyph]
+
+        extra_pages = []
+        texts_dir = None
+        parent_dir = os.path.dirname(self.db.reportdir)
+        for folder in ['texts', 'textes', 'text', 'texte']:
+            candidate = os.path.join(parent_dir, folder)
+            if os.path.exists(candidate) and os.path.isdir(candidate):
+                texts_dir = candidate
+                break
+
+        if texts_dir:
+            from glob import glob as _glob
+            txt_files = sorted(_glob(os.path.join(texts_dir, "*.txt")))
+            log.info(f"Found {len(txt_files)} extra text files in {texts_dir}")
+            for txt_path in txt_files:
+                try:
+                    with open(txt_path, 'r', encoding='utf-8') as f:
+                        lines = f.readlines()
+                    if not lines:
+                        continue
+                    if 'repo' in self.program:
+                        self.program.settings.repo['git'].add(txt_path, force=True)
+                    title_line = lines[0].strip()
+                    body = "".join(lines[1:]).strip()
+                    base_name = os.path.splitext(os.path.basename(txt_path))[0]
+                    img_path = None
+                    for ext in ['.jpg', '.jpeg', '.png', '.svg']:
+                        img_cand = os.path.join(texts_dir, base_name + ext)
+                        if os.path.exists(img_cand):
+                            img_path = img_cand
+                            if 'git' in self.program:
+                                self.program.settings.repo['git'].add(img_cand, force=True)
+                            break
+                    extra_pages.append({
+                        'type': 'extra_text',
+                        'title': title_line,
+                        'text': body,
+                        'image': img_path
+                    })
+                except Exception as e:
+                    log.error(f"Error reading extra text file {txt_path}: {e}")
+
+        from frontend import ui_tkinter as ui
+        page_names = [i['symbol'] for i in pages]
+        suffix = "wTexts" if extra_pages else ""
+        filename = '_'.join([_("Booklet"), *page_names,
+                             f'{suffix}[{self.db.analang}]{self.font_var.get()}.pdf'])
+        filepath = file.getdiredurl(self.db.reportdir, filename)
+
+        if hasattr(self.program.settings, 'loadsettingsfile'):
+            self.program.settings.loadsettingsfile(setting='contributors')
+        contributors_list = self.program.settings.alphabet_contributors()
+        copyright_text = self.copyright_var.get()
+        title_text = self.title_var.get()
+        description_text = self.description_var.get()
+        made_with = f"Made with {self.program.name} ({self.program.url})"
+        font_name = self.font_var.get()
+
+        r = alphabet_comparison_pdf.create_comparison_chart(
+            filepath, *pages,
+            extra_pages=extra_pages,
+            prose_count=self.prose_count_var.get(),
+            title=title_text,
+            cover_image=self.selected_cover_path,
+            logo_image=self.selected_logo_path,
+            contributors=contributors_list,
+            description=description_text,
+            copyright_text=copyright_text,
+            made_with=made_with,
+            font_name=font_name,
+            analang=self.db.analang
+        )
+        log.info(f"Generated {filepath}")
+
+        try:
+            from utilities import open_file
+            open_file(filepath)
+        except Exception as e:
+            log.warning(f"Could not open PDF automatically: {e}")
+        if r == 'using_helvetica':
+            q = ui.Window(self, title=_("Using Helvetica"))
+            q_text = _("This PDF uses Helvetica because neither Charis nor Andika were found; "
+                       "install one of them for better glyph treatment.")
+            ui.Label(q.frame, text=q_text, sticky='news')
+            q.lift()
+            return
+        q = ui.Window(self, title=_("Is this a final PDF?"))
+        q_text = _("Are you done with this PDF?")
+        q_button_text = _("Yes")
+        q_text += '\n' + _("Click {yes} to store and share with your data.").format(yes=q_button_text)
+        ui.Label(q.frame, text=q_text, sticky='news')
+        ui.Button(q.frame, text=q_button_text,
+                  cmd=lambda x=filepath: self.program.settings.repo['git'].add(x, force=True),
+                  r=1, sticky='news')
+        q.lift()

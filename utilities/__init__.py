@@ -6,9 +6,6 @@ try:
     source_base_dir = sys._MEIPASS
     print(f"using {source_base_dir=}")
 except Exception:
-    print(dir(__main__),type(__main__))
-    for f in ['name', 'package', 'spec', 'doc', 'builtins', 'annotations']:
-        print(f, getattr(__main__, '__'+f+'__'))
     try:
         source_base_dir=os.path.dirname(__main__.__file__)
     except Exception:

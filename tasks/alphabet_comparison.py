@@ -1,0 +1,50 @@
+# coding=UTF-8
+from tasks.base import Task
+from backend.core.alphabet import AlphabetComparisonData
+from frontend.alphabet_comparison import PageSetupUI
+from utilities.utilities import LazyGlobal
+from utilities import logsetup
+log = logsetup.getlog(__name__)
+
+def __getattr__(name):
+    if name in ('program', '_'):
+        import main
+        return getattr(main, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+for name in ('program', '_'):
+    if name not in globals():
+        globals()[name] = LazyGlobal(name)
+
+class AlphabetComparisonPages(Task, AlphabetComparisonData, PageSetupUI):
+    my_settings = [
+                    'comparison_exids',
+                    # 'order',
+                    # 'ncolumns', 'chart_title',
+                    'pagesize'
+                ]
+    def taskicon(self):
+        return program.theme.photo['iconTranscribeV']
+    def tooltip(self):
+        return _("This task helps you compare alphabet letters with example words "
+            "and pictures to represent each letter.")
+    def tasktitle(self):
+        return _("Alphabet Comparison Pages")
+    def save_settings(self):
+        for k in self.my_settings:
+            value = getattr(self, k)
+            from frontend import ui_tkinter as ui
+            if isinstance(value, ui.Variable):
+                value = value.get()
+                log.info(_("found '{key}' ui.Variable: {value}").format(key=k, value=value))
+            else:
+                log.info(_("Didn't find '{key}' ui.Variable: {value}").format(key=k, value=value))
+            getattr(program.settings, 'alpha_' + k)(value)
+        program.settings.storesettingsfile(setting='alphabet')
+    def __init__(self, program):
+        Task.__init__(self, program)
+        self.selected_cover_path = None
+        self.selected_logo_path = None
+        self.init_comparison_data(program)
+        PageSetupUI.__init__(self, program.taskchooser)
+        self.mainwindow = False  # don't exit on close

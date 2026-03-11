@@ -26,9 +26,10 @@ class DroppableLabel(ui.Label):
     def __init__(self, parent, *args, **kwargs):
         kwargs['droppable']=True #this provides dnd_accept
         super().__init__(parent, *args, **kwargs)
-class OrderAlphabet(ui.Window):
-    """This allows users both to order what has been analyzed already, and
-    select a picturable word for each grapheme"""
+class OrderAlphabetUI(ui.Window):
+    """UI-only class for ordering glyphs and selecting picturable words.
+    Requires data attributes (order, exids, exobjs, etc.) to be set by a
+    data mixin (AlphabetChartData) before __init__ is called."""
     # def print_chart_screenshot(self):
     #     log.info("Calling print_chart")
     #     region=(
@@ -469,71 +470,14 @@ class OrderAlphabet(ui.Window):
         title=_("Alphabet Chart UI for Glyph Ordering and Selection")
         log.info(f"Running {title}")
         self.parent=parent
-        if not hasattr(self,'program'): #i.e., from calling class
-            self.program=parent.program#kwargs.get('program',{})
-        self.show_at_least=5
-        self.ncolopts=range(1,15)
-        self.db=self.program.get('db',kwargs.get('db'))
-        self.my_settings=['exids','order','ncolumns','chart_title','pagesize']
-        if 'settings' in self.program:
-            defs = {'ncolumns': 5, 'pagesize': 'A4', 'order': [], 'exids': {}, 'chart_title': ''}
-            for k in self.my_settings:
-                setattr(self,k,self.program.settings.mgr.get('alphabet_'+k, defs.get(k)))
-                # log.info(f"Loaded ‘{k}’ ui.Variable: {getattr(self,k)}")
-            self.analangname=self.program.settings.languagenames[
-                                                                self.db.analang]
-        else:
-            for k in ['exids','order']:
-                setattr(self,k,kwargs.get(k,0))
-                # log.info(f"Loaded ‘{k}’ from kwargs/default: {getattr(self,k)}")
-            self.ncolumns=kwargs.get('ncolumns',False)
-            if type(self.ncolumns) != int and not self.columns.isdigit():
-                self.columns=8
-            self.analangname=self.db.analang
-            self.pagesize='letter'
-        self.imgdir=self.db.imgdir
-        log.info(f"using {self.imgdir=}")
-        # self.order=self.program.settings.get('alphabet_order',kwargs.get('order'))
-        #In the following, we convert all integers to strings, since we're 
-        # using them as keys written to file in exids and exobjs
-        if not self.order:
-            log.info(f"No alphabetical order found; using all known glyphs")
-            self.order=[str(i) for j in self.db.s[self.db.analang].values() for i in j]
-            self.order.sort()
-        if 'alphabet' in self.program:
-            gd={str(i) for j in self.program.alphabet.glyphdict().values() for i in j}
-        #pick up new letters, limit to actual but keep order
-            self.order=sorted(gd-set([str(i) for i in self.order])
-                            )+[str(i) for i in self.order if i in gd] 
-        self.order=[i for n,i in enumerate(self.order) if n==self.order.index(i) 
-                        if i not in ['NA']]
-        log.info(f"Using this alphabetical order: {self.order}")
-        log.info(f"Using these exids: {self.exids}")
-        if self.exids:
-            # self.exids=exids
-            for k in set(self.order)-set(self.exids):
-                self.exids[str(k)]=None #only fill in examples, don't remove them.
-            self.exobjs={str(g):(self.db.sensedict[self.exids[g]]
-                            if self.exids[g] in self.db.sensedict
-                            else None)
-                        for g in self.exids}
-            for glyph,sense in [(k,v) for k,v in self.exobjs.items() if v is not None]:
-                getimagelocationURI(sense)
-                if hasattr(sense,'image'):
-                    sense.image.scale(1,pixels=100,scaleto='height')
-                else: #Don't keep examples without images
-                    self.exobjs[str(glyph)]=None
-                    self.exids[str(glyph)]=None
-        else:
-            self.exids={str(g):None for g in self.order}
-            self.exobjs={str(g):None for g in self.order}
-        self.buttons={} #some place to store these
-        self.order_bits={}
-        self.show_bits={}
-        self.hide_vars={g:ui.BooleanVar(value=False) for g in self.order}
-        for i in self.hide_vars.values():
-            i.trace_add('write', self.update_shown)
-        super(OrderAlphabet,self).__init__(parent,title=title,withdrawn=True)
+        # Data attributes (order, exids, exobjs, etc.) must already be set
+        # by AlphabetChartData.init_chart_data() before this is called.
+        if not self.hide_vars:
+            # Fallback: set up hide_vars if not already done by task class
+            self.hide_vars={g:ui.BooleanVar(value=False) for g in self.order}
+            for i in self.hide_vars.values():
+                i.trace_add('write', self.update_shown)
+        super(OrderAlphabetUI,self).__init__(parent,title=title,withdrawn=True)
         self.mainwindow=True
         self.set_up_chart_title()
         self.set_up_copyright()
@@ -659,6 +603,16 @@ if __name__ == '__main__':
     r=ui.Root(program)
     r.title(_('Alphabet Chart UI'))
     exids={"'": None, '-': None, 'B': None, 'I': None, 'O': None, 'P': None, 'a': 'face_50e60901-8869-495f-97cf-b9be6173f6b3', 'ai': None, 'au': None, 'ay': None, 'b': 'beard_4ad57748-4eab-49bd-ad58-72cf41e653bd', 'bb': None, 'c': 'cheek_3fb09846-1194-42a5-ac75-a48eeb9541f9', 'cc': None, 'ch': 'chest_0e7b3795-5a08-40c8-8b23-02f5879e7a3a', 'ck': None, 'ckw': None, 'd': 'body_791094f2-a82b-4650-81d8-c3b6145d2be4', 'dd': None, 'dw': None, 'e': 'neck_73d0f72c-abb2-4e6c-ac0e-122907026b06', 'ea': 'heart_626ba0f2-debb-40c2-92bd-2b0b819c28bb', 'eau': None, 'ee': None, 'ei': 'vein_56c65965-1cbe-4502-8479-fe5551b993cb', 'ey': None, 'f': None, 'ff': None, 'g': 'leg_0d765545-ed2a-4f74-aa37-4a5b7cd4b471', 'gg': None, 'gh': 'thigh_20efd25d-d864-465a-bb96-1dd47ffcef76', 'gn': None, 'gu': 'tongue_f62b2bdc-dad7-4800-9707-197bfebe108e', 'gw': None, 'h': 'hair (of head)_cfd6d8be-fe86-4b3b-9002-f0f59c89c162', 'hh': None, 'hw': None, 'i': None, 'ie': None, 'j': None, 'k': 'knee_150923de-c9a0-42b6-8106-ec01281ee523', 'kw': None, 'l': None, 'll': None, 'lw': None, 'm': None, 'mb': None, 'mm': None, 'mp': None, 'n': 'nose_c6327beb-5bb7-4ce5-9def-078dedbb79da', 'nd': None, 'nk': None, 'nn': None, 'nt': None, 'nw': None, 'ny': None, 'o': None, 'oa': None, 'oe': None, 'oi': None, 'oo': None, 'ou': None, 'ow': None, 'p': None, 'ph': None, 'pp': None, 'pt': None, 'q': None, 'qu': None, 'r': None, 'rh': None, 'rr': None, 'rw': None, 's': None, 'sc': None, 'sh': None, 'sl': None, 'ss': None, 'sw': None, 't': None, 'tch': None, 'th': None, 'thw': None, 'ts': None, 'tt': None, 'tw': None, 'u': None, 'ue': None, 'v': 'navel_d29fffce-fe19-474b-bd16-9e54058d1156', 'w': 'waist_358ed3cb-7f89-47a1-9d08-de6cd7416183', 'wh': None, 'x': None, 'y': None, 'yi': None, 'yw': None, 'z': None, 'zl': None, 'é': None}
-    OrderAlphabet(r, program=program, exids=exids)
+    from backend.core.alphabet import AlphabetChartData
+    class _TestChart(AlphabetChartData, OrderAlphabetUI):
+        def __init__(self, parent, program, **kwargs):
+            self.program = program
+            self.init_chart_data(program, **kwargs)
+            from frontend import ui_tkinter as _ui
+            self.hide_vars = {g: _ui.BooleanVar(value=False) for g in self.order}
+            for i in self.hide_vars.values():
+                i.trace_add('write', self.update_shown)
+            OrderAlphabetUI.__init__(self, parent)
+    _TestChart(r, program=program, exids=exids)
     r.mainloop()
     sys.exit()

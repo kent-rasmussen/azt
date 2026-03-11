@@ -235,7 +235,6 @@ class ContributorsManager(ui.Window):
         
         ui.Label(self.frame, text=_("Names cannot be removed once added."), font='small', r=3, c=0, colspan=2)
 
-
 class PageFrameUI(ui.Frame):
     def select_example(self, index):
         log.info("Calling select_example")
@@ -317,7 +316,11 @@ class PageFrameUI(ui.Frame):
         if glyph and glyph in self.glyph_choice.get(0, "end"):
             self.glyph_choice.selection_set(self.glyph_choice.get(0, "end").index(glyph))
         self.restore_examples()
-class PageSetup(ui.Window):
+class PageSetupUI(ui.Window):
+    """UI-only class for alphabet comparison booklet setup.
+    Requires data attributes (program, db, symbols, vowels, consonants, settings,
+    selected_cover_path, selected_logo_path) to be set by AlphabetComparisonData
+    before __init__ is called."""
     def show_frequencies(self):
         counts=self.program.slices.scount()
         log.info(f"{counts}")
@@ -325,59 +328,37 @@ class PageSetup(ui.Window):
         totals=[(sum([c for psv in counts.values()
             for cvtv in psv.values()
             for glyph,c in cvtv
-            if glyph==g]),g) 
+            if glyph==g]),g)
             for g in self.program.alphabet.order()]
         totals.sort(reverse=True)
         notice=ui.Window(self,title=_("Glyph Frenquency"))
         for i in range(0,len(totals),10):
             # text_this=text+'\n'.join(text_list[i:i+9])
             text_this='\n'.join([f"{x}: {y}" for y,x in totals[i:i+9]])
-            # if the lack of justification here bothers, make this 
+            # if the lack of justification here bothers, make this
             # into individual labels by row, as well
             ui.Label(notice.frame,text=text_this,anchor='w',c=i,padx=5)
             log.info(text_this)
         # log.info(f"{sorted(totals,reverse=True)}")
     def __init__(self, parent, **kwargs):
-        """This is not the same signature as parent class; is that a problem?"""
+        """Data attributes must already be set by AlphabetComparisonData.init_comparison_data()."""
         title = "Alphabet Comparison Setup"
         self.parent = parent
-        if not hasattr(self,'program'): #i.e., from calling class
-            raise AttributeError(f"{__class__} has not program attribute?")
-            # self.program=parent.program
-        self.db = self.program.get('db')
         super().__init__(parent, title=title)
         self.fpr=6 #even allows pairs together
-        
-        # Data
-        if 'alphabet' in self.program:
-            glyphdict=self.program.alphabet.glyphdict()
-        else:
-            glyphdict=self.program.glyphdict
-        self.symbols = [i for j in glyphdict.values() for i in j]
-        self.vowels = list(glyphdict['V']) 
-        self.consonants = list(glyphdict['C'])
         self.prose_count_var = ui.IntVar(value=20)
-        
-        # Persisted UI State
+
+        # Persisted UI State — initialize StringVars from already-loaded self.settings
         self.title_var = ui.StringVar()
         self.copyright_var = ui.StringVar()
         self.description_var = ui.StringVar()
-        # Initialize from global settings
         import migration.converters
         if 'alphabet_copyright' in migration.converters.Converter.attrs_for_legacy_setting('alphabet'):
-             self.copyright_var.set(self.program.settings.alpha_copyright())
-        
-        self.selected_cover_path = None
-        self.selected_logo_path = None
-        
-        # Load persisted settings (local)
-        self.settings = self.load_settings()
+            self.copyright_var.set(self.program.settings.alpha_copyright())
         self.title_var.set(self.settings.get('booklet_title', 'Our Alphabet'))
-        self.selected_cover_path = self.settings.get('cover_image', None)
-        self.selected_logo_path = self.settings.get('logo_image', None)
-        self.selected_logo_path = self.settings.get('logo_image', None)
+        self.selected_cover_path = self.settings.get('cover_image', self.selected_cover_path)
+        self.selected_logo_path = self.settings.get('logo_image', self.selected_logo_path)
         self.description_var.set(self.settings.get('description_text', ''))
-        
         self.font_var = ui.StringVar()
         self.font_var.set(self.settings.get('booklet_font', 'Charis'))
 
@@ -624,166 +605,9 @@ class PageSetup(ui.Window):
         self.pageFrames[index+1].reset_choices(valid_b)
         log.info(f"Page {index} change finished, with page {index+1} constrained to {valid_b}")
 
-    def save_pages(self):
-        """Save current page list to settings."""
-        self.settings['pages'] = [i.glyph for i in self.pageFrames]
-        self.save_settings_file()
+    # save_pages, save_examples, load_settings, save_settings_file, generate_pdf
+    # are provided by AlphabetComparisonData mixin (backend/core/alphabet.py)
 
-    def save_examples(self):
-        """Save current examples for each symbol to settings."""
-        example_dict={i.glyph:i.current_examples for i in self.pageFrames}
-        self.settings.update(example_dict)
-        self.save_settings_file()
-    
-    def load_settings(self):
-        try:
-            # Use the new SettingsManager reports domain
-            reports_mgr = self.program.settings.mgr.reports
-            return reports_mgr.load()
-        except Exception as e:
-            log.warning(f"Could not load settings via manager: {e}")
-        return {}
-
-    def save_settings_file(self):
-        # Update extra fields
-        self.settings['booklet_title'] = self.title_var.get()
-        self.settings['cover_image'] = self.selected_cover_path
-        self.settings['logo_image'] = self.selected_logo_path
-        self.settings['description_text'] = self.description_var.get()
-        
-        try:
-            # Use the new SettingsManager reports domain
-            reports_mgr = self.program.settings.mgr.reports
-            reports_mgr.save(self.settings)
-            
-            if 'git' in self.program:
-                 # The manager determines the filename, we can get it via reports_mgr.filename
-                self.program.settings.repo['git'].add(reports_mgr.filename, force=True)                
-        except Exception as e:
-            log.warning(f"Could not save settings via manager: {e}")
-            
-    def generate_pdf(self):
-        def prepare_data(page):
-            items = []
-            for eid in page.current_examples:
-                if eid and eid in self.db.sensedict:
-                    sense = self.db.sensedict[eid]
-                    word = sense.entry.lcvalue()
-                    uri = sense.illustrationURI()
-                    items.append((page.glyph, word, uri))
-            return {'symbol': page.glyph, 'items': items}
-            
-        pages=[prepare_data(i) for i in self.pageFrames if i.glyph]
-        
-        # --- Extra Text Pages ---
-        extra_pages = []
-        texts_dir = None
-        # Look for 'texts' or 'textes' sibling to reports
-        parent_dir = os.path.dirname(self.db.reportdir)
-        for folder in ['texts', 'textes', 'text', 'texte']:
-            candidate = os.path.join(parent_dir, folder)
-            if os.path.exists(candidate) and os.path.isdir(candidate):
-                texts_dir = candidate
-                break
-        
-        if texts_dir:
-            from glob import glob
-            txt_files = sorted(glob(os.path.join(texts_dir, "*.txt")))
-            log.info(f"Found {len(txt_files)} extra text files in {texts_dir}")
-            for txt_path in txt_files:
-                try:
-                    with open(txt_path, 'r', encoding='utf-8') as f:
-                        lines = f.readlines()
-                    if not lines: continue
-                    if 'repo' in self.program:
-                        self.program.settings.repo['git'].add(txt_path,force=True)
-                    title = lines[0].strip()
-                    body = "".join(lines[1:]).strip()
-                    
-                    # Look for matching image
-                    base_name = os.path.splitext(os.path.basename(txt_path))[0]
-                    img_path = None
-                    for ext in ['.jpg', '.jpeg', '.png', '.svg']:
-                        img_cand = os.path.join(texts_dir, base_name + ext)
-                        if os.path.exists(img_cand):
-                            img_path = img_cand
-                            if 'git' in self.program:
-                                self.program.settings.repo['git'].add(img_cand,force=True)
-                            break
-                    
-                    # We'll let the PDF generator split this if it's too long, 
-                    # but for signatures we need to know how many pages it TAKES.
-                    # This is tricky. Let's assume for now one side per text unless we 
-                    # implement a pre-split helper in the PDF module.
-                    extra_pages.append({
-                        'type': 'extra_text',
-                        'title': title,
-                        'text': body,
-                        'image': img_path
-                    })
-                except Exception as e:
-                    log.error(f"Error reading extra text file {txt_path}: {e}")
-
-        page_names=[i['symbol'] for i in pages]
-        suffix = "wTexts" if extra_pages else ""
-        filename = '_'.join([_("Booklet"),*page_names,f'{suffix}[{self.db.analang}]{self.font_var.get()}.pdf'])
-        filepath = file.getdiredurl(self.db.reportdir, filename)
-        
-        # Gather all needed info
-        if hasattr(self.program.settings, 'loadsettingsfile'):
-             # Ensure loaded (double-check for persistence issues)
-             self.program.settings.loadsettingsfile(setting='contributors')
-        contributors_list = self.program.settings.alphabet_contributors()
-        copyright_text = self.copyright_var.get()
-        title_text = self.title_var.get()
-        description_text = self.description_var.get()
-        
-        # Made with attribution (as per plan, using program defaults, passed here for flexibility or added in PDF module)
-        # We'll pass it into options
-        made_with = f"Made with {self.program.name} ({self.program.url})"
-        
-        # Determine Font
-        font_name = getattr(self, 'font_var', ui.StringVar(value='Charis')).get()
-
-        r=alphabet_comparison_pdf.create_comparison_chart(
-             filepath, *pages, 
-             extra_pages=extra_pages,
-             prose_count=self.prose_count_var.get(),
-             title=title_text,
-             cover_image=self.selected_cover_path,
-             logo_image=self.selected_logo_path,
-             contributors=contributors_list,
-             description=description_text,
-             copyright_text=copyright_text,
-             made_with=made_with,
-             font_name=font_name,
-             analang=self.db.analang
-        )
-        log.info(f"Generated {filepath}")
-        
-        try:
-            from utilities import open_file
-            open_file(filepath)
-        except Exception as e:
-            log.warning(f"Could not open PDF automatically: {e}")
-        if r == 'using_helvetica':
-            q=ui.Window(self,title=_("Using Helvetica"))
-            q_text=_("This PDF uses Helvetica because neither Charis nor Andika were found; "
-                "install one of them for better glyph treatment.")
-            ui.Label(q.frame,text=q_text,sticky='news')
-            q.lift()
-            return
-        q=ui.Window(self,title=_("Is this a final PDF?"))
-        q_text=_("Are you done with this PDF?")
-        q_button_text=_("Yes")
-        q_text+='\n'+_("Click {yes} to store and share with your data."
-                        "").format(yes=q_button_text)
-        ui.Label(q.frame,text=q_text,sticky='news')
-        ui.Button(q.frame,text=q_button_text,
-                    cmd=lambda x=filepath:self.program.settings.repo['git'].add(x,
-                                                                        force=True),
-                    r=1,sticky='news')
-        q.lift()
     def on_close(self):
         self.destroy()
         sys.exit()
@@ -830,7 +654,15 @@ if __name__ == '__main__':
         }
         r = ui.Root(program)
         r.title('Alphabet Comparison')
-        PageSetup(r)
+        from backend.core.alphabet import AlphabetComparisonData
+        class _TestComparison(AlphabetComparisonData, PageSetupUI):
+            def __init__(self, parent, program):
+                self.program = program
+                self.selected_cover_path = None
+                self.selected_logo_path = None
+                self.init_comparison_data(program)
+                PageSetupUI.__init__(self, parent)
+        _TestComparison(r, program)
         r.mainloop()
     except Exception as e:
         print(f"Error running app: {e}")
