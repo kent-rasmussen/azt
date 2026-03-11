@@ -1647,8 +1647,6 @@ class Settings(object):
         if self.attrschanged != []:
             log.error(_("Remaining changed attribute! ({attr})").format(
                                                         attr=self.attrschanged))
-    def makeparameters(self):
-        CheckParameters(self.program)
     def maketoneframes(self,dict={}):
         ToneFrames(dict,self.program)
         # ToneFrames(getattr(self,'toneframes',{}))
@@ -1961,7 +1959,6 @@ class Settings(object):
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
         self.makeglosslangs()
         self.checkglosslangs() #if stated aren't in db, guess
-        self.makeparameters() #depends on nothing but self.analang
         self.attrs_moved_to_object=set()
         self.settingsobjects() #should do this more; can be redone!
         self.trackuntrackedfiles()

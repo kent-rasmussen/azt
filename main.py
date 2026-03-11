@@ -303,10 +303,10 @@ class App:
         log.info(_("Checking for a data repository"))
         self.data_repo=dict() #then copy to class attribute if there
         self.data_directory=file.getfilenamedir(self.filename)
-        if not self.program.testing:
+        if not self.testing:
             repo={ #start with local variable:
-                    'git': Git(self.data_directory),
-                    'hg': Mercurial(self.data_directory),
+                    'git': Git(self),
+                    'hg': Mercurial(self),
                     }
             for r in repo:
                 if (hasattr(repo[r],'files') #fails if no exe
@@ -314,7 +314,7 @@ class App:
                     log.info(_("Found {name} Repository!"
                                 ).format(name=repo[r].repotypename))
                     self.data_repo[r]=repo[r]
-                elif r == 'git' and 'git' in program and self.program.git:
+                elif r == 'git' and hasattr(self,'git') and self.git:
                     #don't worry about hg, if not there already
                     log.info(_("No Git data repository found; creating."))
                     repo[r].init()
@@ -377,9 +377,11 @@ class App:
         self.get_lift_file() #self.filename, self.analang set here
         self.splash = Splash(self)
         FileParser(self) #needs self.filename, pick up self.analang from file
+        self.repocheck()
+        CheckParameters(self) #depends on nothing but self.analang?
         Settings(self) #needs self.filename, pick up self.analang from file
         ExampleDict(self) #needed for makestatus, needs params,slices,data
-        Alphabet(self) #after slicedict is up
+        Alphabet(self) #after slicedict is up; needs params
         # SliceDict(adhoc,profilesbysense,self) #needs adhoc,profilesbysense
         # StatusDict(filename,dict,self) #needs filename,dict
         t = TaskChooser(self) #TaskChooser MainApplication
