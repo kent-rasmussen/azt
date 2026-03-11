@@ -752,11 +752,11 @@ class ASRModelSelectionWindow(ui.Window):
             log.error(f"Cache dir {self.soundsettings.asr_kwargs['cache_dir']} "
                     "not found; exiting.")
             exit()
-        self.languages=self.program.get('languages')
+        self.languages=self.program.languages
         try:
-            self.analang=self.program.get('params').analang()
+            self.analang=self.program.params.analang()
         except:
-            self.analang=self.program.get('analang') #for testing
+            self.analang=self.program.analang #for testing
         self.alllangs=_("All of the below")
         self.get_vars()
         self.reload_model()

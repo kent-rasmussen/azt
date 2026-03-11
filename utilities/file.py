@@ -345,12 +345,13 @@ def praatversioncheck(praat_exe):
     # and where '--hide-picture' becomes available.
     justpraatversion=version.Version(parseversion(
                                             'Praat 6.2.04 (December 18 2021)'))
-    log.info(_("Found Praat version {version}").format(version=str(out)))
+    # log.info(_("Found Praat version {version}").format(version=str(out)))
     if out>=justpraatversion:
-        log.info("Praat version at or greater than {}".format(justpraatversion))
+        # log.info("Praat version at or greater than {}".format(justpraatversion))
         return True
     else:
-        log.info("Praat version less than {}".format(justpraatversion))
+        log.info("Praat version less than {out} {justpraatversion}".format(
+            out=str(out),justpraatversion=justpraatversion))
         return False
 def findexecutable(exe):
     exeOS=exe

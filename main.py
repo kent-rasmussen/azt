@@ -114,7 +114,7 @@ from backend.core.analysis import Analysis, SliceDict, StatusDict, ExampleDict, 
 from backend.core.analysis_inputs import ToneFrames, CheckParameters, Glosslangs
 from backend.core.alphabet import Alphabet
 from backend.core.file_parser import FileParser
-from frontend.config.settings_ui import Settings
+from settings import Settings
 from tasks.tasks import (ExportData, AlphabetChart, AlphabetComparisonPages,
     Sound, Record, Transcription, WordCollectionwRecordings,
     WordCollectionLexeme, WordCollectionCitation, WordCollectionCitationwRecordings,
@@ -156,6 +156,8 @@ class Object:
 class App:
     def __getitem__(self, key): return getattr(self, key)
     def __setitem__(self, key, val): setattr(self, key, val)
+    def get(self,key,default=None): 
+        raise AttributeError("Update the function that called this")
     def handle_exception(self, exc_type, exc_value, exc_traceback):
         if issubclass(exc_type, KeyboardInterrupt): #ignore Ctrl-C
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
@@ -204,16 +206,16 @@ class App:
                                         fallback=True
                                     )}
         for i in langs:
-            log.info("Loading translation for {}".format(i))
+            # log.info("Loading translation for {}".format(i))
             try:
                 self.i18n[i.split('_')[0]] = gettext.translation('azt', transdir, languages=[i])
             except:
                 log.error("Failed to load translation for {}".format(i))
-            finally:
-                log.info("Translation for {} loaded".format(i))
+            # finally:
+            #     log.info("Translation for {} loaded".format(i))
         self.interfacelangs={i for i in self.i18n}
         lang=self.interfacelang() #translation works from here
-        log.info(_("Translation is working now ({lang}).").format(lang=lang))
+        # log.info(_("Translation is working now ({lang}).").format(lang=lang))
     def interfacelang(self,lang=None,magic=False):
         global _
         log.info("interfacelang called with lang {lang} and magic {magic}".format(lang=lang,magic=magic))
@@ -378,8 +380,9 @@ class App:
         self.splash = Splash(self)
         FileParser(self) #needs self.filename, pick up self.analang from file
         self.repocheck()
-        CheckParameters(self) #depends on nothing but self.analang?
         Settings(self) #needs self.filename, pick up self.analang from file
+        CheckParameters(self) #depends on settings (nothing but self.analang?)
+        self.settings.post_lift_init()
         ExampleDict(self) #needed for makestatus, needs params,slices,data
         Alphabet(self) #after slicedict is up; needs params
         # SliceDict(adhoc,profilesbysense,self) #needs adhoc,profilesbysense
@@ -538,6 +541,7 @@ class App:
         # if self.hostname == 'karlap':
         for k,v in program.items():
             setattr(self,k,v)
+        self.default_task='WordCollectnParse'
         if self.aztdir.parent.stem == 'raspy': 
             self.testing=True #eliminates Error screens and zipped logs and repo commits
             self.production=True #True for making screenshots (default theme)
@@ -545,13 +549,13 @@ class App:
             self.loglevel='INFO'
             self.testlift='Demo_en' #portion of filename
             self.testtask='SortV' #Will convert from string to class later
-            self.default_task='WordCollectnParse'
+            # self.default_task='WordCollectnParse'
         else:
             self.me=False
             self.production=True #True for making screenshots (default theme)
             self.testing=False #True eliminates Error screens and zipped logs
             self.loglevel='INFO'
-            self.default_task='WordCollectnParse'
+            # self.default_task='WordCollectnParse'
         self.get_interface_languages()
         #This isn't helpful where things are copied to disk later:
         self.modified_time=times.modified(self.file)

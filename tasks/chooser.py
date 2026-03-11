@@ -679,7 +679,7 @@ class TaskChooser(Task):
         # self.interfacelangs=self.getinterfacelangs()
         self.program.splash.progress(55)
         self.setmainwindow(self)
-        self.program.settings.post_lift_init()
+        # self.program.settings.post_lift_init()
         self.program.splash.progress(65)
         self.whatsdone()
         self.program.splash.progress(80)

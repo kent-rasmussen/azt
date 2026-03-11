@@ -1410,9 +1410,10 @@ class StatusDict(dict):
         return self
     def __init__(self,filename,dict,program):
         """To populate subchecks, use self.groups()"""
+        self.program=program
         self.program.status=self
         self._filename=filename
-        self._task=self.program.get('defaulttask',WordCollectnParse)
+        # self._task=getattr(self.program,'defaulttask',WordCollectnParse)
         super(StatusDict, self).__init__()
         self.source(dict)
         self._checksdict={}
