@@ -353,7 +353,7 @@ class Repository(object):
             if d == d.with_suffix('.'+self.code):
                 return d
             else:
-                return d.joinpath(self.dirname).with_suffix('.'+self.code)
+                return d.joinpath(self.url).with_suffix('.'+self.code)
     def findpresentremotes(self,remote=None,firsttry=True):
         def clonetoUSB(event=None):
             # log.info("Trying to event clonetoUSB")
@@ -757,8 +757,8 @@ class Repository(object):
         super().__init__()
         self.program=program
         self.main='main'
+        # Source Repos get self.url from GitReadOnly
         self.url = url if url else program.data_directory
-        self.dirname = self.program.data_directory
         self.repotypename=self.__class__.__name__
         self.thisos=platform.system()
         self.directorydontask=False #set on init, track first request rejection

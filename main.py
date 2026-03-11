@@ -288,7 +288,7 @@ class App:
         ErrorNotice(text, program=self, **kwargs)
     def find_source_repo(self):
         # self.findexecutable('git') #done in repo init
-        self.source_repo=GitReadOnly(self.aztdir) #this needs root for errors
+        self.source_repo=GitReadOnly(self) #this needs root for errors
         self.modified_time=self.source_repo.lastcommitdate()
         self.modified_time_relative=self.source_repo.lastcommitdaterelative()
         try:
