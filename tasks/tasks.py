@@ -14,7 +14,7 @@ from utilities.utilities import LazyGlobal
 log = logsetup.getlog(__name__)
 
 def __getattr__(name):
-    if name in ('program', '_', 'ErrorNotice', 'nn', 'unlist', 'sysrestart',
+    if name in ('_', 'ErrorNotice', 'nn', 'unlist', 'sysrestart',
                 'sysshutdown', 'SortGroupButtonFrame', 'SortGlyphGroupButtonFrame',
                 'scaleimageifthere', 'loadCAWL', 'saveimagefile', 'ImageFrame',
                 'ResultWindow', 'Alphabet', 'FileParser', 'sound', 'sound_ui',
@@ -23,7 +23,7 @@ def __getattr__(name):
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
-for name in ('program', '_', 'ErrorNotice', 'nn', 'unlist', 'sysrestart',
+for name in ('_', 'ErrorNotice', 'nn', 'unlist', 'sysrestart',
              'sysshutdown', 'SortGroupButtonFrame', 'SortGlyphGroupButtonFrame',
              'scaleimageifthere', 'loadCAWL', 'saveimagefile', 'ImageFrame',
              'ResultWindow', 'Alphabet', 'FileParser', 'sound', 'sound_ui',
@@ -34,7 +34,7 @@ for name in ('program', '_', 'ErrorNotice', 'nn', 'unlist', 'sysrestart',
 class ExportData(ui.Window):
     """docstring for ExportData."""
     def taskicon(self):
-        return program.theme.photo['USBdrive']
+        return self.program.theme.photo['USBdrive']
     def tooltip(self):
         return _("This tells you how much data you could export now, and "
                     "allows you to export it.")
@@ -49,13 +49,13 @@ class ExportData(ui.Window):
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.taskchooser.theme.photo['USBdrive'],
+                'image':self.program.taskchooser.theme.photo['USBdrive'],
                 'sticky':'ew',
                 'tttext':tttext
                 }
     def on_quit(self):
         ui.Window.on_quit(self)
-        program.taskchooser.gettask()
+        self.program.taskchooser.gettask()
     def switch(self,event=None):
         if self.exportclass == export.Lexicon:
             self.exportclass=export.Examples
@@ -86,11 +86,11 @@ class ExportData(ui.Window):
                 pass
         self.update()
         self.export=self.exportclass(
-                lift=program.db,
-                analang=program.params.analang(),
-                audiolang=program.params.audiolang(),
-                audiodir=program.settings.audiodir,
-                save_dir=program.settings.exportsdir,
+                lift=self.program.db,
+                analang=self.program.params.analang(),
+                audiolang=self.program.params.audiolang(),
+                audiodir=self.program.settings.audiodir,
+                save_dir=self.program.settings.exportsdir,
                 check=check,
                 max_rows_total=self.max_rows_total,
                 max_rows_per_file=self.max_rows_per_file,
@@ -119,7 +119,7 @@ class ExportData(ui.Window):
                     row=0,column=0,sticky='w'
             )
             if self.slices:
-                allchecks=program.status.allcheckswCVdata()
+                allchecks=self.program.status.allcheckswCVdata()
                 self.button={c:ui.Button(self.button_frame,
                                         text=_("Just {check} data").format(check=c),
                                         anchor='c',padx=50,
@@ -142,8 +142,8 @@ class ExportData(ui.Window):
         self.switch_button.bind("<Button-1>",self.switch)
     def __init__(self, arg):
         self.exportclass=export.Lexicon
-        title=(_("{azt} Data Export").format(azt=program.name))
-        ui.Window.__init__(self,program.root, title=title)
+        title=(_("{azt} Data Export").format(azt=self.program.name))
+        ui.Window.__init__(self,self.program.root, title=title)
         self.slices=False #allow user to output data for each check
         self.max_rows_total=None
         self.max_rows_per_file=None
@@ -163,32 +163,32 @@ class Sound(object):
         except:
             self.pyaudio=sound.AudioInterface()
     def makesoundsettings(self):
-        if not hasattr(program.settings,'soundsettings'):
+        if not hasattr(self.program.settings,'soundsettings'):
             log.info("Making new soundsettings object")
-            program.settings.soundsettings=sound.SoundSettings(self.pyaudio,
-                        analang_obj=program.languages.get_obj(self.analang)
+            self.program.settings.soundsettings=sound.SoundSettings(self.pyaudio,
+                        analang_obj=self.program.languages.get_obj(self.analang)
                         )
     def loadsoundsettings(self):
         self.makesoundsettings()
-        program.settings.loadsettingsfile(setting='soundsettings')
-        program.soundsettings=program.settings.soundsettings
-        if program.hostname == 'karlap' and (
-                        'cache_dir' not in program.soundsettings.asr_kwargs
+        self.program.settings.loadsettingsfile(setting='soundsettings')
+        self.program.soundsettings=self.program.settings.soundsettings
+        if self.program.hostname == 'karlap' and (
+                        'cache_dir' not in self.program.soundsettings.asr_kwargs
                         ):
-            program.soundsettings.asr_kwargs[
+            self.program.soundsettings.asr_kwargs[
                                             'cache_dir']='/media/kentr/hfcache'
     def storesoundsettings(self):
-        program.settings.storesettingsfile(setting='soundsettings')
+        self.program.settings.storesettingsfile(setting='soundsettings')
     def quittask(self):
         self.soundsettingswindow.destroy()
-        program.taskchooser.gettask()
+        self.program.taskchooser.gettask()
         self.on_quit()
     def soundsettingscheck(self):
-        if not hasattr(program.settings,'soundsettings'):
+        if not hasattr(self.program.settings,'soundsettings'):
             self.loadsoundsettings()
     def missingsoundattr(self):
-        # log.info(dir(program.settings.soundsettings))
-        ss=program.settings.soundsettings
+        # log.info(dir(self.program.settings.soundsettings))
+        ss=self.program.settings.soundsettings
         for s in self.settings_attrs:
             if hasattr(ss,s):
                 if s+'s' in ss.hypothetical and (getattr(ss,s)
@@ -202,11 +202,11 @@ class Sound(object):
             else:
                 log.info(_("Missing sound setting {setting}; asking again").format(setting=s))
                 return True
-        program.settings.soundsettingsok=True
+        self.program.settings.soundsettingsok=True
     def soundcheck(self):
         #just make sure settings are there
         self.soundsettingscheck()
-        self.soundsettings=program.settings.soundsettings
+        self.soundsettings=self.program.settings.soundsettings
         self.soundsettings.check()
         if not self.exitFlag.istrue() and self.missingsoundattr():
             self.mikecheck() #if not, get them
@@ -224,10 +224,10 @@ class Sound(object):
         if hasattr(super(), 'setcontext'):
             super().setcontext(context)
         self.context.menuitem(_("Sound settings"),self._configure_sound)
-        self.analang=program.db.analang
+        self.analang=self.program.db.analang
     def __init__(self,):
-        self.audiodir=program.settings.audiodir
-        self.audiolang=program.params.audiolang()
+        self.audiodir=self.program.settings.audiodir
+        self.audiolang=self.program.params.audiolang()
         self.program=program #make available to sound_ui
         self.soundcheck()
 class Record(Sound): #TaskDressing
@@ -256,18 +256,18 @@ class Record(Sound): #TaskDressing
             log.info(_('no runwindow frame; quitting!'))
             return
         self.runwindow.resetframe()
-        ps=program.slices.ps()
-        profile=program.slices.profile()
-        count=program.slices.count()
+        ps=self.program.slices.ps()
+        profile=self.program.slices.profile()
+        count=self.program.slices.count()
         text=_("Record {profile} {ps} Words: click ‘Record’, talk, "
                 "and release ({count} words)").format(profile=profile,ps=ps,
                                                 count=count)
         log.info(text)
         instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
         instr.grid(row=0,column=0,sticky='w')
-        senses=program.slices.senses(ps=ps,profile=profile)
+        senses=self.program.slices.senses(ps=ps,profile=profile)
         if not senses: #i.e., no profile analysis yet
-            senses=program.db.senses
+            senses=self.program.db.senses
         nperpage=5
         pages=[senses[i:i+nperpage] for i in range(0,len(senses),nperpage)]
         log.info(_("pages: {pages}").format(pages=pages))
@@ -313,24 +313,24 @@ class Record(Sound): #TaskDressing
         # Save these values before iterating over them
         #Convert to iterate over local variables
         self.getrunwindow()
-        if justone or not program.slices.valid():
+        if justone or not self.program.slices.valid():
             self.showentryformstorecordpage()
         else:
             #store for later
-            ps=program.slices.ps()
-            profile=program.slices.profile()
-            for psprofile in program.slices.valid(): #self.profilecountsValid:
+            ps=self.program.slices.ps()
+            profile=self.program.slices.profile()
+            for psprofile in self.program.slices.valid(): #self.profilecountsValid:
                 if self.runwindow.exitFlag.istrue():
                     return 1
-                program.slices.ps(psprofile[1])
-                program.slices.profile(psprofile[0])
+                self.program.slices.ps(psprofile[1])
+                self.program.slices.profile(psprofile[0])
                 nextb=ui.Button(self.runwindow,text=_("Next Group"),
                                         cmd=self.runwindow.resetframe) # .frame.destroy
                 nextb.grid(row=0,column=1,sticky='ne')
                 self.showentryformstorecordpage()
             #return to initial
-            program.slices.ps(ps)
-            program.slices.profile(profile)
+            self.program.slices.ps(ps)
+            self.program.slices.profile(profile)
         self.donewpyaudio()
     def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
         def setskip(event):
@@ -347,7 +347,7 @@ class Record(Sound): #TaskDressing
         text=_("Words and phrases to record: click ‘Record’, talk, and release")
         instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
         instr.grid(row=0,column=0,sticky='w',columnspan=2)
-        if (getattr(program.settings, 'entriestoshow', None) is None) and (senses is None):
+        if (getattr(self.program.settings, 'entriestoshow', None) is None) and (senses is None):
             ui.Label(self.runwindow.frame, anchor='w',
                     text=_("Sorry, there are no entries to show!")).grid(row=1,
                                     column=0,sticky='w')
@@ -361,7 +361,7 @@ class Record(Sound): #TaskDressing
             skipb.grid(row=0,column=0,sticky='w')
             skipb.bind('<ButtonRelease-1>', setskip)
         if senses is None:
-            senses=program.settings.entriestoshow
+            senses=self.program.settings.entriestoshow
         for sense in senses:
             log.debug("Working on {} with skip: {}".format(sense.id,
                                                     self.runwindow.frame.skip))
@@ -371,7 +371,7 @@ class Record(Sound): #TaskDressing
                 continue
             if ((self.runwindow.frame.skip == True) and
                 (lift.atleastoneexamplehaslangformmissing(examples,
-                                    program.settings.audiolang) == False)):
+                                    self.program.settings.audiolang) == False)):
                 continue
             row=0
             if self.runwindow.exitFlag.istrue():
@@ -400,7 +400,7 @@ class Record(Sound): #TaskDressing
             # examples.reverse()
             for example in examples:
                 if (skip == True and
-                    lift.examplehaslangform(example,program.settings.audiolang) == True):
+                    lift.examplehaslangform(example,self.program.settings.audiolang) == True):
                     continue
                 # """These should already be framed!"""
                 text=example.formatted(self.analang,self.glosslangs)
@@ -428,40 +428,40 @@ class Record(Sound): #TaskDressing
                 return 'skip'
     def showtonegroupexs(self):
         def next():
-            program.status.nextprofile()
+            self.program.status.nextprofile()
             self.runwindow.on_quit()
             self.showtonegroupexs()
         if (not(hasattr(self,'examplespergrouptorecord')) or
             (type(self.examplespergrouptorecord) is not int)):
             self.examplespergrouptorecord=100
-            program.settings.storesettingsfile()
+            self.program.settings.storesettingsfile()
         self.makeanalysis()
         self.analysis.donoUFanalysis()
         torecord=self.analysis.sensesbygroup
         ntorecord=len(torecord) #number of groups
         nexs=len([k for i in torecord for j in torecord[i] for k in j])
-        nslice=program.slices.count()
+        nslice=self.program.slices.count()
         log.info(_("Found {analyzed} analyzed of {total} examples in slice").format(analyzed=nexs, total=nslice))
         skip=False
         if ntorecord == 0:
             log.error(_("How did we get no UR tone groups? {profile}-{ps}"
                     "\nHave you run the tone report recently?"
                     "\nDoing that for you now...").format(
-                            profile=program.slices.profile(),
-                            ps=program.slices.ps()
+                            profile=self.program.slices.profile(),
+                            ps=self.program.slices.ps()
                                                          ))
             self.analysis.do()
             self.showtonegroupexs()
             return
         batch={}
-        # log.info(f"program.db.sensedict ({len(program.db.sensedict)}): "
-        #         f"{program.db.sensedict}")
+        # log.info(f"self.program.db.sensedict ({len(self.program.db.sensedict)}): "
+        #         f"{self.program.db.sensedict}")
         for i in range(self.examplespergrouptorecord):
             batch[i]=[]
             for ufgroup in torecord:
                 print(i,len(torecord[ufgroup]),ufgroup,torecord[ufgroup])
                 if len(torecord[ufgroup]) > i: #no done piles.
-                    # sense=[program.db.sensedict[torecord[ufgroup][i]]] #list of one
+                    # sense=[self.program.db.sensedict[torecord[ufgroup][i]]] #list of one
                     sense=torecord[ufgroup][i] #list of one
                 else:
                     print("Not enough examples, moving on:",i,ufgroup)
@@ -486,12 +486,12 @@ class Record(Sound): #TaskDressing
                     command=next).grid(row=1,column=0)
         self.donewpyaudio()
     def filenameoptions(self,node):
-        # This depends on self.analang and program.slices.profile; otherwise, it
+        # This depends on self.analang and self.program.slices.profile; otherwise, it
         # could be moved to a FieldParent method
         """This should generate possible filenames, with preferred (current
         schema) last, as that will be used if none are found."""
         log.info(_("Looking for file names for {node} ({tag})").format(node=node, tag=node.tag))
-        ps=program.slices.ps()
+        ps=self.program.slices.ps()
         print("ps:",ps)
         if ps:
             pslocopts=[ps]
@@ -502,7 +502,7 @@ class Record(Sound): #TaskDressing
         # old files, in case they are there but not linked.
         # First option (legacy):
         # pslocopts.insert(0,ps+'_'+self.parent.taskchooser.slices.profile())
-        profile=program.slices.profile()
+        profile=self.program.slices.profile()
         if ps and profile:
             pslocopts.insert(0,ps+'_'+profile)
         fieldlocopts=[None] #none is OK
@@ -565,7 +565,7 @@ class Record(Sound): #TaskDressing
         for f in filenames:
             if self.audioexists(f):
                 log.info(_("Audiofile {file} found at {url}").format(file=f, url=self.audioURL(f)))
-                node.textvaluebylang(lang=program.params.audiolang(),value=f)
+                node.textvaluebylang(lang=self.program.params.audiolang(),value=f)
                 if self.hassoundfile(node,recheck=True):
                     log.info("file {} linked in LIFT".format(node.audiofileURL))
                 break
@@ -704,20 +704,20 @@ class WordCollectionwRecordings(WordCollection,Record):
         # overwritten on confirmation later
         # This is only called when a user clicks on a button, not
         # automatically, so it should always overwrite the entry field
-        program.soundsettings.tally_asr_repo(repo)
+        self.program.soundsettings.tally_asr_repo(repo)
         self.var.set(value)
         self.update_idletasks()
-        program.settings.storesettingsfile(setting='soundsettings')
-        log.info(program.soundsettings.asr_repo_tally())
+        self.program.settings.storesettingsfile(setting='soundsettings')
+        log.info(self.program.soundsettings.asr_repo_tally())
     def store_phonetic(self,*args):
         #Need to fix this; format isn't correct
         self.entry.fieldvalue(self.ftype,
-                        program.db.phoneticlangname(machine=True),
+                        self.program.db.phoneticlangname(machine=True),
                         value=self.transcription_ipa_var.get().split('\n')[0]
                         )
     def store_tone(self,*args):
         self.entry.fieldvalue(self.ftype,
-                        program.db.tonelangname(machine=True),
+                        self.program.db.tonelangname(machine=True),
                         value=self.transcription_tone_var.get()
                         )
     def __init__(self, parent):
@@ -731,7 +731,7 @@ class WordCollectionLexeme(Task,WordCollection):
     def __init__(self, parent): #frame, filename=None
         """This should never really be used, though I made it first, so I've
         left it"""
-        self.ftype=program.params.ftype('lx') #lift.Entry.citationformnodeofentry
+        self.ftype=self.program.params.ftype('lx') #lift.Entry.citationformnodeofentry
         Task.__init__(self,parent)
         WordCollection.__init__(self,parent)
         log.info("Initializing {}".format(self.tasktitle()))
@@ -743,7 +743,7 @@ class WordCollectionCitation(Task,WordCollection):
     def tasktitle(self):
         return _("Add Words") # for Citation Forms
     def __init__(self, parent): #frame, filename=None
-        self.ftype=program.params.ftype('lc') #lift.Entry.citationformnodeofentry
+        self.ftype=self.program.params.ftype('lc') #lift.Entry.citationformnodeofentry
         Task.__init__(self,parent)
         WordCollection.__init__(self,parent)
         log.info("Initializing {}".format(self.tasktitle()))
@@ -756,7 +756,7 @@ class WordCollectionCitationwRecordings(WordCollectionwRecordings,Task):
     def tasktitle(self):
         return _("Add Words with Audio") # for Citation Forms
     def __init__(self, parent): #frame, filename=None
-        self.ftype=program.params.ftype('lc') #lift.Entry.citationformnodeofentry
+        self.ftype=self.program.params.ftype('lc') #lift.Entry.citationformnodeofentry
         Task.__init__(self,parent)
         WordCollectionwRecordings.__init__(self,parent)
         log.info("Initializing {}".format(self.tasktitle()))
@@ -767,10 +767,10 @@ class WordCollectionPlural(Task,WordCollection):
     def tasktitle(self):
         return _("Add plural forms")
     def __init__(self, parent):
-        self.ftype=program.params.ftype('pl')
+        self.ftype=self.program.params.ftype('pl')
         Task.__init__(self,parent)
         WordCollection.__init__(self,parent)
-        if not program.settings.secondformfieldsOK():
+        if not self.program.settings.secondformfieldsOK():
             ErrorNotice(_("To collect Plural forms, you must first "
                             "define which fields should contain those forms"),
                             wait=True)
@@ -786,10 +786,10 @@ class WordCollectionImperative(Task,WordCollection):
     def tasktitle(self):
         return _("Add imperative forms")
     def __init__(self, parent):
-        self.ftype=program.params.ftype('imp')
+        self.ftype=self.program.params.ftype('imp')
         Task.__init__(self,parent)
         WordCollection.__init__(self,parent)
-        if not program.settings.secondformfieldsOK():
+        if not self.program.settings.secondformfieldsOK():
             ErrorNotice(_("To collect Imperative forms, you must first "
                             "define which fields should contain those forms"),
                             wait=True)
@@ -801,7 +801,7 @@ class WordCollectionImperative(Task,WordCollection):
         self.getwords()
 class ParseWords(Parse,Task):
     def taskicon(self):
-        return program.theme.photo['iconWord']
+        return self.program.theme.photo['iconWord']
     def tooltip(self):
         return _("This task will help you parse your citation forms, "
                 "automatically and with confirmation.")
@@ -810,13 +810,13 @@ class ParseWords(Parse,Task):
         text=_("Parse!")
         tttext=_("{azt} tries to do as much as possible automatically, and "
                 "according to the level you have set for confirmation."
-                ).format(azt=program.name)
+                ).format(azt=self.program.name)
         return {'text':text,
                 'fn':fn,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.theme.photo['Word'],
+                'image':self.program.theme.photo['Word'],
                 'sticky':'ew',
                 'tttext':tttext
                 }
@@ -831,11 +831,11 @@ class WordCollectnParse(Parse,WordCollection,Task):
     """This task collects words, from the SIL CAWL, or one by one.
     First in citation form, then pl or imperativewith Parse"""
     def taskicon(self):
-        return program.theme.photo['iconWord']
+        return self.program.theme.photo['iconWord']
     def tooltip(self):
         return _("This task helps you collect and parse words.")
     def dobuttonkwargs(self):
-        if program.taskchooser.cawlmissing:
+        if self.program.taskchooser.cawlmissing:
             fn=self.addCAWLentries
             text=_("Add remaining CAWL entries")
             tttext=_("This will add entries from the Comparative African "
@@ -844,7 +844,7 @@ class WordCollectnParse(Parse,WordCollection,Task):
                     "glosses are found in your database, CAWL tags will be "
                     "merged with those entries."
                     "\nDepending on the number of entries, this may take "
-                    "awhile.").format(count=len(program.taskchooser.cawlmissing))
+                    "awhile.").format(count=len(self.program.taskchooser.cawlmissing))
         else:
             text=_("Add a Word")#?
             fn=self.addmorpheme#?
@@ -856,7 +856,7 @@ class WordCollectnParse(Parse,WordCollection,Task):
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.theme.photo['Word'],
+                'image':self.program.theme.photo['Word'],
                 'sticky':'ew',
                 'tttext':tttext
                 }
@@ -864,23 +864,23 @@ class WordCollectnParse(Parse,WordCollection,Task):
         return _("Add and Parse Words") # for Citation Forms
     def __init__(self, parent):
         log.info("Initializing {}".format(self.tasktitle()))
-        self.ftype=program.params.ftype('lc') #always correct?
+        self.ftype=self.program.params.ftype('lc') #always correct?
         # self.nodetag='citation'
         Task.__init__(self,parent)
         Parse.__init__(self,parent)
         WordCollection.__init__(self,parent)
-        program.taskchooser.withdraw()
+        self.program.taskchooser.withdraw()
         fn=self.getwords()#?
 class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,Task):
     """This task collects words, from the SIL CAWL, or one by one.
     First in citation form, then pl or imperativewith Parse"""
     def taskicon(self):
-        return program.theme.photo['iconWordRec']
+        return self.program.theme.photo['iconWordRec']
     def tooltip(self):
         return _("This task helps you collect and parse words by recording "
                 "them, with an automatic draft.")
     def dobuttonkwargs(self):
-        if program.taskchooser.cawlmissing:
+        if self.program.taskchooser.cawlmissing:
             fn=self.addCAWLentries
             text=_("Add remaining CAWL entries")
             tttext=_("This will add entries from the Comparative African "
@@ -889,7 +889,7 @@ class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,Task):
                     "glosses are found in your database, CAWL tags will be "
                     "merged with those entries."
                     "\nDepending on the number of entries, this may take "
-                    "awhile.").format(count=len(program.taskchooser.cawlmissing))
+                    "awhile.").format(count=len(self.program.taskchooser.cawlmissing))
         else:
             text=_("Add a Word")#?
             fn=self.addmorpheme#?
@@ -901,7 +901,7 @@ class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,Task):
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.theme.photo['WordRec'],
+                'image':self.program.theme.photo['WordRec'],
                 'sticky':'ew',
                 'tttext':tttext
                 }
@@ -909,16 +909,16 @@ class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,Task):
         return _("Add and Parse Words with Audio") # for Citation Forms
     def __init__(self, parent):
         log.info("Initializing {}".format(self.tasktitle()))
-        self.ftype=program.params.ftype('lc') #always correct?
+        self.ftype=self.program.params.ftype('lc') #always correct?
         # self.nodetag='citation'
         Task.__init__(self,parent)
         Parse.__init__(self,parent)
         WordCollectionwRecordings.__init__(self,parent)
-        program.taskchooser.withdraw()
+        self.program.taskchooser.withdraw()
         fn=self.getwords()#?
 class WordsParse(Parse,WordCollection,Task):
     def taskicon(self):
-        return program.theme.photo['iconWord']
+        return self.program.theme.photo['iconWord']
     def tooltip(self):
         return _("This task helps you parse words you collected earlier.")
     def tasktitle(self):
@@ -927,12 +927,12 @@ class WordsParse(Parse,WordCollection,Task):
         pass
     def __init__(self, parent):
         log.info("Initializing {}".format(self.tasktitle()))
-        self.ftype=program.params.ftype('lc') #always correct?
+        self.ftype=self.program.params.ftype('lc') #always correct?
         # self.nodetag='citation'
         Task.__init__(self,parent)
         Parse.__init__(self,parent)
         WordCollection.__init__(self,parent)
-        # if not program.settings.secondformfieldsOK():
+        # if not self.program.settings.secondformfieldsOK():
         #     ErrorNotice(_("To parse, you must first define which fields "
         #                     "should contain secondary forms"),
         #                     wait=True)
@@ -942,7 +942,7 @@ class WordsParse(Parse,WordCollection,Task):
         self.checkeach=True #confirm each word (not default)
         self.dodoneonly=True #don't give me other words
         self.userresponse=Object()
-        program.taskchooser.withdraw()
+        self.program.taskchooser.withdraw()
         #This should either be adapted to use parse or not by keyword, or have
         # another method for addnParse
         # if me:
@@ -969,7 +969,7 @@ class ParseSliceWords(ParseSlice):
 class Placeholder(Task):
     """Fake check, placeholder for now."""
     def taskicon(self):
-        return program.theme.photo['icon']
+        return self.program.theme.photo['icon']
     def tooltip(self):
         return _("Tooltip here.")
     def dobuttonkwargs(self):
@@ -981,13 +981,13 @@ class Placeholder(Task):
                 "glosses are found in your database, CAWL tags will be "
                 "merged with those entries."
                 "\nDepending on the number of entries, this may take "
-                "awhile.").format(count=len(program.taskchooser.cawlmissing))
+                "awhile.").format(count=len(self.program.taskchooser.cawlmissing))
         return {'text':text,
                 'fn':fn,
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.theme.photo['icon'],
+                'image':self.program.theme.photo['icon'],
                 'sticky':'ew',
                 'tttext':tttext
                 }
@@ -1025,7 +1025,7 @@ class ToneFrameDrafter(ui.Window):
             pass
         self.fds=ui.Frame(self.content,row=1,column=0)
         if 'field' not in self.forms:
-            d=program.params.ftype()
+            d=self.program.params.ftype()
             log.info("Didn't find field type; setting current ({}).".format(d))
             self.forms['field']=d
         if 'name' not in self.forms:
@@ -1068,10 +1068,10 @@ class ToneFrameDrafter(ui.Window):
         ui.ToolTip(ftypelabel)
         self.forms['field']
         #order glosslangs first, then other options:
-        self.langs=[self.analangftypecode()]+program.settings.glosslangs+[
-                                    l for l in program.db.glosslangs
-                                    if l not in program.settings.glosslangs]
-        for l in [self.analangftypecode()]+program.settings.glosslangs: #actually selected
+        self.langs=[self.analangftypecode()]+self.program.settings.glosslangs+[
+                                    l for l in self.program.db.glosslangs
+                                    if l not in self.program.settings.glosslangs]
+        for l in [self.analangftypecode()]+self.program.settings.glosslangs: #actually selected
             try:
                 self.forms[l]['after']=self.forms[l].get('after','')
             except KeyError: #i.e., if no l in self.forms
@@ -1083,12 +1083,12 @@ class ToneFrameDrafter(ui.Window):
         # log.info("Langs langstodo: {}".format(langstodo))
         nothing='______'
         for n,l in enumerate(self.langs):
-            langname=program.settings.languagenames[self.stripftypecode(l)]
+            langname=self.program.settings.languagenames[self.stripftypecode(l)]
             if l in self.forms:
                 log.info("Working on {}".format(langname))
                 if l == self.stripftypecode(l): #no change means gloss
                     tintro=_("Gloss in {lang}:").format(lang=langname)
-                    if l in program.settings.glosslangs:
+                    if l in self.program.settings.glosslangs:
                         ltttext=_("current gloss language")
                     else:
                         ltttext=_("additional gloss language")
@@ -1116,7 +1116,7 @@ class ToneFrameDrafter(ui.Window):
                         text=nothing
                     except:
                         text='<'+_("No {lang} frame info").format(
-                                lang=program.settings.languagenames[l])+'>'
+                                lang=self.program.settings.languagenames[l])+'>'
                 button=ui.Button(lineframe,text=text,
                                 relief=relief,
                                 cmd=lambda l=l, context='before':
@@ -1164,10 +1164,10 @@ class ToneFrameDrafter(ui.Window):
                     if i[0] == self.forms['field']][0]
     def fieldtypes(self):
         # try:
-        #     log.info("{}".format(program.settings.pluralname))
-        #     log.info("{}".format(program.settings.imperativename))
-        #     log.info("{}".format(program.settings.secondformfield[program.settings.verbalps]))
-        #     log.info("{}".format(program.settings.secondformfield[program.settings.nominalps]))
+        #     log.info("{}".format(self.program.settings.pluralname))
+        #     log.info("{}".format(self.program.settings.imperativename))
+        #     log.info("{}".format(self.program.settings.secondformfield[self.program.settings.verbalps]))
+        #     log.info("{}".format(self.program.settings.secondformfield[self.program.settings.nominalps]))
         # except Exception as e:
         #     log.error("Exception in ps-land:{}".format(e))
         opts=[
@@ -1175,10 +1175,10 @@ class ToneFrameDrafter(ui.Window):
                 ('lx', _("Lexeme form")),
                 ]
         """These should maybe be switched over to just pl and imp"""
-        if self.ps == program.settings.nominalps:
-            opts.append((program.settings.pluralname, _("Plural form")))
-        elif self.ps == program.settings.verbalps:
-            opts.append((program.settings.imperativename, _("Imperative form")))
+        if self.ps == self.program.settings.nominalps:
+            opts.append((self.program.settings.pluralname, _("Plural form")))
+        elif self.ps == self.program.settings.verbalps:
+            opts.append((self.program.settings.imperativename, _("Imperative form")))
         return [(i,j) for (i,j) in opts if i]
     def getfieldtype(self,event=None):
         w=ui.Window(self,
@@ -1277,7 +1277,7 @@ class ToneFrameDrafter(ui.Window):
     def promptstrings(self,lang=None,context=None):
         #None of this changes in editing. Is that what we want?
         if lang:
-            lname=program.settings.languagenames[self.stripftypecode(lang)]
+            lname=self.program.settings.languagenames[self.stripftypecode(lang)]
             text=_("Fill in the {lang} frame forms below.\n(include a "
                 "space to separate word forms)"
                 ).format(lang=lname)
@@ -1298,7 +1298,7 @@ class ToneFrameDrafter(ui.Window):
         else:
             text=_("What do you want to call this new {ps} tone frame for {lang}?"
                     ).format(ps=self.ps,
-                            lang=program.settings.languagenames[self.analang])
+                            lang=self.program.settings.languagenames[self.analang])
             ok=_("Use this name")
         return {'lang':lang, 'prompt':text, 'ok':ok}
     def promptwindow(self,lang=None,context=None,event=None):
@@ -1333,11 +1333,11 @@ class ToneFrameDrafter(ui.Window):
             self.w.title('{} {}'.format(context,lang))
         else:
             self.w.title(_("New {ps} Tone frame for {lang}: Name the Frame").format(
-                        ps=self.ps,lang=program.settings.languagenames[self.analang]))
+                        ps=self.ps,lang=self.program.settings.languagenames[self.analang]))
         self.withdraw() #Don't show status when asking for a value
         getform=ui.Label(self.w.frame,text=strings['prompt'],
                         font='read',row=0,column=0,
-                        wraplength=program.root.wraplength/2,
+                        wraplength=self.program.root.wraplength/2,
                         padx=self.padx,
                         pady=self.pady)
         #field rendering is better in another frame, with no sticky!:
@@ -1379,15 +1379,15 @@ class ToneFrameDrafter(ui.Window):
                                                 checktoadd,checkdefntoadd
                                                 ))
         # Having made and unset these, we now reset and write them to file.
-        program.toneframes.addframe(self.ps,checktoadd,checkdefntoadd)
-        program.status.renewchecks() #renew (not update), because of new frame
-        # log.info("object: {}".format(program.toneframes))
-        program.settings.storesettingsfile(setting='toneframes')
-        program.settings.setcheck(checktoadd) #assume we will use this now
+        self.program.toneframes.addframe(self.ps,checktoadd,checkdefntoadd)
+        self.program.status.renewchecks() #renew (not update), because of new frame
+        # log.info("object: {}".format(self.program.toneframes))
+        self.program.settings.storesettingsfile(setting='toneframes')
+        self.program.settings.setcheck(checktoadd) #assume we will use this now
         self.task.deiconify()
         self.destroy()
     def gimmesense(self,sense=None,next=False,**kwargs):
-        sensesbyps=program.db.sensesbyps[self.ps]
+        sensesbyps=self.program.db.sensesbyps[self.ps]
         if next and sense:
             # log.info("trying {} sense {}/{}".format(self.ps,
             #                                     sensesbyps.index(sense)+1,
@@ -1409,26 +1409,26 @@ class ToneFrameDrafter(ui.Window):
         ftype=framedef['field']
         while not tried or None in f.values():
             f={lang:None for lang in langs} #start each with a clean slate
-            if tried > program.db.nsenses*1.5: #give up looking randomly
+            if tried > self.program.db.nsenses*1.5: #give up looking randomly
                 sense=self.gimmesense(sense,next=True)
             else:
                 sense=self.gimmesense()
             f.update(sense.formatteddictbylang(self.analang, #This is xyz_ftype
                                         glosslangs,
-                                        # program.settings.glosslangs,
+                                        # self.program.settings.glosslangs,
                                         frame=framedef
                                             ))
             # log.info("Analang form found: {}".format(f[self.analang]))
             tried+=1
             log.info("Values found: {}".format(f))
-            if tried> program.db.nsenses*3.5:
+            if tried> self.program.db.nsenses*3.5:
                 errortext=_("I've tried (randomly, then through each) {count} "
                 "times, and not found one "
                 "of your {total} senses with data in each of these languages: "
                 "{langs}. \nAre you asking for gloss "
                 "languages which actually have data in your database? \nOr, are "
                 "you missing gloss fields (i.e., you have only 'definition' "
-                "fields)?").format(count=tried,total=program.db.nsenses,langs=langs)
+                "fields)?").format(count=tried,total=self.program.db.nsenses,langs=langs)
                 log.error(errortext)
                 return #errortext
         log.debug("Found entry {} with glosses {}".format(sense.id,f))
@@ -1437,7 +1437,7 @@ class ToneFrameDrafter(ui.Window):
         ui.Window.__init__(self,parent)
         self.task=parent #this should always be called by a window task
         self.analang=parent.analang
-        self.ps=program.slices.ps()
+        self.ps=self.program.slices.ps()
         self.forms={}
         # we want to start this net wide, to cover future usage
         # At some point, I may want to distinguish the analang from its gloss
@@ -1449,9 +1449,9 @@ class ToneFrameDrafter(ui.Window):
         self.padx=50
         self.pady=10
         title=_("Define a New {ps} Tone Frame for {lang}").format(ps=self.ps,
-                        lang=program.settings.languagenames[self.analang])
+                        lang=self.program.settings.languagenames[self.analang])
         self.title(title)
-        t(f"Add {self.ps} Tone Frame for {program.settings.languagenames[self.analang]}")#+'\n'?
+        t(f"Add {self.ps} Tone Frame for {self.program.settings.languagenames[self.analang]}")#+'\n'?
         ui.Label(self.frame,text=t,font='title',row=0,column=0)
         self.scroll=ui.ScrollingFrame(self.frame,row=1,column=0)
         self.content=self.scroll.content
@@ -1459,11 +1459,11 @@ class ToneFrameDrafter(ui.Window):
 
     def store(self):
         log.info(_("Saving toneframes dict to file"))
-        program.settings.storesettingsfile('toneframes')
+        self.program.settings.storesettingsfile('toneframes')
 
 class SortSyllables(Sort,Segments,Task):
     def taskicon(self):
-        return program.theme.photo['iconWord']
+        return self.program.theme.photo['iconWord']
     def tasktitle(self):
         return _("Sort Word Syllables") #Citation Form Sorting in Tone Frames
     def tooltip(self):
@@ -1475,7 +1475,7 @@ class SortSyllables(Sort,Segments,Task):
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.theme.photo['Word'], #self.cvt
+                'image':self.program.theme.photo['Word'], #self.cvt
                 'sticky':'ew'
                 }
     def presortgroups(self):
@@ -1488,25 +1488,25 @@ class SortSyllables(Sort,Segments,Task):
         We should likely store different values, one that is calculated,
         the other is user data
         """
-        ps=program.slices.ps()
-        for sense in program.db.sensesbyps[ps]:
-            valuelist=[k for k in program.settings.profilesbysense[ps]
-                        if sense in program.settings.profilesbysense[ps][k]]
+        ps=self.program.slices.ps()
+        for sense in self.program.db.sensesbyps[ps]:
+            valuelist=[k for k in self.program.settings.profilesbysense[ps]
+                        if sense in self.program.settings.profilesbysense[ps][k]]
             if valuelist:
-                sense.cvprofilevalue(program.params.ftype(),valuelist[0])
+                sense.cvprofilevalue(self.program.params.ftype(),valuelist[0])
     def runcheck(self):
-        program.settings.storesettingsfile()
+        self.program.settings.storesettingsfile()
         log.info("Running check...")
-        cvt=program.params.cvt()
-        check=program.params.check()
-        profiles=program.slices.profiles()
+        cvt=self.program.params.cvt()
+        check=self.program.params.check()
+        profiles=self.program.slices.profiles()
         """further specify check check in maybesort, where you can send the user
         on to the next setting"""
         self.presortgroups()
         self.updatesortingstatus() # Not just tone anymore
         self.maybesort(firstrun=True)
     def __init__(self, parent):
-        program.params.cvt('S') #syllable
+        self.program.params.cvt('S') #syllable
         Task.__init__(self,parent)
         Sort.__init__(self, parent)
         Segments.__init__(self,parent)
@@ -1518,7 +1518,7 @@ class SortCV(Sort,Segments,Task):
         Segments.__init__(self,parent)
 class SortV(Sort,Segments,Task):
     def taskicon(self):
-        return 'iconV'#program.theme.photo['iconV']
+        return 'iconV'#self.program.theme.photo['iconV']
     def tasktitle(self):
         return _("Sort Vowels") #Citation Form Sorting in Tone Frames
     def tooltip(self):
@@ -1528,11 +1528,11 @@ class SortV(Sort,Segments,Task):
                 'fn':self.runcheck,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.theme.photo['V'], #self.cvt
+                'image':self.program.theme.photo['V'], #self.cvt
                 'sticky':'ew'
                 }
     def __init__(self, parent, **kwargs):
-        program.params.cvt('V')
+        self.program.params.cvt('V')
         Task.__init__(self,parent)
         Sort.__init__(self, parent)
         Segments.__init__(self,parent)
@@ -1542,7 +1542,7 @@ class SortV(Sort,Segments,Task):
             self.runcheck()
 class SortC(Sort,Segments,Task):
     def taskicon(self):
-        return 'iconC'#program.theme.photo['iconC']
+        return 'iconC'#self.program.theme.photo['iconC']
     def tasktitle(self):
         return _("Sort Consonants") #Citation Form Sorting in Tone Frames
     def tooltip(self):
@@ -1553,11 +1553,11 @@ class SortC(Sort,Segments,Task):
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.theme.photo['C'], #self.cvt
+                'image':self.program.theme.photo['C'], #self.cvt
                 'sticky':'ew'
                 }
     def __init__(self, parent, **kwargs):
-        program.params.cvt('C')
+        self.program.params.cvt('C')
         Task.__init__(self,parent)
         Sort.__init__(self, parent)
         Segments.__init__(self,parent)
@@ -1567,7 +1567,7 @@ class SortC(Sort,Segments,Task):
             self.runcheck()
 class SortT(Sort,Tone,Task):
     def taskicon(self):
-        return 'iconT'#program.theme.photo['iconT']
+        return 'iconT'#self.program.theme.photo['iconT']
     def tasktitle(self):
         return _("Sort Tone") #Citation Form Sorting in Tone Frames
     def tooltip(self):
@@ -1578,15 +1578,15 @@ class SortT(Sort,Tone,Task):
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.theme.photo['T'], #self.cvt
+                'image':self.program.theme.photo['T'], #self.cvt
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
         Tone.__init__(self)
         Task.__init__(self,parent)
-        program.params.cvt('T')
+        self.program.params.cvt('T')
         Sort.__init__(self, parent)
-        # log.info("status: {}".format(type(program.status)))
+        # log.info("status: {}".format(type(self.program.status)))
         # Not sure what this was for (XML?):
         self.pp=pprint.PrettyPrinter()
         """Are we OK without these?"""
@@ -1594,7 +1594,7 @@ class SortT(Sort,Tone,Task):
         """Testing Zone"""
     def addtonefieldpron(self,guid,framed): #unused; leads to broken lift fn
         sense=None
-        program.db.addpronunciationfields(
+        self.program.db.addpronunciationfields(
                                     guid,sense.id,self.analang,self.glosslangs,
                                     lang='en',
                                     forms=framed,
@@ -1656,7 +1656,7 @@ class Transcribe(Sound,Sort,Task):
         fn(self.group_comparison,self.group,updatestatus=False)
         fn(g,self.group_comparison)
         self.refresh_status_buttons(g,self.group_comparison)
-        # program.settings.setgroup(gc)
+        # self.program.settings.setgroup(gc)
         self.runwindow.on_quit()
         self.makewindow() #The other group needs a name, too!
     def submitandswitch(self):
@@ -1670,10 +1670,10 @@ class Transcribe(Sound,Sort,Task):
             self.switchgroups(comparison)
     def updategroups(self):
         # Update locals group, groups, and othergroups from objects
-        self.groups=program.status.groups(wsorted=True)
+        self.groups=self.program.status.groups(wsorted=True)
         # log.info("self.groups: {}".format(self.groups))
-        self.groupsdone=program.status.verified()
-        self.group=program.status.group()
+        self.groupsdone=self.program.status.verified()
+        self.group=self.program.status.group()
         # log.info("group: {}, groups: {}".format(self.group,self.groups))
         if not self.groups:
             ErrorNotice(_("No groups in that slice; try another!"))
@@ -1683,7 +1683,7 @@ class Transcribe(Sound,Sort,Task):
             w=self.getgroup(wsorted=True, guess=True, intfirst=True)
             if w.winfo_exists():
                 w.wait_window(w)
-            self.group=program.status.group()
+            self.group=self.program.status.group()
             if not self.group:
                 log.info("I asked for a framed tone group, but didn't get one.")
                 return
@@ -1708,42 +1708,42 @@ class Transcribe(Sound,Sort,Task):
                         ).format(group=self.group,new=newvalue)]
             if len(newvalue) > 1:
                 warning.append(_("{azt} will add ‘{new}’ to those settings."
-                            ).format(azt=program.name,new=newvalue))
-                if newvalue not in program.settings.polygraphs[self.analang][self.cvt]:
-                    program.settings.polygraphs[self.analang][self.cvt][newvalue]=True
-                    program.settings.storesettingsfile('profiledata')
+                            ).format(azt=self.program.name,new=newvalue))
+                if newvalue not in self.program.settings.polygraphs[self.analang][self.cvt]:
+                    self.program.settings.polygraphs[self.analang][self.cvt][newvalue]=True
+                    self.program.settings.storesettingsfile('profiledata')
             if len(self.group) > 1:
                 warning.append(_("{azt} will *not* remove ‘{group}’ from "
                             "those settings, because you may still be "
                             "using it elsewhere."
-                            ).format(azt=program.name,group=self.group))
+                            ).format(azt=self.program.name,group=self.group))
             warning.extend(['',_("**If this isn't what you wanted, "
                         "fix and confirm your digraph and "
                         "trigraph settings in the menu "
                         "\n(this will make {azt} restart and redo "
                         "the syllable profile analysis)."
-                        ).format(azt=program.name)])
+                        ).format(azt=self.program.name)])
             title=_("Syllable profile change?")
             #Just state this and move on to making changes:
             log.info('\n'.join(warning))
             # self.err=ErrorNotice(warning,parent=self,title=title)
     def submitform(self):
         newvalue=self.transcriber.formfield.get()
-        if program.params.cvt() != 'T': #Warning only on segmental changes
+        if self.program.params.cvt() != 'T': #Warning only on segmental changes
             self.polygraphwarn(newvalue)
             #These should each make one change only, checking for overwrites
             self.rename_macrogroup(self.group,newvalue)
-            program.alphabet.glyph(newvalue)
+            self.program.alphabet.glyph(newvalue)
             self.refresh_status_buttons(self.group,newvalue)
         else:
             """updateforms=True doesn't seem to be working for segments"""
             self.updatebygroupsense(self.group,newvalue,updateforms=True)
             #NO: this should update formstosearch and profile data.
             # log.info("Doing renamegroup: {}>{}".format(self.group,newvalue))
-            program.status.renamegroup(self.group,newvalue) #status file only
+            self.program.status.renamegroup(self.group,newvalue) #status file only
             # log.info("Doing updategroups")
             self.updategroups() #updates self.groups self.group self.othergroups self.groupsdone
-            program.settings.storesettingsfile(setting='status')
+            self.program.settings.storesettingsfile(setting='status')
             """Update regular expressions here!!"""
         self.maybewrite()
         self.ok_done=True
@@ -1756,15 +1756,15 @@ class Transcribe(Sound,Sort,Task):
         error=self.submitform()
         if not error:
             # log.debug("group: {}".format(group))
-            ints=[i for i in program.status.groups(wsorted=True)
+            ints=[i for i in self.program.status.groups(wsorted=True)
                     if i.isdigit()]
             if ints:
                 log.info("Found integer groups: {ints}".format(ints=ints))
-                program.status.group(str(min(ints)))#Look for integers first
+                self.program.status.group(str(min(ints)))#Look for integers first
             else:
                 log.info("Didn't Find integer groups: {groups}".format(
-                    groups=program.status.groups(wsorted=True)))
-                program.status.nextgroup(wsorted=True)
+                    groups=self.program.status.groups(wsorted=True)))
+                self.program.status.nextgroup(wsorted=True)
             # log.debug("group: {}".format(group))
             self.makewindow()
     def nextcheck(self):
@@ -1772,7 +1772,7 @@ class Transcribe(Sound,Sort,Task):
         error=self.submitform()
         if not error:
             # log.debug("check: {}".format(check))
-            program.status.nextcheck(wsorted=True)
+            self.program.status.nextcheck(wsorted=True)
             # log.debug("check: {}".format(check))
             self.makewindow()
     def nextprofile(self):
@@ -1780,12 +1780,12 @@ class Transcribe(Sound,Sort,Task):
         error=self.submitform()
         if not error:
             # log.debug("profile: {}".format(profile))
-            program.status.nextprofile(wsorted=True)
+            self.program.status.nextprofile(wsorted=True)
             # log.debug("profile: {}".format(profile))
             self.makewindow()
     def setgroup_comparison(self,group=None,**kwargs):
         if group:
-            program.settings.set('group_comparison',group)
+            self.program.settings.set('group_comparison',group)
         else:
             #this returns its window:
             w=self.getglyph(comparison=True,**kwargs)
@@ -1793,9 +1793,9 @@ class Transcribe(Sound,Sort,Task):
                 log.info("Waiting for {w}".format(w=w))
                 w.wait_window(w)
         log.info(_("Groups: {group} (of {groups}); "
-                "{comp}?").format(group=self.group, groups=self.groups, comp=program.settings.group_comparison))
-        if hasattr(program.settings,'group_comparison'):
-            self.group_comparison=program.settings.group_comparison
+                "{comp}?").format(group=self.group, groups=self.groups, comp=self.program.settings.group_comparison))
+        if hasattr(self.program.settings,'group_comparison'):
+            self.group_comparison=self.program.settings.group_comparison
         if self.errorlabel['text'] == _("Sorry, pick a comparison first!"):
             self.updateerror()
         self.comparisonbuttons()
@@ -1849,24 +1849,24 @@ class Transcribe(Sound,Sort,Task):
         self.sub_c['text']=t
     def __init__(self,parent): #frame, filename=None
         Task.__init__(self, parent)
-        program.settings.makeeverythingok()
-        self.ftype=program.params.ftype()
+        self.program.settings.makeeverythingok()
+        self.ftype=self.program.params.ftype()
         self.mistake=False #track when a user has made a mistake
-        self.analang=program.params.analang()
-        program.status.makecheckok()
+        self.analang=self.program.params.analang()
+        self.program.status.makecheckok()
         Sound.__init__(self)
 class TranscribeS(Transcribe,Segments):
     macrosort=True
     def done(self):
         log.info("Transcribe done")
         self.submitform()
-        program.alphabet.save_settings()
+        self.program.alphabet.save_settings()
         self.donewpyaudio()
     def go_back(self):
         log.info("Transcribe done for now (going back)")
         self.runwindow.on_quit()
         self.donewpyaudio()
-        program.taskchooser.maketask(f"Sort{program.params.cvt()}",
+        self.program.taskchooser.maketask(f"Sort{self.program.params.cvt()}",
                                         redo_glyph=self.group)
     def set_ok_w_form(self,error=False):
         form=self.transcriber.formfield.get()
@@ -1880,25 +1880,25 @@ class TranscribeS(Transcribe,Segments):
         self.pyaudiocheck() # seems to dissapear sometimes
         self.ok_done=False
         if glyph:
-            self.group=program.alphabet.glyph(glyph)
+            self.group=self.program.alphabet.glyph(glyph)
         else:
-            self.group=program.alphabet.glyph()
+            self.group=self.program.alphabet.glyph()
         if not isinstance(self.group, str):
             log.info("Group not a string! ({group}, {type})".format(group=self.group, type=type(self.group)))
-        cvt=program.params.cvt()
-        self.groups=program.alphabet.glyphs()
-        # self.groups=program.status.all_groups_verified_for_cvt()
+        cvt=self.program.params.cvt()
+        self.groups=self.program.alphabet.glyphs()
+        # self.groups=self.program.status.all_groups_verified_for_cvt()
         self.otherglyphs=set(self.groups)-{self.group}
         padx=50
-        if program.settings.lowverticalspace:
+        if self.program.settings.lowverticalspace:
             log.info("Using low vertical space setting")
             pady=0
         else:
             pady=10
-        self.buttonframew=int(program.screenw()/3.5)
-        title=[program.params.cvtdict()[cvt]['sg'],_("letter")]
+        self.buttonframew=int(self.program.screenw()/3.5)
+        title=[self.program.params.cvtdict()[cvt]['sg'],_("letter")]
         getformtext=[_("What letter(s) will you use for this {sg} "
-                        "group?").format(sg=program.params.cvtdict()[cvt]['sg'])]
+                        "group?").format(sg=self.program.params.cvtdict()[cvt]['sg'])]
         if self.group.isdigit():
             title.insert(0,_("Name New"))
             # getformtext.append(_("Because this is a new group, you need to give it "
@@ -2024,7 +2024,7 @@ class TranscribeV(TranscribeS):
     def tooltip(self):
         return _("This task helps you decide on your vowel letters.")
     def taskicon(self):
-        return program.theme.photo['iconTranscribeV']
+        return self.program.theme.photo['iconTranscribeV']
     def __init__(self, parent): #frame, filename=None
         self.glyphspossible=[ #'a','e','i','o','u','ɛ','ɔ','ɨ','ʉ']
         #tilde (decomposed):
@@ -2045,7 +2045,7 @@ class TranscribeV(TranscribeS):
         # # 'Â', 'Ê', 'Î', 'Ô', 'Û',
         # 'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
         ]
-        self.cvt=program.params.cvt('V')
+        self.cvt=self.program.params.cvt('V')
         super().__init__(parent)
 class TranscribeC(TranscribeS):
     def tasktitle(self):
@@ -2053,7 +2053,7 @@ class TranscribeC(TranscribeS):
     def tooltip(self):
         return _("This task helps you decide on your consonant letters.")
     def taskicon(self):
-        return program.theme.photo['iconTranscribeC']
+        return self.program.theme.photo['iconTranscribeC']
     def __init__(self, parent): #frame, filename=None
         self.glyphspossible=[#'p','b','k','g','d','t',]
         'bh','dh','gh','gb',
@@ -2091,7 +2091,7 @@ class TranscribeC(TranscribeS):
         'l','r',
         'rh','wh',
         ]
-        self.cvt=program.params.cvt('C')
+        self.cvt=self.program.params.cvt('C')
         super().__init__(parent)
 class TranscribeT(Transcribe,Tone):
     def tasktitle(self):
@@ -2104,11 +2104,11 @@ class TranscribeT(Transcribe,Tone):
                 'fn':self.makewindow,
                 'font':'title',
                 'compound':'top', #image bottom, left, right, or top of text
-                'image':program.theme.photo['Transcribe'], #self.cvt
+                'image':self.program.theme.photo['Transcribe'], #self.cvt
                 'sticky':'ew'
                 }
     def taskicon(self):
-        return program.theme.photo['iconTranscribe']
+        return self.program.theme.photo['iconTranscribe']
     def done(self):
         log.info("Transcribe done")
         self.submitform()
@@ -2117,29 +2117,29 @@ class TranscribeT(Transcribe,Tone):
         pass #maybe use some day?
     def makewindow(self, group=None, event=None):
         if group:
-            self.group=program.status.group(group)
+            self.group=self.program.status.group(group)
         """Go through this and tease apart what is needed for tone complexity,
         and move that to tone.
         Note to user: you can't pick these group names (switch later, not here)
         Make another function to switch letters between groups."""
         # log.info("Making transcribe window")
         def changegroupnow(event=None):
-            w=program.taskchooser.getgroup(wsorted=True)
+            w=self.program.taskchooser.getgroup(wsorted=True)
             self.runwindow.wait_window(w)
             if not w.exitFlag.istrue():
                 self.runwindow.on_quit()
                 self.makewindow()
-        cvt=program.params.cvt()
-        ps=program.slices.ps()
-        profile=program.slices.profile()
-        check=program.params.check()
-        self.buttonframew=int(program.screenw/3.5)
+        cvt=self.program.params.cvt()
+        ps=self.program.slices.ps()
+        profile=self.program.slices.profile()
+        check=self.program.params.check()
+        self.buttonframew=int(self.program.screenw/3.5)
         if not check:
             self.getcheck(guess=True)
             if check is None:
                 # log.info("I asked for a check name, but didn't get one.")
                 return
-        if not program.status.groups(wsorted=True):
+        if not self.program.status.groups(wsorted=True):
             log.error(_("I don't have any sorted data for check: {check}, "
                         "ps-profile: {ps}-{profile},").format(check=check,ps=ps,profile=profile))
             return
@@ -2148,21 +2148,21 @@ class TranscribeT(Transcribe,Tone):
             log.error("Problem with log; check earlier message.")
             return
         padx=50
-        if program.settings.lowverticalspace:
+        if self.program.settings.lowverticalspace:
             log.info("Using low vertical space setting")
             pady=0
         else:
             pady=10
         title=_("Rename {ps} {profile} {noun_sg} group ‘{group}’ in ‘{check}’ frame"
                         ).format(ps=ps,profile=profile,
-                        noun_sg=program.params.cvtdict()[cvt]['sg'],
+                        noun_sg=self.program.params.cvtdict()[cvt]['sg'],
                         group=self.group,check=check)
         self.getrunwindow(title=title)
         titlel=ui.Label(self.runwindow.frame,text=title,font='title',
                         row=0,column=0,sticky='ew',padx=padx,pady=pady
                         )
         getformtext=[_("What new name do you want to call this {sg} "
-                        "group?").format(sg=program.params.cvtdict()[cvt]['sg'])]
+                        "group?").format(sg=self.program.params.cvtdict()[cvt]['sg'])]
         if cvt == 'T':
             getformtext.append(_("A label that describes the surface tone form "
                         "in this context would be best, like ‘[˥˥˥ ˨˨˨]’"))
@@ -2267,7 +2267,7 @@ class TranscribeT(Transcribe,Tone):
         Tone.__init__(self)
         self.glyphspossible=None
         Transcribe.__init__(self,parent)
-        program.params.cvt('T')
+        self.program.params.cvt('T')
 class JoinUFgroups(Tone,Task):
     """docstring for JoinUFgroups."""
     def tasktitle(self):
@@ -2280,11 +2280,11 @@ class JoinUFgroups(Tone,Task):
                 'fn':self.tonegroupsjoinrename,
                 'font':'title',
                 'compound':'top', #image bottom, left, right, or top of text
-                'image':program.theme.photo['JoinUF'], #self.cvt
+                'image':self.program.theme.photo['JoinUF'], #self.cvt
                 'sticky':'ew'
                 }
     def taskicon(self):
-        return program.theme.photo['iconJoinUF']
+        return self.program.theme.photo['iconJoinUF']
     def tonegroupsjoinrename(self,**kwargs):
         def clearerror(event=None):
             errorlabel['text'] = ''
@@ -2316,7 +2316,7 @@ class JoinUFgroups(Tone,Task):
                         sense.uftonevalue(uf)
             self.maybewrite()
             self.runwindow.on_quit()
-            program.status.last('joinUF',update=True)
+            self.program.status.last('joinUF',update=True)
             self.tonegroupsjoinrename() #call again, in case needed
         self.makeanalysis()
         def redo(timestamps=_("By manual request")):
@@ -2327,9 +2327,9 @@ class JoinUFgroups(Tone,Task):
             self.tonegroupsjoinrename(redo=True) #call again, in case needed
         def done():
             self.runwindow.on_quit()
-        ps=kwargs.get('ps',program.slices.ps())
-        profile=kwargs.get('profile',program.slices.profile())
-        analysisOK,joinedsince,timestamps=program.status.isanalysisOK(**kwargs) #Should specify which lasts...
+        ps=kwargs.get('ps',self.program.slices.ps())
+        profile=kwargs.get('profile',self.program.slices.profile())
+        analysisOK,joinedsince,timestamps=self.program.status.isanalysisOK(**kwargs) #Should specify which lasts...
         if not analysisOK:
             if not kwargs.get('redo'):
                 #otherwise, the user will almost certainly be upset to have to do it later
@@ -2337,7 +2337,7 @@ class JoinUFgroups(Tone,Task):
             else:
                 txt=_("The analysis still isn't OK after retrying; "
                         "Check your settings and try again (e.g., "
-                        "{ps} {profile} checks: {checks})").format(ps=ps, profile=profile, checks=program.status.checks())
+                        "{ps} {profile} checks: {checks})").format(ps=ps, profile=profile, checks=self.program.status.checks())
                 ErrorNotice(txt,wait=True,parent=self)
             return
         self.getrunwindow(msg=_("Preparing to join draft underlying form groups"
@@ -2363,7 +2363,7 @@ class JoinUFgroups(Tone,Task):
                 "the groups you create here, you can start over with an new "
                 "analysis by pressing the ‘{redo}’ button. \nOtherwise, these "
                 "joined groups will be reflected in reports until you sort "
-                "more data.").format(ps=ps,profile=profile,program=program.name,
+                "more data.").format(ps=ps,profile=profile,program=self.program.name,
                                                 redo=redotext.replace('\n',' '))
         rwrow+=1
         i=ui.Label(self.runwindow.frame,text=text,
@@ -2456,13 +2456,13 @@ class RecordCitation(Record,Segments):
                 'fn':self.showentryformstorecord,
                 'font':'title',
                 'compound':'top', #image bottom, left, right, or top of text
-                'image':program.theme.photo['WordRec'],
+                'image':self.program.theme.photo['WordRec'],
                 'sticky':'ew'
                 }
     def tasktitle(self):
         return _("Record Words") #Citation Forms
     def taskicon(self):
-        return program.theme.photo['iconWordRec']
+        return self.program.theme.photo['iconWordRec']
     def __init__(self, parent): #frame, filename=None
         Segments.__init__(self,parent)
         # ui.Window.__init__(self,parent)
@@ -2476,11 +2476,11 @@ class RecordCitationT(Record,Tone):
                 'fn':self.showtonegroupexs,
                 'font':'title',
                 'compound':'top', #image bottom, left, right, or top of text
-                'image':program.theme.photo['TRec'],
+                'image':self.program.theme.photo['TRec'],
                 'sticky':'ew'
                 }
     def taskicon(self):
-        return program.theme.photo['iconTRec']
+        return self.program.theme.photo['iconTRec']
     def tasktitle(self):
         return _("Record Tone") #Citation Form Sorting in Tone Frames
     def __init__(self, parent): #frame, filename=None
@@ -2491,7 +2491,7 @@ class ReportCitation(Report,Segments,Task):
     def tasktitle(self):
         return _("Alphabet Report (Not background)") # on One Data Slice
     def taskicon(self):
-        return program.theme.photo['iconReport']
+        return self.program.theme.photo['iconReport']
     def tooltip(self):
         return _("This report gives you reports for one lexical "
                 "category, in one syllable profile. \nIt does "
@@ -2502,30 +2502,30 @@ class ReportCitation(Report,Segments,Task):
                 'fn':self.do,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.theme.photo['Report'],
+                'image':self.program.theme.photo['Report'],
                 'sticky':'ew'
                 }
     def runcheck(self):
         """This needs to get stripped down and updated for just this check"""
-        program.settings.storesettingsfile()
+        self.program.settings.storesettingsfile()
         t=(_('Run Check'))
         log.info("Running report...")
         log.info("Using these regexs: {rx}".format(rx=self.rxdict))
         # exit() #for testing
         i=0
-        cvt=program.params.cvt()
+        cvt=self.program.params.cvt()
         if cvt == 'T':
-            w=program.taskchooser.getcvt()
+            w=self.program.taskchooser.getcvt()
             w.wait_window(w)
-            cvt=program.params.cvt()
+            cvt=self.program.params.cvt()
             if cvt == 'T':
                 ErrorNotice(_("Pick Consonants, Vowels, or CV for this report."))
                 return
-        ps=program.slices.ps()
+        ps=self.program.slices.ps()
         if not ps:
             self.getps()
-        check=program.params.check()
-        profile=program.slices.profile()
+        check=self.program.params.check()
+        profile=self.program.slices.profile()
         if not profile:
             self.getprofile()
         if not profile or not ps:
@@ -2539,10 +2539,10 @@ class ReportCitation(Report,Segments,Task):
                                                  ps=ps,check=check,profile=profile))
         self.getresults()
     def __init__(self, parent): #frame, filename=None
-        program.params.ftype('lc')
+        self.program.params.ftype('lc')
         Segments.__init__(self,parent)
         self.do=self.getresults
-        program.status.group(None) #default to reports with all groups
+        self.program.status.group(None) #default to reports with all groups
         Task.__init__(self,parent)
         Report.__init__(self)
 class ReportCitationBackground(Background,ReportCitation):
@@ -2611,7 +2611,7 @@ class ReportCitationMultislice(MultisliceS,ReportCitation):
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.theme.photo['VCCVRepcomp'],
+                'image':self.program.theme.photo['VCCVRepcomp'],
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
@@ -2623,7 +2623,7 @@ class ReportConsultantCheck(Report,Tone,Task):
     def tasktitle(self):
         return _("Consultant Check")
     def taskicon(self):
-        return program.theme.photo['icontall']
+        return self.program.theme.photo['icontall']
     def tooltip(self):
         return _("This task automates work normally done before a consultant "
                 "check: \n- reloads status data, and \n- runs comprehensive tone "
@@ -2634,7 +2634,7 @@ class ReportConsultantCheck(Report,Tone,Task):
                 # column=0,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.theme.photo['icontall'],
+                'image':self.program.theme.photo['icontall'],
                 'sticky':'ew'
                 }
     def __init__(self, parent): #frame, filename=None
@@ -2646,7 +2646,7 @@ class ReportCitationT(Report,Tone,Task):
     def tasktitle(self):
         return _("Tone Report (not backgrounded)")
     def taskicon(self):
-        return program.theme.photo['iconTRep']
+        return self.program.theme.photo['iconTRep']
     def tooltip(self):
         return _("This report gives you report for one lexical "
                 "category, in one syllable profile. \nIt does "
@@ -2656,7 +2656,7 @@ class ReportCitationT(Report,Tone,Task):
                 'fn':self.do,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.theme.photo['TRep'],
+                'image':self.program.theme.photo['TRep'],
                 'sticky':'ew'
                 }
     def __init__(self, parent):
@@ -2670,7 +2670,7 @@ class ReportCitationTBackground(Background,ReportCitationT):
     def tasktitle(self):
         return _("Tone Report")
     def taskicon(self):
-        return program.theme.photo['iconTRep']
+        return self.program.theme.photo['iconTRep']
     def tooltip(self):
         return _("This report gives you report for one lexical "
                 "category, in one syllable profile. \nIt does "
@@ -2680,7 +2680,7 @@ class ReportCitationTBackground(Background,ReportCitationT):
                 'fn':self.do,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.theme.photo['TRep'],
+                'image':self.program.theme.photo['TRep'],
                 'sticky':'ew'
                 }
     def __init__(self, parent):
@@ -2702,7 +2702,7 @@ class ReportCitationTLBackground(Background,ReportCitationTL):
     def tasktitle(self):
         return _("Tone Report (by frames)")
     def taskicon(self):
-        return program.theme.photo['iconTRep']
+        return self.program.theme.photo['iconTRep']
     def tooltip(self):
         return _("This report gives you report for one lexical "
                 "category, in one syllable profile. \nIt does "
@@ -2712,7 +2712,7 @@ class ReportCitationTLBackground(Background,ReportCitationTL):
                 'fn':self.do,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.theme.photo['TRep'],
+                'image':self.program.theme.photo['TRep'],
                 'sticky':'ew'
                 }
     def __init__(self, parent):
@@ -2723,7 +2723,7 @@ class ReportCitationMultisliceT(MultisliceT,ReportCitationT):
     def tasktitle(self):
         return _("Multislice Tone Report (not background)")
     def taskicon(self):
-        return program.theme.photo['iconTRepcomp']
+        return self.program.theme.photo['iconTRepcomp']
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
                 "categories, and across multiple syllable profiles. \nIt does "
@@ -2733,7 +2733,7 @@ class ReportCitationMultisliceT(MultisliceT,ReportCitationT):
                 'fn':self.do,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.theme.photo['TRepcomp'],
+                'image':self.program.theme.photo['TRepcomp'],
                 'sticky':'ew'
                 }
     def __init__(self, parent):
@@ -2744,7 +2744,7 @@ class ReportCitationMultisliceTL(MultisliceT,ReportCitationTL):
     def tasktitle(self):
         return _("Multislice Tone Report (not background)")
     def taskicon(self):
-        return program.theme.photo['iconTRepcomp']
+        return self.program.theme.photo['iconTRepcomp']
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
                 "categories, and across multiple syllable profiles. \nIt does "
@@ -2754,7 +2754,7 @@ class ReportCitationMultisliceTL(MultisliceT,ReportCitationTL):
                 'fn':self.do,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.theme.photo['TRepcomp'],
+                'image':self.program.theme.photo['TRepcomp'],
                 'sticky':'ew'
                 }
     def __init__(self, parent):
@@ -2765,7 +2765,7 @@ class ReportCitationMultisliceTBackground(Background,ReportCitationMultisliceT):
     def tasktitle(self):
         return _("Multislice Tone Report")
     def taskicon(self):
-        return program.theme.photo['iconTRepcomp']
+        return self.program.theme.photo['iconTRepcomp']
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
                 "categories, and across multiple syllable profiles. \nIt does "
@@ -2775,7 +2775,7 @@ class ReportCitationMultisliceTBackground(Background,ReportCitationMultisliceT):
                 'fn':self.do,
                 'font':'title',
                 'compound':'bottom', #image bottom, left, right, or top of text
-                'image':program.theme.photo['TRepcomp'],
+                'image':self.program.theme.photo['TRepcomp'],
                 'sticky':'ew'
                 }
     def __init__(self, parent):
@@ -2786,7 +2786,7 @@ class ReportCitationMultisliceTLBackground(Background,ReportCitationMultisliceTL
     def tasktitle(self):
         return _("Multislice Tone Report (by location)")
     def taskicon(self):
-        return program.theme.photo['iconTRepcomp']
+        return self.program.theme.photo['iconTRepcomp']
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
                 "categories, and across multiple syllable profiles. \nIt does "

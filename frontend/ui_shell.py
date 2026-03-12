@@ -27,13 +27,13 @@ log=logsetup.getlog(__name__)
 
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('program', 'counts', 'me', '_', 'ErrorNotice', 'askerror', 'sysrestart', 'sysshutdown', 'pythonmodules', 'findexecutable', 'main', 'testversion', 'reverttomain', 'buttonwraplength', 'regexdict', 'interfacelang', 'nowruntime', 'callerfn', 'logfinished', 'nn', 'unlist', 'xlp', 'rx', 'exampletype', 'dictofchilddicts', 'dictscompare', 'flatten', 'grouptype', 't', 'openweburl', 'isinterneturl', 'scaleimageifthere', 'loadCAWL', 'saveimagefile', 'ImageFrame', 'TranscribeC', 'TranscribeV', 'TranscribeS', 'ResultWindow', 'Multislice', 'Multicheck', 'Tone', 'Segments', 'ToneFrames', 'CheckParameters', 'Glosslangs', 'Senses', 'WordCollection', 'Parse', 'Sort', 'HasMenus', 'Menus', 'StatusFrame', 'TaskDressing', 'TaskChooser', 'Repository', 'Mercurial', 'Git', 'GitReadOnly', 'Analysis', 'SliceDict', 'StatusDict', 'ExampleDict', 'DictbyLang', 'Settings', 'Entry', 'updateazt', 'SortGroupButtonFrame', 'Alphabet', 'FileParser', 'Sound', 'SortT', 'JoinUFgroups', 'ReportCitationT', 'ExportData', 'AlphabetChart', 'AlphabetComparisonPages', 'ReportCitationBackground', 'ReportCitationMulticheckBackground', 'ReportCitationMultichecksliceBackground', 'ReportCitationTBackground', 'ReportCitationTLBackground', 'ReportCitationMultisliceTBackground', 'ReportCitationMultisliceTLBackground', 'ReportCitationByUFBackground', 'ReportCitationByUFMulticheckBackground', 'ReportCitationByUFMultichecksliceBackground', 'WordCollectionCitation', 'WordCollectionCitationwRecordings', 'WordCollectnParse', 'WordCollectnParsewRecordings', 'RecordCitation', 'SortSyllables', 'SortV', 'SortC', 'RecordCitationT', 'WordsParse', 'TranscribeT', 'ReportConsultantCheck', 'sound', 'scaledimage', 'getimagelocationURI'):
+    if name in ('counts', 'me', '_', 'ErrorNotice', 'askerror', 'sysrestart', 'sysshutdown', 'pythonmodules', 'findexecutable', 'main', 'testversion', 'reverttomain', 'buttonwraplength', 'regexdict', 'interfacelang', 'nowruntime', 'callerfn', 'logfinished', 'nn', 'unlist', 'xlp', 'rx', 'exampletype', 'dictofchilddicts', 'dictscompare', 'flatten', 'grouptype', 't', 'openweburl', 'isinterneturl', 'scaleimageifthere', 'loadCAWL', 'saveimagefile', 'ImageFrame', 'TranscribeC', 'TranscribeV', 'TranscribeS', 'ResultWindow', 'Multislice', 'Multicheck', 'Tone', 'Segments', 'ToneFrames', 'CheckParameters', 'Glosslangs', 'Senses', 'WordCollection', 'Parse', 'Sort', 'HasMenus', 'Menus', 'StatusFrame', 'TaskDressing', 'TaskChooser', 'Repository', 'Mercurial', 'Git', 'GitReadOnly', 'Analysis', 'SliceDict', 'StatusDict', 'ExampleDict', 'DictbyLang', 'Settings', 'Entry', 'updateazt', 'SortGroupButtonFrame', 'Alphabet', 'FileParser', 'Sound', 'SortT', 'JoinUFgroups', 'ReportCitationT', 'ExportData', 'AlphabetChart', 'AlphabetComparisonPages', 'ReportCitationBackground', 'ReportCitationMulticheckBackground', 'ReportCitationMultichecksliceBackground', 'ReportCitationTBackground', 'ReportCitationTLBackground', 'ReportCitationMultisliceTBackground', 'ReportCitationMultisliceTLBackground', 'ReportCitationByUFBackground', 'ReportCitationByUFMulticheckBackground', 'ReportCitationByUFMultichecksliceBackground', 'WordCollectionCitation', 'WordCollectionCitationwRecordings', 'WordCollectnParse', 'WordCollectnParsewRecordings', 'RecordCitation', 'SortSyllables', 'SortV', 'SortC', 'RecordCitationT', 'WordsParse', 'TranscribeT', 'ReportConsultantCheck', 'sound', 'scaledimage', 'getimagelocationURI'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('program', 'counts', 'me', '_', 'ErrorNotice', 'askerror', 'sysrestart', 'sysshutdown', 'pythonmodules', 'findexecutable', 'main', 'testversion', 'reverttomain', 'buttonwraplength', 'regexdict', 'interfacelang', 'nowruntime', 'callerfn', 'logfinished', 'nn', 'unlist', 'xlp', 'rx', 'exampletype', 'dictofchilddicts', 'dictscompare', 'flatten', 'grouptype', 't', 'openweburl', 'isinterneturl', 'scaleimageifthere', 'loadCAWL', 'saveimagefile', 'ImageFrame', 'TranscribeC', 'TranscribeV', 'TranscribeS', 'ResultWindow', 'Multislice', 'Multicheck', 'Tone', 'Segments', 'ToneFrames', 'CheckParameters', 'Glosslangs', 'Senses', 'WordCollection', 'Parse', 'Sort', 'HasMenus', 'Menus', 'StatusFrame', 'TaskDressing', 'TaskChooser', 'Repository', 'Mercurial', 'Git', 'GitReadOnly', 'Analysis', 'SliceDict', 'StatusDict', 'ExampleDict', 'DictbyLang', 'Settings', 'Entry', 'updateazt', 'SortGroupButtonFrame', 'Alphabet', 'FileParser', 'Sound', 'SortT', 'JoinUFgroups', 'ReportCitationT', 'ExportData', 'AlphabetChart', 'AlphabetComparisonPages', 'ReportCitationBackground', 'ReportCitationMulticheckBackground', 'ReportCitationMultichecksliceBackground', 'ReportCitationTBackground', 'ReportCitationTLBackground', 'ReportCitationMultisliceTBackground', 'ReportCitationMultisliceTLBackground', 'ReportCitationByUFBackground', 'ReportCitationByUFMulticheckBackground', 'ReportCitationByUFMultichecksliceBackground', 'WordCollectionCitation', 'WordCollectionCitationwRecordings', 'WordCollectnParse', 'WordCollectnParsewRecordings', 'RecordCitation', 'SortSyllables', 'SortV', 'SortC', 'RecordCitationT', 'WordsParse', 'TranscribeT', 'ReportConsultantCheck', 'sound', 'scaledimage', 'getimagelocationURI'):
+for name in ('counts', 'me', '_', 'ErrorNotice', 'askerror', 'sysrestart', 'sysshutdown', 'pythonmodules', 'findexecutable', 'main', 'testversion', 'reverttomain', 'buttonwraplength', 'regexdict', 'interfacelang', 'nowruntime', 'callerfn', 'logfinished', 'nn', 'unlist', 'xlp', 'rx', 'exampletype', 'dictofchilddicts', 'dictscompare', 'flatten', 'grouptype', 't', 'openweburl', 'isinterneturl', 'scaleimageifthere', 'loadCAWL', 'saveimagefile', 'ImageFrame', 'TranscribeC', 'TranscribeV', 'TranscribeS', 'ResultWindow', 'Multislice', 'Multicheck', 'Tone', 'Segments', 'ToneFrames', 'CheckParameters', 'Glosslangs', 'Senses', 'WordCollection', 'Parse', 'Sort', 'HasMenus', 'Menus', 'StatusFrame', 'TaskDressing', 'TaskChooser', 'Repository', 'Mercurial', 'Git', 'GitReadOnly', 'Analysis', 'SliceDict', 'StatusDict', 'ExampleDict', 'DictbyLang', 'Settings', 'Entry', 'updateazt', 'SortGroupButtonFrame', 'Alphabet', 'FileParser', 'Sound', 'SortT', 'JoinUFgroups', 'ReportCitationT', 'ExportData', 'AlphabetChart', 'AlphabetComparisonPages', 'ReportCitationBackground', 'ReportCitationMulticheckBackground', 'ReportCitationMultichecksliceBackground', 'ReportCitationTBackground', 'ReportCitationTLBackground', 'ReportCitationMultisliceTBackground', 'ReportCitationMultisliceTLBackground', 'ReportCitationByUFBackground', 'ReportCitationByUFMulticheckBackground', 'ReportCitationByUFMultichecksliceBackground', 'WordCollectionCitation', 'WordCollectionCitationwRecordings', 'WordCollectnParse', 'WordCollectnParsewRecordings', 'RecordCitation', 'SortSyllables', 'SortV', 'SortC', 'RecordCitationT', 'WordsParse', 'TranscribeT', 'ReportConsultantCheck', 'sound', 'scaledimage', 'getimagelocationURI'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 
@@ -1256,7 +1256,7 @@ class StatusFrame(ui.Frame):
         self.glosslangline()
         if isinstance(self.task,Segments) and not isinstance(self.task,TranscribeS):
             self.fieldsline()
-        if ('slices' in program and
+        if (hasattr(self.program, 'slices') and
                 not isinstance(self.task,(TaskChooser,
                                             Parse,
                                             TranscribeS,
@@ -1439,13 +1439,6 @@ class TaskDressing(HasMenus,ui.Window):
                 log.info(_("Didn't find {attr} in {settings}").format(attr=attr,settings=self.program.settings))
         # #For convenience:
         # self.analang=self.program.params.analang()
-    def makecvtok(self):
-        # log.info("cvt: {}".format(self.program.params.cvt()))
-        if isinstance(self,Tone) and not self.program.params.cvt() == 'T':
-            self.program.settings.setcvt('T')
-        if isinstance(self,Segments) and (self.program.params.cvt()
-                                                    not in ['V','C','CV']):
-            self.program.settings.setcvt('V')
     def trystatusframelater(self,dict):
         self.program.settings.setrefreshdelay()
         self.makestatusframe_after_id=self.after(
@@ -1462,7 +1455,7 @@ class TaskDressing(HasMenus,ui.Window):
         StringVar().set()"""
         if self.exitFlag.istrue():
             return
-        if 'slices' not in program:
+        if not hasattr(self.program, 'slices'):
             # slices is done by taskchooser on boot, but later
             # don't update both taskchooser and task, just the visible one
             self.trystatusframelater(dict)
@@ -2718,7 +2711,6 @@ class TaskDressing(HasMenus,ui.Window):
                     'showdetails']:
             if not hasattr(self,k):
                     setattr(self,k,False)
-        self.makecvtok() #this just enforces a good cvt value
         # Make the actual window
         ui.Window.__init__(self,parent,withdrawn=True)
         self.mainwindow=True
@@ -3049,7 +3041,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         if self.program.praat:
             bttext+='; '+_("right click to open in praat")
             b.bind('<Button-3>',
-                    lambda x: executables.praatopen(program, self._filenameURL))
+                    lambda x: executables.praatopen(self.program, self._filenameURL))
         bt=ui.ToolTip(b,bttext)
     def selectbutton(self):
         if self.kwargs.get('on_select'):

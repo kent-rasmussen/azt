@@ -381,8 +381,8 @@ class App:
         FileParser(self) #needs self.filename, pick up self.analang from file
         self.repocheck()
         Settings(self) #needs self.filename, pick up self.analang from file
-        CheckParameters(self) #depends on settings (nothing but self.analang?)
         self.settings.post_lift_init()
+        CheckParameters(self) #depends on settings (nothing but self.analang?)
         ExampleDict(self) #needed for makestatus, needs params,slices,data
         Alphabet(self) #after slicedict is up; needs params
         # SliceDict(adhoc,profilesbysense,self) #needs adhoc,profilesbysense

@@ -155,6 +155,8 @@ class Settings(SettingsUI):
                                 'menu',
                                 'mainrelief',
                                 'fontthemesmall',
+                                'nominalps',
+                                'verbalps',
                                 'secondformfield',
                                 'soundsettingsok',
                                 'buttoncolumns',
@@ -719,30 +721,38 @@ class Settings(SettingsUI):
         if value:
             self._alphabet_pagesize=value
         return getattr(self,'_alphabet_pagesize','A4')
-    def pss(self):
-        _log.info(_("checking these lexical category names for plausible noun "
-                "and verb names: {pss}").format(pss=self.program.db.pss))
+    def guess_nominalps(self):
         topn=3 #just in case N and V aren't the first two, finish with top
-        _log.info(_("Looking at pss {pss}").format(pss=self.program.db.pss))
+        n_opts=['N','n','Noun','noun', 'Nom','nom','S','s',
+                'Sustantivo','sustantivo']
+        _log.info(_("Looking for any of {opts} in {pss}"
+                    "").format(opts=n_opts, pss=self.program.db.pss))
         for ps in reversed(self.program.db.pss[:topn]):
-            _log.info(_("Looking at ps {ps}").format(ps=ps))
-            if ps in ['N','n','Noun','noun',
-                    'Nom','nom',
-                    'S','s','Sustantivo','sustantivo'
-                    ]:
+            if ps in n_opts:
                 self.nominalps=ps
-            elif ps in ['V','v','Verb','verb',
-                    'Verbe','verbe',
-                    'Verbo','verbo'
-                    ]:
+                break
+        if not hasattr(self,'nominalps'): #don't leave without something
+            self.nominalps='Noun'
+    def guess_verbalps(self):
+        topn=3 #just in case N and V aren't the first two, finish with top
+        v_opts=['V','v','Verb','verb', 'Verbe','verbe', 'Verbo','verbo']
+        _log.info(_("Looking for any of {opts} in {pss}"
+                    "").format(opts=v_opts, pss=self.program.db.pss))
+        for ps in reversed(self.program.db.pss[:topn]):
+            if ps in v_opts:
                 self.verbalps=ps
-            # else:
-            #     _log.error("Not sure what to do with top {} ps {}".format(
-            #                                                         topn,ps))
-        if not hasattr(self,'nominalps'):
-                self.nominalps='Noun'
-        if not hasattr(self,'verbalps'):
-                self.verbalps='Verb'
+                break
+        if not hasattr(self,'verbalps'): #don't leave without something
+            self.verbalps='Verb'
+    def pss(self):
+        if hasattr(self,'nominalps'):
+            log.info(_("Found nominal ps {ps} in settings").format(ps=self.nominalps))
+        else:
+            self.guess_nominalps()
+        if hasattr(self,'verbalps'):
+            log.info(_("Found verbal ps {ps} in settings").format(ps=self.verbalps))
+        else:
+            self.guess_verbalps()
         try:
             _log.info(_("Using '{noun}' for nouns, and '{verb}' for verbs").format(
                 noun=self.nominalps,
@@ -751,11 +761,6 @@ class Settings(SettingsUI):
             _log.info(_("Problem with finding a nominal and verbal lexical "
             "category (looked in first two of [{pss}])")
             .format(pss=self.program.db.pss))
-        if self.secondformfield:
-            if self.nominalps in self.secondformfield:
-                self.pluralname=self.secondformfield[self.nominalps]
-            if self.verbalps in self.secondformfield:
-                self.imperativename=self.secondformfield[self.verbalps]
     def makesecondformfieldsOK(self):
         if self.nominalps not in self.secondformfield:
             self.program.taskchooser.mainwindowis.getsecondformfieldN()
@@ -769,17 +774,16 @@ class Settings(SettingsUI):
         """I think this is lift specific; may move it to defaults, if not."""
         # _log.info(self.program.db.fieldnames)
         try:
-            fieldnames=self.program.db.fieldnames[self.analang]
+            self.fieldnames=self.program.db.fieldnames[self.analang]
         except KeyError:
-            fieldnames=[]
-        self.secondformfield={}
-        _log.info(_("Fields found in lexicon: {fields}").format(fields=fieldnames))
+            self.fieldnames=[]
+        _log.info(_("Fields found in lexicon: {fields}").format(fields=self.fieldnames))
+    def guess_nominal_secondformfield(self):
         self.plopts=['Plural', 'plural', 'pl', 'Pluriel', 'pluriel']
-        self.impopts=['Imperative', 'imperative', 'imp', 'Imp', 'Imperatif',
-                                                    'imperatif']
         for opt in self.plopts:
-            if opt in fieldnames:
+            if opt in self.fieldnames:
                 self.secondformfield[self.nominalps]=self.pluralname=opt
+                break
         try:
             _log.info(_("Plural field name: {name}").format(name=self.pluralname))
             for entry in self.program.db.entries:
@@ -787,9 +791,13 @@ class Settings(SettingsUI):
         except AttributeError:
             _log.info(_('Looks like there is no Plural field in the database'))
             self.pluralname=None
+    def guess_verbal_secondformfield(self):
+        self.impopts=['Imperative', 'imperative', 'imp', 'Imp', 
+                        'Imperatif', 'imperatif']
         for opt in self.impopts:
-            if opt in fieldnames:
+            if opt in self.fieldnames:
                 self.secondformfield[self.verbalps]=self.imperativename=opt
+                break
         try:
             _log.info(_("Imperative field name: {name}").format(name=self.imperativename))
             for entry in self.program.db.entries:
@@ -797,6 +805,20 @@ class Settings(SettingsUI):
         except AttributeError:
             _log.info(_('Looks like there is no Imperative field in the database'))
             self.imperativename=None
+    def secondformfields(self):
+        if hasattr(self,'secondformfield') and self.secondformfield:
+            if self.nominalps in self.secondformfield:
+                self.pluralname=self.secondformfield[self.nominalps]
+            else:
+                self.guess_nominal_secondformfield()
+            if self.verbalps in self.secondformfield:
+                self.imperativename=self.secondformfield[self.verbalps]
+            else:
+                self.guess_verbal_secondformfield()
+        else:
+            self.secondformfield={}
+            self.guess_nominal_secondformfield()
+            self.guess_verbal_secondformfield()
     def checkforpolygraphsindata(self):
         for lang in self.program.db.s:
             for sclass in [sc for sc in self.program.db.s[lang]
@@ -1641,15 +1663,6 @@ class Settings(SettingsUI):
         #         xyz in self.adnlangnames and
         #         self.adnlangnames[xyz]):
         #     self.languagenames[xyz]=self.adnlangnames[xyz]
-    def makeeverythingok(self):
-        try:
-            self.program.status.makecvtok()
-            self.program.slices.makepsok()
-            self.program.slices.makeprofileok()
-            self.program.status.makecheckok() #this is intentionally broad: *any* check
-        except KeyError as e:
-            _log.info(_("Maybe status/slices aren't set up yet."))
-        # self.program.status.makegroupok(wsorted=True)
     def setrefreshdelay(self):
         """This sets the main window refresh delay, in miliseconds"""
         if (hasattr(self.program.taskchooser.mainwindowis,'runwindow') and
@@ -1698,8 +1711,10 @@ class Settings(SettingsUI):
             _log.error(_("No analysis language; exiting."))
             return
         #set the field names used in this db:
+        log.info(f"{self.secondformfield=}")
         self.pss() #sets self.nominalps and self.verbalps
-        self.fields() #sets self.pluralname and self.imperativename
+        self.fields() #just reports
+        self.secondformfields() #sets self.pluralname and self.imperativename
         self.langnames()
         self.guessaudiolang()
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
@@ -1715,7 +1730,7 @@ class Settings(SettingsUI):
         self.loadsettingsfile(setting='toneframes')
         self.loadsettingsfile(setting='adhocgroups')
         self.loadsettingsfile(setting='alphabet')
-        self.makeeverythingok()
+        # self.makeeverythingok() #do in task
         """The following might be OK here, but need to be OK later, too."""
         # """The following should only be done after word collection"""
         # if self.taskchooser.donew['collectionlc']:

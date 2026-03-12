@@ -5,13 +5,13 @@ log=logsetup.getlog(__name__)
 
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('program', 'counts', 'me', '_', 'ErrorNotice', 'askerror', 'sysrestart', 'pythonmodules', 'findexecutable', 'main', 'testversion', 'reverttomain', 'buttonwraplength', 'regexdict', 'interfacelang', 'nowruntime', 'callerfn', 'logfinished', 'nn', 'unlist', 'xlp', 'rx', 'exampletype', 'dictofchilddicts', 'dictscompare', 'flatten', 'grouptype', 't', 'openweburl', 'isinterneturl', 'scaleimageifthere', 'loadCAWL', 'saveimagefile', 'ImageFrame', 'TranscribeC', 'TranscribeV', 'TranscribeS', 'ResultWindow', 'Multislice', 'Multicheck', 'Tone', 'Segments', 'ToneFrames', 'CheckParameters', 'Glosslangs', 'Senses', 'WordCollection', 'Parse', 'Sort', 'HasMenus', 'Menus', 'StatusFrame', 'TaskDressing', 'TaskChooser', 'Repository', 'Mercurial', 'Git', 'GitReadOnly', 'Analysis', 'SliceDict', 'StatusDict', 'ExampleDict', 'DictbyLang', 'Settings', 'Entry', 'updateazt', 'LiftChooser', 'SortGroupButtonFrame'):
+    if name in ('counts', 'me', '_', 'ErrorNotice', 'askerror', 'sysrestart', 'pythonmodules', 'findexecutable', 'main', 'testversion', 'reverttomain', 'buttonwraplength', 'regexdict', 'interfacelang', 'nowruntime', 'callerfn', 'logfinished', 'nn', 'unlist', 'xlp', 'rx', 'exampletype', 'dictofchilddicts', 'dictscompare', 'flatten', 'grouptype', 't', 'openweburl', 'isinterneturl', 'scaleimageifthere', 'loadCAWL', 'saveimagefile', 'ImageFrame', 'TranscribeC', 'TranscribeV', 'TranscribeS', 'ResultWindow', 'Multislice', 'Multicheck', 'Tone', 'Segments', 'ToneFrames', 'CheckParameters', 'Glosslangs', 'Senses', 'WordCollection', 'Parse', 'Sort', 'HasMenus', 'Menus', 'StatusFrame', 'TaskDressing', 'TaskChooser', 'Repository', 'Mercurial', 'Git', 'GitReadOnly', 'Analysis', 'SliceDict', 'StatusDict', 'ExampleDict', 'DictbyLang', 'Settings', 'Entry', 'updateazt', 'LiftChooser', 'SortGroupButtonFrame'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('program', 'counts', 'me', '_', 'ErrorNotice', 'askerror', 'sysrestart', 'pythonmodules', 'findexecutable', 'main', 'testversion', 'reverttomain', 'buttonwraplength', 'regexdict', 'interfacelang', 'nowruntime', 'callerfn', 'logfinished', 'nn', 'unlist', 'xlp', 'rx', 'exampletype', 'dictofchilddicts', 'dictscompare', 'flatten', 'grouptype', 't', 'openweburl', 'isinterneturl', 'scaleimageifthere', 'loadCAWL', 'saveimagefile', 'ImageFrame', 'TranscribeC', 'TranscribeV', 'TranscribeS', 'ResultWindow', 'Multislice', 'Multicheck', 'Tone', 'Segments', 'ToneFrames', 'CheckParameters', 'Glosslangs', 'Senses', 'WordCollection', 'Parse', 'Sort', 'HasMenus', 'Menus', 'StatusFrame', 'TaskDressing', 'TaskChooser', 'Repository', 'Mercurial', 'Git', 'GitReadOnly', 'Analysis', 'SliceDict', 'StatusDict', 'ExampleDict', 'DictbyLang', 'Settings', 'Entry', 'updateazt', 'LiftChooser', 'SortGroupButtonFrame'):
+for name in ('counts', 'me', '_', 'ErrorNotice', 'askerror', 'sysrestart', 'pythonmodules', 'findexecutable', 'main', 'testversion', 'reverttomain', 'buttonwraplength', 'regexdict', 'interfacelang', 'nowruntime', 'callerfn', 'logfinished', 'nn', 'unlist', 'xlp', 'rx', 'exampletype', 'dictofchilddicts', 'dictscompare', 'flatten', 'grouptype', 't', 'openweburl', 'isinterneturl', 'scaleimageifthere', 'loadCAWL', 'saveimagefile', 'ImageFrame', 'TranscribeC', 'TranscribeV', 'TranscribeS', 'ResultWindow', 'Multislice', 'Multicheck', 'Tone', 'Segments', 'ToneFrames', 'CheckParameters', 'Glosslangs', 'Senses', 'WordCollection', 'Parse', 'Sort', 'HasMenus', 'Menus', 'StatusFrame', 'TaskDressing', 'TaskChooser', 'Repository', 'Mercurial', 'Git', 'GitReadOnly', 'Analysis', 'SliceDict', 'StatusDict', 'ExampleDict', 'DictbyLang', 'Settings', 'Entry', 'updateazt', 'LiftChooser', 'SortGroupButtonFrame'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 
@@ -48,7 +48,7 @@ class Alphabet():
     until all is confirmed, then force it all to happen at once (maybe backup
     before doing so?)
 
-    program.slices.senses() is sensitive to ps and profile, and pulls from syllableprofiles
+    self.program.slices.senses() is sensitive to ps and profile, and pulls from syllableprofiles
     iterating over that with sense.annotationvaluedictbyftypelang(ftype,lang)
     should provide the different checks and values for each sense.
 
@@ -142,7 +142,7 @@ class Alphabet():
             raise
         return self._distinguished
     def distinguished_by_cvt(self,**kwargs):
-        cvt=kwargs.get('cvt',program.params.cvt())
+        cvt=kwargs.get('cvt',self.program.params.cvt())
         return self.distinguished()[cvt]
     def distinguish(self, g, **kwargs):
         self.distinguished_by_cvt().add(g)
@@ -238,7 +238,7 @@ class Alphabet():
         return {self.cvt_of_item(m) for m in self.glyph_members()[glyph]}
     def cvt_of_item(self,x):
         check=self.parse_verificationcode(x)['check']
-        return program.params.cvt_of_check(check)
+        return self.program.params.cvt_of_check(check)
     def glyph_of_item(self,item):
         for glyph in self.glyph_members():
             if item in self.glyph_members()[glyph]:
@@ -246,11 +246,11 @@ class Alphabet():
     def conflict_code(self,code):
         return code.split('_')[:4]
     def verificationcode(self,**kwargs):
-        ps=kwargs.get('ps',program.slices.ps())
-        profile=kwargs.get('profile',program.slices.profile())
+        ps=kwargs.get('ps',self.program.slices.ps())
+        profile=kwargs.get('profile',self.program.slices.profile())
         ftype=kwargs.get('ftype',self.ftype)
-        check=kwargs.get('check',program.params.check())
-        group=kwargs.get('group',program.status.group())
+        check=kwargs.get('check',self.program.params.check())
+        group=kwargs.get('group',self.program.status.group())
         return '_'.join([ps,profile,ftype,check,group])
     def parse_verificationcode(self,code):
         ps,profile,ftype,check,group=code.split('_')
@@ -259,8 +259,8 @@ class Alphabet():
     def refresh_items(self):
         self.items_present=set()
         k={'ftype':self.ftype} #ftype may need to iterate some day
-        program.settings.reloadstatusdata() # culled here
-        d=program.status.dict()
+        self.program.settings.reloadstatusdata() # culled here
+        d=self.program.status.dict()
         for k['cvt'],ps_d in d.items(): #read cvt from status
             for k['ps'],pr_d in ps_d.items():
                 for k['profile'],ch_d in pr_d.items():
@@ -331,7 +331,7 @@ class Alphabet():
         for i in gm[x]:
             for j in gm[y]:
                 if (self.conflict_code(i) != self.conflict_code(j) or
-                            not program.status.isdistinguished(
+                            not self.program.status.isdistinguished(
                                     self.parse_verificationcode(j)['group'],
                                     **self.parse_verificationcode(i))):
                     log.info(_("Found undistinguished items {item1} and {item2}").format(item1=i, item2=j))
@@ -393,7 +393,7 @@ class Alphabet():
         """I need to rethink this method entirely. How to make sure all symbols
         are available to the alphabet chart?
         """
-        order=program.settings.alpha_order()
+        order=self.program.settings.alpha_order()
         """this is a dict keyed by C,V; iterate appropriately!"""
         glyphdict=self.glyphdict()
         """Extra symbols not in order"""
@@ -421,14 +421,14 @@ class Alphabet():
     def glyphs(self):
         return [k for k,v in self.glyph_members().items()
                         if [i for i in v
-                            if self.cvt_of_item(i) == program.params.cvt()]
+                            if self.cvt_of_item(i) == self.program.params.cvt()]
                 ]
     def save_settings(self):
-        program.settings.storesettingsfile(setting='alphabet')
+        self.program.settings.storesettingsfile(setting='alphabet')
     def __init__(self, program):
         self.program=program
-        program.alphabet=self
-        self.ftype=program.params.ftype()
+        self.program.alphabet=self
+        self.ftype=self.program.params.ftype()
         self.program.settings.settingsobjects() #should do this more; can be redone!
         # self.renew_items_tomacrosort() #if needed, run then, with cvt
         self.save_settings()
@@ -439,16 +439,16 @@ class AlphabetChartData:
     """Backend data/logic mixin for alphabet chart. No UI imports."""
     my_settings = ['exids', 'order', 'ncolumns', 'chart_title', 'pagesize']
 
-    def init_chart_data(self, program, **kwargs):
-        self.program = program
+    def init_chart_data(self, **kwargs):
+        # self.program = program
         self.show_at_least = 5
         self.ncolopts = range(1, 15)
-        self.db = program.get('db', kwargs.get('db'))
-        if 'settings' in program:
+        self.db = getattr(self.program, 'db', kwargs.get('db'))
+        if hasattr(self.program, 'settings'):
             defs = {'ncolumns': 5, 'pagesize': 'A4', 'order': [], 'exids': {}, 'chart_title': ''}
             for k in self.my_settings:
-                setattr(self, k, program.settings.mgr.get('alphabet_' + k, defs.get(k)))
-            self.analangname = program.settings.languagenames[self.db.analang]
+                setattr(self, k, self.program.settings.mgr.get('alphabet_' + k, defs.get(k)))
+            self.analangname = self.program.settings.languagenames[self.db.analang]
         else:
             for k in ['exids', 'order']:
                 setattr(self, k, kwargs.get(k, 0))
@@ -463,8 +463,8 @@ class AlphabetChartData:
             log.info(f"No alphabetical order found; using all known glyphs")
             self.order = [str(i) for j in self.db.s[self.db.analang].values() for i in j]
             self.order.sort()
-        if 'alphabet' in program:
-            gd = {str(i) for j in program.alphabet.glyphdict().values() for i in j}
+        if hasattr(self.program, 'alphabet'):
+            gd = {str(i) for j in self.program.alphabet.glyphdict().values() for i in j}
             self.order = sorted(gd - set([str(i) for i in self.order])) + [str(i) for i in self.order if i in gd]
         self.order = [i for n, i in enumerate(self.order) if n == self.order.index(i)
                       if i not in ['NA']]
@@ -496,7 +496,7 @@ class AlphabetChartData:
         self.hide_vars = {}  # UI BooleanVars set up by task/UI class
 
     def save_settings(self):
-        if 'settings' not in self.program:
+        if not hasattr(self.program, 'settings'):
             return
         log.error("If you're seeing this, you have passed a settings module, "
                   "but there is no save_settings method in the parent class...")
@@ -510,13 +510,12 @@ class AlphabetChartData:
 class AlphabetComparisonData:
     """Backend data/logic mixin for alphabet comparison. No UI imports."""
 
-    def init_comparison_data(self, program, **kwargs):
-        self.program = program
-        self.db = program.get('db')
-        if 'alphabet' in program:
-            glyphdict = program.alphabet.glyphdict()
+    def init_comparison_data(self, **kwargs):
+        self.db = getattr(self.program, 'db', kwargs.get('db'))
+        if hasattr(self.program, 'alphabet'):
+            glyphdict = self.program.alphabet.glyphdict()
         else:
-            glyphdict = program.glyphdict
+            glyphdict = self.program.glyphdict
         self.symbols = [i for j in glyphdict.values() for i in j]
         self.vowels = list(glyphdict['V'])
         self.consonants = list(glyphdict['C'])
@@ -538,8 +537,8 @@ class AlphabetComparisonData:
         try:
             reports_mgr = self.program.settings.mgr.reports
             reports_mgr.save(self.settings)
-            if 'git' in self.program:
-                self.program.settings.repo['git'].add(reports_mgr.filename, force=True)
+            if hasattr(self.program, 'git') and self.program.git:
+                self.program.data_repo['git'].add(reports_mgr.filename, force=True)
         except Exception as e:
             log.warning(f"Could not save settings via manager: {e}")
 

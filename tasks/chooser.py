@@ -11,7 +11,7 @@ log = logsetup.getlog(__name__)
 
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('program', '_', 'nowruntime', 'logfinished', 'sysrestart', 'sysshutdown',
+    if name in ('_', 'nowruntime', 'logfinished', 'sysrestart', 'sysshutdown',
                 'ErrorNotice', 'LiftChooser', 'openweburl', 'me', 'main',
                 'Sound', 'SortV',
                 'ExportData', 'AlphabetChart', 'AlphabetComparisonPages',
@@ -31,7 +31,7 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('program', '_', 'nowruntime', 'logfinished', 'sysrestart', 'sysshutdown',
+for name in ('_', 'nowruntime', 'logfinished', 'sysrestart', 'sysshutdown',
              'ErrorNotice', 'LiftChooser', 'openweburl', 'me', 'main',
              'Sound', 'SortV',
              'ExportData', 'AlphabetChart', 'AlphabetComparisonPages',
@@ -67,7 +67,7 @@ class TaskChooser(Task):
                 'fn':self.choosereports,
                 'font':'title',
                 'compound':'top', #image bottom, left, right, or top of text
-                'image':program.theme.photo['iconReportLogo'],
+                'image':self.program.theme.photo['iconReportLogo'],
                 'sticky':'ew'
                 }
     def choosereports(self):
@@ -79,16 +79,16 @@ class TaskChooser(Task):
         # import time
         log.info(_("Doing guid triage and other variables —this takes awhile..."))
         start_time=nowruntime()
-        self.guids=program.db.guids
+        self.guids=self.program.db.guids
         self.guidsinvalid=[] #nothing, for now...
         print(len(self.guidsinvalid),'entries with invalid data found.')
-        program.db.guidsinvalid=self.guidsinvalid
+        self.program.db.guidsinvalid=self.guidsinvalid
         self.guidsvalid=[]
         for guid in self.guids:
             if guid not in self.guidsinvalid:
                 self.guidsvalid+=[guid]
         print(len(self.guidsvalid),'entries with valid data remaining.')
-        self.guidswanyps=program.db.get('guidwanyps') #any ps value works here.
+        self.guidswanyps=self.program.db.get('guidwanyps') #any ps value works here.
         print(len(self.guidswanyps),'entries with ps data found.')
         self.guidsvalidwops=[]
         self.guidsvalidwps=[]
@@ -97,7 +97,7 @@ class TaskChooser(Task):
                 self.guidsvalidwps+=[guid]
             else:
                 self.guidsvalidwops+=[guid]
-        program.db.guidsvalidwps=self.guidsvalidwps #This is what we'll search
+        self.program.db.guidsvalidwps=self.guidsvalidwps #This is what we'll search
         print(len(self.guidsvalidwops),'entries with valid data but no ps data.')
         print(len(self.guidsvalidwps),'entries with valid data and ps data.')
         # for var in [self.guids, self.guidswanyps, self.guidsvalidwops, self.guidsvalidwps, self.guidsinvalid, self.guidsvalid]:
@@ -110,9 +110,9 @@ class TaskChooser(Task):
     def guidtriagebyps(self): #obsolete
         log.info(_("Doing guid triage by ps... This also takes awhile?..."))
         self.guidsvalidbyps={}
-        """use program.db.entriesbyps or program.db.sensesbyps"""
-        for ps in program.db.pss:
-            self.guidsvalidbyps[ps]=program.db.get('guidbyps',ps=ps)
+        """use self.program.db.entriesbyps or self.program.db.sensesbyps"""
+        for ps in self.program.db.pss:
+            self.guidsvalidbyps[ps]=self.program.db.get('guidbyps',ps=ps)
     def gettask(self,event=None):
         """This function allows the user to select from any of tasks whose
         prerequisites are minimally satisfied."""
@@ -126,7 +126,7 @@ class TaskChooser(Task):
             self.status.finalbuttons()
         if not self.mainwindow:
             # self.correlatemenus() #not even if moving to this window
-            self.unsetmainwindow() #first, so the program stays alive
+            self.unsetmainwindow() #first, so the self.program stays alive
         elif not self.showingreports and not self.showreports:
             self.datacollection=not self.datacollection
         if self.showingreports:
@@ -158,7 +158,7 @@ class TaskChooser(Task):
                         row=int(n/bpr),
                         compound='top', #left, bottom
                         image=o[2],
-                        wraplength=int(program.tk_root.wraplength*.02125/bpr),
+                        wraplength=int(self.program.tk_root.wraplength*.02125/bpr),
                         anchor='n',
                         sticky='nesw',
                         columnspan=columnspan
@@ -185,13 +185,13 @@ class TaskChooser(Task):
         optionlist=[i for i in optionlist if not issubclass(i[0],Sound)]
         # log.info("getting default from option list {}".format(
         #                                             [i[1] for i in optionlist]))
-        if program.testing and 'testtask' in program:
-            self.maketask(program.testtask)
+        if self.program.testing and hasattr(self.program,'testtask'):
+            self.maketask(self.program.testtask)
         else: #we need better logic here
             if SortV in [i[0] for i in optionlist]:
                 self.maketask(SortV)
             else:
-                self.maketask(program.default_task)
+                self.maketask(self.program.default_task)
                 #optionlist[-1][0]) #last item, the code
     def maketask(self,taskclass,**kwargs): #,filename=None
         self.unsetmainwindow()
@@ -286,10 +286,10 @@ class TaskChooser(Task):
                 # tasks.append(ParseSlice)
                 # tasks.append(ParseSliceWords)
                 tasks.append(ReportConsultantCheck)
-        # if (program.testing and 'testtask' in program and
-        #         program.testtask not in tasks):
-        #     if self.showreports == isinstance(program.testtask,Report):
-        #         tasks.append(program.testtask)
+        # if (self.program.testing and 'testtask' in self.program and
+        #         self.program.testtask not in tasks):
+        #     if self.showreports == isinstance(self.program.testtask,Report):
+        #         tasks.append(self.program.testtask)
         # tasks.append(WordCollectionCitation),
         # tasks.append(WordCollectionPlImp),
         # tasks.append(ParseA), # input pl/imp, gives lx and ps
@@ -328,16 +328,16 @@ class TaskChooser(Task):
         try:
             window.destroy()
             backup=self.filename+'_backupBeforeLx2LcConversion'
-            program.db.write(backup)
-            program.db.convertlxtolc()
-            # program.db.write(self.file.name+str(now()))
-            program.db.write()
+            self.program.db.write(backup)
+            self.program.db.convertlxtolc()
+            # self.program.db.write(self.file.name+str(now()))
+            self.program.db.write()
             conversionlogfile=logsetup.writelzma()
             ErrorNotice(_("The conversion is done now, so {name} will quit. You may "
                     "want to inspect your current file ({file}) and the backup "
                     "({backup}) to confirm this did what you wanted, before "
                     "opening {name} again. In case there are any issues, the "
-                    "log file is also saved in {log}").format(name=program.name,
+                    "log file is also saved in {log}").format(name=self.program.name,
                                                 file=self.filename,
                                                 backup=backup,
                                                 log=conversionlogfile),
@@ -349,10 +349,10 @@ class TaskChooser(Task):
                 "should fix this before moving on."))
     def asktoconvertlxtolc(self):
         title=_("Convert lexeme field data to citation form fields?")
-        url='{}/CITATIONFORMS.md'.format(program.docsurl)
-        w=ui.Window(program.tk_root,title=title,exit=False)
-        lexemesdone=list(program.db.nentrieswlexemedata.values())#[program.settings.analang]
-        citationsdone=list(program.db.nentrieswcitationdata.values())#[program.settings.analang]
+        url='{}/CITATIONFORMS.md'.format(self.program.docsurl)
+        w=ui.Window(self.program.tk_root,title=title,exit=False)
+        lexemesdone=list(self.program.db.nentrieswlexemedata.values())#[self.program.settings.analang]
+        citationsdone=list(self.program.db.nentrieswcitationdata.values())#[self.program.settings.analang]
         nbtext1=_("You have {lexemes} entries with lexeme data, and only {citations} with "
                 "citation data.").format(lexemes=lexemesdone,citations=citationsdone)
         instructions=_("Typically, dictionary work starts by collecting "
@@ -363,10 +363,10 @@ class TaskChooser(Task):
                         "is typically in error. {name} can help you analyze your "
                         "citation forms into lexeme forms, but they first need "
                         "to be moved to the correct fields in your database."
-                        "".format(name=program.name))
+                        "".format(name=self.program.name))
         Question=_("Do you want {name} to move data from your lexeme fields to "
                     "citation fields, for each entry with no citation field "
-                    "data?").format(name=program.name)
+                    "data?").format(name=self.program.name)
         infot=_("See {url} for more information.").format(url=url)
         oktext=_("Move lexeme field data to citation fields")
         noktext=_("No thanks; I'll manage this myself")
@@ -400,7 +400,7 @@ class TaskChooser(Task):
             l.wrap()
         return w
     def getcawlmissing(self):
-        cawls=program.db.get('cawlfield/form/text').get('text')
+        cawls=self.program.db.get('cawlfield/form/text').get('text')
         # log.info("CAWL ({}): {}".format(len(cawls),cawls))
         self.cawlmissing=[]
         for i in range(1700):
@@ -430,29 +430,29 @@ class TaskChooser(Task):
                     ]:
             self.donew[taskreq]=False
             self.doneenough[taskreq]=False
-        nentries=program.db.nguids
-        lexemesdone=program.db.nentrieswlexemedata
-        citationsdone=program.db.nentrieswcitationdata
+        nentries=self.program.db.nguids
+        lexemesdone=self.program.db.nentrieswlexemedata
+        citationsdone=self.program.db.nentrieswcitationdata
         log.info("lexemesdone by lang: {}".format(lexemesdone))
         log.info("citationsdone by lang: {}".format(citationsdone))
         # There should never be more lexemes than citation forms.
         for l in lexemesdone:
-            if not program.settings.askedlxtolc and (l not in citationsdone
+            if not self.program.settings.askedlxtolc and (l not in citationsdone
                                 or citationsdone[l] < lexemesdone[l]):
                 w=self.asktoconvertlxtolc()
                 w.wait_window(w) # wait for this answer before moving on
-                program.settings.askedlxtolc=True
-                program.settings.storesettingsfile()
+                self.program.settings.askedlxtolc=True
+                self.program.settings.storesettingsfile()
                 break #just ask this once
         self.getcawlmissing()
-        log.info("nfields in db: {}".format(program.db.nfields))
-        log.info("wannotations in db: {}".format(program.db.nfieldswannotations))
-        sorts={k:v for (k,v) in program.db.nfields.items()
+        log.info("nfields in db: {}".format(self.program.db.nfields))
+        log.info("wannotations in db: {}".format(self.program.db.nfieldswannotations))
+        sorts={k:v for (k,v) in self.program.db.nfields.items()
                                             if 'sense/example' in v}
-        sorts.update({k:v for (k,v) in program.db.nfieldswannotations.items()
+        sorts.update({k:v for (k,v) in self.program.db.nfieldswannotations.items()
                                             if 'sense/example' not in v})
         # log.info("nfields by lang (updated): {}".format(sorts))
-        sortsrecorded=program.db.nfieldswsoundfiles
+        sortsrecorded=self.program.db.nfieldswsoundfiles
         log.info("nfieldswsoundfiles by lang: {}".format(sortsrecorded))
         sortsnotrecorded={}
         log.info(f"sorts: {sorts}")
@@ -462,17 +462,17 @@ class TaskChooser(Task):
             enough=6 #for demonstrating; is 25 a reasonable minimum?
         # log.info("looking at sorts now: {}".format(sorts))
         for l in sorts:
-            if program.db.audiolang:
-                al=program.db.audiolang
+            if self.program.db.audiolang:
+                al=self.program.db.audiolang
             else:
-                maybeals=[i for i in program.db.audiolangs if l in i]
+                maybeals=[i for i in self.program.db.audiolangs if l in i]
                 if maybeals:
                     al=maybeals[0]
                     log.info(_("Using audiolang {audio} for analang {analang}")
                                 .format(audio=al,analang=l))
                 else:
                     log.info(_("Couldn't find plausible audiolang (among {audios}) "
-                        "for analang {analang}").format(audios=program.db.audiolangs,analang=l))
+                        "for analang {analang}").format(audios=self.program.db.audiolangs,analang=l))
             if al not in sortsrecorded:
                 sortsrecorded[al]={}
             sortsnotrecorded[l]={}
@@ -511,9 +511,9 @@ class TaskChooser(Task):
                 # log.info("Finished looking at [{}]{} field: {}".format(l,f,self.doneenough))
                 log.info(_("Finished looking at [{lang}]{field} field: {status}").format(lang=l, field=f, status=self.doneenough))
         # log.info("nfieldswosoundfiles by lang: {}".format(sortsnotrecorded))
-        for lang in program.db.nentrieswlexemedata:
-            remaining=program.db.nentrieswcitationdata[lang
-                                        ]-program.db.nentrieswlexemedata[lang]
+        for lang in self.program.db.nentrieswlexemedata:
+            remaining=self.program.db.nentrieswcitationdata[lang
+                                        ]-self.program.db.nentrieswlexemedata[lang]
             if not remaining:
                 self.donew['parsedlx']=True
             if remaining < 100:
@@ -525,7 +525,7 @@ class TaskChooser(Task):
             if citationsdone[lang] > 200: #was 705
                 self.doneenough['collectionlc']=True#I need to think through this
             # log.info("checking '{}'".format(f))
-        for f in [i for j in program.db.sensefieldnames.values() for i in j]:
+        for f in [i for j in self.program.db.sensefieldnames.values() for i in j]:
             if 'verification' in f:
                 # log.info("Found 'verification' in '{}'".format(f))
                 #I need to tweak this, it should follow tone (only) reports:
@@ -556,7 +556,7 @@ class TaskChooser(Task):
             log.info(_("There doesn't seem to be a runwindow to hide; moving on."))
         while self.writing:
             # log.info("towrite: {}; writing: {}; taskwrite: {}".format(
-            #     self.towrite,self.writing,program.taskchooser.writing))
+            #     self.towrite,self.writing,self.program.taskchooser.writing))
             log.info(_("Waiting to finish writing to lift"))
             time.sleep(1)
             self.check_if_write_done() #because after() isn't working here...
@@ -575,9 +575,9 @@ class TaskChooser(Task):
         if hasattr(self,'name') and self.name:
             self.filename=self.name
         # text=_("{name} will now exit; restart to work with the new database."
-        #         "").format(name=program.name)
+        #         "").format(name=self.program.name)
         # ErrorNotice(text,title=_("Change Database"),wait=True)
-        # program.tk_root.destroy()
+        # self.program.tk_root.destroy()
         # subprocess.call?
         # __name__
         # main()
@@ -595,14 +595,14 @@ class TaskChooser(Task):
         change this in your project settings if your power is stable and you
         want to write less."""
         self.writeable+=1 #and tally here each time this is asked
-        return not self.writeable%program.settings.writeeverynwrites
+        return not self.writeable%self.program.settings.writeeverynwrites
     def schedule_write_check(self):
         """Schedule `check_if_write_done()` function after x seconds."""
         x=1
         # log.info("Scheduling check after {x} seconds")
-        program.tk_root.after(x*1000, self.check_if_write_done)
+        self.program.tk_root.after(x*1000, self.check_if_write_done)
         # log.info("Scheduled check")
-        # program.taskchooser.after(5000, self.check_if_write_done, t)
+        # self.program.taskchooser.after(5000, self.check_if_write_done, t)
     def check_if_write_done(self):
         # If the thread has finished, allow another write.
         # log.info("Checking if writing done to lift.")
@@ -614,23 +614,23 @@ class TaskChooser(Task):
             log.info(_("Exception: {error}").format(error=e))
             log.info(_("writethread: {exists}").format(exists=hasattr(self,'writethread')))
         if done:
-            log.info(_("Done writing to lift ({status}).").format(status=program.db.write_OK))
-            if not program.db.write_OK:
+            log.info(_("Done writing to lift ({status}).").format(status=self.program.db.write_OK))
+            if not self.program.db.write_OK:
                 ErrorNotice(_("Write to lift returned "
-                            "'{error}'.").format(error=program.db.write_error),wait=True)
+                            "'{error}'.").format(error=self.program.db.write_error),wait=True)
             self.writing=False
             if self.towrite:
                 log.info(_("Found previous request to write; doing again."))
                 self._write()
             else:
-                program.settings.repo_commit()
+                self.program.settings.repo_commit()
         else:
             # Otherwise check again later.
             # log.info("schedule_write_check writing to lift.")
             self.schedule_write_check()
     def _write(self):
         self.towrite=False
-        self.writethread = threading.Thread(target=program.db.write)
+        self.writethread = threading.Thread(target=self.program.db.write)
         self.writing=True
         log.info(_("Writing to lift..."))
         self.writethread.start()
@@ -650,7 +650,7 @@ class TaskChooser(Task):
         if self.splash.exitFlag.istrue():
             return
         self.splash.withdraw()
-        for r in program.settings.repo.values():
+        for r in self.program.settings.repo.values():
             # log.info("checking repo {} for USB drive".format(r))
             #on boot, pull in changes becore committing
             r.share(noclone=True,nocommit=True)
@@ -660,22 +660,22 @@ class TaskChooser(Task):
         self.parent.on_quit(**kwargs)
     # def getinterfacelangs(self):
     # # global i18n
-    #     return [{'code':i,'name':program.settings.languagenames[i]}
-    #             for i in program.interfacelangs]
+    #     return [{'code':i,'name':self.program.settings.languagenames[i]}
+    #             for i in self.program.interfacelangs]
     # # {'code':'fr','name':'Français'},
     # #         {'code':'en','name':'English'},
     # #         {'code':'fub','name':'Fulfulde'}
     # #         ]
     def __init__(self,program):
         self.program=program
-        program.taskchooser=self
+        self.program.taskchooser=self
         self.towrite=False
         self.writing=False
         self.datacollection=True # everyone starts here?
         self.showreports=False
         self.showingreports=False
         self.program.splash.draw()
-        assert hasattr(program,'settings')
+        assert hasattr(self.program,'settings')
         # self.interfacelangs=self.getinterfacelangs()
         self.program.splash.progress(55)
         self.setmainwindow(self)
@@ -684,7 +684,7 @@ class TaskChooser(Task):
         self.whatsdone()
         self.program.splash.progress(80)
         log.info(_("Settings: {settings}").format(settings=self.program.settings))
-        super().__init__(program, _parent=self.program.tk_root)
+        super().__init__(self.program, _parent=self.program.tk_root)
         # TaskDressing.__init__(self,parent) #I think this should be after settings
         self.program.settings.getprofiles()
         # self.withdraw()
