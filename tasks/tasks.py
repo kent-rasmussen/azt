@@ -13,21 +13,21 @@ from tasks.alphabet_comparison import AlphabetComparisonPages
 from utilities.utilities import LazyGlobal
 log = logsetup.getlog(__name__)
 
+from frontend.error_notice import ErrorNotice
+
 def __getattr__(name):
-    if name in ('_', 'ErrorNotice', 'nn', 'unlist', 'sysrestart',
-                'sysshutdown', 'SortGroupButtonFrame', 'SortGlyphGroupButtonFrame',
-                'scaleimageifthere', 'loadCAWL', 'saveimagefile', 'ImageFrame',
-                'ResultWindow', 'Alphabet', 'FileParser', 'sound', 'sound_ui',
-                'transcriber', 'exampletype', 't'):
+    if name in ('_', 'nn', 'unlist',
+                'SortGroupButtonFrame', 'SortGlyphGroupButtonFrame',
+                'Alphabet', 'sound', 'sound_ui',
+                'transcriber', 't'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
-for name in ('_', 'ErrorNotice', 'nn', 'unlist', 'sysrestart',
-             'sysshutdown', 'SortGroupButtonFrame', 'SortGlyphGroupButtonFrame',
-             'scaleimageifthere', 'loadCAWL', 'saveimagefile', 'ImageFrame',
-             'ResultWindow', 'Alphabet', 'FileParser', 'sound', 'sound_ui',
-             'transcriber', 'exampletype', 't'):
+for name in ('_', 'nn', 'unlist',
+             'SortGroupButtonFrame', 'SortGlyphGroupButtonFrame',
+             'Alphabet', 'sound', 'sound_ui',
+             'transcriber', 't'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 

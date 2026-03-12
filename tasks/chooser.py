@@ -9,10 +9,12 @@ from utilities.utilities import LazyGlobal
 from utilities import file, logsetup
 log = logsetup.getlog(__name__)
 
+from frontend.error_notice import ErrorNotice
+
 def __getattr__(name):
     # Lazy load globals from main
     if name in ('_', 'nowruntime', 'logfinished', 'sysrestart', 'sysshutdown',
-                'ErrorNotice', 'LiftChooser', 'openweburl', 'me', 'main',
+                'LiftChooser', 'openweburl', 'me', 'main',
                 'Sound', 'SortV',
                 'ExportData', 'AlphabetChart', 'AlphabetComparisonPages',
                 'ReportCitationBackground', 'ReportCitationMulticheckBackground',
@@ -32,7 +34,7 @@ def __getattr__(name):
 
 # Mirror main globals lazily to allow bare-name access
 for name in ('_', 'nowruntime', 'logfinished', 'sysrestart', 'sysshutdown',
-             'ErrorNotice', 'LiftChooser', 'openweburl', 'me', 'main',
+             'LiftChooser', 'openweburl', 'me', 'main',
              'Sound', 'SortV',
              'ExportData', 'AlphabetChart', 'AlphabetComparisonPages',
              'ReportCitationBackground', 'ReportCitationMulticheckBackground',

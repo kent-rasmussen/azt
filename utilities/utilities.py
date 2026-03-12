@@ -361,6 +361,8 @@ class LazyGlobal:
     def __hash__(self): return hash(self._get_val())
     def __str__(self): return str(self._get_val())
 
+globals()['_'] = LazyGlobal('_')
+
 """Function Decorators"""
 def marktime(f,*args,**kwargs):
     def timed(*args,**kwargs):

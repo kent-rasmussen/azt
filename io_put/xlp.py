@@ -6,11 +6,8 @@ log=logsetup.getlog(__name__)
 # logsetup.setlevel('INFO',log) #for this file
 logsetup.setlevel('DEBUG',log) #for this file
 import subprocess
-try:
-    _
-except NameError:
-    def _(x):
-        return x
+from utilities.utilities import LazyGlobal
+globals()['_'] = LazyGlobal('_')
 class Report(object):
     def __init__(self,filename,report,langname,program):
         #use program, if only for it's name

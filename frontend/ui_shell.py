@@ -25,15 +25,35 @@ import settings
 
 log=logsetup.getlog(__name__)
 
+from frontend.error_notice import ErrorNotice
+
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('counts', 'me', '_', 'ErrorNotice', 'askerror', 'sysrestart', 'sysshutdown', 'pythonmodules', 'findexecutable', 'main', 'testversion', 'reverttomain', 'buttonwraplength', 'regexdict', 'interfacelang', 'nowruntime', 'callerfn', 'logfinished', 'nn', 'unlist', 'xlp', 'rx', 'exampletype', 'dictofchilddicts', 'dictscompare', 'flatten', 'grouptype', 't', 'openweburl', 'isinterneturl', 'scaleimageifthere', 'loadCAWL', 'saveimagefile', 'ImageFrame', 'TranscribeC', 'TranscribeV', 'TranscribeS', 'ResultWindow', 'Multislice', 'Multicheck', 'Tone', 'Segments', 'ToneFrames', 'CheckParameters', 'Glosslangs', 'Senses', 'WordCollection', 'Parse', 'Sort', 'HasMenus', 'Menus', 'StatusFrame', 'TaskDressing', 'TaskChooser', 'Repository', 'Mercurial', 'Git', 'GitReadOnly', 'Analysis', 'SliceDict', 'StatusDict', 'ExampleDict', 'DictbyLang', 'Settings', 'Entry', 'updateazt', 'SortGroupButtonFrame', 'Alphabet', 'FileParser', 'Sound', 'SortT', 'JoinUFgroups', 'ReportCitationT', 'ExportData', 'AlphabetChart', 'AlphabetComparisonPages', 'ReportCitationBackground', 'ReportCitationMulticheckBackground', 'ReportCitationMultichecksliceBackground', 'ReportCitationTBackground', 'ReportCitationTLBackground', 'ReportCitationMultisliceTBackground', 'ReportCitationMultisliceTLBackground', 'ReportCitationByUFBackground', 'ReportCitationByUFMulticheckBackground', 'ReportCitationByUFMultichecksliceBackground', 'WordCollectionCitation', 'WordCollectionCitationwRecordings', 'WordCollectnParse', 'WordCollectnParsewRecordings', 'RecordCitation', 'SortSyllables', 'SortV', 'SortC', 'RecordCitationT', 'WordsParse', 'TranscribeT', 'ReportConsultantCheck', 'sound', 'scaledimage', 'getimagelocationURI'):
+    if name in ('me', '_', 'sysrestart', 'main',
+                'interfacelang', 'nn', 'unlist', 'rx', 'exampletype',
+                'grouptype', 't', 'openweburl', 'scaleimageifthere',
+                'loadCAWL', 'saveimagefile', 'TranscribeS',
+                'Multislice', 'Multicheck', 'Tone', 'Segments',
+                'WordCollection', 'Parse', 'Sort',
+                'TaskChooser', 'Mercurial', 'Git', 'Analysis',
+                'StatusDict', 'Settings', 'updateazt',
+                'Sound', 'SortT', 'JoinUFgroups', 'ReportCitationT',
+                'sound', 'scaledimage', 'getimagelocationURI'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('counts', 'me', '_', 'ErrorNotice', 'askerror', 'sysrestart', 'sysshutdown', 'pythonmodules', 'findexecutable', 'main', 'testversion', 'reverttomain', 'buttonwraplength', 'regexdict', 'interfacelang', 'nowruntime', 'callerfn', 'logfinished', 'nn', 'unlist', 'xlp', 'rx', 'exampletype', 'dictofchilddicts', 'dictscompare', 'flatten', 'grouptype', 't', 'openweburl', 'isinterneturl', 'scaleimageifthere', 'loadCAWL', 'saveimagefile', 'ImageFrame', 'TranscribeC', 'TranscribeV', 'TranscribeS', 'ResultWindow', 'Multislice', 'Multicheck', 'Tone', 'Segments', 'ToneFrames', 'CheckParameters', 'Glosslangs', 'Senses', 'WordCollection', 'Parse', 'Sort', 'HasMenus', 'Menus', 'StatusFrame', 'TaskDressing', 'TaskChooser', 'Repository', 'Mercurial', 'Git', 'GitReadOnly', 'Analysis', 'SliceDict', 'StatusDict', 'ExampleDict', 'DictbyLang', 'Settings', 'Entry', 'updateazt', 'SortGroupButtonFrame', 'Alphabet', 'FileParser', 'Sound', 'SortT', 'JoinUFgroups', 'ReportCitationT', 'ExportData', 'AlphabetChart', 'AlphabetComparisonPages', 'ReportCitationBackground', 'ReportCitationMulticheckBackground', 'ReportCitationMultichecksliceBackground', 'ReportCitationTBackground', 'ReportCitationTLBackground', 'ReportCitationMultisliceTBackground', 'ReportCitationMultisliceTLBackground', 'ReportCitationByUFBackground', 'ReportCitationByUFMulticheckBackground', 'ReportCitationByUFMultichecksliceBackground', 'WordCollectionCitation', 'WordCollectionCitationwRecordings', 'WordCollectnParse', 'WordCollectnParsewRecordings', 'RecordCitation', 'SortSyllables', 'SortV', 'SortC', 'RecordCitationT', 'WordsParse', 'TranscribeT', 'ReportConsultantCheck', 'sound', 'scaledimage', 'getimagelocationURI'):
+for name in ('me', '_', 'sysrestart', 'main',
+             'interfacelang', 'nn', 'unlist', 'rx', 'exampletype',
+             'grouptype', 't', 'openweburl', 'scaleimageifthere',
+             'loadCAWL', 'saveimagefile', 'TranscribeS',
+             'Multislice', 'Multicheck', 'Tone', 'Segments',
+             'WordCollection', 'Parse', 'Sort',
+             'TaskChooser', 'Mercurial', 'Git', 'Analysis',
+             'StatusDict', 'Settings', 'updateazt',
+             'Sound', 'SortT', 'JoinUFgroups', 'ReportCitationT',
+             'sound', 'scaledimage', 'getimagelocationURI'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 
@@ -3460,63 +3480,6 @@ class Splash(ui.Window):
         y=int(self.master.winfo_screenheight()/2 -(self.h/2))
         self.geometry('+%d+%d' % (x, y))
         self.labels['v'].bind('<Button-1>', lambda e,x=self:updateazt(parent=x))
-class ErrorNotice(ui.Window):
-    """this is for things that I want the user to know, without having
-    to find it in the logs."""
-    """kwarg button is a tuple: (text,command)"""
-    def destroy(self, event=None):
-        ui.Window.destroy(self)
-    def withdraw(self, event=None):
-        ui.Window.withdraw(self)
-    def __init__(self, text, **kwargs):
-        if not text:
-            log.error(_("ErrorNotice got no text?"))
-            return
-        #use parent window if given, else parent.self.program.tk_root, else ui.Root()
-        if not (parent:=kwargs.get('parent')):
-            if kwargs.get('program') and kwargs['program'].tk_root:
-                parent=kwargs['program'].tk_root
-            else:
-                parent=ui.Root()
-        if parent.exitFlag.istrue():
-            log.error(_("Parent window is exiting; error message follows"))
-            log.error(text)
-            return
-        title=kwargs.get('title',_("Error!"))
-        wait=kwargs.get('wait')
-        button=kwargs.get('button')
-        image=kwargs.get('image')
-        super(ErrorNotice, self).__init__(parent,title=title,exit=False)
-        self.withdraw()
-        self.parent.withdraw()
-        self.title = title
-        self.text = text
-        l=ui.Label(self.frame, text=text,
-                    image=image,
-                    compound='left',
-                    row=0, column=1,
-                    columnspan=2,
-                    ipadx=25)
-        l.wrap()
-        if button and type(button) is tuple:
-            b=ui.Button(self.frame, text=button[0],
-                    cmd=None,
-                    row=1, column=1, sticky='e')
-            b.bind('<ButtonRelease>',self.withdraw)
-            b.bind('<ButtonRelease>',button[1],add='+')
-            b.bind('<ButtonRelease>',self.destroy,add='+')
-        b=ui.Button(self.frame, text=_("OK"),
-                cmd=self.on_quit,
-                row=1, column=2, sticky='nse')
-        self.attributes("-topmost", True)
-        self.deiconify()
-        if wait:
-            self.wait_window(self)
-        if self.exitFlag.istrue():
-            return
-        if not isinstance(self.parent,ui.Root):
-            self.parent.deiconify()
-        # self.pull() # in case there's a source available
 class ResultWindow(ui.Window):
     def __init__(self, parent, msg=None, title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,

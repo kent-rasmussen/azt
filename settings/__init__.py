@@ -106,9 +106,11 @@ from utilities.utilities import *
 _log = _logsetup.getlog(__name__)
 
 
+from frontend.error_notice import ErrorNotice
+
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('program', 'counts', 'me', '_', 'ErrorNotice', 'askerror',
+    if name in ('counts', 'me', '_', 'askerror',
                 'sysrestart', 'sysshutdown', 'rx', 'interfacelang', 'nowruntime',
                 'logfinished', 'nn', 'unlist', 'Glosslangs', 'ToneFrames',
                 'SliceDict', 'StatusDict', 'Tone', 'Segments', 'WordCollection',
@@ -117,7 +119,7 @@ def __getattr__(name):
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
-for _name in ('program', 'counts', 'me', '_', 'ErrorNotice', 'askerror',
+for _name in ('counts', 'me', '_', 'askerror',
               'sysrestart', 'sysshutdown', 'rx', 'interfacelang', 'nowruntime',
               'logfinished', 'nn', 'unlist', 'Glosslangs', 'ToneFrames',
               'SliceDict', 'StatusDict', 'Tone', 'Segments', 'WordCollection',
@@ -453,7 +455,7 @@ class Settings(SettingsUI):
         return settingsdict
     def storesettingsfile(self,setting='defaults'):
         if setting in ['status', 'toneframes']:
-            d=program[setting]
+            d=getattr(self.program, setting)
         else:
             d=self.makesettingsdict(setting=setting)
 
@@ -1557,7 +1559,7 @@ class Settings(SettingsUI):
         """
         if not hasattr(self,'attrschanged'):
             return
-        if 'status' in program:
+        if hasattr(self.program, 'status'):
             self.program.status.build()
         t=self.program.params.cvt()
         if 'cvt' in self.attrschanged:

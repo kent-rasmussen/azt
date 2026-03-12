@@ -10,13 +10,9 @@ import time
 import collections
 import difflib
 import threading
-try: #translation
-    _
-except NameError:
-    def _(x):
-        return x
 from io_put import lift
 from utilities.utilities import *
+globals()['_'] = LazyGlobal('_')
 class AffixCollector(object):
     """This class does just one thing: call parse to collect affixes
     automatically to populate the catalog."""

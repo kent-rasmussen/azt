@@ -7,12 +7,12 @@ from utilities import logsetup
 log = logsetup.getlog(__name__)
 
 def __getattr__(name):
-    if name in ('_', 'getimagelocationURI'):
+    if name in ('_',):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
-for name in ('_', 'getimagelocationURI'):
+for name in ('_',):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 
