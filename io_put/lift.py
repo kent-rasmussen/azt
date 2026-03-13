@@ -22,6 +22,7 @@ lxml=False
 # from xmletfns import * # from xml.etree import ElementTree as ET
 from utilities import xmletfns as et
 from utilities import xmlfns, file, rx
+from io_put.images_CAWL import CAWLImageResolver
 import sys
 import pathlib
 import threading
@@ -166,6 +167,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 "there; if your audio is elsewhere, fix this.").format(audiodir=self.audiodir))
     def get_imgdir(self):
         self.imgdir=file.getimagesdir(self.lift_home)
+        self._cawl_resolver=CAWLImageResolver(self.lift_home)
         for s in self.senses:
             try:
                 totry=file.getdiredurl(self.imgdir,s.illustrationvalue())
@@ -2785,6 +2787,9 @@ class Sense(Node,FieldParent):
                                         if i]))
         rootimgdir='images/toselect/'
         self.imgselectiondir=None
+        if not os.path.isdir(rootimgdir):
+            from images.to_select_update import ensure_available
+            ensure_available()
         #These first two depend on real directories being there
         if self.cawln:
             self.imgselectiondir=[i for i in file.getfilesofdirectory(
@@ -2986,6 +2991,17 @@ class Sense(Node,FieldParent):
             self.cawln=None
     def illustrationURI(self):
         v=self.illustrationvalue()
+        if v:
+            local=file.getdiredurl(self.db.imgdir,v)
+            if file.exists(local):
+                return local
+        # Fall back to GitHub-hosted CAWL image if no local file
+        resolver=getattr(self.db,'_cawl_resolver',None)
+        if resolver and getattr(self,'cawln',None):
+            url=resolver.get_url(self.cawln)
+            if url:
+                return url
+        # Return local path even if missing (preserves original behaviour)
         if v:
             return file.getdiredurl(self.db.imgdir,v)
     def illustrationvalue(self,value=None):

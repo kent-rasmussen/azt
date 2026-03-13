@@ -91,7 +91,10 @@ class ImageSelector(ui.Window):
             for t in types:
                 self.images.extend(glob.glob(os.path.join(self.target_dir, t)))
                 
-        # 2. Scan Program Defaults
+        # 2. Scan Program Defaults — ensure images repo is available
+        if not os.path.isdir('images/toselect'):
+            from images.to_select_update import ensure_available
+            ensure_available()
         possible_roots = [
             os.path.dirname(__file__),
             os.getcwd(),
