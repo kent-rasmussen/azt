@@ -4824,7 +4824,7 @@ if __name__ == '__main__':
     # lc_source='/home/kentr/Assignment/Tools/WeSay/ln-CD/ln-CD.lift'
     # # code= #103 #240 #255 lingala
     # lift=LiftXML(lc_source)
-    # gloss_target='/home/kentr/bin/raspy/azt/SILCAWL/SILCAWL.lift'
+    # gloss_target='/home/kentr/bin/raspy/azt/lift_templates/SILCAWL/SILCAWL.lift'
     # copy_lc_to_new_lift_gloss(lift_w_lc=lift,
     #                             lift_target=gloss_target,
     #                             analang='ln-CD')

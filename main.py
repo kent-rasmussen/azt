@@ -611,7 +611,10 @@ def propagate(self,attr):
             setattr(child,attr,getattr(self,attr))
             propagate(child,attr=attr)
 def loadCAWL():
-    stockCAWL=file.pathname_from_base_dir('SILCAWL/SILCAWL.lift')
+    stockCAWL=file.pathname_from_base_dir('lift_templates/SILCAWL/SILCAWL.lift')
+    if not file.exists(stockCAWL):
+        from lift_templates.SILCAWL_update import ensure_available
+        ensure_available()
     if file.exists(stockCAWL):
         log.info(_("Found stock LIFT file: {file}").format(file=stockCAWL))
     try:
