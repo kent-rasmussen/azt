@@ -1,4 +1,8 @@
 # coding=UTF-8
+import gettext
+_ = gettext.gettext
+from utilities import logsetup
+log=logsetup.getlog(__name__)
 from frontend.ui_shell import TaskDressing
 
 class Task(TaskDressing):

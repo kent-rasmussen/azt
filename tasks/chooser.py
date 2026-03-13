@@ -6,8 +6,12 @@ import tkinter
 from frontend import ui_tkinter as ui
 from tasks.base import Task
 from utilities.utilities import LazyGlobal
-from utilities import file, logsetup
-log = logsetup.getlog(__name__)
+from utilities import file
+import gettext
+_ = gettext.gettext
+from utilities import logsetup
+log=logsetup.getlog(__name__)
+
 
 from frontend.error_notice import ErrorNotice
 

@@ -1,5 +1,9 @@
 # coding=UTF-8
 """This module is an interface to the base frontend classes."""
+import gettext
+_ = gettext.gettext
+from utilities import logsetup
+log=logsetup.getlog(__name__)
 import sys
 import collections
 import re
@@ -12,18 +16,6 @@ from io_put import lift
 from backend import langtags
 import langcodes
 import settings
-# import time
-# import webbrowser
-# import os
-# import platform
-# import subprocess
-# import threading
-# import json
-# import itertools
-# import inspect
-# import multiprocessing
-
-log=logsetup.getlog(__name__)
 
 from frontend.error_notice import ErrorNotice
 

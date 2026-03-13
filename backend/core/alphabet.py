@@ -1,5 +1,7 @@
 # coding=UTF-8
 from utilities.utilities import *
+import gettext
+_ = gettext.gettext
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 

@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # coding=UTF-8
-from xml.etree import ElementTree as ET
-from utilities import xmlfns,rx,file,logsetup,times
+import gettext
+_ = gettext.gettext
+from utilities import logsetup
 log=logsetup.getlog(__name__)
-# logsetup.setlevel('INFO',log) #for this file
-logsetup.setlevel('DEBUG',log) #for this file
+from xml.etree import ElementTree as ET
+from utilities import xmlfns,rx,file,times
+
 import subprocess
 from utilities.utilities import LazyGlobal
 globals()['_'] = LazyGlobal('_')
