@@ -46,7 +46,7 @@ class Senses(object):
         buttontxt=_("Sort!")
         text=_("Hey, you're not done with {ps} {profile} words by {check}!"
                 "\nCome back when you have time; restart where you left "
-                "off by pressing ‘{button}’").format(ps=self.ps,profile=self.profile,check=self.check,
+                "off by pressing '{button}'").format(ps=self.ps,profile=self.profile,check=self.check,
                                                 button=buttontxt)
         # self.withdraw()
         if not self.program.Demo: #Should anyone see this?
@@ -221,7 +221,7 @@ class Segments(Senses):
             return
         # log.info("fnode: {}; text: {}".format(fnode,t.text))
         annodict=sense.annotationvaluedictbyftypelang(self.ftype,self.analang)
-        conflict_text=_("Not updating ‘{form}’ (conflict in {anno}.").format(form=formvalue, anno=annodict)
+        conflict_text=_("Not updating '{form}' (conflict in {anno}.").format(form=formvalue, anno=annodict)
         error_nb=_("Check the log for any further conflicts")
         error=False
         if check: #just update to this annotation
@@ -316,7 +316,7 @@ class Segments(Senses):
         def newform(x): #move this to alphabet
             return '_'.join(x.split('_')[:4]+[glyph])
         # log.info("update_annotations_by_glyph: checking if it is safe to "
-        #         f"update items in ‘{glyph}’")
+        #         f"update items in '{glyph}'")
         gm=self.program.alphabet.glyph_members()
         """If an annotation change would effectively join groups, e.g., Noun_CVCVC_lc_V1_ea
         would become Noun_CVCVC_lc_V1_ee, which already exists, stop. 
@@ -327,11 +327,11 @@ class Segments(Senses):
                 continue
             if (item.split('_')[-1] != glyph and
                 newform(item) in [i for j in gm.values() for i in j]):
-                txt=_("Conflict: cannot rename ‘{item}’ to ‘{glyph}’; "
-                    "‘{new}’ already exists.").format(item=item, glyph=glyph, new=newform(item))
+                txt=_("Conflict: cannot rename '{item}' to '{glyph}'; "
+                    "'{new}' already exists.").format(item=item, glyph=glyph, new=newform(item))
                 log.error(txt)
                 return txt
-        log.info(_("update_annotations_by_glyph safely: ‘{members}’ to ‘{glyph}’").format(members=gm[glyph], glyph=glyph))
+        log.info(_("update_annotations_by_glyph safely: '{members}' to '{glyph}'").format(members=gm[glyph], glyph=glyph))
         for item in list(gm[glyph]):
             kwargs=self.program.alphabet.parse_verificationcode(item)
             senses=self.program.slices.inslice(
@@ -359,10 +359,10 @@ class Segments(Senses):
         self.thread_update()
         try:
             u.join()
-            log.info(_("Finished update_annotations_by_glyph threads for ‘{glyph}’").format(glyph=glyph))
+            log.info(_("Finished update_annotations_by_glyph threads for '{glyph}'").format(glyph=glyph))
         except UnboundLocalError: #if u.start() never happened...
             pass
-        log.info(_("update_annotations_by_glyph done with ‘{members}’ to ‘{glyph}’").format(members=gm[glyph], glyph=glyph))
+        log.info(_("update_annotations_by_glyph done with '{members}' to '{glyph}'").format(members=gm[glyph], glyph=glyph))
     def default_glyphs(self):
         return [i for i in 
                 self.program.alphabet.glyphdict()[self.program.params.cvt()]
@@ -405,7 +405,7 @@ class Segments(Senses):
     def rename_macrogroup(self,x,y,updatestatus=False):
         for item in list(self.program.alphabet.glyph_members()[x]):
             kwargs=self.program.alphabet.parse_verificationcode(item)
-            log.info(_("Updating verification from ‘{old}’ to ‘{new}’ for {args}").format(old=x, new=y, args=kwargs))
+            log.info(_("Updating verification from '{old}' to '{new}' for {args}").format(old=x, new=y, args=kwargs))
             self.rename_group_verification(x,y,**kwargs)
         #Do the above first, before glyph_members changes
         self.program.alphabet.rename_glyph(x,y)
@@ -437,8 +437,7 @@ class Segments(Senses):
 
 class WordCollection(Segments):
     """This task collects words, from the SIL CAWL, or one by one."""
-    def taskicon(self):
-        return self.program.theme.photo['iconWord']
+    taskicon = 'iconWord'
     def dobuttonkwargs(self):
         if self.program.taskchooser.cawlmissing:
             fn=self.addCAWLentries
@@ -517,10 +516,10 @@ class WordCollection(Segments):
             ok=_('Use this form')
             skip=None
         else:
-            text=_("What does ‘{form}’ mean in {lang}?").format(
+            text=_("What does '{form}' mean in {lang}?").format(
                             form=self.runwindow.form[self.analang],
                             lang=self.program.settings.languagenames[lang])
-            ok=_("Use this {lang} gloss for ‘{form}’").format(
+            ok=_("Use this {lang} gloss for '{form}'").format(
                             lang=self.program.settings.languagenames[lang],
                             form=self.runwindow.form[self.analang])
             self.runwindow.glosslangs.append(lang)
@@ -1265,7 +1264,7 @@ class Parse(Segments):
         w=ui.Window(self)
         w.title(_("Select second form"))
         t=ui.Label(w.frame,
-                    text=_("What is the {sfname} or {sfname2} of \n‘{lc}’ ({gloss})?"
+                    text=_("What is the {sfname} or {sfname2} of \n'{lc}' ({gloss})?"
                         "").format(
                         sfname=self.secondformfield[self.nominalps],
                         sfname2=self.secondformfield[self.verbalps],
@@ -1387,7 +1386,7 @@ class Parse(Segments):
             return
         if not ps:
             return asksegmentsnops()
-        log.info("asking for second form segments for ‘{}’ ps: {} ({}; {})"
+        log.info("asking for second form segments for '{}' ps: {} ({}; {})"
                 "".format(self.parser.entry.lcvalue(),
                             ps,self.parser.sense.id,
                             self.parsecatalog.parsen()))
@@ -1397,7 +1396,7 @@ class Parse(Segments):
         w=ui.Window(self)
         w.title(_("Type second form"))
         l=ui.Label(w.frame,
-                text=_("What {sfname} form goes with ‘{lc}’ ({gloss})?"
+                text=_("What {sfname} form goes with '{lc}' ({gloss})?"
                     "").format(sfname=sfname,
                             lc=self.parser.entry.lcvalue(),
                             gloss=self.getgloss()),
@@ -1481,7 +1480,7 @@ class Parse(Segments):
             return
         elif isinstance(r,tuple) and self.userconfirmation(*r):
                 # return level, lx, lc, sf, self.ps, afxs #from self.parser.threeforms
-            log.info("Confirmed parsing of ‘{}’ root from ‘{}’ and ‘{}’ as {}"
+            log.info("Confirmed parsing of '{}' root from '{}' and '{}' as {}"
                         "".format(*r[1:5]))
             log.info("adding {} affix set {}".format(*r[4:]))
             self.parser.addaffixset(*r[4:])#self.ps,afxs)
@@ -1758,7 +1757,7 @@ class Tone(Senses):
             item.examples[check].textvaluebylang(
                                     lang=self.analang,
                                     value=f)
-            log.info("Setting tone sort group to ‘{}’".format(group))
+            log.info("Setting tone sort group to '{}'".format(group))
             item.examples[check].tonevalue(group)
             for g in (set(self.glosslangs)& #selected
                         set(self.program.toneframes[ps][check])& #defined
@@ -1769,7 +1768,7 @@ class Tone(Senses):
                     item.examples[check].translationvalue(g,f)
             item.examples[check].lastAZTsort()
         except (KeyError,AssertionError) as e:
-            # log.info(f"Adding a new example to store ‘{check}’ values ({e})")
+            # log.info(f"Adding a new example to store '{check}' values ({e})")
             item.newexample(check,
                             self.program.toneframes[ps][check],
                             self.analang,

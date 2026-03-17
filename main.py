@@ -456,7 +456,7 @@ class App:
             m.bind("<Button-1>", lambda e: openweburl(durl))
             m2=ui.Label(errorw.frame,
                 text=_("I have tried to install some Python dependencies for you. "
-                        "If everything but ‘patiencediff’ installed "
+                        "If everything but 'patiencediff' installed "
                         "(see log below), just close this window and {azt} "
                         "will restart. "
                         "\nIf you see connectivity errors, check your internet "

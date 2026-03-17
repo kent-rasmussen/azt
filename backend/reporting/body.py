@@ -923,7 +923,7 @@ class Report(object):
                 "both V1=x and V2=y.")
         kwargs['usegui']=usegui
         if kwargs.get('usegui'): #i.e., showing results in window
-            self.wait(msg=_("Running {task}").format(task=self.tasktitle()))
+            self.wait(msg=_("Running {task}").format(task=_(self.tasktitle)))
         self.basicreportfile=''.join([str(self.reportbasefilename)
                                         ,'_',''.join(sorted(self.cvtstodo)[:2])
                                         ,'_MultisliceReport.txt'])

@@ -539,7 +539,7 @@ class Renderer():
         text=kwargs['text'] #should always be there
         text=text.replace('\t','    ') #Not sure why, but tabs aren't working.
         wraplength=kwargs['wraplength'] #should always be there
-        log.log(2,"Rendering ‘{}’ text with font: {}".format(text,font))
+        log.log(2,"Rendering '{}' text with font: {}".format(text,font))
         if (('justify' in kwargs and
                         kwargs['justify'] in [tkinter.LEFT,'left']) or
             ('anchor' in kwargs and

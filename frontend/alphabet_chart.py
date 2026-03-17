@@ -60,7 +60,7 @@ class OrderAlphabetUI(ui.Window):
                     'image':self.exobjs[g].image.scaled,
                 }
         elif self.exids[g]:
-            log.error(_("self.exids for ‘{g}’ is there ({i}), but self.exobjs isn't? "
+            log.error(_("self.exids for '{g}' is there ({i}), but self.exobjs isn't? "
                     "{objs} {ids}").format(g=g,i=self.exids[g],objs=self.exobjs,ids=self.exids))
         else:
             return {'text':"?"}
@@ -172,7 +172,7 @@ class OrderAlphabetUI(ui.Window):
             self.draggables.insert(i,self.make_glyph_label(self.order[i]))
             self.update_idletasks()
         index3=self.order.index(glyph)
-        text=(f"Glyph ‘{glyph}’ moved to index {index_dest} (between "
+        text=(f"Glyph '{glyph}' moved to index {index_dest} (between "
                 f"{self.order[index3-1]} and ")
         if len(self.order) > index3+1:
             text+=f"{self.order[index3+1]})"
@@ -563,7 +563,7 @@ class SelectFromPicturableWords(ui.Window):
         # print(optionlist)
         ui.Label(self.frame,text=title,font='title',c=0,r=0)
         if optionlist:
-            ui.Label(self.frame,text=_("Select a word to exemplify ‘{glyph}’").format(glyph=glyph),
+            ui.Label(self.frame,text=_("Select a word to exemplify '{glyph}'").format(glyph=glyph),
                     c=0,r=1)
             ui.ScrollingButtonFrame(self.frame,
                             optionlist=optionlist,
@@ -572,7 +572,7 @@ class SelectFromPicturableWords(ui.Window):
                             c=0,r=2
                             )
         else:
-            ui.Label(self.frame,text=_("No examples for ‘{glyph}’!").format(glyph=glyph),c=0,r=1)
+            ui.Label(self.frame,text=_("No examples for '{glyph}'!").format(glyph=glyph),c=0,r=1)
         self.deiconify()
 def getimagelocationURI(sense):
     if hasattr(sense,'image') and isinstance(sense.image,ui.Image):

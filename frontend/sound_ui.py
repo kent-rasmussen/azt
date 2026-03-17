@@ -295,7 +295,7 @@ class SoundSettingsWindow(ui.Window):
             cur=self.soundsettings.cards['dict'][self.soundsettings.audio_card_in]
         else:
             cur=None
-        return _(f"Microphone: ‘{cur}’")
+        return _(f"Microphone: '{cur}'")
     def setsoundcardoutindex(self,choice,window):
         # log.info("setsoundcardoutindex: {}".format(choice))
         self.soundsettings.audio_card_out=choice
@@ -306,7 +306,7 @@ class SoundSettingsWindow(ui.Window):
     def soundcardoutindexlabel(self):
         self.soundsettings.check()
         cur=self.soundsettings.cards['dict'][self.soundsettings.audio_card_out]
-        return _(f"Speakers: ‘{cur}’")
+        return _(f"Speakers: '{cur}'")
     def setsoundhz(self,choice,window):
         self.soundsettings.fs=choice
         self.updatesoundhz()
@@ -406,7 +406,7 @@ class SoundSettingsWindow(ui.Window):
         self.scroll=ui.ScrollingFrame(self.frame, row=0, column=0)
         self.content=self.scroll.content
         ui.Label(self.content, font='title',
-                text=self.tasktitle(),
+                text=_(self.tasktitle),
                 row=self.content.nrows())
         ui.Label(self.content, #font='title',
                 text=_("(click any to change)"),
@@ -434,14 +434,14 @@ class SoundSettingsWindow(ui.Window):
                             row=self.content.nrows(),
                             sticky='')
         play=_("Play")
-        l=_("Plug in your microphone, and make sure ‘record’ and ‘{play}’ work "
+        l=_("Plug in your microphone, and make sure 'record' and '{play}' work "
             "well here, before recording real data!".format(play=play))
         caveat=ui.Label(self.content,
                 text=l,font='read',
                 row=self.content.nrows(),
                 sticky='')
         caveat.wrap()
-        l=_("If Praat is installed in your OS path, right click on ‘{}’ above "
+        l=_("If Praat is installed in your OS path, right click on '{}' above "
             "to open in Praat.".format(play))
         caveat3=ui.Label(self.content,
                 text=l,font='default',
@@ -455,8 +455,7 @@ class SoundSettingsWindow(ui.Window):
     def soundcheckrefreshdone(self):
         self.task.storesoundsettings()
         self.on_quit()
-    def tasktitle(self):
-        return _('Sound Card Settings')
+    tasktitle = "Sound Card Settings"
     def __init__(self,program,**kwargs):
         self.refreshdelay=1000 # wait 1s for a refresh check, always mainwindow
         self.program=program #needed to find praat
@@ -464,7 +463,7 @@ class SoundSettingsWindow(ui.Window):
         ui.Window.__init__(self,
                             program.tk_root, #this show be called from a task now
                             exit=False,
-                            title=self.tasktitle(),
+                            title=_(self.tasktitle),
                             withdrawn=True
                         )
         self.task=self.program.task
@@ -509,7 +508,7 @@ class ASRModelSelectionWindow(ui.Window):
             log.info(f"Looking for languages related to {display}")
         except Exception as e:
             log.error(f"Language display error: {e}")
-            self.lang_display_var.set(f"Error: ‘{self.lang_cur}’ not found")
+            self.lang_display_var.set(f"Error: '{self.lang_cur}' not found")
             self.sister_options=[_("Nothing")]
             self.update_n_sisters()
             self.sisters_listbox.delete(0, "end")

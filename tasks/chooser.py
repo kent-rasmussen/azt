@@ -315,18 +315,12 @@ class TaskChooser(Task):
         # tasks.append(RecordTLexeme)
         # ]:
         tasktuples=[]
+        photos=self.program.theme.photo
         for task in tasks:
-            if hasattr(task,'tasktitle'):
-                if hasattr(task,'taskicon'):
-                    tasktuples.append((task,task.tasktitle(task),
-                                            task.taskicon(task)))
-                else:
-                    tasktuples.append((task,task.tasktitle(task),None))
-            else:
-                if hasattr(task,'taskicon'):
-                    tasktuples.append((task,str(task), task.taskicon(task)))
-                else:
-                    tasktuples.append((task,str(task),None))
+            title=_(task.tasktitle) if task.tasktitle else _("Unnamed {name} Task ({type})"
+                    ).format(name=self.program.name,type=task.__name__)
+            icon=photos.get(task.taskicon) if task.taskicon else None
+            tasktuples.append((task,title,icon))
         log.info(_("Tasks available ({count}): {tasks}").format(count=len(tasktuples),
                     tasks=[i[1] for i in tasktuples]))
         return tasktuples

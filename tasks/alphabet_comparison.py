@@ -23,13 +23,11 @@ class AlphabetComparisonPages(Task, AlphabetComparisonData, PageSetupUI):
                     # 'ncolumns', 'chart_title',
                     'pagesize'
                 ]
-    def taskicon(self):
-        return self.program.theme.photo['iconTranscribeV']
+    taskicon = 'iconTranscribeV'
     def tooltip(self):
         return _("This task helps you compare alphabet letters with example words "
             "and pictures to represent each letter.")
-    def tasktitle(self):
-        return _("Alphabet Comparison Pages")
+    tasktitle = "Alphabet Comparison Pages"
     def save_settings(self):
         for k in self.my_settings:
             value = getattr(self, k)

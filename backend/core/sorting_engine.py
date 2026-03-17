@@ -53,7 +53,7 @@ class Sort(object):
         if frames and self.check in frames:
             return frames.get(self.check)
         else:
-            text=_("Looking for tone check ‘{check}’, but not "
+            text=_("Looking for tone check '{check}', but not "
                     "in {ps} frames: {frames}").format(check=self.check, ps=self.ps, frames=frames)
             ErrorNotice(text,wait=True)
     def getsensesincheckgroup(self,**kwargs):
@@ -358,8 +358,8 @@ class Sort(object):
                         "".format(vals))
             curvalue=None
         if curvalue == annogroup: #only update if starting w/ same value
-            # log.info(f"Confirmed curent verification group ‘{curvalue}’ "
-            #         f"matches annotation group ‘{curvalue}’")
+            # log.info(f"Confirmed curent verification group '{curvalue}' "
+            #         f"matches annotation group '{curvalue}'")
             return True
         elif not curvalue:
             log.error("Problem updating verification to {}; current "
@@ -624,7 +624,7 @@ class Sort(object):
             fn=self.nprofile
         else:
             fn=None
-        done=_("All ‘{profile}’ groups in the ‘{check}’ "
+        done=_("All '{profile}' groups in the '{check}' "
                 "{typename} are verified and distinct!").format(profile=self.profile,
                 check=self.check, typename=self.checktypename[cvt])
                 #only on first two ifs:
@@ -892,7 +892,7 @@ class Sort(object):
         """Titles"""
         if self.cvt == 'T':
             context=_("tone melody")
-            descripttext=_("in ‘{check}’ frame").format(check=self.check)
+            descripttext=_("in '{check}' frame").format(check=self.check)
         else:
             context=self.program.params.cvcheckname(self.check)
             descripttext=_("by {check}").format(check=self.check)
@@ -1005,7 +1005,7 @@ class Sort(object):
     def verify(self,menu=False,macrosort=False):
         def updatestatus(verified=False):
             if macrosort:
-                log.info("Updating ‘{group}’ status as verified={verified}".format(group=group, verified=verified))
+                log.info("Updating '{group}' status as verified={verified}".format(group=group, verified=verified))
                 if verified:
                     self.program.alphabet.mark_glyph_done(group,cvt=self.cvt)
                 else:
@@ -1040,12 +1040,12 @@ class Sort(object):
             if group.isdigit():
                 title.append(_("letter group"))
             else:
-                title.append(_("letter ‘{group}’").format(group=group))
+                title.append(_("letter '{group}'").format(group=group))
             checks={self.program.alphabet.parse_verificationcode(i)['check']
                     for i in items}
             oktext=_("These all should use the same letter")
             if not group.isdigit():
-                oktext+=_(" (currently ‘{group}’)").format(group=group)
+                oktext+=_(" (currently '{group}')").format(group=group)
             instructions=_("Read this list aloud. Note where each "
                 "was sorted ({checks})."
                 "\nClick on any with a different "
@@ -1063,19 +1063,19 @@ class Sort(object):
             self.currentsortitems=items=self.program.examples.sensesinslicegroup(group,check)
             if group == 'NA':
                 oktext=_('These all DO NOT have {checkname}').format(checkname=checkname)
-                #These words seem to NOT have ‘{checkname}’. 
+                #These words seem to NOT have '{checkname}'. 
                 instructions=_("Read this list aloud, and click on any that "
-                            "DOES have ‘{checkname}’.").format(checkname=checkname)
-                title.append(_("for ‘{check}’ (NOT {checkname})").format(check=check.replace('=','≠'), 
+                            "DOES have '{checkname}'.").format(checkname=checkname)
+                title.append(_("for '{check}' (NOT {checkname})").format(check=check.replace('=','≠'), 
                                                             checkname=self.program.params.cvcheckname()))
             else:
                 oktext=_('These all have the same {checkname} ({check})'
                             ).format(checkname=checkname,check=check)
                 instructions=_("Read this list aloud. Click on any with a "
                             "different {checkname} sound.").format(checkname=checkname)
-                title.append(_("for ‘{check}’ ({checkname})").format(check=check, checkname=self.program.params.cvcheckname()))
+                title.append(_("for '{check}' ({checkname})").format(check=check, checkname=self.program.params.cvcheckname()))
             if group in self.program.status.verified():
-                log.info(_("‘{group}’ already verified, continuing.").format(group=group))
+                log.info(_("'{group}' already verified, continuing.").format(group=group))
                 return 1
             if self.program.params.cvt() == 'T' and 'examples' not in program:
                 log.error(_("Not verifying tone examples which don't exist."))
@@ -1087,7 +1087,7 @@ class Sort(object):
             groups=self.groups(wsorted=True) #from which to remove, put back
             # log.info("Groups: {}".format(self.groups(toverify=True)))
             verified=False
-            log.info("Group ‘{group}’ has no examples; continuing.".format(group=group))
+            log.info("Group '{group}' has no examples; continuing.".format(group=group))
             # log.info("Groups: {}".format(self.groups(toverify=True)))
             updatestatus(False)
             log.info("Group-groups: {group}-{groups}".format(group=group,groups=groups))
@@ -1100,12 +1100,12 @@ class Sort(object):
                         "".format(groups=self.groups(toverify=True)))
             return
         elif len(items) == 1 and not getattr(self,'reverifying',False):
-            log.info(_("Group ‘{group}’ only has {count} example; marking verified and "
+            log.info(_("Group '{group}' only has {count} example; marking verified and "
                     "continuing.").format(group=group,count=len(items)))
             updatestatus(True)
             return 1
         self.reverifying=False
-        self.getrunwindow(msg=_("preparing to verify the {item_name} ‘{group}’").format(item_name=item_name, group=group))
+        self.getrunwindow(msg=_("preparing to verify the {item_name} '{group}'").format(item_name=item_name, group=group))
         titles=ui.Frame(self.runwindow.frame,
                         column=1, row=0, columnspan=1, sticky='w')
         ui.Label(titles, text=' '.join(title), font='title', column=0, row=0, sticky='w')
@@ -1169,7 +1169,7 @@ class Sort(object):
         self.runwindow.wait_window(self.verifycanary)
         if self.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
             return
-        log.debug("User selected ‘{selection}’, moving on.".format(selection=oktext))
+        log.debug("User selected '{selection}', moving on.".format(selection=oktext))
         if macrosort:
             self.verifyselected(macrosort=True)
             if len(self.buttonframe.groupbuttonlist) > 1:
@@ -1262,8 +1262,8 @@ class Sort(object):
         def join_pair():
             lpr=sorted(self.current_pair,key=str) #put a number first (to remove)
             log.info("User selected {lpr} to join, joining them (macrosort={macrosort}).".format(lpr=lpr, macrosort=macrosort))
-            msg=_("Now we're going to move group ‘{group1}’ into "
-                "‘{group2}’, removing ‘{group1}’ and marking ‘{group2}’ unverified.").format(group1=lpr[0], group2=lpr[1])
+            msg=_("Now we're going to move group '{group1}' into "
+                "'{group2}', removing '{group1}' and marking '{group2}' unverified.").format(group1=lpr[0], group2=lpr[1])
             self.runwindow.wait(msg=msg)
             """All the senses we're looking at, by ps/profile"""
             if macrosort:
@@ -1316,7 +1316,7 @@ class Sort(object):
             buttonclass=SortGroupButtonFrame
             img_mod=''
             title_mod="Sort"
-            title_mod_2=f" (‘{check}’)"
+            title_mod_2=f" ('{check}')"
             join_icon='join'
         title=_("Review {title} Groups{mod}").format(title=title_mod,mod=title_mod_2)
         self.runwindow.frame.titles=ui.Frame(self.runwindow.frame,

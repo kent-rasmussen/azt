@@ -628,7 +628,7 @@ class StatusFrame(ui.Frame):
             field=self.program.settings.secondformfield[ps]
         else:
             field='<unset>'
-        return (_("Using second form field ‘{field}’ ({ps})").format(field=field, ps=ps))
+        return (_("Using second form field '{field}' ({ps})").format(field=field, ps=ps))
     def fieldsline(self):
         # log.info("Starting fieldsline w/self {} ({})".format(self,type(self)))
         # log.info("Starting fieldsline w/task {} ({})".format(self.task,
@@ -725,7 +725,7 @@ class StatusFrame(ui.Frame):
         elif check not in checks:
             return _("no tone frame selected.")
         else:
-            return (_("working on ‘{check}’ tone frame").format(check=check))
+            return (_("working on '{check}' tone frame").format(check=check))
     def toneframe(self,line):
         # log.info("toneframes: {}".format(self.program.toneframes))
         # log.info("maketoneframes: {}".format(self.program.toneframes))
@@ -744,7 +744,7 @@ class StatusFrame(ui.Frame):
             self.program.params.check(), self.program.status.group()
             return _("(no framed group)")
         else:
-            return (_("(framed group: ‘{group}’)").format(group=self.program.status.group()))
+            return (_("(framed group: '{group}')").format(group=self.program.status.group()))
     def tonegroup(self,line):
         check=self.program.params.check()
         group=self.program.status.group()
@@ -1036,7 +1036,7 @@ class StatusFrame(ui.Frame):
                                     on_select=fn,
                                     column=1, sticky="W")
         if not bf.hasexample:
-            log.info(f"deleting empty button for ‘{glyph}’")
+            log.info(f"deleting empty button for '{glyph}'")
             l.destroy()
             bf.destroy()
     def makeglyphtable(self):
@@ -1297,11 +1297,8 @@ class StatusFrame(ui.Frame):
 class TaskDressing(HasMenus,ui.Window):
     """This Class covers elements that belong to (or should be available to)
     all tasks, e.g., menus and button appearance."""
-    def taskicon(self):
-        return self.program.theme.photo['icon'] #default
-    def tasktitle(self):
-        return _("Unnamed {name} Task ({type})").format(name=self.program.name,
-                                                type=type(self).__name__)
+    taskicon = 'icon'
+    tasktitle = None
     def _taskchooserbutton(self):
         if isinstance(self,TaskChooser) and not self.showreports:
             if self.datacollection:
@@ -1410,16 +1407,23 @@ class TaskDressing(HasMenus,ui.Window):
             self.context.menuitem(_("Hide details"),self._hidedetails)
         else:
             self.context.menuitem(_("Show details"),self._showdetails)
+    def _tasktitle(self):
+        if callable(self.tasktitle):
+            return self.tasktitle()
+        if self.tasktitle:
+            return _(self.tasktitle)
+        return _("Unnamed {name} Task ({type})").format(
+                                name=self.program.name,type=type(self).__name__)
     def maketitle(self):
         title=_("{name} Dictionary and Orthography Checker: {task}").format(
-                                            name=self.program.name,task=self.tasktitle())
+                                            name=self.program.name,task=self._tasktitle())
         if self.program.theme.name != 'greygreen':
-            log.info(_("Using theme ‘{theme}’ on {task}.").format(theme=self.program.theme.name,
-                                                        task=self.tasktitle()))
+            log.info(_("Using theme '{theme}' on {task}.").format(theme=self.program.theme.name,
+                                                        task=self._tasktitle()))
             title+=f' ({self.program.theme.name})'
         self.title(title)
         t=ui.Label(self.frame, font='title',
-                text=self.tasktitle(),
+                text=self._tasktitle(),
                 row=0, column=0, columnspan=2)
         tasks=_("Tasks")
         t.tt=ui.ToolTip(t,text=_("click on the task you want to do"))
@@ -1585,14 +1589,14 @@ class TaskDressing(HasMenus,ui.Window):
                             self.program.settings.distinguish[s]=changed[s][0] #(oldvar,newvar):
                         else:
                             log.error(_("Changed to value ({new}) doesn't match "
-                            "current setting for ‘{setting}’: {current}").format(new=changed[s][1],
+                            "current setting for '{setting}': {current}").format(new=changed[s][1],
                                                         setting=s,current=self.distinguish[s]))
                     elif s in self.program.settings.interpret:
                         if self.program.settings.interpret[s]==changed[s][1]:
                             self.program.settings.interpret[s]=changed[s][0] #(oldvar,newvar):
                         else:
                             log.error(_("Changed to value ({new}) doesn't match "
-                            "current setting for ‘{setting}’: {current}").format(new=changed[s][1],
+                            "current setting for '{setting}': {current}").format(new=changed[s][1],
                                                         setting=s,current=self.interpret[s]))
             r=True #only false if changes made, and user exits notice
             changed={}
@@ -2163,7 +2167,7 @@ class TaskDressing(HasMenus,ui.Window):
                                     setcmd=setcmd,
                                     # other=True
                                     )
-        log.info(_("Asking for ‘{ps}’ second form field...").format(ps=ps))
+        log.info(_("Asking for '{ps}' second form field...").format(ps=ps))
         try:
             assert other == False
             othernames=[i for i in self.program.db.fieldnames[self.analang]
@@ -2173,21 +2177,21 @@ class TaskDressing(HasMenus,ui.Window):
         if othernames:
             if len(othernames)-1:
                 text=_("Select a database field "
-                        "to use for second forms of ‘{ps}’ words").format(ps=ps)
+                        "to use for second forms of '{ps}' words").format(ps=ps)
                 otherbuttontext=_("None of these; make a new field")
             else:
-                text=_("Select the ‘{field}’ database field "
-                        "for second forms of ‘{ps}’ words").format(field=othernames[0],ps=ps)
+                text=_("Select the '{field}' database field "
+                        "for second forms of '{ps}' words").format(field=othernames[0],ps=ps)
                 otherbuttontext=_("No; make a new field")
             cmd=getother
             optionslist=othernames
         else:
             setcmd(opts[0])
             # ErrorNotice(_("No suitable database fields were found for second "
-            #             f"forms of ‘{ps}’ words; using ‘{opts[0]}’."))
+            #             f"forms of '{ps}' words; using '{opts[0]}'."))
             return
             # text=_("No suitable database fields were found; what name "
-            #         f"do you want to use for second forms of ‘{ps}’ words?")
+            #         f"do you want to use for second forms of '{ps}' words?")
             # otherbuttontext=_("None of these work; make my own field")
             # cmd=getcustom
             # optionslist=opts
@@ -2314,7 +2318,7 @@ class TaskDressing(HasMenus,ui.Window):
                 "pay attention to the instructions, and if \nthere's anything "
                 "you don't understand, or if you're not \nsure what a tone "
                 "frame is, please ask for help. \nWhen you are done making "
-                "frames, click ‘Exit’ to continue.").format(button=btext)
+                "frames, click 'Exit' to continue.").format(button=btext)
                 cmd=lambda w=window: self.addframe(window=w)
             else:
                 btext=_("Return to {name}, to fix settings").format(name=self.program.name)
@@ -2423,7 +2427,7 @@ class TaskDressing(HasMenus,ui.Window):
         if not groups:
             ErrorNotice(parent=window.frame,
                           text=_("It looks like you don't have {ps}-{profile} lexemes "
-                          "grouped in the ‘{check}’ check yet \n({kwargs})."
+                          "grouped in the '{check}' check yet \n({kwargs})."
                           "").format(ps=ps,profile=profile,check=check,kwargs=kwargs), column=0, row=0)
             return
         if kwargs.get('intfirst') and kwargs.get('guess'):
@@ -2696,6 +2700,7 @@ class TaskDressing(HasMenus,ui.Window):
     def __init__(self,parent):
         log.info(_("Initializing TaskDressing"))
         self.parent=parent
+        self.program=parent.program
         self.menu=False #initialize once
         if isinstance(self,TaskChooser):
             taskchooser=self
@@ -3280,7 +3285,7 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                     for f in self.frameargs}
         super().__init__(parent, **frameargs)
         if self.group not in self.program.alphabet.glyph_members():
-            ui.Label(self,text=_("group ‘{group}’ isn't in glyphs! "
+            ui.Label(self,text=_("group '{group}' isn't in glyphs! "
                     "({members})").format(group=self.group, members=list(self.program.alphabet.glyph_members())),
                     c=0)
             self.hasexample=True #make this error visible

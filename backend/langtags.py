@@ -374,7 +374,7 @@ class Language(langcodes.Language):
             # log.info(f"{self.lineages=}")
             self.lineage = self.shared_lineage()
         else:
-            log.error(f"code ‘{iso}’ is not in self.languages.by_iso "
+            log.error(f"code '{iso}' is not in self.languages.by_iso "
                         "or macrolanguage_members!?")
             self.lineage = []
     def shared_lineage(self):
@@ -392,7 +392,7 @@ class Language(langcodes.Language):
         try:
             return self.lineage[0]
         except:
-            log.error(f"code ‘{self.iso()}’ came back with no family!? "
+            log.error(f"code '{self.iso()}' came back with no family!? "
                 f"({self.lineages})")
     def get_regionname(self):
         tag=self.language
@@ -489,7 +489,7 @@ class Language(langcodes.Language):
                 return ancestors
     def report(self):
         log.info(f"{self.display_name()} ({self.display_name('fr')}; "
-            f"tag ‘{self.tag()}’ "
+            f"tag '{self.tag()}' "
             f"{'Valid' if self.is_valid() else 'Not valid'}, "
             f"from {self.tag_raw()} > {self.maximize()})")
         log.info(f"Family: {self.family()}")

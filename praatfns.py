@@ -516,13 +516,13 @@ class TextGrid(tgt.core.TextGrid):
         for tier in tgt_text_grid.tiers:
             # print(tier.name)
             if self.has_tier(tier.name):
-                print(_("Tier ‘{}’ is already there!").format(tier.name))
+                print(_("Tier '{}' is already there!").format(tier.name))
                 print(_("Won't add "
                 "{} "
                 "annotations (first 5: "
                 "{})").format(len(tier.annotations),[i.text for i in tier.annotations[:5]]))
             else:
-                print(_("Tier ‘{}’ not there, adding!").format(tier.name))
+                print(_("Tier '{}' not there, adding!").format(tier.name))
                 self.add_tier(tier.name)
                 self.get_tier_by_name(tier.name).add_annotations(tier.annotations)
             print("Done with",tier.name)
@@ -708,7 +708,7 @@ class ExtractToArchive():
         if tier_name in self.files.textgrid.get_tier_names():
             tier=self.files.textgrid.get_tier_by_name(tier_name)
         elif tier_name:
-            log.info(f"Tier ‘{tier_name}’ not in "
+            log.info(f"Tier '{tier_name}' not in "
                     "{self.files.textgrid.get_tier_names()}")
             exit()
         elif len(self.files.textgrid.tiers) == 1:

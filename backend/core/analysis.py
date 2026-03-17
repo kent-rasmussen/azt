@@ -1378,10 +1378,10 @@ class StatusDict(dict):
             sortl=[]
             ufjoinl=[]
             self.renewchecks()
-            # log.info(f"Working on checks ‘{self.checks()}’")
-            # log.info(f"Working on updatechecksbycvt ‘{self.updatechecksbycvt()}’")
+            # log.info(f"Working on checks '{self.checks()}'")
+            # log.info(f"Working on updatechecksbycvt '{self.updatechecksbycvt()}'")
             for check in self.updatechecksbycvt():
-                log.info(_("Working on check ‘{check}’").format(check=check))
+                log.info(_("Working on check '{check}'").format(check=check))
                 analysisl.append(self.last('analysis',**{**kwargs,'check':check}))
                 sortl.append(self.last('sort',**{**kwargs,'check':check}))
                 ufjoinl.append(self.last('joinUF',**{**kwargs,'check':check}))

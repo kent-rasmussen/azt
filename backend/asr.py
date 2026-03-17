@@ -235,7 +235,7 @@ class ASRtoText(object):
     def get_tone(self):
         tonenumbers=[i for i in self.ipa if i.isdigit()]
         if not tonenumbers:
-            # log.info(f"No tone numbers in ‘{self.ipa}’ ({self.repo}); "
+            # log.info(f"No tone numbers in '{self.ipa}' ({self.repo}); "
             #             "skipping tone.")
             return
         # print("Getting Tone")
@@ -378,7 +378,7 @@ class ASRtoText(object):
             if self.repo in x:
                 text="OK"
             else:
-                text=f"!= ‘{self.repo}’!"
+                text=f"!= '{self.repo}'!"
             log.info(f"inferall iteration ({x} {text}: {z if z else y})")
             if x in self.transcriptions or x in self.transcriptions_ipa:
                 tx=self.transcriptions[x] if x in self.transcriptions else None

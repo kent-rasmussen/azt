@@ -629,12 +629,12 @@ class Engine(object):
         ls=self.levels()
         if isinstance(l,int) and l in ls:
             self.ask=l
-        log.info(_("Parser set to ask for ‘{ask_level}’").format(ask_level=ls[self.ask]))
+        log.info(_("Parser set to ask for '{ask_level}'").format(ask_level=ls[self.ask]))
     def autolevel(self,l=None):
         ls=self.levels()
         if isinstance(l,int) and l in ls:
             self.auto=l
-        log.info(_("Parser set to auto for ‘{auto_level}’").format(auto_level=ls[self.auto]))
+        log.info(_("Parser set to auto for '{auto_level}'").format(auto_level=ls[self.auto]))
     def setlevels(self,auto=5,ask=4): #default for first auto run
         self.auto=auto
         self.ask=ask

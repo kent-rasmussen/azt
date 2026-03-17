@@ -24,13 +24,11 @@ class AlphabetChart(Task, AlphabetChartData, OrderAlphabetUI):
                     'copyright',
                     'pagesize'
                 ] + AlphabetChartData.my_settings
-    def taskicon(self):
-        return self.program.theme.photo['alpha_icon']
+    taskicon = 'alpha_icon'
     def tooltip(self):
         return _("This task helps you organize an alphabet and select words "
             "with pictures to represent each letter.")
-    def tasktitle(self):
-        return _("Alphabet Chart")
+    tasktitle = "Alphabet Chart"
     def save_settings(self):
         for k in self.my_settings:
             value = getattr(self, k)

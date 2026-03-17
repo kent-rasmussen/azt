@@ -203,21 +203,21 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         lang_stats=collections.Counter(present_langs).most_common()
         langs=set(present_langs)
         if current_lang in self.glosslangs:
-            log.error(_("‘{lang}’ is a gloss lang! ({langs})!").format(lang=current_lang, langs=self.glosslangs))
+            log.error(_("'{lang}' is a gloss lang! ({langs})!").format(lang=current_lang, langs=self.glosslangs))
             return
         if current_lang == new_lang:
-            log.error(_("‘{new}’ is the same as ‘{current}’!")
+            log.error(_("'{new}' is the same as '{current}'!")
                 .format(new=new_lang, current=current_lang))
             return
         if current_lang not in langs:
-            log.error(_("‘{current}’ not in langs={langs}!")
+            log.error(_("'{current}' not in langs={langs}!")
                     .format(current=current_lang, langs=langs))
             return
         if new_lang in langs and not new_already_ok:
-            log.error(_("‘{new}’ already in langs={langs}!")
+            log.error(_("'{new}' already in langs={langs}!")
                     .format(new=new_lang, langs=langs))
             return
-        log.info(_("found ‘{current}’, and not ‘{new}’ in langs={langs}.")
+        log.info(_("found '{current}', and not '{new}' in langs={langs}.")
                 .format(current=current_lang, new=new_lang, langs=langs))
         for fn in [None,self.tonelangname,
                     self.audiolangname,
@@ -1014,7 +1014,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         # t=self.get('field/form/text',node=node[0],ftype='tone',
         #             showurl=True
         #             ).get()
-        # log.info("Sense level tone field now ‘{}’.".format(t[0].text))
+        # log.info("Sense level tone field now '{}'.".format(t[0].text))
         # prettyprint(node[0])
         self.updatemoddatetime(guid=guid,senseid=senseid,write=write)
         """<field type="tone">
@@ -1236,7 +1236,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 self.analangs=[tryname]
         else:
             log.error("I can't find a plausible analang! "
-                        f"(from ‘{l_ordered}’)")
+                        f"(from '{l_ordered}')")
         # log.info(_("Possible analysis language codes found: {langs}").format(langs=self.analangs))
         for glang in set(['fr','en']) & set(self.analangs):
             log.info(f"Examples of LWC lang {glang} found; is this correct?")
@@ -2008,7 +2008,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 """This finds or creates, by lang:"""
                 lx=e.lx.textvaluebylang(lang)
                 lc=e.lc.textvaluebylang(lang)
-                log.info("Copying citation ‘{}’ to lexeme (was {}) for "
+                log.info("Copying citation '{}' to lexeme (was {}) for "
                         "lang {}".format(lc,lx,lang))
                 e.lx.textvaluebylang(lang,lc) #overwrite in any case
                     # if not lx.text: #don't overwrite info
@@ -2068,7 +2068,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                     totext=to.textvaluebylang(lang)
                 except AttributeError:
                     totext=to.textvalue()
-                log.info("Moving {} {}/{} ‘{}’ to {}/{} (was {}) for lang {}"
+                log.info("Moving {} {}/{} '{}' to {}/{} (was {}) for lang {}"
                         "".format(entry.get("guid"),kwargs['fromtag'],f.tag,fft,
                                     kwargs['totag'],to.tag,totext,ffl))
                 if not totext:#,value
@@ -2280,7 +2280,7 @@ class Form(Node):
         return r
     def textvalue(self,value=None):
         if value is not None: #leave room to clear value with False
-            # log.info("Setting textvalue to ‘{}’ ({})".format(value,type(value)))
+            # log.info("Setting textvalue to '{}' ({})".format(value,type(value)))
             self.textnode.text=value
         else:
             return self.textnode.text
@@ -2404,7 +2404,7 @@ class FormParent(Node):
         if not lang:
             lang=self.getlang(lang)
         if lang not in self.forms:
-            # log.info(f"Missing ‘{lang}’ lang in textvaluebylang: {self.forms=}")
+            # log.info(f"Missing '{lang}' lang in textvaluebylang: {self.forms=}")
             if value is not None: #only make if we're populating it, allow ''
                 self.forms[lang]=Form(self,attrib={'lang':lang})
             else:
@@ -2456,7 +2456,7 @@ class FormParent(Node):
                 guid=(self.parent.entry.guid if hasattr(self.parent,'entry')
                                             else self.parent.guid)
                 log.error(f"{self.tag} node {num} in entry {guid} has multiple "
-                    "forms for ‘{lang}’ lang. While this is legal LIFT, "
+                    "forms for '{lang}' lang. While this is legal LIFT, "
                     "it is almost certainly an error, and will lead to "
                     "unexpected behavior.")
                 forms=self.findall(f'form[@lang="{lang}"]')
@@ -2469,17 +2469,17 @@ class FormParent(Node):
                 elif set('/\\')&set(texts[0]) or set('/\\')&set(texts[1]):
                     absolute=file.absolute_of_other(*texts[:2])
                     if absolute:
-                        log.info(f"texts ‘{texts[0]}’ & ‘{texts[1]}’ are not "
+                        log.info(f"texts '{texts[0]}' & '{texts[1]}' are not "
                         f"the same, but {absolute} seems to be an absolute (or "
                         "more absolute) version of the other, so removing it.")
                         self.remove(forms[texts.index(absolute)])
                     else:
-                        log.info(f"texts ‘{texts[0]}’ & ‘{texts[1]}’ are not "
+                        log.info(f"texts '{texts[0]}' & '{texts[1]}' are not "
                             "the same. At least one seems to contain "
                             "a directory, but I can't find an absolute path "
                             "to remove.")
                 else:
-                    log.info(f"texts ‘{texts[0]}’ & ‘{texts[1]}’ are not "
+                    log.info(f"texts '{texts[0]}' & '{texts[1]}' are not "
                         "the same, and neither seems to contain a directory,"
                         "so I'm not sure what to do.")
     def getforms(self):
@@ -2609,7 +2609,7 @@ class FieldParent(object):
             tag='field'
         if len(self.findall('{}[@type="{}"]'.format(tag,type))) > 1:
             values=[i.textvaluebylang() for i in self.findall(f'{tag}[@type="{type}"]')]
-            log.error("{} node in entry {} has multiple {} nodes of ‘{}’ type. "
+            log.error("{} node in entry {} has multiple {} nodes of '{}' type. "
                     "While this is legal LIFT, it is probably an error, and "
                     f"will lead to unexpected behavior. ({values=})"
                     "".format(self.tag,self.entry.guid,tag,type))
@@ -3162,7 +3162,7 @@ class Sense(Node,FieldParent):
             v=self.fieldvalue(key)
         else:
             v=self.fieldvalue(key,value=str(value))
-        # log.info(f"Set ‘{key}’ fieldvalue {str(value)} = {v}")
+        # log.info(f"Set '{key}' fieldvalue {str(value)} = {v}")
         if v: #fieldvalue returns None on no node
             v=xmlfns.stringtoobject(v) #must come and go to XML as string
             # log.info(f"verificationtextvalue returning {v=} ({type(v)=}; "
@@ -4372,7 +4372,7 @@ def another():
                 "/grammatical-info[@value='{ps}']/../.."
                 "/lexical-unit"
                 "/form[@lang='{analang}'][text='{form}']"
-                "/../.." # ^ [.=’text'] not until python 3.7
+                "/../.." # ^ [.='text'] not until python 3.7
                 ),['guid','senseid','ps','analang','form']),
         'attr':'guid'}
     a['guidbysense']={
@@ -4400,7 +4400,7 @@ def another():
                 "/grammatical-info[@value='{ps}']/../.."
                 "/citation"
                 "/form[@lang=guid'{analang}'][text='{form}']"
-                "/../.." # ^ [].=’text'] not until python 3.7
+                "/../.." # ^ [].='text'] not until python 3.7
                 ),['guid','senseid','ps','analang','form']),
         'attr':'guid'}
     a['toneUFfieldvalue']={
