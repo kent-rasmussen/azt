@@ -358,7 +358,7 @@ class OrderAlphabetUI(ui.Window):
                         "").format(yes=q_button_text)
         ui.Label(q.frame,text=q_text,sticky='news')
         ui.Button(q.frame,text=q_button_text,
-                    cmd=lambda x=filepath:self.program.settings.repo['git'].add(x,
+                    cmd=lambda x=filepath:self.program.data_repo['git'].add(x,
                                                                         force=True),
                     r=1,sticky='news')
         b2_text=_("I see spelling problems; \nshow me word data")

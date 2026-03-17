@@ -592,7 +592,7 @@ class AlphabetComparisonData:
                     if not lines:
                         continue
                     if 'repo' in self.program:
-                        self.program.settings.repo['git'].add(txt_path, force=True)
+                        self.program.data_repo['git'].add(txt_path, force=True)
                     title_line = lines[0].strip()
                     body = "".join(lines[1:]).strip()
                     base_name = os.path.splitext(os.path.basename(txt_path))[0]
@@ -602,7 +602,7 @@ class AlphabetComparisonData:
                         if os.path.exists(img_cand):
                             img_path = img_cand
                             if 'git' in self.program:
-                                self.program.settings.repo['git'].add(img_cand, force=True)
+                                self.program.data_repo['git'].add(img_cand, force=True)
                             break
                     extra_pages.append({
                         'type': 'extra_text',
@@ -663,6 +663,6 @@ class AlphabetComparisonData:
         q_text += '\n' + _("Click {yes} to store and share with your data.").format(yes=q_button_text)
         ui.Label(q.frame, text=q_text, sticky='news')
         ui.Button(q.frame, text=q_button_text,
-                  cmd=lambda x=filepath: self.program.settings.repo['git'].add(x, force=True),
+                  cmd=lambda x=filepath: self.program.data_repo['git'].add(x, force=True),
                   r=1, sticky='news')
         q.lift()

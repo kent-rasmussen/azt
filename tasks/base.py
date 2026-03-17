@@ -4,6 +4,7 @@ _ = gettext.gettext
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 from frontend.ui_shell import TaskDressing
+from backend.core.lexicon import Tone, Segments #for makecvtok
 
 class Task(TaskDressing):
     def makecvtok(self):

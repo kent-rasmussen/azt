@@ -24,13 +24,13 @@ from frontend.error_notice import ErrorNotice
 
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('Multicheck', 'Multislice', 'ResultWindow', 'Segments', 'Tone', '_', 'callerfn', 'counts', 'logfinished', 'nn', 'nowruntime', 'xlp'):
+    if name in ('Multicheck', 'Multislice', 'ResultWindow', 'Segments', 'Tone', '_', 'callerfn', 'logfinished', 'nn', 'nowruntime', 'xlp'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('Multicheck', 'Multislice', 'ResultWindow', 'Segments', 'Tone', '_', 'callerfn', 'counts', 'logfinished', 'nn', 'nowruntime', 'xlp'):
+for name in ('Multicheck', 'Multislice', 'ResultWindow', 'Segments', 'Tone', '_', 'callerfn', 'logfinished', 'nn', 'nowruntime', 'xlp'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 
@@ -57,7 +57,7 @@ class Report(object):
             # with multiprocessing.Pool(processes=4) as pool:
             #     pool.map(self.tonegroupreport,[
             #             {'ps':ps,'profile':p,'usegui':False} for p in d[ps]])
-        kwargs['xlpr'].close(me=me)
+        kwargs['xlpr'].close(me=self.program.me)
     def reportmulti(self,**kwargs):
         """This backgrounds multiple reports at a time, not multiple sections
         in one report"""
@@ -390,7 +390,7 @@ class Report(object):
                             eps=eps,audiopercent=audiopercent)
         ps2=xlp.Paragraph(s2,text=ptext)
         if 'xlpr' not in kwargs:
-            xlpr.close(me=me)
+            xlpr.close(me=self.program.me)
         text=_("Finished in {seconds} seconds.").format(seconds=nowruntime()-start_time)
         text=logfinished(start_time,msg=_("report {ps} {profile}").format(ps=ps,profile=profile))
         logfinished(start_time)
@@ -400,7 +400,7 @@ class Report(object):
         r.close()
         if usegui:
             resultswindow.waitdone()
-            if me:
+            if self.program.me:
                 resultswindow.on_quit()
         self.program.status.last('report',update=True)
     def makeresultsframe(self):
@@ -496,7 +496,7 @@ class Report(object):
         else:
             kwargs['ufgroup']=_("All")
             iterateUFgroups(si,**kwargs)
-        xlpr.close(me=me)
+        xlpr.close(me=self.program.me)
         if usegui:
             self.runwindow.waitdone()
             if not hasattr(self,'results'): #i.e., showing results in window
@@ -1034,7 +1034,7 @@ class Report(object):
                     iteratecvt(parent=s2,**kwargs)
         self.coocurrencetables(xlpr)
         log.info(self.checkcounts)
-        xlpr.close(me=me)
+        xlpr.close(me=self.program.me)
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
         if kwargs.get('usegui'):

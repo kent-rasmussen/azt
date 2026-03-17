@@ -11,6 +11,7 @@ import re
 import pathlib
 import os
 import sys
+loglevel_default='INFO'
 """
 DEBUG (10):    Detailed information, typically of interest only when
                 diagnosing problems.
@@ -26,9 +27,11 @@ CRITICAL (50): A serious error, indicating that the program itself
 def shutdown():
     log.info("shutting down logging")
     logging.shutdown()
-def getlog(name):
-    return logging.getLogger(name)
-def setlevel(loglevel,thislog=None):
+def getlog(name,loglevel=loglevel_default):
+    thislog=logging.getLogger(name)
+    setlevel(loglevel,thislog)
+    return thislog
+def setlevel(loglevel=loglevel_default,thislog=None):
     if not thislog:
         thislog=logging.root
     thislog.setLevel(loglevel)

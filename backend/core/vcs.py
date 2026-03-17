@@ -142,7 +142,7 @@ class Repository(object):
         if '=======' in difftext:
             ErrorNotice(f"Merge needs to happen! {difftext}",wait=True)
             return
-        if difftext and (not me or self.commitconfirm(difftext)):
+        if difftext and (not self.program.me or self.commitconfirm(difftext)):
             r=self.do([i for i in args if i is not None])
             log.info("commit return: {}".format(r))
             return r
@@ -456,7 +456,7 @@ class Repository(object):
         except subprocess.CalledProcessError as e:
             output=stouttostr(e.output)
             # log.info("Error output: \n{}; {}".format(output,type(output)))
-            if me and (iwascalledby in ['pull'] and
+            if self.program.me and (iwascalledby in ['pull'] and
                         'rejected' not in output and
                         self.code == 'git'):
                 log.info(_("Call to {repo} ({args}) gave error: \n{output}\nMerging.").format(
@@ -812,7 +812,7 @@ class Mercurial(Repository):
                     "").format(url=self.url,files='\n'.join(rescues))
             log.error(error)
             ErrorNotice(error,title=_("Chorus Rescue files found!"))
-            if me:
+            if self.program.me:
                 exit()
     def makebare(self):
         args=['update', 'null']
@@ -980,7 +980,7 @@ class GitReadOnly(Git):
         # this will mostly operate on all present sources (internet and USB),
         # reporting failures as appropriate. I hope users will be OK with that
         r={}
-        if me: #no one else should push changes
+        if self.program.me: #no one else should push changes
             method=Repository.push
             # This doesn't mind if there is no USB:
             remotes=self.localremotes() #don't publish to internet this way

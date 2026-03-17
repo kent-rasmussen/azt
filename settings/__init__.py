@@ -110,20 +110,20 @@ from frontend.error_notice import ErrorNotice
 
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('counts', 'me', '_', 'askerror',
+    if name in ('_',
                 'sysrestart', 'sysshutdown', 'rx', 'interfacelang', 'nowruntime',
                 'logfinished', 'nn', 'unlist', 'Glosslangs', 'ToneFrames',
                 'SliceDict', 'StatusDict', 'Tone', 'Segments', 'WordCollection',
-                'Parse', 'Sort'):
+                'Parse'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
-for _name in ('counts', 'me', '_', 'askerror',
+for _name in ('_',
               'sysrestart', 'sysshutdown', 'rx', 'interfacelang', 'nowruntime',
               'logfinished', 'nn', 'unlist', 'Glosslangs', 'ToneFrames',
               'SliceDict', 'StatusDict', 'Tone', 'Segments', 'WordCollection',
-              'Parse', 'Sort'):
+              'Parse'):
     if _name not in globals():
         globals()[_name] = LazyGlobal(_name)
 
@@ -331,9 +331,6 @@ class Settings(SettingsUI):
                     self.program.data_repo[r].add(savefile)
         #This line as is causes merge conflicts unnecessarilyː
         # self.repo_commit() #this will be taken up later, or else done again
-    def repo_commit(self):
-        for r in self.program.data_repo:
-            self.program.data_repo[r].commit()
     def moveattrstoobjects(self):
         # _log.info("Glosslangs (in moveattrstoobjects): {}".format(self.glosslangs.langs()))
         # _log.info(f"moveattrstoobjects done: {self.attrs_moved_to_object}")

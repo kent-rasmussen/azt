@@ -24,13 +24,13 @@ from frontend.error_notice import ErrorNotice
 
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('Sort', 'Tone', '_', 'counts', 'dictofchilddicts', 'dictscompare', 'exampletype', 'flatten', 'grouptype', 'rx', 'unlist'):
+    if name in ('Sort', 'Tone', '_', 'dictofchilddicts', 'dictscompare', 'exampletype', 'flatten', 'grouptype', 'rx', 'unlist'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('Sort', 'Tone', '_', 'counts', 'dictofchilddicts', 'dictscompare', 'exampletype', 'flatten', 'grouptype', 'rx', 'unlist'):
+for name in ('Sort', 'Tone', '_', 'dictofchilddicts', 'dictscompare', 'exampletype', 'flatten', 'grouptype', 'rx', 'unlist'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 
@@ -660,6 +660,7 @@ class SliceDict(dict):
         because changes in slice options (ps or profile) change check options,
         and not vice versa (check options are only presented based on current
         cvt and slice)"""
+        self.program=program
         self.program.slices=self
         super(SliceDict, self).__init__()
         self.profilecountsValid=0
@@ -893,6 +894,20 @@ class StatusDict(dict):
         return cs
     def all_groups_verified_anywhere(self):
         d=self.dict()
+        log.info(d)
+        log.info({cvt:set([check #i
+                        for ps in d[cvt]
+                        for profile in d[cvt][ps]
+                        for check in d[cvt][ps][profile]
+                        # for i in d[cvt][ps][profile][check]['done']
+                        # if 'done' in d[cvt][ps][profile][check]
+                        # if i not in ['NA']
+                        ])
+                for cvt in d if cvt != 'T'
+                })
+        #prints FIX!
+        #{'Noun': {'done', 'recorded', 'last', 'presorted', 'tosort', 
+                # 'groups', 'tojoin'}}
         return {cvt:set([i
                         for ps in d[cvt]
                         for profile in d[cvt][ps]
@@ -1400,11 +1415,6 @@ class StatusDict(dict):
                                 ok=ok)
         log.info(annalysisoknotice)
         return ok, joinsinceanalysis, annalysisoknotice
-    def source(self,dict=None):
-        if dict:
-            for k in [i for i in dict if i is not None]:
-                self[k]=dict[k]
-        return self
     def __init__(self,filename,dict,program):
         """To populate subchecks, use self.groups()"""
         self.program=program
@@ -1412,7 +1422,10 @@ class StatusDict(dict):
         self._filename=filename
         # self._task=getattr(self.program,'defaulttask',WordCollectnParse)
         super(StatusDict, self).__init__()
-        self.source(dict)
+        for k in dict:
+            if k is None:
+                continue
+            self[k]=dict[k]
         self._checksdict={}
         self._cvchecknames={}
-
+        log.info(f"StatusDict initialized with contents {self}")

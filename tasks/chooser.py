@@ -18,7 +18,7 @@ from frontend.error_notice import ErrorNotice
 def __getattr__(name):
     # Lazy load globals from main
     if name in ('_', 'nowruntime', 'logfinished', 'sysrestart', 'sysshutdown',
-                'LiftChooser', 'openweburl', 'me', 'main',
+                'LiftChooser', 'openweburl', 'main',
                 'Sound', 'SortV',
                 'ExportData', 'AlphabetChart', 'AlphabetComparisonPages',
                 'ReportCitationBackground', 'ReportCitationMulticheckBackground',
@@ -38,7 +38,7 @@ def __getattr__(name):
 
 # Mirror main globals lazily to allow bare-name access
 for name in ('_', 'nowruntime', 'logfinished', 'sysrestart', 'sysshutdown',
-             'LiftChooser', 'openweburl', 'me', 'main',
+             'LiftChooser', 'openweburl', 'main',
              'Sound', 'SortV',
              'ExportData', 'AlphabetChart', 'AlphabetComparisonPages',
              'ReportCitationBackground', 'ReportCitationMulticheckBackground',
@@ -286,7 +286,7 @@ class TaskChooser(Task):
                 tasks.append(TranscribeT)
             if self.doneenough['analysis']:
                 tasks.append(JoinUFgroups)
-            if me:
+            if self.program.me:
                 # tasks.append(ParseWords)
                 # tasks.append(ParseWords)
                 # tasks.append(ParseSlice)
@@ -462,7 +462,7 @@ class TaskChooser(Task):
         log.info("nfieldswsoundfiles by lang: {}".format(sortsrecorded))
         sortsnotrecorded={}
         log.info(f"sorts: {sorts}")
-        if me:
+        if self.program.me:
             enough=0
         else:
             enough=6 #for demonstrating; is 25 a reasonable minimum?
@@ -629,7 +629,7 @@ class TaskChooser(Task):
                 log.info(_("Found previous request to write; doing again."))
                 self._write()
             else:
-                self.program.settings.repo_commit()
+                self.program.repo_commit()
         else:
             # Otherwise check again later.
             # log.info("schedule_write_check writing to lift.")
@@ -653,14 +653,14 @@ class TaskChooser(Task):
             self.towrite=True
             # self.schedule_write()
     def usbcheck(self):
-        if self.splash.exitFlag.istrue():
+        if self.program.splash.exitFlag.istrue():
             return
-        self.splash.withdraw()
-        for r in self.program.settings.repo.values():
+        self.program.splash.withdraw()
+        for r in self.program.data_repo.values():
             # log.info("checking repo {} for USB drive".format(r))
             #on boot, pull in changes becore committing
             r.share(noclone=True,nocommit=True)
-        self.splash.draw()
+        self.program.splash.draw()
     def on_quit(self,**kwargs):
         super().on_quit(**kwargs)
         self.parent.on_quit(**kwargs)
@@ -702,7 +702,7 @@ class TaskChooser(Task):
         # self.guidtriagebyps() #sets self.guidsvalidbyps (dictionary keyed on ps)
         """Can whatsdone be joined with makedefaulttask? they appear together
         elsewhere."""
-        self.splash.maketexts() #update for translation change
+        self.program.splash.maketexts() #update for translation change
         if not self.program.settings.writeeverynwrites: #0/None are not sensible values
             self.program.settings.writeeverynwrites=1
             self.program.settings.storesettingsfile()

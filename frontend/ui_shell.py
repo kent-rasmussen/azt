@@ -14,6 +14,7 @@ from utilities.utilities import *
 from utilities import file, logsetup, htmlfns, executables
 from io_put import lift
 from backend import langtags
+from backend.reporting.generator import Report
 import langcodes
 import settings
 
@@ -21,7 +22,7 @@ from frontend.error_notice import ErrorNotice
 
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('me', '_', 'sysrestart', 'main',
+    if name in ('_', 'sysrestart', 'main',
                 'interfacelang', 'nn', 'unlist', 'rx', 'exampletype',
                 'grouptype', 't', 'openweburl', 'scaleimageifthere',
                 'loadCAWL', 'saveimagefile', 'TranscribeS',
@@ -36,7 +37,7 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('me', '_', 'sysrestart', 'main',
+for name in ('_', 'sysrestart', 'main',
              'interfacelang', 'nn', 'unlist', 'rx', 'exampletype',
              'grouptype', 't', 'openweburl', 'scaleimageifthere',
              'loadCAWL', 'saveimagefile', 'TranscribeS',
@@ -294,7 +295,7 @@ class Menus(ui.Menu):
                                                             bylocation=True))
         reportmenu.add_command(label=_("Tone by sense (comprehensive)"),
                 command=lambda x=check:Check.tonegroupreportcomprehensive(x))
-        if me:
+        if self.program.me:
             reportmenu.add_command(label=_("Initiate Consultant Check"),
                 command=lambda x=check:Check.consultantcheck(x))
         reportmenu.add_command(label=_("Basic Vowel report (to file)"),
@@ -471,8 +472,8 @@ class Menus(ui.Menu):
         if self.program.git:
             # clonetoUSB should be called if updateazt doesn't have a source (incl internet)
             helpitems+=[(_("Update {azt}").format(azt=self.program.name), updateazt)]
-            if 'git' in self.program.settings.repo:
-                helpitems+=[(_("Share data to USB"), self.program.settings.repo['git'].share)]
+            if 'git' in self.program.data_repo:
+                helpitems+=[(_("Share data to USB"), self.program.data_repo['git'].share)]
             if self.program.repo.branch == 'main':
                 helpitems+=[(_("Try {azt} test version").format(azt=self.program.name),
                                 self.parent.trytestazt)]
@@ -493,7 +494,7 @@ class Menus(ui.Menu):
         if isinstance(parent,TaskDressing):
             self.advanced()
         self.help()
-        if me:
+        if self.program.me:
             self.command(self,self.program.taskchooser.filename,None)
 
 class StatusFrame(ui.Frame):
@@ -1387,12 +1388,12 @@ class TaskDressing(HasMenus,ui.Window):
         if self.exitFlag.istrue() or not self.winfo_exists():
             return
         self.context.menuinit() #This is a ContextMenu() method
-        if me:
+        if self.program.me:
             self.context.menuitem(_("Change to another Database (Restart)"),
                             self.program.taskchooser.changedatabase)
-        if 'git' in self.program.settings.repo:
+        if 'git' in self.program.data_repo:
             self.context.menuitem(_("Share data to USB"), 
-                                self.program.settings.repo['git'].share)
+                                self.program.data_repo['git'].share)
         if not hasattr(self,'menu') or not self.menu:
             self.context.menuitem(_("Show Menus"),self._setmenus)
         else:
@@ -2663,8 +2664,8 @@ class TaskDressing(HasMenus,ui.Window):
             log.info(_("No final write to lift"))
         self.program.settings.trackuntrackedfiles()
         self.waitdone() #Don't confuse user; there's more input to come, maybe
-        for r in self.program.settings.repo:
-            self.program.settings.repo[r].share()
+        for r in self.program.data_repo:
+            self.program.data_repo[r].share()
             log.info(_("Done maybe committing/pushing to {repo}").format(repo=r))
         log.info(_("Saving settings for next time"))
         self.program.settings.storesettingsfile() #in case we added repos

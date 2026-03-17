@@ -31,11 +31,11 @@ information than 'DEBUG' does):
     helpful.
 Other levels:'WARNING','ERROR','CRITICAL'
 """
-loglevel='INFO'
 from utilities.utilities import *
 from utilities import logsetup
-log=logsetup.getlog(__name__) #not ever a module
-logsetup.setlevel(loglevel)
+# program['loglevel']='INFO' #set here for now, if not 'INFO', or
+log=logsetup.getlog(__name__) #not ever a module, add loglevel if not 'INFO'
+# logsetup.setlevel(program['loglevel'])
 """My modules, which should log as above"""
 from io_put import lift, xlp, export
 #import openclipart
@@ -184,7 +184,7 @@ class App:
         log.info(text)
         log.info(_("Computer identifies as {platform}").format(platform=platform.uname()))
         log.info(_("Loglevel is {level}; started at {time}")
-                .format(level=loglevel, time=times.now().isoformat()[:-7]+'Z'))
+                .format(level=self.loglevel, time=times.now().isoformat()[:-7]+'Z'))
     def show_scaling_from_windows(self):
         try:
             import ctypes
@@ -323,6 +323,9 @@ class App:
                     repo[r].add(self.liftfilename)
                     repo[r].commit()
                     self.data_repo[r]=repo[r]
+    def repo_commit(self):
+        for r in self.data_repo:
+            self.data_repo[r].commit()
     def askwhichlift(self):
         # put right click menu here
         LiftChooser(self)
@@ -542,11 +545,11 @@ class App:
         for k,v in program.items():
             setattr(self,k,v)
         self.default_task='WordCollectnParse'
+        self.loglevel=logsetup.loglevel_default #'INFO'
         if self.aztdir.parent.stem == 'raspy': 
             self.testing=True #eliminates Error screens and zipped logs and repo commits
             self.production=True #True for making screenshots (default theme)
             self.me=True
-            self.loglevel='INFO'
             self.testlift='Demo_en' #portion of filename
             self.testtask='SortV' #Will convert from string to class later
             # self.default_task='WordCollectnParse'
@@ -554,8 +557,9 @@ class App:
             self.me=False
             self.production=True #True for making screenshots (default theme)
             self.testing=False #True eliminates Error screens and zipped logs
-            self.loglevel='INFO'
+            # self.loglevel='INFO'
             # self.default_task='WordCollectnParse'
+        logsetup.setlevel(self.loglevel) #update to value just set
         self.get_interface_languages()
         #This isn't helpful where things are copied to disk later:
         self.modified_time=times.modified(self.file)
@@ -711,7 +715,7 @@ def updateazt(event=None,**kwargs): #should only be parent, for errorroot
             else:
                 t=t+_('\n(Check your internet connection and try again)')
                 button=(_("Try Again"),tryagain)
-        elif not me:
+        elif not program.me:
             if [i for i in r.values() if 'fatal: ' in i]: #any fatal problem
                 t+='\n'+_("(Problem! You will likely need help with this.)")
             elif [i for i in r.values() if updated(i)]: #anything updated

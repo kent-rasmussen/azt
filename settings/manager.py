@@ -144,9 +144,9 @@ def read_ini(filename, setting=None):
             log.info(_("working in non-default section {section}").format(section=section))
             if len(config[section].values()) > 0:
                 for s in config[section]:
-                    if setting in ['status', 'toneframes']:
-                        d[ofromstr(s)] = ofromstr(config[section][s])
-                    else:
+                    # if setting in ['status', 'toneframes']:
+                    #     d[ofromstr(s)] = ofromstr(config[section][s])
+                    # else:
                         if section not in d:
                             d[section] = {}
                         d[section][s] = ofromstr(config[section][s])

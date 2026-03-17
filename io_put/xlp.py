@@ -8,8 +8,8 @@ from xml.etree import ElementTree as ET
 from utilities import xmlfns,rx,file,times
 
 import subprocess
-from utilities.utilities import LazyGlobal
-globals()['_'] = LazyGlobal('_')
+# from utilities.utilities import LazyGlobal
+# globals()['_'] = LazyGlobal('_')
 class Report(object):
     def __init__(self,filename,report,langname,program):
         #use program, if only for it's name
