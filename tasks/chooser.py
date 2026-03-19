@@ -5,6 +5,7 @@ import time
 import tkinter
 from frontend import ui_tkinter as ui
 from tasks.base import Task
+import tasks.tasks
 from utilities.utilities import LazyGlobal
 from utilities import file
 import gettext
@@ -208,8 +209,8 @@ class TaskChooser(Task):
         except AttributeError:
             log.info(_("No task, apparently; not destroying."))
         if type(taskclass) is str:
-            taskclass=getattr(main, taskclass)
-        self.task=taskclass(self,**kwargs) #filename
+            taskclass=getattr(tasks.tasks, taskclass)
+        self.task=taskclass(self.program,**kwargs) #filename
         if not self.task.exitFlag.istrue():# and not isinstance(self.task,Parse):
             self.task.deiconify()
     def unsetmainwindow(self):

@@ -335,7 +335,7 @@ class SoundSettings(object):
             log.info("ASR reloaded")
         except (AssertionError,AttributeError) as e:
             log.info(f"Loading ASR ({e})")
-            self.asr=asr.ASRtoText(**self.asr_kwargs)
+            self.asr=asr.ASRtoText(self.program, **self.asr_kwargs)
             self.asr_kwargs=copy.deepcopy(self.asr.kwarg_defaults)
             log.info("ASR loaded")
     def tally_asr_repo(self,reponame):
@@ -373,10 +373,15 @@ class SoundSettings(object):
                 file.getsize(filename) > self.min_audio_file_size())
     def min_audio_file_size(self):
         return self.fs*self.min_audio_length_ms/1000
-    def __init__(self,pyaudio=None,analang_obj=None):
-        if not pyaudio:
-            pyaudio = AudioInterface()
-        self.pyaudio=pyaudio
+    def confirm_pyaudio(self):
+        if (hasattr(self.program,'pyaudio') 
+                and isinstance(self.program.pyaudio,AudioInterface)):
+            self.pyaudio=self.program.pyaudio
+        else:
+            self.pyaudio=self.program.pyaudio=AudioInterface()
+    def __init__(self,program,pyaudio=None,analang_obj=None):
+        self.program=program
+        self.confirm_pyaudio()
         self.sethypothetical()
         self.getactual()
         self.makedefaultifnot()
@@ -386,7 +391,7 @@ class SoundSettings(object):
         # self.defaults() #pick best of actuals
         try:
             assert 'backend.asr' in sys.modules, "ASR module not loaded"
-            self.initial_ASR_kwargs(analang_obj) #overwritten by UI or file
+            # self.initial_ASR_kwargs(analang_obj) #overwritten by UI or file
             self.asrOK=True
         except (Exception,AssertionError) as e:
             log.error("Exception loading ASR: {}".format(e))

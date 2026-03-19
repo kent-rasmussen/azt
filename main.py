@@ -388,6 +388,7 @@ class App:
         CheckParameters(self) #depends on settings (nothing but self.analang?)
         ExampleDict(self) #needed for makestatus, needs params,slices,data
         Alphabet(self) #after slicedict is up; needs params
+        langtags.Languages(self)
         # SliceDict(adhoc,profilesbysense,self) #needs adhoc,profilesbysense
         # StatusDict(filename,dict,self) #needs filename,dict
         t = TaskChooser(self) #TaskChooser MainApplication

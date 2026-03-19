@@ -591,7 +591,7 @@ class AlphabetComparisonData:
                         lines = f.readlines()
                     if not lines:
                         continue
-                    if 'repo' in self.program:
+                    if hasattr(self.program, 'repo'):
                         self.program.data_repo['git'].add(txt_path, force=True)
                     title_line = lines[0].strip()
                     body = "".join(lines[1:]).strip()
@@ -601,7 +601,7 @@ class AlphabetComparisonData:
                         img_cand = os.path.join(texts_dir, base_name + ext)
                         if os.path.exists(img_cand):
                             img_path = img_cand
-                            if 'git' in self.program:
+                            if hasattr(self.program, 'git'):
                                 self.program.data_repo['git'].add(img_cand, force=True)
                             break
                     extra_pages.append({

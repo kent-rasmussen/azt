@@ -11,7 +11,7 @@ import datetime, copy
 from data import whisper_codes_names
 from transformers import pipeline
 from huggingface_hub import try_to_load_from_cache, _CACHED_NO_EXIST
-from backend import langtags
+# from backend import langtags
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 class ASRtoText(object):
@@ -543,9 +543,9 @@ class ASRtoText(object):
                                 for i in self.repo_modelnames})
         self.kwarg_defaults.update(kwargs) #override defaults with given kwargs
         return self.kwarg_defaults
-    def __init__(self,**kwargs):
+    def __init__(self,program,**kwargs):
         kwargs['return_ipa']=True #always, for now
-        self.languages=langtags.Languages()
+        self.languages=program.languages
         self.models=dict()
         self.do_not_return=[] #models that should not return transcriptions
         log.info(f"Loading ASR with kwargs {kwargs}")

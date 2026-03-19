@@ -123,10 +123,10 @@ class ExampleDict(dict):
         log.info("sensesinslice ({n}): {ids}".format(n=len(sensesinslice),
                                             ids=[i.id for i in sensesinslice][:5]))
         if not sensesinslice:
-            log.error("There don't seem to be any sensids from that check tone "
-                "group in this slice-group, so I can't get you an example. "
-                "({self.program.slices'].ps()}-{program['slices.profile()}, "
-                "{check} {group})")
+            log.error(f"There don't seem to be any sensids from that check tone "
+                f"group in this slice-group, so I can't get you an example. "
+                f"({self.program.slices.ps()}-{self.program.slices.profile()}, "
+                f"{check} {group})")
             return []
         return list(set(senses)&set(sensesinslice))
     def hasglosses(self,node):
@@ -1164,7 +1164,7 @@ class StatusDict(dict):
             log.error("No type is set; can't renew checks!")
         if cvt not in self._checksdict:
             self._checksdict[cvt]={}
-        profile=kwargs.get('profile',self.program.slices.profile() if 'slices' in program else '')
+        profile=kwargs.get('profile',self.program.slices.profile() if hasattr(self.program,'slices') else '')
         if cvt == 'T':
             for ps in self.program.slices.pss():
                 if ps in self.program.toneframes:

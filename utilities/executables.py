@@ -18,10 +18,10 @@ def praatopen(program,file,newpraat=False,event=None):
     The same version also introduced the '--hide-picture' command line option,
     so we only use that when praatversioncheck() passes.
     """
-    if not newpraat and 'sendpraat' in program and program['sendpraat']:
+    if not newpraat and hasattr(program, 'sendpraat') and program.sendpraat:
         """sendpraat sends the command to a running praat instance. If there
         isn't one, just open praat."""
-        praatargs=[program['sendpraat'], 'praat', 'Read from file... "{}"'
+        praatargs=[program.sendpraat, 'praat', 'Read from file... "{}"'
                                                     "".format(file)]
         try:
             o=subprocess.check_output(praatargs,shell=False,
@@ -36,12 +36,12 @@ def praatopen(program,file,newpraat=False,event=None):
             praatopen(file,newpraat=True)
         else:
             log.info("praatoutput: {}".format(t))
-    elif program['praat']:
-        log.info("Trying to call Praat at {}...").format(program['praat'])
-        if 'sendpraat' not in program: #don't care about exe, just version check
-            praatargs=[program['praat'], '--hide-picture','--open', file]
+    elif program.praat:
+        log.info("Trying to call Praat at {}...").format(program.praat)
+        if not hasattr(program, 'sendpraat'): #don't care about exe, just version check
+            praatargs=[program.praat, '--hide-picture','--open', file]
         else:
-            praatargs=[program['praat'], '--open', file]
+            praatargs=[program.praat, '--open', file]
         subprocess.Popen(praatargs,shell=False) #not run; continue here
     else:
         log.info("Looks like I couln't find Praat...")

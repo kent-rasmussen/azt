@@ -302,7 +302,9 @@ class Languages(dict):
         d|={k for k,v in macrolanguage_members.items() if v&d}
         print(f"Found {len(d)} descendants of {group_list}")
         return d
-    def __init__(self,**kwargs):
+    def __init__(self,program,**kwargs):
+        self.program=program
+        self.program.languages=self
         self.url="https://ldml.api.sil.org/langtags.json"
         self.json_location=file.getparent(__file__).joinpath(
                             '..','data', self.url.split('/')[-1])
@@ -519,7 +521,13 @@ class Language(langcodes.Language):
         self.ok=True
 if __name__ == '__main__':
     print(f"{tag_is_valid('sw-x-ipa_MT')=}")
-    ldict=Languages()
+    from dummy import App
+    program=App()
+    program.praat='/home/kentr/bin/praat'
+    program.hostname='karlap'
+    program.name='A−Z+T'
+    program.analang='tbt-CD'
+    ldict=Languages(program)
     for code in ['sw-x-ipa_MT','sw-TZ']:
         o=Language(code,ldict)
         print(o.full_display())

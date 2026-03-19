@@ -383,7 +383,7 @@ class OrderAlphabetUI(ui.Window):
             self.hide_vars[i].set(value[i])
         return {i:self.hide_vars[i].get() for i in self.hide_vars}
     def save_settings(self):
-        if 'settings' not in self.program:
+        if not hasattr(self.program, 'settings'):
             # log.info(f"settings now {self.exids=} {self.order=} {self.ncolumns=}")
             return
         log.error("If you're seeing this, you have passed a settings module, "

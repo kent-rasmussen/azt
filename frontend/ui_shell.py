@@ -1491,7 +1491,7 @@ class TaskDressing(HasMenus,ui.Window):
                 # 'maxprofiles':self.program.settings.maxprofiles,
                 # 'maxpss':self.program.settings.maxpss
                 }
-        # if 'slices' in program:
+        # if hasattr(self.program, 'slices'):
         dictnow.update({
             # 'cvt':self.program.params.cvt(),
             # 'check':self.program.params.check(),
@@ -1521,7 +1521,7 @@ class TaskDressing(HasMenus,ui.Window):
         # log.info(f"dictori: {dict}")
         # log.info(f"dictnow: {dictnow}")
         if self.program.taskchooser.donew['collectionlc']:
-            self.program.settings.makeeverythingok()
+            self.makeeverythingok()
         #This will probably need to be reworked
         if self.exitFlag.istrue():
             return
@@ -4019,9 +4019,9 @@ class LiftChooser(ui.Window,HasMenus):
             return file.fileandparentfrompath(filename)
     def __init__(self,program):
         # self.filechooser=chooser #main.FileChooser
-        self.parent=self.program.tk_root
         self.program=program
-        super(LiftChooser, self).__init__(self.parent)
+        # self.parent=self.program.tk_root
+        super(LiftChooser, self).__init__(self.program.tk_root)
         self.title(_("Select LIFT Database"))
         ui.ContextMenu(self)
         text=_('What do you want to work on?') #LIFT database

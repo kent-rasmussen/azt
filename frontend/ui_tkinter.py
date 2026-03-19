@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # coding=UTF-8
+import gettext
+_ = gettext.gettext
 import sys,copy
 import platform
 from utilities import logsetup
@@ -222,6 +224,7 @@ class Theme(object):
                                 continue
                         except Exception as e:
                             log.error(f"Other exception making image at {imgurl} ({e})")
+                            raise
             self.photo[name] = Image(imgurl)
             # log.info("Compiled {} {}".format(name,imgurl))
 
@@ -2389,7 +2392,7 @@ class Wait(Window): #tkinter.Toplevel?
         self['background']=parent['background']
         self.attributes("-topmost", True)
         title=_("Please Wait! {azt} Dictionary and Orthography Checker "
-                "in Process").format(azt=self._root().self.program.name)
+                "in Process").format(azt=self._root().program.name)
         self.title(title)
         text=_("Please Wait...")
         self.l=Label(self.outsideframe, text=text,
@@ -2893,12 +2896,12 @@ def testapp(program=None):
                 print(m)
     r.mainloop()
 if __name__ == '__main__':
-    global _
-    try: #translation
-        _
-    except NameError:
-        def _(x):
-            return x
+    # global _
+    # try: #translation
+    #     _
+    # except NameError:
+    #     def _(x):
+    #         return x
     # from dummy import App
     # program=App()
     # """To Test:"""

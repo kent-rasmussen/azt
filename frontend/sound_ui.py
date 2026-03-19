@@ -63,7 +63,7 @@ class RecordButtonFrame(ui.Frame):
         # self.p.bind('<ButtonRelease>', self.function)
         self.p.grid(row=0, column=1,sticky='nsw')
         pttext=_("Click to hear")
-        if 'praat' in self.program:
+        if hasattr(self.program, 'praat'):
             pttext+='; '+_("right click to open in praat")
             self.p.bind('<Button-3>',
                         lambda x: executables.praatopen(
@@ -459,7 +459,7 @@ class SoundSettingsWindow(ui.Window):
     def __init__(self,program,**kwargs):
         self.refreshdelay=1000 # wait 1s for a refresh check, always mainwindow
         self.program=program #needed to find praat
-        log.info(f"Theme of task: {program.theme}")
+        log.info(f"Theme: {program.theme}")
         ui.Window.__init__(self,
                             program.tk_root, #this show be called from a task now
                             exit=False,
@@ -735,17 +735,17 @@ class ASRModelSelectionWindow(ui.Window):
     def modify(self):
         self.soundsettings.asr_kwargs['sister_languages']=['zmg']
         self.soundsettings.asr_kwargs['simplify_length']=False
-    def __init__(self,task,**kwargs):
+    def __init__(self,program,**kwargs):
         window_title=_('Select ASR Settings')
         self.page_title=_('Settings for Transcription Model')
-        log.info(f"Theme of task: {task.theme}")
+        log.info(f"Theme: {program.theme}")
         ui.Window.__init__(self,
-                            task,
+                            program.tk_root,
                             exit=False,
                             title=window_title,
                             withdrawn=True
                             )
-        self.program=task.program #needed to find praat
+        self.program=program #needed to find praat
         self.soundsettings=self.program.soundsettings
         if 'cache_dir' in self.soundsettings.asr_kwargs and not file.exists(self.soundsettings.asr_kwargs['cache_dir']):
             log.error(f"Cache dir {self.soundsettings.asr_kwargs['cache_dir']} "
@@ -766,7 +766,7 @@ class ASRModelSelectionWindow(ui.Window):
             self.get_sister_options() #Not on every change, but on boot
         self.save_kwargs_to_soundsettings()
         if not kwargs.get("withdrawn"):
-            task.withdraw()
+            self.program.task.withdraw()
             self.deiconify()
 class Task(ui.Window):
     def wait(self,x):
@@ -805,27 +805,28 @@ if __name__ == "__main__":
     program.hostname='karlap'
     program.name='A−Z+T'
     program.analang='tbt-CD'
-    import langtags
-    program.languages=langtags.Languages()
+    from backend import langtags
+    program.languages=langtags.Languages(program)
     #This will normally pass self.pyaudio from task to SoundSettings, to keep
     # one pyaudio instance, but if not, settings will create one.
     language=program.languages.get_obj(program.analang)
-    program.soundsettings=sound.SoundSettings(analang_obj=language)
-    log.info(f"asr_kwargs: {r.program.soundsettings.asr_kwargs}")
+    program.soundsettings=sound.SoundSettings(program)
+    program.soundsettings.initial_ASR_kwargs(language)
+    log.info(f"asr_kwargs: {program.soundsettings.asr_kwargs}")
     r=ui.Root(program=program)
     r.title('Test Sound UI')
-    task=Task(program=r.program)
+    program.task=Task(program=r.program)
     if r.program.hostname == 'karlap':
         r.program.soundsettings.asr_kwargs['cache_dir']='/media/kentr/hfcache'
-    ssw=SoundSettingsWindow(task,withdrawn=True)
+    ssw=SoundSettingsWindow(program,withdrawn=True)
     ssw.setsoundcard_byname('default')
     ssw.destroy() #since not waiting
     log.info(f"asr_kwargs: {r.program.soundsettings.asr_kwargs}")
     # ssw.wait_window(ssw) #only if need to change stuff
-    ssw=ASRModelSelectionWindow(task)
+    ssw=ASRModelSelectionWindow(program)
     log.info(f"asr_kwargs: {r.program.soundsettings.asr_kwargs}")
     ui.Label(r,text="Record sound to test Automatic Speech Recognition engines",row=0,column=0)
-    RecordnTranscribeButtonFrame(r,task,test=True,
+    RecordnTranscribeButtonFrame(r,program.task,test=True,
         show_transcriptions=True, #this typically in Entry
         show_tone=True,
         shown='all',

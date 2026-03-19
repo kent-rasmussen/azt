@@ -194,14 +194,14 @@ class Report(object):
         title=_('Introduction to {ps} {profile}').format(ps=ps,profile=profile)
         s1=xlp.Section(s1parent,title=title)
         text=_("This report follows an analysis of sortings of {ps} morphemes "
-        "(roots or affixes) across the following frames: {checks}. {self.program. stores these "
+        "(roots or affixes) across the following frames: {checks}. {name} stores these "
         "sortings in lift examples, which are output here, with any glossing "
         "and sound file links found in each lift sense example. "
         "Each group in "
         "this report is distinct from the others, in terms of its grouping "
         "across the multiple frames used. Sound files should be available "
         "through links, if the audio directory with those files is in the same "
-        "directory as this file.").format(ps=ps,checks=checks,self.program.self.program.name)
+        "directory as this file.").format(ps=ps,checks=checks,name=self.program.name)
         p1=xlp.Paragraph(s1,text=text)
         text=_("As a warning to the analyst who may not understand the "
         "implications of this *automated analysis*, you may have too few "
@@ -581,7 +581,7 @@ class Report(object):
         reportfileXLP='_'.join(bits)+'.xml'
         xlpreport=xlp.Report(reportfileXLP,reporttype,
                         self.program.settings.languagenames[self.analang],
-                        self.program.# who is calling this report?
+                        self.program# who is calling this report?
                         )
         # langsalreadythere=[]
         if hasattr(xlpreport,'node'): #otherwise, this will fail

@@ -223,10 +223,10 @@ class Sound(object):
             super().setcontext(context)
         self.context.menuitem(_("Sound settings"),self._configure_sound)
         self.analang=self.program.db.analang
-    def __init__(self,):
+    def __init__(self):
         self.audiodir=self.program.settings.audiodir
         self.audiolang=self.program.params.audiolang()
-        self.program=program #make available to sound_ui
+        # self.program=program #make available to sound_ui
         self.soundcheck()
 class Record(Sound): #TaskDressing
     """This holds all the Sound methods specific for Recording."""
@@ -1498,6 +1498,7 @@ class SortCV(Sort,Segments,Task):
 class SortV(Sort,Segments,Task):
     taskicon = 'iconV'
     tasktitle = "Sort Vowels" #Citation Form Sorting in Tone Frames
+    cvt='V'
     def tooltip(self):
         return _("This task helps you sort words in citation form by vowels.")
     def dobuttonkwargs(self):
@@ -1509,8 +1510,8 @@ class SortV(Sort,Segments,Task):
                 'sticky':'ew'
                 }
     def __init__(self, parent, **kwargs):
-        self.program.params.cvt('V')
         Task.__init__(self,parent)
+        # self.program.params.cvt('V')
         Sort.__init__(self, parent)
         Segments.__init__(self,parent)
         if g:=kwargs.get("redo_glyph"):
@@ -1822,7 +1823,7 @@ class Transcribe(Sound,Sort,Task):
         self.sub_c['text']=t
     def __init__(self,parent): #frame, filename=None
         Task.__init__(self, parent)
-        self.program.settings.makeeverythingok()
+        self.makeeverythingok() #why?
         self.ftype=self.program.params.ftype()
         self.mistake=False #track when a user has made a mistake
         self.analang=self.program.params.analang()

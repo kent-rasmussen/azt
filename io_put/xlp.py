@@ -13,8 +13,8 @@ import subprocess
 class Report(object):
     def __init__(self,filename,report,langname,program):
         #use program, if only for it's name
-        if 'name' not in program:
-            log.error(_("the program argument to xlp.Report needs a 'name' key"))
+        if not hasattr(program, 'name'):
+            log.error(_("the program argument to xlp.Report needs a 'name' attribute"))
             exit()
         self.start_time=times.now()
         self.filename=filename

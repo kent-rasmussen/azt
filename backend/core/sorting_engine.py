@@ -1077,7 +1077,7 @@ class Sort(object):
             if group in self.program.status.verified():
                 log.info(_("'{group}' already verified, continuing.").format(group=group))
                 return 1
-            if self.program.params.cvt() == 'T' and 'examples' not in program:
+            if self.program.params.cvt() == 'T' and not hasattr(self.program, 'examples'):
                 log.error(_("Not verifying tone examples which don't exist."))
                 return 
         # The title for this page changes by group, below.
@@ -1462,7 +1462,7 @@ class Sort(object):
                 self.program.status.distinguish((y if t[0]==x else t[0],y if t[1]==x else t[1]))
         self.maybewrite() #once done iterating over senses
     def __init__(self, parent):
-        self.program.settings.makeeverythingok()
+        self.makeeverythingok()
         """I need some way to control for ftype"""
         """I need to think through when I would work with one ftype, and not
         another, or when I would want to work with one, then modify the other
