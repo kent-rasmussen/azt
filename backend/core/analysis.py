@@ -8,7 +8,6 @@ from utilities.utilities import *
 from io_put import lift
 from utilities import logsetup, htmlfns
 log=logsetup.getlog(__name__)
-
 # import time
 # import webbrowser
 # import os
@@ -864,7 +863,8 @@ class StatusDict(dict):
         tojoinkwargs['tojoin']=True
         cs=[]
         checks=self.updatechecksbycvt(**kwargs)
-        if isinstance(self.task(),Sort) or isinstance(self.task(),Transcribe):
+        # if isinstance(self.task(),Sort) or isinstance(self.task(),Transcribe):
+        if kwargs.get('no_correspondence_checks'):
             checks=[i for i in checks if 'x' not in i]
         if not checks:
             return cs
