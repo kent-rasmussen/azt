@@ -63,6 +63,7 @@ class TaskChooser(Task):
     task on opening, and allows users to choose others (any with minimum
     prequisites satisfied)."""
     do_not_show_slices=True
+    ischooser=True
     def tasktitle(self):
         if self.showreports:
             return _("Run Reports")

@@ -1493,13 +1493,13 @@ class SortSyllables(Sort,Segments,Task):
         self.program.params.cvt('S') #syllable
         Task.__init__(self,parent)
         Sort.__init__(self, parent)
-        Segments.__init__(self,parent)
+        Segments.__init__(self)
 class SortCV(Sort,Segments,Task):
     """docstring for SortCV."""
     def __init__(self, parent):
         Task.__init__(self,parent)
         Sort.__init__(self, parent)
-        Segments.__init__(self,parent)
+        Segments.__init__(self)
 class SortV(Sort,Segments,Task):
     taskicon = 'iconV'
     tasktitle = "Sort Vowels" #Citation Form Sorting in Tone Frames
@@ -1518,7 +1518,7 @@ class SortV(Sort,Segments,Task):
         Task.__init__(self,parent)
         # self.program.params.cvt('V')
         Sort.__init__(self, parent)
-        Segments.__init__(self,parent)
+        Segments.__init__(self)
         if g:=kwargs.get("redo_glyph"):
             self.redo_joinglyphs(g)
         elif g:=kwargs.get("sort_immediately"):
@@ -1541,7 +1541,7 @@ class SortC(Sort,Segments,Task):
         self.program.params.cvt('C')
         Task.__init__(self,parent)
         Sort.__init__(self, parent)
-        Segments.__init__(self,parent)
+        Segments.__init__(self)
         if g:=kwargs.get("redo_glyph"):
             self.redo_joinglyphs(g)
         elif g:=kwargs.get("sort_immediately"):
@@ -1998,7 +1998,7 @@ class TranscribeS(Transcribe,Segments):
         self.switch_tt=_("This switches letters for the two groups, and "
                             "updates each of them")
         Transcribe.__init__(self,parent)
-        Segments.__init__(self,parent)
+        Segments.__init__(self)
 class TranscribeV(TranscribeS):
     tasktitle = "Vowel Letters"
     def tooltip(self):
@@ -2436,7 +2436,7 @@ class RecordCitation(Record,Segments):
     tasktitle = "Record Words" #Citation Forms
     taskicon = 'iconWordRec'
     def __init__(self, parent): #frame, filename=None
-        Segments.__init__(self,parent)
+        Segments.__init__(self)
         # ui.Window.__init__(self,parent)
         # Task.__init__(self,parent)
         Record.__init__(self,parent)
@@ -2508,7 +2508,7 @@ class ReportCitation(Report,Segments,Task):
         self.getresults()
     def __init__(self, parent): #frame, filename=None
         self.program.params.ftype('lc')
-        Segments.__init__(self,parent)
+        Segments.__init__(self)
         self.do=self.getresults
         self.program.status.group(None) #default to reports with all groups
         Task.__init__(self,parent)
