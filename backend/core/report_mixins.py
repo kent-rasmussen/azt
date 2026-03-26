@@ -19,6 +19,7 @@ for name in ('_',):
 class Multislice(object):
     """This class just triggers which settings are visible to the user, and
     updates changes from child classes"""
+    multislice_max=True #maybe should be an integer default value?
     def __init__(self):
         # log.info("Setting up Multislice report, with {dir}".format(dir=dir()))
         """I think these two should go:"""
@@ -33,6 +34,7 @@ class MultisliceT(Multislice):
         self.do=self.tonegroupreportcomprehensive
         Multislice.__init__(self)
 class Multicheck(object):
+    multicheckscope=True
     def __init__(self):
         """This should only be used for segmental checks; tone reports are
         always multiple checks"""

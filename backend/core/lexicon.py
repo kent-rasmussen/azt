@@ -72,6 +72,7 @@ class Senses(object):
 
 class Segments(Senses):
     """docstring for Segments."""
+    show_second_fields=True
     def buildregex(self,**kwargs):
         """include profile (of those available for ps and check),
         and subcheck (e.g., a: CaC\2)."""
@@ -438,6 +439,7 @@ class Segments(Senses):
 class WordCollection(Segments):
     """This task collects words, from the SIL CAWL, or one by one."""
     taskicon = 'iconWord'
+    do_not_show_slices=True
     def dobuttonkwargs(self):
         if self.program.taskchooser.cawlmissing:
             fn=self.addCAWLentries
@@ -1077,6 +1079,8 @@ class WordCollection(Segments):
 
 class Parse(Segments):
     """docstring for Parse."""
+    do_not_show_slices=True
+    show_parser_ui=True
     def getgloss(self,ftype=None):
         return ', '.join([', '.join(self.parser.sense.formattedgloss(l,
                                                             ftype=ftype,

@@ -1268,28 +1268,34 @@ class StatusFrame(ui.Frame):
         self.interfacelangline()
         self.analangline()
         self.glosslangline()
-        if isinstance(self.task,Segments) and not isinstance(self.task,TranscribeS):
+        # if isinstance(self.task,Segments) and not isinstance(self.task,TranscribeS):
+        if getattr(self.program.task,'show_second_fields'):
             self.fieldsline()
         if (hasattr(self.program, 'slices') and
-                not isinstance(self.task,(TaskChooser,
-                                            Parse,
-                                            TranscribeS,
-                                            WordCollection))
-                ):
+                not getattr(self.program.task,'do_not_show_slices')):
+                # isinstance(self.task,(TaskChooser,
+                #                             Parse,
+                #                             TranscribeS,
+                #                             WordCollection))
+                # ):
             self.makesliceattrs()
-            if isinstance(self.task,Multislice): #any cvt
+            if getattr(self.program.task,'multislice_max'):
+            # if isinstance(self.task,Multislice): #any cvt
                 self.maxes()
             else:
                 self.sliceline()
-            if isinstance(self.task,Multicheck): #segments only
+            if getattr(self.program.task,'multicheck_scope'):
+            # isinstance(self.task,Multicheck): #segments only
                 self.multicheckscope()
-            elif not (isinstance(self.task,ReportCitationT) or
-                        isinstance(self.task,JoinUFgroups)
-                        ):
+            elif not getattr(self.program.task,'do_not_show_cvt'):
+                # not (isinstance(self.task,ReportCitationT) or
+                #         isinstance(self.task,JoinUFgroups)
+                #         ):
                 self.cvtline()
-            if isinstance(self.task,Sort) and not isinstance(self.task,Transcribe):
+            if getattr(self.program.task,'show_buttoncolumnsline'):
+                # isinstance(self.task,Sort) and not isinstance(self.task,Transcribe):
                 self.buttoncolumnsline()
-        if isinstance(self.task,Parse):
+        if getattr(self.program.task,'show_parser_ui'):
             self.parserlevels()
             self.sensetodo()
         self.maybeboard()

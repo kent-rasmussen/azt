@@ -62,6 +62,7 @@ class TaskChooser(Task):
     to the user a default (highest in hierarchy without optimum fulfilled)
     task on opening, and allows users to choose others (any with minimum
     prequisites satisfied)."""
+    do_not_show_slices=True
     def tasktitle(self):
         if self.showreports:
             return _("Run Reports")

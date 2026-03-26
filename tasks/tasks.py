@@ -148,6 +148,7 @@ class ExportData(ui.Window):
         self.report_data()
 class Sort(backend.core.sorting_engine.Sort):
     """task accessible mixin for sorting tasks"""
+    show_buttoncolumnsline=True
     def __init__(self, parent):
         super().__init__(parent)
 class Sound(object):
@@ -1591,6 +1592,7 @@ class SortT(Sort,Tone,Task):
         self.guidssorted.remove(guid)
     """Doing stuff"""
 class Transcribe(Sound,Sort,Task):
+    show_buttoncolumnsline=False
     def updateerror(self):
         newvalue=self.transcriber.formfield.get()
         if newvalue == '':
@@ -1835,6 +1837,7 @@ class Transcribe(Sound,Sort,Task):
         Sound.__init__(self)
 class TranscribeS(Transcribe,Segments):
     macrosort=True
+    do_not_show_slices=True
     def done(self):
         log.info("Transcribe done")
         self.submitform()
@@ -2243,6 +2246,8 @@ class TranscribeT(Transcribe,Tone):
 class JoinUFgroups(Tone,Task):
     """docstring for JoinUFgroups."""
     tasktitle = "Join Underlying Form Groups"
+    taskicon = 'iconJoinUF'
+    do_not_show_cvt=True
     def tooltip(self):
         return _("This task helps you join hypersplit UF groups, as well as "
                 "giving them meaniningful names (e.g., High or Low).")
@@ -2254,7 +2259,6 @@ class JoinUFgroups(Tone,Task):
                 'image':self.program.theme.photo['JoinUF'], #self.cvt
                 'sticky':'ew'
                 }
-    taskicon = 'iconJoinUF'
     def tonegroupsjoinrename(self,**kwargs):
         def clearerror(event=None):
             errorlabel['text'] = ''
@@ -2599,6 +2603,7 @@ class ReportCitationT(Report,Tone,Task):
     """docstring for ReportCitationT."""
     tasktitle = "Tone Report (not backgrounded)"
     taskicon = 'iconTRep'
+    do_not_show_cvt=True
     def tooltip(self):
         return _("This report gives you report for one lexical "
                 "category, in one syllable profile. \nIt does "
