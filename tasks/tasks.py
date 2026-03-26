@@ -4,7 +4,7 @@ from tasks.base import Task
 from backend.core.report_mixins import Multislice, MultisliceS, MultisliceT, Multicheck, Multicheckslice, ByUF, Background
 from backend.reporting.generator import Report
 from backend.core.lexicon import WordCollection, Parse, Tone, Segments
-from backend.core.sorting_engine import Sort
+import backend.core.sorting_engine #for Sort
 from utilities.utilities import *
 from utilities import file, logsetup, rx
 from io_put import export
@@ -146,6 +146,10 @@ class ExportData(ui.Window):
         self.max_rows_total=None
         self.max_rows_per_file=None
         self.report_data()
+class Sort(backend.core.sorting_engine.Sort):
+    """task accessible mixin for sorting tasks"""
+    def __init__(self, parent):
+        super().__init__(parent)
 class Sound(object):
     """This holds all the Sound methods, mostly for playing."""
     settings_attrs=['fs', 'sample_format',

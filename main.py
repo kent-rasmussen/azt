@@ -48,7 +48,6 @@ from frontend import alphabet_chart
 from frontend import alphabet_comparison
 import settings
 import migration
-program['languages']=langtags.Languages()
 try:
     from io_put import sound
     from frontend import transcriber, sound_ui
@@ -105,7 +104,7 @@ from backend.core.lexicon import Senses, Segments, WordCollection, Parse, Tone
 from backend.core.sorting_engine import Sort
 from frontend.ui_shell import (HasMenus, Menus, StatusFrame, TaskDressing,
     LiftChooser, SortButtonFrame, _GroupButtonFrame, SortGroupButtonFrame,
-    SortGlyphGroupButtonFrame, ImageFrame, Splash, ErrorNotice, ResultWindow)
+    SortGlyphGroupButtonFrame, ImageFrame, Splash, ErrorNotice, ResultWindow, Settings as UISettings)
 from tasks.base import Task
 from tasks.chooser import TaskChooser
 from backend.core.report_mixins import Multislice, MultisliceS, MultisliceT, Multicheck, Multicheckslice, ByUF, Background
@@ -381,6 +380,7 @@ class App:
             log.info(_("MS Windows screen size: {size}").format(size=screensize))
         self.get_lift_file() #self.filename, self.analang set here
         self.splash = Splash(self)
+        langtags.Languages(self)
         FileParser(self) #needs self.filename, pick up self.analang from file
         self.repocheck()
         Settings(self) #needs self.filename, pick up self.analang from file
@@ -391,6 +391,7 @@ class App:
         langtags.Languages(self)
         # SliceDict(adhoc,profilesbysense,self) #needs adhoc,profilesbysense
         # StatusDict(filename,dict,self) #needs filename,dict
+        UISettings(self)
         t = TaskChooser(self) #TaskChooser MainApplication
         t.mainloop()
         sysshutdown()

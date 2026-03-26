@@ -962,13 +962,13 @@ class Settings(SettingsUI):
             return lwcdefaults[self.program.params.analang] #in case trying out a demo
         try:
             _log.info(_("Using your interface language ({lang}) digraph defaults")
-                    .format(lang=self.languagenames[interfacelang()]))
-            return lwcdefaults[interfacelang()] #assume this general framework
+                    .format(lang=self.languagenames[self.program.interfacelang()]))
+            return lwcdefaults[self.program.interfacelang()] #assume this general framework
         except KeyError:
             _log.info(_("It looks like neither your LWC ({analang}) nor your interface language ({interlang}) "
                     "has a set of digraph defaults, so not providing any")
                     .format(analang=self.languagenames[self.program.params.analang],
-                            interlang=self.languagenames[interfacelang()]))
+                            interlang=self.languagenames[self.program.interfacelang()]))
             return {} #let users build from scratch
     def polygraphcheck(self):
         _log.info(_("Checking for Digraphs and Trigraphs!"))

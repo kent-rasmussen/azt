@@ -46,7 +46,7 @@ class SettingsUI(object):
     def interfacelangwrapper(self,choice=None,window=None):
         # log.info(f"going to set interface lang {choice}")
         if choice:
-            interfacelang(choice) #change the UI *ONLY*; no object attributes
+            self.program.interfacelang(choice) #change the UI *ONLY*; no object attributes
             self.set('interfacelang',choice,window) #set variable for the future
             self.langnames() #relocalize
             self.program.taskchooser.mainwindowis.status.makeui()
@@ -54,7 +54,7 @@ class SettingsUI(object):
             #because otherwise, this stays as is...
             self.program.taskchooser.mainwindowis.maketitle()
         else:
-            return interfacelang()
+            return self.program.interfacelang()
     def askaboutpolygraphs(self,onboot=False):
         def nochanges():
             log.info(_("Trying to make no changes"))

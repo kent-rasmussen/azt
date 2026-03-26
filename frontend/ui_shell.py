@@ -214,19 +214,19 @@ class Menus(ui.Menu):
     def languages(self):
         """Language stuff"""
         self.cascade(self.changemenu,_("Languages"),'languagemenu')
-        for m in [("Interface/computer language", self.parent.getinterfacelang),
-                    ("Analysis language",self.parent.getanalang),
-                    ("Analysis language Name",self.parent.getanalangname),
-                    ("Gloss language",self.parent.getglosslang),
-                    ("Another gloss language",self.parent.getglosslang2)]:
+        for m in [("Interface/computer language", self.program.ui_settings.getinterfacelang),
+                    ("Analysis language",self.program.ui_settings.getanalang),
+                    ("Analysis language Name",self.program.ui_settings.getanalangname),
+                    ("Gloss language",self.program.ui_settings.getglosslang),
+                    ("Another gloss language",self.program.ui_settings.getglosslang2)]:
             self.command(self.languagemenu,
                         label=_(m[0]),
                         cmd=m[1]
                         )
         """Word/data choice stuff"""
     def parameterslice(self):
-        for m in [("Part of speech", self.parent.getps),
-                    ("Consonant-Vowel-Tone", self.parent.getcvt),
+        for m in [("Part of speech", self.program.ui_settings.getps),
+                    ("Consonant-Vowel-Tone", self.program.ui_settings.getcvt),
                     ]:
             self.command(self.changemenu,
                         label=_(m[0]),
@@ -234,7 +234,7 @@ class Menus(ui.Menu):
                         )
         self.cascade(self.changemenu,_("Syllable profile"),'profilemenu')
         for m in [("Next", self.parent.status.nextprofile),
-                    ("Choose", self.parent.getprofile),
+                    ("Choose", self.program.ui_settings.getprofile),
                     ]:
             self.command(self.profilemenu,
                         label=_(m[0]),
@@ -341,7 +341,7 @@ class Menus(ui.Menu):
                 (_("Digraph and Trigraph settings"),
                             self.program.settings.askaboutpolygraphs),
                 (_("Segment Interpretation Settings"),
-                            self.parent.setSdistinctions),
+                            self.program.ui_settings.setSdistinctions),
                 (_("Remake Status file (All: several minutes)"),
                             self.program.settings.reloadstatusdata),
                 (_("Remake Status file (just this category)"),
@@ -557,14 +557,14 @@ class StatusFrame(ui.Frame):
         self.labels['interfacelang']['text'].set(self.interfacelanglabel())
     def interfacelanglabel(self):
         # for l in self.program.taskchooser.interfacelangs:
-        #     if l['code']==interfacelang():
+        #     if l['code']==self.program.interfacelang():
         #         interfacelanguagename=l['name']
-        return (_("Using {lang}").format(lang=self.program.settings.languagenames[interfacelang()]))
+        return (_("Using {lang}").format(lang=self.program.settings.languagenames[self.program.interfacelang()]))
     def interfacelangline(self):
         self.labels['interfacelang']={
                         'text':ui.StringVar(value=self.interfacelanglabel()),
                         'columnplus':1,
-                        'cmd':self.task.getinterfacelang,
+                        'cmd':self.program.ui_settings.getinterfacelang,
                         'tt':_("change the interface language")}
         self.proselabel(**self.labels['interfacelang'])
     def updateanalang(self):
@@ -576,10 +576,10 @@ class StatusFrame(ui.Frame):
     def analangline(self):
         self.newrow()
         if self.program.params.analang() not in self.program.settings.languagenames:
-            cmd=self.task.getanalangname
+            cmd=self.program.ui_settings.getanalangname
             tt=_("Set analysis language Name")
         else:
-            cmd=self.task.getanalang
+            cmd=self.program.ui_settings.getanalang
             tt=_("Change analysis language")
         self.labels['analangline']={
                                 'text':ui.StringVar(value=self.analanglabel()),
@@ -606,7 +606,7 @@ class StatusFrame(ui.Frame):
         self.labels['glosslang']={'text':ui.StringVar(value=self.glosslanglabel()),
                                 'columnplus':1,
                                 # 'rowplus':1,
-                                'cmd':self.task.getglosslang,
+                                'cmd':self.program.ui_settings.getglosslang,
                                 'parent':line,
                                 'tt':_("change this gloss language")
                                     if len(self.program.settings.glosslangs) >1
@@ -615,7 +615,7 @@ class StatusFrame(ui.Frame):
         self.proselabel(**self.labels['glosslang'])
         self.labels['glosslang2']={'text':ui.StringVar(value=self.glosslanglabel2()),
                                 'columnplus':1,
-                                'cmd':self.task.getglosslang2,
+                                'cmd':self.program.ui_settings.getglosslang2,
                                 'parent':line,
                                 'tt':_("add another gloss language")}
         self.proselabel(**self.labels['glosslang2'])
@@ -639,9 +639,9 @@ class StatusFrame(ui.Frame):
                             columnspan=3,sticky='w') #3 cols is the width of frame
             # These shouldn't need to be updated:
             if ps == self.program.settings.nominalps:
-                cmd=self.task.getsecondformfieldN
+                cmd=self.program.ui_settings.getsecondformfieldN
             else:
-                cmd=self.task.getsecondformfieldV
+                cmd=self.program.ui_settings.getsecondformfieldV
             if ps not in self.program.settings.secondformfield and (
                     isinstance(self.task,Parse) or (
                     isinstance(self.task,WordCollection
@@ -680,13 +680,13 @@ class StatusFrame(ui.Frame):
         self.labels['profile']={'text':ui.StringVar(value=self.profilelabel()),
                                 'columnplus':1,
                                 'rowplus':1,
-                                'cmd':self.task.getprofile,
+                                'cmd':self.program.ui_settings.getprofile,
                                 'parent':line,
                                 'tt':_("change this syllable profile")}
         self.proselabel(**self.labels['profile'])
         self.labels['ps']={'text':ui.StringVar(value=self.pslabel()),
                                 'columnplus':1,
-                                'cmd':self.task.getps,
+                                'cmd':self.program.ui_settings.getps,
                                 'parent':line,
                                 'tt':_("change this grammatical category")}
         self.proselabel(**self.labels['ps'])
@@ -703,7 +703,7 @@ class StatusFrame(ui.Frame):
         self.labels['cvt']={'text':ui.StringVar(value=self.cvtlabel()),
                                 'columnplus':1,
                                 'rowplus':1,
-                                'cmd':self.task.getcvt,
+                                'cmd':self.program.ui_settings.getcvt,
                                 'parent':line,
                                 'tt':_("change to other check types")}
         self.proselabel(**self.labels['cvt'])
@@ -815,7 +815,7 @@ class StatusFrame(ui.Frame):
         self.newrow()
         self.labels['buttoncolumns']={'text':ui.StringVar(value=self.buttoncolumnslabel()),
                                 'columnplus':1,
-                                'cmd':self.task.getbuttoncolumns,
+                                'cmd':self.program.ui_settings.getbuttoncolumns,
                                 'tt':tt}
         self.proselabel(**self.labels['buttoncolumns'])
     def updatemaxprofiles(self):
@@ -833,21 +833,21 @@ class StatusFrame(ui.Frame):
         self.labels['maxprofiles']={
                         'text':ui.StringVar(value=self.maxprofileslabel()),
                         'columnplus':1,
-                        'cmd':self.task.getmaxprofiles,
+                        'cmd':self.program.ui_settings.getmaxprofiles,
                         'parent':line,
                         'tt':_("change this max")}
         self.proselabel(**self.labels['maxprofiles'])
         self.opts['columnplus']=1
         self.labels['maxpss']={'text':ui.StringVar(value=self.maxpsslabel()),
                                 'columnplus':1,
-                                'cmd':self.task.getmaxpss,
+                                'cmd':self.program.ui_settings.getmaxpss,
                                 'parent':line,
                                 'tt':_("change this check")}
         self.proselabel(**self.labels['maxpss'])
     def updatemulticheckscope(self):
         self.labels['cvgroup']['text'].set(self.multicheckscopelabel())
     def multicheckscopelabel(self):
-        t=(_("Run all checks for {checks}").format(checks=unlist(self.task.cvtstodoprose())))
+        t=(_("Run all checks for {checks}").format(checks=unlist(self.program.ui_settings.cvtstodoprose())))
     def multicheckscope(self):
         if not hasattr(self.task,'cvtstodo'):
             self.task.cvtstodo=['V']
@@ -857,7 +857,7 @@ class StatusFrame(ui.Frame):
         self.labels['multicheckscope']={
                         'text':ui.StringVar(value=self.multicheckscopelabel()),
                         'columnplus':1,
-                        'cmd':self.task.getmulticheckscope,
+                        'cmd':self.program.ui_settings.getmulticheckscope,
                         'parent':line,
                         'tt':_("change this check")}
         self.proselabel(**self.labels['multicheckscope'])
@@ -939,9 +939,9 @@ class StatusFrame(ui.Frame):
                     isinstance(self.task,WordCollection) and
                     self.type not in ['lx','lc'])):
                 if ps == self.program.settings.nominalps:
-                    self.task.getsecondformfieldN()
+                    self.program.ui_settings.getsecondformfieldN()
                 else:
-                    self.task.getsecondformfieldV()
+                    self.program.ui_settings.getsecondformfieldV()
                 return #just do one at a time
     """Right side"""
     def maybeboard(self):
@@ -996,7 +996,7 @@ class StatusFrame(ui.Frame):
                             relief=self.mainrelief, font='title')
         lps.grid(row=0,column=2,ipadx=0,ipady=0)
         ttps=ui.ToolTip(lps,_("Change Part of Speech"))
-        lps.bind('<ButtonRelease-1>',self.task.getps)
+        lps.bind('<ButtonRelease-1>',self.program.ui_settings.getps)
     def makenoboard(self):
         log.info("No Progress board")
         try:
@@ -1173,7 +1173,7 @@ class StatusFrame(ui.Frame):
                                     font='reportheader',
                                     row=row,column=column,sticky='s',ipadx=5)
                             l.bind('<ButtonRelease-1>',
-                                        self.task.getcvt)
+                                        self.program.ui_settings.getcvt)
                     elif profile == 'next':
                         continue
                     elif check in self.program.status.checks(cvt=cvt,ps=ps,
@@ -1243,12 +1243,13 @@ class StatusFrame(ui.Frame):
             log.error(_("You have more groups verified than there are, in {count} "
                         "cells").format(count=ungroups))
         # self.frame.update()
-    def __init__(self, parent, task, **kwargs):
+    def __init__(self, parent, program, **kwargs):
         # log.info("Remaking status frame")
         self.setopts()
         self.irow=0 #frame internal rows
         self.parent=parent
-        self.task=task #this is the window that called it; task or chooser
+        self.program=program
+        # self.task=program.task #this is the window that called it; task or chooser
         self.mainrelief=kwargs.pop('relief',None) #not for frame
         self.labels={} #make a place to store these
         kwargs['padx']=25
@@ -1526,7 +1527,7 @@ class TaskDressing(HasMenus,ui.Window):
         if self.exitFlag.istrue():
             return
         hidewhileworking=self.winfo_viewable()
-        status=StatusFrame(self.frame, self,
+        status=StatusFrame(self.frame, self.program,
                             relief=self.mainrelief,
                             row=1, column=0, sticky='nw')
         if hidewhileworking:
@@ -1540,395 +1541,6 @@ class TaskDressing(HasMenus,ui.Window):
         self.program.settings.storesettingsfile()
         self.makestatusframe(dictnow) #this method
         log.info(_("{type} makestatusframe iteration finished").format(type=type(self)))
-    def setSdistinctions(self):
-        def notice(changed):
-            def confirm():
-                ok.value=True
-                w.destroy()
-            ti=_("Important Notice!")
-            w=ui.Window(self,title=ti)
-            til=ui.Label(w.frame,text=ti,font='title')
-            til.grid(row=0,column=0)
-            t=_("You are changing segment interpretation "
-            "settings in a way that could cause you problems: ")
-            d=[x for x in changed.keys()
-                                            if changed[x][1] is False]
-            if len(d) >0:
-                t+=_("\n=> You are no longer distinguishing {items}.").format(
-                                    items=unlist([x.replace('wd','#') for x in d]))
-            i=[y for y in changed.keys() if changed[y][1] is not False]
-            if len(i) >0:
-                t+=_("\n=> Your interpretation of {items} changed.").format(
-                                                            items=unlist(i))
-            t+=_("\nHere is the full info, in form setting: (from, to): {changed}."
-                    "").format(changed=changed)
-            t+=_("\n\nAnywhere you have sorted a group based on your "
-            "old interpretation settings, you should sort/verify "
-            "that data again, as there is a possiblity that "
-            "you have mixed unrelated groups.").format(changed=changed)
-            ui.Label(w.frame,text=t,wraplength=int(
-                        self.frame.winfo_screenwidth()/2)).grid(row=1,column=0)
-            for n,ps in enumerate(self.program.slices.pss()):
-                i=[x for x in self.program.slices.profiles(ps)
-                                    if set(d).intersection(set(x))]
-                if i:
-                    p=_("{ps} Profiles to check: {profiles}").format(ps=ps,profiles=i)
-                    log.info(p)
-                    l=ui.Label(w.frame,text=p,row=2+n,column=0)
-                    l.wrap()
-            ok=Object(value=False)
-            b=ui.Button(w.frame,text=_("OK, go ahead"), command=confirm)
-            b.grid(row=1,column=1)
-            w.wait_window(w)
-            return ok.value
-        def submitform():
-            def undo(changed):
-                for s in changed:
-                    if s in self.program.settings.distinguish:
-                        if self.program.settings.distinguish[s]==changed[s][1]:
-                            self.program.settings.distinguish[s]=changed[s][0] #(oldvar,newvar):
-                        else:
-                            log.error(_("Changed to value ({new}) doesn't match "
-                            "current setting for '{setting}': {current}").format(new=changed[s][1],
-                                                        setting=s,current=self.distinguish[s]))
-                    elif s in self.program.settings.interpret:
-                        if self.program.settings.interpret[s]==changed[s][1]:
-                            self.program.settings.interpret[s]=changed[s][0] #(oldvar,newvar):
-                        else:
-                            log.error(_("Changed to value ({new}) doesn't match "
-                            "current setting for '{setting}': {current}").format(new=changed[s][1],
-                                                        setting=s,current=self.interpret[s]))
-            r=True #only false if changes made, and user exits notice
-            changed={}
-            for typ in ['distinguish', 'interpret']:
-                for s in getattr(self.program.settings,typ):
-                    if s in options.vars: # and s in getattr(self.program.settings,typ):
-                        newvar=options.vars[s].get()
-                        oldvar=getattr(self.program.settings,typ)[s]
-                        if oldvar != newvar:
-                            changed[s]=(oldvar,newvar)
-                            getattr(self.program.settings,typ)[s]=newvar
-            # log.debug('self.distinguish: {}'.format(self.program.settings.distinguish))
-            # log.debug('self.interpret: {}'.format(self.program.settings.interpret))
-            if changed:
-                # log.info('There was a change; we need to redo the analysis now.')
-                log.info(_('The following changed (from,to): {changed}').format(changed=changed))
-                r=notice(changed)
-                if r:
-                    self.runwindow.on_quit()
-                    self.program.settings.storesettingsfile(setting='profiledata')
-                    self.program.taskchooser.restart()
-                else:
-                    undo(changed)
-            else:
-                self.runwindow.on_quit()
-        def buttonframeframe(s):
-            f=ui.Frame(self.runwindow.scroll.content,
-                        row=options.get('r'),
-                        column=options.get('c'),
-                        sticky='ew', padx=options.padx, pady=options.pady)
-            bffl=ui.Label(f,text=textdict[s],justify=ui.LEFT,
-                            anchor='c',
-                            row=1,column=0,
-                            sticky='ew',
-                            padx=options.padx,
-                            pady=options.pady)
-            bffl.wrap()
-            for opt in optdict[s]:
-                bffrb=ui.RadioButtonFrame(f,
-                                        horizontal=True,
-                                        variable=options.vars[s],
-                                        optionlist=optdict[s],
-                                        row=1,column=1)
-            options.next('r')
-        def exsframe(x):
-            text=_("In your data, {item} includes {examples}").format(item=x,examples=', '.join(exsdict[x]))
-            f=ui.Frame(self.runwindow.scroll.content,
-                        row=options.get('r'),
-                        column=options.get('c'),
-                        sticky='ew')
-            bffl=ui.Label(f,text=text,
-                            font='read',
-                            anchor='c',
-                            row=1,column=options.column,
-                            sticky='ew',
-                            padx=options.padx,
-                            pady=options.pady)
-            bffl.wrap()
-            options.next('r')
-        self.getrunwindow()
-        self.program.settings.checkinterpretations()
-        analang=self.program.params.analang()
-        options=Options(r=0,padx=50,pady=0,c=0,vars={},frames={})
-        for s in self.program.settings.distinguish: #Should be already set.
-            options.vars[s] = ui.BooleanVar()
-            options.vars[s].set(self.program.settings.distinguish[s])
-        for s in self.program.settings.interpret: #This should already be set, even by default
-            options.vars[s] = ui.StringVar()
-            options.vars[s].set(self.program.settings.interpret[s])
-        """Page title and instructions"""
-        self.runwindow.title(_("Set Parameters for Segment Interpretation"))
-        mwframe=self.runwindow.frame
-        title=_("Interpret {lang} Segments"
-                ).format(lang=self.program.settings.languagenames[analang])
-        titl=ui.Label(mwframe,text=title,font='title',
-                justify=ui.LEFT,anchor='c',
-                row=options.get('r'), column=options.get('c'),
-                sticky='ew', padx=options.padx, pady=10)
-        options.next('r')
-        text=_("Here you can view and set parameters that change how {name} "
-        "interprets {lang} segments (consonant and vowel glyphs/characters)"
-                ).format(name=self.program.name,lang=self.program.settings.languagenames[analang])
-        instr=ui.Label(mwframe,text=text,justify=ui.LEFT,anchor='c',
-                    row=options.get('r'), column=options.get('c'),
-                    sticky='ew', padx=options.padx, pady=options.pady)
-        instr.wrap()
-        """The rest of the page"""
-        self.runwindow.scroll=ui.ScrollingFrame(mwframe,row=2,column=0)
-        # log.debug('self.distinguish: {}'.format(self.program.settings.distinguish))
-        # log.debug('self.interpret: {}'.format(self.program.settings.interpret))
-        """I considered offering these to the user conditionally, but I don't
-        see a subset of them that would only be relevant when another is
-        selected. For instance, a user may NOT want to distinguish all Nasals,
-        yet distinguish word final nasals. Or CG sequences, but not other G's
-        --or distinguish G, but leave as CG (≠C). So I think these are all
-        independent boolean selections."""
-        if analang in self.program.db.s:
-            vars=[k for k in self.program.db.s[analang].keys()
-                    if not 'dg' in k
-                    if not 'tg' in k
-                    if not 'qg' in k
-                    ]
-            log.info(_("Variable keys to check: {vars}").format(vars=vars))
-        else:
-            ErrorNotice(_("Something happened! "
-                        "(language not keyed in segment dictionary)"))
-            return
-        exsdict={}
-        for var in vars:
-            # log.info("Getting examples of {}".format(var))
-            exsdict[var]=self.program.db.s[analang][var]
-            if var in self.program.settings.polygraphs[analang]:
-                exsdict[var]+=[k for k,v in
-                        self.program.settings.polygraphs[analang][var].items()
-                        if self.program.settings.polygraphs[analang][var][k]
-                                ]
-            # log.info("Examples of {}: {}".format(var,exsdict[var]))
-        textdict={'ʔ':_('Distinguish glottal stops (ʔ) '
-                        'initially and medially?'),
-                'ʔwd':_('Distinguish glottal stops word finally (ʔ#)?'),
-                'N':_('Distinguish Nasals (N) initially and medially?'),
-                'Nwd':_('Distinguish Nasals word finally (N#)?'),
-                'NC':_('How to interpret Nasal-Consonant (NC) sequences?'),
-                'D':_('Distinguish likely depressor consonants (D) '
-                        'initially and medially?'),
-                'Dwd':_('Distinguish likely depressor consonants word finally '
-                        '(D#)?'),
-                'G':_('Distinguish Glides (G) initially and medially?'),
-                'Gwd':_('Distinguish Glides word finally (G#)?'),
-                'CG':_('How to interpret Consonant-Glide (CG) sequences?'),
-                'S':_('Distinguish Non-Nasal/Glide Sonorants (S) '
-                        'initially and medially?'),
-                'Swd':_('Distinguish Non-Nasal/Glide Sonorants word finally '
-                        '(S#)?'),
-                'CS':_('How to interpret Consonant-Sonorant (CS) sequences?'),
-                'VN':_('How to interpret Vowel-Nasal (VN) sequences? '
-                        '(after NC interpretation above)'),
-                'VV':_('How to interpret the *same* vowel letter twice '
-                        'in a row (VV)? ')
-                }
-        optdict={'ʔ':[(True,'ʔ≠C'),(False,'ʔ=C')],
-                'ʔwd':[(True,'ʔ#≠C#'),(False,'ʔ#=C#')],
-                'N':[(True,'N≠C'),(False,'N=C')],
-                'Nwd':[(True,'N#≠C#'),(False,'N#=C#')],
-                'NC':[('NC','NC=NC (≠C, ≠CC)'),
-                        ('C','NC=C (≠NC, ≠CC)'),
-                        ('CC','NC=CC (≠NC, ≠C)')
-                        ],
-                'D':[(True,'D≠C'),(False,'D=C')],
-                'Dwd':[(True,'D#≠C#'),(False,'D#=C#')],
-                'G':[(True,'G≠C'),(False,'G=C')],
-                'Gwd':[(True,'G#≠C#'),(False,'G#=C#')],
-                'CG':[('CG','CG=CG (≠C, ≠CC)'),
-                        ('C','CG=C (≠CG, ≠CC)'),
-                        ('CC','CG=CC (≠CG, ≠C)')],
-                'S':[(True,'S≠C'),(False,'S=C')],
-                'Swd':[(True,'S#≠C#'),(False,'S#=C#')],
-                'CS':[('CS','CS=CS (≠C, ≠CC)'),
-                        ('C','CS=C (≠CS, ≠CC)'),
-                        ('CC','CS=CC (≠CS, ≠C)')],
-                'VN':[('VN','VN=VN (≠Ṽ)'), ('Ṽ','VN=Ṽ (≠VN)')],
-                'VV':[('VV','VV=VV (≠V)'), ('V','VV=V (≠VV)')]
-                }
-        exsframe('C')
-        for var in [i for i in vars if i not in ['C','V','VN']
-                                    if i in exsdict and exsdict[i]]:
-            # log.info("Doing var {}".format(var))
-            exsframe(var)
-            todo=[i for i in textdict if var in i]
-            # log.info("Doing vars {}".format(todo))
-            for var in todo:
-                buttonframeframe(var)
-        exsframe('V')
-        todo=[i for i in textdict if 'V' in i]
-        for v in todo:
-            buttonframeframe(v)
-        """Submit button, etc"""
-        self.runwindow.frame2d=ui.Frame(mwframe,
-                                        row=3,
-                                        column=options.get('c'),
-                                        sticky='e', padx=options.padx,
-                                        pady=options.pady)
-        sub_btn=ui.Button(self.runwindow.frame2d, text=_('Use these settings'),
-                          command = submitform,
-                          row=0,column=1,sticky='nw',
-                          pady=options.pady)
-        nbtext=_("If you make changes, this button==> \nwill "
-                "restart the program to reanalyze your data.")
-        sub_nb=ui.Label(self.runwindow.frame2d, text = nbtext,
-                        anchor='e',
-                        row=0,column=0,sticky='e',
-                        pady=options.pady)
-        self.runwindow.waitdone()
-    def getinterfacelang(self,event=None):
-        log.info(_("Asking for interface language..."))
-        azt=self.program.name
-        window=ui.Window(self, title=_('Select Interface Language'))
-        ui.Label(window.frame, text=_('What language do you want {name} '
-                                'to address you in?').format(name=azt)
-                ).grid(column=0, row=0)
-        options=[{'code':i,'name':self.program.settings.languagenames[i]}
-                for i in self.program.interfacelangs]
-        log.info(_("asking with these options: {options}").format(options=options))
-        ui.ButtonFrame(window.frame,
-                                optionlist=options,
-                                command=self.program.settings.interfacelangwrapper,
-                                window=window,
-                                column=0, row=1
-                                )
-    def getanalangname(self,event=None):
-        log.info(_("this sets the language name"))
-        def submit(event=None):
-            if namevar.get():
-                self.program.settings.languagenames[self.analang]=namevar.get()
-                #This stores to file:
-                setnesteddictobjectval(self.program.settings,'adnlangnames',
-                                    namevar.get(),self.analang)
-            else:
-                if self.analang in self.program.settings.languagenames:
-                    del self.program.settings.languagenames[self.analang]
-                if self.analang in self.program.settings.adnlangnames:
-                    del self.program.settings.adnlangnames[self.analang]
-                self.program.settings.langnames([self.analang]) #refreshes w/above
-            self.program.settings.storesettingsfile()
-            self.program.taskchooser.mainwindowis.status.updateanalang() #ui
-            window.destroy()
-        window=ui.Window(self,title=_('Enter Analysis Language Name'))
-        curname=self.program.settings.languagenames[self.analang]
-        defaultname=_("Language with code [{code}]").format(code=self.analang)
-        t=_("How do you want to display the name of {name}").format(name=curname)
-        namevar=ui.StringVar()
-        log.info(f"{curname} = {defaultname}? {curname == defaultname}")
-        if curname != defaultname:
-            t+=_(", with ISO 639-3 code [{code}]").format(code=self.analang)
-            namevar.set(curname)
-        t+='?' # _("Language with code [{}]").format(xyz)
-        ui.Label(window.frame,text=t,row=0,column=0,sticky='e',columnspan=2)
-        name = ui.EntryField(window.frame,text=namevar,
-                            row=1,column=0,
-                            sticky='e')
-        name.focus_set()
-        name.bind('<Return>',submit)
-        ui.Button(window.frame,text=_('OK'),cmd=submit,row=1,column=1,sticky='w')
-    def getanalang(self,event=None):
-        if len(self.program.db.analangs) <2: #The user probably wants to change display.
-            self.getanalangname()
-            return
-        log.info(_("this sets the language"))
-        # fn=inspect.currentframe().f_code.co_name
-        window=ui.Window(self,title=_('Select Analysis Language'))
-        if self.program.db.analangs is None :
-            ui.Label(window.frame,
-                          text=_('Error: please set Lift file first! ({file})').format(
-                          file=self.program.db.filename)
-                          ).grid(column=0, row=0)
-        else:
-            ui.Label(window.frame,
-                          text=_('What language do you want to analyze?')
-                          ).grid(column=0, row=1)
-            langs=list()
-            for lang in self.program.db.analangs:
-                langs.append({'code':lang,
-                                'name':self.program.settings.languagenames[lang]})
-                # print(lang, self.program.taskchooser.languagenames[lang])
-            buttonFrame1=ui.ButtonFrame(window.frame,
-                                     optionlist=langs,
-                                     command=self.program.settings.setanalang,
-                                     window=window,
-                                     column=0, row=4
-                                     )
-    def getglosslang(self,event=None):
-        window=ui.Window(self,title=_('Select Gloss Language'))
-        text=_('What Language do you want to use for glosses?')
-        ui.Label(window.frame, text=text, column=0, row=1)
-        langs=list()
-        for lang in set(self.program.db.glosslangs)|set(
-                                            self.program.settings.glosslangs[1:]):
-            langs.append({'code':lang,
-                            'name':self.program.settings.languagenames[lang]})
-        if self.program.settings.glosslangs.lang2():
-            langs.append({'code':None,
-                    'name':_('just use {name}').format(name=self.program.settings.languagenames[
-                                    self.program.settings.glosslangs.lang2()])})
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                 optionlist=langs,
-                                 command=self.program.settings.setglosslang,
-                                 window=window,
-                                 column=0, row=4
-                                 )
-    def getglosslang2(self,event=None):
-        window=ui.Window(self,title=_('Select Second Gloss Language'))
-        text=_('What other language do you want to use for glosses?')
-        ui.Label(window.frame, text=text, column=0, row=1)
-        langs=list()
-        for lang in set(self.program.db.glosslangs)|set(self.program.settings.glosslangs[:1]):
-            if lang == self.program.settings.glosslangs[0]:
-                continue
-            langs.append({'code':lang,
-                            'name':self.program.settings.languagenames[lang]})
-        langs.append({'code':None,
-                    'name':_('just use {name}').format(name=self.program.settings.languagenames[
-                                    self.program.settings.glosslangs.lang1()])})
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=langs,
-                                    command=self.program.settings.setglosslang2,
-                                    window=window,
-                                    column=0, row=4
-                                    )
-    def getcvt(self,event=None):
-        log.debug(_("Asking for check cvt/type"))
-        window=ui.Window(self,title=_('Select Check Type'))
-        cvts=[]
-        x=0
-        tdict=self.program.params.cvtdict()
-        for cvt in tdict:
-            if cvt in ['CV','VC'] and (isinstance(self.task,Sort) or
-                                isinstance(self.task,Transcribe)):
-                continue
-            cvts.append({})
-            cvts[x]['name']=tdict[cvt]['pl']
-            cvts[x]['code']=cvt
-            x+=1
-        ui.Label(window.frame, text=_('What part of the sound system do you '
-                                    'want to work with?')
-            ).grid(column=0, row=0)
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=cvts,
-                                    command=self.program.settings.setcvt,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-        return window
     def getparserlevels(self,event=None):
         try:
             levels=self.parser.levels()
@@ -1970,64 +1582,6 @@ class TaskDressing(HasMenus,ui.Window):
                                 window=window,
                                 column=0, row=1
                                             )
-    def getps(self,event=None):
-        log.info(_("Asking for ps..."))
-        # self.refreshattributechanges()
-        window=ui.Window(self, title=_('Select Lexical Category'))
-        ui.Label(window.frame, text=_('What lexical category do you '
-                                    'want to work with (Part of speech)?')
-                ).grid(column=0, row=0)
-        if hasattr(self,'additionalps') and self.program.settings.additionalps is not None:
-            pss=self.program.db.pss+self.program.settings.additionalps #these should be lists
-        else:
-            pss=self.program.db.pss
-        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                            optionlist=pss,
-                                            command=self.program.settings.setps,
-                                            window=window,
-                                            column=0, row=1
-                                            )
-    def getprofile(self,event=None,**kwargs):
-        log.info(_("Asking for profile..."))
-        # self.refreshattributechanges()
-        ps=self.program.slices.ps()
-        if not ps:
-            text=(_("No Grammatical Category? ")+""
-                    f" ({list(self.program.settings.profilesbysense)})")
-            ErrorNotice(text, parent=self, wait=True)
-        elif self.program.settings.profilesbysense[ps] is None: #likely never happen...
-            text=_('Error: please set Grammatical category with profiles '
-                    'first! (not {ps})').format(ps=ps)
-            ErrorNotice(text, parent=self, wait=True)
-        else:
-            profilecounts=self.program.slices.valid()
-            profilecountsAdHoc=self.program.slices.adhoccounts()
-            profiles=self.program.status.profiles(**kwargs)
-            if profilecountsAdHoc:
-                adhocdict=self.program.slices.adhoc()
-                profilecounts.update(profilecountsAdHoc)
-                if ps in adhocdict:
-                    profiles+=self.program.slices.adhoc()[ps].keys()
-            profiles=dict.fromkeys(profiles)
-            if not profiles:
-                log.error(_("No profiles of {type} type found!").format(type=kwargs))
-            # log.info("count types: {}, {}".format(type(profilecounts),
-            #                                         type(profilecountsAdHoc)))
-            window=ui.Window(self,title=_('Select Syllable Profile'))
-            ui.Label(window.frame, text=_('What ({ps}) syllable profile do you '
-                                    'want to work with?').format(ps=ps)
-                                    ).grid(column=0, row=0)
-            optionslist = [{'code':x,'description':profilecounts[(x,ps)]} for x in profiles]
-            """What does this extra frame do?"""
-            window.scroll=ui.Frame(window.frame)
-            window.scroll.grid(column=0, row=1)
-            buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                                    optionlist=optionslist,
-                                    command=self.program.settings.setprofile,
-                                    window=window,
-                                    column=0, row=0
-                                    )
-            window.wait_window(window)
     def setsensetodo(self,choice,window):
         self.sense=self.sensetodo=choice
         self.program.taskchooser.mainwindowis.status.updatesensetodo()
@@ -2096,213 +1650,6 @@ class TaskDressing(HasMenus,ui.Window):
                                             column=0, row=1
                                             )
         window.lift()
-    def getsecondformfieldN(self,event=None):
-        ps=self.program.settings.nominalps
-        opts=self.program.settings.plopts
-        othername=self.program.settings.imperativename
-        setcmd=self.program.settings.setsecondformfieldN
-        self.getsecondformfield(ps,opts,othername,setcmd)
-    def getsecondformfieldV(self,event=None):
-        # log.info(".impopts: {}".format(self.program.settings.impopts))
-        ps=self.program.settings.verbalps
-        opts=self.program.settings.impopts
-        othername=self.program.settings.pluralname
-        setcmd=self.program.settings.setsecondformfieldV
-        self.getsecondformfield(ps,opts,othername,setcmd)
-    def getcustomsecondformfield(self,ps,othername,setcmd):
-        def updateerror(event=None):
-            if event.keysym != 'Return':
-                self.errorlabel['text'] = ''
-        def submitform(event=None):
-            log.info(_("setting {custom} (not {other})").format(custom=custom.get(), other=othername))
-            if custom.get() == othername:
-                text=_("That name is already used!")
-                log.error(text)
-                self.errorlabel['text']=text
-                return
-            setcmd(custom.get())
-            window.on_quit()
-        title=_('Make Custom Second Form Field for {ps}').format(ps=ps)
-        window=ui.Window(self,title=title)
-        #should never be othername
-        l=ui.Label(window,
-                text=_("What field name do you want to use for {ps} words?"
-                        ).format(ps=ps),
-                row=0,column=0)
-        custom=ui.StringVar()
-        formfield = ui.EntryField(window, render=True,
-                                    text=custom,
-                                    row=1,column=0,
-                                    sticky='')
-        formfield.focus_set()
-        formfield.bind('<Return>',submitform)
-        formfield.bind('<KeyRelease>',updateerror)
-        self.errorlabel=ui.Label(window,text='',
-                            fg='red',
-                            wraplength=int(self.frame.winfo_screenwidth()/3),
-                            row=2,column=0,sticky='nsew'
-                            )
-        window.wait_window()
-    def getsecondformfield(self,ps,opts,othername,setcmd,other=False):
-        """'other' is used when fields already present in the database
-        do not include a good option. 'Othername' is used to exclude another
-        grammatical category, e.g., verb fields for a noun second form.
-        If there are no such fields in the db (e.g., if you just started
-        a new db for word collection), the user will go straight to selecting
-        from default options, or providing a custom name for the new field"""
-        def getother():
-            """Current db fields aren't enough, ask for default or custom"""
-            window.destroy()
-            self.getsecondformfield(ps=ps,
-                                    opts=opts,
-                                    othername=othername,
-                                    setcmd=setcmd,
-                                    other=True)
-        def getcustom():
-            """Current db fields and custom names aren't enough, get custom"""
-            window.destroy()
-            self.getcustomsecondformfield(ps=ps,
-                                    # opts=opts,
-                                    othername=othername,
-                                    setcmd=setcmd,
-                                    # other=True
-                                    )
-        log.info(_("Asking for '{ps}' second form field...").format(ps=ps))
-        try:
-            assert other == False
-            othernames=[i for i in self.program.db.fieldnames[self.analang]
-                    if i != othername and i not in ['lc','lx']]
-        except (KeyError,AssertionError):
-            othernames=[]
-        if othernames:
-            if len(othernames)-1:
-                text=_("Select a database field "
-                        "to use for second forms of '{ps}' words").format(ps=ps)
-                otherbuttontext=_("None of these; make a new field")
-            else:
-                text=_("Select the '{field}' database field "
-                        "for second forms of '{ps}' words").format(field=othernames[0],ps=ps)
-                otherbuttontext=_("No; make a new field")
-            cmd=getother
-            optionslist=othernames
-        else:
-            setcmd(opts[0])
-            # ErrorNotice(_("No suitable database fields were found for second "
-            #             f"forms of '{ps}' words; using '{opts[0]}'."))
-            return
-            # text=_("No suitable database fields were found; what name "
-            #         f"do you want to use for second forms of '{ps}' words?")
-            # otherbuttontext=_("None of these work; make my own field")
-            # cmd=getcustom
-            # optionslist=opts
-        title=_('Select Second Form Field for {ps}').format(ps=ps)
-        window=ui.Window(self,title=title)
-        ui.Label(window.frame, text=text, column=0, row=0)
-        """What does this extra frame do?"""
-        window.scroll=ui.Frame(window.frame)
-        window.scroll.grid(column=0, row=2)
-        buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                optionlist=optionslist,
-                command=setcmd,
-                window=window,
-                column=0, row=0
-                )
-        otherbutton=ui.Button(buttonFrame1.content,
-                            text=otherbuttontext,
-                            column=0, row=1,
-                            cmd=cmd
-                            )
-        if self.winfo_viewable():
-            self.withdraw()
-            window.wait_window(window)
-            self.deiconify()
-        else:
-            window.wait_window(window)
-    def getmulticheckscope(self,event=None):
-            log.info(_("Asking for multicheckscope..."))
-            window=ui.Window(self, title=_('Select Scope of Checks'))
-            ui.Label(window.frame,
-                    text=_('What kinds of checks to you want to run?')
-                    ).grid(column=0, row=0)
-            cvts=[[i] for i in self.program.params.cvts()]
-            cvts.remove(['T'])
-            cvtsdone=cvts[:]
-            # log.info("{};{}".format(len(cvts),cvts))
-            for j in cvts[:2]+[[i[0] for i in cvts[:2]]]:
-                cvtsdone+=[j+i for i in cvts
-                            if i[0] not in j
-                            if set(j+i) not in [set(i) for i in cvtsdone]]
-                # log.info("{};{}".format(len(cvtsdone),cvtsdone))
-            cvtsdone+=[[i[0] for i in cvts]]
-            options=[{'code':opt,
-                    'name':unlist([self.program.params.cvtdict()[i]['pl'] for i in opt])
-                    }
-                    for opt in cvtsdone
-                    ]
-            for opt in options:
-                if len(opt['code']) == 1:
-                    opt['name']+=' '+_("(only)")
-            buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                    optionlist=options,
-                                    command=self.program.settings.setmulticheckscope,
-                                    window=window,
-                                    column=0, row=1
-                                                )
-    def cvtstodoprose(self,cvtstodo=None):
-        if not cvtstodo:
-            cvtstodo=self.cvtstodo
-        output=[]
-        for cvt in self.cvtstodo:
-            output+=[self.program.params.cvtdict()[cvt]['pl']]
-        return output
-    def secondfieldnames(self):
-        """Not called anywhere?"""
-        if self.program.settings.nominalps not in self.program.settings.secondformfield:
-            self.getsecondformfieldN()
-        if self.program.settings.verbalps not in self.program.settings.secondformfield:
-            self.getsecondformfieldV()
-        return (self.program.settings.secondformfield[self.program.settings.verbalps],
-                self.program.settings.secondformfield[self.program.settings.nominalps])
-    def getbuttoncolumns(self,event=None):
-        log.info(_("Asking for number of button columns..."))
-        window=ui.Window(self,title=_('Select Button Columns'))
-        ui.Label(window.frame, text=_('How many columns do you want to use for '
-                                        'the sort buttons?')
-                                        ).grid(column=0, row=0)
-        optionslist = list(range(1,4))
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                optionlist=optionslist,
-                                command=self.program.settings.setbuttoncolumns,
-                                window=window,
-                                column=0, row=1
-                                )
-        window.wait_window(window)
-    def getmaxpss(self,event=None):
-        title=_('Select Maximum Number of Lexical Categories')
-        window=ui.Window(self, title=title)
-        text=_('How many lexical categories to report (2 = Noun and Verb) ?')
-        ui.Label(window.frame, text=text, column=0, row=0)
-        r=[x for x in range(1,10)]
-        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                optionlist=r,
-                                command=self.program.settings.setmaxpss,
-                                window=window,
-                                column=0, row=1
-                                )
-        buttonFrame1.wait_window(window)
-    def getmaxprofiles(self,event=None):
-        title=_('Select Maximum Number of Syllable Profiles')
-        window=ui.Window(self, title=title)
-        text=_('How many syllable profiles to report?')
-        ui.Label(window.frame, text=text, column=0, row=0)
-        r=[x for x in range(1,10)]
-        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                optionlist=r,
-                                command=self.program.settings.setmaxprofiles,
-                                window=window,
-                                column=0, row=1
-                                )
-        buttonFrame1.wait_window(window)
     def getcheck(self,guess=False,event=None,**kwargs):
         log.info(_("this sets the check"))
         log.info(_("Getting the check name..."))
@@ -2545,55 +1892,6 @@ class TaskDressing(HasMenus,ui.Window):
         kwargs['torecord']=True
         kwargs=grouptype(**kwargs)
         return self.getgroup(**kwargs)
-    def getexamplespergrouptorecord(self):
-        log.info(_("this sets the number of examples per group to record"))
-        self.npossible=[
-            {'code':1,'name':_("1 - Bare minimum, just one per group")},
-            {'code':5,'name':_("5 - Some, but not all, of most groups")},
-            {'code':100,'name':_("100 - All examples in most databases")},
-            {'code':1000,'name':_("1000 - All examples in VERY large databases")}
-                        ]
-        title=_('Select Number of Examples per Group to Record')
-        window=ui.Window(self, title=title)
-        text=_("The {name} tone report splits sorted data into "
-                "draft underlying tone melody groups. "
-                # ", with distinct values for each of your tone frames. This "
-                # "exhaustively finds differences between groups of lexical "
-                # "senses, but often "
-                # "misses similarities between groups, which might be "
-                # "distinguished only because a single word was skipped or sorted "
-                # "incorrectly.\n\n"
-                "Even before a linguist has been able to evaluate these "
-                "groups, it may be helpful to record your sorted data. "
-                "{name} can give you a window for each lexicon sense in a tone "
-                "group, with a record button for each sorted sense-frame "
-                "combination. "
-                "\n\nThose "
-                "windows will be presented to the user from one tone report "
-                "group after "
-                "another, until all groups have had one page presented. Then "
-                "{name} will "
-                "repeat this process, until it has done a number of "
-                "rounds equal to the number selected below. "
-                # "\n\nIf a "
-                # "group has fewer examples than this number, that group will be "
-                # "skipped once done. "
-                "\nPicking a larger number could delay opening "
-                "the recording window; picking a smaller number could mean "
-                "data not getting recorded. "
-                "Up to how many examples do you want to record for each group?"
-                "").format(name=self.program.name)
-        t=ui.Label(window.frame, text=title, font='title',column=0, row=0)
-        l=ui.Label(window.frame, text=text, justify='left',column=0, row=1)
-        t.wrap()
-        l.wrap()
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                            optionlist=self.npossible,
-                            command=self.program.settings.setexamplespergrouptorecord,
-                            window=window,
-                            column=0, row=4
-                                )
-        buttonFrame1.wait_window(window)
     def runwindowcleanup(self):
         log.info(_("Shutting down runwindow"))
         if not self.exitFlag.istrue():
@@ -4055,3 +3353,712 @@ class LiftChooser(ui.Window,HasMenus):
         except:
             pass
         self.wait_window(self)
+
+
+class Settings(object):
+    def __init__(self, program):
+        self.program = program
+        self.program.ui_settings = self
+    def getinterfacelang(self,event=None):
+        log.info(_("Asking for interface language..."))
+        azt=self.program.name
+        window=ui.Window(self.program.task, title=_('Select Interface Language'))
+        ui.Label(window.frame, text=_('What language do you want {name} '
+                                'to address you in?').format(name=azt)
+                ).grid(column=0, row=0)
+        options=[{'code':i,'name':self.program.settings.languagenames[i]}
+                for i in self.program.interfacelangs]
+        log.info(_("asking with these options: {options}").format(options=options))
+        ui.ButtonFrame(window.frame,
+                                optionlist=options,
+                                command=self.program.settings.interfacelangwrapper,
+                                window=window,
+                                column=0, row=1
+                                )
+    def getanalangname(self,event=None):
+        log.info(_("this sets the language name"))
+        def submit(event=None):
+            if namevar.get():
+                self.program.settings.languagenames[self.program.params.analang()]=namevar.get()
+                #This stores to file:
+                setnesteddictobjectval(self.program.settings,'adnlangnames',
+                                    namevar.get(),self.program.params.analang())
+            else:
+                if self.program.params.analang() in self.program.settings.languagenames:
+                    del self.program.settings.languagenames[self.program.params.analang()]
+                if self.program.params.analang() in self.program.settings.adnlangnames:
+                    del self.program.settings.adnlangnames[self.program.params.analang()]
+                self.program.settings.langnames([self.program.params.analang()]) #refreshes w/above
+            self.program.settings.storesettingsfile()
+            self.program.taskchooser.mainwindowis.status.updateanalang() #ui
+            window.destroy()
+        window=ui.Window(self.program.task,title=_('Enter Analysis Language Name'))
+        curname=self.program.settings.languagenames[self.program.params.analang()]
+        defaultname=_("Language with code [{code}]").format(code=self.program.params.analang())
+        t=_("How do you want to display the name of {name}").format(name=curname)
+        namevar=ui.StringVar()
+        log.info(f"{curname} = {defaultname}? {curname == defaultname}")
+        if curname != defaultname:
+            t+=_(", with ISO 639-3 code [{code}]").format(code=self.program.params.analang())
+            namevar.set(curname)
+        t+='?' # _("Language with code [{}]").format(xyz)
+        ui.Label(window.frame,text=t,row=0,column=0,sticky='e',columnspan=2)
+        name = ui.EntryField(window.frame,text=namevar,
+                            row=1,column=0,
+                            sticky='e')
+        name.focus_set()
+        name.bind('<Return>',submit)
+        ui.Button(window.frame,text=_('OK'),cmd=submit,row=1,column=1,sticky='w')
+    def getanalang(self,event=None):
+        if len(self.program.db.analangs) <2: #The user probably wants to change display.
+            self.getanalangname()
+            return
+        log.info(_("this sets the language"))
+        # fn=inspect.currentframe().f_code.co_name
+        window=ui.Window(self.program.task,title=_('Select Analysis Language'))
+        if self.program.db.analangs is None :
+            ui.Label(window.frame,
+                          text=_('Error: please set Lift file first! ({file})').format(
+                          file=self.program.db.filename)
+                          ).grid(column=0, row=0)
+        else:
+            ui.Label(window.frame,
+                          text=_('What language do you want to analyze?')
+                          ).grid(column=0, row=1)
+            langs=list()
+            for lang in self.program.db.analangs:
+                langs.append({'code':lang,
+                                'name':self.program.settings.languagenames[lang]})
+                # print(lang, self.program.taskchooser.languagenames[lang])
+            buttonFrame1=ui.ButtonFrame(window.frame,
+                                     optionlist=langs,
+                                     command=self.program.settings.setanalang,
+                                     window=window,
+                                     column=0, row=4
+                                     )
+    def getglosslang(self,event=None):
+        window=ui.Window(self.program.task,title=_('Select Gloss Language'))
+        text=_('What Language do you want to use for glosses?')
+        ui.Label(window.frame, text=text, column=0, row=1)
+        langs=list()
+        for lang in set(self.program.db.glosslangs)|set(
+                                            self.program.settings.glosslangs[1:]):
+            langs.append({'code':lang,
+                            'name':self.program.settings.languagenames[lang]})
+        if self.program.settings.glosslangs.lang2():
+            langs.append({'code':None,
+                    'name':_('just use {name}').format(name=self.program.settings.languagenames[
+                                    self.program.settings.glosslangs.lang2()])})
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                 optionlist=langs,
+                                 command=self.program.settings.setglosslang,
+                                 window=window,
+                                 column=0, row=4
+                                 )
+    def getglosslang2(self,event=None):
+        window=ui.Window(self.program.task,title=_('Select Second Gloss Language'))
+        text=_('What other language do you want to use for glosses?')
+        ui.Label(window.frame, text=text, column=0, row=1)
+        langs=list()
+        for lang in set(self.program.db.glosslangs)|set(self.program.settings.glosslangs[:1]):
+            if lang == self.program.settings.glosslangs[0]:
+                continue
+            langs.append({'code':lang,
+                            'name':self.program.settings.languagenames[lang]})
+        langs.append({'code':None,
+                    'name':_('just use {name}').format(name=self.program.settings.languagenames[
+                                    self.program.settings.glosslangs.lang1()])})
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=langs,
+                                    command=self.program.settings.setglosslang2,
+                                    window=window,
+                                    column=0, row=4
+                                    )
+    def getcvt(self,event=None):
+        log.debug(_("Asking for check cvt/type"))
+        window=ui.Window(self.program.task,title=_('Select Check Type'))
+        cvts=[]
+        x=0
+        tdict=self.program.params.cvtdict()
+        for cvt in tdict:
+            if cvt in ['CV','VC'] and (isinstance(self.task,Sort) or
+                                isinstance(self.task,Transcribe)):
+                continue
+            cvts.append({})
+            cvts[x]['name']=tdict[cvt]['pl']
+            cvts[x]['code']=cvt
+            x+=1
+        ui.Label(window.frame, text=_('What part of the sound system do you '
+                                    'want to work with?')
+            ).grid(column=0, row=0)
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                    optionlist=cvts,
+                                    command=self.program.settings.setcvt,
+                                    window=window,
+                                    column=0, row=1
+                                    )
+        return window
+    def getps(self,event=None):
+        log.info(_("Asking for ps..."))
+        # self.refreshattributechanges()
+        window=ui.Window(self.program.task, title=_('Select Lexical Category'))
+        ui.Label(window.frame, text=_('What lexical category do you '
+                                    'want to work with (Part of speech)?')
+                ).grid(column=0, row=0)
+        if hasattr(self,'additionalps') and self.program.settings.additionalps is not None:
+            pss=self.program.db.pss+self.program.settings.additionalps #these should be lists
+        else:
+            pss=self.program.db.pss
+        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                                            optionlist=pss,
+                                            command=self.program.settings.setps,
+                                            window=window,
+                                            column=0, row=1
+                                            )
+    def getprofile(self,event=None,**kwargs):
+        log.info(_("Asking for profile..."))
+        # self.refreshattributechanges()
+        ps=self.program.slices.ps()
+        if not ps:
+            text=(_("No Grammatical Category? ")+""
+                    f" ({list(self.program.settings.profilesbysense)})")
+            ErrorNotice(text, parent=self.program.task, wait=True)
+        elif self.program.settings.profilesbysense[ps] is None: #likely never happen...
+            text=_('Error: please set Grammatical category with profiles '
+                    'first! (not {ps})').format(ps=ps)
+            ErrorNotice(text, parent=self.program.task, wait=True)
+        else:
+            profilecounts=self.program.slices.valid()
+            profilecountsAdHoc=self.program.slices.adhoccounts()
+            profiles=self.program.status.profiles(**kwargs)
+            if profilecountsAdHoc:
+                adhocdict=self.program.slices.adhoc()
+                profilecounts.update(profilecountsAdHoc)
+                if ps in adhocdict:
+                    profiles+=self.program.slices.adhoc()[ps].keys()
+            profiles=dict.fromkeys(profiles)
+            if not profiles:
+                log.error(_("No profiles of {type} type found!").format(type=kwargs))
+            # log.info("count types: {}, {}".format(type(profilecounts),
+            #                                         type(profilecountsAdHoc)))
+            window=ui.Window(self.program.task,title=_('Select Syllable Profile'))
+            ui.Label(window.frame, text=_('What ({ps}) syllable profile do you '
+                                    'want to work with?').format(ps=ps)
+                                    ).grid(column=0, row=0)
+            optionslist = [{'code':x,'description':profilecounts[(x,ps)]} for x in profiles]
+            """What does this extra frame do?"""
+            window.scroll=ui.Frame(window.frame)
+            window.scroll.grid(column=0, row=1)
+            buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
+                                    optionlist=optionslist,
+                                    command=self.program.settings.setprofile,
+                                    window=window,
+                                    column=0, row=0
+                                    )
+            window.wait_window(window)
+    def getsecondformfieldN(self,event=None):
+        ps=self.program.settings.nominalps
+        opts=self.program.settings.plopts
+        othername=self.program.settings.imperativename
+        setcmd=self.program.settings.setsecondformfieldN
+        self.getsecondformfield(ps,opts,othername,setcmd)
+    def getsecondformfieldV(self,event=None):
+        # log.info(".impopts: {}".format(self.program.settings.impopts))
+        ps=self.program.settings.verbalps
+        opts=self.program.settings.impopts
+        othername=self.program.settings.pluralname
+        setcmd=self.program.settings.setsecondformfieldV
+        self.getsecondformfield(ps,opts,othername,setcmd)
+    def getcustomsecondformfield(self,ps,othername,setcmd):
+        def updateerror(event=None):
+            if event.keysym != 'Return':
+                self.program.task.errorlabel['text'] = ''
+        def submitform(event=None):
+            log.info(_("setting {custom} (not {other})").format(custom=custom.get(), other=othername))
+            if custom.get() == othername:
+                text=_("That name is already used!")
+                log.error(text)
+                self.program.task.errorlabel['text']=text
+                return
+            setcmd(custom.get())
+            window.on_quit()
+        title=_('Make Custom Second Form Field for {ps}').format(ps=ps)
+        window=ui.Window(self.program.task,title=title)
+        #should never be othername
+        l=ui.Label(window,
+                text=_("What field name do you want to use for {ps} words?"
+                        ).format(ps=ps),
+                row=0,column=0)
+        custom=ui.StringVar()
+        formfield = ui.EntryField(window, render=True,
+                                    text=custom,
+                                    row=1,column=0,
+                                    sticky='')
+        formfield.focus_set()
+        formfield.bind('<Return>',submitform)
+        formfield.bind('<KeyRelease>',updateerror)
+        self.program.task.errorlabel=ui.Label(window,text='',
+                            fg='red',
+                            wraplength=int(self.program.task.frame.winfo_screenwidth()/3),
+                            row=2,column=0,sticky='nsew'
+                            )
+        window.wait_window()
+    def getsecondformfield(self,ps,opts,othername,setcmd,other=False):
+        """'other' is used when fields already present in the database
+        do not include a good option. 'Othername' is used to exclude another
+        grammatical category, e.g., verb fields for a noun second form.
+        If there are no such fields in the db (e.g., if you just started
+        a new db for word collection), the user will go straight to selecting
+        from default options, or providing a custom name for the new field"""
+        def getother():
+            """Current db fields aren't enough, ask for default or custom"""
+            window.destroy()
+            self.getsecondformfield(ps=ps,
+                                    opts=opts,
+                                    othername=othername,
+                                    setcmd=setcmd,
+                                    other=True)
+        def getcustom():
+            """Current db fields and custom names aren't enough, get custom"""
+            window.destroy()
+            self.getcustomsecondformfield(ps=ps,
+                                    # opts=opts,
+                                    othername=othername,
+                                    setcmd=setcmd,
+                                    # other=True
+                                    )
+        log.info(_("Asking for '{ps}' second form field...").format(ps=ps))
+        try:
+            assert other == False
+            othernames=[i for i in self.program.db.fieldnames[self.program.params.analang()]
+                    if i != othername and i not in ['lc','lx']]
+        except (KeyError,AssertionError):
+            othernames=[]
+        if othernames:
+            if len(othernames)-1:
+                text=_("Select a database field "
+                        "to use for second forms of '{ps}' words").format(ps=ps)
+                otherbuttontext=_("None of these; make a new field")
+            else:
+                text=_("Select the '{field}' database field "
+                        "for second forms of '{ps}' words").format(field=othernames[0],ps=ps)
+                otherbuttontext=_("No; make a new field")
+            cmd=getother
+            optionslist=othernames
+        else:
+            setcmd(opts[0])
+            # ErrorNotice(_("No suitable database fields were found for second "
+            #             f"forms of '{ps}' words; using '{opts[0]}'."))
+            return
+            # text=_("No suitable database fields were found; what name "
+            #         f"do you want to use for second forms of '{ps}' words?")
+            # otherbuttontext=_("None of these work; make my own field")
+            # cmd=getcustom
+            # optionslist=opts
+        title=_('Select Second Form Field for {ps}').format(ps=ps)
+        window=ui.Window(self.program.task,title=title)
+        ui.Label(window.frame, text=text, column=0, row=0)
+        """What does this extra frame do?"""
+        window.scroll=ui.Frame(window.frame)
+        window.scroll.grid(column=0, row=2)
+        buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
+                optionlist=optionslist,
+                command=setcmd,
+                window=window,
+                column=0, row=0
+                )
+        otherbutton=ui.Button(buttonFrame1.content,
+                            text=otherbuttontext,
+                            column=0, row=1,
+                            cmd=cmd
+                            )
+        if self.program.task.winfo_viewable():
+            self.program.task.withdraw()
+            window.wait_window(window)
+            self.program.task.deiconify()
+        else:
+            window.wait_window(window)
+    def getmulticheckscope(self,event=None):
+            log.info(_("Asking for multicheckscope..."))
+            window=ui.Window(self.program.task, title=_('Select Scope of Checks'))
+            ui.Label(window.frame,
+                    text=_('What kinds of checks to you want to run?')
+                    ).grid(column=0, row=0)
+            cvts=[[i] for i in self.program.params.cvts()]
+            cvts.remove(['T'])
+            cvtsdone=cvts[:]
+            # log.info("{};{}".format(len(cvts),cvts))
+            for j in cvts[:2]+[[i[0] for i in cvts[:2]]]:
+                cvtsdone+=[j+i for i in cvts
+                            if i[0] not in j
+                            if set(j+i) not in [set(i) for i in cvtsdone]]
+                # log.info("{};{}".format(len(cvtsdone),cvtsdone))
+            cvtsdone+=[[i[0] for i in cvts]]
+            options=[{'code':opt,
+                    'name':unlist([self.program.params.cvtdict()[i]['pl'] for i in opt])
+                    }
+                    for opt in cvtsdone
+                    ]
+            for opt in options:
+                if len(opt['code']) == 1:
+                    opt['name']+=' '+_("(only)")
+            buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                                    optionlist=options,
+                                    command=self.program.settings.setmulticheckscope,
+                                    window=window,
+                                    column=0, row=1
+                                                )
+    def cvtstodoprose(self,cvtstodo=None):
+        if not cvtstodo:
+            cvtstodo=self.cvtstodo
+        output=[]
+        for cvt in self.cvtstodo:
+            output+=[self.program.params.cvtdict()[cvt]['pl']]
+        return output
+    def secondfieldnames(self):
+        """Not called anywhere?"""
+        if self.program.settings.nominalps not in self.program.settings.secondformfield:
+            self.getsecondformfieldN()
+        if self.program.settings.verbalps not in self.program.settings.secondformfield:
+            self.getsecondformfieldV()
+        return (self.program.settings.secondformfield[self.program.settings.verbalps],
+                self.program.settings.secondformfield[self.program.settings.nominalps])
+    def getbuttoncolumns(self,event=None):
+        log.info(_("Asking for number of button columns..."))
+        window=ui.Window(self.program.task,title=_('Select Button Columns'))
+        ui.Label(window.frame, text=_('How many columns do you want to use for '
+                                        'the sort buttons?')
+                                        ).grid(column=0, row=0)
+        optionslist = list(range(1,4))
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                                optionlist=optionslist,
+                                command=self.program.settings.setbuttoncolumns,
+                                window=window,
+                                column=0, row=1
+                                )
+        window.wait_window(window)
+    def getmaxpss(self,event=None):
+        title=_('Select Maximum Number of Lexical Categories')
+        window=ui.Window(self.program.task, title=title)
+        text=_('How many lexical categories to report (2 = Noun and Verb) ?')
+        ui.Label(window.frame, text=text, column=0, row=0)
+        r=[x for x in range(1,10)]
+        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                                optionlist=r,
+                                command=self.program.settings.setmaxpss,
+                                window=window,
+                                column=0, row=1
+                                )
+        buttonFrame1.wait_window(window)
+    def getmaxprofiles(self,event=None):
+        title=_('Select Maximum Number of Syllable Profiles')
+        window=ui.Window(self.program.task, title=title)
+        text=_('How many syllable profiles to report?')
+        ui.Label(window.frame, text=text, column=0, row=0)
+        r=[x for x in range(1,10)]
+        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
+                                optionlist=r,
+                                command=self.program.settings.setmaxprofiles,
+                                window=window,
+                                column=0, row=1
+                                )
+        buttonFrame1.wait_window(window)
+    def setSdistinctions(self):
+        def notice(changed):
+            def confirm():
+                ok.value=True
+                w.destroy()
+            ti=_("Important Notice!")
+            w=ui.Window(self.program.task,title=ti)
+            til=ui.Label(w.frame,text=ti,font='title')
+            til.grid(row=0,column=0)
+            t=_("You are changing segment interpretation "
+            "settings in a way that could cause you problems: ")
+            d=[x for x in changed.keys()
+                                            if changed[x][1] is False]
+            if len(d) >0:
+                t+=_("\n=> You are no longer distinguishing {items}.").format(
+                                    items=unlist([x.replace('wd','#') for x in d]))
+            i=[y for y in changed.keys() if changed[y][1] is not False]
+            if len(i) >0:
+                t+=_("\n=> Your interpretation of {items} changed.").format(
+                                                            items=unlist(i))
+            t+=_("\nHere is the full info, in form setting: (from, to): {changed}."
+                    "").format(changed=changed)
+            t+=_("\n\nAnywhere you have sorted a group based on your "
+            "old interpretation settings, you should sort/verify "
+            "that data again, as there is a possiblity that "
+            "you have mixed unrelated groups.").format(changed=changed)
+            ui.Label(w.frame,text=t,wraplength=int(
+                        self.program.task.frame.winfo_screenwidth()/2)).grid(row=1,column=0)
+            for n,ps in enumerate(self.program.slices.pss()):
+                i=[x for x in self.program.slices.profiles(ps)
+                                    if set(d).intersection(set(x))]
+                if i:
+                    p=_("{ps} Profiles to check: {profiles}").format(ps=ps,profiles=i)
+                    log.info(p)
+                    l=ui.Label(w.frame,text=p,row=2+n,column=0)
+                    l.wrap()
+            ok=Object(value=False)
+            b=ui.Button(w.frame,text=_("OK, go ahead"), command=confirm)
+            b.grid(row=1,column=1)
+            w.wait_window(w)
+            return ok.value
+        def submitform():
+            def undo(changed):
+                for s in changed:
+                    if s in self.program.settings.distinguish:
+                        if self.program.settings.distinguish[s]==changed[s][1]:
+                            self.program.settings.distinguish[s]=changed[s][0] #(oldvar,newvar):
+                        else:
+                            log.error(_("Changed to value ({new}) doesn't match "
+                            "current setting for '{setting}': {current}").format(new=changed[s][1],
+                                                        setting=s,current=self.distinguish[s]))
+                    elif s in self.program.settings.interpret:
+                        if self.program.settings.interpret[s]==changed[s][1]:
+                            self.program.settings.interpret[s]=changed[s][0] #(oldvar,newvar):
+                        else:
+                            log.error(_("Changed to value ({new}) doesn't match "
+                            "current setting for '{setting}': {current}").format(new=changed[s][1],
+                                                        setting=s,current=self.interpret[s]))
+            r=True #only false if changes made, and user exits notice
+            changed={}
+            for typ in ['distinguish', 'interpret']:
+                for s in getattr(self.program.settings,typ):
+                    if s in options.vars: # and s in getattr(self.program.settings,typ):
+                        newvar=options.vars[s].get()
+                        oldvar=getattr(self.program.settings,typ)[s]
+                        if oldvar != newvar:
+                            changed[s]=(oldvar,newvar)
+                            getattr(self.program.settings,typ)[s]=newvar
+            # log.debug('self.distinguish: {}'.format(self.program.settings.distinguish))
+            # log.debug('self.interpret: {}'.format(self.program.settings.interpret))
+            if changed:
+                # log.info('There was a change; we need to redo the analysis now.')
+                log.info(_('The following changed (from,to): {changed}').format(changed=changed))
+                r=notice(changed)
+                if r:
+                    self.program.task.runwindow.on_quit()
+                    self.program.settings.storesettingsfile(setting='profiledata')
+                    self.program.taskchooser.restart()
+                else:
+                    undo(changed)
+            else:
+                self.program.task.runwindow.on_quit()
+        def buttonframeframe(s):
+            f=ui.Frame(self.program.task.runwindow.scroll.content,
+                        row=options.get('r'),
+                        column=options.get('c'),
+                        sticky='ew', padx=options.padx, pady=options.pady)
+            bffl=ui.Label(f,text=textdict[s],justify=ui.LEFT,
+                            anchor='c',
+                            row=1,column=0,
+                            sticky='ew',
+                            padx=options.padx,
+                            pady=options.pady)
+            bffl.wrap()
+            for opt in optdict[s]:
+                bffrb=ui.RadioButtonFrame(f,
+                                        horizontal=True,
+                                        variable=options.vars[s],
+                                        optionlist=optdict[s],
+                                        row=1,column=1)
+            options.next('r')
+        def exsframe(x):
+            text=_("In your data, {item} includes {examples}").format(item=x,examples=', '.join(exsdict[x]))
+            f=ui.Frame(self.program.task.runwindow.scroll.content,
+                        row=options.get('r'),
+                        column=options.get('c'),
+                        sticky='ew')
+            bffl=ui.Label(f,text=text,
+                            font='read',
+                            anchor='c',
+                            row=1,column=options.column,
+                            sticky='ew',
+                            padx=options.padx,
+                            pady=options.pady)
+            bffl.wrap()
+            options.next('r')
+        self.program.task.getrunwindow()
+        self.program.settings.checkinterpretations()
+        analang=self.program.params.analang()
+        options=Options(r=0,padx=50,pady=0,c=0,vars={},frames={})
+        for s in self.program.settings.distinguish: #Should be already set.
+            options.vars[s] = ui.BooleanVar()
+            options.vars[s].set(self.program.settings.distinguish[s])
+        for s in self.program.settings.interpret: #This should already be set, even by default
+            options.vars[s] = ui.StringVar()
+            options.vars[s].set(self.program.settings.interpret[s])
+        """Page title and instructions"""
+        self.program.task.runwindow.title(_("Set Parameters for Segment Interpretation"))
+        mwframe=self.program.task.runwindow.frame
+        title=_("Interpret {lang} Segments"
+                ).format(lang=self.program.settings.languagenames[analang])
+        titl=ui.Label(mwframe,text=title,font='title',
+                justify=ui.LEFT,anchor='c',
+                row=options.get('r'), column=options.get('c'),
+                sticky='ew', padx=options.padx, pady=10)
+        options.next('r')
+        text=_("Here you can view and set parameters that change how {name} "
+        "interprets {lang} segments (consonant and vowel glyphs/characters)"
+                ).format(name=self.program.name,lang=self.program.settings.languagenames[analang])
+        instr=ui.Label(mwframe,text=text,justify=ui.LEFT,anchor='c',
+                    row=options.get('r'), column=options.get('c'),
+                    sticky='ew', padx=options.padx, pady=options.pady)
+        instr.wrap()
+        """The rest of the page"""
+        self.program.task.runwindow.scroll=ui.ScrollingFrame(mwframe,row=2,column=0)
+        # log.debug('self.distinguish: {}'.format(self.program.settings.distinguish))
+        # log.debug('self.interpret: {}'.format(self.program.settings.interpret))
+        """I considered offering these to the user conditionally, but I don't
+        see a subset of them that would only be relevant when another is
+        selected. For instance, a user may NOT want to distinguish all Nasals,
+        yet distinguish word final nasals. Or CG sequences, but not other G's
+        --or distinguish G, but leave as CG (≠C). So I think these are all
+        independent boolean selections."""
+        if analang in self.program.db.s:
+            vars=[k for k in self.program.db.s[analang].keys()
+                    if not 'dg' in k
+                    if not 'tg' in k
+                    if not 'qg' in k
+                    ]
+            log.info(_("Variable keys to check: {vars}").format(vars=vars))
+        else:
+            ErrorNotice(_("Something happened! "
+                        "(language not keyed in segment dictionary)"))
+            return
+        exsdict={}
+        for var in vars:
+            # log.info("Getting examples of {}".format(var))
+            exsdict[var]=self.program.db.s[analang][var]
+            if var in self.program.settings.polygraphs[analang]:
+                exsdict[var]+=[k for k,v in
+                        self.program.settings.polygraphs[analang][var].items()
+                        if self.program.settings.polygraphs[analang][var][k]
+                                ]
+            # log.info("Examples of {}: {}".format(var,exsdict[var]))
+        textdict={'ʔ':_('Distinguish glottal stops (ʔ) '
+                        'initially and medially?'),
+                'ʔwd':_('Distinguish glottal stops word finally (ʔ#)?'),
+                'N':_('Distinguish Nasals (N) initially and medially?'),
+                'Nwd':_('Distinguish Nasals word finally (N#)?'),
+                'NC':_('How to interpret Nasal-Consonant (NC) sequences?'),
+                'D':_('Distinguish likely depressor consonants (D) '
+                        'initially and medially?'),
+                'Dwd':_('Distinguish likely depressor consonants word finally '
+                        '(D#)?'),
+                'G':_('Distinguish Glides (G) initially and medially?'),
+                'Gwd':_('Distinguish Glides word finally (G#)?'),
+                'CG':_('How to interpret Consonant-Glide (CG) sequences?'),
+                'S':_('Distinguish Non-Nasal/Glide Sonorants (S) '
+                        'initially and medially?'),
+                'Swd':_('Distinguish Non-Nasal/Glide Sonorants word finally '
+                        '(S#)?'),
+                'CS':_('How to interpret Consonant-Sonorant (CS) sequences?'),
+                'VN':_('How to interpret Vowel-Nasal (VN) sequences? '
+                        '(after NC interpretation above)'),
+                'VV':_('How to interpret the *same* vowel letter twice '
+                        'in a row (VV)? ')
+                }
+        optdict={'ʔ':[(True,'ʔ≠C'),(False,'ʔ=C')],
+                'ʔwd':[(True,'ʔ#≠C#'),(False,'ʔ#=C#')],
+                'N':[(True,'N≠C'),(False,'N=C')],
+                'Nwd':[(True,'N#≠C#'),(False,'N#=C#')],
+                'NC':[('NC','NC=NC (≠C, ≠CC)'),
+                        ('C','NC=C (≠NC, ≠CC)'),
+                        ('CC','NC=CC (≠NC, ≠C)')
+                        ],
+                'D':[(True,'D≠C'),(False,'D=C')],
+                'Dwd':[(True,'D#≠C#'),(False,'D#=C#')],
+                'G':[(True,'G≠C'),(False,'G=C')],
+                'Gwd':[(True,'G#≠C#'),(False,'G#=C#')],
+                'CG':[('CG','CG=CG (≠C, ≠CC)'),
+                        ('C','CG=C (≠CG, ≠CC)'),
+                        ('CC','CG=CC (≠CG, ≠C)')],
+                'S':[(True,'S≠C'),(False,'S=C')],
+                'Swd':[(True,'S#≠C#'),(False,'S#=C#')],
+                'CS':[('CS','CS=CS (≠C, ≠CC)'),
+                        ('C','CS=C (≠CS, ≠CC)'),
+                        ('CC','CS=CC (≠CS, ≠C)')],
+                'VN':[('VN','VN=VN (≠Ṽ)'), ('Ṽ','VN=Ṽ (≠VN)')],
+                'VV':[('VV','VV=VV (≠V)'), ('V','VV=V (≠VV)')]
+                }
+        exsframe('C')
+        for var in [i for i in vars if i not in ['C','V','VN']
+                                    if i in exsdict and exsdict[i]]:
+            # log.info("Doing var {}".format(var))
+            exsframe(var)
+            todo=[i for i in textdict if var in i]
+            # log.info("Doing vars {}".format(todo))
+            for var in todo:
+                buttonframeframe(var)
+        exsframe('V')
+        todo=[i for i in textdict if 'V' in i]
+        for v in todo:
+            buttonframeframe(v)
+        """Submit button, etc"""
+        self.program.task.runwindow.frame2d=ui.Frame(mwframe,
+                                        row=3,
+                                        column=options.get('c'),
+                                        sticky='e', padx=options.padx,
+                                        pady=options.pady)
+        sub_btn=ui.Button(self.program.task.runwindow.frame2d, text=_('Use these settings'),
+                          command = submitform,
+                          row=0,column=1,sticky='nw',
+                          pady=options.pady)
+        nbtext=_("If you make changes, this button==> \nwill "
+                "restart the program to reanalyze your data.")
+        sub_nb=ui.Label(self.program.task.runwindow.frame2d, text = nbtext,
+                        anchor='e',
+                        row=0,column=0,sticky='e',
+                        pady=options.pady)
+        self.program.task.runwindow.waitdone()
+    def getexamplespergrouptorecord(self):
+        log.info(_("this sets the number of examples per group to record"))
+        self.npossible=[
+            {'code':1,'name':_("1 - Bare minimum, just one per group")},
+            {'code':5,'name':_("5 - Some, but not all, of most groups")},
+            {'code':100,'name':_("100 - All examples in most databases")},
+            {'code':1000,'name':_("1000 - All examples in VERY large databases")}
+                        ]
+        title=_('Select Number of Examples per Group to Record')
+        window=ui.Window(self.program.task, title=title)
+        text=_("The {name} tone report splits sorted data into "
+                "draft underlying tone melody groups. "
+                # ", with distinct values for each of your tone frames. This "
+                # "exhaustively finds differences between groups of lexical "
+                # "senses, but often "
+                # "misses similarities between groups, which might be "
+                # "distinguished only because a single word was skipped or sorted "
+                # "incorrectly.\n\n"
+                "Even before a linguist has been able to evaluate these "
+                "groups, it may be helpful to record your sorted data. "
+                "{name} can give you a window for each lexicon sense in a tone "
+                "group, with a record button for each sorted sense-frame "
+                "combination. "
+                "\n\nThose "
+                "windows will be presented to the user from one tone report "
+                "group after "
+                "another, until all groups have had one page presented. Then "
+                "{name} will "
+                "repeat this process, until it has done a number of "
+                "rounds equal to the number selected below. "
+                # "\n\nIf a "
+                # "group has fewer examples than this number, that group will be "
+                # "skipped once done. "
+                "\nPicking a larger number could delay opening "
+                "the recording window; picking a smaller number could mean "
+                "data not getting recorded. "
+                "Up to how many examples do you want to record for each group?"
+                "").format(name=self.program.name)
+        t=ui.Label(window.frame, text=title, font='title',column=0, row=0)
+        l=ui.Label(window.frame, text=text, justify='left',column=0, row=1)
+        t.wrap()
+        l.wrap()
+        buttonFrame1=ui.ButtonFrame(window.frame,
+                            optionlist=self.npossible,
+                            command=self.program.settings.setexamplespergrouptorecord,
+                            window=window,
+                            column=0, row=4
+                                )
+        buttonFrame1.wait_window(window)
