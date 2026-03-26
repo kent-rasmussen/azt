@@ -1426,6 +1426,10 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         fields=['citation', 'lexical-unit', 'Plural', 'Imperative']
         l=[f"{field}:\t{counts[field]}" for field in fields 
                         if field in counts]
+        acounts=self.nfieldswsoundfiles[self.audiolang]
+        afields=['citation', 'lexical-unit', 'Plural', 'Imperative']
+        l+=[f"audio in {field}:\t{acounts[field]}" for field in afields 
+                        if field in acounts]
         log.info("\n".join(l))
         ps_profile_counts={ps:{profile:len(self.sensesbyps_profile[ps][profile])
                                     for profile in self.sensesbyps_profile[ps]
@@ -1437,7 +1441,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                                 for profile in ps_profile_counts[ps]
                                 ])}" 
                ]
-            log.info("\n".join(l))
+            # log.info("\n".join(l))
         # log.info(f"{self.nfields=} \n"
         #         f"{counts['Plural']+counts.get('Imperative',0)==counts['lexical-unit']=} \n"
         #         f"{ps_profile_counts=}")
@@ -4796,18 +4800,18 @@ if __name__ == '__main__':
             for i in glob.glob(f"/home/kentr/Assignment/Tools/WeSay/{d}-x-*/{d}*.lift")
                 ]
     codes=[
-        'ksv-x-1564',
-        'mdq-x-1592',
+        # 'ksv-x-1564',
+        # 'mdq-x-1592',
         'lol-x-his30101',
         'lol-x-his30102',
-        'lol-x-HIS30146',
+        'lol-x-his30146',
         'lol-x-his30103',
         'lol-x-his30100',
         'lol-x-his30255',
         'lse-x-his30249',
         'lal-x-3886',
-        'lol-x-HIS30147',
-        'lol-x-HIS30148',
+        'lol-x-his30147',
+        'lol-x-his30148',
         'lol-x-his30231',
         'lol-x-his30240',
         'lol-x-his30242',
@@ -4817,10 +4821,15 @@ if __name__ == '__main__':
     filenames=[f"/home/kentr/Assignment/Tools/WeSay/{d}/{d}.lift" for d in codes]
 
     # analyze_relationships(filenames,list_all=False,do_pairs=True)
+    lifts={}
+    for filename in filenames:
+        lifts[filename]=LiftXML(filename)
     def report():
-        lifts={}
         for filename in filenames:
+            log.info(filename)
             lifts[filename].report_counts()
+    report()
+    exit()
     # lc_source='/home/kentr/Assignment/Tools/WeSay/ln-CD/ln-CD.lift'
     # # code= #103 #240 #255 lingala
     # lift=LiftXML(lc_source)
@@ -4849,7 +4858,7 @@ if __name__ == '__main__':
                             'ʔ'], #in forms
             'bad_values':["yu",'yi','aa',"ue","ie","oo","oi",'ʔ','lɔsɔpɔ'] #in annotations
             }
-    revert_stuff(**kwargs) #depends on lift (above)
+    # revert_stuff(**kwargs) #depends on lift (above)
     # print(lift.get_segments_annotated())
     # report()
     def writetofile(name):
