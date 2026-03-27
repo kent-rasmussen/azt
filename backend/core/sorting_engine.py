@@ -1461,7 +1461,8 @@ class Sort(object):
                 self.program.status.undistinguish(t)
                 self.program.status.distinguish((y if t[0]==x else t[0],y if t[1]==x else t[1]))
         self.maybewrite() #once done iterating over senses
-    def __init__(self, parent):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.makeeverythingok()
         """I need some way to control for ftype"""
         """I need to think through when I would work with one ftype, and not

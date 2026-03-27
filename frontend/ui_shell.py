@@ -2006,7 +2006,7 @@ class TaskDressing(HasMenus,ui.Window):
     def __init__(self,parent):
         log.info(_("Initializing TaskDressing"))
         self.parent=parent
-        self.program=parent.program
+        # self.program=parent.program should be set already
         self.menu=False #initialize once
         if isinstance(self,TaskChooser):
             taskchooser=self

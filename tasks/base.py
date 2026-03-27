@@ -23,10 +23,10 @@ class Task(TaskDressing):
         except KeyError as e:
             _log.info(_("Maybe status/slices aren't set up yet."))
         # self.program.status.makegroupok(wsorted=True)
-    def __init__(self, program, _parent=None):
+    def __init__(self, program):
         self.program = program
         if hasattr(self,'cvt'):
             self.program.params.cvt(self.cvt)
         self.makecvtok() #this just enforces a good cvt value
-        parent = _parent if _parent is not None else self.program.taskchooser
-        TaskDressing.__init__(self, parent) #window
+        # parent = _parent if _parent is not None else 
+        TaskDressing.__init__(self, self.program.taskchooser) #window

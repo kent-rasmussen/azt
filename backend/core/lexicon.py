@@ -67,8 +67,8 @@ class Senses(object):
         group=kwargs.get('group',self.program.status.group())
         # log.info("about to return {}={}".format(check,group))
         return check+'='+group
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 class Segments(Senses):
     """docstring for Segments."""
@@ -428,8 +428,8 @@ class Segments(Senses):
     def getitemgroup(self,item,check):
         # ftype=self.program.params.ftype() #not helpful for Tone.getitemgroup
         return item.annotationvaluebyftypelang(self.ftype,self.analang,check)
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.updateconflictwarned=False
         self.dodone=True
         self.dodoneonly=False #don't give me other words
@@ -1073,10 +1073,9 @@ class WordCollection(Segments):
     def setcontext(self,context=None):
         super().setcontext(context)
         self.context.menuitem(_("Show Report"),self.show_report)
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.dodone=False
-
 class Parse(Segments):
     """docstring for Parse."""
     do_not_show_slices=True
@@ -1654,10 +1653,10 @@ class Parse(Segments):
     def waitforOKsecondfields(self):
         while not self.program.settings.secondformfieldsOK():
             after(10*100,callback=self.waitforOKsecondfields) # wait a second
-    def __init__(self): #frame, filename=None
+    def __init__(self, **kwargs): #frame, filename=None
         self.byslice=False
         self.initsensetodo()
-        super().__init__()
+        super().__init__(**kwargs)
         self.secondformfield=self.program.settings.secondformfield
         self.nominalps=self.program.settings.nominalps
         self.verbalps=self.program.settings.verbalps
@@ -1796,7 +1795,8 @@ class Tone(Senses):
         return sense.uftonevalue()
     def name_new_glyphs(self):
         pass
-    def __init__(self,program):
-        super().__init__()
-        self.program=program
+    def __init__(self, program=None, **kwargs):
+        super().__init__(program=program, **kwargs)
+        if program is not None:
+            self.program=program
 

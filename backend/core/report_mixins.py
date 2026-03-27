@@ -20,22 +20,22 @@ class Multislice(object):
     """This class just triggers which settings are visible to the user, and
     updates changes from child classes"""
     multislice_max=True #maybe should be an integer default value?
-    def __init__(self):
+    def __init__(self, **kwargs):
         # log.info("Setting up Multislice report, with {dir}".format(dir=dir()))
         """I think these two should go:"""
         self.status.redofinalbuttons() #because the fns changed
 class MultisliceS(Multislice):
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.do=self.basicreport
         self.program.status.group(None)
-        Multislice.__init__(self)
+        super().__init__(**kwargs)
 class MultisliceT(Multislice):
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.do=self.tonegroupreportcomprehensive
-        Multislice.__init__(self)
+        super().__init__(**kwargs)
 class Multicheck(object):
     multicheckscope=True
-    def __init__(self):
+    def __init__(self, **kwargs):
         """This should only be used for segmental checks; tone reports are
         always multiple checks"""
         self.program.status.group(None)
@@ -43,18 +43,18 @@ class Multicheck(object):
         self.do=self.basicreport
         self.status.redofinalbuttons() #because the fns changed
 class Multicheckslice(Multicheck,MultisliceS):
-    def __init__(self):
-        Multicheck.__init__(self)
-        MultisliceS.__init__(self)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 class ByUF(Tone):
-    def __init__(self):
-        Tone.__init__(self) #Nothing here; just make methods available
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs) #Nothing here; just make methods available
         self.byUFgroup=True
         log.info("doing report by UF groups")
 class Background(object):
     """This class runs a report function in the background, where possible"""
-    def __init__(self):
+    def __init__(self, **kwargs):
         log.info("Setting up background report, based on {name}"
                 "".format(name=self.do.__name__))
         self.do=lambda fn=self.do:self.background(fn)
         self.status.redofinalbuttons() #because the fns changed
+        super().__init__(**kwargs)

@@ -1202,7 +1202,7 @@ class Report(object):
                     if not value:
                         value=''
                     cell=xlp.Cell(h,content=value)
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.reportbasefilename=self.program.settings.reportbasefilename
         self.reporttoaudiorelURL=self.program.settings.reporttoaudiorelURL
         self.distinguish=self.program.settings.distinguish

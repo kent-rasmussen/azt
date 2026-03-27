@@ -149,8 +149,8 @@ class ExportData(ui.Window):
 class Sort(backend.core.sorting_engine.Sort):
     """task accessible mixin for sorting tasks"""
     show_buttoncolumnsline=True
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 class Sound(object):
     """This holds all the Sound methods, mostly for playing."""
     settings_attrs=['fs', 'sample_format',
@@ -228,11 +228,12 @@ class Sound(object):
             super().setcontext(context)
         self.context.menuitem(_("Sound settings"),self._configure_sound)
         self.analang=self.program.db.analang
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.audiodir=self.program.settings.audiodir
         self.audiolang=self.program.params.audiolang()
         # self.program=program #make available to sound_ui
         self.soundcheck()
+        super().__init__(**kwargs)
 class Record(Sound): #TaskDressing
     """This holds all the Sound methods specific for Recording."""
     settings_attrs=['audio_card_in']+Sound.settings_attrs
@@ -600,8 +601,8 @@ class Record(Sound): #TaskDressing
         Sound.setcontext(self)
         self.context.menuitem(_("Transcription settings"),
                                     self._configure_transcription)
-    def __init__(self,parent):
-        Sound.__init__(self)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
         self.soundsettings.load_ASR() #after file settings are loaded
 class Transcription(object):
     def _configure_transcription(self,event=None):
@@ -612,8 +613,8 @@ class Transcription(object):
             super().setcontext(context)
         self.context.menuitem(_("Transcription settings"),
                                     self._configure_transcription)
-    def __init__(self):
-        pass
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 class WordCollectionwRecordings(WordCollection,Record):
     def getinstructions(self):
         return _("Record a word in your language that goes with these "
@@ -726,27 +727,25 @@ class WordCollectionwRecordings(WordCollection,Record):
     def __init__(self, parent):
         Record.__init__(self,parent)
         WordCollection.__init__(self,parent)
-class WordCollectionLexeme(Task,WordCollection):
+class WordCollectionLexeme(WordCollection,Task):
     def tooltip(self):
         return _("Don't use this task.")
     tasktitle = "Word Collection for Lexeme Forms"
-    def __init__(self, parent): #frame, filename=None
+    def __init__(self, program, **kwargs): #frame, filename=None
         """This should never really be used, though I made it first, so I've
         left it"""
-        self.ftype=self.program.params.ftype('lx') #lift.Entry.citationformnodeofentry
-        Task.__init__(self,parent)
-        WordCollection.__init__(self,parent)
+        self.ftype=program.params.ftype('lx') #lift.Entry.citationformnodeofentry
+        super().__init__(program=program, **kwargs)
         log.info("Initializing {}".format(_(self.tasktitle)))
         #Status frame is 0,0
         self.getwords()
-class WordCollectionCitation(Task,WordCollection):
+class WordCollectionCitation(WordCollection,Task):
     def tooltip(self):
         return _("This task helps you collect words in citation form.")
     tasktitle = "Add Words" # for Citation Forms
-    def __init__(self, parent): #frame, filename=None
-        self.ftype=self.program.params.ftype('lc') #lift.Entry.citationformnodeofentry
-        Task.__init__(self,parent)
-        WordCollection.__init__(self,parent)
+    def __init__(self, program, **kwargs): #frame, filename=None
+        self.ftype=program.params.ftype('lc') #lift.Entry.citationformnodeofentry
+        super().__init__(program=program, **kwargs)
         log.info("Initializing {}".format(_(self.tasktitle)))
         #Status frame is 0,0
         self.getwords()
@@ -755,20 +754,18 @@ class WordCollectionCitationwRecordings(WordCollectionwRecordings,Task):
         return _("This task helps you collect words in citation form through "
                 "recordings with automatic transcription drafts.")
     tasktitle = "Add Words with Audio" # for Citation Forms
-    def __init__(self, parent): #frame, filename=None
-        self.ftype=self.program.params.ftype('lc') #lift.Entry.citationformnodeofentry
-        Task.__init__(self,parent)
-        WordCollectionwRecordings.__init__(self,parent)
+    def __init__(self, program, **kwargs): #frame, filename=None
+        self.ftype=program.params.ftype('lc') #lift.Entry.citationformnodeofentry
+        super().__init__(program=program, **kwargs)
         log.info("Initializing {}".format(_(self.tasktitle)))
         self.getwords()
-class WordCollectionPlural(Task,WordCollection):
+class WordCollectionPlural(WordCollection,Task):
     def tooltip(self):
         return _("This task helps you collect plural word forms.")
     tasktitle = "Add plural forms"
-    def __init__(self, parent):
-        self.ftype=self.program.params.ftype('pl')
-        Task.__init__(self,parent)
-        WordCollection.__init__(self,parent)
+    def __init__(self, program, **kwargs):
+        self.ftype=program.params.ftype('pl')
+        super().__init__(program=program, **kwargs)
         if not self.program.settings.secondformfieldsOK():
             ErrorNotice(_("To collect Plural forms, you must first "
                             "define which fields should contain those forms"),
@@ -779,14 +776,13 @@ class WordCollectionPlural(Task,WordCollection):
         #Status frame is 0,0
         # self.nodetag='citation' #lift.Entry.citationformnodeofentry
         self.getwords()
-class WordCollectionImperative(Task,WordCollection):
+class WordCollectionImperative(WordCollection,Task):
     def tooltip(self):
         return _("This task helps you collect imperative word forms.")
     tasktitle = "Add imperative forms"
-    def __init__(self, parent):
-        self.ftype=self.program.params.ftype('imp')
-        Task.__init__(self,parent)
-        WordCollection.__init__(self,parent)
+    def __init__(self, program, **kwargs):
+        self.ftype=program.params.ftype('imp')
+        super().__init__(program=program, **kwargs)
         if not self.program.settings.secondformfieldsOK():
             ErrorNotice(_("To collect Imperative forms, you must first "
                             "define which fields should contain those forms"),
@@ -818,10 +814,9 @@ class ParseWords(Parse,Task):
                 'tttext':tttext
                 }
     tasktitle = "Parse Words"
-    def __init__(self, parent): #frame, filename=None
+    def __init__(self, program, **kwargs): #frame, filename=None
         log.info("Initializing {}".format(_(self.tasktitle)))
-        Task.__init__(self,parent)
-        Parse.__init__(self,parent)
+        super().__init__(program=program, **kwargs)
         # self.checkeach=True #confirm each word
 class WordCollectnParse(Parse,WordCollection,Task):
     """This task collects words, from the SIL CAWL, or one by one.
@@ -856,13 +851,11 @@ class WordCollectnParse(Parse,WordCollection,Task):
                 'tttext':tttext
                 }
     tasktitle = "Add and Parse Words" # for Citation Forms
-    def __init__(self, parent):
+    def __init__(self, program, **kwargs):
         log.info("Initializing {}".format(_(self.tasktitle)))
-        self.ftype=self.program.params.ftype('lc') #always correct?
+        self.ftype=program.params.ftype('lc') #always correct?
         # self.nodetag='citation'
-        Task.__init__(self,parent)
-        Parse.__init__(self,parent)
-        WordCollection.__init__(self,parent)
+        super().__init__(program=program, **kwargs)
         self.program.taskchooser.withdraw()
         fn=self.getwords()#?
 class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,Task):
@@ -899,13 +892,11 @@ class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,Task):
                 'tttext':tttext
                 }
     tasktitle = "Add and Parse Words with Audio" # for Citation Forms
-    def __init__(self, parent):
+    def __init__(self, program, **kwargs):
         log.info("Initializing {}".format(_(self.tasktitle)))
-        self.ftype=self.program.params.ftype('lc') #always correct?
+        self.ftype=program.params.ftype('lc') #always correct?
         # self.nodetag='citation'
-        Task.__init__(self,parent)
-        Parse.__init__(self,parent)
-        WordCollectionwRecordings.__init__(self,parent)
+        super().__init__(program=program, **kwargs)
         self.program.taskchooser.withdraw()
         fn=self.getwords()#?
 class WordsParse(Parse,WordCollection,Task):
@@ -915,13 +906,11 @@ class WordsParse(Parse,WordCollection,Task):
     tasktitle = "Parse Already Collected Words" # for Citation Forms
     def dobuttonkwargs(self):
         pass
-    def __init__(self, parent):
+    def __init__(self, program, **kwargs):
         log.info("Initializing {}".format(_(self.tasktitle)))
-        self.ftype=self.program.params.ftype('lc') #always correct?
+        self.ftype=program.params.ftype('lc') #always correct?
         # self.nodetag='citation'
-        Task.__init__(self,parent)
-        Parse.__init__(self,parent)
-        WordCollection.__init__(self,parent)
+        super().__init__(program=program, **kwargs)
         # if not self.program.settings.secondformfieldsOK():
         #     ErrorNotice(_("To parse, you must first define which fields "
         #                     "should contain secondary forms"),
@@ -943,16 +932,16 @@ class ParseSlice(Parse):
     def tooltip(self):
         return _("This task will help you parse your citation forms, "
                 "for one slice(?PS??!?) of the dictionary at a time.")
-    def __init__(self, parent): #frame, filename=None
-        Parse.__init__(self,parent)
+    def __init__(self, program, **kwargs): #frame, filename=None
+        super().__init__(program=program, **kwargs)
         self.byslice=True #give me words in a selected slice (make this selectable?)
 class ParseSliceWords(ParseSlice):
     tasktitle = "Parse One Slice, word by word"
     def tooltip(self):
         return _("This task will help you parse your citation forms, "
                 "for one slice of the dictionary at a time.")
-    def __init__(self, parent): #frame, filename=None
-        ParseSlice.__init__(self,parent)
+    def __init__(self, program, **kwargs): #frame, filename=None
+        super().__init__(program=program, **kwargs)
         self.checkeach=True #confirm each word
 class Placeholder(Task):
     """Fake check, placeholder for now."""
@@ -979,8 +968,8 @@ class Placeholder(Task):
                 'tttext':tttext
                 }
     tasktitle = "Placeholder Check2"
-    def __init__(self, parent): #frame, filename=None
-        Task.__init__(self,parent)
+    def __init__(self, program, **kwargs): #frame, filename=None
+        super().__init__(program=program, **kwargs)
         log.info("Initializing {}".format(_(self.tasktitle)))
         for r in range(5):
             ui.Label(self.frame,
@@ -1489,17 +1478,13 @@ class SortSyllables(Sort,Segments,Task):
         self.presortgroups()
         self.updatesortingstatus() # Not just tone anymore
         self.maybesort(firstrun=True)
-    def __init__(self, parent):
-        self.program.params.cvt('S') #syllable
-        Task.__init__(self,parent)
-        Sort.__init__(self, parent)
-        Segments.__init__(self)
+    def __init__(self, program, **kwargs):
+        program.params.cvt('S') #syllable
+        super().__init__(program=program, **kwargs)
 class SortCV(Sort,Segments,Task):
     """docstring for SortCV."""
-    def __init__(self, parent):
-        Task.__init__(self,parent)
-        Sort.__init__(self, parent)
-        Segments.__init__(self)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
 class SortV(Sort,Segments,Task):
     taskicon = 'iconV'
     tasktitle = "Sort Vowels" #Citation Form Sorting in Tone Frames
@@ -1514,11 +1499,9 @@ class SortV(Sort,Segments,Task):
                 'image':self.program.theme.photo['V'], #self.cvt
                 'sticky':'ew'
                 }
-    def __init__(self, parent, **kwargs):
-        Task.__init__(self,parent)
-        # self.program.params.cvt('V')
-        Sort.__init__(self, parent)
-        Segments.__init__(self)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
+        # # program.params.cvt('V')
         if g:=kwargs.get("redo_glyph"):
             self.redo_joinglyphs(g)
         elif g:=kwargs.get("sort_immediately"):
@@ -1537,11 +1520,9 @@ class SortC(Sort,Segments,Task):
                 'image':self.program.theme.photo['C'], #self.cvt
                 'sticky':'ew'
                 }
-    def __init__(self, parent, **kwargs):
-        self.program.params.cvt('C')
-        Task.__init__(self,parent)
-        Sort.__init__(self, parent)
-        Segments.__init__(self)
+    def __init__(self, program, **kwargs):
+        program.params.cvt('C')
+        super().__init__(program=program, **kwargs)
         if g:=kwargs.get("redo_glyph"):
             self.redo_joinglyphs(g)
         elif g:=kwargs.get("sort_immediately"):
@@ -1560,11 +1541,9 @@ class SortT(Sort,Tone,Task):
                 'image':self.program.theme.photo['T'], #self.cvt
                 'sticky':'ew'
                 }
-    def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self)
-        Task.__init__(self,parent)
-        self.program.params.cvt('T')
-        Sort.__init__(self, parent)
+    def __init__(self, program, **kwargs): #frame, filename=None
+        program.params.cvt('T')
+        super().__init__(program=program, **kwargs)
         # log.info("status: {}".format(type(self.program.status)))
         # Not sure what this was for (XML?):
         self.pp=pprint.PrettyPrinter()
@@ -1827,14 +1806,13 @@ class Transcribe(Sound,Sort,Task):
             log.info(_("This should never happen (renamegroup/"
                         "comparisonbuttons)"))
         self.sub_c['text']=t
-    def __init__(self,parent): #frame, filename=None
-        Task.__init__(self, parent)
+    def __init__(self, program, **kwargs): #frame, filename=None
+        super().__init__(program=program, **kwargs)
         self.makeeverythingok() #why?
         self.ftype=self.program.params.ftype()
         self.mistake=False #track when a user has made a mistake
         self.analang=self.program.params.analang()
         self.program.status.makecheckok()
-        Sound.__init__(self)
 class TranscribeS(Transcribe,Segments):
     macrosort=True
     do_not_show_slices=True
@@ -1993,18 +1971,17 @@ class TranscribeS(Transcribe,Segments):
             self.status.updateglyphbuttons()
         """Store these variables above, finish with (destroying window with
         local variables):"""
-    def __init__(self, parent):
+    def __init__(self, program, **kwargs):
         self.switch_text=_("Switch letters with this group")
         self.switch_tt=_("This switches letters for the two groups, and "
                             "updates each of them")
-        Transcribe.__init__(self,parent)
-        Segments.__init__(self)
+        super().__init__(program=program, **kwargs)
 class TranscribeV(TranscribeS):
     tasktitle = "Vowel Letters"
     def tooltip(self):
         return _("This task helps you decide on your vowel letters.")
     taskicon = 'iconTranscribeV'
-    def __init__(self, parent): #frame, filename=None
+    def __init__(self, program, **kwargs): #frame, filename=None
         self.glyphspossible=[ #'a','e','i','o','u','ɛ','ɔ','ɨ','ʉ']
         #tilde (decomposed):
         'ã', 'ẽ', 'ɛ̃', 'ə̃', 'ɪ̃', 'ĩ', 'õ', 'ɔ̃', 'ũ', 'ʊ̃',
@@ -2024,14 +2001,14 @@ class TranscribeV(TranscribeS):
         # # 'Â', 'Ê', 'Î', 'Ô', 'Û',
         # 'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
         ]
-        self.cvt=self.program.params.cvt('V')
-        super().__init__(parent)
+        self.cvt=program.params.cvt('V')
+        super().__init__(program=program, **kwargs)
 class TranscribeC(TranscribeS):
     tasktitle = "Consonant Letters"
     def tooltip(self):
         return _("This task helps you decide on your consonant letters.")
     taskicon = 'iconTranscribeC'
-    def __init__(self, parent): #frame, filename=None
+    def __init__(self, program, **kwargs): #frame, filename=None
         self.glyphspossible=[#'p','b','k','g','d','t',]
         'bh','dh','gh','gb',
         'b',#'B',
@@ -2068,8 +2045,8 @@ class TranscribeC(TranscribeS):
         'l','r',
         'rh','wh',
         ]
-        self.cvt=self.program.params.cvt('C')
-        super().__init__(parent)
+        self.cvt=program.params.cvt('C')
+        super().__init__(program=program, **kwargs)
 class TranscribeT(Transcribe,Tone):
     tasktitle = "Transcribe Tone"
     def tooltip(self):
@@ -2236,13 +2213,12 @@ class TranscribeT(Transcribe,Tone):
         self.sub_c.wait_window(self.runwindow) #then move to next step
         """Store these variables above, finish with (destroying window with
         local variables):"""
-    def __init__(self, parent): #frame, filename=None
+    def __init__(self, program, **kwargs): #frame, filename=None
         self.switch_text=_("Switch transcriptions with this group")
         self.switch_tt=_("This doesn't save the curent group")
-        Tone.__init__(self)
         self.glyphspossible=None
-        Transcribe.__init__(self,parent)
-        self.program.params.cvt('T')
+        program.params.cvt('T')
+        super().__init__(program=program, **kwargs)
 class JoinUFgroups(Tone,Task):
     """docstring for JoinUFgroups."""
     tasktitle = "Join Underlying Form Groups"
@@ -2419,9 +2395,8 @@ class JoinUFgroups(Tone,Task):
                     cbl.grid(row=idn+nheaders,column=col,sticky='ew')
         self.runwindow.waitdone()
         self.runwindow.wait_window(scroll)
-    def __init__(self, parent):
-        Tone.__init__(self)
-        Task.__init__(self, parent)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
 class RecordCitation(Record,Segments):
     def tooltip(self):
         return _("This task helps you record words in isolation forms.")
@@ -2435,11 +2410,8 @@ class RecordCitation(Record,Segments):
                 }
     tasktitle = "Record Words" #Citation Forms
     taskicon = 'iconWordRec'
-    def __init__(self, parent): #frame, filename=None
-        Segments.__init__(self)
-        # ui.Window.__init__(self,parent)
-        # Task.__init__(self,parent)
-        Record.__init__(self,parent)
+    def __init__(self, program, **kwargs): #frame, filename=None
+        super().__init__(program=program, **kwargs)
 class RecordCitationT(Record,Tone):
     def tooltip(self):
         return _("This task helps you record words in tone frames, in citation form.")
@@ -2453,9 +2425,8 @@ class RecordCitationT(Record,Tone):
                 }
     taskicon = 'iconTRec'
     tasktitle = "Record Tone" #Citation Form Sorting in Tone Frames
-    def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self)
-        Record.__init__(self,parent)
+    def __init__(self, program, **kwargs): #frame, filename=None
+        super().__init__(program=program, **kwargs)
 class ReportCitation(Report,Segments,Task):
     """docstring for ReportCitation."""
     tasktitle = "Alphabet Report (Not background)" # on One Data Slice
@@ -2506,62 +2477,53 @@ class ReportCitation(Report,Segments,Task):
         log.info(_('Ps-Profile-Check OK; doing getresults! ({ps}/{check}/{profile})').format(
                                                  ps=ps,check=check,profile=profile))
         self.getresults()
-    def __init__(self, parent): #frame, filename=None
+    def __init__(self, program, **kwargs): #frame, filename=None
+        super().__init__(program=program, **kwargs)
         self.program.params.ftype('lc')
-        Segments.__init__(self)
         self.do=self.getresults
         self.program.status.group(None) #default to reports with all groups
-        Task.__init__(self,parent)
-        Report.__init__(self)
 class ReportCitationBackground(Background,ReportCitation):
     """docstring for ReportCitation."""
     tasktitle = "Alphabet Report" # on One Data Slice
-    def __init__(self, parent):
-        ReportCitation.__init__(self,parent)
-        Background.__init__(self)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
         """Does the above not work? was turned off..."""
         # self.do=lambda fn=self.getresults:self.background(fn)
         # self.status.redofinalbuttons() #because the fns changed
 class ReportCitationMulticheckBackground(Multicheck,Background,ReportCitation):
     """docstring for ReportCitation."""
     tasktitle = "Alphabet Report (checks)" # on One Data Slice
-    def __init__(self, parent):
-        ReportCitation.__init__(self,parent)
-        Multicheck.__init__(self)
-        Background.__init__(self)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
+
 class ReportCitationMultichecksliceBackground(Multicheckslice,Background,ReportCitation):
     """docstring for ReportCitation."""
     tasktitle = "Alphabet Report (slices/checks)" # on One Data Slice
-    def __init__(self, parent):
-        ReportCitation.__init__(self,parent)
-        Multicheckslice.__init__(self)
-        Background.__init__(self)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
+
 class ReportCitationByUF(ByUF,ReportCitation):
     """docstring for ReportCitation."""
     tasktitle = "Alphabet Report by Tone group (not background)" # on One Data Slice
-    def __init__(self, parent):
-        ReportCitation.__init__(self, parent)
-        ByUF.__init__(self)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
 class ReportCitationByUFMulticheckBackground(Multicheck,Background,ReportCitationByUF):
     """docstring for ReportCitation."""
     tasktitle = "Alphabet Report by Tone group (checks)" # on One Data Slice
-    def __init__(self, parent):
-        ReportCitationByUF.__init__(self, parent)
-        Multicheck.__init__(self)
-        Background.__init__(self)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
+
 class ReportCitationByUFMultichecksliceBackground(Multicheckslice,Background,ReportCitationByUF):
     """docstring for ReportCitation."""
     tasktitle = "Alphabet Report by Tone Group (slices/checks)" # on One Data Slice
-    def __init__(self, parent):
-        ReportCitationByUF.__init__(self,parent)
-        Multicheckslice.__init__(self)
-        Background.__init__(self)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
+
 class ReportCitationByUFBackground(ByUF,ReportCitationBackground):
     """docstring for ReportCitation."""
     tasktitle = "Alphabet Report by Tone group" # on One Data Slice
-    def __init__(self, parent):
-        ReportCitationBackground.__init__(self, parent)
-        ByUF.__init__(self)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
 class ReportCitationMultislice(MultisliceS,ReportCitation):
     """docstring for ReportCitation."""
     tasktitle = "Multislice Alphabet Report" # on Citation Forms
@@ -2574,10 +2536,10 @@ class ReportCitationMultislice(MultisliceS,ReportCitation):
                 'image':self.program.theme.photo['VCCVRepcomp'],
                 'sticky':'ew'
                 }
-    def __init__(self, parent): #frame, filename=None
-        ReportCitation.__init__(self,parent)
+    def __init__(self, program, **kwargs): #frame, filename=None
+        super().__init__(program=program, **kwargs)
         self.cvtstodo=['V','C','CV']
-        MultisliceS.__init__(self)
+
 class ReportConsultantCheck(Report,Tone,Task):
     """docstring for ReportCitationT."""
     tasktitle = "Consultant Check"
@@ -2595,10 +2557,9 @@ class ReportConsultantCheck(Report,Tone,Task):
                 'image':self.program.theme.photo['icontall'],
                 'sticky':'ew'
                 }
-    def __init__(self, parent): #frame, filename=None
-        Tone.__init__(self)
-        Task.__init__(self,parent)
-        Report.__init__(self)
+    def __init__(self, program, **kwargs): #frame, filename=None
+        super().__init__(program=program, **kwargs)
+
 class ReportCitationT(Report,Tone,Task):
     """docstring for ReportCitationT."""
     tasktitle = "Tone Report (not backgrounded)"
@@ -2616,11 +2577,9 @@ class ReportCitationT(Report,Tone,Task):
                 'image':self.program.theme.photo['TRep'],
                 'sticky':'ew'
                 }
-    def __init__(self, parent):
-        Tone.__init__(self)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
         self.do=self.tonegroupreport
-        Task.__init__(self,parent)
-        Report.__init__(self)
         self.bylocation=False
 class ReportCitationTBackground(Background,ReportCitationT):
     """docstring for ReportCitationT."""
@@ -2638,9 +2597,8 @@ class ReportCitationTBackground(Background,ReportCitationT):
                 'image':self.program.theme.photo['TRep'],
                 'sticky':'ew'
                 }
-    def __init__(self, parent):
-        ReportCitationT.__init__(self,parent)
-        Background.__init__(self)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
 class ReportCitationTL(ReportCitationT):
     """docstring for ReportCitationT."""
     tasktitle = "Tone Report (by frames, not backgrounded)"
@@ -2648,8 +2606,8 @@ class ReportCitationTL(ReportCitationT):
         return _("This report gives you report for one lexical "
                 "category, in one syllable profile. \nIt does "
                 "this for all data sorted in tone frames, organized by frame.")
-    def __init__(self, parent):
-        ReportCitationT.__init__(self,parent)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
         self.bylocation=True
 class ReportCitationTLBackground(Background,ReportCitationTL):
     """docstring for ReportCitationT."""
@@ -2667,9 +2625,8 @@ class ReportCitationTLBackground(Background,ReportCitationTL):
                 'image':self.program.theme.photo['TRep'],
                 'sticky':'ew'
                 }
-    def __init__(self, parent):
-        ReportCitationTL.__init__(self,parent)
-        Background.__init__(self)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
 class ReportCitationMultisliceT(MultisliceT,ReportCitationT):
     """docstring for ReportCitationT."""
     tasktitle = "Multislice Tone Report (not background)"
@@ -2686,9 +2643,8 @@ class ReportCitationMultisliceT(MultisliceT,ReportCitationT):
                 'image':self.program.theme.photo['TRepcomp'],
                 'sticky':'ew'
                 }
-    def __init__(self, parent):
-        ReportCitationT.__init__(self,parent)
-        MultisliceT.__init__(self)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
 class ReportCitationMultisliceTL(MultisliceT,ReportCitationTL):
     """docstring for ReportCitationT."""
     tasktitle = "Multislice Tone Report (not background)"
@@ -2705,9 +2661,8 @@ class ReportCitationMultisliceTL(MultisliceT,ReportCitationTL):
                 'image':self.program.theme.photo['TRepcomp'],
                 'sticky':'ew'
                 }
-    def __init__(self, parent):
-        ReportCitationTL.__init__(self,parent)
-        MultisliceT.__init__(self)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
 class ReportCitationMultisliceTBackground(Background,ReportCitationMultisliceT):
     """docstring for ReportCitationT."""
     tasktitle = "Multislice Tone Report"
@@ -2724,9 +2679,8 @@ class ReportCitationMultisliceTBackground(Background,ReportCitationMultisliceT):
                 'image':self.program.theme.photo['TRepcomp'],
                 'sticky':'ew'
                 }
-    def __init__(self, parent):
-        ReportCitationMultisliceT.__init__(self,parent)
-        Background.__init__(self)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
 class ReportCitationMultisliceTLBackground(Background,ReportCitationMultisliceTL):
     """docstring for ReportCitationT."""
     tasktitle = "Multislice Tone Report (by location)"
@@ -2735,6 +2689,5 @@ class ReportCitationMultisliceTLBackground(Background,ReportCitationMultisliceTL
         return _("This report gives you reports across multiple lexical "
                 "categories, and across multiple syllable profiles. \nIt does "
                 "this for all data sorted in tone frames, organized by word.")
-    def __init__(self, parent):
-        ReportCitationMultisliceTL.__init__(self,parent)
-        Background.__init__(self)
+    def __init__(self, program, **kwargs):
+        super().__init__(program=program, **kwargs)
