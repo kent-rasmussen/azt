@@ -1,7 +1,7 @@
 import backend.core.sound
 from frontend import sound_ui, ui_shell as ui
 from utilities import logsetup as log
-import lift
+from io_put import lift
 
 class Sound(backend.core.sound.Sound):
     """UI task mixin for audio settings and configuration."""

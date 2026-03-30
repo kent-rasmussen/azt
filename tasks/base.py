@@ -26,8 +26,8 @@ class Task(TaskDressing):
             self.program.slices.makepsok() #may not succeed, if no pss yet
             self.program.slices.makeprofileok() #may not succeed, if no profiles yet
             self.program.status.makecheckok() #this is intentionally broad: *any* check
-        except KeyError as e:
-            _log.info(_("Maybe status/slices aren't set up yet."))
+        except AttributeError as e:
+            log.info(_("Maybe status/slices aren't set up yet."))
         # self.program.status.makegroupok(wsorted=True)
     def __init__(self, program):
         self.program = program
