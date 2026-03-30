@@ -687,7 +687,7 @@ class TaskChooser(Task):
         self.whatsdone()
         self.program.splash.progress(80)
         log.info(_("Settings: {settings}").format(settings=self.program.settings))
-        super().__init__(self.program, _parent=self.program.tk_root)
+        super().__init__(self.program)
         # TaskDressing.__init__(self,parent) #I think this should be after settings
         self.program.settings.getprofiles()
         # self.withdraw()

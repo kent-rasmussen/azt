@@ -534,6 +534,15 @@ class App:
         errorw.wait_window(errorw)
         if newtk: #likely never work/needed?
             self.tk_root.mainloop() #This has to be the last thing
+    def getimagelocationURI(sense):
+        i=sense.illustrationvalue()
+        for d in [self.settings.imagesdir,self.directory]:
+            if i and d:
+                di=file.getdiredurl(d,i)
+                if file.exists(di):
+                    return di
+    def scaledimage(image,pixels=150,scaleto='height'):
+        image.scale(self.scale,pixels=pixels,scaleto=scaleto)
     def __init__(self,program):
         # globals()['program'] = self  # replace dict with App; LazyGlobal resolves to self
         sys.excepthook = self.handle_exception
@@ -648,15 +657,6 @@ def saveimagefile(url,filename,copyto=None):
         with open(url,'rb') as u:
             # log.info("opened old file")
             f.write(u.read())
-def scaledimage(image,pixels=150,scaleto='height'):
-    image.scale(program.scale,pixels=pixels,scaleto=scaleto)
-def getimagelocationURI(sense):
-    i=sense.illustrationvalue()
-    for d in [program.settings.imagesdir,program.settings.directory]:
-        if i and d:
-            di=file.getdiredurl(d,i)
-            if file.exists(di):
-                return di
 def compilesenseimage(sense):
     """This needs to capture ui.Image errors like this:
     except tkinter.TclError as e:

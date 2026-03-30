@@ -28,5 +28,8 @@ class Task(TaskDressing):
         if hasattr(self,'cvt'):
             self.program.params.cvt(self.cvt)
         self.makecvtok() #this just enforces a good cvt value
-        # parent = _parent if _parent is not None else 
-        TaskDressing.__init__(self, self.program.taskchooser) #window
+        if self.program.taskchooser == self:
+            parent=self.program.tk_root
+        else:
+            parent=self.program.taskchooser
+        TaskDressing.__init__(self, parent) #window

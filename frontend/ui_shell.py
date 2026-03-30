@@ -2621,6 +2621,8 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             self.show_one()
         log.info(_("Built SortGlyphGroupButtonFrame for {group}").format(group=self.group))
 class ImageFrame(ui.Frame):
+    """I need to remove class references from here where possible,
+    and sort out a program reference"""
     def getimage(self,reload=False):
         specifiedurl=False
         compiled=False
@@ -2636,7 +2638,7 @@ class ImageFrame(ui.Frame):
                 compiled=True
                 self.hasimage=True
             else:
-                i=getimagelocationURI(self.sense)
+                i=self.program.getimagelocationURI(self.sense)
         # lift.prettyprint(self.sense.illustration)
         if not compiled:
             try:
