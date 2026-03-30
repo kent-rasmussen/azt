@@ -46,9 +46,9 @@ class Multicheckslice(Multicheck,MultisliceS):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 class ByUF(Tone):
+    byUFgroup=True
     def __init__(self, **kwargs):
         super().__init__(**kwargs) #Nothing here; just make methods available
-        self.byUFgroup=True
         log.info("doing report by UF groups")
 class Background(object):
     """This class runs a report function in the background, where possible"""

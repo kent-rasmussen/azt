@@ -38,6 +38,7 @@ for name in ('SortGroupButtonFrame', 'Tone', '_', 'scaleimageifthere'):
 class Sort(object):
     """This class takes methods common to all sort checks, and gives sort
     checks a common identity."""
+    show_buttoncolumnsline=True #does this belong here?
     def get_check(self):
         return self.program.params.check()
     def get_ps(self):
@@ -626,7 +627,7 @@ class Sort(object):
             fn=None
         done=_("All '{profile}' groups in the '{check}' "
                 "{typename} are verified and distinct!").format(profile=self.profile,
-                check=self.check, typename=self.checktypename[cvt])
+                check=self.check, typename=self.checktypename)
                 #only on first two ifs:
         if fn:
             done+='\n'+_("Moving on to the next {next_thing}!").format(next_thing=next)
@@ -1462,32 +1463,5 @@ class Sort(object):
                 self.program.status.distinguish((y if t[0]==x else t[0],y if t[1]==x else t[1]))
         self.maybewrite() #once done iterating over senses
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.makeeverythingok()
-        """I need some way to control for ftype"""
-        """I need to think through when I would work with one ftype, and not
-        another, or when I would want to work with one, then modify the other
-        (e.g., lx)"""
-        """sorting on individual whole forms (e.g., lc, pl, imp) should happen
-        in tone, but maybe not for C, V, and CV. Or is there a context where we
-        would expect (or find anyway) that the analyzable (!) plural/imp form
-        doesn't have the same vowels/consonants as the citation form? Maybe we should
-        plan for this, and have a 'Yes, this is OK, change them both' button
-        Maybe make that button a user option, so it doesn't have to be there if
-        not desired."""
-        self.invariablesegmentalroots=True #otherwise, ask, or else just check each
-        self.program.params.ftype('lc') #current default
-        self.cvt=self.program.params.cvt()
-        self.min_to_multicolumn=6 #don't use buttoncolumns with less
-        #for testing only!!
-        # if self.program.settings.pluralname:
-        #     self.program.params.ftype(self.program.settings.pluralname)
-        # if self.program.settings.imperativename:
-        # self.program.params.ftype(self.imperativename)
-        self.checktypename={'T':'frame',
-                        'C':'check',
-                        'V':'check',
-                        'CV':'check',
-                        }
-        self.analang=self.program.db.analang
+        super().__init__(**kwargs) #is this needed?
 

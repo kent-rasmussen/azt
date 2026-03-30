@@ -37,7 +37,10 @@ for name in ('Analysis', 'ImageFrame', 'Sort', 'TranscribeC', 'TranscribeV', '_'
         globals()[name] = LazyGlobal(name)
 
 class Senses(object):
-    """docstring for Senses."""
+    """This was started because some tasks primarily handle senses 
+    (with their various forms), whereas others handle examples.
+    This refactoring was interrupted, though, so should likely
+    be reconsidered. (see Tone class below)"""
     def groups(self,**kwargs): #toverify=True
         return self.program.status.groups(**kwargs)
     def group(self,value=None,**kwargs):#get/set
@@ -1078,6 +1081,7 @@ class WordCollection(Segments):
         self.dodone=False
 class Parse(Segments):
     """docstring for Parse."""
+    invariablesegmentalroots=True #Not used; otherwise, ask, or else just check each
     do_not_show_slices=True
     show_parser_ui=True
     def getgloss(self,ftype=None):
@@ -1685,6 +1689,14 @@ class Parse(Segments):
 
 class Tone(Senses):
     """This keeps stuff used for Tone checks."""
+    """This may want to depend on a new class Examples, since it's
+    examples that have tone values, not senses."""
+    """Is this a valid and consistent distinction, or should those 
+    methods just show here? if there is a 1:1 relationship
+    Segments:Senses
+    Tone:examples
+    then they should be collapsed.
+    """
     def makeanalysis(self,**kwargs):
         """was, now iterable, for multiple reports at a time:"""
         if not hasattr(self,'analysis'):
@@ -1795,8 +1807,8 @@ class Tone(Senses):
         return sense.uftonevalue()
     def name_new_glyphs(self):
         pass
-    def __init__(self, program=None, **kwargs):
-        super().__init__(program=program, **kwargs)
-        if program is not None:
-            self.program=program
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # if program is not None:
+        #     self.program=program
 

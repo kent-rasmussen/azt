@@ -464,6 +464,8 @@ class SliceDict(dict):
                 or self._profile not in profiles):
             self.profile(profiles[0])
     def pss(self):
+        """This comes from pspriority, so will be limited
+        by self.maxpss"""
         return getattr(self,'_pss',[])
     def ps(self,ps=None):
         pss=self.pss()
