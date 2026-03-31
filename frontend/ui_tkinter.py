@@ -436,7 +436,7 @@ class Theme(object):
     def setscale(self):
         # program=self.program #reading and setting here
         root=tkinter.Tk() #just to get these values
-        modifier=2 #This became necessary with xwayland; no idea why
+        modifier=1 #2 seemed necessary in the transition to xwayland; no idea why
         h = self.program.screenh = root.winfo_screenheight()/modifier
         w = self.program.screenw = root.winfo_screenwidth()/modifier
         log.info(f'{root.winfo_screenmmwidth()=}')
