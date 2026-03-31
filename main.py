@@ -95,7 +95,7 @@ import gettext
 _ = gettext.gettext  # initial fallback; updated by interfacelang() when translation loads
 import sys
 import os
-import pprint #for settings and status files, etc.
+# import pprint #for settings and status files, etc.
 import subprocess
 import webbrowser
 

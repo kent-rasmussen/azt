@@ -762,9 +762,9 @@ class Settings(SettingsUI):
             .format(pss=self.program.db.pss))
     def makesecondformfieldsOK(self):
         if self.nominalps not in self.secondformfield:
-            self.program.taskchooser.mainwindowis.getsecondformfieldN()
+            self.program.mainwindow.getsecondformfieldN()
         if self.verbalps not in self.secondformfield:
-            self.program.taskchooser.mainwindowis.getsecondformfieldV()
+            self.program.mainwindow.getsecondformfieldV()
     def secondformfieldsOK(self):
         if (self.nominalps in self.secondformfield and
             self.verbalps in self.secondformfield):
@@ -1001,7 +1001,7 @@ class Settings(SettingsUI):
                             _log.info(_("Asked about polgraphs, but user "
                                         "exited, so exiting {name}"
                                         ).format(name=self.program.name))
-                            self.program.taskchooser.mainwindowis.on_quit()
+                            self.program.mainwindow.on_quit()
                         return
         _log.info("Di/Trigraph settings seem complete; moving on.")
     def checkinterpretations(self):
@@ -1664,8 +1664,8 @@ class Settings(SettingsUI):
         #     self.languagenames[xyz]=self.adnlangnames[xyz]
     def setrefreshdelay(self):
         """This sets the main window refresh delay, in miliseconds"""
-        if (hasattr(self.program.taskchooser.mainwindowis,'runwindow') and
-                self.program.taskchooser.mainwindowis.runwindow.winfo_exists()):
+        if (hasattr(self.program.mainwindow,'runwindow') and
+                self.program.mainwindow.runwindow.winfo_exists()):
             self.refreshdelay=10000 #ten seconds if working in another window
         elif isinstance(self,Parse) and not hasattr(self,'parser'):
             self.refreshdelay=1 #1 msecond if waiting for parser settings

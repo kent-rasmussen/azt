@@ -212,7 +212,8 @@ class TaskChooser(Task):
             log.info(_("No task, apparently; not destroying."))
         if type(taskclass) is str:
             taskclass=getattr(tasks.tasks, taskclass)
-        self.task=taskclass(self.program,**kwargs) #filename
+        self.task=taskclass(program=self.program,**kwargs) #filename
+        self.setmainwindow(self.task)
         if not self.task.exitFlag.istrue():# and not isinstance(self.task,Parse):
             self.task.deiconify()
     def unsetmainwindow(self):
@@ -220,15 +221,16 @@ class TaskChooser(Task):
         x.mainwindow tracks if the object is the mainwindow, so it will
         exit the program on closure appropriately. This fn keeps them
         synchronized."""
-        if hasattr(self,'mainwindowis'):
-            self.mainwindowis.withdraw()
-            self.mainwindowis.mainwindow=False #keep only one of these
+        if hasattr(self,'mainwindow'):
+            self.mainwindow.withdraw()
+            self.mainwindow.ismainwindow=False #keep only one of these
+            self.program.mainwindow=self.mainwindow=None #this could cause a crash...
         else:
-            log.info(_("No mainwindowis found."))
+            log.info(_("No mainwindow found."))
     def setmainwindow(self,window):
         """This is really only useful for the taskChooser; others live or die"""
-        self.mainwindowis=window
-        self.mainwindowis.mainwindow=True #keep only one of these
+        self.program.mainwindow=self.mainwindow=window
+        self.mainwindow.ismainwindow=True #keep only one of these
     def makeoptions(self):
         """This function (and probably a few dependent functions, maybe
         another class) provides a list of functions with prerequisites
@@ -692,7 +694,6 @@ class TaskChooser(Task):
         self.program.settings.getprofiles()
         # self.withdraw()
         self.program.splash.progress(90)
-        self.setmainwindow(self)
         if self.program.tk_root.exitFlag.istrue():
             return
         # self.guidtriage() #sets: self.guidswanyps self.guidswops self.guidsinvalid self.guidsvalid

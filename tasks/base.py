@@ -12,11 +12,12 @@ class Task(TaskDressing):
         # log.info("cvt: {}".format(self.program.params.cvt()))
         if isinstance(self,Tone):
             self.checktypename='frame'
-            self.cvt=self.program.params.cvt('T')
-        if isinstance(self,Segments) and (self.program.params.cvt()
-                                                    not in ['V','C','CV']):
+            self.cvt='T'
+        if isinstance(self,Segments):
             self.checktypename='check'
-            self.cvt=self.program.params.cvt('V')
+            if self.cvt not in ['V','C','CV']:
+                self.cvt='V'
+        self.cvt=self.program.params.cvt(self.cvt)
     def makeeverythingok(self):
         """The value of this method is unclear. This may be better 
         done elsewhere."""
@@ -42,3 +43,4 @@ class Task(TaskDressing):
         self.min_to_multicolumn=6 #don't use buttoncolumns with less
         self.makeeverythingok()
         TaskDressing.__init__(self, parent) #window
+        log.info(f"Done initializing {self.__class__.__name__}.")

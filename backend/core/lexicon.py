@@ -438,7 +438,14 @@ class Segments(Senses):
         self.dodoneonly=False #don't give me other words
         self.ftype=self.program.params.ftype()
         self.rxdict=self.program.settings.rxdict
-
+class Consonants():
+    cvt='C'
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+class Vowels():
+    cvt='V'
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 class WordCollection(Segments):
     """This task collects words, from the SIL CAWL, or one by one."""
     taskicon = 'iconWord'

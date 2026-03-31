@@ -3,9 +3,9 @@ from frontend import ui_tkinter as ui
 from tasks.base import Task
 from backend.core.report_mixins import Multislice, MultisliceS, MultisliceT, Multicheck, Multicheckslice, ByUF, Background
 from backend.reporting.generator import Report
-from backend.core.lexicon import WordCollection, Parse, Tone, Segments
+from backend.core.lexicon import WordCollection, Parse, Tone, Segments, Vowels, Consonants
 from tasks.sound import Sound, Record
-from backend.core.sorting_engine import Sort
+import backend.core.sorting_engine #import Sort
 from utilities.utilities import *
 from utilities import file, logsetup, rx
 from io_put import export
@@ -981,6 +981,20 @@ class ToneFrameDrafter(ui.Window):
         log.info(_("Saving toneframes dict to file"))
         self.program.settings.storesettingsfile('toneframes')
 
+class Sort(backend.core.sorting_engine.Sort):
+    def dobuttonkwargs(self):
+        return {'text':_("Sort!"),
+                'fn':self.runcheck,
+                'font':'title',
+                'compound':'bottom', #image bottom, left, right, or top of text
+                # 'image':self.program.theme.photo[self.cvt], #self.cvt
+                'image':self.cvt, #self.cvt
+                'sticky':'ew'
+                }
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
 class SortSyllables(Sort,Segments,Task):
     taskicon = 'iconWord'
     tasktitle = "Sort Word Syllables" #Citation Form Sorting in Tone Frames
@@ -1023,78 +1037,66 @@ class SortSyllables(Sort,Segments,Task):
         self.presortgroups()
         self.updatesortingstatus() # Not just tone anymore
         self.maybesort(firstrun=True)
-    def __init__(self, program, **kwargs):
+    def __init__(self, **kwargs):
         program.params.cvt('S') #syllable
-        super().__init__(program=program, **kwargs)
+        super().__init__(**kwargs)
 class SortCV(Sort,Segments,Task):
     """docstring for SortCV."""
-    def __init__(self, program, **kwargs):
-        super().__init__(program=program, **kwargs)
-class SortV(Sort,Segments,Task):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+class SortS(Sort,Segments,Task):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        """TranscribeS sends us here with redo_glyph, to resume sorting that was interrupted
+        by the need to transcribe a segment. This should probably be handled differently."""
+        """Sort.update_to_cvt sends us here with sort_immediately if it is asked to sort
+        an item with a wrong cvt"""
+        """Should consider how this impacts tone logic"""
+        if g:=kwargs.get("redo_glyph"): 
+            self.redo_joinglyphs(g)
+        elif g:=kwargs.get("sort_immediately"): 
+            self.runcheck()
+class SortV(Vowels,SortS):
     taskicon = 'iconV'
     tasktitle = "Sort Vowels" #Citation Form Sorting in Tone Frames
-    cvt='V'
     def tooltip(self):
         return _("This task helps you sort words in citation form by vowels.")
-    def dobuttonkwargs(self):
-        return {'text':_("Sort!"),
-                'fn':self.runcheck,
-                'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.program.theme.photo['V'], #self.cvt
-                'sticky':'ew'
-                }
-    def __init__(self, program, **kwargs):
-        super().__init__(program=program, **kwargs)
-        # # program.params.cvt('V')
-        if g:=kwargs.get("redo_glyph"):
-            self.redo_joinglyphs(g)
-        elif g:=kwargs.get("sort_immediately"):
-            self.runcheck()
-class SortC(Sort,Segments,Task):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # if g:=kwargs.get("redo_glyph"):
+        #     self.redo_joinglyphs(g)
+        # elif g:=kwargs.get("sort_immediately"):
+        #     self.runcheck()
+class SortC(Consonants,SortS):
     taskicon = 'iconC'
     tasktitle = "Sort Consonants" #Citation Form Sorting in Tone Frames
     def tooltip(self):
         return _("This task helps you sort words in citation form by consonants.")
-    def dobuttonkwargs(self):
-        return {'text':_("Sort!"),
-                'fn':self.runcheck,
-                # column=0,
-                'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.program.theme.photo['C'], #self.cvt
-                'sticky':'ew'
-                }
-    def __init__(self, program, **kwargs):
-        program.params.cvt('C')
-        super().__init__(program=program, **kwargs)
-        if g:=kwargs.get("redo_glyph"):
-            self.redo_joinglyphs(g)
-        elif g:=kwargs.get("sort_immediately"):
-            self.runcheck()
+    # def dobuttonkwargs(self):
+    #     return {'text':_("Sort!"),
+    #             'fn':self.runcheck,
+    #             # column=0,
+    #             'font':'title',
+    #             'compound':'bottom', #image bottom, left, right, or top of text
+    #             'image':self.program.theme.photo['C'], #self.cvt
+    #             'sticky':'ew'
+    #             }
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 class SortT(Sort,Tone,Task):
     taskicon = 'iconT'
     tasktitle = "Sort Tone" #Citation Form Sorting in Tone Frames
     def tooltip(self):
         return _("This task helps you sort words in citation form tone frames.")
-    def dobuttonkwargs(self):
-        return {'text':_("Sort!"),
-                'fn':self.runcheck,
-                # column=0,
-                'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.program.theme.photo['T'], #self.cvt
-                'sticky':'ew'
-                }
-    def __init__(self, program, **kwargs): #frame, filename=None
-        program.params.cvt('T')
-        super().__init__(program=program, **kwargs)
-        # log.info("status: {}".format(type(self.program.status)))
-        # Not sure what this was for (XML?):
-        self.pp=pprint.PrettyPrinter()
-        """Are we OK without these?"""
-        log.info("Done initializing check.")
-        """Testing Zone"""
+    # def dobuttonkwargs(self):
+    #     return {'text':_("Sort!"),
+    #             'fn':self.runcheck,
+    #             # column=0,
+    #             'font':'title',
+    #             'compound':'bottom', #image bottom, left, right, or top of text
+    #             'image':self.program.theme.photo['T'], #self.cvt
+    #             'sticky':'ew'
+    #             }
     def addtonefieldpron(self,guid,framed): #unused; leads to broken lift fn
         sense=None
         self.program.db.addpronunciationfields(
@@ -1114,6 +1116,8 @@ class SortT(Sort,Tone,Task):
     def marktosortguid(self,guid):
         self.guidstosort.append(guid)
         self.guidssorted.remove(guid)
+    def __init__(self, **kwargs): #frame, filename=None
+        super().__init__(**kwargs)
     """Doing stuff"""
 class Transcribe(Sound,Sort,Task):
     show_buttoncolumnsline=False

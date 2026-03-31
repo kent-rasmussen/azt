@@ -1348,11 +1348,11 @@ class TaskDressing(HasMenus,ui.Window):
     def _showbuttons(self,event=None):
         todo=getattr(self,'mainreliefnext','flat')
         self.mainlabelrelief(relief=todo,refresh=True)
-        self.program.taskchooser.mainwindowis.status.makeui()
+        self.program.mainwindow.status.makeui()
         self.setcontext()
     def _hidebuttons(self,event=None):
         self.mainlabelrelief(relief=None,refresh=True)
-        self.program.taskchooser.mainwindowis.status.makeui()
+        self.program.mainwindow.status.makeui()
         self.setcontext()
     def correlatemenus(self):
         """I don't think I want this. Rather, menus must always be asked for."""
@@ -1383,12 +1383,12 @@ class TaskDressing(HasMenus,ui.Window):
     def _hidedetails(self):
         # log.info("Hiding group names")
         self.program.settings.set('showdetails', False, refresh=True)
-        self.program.taskchooser.mainwindowis.status.maybeboard()
+        self.program.mainwindow.status.maybeboard()
         self.setcontext()
     def _showdetails(self):
         # log.info("Showing group names")
         self.program.settings.set('showdetails', True, refresh=True)
-        self.program.taskchooser.mainwindowis.status.maybeboard()
+        self.program.mainwindow.status.maybeboard()
         self.setcontext()
     def setcontext(self,context=None):
         if self.exitFlag.istrue() or not self.winfo_exists():
@@ -1592,7 +1592,7 @@ class TaskDressing(HasMenus,ui.Window):
                                             )
     def setsensetodo(self,choice,window):
         self.sense=self.sensetodo=choice
-        self.program.taskchooser.mainwindowis.status.updatesensetodo()
+        self.program.mainwindow.status.updatesensetodo()
         window.destroy()
         if isinstance(self,WordCollection):
             self.withdraw()
@@ -3372,7 +3372,7 @@ class Settings(object):
     def getinterfacelang(self,event=None):
         log.info(_("Asking for interface language..."))
         azt=self.program.name
-        window=ui.Window(self.program.task, title=_('Select Interface Language'))
+        window=ui.Window(self.program.mainwindow, title=_('Select Interface Language'))
         ui.Label(window.frame, text=_('What language do you want {name} '
                                 'to address you in?').format(name=azt)
                 ).grid(column=0, row=0)
@@ -3400,7 +3400,7 @@ class Settings(object):
                     del self.program.settings.adnlangnames[self.program.params.analang()]
                 self.program.settings.langnames([self.program.params.analang()]) #refreshes w/above
             self.program.settings.storesettingsfile()
-            self.program.taskchooser.mainwindowis.status.updateanalang() #ui
+            self.program.mainwindow.status.updateanalang() #ui
             window.destroy()
         window=ui.Window(self.program.task,title=_('Enter Analysis Language Name'))
         curname=self.program.settings.languagenames[self.program.params.analang()]

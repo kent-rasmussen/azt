@@ -49,10 +49,10 @@ class SettingsUI(object):
             self.program.interfacelang(choice) #change the UI *ONLY*; no object attributes
             self.set('interfacelang',choice,window) #set variable for the future
             self.langnames() #relocalize
-            self.program.taskchooser.mainwindowis.status.makeui()
+            self.program.mainwindow.status.makeui()
             self.storesettingsfile() #>xyz.CheckDefaults.py
             #because otherwise, this stays as is...
-            self.program.taskchooser.mainwindowis.maketitle()
+            self.program.mainwindow.maketitle()
         else:
             return self.program.interfacelang()
     def askaboutpolygraphs(self,onboot=False):
@@ -100,7 +100,7 @@ class SettingsUI(object):
         titlet=_("{azt} Digraphs and Trigraphs").format(azt=self.program.name)
         hasdata=self.checkforpolygraphsindata()
         #From wherever this is opened, it should withdraw and deiconify that
-        pgw=ui.Window(self.program.taskchooser.mainwindowis,title=titlet,exit=False)
+        pgw=ui.Window(self.program.mainwindow,title=titlet,exit=False)
         t=_("Which of the following letter sequences from your data "
             "refer to a single sound?")
         log.info(_("working with db.analangs: {analangs} and params.analang: {analang}")
@@ -213,8 +213,8 @@ class SettingsUI(object):
             self.warning=ErrorNotice(text,title=title)
     def statusisup(self):
         """Use this for when a setting should ignore status frame updates"""
-        return (hasattr(self.program.taskchooser.mainwindowis,'status') and
-                type(self.program.taskchooser.mainwindowis.status) is StatusFrame)
+        return (hasattr(self.program.mainwindow,'status') and
+                type(self.program.mainwindow.status) is StatusFrame)
     def set(self,attribute,choice,window=None,refresh=True):
         #Normally, pass the attribute through the button frame,
         #otherwise, don't set window (which would be destroyed)
@@ -242,7 +242,7 @@ class SettingsUI(object):
     def setsecondformfieldN(self,choice,window=None):
         self.secondformfield[self.nominalps]=self.pluralname=choice
         if self.statusisup():
-            self.program.taskchooser.mainwindowis.status.updatefields()
+            self.program.mainwindow.status.updatefields()
         self.attrschanged.append('secondformfield')
         for entry in self.program.db.entries:
             entry.plvalue(self.pluralname) # get the right field!
@@ -252,7 +252,7 @@ class SettingsUI(object):
     def setsecondformfieldV(self,choice,window=None):
         self.secondformfield[self.verbalps]=self.imperativename=choice
         if self.statusisup():
-            self.program.taskchooser.mainwindowis.status.updatefields()
+            self.program.mainwindow.status.updatefields()
         self.attrschanged.append('secondformfield')
         for entry in self.program.db.entries:
             """Doesn't do anything??!?"""
@@ -264,7 +264,7 @@ class SettingsUI(object):
         if not choice:
             choice=self.program.status.nextprofile()
         self.program.slices.profile(choice)
-        self.program.taskchooser.mainwindowis.status.updateprofile()
+        self.program.mainwindow.status.updateprofile()
         if self.program.params.cvt() != 'T': #profiles don't determine tone checks
             #in case checks changed:
             firstcheck=self.program.status.updatechecksbycvt()[0]
@@ -279,7 +279,7 @@ class SettingsUI(object):
         self.program.params.cvt(choice)
         self.attrschanged.append('cvt')
         if self.statusisup():
-            self.program.taskchooser.mainwindowis.status.updatecvt()
+            self.program.mainwindow.status.updatecvt()
         self.refreshattributechanges()
         if (not hasattr(self.program.taskchooser,'task') or
                 not self.program.taskchooser.task.mainwindow):
@@ -302,7 +302,7 @@ class SettingsUI(object):
         """This is only used when more than one analang exists in the database"""
         log.info(_("Setting Analysis Language to {lang}").format(lang=choice))
         self.program.params.analang(choice)
-        self.program.taskchooser.mainwindowis.status.updateanalang()
+        self.program.mainwindow.status.updateanalang()
         self.attrschanged.append('analang')
         self.refreshattributechanges()
         window.destroy()
@@ -311,9 +311,9 @@ class SettingsUI(object):
         log.debug(_("setting group: {group}").format(group=choice))
         self.program.status.group(choice)
         if self.program.params.cvt() == 'T':
-            self.program.taskchooser.mainwindowis.status.updatetonegroup()
+            self.program.mainwindow.status.updatetonegroup()
         else:
-            self.program.taskchooser.mainwindowis.status.updatecvgroup()
+            self.program.mainwindow.status.updatecvgroup()
         if isinstance(self.program.taskchooser.task,Sort) and (
                 hasattr(self.program.taskchooser.task,'menu') and
                         self.program.taskchooser.task.menu):
@@ -331,34 +331,34 @@ class SettingsUI(object):
             choice=self.program.status.nextcheck(**kwargs)
         self.program.params.check(choice)
         if self.program.params.cvt() == 'T':
-            self.program.taskchooser.mainwindowis.status.updatetoneframe()
+            self.program.mainwindow.status.updatetoneframe()
         else:
-            self.program.taskchooser.mainwindowis.status.updatecvcheck()
+            self.program.mainwindow.status.updatecvcheck()
         self.attrschanged.append('check')
         self.refreshattributechanges()
         if window:
             window.destroy()
     def setbuttoncolumns(self,choice,window=None):
-        self.buttoncolumns=self.program.taskchooser.mainwindowis.buttoncolumns=choice
+        self.buttoncolumns=self.program.mainwindow.buttoncolumns=choice
         if self.statusisup():
-            self.program.taskchooser.mainwindowis.status.updatebuttoncolumns()
+            self.program.mainwindow.status.updatebuttoncolumns()
         if window:
             window.destroy()
     def setmaxprofiles(self,choice,window):
         self.maxprofiles=choice
-        self.program.taskchooser.mainwindowis.status.updatemaxprofiles()
+        self.program.mainwindow.status.updatemaxprofiles()
         window.destroy()
     def setmaxpss(self,choice,window):
         self.maxpss=choice
-        self.program.taskchooser.mainwindowis.status.updatemaxpss()
+        self.program.mainwindow.status.updatemaxpss()
         window.destroy()
     def setmulticheckscope(self,choice,window):
         self.cvtstodo=self.program.taskchooser.task.cvtstodo=choice
-        self.program.taskchooser.mainwindowis.status.updatemulticheckscope()
+        self.program.mainwindow.status.updatemulticheckscope()
         window.destroy()
     def setglosslang(self,choice,window):
         self.glosslangs.lang1(choice)
-        self.program.taskchooser.mainwindowis.status.updateglosslangs()
+        self.program.mainwindow.status.updateglosslangs()
         self.attrschanged.append('glosslangs')
         self.refreshattributechanges()
         window.destroy()
@@ -367,21 +367,21 @@ class SettingsUI(object):
             self.glosslangs.lang2(choice)
         elif len(self.glosslangs)>1:
             self.glosslangs.pop(1) #if lang2 is None
-        self.program.taskchooser.mainwindowis.status.updateglosslangs()
+        self.program.mainwindow.status.updateglosslangs()
         self.attrschanged.append('glosslangs')
         self.refreshattributechanges()
         window.destroy()
     def setparserasklevel(self,choice,window):
         self.program.taskchooser.parser.asklevel(choice)
-        self.program.taskchooser.mainwindowis.status.updateparserasklevel()
+        self.program.mainwindow.status.updateparserasklevel()
         window.destroy()
     def setparserautolevel(self,choice,window):
         self.program.taskchooser.parser.autolevel(choice)
-        self.program.taskchooser.mainwindowis.status.updateparserautolevel()
+        self.program.mainwindow.status.updateparserautolevel()
         window.destroy()
     def setps(self,choice,window):
         self.program.slices.ps(choice)
-        self.program.taskchooser.mainwindowis.status.updateps()
+        self.program.mainwindow.status.updateps()
         self.attrschanged.append('ps')
         self.refreshattributechanges()
         window.destroy()
