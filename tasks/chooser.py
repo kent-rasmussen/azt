@@ -130,7 +130,7 @@ class TaskChooser(Task):
         try:
                 self.status.bigbutton.destroy()
         except AttributeError:
-            log.info(_("There doesn't seem to be a big button"))
+            log.info(_("There doesn't seem to be a big button to destroy."))
         if not self.showreports:
             self.status.finalbuttons()
         if not self.mainwindow:
@@ -222,9 +222,14 @@ class TaskChooser(Task):
         exit the program on closure appropriately. This fn keeps them
         synchronized."""
         if hasattr(self,'mainwindow'):
-            self.mainwindow.withdraw()
-            self.mainwindow.ismainwindow=False #keep only one of these
-            self.program.mainwindow=self.mainwindow=None #this could cause a crash...
+            try:
+                # we want to keep only one window thinking it ismainwindow at a time:
+                self.mainwindow.ismainwindow=False #OK if self.mainwindow isn't boolean
+                self.mainwindow.withdraw() #only works if winfo_exists()
+            except AttributeError:
+                pass
+            finally:
+                self.program.mainwindow=self.mainwindow=None #this could cause a crash...
         else:
             log.info(_("No mainwindow found."))
     def setmainwindow(self,window):

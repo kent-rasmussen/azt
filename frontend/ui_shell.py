@@ -643,10 +643,9 @@ class StatusFrame(ui.Frame):
             else:
                 cmd=self.program.ui_settings.getsecondformfieldV
             if ps not in self.program.settings.secondformfield and (
-                    isinstance(self.task,Parse) or (
-                    isinstance(self.task,WordCollection
-                    ) and self.task.ftype not in ['lx','lc'])):
-                cmd()
+                    self.program.task.uses_second_forms or ( #Parse
+                        self.program.task.ftype not in ['lx','lc'])):
+                cmd() #Make sure these are defined where needed (i.e., parsing or collecting them.)
                 # return #just do one at a time
             self.labels['fields'+ps]={
                             'text':ui.StringVar(value=self.fieldslabel(ps)),
@@ -733,7 +732,7 @@ class StatusFrame(ui.Frame):
         #                                         getattr(self,'check')))
         self.labels['toneframe']={'text':ui.StringVar(value=self.toneframelabel()),
                                 'columnplus':1,
-                                'cmd':self.task.getcheck,
+                                'cmd':self.program.task.getcheck,
                                 'parent':line,
                                 'tt':_("change this tone frame")}
         self.proselabel(**self.labels['toneframe'])
@@ -753,16 +752,16 @@ class StatusFrame(ui.Frame):
         """Set appropriate conditions for each of these:"""
         if (not check or (check in self.program.status.checks(wsorted=True) and
             profile in self.program.status.profiles(wsorted=True))):
-            cmd=self.task.getgroupwsorted
+            cmd=self.program.task.getgroupwsorted
         elif (not check or (check in self.program.status.checks(tosort=True) and
             profile in self.program.status.profiles(tosort=True))):
-            cmd=self.task.getgrouptosort
+            cmd=self.program.task.getgrouptosort
         elif (check in self.program.status.checks(toverify=True) and
             profile in self.program.status.profiles(toverify=True)):
-            cmd=self.task.getgrouptoverify
+            cmd=self.program.task.getgrouptoverify
         elif (check in self.program.status.checks(torecord=True) and
             profile in self.program.status.profiles(torecord=True)):
-            cmd=self.task.getgrouptorecord
+            cmd=self.program.task.getgrouptorecord
         else:
             cmd=None
         self.labels['tonegroup']={'text':ui.StringVar(value=self.tonegrouplabel()),
@@ -778,7 +777,7 @@ class StatusFrame(ui.Frame):
     def cvcheck(self,line):
         self.labels['cvcheck']={'text':ui.StringVar(value=self.cvchecklabel()),
                                 'columnplus':1,
-                                'cmd':self.task.getcheck,
+                                'cmd':self.program.task.getcheck,
                                 'parent':line,
                                 'tt':_("change this check")}
         self.proselabel(**self.labels['cvcheck'])
@@ -794,7 +793,7 @@ class StatusFrame(ui.Frame):
     def cvgroup(self,line):
         self.labels['cvgroup']={'text':ui.StringVar(value=self.cvgrouplabel()),
                                 'columnplus':2,
-                                'cmd':self.task.getgroup,
+                                'cmd':self.program.task.getgroup,
                                 'parent':line,
                                 'tt':_("change this group")
                                 if self.program.status.group()
@@ -849,8 +848,8 @@ class StatusFrame(ui.Frame):
     def multicheckscopelabel(self):
         t=(_("Run all checks for {checks}").format(checks=unlist(self.program.ui_settings.cvtstodoprose())))
     def multicheckscope(self):
-        if not hasattr(self.task,'cvtstodo'):
-            self.task.cvtstodo=['V']
+        if not hasattr(self.program.task,'cvtstodo'):
+            self.program.task.cvtstodo=['V']
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w')
@@ -865,8 +864,8 @@ class StatusFrame(ui.Frame):
         self.labels['parserasklevel']['text'].set(self.parserasklevellabel())
     def parserasklevellabel(self):
         try:
-            ls=self.task.parser.levels() # we need this anyway, and a parser test
-            return (_("Parse with confirmation at {parser_levels}").format(parser_levels=ls[self.task.parser.ask]))
+            ls=self.program.task.parser.levels() # we need this anyway, and a parser test
+            return (_("Parse with confirmation at {parser_levels}").format(parser_levels=ls[self.program.task.parser.ask]))
         except AttributeError as e:
             log.info(f"Error loading parser levels: {e}")
             return
@@ -874,8 +873,8 @@ class StatusFrame(ui.Frame):
         self.labels['parserautolevel']['text'].set(self.parserautolevellabel())
     def parserautolevellabel(self):
         try:
-            ls=self.task.parser.levels()
-            return (_("Parse automatically at {parser_levels}").format(parser_levels=ls[self.task.parser.auto]))
+            ls=self.program.task.parser.levels()
+            return (_("Parse automatically at {parser_levels}").format(parser_levels=ls[self.program.task.parser.auto]))
         except AttributeError as e:
             log.info(f"Error loading parser levels: {e}")
             return
@@ -886,7 +885,7 @@ class StatusFrame(ui.Frame):
         self.labels['parserasklevel']={
                         'text':ui.StringVar(value=self.parserasklevellabel()),
                         'columnplus':1,
-                        'cmd':self.task.getparserasklevel,
+                        'cmd':self.program.task.getparserasklevel,
                         'parent':line,
                         'tt':_("change this confirmed parse level")}
         self.proselabel(**self.labels['parserasklevel'])
@@ -896,14 +895,14 @@ class StatusFrame(ui.Frame):
         self.labels['parserautolevel']={
                         'text':ui.StringVar(value=self.parserautolevellabel()),
                         'columnplus':1,
-                        'cmd':self.task.getparserautolevel,
+                        'cmd':self.program.task.getparserautolevel,
                         'parent':line,
                         'tt':_("change this auto parse level")}
         self.proselabel(**self.labels['parserautolevel'])
     def updatesensetodo(self):
         self.labels['sensetodo']['text'].set(self.sensetodolabel())
     def sensetodolabel(self):
-        t=self.task
+        t=self.program.task
         if hasattr(t,'sensetodo') and t.sensetodo is not None:
             return _("Parsing {sense}").format(sense=t.sensetodo.formatted(t.analang,t.glosslangs))
         else:
@@ -915,7 +914,7 @@ class StatusFrame(ui.Frame):
         self.labels['sensetodo']={
                             'text':ui.StringVar(value=self.sensetodolabel()),
                             'columnplus':1,
-                            'cmd':self.task.getsensetodo,
+                            'cmd':self.program.task.getsensetodo,
                             'parent':line,
                             'tt':_("change this sense to do")}
         self.proselabel(**self.labels['sensetodo'])
@@ -927,7 +926,7 @@ class StatusFrame(ui.Frame):
         # self.opts['row']+=6
         self.newrow()
         try:
-            kwargs=self.task.dobuttonkwargs()
+            kwargs=self.program.task.dobuttonkwargs()
             self.bigbutton=self.button(**kwargs)
         except Exception as e:
             log.error(f"Problem: {e}")
@@ -935,8 +934,8 @@ class StatusFrame(ui.Frame):
         """Not called anywhere?"""
         for ps in [self.program.settings.nominalps, self.program.settings.verbalps]:
             if ps not in self.program.settings.secondformfield and (
-                isinstance(self.task,Parse) or (
-                    isinstance(self.task,WordCollection) and
+                isinstance(self.program.task,Parse) or (
+                    isinstance(self.program.task,WordCollection) and
                     self.type not in ['lx','lc'])):
                 if ps == self.program.settings.nominalps:
                     self.program.ui_settings.getsecondformfieldN()
@@ -950,19 +949,19 @@ class StatusFrame(ui.Frame):
         self.leaderboard=ui.Frame(self,row=0,column=1,sticky='') #nesw
         #Given the line above, much of the below can go, but not all?
         if (
-            # isinstance(self.task,Report) or
-            isinstance(self.task,TaskChooser) or
-            isinstance(self.task,WordCollection) or
-            isinstance(self.task,Parse)
+            # isinstance(self.program.task,Report) or
+            isinstance(self.program.task,TaskChooser) or
+            isinstance(self.program.task,WordCollection) or
+            isinstance(self.program.task,Parse)
             ):
             return
         if (
-            isinstance(self.task,Record) or
-            isinstance(self.task,JoinUFgroups) or
+            isinstance(self.program.task,Record) or
+            isinstance(self.program.task,JoinUFgroups) or
             not self.program.taskchooser.doneenough['collectionlc']):
             self.makenoboard()
             return
-        if isinstance(self.task,TranscribeS):
+        if isinstance(self.program.task,TranscribeS):
             self.makeglyphtable()
             return
         profileori=self.program.slices.profile()
@@ -1030,8 +1029,8 @@ class StatusFrame(ui.Frame):
                             r=self.glyphscroll.content.nrows())
                             # r=len(self.glyphscroll.content.winfo_children()))
         l=ui.Label(f, text=glyph, font='read', width=3, c=0, sticky="EW")
-        fn=lambda x=glyph:self.task.makewindow(x)
-        bf=SortGlyphGroupButtonFrame(f, self.task,
+        fn=lambda x=glyph:self.program.task.makewindow(x)
+        bf=SortGlyphGroupButtonFrame(f, self.program.task,
                                     group=glyph,
                                     on_select=fn,
                                     column=1, sticky="W")
@@ -1074,7 +1073,7 @@ class StatusFrame(ui.Frame):
         def refresh(event=None):
             # log.info("refreshing status table")
             self.program.settings.storesettingsfile()
-            self.task.tableiteration+=1
+            self.program.task.tableiteration+=1
         self.boardtitle()
         # leaderheader=Frame(self.leaderboard) #someday, make this not scroll...
         # leaderheader.grid(row=1,column=0)
@@ -1157,7 +1156,7 @@ class StatusFrame(ui.Frame):
                             if cvt == 'T' and not (
                                     self.program.status.checks(todo=True)
                                                     ):
-                                cmd=self.task.addframe
+                                cmd=self.program.task.addframe
                             else:
                                 cmd=lambda todo=True:self.program.settings.setcheck(
                                                                     todo=todo)
@@ -1257,7 +1256,7 @@ class StatusFrame(ui.Frame):
         super(StatusFrame, self).__init__(parent, **kwargs)
         self.makeui()
     def makesliceattrs(self):
-        if not isinstance(self.task,WordCollection):
+        if not isinstance(self.program.task,WordCollection):
             self.cvt=self.program.params.cvt()
             self.ps=self.program.slices.ps()
             self.profile=self.program.slices.profile()

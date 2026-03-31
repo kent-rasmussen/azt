@@ -1091,6 +1091,7 @@ class Parse(Segments):
     invariablesegmentalroots=True #Not used; otherwise, ask, or else just check each
     do_not_show_slices=True
     show_parser_ui=True
+    uses_second_forms=True
     def getgloss(self,ftype=None):
         return ', '.join([', '.join(self.parser.sense.formattedgloss(l,
                                                             ftype=ftype,
