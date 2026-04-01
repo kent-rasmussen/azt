@@ -1365,6 +1365,7 @@ class Transcribe(Sound,Sort,Task):
 class TranscribeS(Transcribe,Segments):
     macrosort=True
     do_not_show_slices=True
+    glyph_leaderboard=True
     def done(self):
         log.info("Transcribe done")
         self.submitform()
@@ -1773,6 +1774,7 @@ class JoinUFgroups(Tone,Task):
     tasktitle = "Join Underlying Form Groups"
     taskicon = 'iconJoinUF'
     do_not_show_cvt=True
+    icon_leaderboard=True
     def tooltip(self):
         return _("This task helps you join hypersplit UF groups, as well as "
                 "giving them meaniningful names (e.g., High or Low).")

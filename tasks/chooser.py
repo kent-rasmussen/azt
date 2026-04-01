@@ -64,6 +64,7 @@ class TaskChooser(Task):
     prequisites satisfied)."""
     do_not_show_slices=True
     ischooser=True
+    no_leaderboard=True
     def tasktitle(self):
         if self.showreports:
             return _("Run Reports")
@@ -212,7 +213,7 @@ class TaskChooser(Task):
             log.info(_("No task, apparently; not destroying."))
         if type(taskclass) is str:
             taskclass=getattr(tasks.tasks, taskclass)
-        self.task=taskclass(program=self.program,**kwargs) #filename
+        taskclass(program=self.program,**kwargs) #filename
         self.setmainwindow(self.task)
         if not self.task.exitFlag.istrue():# and not isinstance(self.task,Parse):
             self.task.deiconify()

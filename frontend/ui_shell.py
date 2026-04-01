@@ -634,6 +634,8 @@ class StatusFrame(ui.Frame):
         # log.info("Starting fieldsline w/task {} ({})".format(self.task,
         #                                                     type(self.task)))
         for ps in [self.program.settings.nominalps, self.program.settings.verbalps]:
+            if not ps:
+                continue
             self.newrow()
             line=ui.Frame(self.proseframe,row=self.irow,column=0,
                             columnspan=3,sticky='w') #3 cols is the width of frame
@@ -948,20 +950,12 @@ class StatusFrame(ui.Frame):
             self.leaderboard.destroy()
         self.leaderboard=ui.Frame(self,row=0,column=1,sticky='') #nesw
         #Given the line above, much of the below can go, but not all?
-        if (
-            # isinstance(self.program.task,Report) or
-            isinstance(self.program.task,TaskChooser) or
-            isinstance(self.program.task,WordCollection) or
-            isinstance(self.program.task,Parse)
-            ):
+        if self.program.task.no_leaderboard:
             return
-        if (
-            isinstance(self.program.task,Record) or
-            isinstance(self.program.task,JoinUFgroups) or
-            not self.program.taskchooser.doneenough['collectionlc']):
+        if self.program.task.icon_leaderboard or not self.program.taskchooser.doneenough['collectionlc']:
             self.makenoboard()
             return
-        if isinstance(self.program.task,TranscribeS):
+        if self.program.task.glyph_leaderboard:
             self.makeglyphtable()
             return
         profileori=self.program.slices.profile()
@@ -1308,12 +1302,12 @@ class TaskDressing(HasMenus,ui.Window):
     taskicon = 'icon'
     tasktitle = None
     def _taskchooserbutton(self):
-        if isinstance(self,TaskChooser) and not self.showreports:
+        if self.ischooser and not self.showreports:
             if self.datacollection:
                 text=_("Analyze & Decide")
             else:
                 text=_("Collect Data")
-        elif isinstance(self,Report):
+        elif self.isreport:
             text=_("Reports")
             self.program.taskchooser.showreports=True
         else:

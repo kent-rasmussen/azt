@@ -46,6 +46,7 @@ class Sound(backend.core.sound.Sound):
 
 class Record(backend.core.sound.Record, Sound):
     """UI task mixin for recording widgets and session windows."""
+    icon_leaderboard=True
     def makelabelsnrecordingbuttons(self,parent,node,r,c):
         t=node.formatted(self.analang,self.glosslangs)
         lxl=ui.Label(parent, text=t,row=r,column=c+1,sticky='w')

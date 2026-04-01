@@ -35,6 +35,7 @@ for name in ('Multicheck', 'Multislice', 'ResultWindow', 'Segments', 'Tone', '_'
         globals()[name] = LazyGlobal(name)
 
 class Report(object):
+    isreport=True
     def consultantcheck(self):
         self.program.settings.reloadstatusdata()
         self.bylocation=False

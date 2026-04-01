@@ -450,6 +450,7 @@ class WordCollection(Segments):
     """This task collects words, from the SIL CAWL, or one by one."""
     taskicon = 'iconWord'
     do_not_show_slices=True
+    no_leaderboard=True
     def dobuttonkwargs(self):
         if self.program.taskchooser.cawlmissing:
             fn=self.addCAWLentries
@@ -1092,6 +1093,7 @@ class Parse(Segments):
     do_not_show_slices=True
     show_parser_ui=True
     uses_second_forms=True
+    no_leaderboard=True
     def getgloss(self,ftype=None):
         return ', '.join([', '.join(self.parser.sense.formattedgloss(l,
                                                             ftype=ftype,

@@ -7,6 +7,18 @@ from frontend.ui_shell import TaskDressing
 from backend.core.lexicon import Tone, Segments #for makecvtok
 
 class Task(TaskDressing):
+    """Things that need to be, if not set elsewhere:"""
+    ischooser=False
+    isreport=False
+    uses_second_forms=False
+    do_not_show_slices=False
+    multislice_max=False
+    multicheck_scope=False
+    do_not_show_cvt=False
+    show_parser_ui=False
+    no_leaderboard=False
+    icon_leaderboard=False
+    glyph_leaderboard=False
     def makecvtok(self):
         """Should these not be done locally, in Tone and Segments?"""
         # log.info("cvt: {}".format(self.program.params.cvt()))
@@ -38,6 +50,7 @@ class Task(TaskDressing):
         if self.program.taskchooser == self:
             parent=self.program.tk_root
         else:
+            self.program.task = self
             parent=self.program.taskchooser
         self.analang=self.program.db.analang
         self.min_to_multicolumn=6 #don't use buttoncolumns with less
