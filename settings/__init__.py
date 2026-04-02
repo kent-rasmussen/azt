@@ -1577,8 +1577,8 @@ class Settings(SettingsUI):
             self.attrschanged.remove('interfacelang')
         if 'glosslangs' in self.attrschanged:
             self.attrschanged.remove('glosslangs')
-            if isinstance(self.program.taskchooser.task,WordCollection):
-                self.program.taskchooser.task.getword() #update UI for glosses
+            if isinstance(self.program.task,WordCollection):
+                self.program.task.getword() #update UI for glosses
         if 'secondformfield' in self.attrschanged:
             self.attrschanged.remove('secondformfield')
         soundattrs=self.settings['soundsettings']['attributes']

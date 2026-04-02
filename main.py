@@ -539,6 +539,98 @@ class App:
                     return di
     def scaledimage(image,pixels=150,scaleto='height'):
         image.scale(self.scale,pixels=pixels,scaleto=scaleto)
+    def task_base(self):
+        if not self.task:
+            return "No task"
+        cvt=self.params.cvt()
+        name=self.task.__class__.__name__
+        if cvt in name:
+            return name[:-len(cvt)]
+        else:
+            log.info(f"cvt {cvt} not in task name {name}; not sure how to derive a base")
+    def restart(self,filename=None):
+        log.info(_("Restarting from App"))
+        file.writefilename(self.filename)
+        for loc in [self,self.mainwindow]:
+            if hasattr(loc,'warning') and loc.warning.winfo_exists():
+                loc.warning.destroy()
+        # log.info("towrite: {}; writing: {}".format(self.towrite,self.writing))
+        if self.towrite: #Do even if not closed by user
+            log.info(_("Final write to lift"))
+            self.maybewrite(definitely=True)
+        try:
+            self.task.withdraw() #so users don't do stuff while waiting
+        except (AttributeError,tkinter.TclError):
+            log.info("There doesn't seem to be a task to hide; moving on.")
+        try:
+            self.task.runwindow.withdraw() #so users don't do stuff while waiting
+        except (AttributeError,tkinter.TclError):
+            log.info(_("There doesn't seem to be a runwindow to hide; moving on."))
+        while self.writing:
+            # log.info("towrite: {}; writing: {}; taskwrite: {}".format(
+            #     self.towrite,self.writing,self.program.taskchooser.writing))
+            log.info(_("Waiting to finish writing to lift"))
+            time.sleep(1)
+            self.check_if_write_done() #because after() isn't working here...
+        # log.info("Not writing to lift")
+        sysrestart()
+    def maybewrite(self,definitely=False):
+        write=self.timetowrite() #just call this once!
+        #this currently defaults to write every time asked; can up writeeverynwrites when stable.
+        if (write or definitely) and not self.writing:# or definitely:bad idea to overwrite write
+            self._write()
+        elif write:
+            # log.info(_("Already writing to lift; I trust this new mod will "
+            #         "get picked up later..."))
+            #This tells A−Z+T that something hasn't been written yet, so it will force a write on shutdown.
+            self.towrite=True
+            # self.schedule_write()
+    def schedule_write_check(self):
+        """Schedule `check_if_write_done()` function after x seconds."""
+        x=1 #delay (seconds)
+        # log.info("Scheduling check after {x} seconds")
+        self.tk_root.after(x*1000, self.check_if_write_done)
+        # log.info("Scheduled check")
+        # self.program.taskchooser.after(5000, self.check_if_write_done, t)
+    def check_if_write_done(self):
+        # If the thread has finished, allow another write.
+        # log.info("Checking if writing done to lift.")
+        try:
+            done=not self.writethread.is_alive()
+        except AttributeError:
+            done=True
+        except Exception as e:
+            log.info(_("Exception: {error}").format(error=e))
+            log.info(_("writethread: {exists}").format(exists=hasattr(self,'writethread')))
+        if done:
+            log.info(_("Done writing to lift ({status}).").format(status=self.program.db.write_OK))
+            if not self.program.db.write_OK:
+                ErrorNotice(_("Write to lift returned "
+                            "'{error}'.").format(error=self.program.db.write_error),wait=True)
+            self.writing=False
+            if self.towrite:
+                log.info(_("Found previous request to write; doing again."))
+                self._write()
+            else:
+                self.repo_commit()
+        else:
+            # Otherwise check again later.
+            # log.info("schedule_write_check writing to lift.")
+            self.schedule_write_check()
+    def timetowrite(self):
+        """only write to file every self.writeeverynwrites times you might.
+        current defaiult is every write possible (writeeverynwrites=1)
+        change this in your project settings if your power is stable and you
+        want to write less."""
+        self.writeable+=1 #and tally here each time this is asked
+        return not self.writeable%self.settings.writeeverynwrites
+    def _write(self):
+        self.towrite=False
+        self.writethread = threading.Thread(target=self.db.write)
+        self.writing=True
+        log.info(_("Writing to lift..."))
+        self.writethread.start()
+        self.schedule_write_check()
     def __init__(self,program):
         # globals()['program'] = self  # replace dict with App; LazyGlobal resolves to self
         sys.excepthook = self.handle_exception

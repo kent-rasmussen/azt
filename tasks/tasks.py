@@ -982,6 +982,7 @@ class ToneFrameDrafter(ui.Window):
         self.program.settings.storesettingsfile('toneframes')
 
 class Sort(backend.core.sorting_engine.Sort):
+    cvt_sensitive=True
     def dobuttonkwargs(self):
         return {'text':_("Sort!"),
                 'fn':self.runcheck,
@@ -1121,6 +1122,7 @@ class SortT(Sort,Tone,Task):
     """Doing stuff"""
 class Transcribe(Sound,Sort,Task):
     show_buttoncolumnsline=False
+    cvt_sensitive=True
     def updateerror(self):
         newvalue=self.transcriber.formfield.get()
         if newvalue == '':

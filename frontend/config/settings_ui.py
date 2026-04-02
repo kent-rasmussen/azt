@@ -278,24 +278,26 @@ class SettingsUI(object):
         if window:
             window.destroy()
     def setcvt(self,choice,window=None):
+        task_base=self.program.task_base()
         self.program.params.cvt(choice)
         self.attrschanged.append('cvt')
         if self.statusisup():
             self.program.mainwindow.status.updatecvt()
         self.refreshattributechanges()
-        if (not hasattr(self.program.taskchooser,'task') or
-                not self.program.taskchooser.task.mainwindow):
+        if not self.program.task:
             log.info(_("No task, apparently, so not worried about changing cvt"))
-        elif isinstance(self.program.taskchooser.task,Transcribe):
-            log.info(_("Switching Transcribe tasks"))
-            newtaskclass=getattr(sys.modules[__name__],'Transcribe'+choice)
+        elif self.program.task.cvt_sensitive: #Sort and Transcribe
+        # isinstance(self.program.task,Transcribe):
+            log.info(_("Switching {task_base} tasks").format(task_base=task_base))
+            # newtaskclass=getattr(sys.modules[__name__],task_base+choice)
+            newtaskclass=task_base+choice
             self.program.status.makecheckok() #this is intentionally broad: *any* check
             self.program.taskchooser.maketask(newtaskclass)
-        elif isinstance(self.program.taskchooser.task,Sort):
-            # log.info("Switching Sort tasks")
-            newtaskclass=getattr(sys.modules[__name__],'Sort'+choice)
-            self.program.status.makecheckok() #this is intentionally broad: *any* check
-            self.program.taskchooser.maketask(newtaskclass)
+        # elif isinstance(self.program.task,Sort):
+        #     # log.info("Switching Sort tasks")
+        #     newtaskclass=getattr(sys.modules[__name__],'Sort'+choice)
+        #     self.program.status.makecheckok() #this is intentionally broad: *any* check
+        #     self.program.taskchooser.maketask(newtaskclass)
         else:
             log.info(_("Not Sorting or Transcribing; chilling with cvt change."))
         if window:
@@ -316,10 +318,10 @@ class SettingsUI(object):
             self.program.mainwindow.status.updatetonegroup()
         else:
             self.program.mainwindow.status.updatecvgroup()
-        if isinstance(self.program.taskchooser.task,Sort) and (
-                hasattr(self.program.taskchooser.task,'menu') and
-                        self.program.taskchooser.task.menu):
-            self.program.taskchooser.task.menubar.redoadvanced()
+        if isinstance(self.program.task,Sort) and (
+                hasattr(self.program.task,'menu') and
+                        self.program.task.menu):
+            self.program.task.menubar.redoadvanced()
         window.destroy()
         log.debug(_("group {group} set: {val}").format(group=choice, val=self.program.status.group()))
     def setgroup_comparison(self,choice,window):
@@ -355,7 +357,7 @@ class SettingsUI(object):
         self.program.mainwindow.status.updatemaxpss()
         window.destroy()
     def setmulticheckscope(self,choice,window):
-        self.cvtstodo=self.program.taskchooser.task.cvtstodo=choice
+        self.cvtstodo=self.program.task.cvtstodo=choice
         self.program.mainwindow.status.updatemulticheckscope()
         window.destroy()
     def setglosslang(self,choice,window):

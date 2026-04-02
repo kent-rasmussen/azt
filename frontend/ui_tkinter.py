@@ -686,6 +686,13 @@ class Childof():
             # else:
             #     log.info(f"parent {type(parent)} (of {type(self)}) doesn't "
             #             f"have attr {attr}, skipping inheritance")
+    def is_descendant_of(self,w):
+        # log.info(f"{self.winfo_toplevel()=}")
+        # log.info(f"{self.parent=}")
+        while (y:=self.parent) not in [w,self.winfo_toplevel()]:
+            return y.is_descendant_of(w)
+        if w == y:
+            return True
     def __init__(self, parent, *args, **kwargs): #because this is used everywhere.
         self.parent=parent
         self.inherit()

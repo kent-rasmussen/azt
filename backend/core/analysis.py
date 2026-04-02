@@ -109,7 +109,7 @@ class ExampleDict(dict):
     def sensesinslicegroup(self,group,check):
         """Convert to senses before return"""
         #This returns all the senses with a given tone value
-        senses=self.program.taskchooser.task.getsensesingroup(check,group)
+        senses=self.program.task.getsensesingroup(check,group)
         if not senses:
             log.error("There don't seem to be any sensids in this check tone "
                 "group, so I can't get you an example. ({check} {group})"

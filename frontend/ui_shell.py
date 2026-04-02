@@ -926,10 +926,18 @@ class StatusFrame(ui.Frame):
         self.finalbuttons()
     def finalbuttons(self):
         # self.opts['row']+=6
+        if self.is_descendant_of(self.program.taskchooser):
+            return
         self.newrow()
+        # log.info(f"{self.is_descendant_of(self.program.taskchooser)=}")
         try:
+            # log.info(f"{self.program.mainwindow=}")
+            # assert not self.program.mainwindow.ischooser
+            # log.info(f"{self.program.task=}")
             kwargs=self.program.task.dobuttonkwargs()
             self.bigbutton=self.button(**kwargs)
+        # except AssertionError:
+        #     pass
         except Exception as e:
             log.error(f"Problem: {e}")
     def makesecondfieldsOK(self):
@@ -1262,7 +1270,7 @@ class StatusFrame(ui.Frame):
         self.analangline()
         self.glosslangline()
         # if isinstance(self.task,Segments) and not isinstance(self.task,TranscribeS):
-        if not hasattr(self.program,'task') or getattr(self.program.task,'ischooser'):
+        if not self.program.task or self.program.task.ischooser:
             return
         if getattr(self.program.task,'show_second_fields'):
             self.fieldsline()
@@ -1343,7 +1351,7 @@ class TaskDressing(HasMenus,ui.Window):
                                     row=0,column=2,
                                     sticky='ne')
     def shutdowntask(self):
-        self.program.taskchooser.task=self # in case this hasn't been set yet
+        self.program.task=self # in case this hasn't been set yet
         self.withdraw()
         self.program.taskchooser.gettask()
     def mainlabelrelief(self,relief=None,refresh=False,event=None):
@@ -1351,7 +1359,7 @@ class TaskDressing(HasMenus,ui.Window):
         reliefs=["raised", "groove", "sunken", "ridge", "flat"]
         if self.mainrelief and self.mainrelief in reliefs:
             self.program.taskchooser.mainreliefnext=\
-            self.program.taskchooser.task.mainreliefnext=\
+            self.program.task.mainreliefnext=\
             self.mainreliefnext=reliefs[(reliefs.index(self.mainrelief)+1
                                                             )%len(reliefs)]
         log.info(_("setting button relief to {relief}, with refresh={refresh}").format(relief=relief,
@@ -1359,7 +1367,7 @@ class TaskDressing(HasMenus,ui.Window):
         # None "raised" "groove" "sunken" "ridge" "flat"
         self.status.mainrelief=\
         self.program.taskchooser.mainrelief=\
-        self.program.taskchooser.task.mainrelief=\
+        self.program.task.mainrelief=\
         self.mainrelief=relief
     def _showbuttons(self,event=None):
         todo=getattr(self,'mainreliefnext','flat')
@@ -1482,9 +1490,32 @@ class TaskDressing(HasMenus,ui.Window):
         # #For convenience:
         # self.analang=self.program.params.analang()
     def on_quit(self,**kwargs):
-        if hasattr(self, 'makestatusframe_after_id'):
-            self.after_cancel(self.makestatusframe_after_id)
-        super().on_quit(**kwargs)
+        # if hasattr(self, 'makestatusframe_after_id'):
+        #     self.after_cancel(self.makestatusframe_after_id)
+        if self.program.mainwindow is self:
+            self.program.mainwindow=None #don't leave reference lying around
+        super().on_quit(**kwargs)    
+    def setmainwindow(self,window=None):
+        """This is really only useful for the taskChooser; others live or die"""
+        if window is None:
+            window=self
+        # make an object reference, and a quick boolean:
+        try:
+            self.program.mainwindow.ismainwindow=False #keep only one of these
+        except AttributeError:
+            # no problem if self.program.mainwindow doesn't exist yet
+            pass
+        self.program.mainwindow=window
+        self.program.mainwindow.ismainwindow=True 
+        if not self.program.mainwindow.ischooser:
+            self.i_am_the_task()
+    def i_am_the_task(self):
+        self.program.task=self
+        self.program.status.task(self)
+
+    def makestatusframe(self,dict=None):
+        if self.program.taskchooser.donew['collectionlc']:
+            self.makeeverythingok()
         if self.exitFlag.istrue():
             return
         hidewhileworking=self.winfo_viewable()
@@ -1990,17 +2021,18 @@ class TaskDressing(HasMenus,ui.Window):
                     setattr(self,k,False)
         # Make the actual window
         ui.Window.__init__(self,parent,withdrawn=True)
-        self.mainwindow=True
+        self.setmainwindow()
         self.maketitle()
         ui.ContextMenu(self)
         self.tableiteration=0
         self.makestatusframe()
-        self.withdraw() #made visible by chooser when complete
+        # self.withdraw() #made visible by chooser when complete
         self._taskchooserbutton()
         self._removemenus() #self.correlatemenus()
         self.takekioskscreen()
         self.thread_names=list()
-
+        if not self.exitFlag.istrue():
+            self.deiconify()
 class SortButtonFrame(ui.ScrollingFrame):
     """This is the frame of sort group buttons."""
     def getanotherskip(self,parent,vardict):

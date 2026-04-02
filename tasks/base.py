@@ -19,6 +19,7 @@ class Task(TaskDressing):
     no_leaderboard=False
     icon_leaderboard=False
     glyph_leaderboard=False
+    cvt_sensitive=False
     def makecvtok(self):
         """Should these not be done locally, in Tone and Segments?"""
         # log.info("cvt: {}".format(self.program.params.cvt()))
@@ -56,4 +57,5 @@ class Task(TaskDressing):
         self.min_to_multicolumn=6 #don't use buttoncolumns with less
         self.makeeverythingok()
         TaskDressing.__init__(self, parent) #window
-        log.info(f"Done initializing {self.__class__.__name__}.")
+        log.info(f"Done initializing {self.__class__.__name__}."
+                 f"(base: {self.program.task_base()})")

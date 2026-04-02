@@ -124,16 +124,22 @@ class TaskChooser(Task):
         for ps in self.program.db.pss:
             self.guidsvalidbyps[ps]=self.program.db.get('guidbyps',ps=ps)
     def gettask(self,event=None):
-        """This function allows the user to select from any of tasks whose
-        prerequisites are minimally satisfied."""
+        """This function pulls user out of a task, to select from any 
+        of tasks whose prerequisites are minimally satisfied."""
         # if self.reports:
         self.withdraw()
-        try:
-                self.status.bigbutton.destroy()
-        except AttributeError:
-            log.info(_("There doesn't seem to be a big button to destroy."))
+        # try:
+        #         self.status.bigbutton.destroy()
+        # except AttributeError:
+        #     log.info(_("There doesn't seem to be a big button to destroy."))
         if not self.showreports:
             self.status.finalbuttons()
+        """There are three possibilities here:
+        1. a task sent us here
+        2. a report sent us here
+        3. TaskChooser sent us here (switching between page types)
+        """
+        self.i_am_mainwindow() #now, always true
         if not self.mainwindow:
             # self.correlatemenus() #not even if moving to this window
             self.unsetmainwindow() #first, so the self.program stays alive
@@ -179,7 +185,7 @@ class TaskChooser(Task):
                 log.info(_("Task {task} doesn't seem to have a tooltip.").format(task=o[0]))
         for c in range(bpr):
             self.optionsframe.grid_columnconfigure(c, weight=1, uniform=c)
-        self.setmainwindow(self) #deiconify here
+        self.setmainwindow() 
         if self.showreports:
             self.showreports=False #just do this once each button click
             self.showingreports=True
@@ -203,41 +209,46 @@ class TaskChooser(Task):
             else:
                 self.maketask(self.program.default_task)
                 #optionlist[-1][0]) #last item, the code
-    def maketask(self,taskclass,**kwargs): #,filename=None
-        self.unsetmainwindow()
+    def finish_task(self):
+        # self.unsetmainwindow() # not redundant; fires without gettask
         try:
-            if self.task.waiting():
-                self.task.waitdone()
-            self.task.on_quit() #destroy and set flag
+            if self.program.task.waiting():
+                self.program.task.waitdone()
+            self.program.task.on_quit() #destroy and set flag
+            self.program.task=None #don't look for this again
         except AttributeError:
             log.info(_("No task, apparently; not destroying."))
+    def maketask(self,taskclass,**kwargs): #,filename=None
         if type(taskclass) is str:
             taskclass=getattr(tasks.tasks, taskclass)
         taskclass(program=self.program,**kwargs) #filename
-        self.setmainwindow(self.task)
-        self.program.status.task(self.task)
-        if not self.task.exitFlag.istrue():# and not isinstance(self.task,Parse):
-            self.task.deiconify()
+        # self.setmainwindow(self.task)
+        # self.program.status.task(self.task)
+        # if not self.task.exitFlag.istrue():# and not isinstance(self.task,Parse):
+        #     self.task.deiconify()
+    def i_am_mainwindow(self):
+        if self.program.mainwindow is not self:
+            self.unsetmainwindow()
+            self.setmainwindow()
+        self.finish_task()
     def unsetmainwindow(self):
         """self.mainwindowis tracks who the mainwindow is for the chooser,
         x.mainwindow tracks if the object is the mainwindow, so it will
         exit the program on closure appropriately. This fn keeps them
         synchronized."""
-        if hasattr(self,'mainwindow'):
+        if hasattr(self.program,'task'):
+            self.finish_task()
+        if hasattr(self.program,'mainwindow'):
             try:
                 # we want to keep only one window thinking it ismainwindow at a time:
-                self.mainwindow.ismainwindow=False #OK if self.mainwindow isn't boolean
-                self.mainwindow.withdraw() #only works if winfo_exists()
+                self.program.mainwindow.ismainwindow=False #OK if self.mainwindow isn't boolean
+                self.program.mainwindow.withdraw() #only works if winfo_exists()
             except AttributeError:
                 pass
             finally:
-                self.program.mainwindow=self.mainwindow=None #this could cause a crash...
+                self.program.mainwindow=None #this could cause a crash...
         else:
             log.info(_("No mainwindow found."))
-    def setmainwindow(self,window):
-        """This is really only useful for the taskChooser; others live or die"""
-        self.program.mainwindow=self.mainwindow=window
-        self.mainwindow.ismainwindow=True #keep only one of these
     def makeoptions(self):
         """This function (and probably a few dependent functions, maybe
         another class) provides a list of functions with prerequisites
@@ -355,7 +366,7 @@ class TaskChooser(Task):
                                                 log=conversionlogfile),
                     title=_("Conversion Done!"),
                     wait=True)
-            self.restart()
+            self.program.restart()
         except Exception as e:
             ErrorNotice(_(f"There was a problem converting fields as you asked; you "
                 "should fix this before moving on."))
@@ -549,31 +560,6 @@ class TaskChooser(Task):
             # log.info("'verification' not in '{}'".format(f))
         log.info(_("Analysis of what you're done with: {status}").format(status=self.donew))
         log.info(_("You're done enough with: {status}").format(status=self.doneenough))
-    def restart(self,filename=None):
-        log.info(_("Restarting from TaskChooser"))
-        file.writefilename(self.filename)
-        if hasattr(self,'warning') and self.warning.winfo_exists():
-            self.warning.destroy()
-        # log.info("towrite: {}; writing: {}".format(self.towrite,self.writing))
-        if self.towrite: #Do even if not closed by user
-            log.info(_("Final write to lift"))
-            self.maybewrite(definitely=True)
-        try:
-            self.task.withdraw() #so users don't do stuff while waiting
-        except (AttributeError,tkinter.TclError):
-            log.info("There doesn't seem to be a task to hide; moving on.")
-        try:
-            self.task.runwindow.withdraw() #so users don't do stuff while waiting
-        except (AttributeError,tkinter.TclError):
-            log.info(_("There doesn't seem to be a runwindow to hide; moving on."))
-        while self.writing:
-            # log.info("towrite: {}; writing: {}; taskwrite: {}".format(
-            #     self.towrite,self.writing,self.program.taskchooser.writing))
-            log.info(_("Waiting to finish writing to lift"))
-            time.sleep(1)
-            self.check_if_write_done() #because after() isn't working here...
-        # log.info("Not writing to lift")
-        sysrestart()
     def changedatabase(self):
         log.debug("Preparing to change database name.")
         try:
@@ -596,68 +582,11 @@ class TaskChooser(Task):
         log.info(_("Current database: {name}").format(name=self.filename))
         if self.filename and curname != self.filename:
             log.info(_("User selected a new database; restarting with it."))
-            self.restart()
+            self.program.restart()
         else:
             log.info(_("User didn't select a new database; continuing."))
-            self.task.deiconify()
+            self.program.task.deiconify()
         # self.restart(self.filename)
-    def timetowrite(self):
-        """only write to file every self.writeeverynwrites times you might.
-        current defaiult is every write possible (writeeverynwrites=1)
-        change this in your project settings if your power is stable and you
-        want to write less."""
-        self.writeable+=1 #and tally here each time this is asked
-        return not self.writeable%self.program.settings.writeeverynwrites
-    def schedule_write_check(self):
-        """Schedule `check_if_write_done()` function after x seconds."""
-        x=1
-        # log.info("Scheduling check after {x} seconds")
-        self.program.tk_root.after(x*1000, self.check_if_write_done)
-        # log.info("Scheduled check")
-        # self.program.taskchooser.after(5000, self.check_if_write_done, t)
-    def check_if_write_done(self):
-        # If the thread has finished, allow another write.
-        # log.info("Checking if writing done to lift.")
-        try:
-            done=not self.writethread.is_alive()
-        except AttributeError:
-            done=True
-        except Exception as e:
-            log.info(_("Exception: {error}").format(error=e))
-            log.info(_("writethread: {exists}").format(exists=hasattr(self,'writethread')))
-        if done:
-            log.info(_("Done writing to lift ({status}).").format(status=self.program.db.write_OK))
-            if not self.program.db.write_OK:
-                ErrorNotice(_("Write to lift returned "
-                            "'{error}'.").format(error=self.program.db.write_error),wait=True)
-            self.writing=False
-            if self.towrite:
-                log.info(_("Found previous request to write; doing again."))
-                self._write()
-            else:
-                self.program.repo_commit()
-        else:
-            # Otherwise check again later.
-            # log.info("schedule_write_check writing to lift.")
-            self.schedule_write_check()
-    def _write(self):
-        self.towrite=False
-        self.writethread = threading.Thread(target=self.program.db.write)
-        self.writing=True
-        log.info(_("Writing to lift..."))
-        self.writethread.start()
-        self.schedule_write_check()
-    def maybewrite(self,definitely=False):
-        write=self.timetowrite() #just call this once!
-        #this currently defaults to write every time asked; can up writeeverynwrites when stable.
-        if (write or definitely) and not self.writing:# or definitely:bad idea to overwrite write
-            self._write()
-        elif write:
-            # log.info(_("Already writing to lift; I trust this new mod will "
-            #         "get picked up later..."))
-            #This tells A−Z+T that something hasn't been written yet, so it will force a write on shutdown.
-            self.towrite=True
-            # self.schedule_write()
     def usbcheck(self):
         if self.program.splash.exitFlag.istrue():
             return
@@ -681,6 +610,7 @@ class TaskChooser(Task):
     def __init__(self,program):
         self.program=program
         self.program.taskchooser=self
+        self.program.task=None #so far; make this attribute there, though
         self.towrite=False
         self.writing=False
         self.datacollection=True # everyone starts here?
