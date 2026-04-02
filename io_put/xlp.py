@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # coding=UTF-8
-import gettext
-_ = gettext.gettext
+from utilities.i18n import _
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 from xml.etree import ElementTree as ET

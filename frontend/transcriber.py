@@ -5,8 +5,7 @@ from frontend import ui_tkinter as ui
 from utilities import rx, logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
-from utilities.utilities import LazyGlobal
-globals()['_'] = LazyGlobal('_')
+from utilities.i18n import _
 class Transcriber(ui.Frame):
     def addchar(self,x):
         if x in ['','∅'] or self.formfield.get() == '∅':

@@ -12,23 +12,24 @@ from io_put import export
 from tasks.alphabet_chart import AlphabetChart
 from tasks.alphabet_comparison import AlphabetComparisonPages
 from utilities.utilities import LazyGlobal
+from utilities.i18n import _
 log = logsetup.getlog(__name__)
 
 from frontend.error_notice import ErrorNotice
 
 def __getattr__(name):
-    if name in ('_', 'nn', 'unlist',
+    if name in ('unlist',
                 'SortGroupButtonFrame', 'SortGlyphGroupButtonFrame',
                 'Alphabet', 'sound', 'sound_ui',
-                'transcriber', 't'):
+                'transcriber'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
-for name in ('_', 'nn', 'unlist',
+for name in ('unlist',
              'SortGroupButtonFrame', 'SortGlyphGroupButtonFrame',
              'Alphabet', 'sound', 'sound_ui',
-             'transcriber', 't'):
+             'transcriber'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 

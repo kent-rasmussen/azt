@@ -12,7 +12,7 @@ import difflib
 import threading
 from io_put import lift
 from utilities.utilities import *
-globals()['_'] = LazyGlobal('_')
+from utilities.i18n import _
 class AffixCollector(object):
     """This class does just one thing: call parse to collect affixes
     automatically to populate the catalog."""

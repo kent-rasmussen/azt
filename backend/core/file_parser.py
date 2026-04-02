@@ -1,22 +1,11 @@
 # coding=UTF-8
 from utilities.utilities import *
+from utilities.i18n import _
 from utilities import logsetup, file
 from io_put import lift
 log=logsetup.getlog(__name__)
 
 from frontend.error_notice import ErrorNotice
-
-def __getattr__(name):
-    # Lazy load globals from main
-    if name in ('_',):
-        import main
-        return getattr(main, name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-# Mirror main globals lazily to allow bare-name access
-for name in ('_',):
-    if name not in globals():
-        globals()[name] = LazyGlobal(name)
 
 class FileParser(object):
     """This class parses the LIFT file, once we know which it is."""

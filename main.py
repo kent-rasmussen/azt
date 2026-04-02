@@ -92,7 +92,7 @@ import sys
 """for tr:"""
 import locale
 import gettext
-_ = gettext.gettext  # initial fallback; updated by interfacelang() when translation loads
+from utilities.i18n import _, set_translator
 import sys
 import os
 # import pprint #for settings and status files, etc.
@@ -262,7 +262,7 @@ class App:
                 lang=code
         if lang and lang != curlang and lang in self.i18n: # or not magic:
             self.i18n[lang].install()
-            _ = self.i18n[lang].gettext  # keep main._ updated for LazyGlobal access
+            set_translator(self.i18n[lang].gettext)
             file.uilang(lang)
             log.info(_("Set Interface language: {lang}").format(lang=lang))
             return lang

@@ -1,6 +1,5 @@
 # coding=UTF-8
-import gettext
-_ = gettext.gettext
+from utilities.i18n import _
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 
@@ -31,13 +30,13 @@ from frontend.error_notice import ErrorNotice
 
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('Analysis', 'Settings', 'Sort', 'StatusFrame', 'TaskChooser', '_', 'interfacelang', 'main', 'openweburl', 'unlist'):
+    if name in ('Analysis', 'Settings', 'Sort', 'StatusFrame', 'TaskChooser', 'interfacelang', 'main', 'unlist'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('Analysis', 'Settings', 'Sort', 'StatusFrame', 'TaskChooser', '_', 'interfacelang', 'main', 'openweburl', 'unlist'):
+for name in ('Analysis', 'Settings', 'Sort', 'StatusFrame', 'TaskChooser', 'interfacelang', 'main', 'unlist'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 

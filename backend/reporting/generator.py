@@ -22,15 +22,17 @@ log=logsetup.getlog(__name__)
 
 from frontend.error_notice import ErrorNotice
 
+from utilities.i18n import _
+
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('Multicheck', 'Multislice', 'ResultWindow', 'Segments', 'Tone', '_', 'callerfn', 'logfinished', 'nn', 'nowruntime', 'xlp'):
+    if name in ('Multicheck', 'Multislice', 'ResultWindow', 'Segments', 'Tone', 'logfinished', 'nowruntime', 'xlp'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('Multicheck', 'Multislice', 'ResultWindow', 'Segments', 'Tone', '_', 'callerfn', 'logfinished', 'nn', 'nowruntime', 'xlp'):
+for name in ('Multicheck', 'Multislice', 'ResultWindow', 'Segments', 'Tone', 'logfinished', 'nowruntime', 'xlp'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 

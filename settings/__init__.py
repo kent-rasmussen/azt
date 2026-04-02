@@ -108,20 +108,20 @@ _log = _logsetup.getlog(__name__)
 
 from frontend.error_notice import ErrorNotice
 
+from utilities.i18n import _
+
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('_',
-                'sysrestart', 'sysshutdown', 'rx', 'interfacelang', 'nowruntime',
-                'logfinished', 'nn', 'unlist', 'Glosslangs', 'ToneFrames',
+    if name in ('rx', 'interfacelang', 'nowruntime',
+                'logfinished', 'unlist', 'Glosslangs', 'ToneFrames',
                 'SliceDict', 'StatusDict', 'Tone', 'Segments', 'WordCollection',
                 'Parse'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
-for _name in ('_',
-              'sysrestart', 'sysshutdown', 'rx', 'interfacelang', 'nowruntime',
-              'logfinished', 'nn', 'unlist', 'Glosslangs', 'ToneFrames',
+for _name in ('rx', 'interfacelang', 'nowruntime',
+              'logfinished', 'unlist', 'Glosslangs', 'ToneFrames',
               'SliceDict', 'StatusDict', 'Tone', 'Segments', 'WordCollection',
               'Parse'):
     if _name not in globals():

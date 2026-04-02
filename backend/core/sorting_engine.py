@@ -23,15 +23,19 @@ log=logsetup.getlog(__name__)
 
 from frontend.error_notice import ErrorNotice
 
+from utilities.i18n import _
+from backend.core.lexicon import Tone
+from frontend.ui_shell import SortGroupButtonFrame
+
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('SortGroupButtonFrame', 'Tone', '_', 'scaleimageifthere'):
+    if name in ('scaleimageifthere',):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('SortGroupButtonFrame', 'Tone', '_', 'scaleimageifthere'):
+for name in ('scaleimageifthere',):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 

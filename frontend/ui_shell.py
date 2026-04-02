@@ -1,7 +1,6 @@
 # coding=UTF-8
 """This module is an interface to the base frontend classes."""
-import gettext
-_ = gettext.gettext
+from utilities.i18n import _
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 import sys
@@ -22,9 +21,9 @@ from frontend.error_notice import ErrorNotice
 
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('_', 'sysrestart', 'main',
-                'interfacelang', 'nn', 'unlist', 'rx', 'exampletype',
-                'grouptype', 't', 'openweburl', 'scaleimageifthere',
+    if name in ('main',
+                'interfacelang', 'unlist', 'rx',
+                'scaleimageifthere',
                 'loadCAWL', 'saveimagefile', 'TranscribeS',
                 'Multislice', 'Multicheck', 'Tone', 'Segments',
                 'WordCollection', 'Parse', 'Sort',
@@ -37,9 +36,9 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('_', 'sysrestart', 'main',
-             'interfacelang', 'nn', 'unlist', 'rx', 'exampletype',
-             'grouptype', 't', 'openweburl', 'scaleimageifthere',
+for name in ('main',
+             'interfacelang', 'unlist', 'rx',
+             'scaleimageifthere',
              'loadCAWL', 'saveimagefile', 'TranscribeS',
              'Multislice', 'Multicheck', 'Tone', 'Segments',
              'WordCollection', 'Parse', 'Sort',
@@ -1495,24 +1494,21 @@ class TaskDressing(HasMenus,ui.Window):
         if self.program.mainwindow is self:
             self.program.mainwindow=None #don't leave reference lying around
         super().on_quit(**kwargs)    
-    def setmainwindow(self,window=None):
-        """This is really only useful for the taskChooser; others live or die"""
-        if window is None:
-            window=self
+    def setmainwindow(self):
         # make an object reference, and a quick boolean:
+        # no problem if self.program.mainwindow doesn't exist yet
         try:
             self.program.mainwindow.ismainwindow=False #keep only one of these
+            self.program.mainwindow.withdraw() #until destroyed
         except AttributeError:
-            # no problem if self.program.mainwindow doesn't exist yet
             pass
-        self.program.mainwindow=window
+        self.program.mainwindow=self
         self.program.mainwindow.ismainwindow=True 
-        if not self.program.mainwindow.ischooser:
+        if not self.ischooser:
             self.i_am_the_task()
     def i_am_the_task(self):
         self.program.task=self
         self.program.status.task(self)
-
     def makestatusframe(self,dict=None):
         if self.program.taskchooser.donew['collectionlc']:
             self.makeeverythingok()

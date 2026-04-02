@@ -6,10 +6,9 @@ import tkinter
 from frontend import ui_tkinter as ui
 from tasks.base import Task
 import tasks.tasks
-from utilities.utilities import LazyGlobal
+from utilities.utilities import LazyGlobal, sysrestart, sysshutdown, openweburl
+from utilities.i18n import _
 from utilities import file
-import gettext
-_ = gettext.gettext
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 
@@ -18,8 +17,8 @@ from frontend.error_notice import ErrorNotice
 
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('_', 'nowruntime', 'logfinished', 'sysrestart', 'sysshutdown',
-                'LiftChooser', 'openweburl', 'main',
+    if name in ('nowruntime', 'logfinished',
+                'LiftChooser', 'main',
                 'Sound', 'SortV',
                 'ExportData', 'AlphabetChart', 'AlphabetComparisonPages',
                 'ReportCitationBackground', 'ReportCitationMulticheckBackground',
@@ -38,8 +37,8 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('_', 'nowruntime', 'logfinished', 'sysrestart', 'sysshutdown',
-             'LiftChooser', 'openweburl', 'main',
+for name in ('nowruntime', 'logfinished',
+             'LiftChooser', 'main',
              'Sound', 'SortV',
              'ExportData', 'AlphabetChart', 'AlphabetComparisonPages',
              'ReportCitationBackground', 'ReportCitationMulticheckBackground',
@@ -139,11 +138,9 @@ class TaskChooser(Task):
         2. a report sent us here
         3. TaskChooser sent us here (switching between page types)
         """
-        self.i_am_mainwindow() #now, always true
-        if not self.mainwindow:
-            # self.correlatemenus() #not even if moving to this window
-            self.unsetmainwindow() #first, so the self.program stays alive
-        elif not self.showingreports and not self.showreports:
+        # if not self.mainwindow:
+        self.i_am_mainwindow() #tests there
+        if not self.showingreports and not self.showreports:
             self.datacollection=not self.datacollection
         if self.showingreports:
             self.showingreports=False
@@ -227,28 +224,28 @@ class TaskChooser(Task):
         # if not self.task.exitFlag.istrue():# and not isinstance(self.task,Parse):
         #     self.task.deiconify()
     def i_am_mainwindow(self):
-        if self.program.mainwindow is not self:
-            self.unsetmainwindow()
+        log.info("i_am_mainwindow: {self.mainwindow=} {self.program.mainwindow=}")
+        if not self.mainwindow:
             self.setmainwindow()
-        self.finish_task()
-    def unsetmainwindow(self):
-        """self.mainwindowis tracks who the mainwindow is for the chooser,
-        x.mainwindow tracks if the object is the mainwindow, so it will
-        exit the program on closure appropriately. This fn keeps them
-        synchronized."""
-        if hasattr(self.program,'task'):
             self.finish_task()
-        if hasattr(self.program,'mainwindow'):
-            try:
-                # we want to keep only one window thinking it ismainwindow at a time:
-                self.program.mainwindow.ismainwindow=False #OK if self.mainwindow isn't boolean
-                self.program.mainwindow.withdraw() #only works if winfo_exists()
-            except AttributeError:
-                pass
-            finally:
-                self.program.mainwindow=None #this could cause a crash...
-        else:
-            log.info(_("No mainwindow found."))
+    # def unsetmainwindow(self):
+    #     """self.mainwindowis tracks who the mainwindow is for the chooser,
+    #     x.mainwindow tracks if the object is the mainwindow, so it will
+    #     exit the program on closure appropriately. This fn keeps them
+    #     synchronized."""
+    #     if hasattr(self.program,'task'):
+    #         self.finish_task()
+    #     if hasattr(self.program,'mainwindow'):
+    #         try:
+    #             # we want to keep only one window thinking it ismainwindow at a time:
+    #             self.program.mainwindow.ismainwindow=False #OK if self.mainwindow isn't boolean
+    #             self.program.mainwindow.withdraw() #only works if winfo_exists()
+    #         except AttributeError:
+    #             pass
+    #         finally:
+    #             self.program.mainwindow=None #this could cause a crash...
+    #     else:
+    #         log.info(_("No mainwindow found."))
     def makeoptions(self):
         """This function (and probably a few dependent functions, maybe
         another class) provides a list of functions with prerequisites
@@ -620,7 +617,7 @@ class TaskChooser(Task):
         assert hasattr(self.program,'settings')
         # self.interfacelangs=self.getinterfacelangs()
         self.program.splash.progress(55)
-        self.setmainwindow(self)
+        self.setmainwindow()
         # self.program.settings.post_lift_init()
         self.program.splash.progress(65)
         self.whatsdone()

@@ -1,10 +1,8 @@
 # coding=UTF-8
 from frontend import ui_tkinter as ui
-from utilities.utilities import LazyGlobal
+from utilities.i18n import _
 from utilities import logsetup
 log = logsetup.getlog(__name__)
-
-globals()['_'] = LazyGlobal('_')
 
 class ErrorNotice(ui.Window):
     """this is for things that I want the user to know, without having

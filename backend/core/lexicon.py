@@ -24,15 +24,17 @@ log=logsetup.getlog(__name__)
 
 from frontend.error_notice import ErrorNotice
 
+from utilities.i18n import _
+
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('Analysis', 'ImageFrame', 'Sort', 'TranscribeC', 'TranscribeV', '_', 'loadCAWL', 'rx', 'saveimagefile', 'scaleimageifthere'):
+    if name in ('Analysis', 'ImageFrame', 'Sort', 'TranscribeC', 'TranscribeV', 'loadCAWL', 'rx', 'saveimagefile', 'scaleimageifthere'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('Analysis', 'ImageFrame', 'Sort', 'TranscribeC', 'TranscribeV', '_', 'loadCAWL', 'rx', 'saveimagefile', 'scaleimageifthere'):
+for name in ('Analysis', 'ImageFrame', 'Sort', 'TranscribeC', 'TranscribeV', 'loadCAWL', 'rx', 'saveimagefile', 'scaleimageifthere'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 

@@ -21,15 +21,17 @@ log=logsetup.getlog(__name__)
 
 from frontend.error_notice import ErrorNotice
 
+from utilities.i18n import _
+
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('Sort', 'Tone', '_', 'dictofchilddicts', 'dictscompare', 'exampletype', 'flatten', 'grouptype', 'rx', 'unlist'):
+    if name in ('Sort', 'Tone', 'rx', 'unlist'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('Sort', 'Tone', '_', 'dictofchilddicts', 'dictscompare', 'exampletype', 'flatten', 'grouptype', 'rx', 'unlist'):
+for name in ('Sort', 'Tone', 'rx', 'unlist'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 

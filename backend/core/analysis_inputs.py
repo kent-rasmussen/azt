@@ -1,6 +1,5 @@
 # coding=UTF-8
-import gettext
-_ = gettext.gettext
+from utilities.i18n import _
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 
@@ -21,21 +20,11 @@ from io_put import lift
 # import json
 # import itertools
 # import inspect
-# import multiprocessing 
+# import multiprocessing
 
 from frontend.error_notice import ErrorNotice
 
-def __getattr__(name):
-    # Lazy load globals from main
-    if name in ('Tone', '_'):
-        import main
-        return getattr(main, name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-# Mirror main globals lazily to allow bare-name access
-for name in ('Tone', '_'):
-    if name not in globals():
-        globals()[name] = LazyGlobal(name)
+from backend.core.lexicon import Tone
 
 class Glosslangs(list):
     """docstring for Glosslangs."""

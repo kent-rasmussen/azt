@@ -2,19 +2,9 @@
 from tasks.base import Task
 from backend.core.alphabet import AlphabetComparisonData
 from frontend.alphabet_comparison import PageSetupUI
-from utilities.utilities import LazyGlobal
+from utilities.i18n import _
 from utilities import logsetup
 log = logsetup.getlog(__name__)
-
-def __getattr__(name):
-    if name in ('_'):
-        import main
-        return getattr(main, name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-for name in ('_'):
-    if name not in globals():
-        globals()[name] = LazyGlobal(name)
 
 class AlphabetComparisonPages(Task, AlphabetComparisonData, PageSetupUI):
     my_settings = [
