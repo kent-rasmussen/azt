@@ -215,6 +215,7 @@ class TaskChooser(Task):
             taskclass=getattr(tasks.tasks, taskclass)
         taskclass(program=self.program,**kwargs) #filename
         self.setmainwindow(self.task)
+        self.program.status.task(self.task)
         if not self.task.exitFlag.istrue():# and not isinstance(self.task,Parse):
             self.task.deiconify()
     def unsetmainwindow(self):

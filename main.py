@@ -153,10 +153,6 @@ class Object:
         for k in kwargs:
             setattr(self,k,kwargs[k])
 class App:
-    def __getitem__(self, key): return getattr(self, key)
-    def __setitem__(self, key, val): setattr(self, key, val)
-    def get(self,key,default=None): 
-        raise AttributeError("Update the function that called this")
     def handle_exception(self, exc_type, exc_value, exc_traceback):
         if issubclass(exc_type, KeyboardInterrupt): #ignore Ctrl-C
             sys.__excepthook__(exc_type, exc_value, exc_traceback)

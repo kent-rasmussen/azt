@@ -227,6 +227,8 @@ class SettingsUI(object):
             window.destroy()
         if not hasattr(self,attribute) or getattr(self,attribute) != choice: #only set if different
             setattr(self,attribute,choice)
+            if hasattr(self, 'ui_vars') and attribute in self.ui_vars:
+                self.ui_vars[attribute].set(str(choice))
             self.attrschanged.append(attribute)
             """If there's something getting reset that shouldn't be, remove it
             from self.defaultstoclear[attribute]"""

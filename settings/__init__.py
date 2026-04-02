@@ -1590,6 +1590,25 @@ class Settings(SettingsUI):
         if self.attrschanged != []:
             _log.error(_("Remaining changed attribute! ({attr})").format(
                                                         attr=self.attrschanged))
+
+        # Trigger update of all visible status frames via their bound variables
+        status = getattr(self.program.mainwindow, 'status', None)
+        if status:
+            # We use try/except in case the status frame doesn't have the method yet
+            try:
+                status.update_all_labels()
+            except AttributeError:
+                pass
+        
+        # Also check taskchooser status just in case it's visible but not 'mainwindow'
+        tc = getattr(self.program, 'taskchooser', None)
+        if tc:
+            tc_status = getattr(tc, 'status', None)
+            if tc_status and tc_status != status:
+                try:
+                    tc_status.update_all_labels()
+                except AttributeError:
+                    pass
     def maketoneframes(self,dict={}):
         ToneFrames(dict,self.program)
         # ToneFrames(getattr(self,'toneframes',{}))
@@ -1674,6 +1693,7 @@ class Settings(SettingsUI):
     def __init__(self,program):
         self.program=program
         self.program.settings=self
+        self.ui_vars = {} # Stores tkinter.StringVar for reactive UI
         # self.taskchooser = self.program.taskchooser
         self.liftfilename=self.program.filename
         self.directory=file.getfilenamedir(self.liftfilename)
@@ -1736,3 +1756,12 @@ class Settings(SettingsUI):
         #     self.ifcollectionlc()
         self.attrschanged=[]
         _log.info(_("Settings (Post lift) initialized"))
+
+    def get_ui_var(self, attr, value=None):
+        """Get or create a tkinter.StringVar for the given attribute."""
+        if attr not in self.ui_vars:
+            # Lazy import to avoid circular dependency and only use if UI is present
+            from frontend import ui_tkinter as ui
+            var = ui.StringVar(value=str(value) if value is not None else str(getattr(self, attr, "")))
+            self.ui_vars[attr] = var
+        return self.ui_vars[attr]

@@ -562,7 +562,7 @@ class StatusFrame(ui.Frame):
         return (_("Using {lang}").format(lang=self.program.settings.languagenames[self.program.interfacelang()]))
     def interfacelangline(self):
         self.labels['interfacelang']={
-                        'text':ui.StringVar(value=self.interfacelanglabel()),
+                        'text':self.program.settings.get_ui_var('interfacelang_label', self.interfacelanglabel()),
                         'columnplus':1,
                         'cmd':self.program.ui_settings.getinterfacelang,
                         'tt':_("change the interface language")}
@@ -582,7 +582,7 @@ class StatusFrame(ui.Frame):
             cmd=self.program.ui_settings.getanalang
             tt=_("Change analysis language")
         self.labels['analangline']={
-                                'text':ui.StringVar(value=self.analanglabel()),
+                                'text':self.program.settings.get_ui_var('analang_label', self.analanglabel()),
                                 'columnplus':1,
                                 'cmd':cmd,
                                 'tt':tt}
@@ -603,7 +603,7 @@ class StatusFrame(ui.Frame):
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w') #3 cols is the width of frame
-        self.labels['glosslang']={'text':ui.StringVar(value=self.glosslanglabel()),
+        self.labels['glosslang']={'text':self.program.settings.get_ui_var('glosslang_label', self.glosslanglabel()),
                                 'columnplus':1,
                                 # 'rowplus':1,
                                 'cmd':self.program.ui_settings.getglosslang,
@@ -613,7 +613,7 @@ class StatusFrame(ui.Frame):
                                     else _("change this glosslang")
                                     }
         self.proselabel(**self.labels['glosslang'])
-        self.labels['glosslang2']={'text':ui.StringVar(value=self.glosslanglabel2()),
+        self.labels['glosslang2']={'text':self.program.settings.get_ui_var('glosslang2_label', self.glosslanglabel2()),
                                 'columnplus':1,
                                 'cmd':self.program.ui_settings.getglosslang2,
                                 'parent':line,
@@ -650,7 +650,7 @@ class StatusFrame(ui.Frame):
                 cmd() #Make sure these are defined where needed (i.e., parsing or collecting them.)
                 # return #just do one at a time
             self.labels['fields'+ps]={
-                            'text':ui.StringVar(value=self.fieldslabel(ps)),
+                            'text':self.program.settings.get_ui_var('fields'+ps+'_label', self.fieldslabel(ps)),
                             'columnplus':1,
                             'cmd':cmd,
                             'parent':line,
@@ -678,14 +678,14 @@ class StatusFrame(ui.Frame):
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w')
-        self.labels['profile']={'text':ui.StringVar(value=self.profilelabel()),
+        self.labels['profile']={'text':self.program.settings.get_ui_var('profile_label', self.profilelabel()),
                                 'columnplus':1,
                                 'rowplus':1,
                                 'cmd':self.program.ui_settings.getprofile,
                                 'parent':line,
                                 'tt':_("change this syllable profile")}
         self.proselabel(**self.labels['profile'])
-        self.labels['ps']={'text':ui.StringVar(value=self.pslabel()),
+        self.labels['ps']={'text':self.program.settings.get_ui_var('ps_label', self.pslabel()),
                                 'columnplus':1,
                                 'cmd':self.program.ui_settings.getps,
                                 'parent':line,
@@ -701,7 +701,7 @@ class StatusFrame(ui.Frame):
         self.newrow()
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w')
-        self.labels['cvt']={'text':ui.StringVar(value=self.cvtlabel()),
+        self.labels['cvt']={'text':self.program.settings.get_ui_var('cvt_label', self.cvtlabel()),
                                 'columnplus':1,
                                 'rowplus':1,
                                 'cmd':self.program.ui_settings.getcvt,
@@ -732,7 +732,7 @@ class StatusFrame(ui.Frame):
         # log.info("maketoneframes: {}".format(self.program.toneframes))
         # log.info("checks: {}; check: {}".format(getattr(self,'checks'),
         #                                         getattr(self,'check')))
-        self.labels['toneframe']={'text':ui.StringVar(value=self.toneframelabel()),
+        self.labels['toneframe']={'text':self.program.settings.get_ui_var('toneframe_label', self.toneframelabel()),
                                 'columnplus':1,
                                 'cmd':self.program.task.getcheck,
                                 'parent':line,
@@ -766,7 +766,7 @@ class StatusFrame(ui.Frame):
             cmd=self.program.task.getgrouptorecord
         else:
             cmd=None
-        self.labels['tonegroup']={'text':ui.StringVar(value=self.tonegrouplabel()),
+        self.labels['tonegroup']={'text':self.program.settings.get_ui_var('tonegroup_label', self.tonegrouplabel()),
                                 'columnplus':2,
                                 'cmd':cmd,
                                 'parent':line,
@@ -777,7 +777,7 @@ class StatusFrame(ui.Frame):
     def cvchecklabel(self):
         return (_("working on {check}").format(check=self.program.params.cvcheckname()))
     def cvcheck(self,line):
-        self.labels['cvcheck']={'text':ui.StringVar(value=self.cvchecklabel()),
+        self.labels['cvcheck']={'text':self.program.settings.get_ui_var('cvcheck_label', self.cvchecklabel()),
                                 'columnplus':1,
                                 'cmd':self.program.task.getcheck,
                                 'parent':line,
@@ -793,7 +793,7 @@ class StatusFrame(ui.Frame):
         else:
             return (_("(All groups)"))
     def cvgroup(self,line):
-        self.labels['cvgroup']={'text':ui.StringVar(value=self.cvgrouplabel()),
+        self.labels['cvgroup']={'text':self.program.settings.get_ui_var('cvgroup_label', self.cvgrouplabel()),
                                 'columnplus':2,
                                 'cmd':self.program.task.getgroup,
                                 'parent':line,
@@ -814,7 +814,7 @@ class StatusFrame(ui.Frame):
         # log.info(t)
         tt=_("Click here to change the number of columns used for sort buttons")
         self.newrow()
-        self.labels['buttoncolumns']={'text':ui.StringVar(value=self.buttoncolumnslabel()),
+        self.labels['buttoncolumns']={'text':self.program.settings.get_ui_var('buttoncolumns_label', self.buttoncolumnslabel()),
                                 'columnplus':1,
                                 'cmd':self.program.ui_settings.getbuttoncolumns,
                                 'tt':tt}
@@ -832,14 +832,14 @@ class StatusFrame(ui.Frame):
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w')
         self.labels['maxprofiles']={
-                        'text':ui.StringVar(value=self.maxprofileslabel()),
+                        'text':self.program.settings.get_ui_var('maxprofiles_label', self.maxprofileslabel()),
                         'columnplus':1,
                         'cmd':self.program.ui_settings.getmaxprofiles,
                         'parent':line,
                         'tt':_("change this max")}
         self.proselabel(**self.labels['maxprofiles'])
         self.opts['columnplus']=1
-        self.labels['maxpss']={'text':ui.StringVar(value=self.maxpsslabel()),
+        self.labels['maxpss']={'text':self.program.settings.get_ui_var('maxpss_label', self.maxpsslabel()),
                                 'columnplus':1,
                                 'cmd':self.program.ui_settings.getmaxpss,
                                 'parent':line,
@@ -856,7 +856,7 @@ class StatusFrame(ui.Frame):
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w')
         self.labels['multicheckscope']={
-                        'text':ui.StringVar(value=self.multicheckscopelabel()),
+                        'text':self.program.settings.get_ui_var('multicheckscope_label', self.multicheckscopelabel()),
                         'columnplus':1,
                         'cmd':self.program.ui_settings.getmulticheckscope,
                         'parent':line,
@@ -885,7 +885,7 @@ class StatusFrame(ui.Frame):
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w')
         self.labels['parserasklevel']={
-                        'text':ui.StringVar(value=self.parserasklevellabel()),
+                        'text':self.program.settings.get_ui_var('parserasklevel_label', self.parserasklevellabel()),
                         'columnplus':1,
                         'cmd':self.program.task.getparserasklevel,
                         'parent':line,
@@ -895,7 +895,7 @@ class StatusFrame(ui.Frame):
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w')
         self.labels['parserautolevel']={
-                        'text':ui.StringVar(value=self.parserautolevellabel()),
+                        'text':self.program.settings.get_ui_var('parserautolevel_label', self.parserautolevellabel()),
                         'columnplus':1,
                         'cmd':self.program.task.getparserautolevel,
                         'parent':line,
@@ -914,7 +914,7 @@ class StatusFrame(ui.Frame):
         line=ui.Frame(self.proseframe,row=self.irow,column=0,
                         columnspan=3,sticky='w')
         self.labels['sensetodo']={
-                            'text':ui.StringVar(value=self.sensetodolabel()),
+                            'text':self.program.settings.get_ui_var('sensetodo_label', self.sensetodolabel()),
                             'columnplus':1,
                             'cmd':self.program.task.getsensetodo,
                             'parent':line,
@@ -1296,6 +1296,29 @@ class StatusFrame(ui.Frame):
         self.maybeboard()
         self.finalbuttons()
 
+    def update_all_labels(self):
+        """Update all reactive StringVar labels in the status frame."""
+        self.updateinterfacelang()
+        self.updateanalang()
+        self.updateglosslangs()
+        self.updatefields()
+        self.updateprofile()
+        self.updateps()
+        self.updatecvt()
+        self.updatetoneframe()
+        self.updatetonegroup()
+        self.updatecvcheck()
+        self.updatecvgroup()
+        self.updatebuttoncolumns()
+        self.updatemaxprofiles()
+        self.updatemaxpss()
+        self.updatemulticheckscope()
+        self.updateparserasklevel()
+        self.updateparserautolevel()
+        self.updatesensetodo()
+        self.maybeboard()
+        self.redofinalbuttons()
+
 class TaskDressing(HasMenus,ui.Window):
     """This Class covers elements that belong to (or should be available to)
     all tasks, e.g., menus and button appearance."""
@@ -1458,73 +1481,10 @@ class TaskDressing(HasMenus,ui.Window):
                 log.info(_("Didn't find {attr} in {settings}").format(attr=attr,settings=self.program.settings))
         # #For convenience:
         # self.analang=self.program.params.analang()
-    def trystatusframelater(self,dict):
-        self.program.settings.setrefreshdelay()
-        self.makestatusframe_after_id=self.after(
-                                            self.program.settings.refreshdelay,
-                                            self.makestatusframe,
-                                            dict)
     def on_quit(self,**kwargs):
-        self.after_cancel(self.makestatusframe_after_id)
+        if hasattr(self, 'makestatusframe_after_id'):
+            self.after_cancel(self.makestatusframe_after_id)
         super().on_quit(**kwargs)
-    def makestatusframe(self,dict=None):
-        """There are two threads of this method running or waiting at all times,
-        one for the taskchooser and another for the task. this should probably
-        be converted to a more tkinter native update, like with
-        StringVar().set()"""
-        if self.exitFlag.istrue():
-            return
-        if not hasattr(self.program, 'slices'):
-            # slices is done by taskchooser on boot, but later
-            # don't update both taskchooser and task, just the visible one
-            self.trystatusframelater(dict)
-            return #don't die, but don't do this until ready, either
-        dictnow={
-                # 'mainrelief':self.mainrelief,
-                # 'showdetails':self.program.settings.showdetails, #attr, not task.method
-                'self.fontthemesmall':self.fontthemesmall,
-                # 'buttonkwargs':self.dobuttonkwargs(),
-                # 'iflang':self.program.settings.interfacelangwrapper(),
-                # 'analangname':self.program.settings.languagenames[self.analang],
-                # 'analang':self.program.params.analang(),
-                # 'glang1':self.glosslangs.lang1(),
-                # 'glang2':self.glosslangs.lang2(),
-                # 'secondformfield':str(self.program.settings.secondformfield),
-                # 'maxprofiles':self.program.settings.maxprofiles,
-                # 'maxpss':self.program.settings.maxpss
-                }
-        # if hasattr(self.program, 'slices'):
-        dictnow.update({
-            # 'cvt':self.program.params.cvt(),
-            # 'check':self.program.params.check(),
-            # 'ps':self.program.slices.ps(),
-            # 'profile':self.program.slices.profile(),
-            # 'group':self.program.status.group(),
-            'tableiteration':self.tableiteration
-            })
-        if isinstance(self,Multicheck):
-            dictnow.update({'cvtstodo':self.task.cvtstodo})
-        if isinstance(self,Parse):
-            try:
-                dictnow.update({
-                    # 'parserasklevel':self.parser.ask,
-                    # 'parserautolevel':self.parser.auto,
-                    'sense.id':self.task.sensetodo
-                    })
-            except AttributeError as e:
-                log.info(_("looks like the parser isn't up yet ({error})").format(error=e))
-        """Call this just once. If nothing changed, wait; if changes, run,
-        then run again."""
-        if dict == dictnow:
-            # log.info("No dict changes; no updating the UI: {}".format(dictnow))
-            self.trystatusframelater(dictnow)
-            return
-        log.info(_("Dict changes; checking attributes and updating the UI."))
-        # log.info(f"dictori: {dict}")
-        # log.info(f"dictnow: {dictnow}")
-        if self.program.taskchooser.donew['collectionlc']:
-            self.makeeverythingok()
-        #This will probably need to be reworked
         if self.exitFlag.istrue():
             return
         hidewhileworking=self.winfo_viewable()
@@ -1540,8 +1500,7 @@ class TaskDressing(HasMenus,ui.Window):
         if hidewhileworking:
             self.deiconify()
         self.program.settings.storesettingsfile()
-        self.makestatusframe(dictnow) #this method
-        log.info(_("{type} makestatusframe iteration finished").format(type=type(self)))
+        log.info(_("{type} StatusFrame created").format(type=type(self)))
     def getparserlevels(self,event=None):
         try:
             levels=self.parser.levels()
@@ -1997,18 +1956,19 @@ class TaskDressing(HasMenus,ui.Window):
         else:
             log.info(_("Finished with all threads running"))
     def __init__(self,parent):
-        log.info(_("Initializing TaskDressing"))
+        log.info(_("Initializing TaskDressing for {task}").format(
+                                        task=self.__class__.__name__))
         self.parent=parent
         # self.program=parent.program should be set already
         self.menu=False #initialize once
-        if isinstance(self,TaskChooser):
-            taskchooser=self
-        else:
-            self.task=self
-            taskchooser=self.parent
-            self.program.status.task(self)
-        """Whenever this runs, it's the main window."""
-        taskchooser.mainwindowis=self
+        # if isinstance(self,TaskChooser):
+        #     taskchooser=self
+        # else:
+        #     self.task=self
+        #     taskchooser=self.parent
+        #     self.program.status.task(self)
+        # """Whenever this runs, it's the main window."""
+        # taskchooser.mainwindowis=self
         """At some point, I need to think through which attributes are needed,
         and if I can get them all into objects, read/writeable with files."""
         """These are raw attributes from file"""
