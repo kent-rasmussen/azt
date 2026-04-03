@@ -63,6 +63,9 @@ class Senses(object):
         group=kwargs.get('group',self.program.status.group())
         # log.info("about to return {}={}".format(check,group))
         return check+'='+group
+    @property
+    def lex_ui(self):
+        return self.program.lex_ui
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 class Segments(Senses):
@@ -504,12 +507,12 @@ class WordCollection(Segments):
                 "\nJust type consonants and vowels; don't worry about tone "
                 "for now.")
     def getwords(self):
-        from frontend import ui_tkinter as ui
+        p = self.lex_ui
         self.entries=self.getlisttodo()
         self.nentries=len(self.entries)
         self.index=0
-        self.wordsframe=ui.Frame(self.frame,row=1,column=1,sticky='ew')
-        self.instructions=ui.Label(self.wordsframe,
+        self.wordsframe=p.frame(self.frame,row=1,column=1,sticky='ew')
+        self.instructions=p.label(self.wordsframe,
                                     text=self.getinstructions(),
                                     row=0, column=0)
         self.dirfn=self.nextword
@@ -535,24 +538,24 @@ class WordCollection(Segments):
         self.runwindow.form[lang]=self.runwindow.form[lang].get()
         self.runwindow.frame2.destroy()
     def promptwindow(self,lang):
-        from frontend import ui_tkinter as ui
+        p = self.lex_ui
         def skipform(event=None):
             del self.runwindow.form[lang]
             self.runwindow.frame2.destroy() #Just move on.
         strings=self.promptstrings(lang)
-        self.runwindow.frame2=ui.Frame(self.runwindow.frame,
+        self.runwindow.frame2=p.frame(self.runwindow.frame,
                                         row=1,column=0,
                                         sticky='ew',
                                         padx=25,pady=25)
-        getform=ui.Label(self.runwindow.frame2,text=strings['prompt'],
+        getform=p.label(self.runwindow.frame2,text=strings['prompt'],
                         font='read',row=0,column=0,
                         padx=self.runwindow.padx,
                         pady=self.runwindow.pady)
         #field rendering is better in another frame:
-        eff=ui.Frame(self.runwindow.frame2,row=1,column=0)
+        eff=p.frame(self.runwindow.frame2,row=1,column=0)
         #variable and field for entry:
-        self.runwindow.form[lang]=ui.StringVar()
-        formfield = ui.EntryField(eff, render=True,
+        self.runwindow.form[lang]=p.string_var()
+        formfield = p.entry_field(eff, render=True,
                                     text=self.runwindow.form[lang],
                                     font='readbig',
                                     row=1,column=0,
@@ -560,11 +563,11 @@ class WordCollection(Segments):
         formfield.focus_set()
         formfield.bind('<Return>',lambda event,l=lang:self.submitform(l))
         formfield.rendered.grid(row=2,column=0,sticky='new')
-        sub_btn=ui.Button(self.runwindow.frame2,text = strings['ok'],
+        sub_btn=p.button(self.runwindow.frame2,text = strings['ok'],
                             command = self.submitform,
                             anchor ='c',row=2,column=0,sticky='')
         if strings['skip']:
-            sub_btnNo=ui.Button(self.runwindow.frame2,
+            sub_btnNo=p.button(self.runwindow.frame2,
                                 text = strings['skip'],
                                 command = skipform,
                                 row=1,column=1,sticky='')
@@ -572,7 +575,7 @@ class WordCollection(Segments):
         self.runwindow.waitdone()
         sub_btn.wait_window(self.runwindow.frame2) #then move to next step
     def addmorpheme(self):
-        from frontend import ui_tkinter as ui
+        p = self.lex_ui
         self.getrunwindow()
         self.runwindow.form={}
         self.runwindow.glosslangs=list()
@@ -582,8 +585,8 @@ class WordCollection(Segments):
         self.runwindow.title(_("Add Morpheme to Dictionary"))
         title=_("Add {lang} morpheme to the dictionary").format(
                             lang=self.program.settings.languagenames[self.analang])
-        ui.Label(self.runwindow.frame,text=title,font='title',
-                justify=ui.LEFT,
+        p.label(self.runwindow.frame,text=title,font='title',
+                justify=p.LEFT,
                 anchor='c',sticky='ew',
                 row=0,column=0,
                 padx=self.runwindow.padx,
@@ -755,8 +758,7 @@ class WordCollection(Segments):
         if f and file.exists(f):
             self.markimage(f,w)
     def showimagestoselect(self,files):
-        from frontend import ui_tkinter as ui
-        from frontend.ui_shell import ImageFrame
+        p = self.lex_ui
         self.imagecolumns=3
         self.imagepixels=0
         pixelopts=range(200,1000,100)
@@ -772,11 +774,11 @@ class WordCollection(Segments):
                                                     self.imagepixels,pixels)
             if hasattr(self.selectionwindow,'sf'):
                 self.selectionwindow.sf.destroy()
-            self.selectionwindow.sf=ui.ScrollingFrame(
+            self.selectionwindow.sf=p.scrolling_frame(
                         self.selectionwindow.frame,row=2,column=0)
             for n,f in enumerate(files):
                 # log.info("Using row {}, col {}".format(n//cols,n%cols))
-                    i=ImageFrame(self.selectionwindow.sf.content,url=f,
+                    i=p.image_frame(self.selectionwindow.sf.content,url=f,
                                 pixels=self.imagepixels,
                                 row=n//self.imagecolumns,
                                 column=n%self.imagecolumns,
@@ -799,32 +801,32 @@ class WordCollection(Segments):
             self.selectionwindow.update_idletasks()
         log.info(_("Select from these images: \n{files}").format(files='\n'.join(
                                                     [str(i) for i in files])))
-        self.selectionwindow=ui.Window(self)
+        self.selectionwindow=p.window(self)
         title=_("Select a good image for {glosses}").format(glosses=self.glossesthere)
         self.selectionwindow.title(title)
-        t=ui.Label(self.selectionwindow.frame,text=title, font='title',
+        t=p.label(self.selectionwindow.frame,text=title, font='title',
                     row=0,column=0)
         if self.sense.image:
             self.sense.image.scale(t.theme.scale, pixels=65, scaleto='height')
             t['image']=self.sense.image.scaled
             t['compound']='right'
-        imageparameters=ui.Frame(self.selectionwindow.frame,
+        imageparameters=p.frame(self.selectionwindow.frame,
                                 row=1, column=0, sticky='e')
         fontsize='small'
         parameterseparation=10
-        ui.Button(imageparameters,text=_("Browse"), font='small',
+        p.button(imageparameters,text=_("Browse"), font='small',
             command=lambda x=self.selectionwindow:self.selectlocalimage(w=x),
             ipady=0,row=0,column=imageparameters.ncolumns())
-        ui.Label(imageparameters,text="", font=fontsize,
+        p.label(imageparameters,text="", font=fontsize,
                     width=parameterseparation,
                     row=0,column=imageparameters.ncolumns())
         bdict={pixelopts:{},colopts:{}}
-        bdict[pixelopts][-1]=ui.Button(imageparameters,text='-', font=fontsize,
+        bdict[pixelopts][-1]=p.button(imageparameters,text='-', font=fontsize,
                             command=lambda x=-1:makegrid(pixels=x),ipady=0,
                             width=1,row=0,column=imageparameters.ncolumns())
-        ui.Label(imageparameters,text=_("Image Size"), font=fontsize, padx=2,
+        p.label(imageparameters,text=_("Image Size"), font=fontsize, padx=2,
                     row=0,column=imageparameters.ncolumns())
-        bdict[pixelopts][1]=ui.Button(imageparameters,text='+', font=fontsize,
+        bdict[pixelopts][1]=p.button(imageparameters,text='+', font=fontsize,
                             command=lambda x=1:makegrid(pixels=x),ipady=0,
                             width=1,row=0,column=imageparameters.ncolumns())
         ui.Label(imageparameters,text="", font=fontsize,

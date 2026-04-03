@@ -461,7 +461,7 @@ class DeprecatedUIAccess:
 |-------|--------|--------|-------|
 | 0 | Define UI protocol | Trivial | Foundation | **DONE** |
 | 1 | Add `self.ui` to Task | Trivial | Foundation | **DONE** |
-| 2 | Sort presenter | Medium-High | Highest — Sort is most complex | Pending |
+| 2 | Sort presenter | Medium-High | Highest — Sort is most complex | **DONE** |
 | 3 | Tone/Segments/WordCollection presenters | Medium | High — enables lexicon cleanup | Pending |
 | 4 | Remove module-level ui_tkinter from sorting_engine | Low | Completes Sort separation | **DONE** (function-local) |
 | 5 | Remove module-level ui_tkinter from lexicon | Medium | Completes lexicon separation | **DONE** (function-local) |
@@ -490,3 +490,4 @@ Once complete:
 
 - v1.0 (2026-04-03): Initial plan.
 - v1.1 (2026-04-03): Phases 0-1, 4-7 complete. VCS and Report presenters created. All backend modules have zero module-level frontend imports. sorting_engine.py and lexicon.py use function-local imports pending presenter extraction (Phases 2-3).
+- v1.2 (2026-04-03): Phase 2 complete. SortPresenter created — sorting_engine.py now has zero frontend imports. Only lexicon.py (Phase 3) and alphabet.py remain with function-local imports.
