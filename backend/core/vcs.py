@@ -75,7 +75,6 @@ class Repository(object):
         # else:
         #     log.info(_("Not adding {file} to bare repo {url}").format(file=file,url=self.url))
     def commitconfirm(self,diff): #don't run the diff again...
-        from frontend import ui_tkinter as ui
         def ok(event=None):
             self.commitconfirmed=nowruntime()
             yes.destroy()
@@ -92,17 +91,8 @@ class Repository(object):
             log.info(_("Asked for commit confirm; returning auto False"))
             return False
         log.info(_("Asked for commit confirm; asking user"))
-        w=ui.Window(self.program.tk_root,title=_("Commit Confirm"),exit=False)
-        text=_("Do you want to commit language data via {repo} now?").format(repo=self.repotypename)+'\n'+diff[:300]
-        prompt=ui.Label(w,text=text,row=0,column=0,sticky='')
-        bf=ui.Frame(w,row=1,column=0,sticky='')
-        yes=ui.Button(bf,text=_("Yes"),command=ok,
-                        row=1,column=0,sticky='w',
-                        padx=50)
-        no=ui.Button(bf,text=_("No"),command=notok,
-                        row=1,column=1,sticky='e',
-                        padx=50)
-        w.lift()
+        w, yes = self.program.vcs_ui.confirm_commit(
+            diff, self.repotypename, ok, notok)
         yes.wait_window(yes)
         if not w.exitFlag.istrue():
             w.on_quit()
@@ -149,7 +139,6 @@ class Repository(object):
         args=['status']
         log.info(self.do(args))
     def clonefromUSB(self,directory):
-        from frontend import ui_tkinter as ui
         log.info(_("Preparing to clone to {dir} from USB repo").format(dir=directory))
         #this should be a pathlib object
         # log.info("Continuing to clone to {} from USB repo".format(directory))
@@ -158,11 +147,10 @@ class Repository(object):
         msg=_("Copying from {source} to {dest}; this may take some time."
                     "").format(source=self.url, dest=directory)
         log.info(msg)
-        w=ui.Wait(self.program.tk_root,msg=msg)
+        w=self.program.vcs_ui.show_wait(msg)
         log.info(self.do(args))
         w.close()
     def clonetoUSB(self,event=None):
-        from frontend import ui_tkinter as ui
         # log.info("Trying to run clonetoUSB")
         directory=self.abs_path(self.clonetobaredirname())
         log.info(_("directory: {dir}").format(dir=directory))
@@ -172,7 +160,7 @@ class Repository(object):
                 args=['clone', self.bareclonearg, '.', directory] #this needs from-to
                 msg=_("Copying to {dir}; this may take some time."
                             "").format(dir=directory)
-                w=ui.Wait(self.program.tk_root,msg=msg)
+                w=self.program.vcs_ui.show_wait(msg)
                 log.info(self.do(args))
                 self.addremote(directory)
                 w.close()
@@ -570,64 +558,11 @@ class Repository(object):
             log.info(_("Checking repo existence via {path}").format(path=f))
         return file.exists(f)
     def exewarning(self):
-        from frontend import ui_tkinter as ui
-        title=_("Warning: {type} Executable Missing!").format(type=self.repotypename)
-        text=_("You "
-                # "seem to be working on a repository of data ({0}), "
-                # "\nwhich may be tracked by {1}, "
-                # "\nbut "
-                "you don't seem to have the {repo} executable installed in "
-                "your computer's PATH.").format(
-                                                # self.url,
-                                                repo=self.repotypename)
-        if self.repotypename == 'Mercurial':
-             text+='\n'+_("(Mercurial is used by Chorus and languagedepot.org)")
-             if not self.exists():
-                 log.info(_("No {0} repo, nor {0} executable; moving on."
-                            ).format(self.repotypename))
-                 return
-        w=ui.Window(getattr(self.program,'tk_root',ui.Root()),title=title)
-        w.withdraw()
-        if self.repotypename == 'Git':
-             text+='\n'+_("(Git is used by {name} to track changes in your "
-                        "data, and to keep {name} up to date)"
-                        ).format(name=self.program.name)
-        clickable=_("Please see {url} for installation recommendations"
-                    ).format(url=self.installpage)
-        l=ui.Label(w.frame, text=text, column=0, row=0)
-        l.wrap()
-        m=ui.Label(w.frame, text=clickable, column=0, row=1)
-        m.wrap()
-        m.bind("<Button-1>", lambda e: openweburl(self.installpage))
-        mtt=ui.ToolTip(m,_("Go to {url}").format(url=self.installpage))
-        if self.thisos == 'Windows':
-            clickable1=_("(e.g., in Windows, install *this* file),"
-                        ).format(url=self.wexeurl)
-            clickable2=_("or see all your options at {url}."
-                        ).format(url=self.wdownloadsurl)
-            n=ui.Label(w.frame, text=clickable1, column=0, row=2)
-            n.bind("<Button-1>", lambda e: openweburl(self.wexeurl))
-            ntt=ui.ToolTip(n,_("download {url}").format(url=self.wexeurl))
-            o=ui.Label(w.frame, text=clickable2, column=0, row=3)
-            o.bind("<Button-1>", lambda e: openweburl(self.wdownloadsurl))
-            mtt=ui.ToolTip(o,_("Go to {url}").format(url=self.wdownloadsurl))
-        # button=(_("Restart Now"),sysrestart) #This should be in task/chooser
-        text=_("After you install {repo}, you should restart."
-                ).format(repo=self.repotypename)
-        if self.repotypename == 'Git':
-            text+='\n'+_("You can keep using {name} without installing {repo}, but "
-                        "it is not recommended, and you will continue to see "
-                        "this warning."
-                        " And sooner or later that's going to get really annoying"
-                        ).format(name=self.program.name,repo=self.repotypename)
-        r=ui.Label(w.frame, text=text, column=0, row=4)
-        r.wrap()
-        rb=ui.Button(w.frame, text=_("Restart Now"), column=1, row=4,
-                    cmd=sysrestart) #This should be in task/chooser
-        rbtt=ui.ToolTip(rb,_("Install {repo} first, then do this"
-                            ).format(repo=self.repotypename))
-        w.deiconify()
-        w.lift()
+        if self.repotypename == 'Mercurial' and not self.exists():
+            log.info(_("No {0} repo, nor {0} executable; moving on."
+                       ).format(self.repotypename))
+            return
+        self.program.vcs_ui.show_exe_warning(self)
     def getusernameargs(self):
         #This populates self.usernameargs, once per init.
         self.useremail=None
