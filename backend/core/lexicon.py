@@ -29,17 +29,6 @@ from utilities import rx
 from io_put.cawl import loadCAWL
 import threading
 
-def __getattr__(name):
-    # Lazy load globals from main
-    if name in ('ImageFrame', 'saveimagefile', 'scaleimageifthere'):
-        import main
-        return getattr(main, name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-# Mirror main globals lazily to allow bare-name access
-for name in ('ImageFrame', 'saveimagefile', 'scaleimageifthere'):
-    if name not in globals():
-        globals()[name] = LazyGlobal(name)
 
 class Senses(object):
     """This was started because some tasks primarily handle senses 
@@ -744,6 +733,7 @@ class WordCollection(Segments):
             log.info(f"Exception storing word (WordCollection): {e}")
     def markimage(self,url,w=None):
         """return to file, LIFT"""
+        from main import saveimagefile
         log.info("Selected image {}".format(url))
         if w:
             w.on_quit()
@@ -765,6 +755,8 @@ class WordCollection(Segments):
         if f and file.exists(f):
             self.markimage(f,w)
     def showimagestoselect(self,files):
+        from frontend.ui_shell import ImageFrame
+        from main import scaleimageifthere
         self.imagecolumns=3
         self.imagepixels=0
         pixelopts=range(200,1000,100)
@@ -1013,6 +1005,7 @@ class WordCollection(Segments):
     def set_up_transcription(self):
         pass
     def getword(self):
+        from frontend.ui_shell import ImageFrame
         self.program.taskchooser.withdraw()# not sure why necessary
         # log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
         # log.info("wordframe: {}".format(getattr(self,'wordframe',None)))
@@ -1105,6 +1098,7 @@ class Parse(Segments):
                                                             quoted=True))
                         for l in self.glosslangs])
     def userconfirmation(self,*args):
+        from frontend.ui_shell import ImageFrame
         log.info("asking for user confirmation")
         # Return True or False only
         def do(x):
@@ -1250,6 +1244,7 @@ class Parse(Segments):
                 # log.info("User responded {}".format(self.userresponse.value))
                 return self.userresponse.value
     def selectsffromlist(self,l):
+        from frontend.ui_shell import ImageFrame
         def formattuple(l):
             pfx,sfx=l[-1]
             root=l[2]
@@ -1383,6 +1378,7 @@ class Parse(Segments):
                         imp_name=self.secondformfield[self.verbalps]
                         )
     def asksegments(self,ps=None):
+        from frontend.ui_shell import ImageFrame
         def do(event=None):
             self.parser.sense.psvalue(ps)
             if ps == self.nominalps:

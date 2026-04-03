@@ -26,11 +26,7 @@ import subprocess
 
 from frontend.error_notice import ErrorNotice
 
-def __getattr__(name):
-    if name == 'Settings':
-        from settings import Settings
-        return Settings
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+from settings import Settings
 
 class Repository(object):
     """SuperClass for Repository classes"""
