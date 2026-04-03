@@ -381,6 +381,10 @@ class App:
         self.splash = Splash(self)
         langtags.Languages(self)
         FileParser(self) #needs self.filename, pick up self.analang from file
+        from frontend.vcs_ui import VCSPresenter
+        from frontend.report_ui import ReportPresenter
+        self.vcs_ui = VCSPresenter(self)
+        self.report_ui = ReportPresenter()
         self.repocheck()
         Settings(self) #needs self.filename, pick up self.analang from file
         self.settings.post_lift_init()
