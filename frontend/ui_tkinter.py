@@ -502,6 +502,7 @@ class Theme(object):
             self.setscale()
         self.settheme()
         log.info("Using {} theme ({})".format(self.name,self.program))
+        self.image_cache={}
         self.setimages()
         self.setfonts()
         super().__init__()

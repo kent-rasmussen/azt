@@ -2015,60 +2015,52 @@ class ImageFrame(ui.Frame):
     """I need to remove class references from here where possible,
     and sort out a program reference"""
     def getimage(self,reload=False):
-        from main import scaledimage
-        specifiedurl=False
-        compiled=False
-        if self.url and file.exists(self.url):
-            i=self.url
-            specifiedurl=True
-        elif isinstance(self.sense,lift.Sense):
-            if (hasattr(self.sense,'image')
-                    and isinstance(self.sense.image,ui.Image)
-                    and not reload):
-                # log.info(_("Found Image, using"))
-                image=self.sense.image
-                compiled=True
-                self.hasimage=True
-            else:
-                i=self.program.getimagelocationURI(self.sense)
-        # lift.prettyprint(self.sense.illustration)
-        if not compiled:
+        """this converts self.url (str) to self.image (ui.Image)"""
+        """reload allows the frame to be built once and reused;
+        this may be with the same url (if user selected a new image 
+        for the same sense)"""
+        if not self.url:
+            log.error("No url for ImageFrame")
+            raise 
+        if self.url in self.parent.theme.image_cache and not reload:
+            self.image=self.parent.theme.image_cache[self.url]
+        else:
             try:
                 # log.info(_("trying to make image {image}").format(image=i))
-                assert i
-                image=ui.Image(i)
+                self.image=ui.Image(self.url)
                 self.hasimage=True
+                self.parent.theme.image_cache[self.url]=self.image
                 # log.info(_("Image OK: {img}").format(img=img))
-            except (tkinter.TclError,AssertionError,AttributeError) as e:
+            except (tkinter.TclError,AttributeError) as e:
                 if e.args and ('value for "-file" missing' not in e.args[0] and
                         "couldn't recognize data in image file" not in e.args[0]):
                     log.info(_("ui.Image error: {error}").format(error=e))
                 log.info(f"No image for {self.sense}")
-                image=self.theme.photo['NoImage']
+                self.image=self.theme.photo['NoImage'] #don't store!
                 self.hasimage=False
-                # log.info(_("Image null: {img}").format(img=img))
-            if not specifiedurl and self.hasimage: #don't assign "no image"
-                self.sense.image=image
-        # log.info(_("Image: {image} ({type})").format(image=image,type=type(image)))
-        scaledimage(image,pixels=self.pixels)
-        self.image=image.scaled #Imageframe.image = sense.image.scaled
+        self.scale_image(pixels=self.pixels)
+        # self.image=image.scaled #Imageframe.image = sense.image.scaled
+    def scale_image(self,image=None,pixels=150,scaleto='height'):
+        # This is here because ui.Image doens't have access to theme.scale
+        if image is None:
+            image=self.image
+        image.scale(self.parent.theme.scale,pixels=pixels,scaleto=scaleto)
     def pluralframe(self):
-        ui.Label(self,text='',image=self.image,
+        ui.Label(self,text='',image=self.image.scaled,
                 compound='bottom',
                 sticky='e',
                 ipadx=10,
                 row=0,column=0)
-        ui.Label(self,text='',image=self.image,
+        ui.Label(self,text='',image=self.image.scaled,
                 compound='bottom',
                 sticky='w',
                 ipadx=10,
                 row=0,column=1)
     def imperativeframe(self):
-        from main import scaledimage
         try:
             image1=self.program.theme.photo['Order!']
-            scaledimage(image,pixels=300) #300 wide
-            image2=self.image
+            self.scale_image(image=image1,pixels=300) #300 wide
+            image2=self.image.scaled
             # log.info("image1.scaled: {} ({})".format(image1.scaled,type(image1.scaled)))
             # log.info("image2: {} ({})".format(image2,type(image2)))
             image1.scaled.paste(image2)
@@ -2077,30 +2069,28 @@ class ImageFrame(ui.Frame):
                 sticky='ew',
                 row=0,column=0)
         except:
-            ui.Label(self,text='!',image=self.image,
+            ui.Label(self,text='!',image=self.image.scaled,
                 compound='left',sticky='ew',font='title',
                 row=0,column=0)
     def citationframe(self):
-        l=ui.Label(self,text='',image=self.image,
+        l=ui.Label(self,text='',image=self.image.scaled,
             compound='center',sticky='ew',
             anchor='center',
             row=0,column=0)
         # log.info(l.grid_info())
-    def changesense(self,sense):
-        if self.sense != sense:
-            self.sense=sense
+    def changeurl(self,url):
+        if self.url != url:
+            self.url=url
             self.reloadimage()
     def reloadimage(self):
         self.getimage(reload=True)
         for child in self.winfo_children():
             if isinstance(child,ui.Label):
-                child['image']=self.image
-    def __init__(self, parent, sense=None, *args, **kwargs):
-        """Parent: where it goes; Sense: what it shows"""
-        if not isinstance(sense,lift.Sense) and 'url' not in kwargs:
-            log.error(_("ImageFrame called without sense or url!"))
-            return
-        self.sense=sense
+                child['image']=self.image.scaled
+    def __init__(self, parent, url, *args, **kwargs):
+        """Parent: where it goes; url: what it shows"""
+        """This is now called with url, not sense."""
+        self.sense=sense #for sense.image only?
         #These shouldn't go to frame:
         self.url=kwargs.pop('url',None)
         self.ftype=kwargs.pop('ftype',None)
@@ -2539,7 +2529,8 @@ class LiftChooser(ui.Window,HasMenus):
             log.info(_("returned more or less than one lift file! ({list})")
                     .format(list=l))
     def fillcawldbimages(self,cawldb=None,newdirname=None,wait=None):
-        from main import saveimagefile
+        """This should be backend"""
+        # from main import saveimagefile
         log.info("Filling in empty image fields where possible")
         if not cawldb:
             cawldb=self.cawldb
@@ -2547,10 +2538,14 @@ class LiftChooser(ui.Window,HasMenus):
             newdirname=self.newdirname
         if not wait:
             wait=self.wait
+        log.info(f"{dir(cawldb)=}")
+        log.info("Writing to {}".format(cawldb.imgdir))
         todo=cawldb.senses
         newimagedir=file.getimagesdir(newdirname)
+        cawldb.get_imgdir() #in case this isn't up to date
         # log.info("Filling in {} image fields".format(len(todo)))
-        # log.info("Writing to {}".format(file.getimagesdir(self.newdirname)))
+        log.info("Writing to {}".format(cawldb.imgdir))
+        log.info("Usta wanna write to {}".format(file.getimagesdir(self.newdirname)))
         for sense in todo:
             # log.info("Working on line number {}".format(sense.cawln))
             # log.info("Working on sense {}".format(sense.id))
@@ -2571,11 +2566,13 @@ class LiftChooser(ui.Window,HasMenus):
                             if '__' in str(u) and '.png' in str(u): #best file
                                 # log.info("Found best image {}; \ngoing to put "
                                 #         "in {}".format(u,self.newdirname))
-                                saveimagefile(u,filename, copyto=newimagedir)
-                        if not file.exists(file.getdiredurl(newimagedir,
-                                                                filename)):
+                                sense.save_illustration_to_file(u)
+                                # saveimagefile(u,filename, copyto=newimagedir)
+                        if not file.exists(sense.illustrationURI()):
+                            # file.getdiredurl(newimagedir, filename)):
                             #just take the first one
-                            saveimagefile(urls[0],filename, copyto=newimagedir)
+                            sense.save_illustration_to_file(urls[0])
+                            # saveimagefile(urls[0],filename, copyto=newimagedir)
                         sense.illustrationvalue(filename)
                 # log.info("Setting progress {}".format(todo.index(sense)*100/len(todo)))
                 if wait:
@@ -2629,10 +2626,12 @@ class LiftChooser(ui.Window,HasMenus):
             return
         # else:
         #     log.info(f"{newfile=} doesn't exist already!")
+        self.cawldb.filename=newfile
         self.cawldb.analang=self.demolang
         self.cawldb.getentries()
         self.cawldb.getsenses()
         self.cawldb.convertglosstocitation(self.demolang)
+        self.cawldb.get_imgdir()
         self.fillcawldbimages()
         log.info(newfile)
         self.copytonewfile(newfile)

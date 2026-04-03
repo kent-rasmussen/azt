@@ -284,8 +284,16 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                                     frame=self.program.toneframes.get(
                                                 self.program.params.check()),
                                     showtonegroup=self.kwargs['showtonegroup'])
-        from main import scaleimageifthere
-        self._illustration=scaleimageifthere(node.sense)
+        iuri = node.sense.illustrationURI()
+        if iuri in self.theme.image_cache:
+            node.sense.image = self.theme.image_cache[iuri]
+        elif iv:=node.sense.illustrationvalue():
+            node.sense.image = ui.Image(iv)
+        else:
+            self._illustration=None
+        if hasattr(node.sense,'image'):
+            node.sense.image.scale(self.theme.scale, pixels=65, scaleto='height')
+            self._illustration=node.sense.image.scaled
         return 1
     def makebuttons(self):
         # log.info(f"Making buttons with {self.kwargs=}")

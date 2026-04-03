@@ -537,15 +537,16 @@ class App:
         errorw.wait_window(errorw)
         if newtk: #likely never work/needed?
             self.tk_root.mainloop() #This has to be the last thing
-    def getimagelocationURI(sense):
-        i=sense.illustrationvalue()
-        for d in [self.settings.imagesdir,self.directory]:
-            if i and d:
-                di=file.getdiredurl(d,i)
-                if file.exists(di):
-                    return di
-    def scaledimage(image,pixels=150,scaleto='height'):
-        image.scale(self.scale,pixels=pixels,scaleto=scaleto)
+    # def getimagelocationURI(self,sense):
+    #     i=sense.illustrationvalue()
+    #     for d in [self.settings.imagesdir,self.directory]:
+    #         if i and d:
+    #             di=file.getdiredurl(d,i)
+    #             if file.exists(di):
+    #                 return di
+    # def scaledimage(self,image,pixels=150,scaleto='height'):
+    #     """move to theme?"""
+    #     image.scale(self.scale,pixels=pixels,scaleto=scaleto)
     def task_base(self):
         if not self.task:
             return "No task"
@@ -638,6 +639,9 @@ class App:
         log.info(_("Writing to lift..."))
         self.writethread.start()
         self.schedule_write_check()
+    def runtime_to_now(self):
+        #this returns a delta!
+        return times.now()-self.start_time
     def __init__(self,program):
         # globals()['program'] = self  # replace dict with App; LazyGlobal resolves to self
         sys.excepthook = self.handle_exception
@@ -697,59 +701,21 @@ class App:
             self.maybe_run_problem()
         sys.exit()
 """These are non-method utilities I'm actually using."""
-def runtime_to_now():
-    #this returns a delta!
-    return times.now()-program.start_time
 # unlist moved to utilities/utilities.py; available via wildcard import
-def propagate(self,attr):
-    """This function pushes an attribute value to all children with that
-    attribute already set, for widgets that are already there (changing fonts)
-    """
-    log.info(self.winfo_children())
-    for child in self.winfo_children():
-        # log.info("working on {}".format(child))
-        if hasattr(child,attr):
-            # log.info("Found {} value for {} attr, setting {} value".format(
-            #         getattr(child,attr),attr,getattr(self,attr)
-            #         ))
-            setattr(child,attr,getattr(self,attr))
-            propagate(child,attr=attr)
+# def propagate(self,attr):
+#     """This function pushes an attribute value to all children with that
+#     attribute already set, for widgets that are already there (changing fonts)
+#     """
+#     log.info(self.winfo_children())
+#     for child in self.winfo_children():
+#         # log.info("working on {}".format(child))
+#         if hasattr(child,attr):
+#             # log.info("Found {} value for {} attr, setting {} value".format(
+#             #         getattr(child,attr),attr,getattr(self,attr)
+#             #         ))
+#             setattr(child,attr,getattr(self,attr))
+#             propagate(child,attr=attr)
 from io_put.cawl import loadCAWL  # moved; re-exported for compatibility
-def saveimagefile(url,filename,copyto=None):
-    # log.info("Preparing to write image to new file")
-    if not copyto:
-        copyto=program.settings.imagesdir
-    fqdn=file.getdiredurl(copyto,filename) #new url
-    # log.info("Preparing to write image to {}".format(fqdn))
-    with open(fqdn,'wb') as f:
-        # log.info("opened new file")
-        with open(url,'rb') as u:
-            # log.info("opened old file")
-            f.write(u.read())
-def compilesenseimage(sense):
-    """This needs to capture ui.Image errors like this:
-    except tkinter.TclError as e:
-        if ('value for "-file" missing' not in e.args[0] and
-                "couldn't recognize data in image file" not in e.args[0]):
-            log.info(_("ui.Image error: {error}").format(error=e))
-    """
-    uri=sense.illustrationURI()
-    if uri and file.exists(uri):
-        sense.image=ui.Image(uri)
-    else:
-        sense.image=None
-def scale_image(image,pixels=65,scaleto='height'):
-    return image.scale(program.scale,pixels=pixels,scaleto=scaleto)
-def scaleimageifthere(sense,pixels=65,scaleto='height'):
-    if not getattr(sense,'image',False) or not isinstance(sense.image,ui.Image):
-        try:
-            compilesenseimage(sense)
-        except tkinter.TclError as e:
-            if ('value for "-file" missing' not in e.args[0] and
-                    "couldn't recognize data in image file" not in e.args[0]):
-                log.info(_("ui.Image error: {error}").format(error=e))
-    if sense.image:
-        return scale_image(sense.image,pixels=pixels,scaleto=scaleto)
 def updateazt(event=None,**kwargs): #should only be parent, for errorroot
     def tryagain(event=None):
         kwargs['tryagain']=True

@@ -2994,6 +2994,12 @@ class Sense(Node,FieldParent):
         else:
             self.cawln=None
     def illustrationURI(self):
+        """1. File in lift node, if in db.imgdir, else
+        2. url of image online, by cawln, else
+        3. file in lift node if set (even if not in db.imgdir - dead link)
+        4. else default name from cawln
+        Hence: privilege actual files, but always return writable path.
+        """
         v=self.illustrationvalue()
         if v:
             local=file.getdiredurl(self.db.imgdir,v)
@@ -3006,8 +3012,9 @@ class Sense(Node,FieldParent):
             if url:
                 return url
         # Return local path even if missing (preserves original behaviour)
-        if v:
-            return file.getdiredurl(self.db.imgdir,v)
+        if not v:
+            v=self.imagename()
+        return file.getdiredurl(self.db.imgdir,v)
     def illustrationvalue(self,value=None):
         try:
             assert isinstance(self.illustration,et.Element)
@@ -3020,6 +3027,13 @@ class Sense(Node,FieldParent):
             else:
                 return None
         return self.illustration.myvalue(value)
+    def save_illustration_to_file(self,url):
+        """This copies a file in one location to another"""
+        with open(self.illustrationURI(),'wb') as f:
+            # log.info("opened new file")
+            with open(url,'rb') as u:
+                # log.info("opened old file")
+                f.write(u.read())
     def formattedform(self,analang,ftype=None,frame=False):
         if not ftype:
             if frame:
@@ -3281,6 +3295,7 @@ class Sense(Node,FieldParent):
         self.getglosses()
         self.getdefinitions()
         self.getexamples()
+        self.image=None #make this booleanable, in any case 
         self.illustrationvalue() #set if there
         # log.info([i.textvalue() for i in self.glosses['en']])
         # log.info("Initialized sense for {}".format(self))

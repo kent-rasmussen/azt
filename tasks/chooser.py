@@ -537,9 +537,10 @@ class TaskChooser(Task):
             self.task.withdraw() #so users don't do stuff while waiting
         except (AttributeError,tkinter.TclError):
             log.info(_("There doesn't seem to be a task to hide; moving on."))
-        curname = self.filename
+        curname = self.program.filename
         log.info(_("Current database: {name}").format(name=curname))
-        window=LiftChooser(self,file.getfilenames())
+        # window=LiftChooser(self,file.getfilenames())
+        window=LiftChooser(self.program)
         window.wait_window(window)
         if hasattr(self,'name') and self.name:
             self.filename=self.name
