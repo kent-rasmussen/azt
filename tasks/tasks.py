@@ -11,7 +11,6 @@ from utilities import file, logsetup, rx
 from io_put import export
 from tasks.alphabet_chart import AlphabetChart
 from tasks.alphabet_comparison import AlphabetComparisonPages
-from utilities.utilities import LazyGlobal
 from utilities.i18n import _
 log = logsetup.getlog(__name__)
 

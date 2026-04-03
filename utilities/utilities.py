@@ -328,36 +328,6 @@ if __name__ == '__main__':
     logsetup.setlevel('DEBUG',log) #for this file
     log.info(f"Importing {__name__}")
 
-class LazyGlobal:
-    """A proxy object that lazily fetches an attribute from 'main' module.
-    This allows bare-name access to main.py globals in extracted modules
-    without circular imports at import time.
-    """
-    def __init__(self, name):
-        object.__setattr__(self, '_name', name)
-    def _get_val(self):
-        import sys
-        m = sys.modules.get('main') or sys.modules.get('__main__')
-        if m is None:
-            import main
-            m = main
-        return getattr(m, object.__getattribute__(self, '_name'))
-    def __getitem__(self, key): return self._get_val()[key]
-    def __setitem__(self, key, val): self._get_val()[key] = val
-    def __getattr__(self, attr): return getattr(self._get_val(), attr)
-    def __setattr__(self, attr, val): setattr(self._get_val(), attr, val)
-    def __call__(self, *args, **kwargs): return self._get_val()(*args, **kwargs)
-    def __iter__(self): return iter(self._get_val())
-    def __len__(self): return len(self._get_val())
-    def __contains__(self, item): return item in self._get_val()
-    def __bool__(self): return bool(self._get_val())
-    def __repr__(self): return repr(self._get_val())
-    def __eq__(self, other): return self._get_val() == other
-    def __ne__(self, other): return self._get_val() != other
-    def __hash__(self): return hash(self._get_val())
-    def __str__(self): return str(self._get_val())
-
-globals()['_'] = LazyGlobal('_')
 
 """Function Decorators"""
 def marktime(f,*args,**kwargs):

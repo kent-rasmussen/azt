@@ -26,21 +26,6 @@ from backend.core.analysis import Analysis, StatusDict
 from io_put import sound
 from io_put.cawl import loadCAWL
 
-def __getattr__(name):
-    # Lazy load globals from main
-    if name in ('saveimagefile',
-                'updateazt',
-                'scaledimage', 'getimagelocationURI'):
-        import main
-        return getattr(main, name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-# Mirror main globals lazily to allow bare-name access
-for name in ('saveimagefile',
-             'updateazt',
-             'scaledimage', 'getimagelocationURI'):
-    if name not in globals():
-        globals()[name] = LazyGlobal(name)
 
 class HasMenus():
     def helpnewinterface(self):
@@ -459,6 +444,7 @@ class Menus(ui.Menu):
         # changestuffmenu.add_cascade(label=_("Settings"), menu=settingsmenu)
         """help"""
     def help(self):
+        from main import updateazt
         self.cascade(self,_("Help"),'helpmenu')
         helpitems=[(_("About"), self.parent.helpabout)]
         if self.program.git:
@@ -1927,6 +1913,7 @@ class TaskDressing(HasMenus,ui.Window):
                ]
             ErrorNotice("\n".join(l))
     def updateazt(self,event=None):
+        from main import updateazt
         updateazt()
     def maybewrite(self,definitely=False):
         self.program.taskchooser.maybewrite(definitely=definitely)
@@ -2028,6 +2015,7 @@ class ImageFrame(ui.Frame):
     """I need to remove class references from here where possible,
     and sort out a program reference"""
     def getimage(self,reload=False):
+        from main import scaledimage
         specifiedurl=False
         compiled=False
         if self.url and file.exists(self.url):
@@ -2076,6 +2064,7 @@ class ImageFrame(ui.Frame):
                 ipadx=10,
                 row=0,column=1)
     def imperativeframe(self):
+        from main import scaledimage
         try:
             image1=self.program.theme.photo['Order!']
             scaledimage(image,pixels=300) #300 wide
@@ -2147,6 +2136,7 @@ class Splash(ui.Window):
             return
         self.progressbar.current(value)
     def __init__(self, program):
+        from main import updateazt
         self.program=program
         # try:
         #     parent.withdraw()
@@ -2549,6 +2539,7 @@ class LiftChooser(ui.Window,HasMenus):
             log.info(_("returned more or less than one lift file! ({list})")
                     .format(list=l))
     def fillcawldbimages(self,cawldb=None,newdirname=None,wait=None):
+        from main import saveimagefile
         log.info("Filling in empty image fields where possible")
         if not cawldb:
             cawldb=self.cawldb
