@@ -104,7 +104,6 @@ class Report(object):
             self.waitdone()
         logfinished(start_time,msg=_("all reports ({reports})").format(reports=all))
     def tonegroupreport(self,usegui=True,**kwargs):
-        from frontend import ui_tkinter as ui
         """This should iterate over at least some profiles; top 2-3?
         those with 2-4 verified frames? Selectable with radio buttons?"""
         start_time=nowruntime()
@@ -139,8 +138,8 @@ class Report(object):
         waitmsg=_("{ps} {profile} Tone Report in Process\n({timestamps})").format(ps=ps,profile=profile,
                                                                 timestamps=timestamps)
         if usegui:
-            from frontend.ui_shell import ResultWindow
-            resultswindow=ResultWindow(self.parent,msg=waitmsg)
+            resultswindow=self.program.report_ui.create_result_window(
+                self.parent, msg=waitmsg)
         bits=[str(self.reportbasefilename),
                 rx.urlok(ps),
                 rx.urlok(profile),
@@ -200,8 +199,8 @@ class Report(object):
         r = open(self.tonereportfile, 'w', encoding='utf-8')
         title=_("Tone Report")
         if usegui:
-            resultswindow.scroll=ui.ScrollingFrame(resultswindow.frame)
-            resultswindow.scroll.grid(row=0,column=0)
+            report_ui = self.program.report_ui
+            resultswindow.scroll=report_ui.create_scrolling_frame(resultswindow.frame)
             window=resultswindow.scroll.content
             window.row=0
         else:
@@ -251,7 +250,7 @@ class Report(object):
         def output(window,r,text):
             r.write(text+'\n')
             if usegui:
-                ui.Label(window,text=text,
+                report_ui.add_label(window, text=text,
                         font=window.theme.fonts['report'],
                         row=window.row,column=0, sticky='w'
                         )
@@ -399,16 +398,9 @@ class Report(object):
                 resultswindow.on_quit()
         self.program.status.last('report',update=True)
     def makeresultsframe(self):
-        from frontend import ui_tkinter as ui
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
-            self.results = ui.Frame(self.runwindow.frame,width=800)
-            self.results.grid(column=0,
-                            row=self.runwindow.frame.grid_info()['row']+1,
-                            columnspan=5,
-                            sticky=(ui.N, ui.S, ui.E, ui.W))
-            self.results.scroll=ui.ScrollingFrame(self.results)
-            self.results.scroll.grid(column=0, row=1)
-            self.results.row=0
+            self.results = self.program.report_ui.create_results_frame(
+                self.runwindow.frame)
         else:
             log.error("Tried to get a results frame without a runwindow!")
     def background(self,fn,**kwargs):
@@ -430,7 +422,6 @@ class Report(object):
             # ErrorNotice(msg)
             fn(**kwargs)
     def getresults(self,**kwargs):
-        from frontend import ui_tkinter as ui
         def iterateUFgroups(parent,**kwargs):
             checks=[kwargs['check']]
             #Use this to distinguish "=" checks from "≠" checks, in that order
@@ -473,7 +464,8 @@ class Report(object):
                                                     profile=kwargs['profile'],
                                                     check=kwargs['check']))
         if usegui: #i.e., showing results in window
-            ui.Label(self.results, text=text).grid(column=0, row=self.results.row)
+            self.program.report_ui.add_label(self.results, text=text
+                ).grid(column=0, row=self.results.row)
             self.runwindow.wait()
         si=xlp.Section(xlpr,text)
         if self.byUFgroup:
@@ -521,7 +513,8 @@ class Report(object):
                                                         ps=kwargs['ps'])
             log.info(text)
             if usegui: #i.e., showing results in window
-                ui.Label(self.results, text=text, column=0, row=self.results.row+1)
+                self.program.report_ui.add_label(self.results, text=text,
+                    column=0, row=self.results.row+1)
             return
     def buildXLPtable(self,parent,caption,yterms,xterms,values,ycounts=None,xcounts=None):
         #values should be a (lambda?) function that depends on x and y terms
@@ -623,7 +616,6 @@ class Report(object):
                                     'name': self.program.settings.languagenames[lang]})
         return xlpreport
     def wordsbypsprofilechecksubcheckp(self,parent,**kwargs):
-        from frontend import ui_tkinter as ui
         # log.info("Kwargs (wordsbypsprofilechecksubcheckp): {kwargs}".format(kwargs=kwargs))
         usegui=kwargs['usegui']=kwargs.get('usegui',True)
         cvt=kwargs['cvt']=kwargs.get('cvt',self.program.params.cvt())
@@ -728,7 +720,8 @@ class Report(object):
                     for t in [node.textvaluebylang(self.analang)]+[
                                 node.glossbylang(l) for l in self.glosslangs]:
                         col+=1
-                        ui.Label(self.results.scroll.content,
+                        self.program.report_ui.add_label(
+                                self.results.scroll.content,
                                 text=t, font='read',
                                 anchor='w',padx=10, row=self.results.row,
                                 column=col,
