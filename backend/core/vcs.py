@@ -10,7 +10,6 @@ import collections
 # import re
 # import datetime
 # import tkinter as tk
-from frontend import ui_tkinter as ui
 from utilities.utilities import *
 from utilities import file, htmlfns
 from io_put import lift
@@ -76,6 +75,7 @@ class Repository(object):
         # else:
         #     log.info(_("Not adding {file} to bare repo {url}").format(file=file,url=self.url))
     def commitconfirm(self,diff): #don't run the diff again...
+        from frontend import ui_tkinter as ui
         def ok(event=None):
             self.commitconfirmed=nowruntime()
             yes.destroy()
@@ -149,6 +149,7 @@ class Repository(object):
         args=['status']
         log.info(self.do(args))
     def clonefromUSB(self,directory):
+        from frontend import ui_tkinter as ui
         log.info(_("Preparing to clone to {dir} from USB repo").format(dir=directory))
         #this should be a pathlib object
         # log.info("Continuing to clone to {} from USB repo".format(directory))
@@ -161,6 +162,7 @@ class Repository(object):
         log.info(self.do(args))
         w.close()
     def clonetoUSB(self,event=None):
+        from frontend import ui_tkinter as ui
         # log.info("Trying to run clonetoUSB")
         directory=self.abs_path(self.clonetobaredirname())
         log.info(_("directory: {dir}").format(dir=directory))
@@ -568,6 +570,7 @@ class Repository(object):
             log.info(_("Checking repo existence via {path}").format(path=f))
         return file.exists(f)
     def exewarning(self):
+        from frontend import ui_tkinter as ui
         title=_("Warning: {type} Executable Missing!").format(type=self.repotypename)
         text=_("You "
                 # "seem to be working on a repository of data ({0}), "

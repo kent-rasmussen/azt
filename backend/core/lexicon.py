@@ -4,7 +4,6 @@ import collections
 import re
 import datetime
 # import tkinter as tk
-from frontend import ui_tkinter as ui
 from backend.core.analysis import Analysis
 from utilities.utilities import *
 from utilities import file, logsetup, htmlfns
@@ -66,7 +65,6 @@ class Senses(object):
         return check+'='+group
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
 class Segments(Senses):
     """docstring for Segments."""
     show_second_fields=True
@@ -506,6 +504,7 @@ class WordCollection(Segments):
                 "\nJust type consonants and vowels; don't worry about tone "
                 "for now.")
     def getwords(self):
+        from frontend import ui_tkinter as ui
         self.entries=self.getlisttodo()
         self.nentries=len(self.entries)
         self.index=0
@@ -536,6 +535,7 @@ class WordCollection(Segments):
         self.runwindow.form[lang]=self.runwindow.form[lang].get()
         self.runwindow.frame2.destroy()
     def promptwindow(self,lang):
+        from frontend import ui_tkinter as ui
         def skipform(event=None):
             del self.runwindow.form[lang]
             self.runwindow.frame2.destroy() #Just move on.
@@ -572,6 +572,7 @@ class WordCollection(Segments):
         self.runwindow.waitdone()
         sub_btn.wait_window(self.runwindow.frame2) #then move to next step
     def addmorpheme(self):
+        from frontend import ui_tkinter as ui
         self.getrunwindow()
         self.runwindow.form={}
         self.runwindow.glosslangs=list()
@@ -733,13 +734,12 @@ class WordCollection(Segments):
             log.info(f"Exception storing word (WordCollection): {e}")
     def markimage(self,url,w=None):
         """return to file, LIFT"""
-        from main import saveimagefile
         log.info("Selected image {}".format(url))
         if w:
             w.on_quit()
         filename=self.sense.imagename() #new file name
-        saveimagefile(url,filename)
         self.sense.illustrationvalue(filename)
+        self.sense.save_illustration_to_file(url)
         self.maybewrite()
         self.wordframe.pic.reloadimage()
         self.updatereturnbind()
@@ -755,8 +755,8 @@ class WordCollection(Segments):
         if f and file.exists(f):
             self.markimage(f,w)
     def showimagestoselect(self,files):
+        from frontend import ui_tkinter as ui
         from frontend.ui_shell import ImageFrame
-        from main import scaleimageifthere
         self.imagecolumns=3
         self.imagepixels=0
         pixelopts=range(200,1000,100)
@@ -804,9 +804,9 @@ class WordCollection(Segments):
         self.selectionwindow.title(title)
         t=ui.Label(self.selectionwindow.frame,text=title, font='title',
                     row=0,column=0)
-        currentimage=scaleimageifthere(self.sense)
-        if currentimage:
-            t['image']=currentimage
+        if self.sense.image:
+            self.sense.image.scale(t.theme.scale, pixels=65, scaleto='height')
+            t['image']=self.sense.image.scaled
             t['compound']='right'
         imageparameters=ui.Frame(self.selectionwindow.frame,
                                 row=1, column=0, sticky='e')
@@ -945,6 +945,7 @@ class WordCollection(Segments):
                         button=(_("Select local image"),self.selectlocalimage))
         self.waitdone()
     def killwordframe(self):
+        from frontend import ui_tkinter as ui
         f=getattr(self,'wordframe',None)
         if isinstance(f,ui.Frame) and f.winfo_exists():
             # log.info("Destroying word frame")
@@ -956,6 +957,7 @@ class WordCollection(Segments):
         #     if f:
         #         log.info("word frame exists: {}".format(f.winfo_exists()))
     def dowordframe(self):
+        from frontend import ui_tkinter as ui
         f=getattr(self,'wordframe',None)
         if isinstance(f,ui.Frame) and f.winfo_exists():
             # log.info("Skipping word frame; already exists!")
@@ -989,19 +991,16 @@ class WordCollection(Segments):
         next.bind_all('<Down>',lambda event: self.nextword(nostore=True))
         next.bind_all('<Next>',lambda event: self.nextword(nostore=True))
     def updatereturnbind(self):
+        """Move to UI?"""
+        """ I no longer want users to select words here. They should be 
+        immutable at this point, like glosses.
+        """
         log.info(_("Updating binding ({state})").format(state=self.state()))
         if self.state() == 'withdrawn':
             self.unbind_all('<Return>')
         else: #only bind to non-withdrawn window
-            # try: #re-institute this section once pics have good defaults
-            #     assert self.wordframe.pic.hasimage
             self.lxenter.bind_all('<Return>',
                                 lambda event: self.nextword(nostore=False))
-            #     log.info("Return now moves to next word")
-            # except AssertionError:
-            #     self.wordframe.pic.bind_all('<Return>',
-            #                                         self.selectimageormoveon)
-            #     log.info("Return now selects image, or moves on")
     def set_up_transcription(self):
         pass
     def getword(self):
@@ -1049,10 +1048,11 @@ class WordCollection(Segments):
             self.dirfn(nostore=True)
         self.glossesline['text']=self.glossesthere
         self.glossesline.wrap()
+        url=self.sense.illustrationURI()
         if isinstance(getattr(self.wordframe,'pic',None),ImageFrame):
-            self.wordframe.pic.changesense(self.sense)
+            self.wordframe.pic.changeurl(url)
         else:
-            self.wordframe.pic=ImageFrame(self.wordframe, self.sense,
+            self.wordframe.pic=ImageFrame(self.wordframe, url,
                                             pixels=300,
                                             row=2, column=0,
                                             columnspan=3, sticky='')
@@ -1098,6 +1098,7 @@ class Parse(Segments):
                                                             quoted=True))
                         for l in self.glosslangs])
     def userconfirmation(self,*args):
+        from frontend import ui_tkinter as ui
         from frontend.ui_shell import ImageFrame
         log.info("asking for user confirmation")
         # Return True or False only
@@ -1173,8 +1174,9 @@ class Parse(Segments):
         self.l=ui.Label(self.lcframe,
                 text='-'.join([i for i in lcmorphs if i]),font='title',
                 row=0,column=0)
-        ImageFrame(self.lcframe,self.sense,
-                    row=1,column=0,sticky='')
+        url=self.sense.illustrationURI()
+        ImageFrame(self.lcframe, url, ftype=ftype, 
+                    row=1, column=0, sticky='')
         ui.Label(self.lcframe,
                 text=glosslc,font='readbig',
                 row=2,column=0)
@@ -1187,8 +1189,9 @@ class Parse(Segments):
         ui.Label(self.sfframe,
                 text='-'.join([i for i in sfmorphs if i]),font='title',
                 row=0,column=1)
-        ImageFrame(self.sfframe,self.sense,ftype=ftype,
-                    row=1,column=1,sticky='')
+        url=self.sense.illustrationURI()
+        ImageFrame(self.sfframe, url, ftype=ftype,
+                    row=1, column=1, sticky='')
         ui.Label(self.sfframe,
                 text=glosssf,font='readbig',
                 row=2,column=1)
@@ -1244,6 +1247,7 @@ class Parse(Segments):
                 # log.info("User responded {}".format(self.userresponse.value))
                 return self.userresponse.value
     def selectsffromlist(self,l):
+        from frontend import ui_tkinter as ui
         from frontend.ui_shell import ImageFrame
         def formattuple(l):
             pfx,sfx=l[-1]
@@ -1293,7 +1297,8 @@ class Parse(Segments):
         t.wrap()
         if ln:
             noun=ui.Frame(w.frame, row=1, column=0, sticky='n')
-            ImageFrame(noun,self.sense,ftype='pl',row=0,column=0, sticky='')
+            url=self.sense.illustrationURI()
+            ImageFrame(noun, url, ftype='pl', row=0, column=0, sticky='')
             ui.Label(noun,
                     text=_("Select {field} form").format(
                                         field=self.secondformfield[self.nominalps]),
@@ -1306,7 +1311,8 @@ class Parse(Segments):
                                         )
         if lv:
             verb=ui.Frame(w.frame, row=1, column=1, sticky='n')
-            ImageFrame(verb,self.sense,ftype='imp',row=0,column=0, sticky='')
+            url=self.sense.illustrationURI()
+            ImageFrame(verb, url, ftype='imp', row=0, column=0, sticky='')
             ui.Label(verb,
                     text=_("Select {field} form").format(
                                         field=self.secondformfield[self.verbalps]),
@@ -1378,6 +1384,7 @@ class Parse(Segments):
                         imp_name=self.secondformfield[self.verbalps]
                         )
     def asksegments(self,ps=None):
+        from frontend import ui_tkinter as ui
         from frontend.ui_shell import ImageFrame
         def do(event=None):
             self.parser.sense.psvalue(ps)
@@ -1425,7 +1432,8 @@ class Parse(Segments):
             ftype='pl'
         elif ps == self.verbalps:
             ftype='imp'
-        ImageFrame(w.frame,self.parser.sense,ftype=ftype,row=0,column=2)
+        url=self.parser.sense.illustrationURI()
+        ImageFrame(w.frame, url, ftype=ftype, row=0, column=2)
         segments=ui.StringVar()
         segments.set(self.parser.entry.lcvalue())
         e=ui.EntryField(w.frame,text=segments,
@@ -1669,6 +1677,7 @@ class Parse(Segments):
         while not self.program.settings.secondformfieldsOK():
             after(10*100,callback=self.waitforOKsecondfields) # wait a second
     def __init__(self, **kwargs): #frame, filename=None
+        from frontend import ui_tkinter as ui
         self.byslice=False
         self.initsensetodo()
         super().__init__(**kwargs)
@@ -1697,7 +1706,6 @@ class Parse(Segments):
         self.userresponse=Object(rootchange=False,value=False)
         self.cparsetext=ui.StringVar() #store UI parse info here
         self.showwhenready()
-
 class Tone(Senses):
     """This keeps stuff used for Tone checks."""
     """This may want to depend on a new class Examples, since it's
