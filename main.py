@@ -104,6 +104,8 @@ from backend.core.lexicon import Senses, Segments, WordCollection, Parse, Tone
 from backend.core.sorting_engine import Sort
 from frontend.ui_shell import (HasMenus, Menus, StatusFrame, TaskDressing,
     LiftChooser, ImageFrame, Splash, ErrorNotice, ResultWindow, Settings as UISettings)
+from utilities.error_handler import set_error_handler
+set_error_handler(ErrorNotice)
 from frontend.sort_buttons import (SortButtonFrame, _GroupButtonFrame,
     SortGroupButtonFrame, SortGlyphGroupButtonFrame)
 from tasks.base import Task

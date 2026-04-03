@@ -4,7 +4,7 @@ from utilities.i18n import _
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 
-from frontend.error_notice import ErrorNotice
+from utilities.error_handler import notify_error as ErrorNotice
 
 from backend.core.sorting_engine import Sort
 

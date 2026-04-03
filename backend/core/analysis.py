@@ -19,7 +19,7 @@ log=logsetup.getlog(__name__)
 # import inspect
 # import multiprocessing
 
-from frontend.error_notice import ErrorNotice
+from utilities.error_handler import notify_error as ErrorNotice
 
 from utilities.i18n import _
 from utilities import rx

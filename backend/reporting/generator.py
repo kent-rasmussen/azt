@@ -20,7 +20,7 @@ import multiprocessing
 
 log=logsetup.getlog(__name__)
 
-from frontend.error_notice import ErrorNotice
+from utilities.error_handler import notify_error as ErrorNotice
 
 from utilities.i18n import _
 from backend.core.report_mixins import Multicheck, Multislice

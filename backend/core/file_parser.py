@@ -5,7 +5,7 @@ from utilities import logsetup, file
 from io_put import lift
 log=logsetup.getlog(__name__)
 
-from frontend.error_notice import ErrorNotice
+from utilities.error_handler import notify_error as ErrorNotice
 
 class FileParser(object):
     """This class parses the LIFT file, once we know which it is."""

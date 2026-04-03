@@ -24,7 +24,7 @@ import subprocess
 # import inspect
 # import multiprocessing
 
-from frontend.error_notice import ErrorNotice
+from utilities.error_handler import notify_error as ErrorNotice
 
 from settings import Settings
 
