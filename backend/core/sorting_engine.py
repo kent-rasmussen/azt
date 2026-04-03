@@ -26,22 +26,10 @@ from backend.core.lexicon import Tone
 class Sort(object):
     """This class takes methods common to all sort checks, and gives sort
     checks a common identity."""
-    @staticmethod
-    def _ui():
-        from frontend import ui_tkinter as ui
-        return ui
-    @staticmethod
-    def _SortButtonFrame():
-        from frontend.sort_buttons import SortButtonFrame
-        return SortButtonFrame
-    @staticmethod
-    def _SortGroupButtonFrame():
-        from frontend.sort_buttons import SortGroupButtonFrame
-        return SortGroupButtonFrame
-    @staticmethod
-    def _SortGlyphGroupButtonFrame():
-        from frontend.sort_buttons import SortGlyphGroupButtonFrame
-        return SortGlyphGroupButtonFrame
+    @property
+    def sort_ui(self):
+        """Lazy-init presenter; available after task init wires program.sort_ui."""
+        return self.program.sort_ui
     show_buttoncolumnsline=True #does this belong here?
     def get_check(self):
         return self.program.params.check()
@@ -139,7 +127,7 @@ class Sort(object):
             self.updatestatuslift(group=group,verified=verified,write=write)
             return r
     def addmodadhocsort(self):
-        ui = self._ui()
+        p = self.sort_ui
         def submitform():
             if profilevar.get() == '':
                 log.debug("Give a name for this adhoc sort group!")
@@ -173,7 +161,7 @@ class Sort(object):
         self.runwindow.title(title)
         padx=50
         pady=10
-        ui.Label(self.runwindow.frame,text=title,font='title',
+        p.label(self.runwindow.frame,text=title,font='title',
                 ).grid(row=0,column=0,sticky='ew')
         allpssenses=self.program.slices.sensesbyps(ps)
         if len(allpssenses)>70:
@@ -181,9 +169,9 @@ class Sort(object):
             text=_("This is a large group ({count})! Are you in the right "
                     "lexical category?").format(count=len(allpssensids))
             log.error(text)
-            w=ui.Label(self.runwindow.frame,text=text)
+            w=p.label(self.runwindow.frame,text=text)
             w.grid(row=1,column=0,sticky='ew')
-            b=ui.Button(self.runwindow.frame, text=_("OK"), command=w.destroy, anchor='c')
+            b=p.button(self.runwindow.frame, text=_("OK"), command=w.destroy, anchor='c')
             b.grid(row=2,column=0,sticky='ew')
             self.runwindow.wait_window(w)
             w.destroy()
@@ -191,7 +179,7 @@ class Sort(object):
             return
         else:
             self.runwindow.wait()
-        ui.Label(self.runwindow.frame,text=title,font='title',
+        p.label(self.runwindow.frame,text=title,font='title',
                 ).grid(row=0,column=0,sticky='ew')
         text=_("This page will allow you to set up your own sets of dictionary "
                 "senses to sort, within the '{0}' lexical category. \nYou "
@@ -206,36 +194,36 @@ class Sort(object):
                 "\nIf you want to create a new group, exit here, select a "
                 "non-Ad Hoc syllable profile, and try this window again."
                 "").format(ps=ps)
-        inst=ui.Label(self.runwindow.frame,text=text,
+        inst=p.label(self.runwindow.frame,text=text,
                 row=1,column=0,sticky='ew'
                 )
         inst.wrap()
-        qframe=ui.Frame(self.runwindow.frame)
+        qframe=p.frame(self.runwindow.frame)
         qframe.grid(row=2,column=0,sticky='ew')
         text=_("What do you want to call this group for sorting {ps} words?"
                 "").format(ps=ps)
-        instq=ui.Label(qframe,text=text,
+        instq=p.label(qframe,text=text,
                 row=0,column=0,sticky='ew',pady=20)
         if new:
             default=None
         else:
             default=profile
-        profilevar=ui.StringVar(value=default)
-        namefield = ui.EntryField(qframe,text=profilevar)
+        profilevar=p.string_var(value=default)
+        namefield = p.entry_field(qframe,text=profilevar)
         namefield.grid(row=0,column=1)
         text=_("Select the {ps} words below that you want in this group, then "
                 "click ==>").format(ps=ps)
-        ui.Label(qframe,text=text).grid(row=1,column=0,sticky='ew',pady=20)
-        sub_btn=ui.Button(qframe,text = _("OK"),
+        p.label(qframe,text=text).grid(row=1,column=0,sticky='ew',pady=20)
+        sub_btn=p.button(qframe,text = _("OK"),
                   command = submitform,anchor ='c')
         sub_btn.grid(row=1,column=1,sticky='w')
         vars=list()
         row=0
-        scroll=ui.ScrollingFrame(self.runwindow.frame)
+        scroll=p.scrolling_frame(self.runwindow.frame)
         for idn,sense in enumerate(allpssenses):
             log.debug("id: {}; index: {}; row: {}".format(sense.id,idn,row))
             # idn=allpssenses.index(sense)
-            vars.append(ui.StringVar())
+            vars.append(p.string_var())
             adhocslices=self.program.slices.adhoc()
             if (ps in adhocslices and profile in adhocslices[ps] and
                                         sense in adhocslices[ps][profile]):
@@ -244,7 +232,7 @@ class Sort(object):
                 vars[idn].set(0)
             forms=sense.formatted()
             log.debug("forms: {}".format(forms))
-            ui.CheckButton(scroll.content, text = forms,
+            p.check_button(scroll.content, text = forms,
                                 variable = vars[idn],
                                 onvalue = id, offvalue = 0,
                                 ).grid(row=row,column=0,sticky='ew')
@@ -736,43 +724,21 @@ class Sort(object):
         self.updateformsallchecks() #whole db annotations>forms
         log.info("Done updating forms")
     def present_sense(self,sense):
-        ui = self._ui()
         log.info("presenting to sort {sense_id}".format(sense_id=sense.id))
         frame=self.get_frame()
         text=sense.formatted(self.analang, self.glosslangs, self.ftype, frame)
-        self.buttonframe.sortitem=ui.Frame(self.runwindow.frame, column=1, row=1, sticky='nw',
-                            border=True)
-        l=ui.Label(self.buttonframe.sortitem,
-                                text=text,font='readbig', sticky='w',
-                                # pady=scaledpady
-                                )
-        if sense.image:
-            sense.image.scale(l.theme.scale, pixels=65, scaleto='height')
-            l['image']=sense.image.scaled
-            l['compound']='left'
-        l.wrap()
-        return self.buttonframe.sortitem
+        return self.sort_ui.build_present_sense(
+            self.runwindow.frame, self.buttonframe, text, sense)
     def present_group(self,item):
-        ui = self._ui()
-        SortGroupButtonFrame = self._SortGroupButtonFrame()
         log.info("presenting group {item}".format(item=item))
         kwargs=self.program.alphabet.parse_verificationcode(item)
-        self.buttonframe.sortitem=ui.Frame(self.runwindow.frame, border=True,
-                                            column=1, row=1, sticky='nw')
-        align_w_ggbfs=ui.Label(self.buttonframe.sortitem,text='',
-                                width=5,sticky='')
-        tosort_frame=SortGroupButtonFrame(self.buttonframe.sortitem,
-                                        self, 
-                                        show_check=True,
-                                        label=True,
-                                        sticky='', **kwargs
-                                        )
-        if tosort_frame.hasexample:
-            return self.buttonframe.sortitem
+        result = self.sort_ui.build_present_group(
+            self.runwindow.frame, self.buttonframe, self, item, kwargs)
+        if result:
+            return result
         else:
             log.info("No example for {item}; not sorting.".format(item=item))
             self.program.alphabet.mark_item_macrosorted(item) #don't keep sorting
-            tosort_frame.destroy()
     def current_tosort(self,macrosort=False):
         """These are all ordered lists (either by order of listbuilding, or by
         sorted(). Items not on the original list get tacked onto the end, still
@@ -784,7 +750,6 @@ class Sort(object):
             tosort=self.program.status.sensestosort()
         return self.first_sort+[i for i in tosort if i not in self.first_sort]
     def presenttosort(self,item,macrosort=False):
-        ui = self._ui()
         # log.info("presenting to sort {item}".format(item=item))
         #Keep the same total throughout a given sort:
         tosort=self.current_tosort(macrosort=macrosort)
@@ -792,7 +757,7 @@ class Sort(object):
         """After the first entry, sort by groups."""
         if self.runwindow.exitFlag.istrue():
             return #1,1
-        ui.Label(self.groupsFrame, text=progress, font='report', anchor='e',
+        self.sort_ui.label(self.groupsFrame, text=progress, font='report', anchor='e',
                     column=1, row=0, sticky='e')
         if macrosort:
             self.sortitem=self.present_group(item)
@@ -876,14 +841,10 @@ class Sort(object):
             self.buttonframe.addgroupbutton(category)
         self.maybewrite()
     def sort(self,macrosort=False):
-        ui = self._ui()
-        SortButtonFrame = self._SortButtonFrame()
-        SortGroupButtonFrame = self._SortGroupButtonFrame()
-        SortGlyphGroupButtonFrame = self._SortGlyphGroupButtonFrame()
         """This window/frame/function shows one item at a time,
         for the user to select its category based on buttons defined below.
             sort groups: senses (with pic?) sorted into sort groups
-                one ps and profile at a time (of course) 
+                one ps and profile at a time (of course)
             macrosort: ps-profile-check-ftype sort groups sorted into glyph groups (in a SGBF)
                 across ps and profile
         In the event that the item isn't like any available category, a new one is
@@ -917,15 +878,11 @@ class Sort(object):
             current_list_fn=self.program.alphabet.itemstosort
             self.first_sort=list(current_list_fn()) #current list
             groups=self.program.alphabet.glyphs()
-            # log.info(f"{self.program.alphabet.glyph_members()=}")
-            # log.info(f"{self.exitFlag.istrue()=}")
-            buttonclass=SortGlyphGroupButtonFrame
             img_mod='glyphs'
         else:
             current_list_fn=self.itemstosort
             self.first_sort=list(current_list_fn()) #current list
             groups=[i for i in self.groups(wsorted=True) if i != 'NA']
-            buttonclass=SortGroupButtonFrame
             img_mod=''
             instructions+=' '+_("(by {context})").format(context=context)
         log.info("Going to sort these items: {items}".format(items=self.first_sort))
@@ -934,23 +891,9 @@ class Sort(object):
             return 1
         log.info(f"Getting Runwindow")
         self.getrunwindow() #after we know this will do something
-        ui.Label(self.runwindow.frame, image=f'sort{img_mod}', 
-                row=0, column=0, rowspan=3, sticky='new', anchor='center')
-        ui.Label(self.runwindow.frame,
-                image=self.pageicon(macrosort=macrosort),
-                image_pixels=270, #250=65%;270=70%
-                row=3,column=0,rowspan=3,sticky='nw') 
-        self.runwindow.frame.rowconfigure(1, weight = 0) #word to sort
-        self.runwindow.frame.rowconfigure(2, weight = 1) #prompt and groups
-        self.runwindow.frame.columnconfigure(0, weight = 0) #icons
-        self.runwindow.frame.columnconfigure(1, weight = 1) #words
-        self.groupsFrame=ui.Frame(self.runwindow.frame, column=1, row=2,
-                            rowspan=2, pady=0, sticky='new')
-        ui.Label(self.groupsFrame, text=instructions, font='instructions',
-                anchor='c', sticky='sew')
-        self.buttonframe=SortButtonFrame(self.groupsFrame, self, groups, 
-                                        macrosort=macrosort,
-                                        row=1, sticky='new', columnspan=2)
+        self.groupsFrame, self.buttonframe = self.sort_ui.build_sort_layout(
+            self.runwindow, img_mod, self.pageicon(macrosort=macrosort),
+            instructions, self, groups, macrosort)
         # log.info("Sort SBF done macrosort={macrosort}".format(macrosort=macrosort))
         """Stuff that changes by lexical entry
         The second frame, for the other two buttons, which also scroll"""
@@ -1019,8 +962,6 @@ class Sort(object):
             self.marksortgroup(item, category, nocheck=True) # that marking
         self.maybewrite()
     def verify(self,menu=False,macrosort=False):
-        ui = self._ui()
-        SortButtonFrame = self._SortButtonFrame()
         def updatestatus(verified=False):
             if macrosort:
                 log.info("Updating '{group}' status as verified={verified}".format(group=group, verified=verified))
@@ -1124,62 +1065,22 @@ class Sort(object):
             return 1
         self.reverifying=False
         self.getrunwindow(msg=_("preparing to verify the {item_name} '{group}'").format(item_name=item_name, group=group))
-        titles=ui.Frame(self.runwindow.frame,
-                        column=1, row=0, columnspan=1, sticky='w')
-        ui.Label(titles, text=' '.join(title), font='title', column=0, row=0, sticky='w')
         """Move this to bool vars, like for sort"""
         if hasattr(self,'groupselected'): #so it doesn't get in way later.
             delattr(self,'groupselected')
-        row=0
-        column=0
         if group in groups:
             if len(groups)-1:
-                prog=_("({count} remaining)").format(count=len(groups))
+                prog_text=_("({count} remaining)").format(count=len(groups))
             else:
-                prog=_("(last group)")
-            ui.Label(titles,text=prog,anchor='w',padx=10,column=1,sticky='ew')
-        ui.Label(self.runwindow.frame,
-                image=self.pageicon(macrosort),
-                text='',row=0,column=0,sticky='nw')
-        i=ui.Label(titles, text=instructions,
-                row=1, column=0, columnspan=2, sticky='wns')
-        i.wrap()
-        if group != 'NA':
-            ui.Label(self.runwindow.frame, image=f'verify{img_mod}',
-                        text='', row=1,column=0,
-                        sticky='nws')
-        """Scroll after instructions"""
-        """put entry buttons here."""
-        if macrosort:
-             self.buttonframe=SortButtonFrame(self.runwindow.frame, self,
-                                        list(items),
-                                        macrosort=True,
-                                        show_check=True,
-                                        remove_on_click=True, column=1,
-                                        row=1, sticky='new', columnspan=2)
+                prog_text=_("(last group)")
         else:
-            self.buttonframe=ui.ScrollingFrame(self.runwindow.frame,
-                                    row=1,column=1,
-                                    sticky='wsn')
-            bc=self.buttoncolumns if len(items) >= self.min_to_multicolumn else 1
-            for item in items:
-                if self.runwindow.exitFlag.istrue():
-                    return
-                if item is None: #needed?
-                    continue
-                n=len(self.buttonframe.content.winfo_children())
-                self.verifybutton(self.buttonframe.content,item,
-                                        row=n//bc, 
-                                        column=n%bc,
-                                        label=False)
-        self.verifycanary=ui.Frame(self.buttonframe.content,
-                            row=self.buttonframe.content.nrows(),
-                            sticky='ew') #Keep on own row
-        b=ui.Button(self.verifycanary, text=oktext,
-                        cmd=self.verifycanary.destroy,
-                        anchor='w',
-                        font='instructions',
-                        column=0, row=0, sticky='ew')
+            prog_text=None
+        self.buttonframe, self.verifycanary = self.sort_ui.build_verify_layout(
+            self.runwindow, title, self.pageicon(macrosort), instructions,
+            prog_text, img_mod, group, items, self, macrosort, oktext,
+            self.min_to_multicolumn, self.buttoncolumns, self.verifybutton)
+        if self.verifycanary is None:
+            return
         if self.runwindow.exitFlag.istrue():
             return
         self.runwindow.waitdone()
@@ -1199,7 +1100,6 @@ class Sort(object):
         self.runwindow.on_quit()
         return 1
     def verifybutton(self,parent,sense,row,column=0,label=False,**kwargs):
-        ui = self._ui()
         """This should maybe take examples as input, rather than senses"""
         # This must run one subcheck at a time. If the subcheck changes,
         # it will fail.
@@ -1226,28 +1126,8 @@ class Sort(object):
             ipady=0
         else:
             ipady=15*self.program.scale
-        if label==True:
-            b=ui.Label(parent, text=text,
-                    column=column, row=row,
-                    sticky='ew',
-                    ipady=ipady,
-                    **kwargs
-                    )
-        else:
-            bf=ui.Frame(parent, pady=1, padx=1, column=column, row=row,
-                        sticky='w', border=True
-                        ) #This will be killed by removeitemfromgroup
-            b=ui.Button(bf, text=text, pady='0',
-                    cmd=notok,
-                    column=column, row=0,
-                    sticky='ew',
-                    ipady=ipady, #Inside the buttons...
-                    **kwargs
-                    )
-        if sense.image:
-            sense.image.scale(b.theme.scale, pixels=65, scaleto='height')
-            b['image']=sense.image.scaled
-            b['compound']='left'
+        b, bf = self.sort_ui.build_verify_button(
+            parent, text, sense, label, notok, row, column, ipady, **kwargs)
     def reset_selected(self):
         for k in self.groupvars:
             self.groupvars[k].set(False)
@@ -1271,9 +1151,6 @@ class Sort(object):
         return self.group_pairs_to_distinguish(macrosort=macrosort
                                                 )-d-{(y,x) for x,y in d}
     def join(self,macrosort=False):
-        ui = self._ui()
-        SortGroupButtonFrame = self._SortGroupButtonFrame()
-        SortGlyphGroupButtonFrame = self._SortGlyphGroupButtonFrame()
         def move_on_cleanly():
             # self.runwindow.withdraw()
             # self.last_pair=pair_frame.winfo_children()
@@ -1331,76 +1208,31 @@ class Sort(object):
         self.getrunwindow()
         oktext=_('These are each different from the other(s)')
         if macrosort:
-            buttonclass=SortGlyphGroupButtonFrame
             img_mod='glyphs'
             title_mod="Letter"
-            join_icon='joinglyphs'
             title_mod_2=''
         else:
-            buttonclass=SortGroupButtonFrame
             img_mod=''
             title_mod="Sort"
             title_mod_2=f" ('{check}')"
-            join_icon='join'
+        buttonclass = self.sort_ui.group_button_class(macrosort)
         title=_("Review {title} Groups{mod}").format(title=title_mod,mod=title_mod_2)
-        self.runwindow.frame.titles=ui.Frame(self.runwindow.frame,
-                                            column=1, row=0,
-                                            columnspan=1, sticky='ew'
-                                            )
-        ltitle=ui.Label(self.runwindow.frame.titles, text=title,
-                font='title', anchor='w',
-                column=0, row=0, sticky='ew',
-                )
-        self.progress=ui.Progressbar(self.runwindow.frame.titles,
-                                row=1, sticky='ew')
-        ui.Label(self.runwindow.frame,
-                image=self.pageicon(),
-                text='',row=0,column=0,sticky='nw')
-        ui.Label(self.runwindow.frame,
-                image=f'join{img_mod}', image_pixels=300,
-                image_scaleto='width',
-                text='',
-                row=1,column=0,rowspan=2,sticky='nw'
-                )
-        response_button_frame=ui.Frame(self.runwindow.frame,
-                                        column=1, row=2, pady=10, sticky='news')
-        ui.Button(response_button_frame,
-                text=_("Same"), font='read',
-                image=f'join{img_mod}_same', compound="bottom",
-                image_pixels=200, image_scaleto='width',
-                cmd=join_pair,
-                column=0, padx=10, ipadx=10, sticky='nsw')
-        ui.Button(response_button_frame,
-                text=_("Different"), font='read',
-                image=f'join{img_mod}_different', compound="bottom",
-                image_pixels=200, image_scaleto='width',
-                cmd=distinguish_pair,
-                column=1, padx=10, ipadx=10, sticky='nes')
+        self.progress, response_button_frame, pair_frame = \
+            self.sort_ui.build_join_layout(
+                self.runwindow, title, self.pageicon(), img_mod)
+        self.sort_ui.build_join_buttons(
+            response_button_frame, img_mod, join_pair, distinguish_pair)
         if pairs:
             self.runwindow.waitdone()
         buttons={}
-        pair_frame=ui.Frame(self.runwindow.frame, column=1, row=1)
         # self.last_pair=[]
         while pairs:
             self.progress.current(1 -len(pairs)/npairs)
             self.current_pair=pairs[0]
             log.info("Working on {pair} {count} remaining "
                     "of {total}".format(pair=self.current_pair, count=len(pairs), total=npairs))
-            r=0
-            for group in self.current_pair:
-                if group in buttons:
-                    buttons[group].grid(row=r)
-                else:
-                    buttons[group]=buttonclass(pair_frame, self,
-                            group=group,
-                            showtonegroup=True,
-                            label=True,
-                            row=r, sticky='w')
-                r=1
-            # for p in self.last_pair:
-            #     buttons[p].grid_remove() #after creation; bounce less
-            # self.last_pair=self.current_pair
-            self.canary=ui.Label(pair_frame,text='',col=1)
+            self.canary = self.sort_ui.build_join_pair(
+                pair_frame, buttonclass, self, self.current_pair, buttons)
             # self.runwindow.deiconify()
             pair_frame.wait_window(self.canary)
             if self.did[f'join{img_mod}']:
@@ -1413,7 +1245,6 @@ class Sort(object):
         self.runwindow.on_quit()
         return 1
     def tryNAgain(self):
-        ui = self._ui()
         check=self.program.params.check()
         if check in self.program.status.checks():
             senses=self.getsensesincheckgroup(group='NA')
@@ -1423,7 +1254,7 @@ class Sort(object):
             self.getrunwindow(msg=_("Resetting unSorted items"))
             buttontxt=_("Sort!")
             text=_("Not Trying Again; set a tone frame first!")
-            ui.Label(self.runwindow.frame, text=text).grid(row=0,column=0)
+            self.sort_ui.label(self.runwindow.frame, text=text).grid(row=0,column=0)
             return
         for item in senses:
             self.removeitemfromgroup(item)
