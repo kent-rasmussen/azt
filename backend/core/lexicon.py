@@ -25,6 +25,7 @@ log=logsetup.getlog(__name__)
 from frontend.error_notice import ErrorNotice
 
 from utilities.i18n import _
+import threading
 
 def __getattr__(name):
     # Lazy load globals from main

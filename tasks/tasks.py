@@ -16,20 +16,18 @@ from utilities.i18n import _
 log = logsetup.getlog(__name__)
 
 from frontend.error_notice import ErrorNotice
+from frontend.ui_shell import SortGroupButtonFrame, SortGlyphGroupButtonFrame
+from backend.core.alphabet import Alphabet
+from io_put import sound
+from frontend import sound_ui, transcriber
 
 def __getattr__(name):
-    if name in ('unlist',
-                'SortGroupButtonFrame', 'SortGlyphGroupButtonFrame',
-                'Alphabet', 'sound', 'sound_ui',
-                'transcriber'):
+    if name in ('unlist',):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
-for name in ('unlist',
-             'SortGroupButtonFrame', 'SortGlyphGroupButtonFrame',
-             'Alphabet', 'sound', 'sound_ui',
-             'transcriber'):
+for name in ('unlist',):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 
