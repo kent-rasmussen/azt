@@ -459,19 +459,19 @@ class DeprecatedUIAccess:
 
 | Phase | Target | Effort | Value |
 |-------|--------|--------|-------|
-| 0 | Define UI protocol | Trivial | Foundation |
-| 1 | Add `self.ui` to Task | Trivial | Foundation |
-| 2 | Sort presenter | Medium-High | Highest — Sort is most complex |
-| 3 | Tone/Segments/WordCollection presenters | Medium | High — enables lexicon cleanup |
-| 4 | Remove ui_tkinter from sorting_engine | Low | Completes Sort separation |
-| 5 | Remove ui_tkinter from lexicon | Medium | Completes lexicon separation |
-| 6 | VCS presenter | Medium | Moderate — VCS is less core |
-| 7 | Report presenter | Low-Medium | Moderate |
-| 8 | Split Task from TaskWindow | High | Highest — but only possible after 2-7 |
+| 0 | Define UI protocol | Trivial | Foundation | **DONE** |
+| 1 | Add `self.ui` to Task | Trivial | Foundation | **DONE** |
+| 2 | Sort presenter | Medium-High | Highest — Sort is most complex | Pending |
+| 3 | Tone/Segments/WordCollection presenters | Medium | High — enables lexicon cleanup | Pending |
+| 4 | Remove module-level ui_tkinter from sorting_engine | Low | Completes Sort separation | **DONE** (function-local) |
+| 5 | Remove module-level ui_tkinter from lexicon | Medium | Completes lexicon separation | **DONE** (function-local) |
+| 6 | VCS presenter | Medium | Moderate — VCS is less core | **DONE** |
+| 7 | Report presenter | Low-Medium | Moderate | **DONE** |
+| 8 | Split Task from TaskWindow | High | Highest — but only possible after 2-7 | Pending |
 
-**Phases 0-1** are prerequisites with zero risk.
-**Phases 2-3** deliver the most value — once Sort and Tone are decoupled, the deepest backend/frontend entanglement is resolved.
-**Phases 4-7** are cleanup that follows from 2-3.
+**Phases 0-1** are prerequisites with zero risk. **DONE.**
+**Phases 4-7** (module-level import removal): **DONE.** `vcs.py` and `generator.py` are fully decoupled via presenters (zero frontend imports). `sorting_engine.py` and `lexicon.py` use function-local imports (zero module-level frontend imports).
+**Phases 2-3** deliver the most value — once Sort and Tone presenters are in place, even the function-local imports in sorting_engine.py and lexicon.py can be removed.
 **Phase 8** is the capstone that makes the architecture clean, but is only safe after everything else.
 
 ---
@@ -489,3 +489,4 @@ Once complete:
 ## Changelog
 
 - v1.0 (2026-04-03): Initial plan.
+- v1.1 (2026-04-03): Phases 0-1, 4-7 complete. VCS and Report presenters created. All backend modules have zero module-level frontend imports. sorting_engine.py and lexicon.py use function-local imports pending presenter extraction (Phases 2-3).

@@ -28,7 +28,9 @@ There is no test suite. `test.py` is a scratch file, not a test runner.
 The codebase uses several patterns to manage dependencies between modules:
 
 - **Direct imports** for most cross-module references.
-- **Function-local imports** (`from main import X` inside a method body) where direct imports would create circular dependencies. Used for `ImageFrame`, `scaledimage`, `saveimagefile`, `updateazt`, `scaleimageifthere` — functions in `main.py` that depend on the `program` global.
+- **Function-local imports** (`from main import X` inside a method body) where direct imports would create circular dependencies. Used for `ImageFrame`, `updateazt` — functions in `main.py` that depend on the `program` global.
+- **Presenter pattern** for backend/frontend decoupling: `frontend/vcs_ui.py` (`VCSPresenter`) and `frontend/report_ui.py` (`ReportPresenter`) handle all UI widget creation for `vcs.py` and `generator.py` respectively. Injected via `program.vcs_ui` and `program.report_ui` at startup.
+- **Static lazy-import helpers** in `sorting_engine.py`: `@staticmethod def _ui(): from frontend import ui_tkinter as ui; return ui` pattern, called locally as `ui = self._ui()`. Avoids module-level frontend imports while keeping code readable.
 - **`utilities/i18n.py`** provides a swappable `_()` translation function. All modules do `from utilities.i18n import _`. The live translator is set at startup via `set_translator()`.
 - **`utilities/error_handler.py`** provides `notify_error()` for backend modules to show errors without importing frontend code. The real `ErrorNotice` UI class is wired in at startup via `set_error_handler()`.
 - **Flag-based dispatch** instead of `isinstance` checks for task types: `is_sound_task`, `is_record_task`, `is_sort_task`, `is_sort_tone_task` flags on task classes, checked with `getattr(task, 'is_sound_task', False)`.
@@ -38,6 +40,8 @@ The codebase uses several patterns to manage dependencies between modules:
 - **`main.py`** (~764 lines) — App class, startup, `program` dict (global config), remaining orchestration functions (`updateazt`, `loadCAWL`, image utils, `propagate`). The `program` dict is the central config object passed everywhere.
 - **`frontend/ui_shell.py`** (~3500 lines) — tkinter UI: menus, status frames, task UI dressing, image frames, splash, error notices, result windows, LiftChooser.
 - **`frontend/sort_buttons.py`** — Sort button frame widgets (`SortButtonFrame`, `SortGroupButtonFrame`, `SortGlyphGroupButtonFrame`), extracted from ui_shell to break circular dependencies.
+- **`frontend/vcs_ui.py`** — `VCSPresenter`: commit confirmation dialogs, wait windows, exe-missing warnings. Decouples `vcs.py` from frontend.
+- **`frontend/report_ui.py`** — `ReportPresenter`: results frames, scrolling frames, labels for report display. Decouples `generator.py` from frontend.
 - **`frontend/ui_tkinter.py`** — tkinter widget helpers and custom widgets.
 - **`tasks/`** — Task system:
   - `base.py` — `Task` base class (inherits `TaskDressing` from ui_shell).
@@ -67,7 +71,7 @@ The codebase uses several patterns to manage dependencies between modules:
 
 ## Active Refactoring (settings_rebuild branch)
 
-The `settings_rebuild` branch has extracted frontend/backend separation from the original monolithic `main.py` (was ~5242 lines, now ~764). The `LazyGlobal` pattern (previously used to bridge circular dependencies) has been fully eliminated. Remaining frontend/backend coupling: `sorting_engine.py`, `lexicon.py`, `vcs.py`, and `generator.py` still import `frontend.ui_tkinter` for UI widget construction. See `RemoveLazyGlobal_circular_deps.md` for the analysis and remaining recommendations.
+The `settings_rebuild` branch has extracted frontend/backend separation from the original monolithic `main.py` (was ~5242 lines, now ~764). The `LazyGlobal` pattern has been fully eliminated. All backend modules have zero module-level frontend imports. `vcs.py` and `generator.py` are fully decoupled via presenters. `sorting_engine.py` and `lexicon.py` use function-local imports pending presenter extraction (Phases 2-3 of `UIvTasks.md`). See `UIvTasks.md` for the full decoupling plan.
 
 ## Build Notes
 
