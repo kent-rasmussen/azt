@@ -109,21 +109,21 @@ _log = _logsetup.getlog(__name__)
 from frontend.error_notice import ErrorNotice
 
 from utilities.i18n import _
+from utilities import rx
+from backend.core.lexicon import Tone, Segments, WordCollection, Parse
+from backend.core.analysis import SliceDict, StatusDict
+from backend.core.analysis_inputs import Glosslangs, ToneFrames
 
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('rx', 'interfacelang', 'nowruntime',
-                'logfinished', 'unlist', 'Glosslangs', 'ToneFrames',
-                'SliceDict', 'StatusDict', 'Tone', 'Segments', 'WordCollection',
-                'Parse'):
+    if name in ('interfacelang', 'nowruntime',
+                'logfinished', 'unlist'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
-for _name in ('rx', 'interfacelang', 'nowruntime',
-              'logfinished', 'unlist', 'Glosslangs', 'ToneFrames',
-              'SliceDict', 'StatusDict', 'Tone', 'Segments', 'WordCollection',
-              'Parse'):
+for _name in ('interfacelang', 'nowruntime',
+              'logfinished', 'unlist'):
     if _name not in globals():
         globals()[_name] = LazyGlobal(_name)
 
