@@ -103,8 +103,9 @@ from backend.reporting.generator import Report
 from backend.core.lexicon import Senses, Segments, WordCollection, Parse, Tone
 from backend.core.sorting_engine import Sort
 from frontend.ui_shell import (HasMenus, Menus, StatusFrame, TaskDressing,
-    LiftChooser, SortButtonFrame, _GroupButtonFrame, SortGroupButtonFrame,
-    SortGlyphGroupButtonFrame, ImageFrame, Splash, ErrorNotice, ResultWindow, Settings as UISettings)
+    LiftChooser, ImageFrame, Splash, ErrorNotice, ResultWindow, Settings as UISettings)
+from frontend.sort_buttons import (SortButtonFrame, _GroupButtonFrame,
+    SortGroupButtonFrame, SortGlyphGroupButtonFrame)
 from tasks.base import Task
 from tasks.chooser import TaskChooser
 from backend.core.report_mixins import Multislice, MultisliceS, MultisliceT, Multicheck, Multicheckslice, ByUF, Background
@@ -693,13 +694,7 @@ class App:
 def runtime_to_now():
     #this returns a delta!
     return times.now()-program.start_time
-def unlist(l,ignore=[None]):
-    if l and isinstance(l[0],lift.et.Element):
-         log.error(_("unlist should only be used on text (not node) lists ({list})"
-                    "").format(list=l))
-         log.error(_("Element[0] text: {text}").format(text=l[0].text))
-         return
-    return firstoflist(l,all=True,ignore=ignore)
+# unlist moved to utilities/utilities.py; available via wildcard import
 def propagate(self,attr):
     """This function pushes an attribute value to all children with that
     attribute already set, for widgets that are already there (changing fonts)
@@ -713,27 +708,7 @@ def propagate(self,attr):
             #         ))
             setattr(child,attr,getattr(self,attr))
             propagate(child,attr=attr)
-def loadCAWL():
-    stockCAWL=file.pathname_from_base_dir('lift_templates/SILCAWL/SILCAWL.lift')
-    if not file.exists(stockCAWL):
-        from lift_templates.SILCAWL_update import ensure_available
-        ensure_available()
-    if file.exists(stockCAWL):
-        log.info(_("Found stock LIFT file: {file}").format(file=stockCAWL))
-    try:
-        # cawldb=lift.Lift(str(stockCAWL))
-        cawldb=lift.LiftXML(str(stockCAWL),tostrip=True)
-        log.info(_("Parsed ET."))
-        log.info(_("Got ET Root."))
-    except lift.BadParseError as e:
-        text=_("{file} doesn't look like a well formed lift file; please "
-                "try again. ({error})").format(file=stockCAWL,error=e)
-        ErrorNotice(text,wait=True)
-        return
-    except Exception as e:
-        log.info(_("Error: {error}").format(error=e))
-    log.info(_("Parsed stock LIFT file to tree/nodes."))
-    return cawldb
+from io_put.cawl import loadCAWL  # moved; re-exported for compatibility
 def saveimagefile(url,filename,copyto=None):
     # log.info("Preparing to write image to new file")
     if not copyto:

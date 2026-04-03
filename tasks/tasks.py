@@ -16,20 +16,10 @@ from utilities.i18n import _
 log = logsetup.getlog(__name__)
 
 from frontend.error_notice import ErrorNotice
-from frontend.ui_shell import SortGroupButtonFrame, SortGlyphGroupButtonFrame
+from frontend.sort_buttons import SortGroupButtonFrame, SortGlyphGroupButtonFrame
 from backend.core.alphabet import Alphabet
 from io_put import sound
 from frontend import sound_ui, transcriber
-
-def __getattr__(name):
-    if name in ('unlist',):
-        import main
-        return getattr(main, name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-for name in ('unlist',):
-    if name not in globals():
-        globals()[name] = LazyGlobal(name)
 
 class ExportData(ui.Window):
     """docstring for ExportData."""
@@ -981,6 +971,7 @@ class ToneFrameDrafter(ui.Window):
         self.program.settings.storesettingsfile('toneframes')
 
 class Sort(backend.core.sorting_engine.Sort):
+    is_sort_task=True
     cvt_sensitive=True
     def dobuttonkwargs(self):
         return {'text':_("Sort!"),
@@ -1084,6 +1075,7 @@ class SortC(Consonants,SortS):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 class SortT(Sort,Tone,Task):
+    is_sort_tone_task=True
     taskicon = 'iconT'
     tasktitle = "Sort Tone" #Citation Form Sorting in Tone Frames
     def tooltip(self):

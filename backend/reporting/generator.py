@@ -27,18 +27,6 @@ from backend.core.report_mixins import Multicheck, Multislice
 from backend.core.lexicon import Segments, Tone
 from io_put import xlp
 
-def __getattr__(name):
-    # Lazy load globals from main
-    if name in ('ResultWindow', 'logfinished', 'nowruntime'):
-        import main
-        return getattr(main, name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-# Mirror main globals lazily to allow bare-name access
-for name in ('ResultWindow', 'logfinished', 'nowruntime'):
-    if name not in globals():
-        globals()[name] = LazyGlobal(name)
-
 class Report(object):
     isreport=True
     def consultantcheck(self):
@@ -151,6 +139,7 @@ class Report(object):
         waitmsg=_("{ps} {profile} Tone Report in Process\n({timestamps})").format(ps=ps,profile=profile,
                                                                 timestamps=timestamps)
         if usegui:
+            from frontend.ui_shell import ResultWindow
             resultswindow=ResultWindow(self.parent,msg=waitmsg)
         bits=[str(self.reportbasefilename),
                 rx.urlok(ps),

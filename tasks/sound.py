@@ -5,6 +5,7 @@ from io_put import lift
 
 class Sound(backend.core.sound.Sound):
     """UI task mixin for audio settings and configuration."""
+    is_sound_task=True
     def _configure_sound(self,event=None):
         sound_ui.SoundSettingsWindow(self)
 
@@ -46,6 +47,7 @@ class Sound(backend.core.sound.Sound):
 
 class Record(backend.core.sound.Record, Sound):
     """UI task mixin for recording widgets and session windows."""
+    is_record_task=True
     icon_leaderboard=True
     def makelabelsnrecordingbuttons(self,parent,node,r,c):
         t=node.formatted(self.analang,self.glosslangs)

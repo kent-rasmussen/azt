@@ -25,19 +25,7 @@ from frontend.error_notice import ErrorNotice
 
 from utilities.i18n import _
 from backend.core.lexicon import Tone
-from frontend.ui_shell import SortGroupButtonFrame
-
-def __getattr__(name):
-    # Lazy load globals from main
-    if name in ('scaleimageifthere',):
-        import main
-        return getattr(main, name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-# Mirror main globals lazily to allow bare-name access
-for name in ('scaleimageifthere',):
-    if name not in globals():
-        globals()[name] = LazyGlobal(name)
+from frontend.sort_buttons import SortGroupButtonFrame, SortButtonFrame
 
 class Sort(object):
     """This class takes methods common to all sort checks, and gives sort
@@ -744,6 +732,7 @@ class Sort(object):
                                 text=text,font='readbig', sticky='w',
                                 # pady=scaledpady
                                 )
+        from main import scaleimageifthere
         l['image']=scaleimageifthere(sense)
         l['compound']='left'
         l.wrap()
@@ -1230,6 +1219,7 @@ class Sort(object):
                     ipady=ipady, #Inside the buttons...
                     **kwargs
                     )
+        from main import scaleimageifthere
         b['image']=scaleimageifthere(sense)
         b['compound']='left'
     def reset_selected(self):

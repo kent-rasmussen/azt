@@ -114,18 +114,6 @@ from backend.core.lexicon import Tone, Segments, WordCollection, Parse
 from backend.core.analysis import SliceDict, StatusDict
 from backend.core.analysis_inputs import Glosslangs, ToneFrames
 
-def __getattr__(name):
-    # Lazy load globals from main
-    if name in ('interfacelang', 'nowruntime',
-                'logfinished', 'unlist'):
-        import main
-        return getattr(main, name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-for _name in ('interfacelang', 'nowruntime',
-              'logfinished', 'unlist'):
-    if _name not in globals():
-        globals()[_name] = LazyGlobal(_name)
 
 
 from frontend.config.settings_ui import SettingsUI

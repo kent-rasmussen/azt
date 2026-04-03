@@ -31,17 +31,6 @@ from frontend.error_notice import ErrorNotice
 from backend.core.analysis import Analysis
 from backend.core.sorting_engine import Sort
 
-def __getattr__(name):
-    # Lazy load globals from main
-    if name in ('StatusFrame', 'TaskChooser', 'interfacelang', 'unlist'):
-        import main
-        return getattr(main, name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-# Mirror main globals lazily to allow bare-name access
-for name in ('StatusFrame', 'TaskChooser', 'interfacelang', 'unlist'):
-    if name not in globals():
-        globals()[name] = LazyGlobal(name)
 
 class SettingsUI(object):
     """UI methods for Settings — backend logic is in settings.Settings"""
@@ -215,6 +204,7 @@ class SettingsUI(object):
             self.warning=ErrorNotice(text,title=title)
     def statusisup(self):
         """Use this for when a setting should ignore status frame updates"""
+        from frontend.ui_shell import StatusFrame
         return (hasattr(self.program.mainwindow,'status') and
                 type(self.program.mainwindow.status) is StatusFrame)
     def set(self,attribute,choice,window=None,refresh=True):

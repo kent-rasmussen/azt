@@ -26,17 +26,18 @@ from frontend.error_notice import ErrorNotice
 
 from utilities.i18n import _
 from utilities import rx
+from io_put.cawl import loadCAWL
 import threading
 
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('ImageFrame', 'loadCAWL', 'saveimagefile', 'scaleimageifthere'):
+    if name in ('ImageFrame', 'saveimagefile', 'scaleimageifthere'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('ImageFrame', 'loadCAWL', 'saveimagefile', 'scaleimageifthere'):
+for name in ('ImageFrame', 'saveimagefile', 'scaleimageifthere'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 

@@ -12,11 +12,7 @@ import subprocess
 import webbrowser
 from utilities import logsetup
 log = logging.getLogger(__name__)
-try: #Allow this module to be used without translation
-    _
-except:
-    def _(x):
-        return x
+from utilities.i18n import _
 """Functions moved from main.py"""
 def dictofchilddicts(dict,remove=None):
     # This takes a dict[x][y] and returns a dict[y], with all unique values
@@ -531,6 +527,15 @@ def open_file(path):
         os.startfile(path)
     else:                                   # linux variants
         subprocess.call(('xdg-open', path))
+def unlist(l, ignore=[None]):
+    from io_put import lift
+    if l and isinstance(l[0], lift.et.Element):
+        log.error(_("unlist should only be used on text (not node) lists ({list})"
+                    "").format(list=l))
+        log.error(_("Element[0] text: {text}").format(text=l[0].text))
+        return
+    return firstoflist(l, all=True, ignore=ignore)
+
 if __name__ == '__main__':
     log=logsetup.getlog(__name__)
     # logsetup.setlevel('INFO',log) #for this file
