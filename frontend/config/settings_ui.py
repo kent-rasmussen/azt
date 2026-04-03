@@ -28,15 +28,18 @@ import settings
 
 from frontend.error_notice import ErrorNotice
 
+from backend.core.analysis import Analysis
+from backend.core.sorting_engine import Sort
+
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('Analysis', 'Settings', 'Sort', 'StatusFrame', 'TaskChooser', 'interfacelang', 'main', 'unlist'):
+    if name in ('StatusFrame', 'TaskChooser', 'interfacelang', 'main', 'unlist'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('Analysis', 'Settings', 'Sort', 'StatusFrame', 'TaskChooser', 'interfacelang', 'main', 'unlist'):
+for name in ('StatusFrame', 'TaskChooser', 'interfacelang', 'main', 'unlist'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 
