@@ -746,9 +746,10 @@ class Sort(object):
                                 text=text,font='readbig', sticky='w',
                                 # pady=scaledpady
                                 )
-        from main import scaleimageifthere
-        l['image']=scaleimageifthere(sense)
-        l['compound']='left'
+        if sense.image:
+            sense.image.scale(l.theme.scale, pixels=65, scaleto='height')
+            l['image']=sense.image.scaled
+            l['compound']='left'
         l.wrap()
         return self.buttonframe.sortitem
     def present_group(self,item):
@@ -1243,9 +1244,10 @@ class Sort(object):
                     ipady=ipady, #Inside the buttons...
                     **kwargs
                     )
-        from main import scaleimageifthere
-        b['image']=scaleimageifthere(sense)
-        b['compound']='left'
+        if sense.image:
+            sense.image.scale(b.theme.scale, pixels=65, scaleto='height')
+            b['image']=sense.image.scaled
+            b['compound']='left'
     def reset_selected(self):
         for k in self.groupvars:
             self.groupvars[k].set(False)
