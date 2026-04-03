@@ -27,26 +27,24 @@ from io_put import sound
 
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('main',
-                'interfacelang', 'unlist',
+    if name in ('interfacelang', 'unlist',
                 'scaleimageifthere',
-                'loadCAWL', 'saveimagefile', 'TranscribeS',
+                'loadCAWL', 'saveimagefile',
                 'Sort',
-                'TaskChooser', 'Mercurial', 'Git', 'updateazt',
-                'Sound', 'SortT', 'JoinUFgroups', 'ReportCitationT',
+                'Mercurial', 'Git', 'updateazt',
+                'Sound', 'SortT',
                 'scaledimage', 'getimagelocationURI'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('main',
-             'interfacelang', 'unlist',
+for name in ('interfacelang', 'unlist',
              'scaleimageifthere',
-             'loadCAWL', 'saveimagefile', 'TranscribeS',
+             'loadCAWL', 'saveimagefile',
              'Sort',
-             'TaskChooser', 'Mercurial', 'Git', 'updateazt',
-             'Sound', 'SortT', 'JoinUFgroups', 'ReportCitationT',
+             'Mercurial', 'Git', 'updateazt',
+             'Sound', 'SortT',
              'scaledimage', 'getimagelocationURI'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)

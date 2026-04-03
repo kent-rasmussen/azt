@@ -33,13 +33,13 @@ from backend.core.sorting_engine import Sort
 
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('StatusFrame', 'TaskChooser', 'interfacelang', 'main', 'unlist'):
+    if name in ('StatusFrame', 'TaskChooser', 'interfacelang', 'unlist'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('StatusFrame', 'TaskChooser', 'interfacelang', 'main', 'unlist'):
+for name in ('StatusFrame', 'TaskChooser', 'interfacelang', 'unlist'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 

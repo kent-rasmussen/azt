@@ -30,13 +30,13 @@ from frontend.error_notice import ErrorNotice
 
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('nowruntime', 'logfinished', 'main'):
+    if name in ('nowruntime', 'logfinished'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('nowruntime', 'logfinished', 'main'):
+for name in ('nowruntime', 'logfinished'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 
