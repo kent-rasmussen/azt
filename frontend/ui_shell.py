@@ -19,33 +19,35 @@ import settings
 
 from frontend.error_notice import ErrorNotice
 
+from utilities import rx
+from backend.core.report_mixins import Multislice, Multicheck
+from backend.core.lexicon import Tone, Segments, WordCollection, Parse
+from backend.core.analysis import Analysis, StatusDict
+from io_put import sound
+
 def __getattr__(name):
     # Lazy load globals from main
     if name in ('main',
-                'interfacelang', 'unlist', 'rx',
+                'interfacelang', 'unlist',
                 'scaleimageifthere',
                 'loadCAWL', 'saveimagefile', 'TranscribeS',
-                'Multislice', 'Multicheck', 'Tone', 'Segments',
-                'WordCollection', 'Parse', 'Sort',
-                'TaskChooser', 'Mercurial', 'Git', 'Analysis',
-                'StatusDict', 'Settings', 'updateazt',
+                'Sort',
+                'TaskChooser', 'Mercurial', 'Git', 'updateazt',
                 'Sound', 'SortT', 'JoinUFgroups', 'ReportCitationT',
-                'sound', 'scaledimage', 'getimagelocationURI'):
+                'scaledimage', 'getimagelocationURI'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
 for name in ('main',
-             'interfacelang', 'unlist', 'rx',
+             'interfacelang', 'unlist',
              'scaleimageifthere',
              'loadCAWL', 'saveimagefile', 'TranscribeS',
-             'Multislice', 'Multicheck', 'Tone', 'Segments',
-             'WordCollection', 'Parse', 'Sort',
-             'TaskChooser', 'Mercurial', 'Git', 'Analysis',
-             'StatusDict', 'Settings', 'updateazt',
+             'Sort',
+             'TaskChooser', 'Mercurial', 'Git', 'updateazt',
              'Sound', 'SortT', 'JoinUFgroups', 'ReportCitationT',
-             'sound', 'scaledimage', 'getimagelocationURI'):
+             'scaledimage', 'getimagelocationURI'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 

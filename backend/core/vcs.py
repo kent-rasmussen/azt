@@ -27,16 +27,10 @@ import subprocess
 from frontend.error_notice import ErrorNotice
 
 def __getattr__(name):
-    # Lazy load globals from main
-    if name in ('Settings', 'findexecutable', 'main', 'nowruntime', 'reverttomain', 'testversion'):
-        import main
-        return getattr(main, name)
+    if name == 'Settings':
+        from settings import Settings
+        return Settings
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-# Mirror main globals lazily to allow bare-name access
-for name in ('Settings', 'findexecutable', 'main', 'nowruntime', 'reverttomain', 'testversion'):
-    if name not in globals():
-        globals()[name] = LazyGlobal(name)
 
 class Repository(object):
     """SuperClass for Repository classes"""
