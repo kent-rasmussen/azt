@@ -3,8 +3,6 @@ import sys
 import collections
 import re
 import datetime
-import tkinter as tk
-from frontend import ui_tkinter as ui
 from utilities.utilities import *
 from utilities import file, logsetup, htmlfns
 from io_put import lift
@@ -25,11 +23,25 @@ from utilities.error_handler import notify_error as ErrorNotice
 
 from utilities.i18n import _
 from backend.core.lexicon import Tone
-from frontend.sort_buttons import SortGroupButtonFrame, SortButtonFrame
-
 class Sort(object):
     """This class takes methods common to all sort checks, and gives sort
     checks a common identity."""
+    @staticmethod
+    def _ui():
+        from frontend import ui_tkinter as ui
+        return ui
+    @staticmethod
+    def _SortButtonFrame():
+        from frontend.sort_buttons import SortButtonFrame
+        return SortButtonFrame
+    @staticmethod
+    def _SortGroupButtonFrame():
+        from frontend.sort_buttons import SortGroupButtonFrame
+        return SortGroupButtonFrame
+    @staticmethod
+    def _SortGlyphGroupButtonFrame():
+        from frontend.sort_buttons import SortGlyphGroupButtonFrame
+        return SortGlyphGroupButtonFrame
     show_buttoncolumnsline=True #does this belong here?
     def get_check(self):
         return self.program.params.check()
@@ -127,6 +139,7 @@ class Sort(object):
             self.updatestatuslift(group=group,verified=verified,write=write)
             return r
     def addmodadhocsort(self):
+        ui = self._ui()
         def submitform():
             if profilevar.get() == '':
                 log.debug("Give a name for this adhoc sort group!")
@@ -723,6 +736,7 @@ class Sort(object):
         self.updateformsallchecks() #whole db annotations>forms
         log.info("Done updating forms")
     def present_sense(self,sense):
+        ui = self._ui()
         log.info("presenting to sort {sense_id}".format(sense_id=sense.id))
         frame=self.get_frame()
         text=sense.formatted(self.analang, self.glosslangs, self.ftype, frame)
@@ -738,6 +752,8 @@ class Sort(object):
         l.wrap()
         return self.buttonframe.sortitem
     def present_group(self,item):
+        ui = self._ui()
+        SortGroupButtonFrame = self._SortGroupButtonFrame()
         log.info("presenting group {item}".format(item=item))
         kwargs=self.program.alphabet.parse_verificationcode(item)
         self.buttonframe.sortitem=ui.Frame(self.runwindow.frame, border=True,
@@ -767,6 +783,7 @@ class Sort(object):
             tosort=self.program.status.sensestosort()
         return self.first_sort+[i for i in tosort if i not in self.first_sort]
     def presenttosort(self,item,macrosort=False):
+        ui = self._ui()
         # log.info("presenting to sort {item}".format(item=item))
         #Keep the same total throughout a given sort:
         tosort=self.current_tosort(macrosort=macrosort)
@@ -858,7 +875,11 @@ class Sort(object):
             self.buttonframe.addgroupbutton(category)
         self.maybewrite()
     def sort(self,macrosort=False):
-        """This window/frame/function shows one item at a time, 
+        ui = self._ui()
+        SortButtonFrame = self._SortButtonFrame()
+        SortGroupButtonFrame = self._SortGroupButtonFrame()
+        SortGlyphGroupButtonFrame = self._SortGlyphGroupButtonFrame()
+        """This window/frame/function shows one item at a time,
         for the user to select its category based on buttons defined below.
             sort groups: senses (with pic?) sorted into sort groups
                 one ps and profile at a time (of course) 
@@ -997,6 +1018,8 @@ class Sort(object):
             self.marksortgroup(item, category, nocheck=True) # that marking
         self.maybewrite()
     def verify(self,menu=False,macrosort=False):
+        ui = self._ui()
+        SortButtonFrame = self._SortButtonFrame()
         def updatestatus(verified=False):
             if macrosort:
                 log.info("Updating '{group}' status as verified={verified}".format(group=group, verified=verified))
@@ -1175,6 +1198,7 @@ class Sort(object):
         self.runwindow.on_quit()
         return 1
     def verifybutton(self,parent,sense,row,column=0,label=False,**kwargs):
+        ui = self._ui()
         """This should maybe take examples as input, rather than senses"""
         # This must run one subcheck at a time. If the subcheck changes,
         # it will fail.
@@ -1245,6 +1269,9 @@ class Sort(object):
         return self.group_pairs_to_distinguish(macrosort=macrosort
                                                 )-d-{(y,x) for x,y in d}
     def join(self,macrosort=False):
+        ui = self._ui()
+        SortGroupButtonFrame = self._SortGroupButtonFrame()
+        SortGlyphGroupButtonFrame = self._SortGlyphGroupButtonFrame()
         def move_on_cleanly():
             # self.runwindow.withdraw()
             # self.last_pair=pair_frame.winfo_children()
@@ -1384,6 +1411,7 @@ class Sort(object):
         self.runwindow.on_quit()
         return 1
     def tryNAgain(self):
+        ui = self._ui()
         check=self.program.params.check()
         if check in self.program.status.checks():
             senses=self.getsensesincheckgroup(group='NA')
