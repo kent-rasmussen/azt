@@ -4,7 +4,7 @@ import logging
 from utilities import file
 from utilities.i18n import _
 from io_put import lift
-from frontend.error_notice import ErrorNotice
+from utilities.error_handler import notify_error as ErrorNotice
 
 log = logging.getLogger(__name__)
 
