@@ -3,7 +3,6 @@ import sys
 import collections
 # import re
 # import tkinter as tk
-from frontend import ui_tkinter as ui
 from utilities.utilities import *
 from utilities import file, logsetup, htmlfns
 from io_put import lift
@@ -105,6 +104,7 @@ class Report(object):
             self.waitdone()
         logfinished(start_time,msg=_("all reports ({reports})").format(reports=all))
     def tonegroupreport(self,usegui=True,**kwargs):
+        from frontend import ui_tkinter as ui
         """This should iterate over at least some profiles; top 2-3?
         those with 2-4 verified frames? Selectable with radio buttons?"""
         start_time=nowruntime()
@@ -399,6 +399,7 @@ class Report(object):
                 resultswindow.on_quit()
         self.program.status.last('report',update=True)
     def makeresultsframe(self):
+        from frontend import ui_tkinter as ui
         if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
             self.results = ui.Frame(self.runwindow.frame,width=800)
             self.results.grid(column=0,
@@ -429,6 +430,7 @@ class Report(object):
             # ErrorNotice(msg)
             fn(**kwargs)
     def getresults(self,**kwargs):
+        from frontend import ui_tkinter as ui
         def iterateUFgroups(parent,**kwargs):
             checks=[kwargs['check']]
             #Use this to distinguish "=" checks from "≠" checks, in that order
@@ -621,6 +623,7 @@ class Report(object):
                                     'name': self.program.settings.languagenames[lang]})
         return xlpreport
     def wordsbypsprofilechecksubcheckp(self,parent,**kwargs):
+        from frontend import ui_tkinter as ui
         # log.info("Kwargs (wordsbypsprofilechecksubcheckp): {kwargs}".format(kwargs=kwargs))
         usegui=kwargs['usegui']=kwargs.get('usegui',True)
         cvt=kwargs['cvt']=kwargs.get('cvt',self.program.params.cvt())
