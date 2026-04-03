@@ -56,5 +56,6 @@ class Task(TaskDressing):
         self.min_to_multicolumn=6 #don't use buttoncolumns with less
         self.makeeverythingok()
         TaskDressing.__init__(self, parent) #window
+        self.ui = self  # Phase 1: ui IS the window; will be separate object later
         log.info(f"Done initializing {self.__class__.__name__}."
                  f"(base: {self.program.task_base()})")
