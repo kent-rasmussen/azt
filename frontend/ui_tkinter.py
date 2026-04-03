@@ -919,7 +919,7 @@ class Exitable():
         `if self.exitFlag.istrue(): return`"""
         # log.info(f"Quitting window {self}")
         self.exitFlag.true()
-        if (to_root or self.mainwindow) and self.parent:
+        if (to_root or self.ismainwindow) and self.parent:
             self.parent.on_quit(to_root=True)
         else:
             if (self.parent and

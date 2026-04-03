@@ -5,7 +5,20 @@ import time
 import tkinter
 from frontend import ui_tkinter as ui
 from tasks.base import Task
-import tasks.tasks
+from tasks.tasks import (Sound, SortV,
+    ExportData, AlphabetChart, AlphabetComparisonPages,
+    ReportCitationBackground, ReportCitationMulticheckBackground,
+    ReportCitationMultichecksliceBackground,
+    ReportCitationTBackground, ReportCitationTLBackground,
+    ReportCitationMultisliceTBackground, ReportCitationMultisliceTLBackground,
+    ReportCitationByUFBackground, ReportCitationByUFMulticheckBackground,
+    ReportCitationByUFMultichecksliceBackground,
+    WordCollectionCitation, WordCollectionCitationwRecordings,
+    WordCollectnParse, WordCollectnParsewRecordings, RecordCitation,
+    SortSyllables, SortC, SortT, RecordCitationT,
+    WordsParse, TranscribeV, TranscribeC, TranscribeT,
+    JoinUFgroups, ReportConsultantCheck)
+from frontend.ui_shell import LiftChooser
 from utilities.utilities import LazyGlobal, sysrestart, sysshutdown, openweburl
 from utilities.i18n import _
 from utilities import file
@@ -17,41 +30,13 @@ from frontend.error_notice import ErrorNotice
 
 def __getattr__(name):
     # Lazy load globals from main
-    if name in ('nowruntime', 'logfinished',
-                'LiftChooser', 'main',
-                'Sound', 'SortV',
-                'ExportData', 'AlphabetChart', 'AlphabetComparisonPages',
-                'ReportCitationBackground', 'ReportCitationMulticheckBackground',
-                'ReportCitationMultichecksliceBackground',
-                'ReportCitationTBackground', 'ReportCitationTLBackground',
-                'ReportCitationMultisliceTBackground', 'ReportCitationMultisliceTLBackground',
-                'ReportCitationByUFBackground', 'ReportCitationByUFMulticheckBackground',
-                'ReportCitationByUFMultichecksliceBackground',
-                'WordCollectionCitation', 'WordCollectionCitationwRecordings',
-                'WordCollectnParse', 'WordCollectnParsewRecordings', 'RecordCitation',
-                'SortSyllables', 'SortC', 'SortT', 'RecordCitationT',
-                'WordsParse', 'TranscribeV', 'TranscribeC', 'TranscribeT',
-                'JoinUFgroups', 'ReportConsultantCheck'):
+    if name in ('nowruntime', 'logfinished', 'main'):
         import main
         return getattr(main, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Mirror main globals lazily to allow bare-name access
-for name in ('nowruntime', 'logfinished',
-             'LiftChooser', 'main',
-             'Sound', 'SortV',
-             'ExportData', 'AlphabetChart', 'AlphabetComparisonPages',
-             'ReportCitationBackground', 'ReportCitationMulticheckBackground',
-             'ReportCitationMultichecksliceBackground',
-             'ReportCitationTBackground', 'ReportCitationTLBackground',
-             'ReportCitationMultisliceTBackground', 'ReportCitationMultisliceTLBackground',
-             'ReportCitationByUFBackground', 'ReportCitationByUFMulticheckBackground',
-             'ReportCitationByUFMultichecksliceBackground',
-             'WordCollectionCitation', 'WordCollectionCitationwRecordings',
-             'WordCollectnParse', 'WordCollectnParsewRecordings', 'RecordCitation',
-             'SortSyllables', 'SortC', 'SortT', 'RecordCitationT',
-             'WordsParse', 'TranscribeV', 'TranscribeC', 'TranscribeT',
-             'JoinUFgroups', 'ReportConsultantCheck'):
+for name in ('nowruntime', 'logfinished', 'main'):
     if name not in globals():
         globals()[name] = LazyGlobal(name)
 
@@ -217,6 +202,7 @@ class TaskChooser(Task):
             log.info(_("No task, apparently; not destroying."))
     def maketask(self,taskclass,**kwargs): #,filename=None
         if type(taskclass) is str:
+            import tasks.tasks
             taskclass=getattr(tasks.tasks, taskclass)
         taskclass(program=self.program,**kwargs) #filename
         # self.setmainwindow(self.task)
