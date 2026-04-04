@@ -132,7 +132,7 @@ class Sort(object):
             if profilevar.get() == '':
                 log.debug("Give a name for this adhoc sort group!")
                 return
-            self.runwindow.on_quit()
+            self.ui.runwindow.on_quit()
             ids=[]
             for var in [x for x in vars if len(x.get()) >1]:
                 # log.info("var {}: {}".format(vars.index(var),var.get()))
@@ -158,28 +158,28 @@ class Sort(object):
         else:
             new=False
             title=_("Modify Existing Ad Hoc Sort Group for {group} Group").format(group=ps)
-        self.runwindow.title(title)
+        self.ui.runwindow.title(title)
         padx=50
         pady=10
-        p.label(self.runwindow.frame,text=title,font='title',
+        p.label(self.ui.runwindow.frame,text=title,font='title',
                 ).grid(row=0,column=0,sticky='ew')
         allpssenses=self.program.slices.sensesbyps(ps)
         if len(allpssenses)>70:
-            self.runwindow.waitdone()
+            self.ui.runwindow.waitdone()
             text=_("This is a large group ({count})! Are you in the right "
                     "lexical category?").format(count=len(allpssensids))
             log.error(text)
-            w=p.label(self.runwindow.frame,text=text)
+            w=p.label(self.ui.runwindow.frame,text=text)
             w.grid(row=1,column=0,sticky='ew')
-            b=p.button(self.runwindow.frame, text=_("OK"), command=w.destroy, anchor='c')
+            b=p.button(self.ui.runwindow.frame, text=_("OK"), command=w.destroy, anchor='c')
             b.grid(row=2,column=0,sticky='ew')
-            self.runwindow.wait_window(w)
+            self.ui.runwindow.wait_window(w)
             w.destroy()
-        if self.runwindow.exitFlag.istrue():
+        if self.ui.runwindow.exitFlag.istrue():
             return
         else:
-            self.runwindow.wait()
-        p.label(self.runwindow.frame,text=title,font='title',
+            self.ui.runwindow.wait()
+        p.label(self.ui.runwindow.frame,text=title,font='title',
                 ).grid(row=0,column=0,sticky='ew')
         text=_("This page will allow you to set up your own sets of dictionary "
                 "senses to sort, within the '{0}' lexical category. \nYou "
@@ -194,11 +194,11 @@ class Sort(object):
                 "\nIf you want to create a new group, exit here, select a "
                 "non-Ad Hoc syllable profile, and try this window again."
                 "").format(ps=ps)
-        inst=p.label(self.runwindow.frame,text=text,
+        inst=p.label(self.ui.runwindow.frame,text=text,
                 row=1,column=0,sticky='ew'
                 )
         inst.wrap()
-        qframe=p.frame(self.runwindow.frame)
+        qframe=p.frame(self.ui.runwindow.frame)
         qframe.grid(row=2,column=0,sticky='ew')
         text=_("What do you want to call this group for sorting {ps} words?"
                 "").format(ps=ps)
@@ -219,7 +219,7 @@ class Sort(object):
         sub_btn.grid(row=1,column=1,sticky='w')
         vars=list()
         row=0
-        scroll=p.scrolling_frame(self.runwindow.frame)
+        scroll=p.scrolling_frame(self.ui.runwindow.frame)
         for idn,sense in enumerate(allpssenses):
             log.debug("id: {}; index: {}; row: {}".format(sense.id,idn,row))
             # idn=allpssenses.index(sense)
@@ -238,8 +238,8 @@ class Sort(object):
                                 ).grid(row=row,column=0,sticky='ew')
             row+=1
         scroll.grid(row=3,column=0,sticky='ew')
-        self.runwindow.waitdone()
-        self.runwindow.wait_window(scroll)
+        self.ui.runwindow.waitdone()
+        self.ui.runwindow.wait_window(scroll)
     def removeitemfromgroup(self,item,**kwargs):
         #leave these in kwargs for use below:
         check=kwargs.get('check',self.program.params.check())
@@ -279,7 +279,7 @@ class Sort(object):
             self.program.settings.setcheck(toverify=True)
         #if neither, this should call nprofile
         try:
-            self.runwindow.on_quit()
+            self.ui.runwindow.on_quit()
         except AttributeError:
             log.info("Looks like we wanted to kill a non-existent runwindow.")
         self.runcheck()
@@ -291,7 +291,7 @@ class Sort(object):
             self.program.settings.setprofile(toverify=True)
         #if neither, this should give up with a congrats and comment to pick another ps
         try:
-            self.runwindow.on_quit()
+            self.ui.runwindow.on_quit()
         except AttributeError:
             log.info("Looks like we wanted to kill a non-existent runwindow.")
         self.runcheck()
@@ -301,7 +301,7 @@ class Sort(object):
         if not r:
             self.program.status.nextprofile(toverify=True)
         try:
-            self.runwindow.on_quit()
+            self.ui.runwindow.on_quit()
         except AttributeError:
             log.info("Looks like we wanted to kill a non-existent runwindow.")
         self.runcheck()
@@ -470,7 +470,7 @@ class Sort(object):
                 log.info("Self exit status: {status}".format(status=self.ui.exitFlag.istrue()))
                 log.info("Parent exit status: {status}".format(status=self.parent.exitFlag.istrue()))
                 log.info("Parent return status: {status}".format(status=self.returned))
-                log.info("Runwindow exit status: {status}".format(status=self.runwindow.exitFlag.istrue()))
+                log.info("Runwindow exit status: {status}".format(status=self.ui.runwindow.exitFlag.istrue()))
                 log.info("Taskchooser exit status: {status}".format(status=self.program.taskchooser.exitFlag.istrue()))
             except Exception as e:
                 log.info("Exception: {}".format(e))
@@ -631,7 +631,7 @@ class Sort(object):
     def update_to_cvt(self):
         log.info(_("Group is on a different CVT; updating to that to sort."))
         try:
-            self.runwindow.on_quit()
+            self.ui.runwindow.on_quit()
         except:
             pass
         self.program.taskchooser.maketask(f"Sort{self.program.params.cvt()}",
@@ -728,12 +728,12 @@ class Sort(object):
         frame=self.get_frame()
         text=sense.formatted(self.analang, self.glosslangs, self.ftype, frame)
         return self.sort_ui.build_present_sense(
-            self.runwindow.frame, self.buttonframe, text, sense)
+            self.ui.runwindow.frame, self.buttonframe, text, sense)
     def present_group(self,item):
         log.info("presenting group {item}".format(item=item))
         kwargs=self.program.alphabet.parse_verificationcode(item)
         result = self.sort_ui.build_present_group(
-            self.runwindow.frame, self.buttonframe, self, item, kwargs)
+            self.ui.runwindow.frame, self.buttonframe, self, item, kwargs)
         if result:
             return result
         else:
@@ -755,7 +755,7 @@ class Sort(object):
         tosort=self.current_tosort(macrosort=macrosort)
         progress=(str(tosort.index(item)+1)+'/'+str(len(tosort)))
         """After the first entry, sort by groups."""
-        if self.runwindow.exitFlag.istrue():
+        if self.ui.runwindow.exitFlag.istrue():
             return #1,1
         self.sort_ui.label(self.groupsFrame, text=progress, font='report', anchor='e',
                     column=1, row=0, sticky='e')
@@ -763,19 +763,19 @@ class Sort(object):
             self.sortitem=self.present_group(item)
         else:
             self.sortitem=self.present_sense(item)
-        self.runwindow.waitdone()
+        self.ui.runwindow.waitdone()
         log.info("Going to wait for {item}".format(item=self.sortitem))
         if not self.sortitem:
             log.info("{item} empty; returning".format(item=self.sortitem))
             return
         try:
             self.buttonframe.set_canary(self.sortitem)
-            self.runwindow.deiconify() # not until here
+            self.ui.runwindow.deiconify() # not until here
         except Exception as e:
             log.error("topresent Exception: {e}".format(e=e))
-        self.runwindow.update_idletasks()
-        self.runwindow.wait_window(window=self.sortitem)
-        if not self.runwindow.exitFlag.istrue():
+        self.ui.runwindow.update_idletasks()
+        self.ui.runwindow.wait_window(window=self.sortitem)
+        if not self.ui.runwindow.exitFlag.istrue():
             return item
     def pageicon(self,macrosort=False):
         if not macrosort:
@@ -892,17 +892,17 @@ class Sort(object):
         log.info(f"Getting Runwindow")
         self.ui.getrunwindow() #after we know this will do something
         self.groupsFrame, self.buttonframe = self.sort_ui.build_sort_layout(
-            self.runwindow, img_mod, self.pageicon(macrosort=macrosort),
+            self.ui.runwindow, img_mod, self.pageicon(macrosort=macrosort),
             instructions, self, groups, macrosort)
         # log.info("Sort SBF done macrosort={macrosort}".format(macrosort=macrosort))
         """Stuff that changes by lexical entry
         The second frame, for the other two buttons, which also scroll"""
         while current_list_fn():
-            if self.runwindow.exitFlag.istrue():
+            if self.ui.runwindow.exitFlag.istrue():
                 return
             item=self.presenttosort(current_list_fn()[0], macrosort=macrosort)
             # log.info("presenttosort done")
-            if not self.runwindow.exitFlag.istrue() and item is not None:
+            if not self.ui.runwindow.exitFlag.istrue() and item is not None:
                 r=self.sortselected(item, macrosort=macrosort)
                 if r: #on restarting to maybesort
                     return
@@ -910,7 +910,7 @@ class Sort(object):
         if macrosort: #generalize
             self.program.alphabet.save_settings()
             self.program.settings.storesettingsfile('alphabet')
-        self.runwindow.on_quit()
+        self.ui.runwindow.on_quit()
         return 1
     def re_presort(self):
         self.program.status.presorted(False)
@@ -1076,17 +1076,17 @@ class Sort(object):
         else:
             prog_text=None
         self.buttonframe, self.verifycanary = self.sort_ui.build_verify_layout(
-            self.runwindow, title, self.pageicon(macrosort), instructions,
+            self.ui.runwindow, title, self.pageicon(macrosort), instructions,
             prog_text, img_mod, group, items, self, macrosort, oktext,
             self.min_to_multicolumn, self.buttoncolumns, self.verifybutton)
         if self.verifycanary is None:
             return
-        if self.runwindow.exitFlag.istrue():
+        if self.ui.runwindow.exitFlag.istrue():
             return
-        self.runwindow.waitdone()
-        self.runwindow.deiconify() # not until here
-        self.runwindow.wait_window(self.verifycanary)
-        if self.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
+        self.ui.runwindow.waitdone()
+        self.ui.runwindow.deiconify() # not until here
+        self.ui.runwindow.wait_window(self.verifycanary)
+        if self.ui.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
             return
         log.debug("User selected '{selection}', moving on.".format(selection=oktext))
         if macrosort:
@@ -1097,7 +1097,7 @@ class Sort(object):
                 updatestatus(False) #on *finishing* with one/none
         else:
                 updatestatus(True)
-        self.runwindow.on_quit()
+        self.ui.runwindow.on_quit()
         return 1
     def verifybutton(self,parent,sense,row,column=0,label=False,**kwargs):
         """This should maybe take examples as input, rather than senses"""
@@ -1152,7 +1152,7 @@ class Sort(object):
                                                 )-d-{(y,x) for x,y in d}
     def join(self,macrosort=False):
         def move_on_cleanly():
-            # self.runwindow.withdraw()
+            # self.ui.runwindow.withdraw()
             # self.last_pair=pair_frame.winfo_children()
             # self.last_pair=self.current_pair
             for w in self.current_pair:
@@ -1165,7 +1165,7 @@ class Sort(object):
             log.info("User selected {lpr} to join, joining them (macrosort={macrosort}).".format(lpr=lpr, macrosort=macrosort))
             msg=_("Now we're going to move group '{group1}' into "
                 "'{group2}', removing '{group1}' and marking '{group2}' unverified.").format(group1=lpr[0], group2=lpr[1])
-            self.runwindow.wait(msg=msg)
+            self.ui.runwindow.wait(msg=msg)
             """All the senses we're looking at, by ps/profile"""
             if macrosort:
                 log.info(f"Running join_pair! {macrosort=}")
@@ -1177,7 +1177,7 @@ class Sort(object):
                                 verified=False, #b/c joined
                                 writestatus=True)
             self.did[f'join{img_mod}']=True
-            self.runwindow.on_quit()
+            self.ui.runwindow.on_quit()
         def distinguish_pair():
             if macrosort:
                 self.program.alphabet.distinguish(self.current_pair)
@@ -1219,11 +1219,11 @@ class Sort(object):
         title=_("Review {title} Groups{mod}").format(title=title_mod,mod=title_mod_2)
         self.progress, response_button_frame, pair_frame = \
             self.sort_ui.build_join_layout(
-                self.runwindow, title, self.pageicon(), img_mod)
+                self.ui.runwindow, title, self.pageicon(), img_mod)
         self.sort_ui.build_join_buttons(
             response_button_frame, img_mod, join_pair, distinguish_pair)
         if pairs:
-            self.runwindow.waitdone()
+            self.ui.runwindow.waitdone()
         buttons={}
         # self.last_pair=[]
         while pairs:
@@ -1233,16 +1233,16 @@ class Sort(object):
                     "of {total}".format(pair=self.current_pair, count=len(pairs), total=npairs))
             self.canary = self.sort_ui.build_join_pair(
                 pair_frame, buttonclass, self, self.current_pair, buttons)
-            # self.runwindow.deiconify()
+            # self.ui.runwindow.deiconify()
             pair_frame.wait_window(self.canary)
             if self.did[f'join{img_mod}']:
                 return 1
-            if self.runwindow.exitFlag.istrue():
+            if self.ui.runwindow.exitFlag.istrue():
                 log.info("Runwindow exited.")
                 return
             pairs=get_pairs()
             log.info("Runwindow still open, continuing to next in {pairs}.".format(pairs=pairs))
-        self.runwindow.on_quit()
+        self.ui.runwindow.on_quit()
         return 1
     def tryNAgain(self):
         check=self.program.params.check()
@@ -1254,7 +1254,7 @@ class Sort(object):
             self.ui.getrunwindow(msg=_("Resetting unSorted items"))
             buttontxt=_("Sort!")
             text=_("Not Trying Again; set a tone frame first!")
-            self.sort_ui.label(self.runwindow.frame, text=text).grid(row=0,column=0)
+            self.sort_ui.label(self.ui.runwindow.frame, text=text).grid(row=0,column=0)
             return
         for item in senses:
             self.removeitemfromgroup(item)

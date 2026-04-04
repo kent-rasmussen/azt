@@ -523,7 +523,7 @@ class ToneFrameDrafter(ui.Window):
     def stripftypecode(self,x):
         return x.removesuffix('_'+self.forms['field'])
     def status(self):
-        if self.exitFlag.istrue():
+        if self.ui.exitFlag.istrue():
             return
         try:
             self.fds.destroy()
@@ -546,7 +546,7 @@ class ToneFrameDrafter(ui.Window):
                         "".format(self.forms['name']))
                 self.on_quit()
             # log.info(self.forms)
-            # log.info(self.exitFlag.istrue())
+            # log.info(self.ui.exitFlag.istrue())
             return
         # log.info("Found name")
         # log.info("Starting status with self.form: {}".format(self.forms))
@@ -842,7 +842,7 @@ class ToneFrameDrafter(ui.Window):
         else:
             self.w.title(_("New {ps} Tone frame for {lang}: Name the Frame").format(
                         ps=self.ps,lang=self.program.settings.languagenames[self.analang]))
-        self.withdraw() #Don't show status when asking for a value
+        self.ui.withdraw() #Don't show status when asking for a value
         getform=ui.Label(self.w.frame,text=strings['prompt'],
                         font='read',row=0,column=0,
                         wraplength=self.program.root.wraplength/2,
@@ -880,8 +880,8 @@ class ToneFrameDrafter(ui.Window):
                             command = submitform,
                             anchor ='c',row=2,column=0,sticky='')
         sub_btn.wait_window(formfield) #then move to next step
-        if not self.exitFlag.istrue():
-            self.deiconify()
+        if not self.ui.exitFlag.istrue():
+            self.ui.deiconify()
     def submit(self,checkdefntoadd,checktoadd,event=None):
         log.info("Submitting {} frame with these values: {}".format(
                                                 checktoadd,checkdefntoadd
@@ -1157,7 +1157,7 @@ class Transcribe(Sound,Sort,Task):
         fn(g,self.group_comparison)
         self.refresh_status_buttons(g,self.group_comparison)
         # self.program.settings.setgroup(gc)
-        self.runwindow.on_quit()
+        self.ui.runwindow.on_quit()
         self.makewindow() #The other group needs a name, too!
     def submitandswitch(self):
         if hasattr(self,'group_comparison'):
@@ -1250,7 +1250,7 @@ class Transcribe(Sound,Sort,Task):
         # update forms, even if group doesn't change:
         if hasattr(self,'group_comparison'):
             delattr(self,'group_comparison') # in either case
-        self.runwindow.on_quit()
+        self.ui.runwindow.on_quit()
     def next(self):
         log.debug("running next group")
         error=self.submitform()
@@ -1365,7 +1365,7 @@ class TranscribeS(Transcribe,Segments):
         self.donewpyaudio()
     def go_back(self):
         log.info("Transcribe done for now (going back)")
-        self.runwindow.on_quit()
+        self.ui.runwindow.on_quit()
         self.donewpyaudio()
         self.program.taskchooser.maketask(f"Sort{self.program.params.cvt()}",
                                         redo_glyph=self.group)
@@ -1409,19 +1409,19 @@ class TranscribeS(Transcribe,Segments):
             title.insert(0,_("Rename"))
             title.append(f"'{self.group}'")
             initval=self.group
-        self.getrunwindow(title=title)
-        titlel=ui.Label(self.runwindow.frame,text=' '.join(title),
+        self.ui.getrunwindow(title=title)
+        titlel=ui.Label(self.ui.runwindow.frame,text=' '.join(title),
                         font='title',
                         row=0,column=0,sticky='ew',padx=padx,pady=pady
                         )
-        getform=ui.Label(self.runwindow.frame,
+        getform=ui.Label(self.ui.runwindow.frame,
                         text='\n'.join(getformtext),
                         font='read',
                         norender=True,
                         row=1,column=0,sticky='ew',padx=padx,pady=pady
                         )
         getform.wrap()
-        inputfeedbackframe=ui.Frame(self.runwindow.frame,
+        inputfeedbackframe=ui.Frame(self.ui.runwindow.frame,
                             row=2,column=0,sticky=''
                             )
         self.transcriber=transcriber.Transcriber(inputfeedbackframe,
@@ -1457,7 +1457,7 @@ class TranscribeS(Transcribe,Segments):
                     rowspan=2,
                     sticky='nsew'
                     )
-        examplesframe=ui.Frame(self.runwindow.frame,
+        examplesframe=ui.Frame(self.ui.runwindow.frame,
                                 row=4,column=0,sticky='',
                                 # border=1
                                 )
@@ -1507,8 +1507,8 @@ class TranscribeS(Transcribe,Segments):
                             row=0,column=0
                             )
         self.comparisonbuttons()
-        self.runwindow.waitdone()
-        self.sub_c.wait_window(self.runwindow) #then move to next step
+        self.ui.runwindow.waitdone()
+        self.sub_c.wait_window(self.ui.runwindow) #then move to next step
         if hasattr(self,'status'): #i.e., working from Transcribe task directly
             self.status.updateglyphbuttons()
         """Store these variables above, finish with (destroying window with
@@ -1619,9 +1619,9 @@ class TranscribeT(Transcribe,Tone):
         # log.info("Making transcribe window")
         def changegroupnow(event=None):
             w=self.program.taskchooser.getgroup(wsorted=True)
-            self.runwindow.wait_window(w)
+            self.ui.runwindow.wait_window(w)
             if not w.exitFlag.istrue():
-                self.runwindow.on_quit()
+                self.ui.runwindow.on_quit()
                 self.makewindow()
         cvt=self.program.params.cvt()
         ps=self.program.slices.ps()
@@ -1651,8 +1651,8 @@ class TranscribeT(Transcribe,Tone):
                         ).format(ps=ps,profile=profile,
                         noun_sg=self.program.params.cvtdict()[cvt]['sg'],
                         group=self.group,check=check)
-        self.getrunwindow(title=title)
-        titlel=ui.Label(self.runwindow.frame,text=title,font='title',
+        self.ui.getrunwindow(title=title)
+        titlel=ui.Label(self.ui.runwindow.frame,text=title,font='title',
                         row=0,column=0,sticky='ew',padx=padx,pady=pady
                         )
         getformtext=[_("What new name do you want to call this {sg} "
@@ -1660,14 +1660,14 @@ class TranscribeT(Transcribe,Tone):
         if cvt == 'T':
             getformtext.append(_("A label that describes the surface tone form "
                         "in this context would be best, like '[˥˥˥ ˨˨˨]'"))
-        getform=ui.Label(self.runwindow.frame,
+        getform=ui.Label(self.ui.runwindow.frame,
                         text='\n'.join(getformtext),
                         font='read',
                         norender=True,
                         row=1,column=0,sticky='ew',padx=padx,pady=pady
                         )
         getform.wrap()
-        inputfeedbackframe=ui.Frame(self.runwindow.frame,
+        inputfeedbackframe=ui.Frame(self.ui.runwindow.frame,
                             row=2,column=0,sticky=''
                             )
         self.transcriber=transcriber.Transcriber(inputfeedbackframe,
@@ -1698,7 +1698,7 @@ class TranscribeT(Transcribe,Tone):
                             wraplength=int(self.frame.winfo_screenwidth()/3),
                             row=2,column=1,sticky='nsew'
                             )
-        responseframe=ui.Frame(self.runwindow.frame,
+        responseframe=ui.Frame(self.ui.runwindow.frame,
                                 row=3,
                                 column=0,
                                 sticky='',
@@ -1726,7 +1726,7 @@ class TranscribeT(Transcribe,Tone):
                                 anchor ='c',
                                 row=0,column=column,sticky='ns'
                                 )
-        examplesframe=ui.Frame(self.runwindow.frame,
+        examplesframe=ui.Frame(self.ui.runwindow.frame,
                                 row=4,column=0,sticky=''
                                 )
         b=SortGroupButtonFrame(examplesframe, self,
@@ -1751,8 +1751,8 @@ class TranscribeT(Transcribe,Tone):
                         row=0,column=0
                         )
         self.comparisonbuttons()
-        self.runwindow.waitdone()
-        self.sub_c.wait_window(self.runwindow) #then move to next step
+        self.ui.runwindow.waitdone()
+        self.sub_c.wait_window(self.ui.runwindow) #then move to next step
         """Store these variables above, finish with (destroying window with
         local variables):"""
     def __init__(self, program, **kwargs): #frame, filename=None
@@ -1808,18 +1808,18 @@ class JoinUFgroups(Tone,Task):
                     for sense in self.analysis.sensesbygroup[group]:
                         sense.uftonevalue(uf)
             self.maybewrite()
-            self.runwindow.on_quit()
+            self.ui.runwindow.on_quit()
             self.program.status.last('joinUF',update=True)
             self.tonegroupsjoinrename() #call again, in case needed
         self.makeanalysis()
         def redo(timestamps=_("By manual request")):
             self.wait(_("Redoing Tone Analysis")+'\n'+timestamps)
             self.analysis.do()
-            self.waitdone()
-            # self.runwindow.on_quit()
+            self.ui.waitdone()
+            # self.ui.runwindow.on_quit()
             self.tonegroupsjoinrename(redo=True) #call again, in case needed
         def done():
-            self.runwindow.on_quit()
+            self.ui.runwindow.on_quit()
         ps=kwargs.get('ps',self.program.slices.ps())
         profile=kwargs.get('profile',self.program.slices.profile())
         analysisOK,joinedsince,timestamps=self.program.status.isanalysisOK(**kwargs) #Should specify which lasts...
@@ -1833,16 +1833,16 @@ class JoinUFgroups(Tone,Task):
                         "{ps} {profile} checks: {checks})").format(ps=ps, profile=profile, checks=self.program.status.checks())
                 ErrorNotice(txt,wait=True,parent=self)
             return
-        self.getrunwindow(msg=_("Preparing to join draft underlying form groups"
+        self.ui.getrunwindow(msg=_("Preparing to join draft underlying form groups"
                                 "")+'\n'+timestamps)
         self.update()
         title=_("Join/Rename Draft Underlying {ps}-{profile} tone groups").format(
                                                         ps=ps,profile=profile)
-        self.runwindow.title(title)
+        self.ui.runwindow.title(title)
         padx=50
         pady=10
         rwrow=gprow=qrow=0
-        t=ui.Label(self.runwindow.frame,text=title,font='title')
+        t=ui.Label(self.ui.runwindow.frame,text=title,font='title')
         t.grid(row=rwrow,column=0,sticky='ew')
         redotext=_("Redo the analysis;\nstart these groups over")
         text=_("This page allows you to join the {ps}-{profile} draft underlying tone "
@@ -1859,13 +1859,13 @@ class JoinUFgroups(Tone,Task):
                 "more data.").format(ps=ps,profile=profile,program=self.program.name,
                                                 redo=redotext.replace('\n',' '))
         rwrow+=1
-        i=ui.Label(self.runwindow.frame,text=text,
+        i=ui.Label(self.ui.runwindow.frame,text=text,
                     row=rwrow,column=0,sticky='ew')
         i.wrap()
-        ui.Button(self.runwindow.frame,text=redotext, cmd=redo,
+        ui.Button(self.ui.runwindow.frame,text=redotext, cmd=redo,
                     row=rwrow,column=1,sticky='ew')
         rwrow+=1
-        qframe=ui.Frame(self.runwindow.frame)
+        qframe=ui.Frame(self.ui.runwindow.frame)
         qframe.grid(row=rwrow,column=0,sticky='ew')
         text=_("What do you want to call this UF tone group for {ps}-{profile} words?"
                 "").format(ps=ps,profile=profile)
@@ -1892,13 +1892,13 @@ class JoinUFgroups(Tone,Task):
         done_btn.grid(row=qrow,column=2,sticky='w')
         groupvars=list()
         rwrow+=1
-        scroll=ui.ScrollingFrame(self.runwindow.frame)
+        scroll=ui.ScrollingFrame(self.ui.runwindow.frame)
         scroll.grid(row=rwrow,column=0,sticky='ew')
         self.analysis.donoUFanalysis()
         nheaders=0
         if not self.analysis.orderedUFs:
-            self.runwindow.waitdone()
-            self.runwindow.on_quit()
+            self.ui.runwindow.waitdone()
+            self.ui.runwindow.on_quit()
             ErrorNotice(title=_("No draft UF groups found for {ps} words!"
                                 "").format(ps=ps),
                         text=_("You don't seem to have any analyzed {ps} groups "
@@ -1936,8 +1936,8 @@ class JoinUFgroups(Tone,Task):
                                     )
                             )
                     cbl.grid(row=idn+nheaders,column=col,sticky='ew')
-        self.runwindow.waitdone()
-        self.runwindow.wait_window(scroll)
+        self.ui.runwindow.waitdone()
+        self.ui.runwindow.wait_window(scroll)
     def __init__(self, program, **kwargs):
         super().__init__(program=program, **kwargs)
 class RecordCitation(Record,Segments):

@@ -398,9 +398,9 @@ class Report(object):
                 resultswindow.on_quit()
         self.program.status.last('report',update=True)
     def makeresultsframe(self):
-        if hasattr(self,'runwindow') and self.runwindow.winfo_exists:
+        if hasattr(self,'runwindow') and self.ui.runwindow.winfo_exists:
             self.results = self.program.report_ui.create_results_frame(
-                self.runwindow.frame)
+                self.ui.runwindow.frame)
         else:
             log.error("Tried to get a results frame without a runwindow!")
     def background(self,fn,**kwargs):
@@ -466,7 +466,7 @@ class Report(object):
         if usegui: #i.e., showing results in window
             self.program.report_ui.add_label(self.results, text=text
                 ).grid(column=0, row=self.results.row)
-            self.runwindow.wait()
+            self.ui.runwindow.wait()
         si=xlp.Section(xlpr,text)
         if self.byUFgroup:
             self.makeanalysis()
@@ -487,9 +487,9 @@ class Report(object):
             iterateUFgroups(si,**kwargs)
         xlpr.close(me=self.program.me)
         if usegui:
-            self.runwindow.waitdone()
+            self.ui.runwindow.waitdone()
             if not hasattr(self,'results'): #i.e., showing results in window
-                self.runwindow.on_quit()
+                self.ui.runwindow.on_quit()
         n=0
         for ps in self.checkcounts:
             for profile in self.checkcounts[ps]:

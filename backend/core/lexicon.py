@@ -167,7 +167,7 @@ class Segments(Senses):
         self.program.status.presorted(True)
         self.program.status.store() #after all the above
         self.maybewrite()
-        self.runwindow.waitdone()
+        self.ui.runwindow.waitdone()
     def presort(self,senses,group):
         ftype=self.program.params.ftype()
         for sense in senses:
@@ -526,89 +526,89 @@ class WordCollection(Segments):
             skip=None
         else:
             text=_("What does '{form}' mean in {lang}?").format(
-                            form=self.runwindow.form[self.analang],
+                            form=self.ui.runwindow.form[self.analang],
                             lang=self.program.settings.languagenames[lang])
             ok=_("Use this {lang} gloss for '{form}'").format(
                             lang=self.program.settings.languagenames[lang],
-                            form=self.runwindow.form[self.analang])
-            self.runwindow.glosslangs.append(lang)
+                            form=self.ui.runwindow.form[self.analang])
+            self.ui.runwindow.glosslangs.append(lang)
             skip = _("Skip {lang} gloss").format(lang=self.program.settings.languagenames[lang])
         return {'lang':lang, 'prompt':text, 'ok':ok, 'skip':skip}
     def submitform(self,lang):
-        self.runwindow.form[lang]=self.runwindow.form[lang].get()
-        self.runwindow.frame2.destroy()
+        self.ui.runwindow.form[lang]=self.ui.runwindow.form[lang].get()
+        self.ui.runwindow.frame2.destroy()
     def promptwindow(self,lang):
         p = self.lex_ui
         def skipform(event=None):
-            del self.runwindow.form[lang]
-            self.runwindow.frame2.destroy() #Just move on.
+            del self.ui.runwindow.form[lang]
+            self.ui.runwindow.frame2.destroy() #Just move on.
         strings=self.promptstrings(lang)
-        self.runwindow.frame2=p.frame(self.runwindow.frame,
+        self.ui.runwindow.frame2=p.frame(self.ui.runwindow.frame,
                                         row=1,column=0,
                                         sticky='ew',
                                         padx=25,pady=25)
-        getform=p.label(self.runwindow.frame2,text=strings['prompt'],
+        getform=p.label(self.ui.runwindow.frame2,text=strings['prompt'],
                         font='read',row=0,column=0,
-                        padx=self.runwindow.padx,
-                        pady=self.runwindow.pady)
+                        padx=self.ui.runwindow.padx,
+                        pady=self.ui.runwindow.pady)
         #field rendering is better in another frame:
-        eff=p.frame(self.runwindow.frame2,row=1,column=0)
+        eff=p.frame(self.ui.runwindow.frame2,row=1,column=0)
         #variable and field for entry:
-        self.runwindow.form[lang]=p.string_var()
+        self.ui.runwindow.form[lang]=p.string_var()
         formfield = p.entry_field(eff, render=True,
-                                    text=self.runwindow.form[lang],
+                                    text=self.ui.runwindow.form[lang],
                                     font='readbig',
                                     row=1,column=0,
                                     sticky='')
         formfield.focus_set()
         formfield.bind('<Return>',lambda event,l=lang:self.submitform(l))
         formfield.rendered.grid(row=2,column=0,sticky='new')
-        sub_btn=p.button(self.runwindow.frame2,text = strings['ok'],
+        sub_btn=p.button(self.ui.runwindow.frame2,text = strings['ok'],
                             command = self.submitform,
                             anchor ='c',row=2,column=0,sticky='')
         if strings['skip']:
-            sub_btnNo=p.button(self.runwindow.frame2,
+            sub_btnNo=p.button(self.ui.runwindow.frame2,
                                 text = strings['skip'],
                                 command = skipform,
                                 row=1,column=1,sticky='')
-        self.runwindow.lift()
-        self.runwindow.waitdone()
-        sub_btn.wait_window(self.runwindow.frame2) #then move to next step
+        self.ui.runwindow.lift()
+        self.ui.runwindow.waitdone()
+        sub_btn.wait_window(self.ui.runwindow.frame2) #then move to next step
     def addmorpheme(self):
         p = self.lex_ui
         self.ui.getrunwindow()
-        self.runwindow.form={}
-        self.runwindow.glosslangs=list()
+        self.ui.runwindow.form={}
+        self.ui.runwindow.glosslangs=list()
         form={}
-        self.runwindow.padx=50
-        self.runwindow.pady=10
-        self.runwindow.title(_("Add Morpheme to Dictionary"))
+        self.ui.runwindow.padx=50
+        self.ui.runwindow.pady=10
+        self.ui.runwindow.title(_("Add Morpheme to Dictionary"))
         title=_("Add {lang} morpheme to the dictionary").format(
                             lang=self.program.settings.languagenames[self.analang])
-        p.label(self.runwindow.frame,text=title,font='title',
+        p.label(self.ui.runwindow.frame,text=title,font='title',
                 justify=p.LEFT,
                 anchor='c',sticky='ew',
                 row=0,column=0,
-                padx=self.runwindow.padx,
-                pady=self.runwindow.pady)
+                padx=self.ui.runwindow.padx,
+                pady=self.ui.runwindow.pady)
         # Run the above script (makewindow) for each language, analang first.
         # The user has a chance to enter a gloss for any gloss language
         # already in the datbase, and to skip any as needed/desired.
         for lang in [self.analang]+self.program.db.glosslangs:
-            if lang in self.runwindow.form:
+            if lang in self.ui.runwindow.form:
                 continue #Someday: how to do monolingual form/gloss here
-            if not self.runwindow.exitFlag.istrue():
+            if not self.ui.runwindow.exitFlag.istrue():
                 x=self.promptwindow(lang)
                 if x:
                     return
         """get the new sense back from this function, which generates it"""
-        if not self.runwindow.exitFlag.istrue(): #don't do this if exited
-            self.runwindow.withdraw() #or wait?
+        if not self.ui.runwindow.exitFlag.istrue(): #don't do this if exited
+            self.ui.runwindow.withdraw() #or wait?
             sense=self.program.db.addentry(ps='',analang=self.analang,
-                            glosslangs=self.runwindow.glosslangs,
-                            form=self.runwindow.form)
+                            glosslangs=self.ui.runwindow.glosslangs,
+                            form=self.ui.runwindow.form)
             # Update profile information in the running instance, and in the file.
-            self.runwindow.on_quit()
+            self.ui.runwindow.on_quit()
             """The following are useless without ps information, so they will
             have to come later."""
     def addCAWLentries(self):
@@ -1749,7 +1749,7 @@ class Tone(Senses):
         if not t.exitFlag.istrue():
             self.ui.wait_window(t)
     def aframe(self):
-        self.runwindow.on_quit()
+        self.ui.runwindow.on_quit()
         self.addframe()
         self.addwindow.wait_window(self.addwindow)
         self.runcheck()

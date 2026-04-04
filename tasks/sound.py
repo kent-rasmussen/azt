@@ -65,17 +65,17 @@ class Record(backend.core.sound.Record, Sound):
         gc.collect()
 
     def showentryformstorecordpage(self):
-        if self.runwindow.exitFlag.istrue():
+        if self.ui.runwindow.exitFlag.istrue():
             return
-        if not self.runwindow.frame.winfo_exists():
+        if not self.ui.runwindow.frame.winfo_exists():
             return
-        self.runwindow.resetframe()
+        self.ui.runwindow.resetframe()
         ps=self.program.slices.ps()
         profile=self.program.slices.profile()
         count=self.program.slices.count()
         text="Record {profile} {ps} Words: click 'Record', talk, and release ({count} words)".format(profile=profile,ps=ps,count=count)
         log.info(text)
-        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
+        instr=ui.Label(self.ui.runwindow.frame, anchor='w',text=text)
         instr.grid(row=0,column=0,sticky='w')
         senses=self.program.slices.senses(ps=ps,profile=profile)
         if not senses:
@@ -83,15 +83,15 @@ class Record(backend.core.sound.Record, Sound):
         nperpage=5
         pages=[senses[i:i+nperpage] for i in range(0,len(senses),nperpage)]
         for page in pages:
-            if self.runwindow.exitFlag.istrue():
+            if self.ui.runwindow.exitFlag.istrue():
                 return
-            self.runwindow.wait(thenshow=True)
-            buttonframes=ui.ScrollingFrame(self.runwindow.frame,
+            self.ui.runwindow.wait(thenshow=True)
+            buttonframes=ui.ScrollingFrame(self.ui.runwindow.frame,
                                             row=1,column=0,sticky='w')
             row=0
             done=list()
             for row,entry in enumerate([i.entry for i in page]):
-                self.runwindow.column=0
+                self.ui.runwindow.column=0
                 if entry.guid in done:
                     continue
                 else:
@@ -99,16 +99,16 @@ class Record(backend.core.sound.Record, Sound):
                 ftypes=['lc','pl','imp']
                 for node in [entry.sense.nodebyftype(f) for f in ftypes
                                 if entry.sense.nodebyftype(f)]:
-                    self.runwindow.column+=2
+                    self.ui.runwindow.column+=2
                     self.makelabelsnrecordingbuttons(buttonframes.content,node,
-                        row,self.runwindow.column)
+                        row,self.ui.runwindow.column)
             ui.Button(buttonframes.content,column=1,row=row,
                         text="Next {count} words".format(count=nperpage),
                         cmd=lambda x=buttonframes:self.cleanup_pa(x))
-            self.runwindow.waitdone()
+            self.ui.runwindow.waitdone()
             buttonframes.wait_window(buttonframes)
-        if not self.runwindow.exitFlag.istrue():
-            self.runwindow.wait_window(self.runwindow.frame)
+        if not self.ui.runwindow.exitFlag.istrue():
+            self.ui.runwindow.wait_window(self.ui.runwindow.frame)
 
     def showentryformstorecord(self,justone=False):
         self.ui.getrunwindow()
@@ -118,12 +118,12 @@ class Record(backend.core.sound.Record, Sound):
             ps=self.program.slices.ps()
             profile=self.program.slices.profile()
             for psprofile in self.program.slices.valid():
-                if self.runwindow.exitFlag.istrue():
+                if self.ui.runwindow.exitFlag.istrue():
                     return 1
                 self.program.slices.ps(psprofile[1])
                 self.program.slices.profile(psprofile[0])
-                nextb=ui.Button(self.runwindow,text="Next Group",
-                                        cmd=self.runwindow.resetframe)
+                nextb=ui.Button(self.ui.runwindow,text="Next Group",
+                                        cmd=self.ui.runwindow.resetframe)
                 nextb.grid(row=0,column=1,sticky='ne')
                 self.showentryformstorecordpage()
             self.program.slices.ps(ps)
@@ -132,17 +132,17 @@ class Record(backend.core.sound.Record, Sound):
 
     def showsenseswithexamplestorecord(self,senses=None,progress=None,skip=False):
         def setskip(event):
-            self.runwindow.frame.skip=True
+            self.ui.runwindow.frame.skip=True
             entryframe.destroy()
         self.ui.getrunwindow()
-        if self.ui.exitFlag.istrue() or self.runwindow.exitFlag.istrue():
+        if self.ui.exitFlag.istrue() or self.ui.runwindow.exitFlag.istrue():
             return
         if skip == 'skip':
-            self.runwindow.frame.skip=True
+            self.ui.runwindow.frame.skip=True
         else:
-            self.runwindow.frame.skip=skip
+            self.ui.runwindow.frame.skip=skip
         text="Words and phrases to record: click 'Record', talk, and release"
-        instr=ui.Label(self.runwindow.frame, anchor='w',text=text)
+        instr=ui.Label(self.ui.runwindow.frame, anchor='w',text=text)
         instr.grid(row=0,column=0,sticky='w',columnspan=2)
         if senses is None:
             senses=self.program.settings.entriestoshow
@@ -150,17 +150,17 @@ class Record(backend.core.sound.Record, Sound):
             examples=list(sense.examples.values())
             if examples == []:
                 continue
-            if ((self.runwindow.frame.skip == True) and
+            if ((self.ui.runwindow.frame.skip == True) and
                 (lift.atleastoneexamplehaslangformmissing(examples,
                                      self.program.settings.audiolang) == False)):
                 continue
             row=0
-            if self.runwindow.exitFlag.istrue():
+            if self.ui.runwindow.exitFlag.istrue():
                 return 1
-            entryframe=ui.Frame(self.runwindow.frame)
+            entryframe=ui.Frame(self.ui.runwindow.frame)
             entryframe.grid(row=1,column=0)
             if progress is not None:
-                progressl=ui.Label(self.runwindow.frame, anchor='e',
+                progressl=ui.Label(self.ui.runwindow.frame, anchor='e',
                     font='small',
                     text='({} {}/{})'.format(*progress)
                     )
@@ -172,9 +172,9 @@ class Record(backend.core.sound.Record, Sound):
             ui.Label(entryframe, anchor='w', font='read',
                     text=text).grid(row=row,
                                     column=0,sticky='w')
-            self.runwindow.frame.scroll=ui.ScrollingFrame(entryframe)
-            self.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
-            examplesframe=ui.Frame(self.runwindow.frame.scroll.content)
+            self.ui.runwindow.frame.scroll=ui.ScrollingFrame(entryframe)
+            self.ui.runwindow.frame.scroll.grid(row=1,column=0,sticky='w')
+            examplesframe=ui.Frame(self.ui.runwindow.frame.scroll.content)
             examplesframe.grid(row=0,column=0,sticky='w')
             for example in examples:
                 if (skip == True and
@@ -191,16 +191,16 @@ class Record(backend.core.sound.Record, Sound):
             row+=1
             d=ui.Button(examplesframe, text="Done/Next",command=entryframe.destroy)
             d.grid(row=row,column=0)
-            self.runwindow.waitdone()
-            if self.runwindow.exitFlag.istrue():
+            self.ui.runwindow.waitdone()
+            if self.ui.runwindow.exitFlag.istrue():
                 return 1
-            if self.runwindow.frame.skip == True:
+            if self.ui.runwindow.frame.skip == True:
                 return 'skip'
 
     def showtonegroupexs(self):
         def next_p():
             self.program.status.nextprofile()
-            self.runwindow.on_quit()
+            self.ui.runwindow.on_quit()
             self.showtonegroupexs()
         self.makeanalysis()
         self.analysis.donoUFanalysis()
@@ -219,13 +219,13 @@ class Record(backend.core.sound.Record, Sound):
                                 skip=skip)
                     if exited == 'skip': skip=True
                     if exited == True: return
-        if not (self.runwindow.exitFlag.istrue() or self.ui.exitFlag.istrue()):
-            self.runwindow.waitdone()
-            self.runwindow.resetframe()
-            ui.Label(self.runwindow.frame, anchor='w',font='read',
+        if not (self.ui.runwindow.exitFlag.istrue() or self.ui.exitFlag.istrue()):
+            self.ui.runwindow.waitdone()
+            self.ui.runwindow.resetframe()
+            ui.Label(self.ui.runwindow.frame, anchor='w',font='read',
             text="All done! Sort some more words, and come back."
             ).grid(row=0,column=0,sticky='w')
-            ui.Button(self.runwindow.frame,
+            ui.Button(self.ui.runwindow.frame,
                     text="Continue to next syllable profile",
                     command=next_p).grid(row=1,column=0)
         self.donewpyaudio()
