@@ -78,7 +78,7 @@ The `settings_rebuild` branch has extracted frontend/backend separation from the
 - `frontend/vcs_ui.py` (`VCSPresenter`) — vcs.py commit/wait dialogs
 - `frontend/report_ui.py` (`ReportPresenter`) — generator.py result frames
 
-All backend UI method calls (withdraw, deiconify, getrunwindow, exitFlag, wait*, etc.) route through `self.ui.X()` — currently `self.ui = self` (set in Task.__init__), preparing for a future Task/TaskWindow split. See `UIvTasks.md` for the full plan (Phase 8B pending).
+All UI method calls route through `self.ui.X()`. Tasks are no longer windows — `Task` inherits `TaskBase` (not `TaskDressing`). A separate `TaskWindow(TaskDressing)` is created in `Task.__init__` and linked via `task.ui = window` / `window.task = task`. Bidirectional `__getattr__` provides transparent delegation. See `UIvTasks.md` for the full plan (all phases complete).
 
 ## Build Notes
 

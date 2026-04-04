@@ -1,6 +1,6 @@
 # Decoupling Tasks from UI — Implementation Plan
 
-v1.6 — 2026-04-04
+v1.7 — 2026-04-04
 
 ## Problem Statement
 
@@ -348,7 +348,7 @@ class ReportPresenter:
 **Files:** Create `frontend/report_ui.py`, modify `backend/reporting/generator.py`
 **Risk:** Low-medium — fewest references of any backend module.
 
-### Phase 8: Split Task from TaskWindow (HIGH RISK — only after Phases 2-7)
+### Phase 8: Split Task from TaskWindow (DONE)
 
 This is the final structural change. Once backend mixins no longer call UI methods on `self`, the inheritance can be inverted.
 
@@ -388,38 +388,20 @@ class Task(TaskBase, TaskDressing):   # Logic + window
 Concrete tasks still inherit `Task` — no changes needed to 48 task classes.
 `TaskBase` can be instantiated without tkinter for testing.
 
-#### Phase 8B-full: Remove TaskDressing from MRO (PENDING — HIGH RISK)
+#### Phase 8B-full: Remove TaskDressing from MRO (DONE)
 
-To fully separate task logic from the window, TaskDressing must be removed
-from the concrete task's MRO. This requires:
+TaskDressing removed from Task's inheritance. Task MRO is now:
+`ConcreteTask → [mixins] → Task → TaskBase → object`
 
-**Prerequisite audit (DONE):** TaskDressing reads these task-logic attrs on `self`:
-- `self.ischooser` (2 places), `self.isreport` (1), `self.tasktitle` (3)
-- `self.makeeverythingok()` (1 call)
-- `isinstance(self, WordCollection)` (1 — line 1555)
-- `isinstance(self.task, Multicheck)` (1 — line 1985, guarded by hasattr)
-- Most flags are read via `self.program.task.<flag>` in StatusFrame, not
-  via `self.<flag>` in TaskDressing — this is already split-safe.
-
-**Remaining blockers:**
-- **`super().setcontext()` chain** — overridden in tasks/sound.py and
-  tasks/tasks.py, chains through MRO to TaskDressing.setcontext().
-  After removing TaskDressing from MRO, the chain breaks. Fix: add
-  explicit delegation in TaskBase: `def setcontext(self, ctx=None): self.ui.setcontext(ctx)`
-- **TaskWindow creation** — need `TaskWindow(TaskDressing)` with `__getattr__`
-  delegating to `self.task` so TaskDressing.__init__ can read task flags.
-- **isinstance checks** — `isinstance(self, WordCollection)` in
-  TaskDressing line 1555 would fail (self is TaskWindow, not concrete task).
-  Fix: `isinstance(getattr(self, 'task', self), WordCollection)`
-
-**Approach:** Use `__getattr__` on BOTH sides:
-- TaskBase.__getattr__ → delegates to self.ui (for window methods)
-- TaskWindow.__getattr__ → delegates to self.task (for task flags/methods)
-
-**Files:** Modify `tasks/base.py`, create `frontend/task_window.py`, update
-`tasks/tasks.py` (48 classes), `tasks/chooser.py`, modify `frontend/ui_shell.py`
-**Risk:** HIGH — changes every task class, the instantiation flow, and TaskDressing.
-Must be done atomically with thorough manual testing.
+Implementation:
+- `TaskWindow(TaskDressing)` created in `frontend/task_window.py`
+- `TaskBase.__getattr__` → delegates to `self.ui` (window methods)
+- `TaskWindow.__getattr__` → delegates to `self.task` (task flags)
+- `TaskBase.setcontext()` and `TaskBase.on_quit()` — explicit delegation
+  for `super()` chains that can't go through `__getattr__`
+- `isinstance(self, WordCollection)` in TaskDressing → uses `getattr(self, 'task', self)`
+- Task.__init__ creates TaskWindow with parent=taskchooser.ui (not taskchooser)
+- TaskChooser: moved setmainwindow() after super().__init__()
 
 ---
 
@@ -501,4 +483,5 @@ Once complete:
 - v1.3 (2026-04-03): Phases 3 and 5 complete. LexiconPresenter created and wired — lexicon.py now has zero frontend imports. Only alphabet.py remains with function-local imports.
 - v1.4 (2026-04-04): All phases through 8A complete. All backend modules have zero frontend imports. All backend UI method calls route through self.ui indirection. alphabet.py decoupled via lex_ui. Phase 8B (actual class split) documented with blockers and approach.
 - v1.5 (2026-04-04): self.runwindow indirection complete (162 refs). All non-frontend code now accesses UI exclusively through self.ui. Phase 8A fully done — no caveats remain.
-- v1.6 (2026-04-04): TaskBase extracted from Task. Phase 8B-partial done. Full 8B blocker audit complete — setcontext chain, isinstance checks, TaskWindow __getattr__ documented.
+- v1.6 (2026-04-04): TaskBase extracted from Task. Phase 8B-partial done. Full 8B blocker audit complete.
+- v1.7 (2026-04-04): Phase 8B-full complete. Tasks are no longer windows. TaskDressing removed from Task MRO. TaskWindow created as separate wrapper. __getattr__ bidirectional delegation. ALL PHASES COMPLETE.
