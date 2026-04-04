@@ -1,6 +1,6 @@
 # Decoupling Tasks from UI — Implementation Plan
 
-v1.5 — 2026-04-04
+v1.6 — 2026-04-04
 
 ## Problem Statement
 
@@ -369,61 +369,55 @@ establishes the contract: backend code accesses the window ONLY through `self.ui
 All `self.runwindow` references (162 total across sorting_engine.py, lexicon.py,
 generator.py, body.py, tasks/sound.py, tasks/tasks.py) are now `self.ui.runwindow`.
 
-#### Phase 8B: Actual class split (PENDING — HIGH RISK)
+#### Phase 8B-partial: Extract TaskBase (DONE)
 
-**Prerequisites:**
-1. ~~All `self.runwindow` → `self.ui.runwindow`~~ (DONE)
-2. Audit all TaskDressing methods that read task flags on `self` (e.g.,
-   `self.inherittaskattrs()`, `self.makestatusframe()`, `isinstance(self.task, Multicheck)`)
-3. Handle `setcontext()` which is overridden in both TaskDressing AND concrete tasks
-
-**Blockers identified:**
-- **TaskDressing.__init__** calls `self.inherittaskattrs()`, `self.maketitle()`,
-  `self.makestatusframe()` — all read flags from `self`, expecting it to be the
-  concrete task class. After split, need bidirectional wiring: `task.ui = window`
-  AND `window.task = task`, plus modify TaskDressing to read flags from `self.task`.
-- **`self.runwindow`** (89 refs) — can use `__getattr__` on TaskBase to delegate
-  unknown attributes to `self.ui`, avoiding 89 line changes. But `__getattr__`
-  with `self.ui = self` causes infinite recursion — must guard with
-  `if ui is self: raise AttributeError`.
-- **setcontext()** overridden in tasks/sound.py and tasks/tasks.py — these
-  call `super().setcontext()` expecting TaskDressing's version via MRO.
-  After split, would need explicit `self.ui.setcontext()` or similar.
-
-**Approach when ready:**
+`TaskBase` extracted from `Task` in `tasks/base.py`. Contains all class-level
+flags and pure logic methods (makecvtok, makeeverythingok). `Task` now inherits
+from `TaskBase` AND `TaskDressing`:
 
 ```python
-# tasks/base.py
-class TaskBase:
-    """Base class for task logic. Not a window."""
+class TaskBase:           # Pure logic, no window
     ischooser = False
     isreport = False
-    # ... all class-level flags
+    # ... 12 flags + makecvtok + makeeverythingok
 
-    def __getattr__(self, name):
-        """Delegate unknown attributes to self.ui (TaskWindow)."""
-        ui = object.__getattribute__(self, 'ui')
-        if ui is self:
-            raise AttributeError(name)
-        return getattr(ui, name)
-
-    def __init__(self, program, **kwargs):
-        self.program = program
-        self.ui = None  # set when TaskWindow is created
-        self.makeeverythingok()
-
-# frontend/task_window.py
-class TaskWindow(TaskDressing):
-    def __init__(self, task_base, parent):
-        self.task = task_base    # window → task
-        task_base.ui = self      # task → window
-        self.program = task_base.program
-        TaskDressing.__init__(self, parent)
+class Task(TaskBase, TaskDressing):   # Logic + window
+    def __init__(self, program): ...
 ```
 
-**Files:** Split `tasks/base.py`, create `frontend/task_window.py`, update
+Concrete tasks still inherit `Task` — no changes needed to 48 task classes.
+`TaskBase` can be instantiated without tkinter for testing.
+
+#### Phase 8B-full: Remove TaskDressing from MRO (PENDING — HIGH RISK)
+
+To fully separate task logic from the window, TaskDressing must be removed
+from the concrete task's MRO. This requires:
+
+**Prerequisite audit (DONE):** TaskDressing reads these task-logic attrs on `self`:
+- `self.ischooser` (2 places), `self.isreport` (1), `self.tasktitle` (3)
+- `self.makeeverythingok()` (1 call)
+- `isinstance(self, WordCollection)` (1 — line 1555)
+- `isinstance(self.task, Multicheck)` (1 — line 1985, guarded by hasattr)
+- Most flags are read via `self.program.task.<flag>` in StatusFrame, not
+  via `self.<flag>` in TaskDressing — this is already split-safe.
+
+**Remaining blockers:**
+- **`super().setcontext()` chain** — overridden in tasks/sound.py and
+  tasks/tasks.py, chains through MRO to TaskDressing.setcontext().
+  After removing TaskDressing from MRO, the chain breaks. Fix: add
+  explicit delegation in TaskBase: `def setcontext(self, ctx=None): self.ui.setcontext(ctx)`
+- **TaskWindow creation** — need `TaskWindow(TaskDressing)` with `__getattr__`
+  delegating to `self.task` so TaskDressing.__init__ can read task flags.
+- **isinstance checks** — `isinstance(self, WordCollection)` in
+  TaskDressing line 1555 would fail (self is TaskWindow, not concrete task).
+  Fix: `isinstance(getattr(self, 'task', self), WordCollection)`
+
+**Approach:** Use `__getattr__` on BOTH sides:
+- TaskBase.__getattr__ → delegates to self.ui (for window methods)
+- TaskWindow.__getattr__ → delegates to self.task (for task flags/methods)
+
+**Files:** Modify `tasks/base.py`, create `frontend/task_window.py`, update
 `tasks/tasks.py` (48 classes), `tasks/chooser.py`, modify `frontend/ui_shell.py`
-(TaskDressing to read from `self.task` for flags)
 **Risk:** HIGH — changes every task class, the instantiation flow, and TaskDressing.
 Must be done atomically with thorough manual testing.
 
@@ -507,3 +501,4 @@ Once complete:
 - v1.3 (2026-04-03): Phases 3 and 5 complete. LexiconPresenter created and wired — lexicon.py now has zero frontend imports. Only alphabet.py remains with function-local imports.
 - v1.4 (2026-04-04): All phases through 8A complete. All backend modules have zero frontend imports. All backend UI method calls route through self.ui indirection. alphabet.py decoupled via lex_ui. Phase 8B (actual class split) documented with blockers and approach.
 - v1.5 (2026-04-04): self.runwindow indirection complete (162 refs). All non-frontend code now accesses UI exclusively through self.ui. Phase 8A fully done — no caveats remain.
+- v1.6 (2026-04-04): TaskBase extracted from Task. Phase 8B-partial done. Full 8B blocker audit complete — setcontext chain, isinstance checks, TaskWindow __getattr__ documented.
