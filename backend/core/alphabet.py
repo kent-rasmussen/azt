@@ -463,8 +463,7 @@ class AlphabetChartData:
                       if i not in ['NA']]
         log.info(f"Using this alphabetical order: {self.order}")
         log.info(f"Using these exids: {self.exids}")
-        # getimagelocationURI uses ui.Image, imported here from frontend
-        from frontend.alphabet_chart import getimagelocationURI
+        p = self.program.lex_ui
         if self.exids:
             for k in set(self.order) - set(self.exids):
                 self.exids[str(k)] = None
@@ -473,8 +472,13 @@ class AlphabetChartData:
                                     else None)
                            for g in self.exids}
             for glyph, sense in [(k, v) for k, v in self.exobjs.items() if v is not None]:
-                getimagelocationURI(sense)
-                if hasattr(sense, 'image'):
+                di = sense.illustrationURI()
+                if file.exists(di):
+                    try:
+                        sense.image = p.image(di)
+                    except:
+                        sense.image = None
+                if hasattr(sense, 'image') and sense.image:
                     sense.image.scale(1, pixels=100, scaleto='height')
                 else:
                     self.exobjs[str(glyph)] = None
@@ -602,7 +606,7 @@ class AlphabetComparisonData:
                 except Exception as e:
                     log.error(f"Error reading extra text file {txt_path}: {e}")
 
-        from frontend import ui_tkinter as ui
+        p = self.program.lex_ui
         page_names = [i['symbol'] for i in pages]
         suffix = "wTexts" if extra_pages else ""
         filename = '_'.join([_("Booklet"), *page_names,
@@ -640,18 +644,18 @@ class AlphabetComparisonData:
         except Exception as e:
             log.warning(f"Could not open PDF automatically: {e}")
         if r == 'using_helvetica':
-            q = ui.Window(self, title=_("Using Helvetica"))
+            q = p.window(self, title=_("Using Helvetica"))
             q_text = _("This PDF uses Helvetica because neither Charis nor Andika were found; "
                        "install one of them for better glyph treatment.")
-            ui.Label(q.frame, text=q_text, sticky='news')
+            p.label(q.frame, text=q_text, sticky='news')
             q.lift()
             return
-        q = ui.Window(self, title=_("Is this a final PDF?"))
+        q = p.window(self, title=_("Is this a final PDF?"))
         q_text = _("Are you done with this PDF?")
         q_button_text = _("Yes")
         q_text += '\n' + _("Click {yes} to store and share with your data.").format(yes=q_button_text)
-        ui.Label(q.frame, text=q_text, sticky='news')
-        ui.Button(q.frame, text=q_button_text,
+        p.label(q.frame, text=q_text, sticky='news')
+        p.button(q.frame, text=q_button_text,
                   cmd=lambda x=filepath: self.program.data_repo['git'].add(x, force=True),
                   r=1, sticky='news')
         q.lift()
