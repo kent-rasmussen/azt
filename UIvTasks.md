@@ -1,6 +1,6 @@
 # Decoupling Tasks from UI — Implementation Plan
 
-v1.0 — 2026-04-03
+v1.3 — 2026-04-03
 
 ## Problem Statement
 
@@ -234,7 +234,7 @@ class Sort(backend.core.sorting_engine.Sort):
 **Risk:** Medium — Sort workflow is complex with many UI interactions. Test thoroughly after each method migration.
 **Estimated scope:** ~15 methods in Sort that create UI.
 
-### Phase 3: Wrap Tone/Segments UI operations (MEDIUM RISK)
+### Phase 3: Wrap Tone/Segments UI operations (DONE)
 
 **Tone** calls `self.withdraw()`, `self.wait_window()`, and creates `ToneFrameDrafter(self)` in `addframe()`.
 
@@ -290,7 +290,7 @@ If any remain, they're calls that Phase 2 missed — move them to the presenter.
 **Files:** `backend/core/sorting_engine.py`
 **Risk:** Low — just verifying Phase 2 is complete.
 
-### Phase 5: Remove `ui_tkinter` from lexicon.py (MEDIUM RISK after Phase 3)
+### Phase 5: Remove `ui_tkinter` from lexicon.py (DONE)
 
 After Phase 3, `lexicon.py` should have no direct `ui.` references. Remove the import. The function-local `ImageFrame` imports remain (they're already using the right pattern).
 
@@ -491,3 +491,4 @@ Once complete:
 - v1.0 (2026-04-03): Initial plan.
 - v1.1 (2026-04-03): Phases 0-1, 4-7 complete. VCS and Report presenters created. All backend modules have zero module-level frontend imports. sorting_engine.py and lexicon.py use function-local imports pending presenter extraction (Phases 2-3).
 - v1.2 (2026-04-03): Phase 2 complete. SortPresenter created — sorting_engine.py now has zero frontend imports. Only lexicon.py (Phase 3) and alphabet.py remain with function-local imports.
+- v1.3 (2026-04-03): Phases 3 and 5 complete. LexiconPresenter created and wired — lexicon.py now has zero frontend imports. Only alphabet.py remains with function-local imports.
