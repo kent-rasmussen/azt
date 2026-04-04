@@ -1,6 +1,6 @@
 # Decoupling Tasks from UI — Implementation Plan
 
-v1.3 — 2026-04-03
+v1.4 — 2026-04-04
 
 ## Problem Statement
 
@@ -350,9 +350,48 @@ class ReportPresenter:
 
 ### Phase 8: Split Task from TaskWindow (HIGH RISK — only after Phases 2-7)
 
-This is the final structural change. Once backend mixins no longer call UI methods on `self`, the inheritance can be inverted:
+This is the final structural change. Once backend mixins no longer call UI methods on `self`, the inheritance can be inverted.
 
-**Step 8a:** Create `TaskBase` that holds logic without being a window:
+#### Phase 8A: self.ui indirection (DONE)
+
+All backend UI method calls now go through `self.ui.X()`:
+- `self.withdraw()` → `self.ui.withdraw()`
+- `self.exitFlag.istrue()` → `self.ui.exitFlag.istrue()`
+- `self.getrunwindow()` → `self.ui.getrunwindow()`
+- `self.waitdone()` → `self.ui.waitdone()`
+- `self.wait(...)` → `self.ui.wait(...)`
+- `self.frame` → `self.ui.frame` (in lexicon.py, sorting_engine.py)
+- etc.
+
+Currently `self.ui = self` (set in Task.__init__), so this is a no-op. But it
+establishes the contract: backend code accesses the window ONLY through `self.ui`.
+
+**NOT yet indirected** (89 references, deferred to 8B):
+- `self.runwindow` — set by `self.ui.getrunwindow()`, accessed throughout
+  sorting_engine.py (48), lexicon.py (36), generator.py (5)
+
+#### Phase 8B: Actual class split (PENDING — HIGH RISK)
+
+**Prerequisites:**
+1. All `self.runwindow` → `self.ui.runwindow` (or use `__getattr__` delegation)
+2. Audit all TaskDressing methods that read task flags on `self` (e.g.,
+   `self.inherittaskattrs()`, `self.makestatusframe()`, `isinstance(self.task, Multicheck)`)
+3. Handle `setcontext()` which is overridden in both TaskDressing AND concrete tasks
+
+**Blockers identified:**
+- **TaskDressing.__init__** calls `self.inherittaskattrs()`, `self.maketitle()`,
+  `self.makestatusframe()` — all read flags from `self`, expecting it to be the
+  concrete task class. After split, need bidirectional wiring: `task.ui = window`
+  AND `window.task = task`, plus modify TaskDressing to read flags from `self.task`.
+- **`self.runwindow`** (89 refs) — can use `__getattr__` on TaskBase to delegate
+  unknown attributes to `self.ui`, avoiding 89 line changes. But `__getattr__`
+  with `self.ui = self` causes infinite recursion — must guard with
+  `if ui is self: raise AttributeError`.
+- **setcontext()** overridden in tasks/sound.py and tasks/tasks.py — these
+  call `super().setcontext()` expecting TaskDressing's version via MRO.
+  After split, would need explicit `self.ui.setcontext()` or similar.
+
+**Approach when ready:**
 
 ```python
 # tasks/base.py
@@ -360,59 +399,34 @@ class TaskBase:
     """Base class for task logic. Not a window."""
     ischooser = False
     isreport = False
-    # ... all the class-level flags
+    # ... all class-level flags
+
+    def __getattr__(self, name):
+        """Delegate unknown attributes to self.ui (TaskWindow)."""
+        ui = object.__getattribute__(self, 'ui')
+        if ui is self:
+            raise AttributeError(name)
+        return getattr(ui, name)
 
     def __init__(self, program, **kwargs):
         self.program = program
-        self.ui = None  # set by TaskWindow
+        self.ui = None  # set when TaskWindow is created
+        self.makeeverythingok()
 
-    def makecvtok(self):
-        ...  # pure logic, no UI calls
-
-    def makeeverythingok(self):
-        ...  # pure logic
-```
-
-**Step 8b:** Create `TaskWindow` that wraps TaskBase with a window:
-
-```python
 # frontend/task_window.py
-from frontend.ui_shell import TaskDressing
-
 class TaskWindow(TaskDressing):
-    """Tkinter window wrapper for a TaskBase."""
-
     def __init__(self, task_base, parent):
-        self.task = task_base
-        task_base.ui = self
-        TaskDressing.__init__(self, parent)
-        # Copy program ref
+        self.task = task_base    # window → task
+        task_base.ui = self      # task → window
         self.program = task_base.program
+        TaskDressing.__init__(self, parent)
 ```
 
-**Step 8c:** Update task instantiation:
-
-```python
-# Before:
-taskclass(program=self.program)  # creates window + logic in one shot
-
-# After:
-task = taskclass(program=self.program)  # creates logic only
-window = TaskWindow(task, parent)       # creates window, links to task
-```
-
-**Step 8d:** Update all concrete task classes to inherit `TaskBase` instead of `Task`:
-
-```python
-# Before:
-class SortT(Sort, Tone, Task): ...
-
-# After:
-class SortT(Sort, Tone, TaskBase): ...
-```
-
-**Files:** Split `tasks/base.py`, create `frontend/task_window.py`, update `tasks/tasks.py` (48 classes), `tasks/chooser.py`
-**Risk:** HIGH — changes every task class and the instantiation flow. Must be done after Phases 2-7 ensure no backend mixin calls UI methods on `self`.
+**Files:** Split `tasks/base.py`, create `frontend/task_window.py`, update
+`tasks/tasks.py` (48 classes), `tasks/chooser.py`, modify `frontend/ui_shell.py`
+(TaskDressing to read from `self.task` for flags)
+**Risk:** HIGH — changes every task class, the instantiation flow, and TaskDressing.
+Must be done atomically with thorough manual testing.
 
 ---
 
@@ -492,3 +506,4 @@ Once complete:
 - v1.1 (2026-04-03): Phases 0-1, 4-7 complete. VCS and Report presenters created. All backend modules have zero module-level frontend imports. sorting_engine.py and lexicon.py use function-local imports pending presenter extraction (Phases 2-3).
 - v1.2 (2026-04-03): Phase 2 complete. SortPresenter created — sorting_engine.py now has zero frontend imports. Only lexicon.py (Phase 3) and alphabet.py remain with function-local imports.
 - v1.3 (2026-04-03): Phases 3 and 5 complete. LexiconPresenter created and wired — lexicon.py now has zero frontend imports. Only alphabet.py remains with function-local imports.
+- v1.4 (2026-04-04): All phases through 8A complete. All backend modules have zero frontend imports. All backend UI method calls route through self.ui indirection. alphabet.py decoupled via lex_ui. Phase 8B (actual class split) documented with blockers and approach.

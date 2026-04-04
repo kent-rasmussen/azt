@@ -71,7 +71,14 @@ The codebase uses several patterns to manage dependencies between modules:
 
 ## Active Refactoring (settings_rebuild branch)
 
-The `settings_rebuild` branch has extracted frontend/backend separation from the original monolithic `main.py` (was ~5242 lines, now ~764). The `LazyGlobal` pattern has been fully eliminated. All backend modules have zero module-level frontend imports. `vcs.py` and `generator.py` are fully decoupled via presenters. `sorting_engine.py` and `lexicon.py` use function-local imports pending presenter extraction (Phases 2-3 of `UIvTasks.md`). See `UIvTasks.md` for the full decoupling plan.
+The `settings_rebuild` branch has extracted frontend/backend separation from the original monolithic `main.py` (was ~5242 lines, now ~764). The `LazyGlobal` pattern has been fully eliminated. **All backend modules have zero frontend imports** — every `from frontend import` has been removed from `backend/`. Four presenters handle UI delegation:
+
+- `frontend/sort_ui.py` (`SortPresenter`) — sorting_engine.py widget creation
+- `frontend/lexicon_ui.py` (`LexiconPresenter`) — lexicon.py and alphabet.py widget creation
+- `frontend/vcs_ui.py` (`VCSPresenter`) — vcs.py commit/wait dialogs
+- `frontend/report_ui.py` (`ReportPresenter`) — generator.py result frames
+
+All backend UI method calls (withdraw, deiconify, getrunwindow, exitFlag, wait*, etc.) route through `self.ui.X()` — currently `self.ui = self` (set in Task.__init__), preparing for a future Task/TaskWindow split. See `UIvTasks.md` for the full plan (Phase 8B pending).
 
 ## Build Notes
 
