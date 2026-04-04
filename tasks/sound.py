@@ -19,15 +19,15 @@ class Sound(backend.core.sound.Sound):
              self.mikecheck()
 
     def mikecheck(self):
-        self.withdraw()
+        self.ui.withdraw()
         self.pyaudiocheck()
         self.soundsettingswindow=sound_ui.SoundSettingsWindow(self)
         self.soundsettingswindow.protocol("WM_DELETE_WINDOW", self.quittask)
         if not self.soundsettingswindow.exitFlag.istrue():
             self.soundsettingswindow.wait_window(self.soundsettingswindow)
         self.donewpyaudio()
-        self.deiconify()
-        if not self.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
+        self.ui.deiconify()
+        if not self.ui.exitFlag.istrue() and self.soundsettingswindow.winfo_exists():
             self.soundsettingswindow.destroy()
 
     def _configure_transcription(self,event=None):
@@ -111,7 +111,7 @@ class Record(backend.core.sound.Record, Sound):
             self.runwindow.wait_window(self.runwindow.frame)
 
     def showentryformstorecord(self,justone=False):
-        self.getrunwindow()
+        self.ui.getrunwindow()
         if justone or not self.program.slices.valid():
             self.showentryformstorecordpage()
         else:
@@ -134,8 +134,8 @@ class Record(backend.core.sound.Record, Sound):
         def setskip(event):
             self.runwindow.frame.skip=True
             entryframe.destroy()
-        self.getrunwindow()
-        if self.exitFlag.istrue() or self.runwindow.exitFlag.istrue():
+        self.ui.getrunwindow()
+        if self.ui.exitFlag.istrue() or self.runwindow.exitFlag.istrue():
             return
         if skip == 'skip':
             self.runwindow.frame.skip=True
@@ -219,7 +219,7 @@ class Record(backend.core.sound.Record, Sound):
                                 skip=skip)
                     if exited == 'skip': skip=True
                     if exited == True: return
-        if not (self.runwindow.exitFlag.istrue() or self.exitFlag.istrue()):
+        if not (self.runwindow.exitFlag.istrue() or self.ui.exitFlag.istrue()):
             self.runwindow.waitdone()
             self.runwindow.resetframe()
             ui.Label(self.runwindow.frame, anchor='w',font='read',

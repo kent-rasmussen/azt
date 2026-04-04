@@ -99,9 +99,9 @@ class Report(object):
         log.info(_("Starting reports that didn't work in the background: {reports}").format(reports=unbackground))
         for kwargs in unbackground:
             # log.info("reportmulti unbackground with kwargs {}".format(kwargs))
-            self.wait(msg=kwargs)
+            self.ui.wait(msg=kwargs)
             self.reportfn(**kwargs) #run what failed in background here
-            self.waitdone()
+            self.ui.waitdone()
         logfinished(start_time,msg=_("all reports ({reports})").format(reports=all))
     def tonegroupreport(self,usegui=True,**kwargs):
         """This should iterate over at least some profiles; top 2-3?
@@ -218,7 +218,7 @@ class Report(object):
             if not hasattr(xlpr,'node'):
                 log.info(_("Problem creating report; see previous messages."))
                 if kwargs.get('usegui'):
-                    self.waitdone()
+                    self.ui.waitdone()
                 xlpr.cleanup()
                 return
         title=_('Introduction to {ps} {profile}').format(ps=ps,profile=profile)
@@ -434,7 +434,7 @@ class Report(object):
         usegui=kwargs['usegui']=kwargs.get('usegui',True)
         # log.info("getresults continuing with kwargs {}".format(kwargs))
         if usegui:
-            self.getrunwindow()
+            self.ui.getrunwindow()
             self.makeresultsframe() #not for now, causing problems
         kwargs['cvt']=kwargs.get('cvt',self.program.params.cvt())
         kwargs['ps']=kwargs.get('ps',self.program.slices.ps())
@@ -450,7 +450,7 @@ class Report(object):
         if not hasattr(xlpr,'node'):
             log.info(_("Problem creating report; see previous messages."))
             if kwargs.get('usegui'):
-                self.waitdone()
+                self.ui.waitdone()
             xlpr.cleanup()
             return
         """"Do I need this?"""
@@ -950,7 +950,7 @@ class Report(object):
                 "both V1=x and V2=y.")
         kwargs['usegui']=usegui
         if kwargs.get('usegui'): #i.e., showing results in window
-            self.wait(msg=_("Running {task}").format(task=_(self.tasktitle)))
+            self.ui.wait(msg=_("Running {task}").format(task=_(self.tasktitle)))
         self.basicreportfile=''.join([str(self.reportbasefilename)
                                         ,'_',''.join(sorted(self.cvtstodo)[:2])
                                         ,'_MultisliceReport.txt'])
@@ -961,7 +961,7 @@ class Report(object):
         if not hasattr(xlpr,'node'):
             log.info(_("Problem creating report; see previous messages."))
             if kwargs.get('usegui'):
-                self.waitdone()
+                self.ui.waitdone()
             xlpr.cleanup()
             return
         si=xlp.Section(xlpr,"Introduction")
@@ -1029,7 +1029,7 @@ class Report(object):
         sys.stdout.close()
         sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
         if kwargs.get('usegui'):
-            self.waitdone()
+            self.ui.waitdone()
     def coocurrencetables(self,xlpr):
         t=_("Summary Co-ocurrence Tables")
         s1s=xlp.Section(xlpr,t)

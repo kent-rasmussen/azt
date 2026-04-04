@@ -65,7 +65,7 @@ class Sound(object):
         self.soundsettings=self.program.settings.soundsettings
         self.soundsettings.check()
         # Note: UI checking like mikecheck() is moved to tasks.sound
-        if not self.exitFlag.istrue() and self.missingsoundattr():
+        if not self.ui.exitFlag.istrue() and self.missingsoundattr():
             return True #Signal to UI that mikecheck is needed
 
     def audioexists(self,relfilename):

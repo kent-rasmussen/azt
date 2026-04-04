@@ -149,7 +149,7 @@ class Sort(object):
             self.program.slices.updateslices() #This pulls from profilesbysense
             # self.makecountssorted() #we need these to show up in the counts.
             #so we don't have to do this again after each profile analysis
-        self.getrunwindow()
+        self.ui.getrunwindow()
         profile=self.program.slices.profile()
         ps=self.program.slices.ps()
         if profile in [x[0] for x in self.program.slices.profiles()]: #profilecountsValid]:
@@ -322,7 +322,7 @@ class Sort(object):
                 # and check not in self.program.status.checks(tojoin=True)
                 ):
             exit=self.getcheck()
-            if exit and not self.exitFlag.istrue():
+            if exit and not self.ui.exitFlag.istrue():
                 return #if the user didn't supply a check
         self.presortgroups()
         self.updatesortingstatus() # Not just tone anymore
@@ -445,13 +445,13 @@ class Sort(object):
                 }
     def redo_join(self):
         w=self.getgroup(purpose='join')
-        self.wait_window(w)
+        self.ui.wait_window(w)
         self.group=self.program.status.group()
         self.program.status.undistinguish_any_with(g=self.group) #should be correct at this point
         self.maybesort(firstrun=True)
     def redo_joinglyphs(self,glyph=False):
         if not glyph:
-            self.wait_window(self.getglyph(purpose='join'))
+            self.ui.wait_window(self.getglyph(purpose='join'))
         self.group=self.program.alphabet.glyph(glyph)
         self.program.alphabet.undistinguish_any_with(g=self.group) #should be correct at this point
         self.maybesort(firstrun=True)
@@ -467,7 +467,7 @@ class Sort(object):
                                 ))
         def exitstatuses():
             try:
-                log.info("Self exit status: {status}".format(status=self.exitFlag.istrue()))
+                log.info("Self exit status: {status}".format(status=self.ui.exitFlag.istrue()))
                 log.info("Parent exit status: {status}".format(status=self.parent.exitFlag.istrue()))
                 log.info("Parent return status: {status}".format(status=self.returned))
                 log.info("Runwindow exit status: {status}".format(status=self.runwindow.exitFlag.istrue()))
@@ -475,7 +475,7 @@ class Sort(object):
             except Exception as e:
                 log.info("Exception: {}".format(e))
         def warnorcontinue(return_value): #mostly for testing
-            if self.exitFlag.istrue():
+            if self.ui.exitFlag.istrue():
                 log.info("the task is exited; done with maybesort")
                 pass #just return, below, if the task is exited
             elif return_value:
@@ -488,7 +488,7 @@ class Sort(object):
         if firstrun:
             self.resetsortbutton()
         log.info("Starting maybesort with {did}".format(did=[k for k,v in self.did.items() if v]))
-        if self.exitFlag.istrue(): #if the task has been shut down, stop
+        if self.ui.exitFlag.istrue(): #if the task has been shut down, stop
             return
         self.program.settings.reloadstatusdata() # culled here
         if self.itemstosort() is False:
@@ -782,7 +782,7 @@ class Sort(object):
             r = self.check
             if 1 < self.profile.count(self.cvt) == r.count(self.cvt):
                 r = self.cvt+'=' #use this any time all S is in check.
-            if r in self.frame.theme.photo: # Remove once all supported
+            if r in self.ui.frame.theme.photo: # Remove once all supported
                 return r
         return self.cvt #fail safe for the time being
     def add_int_group(self,macrosort=False):
@@ -887,10 +887,10 @@ class Sort(object):
             instructions+=' '+_("(by {context})").format(context=context)
         log.info("Going to sort these items: {items}".format(items=self.first_sort))
         log.info("Into these groups: {groups}".format(groups=groups))
-        if not self.first_sort or self.exitFlag.istrue():
+        if not self.first_sort or self.ui.exitFlag.istrue():
             return 1
         log.info(f"Getting Runwindow")
-        self.getrunwindow() #after we know this will do something
+        self.ui.getrunwindow() #after we know this will do something
         self.groupsFrame, self.buttonframe = self.sort_ui.build_sort_layout(
             self.runwindow, img_mod, self.pageicon(macrosort=macrosort),
             instructions, self, groups, macrosort)
@@ -1064,7 +1064,7 @@ class Sort(object):
             updatestatus(True)
             return 1
         self.reverifying=False
-        self.getrunwindow(msg=_("preparing to verify the {item_name} '{group}'").format(item_name=item_name, group=group))
+        self.ui.getrunwindow(msg=_("preparing to verify the {item_name} '{group}'").format(item_name=item_name, group=group))
         """Move this to bool vars, like for sort"""
         if hasattr(self,'groupselected'): #so it doesn't get in way later.
             delattr(self,'groupselected')
@@ -1205,7 +1205,7 @@ class Sort(object):
         if not pairs:
             log.debug("No groups to distinguish!")
             return
-        self.getrunwindow()
+        self.ui.getrunwindow()
         oktext=_('These are each different from the other(s)')
         if macrosort:
             img_mod='glyphs'
@@ -1251,7 +1251,7 @@ class Sort(object):
         else:
             #Give an error window here
             log.error("Not Trying again; set a check first!")
-            self.getrunwindow(msg=_("Resetting unSorted items"))
+            self.ui.getrunwindow(msg=_("Resetting unSorted items"))
             buttontxt=_("Sort!")
             text=_("Not Trying Again; set a tone frame first!")
             self.sort_ui.label(self.runwindow.frame, text=text).grid(row=0,column=0)

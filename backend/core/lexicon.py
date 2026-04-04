@@ -44,10 +44,10 @@ class Senses(object):
                 "\nCome back when you have time; restart where you left "
                 "off by pressing '{button}'").format(ps=self.ps,profile=self.profile,check=self.check,
                                                 button=buttontxt)
-        # self.withdraw()
+        # self.ui.withdraw()
         if not self.program.Demo: #Should anyone see this?
             ErrorNotice(text=text,title=_("Not Done!"),parent=self,wait=True)
-        # self.deiconify()
+        # self.ui.deiconify()
     def checktosort(self):
         return self.program.status.checktosort() #bool tosort on cur check
     def itemstosort(self):
@@ -134,7 +134,7 @@ class Segments(Senses):
         #multiprocess from here?
         msg=_("Presorting ({check}={groups})").format(check=self.program.params.check(),groups=groups)
         log.info(msg)
-        w=self.getrunwindow(msg=msg)
+        w=self.ui.getrunwindow(msg=msg)
         self.program.status.renewsensestosort([],[]) #will repopulate
         # test this before implementing it:
         # kwargs['formstosearch']=self.formsthisprofile(**kwargs)
@@ -383,7 +383,7 @@ class Segments(Senses):
             log.error(_("Not sure what to do with this glyph "
                 "({cvt}; {glyphs})").format(cvt=self.program.params.cvt(), glyphs=glyphs))
         w=transcribe(self)
-        self.withdraw()
+        self.ui.withdraw()
         w.waitdone()
         problems=[]
         while digits := self.default_glyphs():
@@ -397,7 +397,7 @@ class Segments(Senses):
             elif not w.ok_done: #user exits without 'OK'
                 break
         w.destroy() #just this window, not parent
-        self.deiconify()
+        self.ui.deiconify()
         if digits or problems:
             log.error(_("User exited with work still to do: {digits} {problems}").format(digits=digits, problems=problems))
         return not bool(digits)
@@ -511,7 +511,7 @@ class WordCollection(Segments):
         self.entries=self.getlisttodo()
         self.nentries=len(self.entries)
         self.index=0
-        self.wordsframe=p.frame(self.frame,row=1,column=1,sticky='ew')
+        self.wordsframe=p.frame(self.ui.frame,row=1,column=1,sticky='ew')
         self.instructions=p.label(self.wordsframe,
                                     text=self.getinstructions(),
                                     row=0, column=0)
@@ -576,7 +576,7 @@ class WordCollection(Segments):
         sub_btn.wait_window(self.runwindow.frame2) #then move to next step
     def addmorpheme(self):
         p = self.lex_ui
-        self.getrunwindow()
+        self.ui.getrunwindow()
         self.runwindow.form={}
         self.runwindow.glosslangs=list()
         form={}
@@ -613,7 +613,7 @@ class WordCollection(Segments):
             have to come later."""
     def addCAWLentries(self):
         text=_("Adding CAWL entries to fill out, in established database.")
-        self.wait(msg=text)
+        self.ui.wait(msg=text)
         log.info(text)
         self.cawldb=loadCAWL()
         added=[]
@@ -681,7 +681,7 @@ class WordCollection(Segments):
             text=_("We seem to have not added or modded any entries, which "
                     "shouldn't happen! (missing: {missing})"
                     "").format(missing=self.program.taskchooser.cawlmissing)
-        self.waitdone()
+        self.ui.waitdone()
         log.info(text)
         ErrorNotice(text,title=title)
     def nextword(self,nostore=False):
@@ -880,7 +880,7 @@ class WordCollection(Segments):
                 self.sense.collectionglosses=[i for i in
                                         str(self.sense.imgselectiondir).split('/')[-1].split('_')
                                         if not isinteger(i)]
-        self.wait(msg=_("Dowloading images from OpenClipart.org\n{glosses}"
+        self.ui.wait(msg=_("Dowloading images from OpenClipart.org\n{glosses}"
                         "").format(glosses=" ".join(self.sense.collectionglosses)),
                     cancellable=True)
         log.info(_("Glosses: {glosses}").format(glosses=self.sense.collectionglosses))
@@ -898,7 +898,7 @@ class WordCollection(Segments):
             try:
                 html=htmlfns.getdecoded(url)
             except urls.MaxRetryError as e:
-                self.waitdone()
+                self.ui.waitdone()
                 msg=_("Problem downloading webpage; check your "
                             "internet connection!\n\n{error}").format(error=e)
                 log.error(msg)
@@ -945,7 +945,7 @@ class WordCollection(Segments):
                 text+=_("\nProblems downloading {count} images").format(count=problems)
             ErrorNotice(text,
                         button=(_("Select local image"),self.selectlocalimage))
-        self.waitdone()
+        self.ui.waitdone()
     def killwordframe(self):
         f=getattr(self,'wordframe',None)
         if hasattr(f,'winfo_exists') and f.winfo_exists():
@@ -1076,8 +1076,8 @@ class WordCollection(Segments):
             else:
                 self.parsebutton.unbind('<ButtonRelease-1>')
         self.lxenter.focus_set()
-        self.frame.grid_columnconfigure(1,weight=1)
-        self.deiconify()
+        self.ui.frame.grid_columnconfigure(1,weight=1)
+        self.ui.deiconify()
         self.lift()
         self.wordframe.update_idletasks()
     def setcontext(self,context=None):
@@ -1143,7 +1143,7 @@ class Parse(Segments):
             log.info(self.currentformnotice())
             do(False)
         level, lx, lc, sf, ps, afxs = args
-        if self.exitFlag.istrue():
+        if self.ui.exitFlag.istrue():
             return
         w=p.window(self,exit=False)
         w.title(_("Confirm this combination of affixes?"))
@@ -1222,9 +1222,9 @@ class Parse(Segments):
         p.label(self.noticeframe,text=t+self.currentformnotice(),
                     font='small',justify='l',
                     row=0,column=0)
-        if self.iswaiting():
+        if self.ui.iswaiting():
             # log.info("Window almost built; unpausing")
-            self.waitpause()
+            self.ui.waitpause()
         # log.info("exit flag for w({}):{}; self({}):{}"
         #         "".format(w,w.exitFlag,self,self.exitFlag))
         # log.info("Window built; waiting")
@@ -1232,15 +1232,15 @@ class Parse(Segments):
         if w.exitFlag.istrue():
             # log.info("Exited parse! (self.userresponse.value:{})"
             #         "".format(self.userresponse.value))
-            self.waitdone()
+            self.ui.waitdone()
             self.exited=True
         else:
             # log.info("Didn't exit parse! (self.userresponse.value:{})"
             #         "".format(self.userresponse.value))
             # w.on_quit()
             w.destroy()
-            if self.iswaiting():
-                self.waitunpause()
+            if self.ui.iswaiting():
+                self.ui.waitunpause()
             if self.userresponse.rootchange:
                 self.trythreeforms() #kick this back up a level
             else:
@@ -1269,10 +1269,10 @@ class Parse(Segments):
             # self.parser.rmpssubclassnode() #leave this for posterity?
             t.destroy()
         # log.info("Selecting from option list: {}".format(l))
-        if self.exitFlag.istrue():
+        if self.ui.exitFlag.istrue():
             return
-        if self.iswaiting():
-            self.waitpause()
+        if self.ui.iswaiting():
+            self.ui.waitpause()
         ln=[(i,formattuple(i)) for i in l if i[1] == self.nominalps
                         if len(i[-1]) == 2] #each must have (only) pfx and sfx
         ln+=[('ON',_("Other {field}").format(field=self.secondformfield[self.nominalps]))]
@@ -1331,8 +1331,8 @@ class Parse(Segments):
             self.exited=True
         # w.on_quit()
         w.destroy()
-        if self.iswaiting():
-            self.waitunpause()
+        if self.ui.iswaiting():
+            self.ui.waitunpause()
     def asksegmentsnops(self):
         for ps in [self.nominalps, self.verbalps]:
             r=self.asksegments(ps=ps)
@@ -1397,7 +1397,7 @@ class Parse(Segments):
         def next(event=None):
             segments.set("")
             b.destroy()
-        if self.exitFlag.istrue():
+        if self.ui.exitFlag.istrue():
             return
         if not ps:
             return asksegmentsnops()
@@ -1406,8 +1406,8 @@ class Parse(Segments):
                             ps,self.parser.sense.id,
                             self.parsecatalog.parsen()))
         sfname=self.secondformfield[ps]
-        if self.iswaiting():
-            self.waitpause()
+        if self.ui.iswaiting():
+            self.ui.waitpause()
         w=p.window(self)
         w.title(_("Type second form"))
         l=p.label(w.frame,
@@ -1440,8 +1440,8 @@ class Parse(Segments):
         w.wait_window(b)
         if w.exitFlag.istrue():
             self.exited=True
-        if self.iswaiting():
-            self.waitunpause()
+        if self.ui.iswaiting():
+            self.ui.waitunpause()
         segments_ok=bool(segments.get())
         w.destroy()
         if not segments_ok:
@@ -1520,15 +1520,15 @@ class Parse(Segments):
         self.parser.entry.lxvalue(root) #setting
         self.updateparseUI()
     def parse_foreground(self,**kwargs):
-        self.withdraw()
+        self.ui.withdraw()
         self.updatereturnbind()
         self.userresponse.rootchange=False #reset for each root
         self.parse(**kwargs)
         self.updateparseUI()
-        if self.iswaiting():
-            self.waitdone()
+        if self.ui.iswaiting():
+            self.ui.waitdone()
         if self.winfo_exists():
-            self.deiconify()
+            self.ui.deiconify()
             self.updatereturnbind()
     def parse(self,**kwargs):
         # These functions return nothing when the parse goes through, 1 when
@@ -1594,7 +1594,7 @@ class Parse(Segments):
                 return set(senses)
     def getparses(self,**kwargs):
         log.info("parses already tried: {}".format(self.parsecatalog.parsen()))
-        self.wait(_("Parsing (ask: {ask} auto: {auto})").format(ask=self.parser.ask,
+        self.ui.wait(_("Parsing (ask: {ask} auto: {auto})").format(ask=self.parser.ask,
                                                         auto=self.parser.auto
                                                     ))
         senses=self.sensestoparse(**kwargs)
@@ -1603,11 +1603,11 @@ class Parse(Segments):
             self.parse() #this can add to lists
             if self.exited:
                 break
-            if self.iswaiting():
+            if self.ui.iswaiting():
                 self.waitprogress(100*n//todo)
             # else:
             #     break
-        self.waitdone()
+        self.ui.waitdone()
         # log.info("total parses tried: {}".format(self.parsecatalog.parsen()))
         self.parsecatalog.report()
     def nextparserasklevel(self):
@@ -1630,18 +1630,18 @@ class Parse(Segments):
         self.parsecatalog=parser.Catalog(self)
         collector=parser.AffixCollector(self.parsecatalog,self.program.db)
         if self.loadfromlift:
-            self.wait(_("Loading Affixes"))
+            self.ui.wait(_("Loading Affixes"))
             # for i in collector.do():
             for i in collector.getfromlift():
                 # log.info("Progress: {}".format(i))
                 self.waitprogress(i)
             self.parsecatalog.report()
-            self.waitdone()
+            self.ui.waitdone()
     def showwhenready(self):
         try:
             assert self.status.winfo_exists()
             log.info("showing")
-            self.deiconify()
+            self.ui.deiconify()
         except:
             log.info("not showing")
             self.after(1,self.showwhenready)
@@ -1744,10 +1744,10 @@ class Tone(Senses):
     def addframe(self,**kwargs):
         if 'window' in kwargs:
             kwargs['window'].destroy() #in any case; if fails, try again.
-        self.withdraw()
+        self.ui.withdraw()
         t=ToneFrameDrafter(self)
         if not t.exitFlag.istrue():
-            self.wait_window(t)
+            self.ui.wait_window(t)
     def aframe(self):
         self.runwindow.on_quit()
         self.addframe()
