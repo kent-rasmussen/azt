@@ -2,19 +2,15 @@
 from utilities.i18n import _
 from utilities import logsetup
 log=logsetup.getlog(__name__)
-from frontend.ui_shell import TaskDressing
 from backend.core.lexicon import Tone, Segments #for makecvtok
 
 class TaskBase:
     """Pure logic base for tasks. No window, no UI dependency.
 
     Holds class-level flags, makecvtok/makeeverythingok logic, and
-    program wiring. Can be instantiated without a tkinter event loop
-    for testing purposes.
-
-    Concrete task classes inherit Task (which adds the window via
-    TaskDressing). The full MRO is:
-        ConcreteTask → [mixins] → Task → TaskBase → TaskDressing → ui.Window
+    program wiring. Unknown attribute access delegates to self.ui
+    (the TaskWindow) via __getattr__, so backend mixins can call
+    window methods transparently.
     """
     ischooser=False
     isreport=False
@@ -28,9 +24,41 @@ class TaskBase:
     icon_leaderboard=False
     glyph_leaderboard=False
     cvt_sensitive=False
+
+    def __getattr__(self, name):
+        """Delegate unknown attributes to self.ui (the TaskWindow).
+
+        This lets backend mixins call window methods (withdraw, frame,
+        runwindow, context, etc.) without importing frontend code.
+        Only fires when normal attribute lookup fails.
+        """
+        # Prevent recursion: if ui isn't set yet, stop
+        try:
+            ui = object.__getattribute__(self, 'ui')
+        except AttributeError:
+            raise AttributeError(
+                f"'{type(self).__name__}' has no attribute '{name}' "
+                f"(ui not yet initialized)")
+        if ui is None:
+            raise AttributeError(
+                f"'{type(self).__name__}' has no attribute '{name}' "
+                f"(ui is None)")
+        return getattr(ui, name)
+
+    # -- Delegation methods for super() chains --
+    # These exist because __getattr__ doesn't intercept super() calls.
+    # Concrete tasks override setcontext/on_quit and chain via super().
+
+    def setcontext(self, context=None):
+        """Delegate to the window's setcontext (TaskDressing)."""
+        self.ui.setcontext(context)
+
+    def on_quit(self, **kwargs):
+        """Delegate to the window's on_quit (ui.Window)."""
+        self.ui.on_quit(**kwargs)
+
     def makecvtok(self):
         """Should these not be done locally, in Tone and Segments?"""
-        # log.info("cvt: {}".format(self.program.params.cvt()))
         if isinstance(self,Tone):
             self.checktypename='frame'
             self.cvt='T'
@@ -39,36 +67,34 @@ class TaskBase:
             if self.cvt not in ['V','C','CV']:
                 self.cvt='V'
         self.cvt=self.program.params.cvt(self.cvt)
+
     def makeeverythingok(self):
         """The value of this method is unclear. This may be better
         done elsewhere."""
         try:
-            self.makecvtok() #this uses self, the following are just any sane
-            self.ftype=self.program.params.ftype() #sets default if not
-            self.program.slices.makepsok() #may not succeed, if no pss yet
-            self.program.slices.makeprofileok() #may not succeed, if no profiles yet
-            self.program.status.makecheckok() #this is intentionally broad: *any* check
+            self.makecvtok()
+            self.ftype=self.program.params.ftype()
+            self.program.slices.makepsok()
+            self.program.slices.makeprofileok()
+            self.program.status.makecheckok()
         except AttributeError as e:
             log.info(_("Maybe status/slices aren't set up yet."))
-        # self.program.status.makegroupok(wsorted=True)
 
-class Task(TaskBase, TaskDressing):
-    """Task with a tkinter window. Inherits logic from TaskBase and
-    window behavior from TaskDressing."""
+class Task(TaskBase):
+    """Task with a separate TaskWindow. Creates the window on init."""
     def __init__(self, program):
         self.program = program
         if hasattr(self,'cvt'):
             self.program.params.cvt(self.cvt)
-        # self.makecvtok() #this just enforces a good cvt value
         if self.program.taskchooser == self:
             parent=self.program.tk_root
         else:
             self.program.task = self
-            parent=self.program.taskchooser
+            parent=self.program.taskchooser.ui
         self.analang=self.program.db.analang
-        self.min_to_multicolumn=6 #don't use buttoncolumns with less
+        self.min_to_multicolumn=6
         self.makeeverythingok()
-        TaskDressing.__init__(self, parent) #window
-        self.ui = self  # Phase 8A: ui IS the window; will be separate object later
+        from frontend.task_window import TaskWindow
+        self.ui = TaskWindow(self, parent)
         log.info(f"Done initializing {self.__class__.__name__}."
                  f"(base: {self.program.task_base()})")

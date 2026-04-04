@@ -55,7 +55,7 @@ class TaskChooser(Task):
     def choosereports(self):
         self.status.bigbutton.destroy()
         self.showreports=True
-        self.setmainwindow(self)
+        self.ui.setmainwindow(self.ui)
         self.gettask()
     def guidtriage(self): #obsolete
         # import time
@@ -99,7 +99,7 @@ class TaskChooser(Task):
         """This function pulls user out of a task, to select from any 
         of tasks whose prerequisites are minimally satisfied."""
         # if self.reports:
-        self.withdraw()
+        self.ui.withdraw()
         # try:
         #         self.status.bigbutton.destroy()
         # except AttributeError:
@@ -155,11 +155,11 @@ class TaskChooser(Task):
                 log.info(_("Task {task} doesn't seem to have a tooltip.").format(task=o[0]))
         for c in range(bpr):
             self.optionsframe.grid_columnconfigure(c, weight=1, uniform=c)
-        self.setmainwindow() 
+        self.ui.setmainwindow()
         if self.showreports:
             self.showreports=False #just do this once each button click
             self.showingreports=True
-        self.deiconify()
+        self.ui.deiconify()
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
         satisfied task"""
@@ -200,7 +200,7 @@ class TaskChooser(Task):
     def i_am_mainwindow(self):
         log.info("i_am_mainwindow: {self.mainwindow=} {self.program.mainwindow=}")
         if not self.mainwindow:
-            self.setmainwindow()
+            self.ui.setmainwindow()
             self.finish_task()
     # def unsetmainwindow(self):
     #     """self.mainwindowis tracks who the mainwindow is for the chooser,
@@ -592,13 +592,13 @@ class TaskChooser(Task):
         assert hasattr(self.program,'settings')
         # self.interfacelangs=self.getinterfacelangs()
         self.program.splash.progress(55)
-        self.setmainwindow()
         # self.program.settings.post_lift_init()
         self.program.splash.progress(65)
         self.whatsdone()
         self.program.splash.progress(80)
         log.info(_("Settings: {settings}").format(settings=self.program.settings))
         super().__init__(self.program)
+        self.ui.setmainwindow()
         # TaskDressing.__init__(self,parent) #I think this should be after settings
         self.program.settings.getprofiles()
         # self.withdraw()

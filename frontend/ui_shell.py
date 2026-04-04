@@ -1552,9 +1552,10 @@ class TaskDressing(HasMenus,ui.Window):
         self.sense=self.sensetodo=choice
         self.program.mainwindow.status.updatesensetodo()
         window.destroy()
-        if isinstance(self,WordCollection):
+        task = getattr(self, 'task', self)
+        if isinstance(task, WordCollection):
             self.withdraw()
-            self.getword()
+            task.getword()
     def getsensetodobyletter(self,choice,window,event=None):
         window.on_quit()
         msg=_("Preparing to ask for a sense...")
