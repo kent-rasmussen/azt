@@ -5,8 +5,17 @@ log=logsetup.getlog(__name__)
 from frontend.ui_shell import TaskDressing
 from backend.core.lexicon import Tone, Segments #for makecvtok
 
-class Task(TaskDressing):
-    """Things that need to be, if not set elsewhere:"""
+class TaskBase:
+    """Pure logic base for tasks. No window, no UI dependency.
+
+    Holds class-level flags, makecvtok/makeeverythingok logic, and
+    program wiring. Can be instantiated without a tkinter event loop
+    for testing purposes.
+
+    Concrete task classes inherit Task (which adds the window via
+    TaskDressing). The full MRO is:
+        ConcreteTask → [mixins] → Task → TaskBase → TaskDressing → ui.Window
+    """
     ischooser=False
     isreport=False
     uses_second_forms=False
@@ -31,7 +40,7 @@ class Task(TaskDressing):
                 self.cvt='V'
         self.cvt=self.program.params.cvt(self.cvt)
     def makeeverythingok(self):
-        """The value of this method is unclear. This may be better 
+        """The value of this method is unclear. This may be better
         done elsewhere."""
         try:
             self.makecvtok() #this uses self, the following are just any sane
@@ -42,6 +51,10 @@ class Task(TaskDressing):
         except AttributeError as e:
             log.info(_("Maybe status/slices aren't set up yet."))
         # self.program.status.makegroupok(wsorted=True)
+
+class Task(TaskBase, TaskDressing):
+    """Task with a tkinter window. Inherits logic from TaskBase and
+    window behavior from TaskDressing."""
     def __init__(self, program):
         self.program = program
         if hasattr(self,'cvt'):
@@ -56,6 +69,6 @@ class Task(TaskDressing):
         self.min_to_multicolumn=6 #don't use buttoncolumns with less
         self.makeeverythingok()
         TaskDressing.__init__(self, parent) #window
-        self.ui = self  # Phase 1: ui IS the window; will be separate object later
+        self.ui = self  # Phase 8A: ui IS the window; will be separate object later
         log.info(f"Done initializing {self.__class__.__name__}."
                  f"(base: {self.program.task_base()})")
