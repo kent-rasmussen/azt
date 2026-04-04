@@ -1,6 +1,6 @@
 # Decoupling Tasks from UI — Implementation Plan
 
-v1.4 — 2026-04-04
+v1.5 — 2026-04-04
 
 ## Problem Statement
 
@@ -366,14 +366,13 @@ All backend UI method calls now go through `self.ui.X()`:
 Currently `self.ui = self` (set in Task.__init__), so this is a no-op. But it
 establishes the contract: backend code accesses the window ONLY through `self.ui`.
 
-**NOT yet indirected** (89 references, deferred to 8B):
-- `self.runwindow` — set by `self.ui.getrunwindow()`, accessed throughout
-  sorting_engine.py (48), lexicon.py (36), generator.py (5)
+All `self.runwindow` references (162 total across sorting_engine.py, lexicon.py,
+generator.py, body.py, tasks/sound.py, tasks/tasks.py) are now `self.ui.runwindow`.
 
 #### Phase 8B: Actual class split (PENDING — HIGH RISK)
 
 **Prerequisites:**
-1. All `self.runwindow` → `self.ui.runwindow` (or use `__getattr__` delegation)
+1. ~~All `self.runwindow` → `self.ui.runwindow`~~ (DONE)
 2. Audit all TaskDressing methods that read task flags on `self` (e.g.,
    `self.inherittaskattrs()`, `self.makestatusframe()`, `isinstance(self.task, Multicheck)`)
 3. Handle `setcontext()` which is overridden in both TaskDressing AND concrete tasks
@@ -507,3 +506,4 @@ Once complete:
 - v1.2 (2026-04-03): Phase 2 complete. SortPresenter created — sorting_engine.py now has zero frontend imports. Only lexicon.py (Phase 3) and alphabet.py remain with function-local imports.
 - v1.3 (2026-04-03): Phases 3 and 5 complete. LexiconPresenter created and wired — lexicon.py now has zero frontend imports. Only alphabet.py remains with function-local imports.
 - v1.4 (2026-04-04): All phases through 8A complete. All backend modules have zero frontend imports. All backend UI method calls route through self.ui indirection. alphabet.py decoupled via lex_ui. Phase 8B (actual class split) documented with blockers and approach.
+- v1.5 (2026-04-04): self.runwindow indirection complete (162 refs). All non-frontend code now accesses UI exclusively through self.ui. Phase 8A fully done — no caveats remain.
