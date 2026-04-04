@@ -43,7 +43,20 @@ class TaskBase:
             raise AttributeError(
                 f"'{type(self).__name__}' has no attribute '{name}' "
                 f"(ui is None)")
-        return getattr(ui, name)
+        # Per-instance recursion guard
+        try:
+            guard = object.__getattribute__(self, '_getattr_guard')
+        except AttributeError:
+            guard = set()
+            object.__setattr__(self, '_getattr_guard', guard)
+        if name in guard:
+            raise AttributeError(
+                f"'{type(self).__name__}' has no attribute '{name}'")
+        guard.add(name)
+        try:
+            return getattr(ui, name)
+        finally:
+            guard.discard(name)
 
     # -- Delegation methods for super() chains --
     # These exist because __getattr__ doesn't intercept super() calls.
