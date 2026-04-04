@@ -14,12 +14,12 @@ class TaskWindow(TaskDressing):
     def __getattr__(self, name):
         """Delegate unknown attributes to the wrapped task object.
 
-        This allows TaskDressing methods to read task flags (ischooser,
-        isreport, etc.) and call task methods (makeeverythingok, etc.)
-        transparently, as if they were on the window itself.
+        Uses object.__getattribute__ to read from the task, which
+        bypasses the task's own __getattr__ and prevents infinite
+        recursion (task.__getattr__ delegates back to self.ui).
         """
         task = object.__getattribute__(self, 'task')
-        return getattr(task, name)
+        return object.__getattribute__(task, name)
 
     def __init__(self, task, parent):
         self.task = task        # window → task (for flag reads)
