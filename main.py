@@ -384,9 +384,11 @@ class App:
         from frontend.vcs_ui import VCSPresenter
         from frontend.report_ui import ReportPresenter
         from frontend.sort_ui import SortPresenter
+        from frontend.lexicon_ui import LexiconPresenter
         self.vcs_ui = VCSPresenter(self)
         self.report_ui = ReportPresenter()
         self.sort_ui = SortPresenter()
+        self.lex_ui = LexiconPresenter()
         self.repocheck()
         Settings(self) #needs self.filename, pick up self.analang from file
         self.settings.post_lift_init()

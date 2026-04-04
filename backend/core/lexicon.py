@@ -947,9 +947,8 @@ class WordCollection(Segments):
                         button=(_("Select local image"),self.selectlocalimage))
         self.waitdone()
     def killwordframe(self):
-        from frontend import ui_tkinter as ui
         f=getattr(self,'wordframe',None)
-        if isinstance(f,ui.Frame) and f.winfo_exists():
+        if hasattr(f,'winfo_exists') and f.winfo_exists():
             # log.info("Destroying word frame")
             f.destroy()
             # log.info("Destroy done")
@@ -959,31 +958,31 @@ class WordCollection(Segments):
         #     if f:
         #         log.info("word frame exists: {}".format(f.winfo_exists()))
     def dowordframe(self):
-        from frontend import ui_tkinter as ui
+        p = self.lex_ui
         f=getattr(self,'wordframe',None)
-        if isinstance(f,ui.Frame) and f.winfo_exists():
+        if hasattr(f,'winfo_exists') and f.winfo_exists():
             # log.info("Skipping word frame; already exists!")
             return
         log.info(_("doing word frame"))
-        self.wordframe=ui.Frame(self.wordsframe,row=1,column=0,sticky='ew')
-        self.prog=ui.Label(self.wordframe, text='', row=1, column=3,
+        self.wordframe=p.frame(self.wordsframe,row=1,column=0,sticky='ew')
+        self.prog=p.label(self.wordframe, text='', row=1, column=3,
                             font='small')
-        self.glossesline=ui.Label(self.wordframe, text='',
+        self.glossesline=p.label(self.wordframe, text='',
                                     font='read',
                                     row=1, column=0, columnspan=3, sticky='ew')
-        back=ui.Button(self.wordframe,text=_("Back"),cmd=self.backword,
+        back=p.button(self.wordframe,text=_("Back"),cmd=self.backword,
                         row=4, column=0, sticky='w',anchor='w')
-        self.instructions2=ui.Label(self.wordframe,text='',font='small',
+        self.instructions2=p.label(self.wordframe,text='',font='small',
                         row=4, column=1, sticky='ew',anchor='c')
-        next=ui.Button(self.wordframe,text=_("Next"),cmd=self.nextword,
+        next=p.button(self.wordframe,text=_("Next"),cmd=self.nextword,
                         row=4, column=2, sticky='e',anchor='e')
-        self.var=ui.StringVar()
-        self.lxenter=ui.EntryField(self.wordframe,textvariable=self.var,
+        self.var=p.string_var()
+        self.lxenter=p.entry_field(self.wordframe,textvariable=self.var,
                                 font='readbig',
                                 row=5,column=0,columnspan=3,
                                 sticky='ew')
         if isinstance(self.task,Parse):
-            self.parsebutton=ui.Label(self.wordframe,
+            self.parsebutton=p.label(self.wordframe,
                                         text=self.cparsetext,
                                         row=6, column=1,
                                         sticky='w',
@@ -1006,7 +1005,7 @@ class WordCollection(Segments):
     def set_up_transcription(self):
         pass
     def getword(self):
-        from frontend.ui_shell import ImageFrame
+        p = self.lex_ui
         self.program.taskchooser.withdraw()# not sure why necessary
         # log.info("sensetodo: {}".format(getattr(self,'sensetodo',None)))
         # log.info("wordframe: {}".format(getattr(self,'wordframe',None)))
@@ -1051,10 +1050,10 @@ class WordCollection(Segments):
         self.glossesline['text']=self.glossesthere
         self.glossesline.wrap()
         url=self.sense.illustrationURI()
-        if isinstance(getattr(self.wordframe,'pic',None),ImageFrame):
+        if hasattr(getattr(self.wordframe,'pic',None),'changeurl'):
             self.wordframe.pic.changeurl(url)
         else:
-            self.wordframe.pic=ImageFrame(self.wordframe, url,
+            self.wordframe.pic=p.image_frame(self.wordframe, url,
                                             pixels=300,
                                             row=2, column=0,
                                             columnspan=3, sticky='')
@@ -1100,13 +1099,12 @@ class Parse(Segments):
                                                             quoted=True))
                         for l in self.glosslangs])
     def userconfirmation(self,*args):
-        from frontend import ui_tkinter as ui
-        from frontend.ui_shell import ImageFrame
+        p = self.lex_ui
         log.info("asking for user confirmation")
         # Return True or False only
         def do(x):
             log.info("doing {}".format(x))
-            if type(x) is ui.StringVar:
+            if hasattr(x, 'get') and hasattr(x, 'set'):
                 log.info("Found StringVar: {}".format(x.get()))
                 self.fixroot(x.get())
                 #keep userresponse.value 'False'
@@ -1118,14 +1116,14 @@ class Parse(Segments):
             # log.info("self.l destroyed")
         def enterroot():
             # log.info("Building extra root fields")
-            ui.Label(self.responseframe,
+            p.label(self.responseframe,
                         text=_("root:"),
                         row=0,column=3,padx=(10,0),sticky='ew')
-            roottext = ui.StringVar(self.responseframe, value=lx)
-            self.roottextfield=ui.EntryField(self.responseframe,
+            roottext = p.string_var(self.responseframe, value=lx)
+            self.roottextfield=p.entry_field(self.responseframe,
                                                 text=roottext,
                                                 row=0,column=4,sticky='ew')
-            ui.Button(self.responseframe,
+            p.button(self.responseframe,
                         text=_("OK"),
                         command=lambda x=roottext: do(x),
                         row=0,column=5,padx=(10,0),sticky='ew')
@@ -1147,7 +1145,7 @@ class Parse(Segments):
         level, lx, lc, sf, ps, afxs = args
         if self.exitFlag.istrue():
             return
-        w=ui.Window(self,exit=False)
+        w=p.window(self,exit=False)
         w.title(_("Confirm this combination of affixes?"))
         self.userresponse.value=False
         self.userresponse.rootchange=False
@@ -1166,62 +1164,62 @@ class Parse(Segments):
         elif ps == self.verbalps:
             ftype='imp'
         glosssf=self.getgloss(ftype=ftype)
-        self.presentationframe=ui.Frame(w.frame,row=1,column=0,sticky='ew')
-        self.lcframe=ui.Frame(self.presentationframe,
+        self.presentationframe=p.frame(w.frame,row=1,column=0,sticky='ew')
+        self.lcframe=p.frame(self.presentationframe,
                                 row=0,column=0,
                                 padx=10,
                                 sticky='ew')
         lcmorphs=list(afxs[0])
         lcmorphs.insert(1,lx)
-        self.l=ui.Label(self.lcframe,
+        self.l=p.label(self.lcframe,
                 text='-'.join([i for i in lcmorphs if i]),font='title',
                 row=0,column=0)
         url=self.sense.illustrationURI()
-        ImageFrame(self.lcframe, url, ftype=ftype, 
+        p.image_frame(self.lcframe, url, ftype=ftype,
                     row=1, column=0, sticky='')
-        ui.Label(self.lcframe,
+        p.label(self.lcframe,
                 text=glosslc,font='readbig',
                 row=2,column=0)
-        self.sfframe=ui.Frame(self.presentationframe,
+        self.sfframe=p.frame(self.presentationframe,
                                 row=0,column=1,
                                 padx=10,
                                 sticky='ew')
         sfmorphs=list(afxs[1])
         sfmorphs.insert(1,lx)
-        ui.Label(self.sfframe,
+        p.label(self.sfframe,
                 text='-'.join([i for i in sfmorphs if i]),font='title',
                 row=0,column=1)
         url=self.sense.illustrationURI()
-        ImageFrame(self.sfframe, url, ftype=ftype,
+        p.image_frame(self.sfframe, url, ftype=ftype,
                     row=1, column=1, sticky='')
-        ui.Label(self.sfframe,
+        p.label(self.sfframe,
                 text=glosssf,font='readbig',
                 row=2,column=1)
-        self.responseframe=ui.Frame(w.frame,row=2,column=0,sticky='ew')
-        ui.Button(self.responseframe,
+        self.responseframe=p.frame(w.frame,row=2,column=0,sticky='ew')
+        p.button(self.responseframe,
                     text=_("Yes!"),
                     command=lambda x=True: do(x),
                     ipadx=10,
                     row=0,column=0,sticky='nsew')
-        ui.Button(self.responseframe,
+        p.button(self.responseframe,
                     text=_("No!"),
                     command=lambda x=False: do(x),
                     ipadx=10,
                     row=0,column=1,sticky='nsew')
-        self.correctframe=ui.Frame(self.responseframe,
+        self.correctframe=p.frame(self.responseframe,
                                     row=0,column=2,
                                     sticky='ew',padx=(10,0))
-        ui.Button(self.correctframe,
+        p.button(self.correctframe,
                     text=_("wrong root!"),
                     command=enterroot,
                     row=0,column=0,sticky='ew')
-        ui.Button(self.correctframe,
+        p.button(self.correctframe,
                     text=_("wrong {field}!").format(field=self.secondformfield[self.sense.psvalue()]),
                     command=undosf,
                     row=1,column=0,sticky='ew')
-        self.noticeframe=ui.Frame(w.frame,row=3,column=0)
+        self.noticeframe=p.frame(w.frame,row=3,column=0)
         t=_("This parse looks good ({level})\n").format(level=self.parser.levels()[level])
-        ui.Label(self.noticeframe,text=t+self.currentformnotice(),
+        p.label(self.noticeframe,text=t+self.currentformnotice(),
                     font='small',justify='l',
                     row=0,column=0)
         if self.iswaiting():
@@ -1249,8 +1247,7 @@ class Parse(Segments):
                 # log.info("User responded {}".format(self.userresponse.value))
                 return self.userresponse.value
     def selectsffromlist(self,l):
-        from frontend import ui_tkinter as ui
-        from frontend.ui_shell import ImageFrame
+        p = self.lex_ui
         def formattuple(l):
             pfx,sfx=l[-1]
             root=l[2]
@@ -1284,9 +1281,9 @@ class Parse(Segments):
                          if len(i[-1]) == 2] #each must have (only) pfx and sfx
         lv+=[('OV',_("Other {field}").format(field=self.secondformfield[self.verbalps]))]
         # log.info("verb option list: {}".format(lv))
-        w=ui.Window(self)
+        w=p.window(self)
         w.title(_("Select second form"))
-        t=ui.Label(w.frame,
+        t=p.label(w.frame,
                     text=_("What is the {sfname} or {sfname2} of \n'{lc}' ({gloss})?"
                         "").format(
                         sfname=self.secondformfield[self.nominalps],
@@ -1298,34 +1295,34 @@ class Parse(Segments):
                     row=0,column=0,columnspan=2)
         t.wrap()
         if ln:
-            noun=ui.Frame(w.frame, row=1, column=0, sticky='n')
+            noun=p.frame(w.frame, row=1, column=0, sticky='n')
             url=self.sense.illustrationURI()
-            ImageFrame(noun, url, ftype='pl', row=0, column=0, sticky='')
-            ui.Label(noun,
+            p.image_frame(noun, url, ftype='pl', row=0, column=0, sticky='')
+            p.label(noun,
                     text=_("Select {field} form").format(
                                         field=self.secondformfield[self.nominalps]),
                     row=1,column=0,
                     columnspan=2)
-            bfn=ui.ScrollingButtonFrame(noun, optionlist=ln, window=t,
+            bfn=p.scrolling_button_frame(noun, optionlist=ln, window=t,
                                         command=self.parser.dooneformparse,
                                         row=2, column=0,
                                         columnspan=2
                                         )
         if lv:
-            verb=ui.Frame(w.frame, row=1, column=1, sticky='n')
+            verb=p.frame(w.frame, row=1, column=1, sticky='n')
             url=self.sense.illustrationURI()
-            ImageFrame(verb, url, ftype='imp', row=0, column=0, sticky='')
-            ui.Label(verb,
+            p.image_frame(verb, url, ftype='imp', row=0, column=0, sticky='')
+            p.label(verb,
                     text=_("Select {field} form").format(
                                         field=self.secondformfield[self.verbalps]),
                     row=1,column=0)
-            bfv=ui.ScrollingButtonFrame(verb, optionlist=lv, window=t,
+            bfv=p.scrolling_button_frame(verb, optionlist=lv, window=t,
                                         command=self.parser.dooneformparse,
                                         row=2, column=0)
-        neitherb=ui.Button(w.frame, text=_("Neither"),
+        neitherb=p.button(w.frame, text=_("Neither"),
                         command=neither,
                         row=1, column=2, sticky='ns')
-        ui.Label(w.frame,text=self.currentformnotice(),
+        p.label(w.frame,text=self.currentformnotice(),
                     font='small',justify='l',
                     row=2,column=0,columnspan=3)
         w.bind_all('<Escape>', lambda event:w.on_quit)
@@ -1386,8 +1383,7 @@ class Parse(Segments):
                         imp_name=self.secondformfield[self.verbalps]
                         )
     def asksegments(self,ps=None):
-        from frontend import ui_tkinter as ui
-        from frontend.ui_shell import ImageFrame
+        p = self.lex_ui
         def do(event=None):
             self.parser.sense.psvalue(ps)
             if ps == self.nominalps:
@@ -1396,19 +1392,11 @@ class Parse(Segments):
             elif ps == self.verbalps:
                 # tag='imp'
                 fn=self.parser.entry.impvalue
-            # lift.prettyprint(self.parser.entry.imp)
-            # lift.prettyprint(self.parser.entry.pl)
-            # log.info("value: {}".format(segments.get()))
-            # lift.prettyprint(self.parser.entry.imp)
-            # lift.prettyprint(self.parser.entry.pl)
             fn(self.secondformfield[ps],segments.get())
-            # log.info("v: {}".format(fn(self.secondformfield[ps],self.analang)))
-            # self.parser.nodetextvalue(tag,segments.get())
             b.destroy()
         def next(event=None):
             segments.set("")
             b.destroy()
-            # w.on_quit()
         if self.exitFlag.istrue():
             return
         if not ps:
@@ -1420,9 +1408,9 @@ class Parse(Segments):
         sfname=self.secondformfield[ps]
         if self.iswaiting():
             self.waitpause()
-        w=ui.Window(self)
+        w=p.window(self)
         w.title(_("Type second form"))
-        l=ui.Label(w.frame,
+        l=p.label(w.frame,
                 text=_("What {sfname} form goes with '{lc}' ({gloss})?"
                     "").format(sfname=sfname,
                             lc=self.parser.entry.lcvalue(),
@@ -1435,16 +1423,16 @@ class Parse(Segments):
         elif ps == self.verbalps:
             ftype='imp'
         url=self.parser.sense.illustrationURI()
-        ImageFrame(w.frame, url, ftype=ftype, row=0, column=2)
-        segments=ui.StringVar()
+        p.image_frame(w.frame, url, ftype=ftype, row=0, column=2)
+        segments=p.string_var()
         segments.set(self.parser.entry.lcvalue())
-        e=ui.EntryField(w.frame,text=segments,
+        e=p.entry_field(w.frame,text=segments,
                         row=2,column=0)
-        b=ui.Button(w.frame,text=_("OK"),cmd=do,
+        b=p.button(w.frame,text=_("OK"),cmd=do,
                         row=3,column=0, sticky='e')
-        ui.Button(w.frame,text=_("Not a {ps}").format(ps=ps),cmd=next,
+        p.button(w.frame,text=_("Not a {ps}").format(ps=ps),cmd=next,
                         row=3,column=1, sticky='e')
-        ui.Label(w.frame,text=self.currentformnotice(),
+        p.label(w.frame,text=self.currentformnotice(),
                     font='small',justify='l',
                     row=4,column=0,columnspan=2)
         e.focus_set()
@@ -1679,7 +1667,6 @@ class Parse(Segments):
         while not self.program.settings.secondformfieldsOK():
             after(10*100,callback=self.waitforOKsecondfields) # wait a second
     def __init__(self, **kwargs): #frame, filename=None
-        from frontend import ui_tkinter as ui
         self.byslice=False
         self.initsensetodo()
         super().__init__(**kwargs)
@@ -1706,7 +1693,8 @@ class Parse(Segments):
         self.checkeach=False #don't confirm each word (default)
         self.dodoneonly=True #don't give me other words
         self.userresponse=Object(rootchange=False,value=False)
-        self.cparsetext=ui.StringVar() #store UI parse info here
+        p = self.lex_ui
+        self.cparsetext=p.string_var() #store UI parse info here
         self.showwhenready()
 class Tone(Senses):
     """This keeps stuff used for Tone checks."""
