@@ -5,7 +5,7 @@ _ = gettext.gettext
 import sys,copy
 import platform
 from utilities import logsetup
-# from utilities import logsetup
+from utilities.times import now
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
 # logsetup.setlevel('DEBUG',log) #for this file
@@ -922,7 +922,7 @@ class Exitable():
         `if self.exitFlag.istrue(): return`"""
         # log.info(f"Quitting window {self}")
         self.exitFlag.true()
-        if (to_root or self.ismainwindow) and self.parent:
+        if (to_root or getattr(self,'ismainwindow',False)) and self.parent:
             self.parent.on_quit(to_root=True)
         else:
             if (self.parent and
@@ -2431,8 +2431,6 @@ class Wait(Window): #tkinter.Toplevel?
         except Exception as e:
             log.info(f"Wait window Exception: {e}")
 """unclassed functions"""
-def now():
-    return datetime.datetime.now(datetime.UTC).isoformat()#[:-7]+'Z'
 def availablexy(self,w=None):
     def padstoint(p):
         """Pads can be expressed as integers or (before,after) tuples"""
