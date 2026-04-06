@@ -12,6 +12,7 @@ import difflib
 import threading
 from io_put import lift
 from utilities.utilities import *
+from utilities.times import now
 from utilities.i18n import _
 class AffixCollector(object):
     """This class does just one thing: call parse to collect affixes

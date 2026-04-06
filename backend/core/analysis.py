@@ -5,6 +5,7 @@ import collections
 # import datetime
 # import tkinter as tk
 from utilities.utilities import *
+from utilities.times import now
 from io_put import lift
 from utilities import logsetup, htmlfns
 log=logsetup.getlog(__name__)
