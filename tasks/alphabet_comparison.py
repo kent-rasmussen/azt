@@ -13,7 +13,7 @@ class AlphabetComparisonPages(Task, AlphabetComparisonData, PageSetupUI):
                     # 'ncolumns', 'chart_title',
                     'pagesize'
                 ]
-    taskicon = 'iconTranscribeV'
+    taskicon = 'alpha_page_icon'
     def tooltip(self):
         return _("This task helps you compare alphabet letters with example words "
             "and pictures to represent each letter.")

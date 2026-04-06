@@ -131,7 +131,9 @@ class Theme(object):
                         ('checkedbox_sm','checked_sm.png'),
                         ('uncheckedbox_sm','unchecked_sm.png'),
                         ('alpha_chart','Alphabet_ChartZ.png'),
-                        ('alpha_icon','Alphabet_ChartZ_icon.png'),
+                        ('alpha_chart_icon','Alphabet_ChartZ_icon.png'),
+                        ('alpha_page','Alphabet_PageZ.png'),
+                        ('alpha_page_icon','Alphabet_PageZ_icon.png'),
                         ('NoImage','toselect/Image-Not-Found.png'),
                         ('Order!','toselect/order!.png'),
                     ]
