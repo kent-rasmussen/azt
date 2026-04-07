@@ -1613,7 +1613,7 @@ class Settings(SettingsUI):
         """This is for getting the prose name for a language from a code."""
         """It should ultimately use a xyz.ldml file, produced (at least)
         by WeSay, but for now is just a dict."""
-        _log.info(_("Setting up language names"))
+        _log.info(_("Setting up language names {langs}").format(langs=langs))
         #ET.register_namespace("", 'palaso')
         ns = {'palaso': 'urn://palaso.org/ldmlExtensions/v1'}
         node=None
@@ -1635,7 +1635,10 @@ class Settings(SettingsUI):
                                 'gnd':"Zulgo",
                                 'fub':"Fulfulde",
                                 'bfj':"Chufie'"})
-        self.localize_langnames() #in case run by Taskchooser
+        try:
+            self.localize_langnames() #in case run by Taskchooser
+        except AttributeError:
+            Settings.localize_langnames(self) #in case run by Liftchooser
         if hasattr(self,'adnlangnames') and self.adnlangnames:
             self.languagenames.update(self.adnlangnames) #from settings
         # print(type(self.analang),type(self.program.db.analangs),type(self.program.db.glosslangs))
