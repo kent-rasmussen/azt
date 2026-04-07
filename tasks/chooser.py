@@ -35,7 +35,7 @@ class TaskChooser(Task):
     task on opening, and allows users to choose others (any with minimum
     prequisites satisfied)."""
     do_not_show_slices=True
-    ischooser=True
+    is_chooser=True
     no_leaderboard=True
     def tasktitle(self):
         if self.showreports:

@@ -27,7 +27,7 @@ from backend.core.lexicon import Segments, Tone
 from io_put import xlp
 
 class Report(object):
-    isreport=True
+    is_report=True
     def consultantcheck(self):
         self.program.settings.reloadstatusdata()
         self.bylocation=False

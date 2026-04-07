@@ -12,8 +12,8 @@ class TaskBase:
     (the TaskWindow) via __getattr__, so backend mixins can call
     window methods transparently.
     """
-    ischooser=False
-    isreport=False
+    is_chooser=False
+    is_report=False
     uses_second_forms=False
     do_not_show_slices=False
     multislice_max=False
@@ -81,6 +81,10 @@ class TaskBase:
                 self.cvt='V'
         self.cvt=self.program.params.cvt(self.cvt)
 
+    def i_am_the_task(self):
+        self.program.task=self
+        self.program.status.task(self)
+
     def makeeverythingok(self):
         """The value of this method is unclear. This may be better
         done elsewhere."""
@@ -102,7 +106,7 @@ class Task(TaskBase):
         if self.program.taskchooser == self:
             parent=self.program.tk_root
         else:
-            self.program.task = self
+            self.i_am_the_task()
             parent=self.program.taskchooser.ui
         self.analang=self.program.db.analang
         self.min_to_multicolumn=6

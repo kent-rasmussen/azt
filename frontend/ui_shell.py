@@ -469,7 +469,8 @@ class Menus(ui.Menu):
     def __init__(self, parent):
         self.parent=parent #this should always be the window where they appear
         super(Menus, self).__init__(parent)
-        if isinstance(parent,TaskDressing):
+        # if isinstance(parent,TaskDressing):
+        if not parent.is_chooser:
             self.advanced()
         self.help()
         if self.program.me:
@@ -910,7 +911,7 @@ class StatusFrame(ui.Frame):
         # log.info(f"{self.is_descendant_of(self.program.taskchooser)=}")
         try:
             # log.info(f"{self.program.mainwindow=}")
-            # assert not self.program.mainwindow.ischooser
+            # assert not self.program.mainwindow.is_chooser
             # log.info(f"{self.program.task=}")
             kwargs=self.program.task.dobuttonkwargs()
             self.bigbutton=self.button(**kwargs)
@@ -1248,7 +1249,7 @@ class StatusFrame(ui.Frame):
         self.analangline()
         self.glosslangline()
         # if isinstance(self.task,Segments) and not isinstance(self.task,TranscribeS):
-        if not self.program.task or self.program.task.ischooser:
+        if not self.program.task or self.program.task.is_chooser:
             return
         if getattr(self.program.task,'show_second_fields'):
             self.fieldsline()
@@ -1311,12 +1312,12 @@ class TaskDressing(HasMenus,ui.Window):
     taskicon = 'icon'
     tasktitle = None
     def _taskchooserbutton(self):
-        if self.ischooser and not self.showreports:
+        if self.is_chooser and not self.showreports:
             if self.datacollection:
                 text=_("Analyze & Decide")
             else:
                 text=_("Collect Data")
-        elif self.isreport:
+        elif self.is_report:
             text=_("Reports")
             self.program.taskchooser.showreports=True
         else:
@@ -1419,12 +1420,13 @@ class TaskDressing(HasMenus,ui.Window):
         else:
             self.context.menuitem(_("Show details"),self._showdetails)
     def _tasktitle(self):
-        if callable(self.tasktitle):
-            return self.tasktitle()
-        if self.tasktitle:
-            return _(self.tasktitle)
+        if callable(self.task.tasktitle):
+            return self.task.tasktitle()
+        if self.task.tasktitle:
+            return _(self.task.tasktitle)
         return _("Unnamed {name} Task ({type})").format(
-                                name=self.program.name,type=type(self).__name__)
+                                name=self.program.name,
+                                type=type(self.task).__name__)
     def maketitle(self):
         title=_("{name} Dictionary and Orthography Checker: {task}").format(
                                             name=self.program.name,task=self._tasktitle())
@@ -1483,11 +1485,8 @@ class TaskDressing(HasMenus,ui.Window):
             pass
         self.program.mainwindow=self
         self.program.mainwindow.ismainwindow=True 
-        if not self.ischooser:
-            self.i_am_the_task()
-    def i_am_the_task(self):
-        self.program.task=self
-        self.program.status.task(self)
+        # if not self.is_chooser:
+        #     self.i_am_the_task()
     def makestatusframe(self,dict=None):
         if self.program.taskchooser.donew['collectionlc']:
             self.makeeverythingok()
@@ -1965,7 +1964,7 @@ class TaskDressing(HasMenus,ui.Window):
             log.info(_("Finished with all threads running"))
     def __init__(self,parent):
         log.info(_("Initializing TaskDressing for {task}").format(
-                                        task=self.__class__.__name__))
+                            task=self.task.__class__.__name__))
         self.parent=parent
         # self.program=parent.program should be set already
         self.menu=False #initialize once
@@ -1983,7 +1982,8 @@ class TaskDressing(HasMenus,ui.Window):
         """these are objects made by the task chooser"""
         # log.info(f"Ready to Inherit for {type(self)} ({program})")
         self.inherittaskattrs()
-        if hasattr(self,'task') and isinstance(self.task,Multicheck):
+        # if hasattr(self,'task') and 
+        if self.task.multicheck_scope:
             if hasattr(self.program.settings,'cvtstodo'):
                 self.cvtstodo=self.program.settings.cvtstodo
             else:
