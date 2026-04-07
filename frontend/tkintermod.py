@@ -14,7 +14,10 @@ class TkErrorCatcher:
     CAUTION: this hides Tk errors from the user, so use it in production, 
     not development.
     '''
-
+    exception_texts_to_raise=[
+        'recursion',
+        'local variable'
+    ]
     def __init__(self, func, subst, widget):
         self.func = func
         self.subst = subst
@@ -33,11 +36,10 @@ class TkErrorCatcher:
         except (KeyError,NameError,AttributeError) as e:
             raise e
         except Exception as err:
-            print(str(err),type(err))
-            if "local variable" in str(err):
+            if any(i in str(err) for i in self.exception_texts_to_raise):
                 raise err
             else:
-                print(f"not raising Exception {err}")
+                print(f"not raising Exception {err} (frontend.tkintermod)")
             # raise err
         except KeyboardInterrupt:
             pass
