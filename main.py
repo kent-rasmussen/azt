@@ -377,7 +377,8 @@ class App:
                 pass
             screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
             log.info(_("MS Windows screen size: {size}").format(size=screensize))
-        self.get_lift_file() #self.filename, self.analang set here
+        self.prep_to_write()
+        self.get_lift_file() #self.filename, self.analang set here, LiftChooser
         self.splash = Splash(self)
         langtags.Languages(self)
         FileParser(self) #needs self.filename, pick up self.analang from file
@@ -586,6 +587,10 @@ class App:
             self.check_if_write_done() #because after() isn't working here...
         # log.info("Not writing to lift")
         sysrestart()
+    def prep_to_write(self):
+        self.writeable=0 #start the count
+        self.towrite=False
+        self.writing=False
     def maybewrite(self,definitely=False):
         write=self.timetowrite() #just call this once!
         #this currently defaults to write every time asked; can up writeeverynwrites when stable.
@@ -631,7 +636,7 @@ class App:
             self.schedule_write_check()
     def timetowrite(self):
         """only write to file every self.writeeverynwrites times you might.
-        current defaiult is every write possible (writeeverynwrites=1)
+        current default is every write possible (writeeverynwrites=1)
         change this in your project settings if your power is stable and you
         want to write less."""
         self.writeable+=1 #and tally here each time this is asked

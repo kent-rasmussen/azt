@@ -1916,7 +1916,7 @@ class TaskDressing(HasMenus,ui.Window):
         from main import updateazt
         updateazt()
     def maybewrite(self,definitely=False):
-        self.program.taskchooser.maybewrite(definitely=definitely)
+        self.program.maybewrite(definitely=definitely)
     def killall(self):
         log.info(_("Shutting down Task"))
         try:

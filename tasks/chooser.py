@@ -583,8 +583,6 @@ class TaskChooser(Task):
         self.program=program
         self.program.taskchooser=self
         self.program.task=None #so far; make this attribute there, though
-        self.towrite=False
-        self.writing=False
         self.datacollection=True # everyone starts here?
         self.showreports=False
         self.showingreports=False
@@ -610,11 +608,7 @@ class TaskChooser(Task):
         """Can whatsdone be joined with makedefaulttask? they appear together
         elsewhere."""
         self.program.splash.maketexts() #update for translation change
-        if not self.program.settings.writeeverynwrites: #0/None are not sensible values
-            self.program.settings.writeeverynwrites=1
-            self.program.settings.storesettingsfile()
         self.usbcheck()
-        self.writeable=0 #start the count
         if self.program.nosound:
             e=_("You don't have the sound module installed. For best use of {name},"
                 "you should switch back to the main branch, connect to the "

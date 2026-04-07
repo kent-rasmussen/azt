@@ -534,6 +534,7 @@ class Settings(SettingsUI):
                             'subcheck'
                             ],
                         'interfacelang':[],
+                        'writeeverynwrites':[],
                         'glosslangs':[],
                         'check':[],
                         'subcheck':[
@@ -567,6 +568,8 @@ class Settings(SettingsUI):
         for default in fields: #self.defaultstoclear[field]:
             if default in ['lowverticalspace']:
                 setattr(self, default, True)
+            elif default in ['writeeverynwrites']:
+                setattr(self, default, 1)
             else:
                 setattr(self, default, None)
     def settingsinit(self):
