@@ -23,6 +23,7 @@ from utilities import rx
 from backend.core.report_mixins import Multislice, Multicheck
 from backend.core.lexicon import Tone, Segments, WordCollection, Parse
 from backend.core.analysis import Analysis, StatusDict
+from backend.core import templates
 from io_put import sound
 from io_put.cawl import loadCAWL
 
@@ -2411,41 +2412,23 @@ class LiftChooser(ui.Window,HasMenus):
             self.use_code_button.configure(state='disabled')
     def analang_code_complete(self):
         log.info("analang_code_complete")
-        self.analang=self.code
-        if not self.analang:
+        if not self.code:
+            ErrorNotice(_("There doesn't seem to be an ethnologue code ({code})")
+                        .format(code=self.code),wait=True)
             return
-        try:
-            self.analang_obj=self.program.languages.get_obj(self.analang)
-        except langcodes.tag_parser.LanguageTagError:
-            log.info(f"{self.analang_obj} didn't parse.")
-        if not self.analang_obj.is_valid():
-            log.error(f"It looks like your code ({self.analang}) isn't valid "
-                        f"({self.analang_obj.full_display()})")
-        if not langtags.tag_is_valid(self.analang):
-            e=ErrorNotice(_("That doesn't look like an ethnologue code ({analang})")
-                        .format(analang=self.analang),wait=True)
-        dir=file.gethome()
-        newfile=file.getnewlifturl(dir,self.analang)
-        if not newfile:
-            ErrorNotice(_("Problem creating file; does the directory "
-                        "already exist?"),wait=True)
-            return
-        if file.exists(newfile):
-            ErrorNotice(_("The file {newfile} already exists!").format(newfile=newfile),
-                                                                wait=True)
-            return
-        self.newdirname=newfile.parent
-        self.wait=ui.Wait(parent=self.program.tk_root,msg=_("Setting up new LIFT file now."))
+        self.wait(msg=_("Setting up new LIFT file now."),
+                    showafterwait=True)
         log.info("Beginning Copy of stock to new LIFT file.")
-        self.cawldb=loadCAWL()
-        self.stripcawldb()
-        self.cawldb.analang=self.analang
-        self.cawldb.getentries() #this needs analang
-        self.cawldb.getsenses()
-        self.fillcawldbimages()
-        self.copytonewfile(newfile)
+        t=templates.CAWL(self.analang,newfile)
+        if type(t) is str:
+            ErrorNotice(t,wait=True)
+            return
+        self.template_obj=t
+        for p in self.template_obj.fill_db_images():
+            self.waitprogress(p)
+        self.cawldb.write()
         self.wait.close()
-        self.newfilelocation(newfile)
+        self.notify_newfilelocation(newfile)
         log.info("analang_code_complete complete")
         return str(newfile)
     def clonefromUSB(self):
@@ -2504,7 +2487,7 @@ class LiftChooser(ui.Window,HasMenus):
             # log.info("using newfile {}".format(newfile))
             if file.exists(newfile): #should always be there
                 # log.info("notifying newfile {}".format(newfile))
-                self.newfilelocation(newfile) #tell user where to find it
+                self.notify_newfilelocation(newfile) #tell user where to find it
                 # log.info("returning newfile {}".format(newfile))
                 return newfile
             else:
@@ -2530,55 +2513,6 @@ class LiftChooser(ui.Window,HasMenus):
             # they're doing
             log.info(_("returned more or less than one lift file! ({list})")
                     .format(list=l))
-    def fillcawldbimages(self,cawldb=None,newdirname=None,wait=None):
-        """This should be backend"""
-        # from main import saveimagefile
-        log.info("Filling in empty image fields where possible")
-        if not cawldb:
-            cawldb=self.cawldb
-        if not newdirname:
-            newdirname=self.newdirname
-        if not wait:
-            wait=self.wait
-        log.info(f"{dir(cawldb)=}")
-        log.info("Writing to {}".format(cawldb.imgdir))
-        todo=cawldb.senses
-        newimagedir=file.getimagesdir(newdirname)
-        cawldb.get_imgdir() #in case this isn't up to date
-        # log.info("Filling in {} image fields".format(len(todo)))
-        log.info("Writing to {}".format(cawldb.imgdir))
-        log.info("Usta wanna write to {}".format(file.getimagesdir(self.newdirname)))
-        for sense in todo:
-            # log.info("Working on line number {}".format(sense.cawln))
-            # log.info("Working on sense {}".format(sense.id))
-            # log.info("Working with image field {}".format(sense.illustrationvalue()))
-            # log.info("Working with image directory {}".format(sense.imgselectiondir))
-            # log.info("Image directory present: {}".format(file.exists(sense.imgselectiondir)))
-            # log.info("Working with image files {}".format(
-            #                                 file.getfilesofdirectory(sense.imgselectiondir)))
-            if sense.cawln and not sense.illustrationvalue():
-                dir=file.pathname_from_base_dir(sense.imgselectiondir)
-                # log.info("Found CAWL sense without image field")
-                if file.exists(dir):
-                    urls=file.getfilesofdirectory(dir)
-                    if urls:
-                        filename=sense.imagename() #new file name
-                        # log.info("Working with image filename {}".format(filename))
-                        for u in urls:
-                            if '__' in str(u) and '.png' in str(u): #best file
-                                # log.info("Found best image {}; \ngoing to put "
-                                #         "in {}".format(u,self.newdirname))
-                                sense.save_illustration_to_file(u)
-                                # saveimagefile(u,filename, copyto=newimagedir)
-                        if not file.exists(sense.illustrationURI()):
-                            # file.getdiredurl(newimagedir, filename)):
-                            #just take the first one
-                            sense.save_illustration_to_file(urls[0])
-                            # saveimagefile(urls[0],filename, copyto=newimagedir)
-                        sense.illustrationvalue(filename)
-                # log.info("Setting progress {}".format(todo.index(sense)*100/len(todo)))
-                if wait:
-                    wait.progress(todo.index(sense)*100/len(todo))
     def storedefaultsettings(self,basename):
         mgr=settings.SettingsManager(basename)
         mgr.project.set('glosslangs',['fr'])
@@ -2639,8 +2573,8 @@ class LiftChooser(ui.Window,HasMenus):
         self.copytonewfile(newfile)
         log.info("copytonewfile done")
         self.wait.close()
-        self.newfilelocation(newfile)
-        log.info("newfilelocation done")
+        self.notify_newfilelocation(newfile)
+        log.info("notify_newfilelocation done")
         self.storedefaultsettings(newfilebasename)
         return str(newfile)
     
@@ -2662,7 +2596,7 @@ class LiftChooser(ui.Window,HasMenus):
         log.info(_("Tried to write {type} LIFT file to {newfile}").format(type=type, newfile=newfile))
         if file.exists(newfile):
             log.info("Wrote {} LIFT file to {}".format(type,newfile))
-    def newfilelocation(self,newfile):
+    def notify_newfilelocation(self,newfile):
         #Do users care about this?
         return #not for now
         msg=_("Your new LIFT file is at {newfile}."
