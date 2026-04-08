@@ -4,7 +4,7 @@ import logging
 from utilities import file
 from utilities.i18n import _
 from io_put import lift
-from utilities.error_handler import notify_error as ErrorNotice
+# from utilities.error_handler import notify_error as ErrorNotice
 
 log = logging.getLogger(__name__)
 
@@ -16,14 +16,13 @@ def loadCAWL():
     if file.exists(stockCAWL):
         log.info(_("Found stock LIFT file: {file}").format(file=stockCAWL))
     try:
-        cawldb=lift.LiftXML(str(stockCAWL),tostrip=True)
+        cawldb=lift.LiftXML(str(stockCAWL),tostrip=True) # Don't load everything
         log.info(_("Parsed ET."))
         log.info(_("Got ET Root."))
     except lift.BadParseError as e:
         text=_("{file} doesn't look like a well formed lift file; please "
                 "try again. ({error})").format(file=stockCAWL,error=e)
-        ErrorNotice(text,wait=True)
-        return
+        return text
     except Exception as e:
         log.info(_("Error: {error}").format(error=e))
     log.info(_("Parsed stock LIFT file to tree/nodes."))
