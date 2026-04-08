@@ -22,7 +22,6 @@ lxml=False
 # from xmletfns import * # from xml.etree import ElementTree as ET
 from utilities import xmletfns as et
 from utilities import xmlfns, file, rx
-from io_put.images_CAWL import CAWLImageResolver
 import sys
 import pathlib
 import threading
@@ -66,14 +65,19 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         except:
             raise BadParseError(self.filename)
         self.getglosslangs() #sets: self.glosslangs
-        if tostrip:
-            return #we're done, if this is a template read
+        # self.word_list_n_attr='cawln' #make this configurable
+        self.word_list_field_name='SILCAWL' #make this configurable
+        if tostrip: #stop here, if this is a template read
+            return 
         backupbits=[filename,'_',
                     str(datetime.datetime.now(datetime.UTC))[10:], #once/day
                     '.txt']
         self.backupfilename=''.join(backupbits)
-        """I should skip some checks in certain cases, like working with the
-        CAWL template"""
+        """I should skip some checks in certain cases, like working 
+        with the CAWL template
+        self.getanalangs should work for Demo databases, but not 
+        for new langauges from template, as specifying analang not 
+        actually in the file doesn't work."""
         self.getanalangs(analang) #sets: self.analangs, self.audiolangs
         self.getentries() #need self.analang by here
         self.getsenses()
@@ -122,6 +126,18 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.get_imgdir()
         self.get_reportdir()
         log.info(_("Language initialization done."))
+    def get_img_resolver(self):
+        # This is used in illustrationURI, if illustrationvalue() 
+        # is not both set and present, and if not local_only=True
+        if not getattr(self,'_img_resolver',None):
+            if self.word_list_field_name=='SILCAWL':
+                from io_put.images_CAWL import CAWLImageResolver
+                #self.lift_home here is just used to cache location data.
+                self._img_resolver=CAWLImageResolver(self.lift_home)
+            else:
+                raise ValueError("No image resolver for "
+                            f"{self.word_list_field_name}")
+        return self._img_resolver
     def tonelangname(self,lang=None,machine=False):
         try:
             assert self.analang == lang, "Not asking for analang"
@@ -166,8 +182,9 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         log.info(_("No audio found in audiodir={audiodir}, but will put new audio "
                 "there; if your audio is elsewhere, fix this.").format(audiodir=self.audiodir))
     def get_imgdir(self):
+        """This method simply looks for images where expected, to confirm
+        that at least one is found there, before reporting the directory."""
         self.imgdir=file.getimagesdir(self.lift_home)
-        self._cawl_resolver=CAWLImageResolver(self.lift_home)
         for s in self.senses:
             try:
                 totry=file.getdiredurl(self.imgdir,s.illustrationvalue())
@@ -2795,10 +2812,13 @@ class Sense(Node,FieldParent):
             from images.to_select_update import ensure_available
             ensure_available()
         #These first two depend on real directories being there
-        if self.cawln:
+        # if self.db.word_list_field_name is set, 
+        # self.word_list_n should be a True int()
+        if self.word_list_n:
             self.imgselectiondir=[i for i in file.getfilesofdirectory(
                             rootimgdir,
-                            regex='_'.join([self.cawln,self.collectionglossesunderlined])+'*'                                )]
+                            regex='_'.join([self.word_list_n,
+                                            self.collectionglossesunderlined])+'*'                                )]
         elif self.collectionglossesunderlined:
             self.imgselectiondir=[i for i in file.getfilesofdirectory(
                                     rootimgdir,
@@ -2806,8 +2826,8 @@ class Sense(Node,FieldParent):
         if self.imgselectiondir: #unlist if there
             self.imgselectiondir=self.imgselectiondir[0]
             return
-        if self.cawln and self.collectionglosses and not self.imgselectiondir:
-            bits=[self.cawln,self.collectionglossesunderlined]
+        if self.word_list_n and self.collectionglosses and not self.imgselectiondir:
+            bits=[self.word_list_n, self.collectionglossesunderlined]
             # log.info("I didn't find a real directory present, but I'm ready "
             # "to write to {}".format(''.join([rootimgdir,'_'.join(bits)])))
             self.imgselectiondir=file.makedir(''.join([ #This may not be a real directory
@@ -2818,8 +2838,9 @@ class Sense(Node,FieldParent):
     def imagename(self):
         # log.info("Making image name")
         affix='.png' #not sure why this isn't there already...
-        if self.cawln:
-            return '_'.join([self.cawln,self.collectionglossesunderlined])+affix
+        if self.word_list_n:
+            return '_'.join([self.word_list_n,
+                            self.collectionglossesunderlined])+affix
         else:
             return '_'.join([self.id,self.collectionglossesunderlined])+affix
     def glossbylang(self,lang):
@@ -2988,33 +3009,41 @@ class Sense(Node,FieldParent):
         except KeyError:
             # log.info("No {} type to pull annotation from".format(ftype))
             pass
-    def getcawlline(self):
-        if 'SILCAWL' in self.fields:
-            self.cawln=self.fields['SILCAWL'].textvaluebylang()
+    def get_word_list_n(self):
+        if self.db.word_list_field_name in self.fields:
+            setattr(self,self.db.word_list_n,
+            self.fields[self.db.word_list_field_name].textvaluebylang())
         else:
-            self.cawln=None
-    def illustrationURI(self):
+            setattr(self,self.db.word_list_n,None)
+    def has_image_file(self):
+        return file.exists(self.illustrationURI(write_to=True))
+    def illustrationURI(self,write_to=False):
         """1. File in lift node, if in db.imgdir, else
-        2. url of image online, by cawln, else
+        2. url of resolved image online, by word list number, else
         3. file in lift node if set (even if not in db.imgdir - dead link)
-        4. else default name from cawln
-        Hence: privilege actual files, but always return writable path.
+        4. else default name from word list number
+        Hence: privilege actual files, but always return writable path,
+        so we can make this file where it aught to be.
         """
-        v=self.illustrationvalue()
+        v=self.illustrationvalue() #get value in XML file
         if v:
             local=file.getdiredurl(self.db.imgdir,v)
             if file.exists(local):
-                return local
-        # Fall back to GitHub-hosted CAWL image if no local file
-        resolver=getattr(self.db,'_cawl_resolver',None)
-        if resolver and getattr(self,'cawln',None):
-            url=resolver.get_url(self.cawln)
-            if url:
-                return url
-        # Return local path even if missing (preserves original behaviour)
-        if not v:
-            v=self.imagename()
-        return file.getdiredurl(self.db.imgdir,v)
+                return local #return XML value if there
+        if write_to:
+            # if this is an URI to write to, return or construct a value,
+            # even if missing (preserves original behaviour)
+            if not v:
+                v=self.imagename()
+            return file.getdiredurl(self.db.imgdir,v)
+        # Fall back to GitHub-hosted CAWL image if reading and 
+        # no local file
+        if self.word_list_n:
+            resolver=self.db.get_img_resolver()
+            if resolver:
+                url=resolver.get_url(self.word_list_n)
+                if url:
+                    return url
     def illustrationvalue(self,value=None):
         try:
             assert isinstance(self.illustration,et.Element)
@@ -3028,8 +3057,9 @@ class Sense(Node,FieldParent):
                 return None
         return self.illustration.myvalue(value)
     def save_illustration_to_file(self,url):
-        """This copies a file in one location to another"""
-        with open(self.illustrationURI(),'wb') as f:
+        """This copies a file in one location to another;
+        no check that this doesn't already exist, or is different!"""
+        with open(self.illustrationURI(write_to=True),'wb') as f:
             # log.info("opened new file")
             with open(url,'rb') as u:
                 # log.info("opened old file")
@@ -3278,7 +3308,7 @@ class Sense(Node,FieldParent):
         Node.__init__(self, parent, node, **kwargs)
         self.entry=parent #make a common reference point for sense/entry
         FieldParent.__init__(self)
-        self.getcawlline()
+        self.get_word_list_n()
         self.sense=self
         self.id=self.get('id')
         self.psvalue() #set if there
