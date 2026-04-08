@@ -612,6 +612,7 @@ class WordCollection(Segments):
             """The following are useless without ps information, so they will
             have to come later."""
     def addCAWLentries(self):
+        # move this to templates!!
         text=_("Adding CAWL entries to fill out, in established database.")
         self.ui.wait(msg=text)
         log.info(text)

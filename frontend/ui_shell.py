@@ -2528,10 +2528,11 @@ class LiftChooser(ui.Window,HasMenus):
                 "of what {azt} can do?").format(azt=self.program.name)
         t=ui.Label(w.frame, text=inst, row=1, column=0, columnspan=2)
         self.cawldb=loadCAWL()
-        # self.program.settings.langnames(self.cawldb.glosslangs)
-        Settings.langnames(self,self.cawldb.glosslangs)
-        opts=[(i,self.languagenames[i]) for i in self.cawldb.glosslangs]
-        # log.info("Options: {}".format(opts))
+        # self.program.settings doesn't exist yet!
+        settings.Settings.langnames(self,self.cawldb.glosslangs)
+        opts=[(i,self.languagenames[i]) 
+                for i in self.cawldb.glosslangs]
+        # log.info(f"{opts=}")
         s=ui.ScrollingButtonFrame(w.frame,
                                     optionlist=opts,
                                     command=self.submitdemolang,
@@ -2567,14 +2568,11 @@ class LiftChooser(ui.Window,HasMenus):
         self.cawldb.getentries()
         self.cawldb.getsenses()
         self.cawldb.convertglosstocitation(self.demolang)
-        self.cawldb.get_imgdir()
-        self.fillcawldbimages()
-        log.info(newfile)
+        self.cawldb.get_imgdir() #problem!
+        self.fill_db_images()
         self.copytonewfile(newfile)
-        log.info("copytonewfile done")
         self.wait.close()
         self.notify_newfilelocation(newfile)
-        log.info("notify_newfilelocation done")
         self.storedefaultsettings(newfilebasename)
         return str(newfile)
     
