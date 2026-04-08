@@ -1206,6 +1206,12 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 log.error(error)
         self.write_OK=False
         self.write_error=error
+    def strip_lxlc_forms(self):
+        for n in (self.nodes.findall('entry/lexical-unit')+
+                    self.nodes.findall('entry/citation')):
+            for f in n.findall('form'):
+                n.remove(f)
+        log.info("Stripped lexical-unit and citation forms from LIFT file.")
     def getanalangs(self,analang=None):
         """These are ordered by frequency in the database"""
         def e_pluribus_unum(langtype):

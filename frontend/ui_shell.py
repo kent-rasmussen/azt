@@ -2642,12 +2642,7 @@ class LiftChooser(ui.Window,HasMenus):
         log.info("newfilelocation done")
         self.storedefaultsettings(newfilebasename)
         return str(newfile)
-    def stripcawldb(self):
-        for n in (self.cawldb.nodes.findall('entry/lexical-unit')+
-                    self.cawldb.nodes.findall('entry/citation')):
-            for f in n.findall('form'):
-                n.remove(f)
-        log.info("Stripped stock LIFT file.")
+    
     def submitdemolang(self,choice,window): #event=None):
         log.info(_("picked {choice}, from {glosslangs}").format(choice=choice, glosslangs=self.cawldb.glosslangs))
         if choice in self.cawldb.glosslangs:
