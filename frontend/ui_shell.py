@@ -181,10 +181,11 @@ class Menus(ui.Menu):
         self.languages()
         if getattr(self.parent,'is_sort_task',False):
             self.parameterslice()
-    def fillcawl(self):
+    def fill_db_images(self):
         w=ui.Wait(self.program.tk_root,msg=_("Filling images..."))
         try:
-            LiftChooser.fillcawldbimages(self, cawldb=self.program.db, newdirname=self.program.db.lift_home, wait=w)
+            for p in self.program.db.fill_db_images(do_wait=True):
+                w.progress(p)
         except Exception as e:
             log.error(f"Error filling images: {e}")
         w.close()
@@ -325,7 +326,7 @@ class Menus(ui.Menu):
                             self.program.settings.reloadstatusdatabycvtps),
                 (_("Remake Status file (just this profile)"),
                         self.program.settings.reloadstatusdatabycvtpsprofile),
-                (_("Fill CAWL Images"), self.fillcawl),
+                (_("Fill CAWL Images"), self.fill_db_images),
                 ]
         for m in options:
             self.command(self.advancedmenu,

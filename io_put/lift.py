@@ -2150,6 +2150,44 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                                         sense.formattedgloss(lang)[0]  #first item of list
                                                             )
                                         )
+    def fill_db_images(self,
+                        # cawldb=None,
+                        # newdirname=None,
+                        do_wait=False
+                        ):
+        log.info("Filling in empty image fields where possible")
+        self.get_imgdir() #in case this isn't up to date
+        log.info("Writing to {}".format(self.imgdir))
+        for sense in self.senses:
+            # log.info("Working on line number {}".format(sense.cawln))
+            # log.info("Working on sense {}".format(sense.id))
+            # log.info("Working with image field {}".format(sense.illustrationvalue()))
+            # log.info("Working with image directory {}".format(sense.imgselectiondir))
+            # log.info("Image directory present: {}".format(file.exists(sense.imgselectiondir)))
+            # log.info("Working with image files {}".format(
+            #                                 file.getfilesofdirectory(sense.imgselectiondir)))
+            if sense.word_list_n() and not sense.has_image_file():
+            # If lift thinks there's a file there, but there isn't,
+            # fill in that, too.
+                if not sense.illustrationvalue():
+                    sense.illustrationvalue(sense.imagename()) #new file name
+                if not hasattr(sense.imgselectiondir):
+                    sense.getglosses()
+                #This should be ...azt/images/0000_glosses:
+                dir=file.pathname_from_base_dir(sense.imgselectiondir)
+                # log.info("Found CAWL sense without image field")
+                if file.exists(dir): #particular to each sense
+                    urls=file.getfilesofdirectory(dir)
+                    if urls:
+                        ok=[i for i in urls if '__' in str(i) and '.png' in str(i)]
+                        if not ok:
+                            ok=[i for i in urls if '__' in str(i)]
+                        if not ok:
+                            ok=urls
+                        if ok: # the first from whichever prioritization succeded
+                            sense.save_illustration_to_file(ok[0])
+            if do_wait:
+                yield self.senses.index(sense)*100/len(self.senses)
 class EmptyTextNodePlaceholder(object):
     """Just be able to return self.text when asked."""
     def __init__(self):
