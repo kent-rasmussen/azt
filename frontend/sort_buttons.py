@@ -135,6 +135,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.remove_on_click=kwargs.pop('remove_on_click',False)
         self.show_check=kwargs.pop('show_check',False)
         self.task=task
+        self.program=self.task.program
         self.groups=groups
         super(SortButtonFrame, self).__init__(parent, *args, **kwargs)
         """Children of self.runwindow.frame.scroll.content"""
@@ -165,7 +166,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         else:
             msg=_("Sorting words"
                     "\nOn the next screen, you will sort words into groups")
-            self.buttoncolumns=self.program.status.task().buttoncolumns
+            self.buttoncolumns=self.task.buttoncolumns
         waiting.wait(msg)
 
         # Prefetch examples for all groups at once to avoid O(N^2) lookup
@@ -291,8 +292,8 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             node.sense.image = ui.Image(iv)
         else:
             self._illustration=None
-        if hasattr(node.sense,'image'):
-            node.sense.image.scale(self.theme.scale, pixels=65, scaleto='height')
+        if node.sense.image and node.sense.image.base_img: #base_img is None if image failed to load
+            node.sense.image.scale(self.program.scale, pixels=65, scaleto='height')
             self._illustration=node.sense.image.scaled
         return 1
     def makebuttons(self):
@@ -416,9 +417,11 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         bkwargs['borderwidth']=self.button_borderwidth
         return bkwargs #only the kwargs appropriate for buttons
     def __init__(self, parent, task, **kwargs):
+        """this should take the ui parent and logical/backend parent (task)"""
         # log.info(_("Initializing buttons for group {group}").format(group=group))
+        self.task=task #NOT the task/check OR the scrollingframe! use self.check.task
+        self.program=self.task.program
         self.exs=self.program.examples
-        self.task=task #the task/check OR the scrollingframe! use self.check.task
         try:
             self.code=self.program.alphabet.verificationcode(**kwargs)
         except:
@@ -545,7 +548,9 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         else:
             log.error(_("Not setting non-existant canary {canary}; ").format(canary=canary))
     def __init__(self, parent, task, **kwargs):
-        self.task=task #the task/check OR the scrollingframe! use self.check.task
+        """this should take the ui parent and logical/backend parent (task)"""
+        self.task=task #NOT the task/check OR the scrollingframe! use self.check.task
+        self.program=self.task.program
         self.group=kwargs.pop('group')
         # self.check=kwargs.get('check')
         log.info(_("Building SortGlyphGroupButtonFrame for {group}").format(group=self.group))
