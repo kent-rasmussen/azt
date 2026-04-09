@@ -292,6 +292,7 @@ class SettingsUI(object):
         #     self.program.taskchooser.maketask(newtaskclass)
         else:
             log.info(_("Not Sorting or Transcribing; chilling with cvt change."))
+            self.program.mainwindow.status.maybeboard()
         if window:
             window.destroy()
     def setanalang(self,choice,window):
@@ -380,6 +381,7 @@ class SettingsUI(object):
         self.program.mainwindow.status.updateps()
         self.attrschanged.append('ps')
         self.refreshattributechanges()
+        self.program.mainwindow.status.maybeboard()
         window.destroy()
     def setexamplespergrouptorecord(self,choice,window):
         self.set('examplespergrouptorecord',choice,window)

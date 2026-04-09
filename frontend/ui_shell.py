@@ -658,7 +658,6 @@ class StatusFrame(ui.Frame):
             return
         self.labels['ps']['text'].set(self.pslabel())
         self.makesliceattrs()
-        self.maybeboard()
     def pslabel(self):
         count=self.program.slices.count()
         ps=self.program.slices.ps()
@@ -687,7 +686,6 @@ class StatusFrame(ui.Frame):
             return
         self.labels['cvt']['text'].set(self.cvtlabel())
         self.makesliceattrs()
-        self.maybeboard()
     def cvtlabel(self):
         return (_("Checking {cvt},").format(cvt=self.program.params.cvtdict()[self.cvt]['pl']))
     def cvtline(self):
@@ -1068,6 +1066,28 @@ class StatusFrame(ui.Frame):
             self.glyphbuttons[k].destroy()
         for k in groups-set(self.glyphbuttons):
             self.makeglyphbutton(k)
+    def activate_cell(self,cell):
+        cell.inactive_background=cell['background'] #store for deactivate
+        cell.inactive_command=cell['command'] #store for deactivate
+        cell.configure(background=cell['activebackground'])
+        cell.configure(command=donothing)
+        self._active_cell=cell
+    def deactivate_cell(self,cell):
+        cell.configure(background=cell.inactive_background)
+        cell.configure(command=cell.inactive_command)
+    def updateprofilencheck(self,profile,check):
+        new_cell=self._cells.get((profile,check))
+        if new_cell and new_cell.winfo_exists():
+            if self._active_cell and self._active_cell.winfo_exists():
+                self.deactivate_cell(self._active_cell)
+            self.activate_cell(new_cell)
+        self.program.slices.profile(profile)
+        self.program.params.check(check)
+        self.updateprofile()
+        if self.program.params.cvt() == 'T':
+            self.updatetoneframe()
+        else:
+            self.updatecvcheck()
     def makeprogresstable(self):
         def groupfn(x):
             for i in x:
@@ -1079,18 +1099,12 @@ class StatusFrame(ui.Frame):
                     if self.program.settings.showdetails:
                         return nn(x,oneperline=True) #if any noninteger, all.
             return len(x) #to show counts only
-        def updateprofilencheck(profile,check):
-            # log.info("running updateprofilencheck({},{})".format(profile,check))
-            self.program.settings.setprofile(profile)
-            self.program.settings.setcheck(check)
-            self.maybeboard()
-            # log.info("now {},{}".format(self.program.slices.profile(),
-            #                             self.program.params.check()))
-            #run this in any case, rather than running it not at all, or twice
         def refresh(event=None):
             # log.info("refreshing status table")
             self.program.settings.storesettingsfile()
             self.program.task.tableiteration+=1
+        self._cells={}
+        self._active_cell=None
         self.boardtitle()
         # leaderheader=Frame(self.leaderboard) #someday, make this not scroll...
         # leaderheader.grid(row=1,column=0)
@@ -1236,13 +1250,11 @@ class StatusFrame(ui.Frame):
                                 bd=0, #border
                                 text=donenum,
                                 cmd=lambda p=profile,
-                                f=check:updateprofilencheck(profile=p, check=f),
+                                f=check:self.updateprofilencheck(profile=p, check=f),
                                 anchor='c',
                                 padx=0,pady=0
                                 )
-                        if profile == curprofile and check == curcheck:
-                            tb.configure(background=tb['activebackground'])
-                            tb.configure(command=donothing)
+                        self._cells[(profile,check)]=tb
                         tips=[]
                         if tosort:
                             tips.extend([_("Words to sort!")])
@@ -1259,6 +1271,8 @@ class StatusFrame(ui.Frame):
                                                                 sticky='nesw')
                         ttb=ui.ToolTip(tb,tip)
             row+=1
+        # if profile == curprofile and check == curcheck:
+        self.activate_cell(self._cells[(curprofile,curcheck)])
         if ungroups > 0:
             log.error(_("You have more groups verified than there are, in {count} "
                         "cells").format(count=ungroups))
@@ -1343,8 +1357,8 @@ class StatusFrame(ui.Frame):
         self.updateparserasklevel()
         self.updateparserautolevel()
         self.updatesensetodo()
-        self.maybeboard()
-        self.redofinalbuttons()
+        # self.maybeboard()
+        # self.redofinalbuttons()
 
 class TaskDressing(HasMenus,ui.Window):
     """This Class covers elements that belong to (or should be available to)

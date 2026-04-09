@@ -215,35 +215,14 @@ class App:
         lang=self.interfacelang() #translation works from here
         # log.info(_("Translation is working now ({lang}).").format(lang=lang))
     def interfacelang(self,lang=None,magic=False):
-        global _
-        log.info("interfacelang called with lang {lang} and magic {magic}".format(lang=lang,magic=magic))
-        # global i18n
-        """Attention: for this to work, _ has to be defined globally (here, not in
-        a class or module.) So I'm getting the language setting in the class, then
-        calling the module (imported globally) from here."""
+        """Determine and/or set the interface language.
+        Uses i18n._current to detect which translation is active."""
+        from utilities import i18n
         curlang=None
-        magic=False
-        try:
-            # log.info("interfacelang")
-            if _.__module__ == 'gettext':
-                log.info("Magic: {}".format(_.__module__))
-                magic=True
-            else:
-                log.info("Magic seems to be installed, but not gettext: {module}"
-                ).format(module=_.__module__)
-            # log.info("_ looks defined")
-            for l in self.i18n:
-                if self.i18n[l] == _.__self__:
-                    curlang=l
-                    break #i.e., if it is already set up correctly
-        except NameError:
-            # log.info("_ doesn't look defined yet")
-            log.info("Looks like translation magic isn't defined yet; making")
-        except Exception as e:
-            log.error("Failed to get translation: {}".format(e))
-        """Diagnostics of questionable value, with Magic above?"""
-        if lang:
-            log.info("Asked to set lang {lang} with curlang {curlang}".format(lang=lang,curlang=curlang))
+        for l in self.i18n:
+            if i18n._current == self.i18n[l].gettext:
+                curlang=l
+                break
         if not lang and not curlang: #deduce, but don't override current setting.
             # log.info("checking for a local setting")
             code=file.uilang()
@@ -263,13 +242,10 @@ class App:
             if code in self.i18n:
                 # log.info("returning {} (of {})".format(code,list(i18n)))
                 lang=code
-        if lang and lang != curlang and lang in self.i18n: # or not magic:
-            self.i18n[lang].install()
+        if lang and lang != curlang and lang in self.i18n:
             set_translator(self.i18n[lang].gettext)
             file.uilang(lang)
-            log.info(_("Set Interface language: {lang}").format(lang=lang))
             return lang
-        log.info(_("Returning current Interface language: {lang}").format(lang=curlang))
         return curlang
     def getlangfromlocale(self):
     # log.debug("Looking for interface language in locale.")
