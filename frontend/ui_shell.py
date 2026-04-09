@@ -1067,7 +1067,11 @@ class StatusFrame(ui.Frame):
         #put in a footer for next profile/frame
         cvt=self.program.params.cvt()
         ps=self.program.slices.ps()
-        profiles=self.program.slices.profiles()[:] #just sort here
+        max_visible_profile_length=20
+        allprofiles=self.program.slices.profiles()
+        profiles=[i for i in allprofiles if len(i)<=max_visible_profile_length] #just sort here
+        if skipped:=set(allprofiles)-set(profiles):
+            log.error(f"Skipped insanely long profiles: {skipped}")
         curprofile=self.program.slices.profile()
         curcheck=self.program.params.check()
         # log.info("self.program.toneframes: {}".format(self.program.toneframes))
