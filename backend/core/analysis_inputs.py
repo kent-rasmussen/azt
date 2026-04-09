@@ -108,7 +108,7 @@ class ToneFrames(dict):
             if updated:
                 log.info(_("updated toneframes for field; you should save it!"))
         return self
-    def __init__(self, dict, program):
+    def __init__(self, program, dict=None):
         self.program=program
         self.program.toneframes=self
         super(ToneFrames, self).__init__()
