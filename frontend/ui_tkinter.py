@@ -513,7 +513,7 @@ class ExitFlag(object):
     def istrue(self):
         # log.debug("Returning {} exitflag".format(self.value))
         return self.value
-    value=get=istrue
+    get=istrue
     def true(self):
         self.value=True
     def false(self):
@@ -911,9 +911,9 @@ class Exitable():
         so functions can check the flag and exit nicely."""
         if self.parent: #Toplevel
             self.parent.exittoroot()
-            return
-        else: #Root
-            self.parent.exitFlag.true()
+        #     return
+        # else: #Root
+        self.exitFlag.true()
     def on_quit(self,to_root=False):
         """Do this when a window closes, so any window functions can know
         to just stop, rather than trying to build graphic components and
@@ -1074,7 +1074,7 @@ class Image(): #PIL.ImageTk.PhotoImage is for display
             right=left+scaled_pixels
         self.scaled.crop([ left, upper, right, lower])
     def transparent(self):
-        log.info("Running transparent")
+        log.info("Not running transparent")
         return
         tkinter.PhotoImage(file=self.filename)
         self.transparency=tkinter.PhotoImage(file=self.filename)
@@ -1205,7 +1205,7 @@ class Progressbar(Childof,Gridded,UI,tkinter.ttk.Progressbar):
     def post_tk_init(self):
         super().post_tk_init()
     def current(self,value):
-        if type(value) is not int and 0 <= value <= 1:
+        if isinstance(value,float) and 0 <= value <= 1:
             value=int(value*100)
         if 0 <= value <= 100:
             self['value']=value
@@ -1396,7 +1396,7 @@ class Text(TextBase):
                 self.image_scaleto in ['both','height','width']):
                 img_kwargs['scaleto']=self.image_scaleto
             self.image=self.image.scale(
-                        self.theme.self.program.scale, #obligatory, non-kwarg
+                        self.theme.scale, #obligatory, non-kwarg
                         **img_kwargs
                         ) #tk ready
         elif isinstance(self.image,Image):
@@ -2461,7 +2461,7 @@ def availablexy(self,w=None):
     except KeyError:
         log.error("Problem with grid on {} widget, with these siblings: {}"
                     "".format(w.winfo_class(),w.parent.winfo_children()))
-        raise{}
+        raise
     wcol=w.grid_info()['column']
     wrowmax=wrow+w.grid_info()['rowspan']
     wcolmax=wcol+w.grid_info()['columnspan']
