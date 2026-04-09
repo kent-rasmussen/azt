@@ -3,10 +3,6 @@
 import gettext
 _ = gettext.gettext
 
-from utilities import logsetup
-log=logsetup.getlog(__name__)
-logsetup.setlevel('DEBUG',log) #for this file
-
 from utilities import source_base_dir
 from tkinter import filedialog
 from tkinter import Tk
@@ -31,7 +27,7 @@ import tarfile
 from packaging import version
 from importlib import reload as modulereload
 import subprocess
-from utilities.utilities import stouttostr
+from utilities.encodings import stouttostr
 joinpath=pathlib.Path.joinpath
 def getfile(filename):
     if filename:
@@ -72,10 +68,9 @@ def fullpathnamewrt(db,filename):
     elif hasattr(db,'filename') and exists(db.filename): #for lift object
         dir=db.filename
     else:
-        log.error(f"{db} doesn't seem to exist, nor does {db}.filename")
+        return f"{db} doesn't seem to exist, nor does {db}.filename"
     return pathlib.Path.joinpath(dir,filename)
 def askfilename(self):
-    log.info('Apparently there is no last lift file url; asking...')
     text=(_("Please select a LIFT lexicon file to check"))
     tkinter.Label(self.status, text=text).grid(column=0,
     row=0)
@@ -102,23 +97,17 @@ def getimagesdir(dirname):
     return d
 def getaudiodir(dirname):
     dir=pathlib.Path.joinpath(dirname,'audio')
-    log.debug("Looking for {}".format(dir))
     if not os.path.exists(dir):
-        log.debug("{} not there, making it!".format(dir))
         os.mkdir(dir)
     return dir
 def getreportdir(dirname):
     dir=pathlib.Path.joinpath(dirname,'reports')
-    log.debug("Looking for {}".format(dir))
     if not os.path.exists(dir):
-        log.debug("{} not there, making it!".format(dir))
         os.mkdir(dir)
     return dir
 def getexportdir(dirname):
     dir=pathlib.Path.joinpath(dirname,'exports')
-    log.debug("Looking for {}".format(dir))
     if not os.path.exists(dir):
-        log.debug("{} not there, making it!".format(dir))
         os.mkdir(dir)
     return dir
 def getreldir(origin,dest):
@@ -128,65 +117,52 @@ def getreldirposix(origin,dest):
     return getfile(os.path.relpath(dest,origin))
 def getstylesheetdir(filename):
     dir=pathlib.Path.joinpath(getfilenamedir(filename),'xlpstylesheets')
-    log.debug("Looking for {}".format(dir))
     if not os.path.exists(dir):
-        log.debug("{} not there, not using your stylesheet!\nIf you want to "
-        "use your own XLingPaper styesheet for these reports, make that "
-        "directory, and put the stylesheet in it. For now, using a default "
-        "stylesheet.".format(dir))
         dir=pathlib.Path.joinpath(pathlib.Path(__file__).parent,'xlpstylesheets')
         if not os.path.exists(dir):
-            log.debug("{} not there, not using a stylesheet!".format(dir))
-            return
+            return ("{} not there, not using a stylesheet!".format(dir))
     return dir
 def gettransformsdir():
     dir=pathlib.Path.joinpath(pathlib.Path(__file__).parent,'xlptransforms')
-    log.debug("Looking for {}".format(dir))
     if not os.path.exists(dir):
-        log.error("HELP! not sure why {} is not there!".format(dir))
-        # os.mkdir(dir)
+        return "HELP! not sure why {} is not there!".format(dir)
     return dir
 def exists(file):
     if file and os.path.exists(file):
         return True
-    # else:
-    #     log.info("file {} doesn't exist!".format(file))
 def rmdir(dir):
     os.rmdir(dir)
 def move(file,newfile):
     if exists(file) and not exists(newfile):
         os.rename(file,newfile)
     else:
-        log.debug(_("Tried to move {} to {}, but I can't find it "
-                    "(or overwrite?).").format(file,newfile))
+        return _("Tried to move {} to {}, but I can't find it "
+                    "(or overwrite?).").format(file,newfile)
 def remove(file):
     if exists(file):
         os.remove(file)
     elif exists(pathname_from_base_dir(file)):
         os.remove(pathname_from_base_dir(file))
     else:
-        log.debug(_("Tried to remove {}, but I can't find it.").format(file))
+        return _("Tried to remove {}, but I can't find it.").format(file)
 def makedir(dir,**kwargs):
     if type(dir) is str:
         dir=getfile(dir)
     if dir and not exists(dir):
         dir.mkdir(parents=True)
-    elif not kwargs.get('silent'):
-        log.info("directory {} already exists!".format(dir))
     return getfile(dir)
 def getnewlifturl(dir,xyz):
     dir=pathlib.Path(dir)
     dir=dir.joinpath(xyz)
     if exists(dir):
-        log.error(_("The directory {} already exists! Not Continuing.").format(dir))
-        return
+        return _("The directory {} already exists! Not Continuing.").format(dir)
     else:
         dir.mkdir()
     url=dir.joinpath(xyz)
     url=url.with_suffix('.lift')
     return url
 def getdiredurl(dir,filename):
-    if not dir: 
+    if not dir:
         dir='.'
     if type(dir) is str:
         dir=getfile(dir)
@@ -206,8 +182,6 @@ def getlangnamepaths(filename, langs):
     for lang in langs:
         #filename=pathlib.Path.joinpath(wsdir, lang +'.ldml')
         output[lang]=str(pathlib.Path.joinpath(wsdir, lang +'.ldml'))
-        log.log(1,filename)
-    log.log(1,output)
     return output
 def getinterfacelang():
     # I haven't figured out a way to translate the strings here, hope that's OK.
@@ -216,14 +190,12 @@ def getinterfacelang():
     # (that's what this enables).
     try:
         import ui_lang
-        log.log(2,"ui_lang.py imported fine.") #Sorry, no translation!
         try:
-            log.debug('Boot ui_lang: {}'.format(ui_lang.interfacelang))
             return ui_lang.interfacelang
         except:
-            log.error("Didn't find ui_lang.interfacelang") #No translation!
+            return "Didn't find ui_lang.interfacelang"
     except:
-        log.error("Didn't find ui_lang.py") #Sorry, no translation!
+        return "Didn't find ui_lang.py"
 def writeinterfacelangtofile(lang):
     file=pathlib.Path.joinpath(pathlib.Path(__file__).parent, "ui_lang.py")
     f = open(file, 'w', encoding='utf-8') # to append, "a"
@@ -241,12 +213,7 @@ def uilang(lang=None):
     if mgr is None:
         return None
     if not lang:
-        value = mgr.ui_lang
-        if value:
-            log.info(f"Found ui_lang value {value}")
-        else:
-            log.debug("No ui_lang value found in app settings")
-        return value or None
+        return mgr.ui_lang or None
     mgr.ui_lang = lang
 def getfilename():
     """Return a single filename if it exists on disk, else return the list."""
@@ -255,9 +222,7 @@ def getfilename():
         return []
     fn = mgr.filename
     if fn and exists(fn):
-        log.debug("lift_url config imported fine, and url points to a file.")
         return fn
-    log.debug(f"lift_url config: no single file found ({fn!r}), returning list")
     return getfilenames()
 def gethome():
     home=pathlib.Path.home()
@@ -272,7 +237,6 @@ def getdirectory(title=None,home=None):
     if not title:
         title=_("Select a new location for your LIFT Lexicon and other Files")
     f=filedialog.askdirectory(initialdir = home, title = title)
-    log.info(f"getdirectory: {f} {bool(f)=}")
     if f:
         return f
 def getfilesofdirectory(dir,regex='*'):
@@ -288,12 +252,10 @@ def makewritablebyeveryone(path):
             stat.S_IROTH|stat.S_IWOTH|stat.S_IXOTH
             )
 def getmediadirectory(mediatype=None):
-    log.info("Looking for media directory")
     if platform.system() == 'Linux':
         media=getdiredurl('/media/',os.getlogin())
     else:
         media=None
-    log.info(f"media: {media}")
     if mediatype:
         prompt=_("Please select where to find the {} media locally"
                 ).format(mediatype)
@@ -329,7 +291,6 @@ def praatversioncheck(praat_exe):
         #         except Exception as e:
         #             log.info("{},{} error".format(encoding, errortag))
     except Exception as e:
-        log.info(_("Problem with praat version ({error}), assuming recent").format(error=e))
         return True
     try:
         if b'\x00' in versionraw:
@@ -339,19 +300,14 @@ def praatversioncheck(praat_exe):
         # log.info("characters={}".format(characters))
         out=version.Version(parseversion(characters))
     except Exception as e:
-        log.info(_("Problem getting parseable praat version ({error})").format(error=e))
         out=versionraw
     # This is the version at which we don't need sendpraat anymore
     # and where '--hide-picture' becomes available.
     justpraatversion=version.Version(parseversion(
                                             'Praat 6.2.04 (December 18 2021)'))
-    # log.info(_("Found Praat version {version}").format(version=str(out)))
     if out>=justpraatversion:
-        # log.info("Praat version at or greater than {}".format(justpraatversion))
         return True
     else:
-        log.info("Praat version less than {out} {justpraatversion}".format(
-            out=str(out),justpraatversion=justpraatversion))
         return False
 def findexecutable(exe):
     exeOS=exe
@@ -369,16 +325,14 @@ def findexecutable(exe):
         if exe == 'sendpraat':
             exeOS='sendpraat-mac'
     else:
-        log.error(_("Sorry, I don't know this OS: {os}").format(os=os))
-    # log.info("Looking for {} on {}...".format(exe,os))
+        return _("Sorry, I don't know this OS: {os}").format(os=os)
     exeURL=None
     try:
         exeURL=subprocess.check_output([which,exeOS], shell=False)
         exeURL=stouttostr(exeURL)
     except subprocess.CalledProcessError as e:
-        log.info(_("Executable {exe} search output: {output}").format(exe=exe,output=e.output))
+        pass
     except Exception as e:
-        log.info(_("Search for {exe} on {os} failed: {error}").format(exe=exe, os=os, error=e))
         return e
     if exeURL:
         exeURL=exeURL.replace('\r','').split('\n')#this will make a list, either way
@@ -387,18 +341,13 @@ def findexecutable(exe):
             if 'Microsoft' in e and 'WindowsApps' in e:
                 exeURL.remove(e)
         exeURL=[i for i in exeURL if i is not None]
-    # if not exeURL:
-    # el
         if len(exeURL) == 1:
             exeURL=exeURL[0]
-            log.info(_("Executable {exe} found at {path}").format(exe=exe,path=exeURL))
         else:
-            log.info(_("Executable {exe} found multiple items: {items}").format(exe=exe,items=exeURL))
             exeURL=sorted(exeURL,key=len)[0]
-            log.info(_("Using shortest executable path: {path}").format(path=exeURL))
     if (exe == 'praat' and exeURL and not praatversioncheck(exeURL)):
         findexecutable('sendpraat') #only ask if it would be useful
-    return exeURL 
+    return exeURL
 def lift():
     Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
     home=gethome()
@@ -414,15 +363,6 @@ def lift():
                                     )
     if not filename:
         return
-    if exists(filename):
-        return writefilename(filename)
-    log.debug('filename:'+str(filename))
-    if not filename:
-        log.warning(_("Sorry, did you select a file? Giving up."))
-        return
-    log.debug('filename: {}'.format(str(filename)))
-    """Assuming this file is still in lift/, this works. Once out,
-    remove a parent"""
     return writefilename(filename)
 def escapecommas(x):
     if ',' in x:
@@ -572,10 +512,8 @@ class TarBall(Buffered):
                 if not n%100:
                     print(f"{n} rows done.")
                 yield n
-            else:
-                log.info(f"skipping {t}")
         self.writeout()
-        log.info(f"Added {n} rows of data to {self.archivename}" )
+        return f"Added {n} rows of data to {self.archivename}"
     def writeout(self):
         self.addtextfile(self.metadata) #this wasn't added earlier
         self.tar.close() # complete write to self.archivetempname
@@ -610,8 +548,7 @@ class TarBall(Buffered):
 def writefilename(filename=''):
     mgr = _app_settings()
     if mgr is None:
-        log.error("writefilename: app settings not available.")
-        return filename
+        return "writefilename: app settings not available."
     mgr.filename = filename
     return filename
 if __name__ == "__main__":

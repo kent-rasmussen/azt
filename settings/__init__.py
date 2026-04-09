@@ -213,7 +213,9 @@ class Settings(SettingsUI):
         fileattr=self.settings[setting]['file']
         legacy=fileattr+'_legacy'
         if (hasattr(self,legacy) and file.exists(getattr(self,legacy))):
-            file.move(getattr(self,legacy), getattr(self,fileattr))
+            err=file.move(getattr(self,legacy), getattr(self,fileattr))
+            if err:
+                _log.error(err)
         if hasattr(self,fileattr):
             return getattr(self,fileattr)
         else:

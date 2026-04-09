@@ -24,6 +24,9 @@ class Report(object):
             return
         open(self.tmpfile, 'wb').close()
         self.stylesheetdir=file.getstylesheetdir(filename)
+        if self.stylesheetdir and not file.exists(self.stylesheetdir):
+            log.error(self.stylesheetdir)
+            self.stylesheetdir=None
         # self.tree=ET.ElementTree(ET.Element('lingPaper'))
         self.node=ET.Element('lingPaper') #self.tree.getroot()
         self.title="{} {} output report for {}".format(report,
@@ -51,7 +54,8 @@ class Report(object):
         t=times.now()-self.start_time
         # m=int(t/60)
         # s=t%60
-        log.info(_("Finished in {:1.0f} minutes, {:2.3f} seconds.").format(*divmod(t,60)))
+        log.info(_("Finished in {:1.0f} minutes, {:2.3f} seconds."
+                ).format(*divmod(t.total_seconds(),60)))
         if me:
             self.compile() #This isn't working yet.
     def cleanup(self):
@@ -92,6 +96,9 @@ class Report(object):
         note the need to explicitely deallocate documents with freeDoc() except for the stylesheet document which is freed when its compiled form is garbage collected.
         """
         self.transformsdir=file.gettransformsdir()
+        if isinstance(self.transformsdir, str) and not file.exists(self.transformsdir):
+            log.error(self.transformsdir)
+            return
         dom = lxml.etree.parse(self.filename)
         log.info(self.filename)
         # xslt = lxml.etree.parse(xsl_filename)
@@ -437,7 +444,9 @@ if __name__ == "__main__":
     def _(x):
         return str(x)
     print('trying manual report generation...')
-    d=Report('filetest.xml',"a non-language","Language Name >")
+    from dummy import App
+    program=App()
+    d=Report('filetest.xml',"a non-language","Language Name >",program)
     s1=Section(d,"Section One title")
     t="This is the first paragraph in the report."
     p=Paragraph(s1,t)

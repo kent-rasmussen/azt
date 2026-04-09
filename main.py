@@ -690,8 +690,11 @@ class App:
             assert not self.exceptiononload or self.me
             #Don't worry about these if exceptiononload:
             for exe in ['praat', 'ffmpeg', 'lame']:
-                setattr(self,exe,file.findexecutable(exe))
-                # log.info(_("Found {exe} at {path}").format(exe=exe,path=getattr(self,exe)))
+                result=file.findexecutable(exe)
+                if isinstance(result, (str, Exception)) and not file.exists(result):
+                    log.info(result)
+                    result=None
+                setattr(self,exe,result)
             self.python=sys.executable
             self.run()
         except SystemExit:

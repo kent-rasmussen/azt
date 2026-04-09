@@ -11,6 +11,7 @@ import os
 import subprocess
 import webbrowser
 from utilities import logsetup
+from utilities.encodings import *
 log = logging.getLogger(__name__)
 from utilities.i18n import _
 """Functions moved from main.py"""
@@ -344,27 +345,6 @@ def callerfn():
 def callerfnparent():
     #Not this function, nor the one that called it, but the one that called that
     return inspect.getouterframes(inspect.currentframe())[1].function
-def stouttostr(x):
-    # This fn is necessary (and problematic) because not all computers seem to
-    # reply to subprocess.check_output with the same kind of data. I have even
-    # seen a computer say it was using unicode, but not return unicode
-    # data (I think because it was replacing translated text, but didn't
-    # replace the same encoding). Another dumb thing that I need to account for.
-    if type(x) is str:
-        return x.strip()
-    if not sys.stdout.encoding:
-        log.error(_("I can't tell the terminal's encoding, sorry!"))
-    else:
-        try:
-            return x.decode(sys.stdout.encoding,
-                            errors='backslashreplace').strip()
-        except Exception as e:
-            #if the computer doesn't know what encoding it is actually using,
-            # this should give us some info to debug.
-            log.error(_("Can't decode this (in {}; {}):"
-                        ).format(sys.stdout.encoding, e))
-            log.error(x)
-    return x #not sure if this is a good idea, but this should probably raise...
 def ofromstr(x):
     """This interprets a string as a python object, if possible"""
     """This is needed to interpret [x,y] as a list and {x:y} as a dictionary."""
