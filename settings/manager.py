@@ -109,6 +109,7 @@ class ConfigParser(configparser.ConfigParser):
 
 def write_ini(filename, d):
     """Write d to a legacy .ini file, skipping if unchanged."""
+    do_not_write_keys=[None, 'None', 'null']
     existing = ConfigParser()
     if Path(filename).exists():
         existing.read(filename, encoding='utf-8')
@@ -116,10 +117,10 @@ def write_ini(filename, d):
         return
     config = ConfigParser()
     config['default'] = {}
-    for s in [i for i in d if i not in [None, 'None']]:
+    for s in [i for i in d if i not in do_not_write_keys]:
         v = d[s]
         if isinstance(v, dict):
-            config[s] = indenteddict(v)
+            config[s] = indenteddict({k:vv for k,vv in v.items() if k not in do_not_write_keys})
         else:
             config['default'][s] = str(v)
     if config['default'] == {}:
