@@ -512,7 +512,7 @@ class Settings(SettingsUI):
             self.makestatus({k:d[k] for k in d if k != 'DEFAULT'})
             _log.info(_("makestatus: {status}").format(status=self.program.status))
         elif setting == 'toneframes':
-            self.maketoneframes({k:d[k] for k in d if k != 'DEFAULT'})
+            self.program.toneframes.source({k:d[k] for k in d if k != 'DEFAULT'})
             _log.info(_("maketoneframes: {frames}").format(frames=self.program.toneframes))
         else:
             self.readsettingsdict(d)

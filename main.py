@@ -391,6 +391,7 @@ class App:
         self.sort_ui = SortPresenter()
         self.lex_ui = LexiconPresenter()
         self.repocheck()
+        ToneFrames(self)
         Settings(self) #needs self.filename, pick up self.analang from file
         self.settings.post_lift_init()
         CheckParameters(self) #depends on settings (nothing but self.analang?)
