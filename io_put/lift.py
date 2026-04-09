@@ -105,7 +105,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 .format(gloss_counts=self.nsenseswglossdata, def_counts=self.nsenseswdefndata))
         #This may be superfluous:
         self.getsenseidsbyps() #sets: self.senseidsbyps and self.nsenseidsbyps
-        self.get_senses_by_cawln()
+        self.get_senses_by_word_list_n()
         """This is very costly on boot time, so this one line is not used:"""
         # self.getguidformstosearch() #sets: self.guidformstosearch[lang][ps]
         self.lcs=self.citations()
@@ -550,8 +550,8 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.sensesbyps={ps:[i for i in self.senses if i.psvalue() == ps]
                             for ps in self.pss
                             }
-    def get_senses_by_cawln(self):
-        self.sensesbycawln={s.cawln:s for s in self.senses}
+    def get_senses_by_word_list_n(self):
+        self.sensesbyword_list_n={s.word_list_n:s for s in self.senses}
     def slicebyps_profile(self):
         self.sensesbyps_profile={ps:{profile:[i for i in self.sensesbyps[ps]
                                             if i.cvprofilevalue() == profile]
@@ -3055,10 +3055,9 @@ class Sense(Node,FieldParent):
             pass
     def get_word_list_n(self):
         if self.db.word_list_field_name in self.fields:
-            setattr(self,self.db.word_list_n,
-            self.fields[self.db.word_list_field_name].textvaluebylang())
+            self.word_list_n=self.fields[self.db.word_list_field_name].textvaluebylang()
         else:
-            setattr(self,self.db.word_list_n,None)
+            self.word_list_n=None
     def has_image_file(self):
         return file.exists(self.illustrationURI(write_to=True))
     def illustrationURI(self,write_to=False):
@@ -4803,7 +4802,7 @@ def analyze_relationships(filenames,list_all=False,do_pairs=False):
     for i in range(1,1701):
         i='0'*(4-len(str(i)))+str(i)
         #just pull these once each:
-        forms={f:lifts[f].sensesbycawln[i].ftypes['lc'].textvaluebylang() 
+        forms={f:lifts[f].sensesbyword_list_n[i].ftypes['lc'].textvaluebylang() 
                 for f in lifts_ordered}
         # log.info(f"Found {len(forms)} form keys")
         # log.info(f"Found {len([v for k,v in forms.items() if v])} form values: \n"
