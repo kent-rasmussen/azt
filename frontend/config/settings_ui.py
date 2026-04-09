@@ -267,6 +267,7 @@ class SettingsUI(object):
                 self.attrschanged.append('check')
         self.attrschanged.append('profile')
         self.refreshattributechanges()
+        self.program.mainwindow.status.sync_active_cell()
         if window:
             window.destroy()
     def setcvt(self,choice,window=None):

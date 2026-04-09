@@ -675,6 +675,7 @@ class StatusFrame(ui.Frame):
                                 'parent':line,
                                 'tt':_("change this syllable profile")}
         self.proselabel(**self.labels['profile'])
+        self.program.settings.get_ui_var('profile_label').trace_add("write", self.update_active_cell)
         self.labels['ps']={'text':self.program.settings.get_ui_var('ps_label', self.pslabel()),
                                 'columnplus':1,
                                 'cmd':self.program.ui_settings.getps,
@@ -731,6 +732,7 @@ class StatusFrame(ui.Frame):
                                 'parent':line,
                                 'tt':_("change this tone frame")}
         self.proselabel(**self.labels['toneframe'])
+        self.program.settings.get_ui_var('toneframe_label').trace_add("write", self.update_active_cell)
     def updatetonegroup(self):
         if 'tonegroup' not in self.labels:
             return
@@ -780,6 +782,7 @@ class StatusFrame(ui.Frame):
                                 'parent':line,
                                 'tt':_("change this check")}
         self.proselabel(**self.labels['cvcheck'])
+        self.program.settings.get_ui_var('cvcheck_label').trace_add("write", self.update_active_cell)
     def updatecvgroup(self):
         if 'cvgroup' not in self.labels:
             return
@@ -1030,15 +1033,6 @@ class StatusFrame(ui.Frame):
         notext=_("Nothing to see here...")
         ui.Label(self.leaderboardtable,text=notext).grid(row=1,column=0)
         # self.frame.update()
-    def updateprogresstable(self):
-        """This could be a method called in creation, then again when updates
-        are needed. I should controll activebackground and commands, setting
-        and clering the one or the other, according to current settings.
-        Maybe could iterate across all, maybe calculate the right column and row
-        should access self.checks and self.profiles for indexes"""
-        if profile == curprofile and check == curcheck:
-            tb.configure(background=tb['activebackground'])
-            tb.configure(command=donothing)
     def makeglyphbutton(self,glyph):
         f=self.glyphbuttons[glyph]=ui.Frame(self.glyphscroll.content,
                             r=self.glyphscroll.content.nrows())
@@ -1075,14 +1069,37 @@ class StatusFrame(ui.Frame):
     def deactivate_cell(self,cell):
         cell.configure(background=cell.inactive_background)
         cell.configure(command=cell.inactive_command)
-    def updateprofilencheck(self,profile,check):
-        new_cell=self._cells.get((profile,check))
+    def update_active_cell(self,*args):
+        log.info(f"update_active_cell {args=}")
+        new_cell=self._cells.get((self.program.slices.profile(),
+                                    self.program.params.check()))
         if new_cell and new_cell.winfo_exists():
             if self._active_cell and self._active_cell.winfo_exists():
                 self.deactivate_cell(self._active_cell)
             self.activate_cell(new_cell)
+    def sync_active_cell(self):
+        """Update leaderboard highlight to match current profile/check."""
+        if not hasattr(self,'_cells'):
+            return
+        profile=self.program.slices.profile()
+        check=self.program.params.check()
+        new_cell=self._cells.get((profile,check))
+        if new_cell is self._active_cell:
+            return
+        if self._active_cell and self._active_cell.winfo_exists():
+            self.deactivate_cell(self._active_cell)
+        if new_cell and new_cell.winfo_exists():
+            self.activate_cell(new_cell)
+    def updateprofilencheck(self,profile,check):
+        # new_cell=self._cells.get((profile,check))
+        # if new_cell and new_cell.winfo_exists():
+        #     if self._active_cell and self._active_cell.winfo_exists():
+        #         self.deactivate_cell(self._active_cell)
+        #     self.activate_cell(new_cell)
         self.program.slices.profile(profile)
         self.program.params.check(check)
+        self.update_active_cell()
+        #above is table, below is prose.
         self.updateprofile()
         if self.program.params.cvt() == 'T':
             self.updatetoneframe()
@@ -1273,6 +1290,8 @@ class StatusFrame(ui.Frame):
             row+=1
         # if profile == curprofile and check == curcheck:
         self.activate_cell(self._cells[(curprofile,curcheck)])
+        # self.labels['profile']['textvariable'].trace_add("write", self.update_active_cell)
+        # self.labels['check']['textvariable'].trace_add("write", self.update_active_cell)
         if ungroups > 0:
             log.error(_("You have more groups verified than there are, in {count} "
                         "cells").format(count=ungroups))
@@ -2778,7 +2797,7 @@ class Settings(object):
             self.program.settings.storesettingsfile()
             self.program.mainwindow.status.updateanalang() #ui
             window.destroy()
-        window=ui.Window(self.program.task,title=_('Enter Analysis Language Name'))
+        window=ui.Window(self.program.task.ui,title=_('Enter Analysis Language Name'))
         curname=self.program.settings.languagenames[self.program.params.analang()]
         defaultname=_("Language with code [{code}]").format(code=self.program.params.analang())
         t=_("How do you want to display the name of {name}").format(name=curname)
@@ -2801,7 +2820,7 @@ class Settings(object):
             return
         log.info(_("this sets the language"))
         # fn=inspect.currentframe().f_code.co_name
-        window=ui.Window(self.program.task,title=_('Select Analysis Language'))
+        window=ui.Window(self.program.task.ui,title=_('Select Analysis Language'))
         if self.program.db.analangs is None :
             ui.Label(window.frame,
                           text=_('Error: please set Lift file first! ({file})').format(
@@ -2823,7 +2842,7 @@ class Settings(object):
                                      column=0, row=4
                                      )
     def getglosslang(self,event=None):
-        window=ui.Window(self.program.task,title=_('Select Gloss Language'))
+        window=ui.Window(self.program.task.ui,title=_('Select Gloss Language'))
         text=_('What Language do you want to use for glosses?')
         ui.Label(window.frame, text=text, column=0, row=1)
         langs=list()
@@ -2842,7 +2861,7 @@ class Settings(object):
                                  column=0, row=4
                                  )
     def getglosslang2(self,event=None):
-        window=ui.Window(self.program.task,title=_('Select Second Gloss Language'))
+        window=ui.Window(self.program.task.ui,title=_('Select Second Gloss Language'))
         text=_('What other language do you want to use for glosses?')
         ui.Label(window.frame, text=text, column=0, row=1)
         langs=list()
@@ -2862,12 +2881,12 @@ class Settings(object):
                                     )
     def getcvt(self,event=None):
         log.debug(_("Asking for check cvt/type"))
-        window=ui.Window(self.program.task,title=_('Select Check Type'))
+        window=ui.Window(self.program.task.ui,title=_('Select Check Type'))
         cvts=[]
         x=0
         tdict=self.program.params.cvtdict()
         for cvt in tdict:
-            if cvt in ['CV','VC'] and getattr(self.task,'is_sort_task',False):
+            if cvt in ['CV','VC'] and getattr(self.program.task,'is_sort_task',False):
                 continue
             cvts.append({})
             cvts[x]['name']=tdict[cvt]['pl']
@@ -2886,7 +2905,7 @@ class Settings(object):
     def getps(self,event=None):
         log.info(_("Asking for ps..."))
         # self.refreshattributechanges()
-        window=ui.Window(self.program.task, title=_('Select Lexical Category'))
+        window=ui.Window(self.program.task.ui, title=_('Select Lexical Category'))
         ui.Label(window.frame, text=_('What lexical category do you '
                                     'want to work with (Part of speech)?')
                 ).grid(column=0, row=0)
@@ -2926,7 +2945,7 @@ class Settings(object):
                 log.error(_("No profiles of {type} type found!").format(type=kwargs))
             # log.info("count types: {}, {}".format(type(profilecounts),
             #                                         type(profilecountsAdHoc)))
-            window=ui.Window(self.program.task,title=_('Select Syllable Profile'))
+            window=ui.Window(self.program.task.ui,title=_('Select Syllable Profile'))
             ui.Label(window.frame, text=_('What ({ps}) syllable profile do you '
                                     'want to work with?').format(ps=ps)
                                     ).grid(column=0, row=0)
@@ -2968,7 +2987,7 @@ class Settings(object):
             setcmd(custom.get())
             window.on_quit()
         title=_('Make Custom Second Form Field for {ps}').format(ps=ps)
-        window=ui.Window(self.program.task,title=title)
+        window=ui.Window(self.program.task.ui,title=title)
         #should never be othername
         l=ui.Label(window,
                 text=_("What field name do you want to use for {ps} words?"
@@ -3041,7 +3060,7 @@ class Settings(object):
             # cmd=getcustom
             # optionslist=opts
         title=_('Select Second Form Field for {ps}').format(ps=ps)
-        window=ui.Window(self.program.task,title=title)
+        window=ui.Window(self.program.task.ui,title=title)
         ui.Label(window.frame, text=text, column=0, row=0)
         """What does this extra frame do?"""
         window.scroll=ui.Frame(window.frame)
@@ -3065,7 +3084,7 @@ class Settings(object):
             window.wait_window(window)
     def getmulticheckscope(self,event=None):
             log.info(_("Asking for multicheckscope..."))
-            window=ui.Window(self.program.task, title=_('Select Scope of Checks'))
+            window=ui.Window(self.program.task.ui, title=_('Select Scope of Checks'))
             ui.Label(window.frame,
                     text=_('What kinds of checks to you want to run?')
                     ).grid(column=0, row=0)
@@ -3110,7 +3129,7 @@ class Settings(object):
                 self.program.settings.secondformfield[self.program.settings.nominalps])
     def getbuttoncolumns(self,event=None):
         log.info(_("Asking for number of button columns..."))
-        window=ui.Window(self.program.task,title=_('Select Button Columns'))
+        window=ui.Window(self.program.task.ui,title=_('Select Button Columns'))
         ui.Label(window.frame, text=_('How many columns do you want to use for '
                                         'the sort buttons?')
                                         ).grid(column=0, row=0)
@@ -3124,7 +3143,7 @@ class Settings(object):
         window.wait_window(window)
     def getmaxpss(self,event=None):
         title=_('Select Maximum Number of Lexical Categories')
-        window=ui.Window(self.program.task, title=title)
+        window=ui.Window(self.program.task.ui, title=title)
         text=_('How many lexical categories to report (2 = Noun and Verb) ?')
         ui.Label(window.frame, text=text, column=0, row=0)
         r=[x for x in range(1,10)]
@@ -3137,7 +3156,7 @@ class Settings(object):
         buttonFrame1.wait_window(window)
     def getmaxprofiles(self,event=None):
         title=_('Select Maximum Number of Syllable Profiles')
-        window=ui.Window(self.program.task, title=title)
+        window=ui.Window(self.program.task.ui, title=title)
         text=_('How many syllable profiles to report?')
         ui.Label(window.frame, text=text, column=0, row=0)
         r=[x for x in range(1,10)]
@@ -3407,7 +3426,7 @@ class Settings(object):
             {'code':1000,'name':_("1000 - All examples in VERY large databases")}
                         ]
         title=_('Select Number of Examples per Group to Record')
-        window=ui.Window(self.program.task, title=title)
+        window=ui.Window(self.program.task.ui, title=title)
         text=_("The {name} tone report splits sorted data into "
                 "draft underlying tone melody groups. "
                 # ", with distinct values for each of your tone frames. This "

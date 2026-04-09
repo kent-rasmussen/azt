@@ -630,8 +630,7 @@ class Renderer():
         w, h = self.gettextsize(draw, text, font, fspacing)
         textori=text
         lines=textori.split('\n') #get everything between manual linebreaks
-        for line in lines:
-            li=lines.index(line)
+        for n,line in enumerate(lines):
             words=line.split(' ') #split by words/spaces
             nl=x=y=0
             while y < len(words):
@@ -645,7 +644,7 @@ class Renderer():
                     x=y-1
                     nl+=1
             line=' '.join(words) #Join back words
-            lines[li]=line
+            lines[n]=line
         text='\n'.join(lines) #join back sections between manual linebreaks
         w, h = self.gettextsize(draw, text, font, fspacing)
         black = 'rgb(0, 0, 0)'
@@ -819,6 +818,76 @@ class Gridded():
             #     print("Target Text:",self.text)
             # except:
             #     print(f"no target Text ({self}; source: {source.text})")
+    @staticmethod
+    def _padstoint(p):
+        """Pads can be expressed as integers or (before,after) tuples"""
+        if str(p) == '1m':
+            return 5
+        try:
+            return int(str(p))*2
+        except:
+            p=tuple(p)
+            return int(p[0])+int(p[-1])
+    @staticmethod
+    def _measure_siblings(w):
+        """Walk up grid tree, return total (width, height) of non-overlapping siblings."""
+        parentclasses=['Toplevel','Tk','Wait','Window','Root',
+                        'Canvas','ScrollingFrame']
+        otherwidth=0
+        otherheight=0
+        while True:
+            my_grid_info=w.grid_info()
+            if not my_grid_info:
+                return otherwidth, otherheight
+            try:
+                wrow=my_grid_info['row']
+            except KeyError:
+                log.error("Problem with grid on {} widget, with these siblings: {}"
+                            "".format(w.winfo_class(),w.parent.winfo_children()))
+                raise
+            wcol=my_grid_info['column']
+            wrows=set(range(wrow,wrow+my_grid_info['rowspan']))
+            wcols=set(range(wcol,wcol+my_grid_info['columnspan']))
+            rowheight={}
+            colwidth={}
+            for sib in w.parent.winfo_children():
+                if (sib.winfo_class() in parentclasses or
+                    sib.parent.winfo_class() in ['Canvas','ScrollingFrame']):
+                    continue
+                sib_grid_info=sib.grid_info()
+                if 'row' not in sib_grid_info:
+                    continue
+                sib_row=sib_grid_info['row']
+                sib_col=sib_grid_info['column']
+                sib_rows=set(range(sib_row,sib_row+sib_grid_info['rowspan']))
+                sib_cols=set(range(sib_col,sib_col+sib_grid_info['columnspan']))
+                if not (wrows & sib_rows): #non-overlapping row
+                    sib_reqheight=sib.winfo_reqheight()
+                    if sib_row not in rowheight or sib_reqheight > rowheight[sib_row]:
+                        rowheight[sib_row]=sib_reqheight
+                        if 'pady' in sib_grid_info:
+                            rowheight[sib_row]+=Gridded._padstoint(sib_grid_info['pady'])
+                if not (wcols & sib_cols): #non-overlapping column
+                    sib_reqwidth=sib.winfo_reqwidth()
+                    if sib_col not in colwidth or sib_reqwidth > colwidth[sib_col]:
+                        colwidth[sib_col]=sib_reqwidth
+                        if 'padx' in sib_grid_info:
+                            colwidth[sib_col]+=Gridded._padstoint(sib_grid_info['padx'])
+            otherheight+=sum(rowheight.values())
+            otherwidth+=sum(colwidth.values())
+            if hasattr(w.parent,'grid_info') and w.parent.grid_info():
+                w=w.parent
+            else:
+                return otherwidth, otherheight
+    def availablexy(self):
+        """Compute self.maxwidth/self.maxheight from available screen space."""
+        otherwidth, otherheight = self._measure_siblings(self)
+        titlebarHeight=50
+        borderSize=50
+        otherwidth+=borderSize*2
+        otherheight+=titlebarHeight+100
+        self.maxheight=self.winfo_screenheight()-otherheight
+        self.maxwidth=self.winfo_screenwidth()-otherwidth
     def __init__(self, *args, **kwargs):
         """this removes gridding kwargs from the widget calls"""
         self._grid=False
@@ -1344,7 +1413,7 @@ class Text(TextBase):
         if i and self.text:
             self.wrap()
     def wrap(self):
-        availablexy(self)
+        self.availablexy()
         if not hasattr(self,'wraplength'):
             wraplength=self.maxwidth
         else:
@@ -1433,7 +1502,7 @@ class Frame(Childof,Gridded,UI,tkinter.Frame):
             self.configured=0
         if self.configured>10:
             return
-        availablexy(self)
+        self.availablexy()
         contentrw=self.winfo_reqwidth()
         contentrh=self.winfo_reqheight()
         if ((self.winfo_width() < contentrw)
@@ -2089,7 +2158,7 @@ class ScrollingFrame(Frame):
         log.info("self.canvas.height={}, width={}\n".format(
                 self.canvas.winfo_height(), self.canvas.winfo_width()))
     def windowsize(self, event=None):
-        availablexy(self) #>self.maxheight, self.maxwidth
+        self.availablexy() #>self.maxheight, self.maxwidth
         """This section deals with the content on the canvas (self.content)!!
         This is how much space the contents of the scrolling canvas is asking
         for. We don't need the scrolling frame to be any bigger than this."""
@@ -2421,125 +2490,7 @@ class Wait(Window): #tkinter.Toplevel?
         except Exception as e:
             log.info(f"Wait window Exception: {e}")
 """unclassed functions"""
-def availablexy(self,w=None):
-    def padstoint(p):
-        """Pads can be expressed as integers or (before,after) tuples"""
-        if str(p) == '1m':
-            return 5
-        try:
-            r=int(str(p))*2
-        except:
-            # log.info(p)
-            p=tuple(p)
-            r=int(p[0])+int(p[-1])
-        # log.info("Returning pad {}".format(r))
-        return r
-    if w is None: #initialize a first run
-        w=self
-        self.otherrowheight=0
-        self.othercolwidth=0
-    parentclasses=['Toplevel','Tk','Wait','Window','Root',
-                    'Canvas',
-                    'ScrollingFrame']
-    my_grid_info=w.grid_info()
-    if not my_grid_info:
-        # (hasattr(w,'parent.parent') and
-        # hasattr(w.parent,'parent') and
-        # w.parent.parent.winfo_class() == ScrollingFrame):
-        return
-    try: #Any kind of error making a widget often shows up here
-        wrow=my_grid_info['row']
-    except KeyError:
-        log.error("Problem with grid on {} widget, with these siblings: {}"
-                    "".format(w.winfo_class(),w.parent.winfo_children()))
-        raise
-    wcol=my_grid_info['column']
-    wrowmax=wrow+my_grid_info['rowspan']
-    wcolmax=wcol+my_grid_info['columnspan']
-    wrows=set(range(wrow,wrowmax))
-    wcols=set(range(wcol,wcolmax))
-    log.log(2,'wrow: {}; wrowmax: {}; wrows: {}; wcol: {}; wcolmax: {}; '
-            'wcols: {} ({})'.format(wrow,wrowmax,wrows,wcol,wcolmax,wcols,w))
-    rowheight={}
-    colwidth={}
-    for sib in w.parent.winfo_children(): #one of these should be sufficient
-        if (sib.winfo_class() not in parentclasses and
-            sib.parent.winfo_class() not in ['Canvas','ScrollingFrame']):
-            sib_grid_info=sib.grid_info()
-            #had hasattr(w.parent,'grid_info'); why?
-            if 'row' in sib_grid_info:
-                sib_row=sib_grid_info['row']
-                sib_col=sib_grid_info['column']
-                sib_pady=sib_grid_info['pady']
-                sib_padx=sib_grid_info['padx']
-                # These are actual the row/col after the max in span,
-                # but this is what we want for range()
-                sib_rowmax=sib_row+sib_grid_info['rowspan']
-                sib_colmax=sib_col+sib_grid_info['columnspan']
-                sib_rows=set(range(sib_row,sib_rowmax))
-                sib_cols=set(range(sib_col,sib_colmax))
-                if (wrows & sib_rows) == set(): #the empty set
-                    sib_reqheight=sib.winfo_reqheight()
-                    # log.info("sib {} reqheight: {}".format(sib,sib.reqheight))
-                    # log.info("sib {} pady: {}".format(sib,sib.pady))
-                    # log.info("sib {} pady: {}".format(sib,padstoint(sib.pady)))
-                    """Give me the tallest cell in this row"""
-                    if ((sib_row not in rowheight) or (sib_reqheight >
-                                                            rowheight[sib_row])):
-                        rowheight[sib_row]=sib_reqheight
-                        if 'pady' in sib_grid_info:
-                            # log.info(rowheight[sib.row])
-                            # log.info(sib.reqheight)
-                            rowheight[sib_row]+=padstoint(sib_pady)
-                            # log.info(rowheight[sib.row])
-                if (wcols & sib_cols) == set(): #the empty set
-                    sib_reqwidth=sib.winfo_reqwidth()
-                    # log.info("sib {} width: {}".format(sib,sib.reqwidth))
-                    # log.info("sib {} padx: {}".format(sib,sib.padx))
-                    # log.info("sib {} padx: {}".format(sib,padstoint(sib.padx)))
-                    """Give me the widest cell in this column"""
-                    if ((sib_col not in colwidth) or (sib_reqwidth >
-                                                            colwidth[sib_col])):
-                        colwidth[sib_col]=sib_reqwidth
-                        if 'padx' in sib_grid_info:
-                            # log.info(colwidth[sib.col])
-                            # log.info(sib.reqwidth)
-                            colwidth[sib_col]+=padstoint(sib_padx)
-                            # log.info(colwidth[sib.col])
-    for row in rowheight:
-        self.otherrowheight+=rowheight[row]
-    for col in colwidth:
-        self.othercolwidth+=colwidth[col]
-    log.log(3,"self.othercolwidth: {}; self.otherrowheight: {}".format(
-                self.othercolwidth,self.otherrowheight))
-    log.log(3,"w.parent.winfo_class: {}".format(w.parent.winfo_class()))
-    if hasattr(w.parent,'grid_info') and w.parent.grid_info():
-        # winfo_class() not in parentclasses:
-        # if hasattr(w.parent,'grid_info'): #one of these should be sufficient
-            availablexy(self,w.parent)
-    else:
-        """This may not be the right way to do this, but this set of adjustments
-        puts the window edge widgets on the edge of the screen. This calculation
-        is done on the toplevel widget, after the above recursive function is
-        done across all the other widgets (so we just get window decoration)."""
-        titlebarHeight = 50 #not working: self.winfo_rooty() - self.winfo_y()
-        borderSize= 50 #not working: self.winfo_rootx() - self.winfo_x()
-        self.othercolwidth+=borderSize*2
-        self.otherrowheight+=titlebarHeight+100
-        self.maxheight=self.winfo_screenheight()-self.otherrowheight
-        self.maxwidth=self.winfo_screenwidth()-self.othercolwidth #+600
-        log.log(2,"self.winfo_rootx(): {}".format(self.winfo_rootx()))
-        log.log(2,"self.winfo_x(): {}".format(self.winfo_x()))
-        log.log(2,"titlebarHeight: {}".format(titlebarHeight))
-        log.log(2,"borderSize: {}".format(borderSize))
-    log.log(2,"height: {}; width: {}; self.maxheight: {}; self.maxwidth: {}"
-                "".format(
-                                self.parent.winfo_screenheight(),
-                                self.parent.winfo_screenwidth(),
-                                self.maxheight,
-                                self.maxwidth))
-    log.log(2,"cols: {}".format(colwidth))
-    log.log(2,"rows: {}".format(rowheight))
+
 def nfc(x):
     #This makes (pre)composed characters, e.g., vowel and accent in one
     return unicodedata.normalize('NFC', str(x))
