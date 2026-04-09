@@ -5,9 +5,8 @@ from utilities.i18n import _
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 from frontend import ui_tkinter as ui
-from utilities.utilities import exampletype
 from utilities import file, executables
-from io_put import lift, sound
+from io_put import sound
 
 class SortButtonFrame(ui.ScrollingFrame):
     """This is the frame of sort group buttons."""
@@ -261,33 +260,28 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         else:
             log.error("Not setting non-existant canary {canary}; ".format(canary=canary))
     def getexample(self,**kwargs):
-        kwargs=exampletype(**kwargs)
-        n,node=self.exs.getexample(self.group,**kwargs)
-        self.updatecount(n)
-        self.hasexample=node is not None
-        """now example.audiofileURL"""
-        if node is not None and node.audiofileisthere:
-            self._filenameURL=node.audiofileURL
-        else:
+        kwargs['showtonegroup']=self.kwargs.get('showtonegroup', False)
+        data=self.exs.get_button_data(self.group, **kwargs)
+        self.updatecount(data['count'])
+        self.hasexample='text' in data
+        if not self.hasexample:
             self._filenameURL=None
-        if node is None:
             log.error(_("SortGroupButtonFrame.getexample returned None for {group} {kwargs}").format(group=self.group, kwargs=kwargs))
             return
-        self._sense=node.sense
-        self._text=node.formatted(self.program.taskchooser.analang,
-                                    self.program.taskchooser.glosslangs,
-                                    ftype=self.program.params.ftype(),
-                                    frame=self.program.toneframes.get(
-                                                self.program.params.check()),
-                                    showtonegroup=self.kwargs['showtonegroup'])
-        iuri = self._sense.illustrationURI()
-        if iuri in self.theme.image_cache:
-            self._sense.image = self.theme.image_cache[iuri]
-        elif iv:=self._sense.illustrationvalue():
-            self._sense.image = ui.Image(iv)
-        else:
-            self._illustration=None
-        if self._sense.image and self._sense.image.base_img: #base_img is None if image failed to load
+        self._filenameURL=data['audio_url']
+        self._sense=data['sense']
+        self._text=data['text']
+        self._illustration=None
+        if self._sense is None:
+            return 1
+        iuri=self._sense.illustrationURI()
+        if not self._sense.image or not self._sense.image.base_img:
+            #don't reload images unnecessarily; base_img is None if image failed to load
+            if iuri in self.theme.image_cache:
+                self._sense.image=self.theme.image_cache[iuri]
+            elif iuri:
+                self._sense.image=ui.Image(iuri)
+        if self._sense.image and self._sense.image.base_img:
             self._sense.image.scale(self.program.scale, pixels=65, scaleto='height')
             self._illustration=self._sense.image.scaled
         return 1

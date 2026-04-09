@@ -273,6 +273,26 @@ class ExampleDict(dict):
             node=nodes[0]
         self[code]=node #store for next iteration
         return len(nodes),node #self._outdict
+    def get_button_data(self, group, **kwargs):
+        """Return display data for a sort button, or None if no example.
+        Keeps LIFT node traversal and text formatting in the backend."""
+        kwargs=exampletype(**kwargs)
+        n, node = self.getexample(group, **kwargs)
+        if node is None:
+            return {'count': n}
+        text = node.formatted(
+            self.program.params.analang(),
+            self.program.settings.glosslangs,
+            ftype=self.program.params.ftype(),
+            frame=self.program.toneframes.get(
+                        self.program.params.check()),
+            showtonegroup=kwargs.get('showtonegroup', False))
+        return {
+            'count': n,
+            'text': text,
+            'audio_url': node.audiofileURL if node.audiofileisthere else None,
+            'sense': node.sense,
+        }
     def __init__(self,program):
         super(ExampleDict, self).__init__({})
         self.nodes_by_code={}
