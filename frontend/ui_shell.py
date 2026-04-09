@@ -498,12 +498,11 @@ class StatusFrame(ui.Frame):
             parent=self.proseframe
             column=self.opts['labelcolumn']
             columnspan=self.opts['columnspan']
-            ipadx=self.opts['labelxpad']
         else:
             parent=kwargs.get('parent')
             column=parent.ncolumns() #just do the next in this line
             columnspan=1
-            ipadx=0
+        ipadx=0
         text=kwargs.get('text',kwargs.get('label'))
         if not self.mainrelief:
             l=ui.Label(parent, text=text,font='report',anchor='w')
@@ -624,8 +623,6 @@ class StatusFrame(ui.Frame):
             if not ps:
                 continue
             self.newrow()
-            line=ui.Frame(self.proseframe,row=self.irow,column=0,
-                            columnspan=3,sticky='w') #3 cols is the width of frame
             # These shouldn't need to be updated:
             if ps == self.program.settings.nominalps:
                 cmd=self.program.ui_settings.getsecondformfieldN
@@ -640,7 +637,6 @@ class StatusFrame(ui.Frame):
                             'text':self.program.settings.get_ui_var('fields'+ps+'_label', self.fieldslabel(ps)),
                             'columnplus':1,
                             'cmd':cmd,
-                            'parent':line,
                             'tt':_("change this field")}
             self.proselabel(**self.labels['fields'+ps])
     def updateprofile(self):
