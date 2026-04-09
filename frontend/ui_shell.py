@@ -535,6 +535,8 @@ class StatusFrame(ui.Frame):
             self.proseframe.destroy()
         self.proseframe=ui.Frame(self,row=0,column=0,sticky='nw')
     def updateinterfacelang(self):
+        if 'interfacelang' not in self.labels:
+            return
         self.labels['interfacelang']['text'].set(self.interfacelanglabel())
     def interfacelanglabel(self):
         # for l in self.program.taskchooser.interfacelangs:
@@ -549,6 +551,8 @@ class StatusFrame(ui.Frame):
                         'tt':_("change the interface language")}
         self.proselabel(**self.labels['interfacelang'])
     def updateanalang(self):
+        if 'analangline' not in self.labels:
+            return
         self.labels['analangline']['text'].set(self.analanglabel())
     def analanglabel(self):
         analang=self.program.params.analang()
@@ -569,6 +573,8 @@ class StatusFrame(ui.Frame):
                                 'tt':tt}
         self.proselabel(**self.labels['analangline'])
     def updateglosslangs(self):
+        if 'glosslang' not in self.labels:
+            return
         self.labels['glosslang']['text'].set(self.glosslanglabel())
         self.labels['glosslang2']['text'].set(self.glosslanglabel2())
     def glosslanglabel(self):
@@ -638,6 +644,8 @@ class StatusFrame(ui.Frame):
                             'tt':_("change this field")}
             self.proselabel(**self.labels['fields'+ps])
     def updateprofile(self):
+        if 'profile' not in self.labels:
+            return
         self.labels['profile']['text'].set(self.profilelabel())
         self.labels['ps']['text'].set(self.pslabel())
     def profilelabel(self):
@@ -646,6 +654,8 @@ class StatusFrame(ui.Frame):
             profile=_("<no syllable profile>")
         return (_("Looking at {profile}").format(profile=profile))
     def updateps(self):
+        if 'ps' not in self.labels:
+            return
         self.labels['ps']['text'].set(self.pslabel())
         self.makesliceattrs()
         self.maybeboard()
@@ -673,6 +683,8 @@ class StatusFrame(ui.Frame):
                                 'tt':_("change this grammatical category")}
         self.proselabel(**self.labels['ps'])
     def updatecvt(self):
+        if 'cvt' not in self.labels:
+            return
         self.labels['cvt']['text'].set(self.cvtlabel())
         self.makesliceattrs()
         self.maybeboard()
@@ -697,6 +709,8 @@ class StatusFrame(ui.Frame):
             self.cvcheck(line)
             self.cvgroup(line)
     def updatetoneframe(self):
+        if 'toneframe' not in self.labels:
+            return
         self.labels['toneframe']['text'].set(self.toneframelabel())
     def toneframelabel(self):
         """this label follows a comma, so no caps"""
@@ -720,6 +734,8 @@ class StatusFrame(ui.Frame):
                                 'tt':_("change this tone frame")}
         self.proselabel(**self.labels['toneframe'])
     def updatetonegroup(self):
+        if 'tonegroup' not in self.labels:
+            return
         self.labels['tonegroup']['text'].set(self.tonegrouplabel())
     def tonegrouplabel(self):
         if None in [self.program.params.check(), self.program.status.group()]:
@@ -754,6 +770,8 @@ class StatusFrame(ui.Frame):
                                 'tt':_("change this check")}
         self.proselabel(**self.labels['tonegroup'])
     def updatecvcheck(self):
+        if 'cvcheck' not in self.labels:
+            return
         self.labels['cvcheck']['text'].set(self.cvchecklabel())
     def cvchecklabel(self):
         return (_("working on {check}").format(check=self.program.params.cvcheckname()))
@@ -765,6 +783,8 @@ class StatusFrame(ui.Frame):
                                 'tt':_("change this check")}
         self.proselabel(**self.labels['cvcheck'])
     def updatecvgroup(self):
+        if 'cvgroup' not in self.labels:
+            return
         self.labels['cvgroup']['text'].set(self.cvgrouplabel())
     def cvgrouplabel(self):
         if not self.program.params.check() or 'x' in self.program.params.check():
@@ -784,6 +804,8 @@ class StatusFrame(ui.Frame):
                                 }
         self.proselabel(**self.labels['cvgroup'])
     def updatebuttoncolumns(self):
+        if 'buttoncolumns' not in self.labels:
+            return
         self.labels['buttoncolumns']['text'].set(self.buttoncolumnslabel())
     def buttoncolumnslabel(self):
         b=self.program.settings.buttoncolumns
@@ -801,10 +823,14 @@ class StatusFrame(ui.Frame):
                                 'tt':tt}
         self.proselabel(**self.labels['buttoncolumns'])
     def updatemaxprofiles(self):
+        if 'maxes' not in self.labels:
+            return
         self.labels['maxes']['text'].set(self.maxprofileslabel())
     def maxprofileslabel(self):
         return (_("Max profiles: {max_profiles}; ").format(max_profiles=self.program.settings.maxprofiles))
     def updatemaxpss(self):
+        if 'maxes' not in self.labels:
+            return
         self.labels['maxes']['text'].set(self.maxpsslabel())
     def maxpsslabel(self):
         return (_("Max lexical categories: {max_pss}").format(max_pss=self.program.settings.maxpss))
@@ -827,6 +853,8 @@ class StatusFrame(ui.Frame):
                                 'tt':_("change this check")}
         self.proselabel(**self.labels['maxpss'])
     def updatemulticheckscope(self):
+        if 'cvgroup' not in self.labels:
+            return
         self.labels['cvgroup']['text'].set(self.multicheckscopelabel())
     def multicheckscopelabel(self):
         t=(_("Run all checks for {checks}").format(checks=unlist(self.program.ui_settings.cvtstodoprose())))
@@ -844,6 +872,8 @@ class StatusFrame(ui.Frame):
                         'tt':_("change this check")}
         self.proselabel(**self.labels['multicheckscope'])
     def updateparserasklevel(self):
+        if 'parserasklevel' not in self.labels:
+            return
         self.labels['parserasklevel']['text'].set(self.parserasklevellabel())
     def parserasklevellabel(self):
         try:
@@ -853,6 +883,8 @@ class StatusFrame(ui.Frame):
             log.info(f"Error loading parser levels: {e}")
             return
     def updateparserautolevel(self):
+        if 'parserautolevel' not in self.labels:
+            return
         self.labels['parserautolevel']['text'].set(self.parserautolevellabel())
     def parserautolevellabel(self):
         try:
@@ -883,6 +915,8 @@ class StatusFrame(ui.Frame):
                         'tt':_("change this auto parse level")}
         self.proselabel(**self.labels['parserautolevel'])
     def updatesensetodo(self):
+        if 'sensetodo' not in self.labels:
+            return
         self.labels['sensetodo']['text'].set(self.sensetodolabel())
     def sensetodolabel(self):
         t=self.program.task
