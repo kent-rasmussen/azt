@@ -737,11 +737,12 @@ class Settings(SettingsUI):
         if not hasattr(self,'verbalps'): #don't leave without something
             self.verbalps='Verb'
     def pss(self):
-        if hasattr(self,'nominalps'):
+        nones=[None,'','None','null','Null']
+        if getattr(self,'nominalps',None) not in nones:
             log.info(_("Found nominal ps {ps} in settings").format(ps=self.nominalps))
         else:
             self.guess_nominalps()
-        if hasattr(self,'verbalps'):
+        if getattr(self,'verbalps',None) not in nones:
             log.info(_("Found verbal ps {ps} in settings").format(ps=self.verbalps))
         else:
             self.guess_verbalps()
