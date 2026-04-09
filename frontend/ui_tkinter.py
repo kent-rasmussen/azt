@@ -822,7 +822,7 @@ class Gridded():
     def __init__(self, *args, **kwargs):
         """this removes gridding kwargs from the widget calls"""
         self._grid=False
-        if bool(set(kwargs) & (self.gridkwargs)):
+        if any(k in self.gridkwargs for k in kwargs):
             self._grid=True
             self.sticky=kwargs.pop('sticky',"ew")
             self.row=kwargs.pop('row',kwargs.pop('r',0))
@@ -865,14 +865,15 @@ class UI():
     def post_tk_init(self):
         """Here we want to use explicit values where present; otherwise the
         theme value"""
+        my_keys=set(self.keys())
         for a in self.backgrounds:
-            if a in self.keys(): #only set where appropriate
+            if a in my_keys: #only set where appropriate
                 self[a]=getattr(self,'background',self.theme.background)
         for a in self.pads:
-            if a in self.keys() and hasattr(self.theme,a):
+            if a in my_keys and hasattr(self.theme,a):
                 self[a]=getattr(self,a,getattr(self.theme,a))
         for a in self.active_color:
-            if a in self.keys():
+            if a in my_keys:
                 self[a]=getattr(self,'activebackground',
                                 self.theme.activebackground)
         if self.withdrawn:
@@ -1074,28 +1075,31 @@ class Image(): #PIL.ImageTk.PhotoImage is for display
             right=left+scaled_pixels
         self.scaled.crop([ left, upper, right, lower])
     def transparent(self):
-        log.info("Not running transparent")
+        """WIP/transitional: make white pixels transparent.
+        Two incomplete approaches below (tkinter.PhotoImage pixel loop and
+        PIL putdata) are kept as reference for finishing this later.
+        Neither works yet — the pixel loop has a bug (== instead of
+        assignment in .put), and the putdata version references undefined
+        'datas'.
+        """
         return
-        tkinter.PhotoImage(file=self.filename)
-        self.transparency=tkinter.PhotoImage(file=self.filename)
-        log.info(f"self.transparency type: {type(self.transparency)}")
-        log.info(f"self.transparency width: {self.transparency.width()}")
-        log.info(f"self.transparency height: {self.transparency.height()}")
-        for x in range(self.transparency.width()):
-            for y in range(self.transparency.height()):
-                if self.transparency.get(x,y) == (255,255,255):
-                    self.transparency.put(x,y) == (0,0,0)
-                # log.info(f"{x},{y} pixel: {self.transparency.get(x,y)}")
-        return
-        newData = []
-        for item in datas:
-            if item[0] == 255 and item[1] == 255 and item[2] == 255:
-                # replacing it with a transparent value
-                newData.append((255, 255, 255, 0))
-            else:
-                newData.append(item)
-        self.transparency.putdata(newData)
-        return self.transparency
+        # Approach 1: tkinter.PhotoImage per-pixel (slow, buggy)
+        # tkinter.PhotoImage(file=self.filename)
+        # self.transparency=tkinter.PhotoImage(file=self.filename)
+        # for x in range(self.transparency.width()):
+        #     for y in range(self.transparency.height()):
+        #         if self.transparency.get(x,y) == (255,255,255):
+        #             self.transparency.put(x,y) == (0,0,0)  # BUG: == not =
+        # return
+        # Approach 2: PIL putdata (needs 'datas' from somewhere)
+        # newData = []
+        # for item in datas:
+        #     if item[0] == 255 and item[1] == 255 and item[2] == 255:
+        #         newData.append((255, 255, 255, 0))
+        #     else:
+        #         newData.append(item)
+        # self.transparency.putdata(newData)
+        # return self.transparency
     def __init__(self,filename):
         """This class uses three different images:
         self.base_img: the original image as loaded from file (PIL.Image.Image)
@@ -1113,6 +1117,8 @@ class Image(): #PIL.ImageTk.PhotoImage is for display
                 self.base_img.load()
         except Exception as e:
             log.error(f"Exception opening image {filename}: {e}")
+            self.base_img=None
+            return
         # try:
         #     PIL.ImageTk.PhotoImage.__init__(self.base_img)
         # except tkinter.TclError as e:
@@ -1396,7 +1402,7 @@ class Text(TextBase):
                 self.image_scaleto in ['both','height','width']):
                 img_kwargs['scaleto']=self.image_scaleto
             self.image=self.image.scale(
-                        self.theme.scale, #obligatory, non-kwarg
+                        self.theme.program.scale, #obligatory, non-kwarg
                         **img_kwargs
                         ) #tk ready
         elif isinstance(self.image,Image):
@@ -1661,58 +1667,42 @@ class ListBox(Childof,Gridded,UI,tkinter.Listbox): #TextBase?
         super().__init__(parent, *args, **kwargs)
         self.post_tk_init()
 class SearchableComboBox(Childof,Gridded,Text,UI):
-    """Adapted from https://coderslegacy.com/searchable-combobox-in-tkinter/"""
+    """NOT FUNCTIONAL — pasted from coderslegacy.com, never adapted.
+    Original uses bare tk.* references and a global 'root' that don't
+    exist here. Kept as a starting point; needs a full rewrite to use
+    this module's widget classes and parent/inherit pattern before use.
+    See https://coderslegacy.com/searchable-combobox-in-tkinter/
+    """
     def post_tk_init(self):
         super().post_tk_init()
-    def __init__(self, options) -> None:
-        self.dropdown_id = None
-        self.options = options
-        # Create a Text widget for the entry field
-        wrapper = tk.Frame(root)
-        wrapper.pack()
-
-        self.entry = tk.Entry(wrapper, width=24)
-        self.entry.bind("<KeyRelease>", self.on_entry_key)
-        self.entry.bind("<FocusIn>", self.show_dropdown)
-        self.entry.pack(side=tk.LEFT)
-
-        # Dropdown icon/button
-        self.icon = ImageTk.PhotoImage(Image.open("dropdown_arrow.png").resize((16,16)))
-        tk.Button(wrapper, image=self.icon, command=self.show_dropdown).pack(side=tk.LEFT)
-
-        # Create a Listbox widget for the dropdown menu
-        self.listbox = tk.Listbox(root, height=5, width=30)
-        self.listbox.bind("<<ListboxSelect>>", self.on_select)
-        for option in self.options:
-            self.listbox.insert(tk.END, option)
-        self.show_at_least_n=3
+    def __init__(self, parent, options, **kwargs):
+        raise NotImplementedError(
+            "SearchableComboBox is not yet adapted for this project. "
+            "Use Combobox instead.")
     def on_entry_key(self, event):
-        if len(self) <= self.show_at_least_n:
+        if len(self.options) <= self.show_at_least_n:
             return
         typed_value = event.widget.get().strip().lower()
         if not typed_value:
-            # If the entry is empty, display all options
-            self.listbox.delete(0, tk.END)
+            self.listbox.delete(0, END)
             for option in self.options:
-                self.listbox.insert(tk.END, option)
+                self.listbox.insert(END, option)
         else:
-            # Filter options based on the typed value
-            self.listbox.delete(0, tk.END)
+            self.listbox.delete(0, END)
             filtered_options = [option for option in self.options if option.lower().startswith(typed_value)]
             for option in filtered_options:
-                self.listbox.insert(tk.END, option)
+                self.listbox.insert(END, option)
         self.show_dropdown()
     def on_select(self, event):
         selected_index = self.listbox.curselection()
         if selected_index:
             selected_option = self.listbox.get(selected_index)
-            self.entry.delete(0, tk.END)
+            self.entry.delete(0, END)
             self.entry.insert(0, selected_option)
     def show_dropdown(self, event=None):
         self.listbox.place(in_=self.entry, x=0, rely=1, relwidth=1.0, anchor="nw")
         self.listbox.lift()
-        # Show dropdown for 2 seconds
-        if self.dropdown_id: # Cancel any old events
+        if self.dropdown_id:
             self.listbox.after_cancel(self.dropdown_id)
         self.dropdown_id = self.listbox.after(2000, self.hide_dropdown)
     def hide_dropdown(self):
@@ -2200,8 +2190,8 @@ class ScrollingFrame(Frame):
                                             )
         yscrollbar = Scrollbar(self, row=0, column=1)
         """Should decide some day which we want when..."""
-        self.yscrollbarwidth=50 #make the scrollbars big!
-        self.yscrollbarwidth=0 #make the scrollbars invisible (use wheel)
+        # self.yscrollbarwidth=50 #make the scrollbars big!
+        # self.yscrollbarwidth=0 #make the scrollbars invisible (use wheel)
         self.yscrollbarwidth=15 #make the scrollbars useable, but not obnoxious
         yscrollbar.config(width=self.yscrollbarwidth)
         self.canvas = tkinter.Canvas(self)
@@ -2449,22 +2439,23 @@ def availablexy(self,w=None):
         self.otherrowheight=0
         self.othercolwidth=0
     parentclasses=['Toplevel','Tk','Wait','Window','Root',
-                    tkinter.Canvas,
+                    'Canvas',
                     'ScrollingFrame']
-    if not w.grid_info():
+    my_grid_info=w.grid_info()
+    if not my_grid_info:
         # (hasattr(w,'parent.parent') and
         # hasattr(w.parent,'parent') and
         # w.parent.parent.winfo_class() == ScrollingFrame):
         return
     try: #Any kind of error making a widget often shows up here
-        wrow=w.grid_info()['row']
+        wrow=my_grid_info['row']
     except KeyError:
         log.error("Problem with grid on {} widget, with these siblings: {}"
                     "".format(w.winfo_class(),w.parent.winfo_children()))
         raise
-    wcol=w.grid_info()['column']
-    wrowmax=wrow+w.grid_info()['rowspan']
-    wcolmax=wcol+w.grid_info()['columnspan']
+    wcol=my_grid_info['column']
+    wrowmax=wrow+my_grid_info['rowspan']
+    wcolmax=wcol+my_grid_info['columnspan']
     wrows=set(range(wrow,wrowmax))
     wcols=set(range(wcol,wcolmax))
     log.log(2,'wrow: {}; wrowmax: {}; wrows: {}; wcol: {}; wcolmax: {}; '
@@ -2473,45 +2464,47 @@ def availablexy(self,w=None):
     colwidth={}
     for sib in w.parent.winfo_children(): #one of these should be sufficient
         if (sib.winfo_class() not in parentclasses and
-            sib.parent.winfo_class() not in [tkinter.Canvas,'ScrollingFrame']):
-            if hasattr(w.parent,'grid_info') and 'row' in sib.grid_info():
-                sib.row=sib.grid_info()['row']
-                sib.col=sib.grid_info()['column']
-                sib.pady=sib.grid_info()['pady']
-                sib.padx=sib.grid_info()['padx']
+            sib.parent.winfo_class() not in ['Canvas','ScrollingFrame']):
+            sib_grid_info=sib.grid_info()
+            #had hasattr(w.parent,'grid_info'); why?
+            if 'row' in sib_grid_info:
+                sib_row=sib_grid_info['row']
+                sib_col=sib_grid_info['column']
+                sib_pady=sib_grid_info['pady']
+                sib_padx=sib_grid_info['padx']
                 # These are actual the row/col after the max in span,
                 # but this is what we want for range()
-                sib.rowmax=sib.row+sib.grid_info()['rowspan']
-                sib.colmax=sib.col+sib.grid_info()['columnspan']
-                sib.rows=set(range(sib.row,sib.rowmax))
-                sib.cols=set(range(sib.col,sib.colmax))
-                if wrows & sib.rows == set(): #the empty set
-                    sib.reqheight=sib.winfo_reqheight()
+                sib_rowmax=sib_row+sib_grid_info['rowspan']
+                sib_colmax=sib_col+sib_grid_info['columnspan']
+                sib_rows=set(range(sib_row,sib_rowmax))
+                sib_cols=set(range(sib_col,sib_colmax))
+                if (wrows & sib_rows) == set(): #the empty set
+                    sib_reqheight=sib.winfo_reqheight()
                     # log.info("sib {} reqheight: {}".format(sib,sib.reqheight))
                     # log.info("sib {} pady: {}".format(sib,sib.pady))
                     # log.info("sib {} pady: {}".format(sib,padstoint(sib.pady)))
                     """Give me the tallest cell in this row"""
-                    if ((sib.row not in rowheight) or (sib.reqheight >
-                                                            rowheight[sib.row])):
-                        rowheight[sib.row]=sib.reqheight
-                        if 'pady' in sib.grid_info():
+                    if ((sib_row not in rowheight) or (sib_reqheight >
+                                                            rowheight[sib_row])):
+                        rowheight[sib_row]=sib_reqheight
+                        if 'pady' in sib_grid_info:
                             # log.info(rowheight[sib.row])
                             # log.info(sib.reqheight)
-                            rowheight[sib.row]+=padstoint(sib.pady)
+                            rowheight[sib_row]+=padstoint(sib_pady)
                             # log.info(rowheight[sib.row])
-                if wcols & sib.cols == set(): #the empty set
-                    sib.reqwidth=sib.winfo_reqwidth()
+                if (wcols & sib_cols) == set(): #the empty set
+                    sib_reqwidth=sib.winfo_reqwidth()
                     # log.info("sib {} width: {}".format(sib,sib.reqwidth))
                     # log.info("sib {} padx: {}".format(sib,sib.padx))
                     # log.info("sib {} padx: {}".format(sib,padstoint(sib.padx)))
                     """Give me the widest cell in this column"""
-                    if ((sib.col not in colwidth) or (sib.reqwidth >
-                                                            colwidth[sib.col])):
-                        colwidth[sib.col]=sib.reqwidth
-                        if 'padx' in sib.grid_info():
+                    if ((sib_col not in colwidth) or (sib_reqwidth >
+                                                            colwidth[sib_col])):
+                        colwidth[sib_col]=sib_reqwidth
+                        if 'padx' in sib_grid_info:
                             # log.info(colwidth[sib.col])
                             # log.info(sib.reqwidth)
-                            colwidth[sib.col]+=padstoint(sib.padx)
+                            colwidth[sib_col]+=padstoint(sib_padx)
                             # log.info(colwidth[sib.col])
     for row in rowheight:
         self.otherrowheight+=rowheight[row]
