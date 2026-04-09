@@ -260,11 +260,6 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             self.canary=canary
         else:
             log.error("Not setting non-existant canary {canary}; ".format(canary=canary))
-    def getsenseofnode(self,node):
-        if isinstance(node,lift.Example): #direct descendance
-            self._sense=node.sense
-        elif isinstance(node.parent,lift.Entry): #sibling of sense
-            self._sense=node.parent.sense
     def getexample(self,**kwargs):
         kwargs=exampletype(**kwargs)
         n,node=self.exs.getexample(self.group,**kwargs)
@@ -278,23 +273,23 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         if node is None:
             log.error(_("SortGroupButtonFrame.getexample returned None for {group} {kwargs}").format(group=self.group, kwargs=kwargs))
             return
-        self.getsenseofnode(node)
+        self._sense=node.sense
         self._text=node.formatted(self.program.taskchooser.analang,
                                     self.program.taskchooser.glosslangs,
                                     ftype=self.program.params.ftype(),
                                     frame=self.program.toneframes.get(
                                                 self.program.params.check()),
                                     showtonegroup=self.kwargs['showtonegroup'])
-        iuri = node.sense.illustrationURI()
+        iuri = self._sense.illustrationURI()
         if iuri in self.theme.image_cache:
-            node.sense.image = self.theme.image_cache[iuri]
-        elif iv:=node.sense.illustrationvalue():
-            node.sense.image = ui.Image(iv)
+            self._sense.image = self.theme.image_cache[iuri]
+        elif iv:=self._sense.illustrationvalue():
+            self._sense.image = ui.Image(iv)
         else:
             self._illustration=None
-        if node.sense.image and node.sense.image.base_img: #base_img is None if image failed to load
-            node.sense.image.scale(self.program.scale, pixels=65, scaleto='height')
-            self._illustration=node.sense.image.scaled
+        if self._sense.image and self._sense.image.base_img: #base_img is None if image failed to load
+            self._sense.image.scale(self.program.scale, pixels=65, scaleto='height')
+            self._illustration=self._sense.image.scaled
         return 1
     def makebuttons(self):
         # log.info(f"Making buttons with {self.kwargs=}")
