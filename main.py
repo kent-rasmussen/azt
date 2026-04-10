@@ -354,6 +354,7 @@ class App:
             screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
             log.info(_("MS Windows screen size: {size}").format(size=screensize))
         self.prep_to_write()
+        langtags.Languages(self)
         self.get_lift_file() #self.filename, self.analang set here, LiftChooser
         self.splash = Splash(self)
         FileParser(self) #needs self.filename, pick up self.analang from file
