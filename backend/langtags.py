@@ -12,7 +12,6 @@ import urllib.request #as request
 import copy
 log=logsetup.getlog(__name__)
 logsetup.setlevel('DEBUG',log) #for this file
-log.info(f"Importing {__name__}")
 # import language_data #optional, for stats and names
 """Users should be able to type in the name of their language as they
 know/understand it, without knowing the iso or other codes. Based on what they

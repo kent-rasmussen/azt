@@ -4,7 +4,6 @@ from xml.etree import ElementTree as ET
 from utilities import logsetup
 #This should not be imported with from xmletfns import *
 log=logsetup.getlog(__name__)
-log.info(f"Importing {__name__}")
 from utilities import file
 import urllib.parse
 import datetime

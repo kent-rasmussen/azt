@@ -5,7 +5,6 @@
 from utilities import logsetup,rx
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
-log.info(f"Importing {__name__}")
 import time
 import collections
 import difflib

@@ -5,7 +5,6 @@ import os, sys
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
-log.info(f"Importing {__name__}")
 from utilities import file
 from io_put import lift, alphabet_chart_pdf
 from frontend import ui_tkinter as ui

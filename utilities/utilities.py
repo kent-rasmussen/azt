@@ -271,7 +271,6 @@ if __name__ == '__main__':
     from utilities import logsetup
     log=logsetup.getlog(__name__)
     logsetup.setlevel('DEBUG',log) #for this file
-    log.info(f"Importing {__name__}")
 
 
 """Function Decorators"""

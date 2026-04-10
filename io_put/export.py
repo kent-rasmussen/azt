@@ -3,7 +3,6 @@
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('DEBUG',log) #for this file
-log.info(f"Importing {__name__}")
 from utilities import file
 class Exporter(object):
     """This class contains most of what is needed to pull data out of lift
