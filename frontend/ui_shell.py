@@ -2326,6 +2326,11 @@ class LiftChooser(ui.Window,HasMenus):
         except:
             pass
     def show_possibles(self,*args):
+        try:
+            self._show_possibles()
+        except Exception as e:
+            log.error(f"show_possibles failed: {e}", exc_info=True)
+    def _show_possibles(self):
         value=self.analang_entry.get()
         log.info(f"Updating Possibles for '{value}'")
         self.entry_field.configure(width=max(10,len(value)))
@@ -2379,7 +2384,6 @@ class LiftChooser(ui.Window,HasMenus):
         self.list_of_possibles.grid_remove()
         self.show_subtag_frames()
     def update_code(self,*args):
-        log.info(f"Updating code {self.iso=}")
         if not self.iso:
             self.code_label.grid_remove()
             self.use_code_button.grid_remove()
@@ -2395,6 +2399,7 @@ class LiftChooser(ui.Window,HasMenus):
         self.code_label.grid()
         self.use_code_button.grid()
         self.check_tag_validity()
+        log.info(f"Code now {self.code=}")
     def show_private_use(self,event=None):
         """The user needs to ask to see this field"""
         self.show_private_w.grid_remove()
@@ -2463,7 +2468,6 @@ class LiftChooser(ui.Window,HasMenus):
             self.territory_frame.destroy()
         self.use_code_button.grid()
     def check_tag_validity(self):
-        log.info("check_tag_validity")
         for code in [langtags.tone_code,
                     langtags.phonetic_code,
                     langtags.audio_code]:
@@ -2478,6 +2482,11 @@ class LiftChooser(ui.Window,HasMenus):
             # log.info(f"tag not valid {self.code=}")
             self.use_code_button.configure(state='disabled')
     def analang_code_complete(self):
+        try:
+            return self._analang_code_complete()
+        except Exception as e:
+            log.error(f"analang_code_complete failed: {e}", exc_info=True)
+    def _analang_code_complete(self):
         log.info("analang_code_complete")
         if not self.code:
             ErrorNotice(_("There doesn't seem to be an ethnologue code ({code})")
