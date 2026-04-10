@@ -1,8 +1,13 @@
 # coding=UTF-8
 from io_put.cawl import loadCAWL
 # include WordCollection.addCAWLentries
-from utilities import file
+from utilities.i18n import _
+from utilities import file,logsetup
 import langcodes
+from backend import langtags
+
+log=logsetup.getlog(__name__)
+logsetup.setlevel('INFO',log) #for this file
 
 class WordListTemplate():
     """
