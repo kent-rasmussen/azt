@@ -2293,7 +2293,6 @@ class LiftChooser(ui.Window,HasMenus):
             return self.analang_code_complete()
     def make_lang_entry(self):
         """This should be pulled into it's own class, so we can source it here and in sound_ui the same way."""
-        self.trace_analang_entry()
         self.entry_field=ui.EntryField(self.entryframe,
                                         text=self.analang_entry,
                                         font='normal',
@@ -2312,6 +2311,7 @@ class LiftChooser(ui.Window,HasMenus):
                                         sticky='w')
         self.entryframe.grid()
         self.entry_field.grid()
+        self.trace_analang_entry()
         self.entry_field.focus_set()
     def trace_analang_entry(self):
         # log.info("trace_analang_entry")
