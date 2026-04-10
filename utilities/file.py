@@ -130,6 +130,9 @@ def gettransformsdir():
 def exists(file):
     if file and os.path.exists(file):
         return True
+def exists_and_not_empty(dir):
+    if exists(dir) and len(getfilesofdirectory(dir)):
+        return True
 def rmdir(dir):
     os.rmdir(dir)
 def move(file,newfile):
@@ -154,8 +157,8 @@ def makedir(dir,**kwargs):
 def getnewlifturl(dir,xyz):
     dir=pathlib.Path(dir)
     dir=dir.joinpath(xyz)
-    if exists(dir):
-        return _("The directory {} already exists! Not Continuing.").format(dir)
+    if exists_and_not_empty(dir):
+        return _("The directory {} already exists and isn't empty! Not Continuing.").format(dir)
     else:
         dir.mkdir()
     url=dir.joinpath(xyz)
@@ -241,10 +244,7 @@ def getdirectory(title=None,home=None):
         return f
 def getfilesofdirectory(dir,regex='*'):
     # return pathlib.Path(dir).iterdir()
-    l=[]
-    for i in pathlib.Path(dir).glob(regex):
-        l.extend([i])
-    return l # we don't want a generator here
+    return [i for i in pathlib.Path(dir).glob(regex)]
 def makewritablebyeveryone(path):
     os.chmod(path,
             stat.S_IRUSR|stat.S_IWUSR|stat.S_IXUSR|
