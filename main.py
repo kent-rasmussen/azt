@@ -356,7 +356,6 @@ class App:
         self.prep_to_write()
         self.get_lift_file() #self.filename, self.analang set here, LiftChooser
         self.splash = Splash(self)
-        langtags.Languages(self)
         FileParser(self) #needs self.filename, pick up self.analang from file
         from frontend.vcs_ui import VCSPresenter
         from frontend.report_ui import ReportPresenter
