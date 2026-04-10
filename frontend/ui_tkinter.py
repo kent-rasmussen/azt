@@ -4,8 +4,8 @@ import gettext
 _ = gettext.gettext
 import sys,copy
 import platform
-from utilities import logsetup
 from utilities.times import now
+from utilities import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
 # logsetup.setlevel('DEBUG',log) #for this file
@@ -2479,10 +2479,10 @@ class Wait(Window): #tkinter.Toplevel?
                         row=2,column=0,sticky='we',padx=50,pady=50)
         if cancellable:
             self.make_cancellable()
-        log.info("Wait window appears")
+        # log.info("Wait window appears")
         try:
             self.deiconify() #show after the window is built
-            log.info("Wait window deiconified")
+            # log.info("Wait window deiconified")
             #for some reason this has to follow the above, or you get a blank window
             # self.update_idletasks() #updates just geometry
             log.info("Wait window creation done")
