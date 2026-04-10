@@ -280,16 +280,6 @@ def praatversioncheck(praat_exe):
     praatvargs=[praat_exe, '--version']
     try:
         versionraw=subprocess.check_output(praatvargs, shell=False)
-        #These lines could be used to see how a praat is outputting on a computer, where neither utf-8 nor uft-16.
-        # for encoding in ['utf-8', 'utf-16', sys.stdout.encoding]:
-        #     for errortag in ['backslashreplace','strict','ignore', 'replace']:
-        #         try:
-        #             log.info("{},{}.strip: {}".format(encoding, errortag,
-        #                         versionraw.decode(encoding, errortag).strip()))
-        #             log.info("{},{}: {}".format(encoding, errortag,
-        #                         versionraw.decode(encoding, errortag)))
-        #         except Exception as e:
-        #             log.info("{},{} error".format(encoding, errortag))
     except Exception as e:
         return True
     try:
@@ -297,7 +287,6 @@ def praatversioncheck(praat_exe):
             characters=versionraw.decode('utf-16')
         else:
             characters=stouttostr(versionraw)
-        # log.info("characters={}".format(characters))
         out=version.Version(parseversion(characters))
     except Exception as e:
         out=versionraw
