@@ -1708,7 +1708,6 @@ class ListBox(Childof,Gridded,UI,tkinter.Listbox): #TextBase?
         except:
             self['listvariable']=tkinter.Variable(value=self.optionlist)
         self.bind('<<ListboxSelect>>', self.command)
-        self.dogrid()
         super().post_tk_init()
     def __init__(self, parent, *args, **kwargs):
         """selectmode can be
