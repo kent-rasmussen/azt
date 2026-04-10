@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 """file is imported lazily inside functions to avoid circular import."""
-
+"""
+from utilities import logsetup
+log=logsetup.getlog(__name__)
+logsetup.setlevel('INFO',log) #for this file
+"""
 import logging
 import logging.handlers
 import tarfile
@@ -87,7 +91,7 @@ def writelzma(filename=None):
     from utilities import file as _file
     try:
         import lzma
-        log.debug("LZMA imported fine.")
+        pass
     except ImportError:
         log.error("LZMA import error.")
         from backports import lzma
@@ -114,28 +118,15 @@ def writelzma(filename=None):
             log.info(e)
     log.info("Compressed files: {}".format(f.getnames()))
     f.close()
-    """Probably can cut from here, once I see this is working on windows"""
     with open(filename,'r', encoding='utf-8') as d:
-        log.debug("Logfile {} opened.".format(filename))
         with lzma.open(compressedurl, "wt", encoding='utf-8') as f:
-            log.debug("LZMA file {} opened.".format(compressedurl))
             data=d.read()
-            log.debug("Logfile {} read (this and following will not be written "
-                    "to compressed log file).".format(filename))
             f.write(data)
-            log.debug("LZMA file {} written.".format(compressed))
             f.close()
-            log.debug("LZMA file {} closed.".format(compressed))
             d.close()
-            log.debug("Logfile {} closed (ready to return LZMA file).".format(
-                                                                    filename))
         with lzma.open(compressedurl) as ch:
             data2 = ch.read().decode("utf-8")
-            log.debug("LZMA file {} decompressed.".format(compressed))
             ch.close()
-        if data2 == data:
-            log.debug("Data before compression the same as after "
-                        "decompression.")
     return compressedurl
 log = logging.getLogger() #this is the root; set level with setlevel
 setlevel('INFO') #If not set elsewhere

@@ -2,8 +2,9 @@
 # coding=UTF-8
 import os
 import random
-import logging
 import platform
+from utilities import logsetup
+from utilities.i18n import _
 try:
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import A4, letter, landscape
@@ -17,9 +18,9 @@ try:
     REPORTLAB_AVAILABLE = True
 except ImportError:
     REPORTLAB_AVAILABLE = False
-    logging.getLogger(__name__).warning("ReportLab not installed. PDF generation will not work.")
 
-log = logging.getLogger(__name__)
+log = logsetup.getlog(__name__)
+logsetup.setlevel('INFO', log)
 
 # Re-use font registration logic from alphabet_chart_pdf.py
 if platform.system() == 'Windows':

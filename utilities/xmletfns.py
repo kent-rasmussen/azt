@@ -93,7 +93,6 @@ class XML(object): #fns called outside of this class call self.nodes here.
         """Problems reading a valid file are dealt with elsewhere"""
         try:
             self.read() #load and parse the XML file.
-            log.info(_("XML read OK"))
         except:
             raise BadParseError(self.filename)
         backupbits=[filename,'_',
@@ -103,7 +102,6 @@ class XML(object): #fns called outside of this class call self.nodes here.
         # self.diagnostics()
         log.info(_("XML initialization done."))
     def get(self, *args,**kwargs):
-        log.info(_("Using my get"))
         ET.get(self,*args,**kwargs)
     def diagnostics(self):
         prettyprint(self.nodes)
@@ -114,7 +112,6 @@ class XML(object): #fns called outside of this class call self.nodes here.
         self.tree,self.nodes=readxml(self.filename)
         # self.tree=ET.parse(self.filename)
         # self.nodes=self.tree.getroot()
-        log.info(_("Done reading XML file."))
         """This returns the root node of an ElementTree tree (the entire
         tree as nodes), to edit the XML."""
 if __name__ == '__main__':

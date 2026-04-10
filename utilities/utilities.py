@@ -39,14 +39,10 @@ def dictofchilddicts(dict,remove=None):
     # log.info("o2:{}".format(o))
     return o
 def flatten(l):
-    log.debug("list to flatten: {}".format(l))
     if type(l) is not list:
-        log.debug(_("{item} is not a list; returning nothing.").format(item=l))
-        return
+        return _("{item} is not a list!").format(item=l)
     if l == [] or type(l[0]) is not list:
-        log.debug(_("The first element of {list} is not a list; returning nothing."
-                    "").format(list=l))
-        return
+        return _("The first element of {list} is not a list!").format(list=l)
     return [i for j in l for i in j] #flatten list of lists
 def addxofytocorrectplaceinlistoflists(x,y,o):
     for k in o:
@@ -72,7 +68,7 @@ def addxofytolistoflists(x,y,o):
 def dictscompare(dicts,ignore=[],flat=True):
     keyswoignore=[k for k in dicts if dicts[k] not in ignore]
     if len(keyswoignore) <= 1:
-        log.debug(_("One or less dict: {dicts}; just returning key.").format(dicts=dicts))
+        # log.debug(_("One or less dict: {dicts}; just returning key.").format(dicts=dicts))
         return [keyswoignore] #This should be a list of lists
     l=dictscompare11(dicts,ignore=ignore)
     o=list([],)
@@ -155,9 +151,8 @@ def firstoflist(l,othersOK=False,all=False,ignore=[None]):
     elif len(l) == 1 or (othersOK == True):
         return l[0]
     elif othersOK == False: #(i.e., with `len(list) != 1`)
-        log.info(_('Sorry, something other than one list item found: {list}'
-                '\nDid you mean to use "othersOK=True"? Returning nothing!'
-                '').format(list=l))
+        return _('Sorry, something other than one list item found: {list}'
+                '\nDid you mean to use "othersOK=True"?').format(list=l)
 def t(element):
     if type(element) is str:
         return element
@@ -167,9 +162,9 @@ def t(element):
         try:
             return element.text
         except:
-            log.debug(_("Apparently you tried to pull text out of a non "
+            return _("Apparently you tried to pull text out of a non "
                         "element, and it's not a simple string, either: {element}"
-                        ).format(element=element))
+                        ).format(element=element)
 def nonspace(x):
     """Return a space instead of None (for the GUI)"""
     if x is not None:
@@ -195,8 +190,7 @@ def nn(x,perline=False,oneperline=False,twoperline=False):
     else:
         return nonspace(x)
 def donothing():
-    log.debug(_("Doing Nothing!"))
-    pass
+    return _("Doing Nothing!")
 def name(x):
     try:
         name=x.__name__ #If x is a function
@@ -240,7 +234,7 @@ def pathseparate(path):
     elif os == 'Linux':
         sep=':'
     else:
-        log.error(_("What operating system are you running? ({os})").format(os=os))
+        return _("I can't tell what operating system you're running ({os})!").format(os=os)
     return path.split(sep)
 def findpath():
     spargs={
@@ -253,10 +247,9 @@ def findpath():
         # CSIDL_DESKTOPDIRECTORY
         # CSIDL_DESKTOP
         #subprocess.check_output(['echo',"%PATH%"], **spargs)
-        log.info(_("PATH is {path}").format(path=path))
         return path
     except Exception as e:
-        log.info(_("No path found! ({error})").format(error=e))
+        return _("No path found! ({error})").format(error=e)
 def sysexecutableversion():
     # args=[program.python, '--version']
     args=[sys.executable, '--version']
@@ -268,60 +261,11 @@ def sysshutdown():
     sys.exit()
 def sysrestart(event=None):
     osys=platform.system()
-    log.info(_("Hard shutting down now."))
     logsetup.shutdown()
     if osys == 'Linux':
-        # log.info(f"restarting with {sys.argv[0]}?={program.python} ({sys.argv}?)")
-        # log.info(f"os.execl({sys.executable}, {sys.argv})")
         os.execl(sys.executable, sys.executable, *sys.argv, '--restart')
-        # log.info("Trying argv[0] with args {}, {} and {}".format(sys.executable,
-        #                                                         sys.argv[0],
-        #                                                         sys.argv))
-        # try:
-        #     log.info("Trying argv[0]")
-        #     os.execv(sys.argv[0], sys.argv)
-        # except Exception as e:
-        #     log.info("Failed ({}); Trying executable".format(e))
-        #     os.execv(sys.executable, sys.argv)
     elif osys == 'Windows':
-        # log.info("Trying subprocess.run with executable".format(e))
         subprocess.run([sys.executable, *sys.argv, '--restart'])
-        # log.info("Trying execv")
-        # # try:
-        # #     os.execv(sys.executable, sys.argv)
-        # # except Exception as e:
-        # # log.info("Failed ({}); Trying execl".format(e))
-        # # try:
-        # #     os.execl(sys.executable, sys.argv)
-        # # except Exception as e:
-        # try:
-        #     log.info("Trying os.execv sys.argv[0]")
-        #     os.execv(sys.argv[0], sys.argv)
-        #     # os.execvp(sys.executable, sys.argv)
-        # except Exception as e:
-        #     try:
-        #         log.info("Failed ({}); Trying execl".format(e))
-        #         os.execl(sys.argv[0], *sys.argv)
-        #     except Exception as e:
-        #         try:
-        #             log.info("Failed ({}); Trying spawnv".format(e))
-        #             os.spawnv(os.P_NOWAIT, sys.argv[0], sys.argv)
-        #         except Exception as e:
-        #             try:
-        #                 log.info("Failed ({}); Trying spawnl".format(e))
-        #                 os.spawnl(os.P_NOWAIT, sys.argv[0], *sys.argv)
-        #             except Exception as e:
-        #                 try:
-        #                     log.info("Failed ({}); Trying subprocess.run"
-        #                                 "".format(e))
-        #                     subprocess.run([*sys.argv])# also try run(sys.argv)
-        #                 except Exception as e:
-        #                     try:
-        #                         log.info("Failed ({}); Trying subprocess.run "
-        #                                     'with executable'.format(e))
-        #                         subprocess.run([sys.executable,*sys.argv])
-        #                     except Exception as e:
-        #                         log.info("Failed ({}); giving up.".format(e))
     sys.exit()
 if __name__ == '__main__':
     from utilities import logsetup
@@ -357,8 +301,7 @@ def tryrun(cmd):
     try:
         cmd()
     except Exception as e:
-        text=_("{} command error: {}\n({})").format(cmd.__name__,e,cmd)
-        log.error(text)
+        return _("{} command error: {}\n({})").format(cmd.__name__,e,cmd)
 def quote(x):
     #does this fail on non-string x?
     if isinstance(x,dict) or isinstance(x,int) or isinstance(x,list):
@@ -368,7 +311,7 @@ def quote(x):
     elif '"' not in x:
         return '"'+x+'"'
     else:
-        log.error(_("Returning None: Looks like ˋ{}ˊ contains single and double quotes!").format(x))
+        return _("ˋ{}ˊ contains single and double quotes!").format(x)
 def indenteddict(indict):
     outdict={}
     # log.info("working on dict with keys {}".format(indict.keys()))
@@ -412,12 +355,6 @@ def nesteddictadd1key(dict,key):
     return dict[key]
 def setnesteddictobjectval(object,dictname,val,*keys,addval=False):
     if not hasattr(object,dictname) or not getattr(object,dictname):
-        try:
-            log.info(_("The dictionary at {}.{} doesn't seem "
-                    "to exist, or is null; creating.").format(object,dictname))
-        except NameError:
-            print(_("The dictionary at {}.{} doesn't seem "
-                    "to exist, or is null; creating.").format(object,dictname))
         setattr(object,dictname,{})
     setnesteddictval(getattr(object,dictname),val,*keys,addval=addval)
 def setnesteddictval(dictionary,val,*keys,addval=False):
@@ -480,10 +417,8 @@ def open_file(path):
 def unlist(l, ignore=[None]):
     from io_put import lift
     if l and isinstance(l[0], lift.et.Element):
-        log.error(_("unlist should only be used on text (not node) lists ({list})"
-                    "").format(list=l))
-        log.error(_("Element[0] text: {text}").format(text=l[0].text))
-        return
+        return _("unlist should only be used on text (not node) lists ({list})\n"
+                "Element[0] text: {text}").format(list=l,text=l[0].text)
     return firstoflist(l, all=True, ignore=ignore)
 
 if __name__ == '__main__':

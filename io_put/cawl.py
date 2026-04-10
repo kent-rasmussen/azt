@@ -1,12 +1,12 @@
 # coding=UTF-8
 """CAWL (Comparative African Wordlist) loading utility, moved from main.py."""
-import logging
-from utilities import file
+from utilities import file, logsetup
 from utilities.i18n import _
 from io_put import lift
 # from utilities.error_handler import notify_error as ErrorNotice
 
-log = logging.getLogger(__name__)
+log = logsetup.getlog(__name__)
+logsetup.setlevel('INFO', log)
 
 def loadCAWL():
     stockCAWL=file.pathname_from_base_dir('lift_templates/SILCAWL/SILCAWL.lift')

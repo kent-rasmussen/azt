@@ -147,7 +147,6 @@ try:
     # Testing
     # from PyQt6.QtWidgets import QApplication
     import torch
-    log.info(_("All necessary modules imported fine."))
 except Exception as e:
     log.info('\n'.join(o))
     log.error(f"Exception: {e}")

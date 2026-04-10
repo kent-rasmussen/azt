@@ -46,7 +46,6 @@ class TranslationScraper(html.parser.HTMLParser):
     def handle_endtag(self,tag):
         self.capture=False
     def __init__(self,lang):
-        log.info('scraping')
         self.lang=lang
         self.capture=False
         super().__init__()

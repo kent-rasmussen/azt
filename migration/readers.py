@@ -98,7 +98,7 @@ class LegacyReader:
                             res[k] = v
             return res
         except Exception as e:
-            from logsetup import getlog
+            from utilities.logsetup import getlog
             log = getlog(__name__)
             log.error(f"Error manually parsing .dat file {filename}: {e}")
             return {}
