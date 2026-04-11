@@ -2183,12 +2183,12 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             # log.info("Image directory present: {}".format(file.exists(sense.imgselectiondir)))
             # log.info("Working with image files {}".format(
             #                                 file.getfilesofdirectory(sense.imgselectiondir)))
-            if sense.word_list_n() and not sense.has_image_file():
+            if sense.word_list_n and not sense.has_image_file():
             # If lift thinks there's a file there, but there isn't,
             # fill in that, too.
                 if not sense.illustrationvalue():
                     sense.illustrationvalue(sense.imagename()) #new file name
-                if not hasattr(sense.imgselectiondir):
+                if not sense.imgselectiondir:
                     sense.getglosses()
                 #This should be ...azt/images/0000_glosses:
                 dir=file.pathname_from_base_dir(sense.imgselectiondir)
@@ -2868,7 +2868,6 @@ class Sense(Node,FieldParent):
                                         for i in j.split()
                                         if i]))
         rootimgdir='images/toselect/'
-        self.imgselectiondir=None
         if not os.path.isdir(rootimgdir):
             from images.to_select_update import ensure_available
             ensure_available()
@@ -3364,6 +3363,7 @@ class Sense(Node,FieldParent):
                 if all_forms or ftype == 'lc' 
                 ]
     def __init__(self, parent, node=None, **kwargs):
+        self.imgselectiondir=None
         kwargs['tag']='sense'
         Node.__init__(self, parent, node, **kwargs)
         self.entry=parent #make a common reference point for sense/entry
