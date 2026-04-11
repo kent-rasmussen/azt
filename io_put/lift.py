@@ -1187,7 +1187,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         xmlfns.indent(self.nodes)
         tree=et.ElementTree(self.nodes)
         try:
-            tmp=filename+'.part'
+            tmp=str(filename)+'.part'
             if file.exists(tmp):
                 file.remove(tmp)
             # log.info(f"{tmp=} ({type(tmp)=})")
