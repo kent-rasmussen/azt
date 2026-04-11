@@ -52,6 +52,12 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
     """This should maybe be subclassed under XML, from xmletfns"""
     """The job of this class is to expose the LIFT XML as python object
     attributes. Nothing more, not thing else, should be done here."""
+    language_codes={'analangs':'', #no code for analysis language
+            'audiolangs':langtags.audio_code,
+            'phoneticlangs':langtags.phonetic_code,
+            'tonelangs':langtags.tone_code,
+            'machine':langtags.machine_transcription_code
+        }
     def __init__(self, filename, analang=None, tostrip=False):
         # analang is optional because we don't always care (CAWL).
         self.debug=False
@@ -74,10 +80,9 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.backupfilename=''.join(backupbits)
         """I should skip some checks in certain cases, like working 
         with the CAWL template
-        self.getanalangs should work for Demo databases, but not 
-        for new langauges from template, as specifying analang not 
-        actually in the file doesn't work."""
-        self.getanalangs(analang) #sets: self.analangs, self.audiolangs
+        self.get_langs should work for Demo databases, or 
+        for new langauges from template."""
+        self.get_langs(analang) #sets: self.analangs, self.audiolangs
         self.getentries() #need self.analang by here
         self.getsenses()
         self.getpss() #all ps values, in a prioritized list
@@ -163,7 +168,6 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             bits+=[langtags.machine_transcription_code]
         return ''.join(bits)
     def get_audiodir(self):
-        self.lift_home=file.getparent(self.filename)
         self.audiodir=file.getaudiodir(self.lift_home)
         for s in self.senses:
             for fp in list(s.fields.values())+list(s.examples.values()): #dicts
@@ -1211,71 +1215,83 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             for f in n.findall('form'):
                 n.remove(f)
         log.info("Stripped lexical-unit and citation forms from LIFT file.")
-    def getanalangs(self,analang=None):
+    def get_langs(self,analang=None):
         """These are ordered by frequency in the database"""
-        def e_pluribus_unum(langtype):
-            langtypepl=langtype+'s'
-            if len(getattr(self,langtypepl)) == 1:
-                setattr(self,langtype,getattr(self,langtypepl)[0])
-                log.info(f'One {langtype} found: {getattr(self,langtype)}')
-            elif (hasattr(self,'analang') and self.analang and
-                    self.analang+codes[langtypepl] in getattr(self,langtypepl)):
-                setattr(self,langtype,self.analang+codes[langtypepl])
-            else:
-                log.info(f'Multiple/no {langtypepl}: {getattr(self,langtypepl)}')
-                setattr(self,langtype,None)#fix this later, but have attr
+        log.info(f"get_langs: analang={analang}")
+        if lo:=self.collect_and_sort_plausible_lang_codes():
+            log.info(_("Invalid codes found in data: {langs}").format(langs=lo))
+        if err:=self.find_plausible_analang(analang):
+            raise ValueError(err)
+        if err:=self.find_plausible_otherlangs():
+            raise ValueError(err) #This should never happen; reconsider?
+    def collect_and_sort_plausible_lang_codes(self):    
+        #collect every example of every lc, lx, and ph language form in the database
         langs=[i.get('lang') for i in self.nodes.findall('entry/citation/form'
                                     )+self.nodes.findall('entry/lexical-unit/form'
                                     )+self.nodes.findall('entry/pronunciation/form')]
-        codes={'audiolangs':langtags.audio_code,
-            'phoneticlangs':langtags.phonetic_code,
-            'tonelangs':langtags.tone_code,
-            'machine':langtags.machine_transcription_code
-        }
+        #order by frequency
         l_ordered=[i[0] for i in collections.Counter(langs).most_common()] #tups
         # log.info(f"Found these languages in lc/lx/ph fields: {l_ordered} ({len(langs)})")
         for l in ['audiolangs','tonelangs','phoneticlangs']:
-            setattr(self,l,[i for i in l_ordered if codes[l] in i
-                                                and codes['machine'] not in i])
-            l_ordered=[i for i in l_ordered if i not in getattr(self,l)]
+            #pull out those with the code for this language type
+            setattr(self,l,[i for i in l_ordered if self.language_codes[l] in i
+                                                and self.language_codes['machine'] not in i])
+            #remove those taken
+            l_ordered=[i for i in l_ordered if i not in getattr(self,l)] 
+        #pull out the rest that are valid and not a machine language
         self.analangs=[i for i in l_ordered if langtags.tag_is_valid(i)
-                                            and codes['machine'] not in i]
-        l_ordered=[i for i in l_ordered if i not in self.analangs]
+                                            and self.language_codes['machine'] not in i]
+        #remove those taken
+        return [i for i in l_ordered if i not in self.analangs] 
+    def find_plausible_analang(self,analang=None):
+        """This priviledges:
+        1. analang from settings (needed in a multilingual dictionary), if in data or no data
+        2. filename base, if in self.analangs
+        3. any language in self.analangs; i.e., valid without other codes
+        4. filename base, if valid
+        """
+        for glang in {'fr','en'} & set(self.analangs):
+            log.info(f"Examples of LWC lang {glang} found; is this correct?")
+        # set up a code to try from the filename
         tryname=file.getfilenamebase(self.filename)
-        if analang in self.analangs:
+        # self.analangs have already passed langtags.tag_is_valid
+        if analang or not self.analangs: # The first use of analang, the name provided
             log.info(_("Using analang={analang} from settings.").format(analang=analang))
-            self.analangs=[analang]
+            self.analang=analang
         elif tryname in self.analangs:
             log.info(_("Found file name base in possible analysis languages; "
                     "assuming that and moving on. To select another "
                     "analysis language for this database, change it in the "
                     "settings."))
-            self.analangs=[tryname]
-        elif not self.analangs:
-            if langtags.tag_is_valid(tryname):
-                log.info(_("No language data yet: extrapolating analysis "
+            self.analang=tryname
+        elif self.analangs:
+            self.analang=self.analangs[0] #if multilingual, pick the most common if not in settings
+        elif langtags.tag_is_valid(tryname): #since not limited to self.analangs anymore
+            log.info(_("No valid language-encoded data yet: extrapolating analysis "
                     f"language from file name ({tryname})."))
-                self.analangs=[tryname]
+            self.analang=tryname
         else:
-            log.error("I can't find a plausible analang! "
-                        f"(from '{l_ordered}')")
-        # log.info(_("Possible analysis language codes found: {langs}").format(langs=self.analangs))
-        for glang in set(['fr','en']) & set(self.analangs):
-            log.info(f"Examples of LWC lang {glang} found; is this correct?")
-        e_pluribus_unum('analang')
-        for l in ['audiolangs','tonelangs','phoneticlangs']:
-            if not getattr(self,l):
-                log.debug(_('No {lang} found in Database; creating one '
-                        'from settings.').format(lang=l))
-                setattr(self,l,[i+codes[l] for i in getattr(self,'analangs')])
-            elif self.analang and self.analang+codes[l] not in getattr(self,l):
-                getattr(self,l).append(self.analang+codes[l])
-        for l in ['audiolang','tonelang','phoneticlang']:
-            e_pluribus_unum(l)
-        if l_ordered:
-            log.error(_("Language codes {langs} found in data, "
-                        "but not in settings. Check your settings!")
-                    .format(langs=l_ordered))
+            self.analang=None #don't require hasattr
+            return _("I can't find a plausible analang! {analangs} {filename} {tryname}"
+                        ).format(analangs=self.analangs,filename=self.filename,tryname=tryname)
+    def find_plausible_otherlangs(self):
+        """for possible audio, phonetic and tone language scripts:
+        1. build from analang (should_be), if that or none was found in data
+        2. take another lang of this type if it contains self.analang 
+        3. otherwise, leave as None for now.
+        """
+        if not self.analang:
+            return _("No analang found; can't find other langs.")
+        for langtype in ['audiolang','tonelang','phoneticlang']:
+            langtypepl=langtype+'s'
+            should_be=self.analang+self.language_codes[langtypepl]
+            ls=getattr(self,langtypepl)
+            alls=[i for i in ls if self.analang in i]
+            if ls and should_be not in ls and alls: 
+                # ls has at least one entry with analang, but not should_be:
+                setattr(self,langtype,alls[0])
+            else: # if not ls, or should_be in ls, or ls has entries, but none with analang:
+                setattr(self,langtype,should_be)
     def getglosslangs(self):
         """These are ordered by frequency in the database"""
         g=self.get('gloss').get('lang')
