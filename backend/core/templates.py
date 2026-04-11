@@ -17,14 +17,17 @@ class WordListTemplate():
     On error, stop and leave error text in self.error_text
     """
     def verify_code(self,code):
+        log.info(f"verify_code: code={code}")
         # self.analang=code
         # if not self.analang:
         #     return
         try:
             self.analang_obj=self.program.languages.get_obj(code)
-        except langcodes.tag_parser.LanguageTagError:
+        except langtags.langcodes.tag_parser.LanguageTagError:
             # log.info(
-            return f"{self.analang_obj} didn't parse."
+            return _("self.analang_obj didn't parse.")
+        except Exception as e:
+            return _("self.analang_obj didn't parse ({e}).").format(e=e)
         if not self.analang_obj.is_valid():
             return (f"It looks like your code ({code}) isn't valid "
                         f"({self.analang_obj.full_display()})")
@@ -33,25 +36,23 @@ class WordListTemplate():
             #             ,wait=True)
             return _("That doesn't look like an ethnologue code ({analang})"
                     ).format(analang=code)
-        self.db.analang=code
+        self.db.get_langs(code)
     def verify_writeable(self):
-        # dir=file.gethome()
-        # newfile=file.getnewlifturl(dir,self.code)
+        dir=file.gethome()
+        newfile=file.getnewlifturl(dir,self.db.analang)
         if not newfile:
-            # ErrorNotice(_("Problem creating file; does the directory "
-            #             "already exist?"),wait=True)
             return _("Problem creating file; does the directory "
-                        "already exist?")
+                        "already exist with files in it? ({newfile})").format(newfile=newfile)
         if file.exists(newfile):
-            # ErrorNotice(_("The file {newfile} already exists!").format(newfile=newfile),
-            #                                                     wait=True)
             return _("The file {newfile} already exists!").format(newfile=newfile)
-        self.db.filename=newfile
-        # self.newdirname=newfile.parent
+        self.db.set_filename(newfile)
+        log.info(_("Going to write to {newfile}").format(newfile=newfile))
     def fill_db_images(self):    
         yield from self.db.fill_db_images()
-    def __init__(self,analang,filename):
-        # self.error_text=None
+    def __init__(self,analang,program):
+        log.info(_("Preparing word list for writing"))
+        self.program=program
+        self.error_text=None
         self.error_text=self.verify_code(analang) #sets self.db.analang
         if self.error_text:
             return
@@ -65,13 +66,18 @@ class WordListTemplate():
 
 class CAWL(WordListTemplate):
     """This loads from the Comparative African Word List(CAWL)"""
-    def __init__(self,analang,filename):
+    def __init__(self,analang,program):
+        log.info(f"Loading CAWL for {analang}")
         t=loadCAWL()
+        log.info(f"Loaded {t} ({type(t)})")
         if type(t) is str:
             self.error_text=t
-        else:
-            self.db=t
-            super().__init__(analang,filename)
+            return
+        self.db=t
+        super().__init__(analang,program)
+        log.info(f"Stripping lxlc forms from CAWL")
+        if not self.error_text:
             self.db.strip_lxlc_forms()
+            # self.db.collect_and_sort_plausible_lang_codes() #depends on lx/lc/ph in database
         
         
