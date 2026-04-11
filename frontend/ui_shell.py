@@ -2487,22 +2487,22 @@ class LiftChooser(ui.Window,HasMenus):
         except Exception as e:
             log.error(f"analang_code_complete failed: {e}", exc_info=True)
     def _analang_code_complete(self):
-        log.info("analang_code_complete")
+        log.info("analang_code_complete: self.code={}".format(self.code))
         if not self.code:
             ErrorNotice(_("There doesn't seem to be an ethnologue code ({code})")
                         .format(code=self.code),wait=True)
             return
-        self.wait(msg=_("Setting up new LIFT file now."),
-                    showafterwait=True)
+        self.wait(msg=_("Setting up new LIFT file now."), thenshow=True)
         log.info("Beginning Copy of stock to new LIFT file.")
-        t=templates.CAWL(self.analang,newfile)
-        if type(t) is str:
-            ErrorNotice(t,wait=True)
+        t=templates.CAWL(self.code,self.program)
+        if t.error_text:
+            self.waitdone()
+            ErrorNotice(t.error_text,wait=True)
             return
         self.template_obj=t
         for p in self.template_obj.fill_db_images():
             self.waitprogress(p)
-        self.cawldb.write()
+        self.template_obj.db.write()
         self.wait.close()
         self.notify_newfilelocation(newfile)
         log.info("analang_code_complete complete")
