@@ -37,6 +37,7 @@ class WordListTemplate():
             return _("That doesn't look like an ethnologue code ({analang})"
                     ).format(analang=code)
         self.db.get_langs(code)
+        self.program.settings.save_analang(code)
     def verify_writeable(self):
         dir=file.gethome()
         newfile=file.getnewlifturl(dir,self.db.analang)
