@@ -1,0 +1,40 @@
+/* Theme CSS — populated at runtime via JS from Python Theme object */
+:root {
+    --background: #d9d9d9;
+    --activebackground: #ececec;
+    --menubackground: #d9d9d9;
+    --white: #ffffff;
+    --offwhite: #f0f0f0;
+    --highlight: #0078d7;
+    --padx: 5px;
+    --pady: 5px;
+    --ipadx: 2px;
+    --ipady: 2px;
+    --scale: 1.0;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: var(--background);
+    font-family: 'Charis SIL', 'Gentium Plus', 'DejaVu Sans', sans-serif;
+    font-size: calc(12px * var(--scale));
+    color: #000;
+    overflow: hidden;
+}
+
+/* Font classes matching theme.fonts keys */
+.font-title   { font-size: calc(24px * var(--scale)); font-weight: bold; }
+.font-big     { font-size: calc(18px * var(--scale)); }
+.font-normal  { font-size: calc(12px * var(--scale)); }
+.font-read    { font-size: calc(14px * var(--scale)); }
+.font-readbig { font-size: calc(18px * var(--scale)); }
+.font-small   { font-size: calc(10px * var(--scale)); }
+.font-tiny    { font-size: calc(8px * var(--scale)); }
+.font-default { font-size: calc(12px * var(--scale)); }
+.font-italic  { font-style: italic; }
+.font-fixed   { font-family: monospace; }

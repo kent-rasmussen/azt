@@ -87,7 +87,6 @@ class XML(object): #fns called outside of this class call self.nodes here.
     def __init__(self, filename, tostrip=False): #may need tostrip for LIFT
         self.debug=False
         self.filename=filename #lift_file.liftstr()
-        self.logfile=filename+".changes"
         self.urls={} #store urls generated
         """Problems reading a valid file are dealt with elsewhere"""
         try:
