@@ -61,8 +61,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
     def __init__(self, filename, analang=None, tostrip=False):
         # analang is optional because we don't always care (CAWL).
         self.debug=False
-        self.filename=filename #lift_file.liftstr()
-        self.logfile=filename+".changes"
+        self.set_filename(filename)
         self.urls={} #store urls generated
         """Problems reading a valid LIFT file are dealt with in main.py"""
         try:
@@ -130,6 +129,10 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.get_imgdir()
         self.get_reportdir()
         log.info(_("Language initialization done."))
+    def set_filename(self,filename):
+        self.filename=filename
+        log.info("Set LIFT XML filename: {}".format(self.filename))
+        self.lift_home=file.getparent(self.filename)
     def get_img_resolver(self):
         # This is used in illustrationURI, if illustrationvalue() 
         # is not both set and present, and if not local_only=True
@@ -1128,7 +1131,6 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
     def read(self):
         """this parses the lift file into an entire ElementTree tree,
         for reading or writing the LIFT file."""
-        log.info("Reading LIFT file: {}".format(self.filename))
         self.tree,self.nodes=et.readxml(self.filename)
         self.nodes=Lift(self,self.nodes)
         # self.tree=et.parse(self.filename)
