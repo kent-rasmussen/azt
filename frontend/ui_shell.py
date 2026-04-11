@@ -2503,10 +2503,10 @@ class LiftChooser(ui.Window,HasMenus):
         for p in self.template_obj.fill_db_images():
             self.waitprogress(p)
         self.template_obj.db.write()
-        self.wait.close()
-        self.notify_newfilelocation(newfile)
+        self.waitdone()
+        # self.notify_newfilelocation(self.template_obj.db.filename)
         log.info("analang_code_complete complete")
-        return str(newfile)
+        return str(self.template_obj.db.filename)
     def clonefromUSB(self):
         def makenewrepo(repoclass,mediadir):
             repo=repoclass(mediadir)
