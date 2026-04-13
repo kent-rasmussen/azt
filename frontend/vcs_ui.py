@@ -4,7 +4,7 @@
 Backend vcs.py delegates all UI widget creation here, so it has
 zero frontend imports at either module or function level.
 """
-from frontend import ui_tkinter as ui
+from frontend import ui
 from utilities.i18n import _
 
 

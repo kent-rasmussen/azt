@@ -1,5 +1,5 @@
 # coding=UTF-8
-from frontend import ui_tkinter as ui
+from frontend import ui
 from utilities.i18n import _
 from utilities import logsetup
 log = logsetup.getlog(__name__)

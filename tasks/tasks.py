@@ -1,5 +1,5 @@
 # coding=UTF-8
-from frontend import ui_tkinter as ui
+from frontend import ui
 from tasks.base import Task
 from backend.core.report_mixins import Multislice, MultisliceS, MultisliceT, Multicheck, Multicheckslice, ByUF, Background
 from backend.reporting.generator import Report

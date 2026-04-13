@@ -4,7 +4,7 @@ circular dependencies between sorting_engine and ui_shell."""
 from utilities.i18n import _
 from utilities import logsetup
 log=logsetup.getlog(__name__)
-from frontend import ui_tkinter as ui
+from frontend import ui
 from utilities import file, executables
 from io_put import sound
 

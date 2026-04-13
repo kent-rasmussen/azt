@@ -4,7 +4,7 @@
 Backend sorting_engine.py delegates all UI widget creation here, so it
 has zero frontend imports.
 """
-from frontend import ui_tkinter as ui
+from frontend import ui
 from frontend.sort_buttons import (SortButtonFrame, SortGroupButtonFrame,
                                    SortGlyphGroupButtonFrame)
 from utilities.i18n import _

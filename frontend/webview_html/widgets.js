@@ -100,6 +100,70 @@ function createWidget(spec) {
             fill.className = 'wv-progressbar-fill';
             el.appendChild(fill);
             break;
+        case 'checkbutton': {
+            el = document.createElement('label');
+            el.className = 'wv-widget wv-checkbutton';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = !!spec.props.checked;
+            el.appendChild(cb);
+            const cblbl = document.createElement('span');
+            cblbl.textContent = spec.props.text || '';
+            el.appendChild(cblbl);
+            if (spec.props.font) el.classList.add('font-' + spec.props.font);
+            cb.addEventListener('change', () => {
+                if (window.pywebview && window.pywebview.api) {
+                    window.pywebview.api.on_event(spec.wid, 'toggle', {checked: cb.checked});
+                }
+            });
+            break;
+        }
+        case 'radiobutton': {
+            el = document.createElement('label');
+            el.className = 'wv-widget wv-radiobutton';
+            const rb = document.createElement('input');
+            rb.type = 'radio';
+            rb.name = spec.props.group || 'default';
+            rb.value = spec.props.value || '';
+            el.appendChild(rb);
+            const rblbl = document.createElement('span');
+            rblbl.textContent = spec.props.text || '';
+            el.appendChild(rblbl);
+            if (spec.props.font) el.classList.add('font-' + spec.props.font);
+            rb.addEventListener('change', () => {
+                if (window.pywebview && window.pywebview.api) {
+                    window.pywebview.api.on_event(spec.wid, 'select', {value: rb.value});
+                }
+            });
+            break;
+        }
+        case 'listbox': {
+            el = document.createElement('div');
+            el.className = 'wv-widget wv-listbox';
+            el.tabIndex = 0;
+            if (spec.props.height) el.style.maxHeight = (spec.props.height * 1.5) + 'em';
+            if (spec.props.width) el.style.width = spec.props.width + 'ch';
+            if (spec.props.font) el.classList.add('font-' + spec.props.font);
+            // Items added via updateProp('items', [...])
+            break;
+        }
+        case 'combobox': {
+            el = document.createElement('select');
+            el.className = 'wv-widget wv-combobox';
+            if (spec.props.width) el.style.width = spec.props.width + 'ch';
+            if (spec.props.font) el.classList.add('font-' + spec.props.font);
+            el.addEventListener('change', () => {
+                if (window.pywebview && window.pywebview.api) {
+                    window.pywebview.api.on_event(spec.wid, 'select', {value: el.value});
+                }
+            });
+            break;
+        }
+        case 'menu': {
+            el = document.createElement('div');
+            el.className = 'wv-widget wv-menu wv-hidden';
+            break;
+        }
         default:
             el = document.createElement('div');
             el.className = 'wv-widget';
@@ -161,6 +225,44 @@ function updateProp(wid, prop, value) {
             // Remove old font class, add new
             el.className = el.className.replace(/font-\S+/g, '');
             el.classList.add('font-' + value);
+            break;
+        case 'checked':
+            { const cb = el.querySelector('input[type="checkbox"]');
+              if (cb) cb.checked = !!value; }
+            break;
+        case 'items':
+            // For listbox: value is an array of strings
+            if (el.classList.contains('wv-listbox')) {
+                el.innerHTML = '';
+                (value || []).forEach((item, i) => {
+                    const div = document.createElement('div');
+                    div.className = 'wv-listbox-item';
+                    div.textContent = item;
+                    div.dataset.index = i;
+                    div.addEventListener('click', () => {
+                        el.querySelectorAll('.wv-listbox-item').forEach(d => d.classList.remove('selected'));
+                        div.classList.add('selected');
+                        if (window.pywebview && window.pywebview.api) {
+                            window.pywebview.api.on_event(parseInt(el.dataset.wid), 'select', {index: i, value: item});
+                        }
+                    });
+                    el.appendChild(div);
+                });
+            }
+            // For combobox: value is an array of strings
+            if (el.tagName === 'SELECT') {
+                el.innerHTML = '';
+                (value || []).forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item;
+                    opt.textContent = item;
+                    el.appendChild(opt);
+                });
+            }
+            break;
+        case 'value':
+            if (el.tagName === 'SELECT') el.value = value;
+            if (el.tagName === 'INPUT') el.value = value;
             break;
     }
 }
@@ -235,4 +337,71 @@ function batchCreate(specs) {
     for (const spec of specs) {
         createWidget(spec);
     }
+}
+
+// ── Drag and Drop (HTML5 DnD API) ────────────────────────────────────
+
+let _dragSourceWid = null;
+
+function makeDraggable(wid) {
+    const el = _widgets.get(wid);
+    if (!el) return;
+    el.draggable = true;
+    el.style.cursor = 'grab';
+
+    el.addEventListener('dragstart', (e) => {
+        _dragSourceWid = wid;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(wid));
+        el.style.opacity = '0.5';
+        // Notify Python of drag start
+        if (window.pywebview && window.pywebview.api) {
+            window.pywebview.api.on_event(wid, 'dnd_start', {x: e.clientX, y: e.clientY});
+        }
+    });
+
+    el.addEventListener('dragend', (e) => {
+        el.style.opacity = '1';
+        _dragSourceWid = null;
+        if (window.pywebview && window.pywebview.api) {
+            window.pywebview.api.on_event(wid, 'dnd_end', {});
+        }
+    });
+}
+
+function makeDroppable(wid) {
+    const el = _widgets.get(wid);
+    if (!el) return;
+
+    el.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    });
+
+    el.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        el.style.background = 'var(--activebackground)';
+        if (window.pywebview && window.pywebview.api) {
+            window.pywebview.api.on_event(wid, 'dnd_enter', {source_wid: _dragSourceWid});
+        }
+    });
+
+    el.addEventListener('dragleave', (e) => {
+        el.style.background = '';
+        if (window.pywebview && window.pywebview.api) {
+            window.pywebview.api.on_event(wid, 'dnd_leave', {source_wid: _dragSourceWid});
+        }
+    });
+
+    el.addEventListener('drop', (e) => {
+        e.preventDefault();
+        el.style.background = '';
+        const sourceWid = parseInt(e.dataTransfer.getData('text/plain'));
+        if (window.pywebview && window.pywebview.api) {
+            window.pywebview.api.on_event(wid, 'dnd_commit', {
+                source_wid: sourceWid,
+                x: e.clientX, y: e.clientY
+            });
+        }
+    });
 }

@@ -72,6 +72,9 @@ import itertools
 import importlib.util
 import collections
 from random import randint
+import os
+if os.environ.get('AZT_UI_BACKEND', '').lower() == 'webview':
+    program['tkinter'] = False
 if program['tkinter']:
     import tkinter #as gui
     import tkinter.font
@@ -79,10 +82,7 @@ if program['tkinter']:
     if not program['testing']:
         from frontend import tkintermod
         tkinter.CallWrapper = tkintermod.TkErrorCatcher
-    from frontend import ui_tkinter as ui
-"""else:
-    import kivy
-"""
+from frontend import ui
 import time
 # #for some day...
 # from PIL import Image #, ImageTk
@@ -322,19 +322,13 @@ class App:
         if self.filename and 'Demo' in str(self.filename):
             program.Demo=True
             file.writefilename() #clear this to select next time
-    def run(self):
-        # global program
-        log.info("Running main function on {} ({})".format(platform.system(),
-                                        platform.platform())) #Don't translate yet!
-        try:
-            self.tk_root = ui.Root(program=self)
-        except tkinter.TclError as e:
-            log.info(_("Evidently you can't make a root window? ({error})").format(error=e))
-            return
-        # log.info("Theme ipady: {}".format(program.theme.ipady))
-        # log.info("Theme ipadx: {}".format(program.theme.ipadx))
-        # log.info("Theme pady: {}".format(program.theme.pady))
-        # log.info("Theme padx: {}".format(program.theme.padx))
+    def _run_setup(self):
+        """All setup that must happen after the UI event loop is live.
+
+        For tkinter this runs synchronously before mainloop().
+        For pywebview this runs in a background thread after webview.start()
+        has loaded, so that blocking calls like wait_window() can work.
+        """
         lastcommit=self.source_repo.lastcommitdate()
         self.tk_root.wraplength=self.tk_root.winfo_screenwidth()-300 #exit button
         self.tk_root.wraplength=int(self.tk_root.winfo_screenwidth()*.7) #exit button
@@ -377,8 +371,25 @@ class App:
         # SliceDict(adhoc,profilesbysense,self) #needs adhoc,profilesbysense
         # StatusDict(filename,dict,self) #needs filename,dict
         UISettings(self)
-        t = TaskChooser(self) #TaskChooser MainApplication
-        t.mainloop()
+        TaskChooser(self) #TaskChooser MainApplication
+
+    def run(self):
+        # global program
+        log.info("Running main function on {} ({})".format(platform.system(),
+                                        platform.platform())) #Don't translate yet!
+        try:
+            self.tk_root = ui.Root(program=self)
+        except Exception as e:
+            log.info(_("Evidently you can't make a root window? ({error})").format(error=e))
+            return
+        if program['tkinter']:
+            # tkinter: setup runs synchronously, then mainloop blocks
+            self._run_setup()
+            self.tk_root.mainloop()
+        else:
+            # webview: start event loop first, run setup in background thread
+            # after loaded — avoids deadlock from wait_window() before start()
+            self.tk_root.mainloop(setup_callback=self._run_setup)
         sysshutdown()
     def maybe_run_problem(self):
         if self.testing and self.me:
@@ -422,7 +433,7 @@ class App:
                 self.tk_root.wraplength=int(self.tk_root.winfo_screenwidth()*.7) #exit button
                 newtk=True
                 log.info(_("Starting with new root"))
-            except tkinter.TclError as e:
+            except Exception as e:
                 log.info(_("Evidently you can't make a root window? ({error})").format(error=e))
                 log.info(_("This was your error:\n{error}").format(error=logsetup.contents(50)))
                 return
@@ -550,11 +561,11 @@ class App:
             self.maybewrite(definitely=True)
         try:
             self.task.withdraw() #so users don't do stuff while waiting
-        except (AttributeError,tkinter.TclError):
+        except (AttributeError, Exception):
             log.info("There doesn't seem to be a task to hide; moving on.")
         try:
             self.task.runwindow.withdraw() #so users don't do stuff while waiting
-        except (AttributeError,tkinter.TclError):
+        except (AttributeError, Exception):
             log.info(_("There doesn't seem to be a runwindow to hide; moving on."))
         while self.writing:
             # log.info("towrite: {}; writing: {}; taskwrite: {}".format(

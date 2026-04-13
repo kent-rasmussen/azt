@@ -7,8 +7,7 @@ import sys
 import collections
 import re
 import datetime
-import tkinter as tk
-from frontend import ui_tkinter as ui
+from frontend import ui
 from utilities.utilities import *
 from utilities import file, logsetup, htmlfns, executables
 from io_put import lift
@@ -2025,8 +2024,7 @@ class TaskDressing(HasMenus,ui.Window):
     def thread_update(self):
         if self.thread_names:
             log.info(_("{count} threads running: {threads}").format(count=len(self.thread_names), threads=self.thread_names))
-            if (not hasattr(self,'thread_update_thread') or 
-                self.thread_update_thread not in self.tk.call('after', 'info')):
+            if not hasattr(self,'thread_update_thread') or not self.thread_update_thread:
                 self.thread_update_thread=self.after(1000,self.thread_update)
             # log.info(f"Will update by {id=} in 1s {type(id)=}")
         else:
@@ -2101,7 +2099,7 @@ class ImageFrame(ui.Frame):
                 self.hasimage=True
                 self.parent.theme.image_cache[self.url]=self.image
                 # log.info(_("Image OK: {img}").format(img=img))
-            except (tkinter.TclError,AttributeError) as e:
+            except (AttributeError, Exception) as e:
                 if e.args and ('value for "-file" missing' not in e.args[0] and
                         "couldn't recognize data in image file" not in e.args[0]):
                     log.info(_("ui.Image error: {error}").format(error=e))
@@ -2235,10 +2233,10 @@ class Splash(ui.Window):
                                 mode='determinate', #or 'indeterminate'
                                 row=5,column=0)
         self.w = self.winfo_reqwidth()
-        x=int(self.master.winfo_screenwidth()/2-(self.w/2))
+        x=int(self.parent.winfo_screenwidth()/2-(self.w/2))
         self.h = self.winfo_reqheight()
-        y=int(self.master.winfo_screenheight()/2 -(self.h/2))
-        self.geometry('+%d+%d' % (x, y))
+        y=int(self.parent.winfo_screenheight()/2 -(self.h/2))
+        # self.geometry('+%d+%d' % (x, y))
         self.labels['v'].bind('<Button-1>', lambda e,x=self:updateazt(parent=x))
 class ResultWindow(ui.Window):
     def __init__(self, parent, msg=None, title=None):

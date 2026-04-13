@@ -3,7 +3,7 @@
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
-from frontend import ui_tkinter as ui
+from frontend import ui
 from io_put import sound
 from utilities import file, executables, utilities as utils
 class RecordButtonFrame(ui.Frame):

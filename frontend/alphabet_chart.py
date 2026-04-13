@@ -7,7 +7,7 @@ log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
 from utilities import file
 from io_put import lift, alphabet_chart_pdf
-from frontend import ui_tkinter as ui
+from frontend import ui
 # import pyautogui
 
 class DraggableLabel(ui.Label):
@@ -607,7 +607,7 @@ if __name__ == '__main__':
         def __init__(self, parent, program, **kwargs):
             self.program = program
             self.init_chart_data(program, **kwargs)
-            from frontend import ui_tkinter as _ui
+            from frontend import ui as _ui
             self.hide_vars = {g: _ui.BooleanVar(value=False) for g in self.order}
             for i in self.hide_vars.values():
                 i.trace_add('write', self.update_shown)

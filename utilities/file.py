@@ -4,9 +4,48 @@ import gettext
 _ = gettext.gettext
 
 from utilities import source_base_dir
-from tkinter import filedialog
-from tkinter import Tk
 import pathlib
+import os as _os
+
+# File dialog support — tkinter when available, zenity/kdialog fallback
+try:
+    if _os.environ.get('AZT_UI_BACKEND', '').lower() == 'webview':
+        raise ImportError("webview backend — skip tkinter filedialog")
+    from tkinter import filedialog
+    from tkinter import Tk
+    _has_tk_dialog = True
+except ImportError:
+    _has_tk_dialog = False
+
+def _zenity_directory(title, initialdir):
+    """Fallback directory picker using zenity (Linux) or input()."""
+    import subprocess, shutil
+    if shutil.which('zenity'):
+        try:
+            r = subprocess.run(['zenity', '--file-selection', '--directory',
+                                '--title', title or 'Select Directory'],
+                               capture_output=True, text=True)
+            if r.returncode == 0 and r.stdout.strip():
+                return r.stdout.strip()
+        except Exception:
+            pass
+    # Last resort: console input
+    return input(f"{title or 'Directory'} [{initialdir}]: ").strip() or None
+
+def _zenity_openfile(**kwargs):
+    """Fallback file picker using zenity (Linux) or input()."""
+    import subprocess, shutil
+    title = kwargs.get('title', 'Select File')
+    if shutil.which('zenity'):
+        try:
+            r = subprocess.run(['zenity', '--file-selection',
+                                '--title', title],
+                               capture_output=True, text=True)
+            if r.returncode == 0 and r.stdout.strip():
+                return r.stdout.strip()
+        except Exception:
+            pass
+    return input(f"{title}: ").strip() or ''
 
 def _app_settings():
     """Lazy singleton for AppSettingsManager, keyed to the AZT root dir."""
@@ -70,11 +109,6 @@ def fullpathnamewrt(db,filename):
     else:
         return f"{db} doesn't seem to exist, nor does {db}.filename"
     return pathlib.Path.joinpath(dir,filename)
-def askfilename(self):
-    text=(_("Please select a LIFT lexicon file to check"))
-    tkinter.Label(self.status, text=text).grid(column=0,
-    row=0)
-    return lift() #this is a string
 def getfilenamedir(filename):
     return pathlib.Path(filename).parent
 def getfilenamebase(filename):
@@ -234,12 +268,15 @@ def gethome():
         home=pathlib.Path.joinpath(home, "Assignment","Tools","WeSay")
     return home
 def getdirectory(title=None,home=None):
-    Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
     if not home:
         home=gethome()
     if not title:
         title=_("Select a new location for your LIFT Lexicon and other Files")
-    f=filedialog.askdirectory(initialdir = home, title = title)
+    if _has_tk_dialog:
+        Tk().withdraw()
+        f=filedialog.askdirectory(initialdir = home, title = title)
+    else:
+        f=_zenity_directory(title, home)
     if f:
         return f
 def getfilesofdirectory(dir,regex='*'):
@@ -263,7 +300,9 @@ def getmediadirectory(mediatype=None):
         prompt=_("Please select where to find the media locally")
     return getdirectory(prompt, media)
 def askopenfilename(**kwargs):
-    return filedialog.askopenfilename(**kwargs)
+    if _has_tk_dialog:
+        return filedialog.askopenfilename(**kwargs)
+    return _zenity_openfile(**kwargs)
     # initialdir = home,#"$HOME",#filetypes=[('LIFT','*.lift')],
     #                                 title = _("Select LIFT Lexicon File"),
     #                                 filetypes=[

@@ -2,8 +2,7 @@
 import sys
 import threading
 import time
-import tkinter
-from frontend import ui_tkinter as ui
+from frontend import ui
 from tasks.base import Task
 from tasks.tasks import (Sound, SortV,
     ExportData, AlphabetChart, AlphabetComparisonPages,
@@ -535,7 +534,7 @@ class TaskChooser(Task):
         log.debug("Preparing to change database name.")
         try:
             self.task.withdraw() #so users don't do stuff while waiting
-        except (AttributeError,tkinter.TclError):
+        except (AttributeError, Exception):
             log.info(_("There doesn't seem to be a task to hide; moving on."))
         curname = self.program.filename
         log.info(_("Current database: {name}").format(name=curname))

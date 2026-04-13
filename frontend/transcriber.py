@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 from io_put import sound
-from frontend import ui_tkinter as ui
+from frontend import ui
 from utilities import rx, logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file

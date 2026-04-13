@@ -4,7 +4,7 @@
 Backend generator.py delegates all UI widget creation here, so it has
 zero frontend imports.
 """
-from frontend import ui_tkinter as ui
+from frontend import ui
 from frontend.ui_shell import ResultWindow
 
 

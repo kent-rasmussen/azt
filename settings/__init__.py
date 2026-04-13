@@ -1758,7 +1758,7 @@ class Settings(SettingsUI):
         """Get or create a tkinter.StringVar for the given attribute."""
         if attr not in self.ui_vars:
             # Lazy import to avoid circular dependency and only use if UI is present
-            from frontend import ui_tkinter as ui
+            from frontend import ui
             var = ui.StringVar(value=str(value) if value is not None else str(getattr(self, attr, "")))
             self.ui_vars[attr] = var
         return self.ui_vars[attr]

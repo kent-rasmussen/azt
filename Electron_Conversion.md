@@ -1,5 +1,16 @@
 # Electron Frontend Alternative: Implementation Plan
 
+## Progress (2026-04-11)
+- **Phase 0** ✓ `frontend/ui_interface.py` — ABC definitions for all widget classes
+- **Phase 1** ✓ `frontend/ui_variables.py` — Standalone Variable/StringVar/IntVar/BooleanVar
+- **Phase 2** ✓ `frontend/ui_webview.py` + `frontend/webview_html/` — Core widgets (Root, Window, Frame, Label, Button, EntryField, Progressbar)
+- **Phase 3** ✓ Theme (real theme dicts, _FontInfo, CSS vars), Image (PIL→base64), Renderer (PIL text→base64)
+- **Phase 4** ✓ CheckButton, RadioButton, ListBox, Combobox, Menu (tk_popup via JS), widget stubs for remaining
+- **Phase 5** ✓ Blocking patterns: mainloop→webview.start, wait_window→threading.Event, after→Timer
+- **Phase 6** — Drag-and-Drop (pending — low priority, only alphabet_chart reordering)
+- **Phase 7** ✓ Leakage remediation complete — zero direct tkinter imports outside backend
+- **Phase 8** ✓ All 21 consumer files switched to `from frontend import ui`, main.py gates tkinter imports
+
 ## Architecture Decision: pywebview
 
 **Recommendation: pywebview** over Eel or raw Electron+WebSocket.

@@ -22,7 +22,7 @@ class AlphabetChart(Task, AlphabetChartData, OrderAlphabetUI):
     def save_settings(self):
         for k in self.my_settings:
             value = getattr(self, k)
-            from frontend import ui_tkinter as ui
+            from frontend import ui
             if isinstance(value, ui.Variable):
                 value = value.get()
                 log.info(_("found '{key}' ui.Variable: {value}").format(key=k, value=value))
@@ -36,7 +36,7 @@ class AlphabetChart(Task, AlphabetChartData, OrderAlphabetUI):
         title = _("Alphabet Chart UI for Glyph Ordering and Selection")
         self.init_chart_data(program)
         # hide_vars requires ui.BooleanVar — set up here, not in backend data class
-        from frontend import ui_tkinter as ui
+        from frontend import ui
         self.hide_vars = {g: ui.BooleanVar(value=False) for g in self.order}
         for i in self.hide_vars.values():
             i.trace_add('write', self.update_shown)

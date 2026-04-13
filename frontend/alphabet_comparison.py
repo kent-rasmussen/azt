@@ -23,7 +23,7 @@ from utilities import logsetup
 log = logsetup.getlog(__name__)
 from utilities import file
 from io_put import lift, alphabet_comparison_pdf
-from frontend import ui_tkinter as ui
+from frontend import ui
 from frontend.alphabet_chart import SelectFromPicturableWords, getimagelocationURI
 
 
@@ -53,15 +53,9 @@ class ImageSelector(ui.Window):
         self.destroy()
 
     def browse_and_select(self):
-        try:
-            from tkinter import filedialog
-            import shutil
-        except ImportError:
-            log.error("Could not import filedialog")
-            return
-            
-        file_path = filedialog.askopenfilename(
-            parent=self,
+        from utilities import file as fileu
+        import shutil
+        file_path = fileu.askopenfilename(
             title=_("Select Image File"),
             filetypes=[("Image files", "*.jpg *.jpeg *.png *.svg"), ("All files", "*.*")]
         )
@@ -171,7 +165,7 @@ class ImageSelector(ui.Window):
 
 class DescriptionEditor(ui.Window):
     def save(self):
-        val = self.text_widget.get("1.0", "end-1c")
+        val = self._text_var.get()
         self.parent.description_var.set(val)
         self.parent.save_settings_file()
         self.destroy()
@@ -182,20 +176,10 @@ class DescriptionEditor(ui.Window):
         
         ui.Label(self.frame, text=_("Enter descriptive text for the imprint page:"), r=0, c=0)
         
-        # Using standard Tkinter text widget directly if ui wrapper not available or complex
-        # ui_tkinter usually has Text or similar. Assuming ui.Text exists or falling back to Frame+tk.Text
-        # Checking ui_tkinter usage... usually ui.Text isn't standard in minimal wrapper, 
-        # let's assume we can access tk widget via ui.Frame or similar if needed. 
-        # But wait, ui.Label/EntryField exist. Let's try ui.Text if it exists in library, 
-        # otherwise use a simple specialized Frame.
-        
         self.text_frame = ui.Frame(self.frame, r=1, c=0)
-        import tkinter as tk
-        self.text_widget = tk.Text(self.text_frame, height=10, width=40)
-        self.text_widget.pack()
-        
-        current_val = self.parent.description_var.get()
-        self.text_widget.insert("1.0", current_val)
+        self._text_var = ui.StringVar(value=self.parent.description_var.get())
+        self.text_widget = ui.EntryField(self.text_frame, textvariable=self._text_var,
+                                         width=40, r=0, c=0)
         
         ui.Button(self.frame, text=_("Save"), command=self.save, r=2, c=0)
 
@@ -430,14 +414,9 @@ class PageSetupUI(ui.Window):
             self.cover_btn.configure(text=_("Select Cover"), image='', compound='none')
 
     def open_logo_selector(self):
-        try:
-            from tkinter import filedialog
-            import shutil
-        except ImportError:
-            return
-
-        file_path = filedialog.askopenfilename(
-            parent=self,
+        from utilities import file as fileu
+        import shutil
+        file_path = fileu.askopenfilename(
             title=_("Select Logo File"),
             filetypes=[("Image files", "*.jpg *.jpeg *.png *.svg"), ("All files", "*.*")]
         )

@@ -21,7 +21,7 @@ class AlphabetComparisonPages(Task, AlphabetComparisonData, PageSetupUI):
     def save_settings(self):
         for k in self.my_settings:
             value = getattr(self, k)
-            from frontend import ui_tkinter as ui
+            from frontend import ui
             if isinstance(value, ui.Variable):
                 value = value.get()
                 log.info(_("found '{key}' ui.Variable: {value}").format(key=k, value=value))
