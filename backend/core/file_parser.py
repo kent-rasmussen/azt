@@ -3,6 +3,7 @@ from utilities.utilities import *
 from utilities.i18n import _
 from utilities import logsetup, file
 from io_put import lift
+import settings
 log=logsetup.getlog(__name__)
 
 from utilities.error_handler import notify_error as ErrorNotice
@@ -12,7 +13,7 @@ class FileParser(object):
     def loaddatabase(self):
         try:
             #This program key will only be available after this finishes
-            self.program.db=lift.LiftXML(str(self.filename),getattr(self.program,'analang',None))
+            self.program.db=lift.LiftXML(str(self.filename),self.program.analang)
         except lift.BadParseError:
             text=_("{filename} doesn't look like a well formed lift file; please "
                     "try again.").format(filename=self.filename)
@@ -47,6 +48,11 @@ class FileParser(object):
         super(FileParser, self).__init__()
         self.program=program
         self.filename=self.program.filename
+        """I think an ad hoc settings goes here, to load analang.
+        Everyone should have this, if available in settings."""
+        mgr=settings.SettingsManager(self.filename)
+        self.program.analang=mgr.project.get('analang',None)
+        log.info(f"Ready to load {self.filename} with {self.program.analang=}")
         # self.analang=self.program.analang
         # splash.progress(15)
         self.loaddatabase()

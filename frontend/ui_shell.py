@@ -1175,7 +1175,7 @@ class StatusFrame(ui.Frame):
                     #Make row header
                     t=profile
                     if self.program.settings.showdetails:
-                        t+=(f" ({len(self.program.settings.profilesbysense[ps][profile])})")
+                        t+=(f" ({len(self.program.profiles.profilesbysense[ps][profile])})")
                     h=ui.Label(self.leaderboardtable,text=t,
                                 row=row,
                                 column=column,
@@ -2349,7 +2349,8 @@ class LiftChooser(ui.Window,HasMenus):
         self.newfile_page()
         self.make_lang_entry()
         self._new_w.mainwindow=False
-        t.wait_window(self._new_w)
+        self.wait_window(self._new_w)
+        log.info(f"Done waiting; {self._new_w.exitFlag.istrue()=}")
         if not self._new_w.exitFlag.istrue(): #true w/ X or Exit, not "Use..."
             return self.analang_code_complete()
     def make_lang_entry(self):
@@ -2532,6 +2533,7 @@ class LiftChooser(ui.Window,HasMenus):
         for p in self.template_obj.fill_db_images():
             self.waitprogress(p)
         self.template_obj.db.write()
+        self.store_analang()
         self.waitdone()
         # self.notify_newfilelocation(self.template_obj.db.filename)
         log.info("analang_code_complete complete")
@@ -2618,10 +2620,12 @@ class LiftChooser(ui.Window,HasMenus):
             # they're doing
             log.info(_("returned more or less than one lift file! ({list})")
                     .format(list=l))
-    def storedefaultsettings(self,basename):
-        mgr=settings.SettingsManager(basename)
-        mgr.project.set('glosslangs',['fr'])
-        mgr.ui.set('buttoncolumns',2)
+    def store_analang(self): #basename
+        mgr=settings.SettingsManager(self.template_obj.db.filename)
+        # mgr.project.set('glosslangs',['fr'])
+        mgr.project.set('analang',self.template_obj.db.analang)
+        # mgr.ui.set('buttoncolumns',2)
+        mgr.save_all()
         log.info(f"Stored default settings for next run.")
     def makeCAWLdemo(self):
         title=_("Make a Demo LIFT Database")
@@ -2678,7 +2682,7 @@ class LiftChooser(ui.Window,HasMenus):
         self.copytonewfile(newfile)
         self.wait.close()
         self.notify_newfilelocation(newfile)
-        self.storedefaultsettings(newfilebasename)
+        self.store_analang()
         return str(newfile)
     def submitdemolang(self,choice,window): #event=None):
         log.info(_("picked {choice}, from {glosslangs}").format(choice=choice, glosslangs=self.cawldb.glosslangs))
@@ -2729,7 +2733,7 @@ class LiftChooser(ui.Window,HasMenus):
         else:
             name=choice
         # log.info(f"{self.name if hasattr(self,'name') else "no self.name!"}")
-        log.info(f"{name}")
+        log.info(f"selected result {name=}")
         if name:
             self.setfilenameandcontinue(name,restart)
         elif not hasattr(self,'name') or not self.name: #If not either, trust that Demo is working
@@ -2958,9 +2962,9 @@ class Settings(object):
         ps=self.program.slices.ps()
         if not ps:
             text=(_("No Grammatical Category? ")+""
-                    f" ({list(self.program.settings.profilesbysense)})")
+                    f" ({list(self.program.profiles.profilesbysense)})")
             ErrorNotice(text, parent=self.program.task, wait=True)
-        elif self.program.settings.profilesbysense[ps] is None: #likely never happen...
+        elif self.program.profiles.profilesbysense[ps] is None: #likely never happen...
             text=_('Error: please set Grammatical category with profiles '
                     'first! (not {ps})').format(ps=ps)
             ErrorNotice(text, parent=self.program.task, wait=True)
@@ -3244,16 +3248,16 @@ class Settings(object):
         def submitform():
             def undo(changed):
                 for s in changed:
-                    if s in self.program.settings.distinguish:
-                        if self.program.settings.distinguish[s]==changed[s][1]:
-                            self.program.settings.distinguish[s]=changed[s][0] #(oldvar,newvar):
+                    if s in self.program.profiles.distinguish:
+                        if self.program.profiles.distinguish[s]==changed[s][1]:
+                            self.program.profiles.distinguish[s]=changed[s][0] #(oldvar,newvar):
                         else:
                             log.error(_("Changed to value ({new}) doesn't match "
                             "current setting for '{setting}': {current}").format(new=changed[s][1],
                                                         setting=s,current=self.distinguish[s]))
-                    elif s in self.program.settings.interpret:
-                        if self.program.settings.interpret[s]==changed[s][1]:
-                            self.program.settings.interpret[s]=changed[s][0] #(oldvar,newvar):
+                    elif s in self.program.profiles.interpret:
+                        if self.program.profiles.interpret[s]==changed[s][1]:
+                            self.program.profiles.interpret[s]=changed[s][0] #(oldvar,newvar):
                         else:
                             log.error(_("Changed to value ({new}) doesn't match "
                             "current setting for '{setting}': {current}").format(new=changed[s][1],
@@ -3268,8 +3272,8 @@ class Settings(object):
                         if oldvar != newvar:
                             changed[s]=(oldvar,newvar)
                             getattr(self.program.settings,typ)[s]=newvar
-            # log.debug('self.distinguish: {}'.format(self.program.settings.distinguish))
-            # log.debug('self.interpret: {}'.format(self.program.settings.interpret))
+            # log.debug('self.distinguish: {}'.format(self.program.profiles.distinguish))
+            # log.debug('self.interpret: {}'.format(self.program.profiles.interpret))
             if changed:
                 # log.info('There was a change; we need to redo the analysis now.')
                 log.info(_('The following changed (from,to): {changed}').format(changed=changed))
@@ -3317,15 +3321,15 @@ class Settings(object):
             bffl.wrap()
             options.next('r')
         self.program.task.getrunwindow()
-        self.program.settings.checkinterpretations()
+        self.program.profiles.checkinterpretations()
         analang=self.program.params.analang()
         options=Options(r=0,padx=50,pady=0,c=0,vars={},frames={})
-        for s in self.program.settings.distinguish: #Should be already set.
+        for s in self.program.profiles.distinguish: #Should be already set.
             options.vars[s] = ui.BooleanVar()
-            options.vars[s].set(self.program.settings.distinguish[s])
-        for s in self.program.settings.interpret: #This should already be set, even by default
+            options.vars[s].set(self.program.profiles.distinguish[s])
+        for s in self.program.profiles.interpret: #This should already be set, even by default
             options.vars[s] = ui.StringVar()
-            options.vars[s].set(self.program.settings.interpret[s])
+            options.vars[s].set(self.program.profiles.interpret[s])
         """Page title and instructions"""
         self.program.task.runwindow.title(_("Set Parameters for Segment Interpretation"))
         mwframe=self.program.task.runwindow.frame
@@ -3345,8 +3349,8 @@ class Settings(object):
         instr.wrap()
         """The rest of the page"""
         self.program.task.runwindow.scroll=ui.ScrollingFrame(mwframe,row=2,column=0)
-        # log.debug('self.distinguish: {}'.format(self.program.settings.distinguish))
-        # log.debug('self.interpret: {}'.format(self.program.settings.interpret))
+        # log.debug('self.distinguish: {}'.format(self.program.profiles.distinguish))
+        # log.debug('self.interpret: {}'.format(self.program.profiles.interpret))
         """I considered offering these to the user conditionally, but I don't
         see a subset of them that would only be relevant when another is
         selected. For instance, a user may NOT want to distinguish all Nasals,
@@ -3368,10 +3372,10 @@ class Settings(object):
         for var in vars:
             # log.info("Getting examples of {}".format(var))
             exsdict[var]=self.program.db.s[analang][var]
-            if var in self.program.settings.polygraphs[analang]:
+            if var in self.program.profiles.polygraphs[analang]:
                 exsdict[var]+=[k for k,v in
-                        self.program.settings.polygraphs[analang][var].items()
-                        if self.program.settings.polygraphs[analang][var][k]
+                        self.program.profiles.polygraphs[analang][var].items()
+                        if self.program.profiles.polygraphs[analang][var][k]
                                 ]
             # log.info("Examples of {}: {}".format(var,exsdict[var]))
         textdict={'ʔ':_('Distinguish glottal stops (ʔ) '

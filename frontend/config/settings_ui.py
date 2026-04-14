@@ -64,21 +64,21 @@ class SettingsUI(object):
             for lang in self.program.db.analangs:
                 for pc in vars[lang]:
                     for pg in vars[lang][pc]:
-                        self.polygraphs[lang][pc][pg]=vars[lang][pc][pg].get()
+                        self.program.profiles.polygraphs[lang][pc][pg]=vars[lang][pc][pg].get()
             self.storesettingsfile(setting='profiledata')
             self.program.taskchooser.restart()
         def foundchanges():
             for lang in vars:
-                if lang not in self.polygraphs:
+                if lang not in self.program.profiles.polygraphs:
                     return True
                 for pc in vars[lang]:
-                    if pc not in self.polygraphs[lang]:
+                    if pc not in self.program.profiles.polygraphs[lang]:
                         return True
                     for pg in vars[lang][pc]:
-                        if pg not in self.polygraphs[lang][pc]:
+                        if pg not in self.program.profiles.polygraphs[lang][pc]:
                             return True
                         v=vars[lang][pc][pg].get()
-                        if self.polygraphs[lang][pc][pg]!=v:
+                        if self.program.profiles.polygraphs[lang][pc][pg]!=v:
                             return True
             log.info(_("No changes found to polygraph settings, continuing."))
         oktext=_("OK")
@@ -89,7 +89,7 @@ class SettingsUI(object):
             nochangetext=_("Exit with no changes")
         log.info(_("Asking about Digraphs and Trigraphs!"))
         titlet=_("{azt} Digraphs and Trigraphs").format(azt=self.program.name)
-        hasdata=self.checkforpolygraphsindata()
+        hasdata=self.program.profiles.checkforpolygraphsindata()
         #From wherever this is opened, it should withdraw and deiconify that
         pgw=ui.Window(self.program.mainwindow,title=titlet,exit=False)
         t=_("Which of the following letter sequences from your data "
@@ -136,16 +136,16 @@ class SettingsUI(object):
         row+=1
         t4=ui.Label(pgw.frame,text=t,column=0, row=row)
         t4.bind("<Button-1>", lambda e: openweburl(helpurl))
-        if not hasattr(self,'polygraphs'):
-            self.polygraphs={}
+        if not hasattr(self.program.profiles,'polygraphs'):
+            self.program.profiles.polygraphs={}
         vars={}
         row+=1
         scroll=ui.ScrollingFrame(pgw.frame, row=row, column=0)
         srow=0
         ncols=4 # increase this for wider window
         for lang in self.program.db.analangs:
-            if lang not in self.polygraphs:
-                self.polygraphs[lang]={}
+            if lang not in self.program.profiles.polygraphs:
+                self.program.profiles.polygraphs[lang]={}
             srow+=1
             title=ui.Label(scroll.content,text=self.languagenames[lang],
                                                         font='read')
@@ -155,8 +155,8 @@ class SettingsUI(object):
             for sclass in [sc for sc in self.program.db.s[lang] #Vtg, Vdg, Ctg, Cdg, etc
                                 if ('dg' in sc or 'tg' in sc or 'qg' in sc)]:
                 pclass=sclass.replace('dg','').replace('tg','').replace('qg','')
-                if pclass not in self.polygraphs[lang]:
-                    self.polygraphs[lang][pclass]={}
+                if pclass not in self.program.profiles.polygraphs[lang]:
+                    self.program.profiles.polygraphs[lang][pclass]={}
                 if pclass not in vars[lang]:
                     vars[lang][pclass]={}
                 if len(self.program.db.s[lang][sclass])>0:
@@ -171,7 +171,7 @@ class SettingsUI(object):
                 for pg in self.program.db.s[lang][sclass]:
                     vars[lang][pclass][pg] = ui.BooleanVar()
                     vars[lang][pclass][pg].set(
-                                    self.polygraphs[lang][pclass].get(pg,True))
+                                    self.program.profiles.polygraphs[lang][pclass].get(pg,True))
                     cb=ui.CheckButton(scroll.content, text = pg, #.content
                                         variable = vars[lang][pclass][pg],
                                         onvalue = True, offvalue = False,

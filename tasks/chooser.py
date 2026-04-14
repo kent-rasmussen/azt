@@ -597,7 +597,7 @@ class TaskChooser(Task):
         super().__init__(self.program)
         self.ui.setmainwindow()
         # TaskDressing.__init__(self,parent) #I think this should be after settings
-        self.program.settings.getprofiles()
+        self.program.profiles.run()
         # self.withdraw()
         self.program.splash.progress(90)
         if self.program.tk_root.exitFlag.istrue():

@@ -1012,8 +1012,8 @@ class SortSyllables(Sort,Segments,Task):
         """
         ps=self.program.slices.ps()
         for sense in self.program.db.sensesbyps[ps]:
-            valuelist=[k for k in self.program.settings.profilesbysense[ps]
-                        if sense in self.program.settings.profilesbysense[ps][k]]
+            valuelist=[k for k in self.program.profiles.profilesbysense[ps]
+                        if sense in self.program.profiles.profilesbysense[ps][k]]
             if valuelist:
                 sense.cvprofilevalue(self.program.params.ftype(),valuelist[0])
     def runcheck(self):
@@ -1209,8 +1209,8 @@ class Transcribe(Sound,Sort,Task):
             if len(newvalue) > 1:
                 warning.append(_("{azt} will add '{new}' to those settings."
                             ).format(azt=self.program.name,new=newvalue))
-                if newvalue not in self.program.settings.polygraphs[self.analang][self.cvt]:
-                    self.program.settings.polygraphs[self.analang][self.cvt][newvalue]=True
+                if newvalue not in self.program.profiles.polygraphs[self.analang][self.cvt]:
+                    self.program.profiles.polygraphs[self.analang][self.cvt][newvalue]=True
                     self.program.settings.storesettingsfile('profiledata')
             if len(self.group) > 1:
                 warning.append(_("{azt} will *not* remove '{group}' from "

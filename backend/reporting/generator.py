@@ -1196,8 +1196,8 @@ class Report(object):
     def __init__(self, **kwargs):
         self.reportbasefilename=self.program.settings.reportbasefilename
         self.reporttoaudiorelURL=self.program.settings.reporttoaudiorelURL
-        self.distinguish=self.program.settings.distinguish
-        self.profilesbysense=self.program.settings.profilesbysense
+        self.distinguish=self.program.profiles.distinguish
+        self.profilesbysense=self.program.profiles.profilesbysense
         if self.program.settings.minimumwordstoreportUFgroup:
             self.minwords=self.program.settings.minimumwordstoreportUFgroup
         else: #provide a default, return to settings file for modification

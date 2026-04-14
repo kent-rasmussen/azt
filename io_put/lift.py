@@ -59,6 +59,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             'machine':langtags.machine_transcription_code
         }
     def __init__(self, filename, analang=None, tostrip=False):
+        log.info(f"LiftXML init: filename={filename}, analang={analang}, tostrip={tostrip}")
         # analang is optional because we don't always care (CAWL).
         self.debug=False
         self.set_filename(filename)

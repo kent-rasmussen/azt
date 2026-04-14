@@ -102,6 +102,7 @@ import webbrowser
 from backend.reporting.generator import Report
 from backend.core.lexicon import Senses, Segments, WordCollection, Parse, Tone
 from backend.core.sorting_engine import Sort
+from backend.core.profiles import ProfileAnalyzer
 from frontend.ui_shell import (HasMenus, Menus, StatusFrame, TaskDressing,
     LiftChooser, ImageFrame, Splash, ErrorNotice, ResultWindow, Settings as UISettings)
 from utilities.error_handler import set_error_handler
@@ -349,9 +350,9 @@ class App:
             log.info(_("MS Windows screen size: {size}").format(size=screensize))
         self.prep_to_write()
         langtags.Languages(self)
-        self.get_lift_file() #self.filename, self.analang set here, LiftChooser
+        self.get_lift_file() #self.filename, maybe LiftChooser (NOT self.analang)
         self.splash = Splash(self)
-        FileParser(self) #needs self.filename, pick up self.analang from file
+        FileParser(self) #needs self.filename, pick up self.analang from settings or file
         from frontend.vcs_ui import VCSPresenter
         from frontend.report_ui import ReportPresenter
         from frontend.sort_ui import SortPresenter
@@ -364,6 +365,7 @@ class App:
         ToneFrames(self)
         Settings(self) #needs self.filename, pick up self.analang from file
         self.settings.post_lift_init()
+        ProfileAnalyzer(self) #registers as self.profiles
         CheckParameters(self) #depends on settings (nothing but self.analang?)
         ExampleDict(self) #needed for makestatus, needs params,slices,data
         Alphabet(self) #after slicedict is up; needs params
@@ -372,7 +374,6 @@ class App:
         # StatusDict(filename,dict,self) #needs filename,dict
         UISettings(self)
         TaskChooser(self) #TaskChooser MainApplication
-
     def run(self):
         # global program
         log.info("Running main function on {} ({})".format(platform.system(),

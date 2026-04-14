@@ -98,7 +98,7 @@ class Segments(Senses):
         """I think I want to move away from this"""
         log.info(_("Asked for forms to search for a data slice (only do once!)"))
         ps=kwargs.get('ps',self.program.slices.ps())
-        d=self.program.settings.formstosearch[ps] #{form:sense}
+        d=self.program.profiles.formstosearch[ps] #{form:sense}
         # log.info("Looking at {} entries".format(len(d)))
         return {k:d[k] for k in d
                         if set(d[k]) & set(self.program.slices.senses(**kwargs))}
@@ -207,10 +207,10 @@ class Segments(Senses):
         that would likely need more smarts for affix and root distinction."""
         def maybe_add_polygraph(pg):
             sc=self.program.params.cvt()
-            scvalue=self.program.settings.polygraphs[self.analang][sc][value]
+            scvalue=self.program.profiles.polygraphs[self.analang][sc][value]
             if not scvalue:
                 scvalue=True
-                self.program.settings.setupCVrxs() #costly; only when needed!
+                self.program.profiles.setupCVrxs() #costly; only when needed!
         def do_not_do_these(value,check=None):
             return value in ['NA',None] or (check and check.isdigit()) or value.isdigit()
         form_ori=formvalue=sense.textvaluebyftypelang(self.ftype,self.analang)
@@ -241,7 +241,7 @@ class Segments(Senses):
                 formvalue=self.rxdict.update(formvalue,check,value)
                 #This should update formstosearch:
                 if formvalue != f:
-                    self.program.settings.addtoformstosearch(sense,f,formvalue)
+                    self.program.profiles.addtoformstosearch(sense,f,formvalue)
                 if len(value)>1:
                     maybe_add_polygraph(value)
         else: #update to all annotations
@@ -432,7 +432,7 @@ class Segments(Senses):
         self.dodone=True
         self.dodoneonly=False #don't give me other words
         self.ftype=self.program.params.ftype()
-        self.rxdict=self.program.settings.rxdict
+        self.rxdict=self.program.profiles.rxdict
 class Consonants():
     cvt='C'
     def __init__(self, **kwargs):

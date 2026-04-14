@@ -19,6 +19,11 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.0.1
+- Extracted syllable profile analysis from Settings into ProfileAnalyzer (backend/core/profiles.py)
+- Deleted dead profiles.py at repo root
+- Settings now delegates profile analysis to program.profiles; file persistence stays in Settings
+
 # Version 1.0.0
 - Alphabet chart up and printing
 - ps-profile sort groups now sorting in to glyph/letter groups
