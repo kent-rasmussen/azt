@@ -2254,19 +2254,89 @@ class LiftChooser(ui.Window,HasMenus):
     to start a new one (live or demo), or copy from USB."""
     def newfile_page(self):
         self._new_w=ui.Window(self.program.tk_root,title=_("Start New LIFT Database"))
-        defaults={'pady':20,'column':0,'sticky':'w','gridwait':True}
+        defaults={'pady':20,'padx':20,'column':0,'sticky':'w','gridwait':True}
         self.title_frame=ui.Frame(self._new_w.frame, row=0, **defaults)
         self.code_frame=ui.Frame(self._new_w.frame, row=1, **defaults)
+        self.entryframe=ui.Frame(self._new_w.frame, row=2, **defaults)
+        self.subtags_frame=ui.Frame(self._new_w.frame, row=3, **defaults)
+        self.subtags_frame.grid_remove()
+        # title children
+        title=_("What is your language code?")
+        text=_("Type the name of your language in the field, then find and select the full name below.")
+        t=ui.Label(self.title_frame, text=title, font='title', column=0, row=0)
+        l=ui.Label(self.title_frame, text=text, column=0, row=1)
+        # code children
         self.code_label=ui.Label(self.code_frame, text=_('code: '),
                                 font='readbig', row=0, **defaults)
         self.use_code_button=ui.Button(self.code_frame,
                                         text='<= '+_("Use this code"),
                                         command=self._new_w.destroy,
-                                        font='readbig', padx=20,
+                                        font='readbig',
                                         state='disabled',
-                                        **{**defaults,'column':1}
+                                        **{**defaults,'column':1,'padx':20}
                                     )
-        self.entryframe=ui.Frame(self._new_w.frame, row=2, **defaults)
+        self.entry_field=ui.EntryField(self.entryframe,
+                                        text=self.analang_entry,
+                                        font='normal',
+                                        width=10,
+                                        row=1,
+                                        # column=0,
+                                        # sticky='w',
+                                        **defaults)
+        self.list_of_possibles=ui.ListBox(self.entryframe,
+                                        command=self.lang_name_selected,
+                                        font='default',
+                                        height=1,
+                                        width=10,
+                                        row=2,
+                                        # column=0,
+                                        # gridwait=True,
+                                        # sticky='w',
+                                        **defaults)
+        #Above this is shown on open, below after a language has been selected:
+        self.private_use_frame=ui.Frame(self.subtags_frame, **defaults)
+        # this
+        self.show_private_w=ui.Button(self.private_use_frame,
+                            text=_("I'm working on a dialect of this language"),
+                            command=self.show_private_use,
+                            r=0, **defaults
+                        )
+        # alternates with this
+        self.private_use_fields=ui.Frame(self.private_use_frame, **defaults)
+        instructions=ui.Label(self.private_use_fields, r=0, c=0, colspan=2,
+                                text=_("give two to eight (2-8) characters "
+                                        "to identify your dialect"))
+        prefix=ui.Label(self.private_use_fields, text='x-',
+                                                r=1, c=0, sticky='e')
+        self.entry_field_2=ui.EntryField(self.private_use_fields,
+                                        textvariable=self.variant_entry,
+                                        font='normal', width=10, r=1,
+                                        **{**defaults,'column':1})
+        # and this frame:
+        self.territory_frame=ui.Frame(self.subtags_frame, **{**defaults,'column':1})
+        instructions=_("This language is spoken in multiple territories; "
+                        "where are you working?")
+        self.no_country_text=_("Multiple/all territories") #used on each rebuild
+        ui.Label(self.territory_frame,
+                text=instructions,
+                row=0, **defaults,
+                # column=0,
+                # gridwait=True,
+                # sticky='w'
+                )
+        options=[self.no_country_text]# initial default. later: +list(lang_obj.regions)
+        max_len=max(len(i) for i in options)
+        self.list_of_territories=ui.ListBox(self.territory_frame,
+                                        command=self.territory_selected,
+                                        optionlist=options,
+                                        font='default',
+                                        height=min(5,len(options)),
+                                        width=max_len,
+                                        row=1, **defaults,
+                                        # column=0,
+                                        # gridwait=True,
+                                        # sticky='w'
+                                        )
         log.info("newfile_page done")
     def set_up_variables(self):
         self.analang_entry=ui.StringVar()
@@ -2275,15 +2345,8 @@ class LiftChooser(ui.Window,HasMenus):
     def startnewfile(self):
         self.program.tk_root.unbind_all('<Button-1>')
         self.program.tk_root.unbind_all('<Return>')
-        self.newfile_page()
-        title=_("What is your language code?")
-        text=_("Type the name of your language in the field, then find and select the full name below.")
-        self.no_country_text=_("Multiple/all territories")
-        t=ui.Label(self.title_frame, text=title, font='title', column=0, row=0)
-        l=ui.Label(self.title_frame, text=text, column=0, row=1)
-        l.wrap()
         self.set_up_variables()
-        self.title_frame.grid()
+        self.newfile_page()
         self.make_lang_entry()
         self._new_w.mainwindow=False
         t.wait_window(self._new_w)
@@ -2291,30 +2354,18 @@ class LiftChooser(ui.Window,HasMenus):
             return self.analang_code_complete()
     def make_lang_entry(self):
         """This should be pulled into it's own class, so we can source it here and in sound_ui the same way."""
-        self.entry_field=ui.EntryField(self.entryframe,
-                                        text=self.analang_entry,
-                                        font='normal',
-                                        width=10,
-                                        row=1,
-                                        column=0,
-                                        sticky='w')
-        self.list_of_possibles=ui.ListBox(self.entryframe,
-                                        command=self.lang_name_selected,
-                                        font='default',
-                                        height=1,
-                                        width=10,
-                                        row=2,
-                                        column=0,
-                                        gridwait=True,
-                                        sticky='w')
         self.entryframe.grid()
         self.entry_field.grid()
         self.trace_analang_entry()
         self.entry_field.focus_set()
     def trace_analang_entry(self):
+        def focus_list(event):
+            self.list_of_possibles.focus_set()
+            return("break")
         # log.info("trace_analang_entry")
         self.analang_entry.trace=self.analang_entry.trace_add('write',
                                                             self.show_possibles)
+        self.entry_field.bind('<Down>',focus_list)
         # log.info("trace_analang_entry OK")
     def untrace_analang_entry(self):
         # log.info("untrace_analang_entry")
@@ -2331,9 +2382,8 @@ class LiftChooser(ui.Window,HasMenus):
     def _show_possibles(self):
         value=self.analang_entry.get()
         log.info(f"Updating Possibles for '{value}'")
+        self.hide_subtag_frames()
         self.entry_field.configure(width=max(10,len(value)))
-        if hasattr(self,'subtags_frame') and self.subtags_frame.winfo_exists():
-            self.subtags_frame.destroy()
         if not value:
             self.list_of_possibles.grid_remove()
             self.iso=''
@@ -2379,16 +2429,14 @@ class LiftChooser(ui.Window,HasMenus):
         self.analang_entry.set(value)
         self.trace_analang_entry()
         self.entry_field.configure(width=max(10,len(value)))
-        self.list_of_possibles.grid_remove()
         self.show_subtag_frames()
     def update_code(self,*args):
+        self.code=self.iso
         if not self.iso:
-            self.code_label.grid_remove()
-            self.use_code_button.grid_remove()
             self.check_tag_validity()
             self._new_w.update_idletasks()
+            self.code_label['text']=f"code: {self.code}"
             return
-        self.code=self.iso
         if self.territory_entry.get():
             self.code+='-'+self.territory_entry.get()
         if self.variant_entry.get():
@@ -2398,19 +2446,16 @@ class LiftChooser(ui.Window,HasMenus):
         self.use_code_button.grid()
         self.check_tag_validity()
         log.info(f"Code now {self.code=}")
+    def hide_private_use(self):
+        try:
+            self.private_use_fields.grid_remove()
+            self.show_private_w.grid()
+        except:
+            pass
     def show_private_use(self,event=None):
         """The user needs to ask to see this field"""
         self.show_private_w.grid_remove()
-        instructions=ui.Label(self.private_use_frame, r=0, c=0, colspan=2,
-                                text=_("give two to eight (2-8) characters "
-                                        "to identify your dialect"))
-        prefix=ui.Label(self.private_use_frame, text='x-',
-                                                r=1, c=0, sticky='e')
-        self.entry_field_2=ui.EntryField(self.private_use_frame,
-                                        textvariable=self.variant_entry,
-                                        font='normal', width=10,
-                                        row=1, column=1,
-                                        sticky='w')
+        self.private_use_fields.grid()
         self.variant_entry.trace_add('write', self.update_code)
         self.entry_field_2.focus_set()
     def territory_selected(self,*args):
@@ -2423,62 +2468,48 @@ class LiftChooser(ui.Window,HasMenus):
         else:
             self.territory_entry.set('')
         self.update_code()
+    def hide_subtag_frames(self):
+        try:
+            self.subtags_frame.grid_remove()
+            self.hide_private_use()
+        except:
+            pass
     def show_subtag_frames(self):
         # log.info("show_subtag_frames")
-        defaults={'pady':20,'padx':20,'sticky':'w','gridwait':True}
-        self.subtags_frame=ui.Frame(self._new_w.frame, row=3, **defaults)
-        self.private_use_frame=ui.Frame(self.subtags_frame, **defaults)
-        self.territory_frame=ui.Frame(self.subtags_frame,
-                                        column=1, **defaults)
-        self.show_private_w=ui.Button(self.private_use_frame,
-                            text=_("I'm working on a dialect of this language"),
-                            command=self.show_private_use,
-                            r=0,c=0
-                        )
         self.subtags_frame.grid()
         self.private_use_frame.grid()
         lang_obj=self.program.languages.get_obj(self.iso)
         if len(lang_obj.regions) > 1:
+            self.list_of_territories.delete(0, "end") #delete
+            for i in lang_obj.regions:
+                self.list_of_territories.insert("end", i)
+            max_value_len=max([0]+[len(self.list_of_territories.get(i))
+                    for i in range(len(self.list_of_territories.get(0,'end')))])
+            self.list_of_territories.configure(width=max(10,max_value_len),
+                                        height=min(4,len(lang_obj.regions)))
             self.territory_frame.grid()
-            instructions=_("This language is spoken in multiple territories; "
-                            "where are you working?")
-            territory_instructions=ui.Label(self.territory_frame,
-                                            text=instructions,
-                                            row=0,
-                                            column=0,
-                                            # gridwait=True,
-                                            sticky='w')
-            max_len=max([len(i) for i in lang_obj.regions])
-            options=[self.no_country_text]+list(lang_obj.regions)
-            self.list_of_territories=ui.ListBox(self.territory_frame,
-                                        command=self.territory_selected,
-                                        optionlist=options,
-                                        font='default',
-                                        height=min(5,len(lang_obj.regions)+1),
-                                        width=max_len,
-                                        row=1,
-                                        column=0,
-                                        # gridwait=True,
-                                        sticky='w')
-        elif len(lang_obj.regions):
-            self.territory_frame.destroy()
-        else:
-            self.territory_frame.destroy()
+        else: #if len(lang_obj.regions):
+            self.territory_frame.grid_remove()
         self.use_code_button.grid()
     def check_tag_validity(self):
-        for code in [langtags.tone_code,
-                    langtags.phonetic_code,
-                    langtags.audio_code]:
-            if code in self.code:
-                self.use_code_button.configure(state='disabled')
-                self.use_code_button['text']=f"'{code}' invalid"
-                return
-        if langtags.tag_is_valid(self.code):
-            # log.info("tag valid")
-            self.use_code_button.configure(state='normal')
-        else:
-            # log.info(f"tag not valid {self.code=}")
+        def no_good():
             self.use_code_button.configure(state='disabled')
+        def code_ok():
+            self.use_code_button.configure(state='normal')
+        if self.code:
+            for code in [langtags.tone_code,
+                        langtags.phonetic_code,
+                        langtags.audio_code]:
+                if code in self.code:
+                    no_good()
+                    self.use_code_button['text']=f"'{code}' invalid"
+                    return
+            if langtags.tag_is_valid(self.code):
+                # log.info("tag valid")
+                code_ok()
+                return
+        # log.info(f"tag not valid {self.code=}")
+        no_good()
     def analang_code_complete(self):
         try:
             return self._analang_code_complete()
@@ -2649,7 +2680,6 @@ class LiftChooser(ui.Window,HasMenus):
         self.notify_newfilelocation(newfile)
         self.storedefaultsettings(newfilebasename)
         return str(newfile)
-    
     def submitdemolang(self,choice,window): #event=None):
         log.info(_("picked {choice}, from {glosslangs}").format(choice=choice, glosslangs=self.cawldb.glosslangs))
         if choice in self.cawldb.glosslangs:
