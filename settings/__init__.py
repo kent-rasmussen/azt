@@ -802,11 +802,11 @@ class Settings(SettingsUI):
         if hasattr(self,'secondformfield') and self.secondformfield:
             if self.nominalps in self.secondformfield:
                 self.pluralname=self.secondformfield[self.nominalps]
-            else:
+            elif self.nominalps:
                 self.guess_nominal_secondformfield()
             if self.verbalps in self.secondformfield:
                 self.imperativename=self.secondformfield[self.verbalps]
-            else:
+            elif self.verbalps:
                 self.guess_verbal_secondformfield()
         else:
             self.secondformfield={}
