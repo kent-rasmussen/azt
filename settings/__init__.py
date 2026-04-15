@@ -121,6 +121,16 @@ from frontend.config.settings_ui import SettingsUI
 
 class Settings(SettingsUI):
     """Full Settings class: backend logic + UI methods from SettingsUI."""
+    domain_mapping = {
+            'defaults': ['project', 'ui'],
+            'soundsettings': ['audio'],
+            'alphabet': ['alphabet'],
+            'contributors': ['contributors'],
+            'status': ['data'],
+            'toneframes': ['data'],
+            'adhocgroups': ['data'],
+            'profiledata': ['data']
+        }
     def settingsbyfile(self):
         #Here we set which settings are stored in which files
         self.settings={'defaults':{
@@ -352,7 +362,8 @@ class Settings(SettingsUI):
             # fns['toneframes']=self.program.toneframes
             # fns['status']=self.program.status
             fns['aztrepourls']=self.program.source_repo.remoteurls
-            fns['status']=self.program.alphabet.status
+            # fns['status']=self.program.alphabet.status
+            # fns['status']=self.program.status #I think this is redundant
             fns['glyphdict']=self.program.alphabet.glyphdict
             fns['glyph_members']=self.program.alphabet.glyph_members
             fns['glyphs_distinguished']=self.program.alphabet.distinguished
@@ -434,6 +445,8 @@ class Settings(SettingsUI):
                 # _log.info("Trying to read {} to object with value {} and fn "
                 #             "{}".format(s,v,self.fndict[s]))
                 self.fndict[s](v)
+            elif s == 'status' and not hasattr(self.program,'status'): #Only load this once
+                self.makestatus({k:v[k] for k in v if k != 'DEFAULT'})
             elif (isinstance(v,dict) and
                 hasattr(o,s) and isinstance(getattr(o,s),dict)):
                 getattr(o,s).update(v)
@@ -448,20 +461,8 @@ class Settings(SettingsUI):
         else:
             d=self.makesettingsdict(setting=setting)
 
-        # Synchronize with new modular domains
-        domain_mapping = {
-            'defaults': ['project', 'ui'],
-            'soundsettings': ['audio'],
-            'alphabet': ['alphabet'],
-            'contributors': ['contributors'],
-            'status': ['data'],
-            'toneframes': ['data'],
-            'adhocgroups': ['data'],
-            'profiledata': ['data']
-        }
-
-        if setting in domain_mapping:
-            for domain_name in domain_mapping[setting]:
+        if setting in self.domain_mapping:
+            for domain_name in self.domain_mapping[setting]:
                 domain_mgr = getattr(self.mgr, domain_name)
                 # We need to filter and update the domain data
                 domain_attrs = migration.converters.Converter.DOMAIN_MAPPING[domain_name]
@@ -479,31 +480,18 @@ class Settings(SettingsUI):
         write_ini(filename, d)
     def loadsettingsfile(self,setting='defaults'):
         # Check domain-specific manager first
-        domain_mapping = {
-            'defaults': ['project', 'ui'],
-            'soundsettings': ['audio'],
-            'alphabet': ['alphabet'],
-            'contributors': ['contributors'],
-            'status': ['data'],
-            'toneframes': ['data'],
-            'adhocgroups': ['data'],
-            'profiledata': ['data']
-        }
-
-        if setting in domain_mapping:
-            for domain_name in domain_mapping[setting]:
+        if setting in self.domain_mapping:
+            for domain_name in self.domain_mapping[setting]:
                 domain_mgr = getattr(self.mgr, domain_name)
                 data = domain_mgr.load()
                 if data:
                     _log.info(_("Loaded {setting} settings from new {domain} domain").format(setting=setting, domain=domain_name))
                     self.readsettingsdict(data)
-
         # Still fallback to legacy reader for now to ensure absolute compatibility
         # during the transition if JSON files were not yet created or migrated.
         filename=self.settingsfile(setting)
         if not filename or not filename.exists():
             return
-
         _log.info(_("Fallback check for {setting} settings in {file}").format(setting=setting, file=filename))
         sections, d = read_ini(filename, setting)
         if not sections and setting not in ['status','toneframes']:
@@ -1218,30 +1206,6 @@ class Settings(SettingsUI):
                                     for i in langs
                                     if i not in self.languagenames
                                     })
-        # for xyz in langs+self.program.interfacelangs:
-        #     default=_("Language with code [{code}]").format(code=xyz)
-        #     # _log.info(' '.join('Looking for language name for',xyz))
-        #     setnesteddictobjectval(self,'languagenames',
-        #                             d.get(xyz,default),
-        #                             xyz)
-        """This provides an ldml node implement this some day"""
-        #_log.info(' '.join(tree.nodes.find(f"special/palaso:languageName", namespaces=ns)))
-        #nsurl=tree.nodes.find(f"ldml/special/@xmlns:palaso")
-        """This doesn't seem to be working; I should fix it, but there
-        doesn't seem to be reason to generalize it for now."""
-        # tree=ET.parse(self.languagepaths[xyz])
-        # tree.nodes=tree.getroot()
-        # node=tree.nodes.find(f"special/palaso:languageName", namespaces=ns)
-        # if node is not None:
-        #     self.languagenames[xyz]=node.get('value')
-        #     _log.info(' '.join('found',self.languagenames[xyz]))
-        # if not hasattr(self,'adnlangnames') or self.adnlangnames is None:
-        #     self.adnlangnames={}
-        # if (hasattr(self,'adnlangnames') and
-        #         self.adnlangnames and
-        #         xyz in self.adnlangnames and
-        #         self.adnlangnames[xyz]):
-        #     self.languagenames[xyz]=self.adnlangnames[xyz]
     def setrefreshdelay(self):
         """This sets the main window refresh delay, in miliseconds"""
         if (hasattr(self.program.mainwindow,'runwindow') and
