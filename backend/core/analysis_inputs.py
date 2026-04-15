@@ -254,6 +254,33 @@ class CheckParameters(object):
                     ('CV6', _("Sixth CV"))
                     ]
                 },
+            'VC':{
+                1:[
+                    ('VxC1', _("Correspondence of first VC")),
+                    ],
+                2:[
+                    ('VxC2', _("Correspondence of second VC")),
+                    # ('VC1=VC2',_("Same First/only Two VCs")),
+                    ],
+                3:[
+                    ('VxC3', _("Correspondence of third VC")),
+                    # ('VC1=VC2=VC3',_("Same First/only Three VCs")),
+                    # ('VC3', _("Third VC"))
+                    ],
+                4:[
+                    ('CV1=CV2=CV3=CV4',_("Same First/only Four CVs")),
+                    ('CV4', _("Fourth CV"))
+                    ],
+                5:[
+                    ('CV1=CV2=CV3=CV4=CV5',_("Same First/only Five CVs")),
+                    ('CV5', _("Fifth CV"))
+                    ],
+                6:[
+                    ('CV1=CV2=CV3=CV4=CV5=CV6',_("Same First/only Six CVs")),
+                    ('CV6', _("Sixth CV"))
+                    ]
+                },
+        }
     def assure_checknames(self):
         if not hasattr(self,'_checknames'):
             self.build_checknames()
@@ -332,33 +359,6 @@ class CheckParameters(object):
                         'pl':'Vowel-Consonant combinations'},
                 'T':{'sg':'Tone','pl':'Tones'},
                 }
-            'VC':{
-                1:[
-                    ('VxC1', _("Correspondence of first VC")),
-                    ],
-                2:[
-                    ('VxC2', _("Correspondence of second VC")),
-                    # ('VC1=VC2',_("Same First/only Two VCs")),
-                    ],
-                3:[
-                    ('VxC3', _("Correspondence of third VC")),
-                    # ('VC1=VC2=VC3',_("Same First/only Three VCs")),
-                    # ('VC3', _("Third VC"))
-                    ],
-                4:[
-                    ('CV1=CV2=CV3=CV4',_("Same First/only Four CVs")),
-                    ('CV4', _("Fourth CV"))
-                    ],
-                5:[
-                    ('CV1=CV2=CV3=CV4=CV5',_("Same First/only Five CVs")),
-                    ('CV5', _("Fifth CV"))
-                    ],
-                6:[
-                    ('CV1=CV2=CV3=CV4=CV5=CV6',_("Same First/only Six CVs")),
-                    ('CV6', _("Sixth CV"))
-                    ]
-                },
-        }
         self.cvchecknamesdict()
         self.checkcodes_by_cvt()
 
