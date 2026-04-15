@@ -198,6 +198,62 @@ class CheckParameters(object):
                     ('V6', _("Sixth Vowel"))
                     ]
                 },
+            'C':{
+                1:[('C1', _("First/only Consonant"))],
+                2:[
+                    ('C2', _("Second Consonant")),
+                    ('C1=C2',_("First Two Same Consonants")),
+                    ('C1xC2', _("Correspondence of First Two Consonants"))
+                    ],
+                3:[
+                    ('C2=C3',_("Second and Third Same Consonants")),
+                    ('C2xC3', _("Correspondence of Second and Third Consonants")),
+                    ('C3', _("Third Consonant")),
+                    ('C1=C2=C3',_("First Three Same Consonants"))
+                    ],
+                4:[
+                    ('C4', _("Fourth Consonant")),
+                    ('C1=C2=C3=C4',_("First Four Same Consonants"))
+                    ],
+                5:[
+                    ('C5', _("Fifth Consonant")),
+                    ('C1=C2=C3=C4=C5',_("First Five Same Consonants"))
+                    ],
+                6:[
+                    ('C6', _("Sixth Consonant")),
+                    ('C1=C2=C3=C4=C5=C6',_("First Six Same Consonants"))
+                    ]
+                },
+            'CV':{
+                1:[
+                    # ('#CV1', _("Word-initial CV")),
+                    ('CxV1', _("Correspondence of first CV")),
+                    # ('CV1', _("First/only CV)")
+                    ],
+                2:[
+                    # ('CV2', _("Second CV")),
+                    ('CxV2', _("Correspondence of second CV")),
+                    ('CV1=CV2',_("Same First/only Two CVs")),
+                    # ('CV2#', _("Word-final CV"))
+                    ],
+                3:[
+                    ('CxV3', _("Correspondence of third CV")),
+                    ('CV1=CV2=CV3',_("Same First/only Three CVs")),
+                    ('CV3', _("Third CV"))
+                    ],
+                4:[
+                    ('CV1=CV2=CV3=CV4',_("Same First/only Four CVs")),
+                    ('CV4', _("Fourth CV"))
+                    ],
+                5:[
+                    ('CV1=CV2=CV3=CV4=CV5',_("Same First/only Five CVs")),
+                    ('CV5', _("Fifth CV"))
+                    ],
+                6:[
+                    ('CV1=CV2=CV3=CV4=CV5=CV6',_("Same First/only Six CVs")),
+                    ('CV6', _("Sixth CV"))
+                    ]
+                },
     def assure_checknames(self):
         if not hasattr(self,'_checknames'):
             self.build_checknames()
@@ -276,62 +332,6 @@ class CheckParameters(object):
                         'pl':'Vowel-Consonant combinations'},
                 'T':{'sg':'Tone','pl':'Tones'},
                 }
-            'C':{
-                1:[('C1', _("First/only Consonant"))],
-                2:[
-                    ('C2', _("Second Consonant")),
-                    ('C1=C2',_("First Two Same Consonants")),
-                    ('C1xC2', _("Correspondence of First Two Consonants"))
-                    ],
-                3:[
-                    ('C2=C3',_("Second and Third Same Consonants")),
-                    ('C2xC3', _("Correspondence of Second and Third Consonants")),
-                    ('C3', _("Third Consonant")),
-                    ('C1=C2=C3',_("First Three Same Consonants"))
-                    ],
-                4:[
-                    ('C4', _("Fourth Consonant")),
-                    ('C1=C2=C3=C4',_("First Four Same Consonants"))
-                    ],
-                5:[
-                    ('C5', _("Fifth Consonant")),
-                    ('C1=C2=C3=C4=C5',_("First Five Same Consonants"))
-                    ],
-                6:[
-                    ('C6', _("Sixth Consonant")),
-                    ('C1=C2=C3=C4=C5=C6',_("First Six Same Consonants"))
-                    ]
-                },
-            'CV':{
-                1:[
-                    # ('#CV1', _("Word-initial CV")),
-                    ('CxV1', _("Correspondence of first CV")),
-                    # ('CV1', _("First/only CV)")
-                    ],
-                2:[
-                    # ('CV2', _("Second CV")),
-                    ('CxV2', _("Correspondence of second CV")),
-                    ('CV1=CV2',_("Same First/only Two CVs")),
-                    # ('CV2#', _("Word-final CV"))
-                    ],
-                3:[
-                    ('CxV3', _("Correspondence of third CV")),
-                    ('CV1=CV2=CV3',_("Same First/only Three CVs")),
-                    ('CV3', _("Third CV"))
-                    ],
-                4:[
-                    ('CV1=CV2=CV3=CV4',_("Same First/only Four CVs")),
-                    ('CV4', _("Fourth CV"))
-                    ],
-                5:[
-                    ('CV1=CV2=CV3=CV4=CV5',_("Same First/only Five CVs")),
-                    ('CV5', _("Fifth CV"))
-                    ],
-                6:[
-                    ('CV1=CV2=CV3=CV4=CV5=CV6',_("Same First/only Six CVs")),
-                    ('CV6', _("Sixth CV"))
-                    ]
-                },
             'VC':{
                 1:[
                     ('VxC1', _("Correspondence of first VC")),
