@@ -159,79 +159,7 @@ class CheckParameters(object):
             self._check=None
         # log.info(_("Returning check {check}").format(check=self._check))
         return self._check
-    def checkcodes_by_cvt(self):
-        self._checkcodes_by_cvt={cvt:{code_tuple[0]
-                    for nsyl,code_list in syl_dict.items()
-                    for code_tuple in code_list
-                    }
-                for cvt,syl_dict in self._checknames.items()
-                }
-        log.info(_("self._checkcodes_by_cvt={codes}").format(codes=self._checkcodes_by_cvt))
-    def cvt_of_check(self,check):
-        for cvt,codes in self._checkcodes_by_cvt.items():
-            # log.info(f"{cvt=},{codes=}")
-            if check in codes:
-                return cvt
-    def cvcheckname(self,code=None):
-        if self.cvt() == 'T':
-            code='T'
-        if not code:
-            code=self.check()
-        try:
-            return _(self._cvchecknames[code])
-        except KeyError:
-            return None
-    def cvchecknamesdict(self):
-        """I reconstruct this here so I can look up names intuitively, having
-        built the named checks by type and number of syllables."""
-        self._cvchecknames={}
-        for t in self._checknames:
-            for s in self._checknames[t]:
-                for tup in self._checknames[t][s]:
-                    self._cvchecknames[tup[0]]=tup[1]
-        return self._cvchecknames
-    def analang(self,analang=None):
-        if analang:
-            log.info(_("Setting analysis language as {analang} ({self})").format(analang=analang, self=self))
-            self._analang=analang
-        # log.info(_("Returning analysis language as {analang} ({self})").format(analang=self._analang, self=self))
-        return self._analang
-    def audiolang(self,audiolang=None):
-        if audiolang:
-            self._audiolang=audiolang
-        if hasattr(self,'_audiolang'):
-            return self._audiolang
-    def ftype(self,ftype=None):
-        if ftype:
-            self._ftype=ftype
-        elif not hasattr(self,'_ftype'):
-            self._ftype='lc'
-        return self._ftype
-    def secondfield(self,ps):
-        fields=self.program.settings.secondformfield
-        if ps in fields:
-            return fields[ps]
-    def nominalps_secondfield(self):
-        return self.secondfield(self.program.settings.nominalps)
-    def verbalps_secondfield(self):
-        return self.secondfield(self.program.settings.verbalps)
-    def __init__(self, program):
-        self.program=program
-        self.program.params=self
-        """replaces setnamesall"""
-        """replaces self.checknamesall"""
-        super(CheckParameters, self).__init__()
-        self._analang=self.program.db.analang
-        self._audiolang=self.program.db.audiolang
-        self._cvts={
-                'V':{'sg':'Vowel','pl':'Vowels'},
-                'C':{'sg':'Consonant','pl':'Consonants'},
-                'CV':{'sg':'Consonant-Vowel combination',
-                        'pl':'Consonant-Vowel combinations'},
-                'VC':{'sg':'Vowel-Consonant combination',
-                        'pl':'Vowel-Consonant combinations'},
-                'T':{'sg':'Tone','pl':'Tones'},
-                }
+    def build_checknames(self):
         self._checknames={
             'S':{ 1:[('lc', _("Whole Citation Word Syllable Profile")),
                 ('lx', _("Whole Root Syllable Profile")),
@@ -270,6 +198,84 @@ class CheckParameters(object):
                     ('V6', _("Sixth Vowel"))
                     ]
                 },
+    def assure_checknames(self):
+        if not hasattr(self,'_checknames'):
+            self.build_checknames()
+    def checkcodes_by_cvt(self):
+        self.assure_checknames()
+        self._checkcodes_by_cvt={cvt:{code_tuple[0]
+                    for nsyl,code_list in syl_dict.items()
+                    for code_tuple in code_list
+                    }
+                for cvt,syl_dict in self._checknames.items()
+                }
+        log.info(_("self._checkcodes_by_cvt={codes}").format(codes=self._checkcodes_by_cvt))
+    def cvt_of_check(self,check):
+        for cvt,codes in self._checkcodes_by_cvt.items():
+            # log.info(f"{cvt=},{codes=}")
+            if check in codes:
+                return cvt
+    def cvcheckname(self,code=None):
+        if self.cvt() == 'T':
+            code='T'
+        if not code:
+            code=self.check()
+        try:
+            return _(self._cvchecknames[code])
+        except KeyError:
+            return None
+    def cvchecknamesdict(self):
+        """I reconstruct this here so I can look up names intuitively, having
+        built the named checks by type and number of syllables."""
+        self.assure_checknames()
+        self._cvchecknames={}
+        for t in self._checknames:
+            for s in self._checknames[t]:
+                for tup in self._checknames[t][s]:
+                    self._cvchecknames[tup[0]]=tup[1]
+        return self._cvchecknames
+    def analang(self,analang=None):
+        if analang:
+            log.info(_("Setting analysis language as {analang} ({self})").format(analang=analang, self=self))
+            self._analang=analang
+        # log.info(_("Returning analysis language as {analang} ({self})").format(analang=self._analang, self=self))
+        return self._analang
+    def audiolang(self,audiolang=None):
+        if audiolang:
+            self._audiolang=audiolang
+        if hasattr(self,'_audiolang'):
+            return self._audiolang
+    def ftype(self,ftype=None):
+        if ftype:
+            self._ftype=ftype
+        elif not hasattr(self,'_ftype'):
+            self._ftype='lc'
+        return self._ftype
+    def secondfield(self,ps):
+        fields=self.program.settings.secondformfield
+        if fields and ps in fields:
+            return fields[ps]
+    def nominalps_secondfield(self):
+        return self.secondfield(self.program.settings.nominalps)
+    def verbalps_secondfield(self):
+        return self.secondfield(self.program.settings.verbalps)
+    def __init__(self, program):
+        self.program=program
+        self.program.params=self
+        """replaces setnamesall"""
+        """replaces self.checknamesall"""
+        super(CheckParameters, self).__init__()
+        self._analang=self.program.db.analang
+        self._audiolang=self.program.db.audiolang
+        self._cvts={
+                'V':{'sg':'Vowel','pl':'Vowels'},
+                'C':{'sg':'Consonant','pl':'Consonants'},
+                'CV':{'sg':'Consonant-Vowel combination',
+                        'pl':'Consonant-Vowel combinations'},
+                'VC':{'sg':'Vowel-Consonant combination',
+                        'pl':'Vowel-Consonant combinations'},
+                'T':{'sg':'Tone','pl':'Tones'},
+                }
             'C':{
                 1:[('C1', _("First/only Consonant"))],
                 2:[
