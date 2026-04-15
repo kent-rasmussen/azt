@@ -1057,16 +1057,6 @@ class Settings(SettingsUI):
                         break #stop iterating, and keep this one.
         _log.info(_("analang guessed: {lang} (If you don't like this, change it in "
                     "the menus)").format(lang=self.analang))
-    def guessaudiolang(self):
-        nlangs=len(self.program.db.audiolangs)
-        """if there's only one audio language, use it."""
-        if self.program.db.audiolang:
-            self.audiolang=self.program.db.audiolang
-        else: #for three or more analangs, take the first plausible iso code
-            for n in range(nlangs):
-                if self.analang in self.program.db.audiolangs[n]:
-                    self.audiolang=self.program.db.audiolangs[n]
-                    return
     def makeglosslangs(self):
         if self.glosslangs:
             self.glosslangs=Glosslangs(self.glosslangs)
@@ -1259,7 +1249,6 @@ class Settings(SettingsUI):
         self.fields() #just reports
         self.secondformfields() #sets self.pluralname and self.imperativename
         self.langnames()
-        self.guessaudiolang()
         self.loadsettingsfile() # overwrites guess above, stored on runcheck
         self.makeglosslangs()
         self.checkglosslangs() #if stated aren't in db, guess
