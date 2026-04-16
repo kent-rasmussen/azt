@@ -274,8 +274,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         self._illustration=None
         if self._sense is None:
             return 1
-        self.program.sort_ui.set_sense_illustration(self._sense)
-        self._illustration=self._sense.image.scaled
+        self._illustration=self.program.sort_ui.set_sense_illustration(self._sense)
         return 1    
     def makebuttons(self):
         # log.info(f"Making buttons with {self.kwargs=}")

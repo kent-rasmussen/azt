@@ -41,17 +41,17 @@ class SortPresenter:
         return ui.Progressbar(parent, **kwargs)
 
     def set_sense_illustration(self, sense):
-        iuri=sense.illustrationURI()
         if not sense.image or not sense.image.base_img:
             # don't reload images unnecessarily; 
             # base_img is None if image failed to load
+            iuri=sense.illustrationURI()
             if iuri in self.theme.image_cache:
                 sense.image=self.theme.image_cache[iuri]
             elif iuri:
                 sense.image=ui.Image(iuri)
         if sense.image and sense.image.base_img:
             sense.image.scale(self.theme.scale, pixels=65, scaleto='height')
-        
+            return sense.image.scaled
     # -- Sort button frame factories --
 
     def sort_button_frame(self, parent, sort_obj, groups, **kwargs):
@@ -179,11 +179,8 @@ class SortPresenter:
             b = ui.Button(bf, text=text, pady='0', cmd=notok_fn,
                          column=column, row=0, sticky='ew',
                          ipady=ipady, **kwargs)
-        self.set_sense_illustration(sense)
-        if sense.image:
-            sense.image.scale(b.theme.scale, pixels=65, scaleto='height')
-            b['image'] = sense.image.scaled
-            b['compound'] = 'left'
+        b['image'] = self.set_sense_illustration(sense)
+        b['compound'] = 'left'
         return b, bf
 
     def build_join_layout(self, runwindow, title, page_icon, img_mod):
