@@ -85,7 +85,7 @@ class SortButtonFrame(ui.ScrollingFrame):
             # log.info("using lowverticalspace for addgroupbutton")
             scaledpady=0
         else:
-            scaledpady=int(40*self.program.scale)
+            scaledpady=int(40*self.theme.scale)
         # log.info("This button at row={row}, col={col}".format(row=self.groupbuttons.row, col=self.groupbuttons.col))
         nbuttons=len(self.groupbuttons.winfo_children())
         r,c=nbuttons//self.buttoncolumns,nbuttons%self.buttoncolumns
@@ -282,7 +282,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             elif iuri:
                 self._sense.image=ui.Image(iuri)
         if self._sense.image and self._sense.image.base_img:
-            self._sense.image.scale(self.program.scale, pixels=65, scaleto='height')
+            self._sense.image.scale(self.theme.scale, pixels=65, scaleto='height')
             self._illustration=self._sense.image.scaled
         return 1
     def makebuttons(self):

@@ -160,7 +160,7 @@ class Theme(object):
     def setimages(self):
         """with PIL.ImageTk, this should probably be largely culled."""
         # Program icon(s) (First should be transparent!)
-        scale=self.program.scale #just reading this here
+        scale=self.scale #just reading this here
         self.scalings=[]
         self.photo={}
         #do these once:
@@ -392,7 +392,7 @@ class Theme(object):
                             'white': 'white'}
                     }
     def setfonts(self,fonttheme='default'):
-        scale=self.program.scale #just reading this here
+        scale=self.scale #just reading this here
         log.info("Setting fonts with {} theme".format(fonttheme))
         if fonttheme == 'smaller':
             default=int(12*scale)
@@ -456,16 +456,16 @@ class Theme(object):
         xmin=min(hx,wx,hmmx,wmmx)
         xmax=max(hx,wx,hmmx,wmmx)
         if xmax-1 > 1-xmin:
-            self.program.scale=xmax
+            self.scale=xmax
         else:
-            self.program.scale=xmin
-        if self.program.scale < 1.02 and self.program.scale > 0.98:
+            self.scale=xmin
+        if self.scale < 1.02 and self.scale > 0.98:
             log.info("Probably shouldn't scale in this case (scale: {})".format(
-                                                        self.program.scale))
-            self.program.scale=1
-        # self.program.scale=0.75 #for testing
+                                                        self.scale))
+            self.scale=1
+        # self.scale=0.75 #for testing
         log.info("Largest variance from 1:1 ratio: {} (this will be used to scale "
-                "stuff.)".format(self.program.scale))
+                "stuff.)".format(self.scale))
     def setpads(self,**kwargs):
         for kwarg in ['ipady','ipadx','pady','padx']:
             if kwarg in kwargs:
@@ -496,8 +496,9 @@ class Theme(object):
         self.program.theme=self #this theme needs to be in use, either way
         self.setpads(**kwargs)
         self.setthemes()
+        log.info("Initializing {} theme ({})".format(self.name,self.program))
         if kwargs.get('noimagescaling'):
-            self.program.scale=1
+            self.scale=1
         else:
             self.setscale()
         self.settheme()
@@ -1206,6 +1207,8 @@ class Root(Waitable,UI,tkinter.Tk):
     def post_tk_init(self,**kwargs):
         """This needs Tk to be instantiated already, but must precede UI
         application"""
+        if not hasattr(self.program,'tk_root'):
+            self.program.tk_root=self
         try:
             assert not self.noimagescaling, 'noimagescaling set' #otherwise, make copy theme
             assert hasattr(self.program,'theme'),"No theme in program"
@@ -1235,8 +1238,6 @@ class Root(Waitable,UI,tkinter.Tk):
         self.mainwindow=False
         self.noimagescaling=kwargs.pop('noimagescaling',False)
         super().__init__(*args, **kwargs)
-        if not hasattr(self.program,'tk_root'):
-            self.program.tk_root=self
         self.post_tk_init(**kwargs) #Theme needs Tk to exist by now
         self.renderer=Renderer()
         # log.info("Root initialized")
@@ -1469,7 +1470,7 @@ class Text(TextBase):
                 self.image_scaleto in ['both','height','width']):
                 img_kwargs['scaleto']=self.image_scaleto
             self.image=self.image.scale(
-                        self.theme.program.scale, #obligatory, non-kwarg
+                        self.theme.scale, #obligatory, non-kwarg
                         **img_kwargs
                         ) #tk ready
         elif isinstance(self.image,Image):
@@ -2767,7 +2768,7 @@ def testapp(program=None):
     # l.img=r.theme.photo['NoImage']
     # # log.info("Image: {} ({})".format(l.img.transparency, Image.maxhw(l.img)))
     # log.info("Image dir: {}".format(dir(l.img)))
-    # l.img.scale(self.program.scale,pixels=100,resolution=10)
+    # l.img.scale(self.theme.scale,pixels=100,resolution=10)
     # log.info("Image: {} ({})".format(l.img.scaled, Image.maxhw(l.img,scaled=True)))
     # l['image']=l.img.scaled
     # l['compound']="bottom"

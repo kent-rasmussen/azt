@@ -634,10 +634,9 @@ class Theme:
         self.program.theme = self
         noimagescaling = kwargs.get('noimagescaling', False)
 
-        # Scale — use devicePixelRatio later; for now use program.scale if set
-        if not hasattr(program, 'scale') or not program.scale:
-            program.scale = 1.0
-        scale = program.scale
+        # Scale — use devicePixelRatio later; for now default to 1.0
+        self.scale = getattr(program, 'scale', None) or 1.0
+        scale = self.scale
 
         # Pick theme
         if isinstance(getattr(program, 'theme_name', None), str):
@@ -711,7 +710,7 @@ class Theme:
             'pady': f'{self.pady}px',
             'ipadx': f'{self.ipadx}px',
             'ipady': f'{self.ipady}px',
-            'scale': str(self.program.scale),
+            'scale': str(self.scale),
         }
 
 

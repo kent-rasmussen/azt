@@ -1125,7 +1125,7 @@ class Sort(object):
         if self.program.settings.lowverticalspace:
             ipady=0
         else:
-            ipady=15*self.program.scale
+            ipady=15*self.theme.scale
         b, bf = self.sort_ui.build_verify_button(
             parent, text, sense, label, notok, row, column, ipady, **kwargs)
     def reset_selected(self):
