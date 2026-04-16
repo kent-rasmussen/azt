@@ -74,7 +74,9 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.word_list_field_name='SILCAWL' #make this configurable
         if tostrip: #stop here, if this is a template read
             return 
-        backupbits=[filename,'_',
+        self.init_post_analang(analang)
+    def init_post_analang(self,analang): #will fail on no analang
+        backupbits=[self.filename,'_',
                     str(datetime.datetime.now(datetime.UTC))[10:], #once/day
                     '.txt']
         self.backupfilename=''.join(backupbits)
@@ -103,7 +105,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.getfieldswsoundfiles() #sets self.nfields & self.nfieldswsoundfiles
         log.info(_("Working on {file} with {nguids} entries, with lexeme data counts: {lex_counts}, "
                    "citation data counts: {citation_counts} and {nsenseids} senses")
-                .format(file=filename, nguids=self.nguids, lex_counts=self.nentrieswlexemedata,
+                .format(file=self.filename, nguids=self.nguids, lex_counts=self.nentrieswlexemedata,
                         citation_counts=self.nentrieswcitationdata, nsenseids=self.nsenseids))
         log.info(_("Found gloss data counts: {gloss_counts}, definition counts: {def_counts}")
                 .format(gloss_counts=self.nsenseswglossdata, def_counts=self.nsenseswdefndata))
@@ -131,9 +133,9 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         self.get_reportdir()
         log.info(_("Language initialization done."))
     def set_filename(self,filename):
-        self.filename=filename
+        self.filename=str(filename)
         log.info("Set LIFT XML filename: {}".format(self.filename))
-        self.lift_home=file.getparent(self.filename)
+        self.lift_home=file.getparent(filename)
     def get_img_resolver(self):
         # This is used in illustrationURI, if illustrationvalue() 
         # is not both set and present, and if not local_only=True
@@ -2174,7 +2176,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                         do_wait=False
                         ):
         log.info("Filling in empty image fields where possible")
-        self.get_imgdir() #in case this isn't up to date
+        # self.get_imgdir() #in case this isn't up to date
         log.info("Writing to {}".format(self.imgdir))
         for sense in self.senses:
             # log.info("Working on line number {}".format(sense.cawln))

@@ -2524,7 +2524,7 @@ class LiftChooser(ui.Window,HasMenus):
             return
         self.wait(msg=_("Setting up new LIFT file now."), thenshow=True)
         log.info("Beginning Copy of stock to new LIFT file.")
-        t=templates.CAWL(self.code,self.program)
+        t=templates.CAWL(self.program,analang=self.code)
         if t.error_text:
             self.waitdone()
             ErrorNotice(t.error_text,wait=True)
@@ -2534,6 +2534,7 @@ class LiftChooser(ui.Window,HasMenus):
             self.waitprogress(p)
         self.template_obj.db.write()
         self.store_analang()
+        self.program.db=self.template_obj.db
         self.waitdone()
         # self.notify_newfilelocation(self.template_obj.db.filename)
         log.info("analang_code_complete complete")
@@ -2594,7 +2595,7 @@ class LiftChooser(ui.Window,HasMenus):
             # log.info("using newfile {}".format(newfile))
             if file.exists(newfile): #should always be there
                 # log.info("notifying newfile {}".format(newfile))
-                self.notify_newfilelocation(newfile) #tell user where to find it
+                # self.notify_newfilelocation(newfile) #tell user where to find it
                 # log.info("returning newfile {}".format(newfile))
                 return newfile
             else:
@@ -2636,11 +2637,16 @@ class LiftChooser(ui.Window,HasMenus):
         inst=_("Which language would you like to study, in this demonstration "
                 "of what {azt} can do?").format(azt=self.program.name)
         t=ui.Label(w.frame, text=inst, row=1, column=0, columnspan=2)
-        self.cawldb=loadCAWL()
+        demo=templates.CAWL(self.program,demo=True) #code doesn't exist yet
+        # log.info(f"{demo=} {type(demo)=}")
+        # log.info(f"{demo.error_text=} {demo.db.glosslangs=}")
+        if demo.error_text:
+            self.waitdone()
+            ErrorNotice(demo.error_text,wait=True)
+            return
         # self.program.settings doesn't exist yet!
-        settings.Settings.langnames(self,self.cawldb.glosslangs)
-        opts=[(i,self.languagenames[i]) 
-                for i in self.cawldb.glosslangs]
+        settings.Settings.langnames(self,demo.db.glosslangs) #sets self.languagenames
+        opts=[(i,self.languagenames[i]) for i in demo.db.glosslangs] #use codes; show names
         # log.info(f"{opts=}")
         s=ui.ScrollingButtonFrame(w.frame,
                                     optionlist=opts,
@@ -2654,56 +2660,33 @@ class LiftChooser(ui.Window,HasMenus):
             return
         else:
             log.info("User selected a language: {}.".format(self.demolang))
-        self.stripcawldb()
-        self.wait=ui.Wait(parent=self.program.tk_root,
-                        msg=_("Making Demo Database \n(will restart)"))
-        homedir=file.gethome() #don't ask where to put it
-        self.newdirname=file.getfile(homedir).joinpath('Demo_'+self.demolang)
-        file.makedir(self.newdirname)
-        newfilebasename=self.newdirname.joinpath('Demo_'+self.demolang)
-        newfile=newfilebasename.with_suffix('.lift')
-        if file.exists(newfile):
-            self.wait.close()
-            ErrorNotice(_("File {newfile} already exists! \nUse it?").format(newfile=newfile),
+        demo.init_w_code_and_filename(self.demolang,demo=True)
+        if demo.error_text:
+            log.info(demo.error_text)
+        #if the above error_text shows a file/directory already there, the user may want to use it.
+        log.info(f"{demo.filename=}")
+        if file.exists(demo.filename): #in this case, init_w_code_and_filename will not have finished.
+            ErrorNotice(_("File {newfile} already exists! \nUse it?").format(newfile=demo.filename),
                         wait=True,
-                        button=(_("Yes!"),lambda event,x=str(newfile):
+                        button=(_("Yes!"),lambda event,x=str(demo.filename):
                                 self.setfilenameandcontinue(x,restart=True))
                         )
             return
-        # else:
-        #     log.info(f"{newfile=} doesn't exist already!")
-        self.cawldb.filename=newfile
-        self.cawldb.analang=self.demolang
-        self.cawldb.getentries()
-        self.cawldb.getsenses()
-        self.cawldb.convertglosstocitation(self.demolang)
-        self.cawldb.get_imgdir() #problem!
-        self.fill_db_images()
-        self.copytonewfile(newfile)
-        self.wait.close()
-        self.notify_newfilelocation(newfile)
-        self.store_analang()
-        return str(newfile)
+        elif not demo.filename:
+            ErrorNotice(demo.error_text,wait=True)
+            return
+        demo.convertglosstocitation(self.demolang)
+        for p in demo.fill_db_images():
+            self.waitprogress(p)
+        demo.db.write()
+        self.program.db=demo.db
+        return str(demo.filename)
     def submitdemolang(self,choice,window): #event=None):
-        log.info(_("picked {choice}, from {glosslangs}").format(choice=choice, glosslangs=self.cawldb.glosslangs))
-        if choice in self.cawldb.glosslangs:
-            self.demolang=choice
-            window.destroy()
-    def copytonewfile(self,newfile):
-        if 'Demo' in str(newfile):
-            type=_("demo")
-        else:
-            type=_("empty")
-        log.info(_("Trying to write {type} LIFT file to {newfile}").format(type=type, newfile=newfile))
-        try:
-            self.cawldb.write(str(newfile))
-        except Exception as e:
-            log.error("Exception: {}".format(e))
-        log.info(_("Tried to write {type} LIFT file to {newfile}").format(type=type, newfile=newfile))
-        if file.exists(newfile):
-            log.info("Wrote {} LIFT file to {}".format(type,newfile))
+        # log.info(_("picked {choice}, from {glosslangs}").format(choice=choice, glosslangs=self.cawldb.glosslangs))
+        self.demolang=choice
+        window.destroy()
     def notify_newfilelocation(self,newfile):
-        #Do users care about this?
+        #Do users care about this? it may be useful for USB cloning?
         return #not for now
         msg=_("Your new LIFT file is at {newfile}."
                 "\nIf you don't want it there, close {azt} and move the whole "
@@ -2725,11 +2708,11 @@ class LiftChooser(ui.Window,HasMenus):
         elif choice == 'Clone':
             log.info("trying clone from USB")
             name=self.clonefromUSB()
-            restart=True
+            # restart=True #Why would this be necessary?
         elif choice == 'Demo':
             log.info("Making a CAWL demo database")
             name=self.makeCAWLdemo()
-            restart=True
+            # restart=True
         else:
             name=choice
         # log.info(f"{self.name if hasattr(self,'name') else "no self.name!"}")
@@ -2744,7 +2727,8 @@ class LiftChooser(ui.Window,HasMenus):
         self.program.filename=name
         file.writefilename(name)
         self.destroy()
-        if (hasattr(self.program.taskchooser,'splash') and
+        if (hasattr(self.program,'taskchooser') and 
+                    hasattr(self.program.taskchooser,'splash') and
                     self.program.taskchooser.splash.winfo_exists()):
             self.program.taskchooser.splash.deiconify()
         if restart:

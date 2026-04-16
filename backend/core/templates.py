@@ -36,49 +36,67 @@ class WordListTemplate():
             #             ,wait=True)
             return _("That doesn't look like an ethnologue code ({analang})"
                     ).format(analang=code)
-        self.db.get_langs(analang=code) #This sets self.db.analang
+        # self.db.get_langs(analang=code) #This sets self.db.analang
+        self.analang=code
         # self.program.settings.save_analang(code)
-    def verify_writeable(self):
+    def verify_writeable(self,**kwargs):
         dir=file.gethome()
-        newfile=file.getnewlifturl(dir,self.db.analang)
-        if not newfile:
-            return _("Problem creating file; does the directory "
-                        "already exist with files in it? ({newfile})").format(newfile=newfile)
-        if file.exists(newfile):
-            return _("The file {newfile} already exists!").format(newfile=newfile)
-        self.db.set_filename(newfile)
-        log.info(_("Going to write to {newfile}").format(newfile=newfile))
+        if kwargs.get('demo'):
+            filename_code='Demo_'+self.analang
+        else:
+            filename_code=self.analang
+        self.filename=file.getnewlifturl(dir,filename_code)
+        #Any return here means that the file will not be written.
+        if not self.filename:
+            return _("Problem creating file name from {dir=}, {filename_code=}"
+                    "").format(dir=dir,filename_code=filename_code)
+        #I don't think I care so much about this. If the folder is there, but the 
+        #file is not (else below is true) I'll just write it into the existing 
+        # directory.
+        # # if file.exists_and_not_empty(self.filename.parent):
+        #     return _("The directory {newfile} already exists and isn't empty!").format(newfile=self.filename.parent)
+        if file.exists(self.filename):
+            return _("The file {newfile} already exists!").format(newfile=self.filename)
+        self.db.set_filename(self.filename) #This was done once on template load; now to new location.
+        log.info(_("Going to write to {newfile}").format(newfile=self.filename))
     def fill_db_images(self):    
         yield from self.db.fill_db_images()
-    def __init__(self,analang,program):
+    def convertglosstocitation(self,analang):
+        self.db.convertglosstocitation(analang)
+    def __init__(self,program,**kwargs):
         log.info(_("Preparing word list for writing"))
         self.program=program
         self.error_text=None
+        if analang:=kwargs.pop('analang',None): #otherwise, do this later, manually.
+            self.init_w_code_and_filename(analang,**kwargs)
+        log.info(_("Word list initialized"))
+    def init_w_code_and_filename(self,analang,**kwargs):
         self.error_text=self.verify_code(analang) #sets self.db.analang
         if self.error_text:
             return
-        self.error_text=self.verify_writeable() #sets self.db.filename
+        self.error_text=self.verify_writeable(**kwargs) #sets self.db.filename
         if self.error_text:
             return
         # self.analang=analang
         # self.db.filename=filename
+        self.db.init_post_analang(self.analang)
         self.db.getentries() #this needs analang
         self.db.getsenses()
 
 class CAWL(WordListTemplate):
     """This loads from the Comparative African Word List(CAWL)"""
-    def __init__(self,analang,program):
-        log.info(f"Loading CAWL for {analang}")
+    def __init__(self,program,**kwargs):
+        log.info(f"Loading CAWL")
         t=loadCAWL()
         log.info(f"Loaded {t} ({type(t)})")
         if type(t) is str:
             self.error_text=t
             return
         self.db=t
-        super().__init__(analang,program)
-        log.info(f"Stripping lxlc forms from CAWL")
+        super().__init__(program,**kwargs)
         if not self.error_text:
-            self.db.strip_lxlc_forms()
+            log.info(f"Stripping lxlc forms from CAWL")
+            self.db.strip_lxlc_forms() #OK for demo; forms come from glosses
             # self.db.collect_and_sort_plausible_lang_codes() #depends on lx/lc/ph in database
-        
+        log.info("Done initializing CAWL")
         

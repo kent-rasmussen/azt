@@ -485,7 +485,8 @@ class Settings(SettingsUI):
                 domain_mgr = getattr(self.mgr, domain_name)
                 data = domain_mgr.load()
                 if data:
-                    _log.info(_("Loaded {setting} settings from new {domain} domain").format(setting=setting, domain=domain_name))
+                    # _log.info(_("Loaded {setting} settings from new {domain} domain").format(setting=setting, domain=domain_name))
+                    # _log.info(_("Loaded {data}").format(data=data))
                     self.readsettingsdict(data)
         # Still fallback to legacy reader for now to ensure absolute compatibility
         # during the transition if JSON files were not yet created or migrated.
@@ -1149,9 +1150,9 @@ class Settings(SettingsUI):
         ToneFrames(dict,self.program)
         # ToneFrames(getattr(self,'toneframes',{}))
     def makestatus(self,dict={}):
-        # _log.info("Making status object with value {}".format(self.program.status))
+        # _log.info("Making status object with value {}".format(dict))
         StatusDict(self.settingsfile('status'), dict, self.program)
-        # _log.info("Made status object with value {}".format(self.program.status))
+        # _log.info("Made status object with value {}".format(dict))
     def localize_langnames(self):
         self.languagenames={i:_(self.languagenames[i]) for i in self.languagenames}
     def langnames(self,langs={}):
@@ -1176,6 +1177,7 @@ class Settings(SettingsUI):
                                 'ha':"Hausa",
                                 'hau':"Hausa",
                                 'swc':"Congo Swahili",
+                                'ln-CD':"Lingala (DRC)",
                                 'swh':"Swahili",
                                 'gnd':"Zulgo",
                                 'fub':"Fulfulde",

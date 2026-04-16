@@ -205,7 +205,8 @@ class SettingsUI(object):
     def statusisup(self):
         """Use this for when a setting should ignore status frame updates"""
         from frontend.ui_shell import StatusFrame
-        return (hasattr(self.program.mainwindow,'status') and
+        return (hasattr(self.program,'mainwindow') and
+                hasattr(self.program.mainwindow,'status') and
                 type(self.program.mainwindow.status) is StatusFrame)
     def set(self,attribute,choice,window=None,refresh=True):
         #Normally, pass the attribute through the button frame,
@@ -337,7 +338,7 @@ class SettingsUI(object):
         if window:
             window.destroy()
     def setbuttoncolumns(self,choice,window=None):
-        self.buttoncolumns=self.program.mainwindow.buttoncolumns=choice
+        self.buttoncolumns=choice
         if self.statusisup():
             self.program.mainwindow.status.updatebuttoncolumns()
         if window:

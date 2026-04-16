@@ -189,11 +189,11 @@ def makedir(dir,**kwargs):
         dir.mkdir(parents=True)
     return getfile(dir)
 def getnewlifturl(dir,xyz):
+    """This returns what should be the new lift file path. It does not check
+    if the directory exists or not --do that later."""
     dir=pathlib.Path(dir)
     dir=dir.joinpath(xyz)
-    if exists_and_not_empty(dir):
-        return _("The directory {} already exists and isn't empty! Not Continuing.").format(dir)
-    else:
+    if not exists(dir):
         dir.mkdir()
     url=dir.joinpath(xyz)
     url=url.with_suffix('.lift')

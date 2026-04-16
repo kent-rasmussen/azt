@@ -321,7 +321,7 @@ class App:
         elif not file.exists(self.filename):
             self.askwhichlift()
         if self.filename and 'Demo' in str(self.filename):
-            program.Demo=True
+            self.demo=True #not used?
             file.writefilename() #clear this to select next time
     def _run_setup(self):
         """All setup that must happen after the UI event loop is live.

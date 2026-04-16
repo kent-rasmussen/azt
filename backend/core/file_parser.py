@@ -9,7 +9,8 @@ log=logsetup.getlog(__name__)
 from utilities.error_handler import notify_error as ErrorNotice
 
 class FileParser(object):
-    """This class parses the LIFT file, once we know which it is."""
+    """This class parses the LIFT file, once we know which it is.
+    Unless, of course, it was loaded in LiftChooser."""
     def loaddatabase(self):
         try:
             #This program key will only be available after this finishes
@@ -47,6 +48,10 @@ class FileParser(object):
     def __init__(self,program):
         super(FileParser, self).__init__()
         self.program=program
+        if hasattr(self.program,'db') and isinstance(self.program.db,lift.LiftXML):
+            log.info("Using {analang} db already loaded from {filename}"
+                    "".format(analang=self.program.db.analang,
+                            filename=self.program.db.filename))
         self.filename=self.program.filename
         """I think an ad hoc settings goes here, to load analang.
         Everyone should have this, if available in settings."""
