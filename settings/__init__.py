@@ -446,7 +446,9 @@ class Settings(SettingsUI):
                 #             "{}".format(s,v,self.fndict[s]))
                 self.fndict[s](v)
             elif s == 'status' and not hasattr(self.program,'status'): #Only load this once
-                self.makestatus({k:v[k] for k in v if k != 'DEFAULT'})
+                d={k:v[k] for k in v if k != 'DEFAULT'}
+                _log.info(_("makestatus from file: {status}").format(status=d))
+                self.makestatus(d)
             elif (isinstance(v,dict) and
                 hasattr(o,s) and isinstance(getattr(o,s),dict)):
                 getattr(o,s).update(v)
@@ -488,6 +490,8 @@ class Settings(SettingsUI):
                     # _log.info(_("Loaded {setting} settings from new {domain} domain").format(setting=setting, domain=domain_name))
                     # _log.info(_("Loaded {data}").format(data=data))
                     self.readsettingsdict(data)
+                if setting == 'status' and not hasattr(self.program,'status'):
+                    self.makestatus({}) #make status anyway, just once                    
         # Still fallback to legacy reader for now to ensure absolute compatibility
         # during the transition if JSON files were not yet created or migrated.
         filename=self.settingsfile(setting)
@@ -501,7 +505,7 @@ class Settings(SettingsUI):
             return
         if setting == 'status':
             self.makestatus({k:d[k] for k in d if k != 'DEFAULT'})
-            _log.info(_("makestatus: {status}").format(status=self.program.status))
+            _log.info(_("makestatus legacy: {status}").format(status=self.program.status))
         elif setting == 'toneframes':
             self.program.toneframes.source({k:d[k] for k in d if k != 'DEFAULT'})
             _log.info(_("maketoneframes: {frames}").format(frames=self.program.toneframes))
