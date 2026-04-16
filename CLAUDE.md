@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A-Z+T is a tkinter-based desktop GUI for linguistic fieldwork — sorting, transcribing, recording, and analyzing lexical data from LIFT (Lexicon Interchange FormaT) XML files. It targets SIL linguists working on minority language documentation.
+A-Z+T is a desktop GUI for linguistic fieldwork — sorting, transcribing, recording, and analyzing lexical data from LIFT (Lexicon Interchange FormaT) XML files. It targets SIL linguists working on minority language documentation. The UI has a pluggable backend: tkinter (default) or pywebview, selected via the `AZT_UI_BACKEND` environment variable or configuration.
 
 ## Running
 
@@ -23,6 +23,15 @@ There is no test suite. `test.py` is a scratch file, not a test runner.
 
 ## Architecture
 
+### UI Backend Abstraction
+
+Consumer code imports `from frontend import ui`, which resolves to either `ui_tkinter` or `ui_webview` based on the `AZT_UI_BACKEND` env var (see `frontend/__init__.py`). Key pieces:
+
+- **`frontend/ui_interface.py`** — Abstract interface (ABC) defining the contract both backends must fulfill: constants (`END`, `INSERT`, `N`, `S`, etc.), Variable classes, and widget APIs.
+- **`frontend/ui_tkinter.py`** — tkinter backend implementation.
+- **`frontend/ui_webview.py`** — pywebview backend (Phase 2–3 complete: Root, Window, Frame, Label, Button, Theme, Image, Renderer; remaining widgets are stubs).
+- **`frontend/ui_variables.py`** — Standalone `Variable`/`StringVar`/`IntVar`/`BooleanVar` classes (tkinter-free) for the webview backend.
+
 ### Task System (frontend/backend split)
 
 Tasks are NOT windows. The class hierarchy is:
@@ -31,6 +40,8 @@ Tasks are NOT windows. The class hierarchy is:
 TaskBase          — pure logic: flags, makecvtok, makeeverythingok (tasks/base.py)
   Task            — creates a TaskWindow on init (tasks/base.py)
     ConcreteTask  — Sort, Transcribe, Report, etc. (tasks/tasks.py)
+                  — AlphabetChart (tasks/alphabet_chart.py)
+                  — AlphabetComparisonPages (tasks/alphabet_comparison.py)
 
 TaskWindow(TaskDressing) — tkinter window wrapper (frontend/task_window.py)
 ```
@@ -41,48 +52,82 @@ Bidirectional `__getattr__` links them:
 - `TaskBase.__getattr__` delegates unknown attrs to `self.ui`
 - `TaskWindow.__getattr__` delegates unknown attrs to `self.task` (via `object.__getattribute__` to prevent recursion)
 
+The `tasks/ui_protocol.py` module defines `TaskUI`, the abstract interface that backend mixins use for UI operations (`show_run_window`, `hide`, `show`, `wait_for_window`, etc.).
+
+Sound tasks use a mixin split: `backend/core/sound.py` (headless audio logic) and `tasks/sound.py` (UI task mixin inheriting from it + `frontend/sound_ui.py`).
+
 ### Presenter Pattern (backend/frontend decoupling)
 
-All backend modules have zero frontend imports. Four presenters handle UI widget creation:
+All backend modules have zero frontend imports. Presenters handle UI widget creation:
 
 - `frontend/sort_ui.py` (`SortPresenter`) — sorting_engine.py widget creation
 - `frontend/lexicon_ui.py` (`LexiconPresenter`) — lexicon.py and alphabet.py widget creation
 - `frontend/vcs_ui.py` (`VCSPresenter`) — vcs.py commit/wait dialogs
 - `frontend/report_ui.py` (`ReportPresenter`) — generator.py result frames
+- `frontend/sound_ui.py` — Sound settings window UI
 
 Injected at startup via `program.sort_ui`, `program.lex_ui`, `program.vcs_ui`, `program.report_ui`.
 
 ### Cross-Module Import Patterns
 
-- **Direct imports** for most cross-module references.
+- **`from frontend import ui`** — the standard way to access UI widgets. Resolves to the active backend.
 - **Presenter pattern** (above) for backend → frontend decoupling.
 - **`self.ui.X()` indirection** for all backend UI method calls (withdraw, getrunwindow, exitFlag, runwindow, waitdone, etc.).
 - **`utilities/i18n.py`** provides a swappable `_()` translation function. All modules do `from utilities.i18n import _`. The live translator is set at startup via `set_translator()`.
 - **`utilities/error_handler.py`** provides `notify_error()` for backend modules to show errors without importing frontend code.
 - **Flag-based dispatch** instead of `isinstance` checks for task types: `is_sound_task`, `is_record_task`, `is_sort_task`, `is_sort_tone_task` flags on task classes, checked with `getattr(task, 'is_sound_task', False)`.
 
+### Settings System
+
+The settings system (`settings/`) uses domain-split config backed by JSON files. Key classes:
+
+- **`settings/manager.py`** — `ConfigManager` base class: JSON-backed per-domain config with read/write, `CustomEncoder` for sets/Paths.
+- **`settings/__init__.py`** — `AppSettingsManager` (pre-project settings: last file, UI language) and `SettingsManager` (post-project: routes get/set to domain configs).
+- **Domain configs**: `project.py`, `ui.py`, `audio.py`, `alphabet.py`, `contributors.py`, `data.py`, `reports.py`, `app.py` — each inherits from `ConfigManager`.
+
 ### Module Layout
 
-- **`main.py`** (~764 lines) — App class, startup, `program` dict (global config), presenter wiring, remaining orchestration functions.
-- **`frontend/ui_shell.py`** (~3500 lines) — tkinter UI: menus, status frames, TaskDressing, image frames, splash, error notices, result windows, LiftChooser.
-- **`frontend/task_window.py`** — `TaskWindow(TaskDressing)`: tkinter window wrapper for task logic objects.
-- **`frontend/sort_buttons.py`** — Sort button frame widgets, extracted from ui_shell.
-- **`frontend/sort_ui.py`**, **`lexicon_ui.py`**, **`vcs_ui.py`**, **`report_ui.py`** — Presenter classes.
-- **`frontend/ui_tkinter.py`** — tkinter widget helpers and custom widgets.
+- **`main.py`** (~800 lines) — App class, startup, `program` dict (global config), presenter wiring, remaining orchestration functions.
+- **`frontend/`** — UI layer:
+  - `__init__.py` — Backend selector (`from frontend import ui` resolves to tkinter or webview).
+  - `ui_interface.py` — Abstract UI backend contract (ABC).
+  - `ui_tkinter.py` — tkinter widget helpers and custom widgets.
+  - `ui_webview.py` — pywebview backend (partial, in progress).
+  - `ui_variables.py` — Standalone Variable classes for non-tkinter backends.
+  - `ui_shell.py` (~3500 lines) — Main UI: menus, status frames, TaskDressing, image frames, splash, error notices, result windows, LiftChooser.
+  - `task_window.py` — `TaskWindow(TaskDressing)`: window wrapper for task logic objects.
+  - `sort_buttons.py` — Sort button frame widgets.
+  - `sort_ui.py`, `lexicon_ui.py`, `vcs_ui.py`, `report_ui.py` — Presenter classes.
+  - `sound_ui.py` — Sound settings and record button UI.
+  - `transcriber.py` — `Transcriber` widget (text input with character palette).
+  - `alphabet_chart.py` — Alphabet chart UI (draggable/droppable labels).
+  - `alphabet_comparison.py` — Alphabet comparison booklet UI.
+  - `error_notice.py` — `ErrorNotice` popup window.
+  - `tkintermod.py` — Tkinter error catcher.
 - **`tasks/`** — Task system:
   - `base.py` — `TaskBase` (pure logic) and `Task(TaskBase)` (creates window).
-  - `tasks.py` (~2244 lines) — All concrete task classes.
+  - `tasks.py` (~2236 lines) — Most concrete task classes (Sort, Transcribe, Report, etc.).
+  - `alphabet_chart.py` — `AlphabetChart` task.
+  - `alphabet_comparison.py` — `AlphabetComparisonPages` task.
+  - `sound.py` — Sound task UI mixin (bridges `backend/core/sound.py` + `frontend/sound_ui.py`).
   - `chooser.py` — `TaskChooser` UI for selecting tasks.
+  - `ui_protocol.py` — `TaskUI` abstract interface for task window operations.
 - **`backend/core/`** — Domain logic (zero frontend imports):
   - `lexicon.py` — `Senses`, `Segments`, `WordCollection`, `Parse`, `Tone`.
   - `sorting_engine.py` — `Sort` (linguistic sorting).
   - `analysis.py` — `Analysis`, `SliceDict`, `StatusDict`, `ExampleDict`.
+  - `analysis_inputs.py` — Analysis input data structures.
   - `alphabet.py` — `Alphabet`, `AlphabetChartData`, `AlphabetComparisonData`.
   - `vcs.py` — `Repository`, `Mercurial`, `Git`, `GitReadOnly`.
-- **`backend/reporting/`** — `Report` and report body generation.
-- **`settings/`** — Domain-split config system backed by INI files. `SettingsManager` routes get/set to the correct domain.
-- **`io_put/`** — File I/O: `lift.py` (LIFT XML), `xlp.py` (XLingPaper), `export.py`, `sound.py` (audio I/O), `cawl.py`.
-- **`utilities/`** — Pure utilities, logging, file ops, HTML helpers, regex, `i18n.py`, `error_handler.py`.
+  - `sound.py` — `Sound` headless mixin: PyAudio streams, audio card config.
+  - `profiles.py` — `ProfileAnalyzer`: syllable CV profile analysis (extracted from settings).
+  - `templates.py` — `WordListTemplate`: CAWL wordlist template handling.
+  - `report_mixins.py` — `Multislice` and report-related backend mixins.
+  - `file_parser.py` — File parsing utilities for LIFT data.
+- **`backend/reporting/`** — `Report` and report body generation (`generator.py`).
+- **`settings/`** — Domain-split config system backed by JSON files. `SettingsManager` routes get/set to the correct domain. Domain configs: `project.py`, `ui.py`, `audio.py`, `alphabet.py`, `contributors.py`, `data.py`, `reports.py`, `app.py`.
+- **`io_put/`** — File I/O: `lift.py` (LIFT XML), `xlp.py` (XLingPaper), `export.py`, `sound.py` (audio I/O), `cawl.py`, `alphabet_chart_pdf.py`, `alphabet_comparison_pdf.py`, `images_CAWL.py`.
+- **`utilities/`** — Pure utilities: logging (`logsetup.py`), file ops (`file.py`), HTML helpers (`htmlfns.py`), regex (`rx.py`), `i18n.py`, `error_handler.py`, `encodings.py`, `executables.py`, `duplicates.py`, `times.py`, `ui_lang.py`, `urls.py`, `xmlfns.py`, `xmletfns.py`, `openclipart.py`, `py_modules.py`.
 
 ### Key Patterns
 
