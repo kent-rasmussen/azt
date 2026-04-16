@@ -2482,7 +2482,7 @@ class LiftChooser(ui.Window,HasMenus):
         lang_obj=self.program.languages.get_obj(self.iso)
         if len(lang_obj.regions) > 1:
             self.list_of_territories.delete(0, "end") #delete
-            for i in lang_obj.regions:
+            for i in [self.no_country_text]+list(lang_obj.regions):
                 self.list_of_territories.insert("end", i)
             max_value_len=max([0]+[len(self.list_of_territories.get(i))
                     for i in range(len(self.list_of_territories.get(0,'end')))])
