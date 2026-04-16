@@ -1930,7 +1930,7 @@ class TaskDressing(HasMenus,ui.Window):
         log.info(_("Shutting down runwindow"))
         if not self.exitFlag.istrue():
             self.deiconify()
-        if self.program.taskchooser.towrite:
+        if self.program.towrite:
             log.info(_("Final write to lift"))
             self.maybewrite(definitely=True)
         else:
@@ -1987,14 +1987,10 @@ class TaskDressing(HasMenus,ui.Window):
         self.program.maybewrite(definitely=definitely)
     def killall(self):
         log.info(_("Shutting down Task"))
-        try:
-            towrite=self.program.taskchooser.towrite
-        except AttributeError:
-            towrite=self.towrite #if taskchooser; shouldn't happen, but in case.
         self.wait(msg=_("Closing down {name} and storing changes").format(
                                                                 name=self.program.name
                                                                 ))
-        if towrite:
+        if self.program.towrite:
             log.info(_("Final write to lift"))
             self.maybewrite(definitely=True)
         else:
