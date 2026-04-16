@@ -1283,7 +1283,7 @@ class Progressbar(Childof,Gridded,UI,tkinter.ttk.Progressbar):
             value=int(value*100)
         if 0 <= value <= 100:
             self['value']=value
-        # self.update_idletasks() #updates just geometry
+        self.update_idletasks() #updates just geometry
     def __init__(self, parent, *args, **kwargs):
         if 'orient' not in kwargs:
             kwargs['orient']='horizontal' #or 'vertical'
@@ -2483,7 +2483,7 @@ class Wait(Window): #tkinter.Toplevel?
             self.deiconify() #show after the window is built
             # log.info("Wait window deiconified")
             #for some reason this has to follow the above, or you get a blank window
-            # self.update_idletasks() #updates just geometry
+            self.update_idletasks() #updates just geometry
             log.info("Wait window creation done")
         except Exception as e:
             log.info(f"Wait window Exception: {e}")

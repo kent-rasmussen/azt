@@ -585,7 +585,6 @@ class TaskChooser(Task):
         self.datacollection=True # everyone starts here?
         self.showreports=False
         self.showingreports=False
-        self.program.splash.draw()
         assert hasattr(self.program,'settings')
         # self.interfacelangs=self.getinterfacelangs()
         self.program.splash.progress(55)

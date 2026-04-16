@@ -2637,7 +2637,6 @@ class LiftChooser(ui.Window,HasMenus):
         # log.info(f"{demo=} {type(demo)=}")
         # log.info(f"{demo.error_text=} {demo.db.glosslangs=}")
         if demo.error_text:
-            self.waitdone()
             ErrorNotice(demo.error_text,wait=True)
             return
         # self.program.settings doesn't exist yet!
@@ -2656,6 +2655,7 @@ class LiftChooser(ui.Window,HasMenus):
             return
         else:
             log.info("User selected a language: {}.".format(self.demolang))
+        self.wait(msg=_("Setting up {lang} for use...").format(lang=self.demolang))
         demo.init_w_code_and_filename(self.demolang,demo=True)
         if demo.error_text:
             log.info(demo.error_text)

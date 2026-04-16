@@ -352,6 +352,7 @@ class App:
         langtags.Languages(self)
         self.get_lift_file() #self.filename, maybe LiftChooser (NOT self.analang)
         self.splash = Splash(self)
+        self.splash.draw()
         FileParser(self) #needs self.filename, pick up self.analang from settings or file
         from frontend.vcs_ui import VCSPresenter
         from frontend.report_ui import ReportPresenter
@@ -361,15 +362,19 @@ class App:
         self.report_ui = ReportPresenter()
         self.sort_ui = SortPresenter()
         self.lex_ui = LexiconPresenter()
+        self.splash.progress(25)
         self.repocheck()
         ToneFrames(self)
+        self.splash.progress(35)
         Settings(self) #needs self.filename, pick up self.analang from file
         CheckParameters(self) #depends on settings (nothing but self.analang?)
         self.settings.post_lift_init()
+        self.splash.progress(45)
         ProfileAnalyzer(self) #registers as self.profiles
         ExampleDict(self) #needed for makestatus, needs params,slices,data
         Alphabet(self) #after slicedict is up; needs params
         langtags.Languages(self)
+        self.splash.progress(50)
         # SliceDict(adhoc,profilesbysense,self) #needs adhoc,profilesbysense
         # StatusDict(filename,dict,self) #needs filename,dict
         UISettings(self)
