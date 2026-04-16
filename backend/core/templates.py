@@ -80,8 +80,6 @@ class WordListTemplate():
         # self.analang=analang
         # self.db.filename=filename
         self.db.init_post_analang(self.analang)
-        self.db.getentries() #this needs analang
-        self.db.getsenses()
 
 class CAWL(WordListTemplate):
     """This loads from the Comparative African Word List(CAWL)"""
