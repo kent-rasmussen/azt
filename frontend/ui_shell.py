@@ -2182,9 +2182,9 @@ class Splash(ui.Window):
                                         "Checker").format(azt=self.program.name))
         self.update_idletasks()
     def draw(self):
-        # self.update_idletasks()
         # self.update()
         self.deiconify() #show after placement
+        self.update_idletasks()
     def progress(self,value):
         if self.exitFlag.istrue():
             return
