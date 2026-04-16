@@ -570,7 +570,7 @@ class App:
             log.info(_("There doesn't seem to be a runwindow to hide; moving on."))
         while self.writing:
             # log.info("towrite: {}; writing: {}; taskwrite: {}".format(
-            #     self.towrite,self.writing,self.program.taskchooser.writing))
+            #     self.towrite,self.writing,self.taskchooser.writing))
             log.info(_("Waiting to finish writing to lift"))
             time.sleep(1)
             self.check_if_write_done() #because after() isn't working here...
@@ -597,7 +597,7 @@ class App:
         # log.info("Scheduling check after {x} seconds")
         self.tk_root.after(x*1000, self.check_if_write_done)
         # log.info("Scheduled check")
-        # self.program.taskchooser.after(5000, self.check_if_write_done, t)
+        # self.taskchooser.after(5000, self.check_if_write_done, t)
     def check_if_write_done(self):
         # If the thread has finished, allow another write.
         # log.info("Checking if writing done to lift.")
@@ -609,10 +609,10 @@ class App:
             log.info(_("Exception: {error}").format(error=e))
             log.info(_("writethread: {exists}").format(exists=hasattr(self,'writethread')))
         if done:
-            log.info(_("Done writing to lift ({status}).").format(status=self.program.db.write_OK))
-            if not self.program.db.write_OK:
+            log.info(_("Done writing to lift ({status}).").format(status=self.db.write_OK))
+            if not self.db.write_OK:
                 ErrorNotice(_("Write to lift returned "
-                            "'{error}'.").format(error=self.program.db.write_error),wait=True)
+                            "'{error}'.").format(error=self.db.write_error),wait=True)
             self.writing=False
             if self.towrite:
                 log.info(_("Found previous request to write; doing again."))
