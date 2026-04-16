@@ -12,7 +12,8 @@ from utilities.i18n import _
 
 class SortPresenter:
     """Handles all UI rendering for Sort, Verify, and Join workflows."""
-
+    def __init__(self, theme):
+        self.theme=theme
     # -- Widget factories (used by multiple methods) --
 
     def label(self, parent, **kwargs):
@@ -39,6 +40,18 @@ class SortPresenter:
     def progressbar(self, parent, **kwargs):
         return ui.Progressbar(parent, **kwargs)
 
+    def set_sense_illustration(self, sense):
+        iuri=sense.illustrationURI()
+        if not sense.image or not sense.image.base_img:
+            # don't reload images unnecessarily; 
+            # base_img is None if image failed to load
+            if iuri in self.theme.image_cache:
+                sense.image=self.theme.image_cache[iuri]
+            elif iuri:
+                sense.image=ui.Image(iuri)
+        if sense.image and sense.image.base_img:
+            sense.image.scale(self.theme.scale, pixels=65, scaleto='height')
+        
     # -- Sort button frame factories --
 
     def sort_button_frame(self, parent, sort_obj, groups, **kwargs):
@@ -166,6 +179,7 @@ class SortPresenter:
             b = ui.Button(bf, text=text, pady='0', cmd=notok_fn,
                          column=column, row=0, sticky='ew',
                          ipady=ipady, **kwargs)
+        self.set_sense_illustration(sense)
         if sense.image:
             sense.image.scale(b.theme.scale, pixels=65, scaleto='height')
             b['image'] = sense.image.scaled

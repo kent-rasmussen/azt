@@ -360,7 +360,7 @@ class App:
         from frontend.lexicon_ui import LexiconPresenter
         self.vcs_ui = VCSPresenter(self)
         self.report_ui = ReportPresenter()
-        self.sort_ui = SortPresenter()
+        self.sort_ui = SortPresenter(self.theme) #only needed (so far)
         self.lex_ui = LexiconPresenter()
         self.splash.progress(25)
         self.repocheck()

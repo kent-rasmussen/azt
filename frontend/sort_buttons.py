@@ -274,17 +274,9 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         self._illustration=None
         if self._sense is None:
             return 1
-        iuri=self._sense.illustrationURI()
-        if not self._sense.image or not self._sense.image.base_img:
-            #don't reload images unnecessarily; base_img is None if image failed to load
-            if iuri in self.theme.image_cache:
-                self._sense.image=self.theme.image_cache[iuri]
-            elif iuri:
-                self._sense.image=ui.Image(iuri)
-        if self._sense.image and self._sense.image.base_img:
-            self._sense.image.scale(self.theme.scale, pixels=65, scaleto='height')
-            self._illustration=self._sense.image.scaled
-        return 1
+        self.program.sort_ui.set_sense_illustration(self._sense)
+        self._illustration=self._sense.image.scaled
+        return 1    
     def makebuttons(self):
         # log.info(f"Making buttons with {self.kwargs=}")
         self._playable=False
