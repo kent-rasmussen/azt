@@ -436,8 +436,7 @@ class Theme(object):
         overstrike - font strikeout (0 - none, 1 - strikeout)
         """
     def setscale(self):
-        # program=self.program #reading and setting here
-        root=tkinter.Tk() #just to get these values
+        root=self.program.tk_root #tkinter.Tk() #just to get these values
         modifier=1 #2 seemed necessary in the transition to xwayland; no idea why
         h = self.program.screenh = root.winfo_screenheight()/modifier
         w = self.program.screenw = root.winfo_screenwidth()/modifier
@@ -447,7 +446,6 @@ class Theme(object):
         log.info(f'{root.winfo_screenwidth()=}')
         wmm = root.winfo_screenmmwidth()/modifier
         hmm = root.winfo_screenmmheight()/modifier
-        root.destroy()
         #this computer as a ratio of mine, 1080 (286mm) x 1920 (508mm):
         hx=h/1080
         wx=w/1920
