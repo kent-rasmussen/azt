@@ -2467,9 +2467,9 @@ class Wait(Window): #tkinter.Toplevel?
         self.l1.wrap()
     def __init__(self, parent, msg=None, cancellable=False, *args, **kwargs):
         kwargs['exit']=False
+        kwargs['withdrawn']=True
         super().__init__(parent, *args, **kwargs)
         self.paused=False
-        self.withdraw() #don't show until we're done making it
         self['background']=parent['background']
         self.attributes("-topmost", True)
         title=_("Please Wait! {azt} Dictionary and Orthography Checker "
