@@ -68,7 +68,6 @@ program['start_time'] = times.now()
 import threading
 import multiprocessing
 import psutil
-import itertools
 import importlib.util
 import collections
 from random import randint

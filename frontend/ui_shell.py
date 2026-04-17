@@ -67,8 +67,8 @@ class HasMenus():
                 row=1,column=0,sticky='we'
                         )
         versiondate=_("updated to {date} ({relative_date})").format(
-                        date=self.program.repo.lastcommitdate(),
-                        relative_date=self.program.repo.lastcommitdaterelative())
+                        date=self.program.source_repo.lastcommitdate(),
+                        relative_date=self.program.source_repo.lastcommitdaterelative())
         ui.Label(window.frame,
                 text=versiondate,
                 anchor='c',padx=50,
@@ -123,14 +123,14 @@ class HasMenus():
         ui.ToolTip(maill, _("Send me an Email (from your mail client)"))
     def reverttomainazt(self,event=None):
         #This doesn't care which (test) version one is on
-        r=self.program.repo.reverttomain()
+        r=self.program.source_repo.reverttomain()
         log.info("reverttomainazt: {}".format(r))
         self.updateazt()
         if r:
             self.program.taskchooser.restart()
     def trytestazt(self,event=None):
         #This only goes to the test version at the top of this file
-        r=self.program.repo.testversion()
+        r=self.program.source_repo.testversion()
         log.info("trytestazt: {}".format(r))
         self.updateazt()
         if r:
@@ -448,12 +448,12 @@ class Menus(ui.Menu):
         from main import updateazt
         self.cascade(self,_("Help"),'helpmenu')
         helpitems=[(_("About"), self.parent.helpabout)]
-        if self.program.git:
+        if hasattr(self.program.source_repo,'git'):
             # clonetoUSB should be called if updateazt doesn't have a source (incl internet)
             helpitems+=[(_("Update {azt}").format(azt=self.program.name), updateazt)]
             if 'git' in self.program.data_repo:
                 helpitems+=[(_("Share data to USB"), self.program.data_repo['git'].share)]
-            if self.program.repo.branch == 'main':
+            if self.program.source_repo.branch == 'main':
                 helpitems+=[(_("Try {azt} test version").format(azt=self.program.name),
                                 self.parent.trytestazt)]
             else:
@@ -469,13 +469,14 @@ class Menus(ui.Menu):
                         )
     def __init__(self, parent):
         self.parent=parent #this should always be the window where they appear
+        self.program=self.parent.program
         super(Menus, self).__init__(parent)
         # if isinstance(parent,TaskDressing):
         if not parent.is_chooser:
             self.advanced()
         self.help()
         if self.program.me:
-            self.command(self,self.program.taskchooser.filename,None)
+            self.command(self,self.program.filename,None)
 
 class StatusFrame(ui.Frame):
     """This contains all the info about what the user is currently working on,

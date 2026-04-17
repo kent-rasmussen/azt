@@ -13,7 +13,7 @@ import platform
 import subprocess
 import threading
 import json
-import itertools
+# import itertools
 import inspect
 import multiprocessing
 

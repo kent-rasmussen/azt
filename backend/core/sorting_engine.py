@@ -13,7 +13,7 @@ from io_put import lift
 # import subprocess
 # import threading
 # import json
-# import itertools
+import itertools
 # import inspect
 # import multiprocessing
 
@@ -491,7 +491,7 @@ class Sort(object):
         if self.ui.exitFlag.istrue(): #if the task has been shut down, stop
             return
         self.program.settings.reloadstatusdata() # culled here
-        if self.itemstosort() is False:
+        if not self.itemstosort():
             self.updatesortingstatus() # Not just tone anymore
         cvt=self.program.params.cvt()
         self.check=self.get_check()
@@ -1177,6 +1177,7 @@ class Sort(object):
                                 verified=False, #b/c joined
                                 writestatus=True)
             self.did[f'join{img_mod}']=True
+            self.ui.runwindow.waitdone()
             self.ui.runwindow.on_quit()
         def distinguish_pair():
             if macrosort:
@@ -1241,7 +1242,6 @@ class Sort(object):
                 log.info("Runwindow exited.")
                 return
             pairs=get_pairs()
-            log.info("Runwindow still open, continuing to next in {pairs}.".format(pairs=pairs))
         self.ui.runwindow.on_quit()
         return 1
     def tryNAgain(self):

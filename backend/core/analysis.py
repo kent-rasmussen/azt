@@ -16,7 +16,7 @@ log=logsetup.getlog(__name__)
 # import subprocess
 # import threading
 # import json
-# import itertools
+import itertools
 # import inspect
 # import multiprocessing
 
@@ -1003,7 +1003,7 @@ class StatusDict(dict):
         # log.info(_("Tosort now {tosort} (marksensetosort)").format(tosort=self.tosort()))
     def store(self):
         """This will just store to file; reading will come from check."""
-        log.info(_("Saving status dict to file"))
+        # log.info(_("Saving status dict to file"))
         self.program.settings.storesettingsfile('status')
     def dict(self): #needed?
         return {k:self[k] for k in self}
