@@ -353,6 +353,7 @@ class App:
         self.splash = Splash(self)
         self.splash.draw()
         FileParser(self) #needs self.filename, pick up self.analang from settings or file
+        self.splash.progress(5)
         from frontend.vcs_ui import VCSPresenter
         from frontend.report_ui import ReportPresenter
         from frontend.sort_ui import SortPresenter
