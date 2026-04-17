@@ -30,8 +30,7 @@ class ErrorNotice(ui.Window):
         wait=kwargs.get('wait')
         button=kwargs.get('button')
         image=kwargs.get('image')
-        super(ErrorNotice, self).__init__(parent,title=title,exit=False)
-        self.withdraw()
+        super(ErrorNotice, self).__init__(parent,title=title,exit=False,withdrawn=True)
         self.parent.withdraw()
         self.title = title
         self.text = text

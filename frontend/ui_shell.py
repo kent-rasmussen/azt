@@ -1946,7 +1946,8 @@ class TaskDressing(HasMenus,ui.Window):
         self.runwindow.title(title)
         self.runwindow.takekioskscreen()
         self.runwindow.cleanup=self.runwindowcleanup
-        if msg: #withdraw one way or another, but just waitdone to return
+        if msg and any(i.mature for i in self.program.data_repo.values()):
+        #withdraw one way or another, but just waitdone to return
             self.runwindow.wait(msg=msg,thenshow=True)
         self.withdraw() #this is the parent of the runwindow, the task
     def isrunwindow(self):

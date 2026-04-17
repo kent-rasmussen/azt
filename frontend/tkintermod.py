@@ -16,7 +16,14 @@ class TkErrorCatcher:
     '''
     exception_texts_to_raise=[
         'recursion',
-        'local variable'
+        'local variable',
+        'bad window path name'
+    ]
+    exception_types_to_raise=[
+        # _tkinter.TclError,
+        AttributeError,
+        KeyError,
+        NameError
     ]
     def __init__(self, func, subst, widget):
         self.func = func
@@ -38,8 +45,10 @@ class TkErrorCatcher:
         except Exception as err:
             if any(i in str(err) for i in self.exception_texts_to_raise):
                 raise err
+            elif any(isinstance(err,t) for t in self.exception_types_to_raise):
+                raise err
             else:
-                print(f"not raising Exception {err} (frontend.tkintermod)")
+                print(f"not raising {type(err)} Exception {err} (frontend.tkintermod)")
             # raise err
         except KeyboardInterrupt:
             pass

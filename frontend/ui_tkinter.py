@@ -1023,6 +1023,9 @@ class Waitable(Exitable):
             self.withdraw()
         self.ww=Wait(self,msg,cancellable=cancellable)
     def iswaiting(self):
+        root=self._root()
+        if hasattr(root,'ww') and root.ww.winfo_exists():
+            self.ww=root.ww
         return hasattr(self,'ww') and self.ww.winfo_exists()
     def waitpause(self):
         self.ww.withdraw()
@@ -1036,6 +1039,11 @@ class Waitable(Exitable):
             self.ww.progress(x,r=4)
         except Exception as e:
             log.info(f"Couldn't change wait progress ({e})")
+    def wait_and_drive_work(self, msg, generator, on_done=None):
+        self.wait(msg)
+        log.info("Waiting, going to drive now")
+        self.drive_work(generator, on_done)
+        log.info("Waiting, done driving")
     def drive_work(self, generator, on_done=None):
         """Consume a work generator one yield at a time via after(),
         letting the event loop paint between chunks."""
@@ -2474,7 +2482,7 @@ class Wait(Window): #tkinter.Toplevel?
                                 cmd=self.cancel,
                                 row=3,column=0,sticky='e')
     def msg(self,msg):
-        log.info(f"Waiting: {msg}")
+        log.info(f"Waiting ({type(self.parent)}): {msg}")
         self.l1['text']=msg
         self.l1.wrap()
     def __init__(self, parent, msg=None, cancellable=False, *args, **kwargs):

@@ -490,7 +490,19 @@ class Sort(object):
         log.info("Starting maybesort with {did}".format(did=[k for k,v in self.did.items() if v]))
         if self.ui.exitFlag.istrue(): #if the task has been shut down, stop
             return
-        self.program.settings.reloadstatusdata() # culled here
+        try:
+            self.ui.runwindow.winfo_viewable()
+            w=self.ui.runwindow
+        except:
+            w=self.program.tk_root
+        if any(i.mature for i in self.program.data_repo.values()):
+            w.wait_and_drive_work(
+                        _("Reloading status data"),
+                        self.program.settings.reloadstatusdata(), # culled here
+                        on_done=self.program.settings.reloadstatusdata_cleanup)
+        else:
+            w.drive_work(self.program.settings.reloadstatusdata(), # culled here
+                        on_done=self.program.settings.reloadstatusdata_cleanup)
         if not self.itemstosort():
             self.updatesortingstatus() # Not just tone anymore
         cvt=self.program.params.cvt()
@@ -594,10 +606,17 @@ class Sort(object):
             self.update_annotations_to_glyphs() #Iterates over all glyphs
             # The above aligns all annotations and verifications
             # the below updates forms IF annotations agree
-            self.ui.runwindow.wait(msg=_("Updating forms..."))
-            for p in self.updateformsallchecks():
-                self.ui.runwindow.waitprogress(p)
-            self.ui.runwindow.waitdone()
+            try:
+                self.ui.runwindow.winfo_viewable()
+                w=self.ui.runwindow
+            except:
+                w=self.program.tk_root
+            if any(i.mature for i in self.program.data_repo.values()):
+                w.wait_and_drive_work(
+                _("Updating forms..."),
+                self.updateformsallchecks())
+            else:
+                w.drive_work(self.updateformsallchecks())
         """The following is to iterate to the next work to do. So we want
         everything for a check to be complete to be done by now.
         A user may want to change the name of a group; if so, they should stop

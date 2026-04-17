@@ -97,6 +97,7 @@ import sys
 import importlib
 import threading
 import configparser as _configparser
+import itertools
 import migration
 from . import manager
 from utilities import logsetup as _logsetup
@@ -864,16 +865,11 @@ class Settings(SettingsUI):
                 if isinstance(x[k],dict) and isinstance(y[k],dict):
                     report(x[k],y[k],k)
         report(x,y)
-    def reloadstatusdata(self):
-        _log.info(_("Refreshing all status settings from LIFT"))
-        self.storesettingsfile() #default, not status
-        self.program.db.load_ps_profiles()
+    def generate_status_by_annotations(self,**kwargs):
+        _log.info(_("Refreshing annotations from LIFT"))
+        start_at=kwargs.get('startat',0)
+        end_at=kwargs.get('endat',100)
         d=self.program.db.annotation_values_by_ps_profile()
-        t=self.program.db.tone_values_by_ps_profile()
-        # _log.info(f"Found this LIFT file: {self.program.db.filename}")
-        # _log.info(f"Found these LIFT annotations: {d}")
-        self.program.status.clear_all_groups()
-        #The above because the following only modifies current profiles & checks
         k={}
         for k['ps'],profile_dict in d.items():
             for k['profile'],check_dict in profile_dict.items():
@@ -884,16 +880,36 @@ class Settings(SettingsUI):
                     groups=[i for i in groups if i]
                     # _log.info(f"storing {k} unverified values: {groups}")
                     self.program.status.groups(groups, wsorted=True, **k)
+                    yield start_at + (end_at-start_at) * len(k)/len(d) #maybe more detail later
+    def generate_status_by_tone_groups(self,**kwargs):
+        _log.info(_("Refreshing tone data from LIFT"))
+        start_at=kwargs.get('startat',0)
+        end_at=kwargs.get('endat',100)
+        t=self.program.db.tone_values_by_ps_profile()
+        k={}
         k['cvt']='T'
         for k['ps'],profile_dict in t.items():
             for k['profile'],check_dict in profile_dict.items():
                 for k['check'],groups in check_dict.items():
                     self.program.status.groups(groups, wsorted=True, **k)
+                    yield start_at + (end_at-start_at) * len(k)/len(t) #maybe more detail later
+    def reloadstatusdata(self):
+        _log.info(_("Refreshing all status settings from LIFT"))
+        self.storesettingsfile() #default, not status
+        self.program.db.load_ps_profiles()
+        # _log.info(f"Found this LIFT file: {self.program.db.filename}")
+        # _log.info(f"Found these LIFT annotations: {d}")
+        self.program.status.clear_all_groups()
+        #The above because the following only modifies current profiles & checks
         """Verification data should not be read from LIFT. A single lift entry
         may be verified to belong to a particular sort group, without that sort
         group being verified in it's entirety, especially not since another
         word has been added to it.
         """
+        for i in itertools.chain(self.generate_status_by_annotations(end_at=50),
+                                self.generate_status_by_tone_groups(start_at=50)):
+            yield i
+    def reloadstatusdata_cleanup(self):
         """Now remove what didn't get data"""
         self.program.status.cull() #this removes empties, and limits done to groups
         if None in self.program.status: #This should never be there

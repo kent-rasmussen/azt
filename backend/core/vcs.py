@@ -401,6 +401,10 @@ class Repository(object):
             self.files=[file.getfile(i) for i in r.split('\n')]
         else:
             self.files=[]
+        if len(self.files)> 2000:
+            self.mature=True
+        else:
+            self.mature=False
     def do(self,args,**kwargs):
         # log.info("do args: {}".format(args))
         iwascalledby=callerfn()
