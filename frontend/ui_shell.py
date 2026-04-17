@@ -182,13 +182,9 @@ class Menus(ui.Menu):
         if getattr(self.parent,'is_sort_task',False):
             self.parameterslice()
     def fill_db_images(self):
-        w=ui.Wait(self.program.tk_root,msg=_("Filling images..."))
-        try:
-            for p in self.program.db.fill_db_images(do_wait=True):
-                w.progress(p)
-        except Exception as e:
-            log.error(f"Error filling images: {e}")
-        w.close()
+        self.program.tk_root.wait(msg=_("Filling images..."))
+        self.program.tk_root.drive_work(
+            self.program.db.fill_db_images(do_wait=True))
     def languages(self):
         """Language stuff"""
         self.cascade(self.changemenu,_("Languages"),'languagemenu')

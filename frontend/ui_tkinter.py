@@ -1036,6 +1036,18 @@ class Waitable(Exitable):
             self.ww.progress(x,r=4)
         except Exception as e:
             log.info(f"Couldn't change wait progress ({e})")
+    def drive_work(self, generator, on_done=None):
+        """Consume a work generator one yield at a time via after(),
+        letting the event loop paint between chunks."""
+        try:
+            progress = next(generator)
+            if self.iswaiting():
+                self.waitprogress(progress)
+            self.after(1, self.drive_work, generator, on_done)
+        except StopIteration:
+            self.waitdone()
+            if on_done:
+                on_done()
     def waitcancel(self):
         self.waitcancelled=True
         log.info("Wait cancel registered; waiting to cancel")

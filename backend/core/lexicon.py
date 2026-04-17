@@ -267,14 +267,22 @@ class Segments(Senses):
         # log.info(_("Setting segment sort group"))
         item.annotationvaluebyftypelang(self.ftype,self.analang,check,group)
     def updateformsallchecks(self):
+        """Generator: updates forms from annotations for every sense."""
         log.info(_("updateformsallchecks"))
-        for sense in self.program.db.senses: #do the whole dictionary
+        senses=self.program.db.senses
+        n=len(senses)
+        for i, sense in enumerate(senses):
             self.updateformtoannotations(sense)
-        self.maybewrite()#after iteration
+            yield i * 100 // n if n else 100
+        self.maybewrite()
     def updateformsbycheck(self):
-        for sense in self.getsensesincheck():
+        """Generator: updates forms from annotations for current check."""
+        senses=list(self.getsensesincheck())
+        n=len(senses)
+        for i, sense in enumerate(senses):
             self.updateformtoannotations(sense,self.check)
-        self.maybewrite()#after iteration
+            yield i * 100 // n if n else 100
+        self.maybewrite()
     def update_annotations_to_glyphs(self):
         return [i for i in [self.update_annotations_by_glyph(k)
                     for k in self.program.alphabet.glyph_members()] if i]

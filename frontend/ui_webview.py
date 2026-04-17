@@ -1787,6 +1787,16 @@ class Root(_WebviewWidget):
         except Exception:
             pass
 
+    def drive_work(self, generator, on_done=None):
+        """Consume a work generator one yield at a time, letting the event
+        loop breathe. Webview stub — runs synchronously for now."""
+        for progress in generator:
+            if self.iswaiting():
+                self.waitprogress(progress)
+        self.waitdone()
+        if on_done:
+            on_done()
+
     def waitcancel(self):
         self.waitcancelled = True
 

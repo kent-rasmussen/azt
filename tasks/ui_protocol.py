@@ -34,6 +34,12 @@ class TaskUI:
         """Update progress indicator."""
         raise NotImplementedError
 
+    def drive_work(self, generator, on_done=None):
+        """Consume a work generator one yield at a time, letting the
+        event loop paint between chunks. Calls waitdone() on completion,
+        then on_done() if provided."""
+        raise NotImplementedError
+
     @property
     def run_window(self):
         """The current secondary work window, or None."""

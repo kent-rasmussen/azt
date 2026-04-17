@@ -594,7 +594,10 @@ class Sort(object):
             self.update_annotations_to_glyphs() #Iterates over all glyphs
             # The above aligns all annotations and verifications
             # the below updates forms IF annotations agree
-            self.updateformsallchecks() #whole db annotations>forms
+            self.ui.runwindow.wait(msg=_("Updating forms..."))
+            for p in self.updateformsallchecks():
+                self.ui.runwindow.waitprogress(p)
+            self.ui.runwindow.waitdone()
         """The following is to iterate to the next work to do. So we want
         everything for a check to be complete to be done by now.
         A user may want to change the name of a group; if so, they should stop
@@ -721,7 +724,10 @@ class Sort(object):
         # The above aligns all annotations and verifications
         # the below updates forms IF annotations agree
         log.info("Going to update forms now")
-        self.updateformsallchecks() #whole db annotations>forms
+        self.ui.runwindow.wait(msg=_("Updating forms..."))
+        for p in self.updateformsallchecks():
+            self.ui.runwindow.waitprogress(p)
+        self.ui.runwindow.waitdone()
         log.info("Done updating forms")
     def present_sense(self,sense):
         log.info("presenting to sort {sense_id}".format(sense_id=sense.id))
