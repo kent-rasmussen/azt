@@ -2245,6 +2245,22 @@ class ScrollingFrame(Frame):
     def totop(self):
         self.update_idletasks()
         self.canvas.yview_moveto(0)
+    def initialize_wheel_bindings(self):
+        self.bind('<Enter>', self._bound_to_mousewheel)
+        self.bind('<Leave>', self._unbound_to_mousewheel)
+        self._bound_to_mousewheel(None) #maybe excessive, but covers edge cases
+        self.canvas.bind('<Destroy>', self._unbound_to_mousewheel)
+        return
+        # If pointer is already inside, bind immediately                                                                                                                        
+        try:                                                                                                                                                                    
+            x, y = self.winfo_pointerxy() 
+            for w in self.winfo_containing(x, y).winfo_children():
+                log.info(f"pointer in parent of {w=}")
+            log.info(f"pointer in {self.winfo_containing(x, y)=}")                                                                                                                                      
+            if self.winfo_containing(x, y) in (self, self.canvas, self.content):                                                                                                
+                self._bound_to_mousewheel(None)                                                                                                                                 
+        except:                                                                                                                                                                 
+            pass   
     def __init__(self, parent, xscroll=False, *args, **kwargs):
         self.ignore_maxwidth=kwargs.pop('ignore_maxwidth',False)
         """Make this a Frame, with all the inheritances, I need"""
@@ -2294,9 +2310,7 @@ class ScrollingFrame(Frame):
         yscrollbar.config(command=self.canvas.yview)
         """Bindings so the mouse wheel works correctly, etc."""
         w=self.winfo_toplevel()
-        self.bind('<Enter>', self._bound_to_mousewheel)
-        self.bind('<Leave>', self._unbound_to_mousewheel)
-        self.canvas.bind('<Destroy>', self._unbound_to_mousewheel)
+        self.initialize_wheel_bindings()
         # self.canvas.bind('<Configure>', self._configure_canvas) #called by:
         self.content.bind('<Configure>', self._configure_interior)
         self.bind('<Visibility>', self.windowsize)
