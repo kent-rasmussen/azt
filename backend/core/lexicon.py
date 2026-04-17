@@ -169,15 +169,11 @@ class Segments(Senses):
         self.maybewrite()
         self.ui.runwindow.waitdone()
     def presort(self,senses,group):
-        ftype=self.program.params.ftype()
+        kwargs={#check:check,
+                #ftype: self.program.params.ftype(),
+                }
         for sense in senses:
-            t = threading.Thread(target=self.marksortgroup,
-                            args=(sense,group),
-                            kwargs={#'check':check,
-                                    # 'ftype':ftype,
-                                    })
-            t.start()
-        t.join()
+            self.marksortgroup(sense, group,**kwargs)
         # self.program.status.marksensesorted(sense) #now in marksortgroup
         self.updatestatus(group=group) # marks the group unverified.
     def check_with_conflicting_value(self,annodict,check):
@@ -274,25 +270,10 @@ class Segments(Senses):
         log.info(_("updateformsallchecks"))
         for sense in self.program.db.senses: #do the whole dictionary
             self.updateformtoannotations(sense)
-        #     u = threading.Thread(target=self.updateformtoannotations,
-        #                         args=(sense), # w/o check, all done
-        #                         )
-        #     u.start()
-        # try:
-        #     u.join()
-        # except:
-        #     pass
         self.maybewrite()#after iteration
     def updateformsbycheck(self):
         for sense in self.getsensesincheck():
-            u = threading.Thread(target=self.updateformtoannotations,
-                                args=(sense,self.check), # w/o check, all done
-                                )
-            u.start()
-        try:
-            u.join()
-        except:
-            pass
+            self.updateformtoannotations(sense,self.check)
         self.maybewrite()#after iteration
     def update_annotations_to_glyphs(self):
         return [i for i in [self.update_annotations_by_glyph(k)
@@ -338,29 +319,16 @@ class Segments(Senses):
                             **kwargs)
             # log.info(f"Found {len(senses)} senses for {item}: {[i.id for i in senses]}")
             for sense in senses: #ps-profile only
-                thread_name='_'.join([sense.id,glyph])
-                u = threading.Thread(target=self.marksortgroup,
-                                    args=(sense,glyph),
-                                    kwargs={**{k:v for k,v in kwargs.items()
-                                            if k != 'group'},
-                                    # remove for testing this fn:
-                                    # 'nocheck': True, #no lift verify
-                                            'thread_name':thread_name,
-                                            'not_sorting':True,
-                                            'updateverification':True,
-                                            'updateforms':False}) 
-                                            #update all annotations first, then forms 
-                self.track_thread(thread_name) #don't race the thread
-                u.start()
+                self.marksortgroup(sense, glyph,
+                                   **{k:v for k,v in kwargs.items()
+                                      if k != 'group'},
+                                   not_sorting=True,
+                                   updateverification=True,
+                                   updateforms=False)
+                                   #update all annotations first, then forms
             self.program.status.renamegroup(kwargs.pop('group'),glyph,**kwargs)
-            #above should rename throughout status 
+            #above should rename throughout status
             self.program.alphabet.rename_glyph_member(item,newform(item))
-        self.thread_update()
-        try:
-            u.join()
-            log.info(_("Finished update_annotations_by_glyph threads for '{glyph}'").format(glyph=glyph))
-        except UnboundLocalError: #if u.start() never happened...
-            pass
         log.info(_("update_annotations_by_glyph done with '{members}' to '{glyph}'").format(members=gm[glyph], glyph=glyph))
     def default_glyphs(self):
         return [i for i in 

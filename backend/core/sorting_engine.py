@@ -1297,19 +1297,16 @@ class Sort(object):
         if not senses:
             log.info("No senses for {check}={value}".format(check=check,value=x))
             return
+        kwargs={#check:check,
+                #ftype:ftype,
+                # remove for testing this fn:
+                # 'nocheck': True, #don't verify from lift
+                'not_sorting':True,
+                'updateverification':True,
+                'updateforms':updateforms
+                }
         for sense in senses:
-            u = threading.Thread(target=self.marksortgroup,
-                                args=(sense,y),
-                                kwargs={#'check':check,
-                                        # 'ftype':ftype,
-                                        # remove for testing this fn:
-                                        # 'nocheck': True, #don't verify from lift
-                                        'thread_name':'_'.join([sense.id,y]),
-                                        'not_sorting':True,
-                                        'updateverification':True,
-                                        'updateforms':updateforms})
-            u.start()
-        u.join()
+            self.marksortgroup(sense, y, **kwargs)
         if updatestatus: #update status even if not updating forms
             self.program.settings.reloadstatusdata()
         for t in list(self.program.status.distinguished()):
@@ -1317,6 +1314,7 @@ class Sort(object):
                 self.program.status.undistinguish(t)
                 self.program.status.distinguish((y if t[0]==x else t[0],y if t[1]==x else t[1]))
         self.maybewrite() #once done iterating over senses
+        log.info("updatebygroupsense finished converting {x} to {y}".format(x=x,y=y))
     def __init__(self, **kwargs):
         super().__init__(**kwargs) #is this needed?
 
