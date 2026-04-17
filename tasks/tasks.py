@@ -329,8 +329,12 @@ class ParseWords(Parse,Task):
     def tooltip(self):
         return _("This task will help you parse your citation forms, "
                 "automatically and with confirmation.")
+    def run_getparses(self):
+        msg=_("Parsing (ask: {ask} auto: {auto})").format(
+            ask=self.parser.ask, auto=self.parser.auto)
+        self.ui.wait_and_drive_work(msg, self.getparses())
     def dobuttonkwargs(self):
-        fn=self.getparses
+        fn=self.run_getparses
         text=_("Parse!")
         tttext=_("{azt} tries to do as much as possible automatically, and "
                 "according to the level you have set for confirmation."
@@ -357,7 +361,7 @@ class WordCollectnParse(Parse,WordCollection,Task):
         return _("This task helps you collect and parse words.")
     def dobuttonkwargs(self):
         if self.program.taskchooser.cawlmissing:
-            fn=self.addCAWLentries
+            fn=self.run_addCAWLentries
             text=_("Add remaining CAWL entries")
             tttext=_("This will add entries from the Comparative African "
                     "Wordlist (CAWL) which aren't already in your database "
@@ -398,7 +402,7 @@ class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,Task):
                 "them, with an automatic draft.")
     def dobuttonkwargs(self):
         if self.program.taskchooser.cawlmissing:
-            fn=self.addCAWLentries
+            fn=self.run_addCAWLentries
             text=_("Add remaining CAWL entries")
             tttext=_("This will add entries from the Comparative African "
                     "Wordlist (CAWL) which aren't already in your database "
@@ -1024,9 +1028,16 @@ class SortSyllables(Sort,Segments,Task):
         profiles=self.program.slices.profiles()
         """further specify check check in maybesort, where you can send the user
         on to the next setting"""
-        self.presortgroups()
-        self.updatesortingstatus() # Not just tone anymore
-        self.maybesort(firstrun=True)
+        gen=self.presortgroups()
+        def after_presort():
+            self.updatesortingstatus() # Not just tone anymore
+            self.maybesort(firstrun=True)
+        try:
+            self.ui.runwindow.winfo_viewable()
+            w=self.ui.runwindow
+        except:
+            w=self.program.tk_root
+        w.drive_work(gen, on_done=after_presort)
     def __init__(self, **kwargs):
         program.params.cvt('S') #syllable
         super().__init__(**kwargs)

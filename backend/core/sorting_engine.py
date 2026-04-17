@@ -324,9 +324,16 @@ class Sort(object):
             exit=self.getcheck()
             if exit and not self.ui.exitFlag.istrue():
                 return #if the user didn't supply a check
-        self.presortgroups()
-        self.updatesortingstatus() # Not just tone anymore
-        self.maybesort(firstrun=True)
+        gen=self.presortgroups()
+        def after_presort():
+            self.updatesortingstatus() # Not just tone anymore
+            self.maybesort(firstrun=True)
+        try:
+            self.ui.runwindow.winfo_viewable()
+            w=self.ui.runwindow
+        except:
+            w=self.program.tk_root
+        w.drive_work(gen, on_done=after_presort)
     def confirmverificationgroup(self,sense,profile,check):
         """This does the one field storing a list of verified values
         for all checks"""
@@ -603,20 +610,23 @@ class Sort(object):
                 if warnorcontinue(self.name_new_glyphs()): #iterative: all int(); forced continue or quit.
                     return
             """all int() groups and macrogroups are gone at this point!"""
-            self.update_annotations_to_glyphs() #Iterates over all glyphs
-            # The above aligns all annotations and verifications
-            # the below updates forms IF annotations agree
+            # Aligns all annotations and verifications, then updates forms
             try:
                 self.ui.runwindow.winfo_viewable()
                 w=self.ui.runwindow
             except:
                 w=self.program.tk_root
-            if any(i.mature for i in self.program.data_repo.values()):
-                w.wait_and_drive_work(
-                _("Updating forms..."),
-                self.updateformsallchecks())
-            else:
-                w.drive_work(self.updateformsallchecks())
+            def after_annotations():
+                if any(i.mature for i in self.program.data_repo.values()):
+                    w.wait_and_drive_work(
+                    _("Updating forms..."),
+                    self.updateformsallchecks())
+                else:
+                    w.drive_work(self.updateformsallchecks())
+            w.wait_and_drive_work(
+                _("Updating annotations..."),
+                self.update_annotations_to_glyphs(),
+                on_done=after_annotations)
         """The following is to iterate to the next work to do. So we want
         everything for a check to be complete to be done by now.
         A user may want to change the name of a group; if so, they should stop
@@ -732,21 +742,31 @@ class Sort(object):
                 self.program.params.cvt(cvt)
             self.name_new_glyphs() #keep cvt the same
             return
-        error=self.update_annotations_to_glyphs() #Iterates over all glyphs
-        if error:
-            txt=_("Problem updating annotations to glyphs:")
-            txt+=f'\n{'\n'.join(error)}\n\n'
-            txt+=_("try again?")
-            ErrorNotice(txt,wait=True)
-            return
-        log.info(_("Glyph annotations updated OK"))
-        # The above aligns all annotations and verifications
-        # the below updates forms IF annotations agree
-        log.info("Going to update forms now")
-        self.ui.runwindow.wait(msg=_("Updating forms..."))
-        for p in self.updateformsallchecks():
-            self.ui.runwindow.waitprogress(p)
-        self.ui.runwindow.waitdone()
+        try:
+            self.ui.runwindow.winfo_viewable()
+            w=self.ui.runwindow
+        except:
+            w=self.program.tk_root
+        def after_annotations():
+            error=self.update_annotations_errors
+            if error:
+                txt=_("Problem updating annotations to glyphs:")
+                txt+=f'\n{'\n'.join(error)}\n\n'
+                txt+=_("try again?")
+                ErrorNotice(txt,wait=True)
+                return
+            log.info(_("Glyph annotations updated OK"))
+            log.info("Going to update forms now")
+            if any(i.mature for i in self.program.data_repo.values()):
+                w.wait_and_drive_work(
+                    _("Updating forms..."),
+                    self.updateformsallchecks())
+            else:
+                w.drive_work(self.updateformsallchecks())
+        w.wait_and_drive_work(
+            _("Updating annotations..."),
+            self.update_annotations_to_glyphs(),
+            on_done=after_annotations)
         log.info("Done updating forms")
     def present_sense(self,sense):
         log.info("presenting to sort {sense_id}".format(sense_id=sense.id))
@@ -1197,10 +1217,17 @@ class Sort(object):
                 self.program.alphabet.join_glyphs(*lpr)
                 log.info(f"join_pair done {macrosort=}")
             else:
-                self.updatebygroupsense(*lpr) #calls marksortgroup on all
-                self.updatestatus(group=lpr[1], #no longer by updatebygroupsense
-                                verified=False, #b/c joined
-                                writestatus=True)
+                def join_pair_done():
+                    self.program.settings.reloadstatusdata_cleanup()
+                    self.updatestatus(group=lpr[1],
+                                    verified=False,
+                                    writestatus=True)
+                    self.did[f'join{img_mod}']=True
+                    self.ui.runwindow.on_quit()
+                self.ui.runwindow.drive_work(
+                    self.updatebygroupsense(*lpr),
+                    on_done=join_pair_done)
+                return
             self.did[f'join{img_mod}']=True
             self.ui.runwindow.waitdone()
             self.ui.runwindow.on_quit()
@@ -1285,9 +1312,12 @@ class Sort(object):
             self.removeitemfromgroup(item)
         self.runcheck()
     def rename_group(self,x,y,updatestatus=True):
-        self.updatebygroupsense(x,y,
+        for _ in self.updatebygroupsense(x,y,
                                 updatestatus=updatestatus,
-                                updateforms=True)
+                                updateforms=True):
+            pass  # consume generator synchronously
+        if updatestatus:
+            self.program.settings.reloadstatusdata_cleanup()
         self.rename_group_verification(x,y)
     def rename_group_verification(self,x,y,**kwargs):
         v=self.program.status.verified(**kwargs)
@@ -1297,48 +1327,33 @@ class Sort(object):
             v.append(y)
             self.program.status.verified(g=v,**kwargs)
     def updatebygroupsense(self,x,y,updateforms=False,updatestatus=True):
-        """This needs to apply during sorting and without, when sorting variables 
-        and status may not be available.
-        This method does not change the sorting status of any sense, but moves a 
-        sense from one sort group to another.
-        use not_sorting=True to prevent requiring sorting variables.
+        """Generator: moves all senses from group x to group y.
+        Yields 0-100 progress. Post-work (reloadstatusdata, distinguish
+        updates, maybewrite) is handled after generator exhaustion.
         """
-        """Generalize this for segments"""
-        # This function updates the field value and verification status (which
-        # contains the field value) in the lift file.
-        # This is all the words in the database with the given
-        # check:value correspondence (for a given ps/profile)
         check=self.program.params.check()
         lst2=self.getsensesingroup(check,x) #by annotations, for C/V
-        # We are agnostic of verification status of any given entry, so just
-        # use this to change names, not to mark verification status (do that
-        # with self.updatestatuslift())
-        # rm=self.verificationcode(check=check,group=oldvalue)
-        # add=self.verificationcode(check=check,group=newvalue)
-        """The above doesn't test for profile, so we restrict that next"""
         profile=self.program.slices.profile()
         senses=self.program.slices.inslice(lst2)
         ftype=self.program.params.ftype()
         if not senses:
             log.info("No senses for {check}={value}".format(check=check,value=x))
             return
-        kwargs={#check:check,
-                #ftype:ftype,
-                # remove for testing this fn:
-                # 'nocheck': True, #don't verify from lift
-                'not_sorting':True,
+        kwargs={'not_sorting':True,
                 'updateverification':True,
                 'updateforms':updateforms
                 }
-        for sense in senses:
+        n=len(senses)
+        for i, sense in enumerate(senses):
             self.marksortgroup(sense, y, **kwargs)
-        if updatestatus: #update status even if not updating forms
-            self.program.settings.reloadstatusdata()
+            yield i * 50 // n  # 0-50 for marksortgroup phase
+        if updatestatus:
+            yield from self.program.settings.reloadstatusdata() # 0-100 mapped to ~50 already
         for t in list(self.program.status.distinguished()):
             if x in t:
                 self.program.status.undistinguish(t)
                 self.program.status.distinguish((y if t[0]==x else t[0],y if t[1]==x else t[1]))
-        self.maybewrite() #once done iterating over senses
+        self.maybewrite()
         log.info("updatebygroupsense finished converting {x} to {y}".format(x=x,y=y))
     def __init__(self, **kwargs):
         super().__init__(**kwargs) #is this needed?

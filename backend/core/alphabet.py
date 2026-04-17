@@ -252,7 +252,9 @@ class Alphabet():
     def refresh_items(self):
         self.items_present=set()
         k={'ftype':self.ftype} #ftype may need to iterate some day
-        self.program.settings.reloadstatusdata() # culled here
+        for _ in self.program.settings.reloadstatusdata():
+            pass
+        self.program.settings.reloadstatusdata_cleanup() # culled here
         d=self.program.status.dict()
         for k['cvt'],ps_d in d.items(): #read cvt from status
             for k['ps'],pr_d in ps_d.items():

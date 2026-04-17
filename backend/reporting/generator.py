@@ -29,7 +29,9 @@ from io_put import xlp
 class Report(object):
     is_report=True
     def consultantcheck(self):
-        self.program.settings.reloadstatusdata()
+        for _ in self.program.settings.reloadstatusdata():
+            pass
+        self.program.settings.reloadstatusdata_cleanup()
         self.bylocation=False
         self.tonegroupreportcomprehensive()
         self.bylocation=True

@@ -171,14 +171,15 @@ class SortButtonFrame(ui.ScrollingFrame):
         # Prefetch examples for all groups at once to avoid O(N^2) lookup
         self.program.examples.prefetch_examples(self.groups, **kwargs)
 
-        for group in self.groups:
-            self.addgroupbutton(group)
-            waiting.waitprogress(100*self.groups.index(group)/len(self.groups))
-        """Children of self.runwindow.frame.scroll.content.anotherskip"""
-        if not self.remove_on_click:
-            self.getanotherskip(self.content.anotherskip,self.groupvars)
-        waiting.waitprogress(100)
-        waiting.waitdone()
+        def groupbutton_gen():
+            n=len(self.groups)
+            for i, group in enumerate(self.groups):
+                self.addgroupbutton(group)
+                yield i * 100 // max(n,1)
+        def after_buttons():
+            if not self.remove_on_click:
+                self.getanotherskip(self.content.anotherskip,self.groupvars)
+        waiting.drive_work(groupbutton_gen(), on_done=after_buttons)
 class _GroupButtonFrame(object):
     unbuttonargs=['renew','canary','labelizeonselect',
                         'label','playable','unsortable',

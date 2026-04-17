@@ -128,53 +128,43 @@ class Segments(Senses):
         cvt=kwargs.get('cvt',self.program.params.cvt())
         ps=kwargs.get('ps',self.program.slices.ps())
         profile=kwargs.get('profile',self.program.slices.profile())
-        # check=kwargs.get('check',self.program.params.check())
         groups=self.program.status.groups(wsorted=True,**kwargs)
         groups=self.program.status.groups(cvt=cvt)
-        #multiprocess from here?
         msg=_("Presorting ({check}={groups})").format(check=self.program.params.check(),groups=groups)
         log.info(msg)
         w=self.ui.getrunwindow(msg=msg)
         self.program.status.renewsensestosort([],[]) #will repopulate
-        # test this before implementing it:
-        # kwargs['formstosearch']=self.formsthisprofile(**kwargs)
-        """Find all relevant senseids, remove sorted ids for each group,
-        them mark the remaining senses NA, then offer them to user in
-        a modified verify page (new instructions, for those that DON'T
-        fit the test)"""
         self.buildregexnocheck()
-        # log.info(f"(presortgroups-buildregexnocheck) "
-        #         f"cvt: {cvt}, profile: {profile}, "
-        #         f"check: {check}; self.regex: {self.regex}")
         unsortedids=set(self.sensesbyforminregex(self.regex,ps=ps))
-        for group in [i for i in groups if not i.isdigit()]:
+        filteredgroups=[i for i in groups if not i.isdigit()]
+        ngroups=len(filteredgroups)
+        for gi, group in enumerate(filteredgroups):
             self.buildregex(group=group,cvt=cvt,profile=profile)
-            # log.info(f"(presortgroups-buildregex) group: {group}, cvt: {cvt}, "
-            #         f"profile: {profile}, "
-            #         f"check: {check}; self.regex: {self.regex}")
             s=set(self.sensesbyforminregex(self.regex,ps=ps))
-            if s: #senses just for this group
-                self.presort(list(s),group)
+            if s:
+                yield from self.presort(list(s),group,
+                    startat=gi*80//max(ngroups,1),
+                    endat=(gi+1)*80//max(ngroups,1))
                 unsortedids-=s
+            yield gi * 80 // max(ngroups,1)
         log.info(_("unsortedids ({count}): {ids}").format(
                                         count=len(unsortedids),
                                         ids=unsortedids
                                         ))
         if unsortedids:
-            self.presort(unsortedids,group='NA')
+            yield from self.presort(unsortedids,group='NA',startat=80,endat=95)
             self.program.status.group('NA')
             self.verify() #do this here, just this once.
         self.program.status.presorted(True)
         self.program.status.store() #after all the above
         self.maybewrite()
-        self.ui.runwindow.waitdone()
-    def presort(self,senses,group):
-        kwargs={#check:check,
-                #ftype: self.program.params.ftype(),
-                }
-        for sense in senses:
-            self.marksortgroup(sense, group,**kwargs)
-        # self.program.status.marksensesorted(sense) #now in marksortgroup
+        yield 100
+    def presort(self,senses,group,startat=0,endat=100):
+        """Generator: marks senses into group, yields progress from startat to endat."""
+        n=len(senses)
+        for i, sense in enumerate(senses):
+            self.marksortgroup(sense, group)
+            yield startat + (endat-startat) * i // max(n,1)
         self.updatestatus(group=group) # marks the group unverified.
     def check_with_conflicting_value(self,annodict,check):
         """This tests for data where two checks should have the same value
@@ -284,59 +274,54 @@ class Segments(Senses):
             yield i * 100 // n if n else 100
         self.maybewrite()
     def update_annotations_to_glyphs(self):
-        return [i for i in [self.update_annotations_by_glyph(k)
-                    for k in self.program.alphabet.glyph_members()] if i]
+        """Generator: updates annotations for all glyphs, yields 0-100 progress.
+        Errors collected in self.update_annotations_errors."""
+        glyphs=list(self.program.alphabet.glyph_members())
+        nglyphs=len(glyphs)
+        errors=[]
+        for gi, k in enumerate(glyphs):
+            gen=self.update_annotations_by_glyph(k)
+            for p in gen:
+                yield gi * 100 // max(nglyphs,1)
+            if self.update_annotations_error:
+                errors.append(self.update_annotations_error)
+        self.update_annotations_errors=errors
     def update_annotations_by_glyph(self,glyph):
-        """Once all sorting into groups and macrogroups is done, align groups to
-        macrogroups.
-        I need to think how to do this without risking merging groups:
-        Go through glyph_members, and for each item with glyph≠group, change.
-            if the new item exists already, rename it (int) first.
-            int() groups will be renamed in iteration, since glyph≠group
-        this may be more efficiently done with verification fields.
-        
-        This method does more than just annotations:
-        
-        LIFT verification,
-        form data
-
+        """Generator: aligns groups to macrogroups, yields 0-100 progress.
+        Returns error string (via self.update_annotations_error) if conflict detected.
         """
         def newform(x): #move this to alphabet
             return '_'.join(x.split('_')[:4]+[glyph])
-        # log.info("update_annotations_by_glyph: checking if it is safe to "
-        #         f"update items in '{glyph}'")
         gm=self.program.alphabet.glyph_members()
-        """If an annotation change would effectively join groups, e.g., Noun_CVCVC_lc_V1_ea
-        would become Noun_CVCVC_lc_V1_ee, which already exists, stop. 
-        """
         for item in gm[glyph]:
-            #groups must be sorted before then can belong to a glyph:
-            if item.split('_')[-1] in ['NA']: 
+            if item.split('_')[-1] in ['NA']:
                 continue
             if (item.split('_')[-1] != glyph and
                 newform(item) in [i for j in gm.values() for i in j]):
                 txt=_("Conflict: cannot rename '{item}' to '{glyph}'; "
                     "'{new}' already exists.").format(item=item, glyph=glyph, new=newform(item))
                 log.error(txt)
-                return txt
+                self.update_annotations_error=txt
+                return
+        self.update_annotations_error=None
         log.info(_("update_annotations_by_glyph safely: '{members}' to '{glyph}'").format(members=gm[glyph], glyph=glyph))
-        for item in list(gm[glyph]):
+        items=list(gm[glyph])
+        nitems=len(items)
+        for ii, item in enumerate(items):
             kwargs=self.program.alphabet.parse_verificationcode(item)
             senses=self.program.slices.inslice(
                             self.getsensesincheckgroup(**kwargs),
                             **kwargs)
-            # log.info(f"Found {len(senses)} senses for {item}: {[i.id for i in senses]}")
-            for sense in senses: #ps-profile only
+            for sense in senses:
                 self.marksortgroup(sense, glyph,
                                    **{k:v for k,v in kwargs.items()
                                       if k != 'group'},
                                    not_sorting=True,
                                    updateverification=True,
                                    updateforms=False)
-                                   #update all annotations first, then forms
             self.program.status.renamegroup(kwargs.pop('group'),glyph,**kwargs)
-            #above should rename throughout status
             self.program.alphabet.rename_glyph_member(item,newform(item))
+            yield ii * 100 // max(nitems,1)
         log.info(_("update_annotations_by_glyph done with '{members}' to '{glyph}'").format(members=gm[glyph], glyph=glyph))
     def default_glyphs(self):
         return [i for i in 
@@ -384,9 +369,12 @@ class Segments(Senses):
             self.rename_group_verification(x,y,**kwargs)
         #Do the above first, before glyph_members changes
         self.program.alphabet.rename_glyph(x,y)
-        self.update_annotations_by_glyph(y)
-        if updatestatus: #only update status if forms
-            self.program.settings.reloadstatusdata()
+        for _ in self.update_annotations_by_glyph(y):
+            pass  # consume generator synchronously
+        if updatestatus:
+            for _ in self.program.settings.reloadstatusdata():
+                pass
+            self.program.settings.reloadstatusdata_cleanup()
     def getsensesincheck(self):
         return [
                 i for i in self.program.db.senses
@@ -422,9 +410,12 @@ class WordCollection(Segments):
     taskicon = 'iconWord'
     do_not_show_slices=True
     no_leaderboard=True
+    def run_addCAWLentries(self):
+        text=_("Adding CAWL entries to fill out, in established database.")
+        self.ui.wait_and_drive_work(text, self.addCAWLentries())
     def dobuttonkwargs(self):
         if self.program.taskchooser.cawlmissing:
-            fn=self.addCAWLentries
+            fn=self.run_addCAWLentries
             text=_("Add remaining CAWL entries")
             tttext=_("This will add entries from the Comparative African "
                     "Wordlist (CAWL) which aren't already in your database "
@@ -588,14 +579,16 @@ class WordCollection(Segments):
             """The following are useless without ps information, so they will
             have to come later."""
     def addCAWLentries(self):
+        """Generator: adds CAWL entries, yields 0-100 progress."""
         # move this to templates!!
         text=_("Adding CAWL entries to fill out, in established database.")
-        self.ui.wait(msg=text)
         log.info(text)
         self.cawldb=loadCAWL()
         added=[]
         modded=[]
-        for n in self.program.taskchooser.cawlmissing:
+        missing=self.program.taskchooser.cawlmissing
+        ntotal=len(missing)
+        for ni, n in enumerate(missing):
             log.info(_("Working on SILCAWL line #{line:04}.").format(line=n))
             e=self.cawldb.get('entry', path=['cawlfield'],
                                     cawlvalue='{:04}'.format(n),
@@ -641,6 +634,7 @@ class WordCollection(Segments):
                         "copying over that entry.").format(line=n,gloss=g))
                 self.program.db.nodes.append(e)
                 added.append(n)
+            yield ni * 100 // max(ntotal,1)
         if added or modded:
             self.program.db.write()
             title=_("Entries Added!")
@@ -658,7 +652,6 @@ class WordCollection(Segments):
             text=_("We seem to have not added or modded any entries, which "
                     "shouldn't happen! (missing: {missing})"
                     "").format(missing=self.program.taskchooser.cawlmissing)
-        self.ui.waitdone()
         log.info(text)
         ErrorNotice(text,title=title)
     def nextword(self,nostore=False):
@@ -1570,22 +1563,15 @@ class Parse(Segments):
             except AttributeError:
                 return set(senses)
     def getparses(self,**kwargs):
+        """Generator: parses senses, yields 0-100 progress."""
         log.info("parses already tried: {}".format(self.parsecatalog.parsen()))
-        self.ui.wait(_("Parsing (ask: {ask} auto: {auto})").format(ask=self.parser.ask,
-                                                        auto=self.parser.auto
-                                                    ))
         senses=self.sensestoparse(**kwargs)
         todo=len(senses)
         for n,self.sense in enumerate(senses):
             self.parse() #this can add to lists
             if self.exited:
                 break
-            if self.ui.iswaiting():
-                self.waitprogress(100*n//todo)
-            # else:
-            #     break
-        self.ui.waitdone()
-        # log.info("total parses tried: {}".format(self.parsecatalog.parsen()))
+            yield n * 100 // max(todo,1)
         self.parsecatalog.report()
     def nextparserasklevel(self):
         auto=self.parser.auto
