@@ -1023,9 +1023,6 @@ class Waitable(Exitable):
             self.withdraw()
         self.ww=Wait(self,msg,cancellable=cancellable)
     def iswaiting(self):
-        root=self._root()
-        if hasattr(root,'ww') and root.ww.winfo_exists():
-            self.ww=root.ww
         return hasattr(self,'ww') and self.ww.winfo_exists()
     def waitpause(self):
         self.ww.withdraw()
@@ -1063,23 +1060,17 @@ class Waitable(Exitable):
         try:
             self.ww.close()
         except (tkinter.TclError,AttributeError) as e:
-            # pass
+            pass
         # except AttributeError:
-            log.info(f"{self} seems to have tried stopping waiting? {e}")
+            # log.info(f"{self} seems to have tried stopping waiting? {e}")
         finally:
             if not self.exitFlag.istrue():
                 if self.showafterwait:
-                    # log.info(f"Prepping show after wait {self.state()=}")
-                    # self.state('withdrawn')
-                    # log.info(f"Showing after wait {self.state()=}")
-                    r=self.update()
+                    self.update()
                     try:
-                        rr=self.deiconify()
+                        self.deiconify()
                     except:
                         pass
-                    # log.info(f"Showed after wait {self.state()=} {r=} {rr=}")
-                # else:
-                #     log.info(f"Not showing after wait {self.state()=}")
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.showafterwait=True #in case never waited, do this anyway
