@@ -1050,7 +1050,8 @@ class Waitable(Exitable):
                 self.waitprogress(progress)
             self.after(1, self.drive_work, generator, on_done)
         except StopIteration:
-            self.waitdone()
+            if self.iswaiting():
+                self.waitdone()
             if on_done:
                 on_done()
     def waitcancel(self):
@@ -1065,7 +1066,7 @@ class Waitable(Exitable):
             # log.info(f"{self} seems to have tried stopping waiting? {e}")
         finally:
             if not self.exitFlag.istrue():
-                if self.showafterwait:
+                if self.showafterwait and not self is self.theme.program.tk_root:
                     self.update()
                     try:
                         self.deiconify()
