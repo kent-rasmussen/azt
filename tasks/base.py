@@ -69,6 +69,7 @@ class TaskBase:
 
     def on_quit(self, **kwargs):
         """Delegate to the window's on_quit (ui.Window)."""
+        self.ui.waitdone()
         self.ui.on_quit(**kwargs)
 
     def makecvtok(self):
@@ -100,7 +101,8 @@ class TaskBase:
 
 class Task(TaskBase):
     """Task with a separate TaskWindow. Creates the window on init."""
-    def __init__(self, program):
+    ui_kwargs={"withdrawn"}
+    def __init__(self, program, **kwargs):
         self.program = program
         if hasattr(self,'cvt'):
             self.program.params.cvt(self.cvt)
@@ -113,6 +115,7 @@ class Task(TaskBase):
         self.min_to_multicolumn=6
         self.makeeverythingok()
         from frontend.task_window import TaskWindow
-        self.ui = TaskWindow(self, parent)
-        log.info(f"Done initializing {self.__class__.__name__}."
+        ui_kwargs={k:v for k,v in kwargs.items() if k in self.ui_kwargs}
+        self.ui = TaskWindow(self, parent, **ui_kwargs)
+        log.info(f"Done initializing {self.__class__.__name__} "
                  f"(base: {self.program.task_base()})")

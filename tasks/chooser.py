@@ -54,7 +54,7 @@ class TaskChooser(Task):
     def choosereports(self):
         self.status.bigbutton.destroy()
         self.showreports=True
-        self.ui.setmainwindow(self.ui)
+        self.i_am_mainwindow()
         self.gettask()
     def guidtriage(self): #obsolete
         # import time
@@ -117,8 +117,8 @@ class TaskChooser(Task):
         if self.showingreports:
             self.showingreports=False
         self.maketitle() #b/c this changes
-        if hasattr(self,'task') and self.task.winfo_exists():
-            self.task.on_quit() #destroy and set flag
+        if self.program.task and self.task.ui.winfo_exists():
+            self.program.task.ui.on_quit() #destroy and set flag
         if hasattr(self,'optionsframe'):
             self.optionsframe.destroy()
         self._taskchooserbutton()
@@ -154,7 +154,7 @@ class TaskChooser(Task):
                 log.info(_("Task {task} doesn't seem to have a tooltip.").format(task=o[0]))
         for c in range(bpr):
             self.optionsframe.grid_columnconfigure(c, weight=1, uniform=c)
-        self.ui.setmainwindow()
+        self.i_am_mainwindow()
         if self.showreports:
             self.showreports=False #just do this once each button click
             self.showingreports=True
@@ -178,47 +178,22 @@ class TaskChooser(Task):
             else:
                 self.maketask(self.program.default_task)
                 #optionlist[-1][0]) #last item, the code
-    def finish_task(self):
+    def finish_task_ui(self):
         # self.unsetmainwindow() # not redundant; fires without gettask
         try:
-            if self.program.task.waiting():
-                self.program.task.waitdone()
-            self.program.task.on_quit() #destroy and set flag
+            self.program.task.ui.on_quit() #destroy and set flag
             self.program.task=None #don't look for this again
-        except AttributeError:
-            log.info(_("No task, apparently; not destroying."))
+        except AttributeError as e:
+            log.info(_("No task, apparently; not destroying {e}.").format(e=e))
     def maketask(self,taskclass,**kwargs): #,filename=None
         if type(taskclass) is str:
             import tasks.tasks
             taskclass=getattr(tasks.tasks, taskclass)
         taskclass(program=self.program,**kwargs) #filename
-        # self.setmainwindow(self.task)
-        # self.program.status.task(self.task)
-        # if not self.task.exitFlag.istrue():# and not isinstance(self.task,Parse):
-        #     self.task.deiconify()
     def i_am_mainwindow(self):
-        log.info("i_am_mainwindow: {self.mainwindow=} {self.program.mainwindow=}")
-        if not self.mainwindow:
-            self.ui.setmainwindow()
-            self.finish_task()
-    # def unsetmainwindow(self):
-    #     """self.mainwindowis tracks who the mainwindow is for the chooser,
-    #     x.mainwindow tracks if the object is the mainwindow, so it will
-    #     exit the program on closure appropriately. This fn keeps them
-    #     synchronized."""
-    #     if hasattr(self.program,'task'):
-    #         self.finish_task()
-    #     if hasattr(self.program,'mainwindow'):
-    #         try:
-    #             # we want to keep only one window thinking it ismainwindow at a time:
-    #             self.program.mainwindow.ismainwindow=False #OK if self.mainwindow isn't boolean
-    #             self.program.mainwindow.withdraw() #only works if winfo_exists()
-    #         except AttributeError:
-    #             pass
-    #         finally:
-    #             self.program.mainwindow=None #this could cause a crash...
-    #     else:
-    #         log.info(_("No mainwindow found."))
+        if not self.ui.mainwindow:
+            self.ui.i_am_mainwindow()
+            self.finish_task_ui()
     def makeoptions(self):
         """This function (and probably a few dependent functions, maybe
         another class) provides a list of functions with prerequisites
@@ -533,7 +508,7 @@ class TaskChooser(Task):
     def changedatabase(self):
         log.debug("Preparing to change database name.")
         try:
-            self.task.withdraw() #so users don't do stuff while waiting
+            self.program.task.withdraw() #so users don't do stuff while waiting
         except (AttributeError, Exception):
             log.info(_("There doesn't seem to be a task to hide; moving on."))
         curname = self.program.filename
@@ -593,8 +568,8 @@ class TaskChooser(Task):
         self.whatsdone()
         self.program.splash.progress(80)
         log.info(_("Settings: {settings}").format(settings=self.program.settings))
-        super().__init__(self.program)
-        self.ui.setmainwindow()
+        super().__init__(self.program, withdrawn=True) #don't show first on boot
+        # self.ui.i_am_mainwindow()
         # TaskDressing.__init__(self,parent) #I think this should be after settings
         self.program.profiles.run()
         # self.withdraw()
