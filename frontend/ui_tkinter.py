@@ -1036,7 +1036,7 @@ class Waitable(Exitable):
     def waitprogress(self,x):
         # log.info(f"updating wait to {x}")
         try:
-            self.ww.progress(x,r=4)
+            self.ww.progress(x,r=4,c=1)
         except Exception as e:
             log.info(f"Couldn't change wait progress ({e})")
     def wait_and_drive_work(self, msg, generator, on_done=None):

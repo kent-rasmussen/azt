@@ -1540,18 +1540,17 @@ class TaskDressing(HasMenus,ui.Window):
         if self.program.mainwindow is self:
             self.program.mainwindow=None #don't leave reference lying around
         super().on_quit(**kwargs)    
-    def setmainwindow(self):
+    def i_am_mainwindow(self):
         # make an object reference, and a quick boolean:
         # no problem if self.program.mainwindow doesn't exist yet
         try:
+            assert self is not self.program.mainwindow
             self.program.mainwindow.ismainwindow=False #keep only one of these
             self.program.mainwindow.withdraw() #until destroyed
-        except AttributeError:
+        except Exception:
             pass
         self.program.mainwindow=self
         self.program.mainwindow.ismainwindow=True 
-        # if not self.is_chooser:
-        #     self.i_am_the_task()
     def makestatusframe(self,dict=None):
         if self.program.taskchooser.donew['collectionlc']:
             self.makeeverythingok()
@@ -2024,7 +2023,7 @@ class TaskDressing(HasMenus,ui.Window):
             # log.info(f"Will update by {id=} in 1s {type(id)=}")
         else:
             log.info(_("Finished with all threads running"))
-    def __init__(self,parent):
+    def __init__(self, parent, **kwargs):
         log.info(_("Initializing TaskDressing for {task}").format(
                             task=self.task.__class__.__name__))
         self.parent=parent
@@ -2059,8 +2058,8 @@ class TaskDressing(HasMenus,ui.Window):
             if not hasattr(self,k):
                     setattr(self,k,False)
         # Make the actual window
-        ui.Window.__init__(self,parent,withdrawn=True)
-        self.setmainwindow()
+        ui.Window.__init__(self,parent,withdrawn=True) #always, until ready
+        self.i_am_mainwindow()
         self.maketitle()
         ui.ContextMenu(self)
         self.tableiteration=0
@@ -2070,7 +2069,8 @@ class TaskDressing(HasMenus,ui.Window):
         self._removemenus() #self.correlatemenus()
         self.takekioskscreen()
         self.thread_names=list()
-        if not self.exitFlag.istrue():
+        #This withdrawn flag is only for the TaskChooser on startup
+        if not self.exitFlag.istrue() and not kwargs.get('withdrawn'):
             self.deiconify()
 from frontend.sort_buttons import (SortButtonFrame, _GroupButtonFrame,
     SortGroupButtonFrame, SortGlyphGroupButtonFrame)
