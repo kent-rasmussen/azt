@@ -127,14 +127,14 @@ class HasMenus():
         log.info("reverttomainazt: {}".format(r))
         self.updateazt()
         if r:
-            self.program.taskchooser.restart()
+            self.program.restart()
     def trytestazt(self,event=None):
         #This only goes to the test version at the top of this file
         r=self.program.source_repo.testversion()
         log.info("trytestazt: {}".format(r))
         self.updateazt()
         if r:
-            self.program.taskchooser.restart()
+            self.program.restart()
     def _removemenus(self,event=None):
         # log.info(_("Hiding menus? (vars={vars}, self:{self}, event={event})")
         #             .format(vars=vars(self), self=self, event=event))
@@ -3260,7 +3260,7 @@ class Settings(object):
                 if r:
                     self.program.task.runwindow.on_quit()
                     self.program.settings.storesettingsfile(setting='profiledata')
-                    self.program.taskchooser.restart()
+                    self.program.restart()
                 else:
                     undo(changed)
             else:

@@ -66,7 +66,7 @@ class SettingsUI(object):
                     for pg in vars[lang][pc]:
                         self.program.profiles.polygraphs[lang][pc][pg]=vars[lang][pc][pg].get()
             self.storesettingsfile(setting='profiledata')
-            self.program.taskchooser.restart()
+            self.program.restart()
         def foundchanges():
             for lang in vars:
                 if lang not in self.program.profiles.polygraphs:
@@ -305,7 +305,7 @@ class SettingsUI(object):
         self.attrschanged.append('analang')
         self.refreshattributechanges()
         window.destroy()
-        self.program.taskchooser.restart()
+        self.program.restart()
     def setgroup(self,choice,window):
         log.debug(_("setting group: {group}").format(group=choice))
         self.program.status.group(choice)
