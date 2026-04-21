@@ -930,12 +930,7 @@ class Sort(object):
             img_mod=''
             instructions+=' '+_("(by {context})").format(context=context)
         log.info("Going to sort these items: {items}".format(items=self.first_sort))
-        try:
-            assert groups
-            log.info("Into these groups: {groups}".format(groups=groups))
-        except:
-            log.info("No groups to sort into! (this is bad)")
-            return 1
+        log.info("Into these groups: {groups}".format(groups=groups))
         if not self.first_sort or self.ui.exitFlag.istrue():
             return 1
         log.info(f"Getting Runwindow")
