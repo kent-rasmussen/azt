@@ -839,7 +839,9 @@ class Sort(object):
         newgroup=max(values)+1
         groups.append(str(newgroup))
         if not macrosort: #for macrosort, marksortgroup does this
+            log.info(f"add_int_group status.groups: {self.program.status.groups(wsorted=True)}")
             self.program.status.groups(groups,wsorted=True)
+            log.info(f"add_int_group status.groups: {self.program.status.groups(wsorted=True)}")
             self.program.status.store()
         log.info("Groups (appended): {groups}".format(groups=groups))
         return str(newgroup)
@@ -1097,7 +1099,9 @@ class Sort(object):
             if group in groups:
                 groups.remove(group)
             # log.info("Group-groups: {group}-{groups}".format(group=group,groups=groups))
+            log.info(f"verify status.groups: {self.program.status.groups(wsorted=True)}")
             self.program.status.groups(groups,wsorted=True)
+            log.info(f"verify status.groups: {self.program.status.groups(wsorted=True)}")
             log.info("All groups: {groups}".format(groups=self.groups(wsorted=True)))
             log.info("Groups to verify: {groups}"
                         "".format(groups=self.groups(toverify=True)))

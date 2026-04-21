@@ -961,7 +961,9 @@ class Settings(SettingsUI):
         """update 'tosort' status"""
         """update status groups"""
         sorted=set(self._groups)
+        log.info(f"sorted: {sorted}")
         self.program.status.groups(list(sorted),**kwargs)
+        log.info(f"status.groups: {self.program.status.groups(**kwargs)}")
         if store:
             # _log.info(f"updatesortingstatus storing {kwargs=} {self.program.status=}")
             self.storesettingsfile(setting='status')
