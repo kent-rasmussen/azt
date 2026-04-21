@@ -1,5 +1,4 @@
-
-from .manager import ConfigParser, write_ini, read_ini
+from .manager import read_ini
 from .project import ProjectConfig
 from .ui import UIConfig
 from .audio import AudioConfig
@@ -476,11 +475,8 @@ class Settings(SettingsUI):
                     domain_mgr.save(current_data)
                     _log.info(_("Stored {setting} settings in new {domain} domain").format(setting=setting, domain=domain_name))
 
-        # Legacy storage for backup/compatibility
-        filename=self.settingsfile(setting)
-        if not filename:
-             return
-        write_ini(filename, d)
+        # Legacy .ini/.dat files are no longer written.
+        # Migration to JSON domain files is complete.
     def loadsettingsfile(self,setting='defaults'):
         # Check domain-specific manager first
         if setting in self.domain_mapping:
