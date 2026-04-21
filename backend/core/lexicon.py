@@ -373,10 +373,10 @@ class Segments(Senses):
             self.rename_group_verification(x,y,**kwargs)
         #Do the above first, before glyph_members changes
         self.program.alphabet.rename_glyph(x,y)
-        for _ in self.update_annotations_by_glyph(y):
+        for i in self.update_annotations_by_glyph(y):
             pass  # consume generator synchronously
         if updatestatus:
-            for _ in self.program.settings.reloadstatusdata():
+            for i in self.program.settings.reloadstatusdata():
                 pass
             self.program.settings.reloadstatusdata_cleanup()
     def getsensesincheck(self):
