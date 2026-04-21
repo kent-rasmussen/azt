@@ -1394,6 +1394,83 @@ class TaskDressing(HasMenus,ui.Window):
                                     cmd=self.program.taskchooser.gettask,
                                     row=0,column=2,
                                     sticky='ne')
+    def _build_chooser_tabs(self,makeoptions_fn,maketask_fn):
+        """Build the three-tab notebook for task selection."""
+        self._makeoptions_fn=makeoptions_fn
+        self._maketask_fn=maketask_fn
+        self.notebook=ui.Notebook(self.frame,column=1,row=1,pady=(25,0))
+        self.tab_datacollection=ui.Frame(self.notebook)
+        self.tab_analysis=ui.Frame(self.notebook)
+        self.tab_reports=ui.Frame(self.notebook)
+        self.notebook.add(self.tab_datacollection,text=_("Data Collection"))
+        self.notebook.add(self.tab_analysis,text=_("Analysis & Decisions"))
+        self.notebook.add(self.tab_reports,text=_("Reports"))
+        self.notebook.bind('<<NotebookTabChanged>>',self._on_chooser_tab_changed)
+        self._populate_chooser_tabs()
+    def _populate_chooser_tabs(self):
+        """Repopulate all three tab frames with current task buttons."""
+        for frame,category in [
+            (self.tab_datacollection,'datacollection'),
+            (self.tab_analysis,'analysis'),
+            (self.tab_reports,'reports'),
+        ]:
+            self._populate_chooser_tab(frame,category)
+    def _populate_chooser_tab(self,frame,category):
+        for child in frame.winfo_children():
+            child.destroy()
+        tasktuples=self._makeoptions_fn(category)
+        bpr=3
+        optionlist_maxi=len(tasktuples)-1
+        if optionlist_maxi == 3:
+            bpr=2
+        elif optionlist_maxi > 9:
+            bpr=3
+        columnspan=1
+        for n,o in enumerate(tasktuples):
+            if n is optionlist_maxi and int(n/bpr):
+                columnspan=bpr-n%bpr
+            b=ui.Button(frame,
+                        text=o[1],
+                        command=lambda t=o[0]:self._maketask_fn(t),
+                        column=n%bpr,
+                        row=int(n/bpr),
+                        compound='top',
+                        image=o[2],
+                        wraplength=int(self.program.tk_root.wraplength*.02125/bpr),
+                        anchor='n',
+                        sticky='nesw',
+                        columnspan=columnspan
+                        )
+            try:
+                ui.ToolTip(b, o[0].tooltip(None))
+            except AttributeError:
+                log.info(_("Task {task} doesn\u2019t seem to have a tooltip.").format(task=o[0]))
+        for c in range(bpr):
+            frame.grid_columnconfigure(c, weight=1, uniform=c)
+    def _select_chooser_tab(self,tab_name):
+        tab_map={
+            'datacollection':self.tab_datacollection,
+            'analysis':self.tab_analysis,
+            'reports':self.tab_reports,
+        }
+        if tab_name in tab_map:
+            self.notebook.select(tab_map[tab_name])
+    def _on_chooser_tab_changed(self,event=None):
+        tab=self.notebook.select()
+        task=self.task
+        if tab == str(self.tab_datacollection):
+            task.datacollection=True
+            task.showreports=False
+            task.showingreports=False
+        elif tab == str(self.tab_analysis):
+            task.datacollection=False
+            task.showreports=False
+            task.showingreports=False
+        elif tab == str(self.tab_reports):
+            task.datacollection=False
+            task.showreports=False
+            task.showingreports=True
+        self.maketitle()
     def shutdowntask(self):
         self.program.task=self # in case this hasn't been set yet
         self.withdraw()

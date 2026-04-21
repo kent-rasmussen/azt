@@ -25,7 +25,8 @@ class TaskBase:
     glyph_leaderboard=False
     cvt_sensitive=False
     show_second_fields=False
-    
+    show_buttoncolumnsline=False
+
     def __getattr__(self, name):
         """Delegate unknown attributes to self.ui (the TaskWindow).
 

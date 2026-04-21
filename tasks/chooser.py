@@ -104,89 +104,22 @@ class TaskChooser(Task):
         self.maketitle()
         if self.program.task and self.task.ui.winfo_exists():
             self.program.task.ui.on_quit()
-        if not hasattr(self,'notebook'):
-            self._build_tabs()
+        self.whatsdone()
+        if not hasattr(self.ui,'notebook'):
+            self.ui._build_chooser_tabs(self.makeoptions_for,self.maketask)
         else:
-            self._refresh_tabs()
+            self.ui._populate_chooser_tabs()
         # Select the right tab based on how we got here
         if self.showreports:
-            self.notebook.select(self.tab_reports)
+            self.ui._select_chooser_tab('reports')
             self.showreports=False
             self.showingreports=True
         elif self.showingreports:
             self.showingreports=False
         else:
-            # Default: show data collection tab
-            self.notebook.select(self.tab_datacollection)
+            self.ui._select_chooser_tab('datacollection')
         self.i_am_mainwindow()
         self.ui.deiconify()
-    def _build_tabs(self):
-        self.whatsdone()
-        self.notebook=ui.Notebook(self.frame,column=1,row=1,pady=(25,0))
-        self.tab_datacollection=ui.Frame(self.notebook)
-        self.tab_analysis=ui.Frame(self.notebook)
-        self.tab_reports=ui.Frame(self.notebook)
-        self.notebook.add(self.tab_datacollection,text=_("Data Collection"))
-        self.notebook.add(self.tab_analysis,text=_("Analysis & Decisions"))
-        self.notebook.add(self.tab_reports,text=_("Reports"))
-        self.notebook.bind('<<NotebookTabChanged>>',self._on_tab_changed)
-        self._populate_tabs()
-    def _populate_tabs(self):
-        for frame,category in [
-            (self.tab_datacollection,'datacollection'),
-            (self.tab_analysis,'analysis'),
-            (self.tab_reports,'reports'),
-        ]:
-            self._populate_tab(frame,category)
-    def _populate_tab(self,frame,category):
-        for child in frame.winfo_children():
-            child.destroy()
-        tasktuples=self.makeoptions_for(category)
-        bpr=3
-        optionlist_maxi=len(tasktuples)-1
-        if optionlist_maxi == 3:
-            bpr=2
-        elif optionlist_maxi > 9:
-            bpr=3
-        columnspan=1
-        for n,o in enumerate(tasktuples):
-            if n is optionlist_maxi and int(n/bpr):
-                columnspan=bpr-n%bpr
-            b=ui.Button(frame,
-                        text=o[1],
-                        command=lambda t=o[0]:self.maketask(t),
-                        column=n%bpr,
-                        row=int(n/bpr),
-                        compound='top',
-                        image=o[2],
-                        wraplength=int(self.program.tk_root.wraplength*.02125/bpr),
-                        anchor='n',
-                        sticky='nesw',
-                        columnspan=columnspan
-                        )
-            try:
-                ui.ToolTip(b, o[0].tooltip(None))
-            except AttributeError:
-                log.info(_("Task {task} doesn\u2019t seem to have a tooltip.").format(task=o[0]))
-        for c in range(bpr):
-            frame.grid_columnconfigure(c, weight=1, uniform=c)
-    def _refresh_tabs(self):
-        self.whatsdone()
-        self._populate_tabs()
-    def _on_tab_changed(self,event=None):
-        tab=self.notebook.select()
-        if tab == str(self.tab_datacollection):
-            self.datacollection=True
-            self.showreports=False
-            self.showingreports=False
-        elif tab == str(self.tab_analysis):
-            self.datacollection=False
-            self.showreports=False
-            self.showingreports=False
-        elif tab == str(self.tab_reports):
-            self.datacollection=False
-            self.showreports=False
-            self.showingreports=True
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
         satisfied task"""
