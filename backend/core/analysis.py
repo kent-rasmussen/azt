@@ -1327,7 +1327,7 @@ class StatusDict(dict):
         if j in sn['groups']:
             # sn['groups'][sn['groups'].index(j)]=k
             sn['groups'].remove(j)
-            sn['groups'].add(k)
+            sn['groups'].append(k)
         if j in sn['recorded']:
             sn['recorded'][sn['recorded'].index(j)]=k
         if 'distinguished' in sn:
