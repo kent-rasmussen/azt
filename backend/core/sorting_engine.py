@@ -23,22 +23,15 @@ from utilities.error_handler import notify_error as ErrorNotice
 
 from utilities.i18n import _
 from backend.core.lexicon import Tone
-class Sort(object):
+from backend.core.categories import Categories
+class Sort(Categories):
     """This class takes methods common to all sort checks, and gives sort
     checks a common identity."""
+    show_buttoncolumnsline=True #does this belong here?
     @property
     def sort_ui(self):
         """Lazy-init presenter; available after task init wires program.sort_ui."""
         return self.program.sort_ui
-    show_buttoncolumnsline=True #does this belong here?
-    def get_check(self):
-        return self.program.params.check()
-    def get_ps(self):
-        return self.program.slices.ps()
-    def get_profile(self):
-        return self.program.slices.profile()
-    def get_ftype(self):
-        return self.program.params.ftype()
     def get_frame(self):
         if self.cvt != 'T': # not for segmental checks
             return 
@@ -49,50 +42,6 @@ class Sort(object):
             text=_("Looking for tone check '{check}', but not "
                     "in {ps} frames: {frames}").format(check=self.check, ps=self.ps, frames=frames)
             ErrorNotice(text,wait=True)
-    def getsensesincheckgroup(self,**kwargs):
-        check=kwargs.get('check',self.program.params.check())
-        group=kwargs.get('group',self.program.status.group())
-        return self.getsensesingroup(check, group)
-    def rmverification(self,sense,profile,check):
-        self.modverification(sense,profile,check)
-    def modverification(self,sense,profile,check,add=None):
-        """
-        'add' here should be a single compiled 'check=group' code
-        These fns all take value kwarg, with a default lang generated there
-        This and other methods should be making this:
-        field type="CVCVC lc verification">
-                <form lang="{xyz}-x-py">
-                    <text>['V1=ə', …
-        # This could all be moved to operate on sense.fields[key]...
-        # Would require pushing down protections for string values, and probably
-        # making a class for verification nodes
-        """
-        added=None
-        assert not add or check in add
-        # add=Nonelog.info("Modifying verification node {} (to add {})".format(
-        #                                                             key,add))
-        # if key in sense.fields:
-        #     lift.prettyprint(sense.fields[key])
-        values=sense.verificationtextvalue(profile,self.ftype) #always returns list
-        # log.info(f"Found verificationtextvalue values {values}")
-        if add and not values:
-            # log.info("No values found; just adding {}".format(add))
-            v=sense.verificationtextvalue(profile,self.ftype,value=[add])
-            return #if more complex, continue
-        for code in [i for i in values if check in '='.join(i.split('=')[:-1])]:
-            #look for a code for the *whole* current check, replace or remove.
-            if add:
-                if add != code:
-                    log.info(f"Switching {add} for {code} in {profile} {sense.id}")
-                    values[values.index(code)]=add
-                    added=add
-                add=None #only once, not also below
-            else:
-                values.remove(code) #covered in the above
-        if add: #i.e., still, after switching out current values for changes
-            values.append(add)
-            added=add
-        v=sense.verificationtextvalue(profile,self.ftype,value=values)
     def updatestatuslift(self,verified=False,**kwargs):
         """This should be called only by update status, when there is an actual
         change in status to write to file."""
@@ -240,37 +189,6 @@ class Sort(object):
         scroll.grid(row=3,column=0,sticky='ew')
         self.ui.runwindow.waitdone()
         self.ui.runwindow.wait_window(scroll)
-    def removeitemfromgroup(self,item,**kwargs):
-        #leave these in kwargs for use below:
-        check=kwargs.get('check',self.program.params.check())
-        group=kwargs.get('group',self.program.status.group())
-        write=kwargs.pop('write',True) #avoid duplicate
-        sorting=kwargs.get('sorting',True) #Default to verify button
-        log.info(_("Removing sense {id} from subcheck {group}").format(id=item.id,group=group))
-        #This should only *mod* if already there
-        self.setitemgroup(item,check,'',**kwargs)
-        tgroups=self.getitemgroup(item,check)
-        log.info("Checking that removal worked")
-        if tgroups in [[],'',[''],None]:
-            log.info("Field removal succeeded! LIFT says '{}', = []."
-                                                            "".format(tgroups))
-        elif len(tgroups) == 1:
-            tgroup=tgroups[0]
-            log.error("Field removal failed! LIFT says '{}', != []."
-                                                            "".format(tgroup))
-        elif len(tgroups) > 1:
-            log.error("Found {} tone values: {}; Fix this!"
-                                            "".format(len(tgroups),tgroups))
-            return
-        rm=self.verificationcode(check=check,group=group)
-        profile=kwargs.get('profile',self.program.slices.profile())
-        item.rmverificationvalue(profile,self.ftype,rm)
-        self.program.status.last('sort',update=True)
-        self.program.examples.clear_cache(**kwargs) #anything should still be in kwargs
-        if write:
-            self.maybewrite()
-        if sorting:
-            self.program.status.marksensetosort(item)
     def ncheck(self):
         r=self.program.status.nextcheck(tosort=True)
         if r:
@@ -334,96 +252,6 @@ class Sort(object):
         except:
             w=self.program.tk_root
         w.drive_work(gen, on_done=after_presort)
-    def confirmverificationgroup(self,sense,profile,check):
-        """This does the one field storing a list of verified values
-        for all checks"""
-        """This results in NO group change where a group hasn't been confirmed!
-        """
-        log.info(_("Confirming that current group and verification code match "
-                    "before making changes."))
-        annogroup=self.getitemgroup(sense,check) #Segment or Tone
-        vals=sense.verificationtextvalue(profile,self.ftype)
-        curvalues=[i.split('=')[-1]  #last (value), if multiple
-                    for i in sense.verificationtextvalue(profile,ftype)
-                    if check in i]
-        # Length is relevant here because V1 must match V1=V2, if present
-        nvals=len(set(curvalues))
-        if nvals == 1:
-            curvalue=curvalues[0]
-        elif nvals >1:
-            log.error("Too many values for verification node; fix this!"
-                        " ({}; {}; {})".format(curvalues,vals,sense.id))
-            curvalue=None
-        elif nvals == 0:
-            log.error("No values for verification node! ({})"
-                        "".format(vals))
-            curvalue=None
-        if curvalue == annogroup: #only update if starting w/ same value
-            # log.info(f"Confirmed curent verification group '{curvalue}' "
-            #         f"matches annotation group '{curvalue}'")
-            return True
-        elif not curvalue:
-            log.error("Problem updating verification to {}; current "
-                        "value not there (should be {})"
-                        "".format(group, annogroup))
-        else: #not sure what to do here; maybe  throw bigger error?
-            log.error("Problem updating verification to {}; current "
-                        "value ({}) is there, but not the same as "
-                        "current sort group ({})."
-                        "".format(group, curvalue, annogroup))
-    def marksortgroup(self,sense,group,**kwargs):
-        # group=kwargs.get('group',self.program.status.group())
-        check=kwargs.get('check',self.program.params.check())
-        profile=kwargs.get('profile',self.program.slices.profile())
-        # ftype=kwargs.get('ftype',self.program.params.ftype())
-        nocheck=kwargs.get('nocheck',False)
-        guid=None
-        # log.info(f"marksortgroup ready to updateverification {kwargs.get('thread_name')}")
-        if kwargs.get('updateverification'):
-            add=self.verificationcode(check=check,group=group)
-            # Checking and verifying that the current group and verification
-            # values match may be excessive, as well as undesirable, without
-            # any other way to fix discrepancies:
-            noconfirmation=True #Should test w/wo this; time difference?
-            # confirmverificationgroup checks if current annotation matches
-            # current verification. So this needs to happen first:
-            if noconfirmation or self.confirmverificationgroup(sense, profile,
-                                                                check):
-                self.modverification(sense,profile,check,add)
-        else: #unless specifically doing otherwise, marking should unverify:
-            self.rmverification(sense,profile,check)
-        # log.info(f"marksortgroup ready to set {kwargs.get('thread_name')}")
-        self.setitemgroup(sense,check,group)
-        # log.info(f"marksortgroup ready to check set worked {kwargs.get('thread_name')}")
-        if not nocheck:
-            newgroup=self.getitemgroup(sense,check)
-            if newgroup != group:
-                log.error("Field addition failed! LIFT says {new}, not {old}.".format(
-                                                    new=newgroup,old=group))
-            # else:
-            #     log.info("Field addition succeeded! LIFT says {}, which is {}."
-            #                             "".format(newgroup,group))
-        # log.info(f"marksortgroup ready to updateforms {kwargs.get('thread_name')}")
-        if kwargs.get('updateforms'):
-            if self.ftype != self.program.params.ftype():
-                ErrorNotice(_("{ftype} differs from {pftype}; this is a problem!").format(
-                            ftype=ftype, pftype=self.program.params.ftype()),
-                            wait=True)
-            self.updateformtoannotations(sense,check)
-        # log.info(f"marksortgroup ready to marksorted {kwargs.get('thread_name')}")
-        if not kwargs.get('not_sorting'): #default is sorting
-            #This unverifies without updateverification=True:
-            self.marksorted(sense,group,kwargs.get('updateverification'))
-        # log.info(f"marksortgroup ready to write {kwargs.get('thread_name')}")
-        if kwargs.get('write'):
-            self.maybewrite() #Not iterated over.
-        # if kwargs.get('thread_name'):
-        #     log.info(f"Finishing marksortgroup for {kwargs.get('thread_name')}")
-        # log.info(f"marksortgroup ready to untrack {kwargs.get('thread_name')}")
-        if kwargs.get('thread_name'):
-            self.untrack_thread(kwargs.get('thread_name'))
-        if not nocheck:
-            return newgroup
     def marksorted(self,sense,group,verified=False):
         """These functions are only appropriate when sorting or unsorting senses.
         when moving stuff around between groups (in renaming groups), these don't 
@@ -829,22 +657,6 @@ class Sort(object):
             if r in self.ui.frame.theme.photo: # Remove once all supported
                 return r
         return self.cvt #fail safe for the time being
-    def add_int_group(self,macrosort=False):
-        log.info("Adding a new group!")
-        if macrosort:
-            groups=self.program.alphabet.glyphs()
-        else:
-            groups=self.program.status.groups(wsorted=True)
-        values=[int(i) for i in groups if i.isdigit()]+[0] #in case none
-        newgroup=max(values)+1
-        groups.append(str(newgroup))
-        if not macrosort: #for macrosort, marksortgroup does this
-            log.info(f"add_int_group status.groups: {self.program.status.groups(wsorted=True)}")
-            self.program.status.groups(groups,wsorted=True)
-            log.info(f"add_int_group status.groups: {self.program.status.groups(wsorted=True)}")
-            self.program.status.store()
-        log.info("Groups (appended): {groups}".format(groups=groups))
-        return str(newgroup)
     def sortselected(self, item, macrosort=False):
         selected=self.buttonframe.get_selected()
         log.info("selected groups: {groups}".format(groups=selected))
@@ -1314,50 +1126,6 @@ class Sort(object):
         for item in senses:
             self.removeitemfromgroup(item)
         self.runcheck()
-    def rename_group(self,x,y,updatestatus=True):
-        for _ in self.updatebygroupsense(x,y,
-                                updatestatus=updatestatus,
-                                updateforms=True):
-            pass  # consume generator synchronously
-        if updatestatus:
-            self.program.settings.reloadstatusdata_cleanup()
-        self.rename_group_verification(x,y)
-    def rename_group_verification(self,x,y,**kwargs):
-        v=self.program.status.verified(**kwargs)
-        if x in v:
-            log.info("Found verified value to change: {old}>{new}".format(old=x, new=y))
-            v.remove(x)
-            v.append(y)
-            self.program.status.verified(g=v,**kwargs)
-    def updatebygroupsense(self,x,y,updateforms=False,updatestatus=True):
-        """Generator: moves all senses from group x to group y.
-        Yields 0-100 progress. Post-work (reloadstatusdata, distinguish
-        updates, maybewrite) is handled after generator exhaustion.
-        """
-        check=self.program.params.check()
-        lst2=self.getsensesingroup(check,x) #by annotations, for C/V
-        profile=self.program.slices.profile()
-        senses=self.program.slices.inslice(lst2)
-        ftype=self.program.params.ftype()
-        if not senses:
-            log.info("No senses for {check}={value}".format(check=check,value=x))
-            return
-        kwargs={'not_sorting':True,
-                'updateverification':True,
-                'updateforms':updateforms
-                }
-        n=len(senses)
-        for i, sense in enumerate(senses):
-            self.marksortgroup(sense, y, **kwargs)
-            yield i * 50 // n  # 0-50 for marksortgroup phase
-        if updatestatus:
-            yield from self.program.settings.reloadstatusdata() # 0-100 mapped to ~50 already
-        for t in list(self.program.status.distinguished()):
-            if x in t:
-                self.program.status.undistinguish(t)
-                self.program.status.distinguish((y if t[0]==x else t[0],y if t[1]==x else t[1]))
-        self.maybewrite()
-        log.info("updatebygroupsense finished converting {x} to {y}".format(x=x,y=y))
     def __init__(self, **kwargs):
         super().__init__(**kwargs) #is this needed?
 

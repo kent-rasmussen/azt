@@ -6,6 +6,7 @@ from backend.reporting.generator import Report
 from backend.core.lexicon import WordCollection, Parse, Tone, Segments, Vowels, Consonants
 from tasks.sound import Sound, Record
 import backend.core.sorting_engine #import Sort
+from backend.core.categories import Categories
 from utilities.utilities import *
 from utilities import file, logsetup, rx
 from io_put import export
@@ -1121,8 +1122,7 @@ class SortT(Sort,Tone,Task):
     def __init__(self, **kwargs): #frame, filename=None
         super().__init__(**kwargs)
     """Doing stuff"""
-class Transcribe(Sound,Sort,Task):
-    show_buttoncolumnsline=False
+class Transcribe(Sound,Categories,Task):
     cvt_sensitive=True
     def updateerror(self):
         newvalue=self.transcriber.formfield.get()
