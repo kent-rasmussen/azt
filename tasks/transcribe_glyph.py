@@ -128,7 +128,7 @@ class GlyphTranscribeHelper:
 
     def set_ok_w_form(self, error=False):
         form = self.transcriber.formfield.get()
-        self.oktext.set(_("OK: Add the letter '{form}' {newline}to my alphabet "
+        self.oktext.set(_("OK: Add the letter \u2018{form}\u2019 {newline}to my alphabet "
                           "{newline}for this sound").format(form=form, newline="\n"))
         if form and not error:
             self.ok_button['state'] = 'normal'
@@ -204,17 +204,17 @@ class GlyphTranscribeHelper:
 
     def polygraphwarn(self, newvalue):
         if len(newvalue) != 1 or len(self.group) != 1:
-            warning = [_("This name change ('{group}' > '{new}') impacts your "
+            warning = [_("This name change (\u2018{group}\u2019 > \u2018{new}\u2019) impacts your "
                          "digraph and trigraph settings."
                          ).format(group=self.group, new=newvalue)]
             if len(newvalue) > 1:
-                warning.append(_("{azt} will add '{new}' to those settings."
+                warning.append(_("{azt} will add \u2018{new}\u2019 to those settings."
                                  ).format(azt=self.program.name, new=newvalue))
                 if newvalue not in self.program.profiles.polygraphs[self.analang][self.cvt]:
                     self.program.profiles.polygraphs[self.analang][self.cvt][newvalue] = True
                     self.program.settings.storesettingsfile('profiledata')
             if len(self.group) > 1:
-                warning.append(_("{azt} will *not* remove '{group}' from "
+                warning.append(_("{azt} will *not* remove \u2018{group}\u2019 from "
                                  "those settings, because you may still be "
                                  "using it elsewhere."
                                  ).format(azt=self.program.name, group=self.group))
@@ -253,8 +253,8 @@ class GlyphTranscribeHelper:
             log.error(_("Missing either group or comparison, without value "
                         "specified; can't switch them."))
             return
-        log.info(_("Switching groups; using '{comp}' for "
-                   "'{group}'").format(comp=self.group_comparison, group=self.group))
+        log.info(_("Switching groups; using \u2018{comp}\u2019 for "
+                   "\u2018{group}\u2019").format(comp=self.group_comparison, group=self.group))
         g = self.task.add_int_group(self.task)
         self.task.rename_macrogroup(self.group, g, updatestatus=False)
         self.task.rename_macrogroup(self.group_comparison, self.group, updatestatus=False)
@@ -320,7 +320,7 @@ class GlyphTranscribeHelper:
             initval = ''
         else:
             title.insert(0, _("Rename"))
-            title.append(f"'{self.group}'")
+            title.append(f"\u2018{self.group}\u2019")
             initval = self.group
         self.task.ui.getrunwindow(title=title)
         self.runwindow = self.task.ui.runwindow
