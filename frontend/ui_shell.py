@@ -1312,10 +1312,10 @@ class StatusFrame(ui.Frame):
         self.makeproseframe()
         self.interfacelangline()
         self.analangline()
-        self.glosslangline()
         # if isinstance(self.task,Segments) and not isinstance(self.task,TranscribeS):
-        if not self.program.task or self.program.task.is_chooser:
+        if not self.program.task or self.is_descendant_of(self.program.taskchooser):
             return
+        self.glosslangline()
         if getattr(self.program.task,'show_second_fields'):
             self.fieldsline()
         if (hasattr(self.program, 'slices') and
