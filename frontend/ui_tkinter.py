@@ -663,7 +663,8 @@ class Childof():
         try:
             super().post_tk_init()
         except Exception as e:
-            log.error(f"post_tk_init failed for {type(self).__name__}: {e}")
+            if type(self).__name__ not in ['ContextMenu']:
+                log.error(f"post_tk_init failed for {type(self).__name__}: {e}")
     def inherit(self,parent=None,attr=None):
         """This function brings these attributes from the parent, to inherit
         from the root window, through all windows, frames, and scrolling frames, etc
