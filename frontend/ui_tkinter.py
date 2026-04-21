@@ -662,8 +662,8 @@ class Childof():
     def post_tk_init(self):
         try:
             super().post_tk_init()
-        except:
-            pass
+        except Exception as e:
+            log.error(f"post_tk_init failed for {type(self).__name__}: {e}")
     def inherit(self,parent=None,attr=None):
         """This function brings these attributes from the parent, to inherit
         from the root window, through all windows, frames, and scrolling frames, etc
@@ -961,6 +961,8 @@ class UI():
             super().__init__(self.parent, *args, **kwargs)
         else: #Don't send for Root
             super().__init__(*args, **kwargs)
+        if self.withdrawn:
+            self.withdraw()  # withdraw immediately, before post_tk_init work
         self.post_tk_init()
         self.waitcancelled=False
 class Exitable():
@@ -1864,11 +1866,13 @@ class Window(Toplevel):
             if hasattr(self,'frame') and type(self.frame) is Frame:
                 self.frame.destroy()
             for rc in [0,2]:
-                self.outsideframe.grid_rowconfigure(rc, weight=3)
-                self.outsideframe.grid_columnconfigure(rc, weight=3)
+                self.outsideframe.grid_rowconfigure(rc, weight=0)
+                self.outsideframe.grid_columnconfigure(rc, weight=0)
             self.frame=Frame(self.outsideframe, #border=5,
                             row=1, column=1, sticky='nsew',
                             )
+            self.outsideframe.grid_rowconfigure(1, weight=3)
+            self.outsideframe.grid_columnconfigure(1, weight=3)
     def releasefullscreen(self,event=None):
         self.attributes('-fullscreen', False)
         self.bind('<Double-Button-1>', self.takefullscreen)
@@ -2488,17 +2492,17 @@ class Wait(Window): #tkinter.Toplevel?
                 "in Process").format(azt=self._root().program.name)
         self.title(title)
         text=_("Please Wait...")
-        self.l=Label(self.outsideframe, text=text,
+        self.l=Label(self.frame, text=text,
                 font='title',anchor='c',
                 row=0,column=0,sticky='we')
-        self.l1=Label(self.outsideframe, text='',
+        self.l1=Label(self.frame, text='',
                         font='default',anchor='c',row=1,column=0,sticky='we')
         # if msg is not None:
         if msg is None:
             msg="No Particular Reason"
         self.msg(msg)
         if not isinstance(self.parent,Root) or not self.parent.noimagescaling:
-            self.l2=Label(self.outsideframe,
+            self.l2=Label(self.frame,
                         image='small',
                         text='',
                         row=2,column=0,sticky='we',padx=50,pady=50)

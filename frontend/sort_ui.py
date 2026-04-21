@@ -107,18 +107,19 @@ class SortPresenter:
         ui.Label(f, image=f'sort{img_mod}',
                 row=0, column=0, rowspan=3, sticky='new', anchor='center')
         ui.Label(f, image=page_icon, image_pixels=270,
-                row=3, column=0, rowspan=3, sticky='nw')
+                row=3, column=0, #rowspan=3, 
+                sticky='nw')
+        groupsFrame = ui.Frame(f, column=1, row=2,
+                              rowspan=2, pady=0, sticky='nsew')
         f.rowconfigure(1, weight=0)
         f.rowconfigure(2, weight=1)
         f.columnconfigure(0, weight=0)
         f.columnconfigure(1, weight=1)
-        groupsFrame = ui.Frame(f, column=1, row=2,
-                              rowspan=2, pady=0, sticky='new')
         ui.Label(groupsFrame, text=instructions, font='instructions',
                 anchor='c', sticky='sew')
         buttonframe = SortButtonFrame(groupsFrame, sort_obj, groups,
                                      macrosort=macrosort,
-                                     row=1, sticky='new', columnspan=2)
+                                     row=1, sticky='nsew', columnspan=2)
         return groupsFrame, buttonframe
 
     def build_verify_layout(self, runwindow, title, page_icon, instructions,
@@ -129,6 +130,10 @@ class SortPresenter:
         """Build the verify window layout.
         Returns (buttonframe, verifycanary)."""
         f = runwindow.frame
+        # Let the content area expand to fill the kiosk screen
+        # Override the centering spacers (rows 0,2 weight=3 from Window.post_tk_init)
+        f.grid_rowconfigure(1, weight=1)
+        f.grid_columnconfigure(1, weight=1)
         titles = ui.Frame(f, column=1, row=0, columnspan=1, sticky='w')
         ui.Label(titles, text=' '.join(title), font='title',
                 column=0, row=0, sticky='w')
@@ -147,7 +152,7 @@ class SortPresenter:
                                          list(items), macrosort=True,
                                          show_check=True,
                                          remove_on_click=True, column=1,
-                                         row=1, sticky='new', columnspan=2)
+                                         row=1, sticky='nsew', columnspan=2)
         else:
             buttonframe = ui.ScrollingFrame(f, row=1, column=1, sticky='wsn')
             bc = buttoncolumns if len(items) >= min_to_multicolumn else 1

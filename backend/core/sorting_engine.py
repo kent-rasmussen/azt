@@ -503,11 +503,13 @@ class Sort(object):
         except:
             w=self.program.tk_root
         if any(i.mature for i in self.program.data_repo.values()):
+            log.info("Found mature repo; showing wait")
             w.wait_and_drive_work(
                         _("Reloading status data"),
                         self.program.settings.reloadstatusdata(), # culled here
                         on_done=self.program.settings.reloadstatusdata_cleanup)
         else:
+            log.info("Found new repo; not showing wait")
             w.drive_work(self.program.settings.reloadstatusdata(), # culled here
                         on_done=self.program.settings.reloadstatusdata_cleanup)
         if not self.itemstosort():

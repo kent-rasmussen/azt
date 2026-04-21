@@ -1389,141 +1389,28 @@ class TranscribeS(Transcribe,Segments):
         else:
             self.ok_button['state'] = 'disabled'
     def makewindow(self, glyph=None, event=None):
-        self.pyaudiocheck() # seems to dissapear sometimes
-        self.ok_done=False
-        if glyph:
-            self.group=self.program.alphabet.glyph(glyph)
-        else:
-            self.group=self.program.alphabet.glyph()
-        if not isinstance(self.group, str):
-            log.info("Group not a string! ({group}, {type})".format(group=self.group, type=type(self.group)))
-        cvt=self.program.params.cvt()
-        self.groups=self.program.alphabet.glyphs()
-        # self.groups=self.program.status.all_groups_verified_for_cvt()
-        self.otherglyphs=set(self.groups)-{self.group}
-        padx=50
-        if self.program.settings.lowverticalspace:
-            log.info("Using low vertical space setting")
-            pady=0
-        else:
-            pady=10
-        self.buttonframew=int(self.program.screenw()/3.5)
-        title=[self.program.params.cvtdict()[cvt]['sg'],_("letter")]
-        getformtext=[_("What letter(s) will you use for this {sg} "
-                        "group?").format(sg=self.program.params.cvtdict()[cvt]['sg'])]
-        if self.group.isdigit():
-            title.insert(0,_("Name New"))
-            # getformtext.append(_("Because this is a new group, you need to give it "
-            #                 "some name now."))
-            initval=''
-        else:
-            title.insert(0,_("Rename"))
-            title.append(f"'{self.group}'")
-            initval=self.group
-        self.ui.getrunwindow(title=title)
-        titlel=ui.Label(self.ui.runwindow.frame,text=' '.join(title),
-                        font='title',
-                        row=0,column=0,sticky='ew',padx=padx,pady=pady
-                        )
-        getform=ui.Label(self.ui.runwindow.frame,
-                        text='\n'.join(getformtext),
-                        font='read',
-                        norender=True,
-                        row=1,column=0,sticky='ew',padx=padx,pady=pady
-                        )
-        getform.wrap()
-        inputfeedbackframe=ui.Frame(self.ui.runwindow.frame,
-                            row=2,column=0,sticky=''
-                            )
-        self.transcriber=transcriber.Transcriber(inputfeedbackframe,
-                                initval=initval,
-                                soundsettings=self.soundsettings,
-                                chars=self.glyphspossible,
-                                row=0,column=0,sticky=''
-                                )
-        self.transcriber.newname.trace_add('write', self.updateform)
-        infoframe=ui.Frame(inputfeedbackframe,
-                            row=0,column=1,sticky=''
-                            )
-        """Make this a pad of buttons, rather than a label, so users can
-        go directly where they want to be"""
-        g=nn(self.otherglyphs,perline=len(self.otherglyphs)//3)
-        # log.info("groups={groups}, otherglyphs={other}, g={g}".format(groups=self.groups, other=self.otherglyphs, g=g))
-        glyphslabel=ui.Label(infoframe,
-                            text='\n'.join([_("Don't use Other Groups:"),g]),
-                            column=1,
-                            sticky='new',
-                            padx=padx,
-                            rowspan=2
-                            )
-        self.errorlabel=ui.Label(infoframe,text='',
-                            fg='red',
-                            wraplength=int(self.frame.winfo_screenwidth()/3),
-                            row=2,column=1,sticky='nsew'
-                            )
-        ui.Button(infoframe, #don't make this too wide
-                    text=_("Go back and join \nwith one of\n← these groups"),
-                    command=self.go_back,
-                    column=2,
-                    rowspan=2,
-                    sticky='nsew'
-                    )
-        examplesframe=ui.Frame(self.ui.runwindow.frame,
-                                row=4,column=0,sticky='',
-                                # border=1
-                                )
-        # self.oktext=_("OK")
-        self.oktext=ui.StringVar()
-        # self.transcriber.formfield
-        self.ok_button=ui.Button(examplesframe, 
-                                # text=self.oktext,
-                                textvariable=self.oktext,
-                                font='title',
-                                row=0,
-                                column=1,
-                                sticky='ns',
-                                padx=padx,
-                                ipadx=30,
-                                ipady=20,
-                                pady=20,
-                                command=self.done
-        )
-        self.updateform() #updates button state
-        cmd=lambda x=self.group:self.transcriber.set_value(x)
-        b=SortGlyphGroupButtonFrame(examplesframe, self,
-                                group=self.group,
-                                showtonegroup=True,
-                                on_select=cmd,
-                                playable=True,
-                                alwaysrefreshable=True,
-                                row=0, column=0, sticky='w',
-                                wraplength=self.buttonframew
-                                )
-        self.window_failed=False
-        if not b.hasexample:
-            self.clear_runwindow()
-            self.window_failed=True
-            return
-        self.compframe=ui.Frame(examplesframe,
-                    highlightthickness=10,
-                    highlightbackground=self.frame.theme.white,
-                    pady=20, row=1, column=0, sticky='',
-                    columnspan=2
-                    ) #no hlfg here
-        t=_('Compare with another group')
-        fn=self.setgroup_comparison
-        self.sub_c=ui.Button(self.compframe,
-                            text = t,
-                            command = lambda:fn(),
-                            row=0,column=0
-                            )
-        self.comparisonbuttons()
-        self.ui.runwindow.waitdone()
-        self.sub_c.wait_window(self.ui.runwindow) #then move to next step
-        if hasattr(self,'status'): #i.e., working from Transcribe task directly
+        from tasks.transcribe_glyph import GlyphTranscribeHelper
+        if not hasattr(self, '_glyph_helper'):
+            self._glyph_helper = GlyphTranscribeHelper(
+                self, glyphspossible=self.glyphspossible,
+                switch_text=self.switch_text, switch_tt=self.switch_tt,
+                on_done=lambda: self.donewpyaudio(),
+                on_go_back=self._go_back_from_helper)
+        self._glyph_helper.makewindow(glyph, event)
+        # Sync state back for methods that reference self.xxx
+        self.ok_done = self._glyph_helper.ok_done
+        self.window_failed = self._glyph_helper.window_failed
+        self.group = self._glyph_helper.group
+        self.groups = self._glyph_helper.groups
+        self.transcriber = getattr(self._glyph_helper, 'transcriber', None)
+        self.errorlabel = getattr(self._glyph_helper, 'errorlabel', None)
+        if hasattr(self, 'status'):
             self.status.updateglyphbuttons()
-        """Store these variables above, finish with (destroying window with
-        local variables):"""
+
+    def _go_back_from_helper(self):
+        self.donewpyaudio()
+        self.program.taskchooser.maketask(f"Sort{self.program.params.cvt()}",
+                                        redo_glyph=self._glyph_helper.group)
     def __init__(self, program, **kwargs):
         self.switch_text=_("Switch letters with this group")
         self.switch_tt=_("This switches letters for the two groups, and "
@@ -1535,25 +1422,8 @@ class TranscribeV(TranscribeS):
         return _("This task helps you decide on your vowel letters.")
     taskicon = 'iconTranscribeV'
     def __init__(self, program, **kwargs): #frame, filename=None
-        self.glyphspossible=[ #'a','e','i','o','u','ɛ','ɔ','ɨ','ʉ']
-        #tilde (decomposed):
-        'ã', 'ẽ', 'ɛ̃', 'ə̃', 'ɪ̃', 'ĩ', 'õ', 'ɔ̃', 'ũ', 'ʊ̃',
-        #Combining Greek Perispomeni (decomposed):
-        'a͂', 'i͂', 'o͂', 'u͂',
-        #single code point vowels:
-        'a', 'e', 'i', 'ə', 'o', 'u',
-        # 'A', 'E', 'I', 'Ə', 'O', 'U',
-        'ɑ', 'ɛ', 'ɨ', 'ɔ', 'ʉ', 'ɩ',
-        'æ', 'ʌ', 'ɪ', 'ï', 'ö', 'ʊ',
-        #for those using precomposed letters:
-        # 'à', 'è', 'ì', 'ò', 'ù',
-        # # 'À', 'È', 'Ì', 'Ò', 'Ù',
-        # 'á', 'é', 'í', 'ó', 'ú',
-        # # 'Á', 'É', 'Í', 'Ó', 'Ú',
-        # 'â', 'ê', 'î', 'ô', 'û',
-        # # 'Â', 'Ê', 'Î', 'Ô', 'Û',
-        # 'ã', 'ẽ', 'ĩ', 'õ', 'ũ'
-        ]
+        from tasks.transcribe_glyph import VOWEL_GLYPHS
+        self.glyphspossible=VOWEL_GLYPHS
         self.cvt=program.params.cvt('V')
         super().__init__(program=program, **kwargs)
 class TranscribeC(TranscribeS):
@@ -1562,42 +1432,8 @@ class TranscribeC(TranscribeS):
         return _("This task helps you decide on your consonant letters.")
     taskicon = 'iconTranscribeC'
     def __init__(self, program, **kwargs): #frame, filename=None
-        self.glyphspossible=[#'p','b','k','g','d','t',]
-        'bh','dh','gh','gb',
-        'b',#'B',
-        'd','g','ɡ', #,'G' messes with profiles
-        'kk','kp',
-        'p',#'P',
-        'ɓ',#'Ɓ',
-        't','ɗ','ɖ','c','k','q',
-        'vh','zh',
-        'j',#'J',
-        'v','z',#'Z',
-        'ʒ','ð','ɣ',
-        'ch','ph','sh','hh','pf','bv',
-        # 'F',
-        'f','s','ʃ','θ','x','h', #not 'S'
-        'dj','dz','dʒ',
-        'chk',
-        'ts','tʃ',
-        'zl',
-        'ɮ',
-        'sl',
-        'ɬ',
-        'ʔ',
-                "ꞌ", #Latin Small Letter Saltillo
-                "'", #Tag Apostrophe
-                'ʼ', #modifier letter apostrophe
-        'ẅ','y',#'Y',
-        'w',#'W',
-        'm',#'M',
-        'n','ŋ','ɲ','ɱ', #'N', messed with profiles
-        'mm','ŋŋ','ny',
-        "ng'",
-        # """Non-Nasal/Glide Sonorants"""
-        'l','r',
-        'rh','wh',
-        ]
+        from tasks.transcribe_glyph import CONSONANT_GLYPHS
+        self.glyphspossible=CONSONANT_GLYPHS
         self.cvt=program.params.cvt('C')
         super().__init__(program=program, **kwargs)
 class TranscribeT(Transcribe,Tone):

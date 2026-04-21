@@ -8,6 +8,7 @@ from backend.core.analysis import Analysis
 from utilities.utilities import *
 from utilities import file, logsetup, htmlfns
 from io_put import lift
+# from tasks.tasks import TranscribeC, TranscribeV
 # import time
 # import webbrowser
 # import os
@@ -334,18 +335,21 @@ class Segments(Senses):
         some name, and is automatically enforced.
         Changes requested by the user are handled in TranscribeC/V
         """
+        from tasks.transcribe_glyph import (GlyphTranscribeHelper,
+                                             VOWEL_GLYPHS, CONSONANT_GLYPHS)
         glyphs=self.default_glyphs()
         self.program.alphabet.glyphdict()[self.program.params.cvt()]
-        if self.program.params.cvt() == 'C':
-            transcribe=TranscribeC
-        elif self.program.params.cvt() == 'V':
-            transcribe=TranscribeV
+        cvt=self.program.params.cvt()
+        if cvt == 'C':
+            glyphspossible=CONSONANT_GLYPHS
+        elif cvt == 'V':
+            glyphspossible=VOWEL_GLYPHS
         else:
             log.error(_("Not sure what to do with this glyph "
-                "({cvt}; {glyphs})").format(cvt=self.program.params.cvt(), glyphs=glyphs))
-        w=transcribe(self)
+                "({cvt}; {glyphs})").format(cvt=cvt, glyphs=glyphs))
+            return False
+        w=GlyphTranscribeHelper(self, glyphspossible=glyphspossible)
         self.ui.withdraw()
-        w.waitdone()
         problems=[]
         while digits := self.default_glyphs():
             glyph=digits[0]
@@ -357,7 +361,7 @@ class Segments(Senses):
                 problems.append(glyph)
             elif not w.ok_done: #user exits without 'OK'
                 break
-        w.destroy() #just this window, not parent
+        w.destroy()
         self.ui.deiconify()
         if digits or problems:
             log.error(_("User exited with work still to do: {digits} {problems}").format(digits=digits, problems=problems))

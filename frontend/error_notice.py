@@ -31,6 +31,10 @@ class ErrorNotice(ui.Window):
         button=kwargs.get('button')
         image=kwargs.get('image')
         super(ErrorNotice, self).__init__(parent,title=title,exit=False,withdrawn=True)
+        if hasattr(self,'theme'):
+            self['background']=self.theme.background
+        else:
+            log.error(f"ErrorNotice has no theme! parent={type(parent).__name__}")
         self.parent.withdraw()
         self.title = title
         self.text = text
@@ -53,6 +57,7 @@ class ErrorNotice(ui.Window):
                 row=1, column=2, sticky='nse')
         self.attributes("-topmost", True)
         self.deiconify()
+        self.update_idletasks()  # force geometry/paint before wait_window
         if wait:
             self.wait_window(self)
         if self.exitFlag.istrue():
