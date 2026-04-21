@@ -494,7 +494,7 @@ class Sort(object):
             return return_value #pass along
         if firstrun:
             self.resetsortbutton()
-        log.info("Starting maybesort with {did}".format(did=[k for k,v in self.did.items() if v]))
+        log.info("Starting maybesort with did={did}".format(did=[k for k,v in self.did.items() if v]))
         if self.ui.exitFlag.istrue(): #if the task has been shut down, stop
             return
         try:
