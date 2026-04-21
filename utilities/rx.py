@@ -372,7 +372,7 @@ class RegexDict(object):
         for match in matches:
             if len(match)>1:
                 txt=_("NOTICE: '{match}' was removed from this form. Remove it from the "
-                "polygraph settings once it is gone altogether.")
+                "polygraph settings once it is gone altogether.").format(match=match)
                 try:
                     log.info(txt)
                 except NameError:
