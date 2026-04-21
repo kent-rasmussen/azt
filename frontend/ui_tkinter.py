@@ -1701,9 +1701,11 @@ class CheckButton(Childof,Gridded,Text,UI,tkinter.Checkbutton):
             img_names=[f'{i}_sm' for i in img_names]
         kwargs['selectimage']=kwargs.get('selectimage',
                                         parent.theme.photo[img_names[1]].scaled)
+        #image has a helper that expects a string name; selectimage doesn't.
+        #Probably not worth the time to generalize for just these two.
         if kwargs.get('selectimage'):
             kwargs['image']=kwargs.get('image',
-                        parent.theme.photo[img_names[0]].scaled)
+                        img_names[0])
             kwargs['norender']=True #This creates self.image
         super().__init__(parent, *args, **kwargs)
         kwargs=self.super_kwargs
