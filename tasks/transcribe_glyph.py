@@ -240,7 +240,8 @@ class GlyphTranscribeHelper:
         self.runwindow.on_quit()
 
     def refresh_status_buttons(self, *args):
-        if hasattr(self.task, 'status'):
+        """This is just for the Transcribe task, to update the glyph list"""
+        if hasattr(self.task, 'status') and hasattr(self.task.status,'glyphbuttons'):
             for i in args:
                 if (i in self.task.status.glyphbuttons
                         and self.task.status.glyphbuttons[i].winfo_exists()):
