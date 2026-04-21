@@ -2065,7 +2065,8 @@ class TaskDressing(HasMenus,ui.Window):
         self.tableiteration=0
         self.makestatusframe()
         # self.withdraw() #made visible by chooser when complete
-        self._taskchooserbutton()
+        if not getattr(self,'is_chooser',False):
+            self._taskchooserbutton()
         self._removemenus() #self.correlatemenus()
         self.takekioskscreen()
         self.thread_names=list()

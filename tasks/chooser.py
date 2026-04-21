@@ -95,53 +95,69 @@ class TaskChooser(Task):
         for ps in self.program.db.pss:
             self.guidsvalidbyps[ps]=self.program.db.get('guidbyps',ps=ps)
     def gettask(self,event=None):
-        """This function pulls user out of a task, to select from any 
+        """This function pulls user out of a task, to select from any
         of tasks whose prerequisites are minimally satisfied."""
-        # if self.reports:
         self.ui.withdraw()
-        # try:
-        #         self.status.bigbutton.destroy()
-        # except AttributeError:
-        #     log.info(_("There doesn't seem to be a big button to destroy."))
         if not self.showreports:
             self.status.finalbuttons()
-        """There are three possibilities here:
-        1. a task sent us here
-        2. a report sent us here
-        3. TaskChooser sent us here (switching between page types)
-        """
-        # if not self.mainwindow:
-        self.i_am_mainwindow() #tests there
-        if not self.showingreports and not self.showreports:
-            self.datacollection=not self.datacollection
-        if self.showingreports:
-            self.showingreports=False
-        self.maketitle() #b/c this changes
+        self.i_am_mainwindow()
+        self.maketitle()
         if self.program.task and self.task.ui.winfo_exists():
-            self.program.task.ui.on_quit() #destroy and set flag
-        if hasattr(self,'optionsframe'):
-            self.optionsframe.destroy()
-        self._taskchooserbutton()
-        optionlist=self.makeoptions()
+            self.program.task.ui.on_quit()
+        if not hasattr(self,'notebook'):
+            self._build_tabs()
+        else:
+            self._refresh_tabs()
+        # Select the right tab based on how we got here
+        if self.showreports:
+            self.notebook.select(self.tab_reports)
+            self.showreports=False
+            self.showingreports=True
+        elif self.showingreports:
+            self.showingreports=False
+        else:
+            # Default: show data collection tab
+            self.notebook.select(self.tab_datacollection)
+        self.i_am_mainwindow()
+        self.ui.deiconify()
+    def _build_tabs(self):
+        self.whatsdone()
+        self.notebook=ui.Notebook(self.frame,column=1,row=1,pady=(25,0))
+        self.tab_datacollection=ui.Frame(self.notebook)
+        self.tab_analysis=ui.Frame(self.notebook)
+        self.tab_reports=ui.Frame(self.notebook)
+        self.notebook.add(self.tab_datacollection,text=_("Data Collection"))
+        self.notebook.add(self.tab_analysis,text=_("Analysis & Decisions"))
+        self.notebook.add(self.tab_reports,text=_("Reports"))
+        self.notebook.bind('<<NotebookTabChanged>>',self._on_tab_changed)
+        self._populate_tabs()
+    def _populate_tabs(self):
+        for frame,category in [
+            (self.tab_datacollection,'datacollection'),
+            (self.tab_analysis,'analysis'),
+            (self.tab_reports,'reports'),
+        ]:
+            self._populate_tab(frame,category)
+    def _populate_tab(self,frame,category):
+        for child in frame.winfo_children():
+            child.destroy()
+        tasktuples=self.makeoptions_for(category)
         bpr=3
-        # compound='left', #image bottom, left, right, or top of text
-        self.optionsframe=ui.Frame(self.frame,column=1, row=1, pady=(25,0))
-        optionlist_maxi=len(optionlist)-1
+        optionlist_maxi=len(tasktuples)-1
         if optionlist_maxi == 3:
             bpr=2
         elif optionlist_maxi > 9:
             bpr=3
         columnspan=1
-        for n,o in enumerate(optionlist):
+        for n,o in enumerate(tasktuples):
             if n is optionlist_maxi and int(n/bpr):
-                # log.info("bpr: {}, n%bpr: {}".format(bpr,n%bpr))
                 columnspan=bpr-n%bpr
-            b=ui.Button(self.optionsframe,
+            b=ui.Button(frame,
                         text=o[1],
                         command=lambda t=o[0]:self.maketask(t),
                         column=n%bpr,
                         row=int(n/bpr),
-                        compound='top', #left, bottom
+                        compound='top',
                         image=o[2],
                         wraplength=int(self.program.tk_root.wraplength*.02125/bpr),
                         anchor='n',
@@ -151,14 +167,26 @@ class TaskChooser(Task):
             try:
                 ui.ToolTip(b, o[0].tooltip(None))
             except AttributeError:
-                log.info(_("Task {task} doesn't seem to have a tooltip.").format(task=o[0]))
+                log.info(_("Task {task} doesn\u2019t seem to have a tooltip.").format(task=o[0]))
         for c in range(bpr):
-            self.optionsframe.grid_columnconfigure(c, weight=1, uniform=c)
-        self.i_am_mainwindow()
-        if self.showreports:
-            self.showreports=False #just do this once each button click
+            frame.grid_columnconfigure(c, weight=1, uniform=c)
+    def _refresh_tabs(self):
+        self.whatsdone()
+        self._populate_tabs()
+    def _on_tab_changed(self,event=None):
+        tab=self.notebook.select()
+        if tab == str(self.tab_datacollection):
+            self.datacollection=True
+            self.showreports=False
+            self.showingreports=False
+        elif tab == str(self.tab_analysis):
+            self.datacollection=False
+            self.showreports=False
+            self.showingreports=False
+        elif tab == str(self.tab_reports):
+            self.datacollection=False
+            self.showreports=False
             self.showingreports=True
-        self.ui.deiconify()
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
         satisfied task"""
@@ -194,16 +222,9 @@ class TaskChooser(Task):
         if not self.ui.mainwindow:
             self.ui.i_am_mainwindow()
             self.finish_task_ui()
-    def makeoptions(self):
-        """This function (and probably a few dependent functions, maybe
-        another class) provides a list of functions with prerequisites
-        that are minimally and/or optimally satisfied."""
-        """So far that distinction isn't being made. For instance, we should
-        not offer recordingT as default if all examples have sound files, yet
-        a user may well want to go back and look at those recordings, and maybe
-        rerecord some."""
-        self.whatsdone()
-        if self.showreports:
+    def makeoptions_for(self,category):
+        """Return task tuples for the given category."""
+        if category == 'reports':
             tasks=[
                     ExportData,
                     AlphabetChart,
@@ -212,9 +233,6 @@ class TaskChooser(Task):
                     ReportCitationMulticheckBackground,
                     ReportCitationMultichecksliceBackground
                     ]
-            if self.doneenough['collectionlc']:
-                """This currently takes way too much time. Until it gets
-                mutithreaded, it will not be an option"""
             if self.doneenough['sortT']:
                 tasks.append(ReportCitationTBackground)
                 tasks.append(ReportCitationTLBackground)
@@ -224,64 +242,32 @@ class TaskChooser(Task):
                 tasks.append(ReportCitationByUFBackground)
                 tasks.append(ReportCitationByUFMulticheckBackground)
                 tasks.append(ReportCitationByUFMultichecksliceBackground)
-        elif self.datacollection:
+        elif category == 'datacollection':
             tasks=[
                     WordCollectionCitation,
-                    # WordCollectionPlural, #What is the value of this
-                    # WordCollectionImperative, #What is the value of this
                     WordCollectionCitationwRecordings,
                     WordCollectnParse,
                     WordCollectnParsewRecordings,
                     RecordCitation
                     ]
             if self.doneenough['collectionlc']:
-                """Do these next"""
                 tasks.append(SortSyllables)
                 tasks.append(SortV)
                 tasks.append(SortC)
                 tasks.append(SortT)
                 if self.doneenough['sortT']:
                     tasks.append(RecordCitationT)
-            # if self.donew['parsedlx']:
-            #     tasks.append(SortRoots)
-        else: #i.e., analysis tasks
+        else: # analysis
             tasks=[WordsParse]
             if self.doneenough['sort']:
                 tasks.append(TranscribeV)
                 tasks.append(TranscribeC)
-            #this maybe should depend on recordedT:
             if self.doneenough['sortT']:
                 tasks.append(TranscribeT)
             if self.doneenough['analysis']:
                 tasks.append(JoinUFgroups)
             if self.program.me:
-                # tasks.append(ParseWords)
-                # tasks.append(ParseWords)
-                # tasks.append(ParseSlice)
-                # tasks.append(ParseSliceWords)
                 tasks.append(ReportConsultantCheck)
-        # if (self.program.testing and 'testtask' in self.program and
-        #         self.program.testtask not in tasks):
-        #     if self.showreports == isinstance(self.program.testtask,Report):
-        #         tasks.append(self.program.testtask)
-        # tasks.append(WordCollectionCitation),
-        # tasks.append(WordCollectionPlImp),
-        # tasks.append(ParseA), # input pl/imp, gives lx and ps
-        # tasks.append(ParseB), # user selects pl/imp, gives ls and ps
-        # tasks.append(SyllableProfileAnalysisCitation),
-        # tasks.append(SortTCitation),
-        # tasks.append(SyllableProfileAnalysisLexeme),
-        # tasks.append(TranscribeTCitation),
-        # tasks.append(RecordTCitation),
-        # tasks.append(RecordPlImp),
-        # tasks.append(Placeholder),
-        # tasks.append(Reports),
-        # tasks.append(SortV),
-        # tasks.append(SortC),
-        # tasks.append(SortTLexeme),
-        # tasks.append(TranscribeTLexeme),
-        # tasks.append(RecordTLexeme)
-        # ]:
         tasktuples=[]
         photos=self.program.theme.photo
         for task in tasks:
@@ -289,9 +275,19 @@ class TaskChooser(Task):
                     ).format(name=self.program.name,type=task.__name__)
             icon=photos.get(task.taskicon) if task.taskicon else None
             tasktuples.append((task,title,icon))
-        log.info(_("Tasks available ({count}): {tasks}").format(count=len(tasktuples),
+        log.info(_("Tasks available for \u2018{category}\u2019 ({count}): {tasks}").format(
+                    category=category,count=len(tasktuples),
                     tasks=[i[1] for i in tasktuples]))
         return tasktuples
+    def makeoptions(self):
+        """Returns options for current category. Used by makedefaulttask."""
+        self.whatsdone()
+        if self.showreports:
+            return self.makeoptions_for('reports')
+        elif self.datacollection:
+            return self.makeoptions_for('datacollection')
+        else:
+            return self.makeoptions_for('analysis')
     def convertlxtolc(self,window):
         try:
             window.destroy()

@@ -1306,6 +1306,12 @@ class Progressbar(Childof,Gridded,UI,tkinter.ttk.Progressbar):
             kwargs['mode']='determinate' #or 'indeterminate'
         super().__init__(parent, *args, **kwargs)
         self.post_tk_init()
+class Notebook(Childof,Gridded,UI,tkinter.ttk.Notebook):
+    def post_tk_init(self):
+        super().post_tk_init()
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.post_tk_init()
 class TextBase():
     """no image for Message, ComboBox, EntryField, RadioButton, ListBox """
     textkwargs={'text','textvariable','font'}

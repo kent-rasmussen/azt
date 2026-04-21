@@ -1013,6 +1013,19 @@ class Progressbar(_WebviewWidget):
         _js(wv, f'updateProp({self._wid}, "progress", {value})')
 
 
+class Notebook(_WebviewWidget):
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, widget_type='notebook', **kwargs)
+
+    def add(self, child, **kwargs):
+        pass  # stub
+
+    def select(self, tab_id=None):
+        pass  # stub
+
+    def bind(self, sequence, func, add=None):
+        pass  # stub
+
 class Message(_WebviewWidget):
     def __init__(self, parent, *args, **kwargs):
         kwargs.pop('font', None)
