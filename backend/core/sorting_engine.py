@@ -521,14 +521,12 @@ class Sort(object):
         self.ftype=self.get_ftype()
         log.info("Maybe Sort")
         if self.checktosort(): # w/o parameters, tests current check
-            log.info("Running Sort")
             if warnorcontinue(self.sort()):
                 self.did['sort']=True
             return
         log.info("Maybe Verify")
         groupstoverify=self.groups(toverify=True)
         if groupstoverify:
-            log.info("Running Verify")
             log.info("Going to verify the first of these groups now: {groups}".format(
                                     groups=self.groups(toverify=True)))
             if self.program.status.group() not in groupstoverify:
@@ -539,7 +537,6 @@ class Sort(object):
         log.info("Maybe Join")
         self.did['join']=False #runs multiple times, so clear here
         if self.to_distinguish():
-            log.info("Running Join")
             warnorcontinue(self.join()) #1 here is now done; did.join intenally
             return
         """Up to this point, we sort into and out of (via verify) groups tracked
