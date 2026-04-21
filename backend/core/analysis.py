@@ -949,6 +949,10 @@ class StatusDict(dict):
             self._groups=sn['groups']
             if g is not None:
                 self._groups=sn['groups']=g
+            if not self._groups:
+                log.info(_("No groups to sort into! (using {kwargs} node {sn})"
+                    ).format(kwargs=kwargs,sn=sn))
+                return []
             return sorted(self._groups)
         if kwargs['toverify']:
             #done is always a subset of groupsː
