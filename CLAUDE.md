@@ -40,10 +40,32 @@ Tasks are NOT windows. The class hierarchy is:
 TaskBase          — pure logic: flags, makecvtok, makeeverythingok (tasks/base.py)
   Task            — creates a TaskWindow on init (tasks/base.py)
     ConcreteTask  — Sort, Transcribe, Report, etc. (tasks/tasks.py)
+                  — TaskChooser (tasks/chooser.py)
                   — AlphabetChart (tasks/alphabet_chart.py)
                   — AlphabetComparisonPages (tasks/alphabet_comparison.py)
 
 TaskWindow(TaskDressing) — tkinter window wrapper (frontend/task_window.py)
+```
+
+Backend mixins (no frontend imports):
+```
+Categories        — group/category management: create, rename, reassign groups
+                    (backend/core/categories.py)
+  Sort(Categories) — sorting presentation, verification, join logic
+                    (backend/core/sorting_engine.py)
+
+Senses            — base sense operations, verification codes (backend/core/lexicon.py)
+  Segments(Senses) — segmental (C/V) annotation operations
+  Tone(Senses)     — tone annotation operations
+```
+
+Concrete task inheritance:
+```
+SortS(Sort, Segments, Task)           — segmental sort tasks
+SortT(Sort, Tone, Task)               — tone sort tasks
+Transcribe(Sound, Categories, Task)   — transcription (does NOT inherit Sort)
+  TranscribeS(Transcribe, Segments)   — segmental transcription
+  TranscribeT(Transcribe, Tone)       — tone transcription
 ```
 
 Bidirectional `__getattr__` links them:
@@ -82,7 +104,7 @@ Injected at startup via `program.sort_ui`, `program.lex_ui`, `program.vcs_ui`, `
 The settings system (`settings/`) uses domain-split config backed by JSON files. Key classes:
 
 - **`settings/manager.py`** — `ConfigManager` base class: JSON-backed per-domain config with read/write, `CustomEncoder` for sets/Paths.
-- **`settings/__init__.py`** — `AppSettingsManager` (pre-project settings: last file, UI language) and `SettingsManager` (post-project: routes get/set to domain configs).
+- **`settings/__init__.py`** — `AppSettingsManager` (pre-project settings: last file, UI language) and `SettingsManager` (post-project: routes get/set to domain configs). Legacy .ini/.dat files are no longer written; JSON domain files are the sole write path. Legacy read fallback is preserved for migration.
 - **Domain configs**: `project.py`, `ui.py`, `audio.py`, `alphabet.py`, `contributors.py`, `data.py`, `reports.py`, `app.py` — each inherits from `ConfigManager`.
 
 ### Module Layout
@@ -94,7 +116,7 @@ The settings system (`settings/`) uses domain-split config backed by JSON files.
   - `ui_tkinter.py` — tkinter widget helpers and custom widgets.
   - `ui_webview.py` — pywebview backend (partial, in progress).
   - `ui_variables.py` — Standalone Variable classes for non-tkinter backends.
-  - `ui_shell.py` (~3500 lines) — Main UI: menus, status frames, TaskDressing, image frames, splash, error notices, result windows, LiftChooser.
+  - `ui_shell.py` (~3500 lines) — Main UI: menus, status frames, TaskDressing (includes chooser tab UI via `_build_chooser_tabs`/`_populate_chooser_tab`), image frames, splash, error notices, result windows, LiftChooser.
   - `task_window.py` — `TaskWindow(TaskDressing)`: window wrapper for task logic objects.
   - `sort_buttons.py` — Sort button frame widgets.
   - `sort_ui.py`, `lexicon_ui.py`, `vcs_ui.py`, `report_ui.py` — Presenter classes.
@@ -110,11 +132,13 @@ The settings system (`settings/`) uses domain-split config backed by JSON files.
   - `alphabet_chart.py` — `AlphabetChart` task.
   - `alphabet_comparison.py` — `AlphabetComparisonPages` task.
   - `sound.py` — Sound task UI mixin (bridges `backend/core/sound.py` + `frontend/sound_ui.py`).
-  - `chooser.py` — `TaskChooser` UI for selecting tasks.
+  - `chooser.py` — `TaskChooser`: task selection logic, category lists. UI lives in TaskDressing.
+  - `transcribe_glyph.py` — `GlyphTranscribeHelper`: shared glyph transcription UI for Transcribe and `name_new_glyphs`.
   - `ui_protocol.py` — `TaskUI` abstract interface for task window operations.
 - **`backend/core/`** — Domain logic (zero frontend imports):
   - `lexicon.py` — `Senses`, `Segments`, `WordCollection`, `Parse`, `Tone`.
-  - `sorting_engine.py` — `Sort` (linguistic sorting).
+  - `categories.py` — `Categories` mixin: group creation, renaming, reassignment, verification node manipulation. Inherited by both Sort and Transcribe.
+  - `sorting_engine.py` — `Sort(Categories)`: sorting presentation, verification UI, join logic. Sort-specific methods (`marksorted`, `sort`, `verify`, `join`, etc.).
   - `analysis.py` — `Analysis`, `SliceDict`, `StatusDict`, `ExampleDict`.
   - `analysis_inputs.py` — Analysis input data structures.
   - `alphabet.py` — `Alphabet`, `AlphabetChartData`, `AlphabetComparisonData`.
