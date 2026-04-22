@@ -34,7 +34,7 @@ class AlphabetChart(Task, AlphabetChartData, OrderAlphabetUI):
         self.program=program
         Task.__init__(self, program)
         title = _("Alphabet Chart UI for Glyph Ordering and Selection")
-        self.init_chart_data(program)
+        self.init_chart_data()
         # hide_vars requires ui.BooleanVar — set up here, not in backend data class
         from frontend import ui
         self.hide_vars = {g: ui.BooleanVar(value=False) for g in self.order}

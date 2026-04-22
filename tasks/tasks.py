@@ -973,7 +973,6 @@ class ToneFrameDrafter(ui.Window):
     def store(self):
         log.info(_("Saving toneframes dict to file"))
         self.program.settings.storesettingsfile('toneframes')
-
 class Sort(backend.core.sorting_engine.Sort):
     is_sort_task=True
     cvt_sensitive=True
@@ -988,8 +987,6 @@ class Sort(backend.core.sorting_engine.Sort):
                 }
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-
 class SortSyllables(Sort,Segments,Task):
     taskicon = 'iconWord'
     tasktitle = "Sort Word Syllables" #Citation Form Sorting in Tone Frames

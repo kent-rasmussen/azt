@@ -2,6 +2,7 @@
 # coding=UTF-8
 """This module controls manipulation of alphabet charts from LIFt databases"""
 import os, sys
+from utilities.i18n import _
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
@@ -606,7 +607,7 @@ if __name__ == '__main__':
     class _TestChart(AlphabetChartData, OrderAlphabetUI):
         def __init__(self, parent, program, **kwargs):
             self.program = program
-            self.init_chart_data(program, **kwargs)
+            self.init_chart_data(**kwargs)
             from frontend import ui as _ui
             self.hide_vars = {g: _ui.BooleanVar(value=False) for g in self.order}
             for i in self.hide_vars.values():
