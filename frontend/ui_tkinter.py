@@ -278,6 +278,16 @@ class Theme(object):
             exit()
         for k in self.themes[self.name]:
             setattr(self,k,self.themes[self.name][k])
+        # if not hasattr(self,'foreground'):
+        #     self.foreground=self.themes[self.name]['background']
+        # if not hasattr(self,'troughcolor'):
+        #     self.troughcolor=self.themes[self.name]['activebackground']
+        # if not hasattr(self,'bordercolor'):
+        #     self.bordercolor=self.themes[self.name]['activebackground']
+        # if not hasattr(self,'darkcolor'):
+        #     self.darkcolor=self.themes[self.name]['activebackground']
+        # if not hasattr(self,'lightcolor'):
+        #     self.lightcolor=self.themes[self.name]['activebackground']
         self.themettk = tkinter.ttk.Style()
         self.themettk.theme_use('clam')
         self.themettk.configure("TProgressbar", #T+class.name
@@ -929,6 +939,10 @@ class UI():
     backgrounds=['background','bg','troughcolor']
     pads=['ipady','ipadx','pady','padx']
     active_color=['activebackground','selectcolor','highlightcolor']
+    notebook_colors=['bordercolor',
+                    # 'foreground', controls font
+                    # 'lightcolor','darkcolor' controls ?
+                    ]
     def pre_tk_init(self,**kwargs):
         return kwargs
     def post_tk_init(self):
@@ -958,7 +972,7 @@ class UI():
         self.withdrawn=kwargs.pop("withdrawn",True if isinstance(self,Root)
                                                     else False)
         kwargs=self.pre_tk_init(**kwargs)
-        if self.parent:
+        if hasattr(self,'parent') and self.parent:
             super().__init__(self.parent, *args, **kwargs)
         else: #Don't send for Root
             super().__init__(*args, **kwargs)
@@ -1306,6 +1320,18 @@ class Progressbar(Childof,Gridded,UI,tkinter.ttk.Progressbar):
             kwargs['mode']='determinate' #or 'indeterminate'
         super().__init__(parent, *args, **kwargs)
         self.post_tk_init()
+class Style(tkinter.ttk.Style):
+    def apply_theme(self,w):
+        for k in UI.backgrounds+UI.pads+UI.active_color+UI.notebook_colors:
+            try:
+                assert hasattr(self.theme,k),f"No {k} in theme"
+                self.configure(w,**{k:getattr(self.theme,k,None)})
+                log.info(f"set {w}.{k} to {getattr(self.theme,k,None)} in Style")
+            except Exception as e:
+                log.info(f"Style.apply_theme: {e}")
+    def __init__(self, *args, **kwargs):
+        self.theme=kwargs.pop('theme',None)
+        super().__init__(*args, **kwargs)
 class Notebook(Childof,Gridded,UI,tkinter.ttk.Notebook):
     def post_tk_init(self):
         super().post_tk_init()

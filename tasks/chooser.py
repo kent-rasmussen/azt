@@ -44,13 +44,7 @@ class TaskChooser(Task):
         else:
             return _("Analysis & Decision Tasks")
     def dobuttonkwargs(self):
-        return {'text':_("Reports"),
-                'fn':self.choosereports,
-                'font':'title',
-                'compound':'top', #image bottom, left, right, or top of text
-                'image':self.program.theme.photo['iconReportLogo'],
-                'sticky':'ew'
-                }
+        pass
     def choosereports(self):
         self.status.bigbutton.destroy()
         self.showreports=True
@@ -98,10 +92,7 @@ class TaskChooser(Task):
         """This function pulls user out of a task, to select from any
         of tasks whose prerequisites are minimally satisfied."""
         self.ui.withdraw()
-        if not self.showreports:
-            self.status.finalbuttons()
         self.i_am_mainwindow()
-        self.maketitle()
         if self.program.task and self.task.ui.winfo_exists():
             self.program.task.ui.on_quit()
         self.whatsdone()
@@ -109,7 +100,7 @@ class TaskChooser(Task):
             self.ui._build_chooser_tabs(self.makeoptions_for,self.maketask)
         else:
             self.ui._populate_chooser_tabs()
-        # Select the right tab based on how we got here
+        # Select the right tab
         if self.showreports:
             self.ui._select_chooser_tab('reports')
             self.showreports=False
@@ -118,7 +109,6 @@ class TaskChooser(Task):
             self.showingreports=False
         else:
             self.ui._select_chooser_tab('datacollection')
-        self.i_am_mainwindow()
         self.ui.deiconify()
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
