@@ -1406,6 +1406,13 @@ class TaskDressing(HasMenus,ui.Window):
         self.notebook.add(self.tab_analysis,text=_("Analysis & Decisions"))
         self.notebook.add(self.tab_reports,text=_("Reports"))
         self.notebook.bind('<<NotebookTabChanged>>',self._on_chooser_tab_changed)
+        style = ui.Style(theme=self.theme)
+        style.configure('TNotebook.Tab', font=self.theme.fonts['normal'])
+        style.apply_theme('TNotebook.Tab')
+        style.apply_theme('TNotebook')
+        style.map("TNotebook.Tab", background=[("active", self.theme.activebackground)])
+        style.map("TNotebook.Tab", padding=[("selected", (50,5))])
+        style.map("TNotebook.Tab", font=[("selected", self.theme.fonts['title'])])
         self._populate_chooser_tabs()
     def _populate_chooser_tabs(self):
         """Repopulate all three tab frames with current task buttons."""
@@ -1428,7 +1435,8 @@ class TaskDressing(HasMenus,ui.Window):
         columnspan=1
         for n,o in enumerate(tasktuples):
             if n is optionlist_maxi and int(n/bpr):
-                columnspan=bpr-n%bpr
+                columnspan=bpr-n%bpr #*.02125
+            screen_wrap=self.program.tk_root.winfo_width()*self.theme.scale*.8
             b=ui.Button(frame,
                         text=o[1],
                         command=lambda t=o[0]:self._maketask_fn(t),
@@ -1436,9 +1444,10 @@ class TaskDressing(HasMenus,ui.Window):
                         row=int(n/bpr),
                         compound='top',
                         image=o[2],
-                        wraplength=int(self.program.tk_root.wraplength*.02125/bpr),
+                        wraplength=int(screen_wrap/bpr),
                         anchor='n',
                         sticky='nesw',
+                        norender=True,
                         columnspan=columnspan
                         )
             try:
@@ -1446,7 +1455,7 @@ class TaskDressing(HasMenus,ui.Window):
             except AttributeError:
                 log.info(_("Task {task} doesn\u2019t seem to have a tooltip.").format(task=o[0]))
         for c in range(bpr):
-            frame.grid_columnconfigure(c, weight=1, uniform=c)
+            frame.grid_columnconfigure(c, weight=1, uniform=category+str(c))
     def _select_chooser_tab(self,tab_name):
         tab_map={
             'datacollection':self.tab_datacollection,
@@ -1470,7 +1479,6 @@ class TaskDressing(HasMenus,ui.Window):
             task.datacollection=False
             task.showreports=False
             task.showingreports=True
-        self.maketitle()
     def shutdowntask(self):
         self.program.task=self # in case this hasn't been set yet
         self.withdraw()
@@ -1577,12 +1585,13 @@ class TaskDressing(HasMenus,ui.Window):
                                                         task=self._tasktitle()))
             title+=f' ({self.program.theme.name})'
         self.title(title)
-        t=ui.Label(self.frame, font='title',
+        if self is not self.program.taskchooser.ui:
+            t=ui.Label(self.frame, font='title',
                 text=self._tasktitle(),
                 row=0, column=0, columnspan=2)
-        tasks=_("Tasks")
-        t.tt=ui.ToolTip(t,text=_("click on the task you want to do"))
-        # t.bind("<Button-1>",self.program.taskchooser.gettask)
+            tasks=_("Tasks")
+            t.tt=ui.ToolTip(t,text=_("click on the task you want to do"))
+            # t.bind("<Button-1>",self.program.taskchooser.gettask)
     def fullscreen(self):
         w, h = self.parent.winfo_screenwidth(), self.parent.winfo_screenheight()
         self.parent.geometry("%dx%d+0+0" % (w, h))
