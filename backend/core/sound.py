@@ -1,6 +1,5 @@
-from utilities import file, logsetup
-import utilities.logsetup as log
-from utilities import rx
+from utilities import file, rx, logsetup
+log = logsetup.getlog(__name__)
 import io_put.sound as sound #assuming this is the current location of AudioInterface
 
 class Sound(object):
@@ -20,6 +19,7 @@ class Sound(object):
              self.pyaudio=sound.AudioInterface()
 
     def makesoundsettings(self):
+        self.pyaudiocheck()
         if not hasattr(self.program.settings,'soundsettings'):
             log.info("Making new soundsettings object")
             self.program.settings.soundsettings=sound.SoundSettings(self.pyaudio,
@@ -72,15 +72,12 @@ class Sound(object):
         return file.exists(self.audioURL(relfilename))
 
     def audioURL(self,relfilename):
-        return str(file.getdiredurl(self.audiodir,relfilename))
+        return str(file.getdiredurl(self.program.settings.audiodir,relfilename))
 
     def hassoundfile(self,node,recheck=False):
         return node.hassoundfile(recheck)
 
     def __init__(self, **kwargs):
-        self.audiodir=self.program.settings.audiodir
-        self.audiolang=self.program.params.audiolang()
-        self.analang=self.program.db.analang
         super().__init__(**kwargs)
 
 class Record(Sound):

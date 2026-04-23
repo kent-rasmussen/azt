@@ -94,7 +94,6 @@ class Categories:
         check=kwargs.get('check',self.program.params.check())
         profile=kwargs.get('profile',self.program.slices.profile())
         nocheck=kwargs.get('nocheck',False)
-        guid=None
         if kwargs.get('updateverification'):
             add=self.verificationcode(check=check,group=group)
             noconfirmation=True #Should test w/wo this; time difference?

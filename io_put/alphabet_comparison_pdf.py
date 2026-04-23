@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # coding=UTF-8
-import os
 import random
-import platform
 from utilities import logsetup
 from utilities.i18n import _
 try:
@@ -10,10 +8,6 @@ try:
     from reportlab.lib.pagesizes import A4, letter, landscape
     from reportlab.lib.units import inch, cm
     from reportlab.lib.utils import ImageReader
-    from reportlab.pdfbase import pdfmetrics
-    from reportlab.pdfbase.ttfonts import TTFont
-    from reportlab.pdfbase.pdfmetrics import registerFontFamily
-    from reportlab.rl_config import TTFSearchPath
     from reportlab.lib import colors
     REPORTLAB_AVAILABLE = True
 except ImportError:
@@ -22,55 +16,7 @@ except ImportError:
 log = logsetup.getlog(__name__)
 logsetup.setlevel('INFO', log)
 
-# Re-use font registration logic from alphabet_chart_pdf.py
-if platform.system() == 'Windows':
-    for path in [r'C:\Windows\Fonts',
-            r''.join([r'C:\Users\\',
-                    str(os.getlogin()),
-                    r'\AppData\Local\Microsoft\Windows\Fonts'
-                    ])
-            ]:
-        TTFSearchPath.append(path)
-for i in list(TTFSearchPath):
-    TTFSearchPath.append(i+'/*')
-# log.info(f"Looking for fonts in {TTFSearchPath}")
-# for f in TTFSearchPath:
-#     log.info(f"in {f} found {glob.glob(f)}")
-
-def register_fonts():
-    """Registers the specified font family if available."""
-    try:
-        # Check if already registered to avoid errors or re-registering
-        for filename in ['CharisSIL','Charis']:
-            try:
-                pdfmetrics.getFont(f'{filename}-Regular')
-                return True
-            except:
-                pass
-
-            pdfmetrics.registerFont(TTFont('Charis-Regular', f'{filename}-Regular.ttf'))
-            pdfmetrics.registerFont(TTFont('Charis-Bold', f'{filename}-Bold.ttf'))
-            pdfmetrics.registerFont(TTFont('Charis-Italic', f'{filename}-Italic.ttf'))
-            pdfmetrics.registerFont(TTFont('Charis-BoldItalic', f'{filename}-BoldItalic.ttf'))
-            registerFontFamily('Charis',
-                                normal='Charis-Regular',
-                                bold='Charis-Bold',
-                                italic='Charis-Italic',
-                                boldItalic='Charis-BoldItalic')
-        
-        pdfmetrics.registerFont(TTFont('Andika-Regular', 'Andika-Regular.ttf'))
-        pdfmetrics.registerFont(TTFont('Andika-Bold', 'Andika-Bold.ttf'))
-        pdfmetrics.registerFont(TTFont('Andika-Italic', 'Andika-Italic.ttf'))
-        pdfmetrics.registerFont(TTFont('Andika-BoldItalic', 'Andika-BoldItalic.ttf'))
-        registerFontFamily('Andika',
-                            normal='Andika-Regular',
-                            bold='Andika-Bold',
-                            italic='Andika-Italic',
-                            boldItalic='Andika-BoldItalic')
-        return True
-    except Exception as e:
-        log.warning(f"Could not register fonts: {e}")
-        return False
+from io_put.pdf_fonts import register_fonts
 
 def draw_triangular_examples(c, x, y, width, height, items, text_font, font_size):
     """

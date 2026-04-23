@@ -256,9 +256,10 @@ class WordCollectionwRecordings(WordCollection,Record):
                         self.program.db.tonelangname(machine=True),
                         value=self.transcription_tone_var.get()
                         )
-    def __init__(self, parent):
-        Record.__init__(self,parent)
-        WordCollection.__init__(self,parent)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Record.__init__(self,**kwargs)
+        # WordCollection.__init__(self,**kwargs)
 class WordCollectionLexeme(WordCollection,Task):
     def tooltip(self):
         return _("Don't use this task.")
@@ -286,45 +287,38 @@ class WordCollectionCitationwRecordings(WordCollectionwRecordings,Task):
         return _("This task helps you collect words in citation form through "
                 "recordings with automatic transcription drafts.")
     tasktitle = "Add Words with Audio" # for Citation Forms
-    def __init__(self, program, **kwargs): #frame, filename=None
-        self.ftype=program.params.ftype('lc') #lift.Entry.citationformnodeofentry
-        super().__init__(program=program, **kwargs)
+    def __init__(self, **kwargs): #frame, filename=None
+        super().__init__(**kwargs)
         log.info("Initializing {}".format(_(self.tasktitle)))
         self.getwords()
-class WordCollectionPlural(WordCollection,Task):
+class _WordCollectionSecondForm(WordCollection,Task):
+    """Base for word collection tasks that require a second form field."""
+    ftype_code = None  # override in subclasses
+    form_label = None  # override in subclasses
+    def __init__(self, program, **kwargs):
+        self.ftype=program.params.ftype(self.ftype_code)
+        super().__init__(program=program, **kwargs)
+        if not self.program.settings.secondformfieldsOK():
+            ErrorNotice(_("To collect {form} forms, you must first "
+                            "define which fields should contain those forms"
+                            ).format(form=self.form_label),
+                            wait=True)
+            self.shutdowntask()
+            return
+        log.info("Initializing {}".format(_(self.tasktitle)))
+        self.getwords()
+class WordCollectionPlural(_WordCollectionSecondForm):
     def tooltip(self):
         return _("This task helps you collect plural word forms.")
     tasktitle = "Add plural forms"
-    def __init__(self, program, **kwargs):
-        self.ftype=program.params.ftype('pl')
-        super().__init__(program=program, **kwargs)
-        if not self.program.settings.secondformfieldsOK():
-            ErrorNotice(_("To collect Plural forms, you must first "
-                            "define which fields should contain those forms"),
-                            wait=True)
-            self.shutdowntask()
-            return
-        log.info("Initializing {}".format(_(self.tasktitle)))
-        #Status frame is 0,0
-        # self.nodetag='citation' #lift.Entry.citationformnodeofentry
-        self.getwords()
-class WordCollectionImperative(WordCollection,Task):
+    ftype_code = 'pl'
+    form_label = "Plural"
+class WordCollectionImperative(_WordCollectionSecondForm):
     def tooltip(self):
         return _("This task helps you collect imperative word forms.")
     tasktitle = "Add imperative forms"
-    def __init__(self, program, **kwargs):
-        self.ftype=program.params.ftype('imp')
-        super().__init__(program=program, **kwargs)
-        if not self.program.settings.secondformfieldsOK():
-            ErrorNotice(_("To collect Imperative forms, you must first "
-                            "define which fields should contain those forms"),
-                            wait=True)
-            self.shutdowntask()
-            return
-        log.info("Initializing {}".format(_(self.tasktitle)))
-        #Status frame is 0,0
-        # self.nodetag='citation' #lift.Entry.citationformnodeofentry
-        self.getwords()
+    ftype_code = 'imp'
+    form_label = "Imperative"
 class ParseWords(Parse,Task):
     taskicon = 'iconWord'
     def tooltip(self):
@@ -428,13 +422,11 @@ class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,Task):
                 'tttext':tttext
                 }
     tasktitle = "Add and Parse Words with Audio" # for Citation Forms
-    def __init__(self, program, **kwargs):
+    def __init__(self, **kwargs):
         log.info("Initializing {}".format(_(self.tasktitle)))
-        self.ftype=program.params.ftype('lc') #always correct?
-        # self.nodetag='citation'
-        super().__init__(program=program, **kwargs)
+        super().__init__(**kwargs)
         self.program.taskchooser.withdraw()
-        fn=self.getwords()#?
+        fn=self.getwords()
 class WordsParse(Parse,WordCollection,Task):
     taskicon = 'iconWord'
     def tooltip(self):
@@ -990,6 +982,7 @@ class Sort(backend.core.sorting_engine.Sort):
 class SortSyllables(Sort,Segments,Task):
     taskicon = 'iconWord'
     tasktitle = "Sort Word Syllables" #Citation Form Sorting in Tone Frames
+    cvt='S'
     def tooltip(self):
         return _("This task helps you sort words in citation form by whole "
                 "word syllable profiles.")
@@ -1037,7 +1030,6 @@ class SortSyllables(Sort,Segments,Task):
             w=self.program.tk_root
         w.drive_work(gen, on_done=after_presort)
     def __init__(self, **kwargs):
-        program.params.cvt('S') #syllable
         super().__init__(**kwargs)
 class SortCV(Sort,Segments,Task):
     """docstring for SortCV."""
@@ -1139,11 +1131,11 @@ class Transcribe(Sound,Categories,Task):
     def updateform(self,*args):
         self.set_ok_w_form(self.updateerror())
     def refresh_status_buttons(self,*args):
-        for i in [args]:
-            if (i in self.status.glyphbuttons 
-                    and self.status.glyphbuttons[i].winfo_exists()):
-                self.status.glyphbuttons[self.group].destroy()
-                self.status.glyphbuttons[new].destroy()
+        if hasattr(self, 'status') and hasattr(self.status, 'glyphbuttons'):
+            for i in args:
+                if (i in self.status.glyphbuttons
+                        and self.status.glyphbuttons[i].winfo_exists()):
+                    self.status.glyphbuttons[i].destroy()
     def switchgroups(self,comparison=None):
         #this doesn't save!
         if (not hasattr(self,'group') or not hasattr(self,'group_comparison')
@@ -1818,6 +1810,7 @@ class ReportCitation(Report,Segments,Task):
     """docstring for ReportCitation."""
     tasktitle = "Alphabet Report (Not background)" # on One Data Slice
     taskicon = 'iconReport'
+    report_image = 'Report'
     def tooltip(self):
         return _("This report gives you reports for one lexical "
                 "category, in one syllable profile. \nIt does "
@@ -1827,8 +1820,8 @@ class ReportCitation(Report,Segments,Task):
         return {'text':_("Report!"),
                 'fn':self.do,
                 'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.program.theme.photo['Report'],
+                'compound':'bottom',
+                'image':self.program.theme.photo[self.report_image],
                 'sticky':'ew'
                 }
     def runcheck(self):
@@ -1870,59 +1863,23 @@ class ReportCitation(Report,Segments,Task):
         self.do=self.getresults
         self.program.status.group(None) #default to reports with all groups
 class ReportCitationBackground(Background,ReportCitation):
-    """docstring for ReportCitation."""
     tasktitle = "Alphabet Report" # on One Data Slice
-    def __init__(self, program, **kwargs):
-        super().__init__(program=program, **kwargs)
-        """Does the above not work? was turned off..."""
-        # self.do=lambda fn=self.getresults:self.background(fn)
-        # self.status.redofinalbuttons() #because the fns changed
 class ReportCitationMulticheckBackground(Multicheck,Background,ReportCitation):
-    """docstring for ReportCitation."""
     tasktitle = "Alphabet Report (checks)" # on One Data Slice
-    def __init__(self, program, **kwargs):
-        super().__init__(program=program, **kwargs)
-
 class ReportCitationMultichecksliceBackground(Multicheckslice,Background,ReportCitation):
-    """docstring for ReportCitation."""
     tasktitle = "Alphabet Report (slices/checks)" # on One Data Slice
-    def __init__(self, program, **kwargs):
-        super().__init__(program=program, **kwargs)
-
 class ReportCitationByUF(ByUF,ReportCitation):
-    """docstring for ReportCitation."""
     tasktitle = "Alphabet Report by Tone group (not background)" # on One Data Slice
-    def __init__(self, program, **kwargs):
-        super().__init__(program=program, **kwargs)
 class ReportCitationByUFMulticheckBackground(Multicheck,Background,ReportCitationByUF):
-    """docstring for ReportCitation."""
     tasktitle = "Alphabet Report by Tone group (checks)" # on One Data Slice
-    def __init__(self, program, **kwargs):
-        super().__init__(program=program, **kwargs)
-
 class ReportCitationByUFMultichecksliceBackground(Multicheckslice,Background,ReportCitationByUF):
-    """docstring for ReportCitation."""
     tasktitle = "Alphabet Report by Tone Group (slices/checks)" # on One Data Slice
-    def __init__(self, program, **kwargs):
-        super().__init__(program=program, **kwargs)
-
 class ReportCitationByUFBackground(ByUF,ReportCitationBackground):
-    """docstring for ReportCitation."""
     tasktitle = "Alphabet Report by Tone group" # on One Data Slice
-    def __init__(self, program, **kwargs):
-        super().__init__(program=program, **kwargs)
 class ReportCitationMultislice(MultisliceS,ReportCitation):
     """docstring for ReportCitation."""
     tasktitle = "Multislice Alphabet Report" # on Citation Forms
-    def dobuttonkwargs(self):
-        return {'text':_("Report!"),
-                'fn':self.do,
-                # column=0,
-                'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.program.theme.photo['VCCVRepcomp'],
-                'sticky':'ew'
-                }
+    report_image = 'VCCVRepcomp'
     def __init__(self, program, **kwargs): #frame, filename=None
         super().__init__(program=program, **kwargs)
         self.cvtstodo=['V','C','CV']
@@ -1944,14 +1901,13 @@ class ReportConsultantCheck(Report,Tone,Task):
                 'image':self.program.theme.photo['icontall'],
                 'sticky':'ew'
                 }
-    def __init__(self, program, **kwargs): #frame, filename=None
-        super().__init__(program=program, **kwargs)
 
 class ReportCitationT(Report,Tone,Task):
     """docstring for ReportCitationT."""
     tasktitle = "Tone Report (not backgrounded)"
     taskicon = 'iconTRep'
     do_not_show_cvt=True
+    report_image = 'TRep'
     def tooltip(self):
         return _("This report gives you report for one lexical "
                 "category, in one syllable profile. \nIt does "
@@ -1960,8 +1916,8 @@ class ReportCitationT(Report,Tone,Task):
         return {'text':_("Report!"),
                 'fn':self.do,
                 'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.program.theme.photo['TRep'],
+                'compound':'bottom',
+                'image':self.program.theme.photo[self.report_image],
                 'sticky':'ew'
                 }
     def __init__(self, program, **kwargs):
@@ -1969,23 +1925,12 @@ class ReportCitationT(Report,Tone,Task):
         self.do=self.tonegroupreport
         self.bylocation=False
 class ReportCitationTBackground(Background,ReportCitationT):
-    """docstring for ReportCitationT."""
     tasktitle = "Tone Report"
     taskicon = 'iconTRep'
     def tooltip(self):
         return _("This report gives you report for one lexical "
                 "category, in one syllable profile. \nIt does "
                 "this for all data sorted in tone frames.")
-    def dobuttonkwargs(self):
-        return {'text':_("Report!"),
-                'fn':self.do,
-                'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.program.theme.photo['TRep'],
-                'sticky':'ew'
-                }
-    def __init__(self, program, **kwargs):
-        super().__init__(program=program, **kwargs)
 class ReportCitationTL(ReportCitationT):
     """docstring for ReportCitationT."""
     tasktitle = "Tone Report (by frames, not backgrounded)"
@@ -1997,84 +1942,39 @@ class ReportCitationTL(ReportCitationT):
         super().__init__(program=program, **kwargs)
         self.bylocation=True
 class ReportCitationTLBackground(Background,ReportCitationTL):
-    """docstring for ReportCitationT."""
     tasktitle = "Tone Report (by frames)"
     taskicon = 'iconTRep'
     def tooltip(self):
         return _("This report gives you report for one lexical "
                 "category, in one syllable profile. \nIt does "
                 "this for all data sorted in tone frames, organized by frame.")
-    def dobuttonkwargs(self):
-        return {'text':_("Report!"),
-                'fn':self.do,
-                'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.program.theme.photo['TRep'],
-                'sticky':'ew'
-                }
-    def __init__(self, program, **kwargs):
-        super().__init__(program=program, **kwargs)
 class ReportCitationMultisliceT(MultisliceT,ReportCitationT):
-    """docstring for ReportCitationT."""
     tasktitle = "Multislice Tone Report (not background)"
     taskicon = 'iconTRepcomp'
+    report_image = 'TRepcomp'
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
                 "categories, and across multiple syllable profiles. \nIt does "
                 "this for all data sorted in tone frames, organized by word.")
-    def dobuttonkwargs(self):
-        return {'text':_("Report!"),
-                'fn':self.do,
-                'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.program.theme.photo['TRepcomp'],
-                'sticky':'ew'
-                }
-    def __init__(self, program, **kwargs):
-        super().__init__(program=program, **kwargs)
 class ReportCitationMultisliceTL(MultisliceT,ReportCitationTL):
-    """docstring for ReportCitationT."""
     tasktitle = "Multislice Tone Report (not background)"
     taskicon = 'iconTRepcomp'
+    report_image = 'TRepcomp'
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
                 "categories, and across multiple syllable profiles. \nIt does "
                 "this for all data sorted in tone frames, organized by word.")
-    def dobuttonkwargs(self):
-        return {'text':_("Report!"),
-                'fn':self.do,
-                'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.program.theme.photo['TRepcomp'],
-                'sticky':'ew'
-                }
-    def __init__(self, program, **kwargs):
-        super().__init__(program=program, **kwargs)
 class ReportCitationMultisliceTBackground(Background,ReportCitationMultisliceT):
-    """docstring for ReportCitationT."""
     tasktitle = "Multislice Tone Report"
     taskicon = 'iconTRepcomp'
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
                 "categories, and across multiple syllable profiles. \nIt does "
                 "this for all data sorted in tone frames, organized by word.")
-    def dobuttonkwargs(self):
-        return {'text':_("Report!"),
-                'fn':self.do,
-                'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.program.theme.photo['TRepcomp'],
-                'sticky':'ew'
-                }
-    def __init__(self, program, **kwargs):
-        super().__init__(program=program, **kwargs)
 class ReportCitationMultisliceTLBackground(Background,ReportCitationMultisliceTL):
-    """docstring for ReportCitationT."""
     tasktitle = "Multislice Tone Report (by location)"
     taskicon = 'iconTRepcomp'
     def tooltip(self):
         return _("This report gives you reports across multiple lexical "
                 "categories, and across multiple syllable profiles. \nIt does "
                 "this for all data sorted in tone frames, organized by word.")
-    def __init__(self, program, **kwargs):
-        super().__init__(program=program, **kwargs)

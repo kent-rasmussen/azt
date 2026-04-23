@@ -5,37 +5,19 @@ Backend sorting_engine.py delegates all UI widget creation here, so it
 has zero frontend imports.
 """
 from frontend import ui
+from frontend.presenter_base import PresenterBase
 from frontend.sort_buttons import (SortButtonFrame, SortGroupButtonFrame,
                                    SortGlyphGroupButtonFrame)
 from utilities.i18n import _
 
 
-class SortPresenter:
+class SortPresenter(PresenterBase):
     """Handles all UI rendering for Sort, Verify, and Join workflows."""
     def __init__(self, theme):
         self.theme=theme
-    # -- Widget factories (used by multiple methods) --
-
-    def label(self, parent, **kwargs):
-        return ui.Label(parent, **kwargs)
-
-    def frame(self, parent, **kwargs):
-        return ui.Frame(parent, **kwargs)
-
-    def button(self, parent, **kwargs):
-        return ui.Button(parent, **kwargs)
-
-    def string_var(self, **kwargs):
-        return ui.StringVar(**kwargs)
-
-    def scrolling_frame(self, parent, **kwargs):
-        return ui.ScrollingFrame(parent, **kwargs)
 
     def check_button(self, parent, **kwargs):
         return ui.CheckButton(parent, **kwargs)
-
-    def entry_field(self, parent, **kwargs):
-        return ui.EntryField(parent, **kwargs)
 
     def progressbar(self, parent, **kwargs):
         return ui.Progressbar(parent, **kwargs)

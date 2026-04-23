@@ -28,6 +28,21 @@ class Sort(Categories):
     """This class takes methods common to all sort checks, and gives sort
     checks a common identity."""
     show_buttoncolumnsline=True #does this belong here?
+
+    def _get_safe_window(self):
+        """Return runwindow if it exists and is viewable, else tk_root."""
+        try:
+            self.ui.runwindow.winfo_viewable()
+            return self.ui.runwindow
+        except (AttributeError, RuntimeError):
+            return self.program.tk_root
+
+    def _safe_quit_runwindow(self):
+        """Quit runwindow if it exists, silently ignore if not."""
+        try:
+            self.ui.runwindow.on_quit()
+        except AttributeError:
+            log.info("Looks like we wanted to kill a non-existent runwindow.")
     @property
     def sort_ui(self):
         """Lazy-init presenter; available after task init wires program.sort_ui."""
@@ -108,15 +123,13 @@ class Sort(Categories):
             new=False
             title=_("Modify Existing Ad Hoc Sort Group for {group} Group").format(group=ps)
         self.ui.runwindow.title(title)
-        padx=50
-        pady=10
         p.label(self.ui.runwindow.frame,text=title,font='title',
                 ).grid(row=0,column=0,sticky='ew')
         allpssenses=self.program.slices.sensesbyps(ps)
         if len(allpssenses)>70:
             self.ui.runwindow.waitdone()
             text=_("This is a large group ({count})! Are you in the right "
-                    "lexical category?").format(count=len(allpssensids))
+                    "lexical category?").format(count=len(allpssenses))
             log.error(text)
             w=p.label(self.ui.runwindow.frame,text=text)
             w.grid(row=1,column=0,sticky='ew')
@@ -196,10 +209,7 @@ class Sort(Categories):
         else:
             self.program.settings.setcheck(toverify=True)
         #if neither, this should call nprofile
-        try:
-            self.ui.runwindow.on_quit()
-        except AttributeError:
-            log.info("Looks like we wanted to kill a non-existent runwindow.")
+        self._safe_quit_runwindow()
         self.runcheck()
     def nprofile(self):
         r=self.program.status.nextprofile(tosort=True)
@@ -207,21 +217,14 @@ class Sort(Categories):
             self.program.settings.setprofile(r)
         else:
             self.program.settings.setprofile(toverify=True)
-        #if neither, this should give up with a congrats and comment to pick another ps
-        try:
-            self.ui.runwindow.on_quit()
-        except AttributeError:
-            log.info("Looks like we wanted to kill a non-existent runwindow.")
+        self._safe_quit_runwindow()
         self.runcheck()
     def nps(self):
         self.program.slices.nextps()
         r=self.program.status.nextprofile(tosort=True)
         if not r:
             self.program.status.nextprofile(toverify=True)
-        try:
-            self.ui.runwindow.on_quit()
-        except AttributeError:
-            log.info("Looks like we wanted to kill a non-existent runwindow.")
+        self._safe_quit_runwindow()
         self.runcheck()
     def runcheck(self):
         self.program.settings.storesettingsfile()
@@ -246,12 +249,7 @@ class Sort(Categories):
         def after_presort():
             self.updatesortingstatus() # Not just tone anymore
             self.maybesort(firstrun=True)
-        try:
-            self.ui.runwindow.winfo_viewable()
-            w=self.ui.runwindow
-        except:
-            w=self.program.tk_root
-        w.drive_work(gen, on_done=after_presort)
+        self._get_safe_window().drive_work(gen, on_done=after_presort)
     def marksorted(self,sense,group,verified=False):
         """These functions are only appropriate when sorting or unsorting senses.
         when moving stuff around between groups (in renaming groups), these don't 
@@ -325,11 +323,7 @@ class Sort(Categories):
         log.info("Starting maybesort with did={did}".format(did=[k for k,v in self.did.items() if v]))
         if self.ui.exitFlag.istrue(): #if the task has been shut down, stop
             return
-        try:
-            self.ui.runwindow.winfo_viewable()
-            w=self.ui.runwindow
-        except:
-            w=self.program.tk_root
+        w=self._get_safe_window()
         if any(i.mature for i in self.program.data_repo.values()):
             log.info("Found mature repo; showing wait")
             w.wait_and_drive_work(
@@ -438,11 +432,7 @@ class Sort(Categories):
                     return
             """all int() groups and macrogroups are gone at this point!"""
             # Aligns all annotations and verifications, then updates forms
-            try:
-                self.ui.runwindow.winfo_viewable()
-                w=self.ui.runwindow
-            except:
-                w=self.program.tk_root
+            w=self._get_safe_window()
             def after_annotations():
                 if any(i.mature for i in self.program.data_repo.values()):
                     w.wait_and_drive_work(
@@ -489,10 +479,7 @@ class Sort(Categories):
             fn() #only on first two ifs, calls runcheck w/resetsortbutton
     def update_to_cvt(self):
         log.info(_("Group is on a different CVT; updating to that to sort."))
-        try:
-            self.ui.runwindow.on_quit()
-        except:
-            pass
+        self._safe_quit_runwindow()
         self.program.taskchooser.maketask(f"Sort{self.program.params.cvt()}",
                                         sort_immediately=self.group)
     def sort_on_group_by_item(self,item):
@@ -569,11 +556,7 @@ class Sort(Categories):
                 self.program.params.cvt(cvt)
             self.name_new_glyphs() #keep cvt the same
             return
-        try:
-            self.ui.runwindow.winfo_viewable()
-            w=self.ui.runwindow
-        except:
-            w=self.program.tk_root
+        w=self._get_safe_window()
         def after_annotations():
             error=self.update_annotations_errors
             if error:

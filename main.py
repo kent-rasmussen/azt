@@ -17,7 +17,6 @@ program={'name':'A-Z+T',
         'Email':'kent_rasmussen@sil.org',
         'exceptiononload':False #for now
         }
-# program['testing']=True # eliminates Error screens and zipped logs, repos
 import platform
 program['hostname']=platform.uname().node
 from utilities import file
@@ -33,15 +32,10 @@ Other levels:'WARNING','ERROR','CRITICAL'
 """
 from utilities.utilities import *
 from utilities import logsetup
-# program['loglevel']='INFO' #set here for now, if not 'INFO', or
-log=logsetup.getlog(__name__) #not ever a module, add loglevel if not 'INFO'
-# logsetup.setlevel(program['loglevel'])
+log=logsetup.getlog(__name__)
+
 """My modules, which should log as above"""
 from io_put import lift, xlp, export
-#import openclipart
-# import profiles #confirm obsolescence and remove!
-# import setdefaults
-# import urls
 from utilities import htmlfns, rx, executables
 from backend import langtags,parser
 from frontend import alphabet_chart
@@ -57,12 +51,6 @@ except Exception as e:
     log.error("Problem importing Sound/pyaudio. Is it installed? {}"
             "".format(e))
     program['exceptiononload']=True
-"""Other people's stuff"""
-# try:
-    
-# except Exception as e:
-#     log.error("Problem importing packaging.version; installed? {}".format(e))
-#     program['exceptiononload']=True
 from utilities import times
 program['start_time'] = times.now()
 import threading
@@ -83,18 +71,11 @@ if program['tkinter']:
         tkinter.CallWrapper = tkintermod.TkErrorCatcher
 from frontend import ui
 import time
-# #for some day...
-# from PIL import Image #, ImageTk
-#import Image #, ImageTk
-# import reports
 import sys
 """for tr:"""
 import locale
 import gettext
 from utilities.i18n import _, set_translator
-import sys
-import os
-# import pprint #for settings and status files, etc.
 import subprocess
 import webbrowser
 
@@ -151,10 +132,6 @@ class Options:
                     }
         for arg in kwargs:
             setattr(self,self.alias(arg),kwargs[arg])
-class Object:
-    def __init__(self,**kwargs):
-        for k in kwargs:
-            setattr(self,k,kwargs[k])
 class App:
     def handle_exception(self, exc_type, exc_value, exc_traceback):
         if issubclass(exc_type, KeyboardInterrupt): #ignore Ctrl-C
@@ -248,7 +225,6 @@ class App:
             return lang
         return curlang
     def getlangfromlocale(self):
-    # log.debug("Looking for interface language in locale.")
         loc,enc=locale.getlocale()
         log.info(f"Found locale {loc}, encoding {enc}")
         if loc:
@@ -532,20 +508,9 @@ class App:
                     wraplength=buttonwraplength,
                     row=2,column=0,
                     pady=20)
-            # log.info(_("Done making update menu"))
         errorw.wait_window(errorw)
         if newtk: #likely never work/needed?
             self.tk_root.mainloop() #This has to be the last thing
-    # def getimagelocationURI(self,sense):
-    #     i=sense.illustrationvalue()
-    #     for d in [self.settings.imagesdir,self.directory]:
-    #         if i and d:
-    #             di=file.getdiredurl(d,i)
-    #             if file.exists(di):
-    #                 return di
-    # def scaledimage(self,image,pixels=150,scaleto='height'):
-    #     """move to theme?"""
-    #     image.scale(self.scale,pixels=pixels,scaleto=scaleto)
     def task_base(self):
         if not self.task:
             return "No task"
@@ -665,6 +630,7 @@ class App:
             self.me=True
             self.testlift='Demo_en' #portion of filename
             self.testtask='SortV' #Will convert from string to class later
+            self.testtask='WordCollectnParsewRecordings'
             # self.default_task='WordCollectnParse'
         else:
             self.me=False
@@ -706,21 +672,6 @@ class App:
             log.error("uncaught exception: %s", traceback.format_exc())
             self.maybe_run_problem()
         sys.exit()
-"""These are non-method utilities I'm actually using."""
-# unlist moved to utilities/utilities.py; available via wildcard import
-# def propagate(self,attr):
-#     """This function pushes an attribute value to all children with that
-#     attribute already set, for widgets that are already there (changing fonts)
-#     """
-#     log.info(self.winfo_children())
-#     for child in self.winfo_children():
-#         # log.info("working on {}".format(child))
-#         if hasattr(child,attr):
-#             # log.info("Found {} value for {} attr, setting {} value".format(
-#             #         getattr(child,attr),attr,getattr(self,attr)
-#             #         ))
-#             setattr(child,attr,getattr(self,attr))
-#             propagate(child,attr=attr)
 from io_put.cawl import loadCAWL  # moved; re-exported for compatibility
 def updateazt(event=None,**kwargs): #should only be parent, for errorroot
     def tryagain(event=None):
@@ -776,30 +727,4 @@ def updateazt(event=None,**kwargs): #should only be parent, for errorroot
             log.info(set(kwargs.keys()))
             log.info(set(['parent']))
 if __name__ == '__main__':
-    """These things need to be done outside of a function, as we need global
-    variables."""
-    # log.info("TaskChooser MRO: {}".format(TaskChooser.mro()))
-    # log.info("ui.Window MRO: {}".format(ui.Window.mro()))
-    # log.info("ui.Exitable MRO: {}".format(ui.Exitable.mro()))
-    """Not translating yet"""
     App(program)
-    """The following are just for testing"""
-    entry=Entry(db, guid='003307da-3636-40cd-aca9-6b0d798055d2')
-    print(entry.lexeme)
-    print(entry.citation)
-
-    import timeit #for testing; remove in production
-    def tests():
-        m=ui.Toplevel()
-        m.title("Program Name Here")
-        ui.Label(m, text='This application checks lexical data, as part '
-                        'of orthography development.').grid(column=0, row=0)
-        m.mainloop()
-    #tests()
-    def test():
-        formsbycvs(C,V,'C1','V1')
-    def timetest():
-                times=1000000000
-                out1=timeit.timeit(test, number=times)
-                print(out1)
-    #timetest() #see which C variable takes more computing time

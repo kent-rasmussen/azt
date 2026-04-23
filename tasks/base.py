@@ -107,6 +107,8 @@ class Task(TaskBase):
         self.program = program
         if hasattr(self,'cvt'):
             self.program.params.cvt(self.cvt)
+        if not hasattr(self,'ftype'):
+            self.ftype=self.program.params.ftype('lc')
         if self.program.taskchooser == self:
             parent=self.program.tk_root
         else:

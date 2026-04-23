@@ -15,6 +15,11 @@ from utilities.encodings import *
 log = logging.getLogger(__name__)
 from utilities.i18n import _
 """Functions moved from main.py"""
+class Object:
+    def __init__(self,**kwargs):
+        for k in kwargs:
+            setattr(self,k,kwargs[k])
+
 def dictofchilddicts(dict,remove=None):
     # This takes a dict[x][y] and returns a dict[y], with all unique values
     # listed for all dict[*][y].

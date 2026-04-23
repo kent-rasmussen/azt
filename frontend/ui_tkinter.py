@@ -673,7 +673,7 @@ class Childof():
         try:
             super().post_tk_init()
         except Exception as e:
-            if type(self).__name__ not in ['ContextMenu']:
+            if type(self).__name__ not in ['ContextMenu','Menu']:
                 log.error(f"post_tk_init failed for {type(self).__name__}: {e}")
     def inherit(self,parent=None,attr=None):
         """This function brings these attributes from the parent, to inherit

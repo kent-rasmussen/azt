@@ -5,6 +5,7 @@ import re
 import datetime
 # import tkinter as tk
 from backend.core.analysis import Analysis
+from backend import parser
 from utilities.utilities import *
 from utilities import file, logsetup, htmlfns
 from io_put import lift
@@ -1029,6 +1030,7 @@ class WordCollection(Segments):
         else:
             self.wordframe.pic=p.image_frame(self.wordframe, url,
                                             pixels=300,
+                                            show_none=True,
                                             row=2, column=0,
                                             columnspan=3, sticky='')
         self.updatereturnbind()
@@ -1594,15 +1596,16 @@ class Parse(Segments):
     def initparsecatalog(self):
         # like if there is a bad affix making bad autoparses...
         self.pss=self.program.db.pss
-        self.parsecatalog=parser.Catalog(self)
-        collector=parser.AffixCollector(self.parsecatalog,self.program.db)
+        self.program.parsecatalog=parser.Catalog(self)
+        collector=parser.AffixCollector(self.program.parsecatalog,
+                                        self.program.db)
         if self.loadfromlift:
             self.ui.wait(_("Loading Affixes"))
             # for i in collector.do():
             for i in collector.getfromlift():
                 # log.info("Progress: {}".format(i))
                 self.waitprogress(i)
-            self.parsecatalog.report()
+            self.program.parsecatalog.report()
             self.ui.waitdone()
     def showwhenready(self):
         try:
@@ -1642,17 +1645,19 @@ class Parse(Segments):
         self.verbalps=self.program.settings.verbalps
         self.loadfromlift=True
         # self.program.settings.makesecondformfieldsOK() #do elsewhere
-        if hasattr(parent,'parsecatalog'):
-            self.parsecatalog=parent.parsecatalog
-        else:
+        if not hasattr(self.program,'parsecatalog'):
             self.initparsecatalog()
-        if hasattr(parent,'parser'):
-            self.parser=parent.parser
-        else:
-            self.parser=parent.parser=parser.Engine(self.parsecatalog,self)
+        self.parsecatalog=self.program.parsecatalog
+        # else:
+        if not hasattr(self.program,'parser'):
+            self.program.parser=parser.Engine(self.parsecatalog,self)
+        #     self.parser=self.program.parser
+        # else:
+        #     self.parser=
+        self.parser=self.program.parser
             #These should come from settings
-            self.parser.autolevel(5) #no auto
-            self.parser.asklevel(0)
+        self.parser.autolevel(5) #no auto
+        self.parser.asklevel(0)
         self.ftype=self.program.params.ftype('lc') #Is this always correct?
         # self.ftype=self.program.params.ftype('lx') #I think once we parse, we want this
         # self.nodetag='citation'

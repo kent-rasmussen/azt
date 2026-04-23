@@ -233,8 +233,9 @@ class Alphabet():
         check=self.parse_verificationcode(x)['check']
         return self.program.params.cvt_of_check(check)
     def glyph_of_item(self,item):
-        for glyph in self.glyph_members():
-            if item in self.glyph_members()[glyph]:
+        gm = self.glyph_members()
+        for glyph, members in gm.items():
+            if item in members:
                 return glyph
     def conflict_code(self,code):
         return code.split('_')[:4]

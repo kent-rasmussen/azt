@@ -391,7 +391,7 @@ class SoundSettings(object):
         # self.defaults() #pick best of actuals
         try:
             assert 'backend.asr' in sys.modules, "ASR module not loaded"
-            # self.initial_ASR_kwargs(analang_obj) #overwritten by UI or file
+            self.initial_ASR_kwargs(analang_obj) #overwritten by UI or file
             self.asrOK=True
         except (Exception,AssertionError) as e:
             log.error("Exception loading ASR: {}".format(e))

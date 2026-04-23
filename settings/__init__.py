@@ -301,7 +301,6 @@ class Settings(SettingsUI):
         to make our modules basename."""
         self.liftnamebase=rx.pymoduleable(file.getfilenamebase(
                                                             self.liftfilename))
-        # re.sub('\.','_', str(
         basename=file.getdiredurl(self.directory,self.liftnamebase)
         self.defaultfile_legacy=basename.with_suffix(f'.CheckDefaults.ini')
         self.defaultfile=basename.with_suffix(f'.{self.program.source_repo.username}'
@@ -319,7 +318,7 @@ class Settings(SettingsUI):
         self.alphabetsettingsfile=basename.with_suffix(".Alphabet.ini")
         self.settingsbyfile() #This just sets self.settings
         for setting in self.settings:
-            savefile=self.settingsfile(setting)#self.settings[setting]['file']
+            savefile=self.settingsfile(setting)
             if not file.exists(savefile):
                 _log.debug(_("{file} doesn't exist!").format(file=savefile))
                 legacy=savefile.with_suffix('.py')
@@ -329,25 +328,19 @@ class Settings(SettingsUI):
             if file.exists(savefile): #Keep around .ini and .dat
                 for r in self.program.data_repo:
                     self.program.data_repo[r].add(savefile)
-        #This line as is causes merge conflicts unnecessarilyː
-        # self.repo_commit() #this will be taken up later, or else done again
     def moveattrstoobjects(self):
-        # _log.info("Glosslangs (in moveattrstoobjects): {}".format(self.glosslangs.langs()))
-        # _log.info(f"moveattrstoobjects done: {self.attrs_moved_to_object}")
         to_do=set(self.fndict)-self.attrs_moved_to_object
         _log.info(f"moveattrstoobjects to do: {to_do}")
         for attr in to_do:
             if hasattr(self,attr):
                 _log.info(_("moving attr {attr} to object ({val})").format(attr=attr,val=getattr(self,attr)))
                 self.fndict[attr](getattr(self,attr))
-                # _log.info("Glosslangs (in moveattrstoobjects): {}".format(self.glosslangs.langs()))
                 if attr not in ['glosslangs']: #obj and attr have same name...
                     delattr(self,attr)
                 self.attrs_moved_to_object.add(attr)
             else:
                 _log.info(_("attr {attr} not found!").format(attr=attr))
         _log.info(_("attrs_moved_to_object={val}").format(val=self.attrs_moved_to_object))
-        # _log.info("Glosslangs (in moveattrstoobjects): {}".format(self.glosslangs.langs()))
     def settingsobjects(self):
         """These should each push and pull values to/from objects"""
         self.fndict=fns={}
@@ -359,25 +352,19 @@ class Settings(SettingsUI):
             fns['glosslang']=self.glosslangs.lang1
             fns['glosslang2']=self.glosslangs.lang2
             fns['glosslangs']=self.glosslangs.langs
-            # fns['toneframes']=self.program.toneframes
-            # fns['status']=self.program.status
             fns['aztrepourls']=self.program.source_repo.remoteurls
-            # fns['status']=self.program.alphabet.status
-            # fns['status']=self.program.status #I think this is redundant
             fns['glyphdict']=self.program.alphabet.glyphdict
             fns['glyph_members']=self.program.alphabet.glyph_members
             fns['glyphs_distinguished']=self.program.alphabet.distinguished
-            fns['alphabet_order']=self.program.alphabet.order#self.alpha_order
+            fns['alphabet_order']=self.program.alphabet.order
             fns['alphabet_ncolumns']=self.alpha_ncolumns
             fns['alphabet_exids']=self.alpha_exids
             fns['alphabet_chart_title']=self.alpha_chart_title
             fns['alphabet_copyright']=self.alpha_copyright
             fns['alphabet_pagesize']=self.alpha_pagesize
             fns['contributors']=self.alphabet_contributors
-            #This seems to break here:
             fns['ps']=self.program.slices.ps
             fns['profile']=self.program.slices.profile
-            # except this one, which pretends to set but doesn't (throws arg away)
             fns['profilecounts']=self.program.slices.slicepriority
             fns['giturls']=self.program.data_repo['git'].remoteurls
             fns['asr_repos']=self.program.soundsettings.asr_repo_tally
@@ -402,25 +389,16 @@ class Settings(SettingsUI):
         else:
             o=self
         for s in self.settings[setting]['attributes']:
-            # _log.info("Looking for {} attr".format(s))
-            # _log.info("{} attr value: {}".format(s,getattr(o,s,'Not Found!')))
-            """This dictionary of functions isn't made until after the objects,
-            at the end of settings init. So this block is not used in
-            conversion, only in later saves."""
+            # fndict is created after objects, at end of settings init;
+            # not used during legacy conversion, only in later saves.
             if hasattr(self,'fndict') and s in self.fndict:
-                # _log.info("Trying to dict {} attr".format(s))
                 try:
                     d[s]=self.fndict[s]()
-                    # _log.info("Value {}={} found in object".format(s,d[s]))
                 except:
                     _log.error(_("Value of {attr} not found in object").format(attr=s))
             elif hasattr(o,s):
                 if getattr(o,s) or setting == 'soundsettings': #store Falses
                     d[s]=getattr(o,s)
-                # _log.info("Set to dict self.{} with value {}, type {}"
-                #         "".format(s,d[s],type(d[s])))
-            # else:
-            #     _log.error("Couldn't find {} in {}".format(s,setting))
         """This is the only glosslang > glosslangs conversion"""
         if 'glosslangs' in d and d['glosslangs'] in [None,[]]:
             if 'glosslang' in d and d['glosslang'] is not None:
@@ -432,7 +410,6 @@ class Settings(SettingsUI):
         return d
     def readsettingsdict(self,settingsdict):
         """This takes a dictionary keyed by attribute names"""
-        # d=settingsdict
         if 'fs' in settingsdict:
             o=self.soundsettings
         else:
@@ -442,8 +419,6 @@ class Settings(SettingsUI):
             if isinstance(v,_configparser.SectionProxy):
                 continue #don't store expty section headers
             elif hasattr(self,'fndict') and s in self.fndict:
-                # _log.info("Trying to read {} to object with value {} and fn "
-                #             "{}".format(s,v,self.fndict[s]))
                 self.fndict[s](v)
             elif s == 'status' and not hasattr(self.program,'status'): #Only load this once
                 d={k:v[k] for k in v if k != 'DEFAULT'}
@@ -453,8 +428,6 @@ class Settings(SettingsUI):
                 hasattr(o,s) and isinstance(getattr(o,s),dict)):
                 getattr(o,s).update(v)
             else:
-                # _log.info("Trying to read {} to {} with value {}, type {}"
-                #             "".format(s,o,v,type(v)))
                 setattr(o,s,v)
         return settingsdict
     def storesettingsfile(self,setting='defaults'):
@@ -484,8 +457,6 @@ class Settings(SettingsUI):
                 domain_mgr = getattr(self.mgr, domain_name)
                 data = domain_mgr.load()
                 if data:
-                    # _log.info(_("Loaded {setting} settings from new {domain} domain").format(setting=setting, domain=domain_name))
-                    # _log.info(_("Loaded {data}").format(data=data))
                     self.readsettingsdict(data)
                 if setting == 'status' and not hasattr(self.program,'status'):
                     self.makestatus({}) #make status anyway, just once                    
@@ -515,9 +486,7 @@ class Settings(SettingsUI):
         fields are NOT saved to file!).
         These are check related defaults; others in lift.get"""
         self.defaultstoclear={'ps':[
-                            'profile' #do I want this?
-                            # 'name',
-                            # 'subcheck'
+                            'profile'
                             ],
                         'analang':[
                             'glosslangs',
@@ -535,12 +504,9 @@ class Settings(SettingsUI):
                             'regexCV'
                             ],
                         'group_comparison':[],
-                        'profile':[
-                            # 'name'
-                            ],
+                        'profile':[],
                         'cvt':[
                             'check',
-                            # 'subcheck'
                             ],
                         'fs':[],
                         'sample_format':[],
@@ -559,7 +525,7 @@ class Settings(SettingsUI):
             fields=self.settings['defaults']['attributes']
         else:
             fields=self.defaultstoclear[field]
-        for default in fields: #self.defaultstoclear[field]:
+        for default in fields:
             if default in ['lowverticalspace']:
                 setattr(self, default, True)
             elif default in ['writeeverynwrites']:
@@ -568,8 +534,8 @@ class Settings(SettingsUI):
                 setattr(self, default, None)
     def settingsinit(self):
         _log.info(_("Initializing settings."))
-        # self.defaults is already there, from settingsfilecheck
-        self.initdefaults() #provides self.defaultstoclear, needed?
+        self.initdefaults()
+
         self.cleardefaults() #this resets all to none (to be set below)
     def getdirectories(self):
         self.directory=file.getfilenamedir(self.liftfilename)
@@ -580,87 +546,41 @@ class Settings(SettingsUI):
         self.settingsfilecheck()
         self.imagesdir=file.getimagesdir(self.directory)
         self.audiodir=file.getaudiodir(self.directory)
-        # _log.info('self.audiodir: {}'.format(self.audiodir))
         self.reportsdir=file.getreportdir(self.directory)
         self.exportsdir=file.getexportdir(self.directory)
         self.reportbasefilename=file.getdiredurl(self.reportsdir,
                                                     self.liftnamebase)
         self.reporttoaudiorelURL=file.getreldir(self.reportsdir, self.audiodir)
-        # _log.info('self.reportsdir: {}'.format(self.reportsdir))
-        # _log.info('self.reportbasefilename: {}'.format(self.reportbasefilename))
-        # _log.info('self.reporttoaudiorelURL: {}'.format(self.reporttoaudiorelURL))
-        # setdefaults.langs(self.program.db) #This will be done again, on resets
     def trackuntrackedfiles(self):
-        # return #until this doesn't cause problems
-        # This method is here to pick up files that are there, but not tracked,
-        # either in constructing a repository, or as a result of changes by other
-        # editors (e.g., WeSay).
-        # This is for new files, not changes to known files; that is done
-        # on close.
-        # def ifnotthereadd(f,repo):
-        #     # print('ifnotthereadd')
-        #     if f not in self.repo[repo].files:
-        #         # print('ifnotthereadd',f,2)
-        #         self.repo[repo].add(f)
+        """Pick up files that exist but aren't tracked in the git repo,
+        either from constructing a repository or changes by other editors
+        (e.g., WeSay). For new files only; changes to known files are
+        handled on close."""
         _log.info(_("Looking for untracked files to add to repositories"))
-        maxthreads=8 #This causes problems with lots of threads
         maindirfiles=[self.liftfilename,
                         self.toneframesfile,
                         self.statusfile,
                         self.profiledatafile,
-                        # I don't know if anyone is using this, but if so, they share...
                         self.adhocgroupsfile,
-                        #self.defaultfile # This probably shouldn't be shared
-                        # self.soundsettingsfile #per computer, definitely don't share!
                         ]
         self.program.tk_root.update() #update GUI before threading
-        # for r in self.repo:
         r='git' #only look for this; don't duplicate repos unnecessarily
         if r in self.program.data_repo:
-            t=u=None
             present=set(self.program.data_repo[r].files)
             _log.info(_("{repo} currently has {count} files").format(repo=r,count=len(present)))
             for f in maindirfiles:
-                # _log.info("{}".format([file.getreldirposix(self.program.data_repo[r].url,f)]))
-                # _log.info("working on {}".format(file.getreldirposix(self.program.data_repo[r].url,f)))
                 _log.info(_("working on {file}").format(file=file.getfile(f)))
-                # f=file.getreldirposix(self.program.data_repo[r].url,f)
-                if file.exists(f):# They won't always be there
+                if file.exists(f):
                     self.program.data_repo[r].add(file.getreldirposix(self.program.data_repo[r].url,f))
-            # In case I run into formatting issues again:
-            # _log.info(', '.join(list(self.program.data_repo[r].files)[:5]))
-            # _log.info(', '.join([file.getreldir(self.program.data_repo[r].url,i) for i in file.getfilesofdirectory(self.audiodir, '*.wav')][:5]))
-            # If we ever support mp3, we should add it here:
-            # _log.info("{}".format([file.getreldirposix(self.program.data_repo[r].url,i)
-            #         for i in file.getfilesofdirectory(self.audiodir,
-            #                                             '*.wav')]))
-            # _log.info("{}".format(set(file.getreldirposix(self.program.data_repo[r].url,i)
-            #         for i in file.getfilesofdirectory(self.audiodir,
-            #                                             '*.wav'))))
             audiohere=set([file.getreldirposix(self.program.data_repo[r].url,i)
                     for i in file.getfilesofdirectory(self.audiodir,
                                                         '*.wav')])
             audio=audiohere-present
             _log.info(_("{wav_count} wav files to check for the {repo} repo (of {total_count} files total "
                     "here)").format(wav_count=len(audio),repo=r,total_count=len(audiohere)))
-            _log.info(_("head of wav files in repo: {files}").format(files=list(present)[:10]))
-            _log.info(_("head of wav files here: {files}").format(files=list(audiohere)[:10]))
-            _log.info(_("head of wav files to check: {files}").format(files=list(audio)[:10]))
             for f in audio:
-                self.program.data_repo[r].add(f) #These should exist, from ls above
-                # if threading.active_count()<maxthreads:
-                #     t = threading.Thread(target=ifnotthereadd, args=(f,r))
-                #     t.start()
-                # _log.info(_("trackuntrackedfiles waiting for {count} audio file threads."
-                #         ).format(count=threading.active_count()))
-                # if t:
-                #     t.join()
-                # self.program.data_repo[r].add(f)
+                self.program.data_repo[r].add(f)
             for ext in ['png','jpg','gif']:
-                # _log.info(_("Image Directory: {dir}").format(dir=self.imagesdir))
-                # _log.info("Found image files: {}".format(nn([i for i in
-                # file.getfilesofdirectory(self.imagesdir,
-                #                         '*.'+ext)], oneperline=True)))
                 i=set([file.getreldirposix(self.program.data_repo[r].url,i)
                         for i in file.getfilesofdirectory(self.imagesdir,
                                                 '*.'+ext)]
@@ -668,14 +588,7 @@ class Settings(SettingsUI):
                 _log.info(_("{count} {extension} files to check for the {repo} repo")
                         .format(count=len(i),extension=ext,repo=r))
                 for f in i:
-                    self.program.data_repo[r].add(f) #These should exist, from ls above
-                    # if threading.active_count()<maxthreads:
-                    #     u = threading.Thread(target=ifnotthereadd, args=(f,r))
-                    #     u.start()
-                    # _log.info("trackuntrackedfiles waiting for {} {} file "
-                    #     "threads.".format(threading.active_count(),ext))
-                        # if u:
-                        #     u.join()
+                    self.program.data_repo[r].add(f)
         _log.info(_("trackuntrackedfiles finished."))
     def alpha_order(self,value=[]):
         return self.program.alphabet.order(value)
@@ -756,8 +669,6 @@ class Settings(SettingsUI):
             self.verbalps in self.secondformfield):
             return True
     def fields(self):
-        """I think this is lift specific; may move it to defaults, if not."""
-        # _log.info(self.program.db.fieldnames)
         try:
             self.fieldnames=self.program.db.fieldnames[self.analang]
         except KeyError:
@@ -818,9 +729,7 @@ class Settings(SettingsUI):
         checks=self.program.status.checks(**kwargs)
         kwargs['store']=False #do below
         for kwargs['check'] in checks:
-            # _log.info("Working on {}".format(c))
             self.program.status.build(**kwargs)
-            """this just populates groups and the tosort boolean."""
             self.updatesortingstatus(**kwargs)
         if kwargs.get('reporttime'):
             logfinished(start_time)
@@ -852,12 +761,11 @@ class Settings(SettingsUI):
         dictionary has"""
         def report(x,y,key=None):
             """Is dict y a subset of dict x, wrt their key hierarchies?"""
-            if set(y)-set(x):#not (k in x and k in y):#set(x[k])^set(y[k]):
+            if set(y)-set(x):
                 text=(f"{set(y)-set(x)} keys not in {key if key else 'dict'}!")
                 ErrorNotice(text,wait=True)
                 sysshutdown()
-            for k in y: #don't care about k in x but not y
-                # _log.info(f"{k} is in both dictionaries! ({k in x=} {k in y=})")
+            for k in y:
                 if isinstance(x[k],dict) and isinstance(y[k],dict):
                     report(x[k],y[k],k)
         report(x,y)
@@ -874,7 +782,6 @@ class Settings(SettingsUI):
                         continue
                     k['cvt']=self.program.params.cvt_of_check(k['check'])
                     groups=[i for i in groups if i]
-                    # _log.info(f"storing {k} unverified values: {groups}")
                     self.program.status.groups(groups, wsorted=True, **k)
                     yield start_at + (end_at-start_at) * len(k)/len(d) #maybe more detail later
     def generate_status_by_tone_groups(self,**kwargs):
@@ -893,15 +800,7 @@ class Settings(SettingsUI):
         _log.info(_("Refreshing all status settings from LIFT"))
         self.storesettingsfile() #default, not status
         self.program.db.load_ps_profiles()
-        # _log.info(f"Found this LIFT file: {self.program.db.filename}")
-        # _log.info(f"Found these LIFT annotations: {d}")
         self.program.status.clear_all_groups()
-        #The above because the following only modifies current profiles & checks
-        """Verification data should not be read from LIFT. A single lift entry
-        may be verified to belong to a particular sort group, without that sort
-        group being verified in it's entirety, especially not since another
-        word has been added to it.
-        """
         for i in itertools.chain(self.generate_status_by_annotations(end_at=50),
                                 self.generate_status_by_tone_groups(start_at=50)):
             yield i
@@ -918,12 +817,10 @@ class Settings(SettingsUI):
             self.program.status.task(),
             sense,check)
         if v in ['','None',None]: #unlist() returns strings
-            # _log.info("Marking sense {} tosort (v: {})".format(sense.id,v))
             if not kwargs.get('cvt'): #default, not on iteration
                 self.program.status.marksensetosort(sense)
             tosort=True
         else:
-            # _log.info("Marking sense {} sorted (v: {})".format(sense.id,v))
             if not kwargs.get('cvt'): #default, not on iteration
                 self.program.status.marksensesorted(sense.id)
             if v not in ['NA','ALLOK']:
@@ -933,18 +830,12 @@ class Settings(SettingsUI):
         sorted and unsorted senses, as well as sorted (but not verified) groups.
         So don't iterate over it. Instead, use checkforsensestosort to just
         confirm tosort status"""
-        """To get this from the object, use status.tosort(), todo() or done()"""
-        # _log.info("updatesortingstatus called with store={} and kwargs: {}"
-        #         "".format(store,kwargs))
         cvt=kwargs.get('cvt',self.program.params.cvt())
         ps=kwargs.get('ps',self.program.slices.ps())
         profile=kwargs.get('profile',self.program.slices.profile())
         check=kwargs.get('check',self.program.params.check())
         kwargs['wsorted']=True #ever not?
         senses=self.program.slices.senses(ps=ps,profile=profile)
-        # _log.info("Working on {} {} {} senses (first 5): {}".format(len(senses),
-        #                                                             ps,profile,
-        #                                                             senses[:5]))
         _log.info(_("Working on {count} sense.ids (first 5): {ids}").format(count=len(senses),
                                                     ids=[i.id for i in senses[:5]]))
         self.program.status.renewsensestosort([],[]) #will repopulate
@@ -953,129 +844,19 @@ class Settings(SettingsUI):
             fn=Tone.getitemgroup
         else:
             fn=Segments.getitemgroup #This pulls from annotation, not form
-        """I think this is the problem why valid groupslike aʲ are getting dropped."""
-        """continue here"""
         for sense in senses:
-            # _log.info("Working on sense {}".format(sense.id))
             self.categorizebygrouping(fn,sense,**kwargs)
-        """update 'tosort' status"""
-        """update status groups"""
         sorted=set(self._groups)
         log.info(f"sorted: {sorted}")
         self.program.status.groups(list(sorted),**kwargs)
         log.info(f"status.groups: {self.program.status.groups(**kwargs)}")
         if store:
-            # _log.info(f"updatesortingstatus storing {kwargs=} {self.program.status=}")
             self.storesettingsfile(setting='status')
     def dont_guessanalang(self):
         """Analang should be easily deduceable from the lift file, and/or
         explicit in the settings."""
         self.analang=self.program.db.analang
         _log.info(_("analang in use: {analang} (If you don't like this, change it in the menus)").format(analang=self.analang))
-        return
-        #have this call set()?
-        """if there's only one analysis language, use it."""
-        nlangs=len(self.program.db.analangs)
-        _log.debug(_("Found {n} analangs: {langs}").format(n=nlangs, langs=self.program.db.analangs))
-        lxwdata=self.program.db.nentrieswlexemedata
-        lcwdata=self.program.db.nentrieswcitationdata
-        lxwdatamax=lcwdatamax=None
-        for lang in [l for l in lcwdata if lcwdata[l] > 0]:
-            if not lcwdatamax or lcwdata[lcwdatamax] < lcwdata[lang]:
-                lcwdatamax=lang
-        for lang in [l for l in lxwdata if lxwdata[l] > 0]:
-            if not lxwdatamax or lxwdata[lxwdatamax] < lxwdata[lang]:
-                lxwdatamax=lang
-        _log.info(_("Most citation data in [{lang}] ({data})").format(lang=lcwdatamax,data=lcwdata))
-        _log.info(_("Most lexeme data in [{lang}] ({data})").format(lang=lxwdatamax,data=lxwdata))
-        if not nlangs:
-            errortext=_("There don't seem to be any language forms in your "
-            "database!")
-            basename=file.getfilenamebase(self.liftfilename)
-            parent=file.getfilenamebase(file.getfilenamedir(self.liftfilename))
-            if parent == basename and langtags.tag_is_valid(basename):
-                self.analang=parent
-                errortext+=_("\n(guessing [{lang}]; if that's not correct, exit now "
-                            "and fix it!)").format(lang=self.analang)
-                _log.info(errortext)
-            else:
-                self.program.taskchooser.splash.withdraw()
-                errortext+=_("\nFurthermore, your LIFT file doesn't seem to "
-                            "indicate your language code: \n{file} "
-                            "\nchange that or add some data "
-                            "to your database, so I know what language we're "
-                            "working on. "
-                            "\nOr select a different database on "
-                            "the next screen."
-                            ).format(file=self.liftfilename)
-                e=ErrorNotice(errortext,title=_("Error!"),wait=True)
-                file.writefilename() #just clear the default; let user move on
-                sysrestart()
-        elif nlangs == 1:
-            self.analang=self.program.db.analangs[0]
-            _log.debug(_("Only one analang in file; using it: ({lang})").format(
-                                                        lang=self.program.db.analangs[0]))
-            """If there are more than two analangs in the database, check if one
-            of the first two is three letters long, and the other isn't"""
-        elif nlangs == 2:
-            if ((len(self.program.db.analangs[0]) == 3) and
-                langtags.tag_is_valid(self.program.db.analangs[0]) and
-                (lcwdatamax == self.program.db.analangs[0] or
-                    lxwdatamax == self.program.db.analangs[0]) and
-                (len(self.program.db.analangs[1]) != 3)):
-                _log.debug(_("Looks like I found an iso code with data for "
-                                "analang! ({lang})").format(lang=self.program.db.analangs[0]))
-                self.analang=self.program.db.analangs[0] #assume this is the iso code
-                self.analangdefault=self.program.db.analangs[0] #In case it gets changed.
-            elif ((len(self.program.db.analangs[1]) == 3) and
-                langtags.tag_is_valid(self.program.db.analangs[1]) and
-                (lcwdatamax == self.program.db.analangs[1] or
-                    lxwdatamax == self.program.db.analangs[1]) and
-                    (len(self.program.db.analangs[0]) != 3)):
-                _log.debug(_("Looks like I found an iso code with data for "
-                                "analang! ({lang})").format(lang=self.program.db.analangs[1]))
-                self.analang=self.program.db.analangs[1] #assume this is the iso code
-                self.analangdefault=self.program.db.analangs[1] #In case it gets changed.
-            elif (lcwdatamax in self.program.db.analangs and
-                            langtags.tag_is_valid(lcwdatamax)):
-                self.analang=lcwdatamax
-                _log.debug(_("Neither analang looks like an iso code, taking the "
-                "one with most citation data: {langs}").format(langs=self.program.db.analangs))
-            elif (lxwdatamax in self.program.db.analangs and
-                            langtags.tag_is_valid(lxwdatamax)):
-                self.analang=lxwdatamax
-                _log.debug(_("Neither analang looks like an iso code, taking the "
-                "one with most lexeme data: {langs}").format(langs=self.program.db.analangs))
-            else:
-                self.analang=self.program.db.analangs[0]
-                _log.debug(_("Neither analang looks like an iso code, nor has much"
-                "data; taking the first one: {langs}").format(langs=self.program.db.analangs))
-        else: #for three or more analangs, take the first plausible iso code
-            if (lcwdatamax in self.program.db.analangs and
-                        langtags.tag_is_valid(lxwdatamax)):
-                self.analang=lcwdatamax
-                _log.debug(_("The language with the most citation data looks like "
-                "an iso code; using: {langs}").format(langs=self.program.db.analangs))
-            elif lcwdatamax == lxwdatamax and lxwdatamax in self.program.db.analangs:
-                self.analang=lxwdatamax
-                _log.debug(_("The language with the most citation data is also "
-                    "the language with the most lexeme data; using: {langs}").format(
-                                                            langs=self.program.db.analangs))
-            elif (lxwdatamax in self.program.db.analangs and
-                        langtags.tag_is_valid(lxwdatamax)):
-                self.analang=lxwdatamax
-                _log.debug(_("The language with the most lexeme data looks like "
-                "an iso code; using: {langs}").format(langs=self.program.db.analangs))
-            else:
-                for n in range(1,nlangs+1): # end with first
-                    self.analang=self.program.db.analangs[-n]
-                    _log.debug(_('trying {analang}').format(analang=self.analang))
-                    if len(self.program.db.analangs[-n]) == 3:
-                        _log.debug(_("Looks like I found an iso code for "
-                                "analang! ({lang})").format(lang=self.program.db.analangs[n-1]))
-                        break #stop iterating, and keep this one.
-        _log.info(_("analang guessed: {lang} (If you don't like this, change it in "
-                    "the menus)").format(lang=self.analang))
     def makeglosslangs(self):
         if self.glosslangs:
             self.glosslangs=Glosslangs(self.glosslangs)
@@ -1166,11 +947,8 @@ class Settings(SettingsUI):
                     pass
     def maketoneframes(self,dict={}):
         ToneFrames(dict,self.program)
-        # ToneFrames(getattr(self,'toneframes',{}))
     def makestatus(self,dict={}):
-        # _log.info("Making status object with value {}".format(dict))
         StatusDict(self.settingsfile('status'), dict, self.program)
-        # _log.info("Made status object with value {}".format(dict))
     def localize_langnames(self):
         self.languagenames={i:_(self.languagenames[i]) for i in self.languagenames}
     def langnames(self,langs={}):
@@ -1183,7 +961,6 @@ class Settings(SettingsUI):
         node=None
         if not hasattr(self,'languagenames'):
             self.languagenames={}
-        #return localized strings to English, so they can localize again
         self.languagenames.update({'fr':"French",
                                 'en':"English",
                                 'es':"Spanish",
@@ -1206,7 +983,6 @@ class Settings(SettingsUI):
             Settings.localize_langnames(self) #in case run by Liftchooser
         if hasattr(self,'adnlangnames') and self.adnlangnames:
             self.languagenames.update(self.adnlangnames) #from settings
-        # print(type(self.analang),type(self.program.db.analangs),type(self.program.db.glosslangs))
         if not langs:
             langs=self.program.db.analangs+self.program.db.glosslangs
             if hasattr(self,'analang'):
@@ -1228,8 +1004,7 @@ class Settings(SettingsUI):
     def __init__(self,program):
         self.program=program
         self.program.settings=self
-        self.ui_vars = {} # Stores tkinter.StringVar for reactive UI
-        # self.taskchooser = self.program.taskchooser
+        self.ui_vars = {}
         self.liftfilename=self.program.filename
         self.directory=file.getfilenamedir(self.liftfilename)
 
@@ -1256,7 +1031,6 @@ class Settings(SettingsUI):
             self.analang=_tc.analang #I need to keep this alive until objects are done
             self.storesettingsfile() #write analang to file
         _log.info(_("Settings initialized"))
-        # self.post_lift_init()
     def post_lift_init(self):
         """These settings require the LIFt db be up and parsed already"""
         self.dont_guessanalang() #needed for regexs
@@ -1282,11 +1056,6 @@ class Settings(SettingsUI):
         self.loadsettingsfile(setting='toneframes')
         self.loadsettingsfile(setting='adhocgroups')
         self.loadsettingsfile(setting='alphabet')
-        # self.makeeverythingok() #do in task
-        """The following might be OK here, but need to be OK later, too."""
-        # """The following should only be done after word collection"""
-        # if self.taskchooser.donew['collectionlc']:
-        #     self.ifcollectionlc()
         self.attrschanged=[]
         _log.info(_("Settings (Post lift) initialized"))
     def post_params_init(self):

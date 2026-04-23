@@ -203,29 +203,7 @@ class GlyphTranscribeHelper:
     # -- Submit / switch --
 
     def polygraphwarn(self, newvalue):
-        if len(newvalue) != 1 or len(self.group) != 1:
-            warning = [_("This name change (\u2018{group}\u2019 > \u2018{new}\u2019) impacts your "
-                         "digraph and trigraph settings."
-                         ).format(group=self.group, new=newvalue)]
-            if len(newvalue) > 1:
-                warning.append(_("{azt} will add \u2018{new}\u2019 to those settings."
-                                 ).format(azt=self.program.name, new=newvalue))
-                if newvalue not in self.program.profiles.polygraphs[self.analang][self.cvt]:
-                    self.program.profiles.polygraphs[self.analang][self.cvt][newvalue] = True
-                    self.program.settings.storesettingsfile('profiledata')
-            if len(self.group) > 1:
-                warning.append(_("{azt} will *not* remove \u2018{group}\u2019 from "
-                                 "those settings, because you may still be "
-                                 "using it elsewhere."
-                                 ).format(azt=self.program.name, group=self.group))
-            warning.extend(['', _("**If this isn't what you wanted, "
-                                  "fix and confirm your digraph and "
-                                  "trigraph settings in the menu "
-                                  "\n(this will make {azt} restart and redo "
-                                  "the syllable profile analysis)."
-                                  ).format(azt=self.program.name)])
-            title = _("Syllable profile change?")
-            log.info('\n'.join(warning))
+        self.task.polygraphwarn(newvalue)
 
     def submitform(self):
         newvalue = self.transcriber.formfield.get()

@@ -3,6 +3,7 @@
 from utilities import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
+from utilities.i18n import _
 from frontend import ui
 from io_put import sound
 from utilities import file, executables, utilities as utils
@@ -142,7 +143,8 @@ class RecordButtonFrame(ui.Frame):
         ui.Frame.__init__(self,parent, **kwargs)
         """These need to happen after the frame is created, as they
         might cause the init to stop."""
-        if not self.test and not self.program.settings.mgr.get('audiolang'):
+        #self.program.settings.mgr.get('audiolang')
+        if not self.test and not self.program.db.audiolang:
             tlang=_("Set audio language to get record buttons!")
             log.error(tlang)
             ui.Label(self,text=tlang,borderwidth=1,

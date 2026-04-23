@@ -33,14 +33,6 @@ class Sound(backend.core.sound.Sound):
     def _configure_transcription(self,event=None):
         sound_ui.ASRModelSelectionWindow(self)
 
-    def setcontext(self,context=None):
-        backend.core.sound.Sound.setcontext(self) # Need to handle which context?
-        # Re-applying context logic from tasks.py
-        if hasattr(super(), 'setcontext'):
-            super().setcontext(context)
-        self.context.menuitem("Transcription settings",
-                                    self._configure_transcription)
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.soundcheck()
@@ -49,6 +41,14 @@ class Record(backend.core.sound.Record, Sound):
     """UI task mixin for recording widgets and session windows."""
     is_record_task=True
     icon_leaderboard=True
+    def setcontext(self,context=None):
+        backend.core.sound.Sound.setcontext(self) # Need to handle which context?
+        # Re-applying context logic from tasks.py
+        if hasattr(super(), 'setcontext'):
+            super().setcontext(context)
+        self.context.menuitem("Transcription settings",
+                                    self._configure_transcription)
+
     def makelabelsnrecordingbuttons(self,parent,node,r,c):
         t=node.formatted(self.analang,self.glosslangs)
         lxl=ui.Label(parent, text=t,row=r,column=c+1,sticky='w')

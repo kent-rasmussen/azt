@@ -27,6 +27,38 @@ from io_put import sound
 from io_put.cawl import loadCAWL
 
 
+def _option_dialog(parent, title, text, optionlist, command,
+                   scrolling=True, row=1, wait=False, **kwargs):
+    """Create a standard option-selection dialog window.
+
+    Args:
+        parent: parent window for the dialog
+        title: window title string
+        text: label text (question/prompt)
+        optionlist: list of options for the button frame
+        command: callback when an option is selected
+        scrolling: True for ScrollingButtonFrame, False for ButtonFrame
+        row: grid row for the button frame (default 1)
+        wait: if True, call wait_window before returning
+        **kwargs: extra kwargs passed to the ButtonFrame constructor
+
+    Returns:
+        The dialog window.
+    """
+    window = ui.Window(parent, title=title)
+    ui.Label(window.frame, text=text).grid(column=0, row=0)
+    frame_cls = ui.ScrollingButtonFrame if scrolling else ui.ButtonFrame
+    buttonFrame = frame_cls(window.frame,
+                            optionlist=optionlist,
+                            command=command,
+                            window=window,
+                            column=0, row=row,
+                            **kwargs)
+    if wait:
+        window.wait_window(window)
+    return window
+
+
 class HasMenus():
     def helpnewinterface(self):
         title=_("{azt} Dictionary and Orthography Checker") \
@@ -1407,7 +1439,7 @@ class TaskDressing(HasMenus,ui.Window):
         self.notebook.add(self.tab_reports,text=_("Reports"))
         self.notebook.bind('<<NotebookTabChanged>>',self._on_chooser_tab_changed)
         style = ui.Style(theme=self.theme)
-        style.configure('TNotebook.Tab', font=self.theme.fonts['normal'])
+        style.configure('TNotebook.Tab', font=self.theme.fonts['default'])
         style.apply_theme('TNotebook.Tab')
         style.apply_theme('TNotebook')
         style.map("TNotebook.Tab", background=[("active", self.theme.activebackground)])
@@ -1670,33 +1702,23 @@ class TaskDressing(HasMenus,ui.Window):
         levels=self.getparserlevels()
         if not levels:
             return
-        window=ui.Window(self, title=_('Select Parser Ask Level'))
-        ui.Label(window.frame, text=_('What level of parsing match do you want '
-                                    'the parser to confirm with you?'),
-                                    column=0, row=0)
-        buttonFrame1=ui.ScrollingButtonFrame(
-                                window.frame,
-                                optionlist=levels,
-                                command=self.program.settings.setparserasklevel,
-                                window=window,
-                                column=0, row=1
-                                            )
+        _option_dialog(self,
+                       title=_('Select Parser Ask Level'),
+                       text=_('What level of parsing match do you want '
+                              'the parser to confirm with you?'),
+                       optionlist=levels,
+                       command=self.program.settings.setparserasklevel)
     def getparserautolevel(self,event=None):
         log.info(_("Asking for parserautolevel..."))
         levels=self.getparserlevels()
         if not levels:
             return
-        window=ui.Window(self, title=_('Select Parser Auto Level'))
-        ui.Label(window.frame, text=_('What level of parsing match do you want '
-                                    'the parser to do automatically?'),
-                                    column=0, row=0)
-        buttonFrame1=ui.ScrollingButtonFrame(
-                                window.frame,
-                                optionlist=levels,
-                                command=self.program.settings.setparserautolevel,
-                                window=window,
-                                column=0, row=1
-                                            )
+        _option_dialog(self,
+                       title=_('Select Parser Auto Level'),
+                       text=_('What level of parsing match do you want '
+                              'the parser to do automatically?'),
+                       optionlist=levels,
+                       command=self.program.settings.setparserautolevel)
     def setsensetodo(self,choice,window):
         self.sense=self.sensetodo=choice
         self.program.mainwindow.status.updatesensetodo()
@@ -1710,22 +1732,17 @@ class TaskDressing(HasMenus,ui.Window):
         msg=_("Preparing to ask for a sense...")
         log.info(msg)
         senses=self.program.db.senses
-        todo=len(senses)
         list=[(k,k.formatted(self.analang,self.glosslangs))
                 for k in senses
                 if k.unformatted(self.analang,self.glosslangs
                                 ).startswith(choice)]
         list.sort(key=lambda x:x[1])
-        window=ui.Window(self, title=_('Select Lexical Item'))
-        ui.Label(window.frame, text=_('What sense do you want to work with?'),
-                            column=0, row=0)
-        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                            optionlist=list,
-                                            command=self.setsensetodo,
-                                            window=window,
-                                            column=0, row=1
-                                            )
-        window.lift()
+        w=_option_dialog(self,
+                         title=_('Select Lexical Item'),
+                         text=_('What sense do you want to work with?'),
+                         optionlist=list,
+                         command=self.setsensetodo)
+        w.lift()
     def getsensetodo(self,event=None):
         msg=_("Preparing to ask for a sense letter...")
         log.info(msg)
@@ -1756,16 +1773,12 @@ class TaskDressing(HasMenus,ui.Window):
             return
         letters=[{'code':None,'description':_("All words")}
         ]+letters
-        window=ui.Window(self, title=_('Select Lexical Item'))
-        ui.Label(window.frame, text=_('What letter does your sense start with?'),
-                            column=0, row=0)
-        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                            optionlist=letters,
-                                            command=self.getsensetodobyletter,
-                                            window=window,
-                                            column=0, row=1
-                                            )
-        window.lift()
+        w=_option_dialog(self,
+                         title=_('Select Lexical Item'),
+                         text=_('What letter does your sense start with?'),
+                         optionlist=letters,
+                         command=self.getsensetodobyletter)
+        w.lift()
     def getcheck(self,guess=False,event=None,**kwargs):
         log.info(_("this sets the check"))
         log.info(_("Getting the check name..."))
@@ -2169,7 +2182,7 @@ class ImageFrame(ui.Frame):
         """reload allows the frame to be built once and reused;
         this may be with the same url (if user selected a new image 
         for the same sense)"""
-        if not self.url:
+        if not self.url and not self.show_none:
             log.error("No url for ImageFrame")
             raise 
         if self.url in self.parent.theme.image_cache and not reload:
@@ -2185,7 +2198,7 @@ class ImageFrame(ui.Frame):
                 if e.args and ('value for "-file" missing' not in e.args[0] and
                         "couldn't recognize data in image file" not in e.args[0]):
                     log.info(_("ui.Image error: {error}").format(error=e))
-                log.info(f"No image for {self.sense}")
+                log.info(f"No image for {self.url}")
                 self.image=self.theme.photo['NoImage'] #don't store!
                 self.hasimage=False
         self.scale_image(pixels=self.pixels)
@@ -2240,11 +2253,11 @@ class ImageFrame(ui.Frame):
     def __init__(self, parent, url, *args, **kwargs):
         """Parent: where it goes; url: what it shows"""
         """This is now called with url, not sense."""
-        self.sense=sense #for sense.image only?
         #These shouldn't go to frame:
-        self.url=kwargs.pop('url',None)
+        self.url=url #kwargs.pop('url',None)
         self.ftype=kwargs.pop('ftype',None)
         self.pixels=kwargs.pop('pixels',150)
+        self.show_none=kwargs.pop('show_none',False)
         super(ImageFrame, self).__init__(parent, *args, **kwargs)
         self.getimage()
         if self.ftype == 'pl':
@@ -2869,20 +2882,16 @@ class Settings(object):
         self.program.ui_settings = self
     def getinterfacelang(self,event=None):
         log.info(_("Asking for interface language..."))
-        azt=self.program.name
-        window=ui.Window(self.program.mainwindow, title=_('Select Interface Language'))
-        ui.Label(window.frame, text=_('What language do you want {name} '
-                                'to address you in?').format(name=azt)
-                ).grid(column=0, row=0)
         options=[{'code':i,'name':self.program.settings.languagenames[i]}
                 for i in self.program.interfacelangs]
         log.info(_("asking with these options: {options}").format(options=options))
-        ui.ButtonFrame(window.frame,
-                                optionlist=options,
-                                command=self.program.settings.interfacelangwrapper,
-                                window=window,
-                                column=0, row=1
-                                )
+        _option_dialog(self.program.mainwindow,
+                       title=_('Select Interface Language'),
+                       text=_('What language do you want {name} '
+                              'to address you in?').format(name=self.program.name),
+                       optionlist=options,
+                       command=self.program.settings.interfacelangwrapper,
+                       scrolling=False)
     def getanalangname(self,event=None):
         log.info(_("this sets the language name"))
         def submit(event=None):
@@ -2922,32 +2931,23 @@ class Settings(object):
             self.getanalangname()
             return
         log.info(_("this sets the language"))
-        # fn=inspect.currentframe().f_code.co_name
-        window=ui.Window(self.program.task.ui,title=_('Select Analysis Language'))
-        if self.program.db.analangs is None :
+        if self.program.db.analangs is None:
+            window=ui.Window(self.program.task.ui,title=_('Select Analysis Language'))
             ui.Label(window.frame,
                           text=_('Error: please set Lift file first! ({file})').format(
                           file=self.program.db.filename)
                           ).grid(column=0, row=0)
         else:
-            ui.Label(window.frame,
-                          text=_('What language do you want to analyze?')
-                          ).grid(column=0, row=1)
-            langs=list()
-            for lang in self.program.db.analangs:
-                langs.append({'code':lang,
-                                'name':self.program.settings.languagenames[lang]})
-                # print(lang, self.program.taskchooser.languagenames[lang])
-            buttonFrame1=ui.ButtonFrame(window.frame,
-                                     optionlist=langs,
-                                     command=self.program.settings.setanalang,
-                                     window=window,
-                                     column=0, row=4
-                                     )
+            langs=[{'code':lang,
+                    'name':self.program.settings.languagenames[lang]}
+                   for lang in self.program.db.analangs]
+            _option_dialog(self.program.task.ui,
+                           title=_('Select Analysis Language'),
+                           text=_('What language do you want to analyze?'),
+                           optionlist=langs,
+                           command=self.program.settings.setanalang,
+                           scrolling=False, row=4)
     def getglosslang(self,event=None):
-        window=ui.Window(self.program.task.ui,title=_('Select Gloss Language'))
-        text=_('What Language do you want to use for glosses?')
-        ui.Label(window.frame, text=text, column=0, row=1)
         langs=list()
         for lang in set(self.program.db.glosslangs)|set(
                                             self.program.settings.glosslangs[1:]):
@@ -2957,16 +2957,13 @@ class Settings(object):
             langs.append({'code':None,
                     'name':_('just use {name}').format(name=self.program.settings.languagenames[
                                     self.program.settings.glosslangs.lang2()])})
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                 optionlist=langs,
-                                 command=self.program.settings.setglosslang,
-                                 window=window,
-                                 column=0, row=4
-                                 )
+        _option_dialog(self.program.task.ui,
+                       title=_('Select Gloss Language'),
+                       text=_('What Language do you want to use for glosses?'),
+                       optionlist=langs,
+                       command=self.program.settings.setglosslang,
+                       scrolling=False, row=4)
     def getglosslang2(self,event=None):
-        window=ui.Window(self.program.task.ui,title=_('Select Second Gloss Language'))
-        text=_('What other language do you want to use for glosses?')
-        ui.Label(window.frame, text=text, column=0, row=1)
         langs=list()
         for lang in set(self.program.db.glosslangs)|set(self.program.settings.glosslangs[:1]):
             if lang == self.program.settings.glosslangs[0]:
@@ -2976,15 +2973,14 @@ class Settings(object):
         langs.append({'code':None,
                     'name':_('just use {name}').format(name=self.program.settings.languagenames[
                                     self.program.settings.glosslangs.lang1()])})
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=langs,
-                                    command=self.program.settings.setglosslang2,
-                                    window=window,
-                                    column=0, row=4
-                                    )
+        _option_dialog(self.program.task.ui,
+                       title=_('Select Second Gloss Language'),
+                       text=_('What other language do you want to use for glosses?'),
+                       optionlist=langs,
+                       command=self.program.settings.setglosslang2,
+                       scrolling=False, row=4)
     def getcvt(self,event=None):
         log.debug(_("Asking for check cvt/type"))
-        window=ui.Window(self.program.task.ui,title=_('Select Check Type'))
         cvts=[]
         x=0
         tdict=self.program.params.cvtdict()
@@ -2995,33 +2991,25 @@ class Settings(object):
             cvts[x]['name']=tdict[cvt]['pl']
             cvts[x]['code']=cvt
             x+=1
-        ui.Label(window.frame, text=_('What part of the sound system do you '
-                                    'want to work with?')
-            ).grid(column=0, row=0)
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                    optionlist=cvts,
-                                    command=self.program.settings.setcvt,
-                                    window=window,
-                                    column=0, row=1
-                                    )
-        return window
+        return _option_dialog(self.program.task.ui,
+                              title=_('Select Check Type'),
+                              text=_('What part of the sound system do you '
+                                     'want to work with?'),
+                              optionlist=cvts,
+                              command=self.program.settings.setcvt,
+                              scrolling=False)
     def getps(self,event=None):
         log.info(_("Asking for ps..."))
-        # self.refreshattributechanges()
-        window=ui.Window(self.program.task.ui, title=_('Select Lexical Category'))
-        ui.Label(window.frame, text=_('What lexical category do you '
-                                    'want to work with (Part of speech)?')
-                ).grid(column=0, row=0)
         if hasattr(self,'additionalps') and self.program.settings.additionalps is not None:
-            pss=self.program.db.pss+self.program.settings.additionalps #these should be lists
+            pss=self.program.db.pss+self.program.settings.additionalps
         else:
             pss=self.program.db.pss
-        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                            optionlist=pss,
-                                            command=self.program.settings.setps,
-                                            window=window,
-                                            column=0, row=1
-                                            )
+        _option_dialog(self.program.task.ui,
+                       title=_('Select Lexical Category'),
+                       text=_('What lexical category do you '
+                              'want to work with (Part of speech)?'),
+                       optionlist=pss,
+                       command=self.program.settings.setps)
     def getprofile(self,event=None,**kwargs):
         log.info(_("Asking for profile..."))
         # self.refreshattributechanges()
@@ -3187,19 +3175,13 @@ class Settings(object):
             window.wait_window(window)
     def getmulticheckscope(self,event=None):
             log.info(_("Asking for multicheckscope..."))
-            window=ui.Window(self.program.task.ui, title=_('Select Scope of Checks'))
-            ui.Label(window.frame,
-                    text=_('What kinds of checks to you want to run?')
-                    ).grid(column=0, row=0)
             cvts=[[i] for i in self.program.params.cvts()]
             cvts.remove(['T'])
             cvtsdone=cvts[:]
-            # log.info("{};{}".format(len(cvts),cvts))
             for j in cvts[:2]+[[i[0] for i in cvts[:2]]]:
                 cvtsdone+=[j+i for i in cvts
                             if i[0] not in j
                             if set(j+i) not in [set(i) for i in cvtsdone]]
-                # log.info("{};{}".format(len(cvtsdone),cvtsdone))
             cvtsdone+=[[i[0] for i in cvts]]
             options=[{'code':opt,
                     'name':unlist([self.program.params.cvtdict()[i]['pl'] for i in opt])
@@ -3209,12 +3191,11 @@ class Settings(object):
             for opt in options:
                 if len(opt['code']) == 1:
                     opt['name']+=' '+_("(only)")
-            buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                    optionlist=options,
-                                    command=self.program.settings.setmulticheckscope,
-                                    window=window,
-                                    column=0, row=1
-                                                )
+            _option_dialog(self.program.task.ui,
+                           title=_('Select Scope of Checks'),
+                           text=_('What kinds of checks to you want to run?'),
+                           optionlist=options,
+                           command=self.program.settings.setmulticheckscope)
     def cvtstodoprose(self,cvtstodo=None):
         if not cvtstodo:
             cvtstodo=self.cvtstodo
@@ -3232,44 +3213,28 @@ class Settings(object):
                 self.program.settings.secondformfield[self.program.settings.nominalps])
     def getbuttoncolumns(self,event=None):
         log.info(_("Asking for number of button columns..."))
-        window=ui.Window(self.program.task.ui,title=_('Select Button Columns'))
-        ui.Label(window.frame, text=_('How many columns do you want to use for '
-                                        'the sort buttons?')
-                                        ).grid(column=0, row=0)
-        optionslist = list(range(1,4))
-        buttonFrame1=ui.ButtonFrame(window.frame,
-                                optionlist=optionslist,
-                                command=self.program.settings.setbuttoncolumns,
-                                window=window,
-                                column=0, row=1
-                                )
-        window.wait_window(window)
+        _option_dialog(self.program.task.ui,
+                       title=_('Select Button Columns'),
+                       text=_('How many columns do you want to use for '
+                              'the sort buttons?'),
+                       optionlist=list(range(1,4)),
+                       command=self.program.settings.setbuttoncolumns,
+                       scrolling=False,
+                       wait=True)
     def getmaxpss(self,event=None):
-        title=_('Select Maximum Number of Lexical Categories')
-        window=ui.Window(self.program.task.ui, title=title)
-        text=_('How many lexical categories to report (2 = Noun and Verb) ?')
-        ui.Label(window.frame, text=text, column=0, row=0)
-        r=[x for x in range(1,10)]
-        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                optionlist=r,
-                                command=self.program.settings.setmaxpss,
-                                window=window,
-                                column=0, row=1
-                                )
-        buttonFrame1.wait_window(window)
+        _option_dialog(self.program.task.ui,
+                       title=_('Select Maximum Number of Lexical Categories'),
+                       text=_('How many lexical categories to report (2 = Noun and Verb) ?'),
+                       optionlist=list(range(1,10)),
+                       command=self.program.settings.setmaxpss,
+                       wait=True)
     def getmaxprofiles(self,event=None):
-        title=_('Select Maximum Number of Syllable Profiles')
-        window=ui.Window(self.program.task.ui, title=title)
-        text=_('How many syllable profiles to report?')
-        ui.Label(window.frame, text=text, column=0, row=0)
-        r=[x for x in range(1,10)]
-        buttonFrame1=ui.ScrollingButtonFrame(window.frame,
-                                optionlist=r,
-                                command=self.program.settings.setmaxprofiles,
-                                window=window,
-                                column=0, row=1
-                                )
-        buttonFrame1.wait_window(window)
+        _option_dialog(self.program.task.ui,
+                       title=_('Select Maximum Number of Syllable Profiles'),
+                       text=_('How many syllable profiles to report?'),
+                       optionlist=list(range(1,10)),
+                       command=self.program.settings.setmaxprofiles,
+                       wait=True)
     def setSdistinctions(self):
         def notice(changed):
             def confirm():
