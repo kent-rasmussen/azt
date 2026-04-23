@@ -37,7 +37,7 @@ def praatopen(program,file,newpraat=False,event=None):
         else:
             log.info("praatoutput: {}".format(t))
     elif program.praat:
-        log.info("Trying to call Praat at {}...").format(program.praat)
+        log.info(_("Trying to call Praat at {}...").format(program.praat))
         if not hasattr(program, 'sendpraat'): #don't care about exe, just version check
             praatargs=[program.praat, '--hide-picture','--open', file]
         else:
