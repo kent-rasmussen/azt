@@ -5,6 +5,7 @@ log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
 from utilities.i18n import _
 from frontend import ui
+from utilities.error_handler import notify_error as ErrorNotice
 from io_put import sound
 from utilities import file, executables, utilities as utils
 class RecordButtonFrame(ui.Frame):
@@ -170,6 +171,8 @@ class RecordnTranscribeButtonFrame(RecordButtonFrame):
         if self.soundsettings.asrOK and self.recorder.file_write_OK:
             self.task.wait("Getting transcriptions...")
             self.recorder.get_transcriptions()
+            if self.recorder.error_text:
+                ui.error(self.recorder.error_text)
             self.task.waitdone()
         else:
             log.info("Not transcribing because asr is not OK!")
@@ -458,17 +461,17 @@ class SoundSettingsWindow(ui.Window):
         self.task.storesoundsettings()
         self.on_quit()
     tasktitle = "Sound Card Settings"
-    def __init__(self,program,**kwargs):
+    def __init__(self,task,**kwargs):
         self.refreshdelay=1000 # wait 1s for a refresh check, always mainwindow
-        self.program=program #needed to find praat
-        log.info(f"Theme: {program.theme}")
+        self.program=task.program #needed to find praat
+        log.info(f"Theme: {self.program.theme}")
         ui.Window.__init__(self,
-                            program.tk_root, #this show be called from a task now
+                            task.ui, #this show be called from a task now
                             exit=False,
                             title=_(self.tasktitle),
                             withdrawn=True
                         )
-        self.task=self.program.task
+        self.task=task
         self.soundsettings=self.program.soundsettings
         self.soundcheckrefresh()
         if not kwargs.get("withdrawn"):
@@ -738,17 +741,17 @@ class ASRModelSelectionWindow(ui.Window):
     def modify(self):
         self.soundsettings.asr_kwargs['sister_languages']=['zmg']
         self.soundsettings.asr_kwargs['simplify_length']=False
-    def __init__(self,program,**kwargs):
+    def __init__(self,task,**kwargs):
         window_title=_('Select ASR Settings')
         self.page_title=_('Settings for Transcription Model')
-        log.info(f"Theme: {program.theme}")
+        log.info(f"Theme: {task.program.theme}")
         ui.Window.__init__(self,
-                            program.tk_root,
+                            task.ui,
                             exit=False,
                             title=window_title,
                             withdrawn=True
                             )
-        self.program=program #needed to find praat
+        self.program=task.program #needed to find praat
         self.soundsettings=self.program.soundsettings
         if 'cache_dir' in self.soundsettings.asr_kwargs and not file.exists(self.soundsettings.asr_kwargs['cache_dir']):
             log.error(f"Cache dir {self.soundsettings.asr_kwargs['cache_dir']} "

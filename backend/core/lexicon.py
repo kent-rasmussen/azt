@@ -1056,8 +1056,8 @@ class WordCollection(Segments):
         self.ui.deiconify()
         self.lift()
         self.wordframe.update_idletasks()
-    def setcontext(self,context=None):
-        super().setcontext(context)
+    def setcontext(self):
+        super().setcontext()
         self.context.menuitem(_("Show Report"),self.show_report)
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

@@ -15,7 +15,7 @@ from tasks.alphabet_comparison import AlphabetComparisonPages
 from utilities.i18n import _
 log = logsetup.getlog(__name__)
 
-from frontend.error_notice import ErrorNotice
+from utilities.error_handler import notify_error as ErrorNotice
 from frontend.sort_buttons import SortGroupButtonFrame, SortGlyphGroupButtonFrame
 from backend.core.alphabet import Alphabet
 from io_put import sound
@@ -139,9 +139,8 @@ class ExportData(ui.Window):
 class Transcription(object):
     def _configure_transcription(self,event=None):
         sound_ui.ASRModelSelectionWindow(self)
-    def setcontext(self,context=None):
-        if hasattr(super(), 'setcontext'):
-            super().setcontext(context)
+    def setcontext(self):
+        super().setcontext()
         self.context.menuitem(_("Transcription settings"),
                                     self._configure_transcription)
     def __init__(self, **kwargs):

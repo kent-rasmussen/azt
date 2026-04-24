@@ -673,7 +673,7 @@ class Childof():
         try:
             super().post_tk_init()
         except Exception as e:
-            if type(self).__name__ not in ['ContextMenu','Menus']:
+            if type(self).__name__ not in ['ContextMenu','Menu','Menus']:
                 log.error(f"post_tk_init failed for {type(self).__name__}: {e}")
     def inherit(self,parent=None,attr=None):
         """This function brings these attributes from the parent, to inherit
@@ -1985,8 +1985,7 @@ class ContextMenu(Childof):
         # items under appropriate conditions
         # There is a default 'show menus only' one in HasMenus()
         try:
-            # log.info("setcontext: {}".format(self.parent.setcontext))
-            self.parent.setcontext(context=self.context)
+            self.parent.setcontext()
         except Exception as e:
             log.error(_("Exception in dosetcontext: {error}").format(error=e))
     def do_popup(self,event):
@@ -2002,8 +2001,8 @@ class ContextMenu(Childof):
             self.menu.grab_release() #allows click on main window
     def _bind_to_makemenus(self,event): #all needed to cover all of window
         self.parent.bind_all('<Button-3>',self.do_popup) #_all
-        self.parent.bind_all('<Button-1>',self.undo_popup)
     def _unbind_to_makemenus(self,event):
+        self.parent.bind_all('<Button-1>',self.undo_popup)
         self.parent.unbind_all('<Button-3>')
     def getroot(self):
         self.root=Root(self.parent._root().program)
@@ -2011,12 +2010,11 @@ class ContextMenu(Childof):
         log.info("Ad hoc inherit")
         Childof.inherit(self.root,self.parent)
         log.info("Ad hoc inherit done")
-    def __init__(self,parent,context=None, *args, **kwargs):
+    def __init__(self,parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.getroot()
         self.post_tk_init()
         self.parent.context=self
-        self.context=context #where the menu is showing (e.g., verifyT)
         self.updatebindings()
 """These have gridding (not Window or ContextMenu, above)"""
 class ButtonFrame(Frame):

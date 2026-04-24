@@ -16,7 +16,7 @@ from backend.reporting.generator import Report
 import langcodes
 import settings
 
-from frontend.error_notice import ErrorNotice
+from utilities.error_handler import notify_error as ErrorNotice
 
 from utilities import rx
 from backend.core.report_mixins import Multislice, Multicheck
@@ -185,7 +185,7 @@ class HasMenus():
         self.menu=True
         self.setcontext()
         self.unbind_all('<Enter>')
-    def setcontext(self,context=None):
+    def setcontext(self):
         self.context.menuinit() #This is a ContextMenu() method
         if not hasattr(self,'menu') or not self.menu:
             self.context.menuitem(_("Show Menus"),self._setmenus)
@@ -1560,7 +1560,7 @@ class TaskDressing(HasMenus,ui.Window):
         self.program.settings.set('showdetails', True, refresh=True)
         self.program.mainwindow.status.maybeboard()
         self.setcontext()
-    def setcontext(self,context=None):
+    def setcontext(self):
         if self.exitFlag.istrue() or not self.winfo_exists():
             return
         self.context.menuinit() #This is a ContextMenu() method
@@ -1568,7 +1568,7 @@ class TaskDressing(HasMenus,ui.Window):
             self.context.menuitem(_("Change to another Database (Restart)"),
                             self.program.taskchooser.changedatabase)
         if 'git' in self.program.data_repo:
-            self.context.menuitem(_("Share data to USB"), 
+            self.context.menuitem(_("Share data to USB"),
                                 self.program.data_repo['git'].share)
         if not hasattr(self,'menu') or not self.menu:
             self.context.menuitem(_("Show Menus"),self._setmenus)
@@ -1586,6 +1586,10 @@ class TaskDressing(HasMenus,ui.Window):
             self.context.menuitem(_("Hide details"),self._hidedetails)
         else:
             self.context.menuitem(_("Show details"),self._showdetails)
+        # Invite the task's mixin chain to add task-specific items.
+        task = getattr(self, 'task', None)
+        if task is not None and task is not self:
+            task.setcontext()
     def _tasktitle(self):
         if callable(self.task.tasktitle):
             return self.task.tasktitle()

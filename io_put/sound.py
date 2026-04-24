@@ -335,6 +335,7 @@ class SoundFileRecorder(object):
         self.asr.sister_languages=self.settings.asr_kwargs['sister_languages']
         self.asr.show_tone=self.settings.asr_kwargs['show_tone']
         self.asr.get_transcriptions(str(self.filenameURL))
+        self.error_text=self.asr.error_text
         self.transcriptions=self.asr.transcriptions
         self.transcriptions_ipa=self.asr.transcriptions_ipa
         self.tone_melody=getattr(self.asr,'tone_melody',None)

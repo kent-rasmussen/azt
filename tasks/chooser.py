@@ -25,8 +25,7 @@ from utilities import logsetup
 log=logsetup.getlog(__name__)
 
 
-from frontend.error_notice import ErrorNotice
-
+from utilities.error_handler import notify_error as ErrorNotice
 class TaskChooser(Task):
     """This class stores the hierarchy of tasks to do in A-Z+T, plus the
     minimum and optimum prerequisites for each. Based on these, it presents

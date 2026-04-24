@@ -65,9 +65,15 @@ class TaskBase:
     # These exist because __getattr__ doesn't intercept super() calls.
     # Concrete tasks override setcontext/on_quit and chain via super().
 
-    def setcontext(self, context=None):
-        """Delegate to the window's setcontext (TaskDressing)."""
-        self.ui.setcontext(context)
+    def setcontext(self):
+        """Terminator for the task-mixin setcontext chain.
+
+        TaskDressing populates window-chrome items and then calls
+        ``self.task.setcontext()``, which walks the mixin MRO. Each
+        mixin's ``setcontext`` should call ``super().setcontext()``
+        before adding its own items; this base method ends the chain.
+        """
+        pass
 
     def on_quit(self, **kwargs):
         """Delegate to the window's on_quit (ui.Window)."""

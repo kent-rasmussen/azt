@@ -409,6 +409,7 @@ class ASRtoText(object):
         # log.info(f"{self.models_that_give_IPA=}")
         # log.info(f"{self.do_not_return=}")
         # log.info(f"{self.models.keys()=}")
+        self.error_text=None # reset for this file, attempt
         try:
             assert self.sister_languages,"No Sister Language(s) Specified"
             self.sister_language=None
@@ -425,8 +426,21 @@ class ASRtoText(object):
         except (KeyError,AssertionError) as e:
             log.info(f"Not using language specific transcription ({e})")
             self.sister_language=None
-            for x,y,z in self.inferall(file):
-                add_values_no_dup(x,y,z)
+            try:
+                for x,y,z in self.inferall(file):
+                    add_values_no_dup(x,y,z)
+            except ValueError as e:
+                if 'fmpeg' in str(e):
+                    self.error_text=str(e)
+                    return
+                else:
+                    raise e
+        except ValueError as e:
+            if 'fmpeg' in str(e):
+                self.error_text=str(e)
+                return
+            else:
+                raise e
         # log.info(f"self.transcriptions: {self.transcriptions}")
         # log.info(f"self.transcriptions_ipa: {self.transcriptions_ipa}")
     def make_repo_dicts(self):
@@ -594,7 +608,11 @@ class ASRtoText(object):
         self.load_postprocess_by_kwarg(**kwargs)
 if __name__ == '__main__':
     print(datetime.datetime.now())
-    asr=ASRtoText(
+    from dummy import App
+    program=App()
+    from backend import langtags
+    langtags.Languages(program)
+    asr=ASRtoText(program,
             simplify_length=True,
             simplify_nasals=True,
             simplify_vowels=True,
@@ -611,11 +629,18 @@ if __name__ == '__main__':
             sister_language=None
         )
     print(datetime.datetime.now())
-    test={1:'/home/kentr/bin/raspy/azt/John_01_zmb_NP.wav',
-        2:'/home/kentr/bin/raspy/azt/John_01_zmb_word.wav'}
+    test={1:'Noun_witch_(female)_d5a6855f-b8d1-4617-aeac-eeea8dded121_citation_mwanamke__mchawi_sorciere.wav',
+        # 2:'John_01_zmb_word.wav'
+        }
+    import os
+    test={k:os.path.join('/home/kentr/bin/raspy/azt/test_data/',v) 
+            for k,v in test.items()}
     for i in test.values():
         log.info(f"{asr.return_ipa=}")
         asr.get_transcriptions(i)
+        if asr.error_text:
+            from utilities.error_handler import notify_error as ErrorNotice
+            ErrorNotice(asr.error_text)
         log.info(f"{asr.return_ipa=}")
         # for m in asr.inferall(i):
         #     print(m)

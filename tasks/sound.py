@@ -17,9 +17,8 @@ class Sound(object):
     def _configure_sound(self, event=None):
         sound_ui.SoundSettingsWindow(self)
 
-    def setcontext(self, context=None):
-        if hasattr(super(), 'setcontext'):
-            super().setcontext(context)
+    def setcontext(self):
+        super().setcontext()
         self.context.menuitem("Sound settings", self._configure_sound)
 
     def soundcheck(self):
@@ -58,9 +57,9 @@ class Record(BackendRecord, Sound):
     is_record_task = True
     icon_leaderboard = True
 
-    def setcontext(self, context=None):
-        if hasattr(super(), 'setcontext'):
-            super().setcontext(context)
+    def setcontext(self):
+        log.info("Setting Record menu context")
+        super().setcontext()
         self.context.menuitem("Transcription settings",
                               self._configure_transcription)
 
