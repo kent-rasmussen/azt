@@ -14,6 +14,7 @@ class TaskBase:
     """
     is_chooser=False
     is_report=False
+    is_record_task=False
     uses_second_forms=False
     do_not_show_slices=False
     multislice_max=False

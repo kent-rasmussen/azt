@@ -268,8 +268,8 @@ class GlyphTranscribeHelper:
         """
         # Sound settings (optional)
         soundsettings = getattr(self.program.settings, 'soundsettings', None)
-        if hasattr(self.task, 'pyaudiocheck'):
-            self.task.pyaudiocheck()
+        if soundsettings is not None:
+            soundsettings.confirm_pyaudio()
             soundsettings = getattr(self.task, 'soundsettings', soundsettings)
 
         self.ok_done = False

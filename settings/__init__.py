@@ -236,7 +236,8 @@ class Settings(SettingsUI):
         legacy=savefile.with_suffix('.py')
         _log.info(_("Going to make {legacy_name} into {savefile}").format(legacy_name=legacy,savefile=savefile))
         if setting == 'soundsettings':
-            self.soundsettings=sound.SoundSettings()
+            from backend.core import sound
+            self.soundsettings=sound.SoundSettings(self.program)
             o=self.soundsettings
         else:
             o=self

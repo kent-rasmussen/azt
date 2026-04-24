@@ -474,6 +474,7 @@ class SoundSettingsWindow(ui.Window):
         if not kwargs.get("withdrawn"):
             self.task.withdraw()
             self.deiconify()
+        self.protocol("WM_DELETE_WINDOW", self.on_quit)
 class ASRModelSelectionWindow(ui.Window):
     def language_entry(self):
         self.language_frame=ui.Frame(self.languages_frame,

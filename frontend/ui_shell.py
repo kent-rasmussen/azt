@@ -270,64 +270,51 @@ class Menus(ui.Menu):
                                 label=_(m[0]),
                                 cmd=m[1]
                                 )
-                # framemenu = ui.Menu(changemenu, tearoff=0)
-                # changemenu.add_cascade(label=_("Tone Frame"), menu=framemenu)
-                # framemenu.add_command(label=_("Next"),
-                #         command=lambda x=check.status:StatusDict.nextcheck(x))
-                # framemenu.add_command(label=_("Next to sort"),
-                #         command=lambda x=check.status:StatusDict.nextcheck(x,
-                #                                                 tosort=True))
-                # framemenu.add_command(label=_("Next with data already sorted"),
-                #         command=lambda x=check.status:StatusDict.nextcheck(x,
-                #                                                 wsorted=True))
-                # framemenu.add_command(label=_("Choose"),
-                #                 command=lambda x=check:Check.getcheck(x))
             else:
                 self.changemenu.add_separator()
-                self.changemenu.add_command(label=_("Location in word"),
-                        command=lambda x=check:Check.getcheck(x))
-                if check.check is not None:
-                    self.changemenu.add_command(label=_("Segment(s) to check"),
-                        command=lambda x=check:Check.getgroup(x,tosort=True)) #any
+                self.command(self.changemenu, label=_("Location in word"),
+                        cmd=self.parent.getcheck)
+                if self.parent.params.check() is not None:
+                    self.command(self.changemenu, label=_("Segment(s) to check"),
+                        cmd=lambda: self.parent.getgroup(tosort=True))
         """Do"""
     def do(self):
         domenu = ui.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label=_("Do"), menu=domenu)
-        reportmenu = ui.Menu(self.menubar, tearoff=0)
-        reportmenu.add_command(label=_("Tone by sense"),
-                        command=lambda x=check:Check.tonegroupreport(x))
-        reportmenu.add_command(label=_("Tone by location"
-                        ),command=lambda x=check:Check.tonegroupreport(x,
-                                                            bylocation=True))
-        reportmenu.add_command(label=_("Tone by sense (comprehensive)"),
-                command=lambda x=check:Check.tonegroupreportcomprehensive(x))
+        self.cascade(domenu, _("Reports"), 'reportmenu')
         if self.program.me:
-            reportmenu.add_command(label=_("Initiate Consultant Check"),
-                command=lambda x=check:Check.consultantcheck(x))
-        reportmenu.add_command(label=_("Basic Vowel report (to file)"),
-                        command=lambda x=check:Check.basicreport(x,cvtstodo=['V']))
-        reportmenu.add_command(label=_("Basic Consonant report (to file)"),
-                        command=lambda x=check:Check.basicreport(x,cvtstodo=['C']))
-        reportmenu.add_command(label=_("Basic report on Consonants and Vowels "
-                                                                "(to file)"),
-                command=lambda x=check:Check.basicreport(x,cvtstodo=['C','V']))
-        domenu.add_cascade(label=_("Reports"), menu=reportmenu)
-    def record(self):
-        recordmenu = ui.Menu(self.menubar, tearoff=0)
-        recordmenu.add_command(label=_("Sound Card Settings"),
-                        command=lambda x=check:Check.soundcheck(x))
-        recordmenu.add_command(label=_("Record tone group examples"),
-                        command=lambda x=check:Check.showtonegroupexs(x))
-        recordmenu.add_command(label=_("Record dictionary words, largest group "
-                                                                    "first"),
-                        command=lambda x=check:Check.showentryformstorecord(x,
-                                                                justone=False))
-        recordmenu.add_command(label=_("Record examples for particular "
-                                                    "entries, 1 at at time"),
-                        command=lambda x=check:Check.showsenseswithexamplestorecord(x))
-        domenu.add_cascade(label=_("Recording"), menu=recordmenu)
-        domenu.add_command(label=_("Join Groups"),
-                        command=lambda x=check:Check.join(x))
+            self.command(self.reportmenu,label=_("Consultant check"),
+                        cmd=self.parent.consultantcheck)
+        self.reportmenu.add_separator()
+        self.command(self.reportmenu, label=_("Report by tone group"),
+                        cmd=self.parent.tonegroupreport)
+        self.command(self.reportmenu, label=_("Comprehensive report"),
+                        cmd=self.parent.tonegroupreportcomprehensive)
+        self.command(self.reportmenu, label=_("Report by location in word"),
+                        cmd=lambda: self.parent.tonegroupreport(bylocation=True))
+
+        self.reportmenu.add_separator()
+        self.command(self.reportmenu, label=_("Summary report (Vowels)"),
+                        cmd=lambda: self.parent.basicreport(cvtstodo=['V']))
+        self.command(self.reportmenu, label=_("Summary report (Consonants)"),
+                        cmd=lambda: self.parent.basicreport(cvtstodo=['C']))
+        self.command(self.reportmenu, label=_("Summary report (Segments)"),
+                        cmd=lambda: self.parent.basicreport(cvtstodo=['C','V']))
+
+        if getattr(self.parent, 'is_record_task', False):
+            recordmenu = ui.Menu(self.menubar, tearoff=0)
+            self.command(recordmenu, label=_("Sound Card Settings"),
+                            cmd=self.parent.mikecheck)
+            self.command(recordmenu, label=_("Record tone group examples"),
+                            cmd=self.parent.showtonegroupexs)
+            self.command(recordmenu, label=_("Record entries for CAWL tags"),
+                            cmd=self.parent.showentryformstorecord)
+            self.command(recordmenu, label=_("Record meanings for CAWL tags"),
+                            cmd=self.parent.showsenseswithexamplestorecord)
+            domenu.add_cascade(label=_("Recording"), menu=recordmenu)
+        if hasattr(self.parent, 'redo_join'):
+            self.command(domenu, label=_("Join Groups"),
+                            cmd=self.parent.redo_join)
         """Advanced"""
     def redoadvanced(self):
         log.info("Redoing the Advanced menu")
@@ -363,25 +350,23 @@ class Menus(ui.Menu):
                         )
         if getattr(self.parent,'is_sound_task',False):
             self.sound()
+            if getattr(self.parent,'is_record_task',False):
+                self.record()
         if getattr(self.parent,'is_sort_task',False):
             self.sort()
     def sound(self):
         self.advancedmenu.add_separator()
         options=[(_("Sound Settings"),
-                self.parent.soundcheck),]
-        if getattr(self.parent,'is_record_task',False):
-            options+=[(_("Number of Examples to Record"),
-                    self.program.taskchooser.getexamplespergrouptorecord),]
-            # self.record()
+                self.parent.mikecheck),]
         for m in options:
             self.command(self.advancedmenu,
                     label=_(m[0]),
                     cmd=m[1]
                     )
     def record(self):
-        self.advancedmenu.add_separator()
+        # self.advancedmenu.add_separator() #always follows sound
         options=[(_("Number of Examples to Record"),
-                self.program.taskchooser.getexamplespergrouptorecord),]
+                self.program.ui_settings.getexamplespergrouptorecord),]
         for m in options:
             self.command(self.advancedmenu,
                     label=_(m[0]),
