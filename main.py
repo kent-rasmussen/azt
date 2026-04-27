@@ -632,7 +632,7 @@ class App:
             self.me=True
             self.testlift='Demo_en' #portion of filename
             self.testtask='SortV' #Will convert from string to class later
-            self.testtask='WordCollectnParsewRecordings'
+            # self.testtask='WordCollectnParsewRecordings'
             # self.default_task='WordCollectnParse'
         else:
             self.me=False
