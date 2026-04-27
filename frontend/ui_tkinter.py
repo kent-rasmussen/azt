@@ -2013,70 +2013,51 @@ class Window(Toplevel):
 class ContextMenu(Childof):
     def post_tk_init(self):
         super().post_tk_init()
-    def updatebindings(self):
-        self.parent.bind('<Motion>', self._bind_to_makemenus)
-        self.parent.bind('<Leave>', self._unbind_to_makemenus) #parent only
     def undo_popup(self,event=None):
-        if hasattr(self,'menu'):
-            log.log(2,"undo_popup Checking for ContextMenu.menu: {}".format(
-                                                            self.menu.__dict__))
-            try:
-                self.root.destroy()
-                log.log(3,"popup parent/root destroyed")
-            except:
-                log.log(3,"popup parent/root not destroyed!")
-            finally:
-                self.parent.unbind_all('<Button-1>')
+        if not self.popup: return
+        if self.menu.winfo_exists():
+            self.menu.unpost()
+        self.popup=False
     def menuinit(self):
-        """redo menu on context change"""
+        """redo menu on context change
+        As of now, there are not context changes on the same window
+        """
         try:
-            self.menu = Menu(self.root, tearoff=0)
+            if hasattr(self,'menu') and self.menu.winfo_exists():
+                self.menu.destroy()
+            self.menu = Menu(self.parent._root(), tearoff=0)
+            self.menu.bind('<Leave>',self.undo_popup)
         except Exception as e:
             log.error(f"Problem initializing context menu: {e}")
             raise
     def menuitem(self,msg,cmd):
         try:
             self.menu.add_command(label=msg,command=cmd)
-        except AttributeError:
+        except (AttributeError, tkinter.TclError):
             self.menuinit()
             self.menu.add_command(label=msg,command=cmd)
-    def dosetcontext(self):
-        # You need to have a setcontext() method for the
-        # parent of this context menu, to set menu
-        # items under appropriate conditions
-        # There is a default 'show menus only' one in HasMenus()
-        try:
-            self.parent.setcontext()
-        except Exception as e:
-            log.error(_("Exception in dosetcontext: {error}").format(error=e))
     def do_popup(self,event):
-        try:
-            self.menu.tk_popup(event.x_root, event.y_root)
-        except:
-            log.log(4,"Problem with self.menu.tk_popup; setting context")
-            self.getroot()
-            self.dosetcontext()
-            self.menu.tk_popup(event.x_root, event.y_root)
-        finally:
-            self.menu.bind('<Leave>',self.undo_popup) #_all
-            self.menu.grab_release() #allows click on main window
-    def _bind_to_makemenus(self,event): #all needed to cover all of window
-        self.parent.bind_all('<Button-3>',self.do_popup) #_all
-    def _unbind_to_makemenus(self,event):
-        self.parent.bind_all('<Button-1>',self.undo_popup)
-        self.parent.unbind_all('<Button-3>')
-    def getroot(self):
-        self.root=Root(self.parent._root().program)
-        self.root.withdraw()
-        log.info("Ad hoc inherit")
-        Childof.inherit(self.root,self.parent)
-        log.info("Ad hoc inherit done")
+        log.info("trying do_popup")
+        if not hasattr(self,'menu') or not self.menu.winfo_exists():
+            # You need to have a setcontext() method for the
+            # parent of this context menu, to set menu
+            # items under appropriate conditions
+            # There is a default 'show menus only' one in HasMenus()
+            self.parent.setcontext()
+        self.menu.tk_popup(event.x_root, event.y_root)
+        self.menu.grab_release() #don't do Tk redundant grab
+        self.popup=True
+    def _bind_to_makemenus(self,event=None): #all needed to cover all of window
+        log.info("Binding to make menus")
+        if (self.parent._root().tk.call('tk', 'windowingsystem')=='aqua'):
+            self.parent._root().event_add('<<ContextMenu>>', '<Control-Button-1>')
+        self.parent.bind('<<ContextMenu>>',self.do_popup) #_all
     def __init__(self,parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
-        self.getroot()
         self.post_tk_init()
         self.parent.context=self
-        self.updatebindings()
+        self._bind_to_makemenus()
+        self.popup=False
 """These have gridding (not Window or ContextMenu, above)"""
 class ButtonFrame(Frame):
     bf_kwargs={'optionlist'}
