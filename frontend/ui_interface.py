@@ -300,6 +300,14 @@ class ScrollingButtonFrameInterface(ScrollingFrameInterface):
     """Attributes: bf (the ButtonFrame inside content)"""
     pass
 
+# ── ScrollingListBox ─────────────────────────────────────────────────────
+class ScrollingListBoxInterface(FrameInterface):
+    """Listbox + Scrollbar wrapper. API-compatible with ScrollingButtonFrame:
+    constructor kwargs are optionlist, command, window. The command callback
+    fires on selection as command(choice_code, window=window).
+    Attributes: listbox, scrollbar, choices (list of choice codes)."""
+    pass
+
 # ── RadioButtonFrame ─────────────────────────────────────────────────────
 class RadioButtonFrameInterface(FrameInterface):
     """Constructor kwargs: optionlist, horizontal, sticky, variable"""

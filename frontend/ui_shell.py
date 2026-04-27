@@ -35,19 +35,19 @@ def _option_dialog(parent, title, text, optionlist, command,
         parent: parent window for the dialog
         title: window title string
         text: label text (question/prompt)
-        optionlist: list of options for the button frame
+        optionlist: list of options for the selection widget
         command: callback when an option is selected
-        scrolling: True for ScrollingButtonFrame, False for ButtonFrame
-        row: grid row for the button frame (default 1)
+        scrolling: True for ScrollingListBox, False for ListBox
+        row: grid row for the selection widget (default 1)
         wait: if True, call wait_window before returning
-        **kwargs: extra kwargs passed to the ButtonFrame constructor
+        **kwargs: extra kwargs passed to the selection widget constructor
 
     Returns:
         The dialog window.
     """
     window = ui.Window(parent, title=title)
     ui.Label(window.frame, text=text).grid(column=0, row=0)
-    frame_cls = ui.ScrollingButtonFrame if scrolling else ui.ButtonFrame
+    frame_cls = ui.ScrollingListBox if scrolling else ui.ListBox
     buttonFrame = frame_cls(window.frame,
                             optionlist=optionlist,
                             command=command,
@@ -3032,16 +3032,27 @@ class Settings(object):
             ui.Label(window.frame, text=_('What ({ps}) syllable profile do you '
                                     'want to work with?').format(ps=ps)
                                     ).grid(column=0, row=0)
-            optionslist = [{'code':x,'description':profilecounts[(x,ps)]} for x in profiles]
-            """What does this extra frame do?"""
-            window.scroll=ui.Frame(window.frame)
-            window.scroll.grid(column=0, row=1)
-            buttonFrame1=ui.ScrollingButtonFrame(window.scroll,
-                                    optionlist=optionslist,
-                                    command=self.program.settings.setprofile,
-                                    window=window,
-                                    column=0, row=0
-                                    )
+            profile_list=list(profiles)
+            display_items=[f"{x} ({profilecounts[(x,ps)]})"
+                            if (x,ps) in profilecounts else str(x)
+                            for x in profile_list]
+            listframe=ui.Frame(window.frame, row=1, column=0, sticky='nsew')
+            def on_select(event=None):
+                sel=listbox.curselection()
+                if not sel:
+                    return
+                self.program.settings.setprofile(profile_list[sel[0]], window=window)
+            listbox=ui.ListBox(listframe,
+                                optionlist=display_items,
+                                command=on_select,
+                                font='default',
+                                height=min(25, max(5, len(profile_list))),
+                                width=40,
+                                row=0, column=0, sticky='nsew')
+            sb=ui.Scrollbar(listframe, orient='vertical',
+                            command=listbox.yview,
+                            row=0, column=1)
+            listbox.config(yscrollcommand=sb.set)
             window.wait_window(window)
     def getsecondformfieldN(self,event=None):
         ps=self.program.settings.nominalps

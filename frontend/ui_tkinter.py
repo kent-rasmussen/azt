@@ -1744,6 +1744,19 @@ class CheckButton(Childof,Gridded,Text,UI,tkinter.Checkbutton):
         kwargs=self.super_kwargs
         self.post_tk_init()
 class ListBox(Childof,Gridded,UI,tkinter.Listbox): #TextBase?
+    """Drop-in replacement for ButtonFrame.
+
+    Accepts the same `optionlist`/`command`/`window` kwargs as ButtonFrame
+    (strings/ints, dicts with 'code'/'name'/'description'/'image', or
+    tuples of length 2/3/4 — normalized via ButtonFrame.regularize_choice).
+    On selection the command callback fires as
+    `command(choice_code, window=window)`, matching the per-button contract.
+    Per-row images carried by options are dropped (Listbox can't render them).
+
+    If `command` takes the raw `<<ListboxSelect>>` event (i.e. you pass
+    a list of plain strings as `optionlist` and want event-style binding),
+    set `raw_command=True` to bypass the choice-mapping wrapper.
+    """
     tk_textkwargs=TextBase.tk_textkwargs|{'listvariable'}
     def pre_tk_init(self,**kwargs):
         """This restores kwargs needed for the tkinter classes"""
@@ -1752,11 +1765,24 @@ class ListBox(Childof,Gridded,UI,tkinter.Listbox): #TextBase?
     def post_tk_init(self):
         try:
             assert not hasattr(self['listvariable'].get(), '__iter__')
-            self['listvariable'].set(self.optionlist) #even if empty, make this iter
+            self['listvariable'].set(self._display) #even if empty, make this iter
         except:
-            self['listvariable']=tkinter.Variable(value=self.optionlist)
-        self.bind('<<ListboxSelect>>', self.command)
+            self['listvariable']=tkinter.Variable(value=self._display)
+        if self._raw_command:
+            if self.command:
+                self.bind('<<ListboxSelect>>', self.command)
+        else:
+            self.bind('<<ListboxSelect>>', self._on_select)
         super().post_tk_init()
+    def _on_select(self,event=None):
+        sel=self.curselection()
+        if not sel or not self.command:
+            return
+        code=self.choices[sel[0]]
+        if self._window is not None:
+            self.command(code,window=self._window)
+        else:
+            self.command(code)
     def __init__(self, parent, *args, **kwargs):
         """selectmode can be
         tkinter.BROWSE – allows a single selection. This is the default.
@@ -1769,17 +1795,52 @@ class ListBox(Childof,Gridded,UI,tkinter.Listbox): #TextBase?
                 "with 'optionlist' contents, if you don't provide a "
                 "'listvariable' with contents set to a list.")
             raise
-        self.optionlist=kwargs.pop('optionlist',[])
+        self.optionlist=kwargs.pop('optionlist',[]) or []
         self.command=kwargs.pop('command',None)
+        self._window=kwargs.pop('window',None)
+        self._raw_command=kwargs.pop('raw_command',False)
+        # optionlist=kwargs.pop('optionlist',[]) or []
+        # command=kwargs.pop('command',None)
+        # window=kwargs.pop('window',None)
+        kwargs['height']=kwargs.get('height',
+                                    min(25,max(5,len(self.optionlist) or 1)))
+        kwargs['width']=kwargs.get('width',40)
+        kwargs['font']=kwargs.get('font','normal')
+        # raw_command=kwargs.pop('raw_command',False)
+        #kwargs should be
+        # optionlist=optionlist,
+        # command=command,
+        # window=window,
+        # raw_command=raw_command,
+        # font=listbox_font,
+        # height=listbox_height,
+        # width=listbox_width,
+                            
+        # if listbox_height is None:
+        #     listbox_height=min(25,max(5,len(optionlist) or 1))
+        self.choices=[]
+        self._display=[]
+        for choice in self.optionlist:
+            ck=ButtonFrame.regularize_choice(self,choice)
+            if not ck:
+                continue
+            if 'image' in ck:
+                log.info(f"ListBox dropping image for {ck['choice']!r}")
+            self.choices.append(ck['choice'])
+            self._display.append(ck['text'])
+        if self._raw_command:
+            #legacy raw mode: feed optionlist straight to listvariable
+            self._display=list(self.optionlist)
+            self.choices=list(self.optionlist)
         #selectforeground is font color for selected items
         kwargs['selectbackground']=kwargs.get('selectbackground',
                                             parent.theme.activebackground)
         #is this ever *not* the right thing? Normally, don't conflict w/others on page!
-        # You may want to set this otherwise if you want a listbox selection to be 
-        # immediately available to the clipboard, or to cancel another listbox 
-        # selection.  
-        kwargs['exportselection']=kwargs.get('exportselection',False) 
-        
+        # You may want to set this otherwise if you want a listbox selection to be
+        # immediately available to the clipboard, or to cancel another listbox
+        # selection.
+        kwargs['exportselection']=kwargs.get('exportselection',False)
+
         super().__init__(parent, *args, **kwargs)
         self.post_tk_init()
 class SearchableComboBox(Childof,Gridded,Text,UI):
@@ -2386,6 +2447,23 @@ class ScrollingButtonFrame(ScrollingFrame):
                             column=0,
                             **kwargs)
         # log.info(f"ScrollingButtonFrame ButtonFrame complete {kwargs=}")
+class ScrollingListBox(Frame):
+    """Frame containing a ListBox + vertical Scrollbar.
+
+    All option/command/window handling lives in ListBox; this class is only
+    responsible for adding a Scrollbar. Drop-in replacement for
+    ScrollingButtonFrame.
+    """
+    def __init__(self,parent,**kwargs):
+        super().__init__(parent,**kwargs)
+        self.listbox=ListBox(self,
+                            row=0,column=0,sticky='nsew'
+                            **kwargs)
+        self.scrollbar=Scrollbar(self,orient='vertical',
+                                command=self.listbox.yview,
+                                row=0,column=1)
+        self.listbox.config(yscrollcommand=self.scrollbar.set)
+        self.choices=self.listbox.choices
 class RadioButtonFrame(Frame):
     rbf_kwargs={'optionlist'}
     def reserve_kwargs(self,**kwargs):

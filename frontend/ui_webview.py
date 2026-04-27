@@ -1361,6 +1361,12 @@ class ScrollingButtonFrame(ScrollingFrame):
         self.buttons = self.bf.buttons
 
 
+class ScrollingListBox(ScrollingButtonFrame):
+    """Stub for the webview backend. Mirrors the tkinter ScrollingListBox API
+    by delegating to ScrollingButtonFrame for now."""
+    pass
+
+
 class RadioButtonFrame(Frame):
     def __init__(self, parent, *args, **kwargs):
         kwargs.pop('optionlist', None)
