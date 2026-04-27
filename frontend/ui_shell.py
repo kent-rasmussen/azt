@@ -2040,6 +2040,7 @@ class TaskDressing(HasMenus,ui.Window):
         #withdraw one way or another, but just waitdone to return
             self.runwindow.wait(msg=msg,thenshow=True)
         self.withdraw() #this is the parent of the runwindow, the task
+        return self.runwindow
     def isrunwindow(self):
         log.info(f"{hasattr(self,'runwindow')=}")
         widgets=[self]
