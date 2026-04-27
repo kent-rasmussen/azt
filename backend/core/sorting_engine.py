@@ -32,10 +32,11 @@ class Sort(Categories):
     def _get_safe_window(self):
         """Return runwindow if it exists and is viewable, else tk_root."""
         try:
-            self.ui.runwindow.winfo_viewable()
+            assert self.ui.runwindow.winfo_exists(),"runwindow attr may be there, but no widget"
             return self.ui.runwindow
-        except (AttributeError, RuntimeError):
-            return self.program.tk_root
+        except (AttributeError,AssertionError) as e:
+            log.info(str(e))
+            return self.ui.getrunwindow()
 
     def _safe_quit_runwindow(self):
         """Quit runwindow if it exists, silently ignore if not."""
