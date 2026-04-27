@@ -23,7 +23,8 @@ class TkErrorCatcher:
         # _tkinter.TclError,
         AttributeError,
         KeyError,
-        NameError
+        NameError,
+        TypeError
     ]
     def __init__(self, func, subst, widget):
         self.func = func
