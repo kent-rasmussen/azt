@@ -1079,6 +1079,8 @@ class StatusFrame(ui.Frame):
         cell.configure(background=cell.inactive_background)
         cell.configure(command=cell.inactive_command)
     def update_active_cell(self,*args):
+        if not hasattr(self,'_cells'): #This may be called without a table
+            return
         log.info(f"update_active_cell {args=}")
         new_cell=self._cells.get((self.program.slices.profile(),
                                     self.program.params.check()))
