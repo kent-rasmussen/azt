@@ -2186,7 +2186,7 @@ class ScrollingFrame(Frame):
             self.canvas.config(height=self.content.winfo_reqheight())
         log.log(4,"_configure_interior done.")
         self._configure_canvas() #bc we changed the canvas
-        self.hwinfo(event)
+        # self.hwinfo(event) #if needed, bring event in from _configure_interior
     def hwinfo(self,event=None):
         return #unless needed for debugging
         if event is not None:
