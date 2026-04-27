@@ -2151,13 +2151,17 @@ class ScrollingFrame(Frame):
         # self._configure_canvas()
         self._configure_interior()
     def _configure_interior(self, event=None):
+        if getattr(self, '_configure_pending', False):
+            return
+        self._configure_pending = True
+        self.after_idle(self._do_configure_interior)
+    def _do_configure_interior(self):
+        self._configure_pending = False
+        if not self.winfo_exists():
+            return
         log.log(4,"_configure_interior, on content change")
-        self.update_idletasks()
         size = (self.content.winfo_reqwidth(), self.content.winfo_reqheight())
         self.canvas.config(scrollregion="0 0 %s %s" % size)
-        """This makes sure the canvas is as large as what you put on it"""
-        # self.windowsize() #this needs to not keep running
-        self.update_idletasks()
         #     self.configured+=1
         # if self.winfo_width() < self.canvas.winfo_width():
         #     log.info("self width less than canvas!")
