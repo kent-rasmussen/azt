@@ -36,7 +36,7 @@ class ErrorNotice(ui.Window):
         else:
             log.error(f"ErrorNotice has no theme! parent={type(parent).__name__}")
         self.parent.withdraw()
-        self.title = title
+        # self.title = title
         self.text = text
         l=ui.Label(self.frame, text=text,
                     image=image,

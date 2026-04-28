@@ -1,5 +1,5 @@
 from backend.core.sound import SoundSettings, Record as BackendRecord
-from frontend import sound_ui, ui_shell as ui
+from frontend import sound_ui, ui
 from utilities import logsetup
 from io_put import lift
 

@@ -621,6 +621,7 @@ class App:
             self.aztdir=sys._MEIPASS #android?
         else:
             self.aztdir=self.file.parent
+        self.className='azt'
         # if self.hostname == 'karlap':
         for k,v in program.items():
             setattr(self,k,v)

@@ -128,10 +128,11 @@ class ExportData(ui.Window):
             )
         self.export_button.bind("<Button-1>",self.do_export)
         self.switch_button.bind("<Button-1>",self.switch)
-    def __init__(self, arg):
+    def __init__(self, program):
+        self.program=program
         self.exportclass=export.Lexicon
         title=(_("{azt} Data Export").format(azt=self.program.name))
-        ui.Window.__init__(self,self.program.root, title=title)
+        ui.Window.__init__(self,self.program.tk_root, title=title)
         self.slices=False #allow user to output data for each check
         self.max_rows_total=None
         self.max_rows_per_file=None

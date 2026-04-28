@@ -804,15 +804,15 @@ class WordCollection(Segments):
         bdict[pixelopts][1]=p.button(imageparameters,text='+', font=fontsize,
                             command=lambda x=1:makegrid(pixels=x),ipady=0,
                             width=1,row=0,column=imageparameters.ncolumns())
-        ui.Label(imageparameters,text="", font=fontsize,
+        p.label(imageparameters,text="", font=fontsize,
                     width=parameterseparation,
                     row=0,column=imageparameters.ncolumns())
-        bdict[colopts][-1]=ui.Button(imageparameters,text='-', font=fontsize,
+        bdict[colopts][-1]=p.button(imageparameters,text='-', font=fontsize,
                             command=lambda x=-1:makegrid(cols=x),ipady=0,
                             width=1,row=0,column=imageparameters.ncolumns())
-        ui.Label(imageparameters,text=_("Columns"), font=fontsize, padx=2,
+        p.label(imageparameters,text=_("Columns"), font=fontsize, padx=2,
                     row=0,column=imageparameters.ncolumns())
-        bdict[colopts][1]=ui.Button(imageparameters,text="+", font=fontsize,
+        bdict[colopts][1]=p.button(imageparameters,text="+", font=fontsize,
                             command=lambda x=1:makegrid(cols=x),ipady=0,
                             width=1,row=0,column=imageparameters.ncolumns())
         makegrid()

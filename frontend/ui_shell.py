@@ -867,7 +867,7 @@ class StatusFrame(ui.Frame):
             return
         self.labels['cvgroup']['text'].set(self.multicheckscopelabel())
     def multicheckscopelabel(self):
-        t=(_("Run all checks for {checks}").format(checks=unlist(self.program.ui_settings.cvtstodoprose())))
+        return (_("Run all checks for {checks}").format(checks=unlist(self.program.ui_settings.cvtstodoprose())))
     def multicheckscope(self):
         if not hasattr(self.program.task,'cvtstodo'):
             self.program.task.cvtstodo=['V']
@@ -1789,10 +1789,10 @@ class TaskDressing(HasMenus,ui.Window):
                 cmd=lambda w=window: self.addframe(window=w)
             else:
                 btext=_("Return to {name}, to fix settings").format(name=self.program.name)
-                text=_("I can't find any checks for type {cvt}, ps {ps}, profile {profile}."
+                text=_("I can't find any checks for kwargs {kwargs}."
                         " Probably that means there is a problem with your "
                         " settings, or with your syllable profile analysis"
-                        "").format(cvt=cvt,ps=ps,profile=profile)
+                        "").format(kwargs=kwargs)
                 cmd=window.destroy
             ui.Label(window.frame, text=text, column=0, row=0, ipady=25)
             b=ui.Button(window.frame, text=btext,

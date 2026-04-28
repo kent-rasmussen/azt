@@ -614,6 +614,8 @@ class RegexDict(object):
         if groupcomparison:
             log.info(f"going to make {check} profile for {kwargs.get('group')} "
                     f"and {groupcomparison}")
+        else:
+            groupcomparison='' #add to strings below
         for cvt in ['CxV','VxC','C','V']:
             if cvt in check:
                 S=str(cvt).replace('x','')

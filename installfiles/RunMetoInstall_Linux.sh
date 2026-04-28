@@ -29,10 +29,18 @@ python3.12 -m pip install six pyaudio lxml Pillow
 cd;git clone https://github.com/kent-rasmussen/azt.git;cd -
 # wget https://github.com/kent-rasmussen/azt/blob/main/installfiles/azt.desktop?raw=true -O azt.desktop
 cp ${HOME}/azt/installfiles/azt.desktop $HOME/.local/share/applications/
-sed -i "s|~|${HOME}|" $HOME/.local/share/applications/azt.desktop
+sed -i "s|~|${HOME}|g" $HOME/.local/share/applications/azt.desktop
 desktop-file-validate $HOME/.local/share/applications/azt.desktop
-update-desktop-database
+update-desktop-database $HOME/.local/share/applications
 gio set $HOME/.local/share/applications/azt.desktop metadata::trusted true
 chmod a+x $HOME/.local/share/applications/azt.desktop
 ln -f $HOME/.local/share/applications/azt.desktop $HOME/Desktop/
+# Install icon into the hicolor theme so GNOME/KDE can find it by name (Icon=azt)
+ICON_SRC="${HOME}/azt/images/AZT green stacks_transparent_sm.png"
+for sz in 16 32 48 64 128 256; do
+    ICON_DIR="${HOME}/.local/share/icons/hicolor/${sz}x${sz}/apps"
+    mkdir -p "${ICON_DIR}"
+    python3.12 -c "from PIL import Image; im=Image.open('${ICON_SRC}'); im.thumbnail((${sz},${sz})); im.save('${ICON_DIR}/azt.png')"
+done
+gtk-update-icon-cache -f -t "${HOME}/.local/share/icons/hicolor" 2>/dev/null || true
 cd -

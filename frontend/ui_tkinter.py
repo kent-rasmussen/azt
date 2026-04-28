@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # coding=UTF-8
-import gettext
-_ = gettext.gettext
+from utilities.i18n import _
 import sys,copy
 import platform
 from utilities.times import now
@@ -263,7 +262,7 @@ class Theme(object):
                                             (multiplier*len(self.themes)-1))
             self.name='Kent' #for the colorblind (to punish others...)
             self.name='highcontrast' #for low light environments
-            self.name=pot[randint(0, len(pot))-1] #mostly defaulttheme
+            self.name=pot[randint(0, len(pot)-1)] #mostly defaulttheme
             try:
                 if platform.uname().node == 'CS-477':
                     self.name='pink'
@@ -1266,6 +1265,7 @@ class Root(Waitable,UI,tkinter.Tk):
         self.parent=None
         self.mainwindow=False
         self.noimagescaling=kwargs.pop('noimagescaling',False)
+        kwargs['className']=getattr(program,'className','Set App Name')
         super().__init__(*args, **kwargs)
         self.post_tk_init(**kwargs) #Theme needs Tk to exist by now
         self.renderer=Renderer()
@@ -1657,7 +1657,7 @@ class Button(Childof,GridinGridded,Text,UI,tkinter.Button):
                 background=self.theme.activebackground))
             self.bind("<Leave>", func=lambda e: self.config(
                 background=self.theme.background))
-        except _tkinter.TclError as e:
+        except tkinter.TclError as e:
             log.info(f"Error in binding enter and leave: {e}")
     def nofn(self):
         pass
@@ -2438,7 +2438,7 @@ class ScrollingListBox(Frame):
     def __init__(self,parent,**kwargs):
         super().__init__(parent,**kwargs)
         self.listbox=ListBox(self,
-                            row=0,column=0,sticky='nsew'
+                            row=0,column=0,sticky='nsew',
                             **kwargs)
         self.scrollbar=Scrollbar(self,orient='vertical',
                                 command=self.listbox.yview,

@@ -2,9 +2,8 @@
 Name=AZT
 Comment=Dictionary & Orthography checker
 Exec=/usr/bin/python3.12 ~/azt/main.py
-Icon=~/azt/images/AZT green stacks_transparent_sm.png
+Icon=azt
 #Terminal=false
-NoDisplay=true
 Type=Application
 #StartupNotify=true
 StartupWMClass=azt

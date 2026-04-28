@@ -4,6 +4,7 @@ from utilities import logsetup
 log=logsetup.getlog(__name__)
 logsetup.setlevel('DEBUG',log) #for this file
 from utilities import file
+from utilities.i18n import _
 class Exporter(object):
     """This class contains most of what is needed to pull data out of lift
     to create a tarball for ASR training."""
