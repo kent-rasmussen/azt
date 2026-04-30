@@ -4,14 +4,9 @@ from xml.etree import ElementTree as ET
 from utilities import logsetup
 #This should not be imported with from xmletfns import *
 log=logsetup.getlog(__name__)
-from utilities import file
 import urllib.parse
 import datetime
-try: #translation
-    _
-except NameError:
-    def _(x):
-        return x
+from utilities.i18n import _
 ElementTree=ET.ElementTree
 Element=ET.Element
 parse=ET.parse
@@ -61,6 +56,7 @@ def iterateforincludes(node,ns,results=[]):
         iterateforincludes(child,ns,results)
     return results
 def getincluded(filename,iterated=False):
+    from utilities import file
     log=logsetup.getlog(__name__) #fn is imported as *, no not global log
     # Each new files starts here
     filename=urllib.parse.unquote(str(filename), encoding='utf-8', errors='replace')
