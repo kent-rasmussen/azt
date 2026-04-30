@@ -612,6 +612,14 @@ class App:
     def runtime_to_now(self):
         #this returns a delta!
         return times.now()-self.start_time
+    def check_for_theme(self):
+        hard_themes={'CS-477':'pink',
+                    'karlap':'Kim' if not self.production else None}
+        #check if theme exists
+        self.theme=file.uitheme()
+        if not self.theme:
+            self.theme=hard_themes.get(platform.uname().node,None)
+        log.info(f"Using theme {self.theme}")
     def __init__(self,program):
         # globals()['program'] = self  # replace dict with App; LazyGlobal resolves to self
         sys.excepthook = self.handle_exception
@@ -629,7 +637,7 @@ class App:
         self.loglevel=logsetup.loglevel_default #'INFO'
         if self.aztdir.parent.stem == 'raspy': 
             self.testing=True #eliminates Error screens and zipped logs and repo commits
-            self.production=True #True for making screenshots (default theme)
+            # self.production=True #True for making screenshots (default theme)
             self.me=True
             self.testlift='Demo_en' #portion of filename
             self.testtask='SortV' #Will convert from string to class later
@@ -643,6 +651,7 @@ class App:
             # self.default_task='WordCollectnParse'
         logsetup.setlevel(self.loglevel) #update to value just set
         self.get_interface_languages()
+        self.check_for_theme()
         #This isn't helpful where things are copied to disk later:
         self.modified_time=times.modified(self.file)
         self.modified_time_relative=f'{times.now()-self.modified_time} ago'

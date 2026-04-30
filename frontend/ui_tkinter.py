@@ -263,14 +263,6 @@ class Theme(object):
             self.name='Kent' #for the colorblind (to punish others...)
             self.name='highcontrast' #for low light environments
             self.name=pot[randint(0, len(pot)-1)] #mostly defaulttheme
-            try:
-                if platform.uname().node == 'CS-477':
-                    self.name='pink'
-                if (platform.uname().node == 'karlap' and
-                        not self.program.production):
-                    self.name='Kim' #for my development
-            except Exception as e:
-                log.info("Assuming I'm not working from main ({}).".format(e))
         elif self.name not in self.themes:
             print(_("Sorry, that theme doesn't seem to be set up. Pick from "
             "these options:"),self.themes.keys())
@@ -492,7 +484,7 @@ class Theme(object):
             self.originaltheme=self.program.theme
             self.name=None
         else:
-            if not hasattr(self.program,'theme'):
+            if not hasattr(self.program,'theme') or not self.program.theme:
                 self.name=None
             elif isinstance(self.program.theme,str):
                 self.name=self.program.theme
@@ -1278,6 +1270,11 @@ class Toplevel(Childof,Waitable,UI,tkinter.Toplevel): #
         super().post_tk_init()
     def __init__(self, parent, *args, **kwargs):
         self.mainwindow=False
+        if 'class_' not in kwargs:
+            p=parent
+            while p is not None and not hasattr(p,'program'):
+                p=getattr(p,'parent',None) or getattr(p,'master',None)
+            kwargs['class_']=getattr(getattr(p,'program',None),'className','azt')
         super().__init__(parent, *args, **kwargs)
         self.post_tk_init()
 class Menu(Childof,tkinter.Menu): #not Text

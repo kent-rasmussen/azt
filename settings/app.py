@@ -26,3 +26,9 @@ class AppConfig(ConfigManager):
 
     def set_ui_lang(self, lang):
         self.set('ui_lang', lang)
+
+    def get_ui_theme(self):
+        return self.get('ui_theme', '')
+
+    def set_ui_theme(self, theme):
+        self.set('ui_theme', theme)

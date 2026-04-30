@@ -37,6 +37,14 @@ class AppSettingsManager:
     def ui_lang(self, value):
         self.app.set_ui_lang(value)
 
+    @property
+    def ui_theme(self):
+        return self.app.get_ui_theme()
+
+    @ui_theme.setter
+    def ui_theme(self, value):
+        self.app.set_ui_lang(value)
+
 class SettingsManager:
     """
     Centralized settings manager that provides access to all domains.

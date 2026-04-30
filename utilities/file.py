@@ -252,6 +252,14 @@ def uilang(lang=None):
     if not lang:
         return mgr.ui_lang or None
     mgr.ui_lang = lang
+def uitheme(theme=None):
+    """Get or set the UI theme in app-level config."""
+    mgr = _app_settings()
+    if mgr is None:
+        return None
+    if not theme:
+        return mgr.ui_theme or None
+    mgr.ui_theme = theme
 def getfilename():
     """Return a single filename if it exists on disk, else return the list."""
     mgr = _app_settings()
