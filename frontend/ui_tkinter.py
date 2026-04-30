@@ -692,7 +692,7 @@ class Childof():
     def is_descendant_of(self,w):
         # log.info(f"{self.winfo_toplevel()=}")
         # log.info(f"{self.parent=}")
-        while (y:=self.parent) not in [w,self.winfo_toplevel()]:
+        if (y:=self.parent) not in [w,self.winfo_toplevel()]:
             return y.is_descendant_of(w)
         if w == y:
             return True
@@ -950,8 +950,6 @@ class UI():
             if a in my_keys:
                 self[a]=getattr(self,'activebackground',
                                 self.theme.activebackground)
-        if self.withdrawn:
-            self.withdraw()
     def __init__(self, *args, **kwargs):
         """This is always the last of my methods, after which tkinter is called.
         because of this, we need to restore the parent so tkinter can see it"""
@@ -1001,6 +999,7 @@ class Exitable():
         self.exitFlag.true()
         if (to_root or getattr(self,'ismainwindow',False)) and self.parent:
             self.parent.on_quit(to_root=True)
+            return
         else:
             if (self.parent and
                 self.parent.winfo_exists() and
