@@ -168,8 +168,7 @@ class Theme(object):
             scaledalreadydir=file.pathname_from_base_dir('images/scaled/'+str(scale)+'/')
             file.makedir(scaledalreadydir) #in case not there
         def mkimg(name,filename):
-            imgurl=file.pathname_from_base_dir(
-                            file.getdiredurl('../images/',filename))
+            imgurl = self.program.aztdir / 'images' / filename
             # log.info("scale: {}".format(scale))
             # log.info(f"making image {name} ({filename}) with imgurl {imgurl}")
             if scale-1: #x != y:
