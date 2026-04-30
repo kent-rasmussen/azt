@@ -3,19 +3,14 @@
 """This module controls manipulation of LIFT files and objects"""
 """"(Lexical Interchange FormaT), both for reading and writing"""
 from utilities import logsetup
-log=logsetup.getlog(__name__)
+log=logsetup.getlog(__name__,loglevel='DEBUG')
 # logsetup.setlevel('INFO',log) #for this file
-logsetup.setlevel('DEBUG',log) #for this file
 # try:
 #     from lxml import etree as ET
 #     log.info("using lxml to parse XML")
 #     lxml=True
 # except:
-try: #Allow this module to be used without translation
-    _
-except NameError:
-    def _(x):
-        return x
+from utilities.i18n import _
 log.info(_("using xml.etree to parse XML"))
 lxml=False
 # from xmletfns import * # from xml.etree import ElementTree as ET
@@ -4869,6 +4864,11 @@ def update_langtags(codes_to_change):
         away=lang['fromcode']+'/'+lang['tocode']+'.lift' #leave dir alone
         lift.write(filename=make_filename())
 if __name__ == '__main__':
+    try: #Allow this module to be used without translation
+        _
+    except NameError:
+        def _(x):
+            return x
     import time #for testing; remove in production
     logsetup.setlevel('INFO',log) #for this file
     # def _(x):
