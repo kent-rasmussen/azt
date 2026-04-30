@@ -967,7 +967,7 @@ class UI():
             super().__init__(*args, **kwargs)
         if self.withdrawn:
             self.withdraw()  # withdraw immediately, before post_tk_init work
-        self.post_tk_init()
+        # self.post_tk_init()
         self.waitcancelled=False
 class Exitable():
     """This class provides the method and init to make things exit normally.
@@ -1206,15 +1206,6 @@ class Image(): #PIL.ImageTk.PhotoImage is for display
             log.error(f"Exception opening image {filename}: {e}")
             self.base_img=None
             return
-        # try:
-        #     PIL.ImageTk.PhotoImage.__init__(self.base_img)
-        # except tkinter.TclError as e:
-        #     if "couldn't recognize data in image file" in e.args[0]:
-        #         raise #this is processed elsewhere
-        #     elif 'value for "-file" missing' in e.args[0]:
-        #         raise #this is processed elsewhere
-        #     else:
-        #         log.info("Image error: {}".format(e))
         self.compile()
 """below here has UI"""
 class Root(Waitable,UI,tkinter.Tk):
@@ -1760,9 +1751,11 @@ class ListBox(Childof,Gridded,UI,tkinter.Listbox): #TextBase?
         return kwargs
     def post_tk_init(self):
         try:
-            assert not hasattr(self['listvariable'].get(), '__iter__')
-            self['listvariable'].set(self._display) #even if empty, make this iter
-        except:
+            #This is set in any case, empty string if not provided
+            assert self['listvariable'],"listvariable not provided, creating."
+            self.listvariable.set(self._display)
+        except AssertionError as e:
+            log.info(f"Error: {e}")
             self['listvariable']=tkinter.Variable(value=self._display)
         if self._raw_command:
             if self.command:
@@ -1778,6 +1771,7 @@ class ListBox(Childof,Gridded,UI,tkinter.Listbox): #TextBase?
         if self._window is not None:
             self.command(code,window=self._window)
         else:
+            log.info(f"Running {self.command=} with {code=}")
             self.command(code)
     def __init__(self, parent, *args, **kwargs):
         """selectmode can be
@@ -1791,6 +1785,7 @@ class ListBox(Childof,Gridded,UI,tkinter.Listbox): #TextBase?
                 "with 'optionlist' contents, if you don't provide a "
                 "'listvariable' with contents set to a list.")
             raise
+        self.listvariable=kwargs.get('listvariable')
         self.optionlist=kwargs.pop('optionlist',[]) or []
         self.command=kwargs.pop('command',None)
         self._window=kwargs.pop('window',None)
