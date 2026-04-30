@@ -617,8 +617,10 @@ class Renderer():
                     log.info("Using font file {}".format(file))
                     break
                 except OSError as e:
-                    if e == 'cannot open resource':
+                    if 'cannot open resource' in str(e):
                         log.debug("no file {}, checking next".format(file))
+                    else:
+                        raise
         else: #i.e., if it was done before
             font=self.imagefonts[str(fontkey)]
         if str(fontkey) not in self.imagefonts: #i.e., neither before nor now
