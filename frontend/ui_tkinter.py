@@ -231,13 +231,13 @@ class Theme(object):
         ntodo=len(Theme.imagelist)
         self.startruntime()
         for n,(name,filename) in enumerate(Theme.imagelist):
-            try:
-                #Can't hyperthread here!
-                mkimg(name,filename)
-            except Exception as e:
-                log.info("Image {} ({}) not compiled ({})".format(
-                            name,filename,e
-                            ))
+            mkimg(name,filename)
+            # try:
+            #     #Can't hyperthread here!
+            # except Exception as e:
+            #     log.info("Image {} ({}) not compiled ({})".format(
+            #                 name,filename,e
+            #                 ))
             try: #self.fakeroot is only there if scaled not found
                 self.fakeroot.waitprogress(n*100/ntodo)
             except Exception as e:
