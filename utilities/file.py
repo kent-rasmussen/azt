@@ -68,6 +68,7 @@ from importlib import reload as modulereload
 import subprocess
 from utilities.encodings import stouttostr
 joinpath=pathlib.Path.joinpath
+cwd=pathlib.Path.cwd
 def getfile(filename):
     if filename:
         return pathlib.Path(filename)
