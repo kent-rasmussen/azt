@@ -492,8 +492,8 @@ class Theme(object):
                 log.error("Found a Theme theme attribute, with "
                 "program.theme={} ({})".format(self.program.theme,
                                                 type(self.program.theme)))
-                log.error("Stopping theme creation here.")
-                return #only do the following only once per run
+                log.error("This should never happen.")
+                raise TypeError("Theme name is already a Theme") 
         self.program.theme=self #this theme needs to be in use, either way
         self.setpads(**kwargs)
         self.setthemes()
