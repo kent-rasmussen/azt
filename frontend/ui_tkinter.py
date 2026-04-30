@@ -658,10 +658,8 @@ class Renderer():
         self.img = PIL.ImageTk.PhotoImage(img)
 class Childof():
     def pre_tk_init(self,**kwargs):
-        try:
-            kwargs=super().pre_tk_init(**kwargs)
-        finally:
-            return kwargs
+        kwargs=super().pre_tk_init(**kwargs)
+        return kwargs
     def post_tk_init(self):
         try:
             super().post_tk_init()
