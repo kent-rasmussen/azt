@@ -1067,13 +1067,13 @@ class Waitable(Exitable):
     def waitdone(self):
         try:
             self.ww.close()
-        except (tkinter.TclError,AttributeError) as e:
+        except (tkinter.TclError,AttributeError):
             pass
         # except AttributeError:
             # log.info(f"{self} seems to have tried stopping waiting? {e}")
         finally:
             if not self.exitFlag.istrue():
-                if self.showafterwait and not self is self.theme.program.tk_root:
+                if self.showafterwait and self is not self.theme.program.tk_root:
                     self.update()
                     try:
                         self.deiconify()
