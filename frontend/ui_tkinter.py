@@ -136,26 +136,26 @@ class Theme(object):
                         ('NoImage','toselect/Image-Not-Found.png'),
                         ('Order!','toselect/order!.png'),
                     ]
-    def startruntime(self):
-        """/home/kentr/bin/raspy/azt/ui_tkinter.py:95: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
-        self.start_time=datetime.datetime.utcnow()"""
-        self.start_time=datetime.datetime.now(datetime.UTC)
-        log.info("starting at {}".format(self.start_time))
-    def nowruntime(self): #this returns a delta!
-        return datetime.datetime.now(datetime.UTC)-self.start_time
-    def logfinished(self,msg=None):
-        run_time=self.nowruntime()
-        # if type(start) is datetime.datetime: #only work with deltas
-        #     start-=self.start_time
-        if msg:
-            msg=str(msg)+' '
-        else:
-            msg=''
-        minutes, seconds = divmod((run_time).total_seconds(), 60)
-        text=_("Finished {msg}at {time} ({minutes:1.0f}m, {seconds:2.3f}s)"
-                "").format(msg=msg, time=now(), minutes=minutes, seconds=seconds)
-        log.info(text)
-        return text
+    # def startruntime(self):
+    #     """/home/kentr/bin/raspy/azt/ui_tkinter.py:95: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    #     self.start_time=datetime.datetime.utcnow()"""
+    #     self.start_time=datetime.datetime.now(datetime.UTC)
+    #     log.info("starting at {}".format(self.start_time))
+    # def nowruntime(self): #this returns a delta!
+    #     return datetime.datetime.now(datetime.UTC)-self.start_time
+    # def logfinished(self,msg=None):
+    #     run_time=self.nowruntime()
+    #     # if type(start) is datetime.datetime: #only work with deltas
+    #     #     start-=self.start_time
+    #     if msg:
+    #         msg=str(msg)+' '
+    #     else:
+    #         msg=''
+    #     minutes, seconds = divmod((run_time).total_seconds(), 60)
+    #     text=_("Finished {msg}at {time} ({minutes:1.0f}m, {seconds:2.3f}s)"
+    #             "").format(msg=msg, time=now(), minutes=minutes, seconds=seconds)
+    #     log.info(text)
+    #     return text
     def setimages(self):
         """with PIL.ImageTk, this should probably be largely culled."""
         # Program icon(s) (First should be transparent!)
@@ -229,7 +229,7 @@ class Theme(object):
             # log.info("Compiled {} {}".format(name,imgurl))
 
         ntodo=len(Theme.imagelist)
-        self.startruntime()
+        # self.startruntime()
         for n,(name,filename) in enumerate(Theme.imagelist):
             mkimg(name,filename)
             # try:
@@ -245,7 +245,8 @@ class Theme(object):
                 # raise
                 pass
         try:
-            self.logfinished("Image compilation")
+            #trying because self.fakeroot may not exist, but I don't care.
+            # self.logfinished("Image compilation")
             self.fakeroot.waitdone() #won't die if not waiting
             self.fakeroot.destroy()
             self.program.theme.unbootstraptheme()
