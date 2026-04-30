@@ -56,8 +56,12 @@ def logformat(x):
                                     '%(message)s')
             }
     return formats[x]
+_real_stderr = sys.__stderr__
 def dorootloghandlers(self):
-    console = logging.StreamHandler()
+    if getattr(self, '_azt_handlers_installed', False):
+        return
+    self._azt_handlers_installed = True
+    console = logging.StreamHandler(_real_stderr)
     console.setLevel(0) #Let the loglevel determine what to show
     console.setFormatter(logformat('simpleformat'))
     self.addHandler(console)
