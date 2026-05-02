@@ -1475,9 +1475,12 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                                     for ps in self.sensesbyps_profile 
                                     }
         for ps in [i for i in ps_profile_counts if i in ['Noun','Verb']]:
-            l=[f"{ps}:\n{'\n'.join([f'{profile}:\t{ps_profile_counts[ps][profile]}' 
-                                for profile in ps_profile_counts[ps]
-                                ])}" 
+            l=['\n'.join([ps+':','\n'.join([
+                '\t'.join([profile+':',str(ps_profile_counts[ps][profile])]) 
+                for profile in ps_profile_counts[ps]
+                if profile
+                                            ])
+                        ]) 
                ]
             # log.info("\n".join(l))
         # log.info(f"{self.nfields=} \n"
