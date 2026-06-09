@@ -426,7 +426,7 @@ class Theme(object):
                 'tiny':tkinter.font.Font(family=charis, size=tiny),
                 'default':tkinter.font.Font(family=charis, size=default),
                 'italic':tkinter.font.Font(family=charis, size=default, slant='italic'),
-                'fixed':tkinter.font.Font(family='TkFixedFont', size=small)
+                'fixed':tkinter.font.Font(family='Courier', size=small)
                     }
         """additional keyword options (ignored if font is specified):
         family - font family i.e. Courier, Times
