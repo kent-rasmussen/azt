@@ -1,3 +1,4 @@
+from contextlib import ExitStack, contextmanager
 from .manager import read_ini
 from .project import ProjectConfig
 from .ui import UIConfig
@@ -92,6 +93,18 @@ class SettingsManager:
     def save_all(self):
         for domain in self._domains.values():
             domain.save()
+
+    @contextmanager
+    def batch(self):
+        """Defer writes across all domains for the duration of the block; each
+        domain writes at most once on exit. Use to wrap a run of set()/store
+        calls that don't read their file back mid-block. Example:
+            with program.settings.mgr.batch():
+                ...many settings.set(...) calls..."""
+        with ExitStack() as stack:
+            for domain in self._domains.values():
+                stack.enter_context(domain.batch())
+            yield self
 
 
 # ---------------------------------------------------------------------------
