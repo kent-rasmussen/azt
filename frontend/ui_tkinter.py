@@ -856,8 +856,8 @@ class Gridded():
             rowheight={}
             colwidth={}
             for sib in w.parent.winfo_children():
-                if (sib.winfo_class() in parentclasses or
-                    sib.parent.winfo_class() in ['Canvas','ScrollingFrame']):
+                if (type(sib).__name__ in parentclasses or
+                    type(sib.parent).__name__ in ['Canvas','ScrollingFrame']):
                     continue
                 sib_grid_info=sib.grid_info()
                 if 'row' not in sib_grid_info:
@@ -1120,6 +1120,9 @@ class Image(): #PIL.ImageTk.PhotoImage is for display
         as two integers, so r = 0.7 = 7/10, because the zoom and subsample fns
         only work on integers. To not waste computation, resolution starts
         small and increases to what is needed to keep both integers positive"""
+        if not self.base_img:
+            log.info(f"Not scaline missing image for {self.filename}")
+            return
         # def r_off_by(): #how far off does this integer division push this?
         #     return abs(r-(int(resolution*r)/int(resolution)))/r
         # log.info("Scaling with these args: scale {}, pixels {}, resolution {}"
@@ -1957,7 +1960,7 @@ class Window(Toplevel):
         try:
             self.iconphoto(False, self.parent.theme.photo['icon'].scaled) #!transparent
         except Exception as e:
-            log.info(f"{e} self.theme.photo: {self.theme.photo}")
+            log.info(f"{e} self.theme.photo: {self.theme.photo.keys()}")
         super().post_tk_init()
     def progress(self,value,parent=None,**kwargs):
         # between 0 and 100
@@ -2142,7 +2145,7 @@ class ButtonFrame(Frame):
         if 'image' in choice:
             kwargs['image']=choice['image']
         if 'description' in choice:
-            kwargs['text']+=f' ({str(choice['description'])})'
+            kwargs['text']+=f" ({str(choice['description'])})"
         # log.info(f"returning one button {kwargs=}")
         return kwargs
     def __init__(self,parent,**kwargs):
