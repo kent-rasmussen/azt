@@ -230,30 +230,34 @@ class Theme(object):
 
         ntodo=len(Theme.imagelist)
         # self.startruntime()
-        for n,(name,filename) in enumerate(Theme.imagelist):
-            mkimg(name,filename)
-            # try:
-            #     #Can't hyperthread here!
-            # except Exception as e:
-            #     log.info("Image {} ({}) not compiled ({})".format(
-            #                 name,filename,e
-            #                 ))
-            try: #self.fakeroot is only there if scaled not found
-                self.fakeroot.waitprogress(n*100/ntodo)
+        # finally guarantees the "Scaling Images" dialog closes even if
+        # mkimg() re-raises an unexpected image error mid-compilation.
+        try:
+            for n,(name,filename) in enumerate(Theme.imagelist):
+                mkimg(name,filename)
+                # try:
+                #     #Can't hyperthread here!
+                # except Exception as e:
+                #     log.info("Image {} ({}) not compiled ({})".format(
+                #                 name,filename,e
+                #                 ))
+                try: #self.fakeroot is only there if scaled not found
+                    self.fakeroot.waitprogress(n*100/ntodo)
+                except Exception as e:
+                    # log.info("Something happened: {}".format(e))
+                    # raise
+                    pass
+        finally:
+            try:
+                #trying because self.fakeroot may not exist, but I don't care.
+                # self.logfinished("Image compilation")
+                self.fakeroot.waitdone() #won't die if not waiting
+                self.fakeroot.destroy()
+                self.program.theme.unbootstraptheme()
             except Exception as e:
                 # log.info("Something happened: {}".format(e))
                 # raise
                 pass
-        try:
-            #trying because self.fakeroot may not exist, but I don't care.
-            # self.logfinished("Image compilation")
-            self.fakeroot.waitdone() #won't die if not waiting
-            self.fakeroot.destroy()
-            self.program.theme.unbootstraptheme()
-        except Exception as e:
-            # log.info("Something happened: {}".format(e))
-            # raise
-            pass
     def settheme(self):
         if not self.name:
             defaulttheme='greygreen'
@@ -1208,6 +1212,22 @@ class Image(): #PIL.ImageTk.PhotoImage is for display
             return
         self.compile()
 """below here has UI"""
+_app_root = None  # the application's main themed ui.Root (set in Root.post_tk_init)
+def default_root():
+    """Return the application's main themed ui.Root — the real program's root,
+    carrying the full image theme (.theme/.photo) — or None if none currently
+    exists. Deliberately NOT a fakeroot (noimagescaling, used only for image
+    scaling, has no photos), a dummy/contextless root, a context menu, or a
+    tooltip. Lets non-widget code (e.g. ErrorNotice) attach to the running app
+    and resolve theme images, instead of spawning a second Tk interpreter.
+    Consumers use `ui.default_root()` so this stays inside the backend."""
+    if _app_root is not None:
+        try:
+            if _app_root.winfo_exists():
+                return _app_root
+        except tkinter.TclError:
+            pass
+    return None
 class Root(Waitable,UI,tkinter.Tk):
     """this is the root of the tkinter GUI."""
     def on_quit(self,to_root=False):
@@ -1229,6 +1249,15 @@ class Root(Waitable,UI,tkinter.Tk):
             self.theme=Theme(self.program,
                             **{**kwargs,'noimagescaling':self.noimagescaling})
         super().post_tk_init()
+        # Register the app's main themed root so non-widget code (ErrorNotice)
+        # can find it via default_root(). dummy.App sets .dummy=True, so this
+        # excludes dummy/contextless roots (incl. ones passed an explicit
+        # dummy.App()); `not noimagescaling` excludes the image-scaling fakeroot
+        # (which has no photos). What's left is the real app root — the one that
+        # runs mainloop.
+        if not getattr(self.program,'dummy',False) and not self.noimagescaling:
+            global _app_root
+            _app_root=self
     def __init__(self, program=None, *args, **kwargs):
         """specify theme name in self.program.theme
         bring in program here, send it to theme, everyone accesses scale
