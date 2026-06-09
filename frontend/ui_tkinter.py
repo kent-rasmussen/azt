@@ -2,6 +2,7 @@
 # coding=UTF-8
 from utilities.i18n import _
 import sys,copy
+from contextlib import contextmanager
 import platform
 from utilities.times import now
 from utilities import logsetup
@@ -1017,6 +1018,18 @@ class Exitable():
         super().__init__(*args, **kwargs)
 class Waitable(Exitable):
     """docstring for Waitable."""
+    @contextmanager
+    def waiting(self,msg=None,**kwargs):
+        """Context-manager form of wait()/waitdone(). Guarantees the wait
+        dialog is closed even if the body raises or returns early:
+            with self.ui.waiting(_("Working...")):
+                ...do work; call self.ui.waitprogress(p) as needed...
+        Pass the same kwargs you'd pass to wait() (cancellable, thenshow)."""
+        self.wait(msg=msg,**kwargs)
+        try:
+            yield self
+        finally:
+            self.waitdone()
     def wait(self,msg=None,cancellable=False,thenshow=False):
         if self.iswaiting():
             # log.debug("There is already a wait window: {}".format(self.ww))
