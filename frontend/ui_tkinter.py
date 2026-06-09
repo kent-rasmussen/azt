@@ -2209,6 +2209,26 @@ class ScrollingFrame(Frame):
         self.canvas.yview_scroll(1,"units")
     def _on_mousewheeldown(self, event):
         self.canvas.yview_scroll(-1,"units")
+    def _pointer_inside(self):
+        """True if the mouse pointer is currently over this frame or any of its
+        descendants. winfo_containing returns the deepest widget under the
+        pointer (often a child button/label), so match by widget-path prefix
+        rather than identity against self/canvas/content."""
+        try:
+            w=self.winfo_containing(*self.winfo_pointerxy())
+        except Exception:
+            return False
+        if w is None:
+            return False
+        selfpath=str(self)
+        wpath=str(w)
+        return wpath==selfpath or wpath.startswith(selfpath+'.')
+    def _bind_wheel_if_pointer_inside(self, event=None):
+        """Claim the (global, bind_all) wheel for this frame when it is mapped
+        under the pointer. A frame built/mapped under a stationary pointer
+        receives no <Enter>, so this is what makes it scrollable right away."""
+        if self._pointer_inside():
+            self._bound_to_mousewheel(None)
     def update(self):
         # self._configure_canvas()
         self._configure_interior()
@@ -2363,10 +2383,18 @@ class ScrollingFrame(Frame):
     def initialize_wheel_bindings(self):
         self.bind('<Enter>', self._bound_to_mousewheel)
         self.bind('<Leave>', self._unbound_to_mousewheel)
-        self._bound_to_mousewheel(None) #maybe excessive, but covers edge cases
+        # The wheel uses bind_all (global), so the frame under the pointer must
+        # claim it. We used to grab it unconditionally here, which let whichever
+        # ScrollingFrame was built LAST capture the wheel regardless of pointer
+        # location — so a frame built under a stationary pointer (no <Enter>
+        # fires) stayed unscrollable until the user left and re-entered it.
+        # Instead, bind on <Map> (and now, in case already mapped) only when the
+        # pointer is actually inside this frame.
+        self.bind('<Map>', self._bind_wheel_if_pointer_inside)
+        self._bind_wheel_if_pointer_inside()
         self.canvas.bind('<Destroy>', self._unbound_to_mousewheel)
         return
-        # If pointer is already inside, bind immediately                                                                                                                        
+        # If pointer is already inside, bind immediately                                                                                                                     
         try:                                                                                                                                                                    
             x, y = self.winfo_pointerxy() 
             for w in self.winfo_containing(x, y).winfo_children():
