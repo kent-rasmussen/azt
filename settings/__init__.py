@@ -1002,6 +1002,7 @@ class Settings(SettingsUI):
                                 'hau':"Hausa",
                                 'swc':"Congo Swahili",
                                 'ln-CD':"Lingala (DRC)",
+                                'wes':"Kamtok (Cameroon)",
                                 'swh':"Swahili",
                                 'gnd':"Zulgo",
                                 'fub':"Fulfulde",
