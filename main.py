@@ -11,7 +11,7 @@ program={'name':'A-Z+T',
         'production':False, #True for making screenshots (default theme)
         'testing':False, #normal error screens and logs
         'Demo':False, #will get set otherwise later if it is
-        'version':'1.1.0', #This is a string...
+        'version':'1.2.13', #This is a string...
         'testversionname':'testing', #always have some real test branch here
         'url':'https://github.com/kent-rasmussen/azt',
         'Email':'kent_rasmussen@sil.org',
@@ -167,7 +167,7 @@ class App:
             import ctypes
             log.info("Windows scaling: {factor}".format(
                         factor=ctypes.windll.shcore.GetScaleFactorForDevice(0)))
-        except:
+        except Exception:
             pass
     def get_interface_languages(self):
         transdir=file.gettranslationdirin(self.aztdir)
@@ -186,7 +186,7 @@ class App:
             # log.info("Loading translation for {}".format(i))
             try:
                 self.i18n[i.split('_')[0]] = gettext.translation('azt', transdir, languages=[i])
-            except:
+            except Exception:
                 log.error("Failed to load translation for {}".format(i))
             # finally:
             #     log.info("Translation for {} loaded".format(i))
@@ -321,7 +321,7 @@ class App:
                 pass
             try: # Before Windows 8.1
                 ctypes.windll.user32.SetProcessDPIAware()
-            except: # Windows 8 or before
+            except (AttributeError, OSError): # Windows 8 or before
                 pass
             screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
             log.info(_("MS Windows screen size: {size}").format(size=screensize))
@@ -411,7 +411,7 @@ class App:
             # errorroot = self.tk_root
             for w in self.tk_root.winfo_children():
                 w.destroy()
-        except:
+        except Exception:
             try:
                 self.tk_root = ui.Root(program=self)
                 self.tk_root.wraplength=int(self.tk_root.winfo_screenwidth()*.7) #exit button
@@ -684,7 +684,7 @@ class App:
         except Exception as e:
             log.exception(_("Unexpected exception! {error}").format(error=e))
             self.maybe_run_problem()
-        except:
+        except BaseException:
             import traceback
             log.error("uncaught exception: %s", traceback.format_exc())
             self.maybe_run_problem()
@@ -737,10 +737,10 @@ def updateazt(event=None,**kwargs): #should only be parent, for errorroot
         try:
             try:
                 title=_("Update (Git) output")
-            except: #in case translation isn't working yet
+            except Exception: #in case translation isn't working yet
                 title="Update (Git) output"
             ErrorNotice(t,title=title,button=button,wait=True,**kwargs)
-        except:
+        except Exception:
             log.info(set(kwargs.keys()))
             log.info(set(['parent']))
 if __name__ == '__main__':
