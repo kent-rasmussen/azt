@@ -297,7 +297,7 @@ class Settings(SettingsUI):
             else:
                 _log.error(_("Attribute {s} didn't make it back").format(s=s))
                 _log.error(_("You should send in an error report for this."))
-                exit()
+                raise AttributeError(s)
         _log.info(_("Settings file {legacy} converted to {savefile}, with each value verified.")
                 .format(legacy=legacy,savefile=savefile))
         if setting == 'soundsettings':
@@ -403,8 +403,9 @@ class Settings(SettingsUI):
             if hasattr(self,'fndict') and s in self.fndict:
                 try:
                     d[s]=self.fndict[s]()
-                except:
+                except (AttributeError, KeyError):
                     _log.error(_("Value of {attr} not found in object").format(attr=s))
+                    raise AttributeError(s)
             elif hasattr(o,s):
                 if getattr(o,s) or setting == 'soundsettings': #store Falses
                     d[s]=getattr(o,s)
@@ -556,9 +557,10 @@ class Settings(SettingsUI):
     def getdirectories(self):
         self.directory=file.getfilenamedir(self.liftfilename)
         if not file.exists(self.directory):
-            _log.info(_("Looks like there's a problem with your directory... {file}\n{dir}")
-                    .format(file=self.liftfilename,dir=self.directory))
-            exit()
+            _log.info(_("Looks like there's a problem with your directory... "
+                        "{file}\n{dir}")
+                        .format(file=self.liftfilename,dir=self.directory))
+            raise FileNotFoundError(self.directory)
         self.settingsfilecheck()
         self.imagesdir=file.getimagesdir(self.directory)
         self.audiodir=file.getaudiodir(self.directory)
