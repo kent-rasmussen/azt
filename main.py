@@ -552,7 +552,12 @@ class App:
         self.writeable=0 #start the count
         self.towrite=False
         self.writing=False
+        self.status_dirty=True #force first status rebuild; see maybesort
     def maybewrite(self,definitely=False):
+        #Any call here means a LIFT mutation just happened, so the sorting
+        #status derived from LIFT is now stale. maybesort clears this after it
+        #rebuilds, and skips its rebuild while it stays False.
+        self.status_dirty=True
         write=self.timetowrite() #just call this once!
         #this currently defaults to write every time asked; can up writeeverynwrites when stable.
         if (write or definitely) and not self.writing:# or definitely:bad idea to overwrite write
