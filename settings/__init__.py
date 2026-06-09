@@ -111,8 +111,6 @@ class SettingsManager:
 # Settings: full settings class combining backend logic with UI (SettingsUI)
 # ---------------------------------------------------------------------------
 
-import gettext as _gettext
-_builtins_gettext = _gettext.gettext
 import sys
 import importlib
 import threading
