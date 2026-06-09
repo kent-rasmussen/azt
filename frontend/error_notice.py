@@ -21,7 +21,14 @@ class ErrorNotice(ui.Window):
             if kwargs.get('program') and kwargs['program'].tk_root:
                 parent=kwargs['program'].tk_root
             else:
-                parent=ui.Root()
+                # Reuse the existing app root if there is one. Creating a
+                # *second* Tk() here (the old behaviour) spawns a separate
+                # interpreter whose theme images/fonts don't belong to the
+                # running app — an ErrorNotice with image='USBdrive' then raised
+                # `image "pyimageNNN" doesn't exist`, and the two roots fought
+                # over font scaling (error page rendered hugely oversized).
+                # Only make a fresh Root when none exists (very early startup).
+                parent = ui.default_root() or ui.Root()
         if parent.exitFlag.istrue():
             log.error(_("Parent window is exiting; error message follows"))
             log.error(text)
