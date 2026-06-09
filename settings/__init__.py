@@ -441,7 +441,14 @@ class Settings(SettingsUI):
         return settingsdict
     def storesettingsfile(self,setting='defaults'):
         if setting in ['status', 'toneframes']:
-            d=getattr(self.program, setting)
+            # program.status / program.toneframes ARE the data objects, keyed
+            # by their own structure (e.g. cvt for status), NOT flat
+            # attribute->value dicts. The domain block below filters keys
+            # against the domain's attribute names, so wrap the object under
+            # its attribute name; otherwise the filter matches nothing,
+            # domain_data is empty, and the object is silently never written
+            # (status — incl. presorted — was being lost on every reboot).
+            d={setting: getattr(self.program, setting)}
         else:
             d=self.makesettingsdict(setting=setting)
 
