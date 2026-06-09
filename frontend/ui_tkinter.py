@@ -180,7 +180,7 @@ class Theme(object):
                 else:
                     try:
                         assert self.fakeroot.winfo_exists()
-                    except:
+                    except Exception:
                         program_copy=copy.copy(self.program) #does copy work on App()?
                         program_copy.theme=None
                         self.fakeroot=Root(program_copy, withdrawn=True,
@@ -812,7 +812,7 @@ class Gridded():
         """I may need to sort out how this and dnd_end relate"""
         try:
             super().dnd_commit(source, event)
-        except:
+        except Exception:
             source.dnd_putback(self, event)
             # log.info(f"Drag and Drop landed on {self} ({type(self)})")
             # try:
@@ -826,7 +826,7 @@ class Gridded():
             return 5
         try:
             return int(str(p))*2
-        except:
+        except (ValueError, TypeError):
             p=tuple(p)
             return int(p[0])+int(p[-1])
     @staticmethod
@@ -956,7 +956,7 @@ class UI():
         for k in self.backgrounds+self.pads+self.active_color:
             try:
                 setattr(self,k,kwargs.pop(k))
-            except:
+            except KeyError:
                 pass
         self.withdrawn=kwargs.pop("withdrawn",True if isinstance(self,Root)
                                                     else False)
@@ -1077,7 +1077,7 @@ class Waitable(Exitable):
                     self.update()
                     try:
                         self.deiconify()
-                    except:
+                    except tkinter.TclError:
                         pass
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1459,7 +1459,7 @@ class Text(TextBase):
             return
         try:
             text=kwargs.get('textvariable',self.textvariable).get()
-        except:
+        except Exception:
             text=self.text
         style=(self.font['family'],
                 self.font['size'],self.font['weight'],
@@ -1975,7 +1975,7 @@ class Window(Toplevel):
             self.wm_attributes('-zoomed', True)
             self.bind('<Double-Button-1>', self.releasefullscreen)
             self.bind('<Escape>', self.releasefullscreen)
-        except:
+        except tkinter.TclError:
             self.takekioskscreen()
     def __init__(self, parent, backcmd=False, exit=True, title="No Title Yet!",
                 choice=None, *args, **kwargs):
@@ -2345,7 +2345,7 @@ class ScrollingFrame(Frame):
             log.info(f"pointer in {self.winfo_containing(x, y)=}")                                                                                                                                      
             if self.winfo_containing(x, y) in (self, self.canvas, self.content):                                                                                                
                 self._bound_to_mousewheel(None)                                                                                                                                 
-        except:                                                                                                                                                                 
+        except Exception:                                                                                                                                                                 
             pass   
     def __init__(self, parent, xscroll=False, *args, **kwargs):
         self.ignore_maxwidth=kwargs.pop('ignore_maxwidth',False)
