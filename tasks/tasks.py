@@ -1201,50 +1201,23 @@ class Transcribe(Sound,Categories,Task):
     def unsubmit(self,event=None):
         log.info("Undoing...")
         self.mistake=True
-    def polygraphwarn(self,newvalue):
-        if len(newvalue) != 1 or len(self.group) != 1:
-            warning=[_("This name change ('{group}' > '{new}') impacts your "
-                        "digraph and trigraph settings."
-                        ).format(group=self.group,new=newvalue)]
-            if len(newvalue) > 1:
-                warning.append(_("{azt} will add '{new}' to those settings."
-                            ).format(azt=self.program.name,new=newvalue))
-                if newvalue not in self.program.profiles.polygraphs[self.analang][self.cvt]:
-                    self.program.profiles.polygraphs[self.analang][self.cvt][newvalue]=True
-                    self.program.settings.storesettingsfile('profiledata')
-            if len(self.group) > 1:
-                warning.append(_("{azt} will *not* remove '{group}' from "
-                            "those settings, because you may still be "
-                            "using it elsewhere."
-                            ).format(azt=self.program.name,group=self.group))
-            warning.extend(['',_("**If this isn't what you wanted, "
-                        "fix and confirm your digraph and "
-                        "trigraph settings in the menu "
-                        "\n(this will make {azt} restart and redo "
-                        "the syllable profile analysis)."
-                        ).format(azt=self.program.name)])
-            title=_("Syllable profile change?")
-            #Just state this and move on to making changes:
-            log.info('\n'.join(warning))
-            # self.err=ErrorNotice(warning,parent=self,title=title)
     def submitform(self):
+        # Only tone reaches submitform now: segmental glyph naming goes through
+        # GlyphTranscribeHelper (TranscribeS.makewindow delegates to it), which
+        # has its own submitform + polygraphwarn. The former 'if cvt != "T"'
+        # segmental branch here, and Transcribe.polygraphwarn, were dead — their
+        # only entry was TranscribeS.done, which nothing wired — so both are
+        # gone. (polygraphwarn now lives solely on the helper.)
         newvalue=self.transcriber.formfield.get()
-        if self.program.params.cvt() != 'T': #Warning only on segmental changes
-            self.polygraphwarn(newvalue)
-            #These should each make one change only, checking for overwrites
-            self.rename_macrogroup(self.group,newvalue)
-            self.program.alphabet.glyph(newvalue)
-            self.refresh_status_buttons(self.group,newvalue)
-        else:
-            """updateforms=True doesn't seem to be working for segments"""
-            self.updatebygroupsense(self.group,newvalue,updateforms=True)
-            #NO: this should update formstosearch and profile data.
-            # log.info("Doing renamegroup: {}>{}".format(self.group,newvalue))
-            self.program.status.renamegroup(self.group,newvalue) #status file only
-            # log.info("Doing updategroups")
-            self.updategroups() #updates self.groups self.group self.othergroups self.groupsdone
-            self.program.settings.storesettingsfile(setting='status')
-            """Update regular expressions here!!"""
+        """updateforms=True doesn't seem to be working for segments"""
+        self.updatebygroupsense(self.group,newvalue,updateforms=True)
+        #NO: this should update formstosearch and profile data.
+        # log.info("Doing renamegroup: {}>{}".format(self.group,newvalue))
+        self.program.status.renamegroup(self.group,newvalue) #status file only
+        # log.info("Doing updategroups")
+        self.updategroups() #updates self.groups self.group self.othergroups self.groupsdone
+        self.program.settings.storesettingsfile(setting='status')
+        """Update regular expressions here!!"""
         self.maybewrite()
         self.ok_done=True
         # update forms, even if group doesn't change:
@@ -1358,11 +1331,10 @@ class TranscribeS(Transcribe,Segments):
     macrosort=True
     do_not_show_slices=True
     glyph_leaderboard=True
-    def done(self):
-        log.info("Transcribe done")
-        self.submitform()
-        self.program.alphabet.save_settings()
-        self.program.soundsettings.done_pyaudio()
+    # done() removed: segmental glyph naming runs through GlyphTranscribeHelper
+    # (its OK button calls helper.done, with the pyaudio teardown supplied via
+    # the on_done hook in makewindow). The old done() was unwired and called the
+    # now tone-only Transcribe.submitform.
     def go_back(self):
         log.info("Transcribe done for now (going back)")
         self.ui.runwindow.on_quit()

@@ -203,7 +203,32 @@ class GlyphTranscribeHelper:
     # -- Submit / switch --
 
     def polygraphwarn(self, newvalue):
-        self.task.polygraphwarn(newvalue)
+        # Self-contained (uses this helper's own group/program/analang/cvt):
+        # don't delegate to self.task, which only has polygraphwarn for the
+        # Transcribe task — the helper is also driven by Sort.name_new_glyphs,
+        # whose task (SortV/SortC) has no such method.
+        if len(newvalue) != 1 or len(self.group) != 1:
+            warning = [_("This name change ('{group}' > '{new}') impacts your "
+                        "digraph and trigraph settings."
+                        ).format(group=self.group, new=newvalue)]
+            if len(newvalue) > 1:
+                warning.append(_("{azt} will add '{new}' to those settings."
+                            ).format(azt=self.program.name, new=newvalue))
+                if newvalue not in self.program.profiles.polygraphs[self.analang][self.cvt]:
+                    self.program.profiles.polygraphs[self.analang][self.cvt][newvalue] = True
+                    self.program.settings.storesettingsfile('profiledata')
+            if len(self.group) > 1:
+                warning.append(_("{azt} will *not* remove '{group}' from "
+                            "those settings, because you may still be "
+                            "using it elsewhere."
+                            ).format(azt=self.program.name, group=self.group))
+            warning.extend(['', _("**If this isn't what you wanted, "
+                        "fix and confirm your digraph and "
+                        "trigraph settings in the menu "
+                        "\n(this will make {azt} restart and redo "
+                        "the syllable profile analysis)."
+                        ).format(azt=self.program.name)])
+            log.info('\n'.join(warning))
 
     def submitform(self):
         newvalue = self.transcriber.formfield.get()
