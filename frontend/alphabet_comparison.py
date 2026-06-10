@@ -74,7 +74,7 @@ class ImageSelector(ui.Window):
         if self.target_dir and not os.path.exists(self.target_dir):
              try:
                  os.makedirs(self.target_dir)
-             except:
+             except OSError:
                  pass
 
         self.images = []
@@ -408,7 +408,7 @@ class PageSetupUI(ui.Window):
                 img.scale(1, pixels=100, scaleto='height')
                 self.cover_btn.configure(text=txt, image=img.scaled, compound='left')
                 self.cover_btn.image = img # Keep reference!
-            except:
+            except Exception:
                 self.cover_btn.configure(text=txt + f" ({os.path.basename(self.selected_cover_path)})", image='', compound='none')
         else:
             self.cover_btn.configure(text=_("Select Cover"), image='', compound='none')
@@ -427,7 +427,7 @@ class PageSetupUI(ui.Window):
              if not os.path.exists(base_dir):
                  try:
                      os.makedirs(base_dir)
-                 except:
+                 except OSError:
                      pass
              
              filename = os.path.basename(file_path)
@@ -455,7 +455,7 @@ class PageSetupUI(ui.Window):
                 img.scale(1, pixels=100, scaleto='height')
                 self.logo_btn.configure(text=txt, image=img.scaled, compound='left')
                 self.logo_btn.image = img # Keep reference!
-            except:
+            except Exception:
                 self.logo_btn.configure(text=txt + f" ({os.path.basename(self.selected_logo_path)})", image='', compound='none')
         else:
             self.logo_btn.configure(text=_("Select Logo"), image='', compound='none')

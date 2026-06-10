@@ -1027,7 +1027,7 @@ class StatusFrame(ui.Frame):
         log.info("No Progress board")
         try:
             self.boardtitle()
-        except:
+        except Exception:
             log.info("Problem making board title")
         self.noboard=ui.Label(self.leaderboard,
                             image=self.theme.photo['transparent'],
@@ -1122,7 +1122,7 @@ class StatusFrame(ui.Frame):
                 try:
                     int(i)
                     # log.info("Integer {} fine".format(i))
-                except:
+                except (ValueError, TypeError):
                     # log.info("Problem with integer {}".format(i))
                     if self.program.settings.showdetails:
                         return nn(x,oneperline=True) #if any noninteger, all.
@@ -2223,7 +2223,7 @@ class ImageFrame(ui.Frame):
                 compound='center',
                 sticky='ew',
                 row=0,column=0)
-        except:
+        except Exception:
             ui.Label(self,text='!',image=self.image.scaled,
                 compound='left',sticky='ew',font='title',
                 row=0,column=0)
@@ -2460,7 +2460,7 @@ class LiftChooser(ui.Window,HasMenus):
         try:
             self.analang_entry.trace_remove('write',self.analang_entry.trace)
             # log.info("untrace_analang_entry OK")
-        except:
+        except Exception:
             pass
     def show_possibles(self,*args):
         try:
@@ -2538,7 +2538,7 @@ class LiftChooser(ui.Window,HasMenus):
         try:
             self.private_use_fields.grid_remove()
             self.show_private_w.grid()
-        except:
+        except Exception:
             pass
     def show_private_use(self,event=None):
         """The user needs to ask to see this field"""
@@ -2560,7 +2560,7 @@ class LiftChooser(ui.Window,HasMenus):
         try:
             self.subtags_frame.grid_remove()
             self.hide_private_use()
-        except:
+        except Exception:
             pass
     def show_subtag_frames(self):
         # log.info("show_subtag_frames")
@@ -2863,7 +2863,7 @@ class LiftChooser(ui.Window,HasMenus):
         # if hasattr(self.program.taskchooser,'splash'):
         try:
             self.program.taskchooser.splash.withdraw()
-        except:
+        except Exception:
             pass
         self.wait_window(self)
 

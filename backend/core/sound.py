@@ -70,10 +70,8 @@ class SoundSettings(object):
         player = SoundFilePlayer(filenameURL, pa, self)
         try:
             player.play()
-        except BaseException as e:
+        except Exception as e:
             log.debug("Hey, It didn't work! ({})".format(e))
-        except:
-            log.info("Problem playing! %s")
             return 1
 
     def print1(self):
@@ -96,7 +94,7 @@ class SoundSettings(object):
             self.audio_card_in = min(self.cards['in'])
         else:
             log.error("I can't find any input card!")
-            raise
+            raise AttributeError("audio_card_in")
 
     def default_out(self):
         self.audio_card_out = [k for k, v in self.cards['dict'].items()

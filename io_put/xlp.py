@@ -13,8 +13,7 @@ class Report(object):
     def __init__(self,filename,report,langname,program):
         #use program, if only for it's name
         if not hasattr(program, 'name'):
-            log.error(_("the program argument to xlp.Report needs a 'name' attribute"))
-            exit()
+            raise AttributeError(_("the program argument to xlp.Report needs a 'name' attribute"))
         self.start_time=times.now()
         self.filename=filename
         self.tmpfile=self.filename+'.tmp'
@@ -75,7 +74,7 @@ class Report(object):
     def compile(self):
         try:
             import lxml.etree
-        except:
+        except ImportError:
             log.info(_("Couldn't find/import lxml, so not compiling report."))
             return
         """from http://xmlsoft.org/XSLT/python.html:
@@ -130,7 +129,7 @@ class Report(object):
         try:
             newdom = transform[3](dom)
             newdom.write_output(outfile+'b')
-        except:
+        except Exception:
             for error in transform[3].error_log:
                 log.error("XSLT Error {}: {} ({})".format(error.message,
                                                     error.line,
@@ -151,7 +150,7 @@ class Report(object):
             newdom = transform[4](dom)
             log.info(_("writing to tex file {}").format(texfile))
             newdom.write_output(texfile)
-        except:
+        except Exception:
             for error in transform[4].error_log:
                 log.error("XSLT Error {}: {} ({})".format(error.message,
                                                     error.line,

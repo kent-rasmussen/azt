@@ -166,7 +166,7 @@ def t(element):
     else:
         try:
             return element.text
-        except:
+        except AttributeError:
             return _("Apparently you tried to pull text out of a non "
                         "element, and it's not a simple string, either: {element}"
                         ).format(element=element)
@@ -200,7 +200,7 @@ def name(x):
     try:
         name=x.__name__ #If x is a function
         return name
-    except:
+    except AttributeError:
         name=x.__class__.__name__ #If x is a class instance
         return 'class.'+name
 def internetconnectionproblemin(x):
@@ -369,8 +369,8 @@ def setnesteddictval(dictionary,val,*keys,addval=False):
     or assigned if there is no current value.
     """
     if not isinstance(dictionary,dict):
-        print(_("setnesteddictval got dictionary of type {}").format(type(dictionary)))
-        exit() #This should never happen, would be my fault, and I should know
+        # internal invariant: callers must pass a dict
+        raise TypeError(_("setnesteddictval got dictionary of type {}").format(type(dictionary)))
     dictlist=[] #keep dictionaries at each level in memory
     for n,k in enumerate(keys): #keys may repeat, can't use list.index()
         if dictlist:

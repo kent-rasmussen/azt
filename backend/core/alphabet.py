@@ -479,7 +479,7 @@ class AlphabetChartData:
                 if file.exists(di):
                     try:
                         sense.image = p.image(di)
-                    except:
+                    except Exception:
                         sense.image = None
                 if hasattr(sense, 'image') and sense.image:
                     sense.image.scale(1, pixels=100, scaleto='height')

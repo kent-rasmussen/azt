@@ -19,7 +19,23 @@ python main.py
 pip install -r requirements.txt
 ```
 
-There is no test suite. `test.py` is a scratch file, not a test runner.
+## Testing
+
+A pytest suite lives in `tests/` (started 2026-06-06; see `tests/README.md`).
+
+```bash
+pip install -r requirements-dev.txt   # one-time: installs pytest
+pytest                                 # headless; no Tk display needed
+pytest -m "not integration"            # skip stubs awaiting fixtures
+```
+
+Coverage so far is guardrails + units: an **import smoke test** (every module
+must import; missing optional deps skip, real errors fail), a **`waiting()`
+context-manager contract** test (guards the stuck-dialog fix), and units for
+`settings.manager` and pure `utilities`. `backend/core` has API-surface guards
+plus skipped behavioral stubs to grow into. Keep `backend/core` tests
+frontend-free; prefer testing real methods with a fake `self` over a live Tk
+root. `test.py` (at the project root) is a scratch file, **not** part of the suite.
 
 ## Architecture
 

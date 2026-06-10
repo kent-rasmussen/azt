@@ -30,7 +30,7 @@ def praatopen(program,file,newpraat=False,event=None):
             o=e.output
         try:
             t=stouttostr(o)
-        except:
+        except Exception:
             t=o
         if t == 'sendpraat: Program praat not running.':
             praatopen(file,newpraat=True)

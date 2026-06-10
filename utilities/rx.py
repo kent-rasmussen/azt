@@ -71,7 +71,7 @@ def delinebreak(x):
 def stripquotes(x):
     try:
         return x.strip('‘’')
-    except:
+    except AttributeError:
         return x
 """passthrough fns"""
 IGNORECASE=re.IGNORECASE

@@ -52,3 +52,4 @@ bin/
 *.preproject.json
 ./*.txt
 test_data/**
+agenda.txt

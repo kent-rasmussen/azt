@@ -135,7 +135,7 @@ class OrderAlphabetUI(ui.Window):
             self.config_buttons[_("(un)hide")].grid()
             self.config_buttons[_("re-alphabetize")].grid()
             self.config_hiding.destroy()
-        except:
+        except Exception:
             pass
         self.config_order=ui.Frame(self.outsideframe,c=1,r=0)
         self.droppables=[]
@@ -194,7 +194,7 @@ class OrderAlphabetUI(ui.Window):
             self.config_buttons[_("(un)hide")].grid_remove()
             self.config_buttons[_("re-alphabetize")].grid_remove()
             self.config_order.destroy()
-        except:
+        except Exception:
             pass
         self.config_hiding=ui.Frame(self.outsideframe,c=1,r=0)
         for i in self.order:
@@ -237,7 +237,7 @@ class OrderAlphabetUI(ui.Window):
         try:
             for i in self.chart.content.winfo_children():
                 i.destroy()
-        except:
+        except Exception:
             pass
         for n,g in enumerate(self.show_order):
             self.buttons[g]=ui.Frame(self.chart.content,
@@ -491,20 +491,22 @@ class SelectFromPicturableWords(ui.Window):
     def set_up_images(self):
         try:
             _
-        except:
+        except NameError:
             def _(x):
                 return x
         """This would look faster if we made one button at a time."""
         if len(self.examples) > 5:
             self.wait(_("Loading Images"))
-        for n,i in enumerate(self.examples.copy()):
-            self.waitprogress(n*100//len(self.examples))
-            if getimagelocationURI(i):
-                # print(f"no image for {i.id}!")
-                self.examples.remove(i)
-            else:
-                i.image.scale(1,pixels=100,scaleto='height')
-        self.waitdone()
+        try:
+            for n,i in enumerate(self.examples.copy()):
+                self.waitprogress(n*100//len(self.examples))
+                if getimagelocationURI(i):
+                    # print(f"no image for {i.id}!")
+                    self.examples.remove(i)
+                else:
+                    i.image.scale(1,pixels=100,scaleto='height')
+        finally:
+            self.waitdone()
     def select(self,x,event=None):
         print('selected:',x)
         self.selected=x
@@ -513,7 +515,7 @@ class SelectFromPicturableWords(ui.Window):
     def __init__(self, parent, db, glyph, ps=None):
         try:
             _
-        except:
+        except NameError:
             def _(x):
                 return x
         self.imgdir=db.imgdir
@@ -581,7 +583,7 @@ def getimagelocationURI(sense):
     if file.exists(di):
         try:
             sense.image=ui.Image(di)
-        except:
+        except Exception:
             return 1
     elif not sense.illustrationvalue():
         print("no illustration value!")

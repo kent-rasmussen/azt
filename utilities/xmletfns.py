@@ -87,7 +87,7 @@ class XML(object): #fns called outside of this class call self.nodes here.
         """Problems reading a valid file are dealt with elsewhere"""
         try:
             self.read() #load and parse the XML file.
-        except:
+        except Exception:
             raise BadParseError(self.filename)
         backupbits=[filename,'_',
                     datetime.datetime.utcnow().isoformat()[:-16], #once/day

@@ -20,7 +20,7 @@ class ASRtoText(object):
         model_kwargs=copy.deepcopy(self.model_kwargs)
         try:
             model_kwargs['download_root']=model_kwargs.pop('cache_dir')
-        except:
+        except KeyError:
             pass #don't set root if no cache
         self.models[repo]=whisper.load_model(size,
                                         device=device,

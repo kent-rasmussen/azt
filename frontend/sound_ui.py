@@ -100,14 +100,14 @@ class RecordButtonFrame(ui.Frame):
         self.task=task
         try:
             task.pyaudio.get_format_from_width(1) #get_device_count()
-        except:
+        except AttributeError:
             task.pyaudio=sound.AudioInterface()
         self.pa=task.pyaudio
         if not hasattr(task,'soundsettings') or not hasattr(task,'program'):
             log.error("task missing a settings attr? "
                         f"(soundsettings:{hasattr(task,'soundsettings')}; "
                         f"program:{hasattr(task,'program')})")
-            exit()
+            raise AttributeError("task is missing a 'soundsettings' or 'program' attribute")
         self.soundsettings=task.soundsettings
         self.program=task.program
         # log.info("RecordButtonFrame found program settings "
@@ -502,7 +502,7 @@ class ASRModelSelectionWindow(ui.Window):
             return
         try:
             self.language_info.destroy()
-        except:
+        except Exception:
             pass
         try:
             self.lang_cur=self.lang.get()
@@ -755,12 +755,12 @@ class ASRModelSelectionWindow(ui.Window):
         self.soundsettings=self.program.soundsettings
         if 'cache_dir' in self.soundsettings.asr_kwargs and not file.exists(self.soundsettings.asr_kwargs['cache_dir']):
             log.error(f"Cache dir {self.soundsettings.asr_kwargs['cache_dir']} "
-                    "not found; exiting.")
-            exit()
+                    "not found.")
+            raise FileNotFoundError(self.soundsettings.asr_kwargs['cache_dir'])
         self.languages=self.program.languages
         try:
             self.analang=self.program.params.analang()
-        except:
+        except AttributeError:
             self.analang=self.program.analang #for testing
         self.alllangs=_("All of the below")
         self.get_vars()

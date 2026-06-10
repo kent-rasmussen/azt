@@ -1540,8 +1540,10 @@ class Parse(Segments):
     def submitparse(self):
         try:
             self.parsecatalog.addparsed(self.sense.id)
-        except: #upgrade to this
-            self.parsecatalog.addparsed(kwargs['entry'].sense.id)
+        except Exception as e: #upgrade to this
+            log.error("Exception submitting parse (do I need access to entry "
+                        "for entry.sense.id?): {}".format(e))
+            raise e
         self.maybewrite()
     def initsensetodo(self):
         try:
@@ -1610,11 +1612,16 @@ class Parse(Segments):
     def showwhenready(self):
         try:
             assert self.status.winfo_exists()
-            log.info("showing")
+            log.info("self.status found; showing parser UI")
             self.ui.deiconify()
-        except:
-            log.info("not showing")
-            self.after(1,self.showwhenready)
+        except Exception:
+            self.ready_waits=getattr(self,'ready_waits',0)+1
+            if self.ready_waits < self.try_times:
+                log.info("self.status not found; waiting 100ms before showing parser UI")
+                self.after(self.try_each_ms,self.showwhenready)
+            else:
+                log.error("self.status not found after {} tries @ {}ms; giving up"
+                        "".format(self.try_times,self.try_each_ms))
     def storethisword(self):
         log.info(_("Parse trying to store {value} ({type})").format(value=self.var.get(),type=self.ftype))
         try:

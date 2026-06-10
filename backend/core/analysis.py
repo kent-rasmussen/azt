@@ -37,11 +37,11 @@ class Entry(lift.Entry): #Not in use
         to store and access this info?"""
         try:
             self.checkresults[check.name]
-        except:
+        except KeyError:
             self.checkresults[check.name]={}
         try:
             self.checkresults[check.name][check.subcheck]
-        except:
+        except KeyError:
             self.checkresults[check.name][check.subcheck]={}
         self.checkresults[check.name][check.subcheck]['result']=result
         log.info("Don't forget to write these changes to a file somewhere...")

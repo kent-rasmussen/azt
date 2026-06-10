@@ -283,7 +283,7 @@ class Languages(dict):
     def get_obj(self,input): #input can be code or name
         try:
             return Language(input,self) #if this works, we're done
-        except:
+        except Exception:
             code=self.get_code(input)
             if code:
                 # log.info("Trying to make language element now")
@@ -392,7 +392,7 @@ class Language(langcodes.Language):
     def family(self):
         try:
             return self.lineage[0]
-        except:
+        except IndexError:
             log.error(f"code '{self.iso()}' came back with no family!? "
                 f"({self.lineages})")
     def get_regionname(self):
@@ -437,10 +437,10 @@ class Language(langcodes.Language):
                 try:
                     region=self.languages.region_codes_names[
                                 self.languages.all_tags[tag]['region']]
-                except:
+                except KeyError:
                     try:
                         region=self.languages.by_iso[tag]['country name']
-                    except:
+                    except KeyError:
                         region=self.regions[0]
                 self.regionname=f'{region}, etc'
             else:

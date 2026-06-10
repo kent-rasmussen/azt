@@ -141,7 +141,7 @@ class GlyphTranscribeHelper:
         try:  # successive runs
             self.compframe.compframeb.destroy()
             log.info("Comparison frameb destroyed!")
-        except:  # first run
+        except Exception:  # first run
             log.info("Problem destroying comparison frame, making...")
         self.compframe.compframeb = ui.Frame(self.compframe)
         self.compframe.compframeb.grid(row=1, column=0)

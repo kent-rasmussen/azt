@@ -144,7 +144,7 @@ class SoundFilePlayer(object):
             while len(self.data) > 0:
                 try:
                     self.stream.write(self.data)
-                except:
+                except Exception:
                     log.exception("Other exception trying to play "
                                 f"sound! {sys.exc_info()[0]}")
                     log.info("The above may indicate a systemic problem!")
@@ -178,7 +178,7 @@ class SoundFilePlayer(object):
                 while (self.stream.is_active()) and (not self.stream.is_stopped()):
                     try:
                         log.debug(format/8*1024)
-                    except:
+                    except Exception:
                         log.error("No stream to write!")
                         return
                     time.sleep(0.1)
@@ -294,7 +294,7 @@ class SoundFileRecorder(object):
             self.wf.setframerate(self.settings.fs)
             log.log(3,"File opened to write ({}): {}".format(self.wf,
                                                             self.filenameURL))
-        except:
+        except Exception:
             log.error("Trouble opening file to write ({}): {}".format(self.wf,
                                                             self.filenameURL))
     def fileclose(self):

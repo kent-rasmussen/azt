@@ -62,7 +62,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         """Problems reading a valid LIFT file are dealt with in main.py"""
         try:
             self.read() #load and parse the XML file. (Should this go to check?)
-        except:
+        except Exception:
             raise BadParseError(self.filename)
         self.getglosslangs() #sets: self.glosslangs
         # self.word_list_n_attr='cawln' #make this configurable
@@ -180,7 +180,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                         log.info(_("Found {file_url_totry}; assuming audiodir={audiodir}")
                                 .format(file_url_totry=totry, audiodir=self.audiodir))
                         return
-                    except:# Exception as e:
+                    except Exception:  # any candidate failure -> try the next
                         # log.info(f"Exception: {e}")
                         pass
         log.info(_("No audio found in audiodir={audiodir}, but will put new audio "
@@ -196,7 +196,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 log.info(_("Found {file_url_totry}; assuming imgdir={imgdir}")
                         .format(file_url_totry=totry, imgdir=self.imgdir))
                 return
-            except:# Exception as e:
+            except Exception:  # any candidate failure -> try the next
                 # log.info(f"Exception: {e}")
                 pass
         log.info(_("No images found in imgdir={imgdir}, but will put new images "
@@ -1201,7 +1201,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 self.write_OK=True
                 self.write_error=None
                 return
-            except:
+            except OSError:
                 error=_("There was a problem writing "
                     f"{pathlib.Path(filename).name} file to " f"{pathlib.Path(filename).parent} "
                     "directory. This is what's here: "
@@ -2529,7 +2529,7 @@ class FormParent(Node):
             if len(self.findall('form[@lang="{}"]'.format(lang))) > 1:
                 try:
                     num=self.find('field[@type="location"]/form/text').text
-                except:
+                except AttributeError:  # find() returned None
                     num="?"
                 guid=(self.parent.entry.guid if hasattr(self.parent,'entry')
                                             else self.parent.guid)
@@ -3320,7 +3320,7 @@ class Sense(Node,FieldParent):
                     i=(example.audiofileURL,translation)
                     try:
                         r+=[i]
-                    except:
+                    except NameError:  # first item: r not yet defined
                         r=[i]
         try:
             return r
@@ -3344,7 +3344,7 @@ class Sense(Node,FieldParent):
                     i=(self.ftypes[ftype].audiofileURL,value)
                     try: #catch each ftype for sense
                         r+=[i]
-                    except:
+                    except NameError:  # first item: r not yet defined
                         r=[i]
         try:
             return r
@@ -3759,9 +3759,8 @@ class LiftURL():
             args.append('analang')
         return args
     def lift(self):
-        log.error(_("LiftURL is trying to make a lift node; this should never "
-                "happen; exiting!"))
-        exit()
+        raise RuntimeError(_("LiftURL is trying to make a lift node; this "
+                "should never happen"))
     def bearchildrenof(self,parent):
         # log.info("bearing children of {} ({})".format(parent,
         #                                                 self.children[parent]))
@@ -3798,7 +3797,8 @@ class LiftURL():
                         .format(target=target, parents=parents, level=self.level))
                 log.error(_("this is where we're at: {kwargs}\n  {url}")
                         .format(kwargs=self.kwargs, url=val_url))
-                exit()
+                raise RuntimeError(_("last level {target} (of {parents}) not in {level}")
+                        .format(target=target, parents=parents, level=self.level))
     def maybeshowtarget(self,parent):
         # parent here is a node ancestor to the current origin, which may
         # or may not be an ancestor of targethead. If it is, show it.
@@ -3927,7 +3927,8 @@ class LiftURL():
             "cause problems, as it appears in too many places, and is likely "
             "to not give the desired results. Fix this, and try again. (whole "
             "target: {target})").format(head=self.targethead, target=self.target))
-            exit()
+            raise ValueError(_("Ambiguous target head {head}; it appears in too "
+                "many places").format(head=self.targethead))
     def tagonly(self,nodename):
         return nodename.split('[')[0]
     def currentnodename(self):

@@ -402,7 +402,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         self.exs=self.program.examples
         try:
             self.code=self.program.alphabet.verificationcode(**kwargs)
-        except:
+        except Exception:
             pass #don't worry if that info isn't all there
         self.group=kwargs.pop('group') #must be here
         self.check=kwargs.get('check',None) #must be here for glyphs only

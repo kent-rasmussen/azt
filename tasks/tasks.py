@@ -70,7 +70,7 @@ class ExportData(ui.Window):
                     'done_notice']:
             try:
                 getattr(self,o).destroy()
-            except:
+            except Exception:
                 pass
         self.update()
         self.export=self.exportclass(
@@ -176,7 +176,7 @@ class WordCollectionwRecordings(WordCollection,Record):
         ftype=kwargs.pop('ftype',self.ftype)
         try:
             self.wordframe.recordFrame.destroy()#don't leave this around!
-        except:
+        except Exception:
             pass
         log.info(f"setting frame with settings: {self.soundsettings}")
         self.wordframe.recordFrame=sound_ui.RecordnTranscribeButtonFrame(
@@ -199,7 +199,7 @@ class WordCollectionwRecordings(WordCollection,Record):
                         _("correct the consonants and vowels below."))
         try:
             self.wordframe.draftFrame.destroy()
-        except:
+        except Exception:
             pass
         content=self.wordframe.recordFrame.recorder.transcriptions
         log.info(f"Recorder returned {len(content)} transcriptions")
@@ -619,7 +619,7 @@ class ToneFrameDrafter(ui.Window):
                     try:
                         self.forms[l]={'before':''}
                         text=nothing
-                    except:
+                    except Exception:
                         text='<'+_("No {lang} frame info").format(
                                 lang=self.program.settings.languagenames[l])+'>'
                 button=ui.Button(lineframe,text=text,
@@ -1026,7 +1026,7 @@ class SortSyllables(Sort,Segments,Task):
         try:
             self.ui.runwindow.winfo_viewable()
             w=self.ui.runwindow
-        except:
+        except Exception:
             w=self.program.tk_root
         w.drive_work(gen, on_done=after_presort)
     def __init__(self, **kwargs):
@@ -1303,7 +1303,7 @@ class Transcribe(Sound,Categories,Task):
         try: #successive runs
             self.compframe.compframeb.destroy()
             log.info("Comparison frameb destroyed!")
-        except: #first run
+        except Exception: #first run
             log.info("Problem destroying comparison frame, making...")
         self.compframe.compframeb=ui.Frame(self.compframe)
         self.compframe.compframeb.grid(row=1,column=0)

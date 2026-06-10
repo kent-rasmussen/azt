@@ -58,9 +58,17 @@ _app_settings._instance = None
 import os
 import stat
 import platform
-import soundfile
+try:
+    import soundfile
+    soundfileOK=True
+except ModuleNotFoundError:
+    print("Module soundfile not installed; to use sound features, install.")
+    soundfileOK=False
 # import samplerate
-import librosa
+try:
+    import librosa
+except ModuleNotFoundError:
+    print("Module librosa not installed; to use sound features, install.")
 import io
 import tarfile
 from packaging import version
@@ -230,9 +238,9 @@ def getinterfacelang():
         import ui_lang
         try:
             return ui_lang.interfacelang
-        except:
+        except AttributeError:
             return "Didn't find ui_lang.interfacelang"
-    except:
+    except ImportError:
         return "Didn't find ui_lang.py"
 def writeinterfacelangtofile(lang):
     file=pathlib.Path.joinpath(pathlib.Path(__file__).parent, "ui_lang.py")

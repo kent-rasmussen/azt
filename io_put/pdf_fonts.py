@@ -41,7 +41,7 @@ def register_fonts():
             try:
                 pdfmetrics.getFont('Charis-Regular')
                 break
-            except:
+            except KeyError:
                 pass
             try:
                 pdfmetrics.registerFont(TTFont('Charis-Regular', f'{filename}-Regular.ttf'))

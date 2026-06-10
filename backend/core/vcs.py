@@ -493,7 +493,7 @@ class Repository(object):
                                                         error=e)
             try:
                 text+=" ({output})".format(output=output)
-            except:
+            except Exception:
                 pass
             try:
                 assert self.code == 'git' #don't give hg notices here
