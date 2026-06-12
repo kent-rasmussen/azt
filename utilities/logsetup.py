@@ -68,7 +68,8 @@ def dorootloghandlers(self):
     tryfilehandler(self)
 def tryfilehandler(self,lessiso=16):
     from utilities import file as _file
-    logfile='log_'+datetime.datetime.utcnow().isoformat()[:-lessiso]+'.txt'
+    # naive UTC (no tz offset) so the trailing isoformat()[:-lessiso] slice is unchanged
+    logfile='log_'+datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None).isoformat()[:-lessiso]+'.txt'
     filename=pathlib.Path.joinpath(_file.getlogdir(),logfile)
     try:
         handler = logging.handlers.RotatingFileHandler(filename, mode='w',
@@ -77,7 +78,7 @@ def tryfilehandler(self,lessiso=16):
                                                     backupCount=5)
         handler.doRollover()# start at the beginning of a file
         handler.setLevel(0) #Let the loglevel determine what to show
-        handler.setFormatter(logformat('timelessformat'))
+        handler.setFormatter(logformat('fullformat'))
         self.addHandler(handler)
     except PermissionError as e:
         log.info(f"Logfile permission problem ({e}); trying again.")
@@ -102,7 +103,7 @@ def writelzma(filename=None):
         from backports import lzma
     """This writes changes back to XML."""
     """When this goes into production, change this:"""
-    compressed='log_'+datetime.datetime.utcnow().isoformat()[:-7]+'Z'+'.xz'
+    compressed='log_'+datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None).isoformat()[:-7]+'Z'+'.xz'
     compressed=re.sub(':','-',compressed)
     logdir=_file.getlogdir()
     compressedurl=logdir.joinpath(compressed)
