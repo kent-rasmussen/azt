@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="990" height="1180" viewBox="0 0 990 1180" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#475569"/>
+    </marker>
+    <marker id="arrB" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#b45309"/>
+    </marker>
+    <marker id="arrG" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrGs" markerWidth="9" markerHeight="9" refX="0" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M7,0 L0,3 L7,6 Z" fill="#94a3b8"/>
+    </marker>
+    <style>
+      .bt   { font-weight:700; text-anchor:middle; }
+      .bs   { font-size:9.5px; text-anchor:middle; opacity:.82; }
+      .box  { rx:9; ry:9; stroke-width:1.6; }
+      .flow { stroke:#475569; stroke-width:1.7; fill:none; }
+      .loop { stroke:#475569; stroke-width:1.4; fill:none; }
+      .back { stroke:#b45309; stroke-width:1.6; fill:none; stroke-dasharray:1; }
+      .ov   { stroke:#94a3b8; stroke-width:1.3; stroke-dasharray:5 4; fill:none; }
+      .al   { font-size:9.5px; fill:#334155; }    /* arrow label */
+      .bl   { font-size:9.5px; fill:#b45309; }     /* back-edge label */
+      .gl   { font-size:9.5px; fill:#64748b; }     /* overlay label */
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="22" y="32" font-size="21" font-weight="700" fill="#0f172a">A‑Z+T — the vowel sorting process, screen by screen</text>
+  <text x="22" y="53" font-size="12.5" fill="#64748b">Every page a user sees while sorting vowels, through transcription. Each box is a Run‑Window screen or dialog; ↻ = the screen re‑populates with the next item.</text>
+  <text x="22" y="71" font-size="11.5" font-style="italic" fill="#94a3b8">A status panel ("Studying X · Checking Vowels · working on 'V=C' · profile CVC") stays visible beside the Run Window the whole time.</text>
+
+  <!-- ===== Phase bands ===== -->
+  <rect x="14" y="158" width="690" height="392" rx="11" fill="#f7f9fc" stroke="#dbe4ee"/>
+  <rect x="14" y="576" width="690" height="452" rx="11" fill="#f9f6fc" stroke="#e7ddf4"/>
+  <text x="30" y="354" class="bt" font-size="12" fill="#94a3b8" text-anchor="middle" transform="rotate(-90 30 354)">PHASE A · words → sound‑groups</text>
+  <text x="30" y="802" class="bt" font-size="12" fill="#94a3b8" text-anchor="middle" transform="rotate(-90 30 802)">PHASE B · groups → letters + transcription</text>
+
+  <!-- ===== Nodes ===== -->
+  <!-- Task Chooser -->
+  <rect class="box" x="240" y="92" width="240" height="46" rx="23" fill="#e2e8f0" stroke="#475569"/>
+  <text class="bt" x="360" y="112" font-size="13" fill="#1e293b">Task Chooser</text>
+  <text class="bs" x="360" y="128" fill="#1e293b">pick “Sort Vowels”</text>
+
+  <!-- SORT (blue) -->
+  <rect class="box" x="210" y="178" width="300" height="64" fill="#dbeafe" stroke="#2563eb"/>
+  <text class="bt" x="360" y="201" font-size="13" fill="#1e3a8a">SORT · words → sound‑groups</text>
+  <text class="bs" x="360" y="218" fill="#1e3a8a">one word shown → click a group,</text>
+  <text class="bs" x="360" y="231" fill="#1e3a8a">“Other Vowel” (new group), or Skip</text>
+
+  <!-- VERIFY groups (green) -->
+  <rect class="box" x="210" y="360" width="300" height="64" fill="#d1fae5" stroke="#059669"/>
+  <text class="bt" x="360" y="383" font-size="13" fill="#065f46">VERIFY groups</text>
+  <text class="bs" x="360" y="400" fill="#065f46">read group aloud; click any word</text>
+  <text class="bs" x="360" y="413" fill="#065f46">that sounds different, or OK</text>
+
+  <!-- JOIN groups (amber) -->
+  <rect class="box" x="210" y="470" width="300" height="64" fill="#fef3c7" stroke="#d97706"/>
+  <text class="bt" x="360" y="493" font-size="13" fill="#92400e">JOIN groups</text>
+  <text class="bs" x="360" y="510" fill="#92400e">two groups side by side →</text>
+  <text class="bs" x="360" y="523" fill="#92400e">“Same” (merge) / “Different”</text>
+
+  <!-- MACROSORT (blue) -->
+  <rect class="box" x="210" y="596" width="300" height="64" fill="#dbeafe" stroke="#2563eb"/>
+  <text class="bt" x="360" y="619" font-size="13" fill="#1e3a8a">SORT groups → letters (macrosort)</text>
+  <text class="bs" x="360" y="636" fill="#1e3a8a">place each sound‑group under a</text>
+  <text class="bs" x="360" y="649" fill="#1e3a8a">letter, or “Other Letter” (new)</text>
+
+  <!-- VERIFY letters (green) -->
+  <rect class="box" x="210" y="706" width="300" height="64" fill="#d1fae5" stroke="#059669"/>
+  <text class="bt" x="360" y="729" font-size="13" fill="#065f46">VERIFY letters</text>
+  <text class="bs" x="360" y="746" fill="#065f46">read a letter’s words; click any</text>
+  <text class="bs" x="360" y="759" fill="#065f46">group that differs, or OK</text>
+
+  <!-- JOIN letters (amber) -->
+  <rect class="box" x="210" y="816" width="300" height="64" fill="#fef3c7" stroke="#d97706"/>
+  <text class="bt" x="360" y="839" font-size="13" fill="#92400e">JOIN letters</text>
+  <text class="bs" x="360" y="856" fill="#92400e">two letters side by side →</text>
+  <text class="bs" x="360" y="869" fill="#92400e">“Same” / “Different”</text>
+
+  <!-- NAME / TRANSCRIBE (purple) -->
+  <rect class="box" x="210" y="926" width="300" height="74" fill="#ede9fe" stroke="#7c3aed" stroke-width="2.4"/>
+  <text class="bt" x="360" y="949" font-size="13" fill="#5b21b6">★ NAME / TRANSCRIBE letters</text>
+  <text class="bs" x="360" y="966" fill="#5b21b6">type the letter(s) for this vowel —</text>
+  <text class="bs" x="360" y="979" fill="#5b21b6">Transcriber field + glyph palette;</text>
+  <text class="bs" x="360" y="992" fill="#5b21b6">OK adds it to the alphabet</text>
+
+  <!-- Done! — the single completion notice (fires only when nothing is left to
+       sort / verify / join, after naming). "verified AND distinct". -->
+  <rect class="box" x="240" y="1040" width="240" height="50" fill="#f1f5f9" stroke="#94a3b8" stroke-dasharray="4 3"/>
+  <text class="bt" x="360" y="1061" font-size="11.5" fill="#475569">“Done!” notice</text>
+  <text class="bs" x="360" y="1077" fill="#475569">groups verified &amp; distinct</text>
+
+  <!-- ===== Main spine arrows ===== -->
+  <line class="flow" marker-end="url(#arr)" x1="360" y1="138" x2="360" y2="176"/>
+  <text class="al" x="368" y="160">click “Sort Vowels”</text>
+
+  <line class="flow" marker-end="url(#arr)" x1="360" y1="242" x2="360" y2="358"/>
+  <text class="al" x="368" y="304">all words sorted (no dialog)</text>
+
+  <line class="flow" marker-end="url(#arr)" x1="360" y1="424" x2="360" y2="468"/>
+  <text class="al" x="368" y="450">all groups verified</text>
+
+  <line class="flow" marker-end="url(#arr)" x1="360" y1="534" x2="360" y2="594"/>
+  <text class="al" x="368" y="568">all pairs reviewed</text>
+
+  <line class="flow" marker-end="url(#arr)" x1="360" y1="660" x2="360" y2="704"/>
+  <text class="al" x="368" y="686">all groups placed</text>
+
+  <line class="flow" marker-end="url(#arr)" x1="360" y1="770" x2="360" y2="814"/>
+  <text class="al" x="368" y="796">all letters verified</text>
+
+  <line class="flow" marker-end="url(#arr)" x1="360" y1="880" x2="360" y2="924"/>
+  <text class="al" x="368" y="906">all pairs reviewed</text>
+
+  <line class="flow" marker-end="url(#arr)" x1="360" y1="1000" x2="360" y2="1038"/>
+  <text class="al" x="368" y="1024">all letters named</text>
+
+  <!-- Done! -> Task Chooser : finished (far-right return) -->
+  <path class="flow" marker-end="url(#arr)" d="M480,1065 H965 V115 H482"/>
+  <text class="al" x="975" y="560" text-anchor="middle" transform="rotate(-90 975 560)" fill="#475569">finished · OK → Task Chooser</text>
+
+  <!-- Done! -> Sort : "Moving on to the next check / profile!" restarts the
+       whole cycle on a new slice (left-margin loop). -->
+  <path class="flow" marker-end="url(#arr)" d="M240,1065 L150,1065 L150,168 L300,168 L300,174"/>
+  <text class="al" x="142" y="600" text-anchor="middle" transform="rotate(-90 142 600)" fill="#475569">“Moving on to the next check / profile!” → restart at Sort</text>
+
+  <!-- ===== Self-loops (↻ next item) ===== -->
+  <path class="loop" marker-end="url(#arr)" d="M510,197 C566,186 566,223 512,223"/>
+  <text class="al" x="572" y="208">↻ next word</text>
+  <path class="loop" marker-end="url(#arr)" d="M510,379 C566,368 566,405 512,405"/>
+  <text class="al" x="572" y="390">↻ next group</text>
+  <path class="loop" marker-end="url(#arr)" d="M510,489 C566,478 566,515 512,515"/>
+  <text class="al" x="572" y="500">↻ next pair</text>
+  <path class="loop" marker-end="url(#arr)" d="M510,615 C566,604 566,641 512,641"/>
+  <text class="al" x="572" y="626">↻ next group</text>
+  <path class="loop" marker-end="url(#arr)" d="M510,725 C566,714 566,751 512,751"/>
+  <text class="al" x="572" y="736">↻ next letter</text>
+  <path class="loop" marker-end="url(#arr)" d="M510,835 C566,824 566,861 512,861"/>
+  <text class="al" x="572" y="846">↻ next pair</text>
+  <path class="loop" marker-end="url(#arr)" d="M510,955 C566,944 566,981 512,981"/>
+  <text class="al" x="572" y="966">↻ next glyph</text>
+
+  <!-- ===== Back-edges (amber, dashed) ===== -->
+  <!-- verify groups: a word differs -> back to SORT -->
+  <path class="back" marker-end="url(#arrB)" d="M210,392 C92,392 92,210 208,210"/>
+  <text class="bl" x="86" y="300" text-anchor="middle" transform="rotate(-90 86 300)">word differs → re‑sort it</text>
+
+  <!-- verify letters: a group differs -> back to MACROSORT -->
+  <path class="back" marker-end="url(#arrB)" d="M210,738 C92,738 92,628 208,628"/>
+  <text class="bl" x="86" y="683" text-anchor="middle" transform="rotate(-90 86 683)">group differs → re‑place it</text>
+
+  <!-- name: 'Go back and join' -> JOIN letters -->
+  <path class="back" marker-end="url(#arrB)" d="M210,963 C128,963 128,848 208,848"/>
+  <text class="bl" x="122" y="905" text-anchor="middle" transform="rotate(-90 122 905)">“Go back and join”</text>
+
+  <!-- ===== Overlay column (transient / modal dialogs) ===== -->
+  <!-- Transient dialogs -->
+  <rect class="box" x="720" y="180" width="232" height="156" fill="#ffffff" stroke="#94a3b8" stroke-dasharray="5 4"/>
+  <text class="bt" x="836" y="201" font-size="11.5" fill="#64748b">Transient / modal dialogs</text>
+  <text x="734" y="223" class="gl">• Wait / progress  (auto‑closes)</text>
+  <text x="734" y="240" class="gl">  “Reloading status data…”</text>
+  <text x="734" y="262" class="gl">• Error notice  (OK to dismiss)</text>
+  <text x="734" y="279" class="gl">  e.g. “large group — right category?”</text>
+  <text x="734" y="301" class="gl">• VCS commit / save  (on quit)</text>
+  <text x="734" y="318" class="gl">  shares data to git / USB</text>
+  <path class="ov" marker-end="url(#arrG)" d="M718,250 C600,250 560,230 513,213"/>
+  <text x="600" y="172" class="gl" text-anchor="middle">may overlay any step</text>
+
+  <!-- Standalone TranscribeV entry -->
+  <rect class="box" x="720" y="560" width="232" height="92" fill="#faf5ff" stroke="#7c3aed" stroke-dasharray="5 4"/>
+  <text class="bt" x="836" y="581" font-size="11.5" fill="#6d28d9">Alt entry</text>
+  <text x="734" y="602" class="gl" fill="#6d28d9">Standalone “Transcribe Vowels” /</text>
+  <text x="734" y="618" class="gl" fill="#6d28d9">“Vowel Letters” task (TranscribeV)</text>
+  <text x="734" y="634" class="gl" fill="#6d28d9">runs the naming loop on its own —</text>
+  <text x="734" y="648" class="gl" fill="#6d28d9">enters directly at NAME / TRANSCRIBE.</text>
+  <path class="ov" marker-end="url(#arrG)" d="M760,652 C640,760 540,860 478,924"/>
+
+  <!-- Compare / switch-letters picker -->
+  <rect class="box" x="720" y="912" width="232" height="74" fill="#ffffff" stroke="#94a3b8" stroke-dasharray="5 4"/>
+  <text class="bt" x="836" y="933" font-size="11.5" fill="#64748b">Compare‑letter picker</text>
+  <text x="734" y="954" class="gl">“What other Vowel to compare with?”</text>
+  <text x="734" y="971" class="gl">→ shows pair · “Switch letters” swaps</text>
+  <path class="ov" marker-start="url(#arrGs)" marker-end="url(#arrG)" d="M718,952 C620,952 560,955 512,958"/>
+  <text x="615" y="945" class="gl" text-anchor="middle">compare / switch</text>
+
+  <!-- Legend -->
+  <g font-size="11" fill="#334155">
+    <rect x="22" y="1108" width="16" height="12" rx="2" fill="#dbeafe" stroke="#2563eb"/><text x="44" y="1118">Sort</text>
+    <rect x="96" y="1108" width="16" height="12" rx="2" fill="#d1fae5" stroke="#059669"/><text x="118" y="1118">Verify</text>
+    <rect x="178" y="1108" width="16" height="12" rx="2" fill="#fef3c7" stroke="#d97706"/><text x="200" y="1118">Join</text>
+    <rect x="248" y="1108" width="16" height="12" rx="2" fill="#ede9fe" stroke="#7c3aed"/><text x="270" y="1118">Transcribe</text>
+    <rect x="350" y="1108" width="16" height="12" rx="2" fill="#f1f5f9" stroke="#94a3b8"/><text x="372" y="1118">Dialog / notice</text>
+    <line x1="478" y1="1114" x2="508" y2="1114" stroke="#b45309" stroke-width="1.6" stroke-dasharray="1"/><text x="514" y="1118" fill="#b45309">back‑edge (rework)</text>
+    <line x1="648" y1="1114" x2="678" y2="1114" class="ov"/><text x="684" y="1118" fill="#64748b">modal / overlay</text>
+  </g>
+</svg>

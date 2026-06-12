@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="730" viewBox="0 0 1300 730" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#475569"/>
+    </marker>
+    <marker id="arrowStart" markerWidth="9" markerHeight="9" refX="0" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M7,0 L0,3 L7,6 Z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrowEnd" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#94a3b8"/>
+    </marker>
+    <style>
+      .ph   { font-size:13px; font-weight:700; letter-spacing:.5px; }
+      .bt   { font-size:13px; font-weight:600; text-anchor:middle; }
+      .bs   { font-size:9.5px; text-anchor:middle; opacity:.78; }
+      .box  { rx:8; ry:8; stroke-width:1.5; }
+      .flow { stroke:#475569; stroke-width:1.6; fill:none; }
+      .spine{ stroke:#94a3b8; stroke-width:1.4; stroke-dasharray:5 4; fill:none; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="30" y="34" font-size="22" font-weight="700" fill="#0f172a">A‑Z+T workflow — from data collection to alphabet chart &amp; booklet</text>
+  <text x="30" y="56" font-size="13" fill="#64748b">Desktop AZT app · tasks chosen in the Task Chooser · all data lives in one LIFT (Lexicon Interchange FormaT) XML lexicon</text>
+
+  <!-- ===== Phase band backgrounds ===== -->
+  <rect x="20"  y="78"  width="1075" height="86"  rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+  <rect x="20"  y="180" width="1075" height="134" rx="10" fill="#eff6ff" stroke="#bfdbfe"/>
+  <rect x="20"  y="324" width="1075" height="134" rx="10" fill="#ecfdf5" stroke="#a7f3d0"/>
+  <rect x="20"  y="468" width="1075" height="120" rx="10" fill="#fffbeb" stroke="#fde68a"/>
+  <rect x="20"  y="600" width="1075" height="110" rx="10" fill="#f5f3ff" stroke="#ddd6fe"/>
+
+  <!-- Phase titles -->
+  <text class="ph" x="34" y="98"  fill="#334155">1 · DATA INPUT</text>
+  <text class="ph" x="34" y="200" fill="#1d4ed8">2 · DATA COLLECTION <tspan font-weight="400" font-size="11" fill="#3b82f6">— competent speakers</tspan></text>
+  <text class="ph" x="34" y="344" fill="#047857">3 · ANALYSIS <tspan font-weight="400" font-size="11" fill="#10b981">— linguist</tspan></text>
+  <text class="ph" x="34" y="488" fill="#b45309">4 · REPORTING &amp; VALIDATION</text>
+  <text class="ph" x="34" y="620" fill="#6d28d9">5 · FINAL PRODUCTS</text>
+
+  <!-- ===== LIFT spine ===== -->
+  <rect x="1115" y="78" width="165" height="632" rx="12" fill="#f1f5f9" stroke="#94a3b8" stroke-dasharray="6 4"/>
+  <text x="1197" y="372" class="ph" fill="#334155" text-anchor="middle" transform="rotate(-90 1197 372)">LIFT XML lexicon</text>
+  <text x="1215" y="372" font-size="10" fill="#64748b" text-anchor="middle" transform="rotate(-90 1215 372)">central store — every task reads &amp; writes here</text>
+
+  <!-- ===== Boxes ===== -->
+  <!-- Phase 1 -->
+  <rect class="box" x="40"  y="112" width="260" height="46" fill="#e2e8f0" stroke="#475569"/>
+  <text class="bt" x="170" y="132" fill="#1e293b">Open / Create</text>
+  <text class="bs" x="170" y="148" fill="#1e293b">LIFT lexicon (XML)</text>
+
+  <!-- Phase 2 : Data collection -->
+  <g>
+    <rect class="box" x="40"  y="224" width="150" height="56" fill="#dbeafe" stroke="#2563eb"/>
+    <text class="bt" x="115"  y="248" fill="#1e3a8a">Add Words</text>
+    <text class="bs" x="115"  y="264" fill="#1e3a8a">glosses · CAWL tags</text>
+
+    <rect class="box" x="220" y="224" width="150" height="56" fill="#dbeafe" stroke="#2563eb"/>
+    <text class="bt" x="295"  y="248" fill="#1e3a8a">Record Words</text>
+    <text class="bs" x="295"  y="264" fill="#1e3a8a">isolation audio</text>
+
+    <rect class="box" x="400" y="224" width="150" height="56" fill="#dbeafe" stroke="#2563eb"/>
+    <text class="bt" x="475"  y="248" fill="#1e3a8a">Sort Vowels</text>
+    <text class="bs" x="475"  y="264" fill="#1e3a8a">group by sound</text>
+
+    <rect class="box" x="580" y="224" width="150" height="56" fill="#dbeafe" stroke="#2563eb"/>
+    <text class="bt" x="655"  y="248" fill="#1e3a8a">Sort Consonants</text>
+    <text class="bs" x="655"  y="264" fill="#1e3a8a">group by sound</text>
+
+    <rect class="box" x="760" y="224" width="150" height="56" fill="#bfdbfe" stroke="#2563eb"/>
+    <text class="bt" x="835"  y="248" fill="#1e3a8a">Sort Tone</text>
+    <text class="bs" x="835"  y="264" fill="#1e3a8a">surface tone groups</text>
+
+    <rect class="box" x="940" y="224" width="150" height="56" fill="#dbeafe" stroke="#2563eb"/>
+    <text class="bt" x="1015" y="248" fill="#1e3a8a">Record Tone</text>
+    <text class="bs" x="1015" y="264" fill="#1e3a8a">in frames</text>
+  </g>
+
+  <!-- Phase 3 : Analysis -->
+  <g>
+    <rect class="box" x="40"  y="364" width="150" height="56" fill="#d1fae5" stroke="#059669"/>
+    <text class="bt" x="115"  y="388" fill="#065f46">Parse Words</text>
+    <text class="bs" x="115"  y="404" fill="#065f46">lexeme forms</text>
+
+    <rect class="box" x="400" y="364" width="150" height="56" fill="#d1fae5" stroke="#059669"/>
+    <text class="bt" x="475"  y="388" fill="#065f46">Transcribe Vowels</text>
+    <text class="bs" x="475"  y="404" fill="#065f46">groups → letters</text>
+
+    <rect class="box" x="580" y="364" width="150" height="56" fill="#d1fae5" stroke="#059669"/>
+    <text class="bt" x="655"  y="388" fill="#065f46">Transcribe Cons.</text>
+    <text class="bs" x="655"  y="404" fill="#065f46">groups → letters</text>
+
+    <rect class="box" x="760" y="364" width="150" height="56" fill="#d1fae5" stroke="#059669"/>
+    <text class="bt" x="835"  y="388" fill="#065f46">Transcribe Tone</text>
+    <text class="bs" x="835"  y="404" fill="#065f46">groups → marks</text>
+
+    <rect class="box" x="940" y="364" width="150" height="56" fill="#d1fae5" stroke="#059669"/>
+    <text class="bt" x="1015" y="388" fill="#065f46">Join UF Groups</text>
+    <text class="bs" x="1015" y="404" fill="#065f46">underlying tone</text>
+  </g>
+
+  <!-- Phase 4 : Reporting -->
+  <g>
+    <rect class="box" x="490" y="504" width="150" height="56" fill="#fef3c7" stroke="#d97706"/>
+    <text class="bt" x="565"  y="528" fill="#92400e">Alphabet Reports</text>
+    <text class="bs" x="565"  y="544" fill="#92400e">screen / XLingPaper</text>
+
+    <rect class="box" x="760" y="504" width="150" height="56" fill="#fef3c7" stroke="#d97706"/>
+    <text class="bt" x="835"  y="528" fill="#92400e">Tone Reports</text>
+    <text class="bs" x="835"  y="544" fill="#92400e">by word / by frame</text>
+
+    <rect class="box" x="940" y="504" width="150" height="56" fill="#fef3c7" stroke="#d97706"/>
+    <text class="bt" x="1015" y="528" fill="#92400e">Consultant Check</text>
+    <text class="bs" x="1015" y="544" fill="#92400e">validation</text>
+  </g>
+
+  <!-- Phase 5 : Final products -->
+  <g>
+    <rect class="box" x="300" y="628" width="300" height="60" fill="#ede9fe" stroke="#7c3aed" stroke-width="2.5"/>
+    <text class="bt" x="450" y="654" fill="#5b21b6" font-size="14">★ Alphabet Chart</text>
+    <text class="bs" x="450" y="672" fill="#5b21b6">PDF — each letter + example picture</text>
+
+    <rect class="box" x="660" y="628" width="330" height="60" fill="#ede9fe" stroke="#7c3aed" stroke-width="2.5"/>
+    <text class="bt" x="825" y="654" fill="#5b21b6" font-size="14">★ Alphabet Comparison Booklet</text>
+    <text class="bs" x="825" y="672" fill="#5b21b6">PDF — letters with illustrated examples</text>
+  </g>
+
+  <!-- ===== Flow arrows ===== -->
+  <!-- input -> collection -->
+  <path class="flow" marker-end="url(#arrow)" d="M170,158 C170,195 130,195 117,222"/>
+
+  <!-- collection internal -->
+  <line class="flow" marker-end="url(#arrow)" x1="190" y1="252" x2="218" y2="252"/>
+  <line class="flow" marker-end="url(#arrow)" x1="370" y1="252" x2="398" y2="252"/>
+  <line class="flow" marker-end="url(#arrow)" x1="550" y1="252" x2="578" y2="252"/>
+  <line class="flow" marker-end="url(#arrow)" x1="730" y1="252" x2="758" y2="252"/>
+  <line class="flow" marker-end="url(#arrow)" x1="910" y1="252" x2="938" y2="252"/>
+
+  <!-- collection -> analysis -->
+  <line class="flow" marker-end="url(#arrow)" x1="115" y1="280" x2="115" y2="362"/>
+  <line class="flow" marker-end="url(#arrow)" x1="475" y1="280" x2="475" y2="362"/>
+  <line class="flow" marker-end="url(#arrow)" x1="655" y1="280" x2="655" y2="362"/>
+  <line class="flow" marker-end="url(#arrow)" x1="835" y1="280" x2="835" y2="362"/>
+
+  <!-- analysis internal: transcribe tone -> join UF -->
+  <line class="flow" marker-end="url(#arrow)" x1="910" y1="392" x2="938" y2="392"/>
+
+  <!-- analysis -> reporting -->
+  <path class="flow" marker-end="url(#arrow)" d="M475,420 C475,465 545,465 560,502"/>
+  <path class="flow" marker-end="url(#arrow)" d="M655,420 C655,465 590,465 575,502"/>
+  <line class="flow" marker-end="url(#arrow)" x1="835" y1="420" x2="835" y2="502"/>
+  <line class="flow" marker-end="url(#arrow)" x1="1015" y1="420" x2="1015" y2="502"/>
+
+  <!-- reporting -> final products (alphabet data feeds both) -->
+  <path class="flow" marker-end="url(#arrow)" d="M540,560 C500,595 470,595 458,626"/>
+  <path class="flow" marker-end="url(#arrow)" d="M600,560 C720,595 800,595 820,626"/>
+
+  <!-- ===== Spine read/write connectors ===== -->
+  <line class="spine" marker-start="url(#arrowStart)" marker-end="url(#arrowEnd)" x1="1090" y1="252" x2="1117" y2="252"/>
+  <text x="1100" y="240" font-size="9" fill="#94a3b8" text-anchor="end">write</text>
+  <line class="spine" marker-start="url(#arrowStart)" marker-end="url(#arrowEnd)" x1="1090" y1="392" x2="1117" y2="392"/>
+  <text x="1100" y="380" font-size="9" fill="#94a3b8" text-anchor="end">write</text>
+  <line class="spine" marker-end="url(#arrowEnd)" x1="1117" y1="532" x2="1092" y2="532"/>
+  <text x="1100" y="520" font-size="9" fill="#94a3b8" text-anchor="end">read</text>
+  <line class="spine" marker-end="url(#arrowEnd)" x1="1117" y1="658" x2="992" y2="658"/>
+  <text x="1000" y="646" font-size="9" fill="#94a3b8" text-anchor="end">read</text>
+
+  <!-- Footnote -->
+  <text x="30" y="722" font-size="11" fill="#94a3b8">Transcribe / Join steps are only needed where sorting split a sound into several; reports validate analysis before the chart &amp; booklet are produced. Loops back to re‑sort as new data arrives.</text>
+</svg>
