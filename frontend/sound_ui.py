@@ -169,11 +169,10 @@ class RecordnTranscribeButtonFrame(RecordButtonFrame):
     def _stop(self, event):
         RecordButtonFrame._stop(self)
         if self.soundsettings.asrOK and self.recorder.file_write_OK:
-            self.task.wait("Getting transcriptions...")
-            self.recorder.get_transcriptions()
-            if self.recorder.error_text:
-                ui.error(self.recorder.error_text)
-            self.task.waitdone()
+            with self.task.waiting("Getting transcriptions..."):
+                self.recorder.get_transcriptions()
+                if self.recorder.error_text:
+                    ui.error(self.recorder.error_text)
         else:
             log.info("Not transcribing because asr is not OK!")
         if hasattr(self.recorder,'transcriptions'):
@@ -736,8 +735,13 @@ class ASRModelSelectionWindow(ui.Window):
             log.info(f"changed_kwargs: {changed_kwargs['all']} "
                         f"({bool(changed_kwargs['all'])})")
         log.info(f"asr_kwargs: {self.soundsettings.asr_kwargs}")
-        self.soundsettings.load_ASR()
-        self.waitdone()
+        # try/finally (not waiting()) because the dialog opens conditionally
+        # above but waitdone() must run unconditionally; load_ASR() may raise
+        # mid-download and must not leave the dialog stuck open.
+        try:
+            self.soundsettings.load_ASR()
+        finally:
+            self.waitdone()
     def modify(self):
         self.soundsettings.asr_kwargs['sister_languages']=['zmg']
         self.soundsettings.asr_kwargs['simplify_length']=False

@@ -1453,7 +1453,7 @@ class TaskDressing(HasMenus,ui.Window):
             bpr=3
         columnspan=1
         for n,o in enumerate(tasktuples):
-            if n is optionlist_maxi and int(n/bpr):
+            if n == optionlist_maxi and int(n/bpr):
                 columnspan=bpr-n%bpr #*.02125
             screen_wrap=self.program.tk_root.winfo_width()*self.theme.scale*.8
             b=ui.Button(frame,
@@ -2076,16 +2076,16 @@ class TaskDressing(HasMenus,ui.Window):
         self.program.maybewrite(definitely=definitely)
     def killall(self):
         log.info(_("Shutting down Task"))
-        self.wait(msg=_("Closing down {name} and storing changes").format(
+        #Don't confuse user; there's more input to come, maybe
+        with self.waiting(msg=_("Closing down {name} and storing changes").format(
                                                                 name=self.program.name
-                                                                ))
-        if self.program.towrite:
-            log.info(_("Final write to lift"))
-            self.maybewrite(definitely=True)
-        else:
-            log.info(_("No final write to lift"))
-        self.program.settings.trackuntrackedfiles()
-        self.waitdone() #Don't confuse user; there's more input to come, maybe
+                                                                )):
+            if self.program.towrite:
+                log.info(_("Final write to lift"))
+                self.maybewrite(definitely=True)
+            else:
+                log.info(_("No final write to lift"))
+            self.program.settings.trackuntrackedfiles()
         for r in self.program.data_repo:
             self.program.data_repo[r].share()
             log.info(_("Done maybe committing/pushing to {repo}").format(repo=r))
@@ -2219,7 +2219,7 @@ class ImageFrame(ui.Frame):
             # log.info("image1.scaled: {} ({})".format(image1.scaled,type(image1.scaled)))
             # log.info("image2: {} ({})".format(image2,type(image2)))
             image1.scaled.paste(image2)
-            bgl=ui.Label(verb,text='',image=image1.scaled,
+            bgl=ui.Label(self,text='',image=image1.scaled,
                 compound='center',
                 sticky='ew',
                 row=0,column=0)
@@ -2602,6 +2602,7 @@ class LiftChooser(ui.Window,HasMenus):
         try:
             return self._analang_code_complete()
         except Exception as e:
+            self.waitdone()
             log.error(f"analang_code_complete failed: {e}", exc_info=True)
     def _analang_code_complete(self):
         log.info("analang_code_complete: self.code={}".format(self.code))
@@ -2609,23 +2610,30 @@ class LiftChooser(ui.Window,HasMenus):
             ErrorNotice(_("There doesn't seem to be an ethnologue code ({code})")
                         .format(code=self.code),wait=True)
             return
-        self.wait(msg=_("Setting up new LIFT file now."), thenshow=True)
-        log.info("Beginning Copy of stock to new LIFT file.")
-        t=templates.CAWL(self.program,analang=self.code)
-        if t.error_text:
-            self.waitdone()
-            ErrorNotice(t.error_text,wait=True)
+        # waiting() guarantees the progress dialog closes even if the work
+        # below raises or returns early. Capture the outcome inside the block
+        # and show any modal error after it, so the spinner is gone first.
+        error_text=None
+        filename=None
+        with self.waiting(msg=_("Setting up new LIFT file now."), thenshow=True):
+            log.info("Beginning Copy of stock to new LIFT file.")
+            t=templates.CAWL(self.program,analang=self.code)
+            if t.error_text:
+                error_text=t.error_text
+            else:
+                self.template_obj=t
+                for p in self.template_obj.fill_db_images():
+                    self.waitprogress(p)
+                self.template_obj.db.write()
+                self.store_analang()
+                self.program.db=self.template_obj.db
+                # self.notify_newfilelocation(self.template_obj.db.filename)
+                log.info("analang_code_complete complete")
+                filename=str(self.template_obj.db.filename)
+        if error_text:
+            ErrorNotice(error_text,wait=True)
             return
-        self.template_obj=t
-        for p in self.template_obj.fill_db_images():
-            self.waitprogress(p)
-        self.template_obj.db.write()
-        self.store_analang()
-        self.program.db=self.template_obj.db
-        self.waitdone()
-        # self.notify_newfilelocation(self.template_obj.db.filename)
-        log.info("analang_code_complete complete")
-        return str(self.template_obj.db.filename)
+        return filename
     def clonefromUSB(self):
         def makenewrepo(repoclass,mediadir):
             repo=repoclass(mediadir)
@@ -2746,28 +2754,39 @@ class LiftChooser(ui.Window,HasMenus):
             return
         else:
             log.info("User selected a language: {}.".format(self.demolang))
-        self.wait(msg=_("Setting up {lang} for use...").format(lang=self.demolang))
-        demo.init_w_code_and_filename(self.demolang,demo=True)
-        if demo.error_text:
-            log.info(demo.error_text)
-        #if the above error_text shows a file/directory already there, the user may want to use it.
-        log.info(f"{demo.filename=}")
-        if file.exists(demo.filename): #in this case, init_w_code_and_filename will not have finished.
+        # waiting() guarantees the progress dialog closes even on early
+        # return / exception; capture outcome and show modal errors after.
+        already_exists=False
+        error_text=None
+        filename=None
+        with self.waiting(msg=_("Setting up {lang} for use...").format(lang=self.demolang)):
+            demo.init_w_code_and_filename(self.demolang,demo=True)
+            if demo.error_text:
+                log.info(demo.error_text)
+            #if the above error_text shows a file/directory already there, the user may want to use it.
+            log.info(f"{demo.filename=}")
+            if file.exists(demo.filename): #in this case, init_w_code_and_filename will not have finished.
+                already_exists=True
+            elif not demo.filename:
+                error_text=demo.error_text
+            else:
+                demo.convertglosstocitation(self.demolang)
+                for p in demo.fill_db_images():
+                    self.waitprogress(p)
+                demo.db.write()
+                self.program.db=demo.db
+                filename=str(demo.filename)
+        if already_exists:
             ErrorNotice(_("File {newfile} already exists! \nUse it?").format(newfile=demo.filename),
                         wait=True,
                         button=(_("Yes!"),lambda event,x=str(demo.filename):
                                 self.setfilenameandcontinue(x,restart=True))
                         )
             return
-        elif not demo.filename:
-            ErrorNotice(demo.error_text,wait=True)
+        if error_text is not None:
+            ErrorNotice(error_text,wait=True)
             return
-        demo.convertglosstocitation(self.demolang)
-        for p in demo.fill_db_images():
-            self.waitprogress(p)
-        demo.db.write()
-        self.program.db=demo.db
-        return str(demo.filename)
+        return filename
     def submitdemolang(self,choice,window): #event=None):
         # log.info(_("picked {choice}, from {glosslangs}").format(choice=choice, glosslangs=self.cawldb.glosslangs))
         self.demolang=choice

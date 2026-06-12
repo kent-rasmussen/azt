@@ -99,27 +99,26 @@ class Record(BackendRecord, Sound):
         for page in pages:
             if self.ui.runwindow.exitFlag.istrue():
                 return
-            self.ui.runwindow.wait(thenshow=True)
-            buttonframes = ui.ScrollingFrame(self.ui.runwindow.frame,
-                                             row=1, column=0, sticky='w')
-            row = 0
-            done = list()
-            for row, entry in enumerate([i.entry for i in page]):
-                self.ui.runwindow.column = 0
-                if entry.guid in done:
-                    continue
-                else:
-                    done.append(entry.guid)
-                ftypes = ['lc', 'pl', 'imp']
-                for node in [entry.sense.nodebyftype(f) for f in ftypes
-                             if entry.sense.nodebyftype(f)]:
-                    self.ui.runwindow.column += 2
-                    self.makelabelsnrecordingbuttons(buttonframes.content, node,
-                                                    row, self.ui.runwindow.column)
-            ui.Button(buttonframes.content, column=1, row=row,
-                      text="Next {count} words".format(count=nperpage),
-                      cmd=lambda x=buttonframes: self.cleanup_pa(x))
-            self.ui.runwindow.waitdone()
+            with self.ui.runwindow.waiting(thenshow=True):
+                buttonframes = ui.ScrollingFrame(self.ui.runwindow.frame,
+                                                 row=1, column=0, sticky='w')
+                row = 0
+                done = list()
+                for row, entry in enumerate([i.entry for i in page]):
+                    self.ui.runwindow.column = 0
+                    if entry.guid in done:
+                        continue
+                    else:
+                        done.append(entry.guid)
+                    ftypes = ['lc', 'pl', 'imp']
+                    for node in [entry.sense.nodebyftype(f) for f in ftypes
+                                 if entry.sense.nodebyftype(f)]:
+                        self.ui.runwindow.column += 2
+                        self.makelabelsnrecordingbuttons(buttonframes.content, node,
+                                                        row, self.ui.runwindow.column)
+                ui.Button(buttonframes.content, column=1, row=row,
+                          text="Next {count} words".format(count=nperpage),
+                          cmd=lambda x=buttonframes: self.cleanup_pa(x))
             buttonframes.wait_window(buttonframes)
         if not self.ui.runwindow.exitFlag.istrue():
             self.ui.runwindow.wait_window(self.ui.runwindow.frame)

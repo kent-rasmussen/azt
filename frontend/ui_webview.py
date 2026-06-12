@@ -1781,6 +1781,16 @@ class Root(_WebviewWidget):
     def iswaiting(self):
         return hasattr(self, 'ww') and getattr(self.ww, '_exists', False)
 
+    @contextmanager
+    def waiting(self, msg=None, **kwargs):
+        """Context-manager form of wait()/waitdone(): closes the wait dialog
+        even if the body raises or returns early. Mirror of ui_tkinter."""
+        self.wait(msg=msg, **kwargs)
+        try:
+            yield self
+        finally:
+            self.waitdone()
+
     def wait(self, msg=None, cancellable=False, thenshow=False):
         if self.iswaiting():
             if msg:
