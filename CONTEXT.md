@@ -49,6 +49,24 @@ prose for an outside audience, prefer "the analyzed language" /
 "the documented language" for `analang`; for documentation aimed at
 SIL users, "analysis language" / `analang` is fine.
 
+**`S` overloaded (syllable cvt vs segment macrocategory vs sonorant class)**:
+Three unrelated meanings of `S` coexist:
+- **cvt** (`program.params.cvt()`): `'S'` is the whole-word **Syllable-profile**
+  sort (added with `SortSyllables`), alongside `V`/`C`/`CV`/`VC`/`T`.
+- **segment placeholder**: in the regex/profile machinery (e.g. `utilities/rx.py`
+  `makeprofileforcheck`, `nX`) a local `S` is a generic **Segment** standing for
+  either `C` or `V` — i.e. the macrocategory whose members are C and V — used
+  when building per-segment checks (`C1`, `V2`, …).
+- **alphabet segment class**: `'S'` is also a consonant subclass key in
+  `sdict`/`profilesegments` (sonorants: l, r, ll, rr, …), beside C, V, G, N, D, ʔ.
+
+These live in separate scopes today (a `params.cvt()` value vs a local var in
+regex building vs an `sdict` key), so they don't collide — **but the syllable
+cvt rides the *same shared sort engine* as segmental sorting**, so a stray
+`cvt=='S'` test sitting near segment-placeholder code is a latent trap. If they
+ever share scope, disambiguate (rename the syllable cvt, or the placeholder).
+Safe for now; flagged to revisit.
+
 ## Example dialogue
 
 > Linguist: "I want to record an audio sample for this entry."
