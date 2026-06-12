@@ -19,6 +19,424 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.2.44
+- SortSyllables cyclical redesign — slicing (still mid-migration; not runnable
+  until the flow/board/escape land). The 'S' slice is the Beg+count+End
+  macrogroup: `params` now owns the macrogroup helpers (`compose_macrogroup`,
+  `parse_macrogroup`, `macrogroup_of_sense`, `is_syllable_primitive_check`,
+  `SYLLABLE_SLICE_SENTINEL`), and `SliceDict.profile/senses/renewsenses/profiles`
+  resolve the sentinel (whole wordlist, for the #C/C#/syls primitives) vs a
+  macrogroup (the per-word-form profile check). `Syllables.macrogroup` delegates
+  to params. Reverted the stale cvprofile-based 'S' branches in
+  `getexamples`/`prefetch_examples` to the annotation path.
+
+# Version 1.2.43
+- SortSyllables cyclical redesign — engine data-model (first chunk of an
+  all-or-nothing swap; **'S' is mid-migration and not runnable until the
+  remaining chunks land** — see the build-status checklist in
+  `docs/sort_syllables_design.md`). Choice B + slice = Beg+count+End:
+  - 'S' checks are now `[#C (word-initial C/V), C# (word-final C/V), syls
+    (syllable count), <current ftype = the whole-word profile>]` in
+    `renewchecks`/`updatechecksbycvt`. First three run on the whole wordlist and
+    compose into a macrogroup slice; the profile check runs within it.
+  - `Syllables` mixin rewritten to the annotation channel (like segments): the
+    three primitives are seeded by orthography from the computed profile (user
+    judges by ear), `macrogroup()` composes Beg_syls_End on the fly, the
+    four-attribute presort writes them, and the surface form is never rewritten.
+  - Architecture LOCKED in the design doc (slice defs, four checks, annotation
+    storage, presort, board, escape hatch) with a remaining-work checklist.
+- Still TODO (next): macrogroup slicing (+ revert the stale cvprofile 'S'
+  branches), the maybesort flow, the 2-D Beg_End×count board, and the
+  escape-hatch window + prose renderer.
+
+# Version 1.2.42
+- Docs: `docs/sort_syllables_design.md` now specs the agreed **cyclical /
+  orthogonal** syllable sort that supersedes the single whole-profile check.
+  Four checks — word-initial (C/V), word-final (C/V), #syllables, and
+  profile-within-macrogroup — where the first three are closed/determined
+  classes (presort+verify, no "other"/no join) that compose (on the fly) into a
+  macrogroup, and the fourth is the normal open create+join sort scoped to that
+  small bucket. Includes the escape-hatch window (one-axis, immediate re-sort to
+  a named destination cell), a configurable (Beg,Count,End)→prose renderer,
+  per-attribute power-fault-tolerant persistence, and restoring a 2-D
+  Beg_End×count progress board (retiring the 1-D one). No code yet.
+
+# Version 1.2.41
+- SortSyllables progress board: replace the hard-coded ⅓-screen budget (1.2.40)
+  with `availablexy()` — the same space-measuring mechanism text wrapping uses.
+  The board now fits as many uniform columns as the actually-available width
+  (screen − siblings, e.g. the prose-status column) allows without overflowing,
+  recomputed on `<Visibility>`/`<Configure>`. Adapts to status-frame layout
+  changes and translations instead of a fixed fraction.
+
+# Version 1.2.40
+- SortSyllables progress board: the `<Configure>`-reflow from 1.2.39 collapsed
+  to a single column — the leaderboard ScrollingFrame is `sticky=''`/content-
+  sized, so the canvas reports one cell's width, not a viewport. Now wrap to a
+  width BUDGET (≈⅓ screen) instead: columns = budget ÷ uniform-cell-width,
+  growing as many rows as needed and scrolling vertically. Deterministic, no
+  measurement race.
+
+# Version 1.2.39
+- SortSyllables progress board now fits the scroll window's width instead of a
+  squarish grid: the ScrollingFrame scrolls vertically only, so cells use a
+  uniform width (widest label) and the column count is computed from the canvas
+  width and recomputed on `<Configure>` (reflow), wrapping to as many rows as
+  needed. Still biggest-pile-first, same cell dressing.
+
+# Version 1.2.38
+- SortSyllables verify window: stop showing the raw check codes (lc/lx/pl/imp),
+  which mean nothing to users, and drop the "sound" grammar that fits C/V/T but
+  not whole-word profiles. For cvt='S' the verify title is now "for {prose}"
+  (was "for 'lc' ({prose})"), the OK button is "These all have the same {prose}"
+  (was "… ({lc})"), the instruction is "…click on any with a different {prose}."
+  (no "sound"), and the item name is the cvt name ("Syllable Profile", was
+  "lc Group"). C/V/T text is unchanged (their codes/grammar are correct).
+- SortSyllables progress board: match the 2D leaderboard cell decorations —
+  `padx/pady=0`, `ipadx/ipady=0`, and `highlightthickness=3` (was 4px pad and a
+  thinner 2px border).
+
+# Version 1.2.37
+- SortSyllables: two distinct group orderings, as intended. The sort-INTO order
+  (sort buttons / verify, via `StatusDict.order_groups`) stays shortest→longest;
+  the progress board now orders profile piles **biggest→smallest** (by current
+  count) so users can attack the largest first — matching how profiles are
+  prioritised elsewhere.
+
+# Version 1.2.36
+- SortSyllables progress board: the 2D profile×check leaderboard crashed for
+  cvt='S' (`KeyError: ('whole-word','lc')` — `activate_cell` looked up a cell
+  that the sentinel profile / single check never created). Syllable sorting is
+  one pile sorted into profile groups in a single dimension, so it now gets its
+  own `StatusFrame.makeSyllableprogresstable`: a squarish grid (≈√n columns) of
+  profile cells, each showing the profile and its current count, dressed like
+  other sort cells — verified (✓) vs not (bordered) vs active (highlighted).
+  Clicking a cell makes that profile the current group (verify can start there).
+  `update_active_cell`/`sync_active_cell` now key on the profile group (not
+  profile×check) when cvt='S'.
+
+# Version 1.2.35
+- SortSyllables tuning (from second run + Kent's direction):
+  - One word type at a time: 'S' checks are now gated on `params.ftype()` (like
+    other tasks) instead of cycling lc/lx/pl/imp. `updatechecksbycvt`/`renewchecks`
+    compute the single current-ftype check for 'S' (kills the wasted empty-check
+    passes).
+  - Migration: old code wrote the machine profile into the plain
+    `…-x-cvprofile` form (the form that's now user data). `ProfileAnalyzer`
+    now migrates once, before analysis — if no `…-x-cvprofile_MT` (analysis)
+    form exists anywhere for the ftype, the existing plain values are treated as
+    old analysis: each is moved to its `_MT` form and the plain form is cleared
+    (so stale values like the `CVC=VC=CVC` junk aren't mistaken for confirmed
+    data). Idempotent (skips if any `_MT` form already exists).
+  - Canonical group order for 'S': syllable profiles are presented
+    shortest→longest then alphabetically (`StatusDict.order_groups`), since
+    profiles are related to one another (unlike segment/tone groups, which stay
+    plain-alphabetical). Replaces the rejected top-N idea — all groups are shown
+    (any value may be wrong and is fixed by sorting), just ordered sensibly.
+- Docs: CONTEXT.md flags the `S` overload (syllable cvt vs the C/V segment
+  macrocategory placeholder vs the sonorant `sdict` class) — safe today, revisit
+  if they ever share scope.
+
+# Version 1.2.34
+- SortSyllables fixes from first run:
+  - The verify/sort window for cvt='S' showed nothing: the page icon / sort
+    button resolved `image='S'`, but there was no `'S'` theme photo
+    (`Found self.image='S'` error), breaking the window build. Renamed the
+    dormant `'CV'` photo key ('ZA alone clear6.png', the syllable image — its
+    only reader was the not-offered SortCV task) to `'S'`, so the syllable cvt
+    now has its proper icon. Dropped the `'Word'` stopgap and the SortSyllables
+    `dobuttonkwargs`/`pageicon` special-cases (the inherited paths now resolve
+    `'S'` correctly).
+  - Status-frame label "Looking at {profile}…" showed the 'S' sentinel profile
+    ("whole-word"); for cvt='S' it now reads "Sorting whole words by syllable
+    profile" instead.
+
+# Version 1.2.33
+- SortSyllables Phase 1: whole-word syllable-profile sorting, tone-modeled
+  (relabel profile groups, never rewrite the surface form). Builds on 1.2.32.
+  See `docs/sort_syllables_design.md`. NOT yet end-to-end-verified — expect a
+  test-iterate pass (esp. the sort/verify/join UI for cvt='S').
+  - New `Syllables(Senses)` mixin (lexicon.py): group = the syllable-profile
+    string, stored in the sense's cvprofile field; `getitemgroup`/`setitemgroup`
+    read/write `cvprofilevalue`; `updateformtoannotations`/`name_new_glyphs` are
+    no-ops; `presortgroups` seeds groups from each sense's (machine-seeded)
+    profile.
+  - `SortSyllables` re-pointed to `(Sort, Syllables, Segments, Task)` — Syllables
+    overrides win, Segments supplies shared helpers; dropped the broken
+    `presortgroups`/`runcheck` overrides (uses the inherited `Sort.runcheck`).
+  - Linchpin: `getprofileofsense` now writes the machine analysis to the
+    `…-x-cvprofile_MT` form and keeps the plain (confirmed) form in sync only
+    while it still equals the machine guess — preserving any user-confirmed
+    value. Slicing keeps reading the plain form (now seed-or-confirmed).
+  - `cvt='S'` plumbing: `maybesort` skips the glyph/macrosort phase for 'S';
+    `updatesortingstatus` reads groups via `Syllables.getitemgroup`;
+    `SliceDict.profile/senses/renewsenses` treat 'S' as a whole-ps slice with a
+    sentinel profile; `ExampleDict.getexamples`/`prefetch_examples` fetch 'S'
+    example words by cvprofile; `makecvtok` no longer resets 'S' to 'V'.
+  - Bug fixes surfaced en route: `renewchecks` 'S' now uses the 'S' check codes
+    (lc/lx/pl/imp) instead of all-cvt codes; added the missing `'S'` entry to
+    `_cvts` (was a latent `KeyError`).
+- Deferred (per Kent): Phase 2 (canonical segmenter / digraph inference /
+  faithful reconstruction — the guuest cure) and `TranscribeSyllables` (renaming
+  a group e.g. CVCC→CVC via the transcribe page). Design in the doc.
+
+# Version 1.2.32
+- Groundwork for syllable-profiles-as-data / `SortSyllables` (see
+  `docs/sort_syllables_design.md`). Additive, zero behavior change so far:
+  - `profilelang(analang, machine=True)` now appends the machine-transcription
+    code (`_MT`), mirroring `tonelangname`/`phoneticlangname`; it previously
+    ignored its `machine` flag. All existing callers pass the default.
+  - Added `Sense.cvprofilemachinevalue(ftype, value)` to read/write the
+    machine-analyzed profile in the `…-x-cvprofile_MT` form of the
+    `cvprofile_<ftype>` field, alongside (never clobbering) the plain form that
+    will hold the user-confirmed profile. No callers yet.
+- Design doc `docs/sort_syllables_design.md` records the locked decisions, the
+  storage model, the data-integrity LINCHPIN to review (machine→`_MT` write +
+  confirmed-first slicing, same boot-overwrite class as the 1.2.14–1.2.20 saga),
+  the tone-modeled sort flow, two pre-existing 'S' bugs found, and the Phase-2
+  segmentation/digraph-inference design that needs sign-off before coding.
+
+# Version 1.2.31
+- Fix (scroll-frame mouse wheel going dead, intermittently, not motion-related):
+  replaced the per-`ScrollingFrame` wheel claim/release scheme with a single
+  app-wide dispatcher. The old design used a global `bind_all` wheel that each
+  frame "claimed" via `<Enter>`/`<Leave>`/`<Map>`/`<Visibility>` plus a deferred,
+  pointer-gated `_claim_wheel_if_pointer_inside`. Because scroll frames are built
+  inside `with task.waiting(...)`, which *withdraws* the run window and shows a
+  separate Wait window, the one-shot claim raced the withdraw/deiconify reveal:
+  if `winfo_containing()` didn't resolve to the frame at that single instant
+  (pointer elsewhere, or Wait window still overlapping, or position not settled),
+  the frame never bound and — since the window reappears under a stationary
+  pointer, firing no `<Enter>` — stayed dead until the user moved out and back in.
+  Now `Root._on_global_mousewheel` is bound once (`bind_all`) on the real app
+  root; on each wheel event it finds the widget under the pointer and scrolls the
+  nearest enclosing `ScrollingFrame`. The target is decided at *scroll* time, so
+  there is no reveal-timing dependence, no claim/release, and nested/multiple
+  scroll frames work too (innermost under the pointer wins). Removed
+  `initialize_wheel_bindings`, `_bound_to_mousewheel`, `_unbound_to_mousewheel`,
+  `_on_mousewheel*`, `_pointer_inside`, `_bind_wheel_if_pointer_inside`, and
+  `_claim_wheel_if_pointer_inside` from `ScrollingFrame`.
+
+# Version 1.2.30
+- Docs: corrected `docs/sorting_workflow.svg`. The "Done!" notice does not
+  appear between Sort and Verify; `maybesort` flows straight from sorting into
+  verification with no dialog. The single "Done!" notice ("...verified and
+  distinct!", sorting_engine.py:500-506) fires only once nothing is left to
+  sort/verify/join (after naming), and either announces "Moving on to the next
+  check/profile!" — restarting the cycle on a new slice — or finishes back to
+  the Task Chooser. Diagram now shows Sort→Verify direct and the end-of-cycle
+  notice with both branches.
+
+# Version 1.2.29
+- Docs: added `docs/sorting_workflow.svg`, a screen-by-screen state diagram of
+  the vowel sorting process. Shows every Run-Window screen and dialog the user
+  can see — Task Chooser, Sort, "Done!" notice, Verify, Join, then the same
+  machine on letters (Macrosort, Verify, Join) and Name/Transcribe — with the
+  ↻ next-item self-loops, the rework back-edges (a differing word/group returns
+  to sorting; "Go back and join"), the standalone TranscribeV entry, and the
+  transient/modal overlays (wait, error notice, VCS commit, compare-letter
+  picker).
+
+# Version 1.2.28
+- Docs: added `docs/workflow.svg`, a phased pipeline diagram of the user
+  workflow from initial data collection through analysis and reporting to the
+  two final products (alphabet chart PDF and alphabet comparison booklet PDF),
+  with the LIFT lexicon shown as the central read/write store.
+
+# Version 1.2.27
+- Fix: adding a word back into a group did not pull that group out of 'done',
+  so the user was told "all done" instead of being asked to re-verify the group
+  that had changed. Repro: verify a word *out* of a group (the group stays
+  verified for its remaining members), then sort that word back *into* the same
+  group. `marksortgroup` calls `self.marksorted(sense, group,
+  kwargs.get('updateverification'))` to unverify on a sort, but
+  `kwargs.get('updateverification')` is `None` when the key is absent (the
+  normal sorting case). That `None` reached `StatusDict.update()`, which
+  compares `verified == False` exactly — and `None == False` is `False` in
+  Python, so neither the add-to-done nor the remove-from-done branch ran. The
+  group silently stayed in 'done'. The argument is now coerced with `bool(...)`
+  so an ordinary sort always unverifies (the documented intent of that line),
+  while `updateverification=True` callers are unaffected. Applies to tone and
+  segmental sorts alike.
+
+# Version 1.2.26
+- Fix (root cause of the wraplength/off-screen-button bug from 1.2.24): an
+  explicit `wraplength` was still being overwritten by the inherited root
+  default (1344) even after the `restore_kwargs` guards, so text wrapped far too
+  wide and pushed OK/Exit off-screen (e.g. the glyph example got 1344 instead of
+  the passed 548). Widgets like `Button` reserve their kwargs *before*
+  `super().__init__()` runs — `Button.__init__` calls `self.reserve_kwargs()`
+  (popping `wraplength=548` into `self.wraplength`) and only then calls
+  `super().__init__()`, which reaches `Childof.inherit()` and unconditionally did
+  `setattr(self,'wraplength', parent.wraplength)`, clobbering the reserved 548
+  with the parent's 1344. `inherit()` now treats the parent's values as defaults:
+  it skips any attribute already set on the widget (`theme`, `wraplength`,
+  `renderer`, `exitFlag`), so an explicitly-reserved value wins while the
+  inherited default still applies when the widget passed none.
+
+# Version 1.2.25
+- Fix: exiting the "Name New Letter" page without naming all glyphs advanced
+  the sort to the next activity instead of returning to the task. `maybesort`
+  called `name_new_glyphs` and, when it returned unfinished (user exited / went
+  back), fell through to the form-update + navigation block — which assumes all
+  glyphs are named — and finalized anyway. It now returns to the task in that
+  case. (Finishing all names still proceeds normally.)
+
+# Version 1.2.24
+- Fix: an explicit `wraplength` passed to a widget was silently overwritten by
+  the inherited root default, so text wrapped far too wide and pushed buttons
+  (OK, Exit) off-screen on several pages. `Childof.inherit()` copies the
+  parent's `wraplength` onto the widget; `Text.restore_kwargs` then did
+  `kwargs[k]=getattr(self,k)` unconditionally, clobbering the caller's
+  `wraplength=…` with that inherited value before `__init__` read it (e.g. the
+  glyph example got 1344 instead of 548). `restore_kwargs` now only re-injects a
+  value that was actually reserved out of kwargs — it no longer overwrites a
+  kwarg that's still explicitly present — so explicit `wraplength` wins while the
+  inherited default still applies when none was given.
+
+# Version 1.2.23
+- Cleanup: removed the dead pre-helper segmental glyph-naming path from the
+  Transcribe task, so `polygraphwarn` now lives in exactly one place
+  (`GlyphTranscribeHelper`) instead of being duplicated. Segmental letter
+  naming (TranscribeS/V/C and Sort.name_new_glyphs) already ran through the
+  helper; the base `Transcribe` still carried the old implementation
+  (`polygraphwarn`, `submitform`'s `cvt != 'T'` branch, and `TranscribeS.done`),
+  reachable only via the unwired `TranscribeS.done`. Deleted those. Tone is
+  unaffected: `Transcribe.submitform` keeps its tone branch verbatim, and
+  `TranscribeT`'s own window/handlers are untouched.
+
+# Version 1.2.22
+- Fix: clicking OK on the "Name New Letter" page did nothing (logged
+  "GlyphTranscribe done" then silently failed). `GlyphTranscribeHelper.submitform`
+  called `polygraphwarn`, which delegated to `self.task.polygraphwarn` — but the
+  helper is shared between the Transcribe task (which defines it) and
+  `Sort.name_new_glyphs`, whose task (`SortV`/`SortC`) does not, so it raised
+  `AttributeError` (swallowed by the Tk button callback). Made the helper's
+  `polygraphwarn` self-contained, using its own `group`/`program`/`analang`/`cvt`,
+  so it works regardless of which task drives it.
+
+# Version 1.2.21
+- Fix: text entry fields didn't track the `textvariable` passed to them, so any
+  logic driven by that variable's trace never fired — most visibly the "Name
+  New Letter" page, which stayed stuck on "Give a name for this group!" with OK
+  disabled even after typing a name. `EntryField.__init__` ended with
+  `super().post_tk_init()` instead of `self.post_tk_init()`, skipping
+  `EntryField`'s own `post_tk_init` that re-binds the Entry to the caller's
+  variable (needed because `reserve_kwargs` pops `textvariable` out of kwargs,
+  leaving the Entry on a throwaway `StringVar`). Now calls `self.post_tk_init()`
+  like every other widget, so the Entry tracks the caller's variable and its
+  `<write>` traces fire on input.
+
+# Version 1.2.20
+- Fix (root cause of the persistence bugs): `ConfigManager` now loads its JSON
+  on construction. Previously `get`/`set`/`save` all acted on an in-memory
+  `self.data` that stayed empty until some caller happened to call `load()`, so
+  a fresh/unloaded manager returned defaults on read and clobbered on-disk
+  sibling keys on write. That root caused the migration and legacy-reader
+  clobbers, and two more latent instances: `store_analang`
+  (frontend/ui_shell.py — `save_all()` wrote empty domains over the template
+  DB) and `file_parser` (`mgr.project.get('analang')` always returned None).
+  Loading in `__init__` makes a fresh manager correct by default (reads see
+  real data, writes merge). Verified migration still runs before the manager is
+  built, so it sees migrated data.
+
+# Version 1.2.19
+- Fix: macrosort glyph-member buttons rendered blank (glyph name + check name,
+  but no word/image), even though the example data was present. `make_sgbf`
+  passes `gridwait=True` for the member frame, but `gridwait` was in neither
+  `frameargs` nor `unbuttonargs`, so it leaked through `buttonkwargs()` into the
+  member's child buttons. Each button then ran grid → grid_remove → (gridwait)
+  return-without-restore, leaving the buttons permanently `grid_remove`d (frame
+  reqwidth collapsed to 1px). Added `gridwait` to `unbuttonargs` so it's a
+  frame-only kwarg and never reaches child buttons. (Only macrosort hit this;
+  regular sort buttons aren't built with `gridwait`.)
+
+# Version 1.2.18
+- Fix (data loss): the legacy-reader clobber fixed for status in 1.2.15 also
+  affected every other domain whose data is spread across attributes rather
+  than a single same-named key — notably `alphabet` (`glyph_members`,
+  `glyphdict`, `glyphs_distinguished`), plus `defaults`, `profiledata`,
+  `soundsettings`. The 1.2.15 guard only skipped the legacy reader when the
+  setting name was itself a JSON key (status/toneframes), so those other
+  domains were still overwritten by their frozen legacy `.ini`/`.dat` on every
+  load (e.g. glyph membership reset to the pre-migration alphabet). The guard
+  now skips the legacy reader whenever the JSON domain supplied any content.
+
+# Version 1.2.17
+- Fix: mouse wheel again not scrolling a frame built under a stationary pointer
+  — a regression from the 1.2.13 fix. The sort-button frame builds behind the
+  "Sorting words..." wait dialog, so its `<Map>` fired while it was obscured/
+  unsized and the pointer-inside check failed (and no `<Enter>` follows a still
+  pointer). The wheel check now also runs on `<Visibility>` (frame revealed when
+  the wait dialog closes) and is deferred to `after_idle` so geometry is settled
+  before testing containment.
+
+# Version 1.2.16
+- Fix (data loss): the legacy→JSON settings migration ran on every boot and
+  overwrote the JSON domain files with the frozen legacy `.dat`/`.ini`
+  snapshot. Because the legacy files are never updated or removed, each boot
+  reset every domain — most visibly the sort status — to its pre-migration
+  state, wiping work saved since (e.g. CVC sort progress, while the older CV
+  data in the legacy file survived). `MigrationManager.migrate()` now skips any
+  domain whose JSON file already exists, making migration strictly one-time;
+  once the app owns a domain's JSON it is authoritative.
+
+# Version 1.2.15
+- Fix (data loss): freshly-saved sorting status was wiped on the next boot. With
+  status now persisting to the JSON `.data.json` domain (1.2.14), the legacy
+  `.ini`/`.dat` reader in `loadsettingsfile` — intended only for migration —
+  still ran after the JSON load and, for `status`/`toneframes`, rebuilt the
+  object unconditionally from the frozen pre-migration legacy file, overwriting
+  the JSON-loaded data. The next write then persisted that clobbered status, so
+  CVC (and other) sort progress vanished every restart. The legacy reader is now
+  skipped once the JSON domain has supplied the setting (migration still works
+  when JSON has no data yet).
+
+# Version 1.2.14
+- Fix (data loss): sorting status was never written to disk, so all sort/verify
+  progress — including the `presorted` flag — was lost on every reboot (which
+  is why presorting re-ran on startup). `storesettingsfile` set `d` to the raw
+  `program.status` object (keyed by cvt: V/C/T) for `status`/`toneframes`, then
+  filtered `d`'s keys against the data domain's *attribute* names; nothing
+  matched, so `domain_data` was empty and the save was silently skipped. The
+  object is now wrapped under its attribute name (`{setting: obj}`) so it is
+  actually persisted to the `.data.json` domain file and reloaded on boot.
+
+# Version 1.2.13
+- Fix: scrolling frames now respond to the mouse wheel when the pointer is
+  already inside one at build time. The wheel binding is global (`bind_all`),
+  and `ScrollingFrame` used to grab it unconditionally on construction, so
+  whichever frame was built last captured the wheel regardless of pointer
+  location — and a frame built under a stationary pointer (which fires no
+  `<Enter>`) stayed unscrollable until the user left and re-entered it. The
+  frame now claims the wheel on `<Map>` only when the pointer is actually
+  inside it (matched by widget-path prefix, so child widgets count too).
+
+# Version 1.2.12
+- Perf: `maybesort` no longer re-derives the entire lexicon's sorting status on
+  every pass. Only the current `(cvt, ps, profile)` slice can have changed
+  since the last pass, and navigation reads sibling slices' flags from their
+  last build, so it now rebuilds just the current slice via
+  `reloadstatusdatabycvtpsprofile` (the current check rebuilt last, since
+  `updatesortingstatus` overwrites the shared `_sensestosort`). This drops the
+  per-pass whole-lexicon `annotation_values_by_ps_profile` walk, the redundant
+  `load_ps_profiles` (already done once at LIFT load), and the global
+  `clear_all_groups`.
+- Perf: skip the status rebuild entirely when nothing was written since the
+  last rebuild and the slice is unchanged. A `program.status_dirty` flag is set
+  on every LIFT write (`maybewrite`) and cleared after the rebuild.
+
+# Version 1.2.11
+- Fix: "No groups to sort into!" with all groups empty after removing items
+  from a group. `maybesort` kicked off the status reload via the asynchronous
+  `drive_work` (which defers continuation through `after()`), then immediately
+  read the status to sort. Because `reloadstatusdata` clears every group up
+  front and only repopulates across its yields — and the cull cleanup runs
+  only on completion — the sort read a freshly-blanked groups dict with stale
+  `done`. Now `maybesort` drains the reload synchronously (and runs cleanup)
+  before reading status, matching every other `reloadstatusdata` caller. The
+  reload's heavy work is front-loaded, so async chunking gave no benefit here.
+
 # Version 1.0.1
 - Extracted syllable profile analysis from Settings into ProfileAnalyzer (backend/core/profiles.py)
 - Deleted dead profiles.py at repo root
