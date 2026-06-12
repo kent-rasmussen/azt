@@ -1605,7 +1605,7 @@ class Parse(Segments):
         collector=parser.AffixCollector(self.program.parsecatalog,
                                         self.program.db)
         if self.loadfromlift:
-            self.ui.wait(_("Loading Affixes"))
+            with self.ui.waiting(_("Loading Affixes"))
             # for i in collector.do():
             for i in collector.getfromlift():
                 # log.info("Progress: {}".format(i))

@@ -140,68 +140,69 @@ class Sort(Categories):
             w.destroy()
         if self.ui.runwindow.exitFlag.istrue():
             return
-        else:
-            self.ui.runwindow.wait()
-        p.label(self.ui.runwindow.frame,text=title,font='title',
-                ).grid(row=0,column=0,sticky='ew')
-        text=_("This page will allow you to set up your own sets of dictionary "
-                "senses to sort, within the '{0}' lexical category. \nYou "
-                "should only do this if the '{0}' lexical category is so "
-                "small that sorting them by syllable profile gives you "
-                "unusably small slices of your database."
-                "\nIf you want to compare words that are currently in "
-                "different grammatical categories, put them first into the "
-                "same lexical category in another tool (e.g., FLEx or "
-                "WeSay), then put them in an Ad Hoc group here."
-                # "\nIf you're looking at a group you created earlier, and "
-                "\nIf you want to create a new group, exit here, select a "
-                "non-Ad Hoc syllable profile, and try this window again."
-                "").format(ps=ps)
-        inst=p.label(self.ui.runwindow.frame,text=text,
-                row=1,column=0,sticky='ew'
-                )
-        inst.wrap()
-        qframe=p.frame(self.ui.runwindow.frame)
-        qframe.grid(row=2,column=0,sticky='ew')
-        text=_("What do you want to call this group for sorting {ps} words?"
-                "").format(ps=ps)
-        instq=p.label(qframe,text=text,
-                row=0,column=0,sticky='ew',pady=20)
-        if new:
-            default=None
-        else:
-            default=profile
-        profilevar=p.string_var(value=default)
-        namefield = p.entry_field(qframe,text=profilevar)
-        namefield.grid(row=0,column=1)
-        text=_("Select the {ps} words below that you want in this group, then "
-                "click ==>").format(ps=ps)
-        p.label(qframe,text=text).grid(row=1,column=0,sticky='ew',pady=20)
-        sub_btn=p.button(qframe,text = _("OK"),
-                  command = submitform,anchor ='c')
-        sub_btn.grid(row=1,column=1,sticky='w')
-        vars=list()
-        row=0
-        scroll=p.scrolling_frame(self.ui.runwindow.frame)
-        for idn,sense in enumerate(allpssenses):
-            log.debug("id: {}; index: {}; row: {}".format(sense.id,idn,row))
-            # idn=allpssenses.index(sense)
-            vars.append(p.string_var())
-            adhocslices=self.program.slices.adhoc()
-            if (ps in adhocslices and profile in adhocslices[ps] and
-                                        sense in adhocslices[ps][profile]):
-                vars[idn].set(sense)
+        self.ui.runwindow.wait()
+        try:
+            p.label(self.ui.runwindow.frame,text=title,font='title',
+                    ).grid(row=0,column=0,sticky='ew')
+            text=_("This page will allow you to set up your own sets of dictionary "
+                    "senses to sort, within the '{0}' lexical category. \nYou "
+                    "should only do this if the '{0}' lexical category is so "
+                    "small that sorting them by syllable profile gives you "
+                    "unusably small slices of your database."
+                    "\nIf you want to compare words that are currently in "
+                    "different grammatical categories, put them first into the "
+                    "same lexical category in another tool (e.g., FLEx or "
+                    "WeSay), then put them in an Ad Hoc group here."
+                    # "\nIf you're looking at a group you created earlier, and "
+                    "\nIf you want to create a new group, exit here, select a "
+                    "non-Ad Hoc syllable profile, and try this window again."
+                    "").format(ps=ps)
+            inst=p.label(self.ui.runwindow.frame,text=text,
+                    row=1,column=0,sticky='ew'
+                    )
+            inst.wrap()
+            qframe=p.frame(self.ui.runwindow.frame)
+            qframe.grid(row=2,column=0,sticky='ew')
+            text=_("What do you want to call this group for sorting {ps} words?"
+                    "").format(ps=ps)
+            instq=p.label(qframe,text=text,
+                    row=0,column=0,sticky='ew',pady=20)
+            if new:
+                default=None
             else:
-                vars[idn].set(0)
-            forms=sense.formatted()
-            log.debug("forms: {}".format(forms))
-            p.check_button(scroll.content, text = forms,
-                                variable = vars[idn],
-                                onvalue = id, offvalue = 0,
-                                ).grid(row=row,column=0,sticky='ew')
-            row+=1
-        scroll.grid(row=3,column=0,sticky='ew')
-        self.ui.runwindow.waitdone()
+                default=profile
+            profilevar=p.string_var(value=default)
+            namefield = p.entry_field(qframe,text=profilevar)
+            namefield.grid(row=0,column=1)
+            text=_("Select the {ps} words below that you want in this group, then "
+                    "click ==>").format(ps=ps)
+            p.label(qframe,text=text).grid(row=1,column=0,sticky='ew',pady=20)
+            sub_btn=p.button(qframe,text = _("OK"),
+                      command = submitform,anchor ='c')
+            sub_btn.grid(row=1,column=1,sticky='w')
+            vars=list()
+            row=0
+            scroll=p.scrolling_frame(self.ui.runwindow.frame)
+            for idn,sense in enumerate(allpssenses):
+                log.debug("id: {}; index: {}; row: {}".format(sense.id,idn,row))
+                # idn=allpssenses.index(sense)
+                vars.append(p.string_var())
+                adhocslices=self.program.slices.adhoc()
+                if (ps in adhocslices and profile in adhocslices[ps] and
+                                            sense in adhocslices[ps][profile]):
+                    vars[idn].set(sense)
+                else:
+                    vars[idn].set(0)
+                forms=sense.formatted()
+                log.debug("forms: {}".format(forms))
+                p.check_button(scroll.content, text = forms,
+                                    variable = vars[idn],
+                                    onvalue = id, offvalue = 0,
+                                    ).grid(row=row,column=0,sticky='ew')
+                row+=1
+            scroll.grid(row=3,column=0,sticky='ew')
+        finally:
+            self.ui.runwindow.waitdone()
         self.ui.runwindow.wait_window(scroll)
     def ncheck(self):
         r=self.program.status.nextcheck(tosort=True)
@@ -325,17 +326,39 @@ class Sort(Categories):
         if self.ui.exitFlag.istrue(): #if the task has been shut down, stop
             return
         w=self._get_safe_window()
-        if any(i.mature for i in self.program.data_repo.values()):
-            log.info("Found mature repo; showing wait")
-            w.wait_and_drive_work(
-                        _("Reloading status data"),
-                        self.program.settings.reloadstatusdata(), # culled here
-                        on_done=self.program.settings.reloadstatusdata_cleanup)
-        else:
-            log.info("Found new repo; not showing wait")
-            w.drive_work(self.program.settings.reloadstatusdata(), # culled here
-                        on_done=self.program.settings.reloadstatusdata_cleanup)
-        if not self.itemstosort():
+        # Refresh sorting status SYNCHRONOUSLY before the decision logic below
+        # reads it. This used to drive the *global* reloadstatusdata() through
+        # the async drive_work(), which (a) deferred its continuation via
+        # after() so sort()/verify() ran before the reload finished — reading
+        # a freshly-cleared, not-yet-repopulated groups dict ("No groups to
+        # sort into!") — and (b) re-derived the entire lexicon every pass.
+        # Neither is needed: only the CURRENT slice can have changed since the
+        # last pass (a sort/verify/join mutates only the current check's
+        # annotations), and maybesort's navigation reads sibling checks'/
+        # profiles' tosort flags, which stay valid from their last build. So
+        # rebuild just the current (cvt, ps, profile) — its checks — which
+        # also avoids re-running load_ps_profiles() (already done once at LIFT
+        # load) and the global clear_all_groups(). Skip even that when nothing
+        # was written and we're still on the same slice. updatesortingstatus
+        # overwrites the shared _sensestosort, so rebuild the current check
+        # LAST so its to-sort list is the one left standing.
+        slice_now=(self.program.params.cvt(), self.program.slices.ps(),
+                    self.program.slices.profile(), self.program.params.check())
+        if (firstrun or getattr(self.program,'status_dirty',True)
+                or getattr(self,'_last_built_slice',None)!=slice_now):
+            if any(i.mature for i in self.program.data_repo.values()):
+                log.info("Found mature repo; showing wait")
+                w.wait(_("Reloading status data"))
+            else:
+                log.info("Found new repo; not showing wait")
+            self.program.settings.reloadstatusdatabycvtpsprofile() # current slice only
+            self.program.settings.reloadstatusdata_cleanup() # cull: cheap; keeps done<=groups, stores
+            if w.iswaiting():
+                w.waitdone()
+            self.updatesortingstatus(store=False) # current check LAST: fix shared _sensestosort
+            self.program.status_dirty=False
+            self._last_built_slice=slice_now
+        elif not self.itemstosort():
             self.updatesortingstatus() # Not just tone anymore
         cvt=self.program.params.cvt()
         self.check=self.get_check()
@@ -431,6 +454,12 @@ class Sort(Categories):
             if self.default_glyphs():
                 if warnorcontinue(self.name_new_glyphs()): #iterative: all int(); forced continue or quit.
                     return
+                # name_new_glyphs returned without naming them all — the user
+                # exited / went back from the naming page. Return to the task
+                # instead of falling through to the form-update + navigation
+                # below, which assumes every glyph is named ("all int() groups
+                # ... are gone") and would advance the sort to the next activity.
+                return
             """all int() groups and macrogroups are gone at this point!"""
             # Aligns all annotations and verifications, then updates forms
             w=self._get_safe_window()
@@ -922,7 +951,8 @@ class Sort(Categories):
         self.buttonframe, self.verifycanary = self.sort_ui.build_verify_layout(
             self.ui.runwindow, title, self.pageicon(macrosort), instructions,
             prog_text, img_mod, group, items, self, macrosort, oktext,
-            self.min_to_multicolumn, self.buttoncolumns, self.verifybutton)
+            self.min_to_multicolumn, self.buttoncolumns, self.verifybutton,
+            join_fn=self.join)
         if self.verifycanary is None:
             return
         if self.ui.runwindow.exitFlag.istrue():
@@ -994,7 +1024,7 @@ class Sort(Categories):
         #whatever ordering was stored, remove either if there
         return self.group_pairs_to_distinguish(macrosort=macrosort
                                                 )-d-{(y,x) for x,y in d}
-    def join(self,macrosort=False):
+    def join(self,macrosort=False,sortgroup=None):
         def move_on_cleanly():
             # self.ui.runwindow.withdraw()
             # self.last_pair=pair_frame.winfo_children()
@@ -1011,11 +1041,9 @@ class Sort(Categories):
                 "'{group2}', removing '{group1}' and marking '{group2}' unverified.").format(group1=lpr[0], group2=lpr[1])
             self.ui.runwindow.wait(msg=msg)
             """All the senses we're looking at, by ps/profile"""
-            if macrosort:
-                log.info(f"Running join_pair! {macrosort=}")
-                self.program.alphabet.join_glyphs(*lpr)
-                log.info(f"join_pair done {macrosort=}")
-            else:
+            if not macrosort:
+                # async path: drive_work owns the wait dialog and closes it
+                # via waitdone() on StopIteration — do NOT waitdone() here.
                 def join_pair_done():
                     self.program.settings.reloadstatusdata_cleanup()
                     self.updatestatus(group=lpr[1],
@@ -1027,8 +1055,14 @@ class Sort(Categories):
                     self.updatebygroupsense(*lpr),
                     on_done=join_pair_done)
                 return
-            self.did[f'join{img_mod}']=True
-            self.ui.runwindow.waitdone()
+            # synchronous path: guarantee the dialog closes even if join_glyphs raises
+            try:
+                log.info(f"Running join_pair! {macrosort=}")
+                self.program.alphabet.join_glyphs(*lpr)
+                log.info(f"join_pair done {macrosort=}")
+                self.did[f'join{img_mod}']=True
+            finally:
+                self.ui.runwindow.waitdone()
             self.ui.runwindow.on_quit()
         def distinguish_pair():
             if macrosort:
@@ -1053,6 +1087,8 @@ class Sort(Categories):
         ps=self.program.slices.ps()
         profile=self.program.slices.profile()
         pairs=get_pairs()
+        if sortgroup: #sometimes we just limit this to one group
+            pairs=[g for g in pairs if sortgroup in g]
         npairs=len(pairs) #leave this alone, for progress
         if not pairs:
             log.debug("No groups to distinguish!")

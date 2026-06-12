@@ -155,35 +155,37 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.maybewrite=self.program.taskchooser.maybewrite
         waiting=task
         if self.macrosort and not self.remove_on_click:
-            msg=_("Gathering groups"
-                "\nOn the next screen, you will sort groups into letter groups")
+            msg=[_("Gathering groups"),
+                _("On the next screen, you will sort groups of words into letter groups")]
             self.buttoncolumns=1
         elif self.macrosort:
-            msg=_("Verifying groups"
-                    "\nOn the next screen, you will verify groups as belonging together")
+            msg=[_("Verifying groups"),
+                _("On the next screen, you will verify groups of words as belonging together")]
             self.buttoncolumns=1
         else:
-            msg=_("Sorting words"
-                    "\nOn the next screen, you will sort words into groups")
+            msg=[_("Sorting words"),
+                _("On the next screen, you will sort words into groups "
+                "by {cvt}").format(cvt=self.program.params.cvcheckname())]
             self.buttoncolumns=self.task.buttoncolumns
-        waiting.wait(msg)
+        with task.waiting('\n'.join(msg)):
+            # Prefetch examples for all groups at once to avoid O(N^2) lookup
+            self.program.examples.prefetch_examples(self.groups, **kwargs)
 
-        # Prefetch examples for all groups at once to avoid O(N^2) lookup
-        self.program.examples.prefetch_examples(self.groups, **kwargs)
-
-        for i, group in enumerate(self.groups):
-            self.addgroupbutton(group)
-            waiting.waitprogress(i * 100 // max(len(self.groups),1))
-        if not self.remove_on_click:
-            self.getanotherskip(self.content.anotherskip,self.groupvars)
-        waiting.waitdone()
+            for i, group in enumerate(self.groups):
+                self.addgroupbutton(group)
+                task.waitprogress(i * 100 // max(len(self.groups),1))
+            if not self.remove_on_click:
+                self.getanotherskip(self.content.anotherskip,self.groupvars)
 class _GroupButtonFrame(object):
     unbuttonargs=['renew','canary','labelizeonselect',
                         'label','playable','unsortable',
                         'alwaysrefreshable','wsoundfile',
                         'showtonegroup', 'remove_on_click',
                         'goback','all_for_cvt', 'on_select',
-                        'show_check'
+                        'show_check',
+                        'gridwait', #frame-only: must NOT reach child buttons,
+                        #or they grid_remove themselves and never restore
+                        #(macrosort glyph-member buttons rendered blank)
                         ]
     defaults={'sticky':'',
                 'rowspan': 1,
