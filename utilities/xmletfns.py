@@ -90,7 +90,7 @@ class XML(object): #fns called outside of this class call self.nodes here.
         except Exception:
             raise BadParseError(self.filename)
         backupbits=[filename,'_',
-                    datetime.datetime.utcnow().isoformat()[:-16], #once/day
+                    datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None).isoformat()[:-16], #once/day
                     '.txt']
         self.backupfilename=''.join(backupbits)
         # self.diagnostics()
