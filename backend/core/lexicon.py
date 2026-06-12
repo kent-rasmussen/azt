@@ -858,69 +858,72 @@ class WordCollection(Segments):
         self.ui.wait(msg=_("Dowloading images from OpenClipart.org\n{glosses}"
                         "").format(glosses=" ".join(self.sense.collectionglosses)),
                     cancellable=True)
-        log.info(_("Glosses: {glosses}").format(glosses=self.sense.collectionglosses))
-        scraper=htmlfns.ImageScraper()
-        for gloss in self.sense.collectionglosses:
-            kwargs={'per_page':50,
-                    'query':gloss #just one word at a time is less restrictive
-                    }
-            terms=urls.urlencode(kwargs)
-            url='https://openclipart.org/search/?'+terms
-            # https://publicdomainvectors.org/en/search/head
-            # These two are more full-colored images, rather than line drawings:
-            # https://pixabay.com/images/search/head/
-            # https://pxhere.com/en/photos?q=head&search=had
-            try:
-                html=htmlfns.getdecoded(url)
-            except urls.MaxRetryError as e:
-                self.ui.waitdone()
-                msg=_("Problem downloading webpage; check your "
-                            "internet connection!\n\n{error}").format(error=e)
-                log.error(msg)
-                ErrorNotice(msg)
-                return
-            scraper.feed(html)
-            logo=[i for i in scraper.images
-                                    if 'openclipart-logo-2019.svg' in i['src']]
-            # log.info("scraper.images: ({})".format(scraper.images))
-            # log.info("logo: ({})".format(logo))
-            if logo and logo[0] in scraper.images:
-                # log.info("found logo! ({})".format(logo[0]))
-                scraper.images.remove(logo[0])
-        self.images=[]
-        for i in scraper.images:
-            if i not in self.images:
-                self.images.append(i)
-        log.info(_("Found {count} images: {images}").format(count=len(self.images),images=self.images))
-        if self.images:
-            file.makedir(self.sense.imgselectiondir)
-        problems=0
-        for i in self.images:
-            if self.waitcancelled:
-                break
-            url=htmlfns.imgurl(i['src'])
-            num=i['src'].split('/')[-1]
-            i['filename']='_'.join([num,rx.urlok(i.get('alt','noalt'))])
-            # log.info("{} ({})".format(url,i['filename']))
-            log.info("{}".format(i['filename']))
-            try:
-                pic=htmlfns.getbinary(url, timeout=10)
-                # log.info("response data type: {}".format(type(response.data)))
-                i['fqdn']=file.getdiredurl(self.sense.imgselectiondir,
-                                        i['filename'])
-                with open(i['fqdn'],'wb') as d:
-                    d.write(pic)
-            except urls.MaxRetryError as e:
-                log.error(_("Problem downloading image: {error}").format(error=e))
-                problems+=1
-            self.waitprogress(self.images.index(i)*100/len(self.images))
-        if (self.program.me and not nogui) or len(self.images) < 5:
-            text=_("Found {count} images!").format(count=len(self.images))
-            if problems:
-                text+=_("\nProblems downloading {count} images").format(count=problems)
-            ErrorNotice(text,
-                        button=(_("Select local image"),self.selectlocalimage))
-        self.ui.waitdone()
+        # try/finally guarantees the download dialog closes even if an
+        # unexpected error (not just the handled MaxRetryError) is raised.
+        try:
+            log.info(_("Glosses: {glosses}").format(glosses=self.sense.collectionglosses))
+            scraper=htmlfns.ImageScraper()
+            for gloss in self.sense.collectionglosses:
+                kwargs={'per_page':50,
+                        'query':gloss #just one word at a time is less restrictive
+                        }
+                terms=urls.urlencode(kwargs)
+                url='https://openclipart.org/search/?'+terms
+                # https://publicdomainvectors.org/en/search/head
+                # These two are more full-colored images, rather than line drawings:
+                # https://pixabay.com/images/search/head/
+                # https://pxhere.com/en/photos?q=head&search=had
+                try:
+                    html=htmlfns.getdecoded(url)
+                except urls.MaxRetryError as e:
+                    msg=_("Problem downloading webpage; check your "
+                                "internet connection!\n\n{error}").format(error=e)
+                    log.error(msg)
+                    ErrorNotice(msg)
+                    return
+                scraper.feed(html)
+                logo=[i for i in scraper.images
+                                        if 'openclipart-logo-2019.svg' in i['src']]
+                # log.info("scraper.images: ({})".format(scraper.images))
+                # log.info("logo: ({})".format(logo))
+                if logo and logo[0] in scraper.images:
+                    # log.info("found logo! ({})".format(logo[0]))
+                    scraper.images.remove(logo[0])
+            self.images=[]
+            for i in scraper.images:
+                if i not in self.images:
+                    self.images.append(i)
+            log.info(_("Found {count} images: {images}").format(count=len(self.images),images=self.images))
+            if self.images:
+                file.makedir(self.sense.imgselectiondir)
+            problems=0
+            for i in self.images:
+                if self.waitcancelled:
+                    break
+                url=htmlfns.imgurl(i['src'])
+                num=i['src'].split('/')[-1]
+                i['filename']='_'.join([num,rx.urlok(i.get('alt','noalt'))])
+                # log.info("{} ({})".format(url,i['filename']))
+                log.info("{}".format(i['filename']))
+                try:
+                    pic=htmlfns.getbinary(url, timeout=10)
+                    # log.info("response data type: {}".format(type(response.data)))
+                    i['fqdn']=file.getdiredurl(self.sense.imgselectiondir,
+                                            i['filename'])
+                    with open(i['fqdn'],'wb') as d:
+                        d.write(pic)
+                except urls.MaxRetryError as e:
+                    log.error(_("Problem downloading image: {error}").format(error=e))
+                    problems+=1
+                self.waitprogress(self.images.index(i)*100/len(self.images))
+            if (self.program.me and not nogui) or len(self.images) < 5:
+                text=_("Found {count} images!").format(count=len(self.images))
+                if problems:
+                    text+=_("\nProblems downloading {count} images").format(count=problems)
+                ErrorNotice(text,
+                            button=(_("Select local image"),self.selectlocalimage))
+        finally:
+            self.ui.waitdone()
     def killwordframe(self):
         f=getattr(self,'wordframe',None)
         if hasattr(f,'winfo_exists') and f.winfo_exists():
