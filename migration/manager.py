@@ -66,10 +66,20 @@ class MigrationManager:
         # Convert to domains
         domain_data = Converter.convert(all_legacy_data)
 
-        # Save to new format
+        # Save to new format — but NEVER overwrite a domain JSON that already
+        # exists. Migration is strictly one-time: the legacy .dat/.ini files are
+        # frozen (no longer written) and never removed, so once the app owns a
+        # domain's JSON, re-running this conversion every boot would clobber it
+        # with the stale legacy snapshot — e.g. wiping CVC sort status saved
+        # since the first migration. Only fill in domains not yet migrated.
+        migrated_any = False
         for domain, data in domain_data.items():
-            if data:
-                mgr = ConfigManager(domain, self.base_path, self.hostname, self.username)
-                mgr.save(data)
-        
-        return True
+            if not data:
+                continue
+            mgr = ConfigManager(domain, self.base_path, self.hostname, self.username)
+            if mgr.filename.exists():
+                continue  # already migrated; app's JSON is authoritative
+            mgr.save(data)
+            migrated_any = True
+
+        return migrated_any
