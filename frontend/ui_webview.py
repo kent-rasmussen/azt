@@ -16,6 +16,7 @@ import json
 import os
 import threading
 import unicodedata
+from contextlib import contextmanager
 from random import randint
 
 from utilities import logsetup
@@ -596,7 +597,7 @@ class Theme:
         ('iconVCCVRepcomp','AZZA Report Comprehensive_icon.png'),
         ('USBdrive','USB drive.png'),
         ('T','T alone clear6.png'), ('C','Z alone clear6.png'),
-        ('V','A alone clear6.png'), ('CV','ZA alone clear6.png'),
+        ('V','A alone clear6.png'), ('S','ZA alone clear6.png'), #syllable-profile (cvt 'S'); was 'CV'
         ('Word','ZAZA clear stacks6.png'), ('WordRec','ZAZA Rclear stacks6.png'),
         ('TRec','T Rclear stacks6.png'),
         ('Report','Report.png'), ('ReportLogo','Generic AZT Reports.png'),
@@ -1559,7 +1560,11 @@ class Toplevel(_WebviewWidget):
                 pass
 
     def iswaiting(self):
-        return hasattr(self, 'ww') and getattr(self.ww, '_exists', False)
+        # The reused wait window lives on the root; bubble up to Root.iswaiting
+        # (which reports whether the one wait window is currently active).
+        if self.parent:
+            return self.parent.iswaiting()
+        return False
 
     def cleanup(self):
         pass
@@ -1581,6 +1586,7 @@ class Window(Toplevel):
 
     def progress(self, value, parent=None, **kwargs):
         try:
+            self.progressbar.grid() #re-show if a no-progress wait grid_remove()'d it
             self.progressbar.current(value)
         except AttributeError:
             if not parent:
@@ -1600,9 +1606,17 @@ class Window(Toplevel):
 # ── Waitable mixin (for windows) ─────────────────────────────────────
 
 class Wait(Window):
-    def __init__(self, parent, msg=None, cancellable=False, *args, **kwargs):
+    """The single 'Please Wait' window (mirror of ui_tkinter.Wait): built ONCE on
+    the root and then withdrawn/deiconified rather than destroyed/rebuilt per wait.
+    Waitable owns the instance (`root.ww`); wait()/waitdone() call activate()/
+    deactivate(). `active` is what iswaiting() reports."""
+    def __init__(self, parent, *args, **kwargs):
         kwargs['exit'] = False
         super().__init__(parent, *args, **kwargs)
+        self.active = False
+        self.reveal_parent = None
+        self.do_reveal = False
+        self.cancelbutton = None
         self.paused = False
         self.withdraw()
         self.title(_("Please Wait!"))
@@ -1610,29 +1624,61 @@ class Wait(Window):
                        font='title', anchor='c', row=0, column=0, sticky='we')
         self.l1 = Label(self.outsideframe, text='',
                         font='default', anchor='c', row=1, column=0, sticky='we')
-        if msg:
-            self.msg(msg)
-        if cancellable:
-            self.make_cancellable()
-        self.deiconify()
 
     def close(self):
         self.on_quit()
 
     def cancel(self):
-        self.parent.waitcancel()
+        (self.reveal_parent or self.parent).waitcancel()
 
     def make_cancellable(self):
-        self.cancelbutton = Button(self.outsideframe, text='Cancel',
-                                   cmd=self.cancel, row=3, column=0, sticky='e')
+        # Idempotent (the window is reused): build once, then re-show.
+        if getattr(self, 'cancelbutton', None) is None:
+            self.cancelbutton = Button(self.outsideframe, text='Cancel',
+                                       cmd=self.cancel, row=3, column=0, sticky='e')
+        else:
+            self.cancelbutton.grid()
+
+    def hide_cancel(self):
+        if getattr(self, 'cancelbutton', None) is not None:
+            self.cancelbutton.grid_remove()
 
     def msg(self, msg):
         log.info(f"Waiting: {msg}")
         self.l1['text'] = msg
 
+    def activate(self, parent, msg=None, cancellable=False, reveal=True):
+        self.reveal_parent = parent
+        self.do_reveal = reveal
+        if msg:
+            self.msg(msg)
+        if getattr(self, 'progressbar', None) is not None:
+            self.progressbar.grid_remove() #progress() re-grids on demand
+        if cancellable:
+            self.make_cancellable()
+        else:
+            self.hide_cancel()
+        self.paused = False
+        self.active = True
+        self.deiconify()
+
+    def deactivate(self):
+        self.active = False
+        self.reveal_parent = None
+        self.do_reveal = False
+        self.withdraw()
+
 
 # ── Root ──────────────────────────────────────────────────────────────
 
+_app_root = None  # the application's main themed Root (set in Root.__init__)
+def default_root():
+    """The app's main themed Root (with .theme/.photo), or None — mirror of
+    ui_tkinter.default_root() so consumers can call ui.default_root()
+    regardless of backend. Excludes dummy/contextless and fakeroot Roots."""
+    if _app_root is not None and getattr(_app_root, '_exists', False):
+        return _app_root
+    return None
 class Root(_WebviewWidget):
     """The root window — starts the pywebview event loop."""
 
@@ -1689,6 +1735,11 @@ class Root(_WebviewWidget):
 
         if not hasattr(program, 'tk_root'):
             program.tk_root = self
+        # dummy.App sets .dummy=True; exclude dummy/contextless roots and the
+        # image-scaling fakeroot. What's left is the real app root.
+        if not getattr(program,'dummy',False) and not noimagescaling:
+            global _app_root
+            _app_root = self
 
     def _push_theme(self):
         """Push theme CSS variables to the webview after it's loaded."""
@@ -1778,8 +1829,26 @@ class Root(_WebviewWidget):
             except Exception:
                 pass
 
+    def _waitwindow(self, create=True):
+        """The single reused Wait window, owned by the app root (built once, then
+        withdrawn/deiconified). Mirror of ui_tkinter._waitwindow; resolves the root
+        via default_root(), falling back to self when self is itself a root."""
+        root = default_root()
+        if root is None or not getattr(root, '_exists', False):
+            root = self if getattr(self, 'parent', True) is None else None
+        if root is None:
+            return None
+        ww = getattr(root, 'ww', None)
+        if ww is None or not getattr(ww, '_exists', False):
+            if not create:
+                return None
+            ww = Wait(root)
+            root.ww = ww
+        return ww
+
     def iswaiting(self):
-        return hasattr(self, 'ww') and getattr(self.ww, '_exists', False)
+        ww = self._waitwindow(create=False)
+        return ww is not None and getattr(ww, 'active', False)
 
     @contextmanager
     def waiting(self, msg=None, **kwargs):
@@ -1792,27 +1861,45 @@ class Root(_WebviewWidget):
             self.waitdone()
 
     def wait(self, msg=None, cancellable=False, thenshow=False):
-        if self.iswaiting():
+        ww = self._waitwindow()
+        if ww is None:
+            return
+        if ww.active:
             if msg:
-                self.ww.msg(msg)
+                ww.msg(msg)
+            if cancellable:
+                ww.make_cancellable()
+            if thenshow:
+                self.showafterwait = True
+                ww.reveal_parent = self
+                ww.do_reveal = True
             return
         self.showafterwait = self.winfo_viewable() | thenshow
         if self.showafterwait:
             self.withdraw()
-        self.ww = Wait(self, msg, cancellable=cancellable)
+        ww.activate(parent=self, msg=msg, cancellable=cancellable,
+                    reveal=self.showafterwait)
 
     def waitdone(self):
-        try:
-            self.ww.close()
-        except (AttributeError, Exception):
-            pass
-        finally:
-            if not self.exitFlag.istrue() and self.showafterwait:
-                self.deiconify()
+        ww = self._waitwindow(create=False)
+        if ww is None or not ww.active:
+            return
+        parent = ww.reveal_parent
+        if ww.do_reveal and parent is not None \
+                and getattr(parent, '_exists', False) \
+                and not parent.exitFlag.istrue():
+            try:
+                parent.deiconify()
+            except Exception:
+                pass
+        ww.deactivate()
 
     def waitprogress(self, x):
+        ww = self._waitwindow(create=False)
+        if ww is None:
+            return
         try:
-            self.ww.progress(x, r=4)
+            ww.progress(x, r=4)
         except Exception:
             pass
 
@@ -1830,9 +1917,13 @@ class Root(_WebviewWidget):
         self.waitcancelled = True
 
     def waitpause(self):
-        if self.iswaiting():
-            self.ww.withdraw()
+        ww = self._waitwindow(create=False)
+        if ww is not None:
+            ww.withdraw()
+            ww.paused = True
 
     def waitunpause(self):
-        if self.iswaiting():
-            self.ww.deiconify()
+        ww = self._waitwindow(create=False)
+        if ww is not None and ww.active:
+            ww.deiconify()
+            ww.paused = False
