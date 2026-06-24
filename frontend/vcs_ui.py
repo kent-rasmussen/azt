@@ -30,8 +30,11 @@ class VCSPresenter:
         return w, yes
 
     def show_wait(self, msg):
-        """Show a wait/progress dialog. Returns the wait window."""
-        return ui.Wait(self.program.tk_root, msg=msg)
+        """Show the shared wait dialog with msg (the one reused wait window).
+        Returns the root; call .waitdone() on the result to dismiss it."""
+        root = self.program.tk_root
+        root.wait(msg)
+        return root
 
     def show_exe_warning(self, repo):
         """Show VCS executable missing warning.
@@ -49,7 +52,7 @@ class VCSPresenter:
                              "languagedepot.org)")
             if not repo.exists():
                 return  # No repo, no exe — nothing to warn about
-        w = ui.Window(getattr(self.program, 'tk_root', ui.Root()), title=title)
+        w = ui.Window(getattr(self.program, 'tk_root', None) or ui.Root(), title=title)
         w.withdraw()
         if repo.repotypename == 'Git':
             text += '\n' + _("(Git is used by {name} to track changes in your "
