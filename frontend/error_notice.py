@@ -64,7 +64,11 @@ class ErrorNotice(ui.Window):
                 row=1, column=2, sticky='nse')
         self.attributes("-topmost", True)
         self.deiconify()
-        self.update_idletasks()  # force geometry/paint before wait_window
+        # Keyboard escape hatch (Return/Escape) — handy if a dialog ever fails to
+        # paint its OK button.
+        self.bind('<Return>', lambda e: self.on_quit())
+        self.bind('<Escape>', lambda e: self.on_quit())
+        self.update_idletasks() # paint before wait_window
         if wait:
             self.wait_window(self)
         if self.exitFlag.istrue():
