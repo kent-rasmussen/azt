@@ -4263,7 +4263,13 @@ def pylanglegacy2(analang):
 def pylang(analang):
      return analang+'-x-py'
 def profilelang(analang,machine=False): #Machine for script compatability
-     return analang+'-x-cvprofile'
+     # machine=True → the analyzed/computed profile form (…-x-cvprofile_MT),
+     # mirroring tonelangname/phoneticlangname (lift.py ~146-170). The plain form
+     # (machine=False) is the user-confirmed profile = the data/sorting result.
+     bits=[analang+'-x-cvprofile']
+     if machine:
+         bits+=[langtags.machine_transcription_code]
+     return ''.join(bits)
 def quote(x):
     return "‘"+str(x)+"’"
 def textornone(x):
