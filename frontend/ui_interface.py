@@ -329,12 +329,17 @@ class ToolTipInterface(ABC):
 
 # ── Wait ─────────────────────────────────────────────────────────────────
 class WaitInterface(WindowInterface):
-    """A modal wait/progress dialog."""
+    """A modal wait/progress dialog. There is ONE instance per Tk root, owned by
+    the root and reused across waits: it is withdrawn/deiconified (via
+    activate()/deactivate()), never destroyed and rebuilt per wait."""
     pass
 
 # ── Waitable mixin ──────────────────────────────────────────────────────
 class WaitableInterface(ABC):
-    """Mixin for windows that can show wait dialogs."""
+    """Mixin for windows that can show the wait dialog. The dialog is a single
+    reused window on the root; wait() backgrounds the calling window and shows the
+    shared dialog with new content, waitdone() hides the dialog and restores that
+    window. No per-wait window creation/teardown."""
     @abstractmethod
     def wait(self, msg=None, **kwargs): ...
     @abstractmethod
@@ -344,7 +349,9 @@ class WaitableInterface(ABC):
         return can't leave the progress dialog stuck open."""
         ...
     @abstractmethod
-    def iswaiting(self): ...
+    def iswaiting(self):
+        """True iff the one reused wait window is currently shown (active)."""
+        ...
     @abstractmethod
     def waitprogress(self, value): ...
     @abstractmethod
