@@ -16,9 +16,9 @@ class Converter:
             'check', 'regexCV'
         ],
         'ui': [
-            'interfacelang', 'mainrelief', 'fontthemesmall', 'buttoncolumns', 
+            'interfacelang', 'mainrelief', 'fontthemesmall', 'buttoncolumns',
             'showoriginalorthographyinreports', 'lowverticalspace', 'showdetails',
-            'examplespergrouptorecord'
+            'examplespergrouptorecord', 'syllable_max_slice'
         ],
         'audio': [
             'sample_format', 'fs', 'audio_card_in', 'audio_card_out', 
