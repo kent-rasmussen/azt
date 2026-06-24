@@ -860,6 +860,9 @@ class Gridded():
                 if (type(sib).__name__ in parentclasses or
                     isinstance(sib, Toplevel) or # popup window (e.g. ErrorNotice)
                     type(sib.parent).__name__ in ['Canvas','ScrollingFrame']):
+                    # A Toplevel child isn't a gridded sibling; measuring it would
+                    # crash (no grid_info). Seen on the syllable Task-1 → Task-2
+                    # board transition, where the "all checked!" notice is a child.
                     continue
                 sib_grid_info=sib.grid_info()
                 if 'row' not in sib_grid_info:
