@@ -858,6 +858,7 @@ class Gridded():
             colwidth={}
             for sib in w.parent.winfo_children():
                 if (type(sib).__name__ in parentclasses or
+                    isinstance(sib, Toplevel) or # popup window (e.g. ErrorNotice)
                     type(sib.parent).__name__ in ['Canvas','ScrollingFrame']):
                     continue
                 sib_grid_info=sib.grid_info()
