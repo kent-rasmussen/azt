@@ -31,6 +31,16 @@ except Exception as e:
     pilisactive=False
 # import tkintermod
 # tkinter.CallWrapper = tkintermod.TkErrorCatcher
+import os
+from utilities.display import USING_WAYLAND
+# XWayland update guard — ONE-LINE TOGGLE. Set True to make UI.update/
+# update_idletasks skip the synchronous X round-trip on Wayland (the old guard);
+# False = always call through (current default — pulling it correlated with the
+# window transition working). See docs/wayland_freeze_audit.md.
+WAYLAND_UPDATE_GUARD=False
+log.info("Display server: %s (USING_WAYLAND=%s; Wayland update guard %s)",
+         os.environ.get('XDG_SESSION_TYPE','?'), USING_WAYLAND,
+         "ON" if WAYLAND_UPDATE_GUARD else "OFF")
 """Variables for use without tkinter"""
 END=tkinter.END
 INSERT=tkinter.INSERT
@@ -943,6 +953,14 @@ class UI():
                     # 'foreground', controls font
                     # 'lightcolor','darkcolor' controls ?
                     ]
+    # XWayland update guard — gated by the WAYLAND_UPDATE_GUARD toggle at the top
+    # of this file (default OFF: call through normally).
+    def update_idletasks(self):
+        if not (WAYLAND_UPDATE_GUARD and USING_WAYLAND):
+            super().update_idletasks()
+    def update(self):
+        if not (WAYLAND_UPDATE_GUARD and USING_WAYLAND):
+            super().update()
     def pre_tk_init(self,**kwargs):
         return kwargs
     def post_tk_init(self):
@@ -2674,11 +2692,14 @@ class Wait(Window): #tkinter.Toplevel?
             self.make_cancellable()
         # log.info("Wait window appears")
         try:
-            self.deiconify() #show after the window is built
-            # log.info("Wait window deiconified")
-            #for some reason this has to follow the above, or you get a blank window
-            self.update_idletasks() #updates just geometry
-            log.info("Wait window creation done")
+            self.deiconify()
+            # SCOPED guard (1.3.24): XWayland wedges on a synchronous flush right
+            # after deiconify() (faulthandler-confirmed). drive_work's after(1)
+            # event loop paints the dialog ~1ms later, so it's redundant — skip on
+            # Wayland ONLY (not the global guard, which would also disable the
+            # legitimate geometry-measurement flushes elsewhere).
+            if not USING_WAYLAND:
+                self.update_idletasks()
         except Exception as e:
             log.info(f"Wait window Exception: {e}")
 """unclassed functions"""
