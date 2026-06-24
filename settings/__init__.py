@@ -129,7 +129,7 @@ from utilities.error_handler import notify_error as ErrorNotice
 
 from utilities.i18n import _
 from utilities import rx
-from backend.core.lexicon import Tone, Segments, WordCollection, Parse
+from backend.core.lexicon import Tone, Segments, Syllables, WordCollection, Parse
 from backend.core.analysis import SliceDict, StatusDict
 from backend.core.analysis_inputs import Glosslangs, ToneFrames
 
@@ -179,6 +179,7 @@ class Settings(SettingsUI):
                                 'secondformfield',
                                 'soundsettingsok',
                                 'buttoncolumns',
+                                'syllable_max_slice',
                                 'showoriginalorthographyinreports',
                                 'lowverticalspace',
                                 'giturls',
@@ -480,14 +481,27 @@ class Settings(SettingsUI):
         # Migration to JSON domain files is complete.
     def loadsettingsfile(self,setting='defaults'):
         # Check domain-specific manager first
+        json_had_data=False
         if setting in self.domain_mapping:
             for domain_name in self.domain_mapping[setting]:
                 domain_mgr = getattr(self.mgr, domain_name)
                 data = domain_mgr.load()
                 if data:
                     self.readsettingsdict(data)
+                    json_had_data=True #this domain's JSON has real content
                 if setting == 'status' and not hasattr(self.program,'status'):
-                    self.makestatus({}) #make status anyway, just once                    
+                    self.makestatus({}) #make status anyway, just once
+        # The legacy .ini/.dat reader below is migration-ONLY. Once the JSON
+        # domain has any content it is authoritative, so the legacy reader must
+        # not run: it overwrites JSON-loaded data with the frozen pre-migration
+        # file and wipes recent work on every boot. This previously only guarded
+        # settings whose name is itself a JSON key (status/toneframes); domains
+        # spread across attributes (alphabet's glyph_members/glyphdict/
+        # glyphs_distinguished, defaults, profiledata, soundsettings) were left
+        # exposed and kept getting clobbered — so we now skip whenever the JSON
+        # domain supplied data at all.
+        if json_had_data:
+            return
         # Still fallback to legacy reader for now to ensure absolute compatibility
         # during the transition if JSON files were not yet created or migrated.
         filename=self.settingsfile(setting)
@@ -871,6 +885,8 @@ class Settings(SettingsUI):
         self._groups=[]
         if cvt == 'T': #we need to be able to iterate over cvt, to rebuild
             fn=Tone.getitemgroup
+        elif cvt == 'S': #whole-word syllable profile, read from cvprofile field
+            fn=Syllables.getitemgroup
         else:
             fn=Segments.getitemgroup #This pulls from annotation, not form
         for sense in senses:
