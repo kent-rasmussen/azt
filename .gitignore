@@ -54,3 +54,4 @@ bin/
 ./*.txt
 test_data/**
 agenda.txt
+resources.log
