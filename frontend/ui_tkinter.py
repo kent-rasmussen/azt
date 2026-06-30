@@ -2489,12 +2489,23 @@ class ScrollingFrame(Frame):
         if self.content.winfo_reqwidth() != self.canvas.winfo_width():
             # update the canvas's width to fit the inner frame
             self.canvas.config(width=self.content.winfo_reqwidth())
-        if self.content.winfo_reqheight() != self.canvas.winfo_height():
-            # update the canvas's width to fit the inner frame
-            self.canvas.config(height=self.content.winfo_reqheight())
+        # Cap the viewport HEIGHT at the available screen space. The scrollregion
+        # set above is the FULL content height, so content taller than the cap
+        # stays scrollable. Without the cap, sizing the canvas (and, when hugging,
+        # this frame) to the full reqheight makes the viewport as tall as ALL the
+        # content: yview() is then permanently (0,1) — nothing lies outside the
+        # viewport — so the wheel/scrollbar snap straight back to the top while the
+        # OS window clips the over-tall canvas. (Regressed when the redesigned sort
+        # page grew past one screen; before that, content fit and hugging was a
+        # harmless no-op.)
+        self.availablexy()  # refresh self.maxheight/self.maxwidth
+        viewh = min(self.content.winfo_reqheight(), self.maxheight)
+        if viewh != self.canvas.winfo_height():
+            self.canvas.config(height=viewh)
         if getattr(self, '_hug_content', False):
             # Opt-in (the sort page's SortButtonFrame): make the scroll frame's
-            # OWN height track its content so the viewport HUGS the buttons.
+            # OWN height track its content so the viewport HUGS the buttons —
+            # but only up to maxheight, beyond which it must SCROLL, not hug.
             # grid_propagate(0) otherwise freezes this height, so a
             # <Configure>-driven reflow — fired when a group button is added
             # dynamically or its example image loads late — would grow the canvas
@@ -2502,7 +2513,7 @@ class ScrollingFrame(Frame):
             # rows (Other/Not-profile/Skip). Re-hug on every reflow path, not just
             # the explicit reflow() call, so dynamic growth keeps up. Large verify
             # lists don't set the flag, so they keep a fixed scrolling viewport.
-            self.config(height=self.content.winfo_reqheight())
+            self.config(height=viewh)
         log.log(4,"_configure_interior done.")
         self._configure_canvas() #bc we changed the canvas
         # self.hwinfo(event) #if needed, bring event in from _configure_interior
