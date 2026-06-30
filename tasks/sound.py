@@ -119,6 +119,7 @@ class Record(BackendRecord, Sound):
                 ui.Button(buttonframes.content, column=1, row=row,
                           text="Next {count} words".format(count=nperpage),
                           cmd=lambda x=buttonframes: self.cleanup_pa(x))
+            buttonframes.reflow()  # grow canvas to cover this page's record buttons
             buttonframes.wait_window(buttonframes)
         if not self.ui.runwindow.exitFlag.istrue():
             self.ui.runwindow.wait_window(self.ui.runwindow.frame)
@@ -203,6 +204,7 @@ class Record(BackendRecord, Sound):
             row += 1
             d = ui.Button(examplesframe, text="Done/Next", command=entryframe.destroy)
             d.grid(row=row, column=0)
+            self.ui.runwindow.frame.scroll.reflow()  # grow canvas to cover examples
             self.ui.runwindow.waitdone()
             if self.ui.runwindow.exitFlag.istrue():
                 return 1

@@ -444,7 +444,7 @@ class Settings(SettingsUI):
                 self.fndict[s](v)
             elif s == 'status' and not hasattr(self.program,'status'): #Only load this once
                 d={k:v[k] for k in v if k != 'DEFAULT'}
-                _log.info(_("makestatus from file: {status}").format(status=d))
+                # _log.info(_("makestatus from file: {status}").format(status=d))
                 self.makestatus(d)
             elif (isinstance(v,dict) and
                 hasattr(o,s) and isinstance(getattr(o,s),dict)):
@@ -817,6 +817,11 @@ class Settings(SettingsUI):
         start_at=kwargs.get('startat',0)
         end_at=kwargs.get('endat',100)
         d=self.program.db.annotation_values_by_ps_profile()
+        # LIFT-derived 'done' (group verified as a whole = every member carries
+        # its <check>=<group> code). Recomputed here so verified state can't go
+        # stale in the status file — a join no longer drops sibling groups.
+        verified=self.program.db.verified_groups_by_ps_profile(
+                                    log_ps=self.program.slices.ps())
         k={}
         for k['ps'],profile_dict in d.items():
             for k['profile'],check_dict in profile_dict.items():
@@ -826,6 +831,30 @@ class Settings(SettingsUI):
                     k['cvt']=self.program.params.cvt_of_check(k['check'])
                     groups=[i for i in groups if i]
                     self.program.status.groups(groups, wsorted=True, **k)
+                    # Segmental only: 'S' (syllable-prep) done is per-slice, not
+                    # group-coded, so leave it to the prep driver.
+                    if k['cvt'] in ('V','C'):
+                        _verif=verified.get(k['ps'],{}).get(k['profile'],{}
+                                    ).get(k['check'],set())
+                        done=sorted(_verif & set(groups))
+                        # DIAG-done (temporary, poss. 3): the FULL reload recomputes
+                        # done = (LIFT-verified ∩ annotation-groups). Log all three so
+                        # we can tell apart: a group read NOT-verified at all
+                        # (absent from _verif → poss. 1/2 upstream); vs read verified
+                        # but absent from the annotation 'groups' list, so dropped by
+                        # the ∩ (poss. 3 — verified-but-not-built-into-done). Gated to
+                        # the active ps so the trace stays readable.
+                        if k['ps']==self.program.slices.ps():
+                            _verif_not_grouped=sorted(set(_verif)-set(groups))
+                            if set(groups)-set(done) or _verif_not_grouped:
+                                _log.info("DIAG-done full-reload SET %s/%s/%s "
+                                          "done=%s verified=%s groups=%s "
+                                          "NOT-done=%s verified-but-not-in-groups=%s",
+                                          k['ps'], k['profile'], k['check'], done,
+                                          sorted(_verif), sorted(groups),
+                                          sorted(set(groups)-set(done)),
+                                          _verif_not_grouped)
+                        self.program.status.node(**k)['done']=done
                     yield start_at + (end_at-start_at) * len(k)/len(d) #maybe more detail later
     def generate_status_by_tone_groups(self,**kwargs):
         _log.info(_("Refreshing tone data from LIFT"))

@@ -3,6 +3,7 @@ modulestoinstall/*[.]*
 lift_url.py
 ui_lang.py
 *~
+agenda/*
 userlogs/*
 test*wav
 test.py

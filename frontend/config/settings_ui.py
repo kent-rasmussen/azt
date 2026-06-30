@@ -343,6 +343,34 @@ class SettingsUI(object):
             self.program.mainwindow.status.updatebuttoncolumns()
         if window:
             window.destroy()
+    def setmaxslice(self,choice,window=None):
+        # Words shown per page in the syllable-prep verify list (SyllableSliceDict
+        # reads settings.get('syllable_max_slice')). Field-tunable per machine:
+        # smaller = faster pages but more of them, larger = fewer pages. set()
+        # auto-saves to the 'ui' domain.
+        try:
+            self.syllable_max_slice=int(choice) # attribute, like buttoncolumns;
+                # persisted via DOMAIN_MAPPING['ui'] + the settings save mechanism
+        except (TypeError,ValueError):
+            return # leave the chooser open on bad input so the user can retry
+        # Close the chooser FIRST, then re-slice/redraw on the next event-loop
+        # pass, so the dialog disappears immediately instead of lingering through
+        # the (slightly slow) re-slice and only dying afterward. after() lets the
+        # window teardown render before the work runs, and avoids a synchronous
+        # Tk flush (fragile under XWayland on this box).
+        if window:
+            window.destroy()
+        if not self.statusisup():
+            return
+        status=self.program.mainwindow.status
+        status.updatemaxslice() # the "Showing N words per page" label
+        # Re-slice to the new cap so the prep board shows the new pages
+        # (1@150 → 1-3@50) now, not only after the next prep run. maybeboard()
+        # rebuilds the prep board via _prep_board_data, whose build() re-slices
+        # the checks whose cap changed and re-derives 'done' from the durable
+        # per-sense codes (so verified words stay verified). Syllable prep only.
+        if self.program.params.cvt()=='S':
+            status.after(10,status.maybeboard)
     def setmaxprofiles(self,choice,window):
         self.maxprofiles=choice
         self.program.mainwindow.status.updatemaxprofiles()

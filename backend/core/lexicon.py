@@ -47,6 +47,26 @@ class Senses(object):
                 "off by pressing '{button}'").format(ps=self.ps,profile=self.profile,check=self.check,
                                                 button=buttontxt)
         # self.ui.withdraw()
+        # Make sure no verify/sort build is still streaming via drive_work — a
+        # long tail would starve this modal's event loop, leaving it black and
+        # unresponsive (input frozen) until the build drained.
+        rw=getattr(self.ui,'runwindow',None)
+        # The run window is frequently ALREADY DESTROYED here — "not done" means
+        # the user closed it — so every Tk call on it must be guarded, or it
+        # raises "bad window path name", which propagates out of the after()
+        # callback and out of mainloop, freezing the app.
+        def _safe(fn,default='?'):
+            try:
+                return fn()
+            except Exception:
+                return default
+        rw_exists=bool(rw) and _safe(lambda: bool(rw.winfo_exists()), False)
+        if rw_exists:
+            _safe(rw.cancel_drive_work)
+        log.info("notdonewarning: rw_exists=%s iswaiting=%s viewable=%s",
+                 rw_exists,
+                 _safe(lambda: rw.iswaiting()) if rw else None,
+                 _safe(lambda: rw.winfo_viewable()) if rw else None)
         if not self.program.Demo: #Should anyone see this?
             ErrorNotice(text=text,title=_("Not Done!"),parent=self,wait=True)
         # self.ui.deiconify()
@@ -200,6 +220,14 @@ class Segments(Senses):
                 scvalue=True
                 self.program.profiles.setupCVrxs() #costly; only when needed!
         def do_not_do_these(value,check=None):
+            # Only SEGMENTAL checks update the form: those are the ones with a
+            # position regex in rxdict.rx (V1, C1, …). The syllable-prep primitives
+            # (#C, C#, syls) and the profile check (lc) have no regex — feeding them
+            # to rxdict.update raises KeyError (e.g. rx['#C']). Skip any check whose
+            # '='-parts aren't all segmental.
+            if check is not None and not all(c in self.rxdict.rx
+                                             for c in check.split('=')):
+                return True
             return value in ['NA',None] or (check and check.isdigit()) or value.isdigit()
         form_ori=formvalue=sense.textvaluebyftypelang(self.ftype,self.analang)
         if not formvalue:
@@ -350,12 +378,30 @@ class Segments(Senses):
                 "({cvt}; {glyphs})").format(cvt=cvt, glyphs=glyphs))
             return False
         w=GlyphTranscribeHelper(self, glyphspossible=glyphspossible)
+        # "Go back and join with one of ← these groups": wire the helper's go_back
+        # to flag the current glyph. Without this, on_go_back was None, so the
+        # button just closed the window → "not done" warning (the regression).
+        # We un-distinguish the flagged glyph and return True so warnorcontinue
+        # restarts maybesort onto the join-glyphs step (which runs BEFORE
+        # name_new_glyphs) — same effect as redo_joinglyphs, but via the normal
+        # after()-restart rather than a nested maybesort.
+        self._glyph_go_back=None
+        w.on_go_back=lambda:setattr(self,'_glyph_go_back',w.group)
         self.ui.withdraw()
         problems=[]
         while digits := self.default_glyphs():
             glyph=digits[0]
             log.info(_("working on {glyph} of {digits}").format(glyph=glyph, digits=digits))
             w.makewindow(glyph)
+            if self._glyph_go_back is not None:
+                g=self._glyph_go_back
+                self._glyph_go_back=None
+                w.destroy()
+                self.ui.deiconify()
+                self.group=self.program.alphabet.glyph(g)
+                self.program.alphabet.undistinguish_any_with(g=self.group)
+                self._skip_predistinguish_once=True #don't re-hide the pair to join
+                return True  # → maybesort restarts → join-glyphs step picks it up
             if w.window_failed:
                 #This removes verification, thus to do status:
                 self.program.alphabet.mark_glyph_not_done(glyph)
@@ -390,7 +436,12 @@ class Segments(Senses):
         lang=self.program.params.analang()
         return [
                 i for i in self.program.db.senses
-                if i.ftypes[ftype].annotationvaluebylang(lang,check) == group
+                # str(group): group names are strings in LIFT (and via the example
+                # path, analysis.py:217), but a default integer group can reach here
+                # as an int — then "3"==3 is False, the verify codes ZERO members,
+                # and the next full-reload recompute reads the group as NOTDONE
+                # (the groups-keep-unverifying bug). Match the str-guarded siblings.
+                if i.ftypes[ftype].annotationvaluebylang(lang,check) == str(group)
                 ]
     def getitemgroup(self,item,check):
         # ftype=self.program.params.ftype() #not helpful for Tone.getitemgroup
@@ -1605,13 +1656,12 @@ class Parse(Segments):
         collector=parser.AffixCollector(self.program.parsecatalog,
                                         self.program.db)
         if self.loadfromlift:
-            with self.ui.waiting(_("Loading Affixes"))
-            # for i in collector.do():
-            for i in collector.getfromlift():
-                # log.info("Progress: {}".format(i))
-                self.waitprogress(i)
-            self.program.parsecatalog.report()
-            self.ui.waitdone()
+            with self.ui.waiting(_("Loading Affixes")):
+                # for i in collector.do():
+                for i in collector.getfromlift():
+                    # log.info("Progress: {}".format(i))
+                    self.waitprogress(i)
+                self.program.parsecatalog.report()
     def showwhenready(self):
         try:
             assert self.status.winfo_exists()
@@ -1677,6 +1727,8 @@ class Parse(Segments):
         self.userresponse=Object(rootchange=False,value=False)
         p = self.lex_ui
         self.cparsetext=p.string_var() #store UI parse info here
+        self.try_each_ms=100
+        self.try_times=100
         self.showwhenready()
 class Tone(Senses):
     """This keeps stuff used for Tone checks."""
@@ -1789,7 +1841,7 @@ class Tone(Senses):
     def getsensesingroup(self,check,group):
         return [
                 i for i in self.program.db.senses
-                if i.tonevaluebyframe(check) == group
+                if i.tonevaluebyframe(check) == str(group) #str: see Segments variant
                 ]
     def getitemgroup(self,item,check):
         """This works without ftype, as each frame only has one"""
@@ -1802,4 +1854,85 @@ class Tone(Senses):
         super().__init__(**kwargs)
         # if program is not None:
         #     self.program=program
+class Syllables(Senses):
+    """Cyclical syllable sort (see docs/sort_syllables_design.md). FOUR checks:
+    three primitive sorts on the WHOLE wordlist — '#C' (word-initial C/V),
+    'C#' (word-final C/V), 'syls' (syllable count) — whose outcomes compose into
+    a Beg+count+End **macrogroup** (the 'S' slice); then the whole-word profile
+    sort for the current word-form (the ftype: lc/lx/pl/imp) WITHIN each
+    macrogroup. All four live on the annotation channel (like segments); the
+    surface form is never rewritten. Used before Segments in the MRO so these
+    overrides win while Segments supplies shared helpers.
+
+    Primitives are seeded by orthography from the computed profile (the user then
+    judges by ear). The profile annotation is named by the ftype; the three
+    primitives by their check code."""
+    def updateformtoannotations(self,*args,**kwargs):
+        pass  # never rewrite the surface form
+    def name_new_glyphs(self):
+        pass  # no glyph phase
+    # --- annotation channel (mirrors Segments; kept here so the 'S' routing in
+    #     updatesortingstatus/getexamples stays pointed at Syllables) ---
+    def getitemgroup(self,item,check):
+        return item.annotationvaluebyftypelang(self.ftype,self.analang,check)
+    def setitemgroup(self,item,check,group,**kwargs):
+        item.annotationvaluebyftypelang(self.ftype,self.analang,check,group)
+    def getsensesingroup(self,check,group):
+        return [i for i in self.program.db.senses
+                if i.annotationvaluebyftypelang(self.ftype,self.analang,check)
+                    ==str(group)] #str: see Segments variant
+    # --- the three primitives: canonical impl is on params (also reached off-task
+    #     by the board-render rebuild); these delegate so existing self._word_*/
+    #     _syllable_count callers (presortgroups, etc.) stay unchanged ---
+    def _word_initial(self,profile):
+        return self.program.params.word_initial(profile)
+    def _word_final(self,profile):
+        return self.program.params.word_final(profile)
+    def _syllable_count(self,profile):
+        return self.program.params.syllable_count(profile)
+    def macrogroup(self,sense,**kwargs):
+        """The 'S' slice = Beg+count+End, composed on the fly from the three
+        primitive annotations. Delegates to params (the single source of the
+        macrogroup format). Returns e.g. 'C_2_C', or None if not all set."""
+        return self.program.params.macrogroup_of_sense(sense,ftype=self.ftype)
+    def presortgroups(self,**kwargs):
+        """Seed each word's four attributes by orthography so the obvious
+        bucketing is pre-done; the user then verifies each (by ear) and fixes
+        strays via the escape hatch. Idempotent: only FILLS attributes that are
+        missing (a word with no word-initial annotation yet is unbucketed), so
+        confirmed/corrected values are preserved and re-running just fills gaps —
+        no early-return guard, which lets a word a prior presort skipped (e.g.
+        an un-analyzable form) get bucketed on the next run. Generator 0–100."""
+        ftype=self.program.params.ftype()
+        analang=self.analang
+        # PREP is wordlist-wide: the three primitives (#C/C#/syls) are
+        # ps-INDEPENDENT form facts, so seed EVERY word, not just the current ps.
+        # ps re-enters only downstream as the (profile × ps) segmental slice.
+        senses=self.program.db.senses
+        n=max(len(senses),1)
+        # Per-sense seeding is the shared params.seed_sense_primitives rule (also
+        # run at LIFT load), so the two paths can't drift. Tally what it did.
+        tally={'seeded':0,'defaulted':0,'syls':0}
+        for i,sense in enumerate(senses):
+            tag=self.program.params.seed_sense_primitives(sense,ftype,analang)
+            if tag in tally:
+                tally[tag]+=1
+            yield i*100//n
+        log.info("Presort (wordlist-wide): total=%d seeded=%d defaulted→#C=C=%d "
+                "syls-backfilled=%d", n, tally['seeded'], tally['defaulted'],
+                tally['syls'])
+        if tally['syls']:
+            log.info("Presort: backfilled syls for %d already-bucketed word(s) "
+                    "that had #C/C# but no syllable count — they re-enter the "
+                    "syls check.", tally['syls'])
+        if tally['defaulted']:
+            log.info(_("{n} word(s) couldn't be auto-analyzed; defaulted "
+                    "word-initial AND word-final to consonant. Review the "
+                    "consonant groups for outliers.").format(n=tally['defaulted']))
+        self.program.status.presorted(True)
+        self.program.status.store()
+        self.maybewrite()
+        yield 100
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 

@@ -1,0 +1,150 @@
+{
+  "machine_model_set": {
+    "mms_all": true,
+    "neurlang": true,
+    "show_tone": true
+  },
+  "sister_languages": [
+    "swa",
+    "sna",
+    "lin",
+    "kdc",
+    "asa",
+    "wmw",
+    "ziw",
+    "ngp",
+    "heh",
+    "kki",
+    "zga",
+    "sbp",
+    "vid",
+    "poy",
+    "ndj",
+    "swh",
+    "cwe",
+    "ruf",
+    "gog",
+    "ksb"
+  ],
+  "audio_dir": "/home/kentr/Assignment/Tools/WeSay/nml-x-test/audio",
+  "n_sampled": 20,
+  "load_total_s": 5.9874615680018906,
+  "loaded_models": [
+    "neurlang/ipa-whisper-base",
+    "facebook/mms-1b-all",
+    "katyayego/Wav2Vec2Phoneme-CSfinetune"
+  ],
+  "cache_status": {
+    "neurlang/ipa-whisper-base": "unknown",
+    "facebook/mms-1b-all": "unknown",
+    "katyayego/Wav2Vec2Phoneme-CSfinetune": "unknown"
+  },
+  "per_model_infer_s": {
+    "neurlang/ipa-whisper-base": {
+      "mean": 2.4288624345499557,
+      "p90": 3.9774964279931737
+    },
+    "facebook/mms-1b-all": {
+      "mean": 1.4052613951003878,
+      "p90": 1.976365103997523
+    },
+    "katyayego/Wav2Vec2Phoneme-CSfinetune": {
+      "mean": 0.5283966470495216,
+      "p90": 0.7855323190015042
+    }
+  },
+  "mms_switch_s": {
+    "facebook/mms-1b-all": {
+      "swa": {
+        "switch_s": 0.3151192759978585,
+        "infer_s": 0.00021701000514440238
+      },
+      "sna": {
+        "switch_s": 0.12248566899506841,
+        "infer_s": 0.9194856810063357
+      },
+      "lin": {
+        "switch_s": 0.14397006601211615,
+        "infer_s": 0.9360145749960793
+      },
+      "kdc": {
+        "switch_s": 0.15001119999215007,
+        "infer_s": 1.0077292729984038
+      },
+      "asa": {
+        "switch_s": 0.15871566400164738,
+        "infer_s": 0.894700393997482
+      },
+      "wmw": {
+        "switch_s": 0.15077620800002478,
+        "infer_s": 0.9557016119943
+      },
+      "ziw": {
+        "switch_s": 0.26473103600437753,
+        "infer_s": 0.8769876510050381
+      },
+      "ngp": {
+        "switch_s": 0.14409471600083634,
+        "infer_s": 1.0010179539967794
+      },
+      "heh": {
+        "switch_s": 0.3796154790034052,
+        "infer_s": 1.1092504090047441
+      },
+      "kki": {
+        "switch_s": 0.18103389999305364,
+        "infer_s": 1.1336367559997598
+      },
+      "zga": {
+        "switch_s": 0.1542324309994001,
+        "infer_s": 1.1395464510133024
+      },
+      "sbp": {
+        "switch_s": 0.1486968220124254,
+        "infer_s": 1.0605198870034656
+      },
+      "vid": {
+        "switch_s": 0.15245082600449678,
+        "infer_s": 1.0456099849980092
+      },
+      "poy": {
+        "switch_s": 0.14363702599075623,
+        "infer_s": 1.1690553030057345
+      },
+      "ndj": {
+        "switch_s": 0.15959390001080465,
+        "infer_s": 1.0036703679943457
+      },
+      "swh": {
+        "switch_s": 0.13909947099455167,
+        "infer_s": 1.0031673699995736
+      },
+      "cwe": {
+        "switch_s": 0.14527880899549928,
+        "infer_s": 1.010678018006729
+      },
+      "ruf": {
+        "switch_s": 0.1564127110032132,
+        "infer_s": 0.9050676850019954
+      },
+      "gog": {
+        "switch_s": 0.1350454760104185,
+        "infer_s": 0.9979923659993801
+      },
+      "ksb": {
+        "switch_s": 0.13489945599576458,
+        "infer_s": 0.9353682549990481
+      }
+    }
+  },
+  "e2e_per_file_s": {
+    "mean": 26.500136084551194,
+    "p90": 36.80420728000172
+  },
+  "extrapolation_h": {
+    "model_major": 2.061742297766048,
+    "file_major": 4.887491521109163,
+    "e2e": 12.513953151038065,
+    "n": 1700
+  }
+}

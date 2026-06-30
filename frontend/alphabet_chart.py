@@ -52,6 +52,7 @@ class OrderAlphabetUI(ui.Window):
             for k,v in self.get_kwargs(glyph).items():
                 self.buttons[glyph].b[k]=v
             # log.info(f"{self.exids=}")
+        self.chart.reflow()  # sync: grow canvas/scrollregion to new content
         self.deiconify()
         self.update_idletasks()
     def get_kwargs(self,g):
@@ -90,7 +91,7 @@ class OrderAlphabetUI(ui.Window):
                                     column=n%self.ncolumns)
             for g in self.buttons.keys()-set(self.show_order):
                 self.buttons[g].grid_forget()
-            self.chart.update()
+            self.chart.reflow()  # sync: grow canvas/scrollregion to new content
         else:
             self.show_chart() #If buttons are missing, restart.
             return
@@ -255,7 +256,7 @@ class OrderAlphabetUI(ui.Window):
                                         sticky='news',
                                         r=1,c=0,
                                         **self.get_kwargs(g))
-        self.chart.update()
+        self.chart.reflow()  # sync: grow canvas/scrollregion to new content
     def chart_config(self):
         self.chart=ui.ScrollingFrame(self.frame,r=2,c=1,ipadx=20,ipady=20)
         self.configFrame=ui.Frame(self.outsideframe, r=1, c=2, sticky='n')
@@ -338,7 +339,7 @@ class OrderAlphabetUI(ui.Window):
                         analang=self.db.analang)
         
         try:
-            from utilities import open_file
+            from utilities.utilities import open_file
             open_file(filepath)
         except Exception as e:
             log.warning(f"Could not open PDF automatically: {e}")
@@ -367,14 +368,25 @@ class OrderAlphabetUI(ui.Window):
                     r=2,sticky='news')
         q.lift()
     def show_sort_data(self):
-        text=("Printed chart with these examples:\n")
-        text_list=[f"{k}: {self.exobjs[k].annotations_to_update()}"
+        # Hide the syllable-prep checks (#C/C#/syls and their -slice variants —
+        # six keys total) from this orthography-focused view; they're sort
+        # bookkeeping, not word data. Mirrors the board's _is_syl_prep filter.
+        p=self.program.params
+        def _is_syl_prep(name):
+            base=str(name).rsplit('-',1)[0] if '-' in str(name) else name
+            return p.is_syllable_primitive_check(name) or \
+                   p.is_syllable_primitive_check(base)
+        title=_("Printed chart examples")
+        text=_("Printed chart with these examples:")+'\n'
+        text_list=[f"{k}: {self.exobjs[k].annotations_to_update(exclude=_is_syl_prep)}"
             for k in [i for i in self.order if i in self.exids and i in self.exobjs]
             if self.exobjs[k]
         ]
-        for i in range(0,len(text_list),10):
+        npages=(len(text_list)+9)//10
+        for pg,i in enumerate(range(0,len(text_list),10),1):
             text_this=text+'\n'.join(text_list[i:i+9])
-            notice=ui.Window(self)
+            wtitle=title if npages<=1 else f"{title} ({pg}/{npages})"
+            notice=ui.Window(self,title=wtitle)
             ui.Label(notice.frame,text=text_this,sticky='news')
             log.info(text)
         
@@ -393,11 +405,20 @@ class OrderAlphabetUI(ui.Window):
         self.title_entry.grid()
         self.title_entry_field.bind("<Return>",self._set_chart_title)
         self.title_label.grid_remove()
+        # Focus the field immediately (same gap as edit_copyright): otherwise
+        # the entry shows but takes no keyboard focus until clicked again.
+        self.title_entry_field.focus_set()
+        self.title_entry_field.icursor('end')
     def edit_copyright(self,event=None):
         self.copyright_entry_field['width']=len(self.chart_copyright.get())+5
         self.copyright_entry.grid()
         self.copyright_entry_field.bind("<Return>", self._set_copyright)
         self.copyright_label.grid_remove()
+        # Put keyboard focus in the field immediately. Without this the entry
+        # appears but never grabs focus, so the first clicks/keystrokes don't
+        # land in it — typing shows nothing until OK re-reveals the label.
+        self.copyright_entry_field.focus_set()
+        self.copyright_entry_field.icursor('end')
     def _compose_page_title(self):
         self.chart_title.set(_("Alphabet Chart for {name}").format(name=self.analangname) +
             f" [{self.db.analang}]")
@@ -489,24 +510,19 @@ class OrderAlphabetUI(ui.Window):
 class SelectFromPicturableWords(ui.Window):
     """This allows users to select a picturable word for one grapheme"""
     def set_up_images(self):
-        try:
-            _
-        except NameError:
-            def _(x):
-                return x
-        """This would look faster if we made one button at a time."""
-        if len(self.examples) > 5:
-            self.wait(_("Loading Images"))
-        try:
-            for n,i in enumerate(self.examples.copy()):
-                self.waitprogress(n*100//len(self.examples))
-                if getimagelocationURI(i):
-                    # print(f"no image for {i.id}!")
-                    self.examples.remove(i)
-                else:
-                    i.image.scale(1,pixels=100,scaleto='height')
-        finally:
-            self.waitdone()
+        # The caller (__init__) owns the "Loading…" wait dialog that covers the
+        # window through the whole build; here we just load/scale each image and
+        # report progress (waitprogress no-ops if no dialog is active). Senses
+        # whose image won't load are dropped.
+        examples=self.examples.copy()
+        total=len(examples)
+        for n,i in enumerate(examples):
+            self.waitprogress(n*100//total if total else 100)
+            if getimagelocationURI(i):
+                # print(f"no image for {i.id}!")
+                self.examples.remove(i)
+            else:
+                i.image.scale(1,pixels=100,scaleto='height')
     def select(self,x,event=None):
         print('selected:',x)
         self.selected=x
@@ -519,63 +535,109 @@ class SelectFromPicturableWords(ui.Window):
             def _(x):
                 return x
         self.imgdir=db.imgdir
-        analang=db.analang
-        """Think about how to constrict this to just the best examples first:
-        Only V1=V2 (if they exist) for two V profiles.
-        """
-        examples=[(c,i.entry.lcvalue(),i) for i in db.senses #must sort before sense object
-                    if analang in i.entry.lc.forms
-                    for c,v in i.entry.lc.annotationvaluedictbylang(analang).items()
-                    if glyph == v
-                    if not ps or i.psvalue() == ps
-                    if i.entry.lcvalue()
-                    if i.illustrationvalue()
-                    # if glyph in i.entry.lc.annotationvaluedictbylang(analang).values()
-                    ]
-        #give longest key values first, then sort wordforms (will fail on senses)
-        # log.info(f"Found {examples[:10]}")
-        examples_prioritized=sorted(examples, key=lambda x: (-len(x[0]),len(x[1])))#, reverse=True)
-        log.info(f"Found {len(examples)} examples for {glyph}: {examples_prioritized[:5]}")
-        examples_only=[i for c,f,i in examples_prioritized]
-        # log.info(f"Found {examples_only[:10]}")
-        self.examples=[i for n,i in enumerate(examples_only) 
-                                        if n==examples_only.index(i)]
-        # log.info(f"Found {self.examples[:10]}")
-        if not self.examples:
-            examples=[(c,i) for i in db.senses
-                    for c,v in i.entry.lc.annotationvaluedictbylang(analang).items()
-                    if glyph == v
-                    if i.entry.lcvalue()
-                    if analang in i.entry.lc.forms
-                    # if glyph in i.entry.lc.annotationvaluedictbylang(analang).values()
-                    ]
-            log.info(f"No examples found for {glyph} with images in ps {ps}; add to "
-                    f"{[i.id for c,i in examples]}")
-        # print([(i.entry.lcvalue(),i.illustrationvalue()) for i in self.examples])
         title=_("Alphabet Chart UI for Word Selection")
         super(SelectFromPicturableWords,self).__init__(parent,
                                                         title=title,
                                                         withdrawn=True)
-        self.set_up_images()
-        optionlist=[{'code':i.id,
-                    'name':i.entry.lcvalue(),
-                    'image':i.image.scaled}
-                    for i in self.examples
-                    if hasattr(i,'image')]
-        # print(optionlist)
-        ui.Label(self.frame,text=title,font='title',c=0,r=0)
-        if optionlist:
-            ui.Label(self.frame,text=_("Select a word to exemplify '{glyph}'").format(glyph=glyph),
-                    c=0,r=1)
-            ui.ScrollingButtonFrame(self.frame,
-                            optionlist=optionlist,
-                            command=self.select,
-                            compound='left',
-                            c=0,r=2
-                            )
+        # Show ONLY words VERIFIED into this glyph's group. We deliberately do NOT
+        # fall back to an orthographic scan: the orthography is still in
+        # development, so trusting it would surface words that aren't actually in
+        # the verified group. The resolver and glyph_members live on the Alphabet
+        # instance (program.alphabet) — NOT on the chart/comparison page that
+        # opened this window. If there's no alphabet data at all, that's a real
+        # gap (nothing sorted yet), surfaced to the user below — never guessed.
+        # Find `program` robustly. This window is opened from BOTH the chart
+        # (parent = AlphabetChart, has .program) and the booklet (parent =
+        # PageFrameUI, whose .program is NOT set — its program lives on
+        # PageFrameUI.parent). self.program also isn't reliably set on this window
+        # yet. The always-present source is the root toplevel, which carries the
+        # App (program) for every window in the tree.
+        program=(getattr(self,'program',None)
+                or getattr(parent,'program',None)
+                or getattr(self._root(),'program',None))
+        alphabet=getattr(program,'alphabet',None)
+        # Resolve VERIFIED members only (never guess from in-development
+        # orthography), and diagnose precisely WHY a glyph has nothing to show so
+        # the user/log is never left with an ambiguous "can't determine".
+        # self._diag = (kind, n_members, n_verified); kinds:
+        #   'no_alphabet' — no sort data/resolver reachable at all
+        #   'no_members'  — glyph has no recorded sort members (shouldn't happen)
+        #   'unverified'  — members exist but none are verified yet
+        #   'no_picture'  — verified words exist but none has an illustration
+        #   'ok'          — words to show
+        verified=[]
+        if alphabet is None or not hasattr(alphabet,'senses_for_glyph'):
+            self._diag=('no_alphabet',0,0)
+            log.error("select-words[%s]: no Alphabet resolver on program "
+                    "(program=%s, alphabet=%s) — cannot resolve verified words; "
+                    "NOT guessing from orthography.",
+                    glyph,type(program).__name__,type(alphabet).__name__)
         else:
-            ui.Label(self.frame,text=_("No examples for '{glyph}'!").format(glyph=glyph),c=0,r=1)
-        self.deiconify()
+            members=alphabet.glyph_members().get(str(glyph),set())
+            verified=alphabet.senses_for_glyph(glyph)
+            log.info("select-words[%s]: %d glyph member(s), %d verified sense(s)",
+                    glyph,len(members),len(verified))
+            if not members:
+                self._diag=('no_members',0,0)
+            elif not verified:
+                self._diag=('unverified',len(members),0)
+            else:
+                self._diag=('ok',len(members),len(verified))
+        # Keep only picturable words (a word form + an illustration), de-duped,
+        # sorted by word for a stable display.
+        self.examples=[]; seen=set()
+        for i in verified:
+            if (i.entry.lcvalue() and i.illustrationvalue()
+                    and id(i) not in seen):
+                seen.add(id(i)); self.examples.append(i)
+        self.examples.sort(key=lambda i: i.entry.lcvalue().casefold())
+        if self._diag[0]=='ok' and not self.examples:
+            self._diag=('no_picture',self._diag[1],self._diag[2])
+        log.info("select-words[%s]: %d picturable (diag=%s)",
+                glyph,len(self.examples),self._diag[0])
+        # Build-then-show: keep a "Loading…" dialog over the (withdrawn) window
+        # while images load and the button grid is built — slow on XWayland — then
+        # reveal the finished window under cover (waitdone does update()+deiconify).
+        # Avoids the blank-window-then-trickle-in paint.
+        self.wait(_("Loading words for '{glyph}'…").format(glyph=glyph),
+                    thenshow=True)
+        try:
+            self.set_up_images()
+            optionlist=[{'code':i.id,
+                        'name':i.entry.lcvalue(),
+                        'image':i.image.scaled}
+                        for i in self.examples
+                        if hasattr(i,'image')]
+            ui.Label(self.frame,text=title,font='title',c=0,r=0)
+            if optionlist:
+                ui.Label(self.frame,text=_("Select a word to exemplify '{glyph}'").format(glyph=glyph),
+                        c=0,r=1)
+                ui.ScrollingButtonFrame(self.frame,
+                                optionlist=optionlist,
+                                command=self.select,
+                                compound='left',
+                                c=0,r=2
+                                )
+            else:
+                kind,nmembers,nverified=self._diag
+                if kind=='no_alphabet':
+                    msg=_("Can't determine verified words for '{glyph}' — no sort "
+                        "data is loaded. Sort and verify this letter's group(s) "
+                        "first.").format(glyph=glyph)
+                elif kind=='no_members':
+                    msg=_("No sort members are recorded for '{glyph}' yet "
+                        "(unexpected if you've macrosorted it). Sort/macrosort "
+                        "this letter first.").format(glyph=glyph)
+                elif kind=='unverified':
+                    msg=_("'{glyph}' has {n} sorted group(s), but none is verified "
+                        "yet. Verify the group(s), then come back.").format(
+                        glyph=glyph,n=nmembers)
+                else:  # 'no_picture'
+                    msg=_("'{glyph}' has {n} verified word(s), but none has a "
+                        "picture.").format(glyph=glyph,n=nverified)
+                ui.Label(self.frame,text=msg,c=0,r=1)
+        finally:
+            self.waitdone()
 def getimagelocationURI(sense):
     if hasattr(sense,'image') and isinstance(sense.image,ui.Image):
         return

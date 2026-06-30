@@ -115,8 +115,13 @@ class Categories:
                             wait=True)
             self.updateformtoannotations(sense,check)
         if not kwargs.get('not_sorting'): #default is sorting
-            #This unverifies without updateverification=True:
-            self.marksorted(sense,group,kwargs.get('updateverification'))
+            #This unverifies without updateverification=True. Coerce to a real
+            #bool: kwargs.get(...) returns None when the key is absent (the
+            #normal sorting case), and status.update() compares `verified ==
+            #False` exactly — None matches neither branch, so the group would
+            #never leave 'done' (e.g. verify a word out, then sort it back in:
+            #the group stayed verified and maybesort reported "all done").
+            self.marksorted(sense,group,bool(kwargs.get('updateverification')))
         if kwargs.get('write'):
             self.maybewrite() #Not iterated over.
         if kwargs.get('thread_name'):
@@ -208,6 +213,9 @@ class Categories:
             yield i * 50 // n  # 0-50 for marksortgroup phase
         if updatestatus:
             yield from self.program.settings.reloadstatusdata() # 0-100 mapped to ~50 already
+            _rn=self.program.status.node()
+            log.info("DIAG-join-verify after-reload (pre-cull) node check=%s "
+                     "done=%s groups=%s",check,_rn.get('done'),_rn.get('groups'))
         for t in list(self.program.status.distinguished()):
             if x in t:
                 self.program.status.undistinguish(t)

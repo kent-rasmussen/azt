@@ -3,6 +3,7 @@ import sys
 import collections
 import re
 import datetime
+import time
 from utilities.utilities import *
 from utilities import file, logsetup, htmlfns
 from io_put import lift
@@ -24,6 +25,175 @@ from utilities.error_handler import notify_error as ErrorNotice
 from utilities.i18n import _
 from backend.core.lexicon import Tone
 from backend.core.categories import Categories
+from backend.core.analysis import SyllableSliceDict
+
+
+class SyllablePrep(object):
+    """Task 1 (syllable PREP) driver — see docs/syllable_sort_redesign.md. Mixed
+    into SortSyllables BEFORE Sort so runcheck routes the three primitive checks
+    (#C/C#/syls) through a DEDICATED per-slice verify loop (maybeverifysyllables),
+    NOT maybesort — prep never sorts/joins/macrosorts, only verifies one ≤MAX_SLICE
+    slice at a time. Each slice is a single-page list, so the XWayland
+    page-transition freeze is designed out. Once every slice is verified
+    (params.syllable_prep_complete) runcheck hands off to Task 2 (the macrogroup
+    profile sort) via the inherited Sort.runcheck/maybesort."""
+
+    def syllable_slices(self,rebuild=False):
+        """The current ps's prep-slice object (built/assigned + status synced)."""
+        ps=self.program.slices.ps()
+        ftype=self.program.params.ftype()
+        sl=getattr(self.program,'syllable_slices',None)
+        if sl is None or rebuild or sl.ps!=ps or sl.ftype!=ftype:
+            sl=SyllableSliceDict(self.program,ps,ftype)
+        sl.build()
+        return sl
+
+    def runcheck(self):
+        ps=self.program.slices.ps()
+        if self.program.params.syllable_prep_complete(ps):
+            # Task 1 done → Task 2 (macrogroup profile sort) on the shared engine.
+            # Point the engine at the profile (ftype) check, not a stale primitive.
+            self.program.params.check(self.program.params.ftype())
+            return super().runcheck()
+        # Task 1: seed the per-word primitives by orthography (Syllables.
+        # presortgroups), assign stable ≤MAX_SLICE slices, then drive per-slice
+        # verify. No maybesort.
+        self.program.settings.storesettingsfile()
+        gen=self.presortgroups()
+        def after_presort():
+            # The per-slice lookahead preload (verify_slice) keeps each slice's
+            # images cached; the 1.3.18/.19 full-wordlist preload was a DIAG (cache-
+            # exoneration test) that hoarded all ~1700 images → ~4 GB RSS. Removed:
+            # cache is exonerated for the FREEZE, and we're now testing whether that
+            # 4 GB was slowing the per-item RENDER (memory/X pressure).
+            self.syllable_slices(rebuild=True) #assign slices + sync status groups
+            self.maybeverifysyllables(firstrun=True)
+        self._get_safe_window().drive_work(gen,on_done=after_presort)
+
+    def maybeverifysyllables(self,firstrun=False):
+        """Event-driven prep loop. Builds the next unverified slice's content into
+        ONE reused run window and returns; the OK button (canary <Destroy>) marks
+        the slice verified and advances. Two deliberate choices, both to dodge the
+        XWayland deadlock the segmental page loop already dodges:
+          1. REUSE one run window across all slices (rebuild only its content) —
+             never destroy+recreate the kiosk-fullscreen window per slice. The
+             per-slice teardown/recreate (a fullscreen map still in flight) right
+             before a blocking call is what wedged; segmental builds the window
+             once and only its page loop rebuilds content.
+          2. No wait_window — advance from the button callback. Belt-and-suspenders
+             so even the once-built window is never blocked-on mid-transition."""
+        if self.ui.exitFlag.istrue():
+            return
+        sl=self.syllable_slices()
+        nxt=sl.next_unverified_slice()
+        if nxt is None:
+            # Every prep slice verified → Task 1 complete. Close the reused window,
+            # refresh the board (now the Task-2 macrogroup board), tell the user.
+            rw=getattr(self.ui,'runwindow',None)
+            if rw is not None and rw.winfo_exists() and not rw.exitFlag.istrue():
+                rw.on_quit()
+            self.status.maybeboard()
+            ErrorNotice(text=_("All the syllable groups are checked! You can now "
+                        "sort the words by syllable profile."),
+                        title=_("Done!"),wait=False,parent=self)
+            return
+        check,group,idx=nxt
+        self.program.params.check(check)
+        self.check=check
+        self.ps=sl.ps
+        self.profile=sl.sentinel
+        self.verify_slice(sl,check,group,idx)
+
+    def select_prep_slice(self,check,group,idx):
+        """User clicked a prep-board cell: SELECT that slice as the next one to
+        verify (override app navigation) and move the board highlight — but do NOT
+        launch. The user then clicks 'Sort!' (runcheck), which starts there. Stored
+        on program so it survives runcheck's SyllableSliceDict rebuild. (Other sort
+        tasks select-then-Sort; this matches them. A future change may switch to
+        click-to-launch.)"""
+        self.program.syllable_preferred_slice=(check,group,idx)
+        self.status.update_active_prep_cell()
+
+    def _prep_runwindow(self):
+        """The reused prep run window: keep the existing one (just clear its frame
+        for the next slice), creating one only if there isn't a live one. Reusing
+        it means no fullscreen destroy/recreate transition between slices."""
+        rw=getattr(self.ui,'runwindow',None)
+        if rw is not None and rw.winfo_exists() and not rw.exitFlag.istrue():
+            for w in list(rw.frame.winfo_children()):
+                w.destroy()
+            return rw
+        self.ui.getrunwindow()
+        return self.ui.runwindow
+
+    def verify_slice(self,sl,check,group,idx):
+        """Read-aloud verify of ONE slice (single page, content built into the
+        reused window — no Wait dialog, no wait_window). Flag-outs move via the
+        misfit rule (verifybutton.notok reads self._prep_verify); OK destroys the
+        canary, which marks the slice verified and advances."""
+        items=sl.members_in_slice(check,group,idx)
+        items.sort(key=lambda s:sl.slice_key(check,s))
+        nslices=len(sl.slices_of(check,group))
+        if len(items)<=1:
+            sl.mark_slice(check,group,idx,verified=True) #nothing to read aloud
+            self.after(10,self.maybeverifysyllables) #auto-advance
+            return
+        desc=self.program.params.syllable_group_name(check,group)
+        if nslices>1:
+            desc=_("{desc} (part {x} of {y})").format(desc=desc,x=idx+1,y=nslices)
+        title=[_("Verify {language}").format(
+                language=self.program.settings.languagenames[self.analang]),desc]
+        oktext=_("These are all {desc}").format(desc=desc)
+        instructions=_("Read this list aloud. Click on any that are NOT "
+                    "{desc}.").format(desc=desc)
+        prep=_("Loading the words that are {desc}…").format(desc=desc)
+        self.currentsortitems=items
+        self.program.status.group(group)
+        self.group=group
+        self._prep_verify=(sl,check,group,idx)
+        rw=self._prep_runwindow()
+        if rw is None or rw.exitFlag.istrue():
+            self._prep_verify=None
+            return
+        self.buttonframe,self.verifycanary=self.sort_ui.build_verify_layout(
+            rw,title,self.pageicon(False),instructions,
+            None,'',group,items,self,False,oktext,
+            self.min_to_multicolumn,self.buttoncolumns,self.verifybutton,
+            join_fn=self.join,prep=prep)
+        if self.verifycanary is None or rw.exitFlag.istrue():
+            self._prep_verify=None
+            return
+        # OK (canary.destroy) or a window-close both fire <Destroy>; defer so we
+        # don't act mid-teardown, then advance unless the user quit.
+        self.verifycanary.bind('<Destroy>',
+            lambda e=None,c=check,g=group,i=idx:
+                self.after(10,lambda:self._finish_prep_slice(sl,c,g,i)))
+        # This slice is now up and the user is reading it aloud — a window during
+        # which the next slices' images can be decoded+resized off the Tk thread,
+        # so their build is just the cheap PhotoImage compile. (The I/O-bound
+        # per-slice build cost is the real wedge at larger slices; this hides it.)
+        try:
+            self.sort_ui.preload_images(
+                sl.preload_uris(check,group,idx,sl.preload_lookahead))
+        except Exception as e:
+            log.info("syllable preload skipped: %s", e)
+
+    def _finish_prep_slice(self,sl,check,group,idx):
+        self._prep_verify=None
+        rw=getattr(self.ui,'runwindow',None)
+        if rw is None or not rw.winfo_exists() or rw.exitFlag.istrue():
+            # User closed the window → pause prep (no advance). Refresh the board
+            # so the slices verified before closing show their ✓ when the task
+            # window comes back, matching the per-completion maybeboard() the
+            # other sort checks fire (e.g. sorting_engine.py nextcheck path).
+            self.status.maybeboard()
+            return #user closed the window → pause prep (no advance)
+        sl.mark_slice(check,group,idx,verified=True)
+        self.maybewrite()
+        # Reuse the SAME window for the next slice (no on_quit/recreate churn).
+        self.after(10,self.maybeverifysyllables)
+
+
 class Sort(Categories):
     """This class takes methods common to all sort checks, and gives sort
     checks a common identity."""
@@ -66,7 +236,12 @@ class Sort(Categories):
         profile=kwargs.get('profile',self.program.slices.profile())
         ftype=kwargs.get('ftype',self.program.params.ftype())
         # profile=self.program.slices.profile()
-        senses=self.getsensesincheckgroup()
+        # Target the group ACTUALLY being (un)verified — not the current one.
+        # getsensesincheckgroup() defaulted to status.group(), so unverifying a
+        # specific group (e.g. join's updatestatus(group=lpr[1], verified=False))
+        # stripped the verification code off whatever group happened to be
+        # current — greedily unverifying an unrelated, already-done group.
+        senses=self.getsensesincheckgroup(check=check,group=group)
         value=self.verificationcode(check=check,group=group)
         # The above gives a check=group string, which should be escaped later
         if verified == True:
@@ -78,8 +253,26 @@ class Sort(Categories):
         log.info("Modding {} verification add {}, remove {}".format(profile,
                                                                     add,rms))
         """The above doesn't test for profile, so we restrict that next"""
-        for sense in self.program.slices.inslice(senses): #only for this ps-profile
+        _inslice=list(self.program.slices.inslice(senses)) #only for this ps-profile
+        # DIAG-done (temporary, poss. 1 root): EVERY verify write — list exactly
+        # which senses get the code, the group NAME and its python TYPE (to catch a
+        # glyph/int name flip), and the add/remove value. If the read-side later
+        # shows a member with no code, compare: absent from this write
+        # (getsensesincheckgroup/inslice missed it / wrong name) or failed to persist?
+        log.info("DIAG-done write %s=%r (%s) profile=%s verified=%s add=%r rms=%r "
+                 "-> coding %d/%d inslice senses: %s (full group %s)",
+                 check, group, type(group).__name__, profile, verified, add, rms,
+                 len(_inslice), len(senses), [s.id for s in _inslice],
+                 [s.id for s in senses])
+        for sense in _inslice:
             self.modverification(sense,profile,check,add)
+        # Syllable PROFILE sort (check is the ftype, not a #C/C#/syls primitive):
+        # the verified GROUP is the word's CV profile, so mirror it into the plain
+        # …-x-cvprofile form — the profile DATA the segmental/tone sorts read. Set
+        # it on verify, clear it on unverify ('Not {profile}').
+        if self.cvt=='S' and check==ftype:
+            for sense in self.program.slices.inslice(senses):
+                sense.cvprofilevalue(ftype, group if verified else False)
         if kwargs.get('write'):
             self.maybewrite() #for when not iterated over, or on last repeat
     def updatestatus(self,verified=False,**kwargs):
@@ -228,11 +421,57 @@ class Sort(Categories):
             self.program.status.nextprofile(toverify=True)
         self._safe_quit_runwindow()
         self.runcheck()
+    def offer_profile_setup(self,at_open=False):
+        """A segmental/tone sort works on syllable-profile DATA. If a word in this
+        ps lacks a confirmed profile but HAS an affirmable machine analysis, warn —
+        offer to affirm the machine analysis or go sort syllable profiles first
+        (those words won't be sorted for anything until profiled). Fires when the
+        sort page OPENS (and as a guard on the 'Sort!' press), once per task.
+        Returns the user's choice ('affirm'/'sort'/'cancel') or None if not
+        offered."""
+        if self.program.params.cvt()=='S': # the syllable sort has its own flow
+            return None
+        if getattr(self,'_offered_profile_setup',False):
+            return None
+        ftype=self.program.params.ftype()
+        ps=self.program.slices.ps()
+        senses=self.program.db.sensesbyps.get(ps,[])
+        # Only count words that affirming/sorting could actually profile: no
+        # confirmed profile yet, but a real machine analysis to affirm. Words with
+        # no/Invalid machine analysis can never be affirmed, so they must not keep
+        # the prompt alive forever (once affirmed, 'Trust' fully silences it).
+        def _affirmable(s):
+            return (not s.cvprofilevalue(ftype)
+                    and s.cvprofilemachinevalue(ftype) not in (None,'','Invalid'))
+        if not any(_affirmable(s) for s in senses):
+            return None # nothing left that affirming/sorting would profile
+        self._offered_profile_setup=True
+        note=_("Some of these words have no syllable profile yet, so "
+                # "Segmental and tone sorts work on syllable-profile data — "
+                # "a word that hasn't been sorted (or affirmed) for its "
+                # "syllable profile "
+                "they won't be sorted here either.")
+        choice=self.sort_ui.offer_profile_setup(self.ui,note)
+        if choice=='affirm':
+            self.program.profiles.affirm_machine_profiles() # fill holes
+            # …and repair existing trusted profiles: constrain any that violate
+            # their verified primitives and realign drifted sort-group annotations
+            # (the stale 'lc' the old raw affirm left). Idempotent on clean data.
+            self.program.profiles.reconcile_profiles_to_primitives()
+            if at_open and getattr(self,'status',None):
+                self.status.maybeboard() # refresh the now-populated profile board
+        elif choice=='sort':
+            self.program.taskchooser.maketask('SortSyllables')
+        return choice
     def runcheck(self):
         self.program.settings.storesettingsfile()
         # t=(_('Run Check'))
         log.info("Running check...")
         cvt=self.program.params.cvt()
+        # Fallback guard (the main offer is at task open); abort if the user opts to
+        # sort syllables / cancels rather than proceed on incomplete profile data.
+        if cvt!='S' and self.offer_profile_setup() in ('sort','cancel'):
+            return
         self.check=self.program.params.check()
         self.profile=self.program.slices.profile()
         if not self.profile:
@@ -289,6 +528,7 @@ class Sort(Categories):
             self.ui.wait_window(self.getglyph(purpose='join'))
         self.group=self.program.alphabet.glyph(glyph)
         self.program.alphabet.undistinguish_any_with(g=self.group) #should be correct at this point
+        self._skip_predistinguish_once=True #don't let predistinguish re-hide it
         self.maybesort(firstrun=True)
     def maybesort(self,firstrun=False):
         """This should look for one group to verify at a time, with sorting
@@ -371,6 +611,9 @@ class Sort(Categories):
                 self.did['sort']=True
             return
         log.info("Maybe Verify")
+        _vn=self.program.status.node()
+        log.info("DIAG-join-verify maybesort node check=%s done=%s groups=%s",
+                 self.program.params.check(),_vn.get('done'),_vn.get('groups'))
         groupstoverify=self.groups(toverify=True)
         if groupstoverify:
             log.info("Going to verify the first of these groups now: {groups}".format(
@@ -382,7 +625,11 @@ class Sort(Categories):
             return
         log.info("Maybe Join")
         self.did['join']=False #runs multiple times, so clear here
-        if self.to_distinguish():
+        # The 'S' primitive checks (#C/C#/syls) are closed/determined classes —
+        # no joining. Only the profile check (within a macrogroup) joins.
+        syl_primitive=(self.cvt=='S'
+                        and self.program.params.is_syllable_primitive_check())
+        if self.to_distinguish() and not syl_primitive:
             warnorcontinue(self.join()) #1 here is now done; did.join intenally
             return
         """Up to this point, we sort into and out of (via verify) groups tracked
@@ -399,7 +646,7 @@ class Sort(Categories):
         fields, as the user tells us which groups should be represented by the
         same letter. After which all these fields will be updated.
         """
-        if self.cvt != 'T':
+        if self.cvt not in ('T','S'):
             log.info("Maybe Macrosort (with {did})".format(did=[k for k,v in self.did.items() if v]))
             if items := self.program.alphabet.renew_items_tomacrosort(self.cvt):
                 if not any({v for k,v in self.did.items() if 'glyphs' in k}):
@@ -431,7 +678,17 @@ class Sort(Categories):
                 return
             log.info("Maybe Joinglyphs")
             self.did['joinglyphs']=False #runs multiple times, so clear here
-            self.program.alphabet.predistinguish(self.to_distinguish(macrosort=True))
+            # predistinguish hides "trivially distinct" single-member glyph pairs
+            # from the join page (alphabet.predistinguish). Skip it for ONE pass
+            # right after the user INTENTIONALLY un-distinguished a glyph to join it
+            # (name_new_glyphs "go back and join" / redo_joinglyphs) — otherwise it
+            # immediately re-distinguishes the very pair they asked to join, off the
+            # sort-group-level state the glyph-level un-distinguish didn't clear.
+            if getattr(self,'_skip_predistinguish_once',False):
+                self._skip_predistinguish_once=False #one pass only
+                log.info("Skipping predistinguish: user just chose go-back-and-join")
+            else:
+                self.program.alphabet.predistinguish(self.to_distinguish(macrosort=True))
             if self.to_distinguish(macrosort=True):
                 log.info("Running Joinglyphs")
                 warnorcontinue(self.join(macrosort=True))
@@ -614,6 +871,16 @@ class Sort(Categories):
         text=sense.formatted(self.analang, self.glosslangs, self.ftype, frame)
         return self.sort_ui.build_present_sense(
             self.ui.runwindow.frame, self.buttonframe, text, sense)
+    def unverify_profile(self,sense):
+        """Clear the word's CONFIRMED profile DATA (plain …-x-cvprofile) and its
+        profile sort-group annotation, so it drops out of this profile and is
+        re-derived on the next presort. Marks status dirty so maybesort reloads."""
+        ftype=self.program.params.ftype()
+        sense.cvprofilevalue(ftype, False)                       # clear confirmed data
+        sense.annotationvaluebyftypelang(ftype, self.analang, ftype, '') # clear group
+        self.program.db.load_ps_profiles() # rebuild profile slices so it drops out
+        self.program.status_dirty=True
+        self.maybewrite()
     def present_group(self,item):
         log.info("presenting group {item}".format(item=item))
         kwargs=self.program.alphabet.parse_verificationcode(item)
@@ -658,7 +925,22 @@ class Sort(Categories):
             self.ui.runwindow.deiconify() # not until here
         except Exception as e:
             log.error("topresent Exception: {e}".format(e=e))
-        self.ui.runwindow.update_idletasks()
+        # Drained update(), NOT update_idletasks(): on XWayland a bare
+        # update_idletasks leaves the just-mapped window's paint/<Configure> backlog
+        # un-flushed, so later group buttons (the 2nd group) + skip/OK don't render
+        # and the scroll region can stay stale and clip them — the same partial
+        # paint the verify page hit, fixed there with update() (build_verify_layout).
+        try:
+            self.ui.runwindow.update()
+        except Exception as e:
+            log.info("presenttosort commit update() failed: %s", e)
+        # Synchronous scroll reflow now that update() settled the FULL geometry. The
+        # deferred re-arm in SortButtonFrame can fire mid-build with a partial height
+        # (during a slow example-image load) and get consumed before the later rows
+        # (2nd group, Other/Not-profile/Skip) are counted, leaving them clipped and
+        # unscrollable. Recompute here, when reqheight is final.
+        if hasattr(self,'buttonframe') and hasattr(self.buttonframe,'reflow'):
+            self.buttonframe.reflow()
         self.ui.runwindow.wait_window(window=self.sortitem)
         if not self.ui.runwindow.exitFlag.istrue():
             return item
@@ -703,9 +985,14 @@ class Sort(Categories):
                 self.program.status.undistinguish((i_group,item_group),**kwargs)
                 self.program.status.undistinguish((item_group,i_group),**kwargs)
             if recurring_conflicts:
+                # sort_on_group_by_item redirects via a nested runcheck/maybesort
+                # that rebuilds the whole display — so this IS a restart. Return
+                # truthy so the outer sort() loop bails (its `if r: return`) instead
+                # of calling updatecounts() on the now-stale buttonframe the nested
+                # rebuild left behind.
                 self.sort_on_group_by_item(item)
                 # self.maybesort(firstrun=True)
-                return
+                return 1
         else:
             self.marksortgroup(item, category, nocheck=True) # that marking worked
         if category not in list(self.buttonframe.groupvars)+['NA']:
@@ -886,24 +1173,56 @@ class Sort(Categories):
             check=self.program.params.check()
             checks=[]
             img_mod=''
-            item_name=_("{check} Group").format(check=check)
             checkname=self.program.params.cvcheckname()
+            # Users don't know the raw check codes (lc/lx/pl/imp); for syllable
+            # sorting (cvt 'S') show only the prose name, and these labels don't
+            # take the "sound" grammar that the C/V/T segment labels do.
+            is_syl=(self.program.params.cvt()=='S')
+            if is_syl:
+                item_name=self.program.params.cvtname() #e.g. "Syllable Profile"
+            else:
+                item_name=_("{check} Group").format(check=check)
             groups=self.groups(toverify=True) #needed for progress
             self.group=group=self.program.status.group()
+            _t0=time.perf_counter()
             self.currentsortitems=items=self.program.examples.sensesinslicegroup(group,check)
+            log.info("verify: sensesinslicegroup(%s,%s) → %d items in %.2fs",
+                     check, group, len(items or []), time.perf_counter()-_t0)
+            # Present the list in a sensible order, not a random pile of words.
+            # Alphabetical by the word form; for word-final tests, alphabetical
+            # from the END of the word (reverse the key) so like endings group.
+            if items:
+                def _formkey(s):
+                    try:
+                        return (s.formattedform(self.analang,self.ftype)
+                                or '').casefold()
+                    except Exception:
+                        return ''
+                if self.program.params.is_word_final_check(check):
+                    items.sort(key=lambda s: _formkey(s)[::-1])
+                else:
+                    items.sort(key=_formkey)
             if group == 'NA':
                 oktext=_('These all DO NOT have {checkname}').format(checkname=checkname)
-                #These words seem to NOT have '{checkname}'. 
+                #These words seem to NOT have '{checkname}'.
                 instructions=_("Read this list aloud, and click on any that "
                             "DOES have '{checkname}'.").format(checkname=checkname)
-                title.append(_("for '{check}' (NOT {checkname})").format(check=check.replace('=','≠'), 
-                                                            checkname=self.program.params.cvcheckname()))
+                title.append(_("for '{check}' (NOT {checkname})").format(check=check.replace('=','≠'),
+                                                            checkname=checkname))
+            elif is_syl:
+                # Name the specific group being verified, e.g. "consonant
+                # initial" / "vowel final" / "2 syllables" — not the raw check.
+                desc=self.program.params.syllable_group_name(check,group)
+                oktext=_("These are all {desc}").format(desc=desc)
+                instructions=_("Read this list aloud. Click on any that are "
+                            "NOT {desc}.").format(desc=desc)
+                title.append(_("{desc}").format(desc=desc))
             else:
                 oktext=_('These all have the same {checkname} ({check})'
                             ).format(checkname=checkname,check=check)
                 instructions=_("Read this list aloud. Click on any with a "
                             "different {checkname} sound.").format(checkname=checkname)
-                title.append(_("for '{check}' ({checkname})").format(check=check, checkname=self.program.params.cvcheckname()))
+                title.append(_("for '{check}' ({checkname})").format(check=check, checkname=checkname))
             if group in self.program.status.verified():
                 log.info(_("'{group}' already verified, continuing.").format(group=group))
                 return 1
@@ -937,7 +1256,27 @@ class Sort(Categories):
             updatestatus(True)
             return 1
         self.reverifying=False
-        self.ui.getrunwindow(msg=_("preparing to verify the {item_name} '{group}'").format(item_name=item_name, group=group))
+        # Prep message for the wait dialog shown while the (possibly large)
+        # verify list builds. It tells the user what they're about to verify
+        # and gives the first-page build a visible, acknowledged wait; the
+        # window is revealed (waitdone) as soon as the first page is built, then
+        # the rest streams in behind it. See build_verify_layout.
+        if macrosort:
+            prep=_("Preparing the {item_name} '{group}' to verify…").format(
+                                            item_name=item_name, group=group)
+        elif is_syl:
+            prep=_("On the next page, you will verify all the words that are "
+                   "{desc}.").format(desc=desc)
+        elif group=='NA':
+            prep=_("On the next page, you will verify the words that do NOT "
+                   "have {checkname}.").format(checkname=checkname)
+        else:
+            prep=_("On the next page, you will verify the {checkname} "
+                   "words.").format(checkname=checkname)
+        # build_verify_layout owns the wait dialog now (it drives the first-page
+        # build through wait_and_drive_work, which shows the progress bar, then
+        # reveals the window); so create the run window WITHOUT a wait here.
+        self.ui.getrunwindow()
         """Move this to bool vars, like for sort"""
         if hasattr(self,'groupselected'): #so it doesn't get in way later.
             delattr(self,'groupselected')
@@ -952,15 +1291,18 @@ class Sort(Categories):
             self.ui.runwindow, title, self.pageicon(macrosort), instructions,
             prog_text, img_mod, group, items, self, macrosort, oktext,
             self.min_to_multicolumn, self.buttoncolumns, self.verifybutton,
-            join_fn=self.join)
+            join_fn=self.join, prep=prep)
         if self.verifycanary is None:
             return
         if self.ui.runwindow.exitFlag.istrue():
             return
-        self.ui.runwindow.waitdone()
-        self.ui.runwindow.deiconify() # not until here
+        # Single page: the verify list is slice-bounded (≤MAX_SLICE for syllable
+        # prep, one CV-profile in one ps for segmental), so it always fits one
+        # page and there is no page transition to wedge XWayland. Wait on the
+        # off-screen completion canary; the OK button at the end of the list
+        # destroys it. exitFlag = the user quit instead of confirming.
         self.ui.runwindow.wait_window(self.verifycanary)
-        if self.ui.runwindow.exitFlag.istrue(): #i.e., user exited, not hit OK
+        if self.ui.runwindow.exitFlag.istrue(): #user exited, not hit OK
             return
         log.debug("User selected '{selection}', moving on.".format(selection=oktext))
         if macrosort:
@@ -979,6 +1321,43 @@ class Sort(Categories):
         # it will fail.
         # should move to specify location and fieldvalue in button lambda
         def notok():
+            # Syllable PREP (Task 1): a flagged word doesn't belong in this group;
+            # MOVE it to its correct group (the misfit rule) instead of just
+            # un-sorting it. Booleans flip to the other value; count asks ±1.
+            pv=getattr(self,'_prep_verify',None)
+            if pv:
+                sl,check,group,idx=pv
+                if check=='syls':
+                    # Outline the clicked word so the chooser visibly refers to
+                    # it. Recolouring the button background did nothing: in
+                    # several themes activebackground == background (a no-op), and
+                    # the illustration covers the face anyway. Use the button's
+                    # focus-highlight BORDER instead — the same mechanism the prep
+                    # board uses for unverified cells, which DOES render — in the
+                    # theme accent ('highlight') colour. Restore on Cancel;
+                    # Shorter/Longer destroy the button, so only Cancel restores.
+                    orig_ht=b['highlightthickness']
+                    orig_hb=b['highlightbackground']
+                    b.configure(highlightthickness=3, highlightbackground=
+                                getattr(b.theme,'highlight',None) or b.theme.white)
+                    b.update_idletasks() # paint before the modal chooser opens
+                    new=self.sort_ui.ask_syllable_count(self.ui.runwindow,
+                                                        int(group))
+                    if new is None:
+                        if b.winfo_exists():
+                            b.configure(highlightthickness=orig_ht,
+                                        highlightbackground=orig_hb) #restore
+                        return #leave the word where it is
+                    sl.move_misfit(sense,check,target=str(new))
+                else:
+                    sl.move_misfit(sense,check)
+                if sense in self.currentsortitems:
+                    self.currentsortitems.remove(sense)
+                if len(self.currentsortitems) < 2:
+                    self.verifycanary.destroy()
+                self.maybewrite()
+                bf.destroy()
+                return
             if len(self.currentsortitems) > 2:
                 self.removeitemfromgroup(sense,sorting=True,write=False)
                 self.currentsortitems.remove(sense)
@@ -1046,6 +1425,10 @@ class Sort(Categories):
                 # via waitdone() on StopIteration — do NOT waitdone() here.
                 def join_pair_done():
                     self.program.settings.reloadstatusdata_cleanup()
+                    _cn=self.program.status.node()
+                    log.info("DIAG-join-verify post-cull node check=%s done=%s "
+                             "groups=%s",self.program.params.check(),
+                             _cn.get('done'),_cn.get('groups'))
                     self.updatestatus(group=lpr[1],
                                     verified=False,
                                     writestatus=True)
@@ -1086,6 +1469,9 @@ class Sort(Categories):
         check=self.program.params.check()
         ps=self.program.slices.ps()
         profile=self.program.slices.profile()
+        _bn=self.program.status.node()
+        log.info("DIAG-join-verify join-start node check=%s done=%s groups=%s",
+                 check,_bn.get('done'),_bn.get('groups'))
         pairs=get_pairs()
         if sortgroup: #sometimes we just limit this to one group
             pairs=[g for g in pairs if sortgroup in g]
@@ -1110,8 +1496,6 @@ class Sort(Categories):
                 self.ui.runwindow, title, self.pageicon(), img_mod)
         self.sort_ui.build_join_buttons(
             response_button_frame, img_mod, join_pair, distinguish_pair)
-        if pairs:
-            self.ui.runwindow.waitdone()
         buttons={}
         # self.last_pair=[]
         while pairs:
@@ -1121,7 +1505,14 @@ class Sort(Categories):
                     "of {total}".format(pair=self.current_pair, count=len(pairs), total=npairs))
             self.canary = self.sort_ui.build_join_pair(
                 pair_frame, buttonclass, self, self.current_pair, buttons)
-            # self.ui.runwindow.deiconify()
+            # Reveal the kiosk run window — getrunwindow() created it withdrawn,
+            # and join (unlike sort's presenttosort) never deiconified it, so
+            # wait_window blocked on a window the user could never see/dismiss.
+            # Mirror presenttosort: waitdone (in case a wait covered the build),
+            # then deiconify + render.
+            self.ui.runwindow.waitdone()
+            self.ui.runwindow.deiconify()
+            self.ui.runwindow.update_idletasks()
             pair_frame.wait_window(self.canary)
             if self.did[f'join{img_mod}']:
                 return 1

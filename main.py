@@ -11,7 +11,7 @@ program={'name':'A-Z+T',
         'production':False, #True for making screenshots (default theme)
         'testing':False, #normal error screens and logs
         'Demo':False, #will get set otherwise later if it is
-        'version':'1.2.44', #This is a string...
+        'version':'1.4.0', #This is a string...
         'testversionname':'testing', #always have some real test branch here
         'url':'https://github.com/kent-rasmussen/azt',
         'Email':'kent_rasmussen@sil.org',
@@ -60,6 +60,19 @@ import importlib.util
 import collections
 from random import randint
 import os
+# Stack dumper for diagnosing freezes: when the UI hangs, run `kill -USR1 <pid>`
+# (pid logged just below) and the Python stacks of all threads are written to
+# /tmp/azt_stacks.txt — works even when stuck in a C-level Tk/X call, so it
+# names the exact blocked call instead of us guessing. Dumps to a FILE (not
+# stderr) so it's easy to retrieve.
+import faulthandler, signal as _signal
+try:
+    _stackfile = open('/tmp/azt_stacks.txt', 'w')
+    faulthandler.register(_signal.SIGUSR1, file=_stackfile, all_threads=True)
+    log.info("faulthandler armed: if it hangs, run `kill -USR1 %s` then send "
+             "/tmp/azt_stacks.txt", os.getpid())
+except (AttributeError, ValueError, OSError) as e:
+    log.info("faulthandler not armed: %s", e)  # e.g. Windows
 if os.environ.get('AZT_UI_BACKEND', '').lower() == 'webview':
     program['tkinter'] = False
 if program['tkinter']:
@@ -115,25 +128,7 @@ from tasks.tasks import (ExportData, AlphabetChart, AlphabetComparisonPages,
     ReportCitationTBackground, ReportCitationTL, ReportCitationTLBackground,
     ReportCitationMultisliceT, ReportCitationMultisliceTL,
     ReportCitationMultisliceTBackground, ReportCitationMultisliceTLBackground)
-        
-class Options:
-    def alias(self,o):
-        return self.odict.get(o,o)
-    def next(self,o):
-        o=self.alias(o)
-        setattr(self,o,getattr(self,o)+1)
-    def prev(self,o):
-        o=self.alias(o)
-        setattr(self,o,getattr(self,o)-1)
-    def get(self,o):
-        o=self.alias(o)
-        return getattr(self,o)
-    def __init__(self,**kwargs):
-        self.odict={'col':'column','c':'column',
-                    'r':'row'
-                    }
-        for arg in kwargs:
-            setattr(self,self.alias(arg),kwargs[arg])
+
 class App:
     def handle_exception(self, exc_type, exc_value, exc_traceback):
         if issubclass(exc_type, KeyboardInterrupt): #ignore Ctrl-C
@@ -481,6 +476,7 @@ class App:
         o.wrap()
         if not self.me:
             o.bind("<Button-1>", lambda e: openweburl(eurl))
+        scroll.reflow()  # grow canvas/scrollregion to the wrapped log label
         scroll.tobottom()
         f=ui.Frame(errorw.outsideframe,row=1,column=2)
         buttonwraplength=75
@@ -640,12 +636,13 @@ class App:
             setattr(self,k,v)
         self.default_task='WordCollectnParse'
         self.loglevel=logsetup.loglevel_default #'INFO'
-        if self.aztdir.parent.stem == 'raspy': 
+        if self.aztdir.parent.stem == 'AZT': 
             self.testing=True #eliminates Error screens and zipped logs and repo commits
             # self.production=True #True for making screenshots (default theme)
             self.me=True
             self.testlift='Demo_en' #portion of filename
             self.testtask='SortV' #Will convert from string to class later
+            # self.testtask='SortSyllables' #Will convert from string to class later
             # self.testtask='WordCollectnParsewRecordings'
             # self.default_task='WordCollectnParse'
         else:

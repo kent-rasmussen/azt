@@ -1261,6 +1261,8 @@ class ScrollingFrame(Frame):
 
     def windowsize(self, event=None):
         pass
+    def reflow(self):
+        pass
     def tobottom(self):
         pass
     def totop(self):

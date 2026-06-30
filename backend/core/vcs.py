@@ -149,7 +149,7 @@ class Repository(object):
         log.info(msg)
         w=self.program.vcs_ui.show_wait(msg)
         log.info(self.do(args))
-        w.close()
+        w.waitdone()
     def clonetoUSB(self,event=None):
         # log.info("Trying to run clonetoUSB")
         directory=self.abs_path(self.clonetobaredirname())
@@ -163,7 +163,7 @@ class Repository(object):
                 w=self.program.vcs_ui.show_wait(msg)
                 log.info(self.do(args))
                 self.addremote(directory)
-                w.close()
+                w.waitdone()
             else:
                 log.info(_("Found a related repository; added to settings."))
         else:
@@ -375,6 +375,7 @@ class Repository(object):
                                             desc=self.description),
                             button=button,
                             image='USBdrive',
+                            program=self.program,  # use the app's root, not a new dummy one
                             wait=True
                             )
                 # log.info(self.remoteurls())

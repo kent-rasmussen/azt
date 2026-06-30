@@ -1,7 +1,7 @@
 # coding=UTF-8
 from utilities.utilities import *
 from utilities.i18n import _
-from utilities import logsetup
+from utilities import logsetup,file
 log=logsetup.getlog(__name__)
 
 from utilities.error_handler import notify_error as ErrorNotice
@@ -237,6 +237,39 @@ class Alphabet():
         for glyph, members in gm.items():
             if item in members:
                 return glyph
+    def senses_for_glyph(self,glyph):
+        """The senses VERIFIED into this glyph's macrogroup, NOT every word whose
+        orthography happens to contain the glyph.
+
+        Each glyph member is a verification code (ps_profile_ftype_check_group), so
+        it defines BOTH a slice (ps, profile) and a sort value (check==group). We
+        must NOT use the sort annotation (annotation[check]==group) to pick senses:
+        that's the sort value, and verification is per-cvprofile — the same sort
+        value can be verified in one profile and still in-progress in another, so
+        sort-matching leaks unverified words across slices. Instead, per member,
+        confine to that member's slice and keep only senses that carry the
+        '<check>=<group>' VERIFICATION code (what a group-verify writes to every
+        member; see verified_groups_by_ps_profile). Collate across whatever slices
+        the glyph spans."""
+        db=self.program.db
+        out=[]; seen=set()
+        for item in self.glyph_members().get(str(glyph),set()):
+            kw=self.parse_verificationcode(item)
+            if kw['group']=='NA':
+                continue
+            ps,profile,ftype,check,group=(kw['ps'],kw['profile'],kw['ftype'],
+                                          kw['check'],kw['group'])
+            code=check+'='+group
+            try:
+                slice_senses=db.sensesbyps_profile[ps][profile]
+            except KeyError:
+                continue
+            for s in slice_senses:
+                if id(s) in seen:
+                    continue
+                if code in set(s.verificationtextvalue(profile,ftype)):
+                    seen.add(id(s)); out.append(s)
+        return out
     def conflict_code(self,code):
         return code.split('_')[:4]
     def verificationcode(self,**kwargs):
@@ -642,7 +675,7 @@ class AlphabetComparisonData:
         log.info(f"Generated {filepath}")
 
         try:
-            from utilities import open_file
+            from utilities.utilities import open_file
             open_file(filepath)
         except Exception as e:
             log.warning(f"Could not open PDF automatically: {e}")

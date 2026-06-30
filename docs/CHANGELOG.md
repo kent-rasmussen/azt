@@ -19,6 +19,1840 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.4.0
+- MILESTONE: **Syllable sort redesign complete.** Verified end-to-end on a real
+  lexicon (2026-06-30): a full sort → macrosort → glyph-naming cycle, with sort
+  groups staying verified through the cycle (the original groups-invalidated bug
+  is resolved in practice). Not bug-free — remaining issues are tracked separately
+  (glyph-rename conflict when a default group collides with an existing glyph
+  member; the conflict dialog's Retry leaving no UI) — but the redesign itself is
+  done. See azt/agenda/syllable_sort_redesign.md.
+- FIX (Alphabet word-selection window — chart AND booklet): showed words by
+  ORTHOGRAPHY (every word whose spelling contained the glyph), including words not
+  actually verified into the group. Now resolves a glyph's VERIFIED members only:
+  per `glyph_members` item it confines to that member's slice (ps/profile) and
+  keeps senses carrying the `<check>=<group>` verification code (not the sort
+  annotation), collated across the glyph's slices (`Alphabet.senses_for_glyph`).
+  No orthographic fallback — if nothing resolves, the user is told precisely why
+  (no sort data / no members / members unverified / verified-but-no-picture). The
+  window also reaches `program` via the root toplevel, so it works from the
+  booklet's `PageFrameUI` (which doesn't carry `program`) as well as the chart.
+- FIX (Alphabet word-selection window): built blank then painted content slowly on
+  XWayland — now builds under a "Loading…" cover and reveals the finished window
+  (waitdone update()+deiconify). Added a window title; excluded syllable-prep
+  bookkeeping from the "printed examples" notice (see below).
+- FIX (Alphabet Chart: PDF no longer opened in the OS viewer): the post-generate
+  open used `from utilities import open_file`, but `open_file` lives in
+  `utilities/utilities.py` and isn't re-exported by `utilities/__init__.py`, so the
+  import raised `ImportError` — swallowed by the surrounding `try/except` as a bare
+  `log.warning`. The PDF wrote fine; the open call never ran. Fixed the import to
+  `from utilities.utilities import open_file` in `frontend/alphabet_chart.py` and
+  `backend/core/alphabet.py`. (Confirmed: PDF reopens in the OS tool.)
+- FIX (Alphabet Chart "Printed chart examples" notice): the window had no title and
+  dumped the syllable-prep sort bookkeeping. It now has a title (paginated as
+  "(n/m)" when it spans multiple windows) and excludes the six syllable-prep keys
+  `#C`, `C#`, `syls`, `#C-slice`, `C#-slice`, `syls-slice` from the per-glyph
+  annotation display via a new `exclude` predicate on `Sense.annotations_to_update`
+  (display-only; stored data untouched). Reuses `params.is_syllable_primitive_check`
+  + suffix-strip, matching the board's `_is_syl_prep` filter.
+- FIX (ScrollingFrame canvas didn't grow/shrink to re-gridded content — clipped
+  rows): added a synchronous `ScrollingFrame.reflow()` (`update_idletasks()` →
+  `_do_configure_interior()`) and routed every dynamic content-add site through it,
+  so the canvas + scrollregion track the new content instead of relying on the
+  debounced `<Configure>` reflow the canvas can starve. The `update_idletasks()` is
+  required: grid()/grid_forget() defer the requested-size recompute, so reading it
+  without flushing reflowed to the stale size (observed: alphabet-chart +/- columns
+  and show-all/pictured-only didn't resize). Sites fixed: alphabet chart
+  (reflow_chart/show_chart/select_example), alphabet comparison (image grid,
+  +2-pages booklet), tone-frame drafter (status/exemplified), JoinUFgroups rows,
+  sound record-button pages + example recordings, sound transcription labels + card
+  settings, glyph leaderboard, and the error-log window. Webview `ScrollingFrame`
+  stub got a no-op `reflow()` for backend safety. See scrollframe-reflow-viewport-trap.
+
+# Version 1.3.115
+- FIX (Alphabet Chart / Comparison: redundant task page that quit AZT on close):
+  `AlphabetChart` and `AlphabetComparisonPages` inherited `Task`, whose `__init__`
+  builds a generic `TaskWindow` and makes it the app main window
+  (`TaskDressing.__init__`→`i_am_mainwindow`). But each task's real UI is its OWN
+  window (`OrderAlphabetUI` / `PageSetupUI`), so a pointless second "main page"
+  appeared and closing it propagated `on_quit(to_root=True)` → quit AZT. (The old
+  `self.mainwindow = False` was dead: `on_quit` checks `ismainwindow`.) Dropped
+  `Task` from both — the config window IS the task now (matching the original
+  design). Each registers itself as `program.task` with `self.ui = self`, hides
+  the chooser while open, and binds the window-close to `taskchooser.gettask` so
+  closing returns to the chooser exactly like the Tasks/Reports button instead of
+  quitting. They use nothing else from `Task` (the chart UI/back end never call
+  `self.ui.*`; the chooser only reads `tasktitle`/`taskicon`).
+- FIX (Alphabet Comparison crashed on open: `NameError: name '_' is not defined`):
+  `frontend/alphabet_comparison.py` used the `_()` translator without importing
+  it. Added `from utilities.i18n import _` (the suite-wide convention).
+
+# Version 1.3.114
+- FIX (correspondence checks were wrongly offered for sorting): `V1xV2`/`C1xC2`
+  (and the other `x` correspondence checks) are a REPORTING construct — the
+  cross-tab chart, which the report builds by crossing the single-axis V1/V2
+  groups (`generator.docheckreport`). They are not something to ask the user to
+  sort/verify by; offering them produced a nonsensical `NA` pile (e.g. 69
+  two-vowel words parked as "NOT Correspondence of First Two Vowels", when
+  correspondence applies to anything with two vowels). The filter that drops them
+  already existed in `StatusDict.checks()` but its trigger had been commented out
+  (the old `isinstance(self.task(),Sort)`) and replaced by a `no_correspondence_checks`
+  kwarg that nothing passed. Re-armed it with the flag-based equivalent: when the
+  live task is a sort task (`getattr(self.task(),'is_sort_task',False)`), drop `x`
+  checks. Gated on the SORT task, NOT on "is a report", because reports run with
+  `status.task()` unset (None) in a subprocess and must keep the `x` checks for the
+  chart. Check NAMES (analysis_inputs) are unchanged — the report still needs them.
+- FIX (status frame showed "working on First Vowel None"): `cvgrouplabel()`
+  returned a bare `None` for x-checks / no check, and `updatecvgroup()` does
+  `StringVar.set(that)` — `set(None)` renders the literal "None". When the sort
+  stepped through an `x`-check the group label was set to "None" and went stale
+  when it advanced to a single-axis check (V1), so a None group (= all groups)
+  read as "None". Return '' instead; a real None group still reads "(All groups)".
+
+# Version 1.3.113
+- FIX (sort page clips lower rows when a group button is added mid-sort): the
+  scroll content self-heals through the content frame's `<Configure>` binding →
+  `ScrollingFrame._do_configure_interior`, which resized the canvas + scrollregion
+  but never the scroll frame's OWN height. Only `SortButtonFrame.reflow()` set
+  that, and it ran once per item in `presenttosort`. So when a new group button
+  appeared during sorting (user picks "Other", a new group is created +
+  `addgroupbutton`) — or when a group's example image loaded *after* that one-shot
+  reflow — the content grew, the canvas/scrollregion grew, but the frame (frozen
+  by `grid_propagate(0)`) stayed short and pushed Other/Not-profile/Skip off the
+  viewport. Moved the content-hug into `_do_configure_interior`, gated by a new
+  per-instance `_hug_content` flag that `SortButtonFrame` sets for the sort
+  (item-at-a-time) page only — so every reflow path (including the `<Configure>`
+  one) keeps the viewport hugging its buttons, while the macrosort verify list
+  (`remove_on_click`) keeps its fixed scrolling viewport.
+
+# Version 1.3.112
+- FIX (sort page scroll frame sized right): v1.3.111 gave the scroll frame grid
+  weight, which made it FILL the window (a 2-3 button page had a big empty scroll
+  area). Reverted that; instead `SortButtonFrame.reflow()` sets the scroll frame's
+  OWN height to the content's `reqheight` (it has `grid_propagate(0)`), so the
+  viewport HUGS the buttons — not frozen-too-small (clip) and not window-filling.
+  If content ever exceeds the window, the grid cell caps it and the scrollregion
+  handles scrolling.
+
+# Version 1.3.111
+- FIX (sort page clip — the actual cause): the v1.3.110 `DIAG-reflow` showed the
+  reflow now sizes content + scrollregion correctly (→472), but the **canvas
+  viewport stayed 347** — the scroll frame (`buttonframe`) is gridded into
+  `groupsFrame` row 1 with no row weight and has `grid_propagate(0)`, so its cell
+  stayed frozen at an early/partial height and the viewport couldn't grow into the
+  empty window space below (buttons past 347 clipped, matching "scroll window grows
+  but canvas doesn't"). `build_sort_layout` now sets `groupsFrame` row-1 + column-0
+  weight so the scroll frame fills the available space and the buttons show. Removed
+  the `DIAG-reflow` instrumentation; kept `SortButtonFrame.reflow()` +
+  `presenttosort`'s synchronous call (they correctly size content/scrollregion).
+
+# Version 1.3.110
+- DIAG (sort page clip persists, no behavior change): the 1.3.108/109 reflows still
+  leave later rows clipped — and the canvas/scrollregion (not the content frame) is
+  the clamp (scroll frame grows, canvas doesn't). `SortButtonFrame.reflow()` now logs
+  `DIAG-reflow` before/after `_do_configure_interior`: target object, suspend state,
+  content `h`/`reqh`, canvas height, and scrollregion — to show whether the reflow
+  runs with a stale `reqheight` or fails to expand the canvas/scrollregion.
+
+# Version 1.3.109
+- FIX (sort page: skip/"Other"/"Not-profile" rows still clipped & unscrollable):
+  the v1.3.108 reflow was DEFERRED (re-armed `_configure_interior`) and could be
+  consumed mid-build with a partial height (during a slow example-image load),
+  before the later rows were counted — so the content still clamped short. Added
+  `SortButtonFrame.reflow()` (synchronous `_do_configure_interior`) and call it from
+  `presenttosort` right after the run window's `update()`, when the full geometry is
+  settled, so the content sizes to its true `reqheight`. (Confirmed it's not just
+  below-the-fold: content was clipped above an empty strip with a full-height
+  scrollbar = clamped, not scrollable.)
+
+# Version 1.3.108
+- FIX (sort page: 2nd+ group button + skip/OK clipped & unscrollable): the scroll
+  content is a canvas-embedded frame whose reflow is driven by its `<Configure>`.
+  When a reflow runs MID-BUILD (the event loop pumped during a slow example load for
+  a later group — here the ~2 s compound `V1=V2` regex/image), it pins the content
+  window to the partial height; subsequent buttons grow the REQUESTED height but not
+  the pinned actual height, so `<Configure>` never re-fires and the content stays
+  clamped to the first button (later buttons + skip clipped, and unscrollable since
+  the scroll region was computed at the partial size too). `SortButtonFrame` now
+  re-arms one reflow after all buttons + skip are built (flushed by the run window's
+  `update()`), mirroring the verify page's `resume_configure`. Diagnosed via the
+  v1.3.107 `DIAG-sortbtn` dump (`content h=126, reqh=472`), now removed. Why it
+  didn't bite before: fast builds reflow only after everything's in, and the verify
+  page already batches with suspend/resume — only a slow mid-build pump triggers it.
+
+# Version 1.3.107
+- DIAG (sort page partial render, no behavior change): the v1.3.106 drained `update()`
+  did NOT fix the missing 2nd group button + skip/OK, so it's layout, not paint-flush.
+  Added a temporary `DIAG-sortbtn` dump in `presenttosort` logging each group
+  button's mapped state + geometry, the skip frame's, and the scroll content height —
+  to tell apart not-built / zero-size / unmapped / off-screen / scrollregion-clip.
+
+# Version 1.3.106
+- FIX (sort page partial render: 2nd group button + skip/OK don't draw, sort
+  un-completable): `presenttosort` revealed the run window with `update_idletasks()`,
+  which on XWayland leaves the just-mapped window's paint/`<Configure>` backlog
+  un-flushed — so later group buttons and the skip/OK row didn't paint and the
+  scroll region could stay stale and clip them. Switched to a drained `update()`
+  (wrapped, like the verify page's `build_verify_layout` commit), which processes the
+  backlog so the whole page paints. Not new wedge-chasing — it applies the existing
+  verify-page render fix to the sort page, which had been missed.
+
+# Version 1.3.105
+- FIX (`KeyError: '#C'` crash on form update after sorting): `updateformtoannotations`
+  (lexicon.py) iterated EVERY annotation and fed each to `rxdict.update`, including
+  the syllable-prep primitives (`#C`, `C#`, `syls`) and the profile check (`lc`),
+  which have no position regex in `rxdict.rx` → `self.rx['#C']` KeyError, killing
+  `updateformsallchecks` mid-generator (seen via the macrosort form-update pass).
+  Form updates apply only to SEGMENTAL checks; `do_not_do_these` now skips any check
+  whose `=`-parts aren't all present in `rxdict.rx`.
+
+# Version 1.3.104
+- FIX ("go back and join" offered no pair to join): after the user intentionally
+  un-distinguished a glyph to join it, `maybesort` immediately called
+  `predistinguish`, which re-distinguishes "trivially distinct" single-member glyph
+  pairs (deciding off the SORT-GROUP-level `status.isdistinguished`, which the
+  glyph-level un-distinguish doesn't clear) — so the very pair the user asked to join
+  was dropped from the join page. Now a one-shot `_skip_predistinguish_once` flag,
+  set by both go-back paths (`name_new_glyphs` go-back and `redo_joinglyphs`), makes
+  `maybesort` skip `predistinguish` for that single pass. Normal runs still
+  predistinguish as before. (Two paths: predistinguish on normal run; don't when we
+  just intentionally un-distinguished.)
+
+# Version 1.3.103
+- FIX (groups-unverified root cause): the segmental sort slice (`_profilesbysense`,
+  via `getprofileofsense`) was built from the MACHINE analysis constrained to
+  primitives, while the status slice (`sensesbyps_profile`/`verified_groups`) used the
+  confirmed `cvprofile` data form — two indices that disagreed, so a word could be
+  sorted in CVC but invisible to verification. Now `getprofileofsense` files each
+  sense under its **confirmed `cvprofile` …-x-cvprofile form** (the trusted profile),
+  matching the status slice. A word with no confirmed profile is left OUT of segmental
+  slicing (it still gets syllable-prep'd to acquire one).
+- NEW (on every load): `ProfileAnalyzer.scrub_sorts_to_primitives()` enforces the
+  sort/verification distinction: (1) never auto-adds a missing `lc` profile-sort
+  annotation; (2) constrains an ILLEGAL `lc` annotation to the confirmed primitives
+  and rewrites it (the sort must be legal); (3) if the now-legal sort no longer
+  matches the confirmed `cvprofile` form, CLEARS that cvprofile verification (the word
+  drops out of segmental sorting → the profile-setup trigger fires for manual/trust
+  re-set). The `'<profile> lc verification'` segmental fields (context-tagged by
+  profile) are untouched. Self-healing and a no-op once data is consistent.
+- FIX ("Go back and join" on the New Letter page did nothing → "not done" warning):
+  the inline `name_new_glyphs` built `GlyphTranscribeHelper` with no `on_go_back`, so
+  the button just closed the window. Now wires it: the flagged glyph is
+  un-distinguished and `name_new_glyphs` returns True so `warnorcontinue` restarts
+  `maybesort` onto the join-glyphs step (which precedes naming) — same effect as
+  `redo_joinglyphs`, without a nested `maybesort`.
+
+# Version 1.3.102
+- FIX (New Letter page stuck on "Give a name!"): regression in `EntryField.__init__`
+  (ui_tkinter.py). `reserve_kwargs` pops the caller's `textvariable` into
+  `self.textvariable`, but the next line re-defaulted from `kwargs` (now empty) and
+  always injected a THROWAWAY `StringVar`; `TextBase.__init__` then adopted the
+  throwaway, so the visible Entry bound to it instead of the caller's var. Typing
+  updated the throwaway, the caller's write-trace never fired, and `GlyphTranscribe`'s
+  `updateform` never re-ran — leaving OK greyed with "Give a name!" even with text in
+  the field. Now re-injects `self.textvariable` (the caller's var), defaulting to a
+  fresh one only when none was passed. (This is the same class of bug the in-code
+  comment at EntryField says was fixed before; it had regressed.)
+
+# Version 1.3.101
+- DIAG (groups-unverified, no behavior change): widened the `DIAG-done write` line
+  (sorting_engine.updatestatuslift) to fire for EVERY verify write, not just
+  digit-named groups, and to log the group NAME + its python TYPE, the profile, and
+  the add/remove values. Reason: in the 2026-06-27 reload-only log, `grep DIAG-done
+  write` and `grep update REMOVE` were both empty — so nothing was explicitly
+  un-verified (poss. 4b out), and no integer-group code was written there. The empty
+  write grep also hints the verified group may not be digit-named at write time
+  (glyph/int name flip), which the old isdigit() gate hid. Now any verify is
+  captured with its exact name/type/targets.
+
+# Version 1.3.100
+- DIAG (groups-unverified, no behavior change): exhaustive `DIAG-done` tracing of the
+  full verify→done lifecycle for INTEGER (still-unnamed) groups in the active ps, to
+  decide between the four possibilities for why a verified group ('2'/'3') reads as
+  unverified. One `grep DIAG-done` now covers all four:
+  - **write** (`updatestatuslift`, sorting_engine.py): `DIAG-done write check=g ->
+    coding N/M inslice senses: [...] (full group [...])` — exactly which senses got
+    the code written (poss. 1 root: was it ever written, or did
+    getsensesincheckgroup/inslice miss members?).
+  - **read** (`verified_groups_by_ps_profile`, io_put/lift.py): `DIAG-done read
+    ps/profile check=g verified=? test='check=g' members=[(id, codes, present?), …]`
+    — every member's LIFT verification codes + the exact membership test. Tells
+    "no code in LIFT" (poss. 1) from "code present but == misses it" (poss. 2).
+  - **build** (`generate_status_by_annotations`, settings/__init__.py): `DIAG-done
+    full-reload SET … done=… verified=… groups=… NOT-done=… verified-but-not-in-
+    groups=…` — whether a read-verified group is dropped by `verified ∩ groups`
+    (poss. 3).
+  - **remove** (`cull` DROP, `update` REMOVE, analysis.py) — already in place (poss.
+    4); plus a `status.group` NON-STR tripwire.
+  Groups are tiny (≈3 and ≈8 words) so member lists are dumped in full. Strip all
+  `DIAG-done`/`DIAG-join-verify` once the cause is fixed.
+
+# Version 1.3.99
+- FIX (groups-unverified, str/int group hazard): `getsensesingroup` — the member
+  lookup the VERIFY uses to write `<check>=<group>` codes — compared the LIFT
+  annotation (always a str) to the raw `group` with no str cast, in all three
+  variants (Segments lexicon.py:413, Tone :1813, Syllables :1851). The sibling
+  example/display path (`analysis.py:217`) and the glyph path (`alphabet.py:412`)
+  already cast `str(group)` with explicit "in case an int() group gets through"
+  comments — so integer groups are known to leak. If a default integer group (e.g.
+  '3') reached the verify as an int, `"3"==3` is False → the verify coded ZERO
+  members → the macrosort transition's full reload
+  (`renew_items_tomacrosort`→`refresh_items`→`reloadstatusdata`) then recomputed the
+  group as NOT verified, re-asking the user to verify it. Now all three lookups cast
+  `str(group)`, matching the guarded siblings.
+- DIAG (temporary): tripwire at the `status.group` setter logs `DIAG-done group()
+  set to NON-STR` if a non-str/non-None group is ever assigned, to confirm on the
+  next repro whether ints actually leak into the group channel (and from where).
+
+# Version 1.3.98
+- DIAG (groups-unverified, no behavior change): added three tagged `DIAG-done` log
+  lines at the ONLY three places the per-check `done` list can shrink, to pinpoint
+  where verified integer groups (e.g. V1 '2'/'3') lose their done status during an
+  unrelated macrosort glyph-verify cycle:
+  - `StatusDict.update` — explicit un-verify (`verified=False` removal).
+  - `StatusDict.cull` — groups intersected out of done (done entry with no group).
+  - `generate_status_by_annotations` — the FULL reload recomputing done from LIFT
+    per (ps,profile,check).
+  NOTE: `verified_groups_by_ps_profile` is correctly **per-(ps,profile) slice** —
+  it requires every member of a group to be coded *within that slice only*, with no
+  cross-slice dependency (groups in different slices relate only via a shared
+  glyph). `updatestatuslift`'s `slices.inslice` write is at the same granularity, so
+  the drop is NOT a cross-profile coding gap. Within one slice, a group leaves
+  `done` only if (a) a member was sorted in / re-annotated so its annotation puts it
+  in the group but it carries no `<check>=<group>` code, (b) an explicit
+  `update(verified=False)`, or (c) the cull (but the repro had '2','3' still in
+  `groups`, ruling cull out). The DIAG lines name which on the next repro before any
+  fix lands. See groups-invalidated-after-join note.
+
+# Version 1.3.97
+- FIX (run-window-never-deiconifies, 3rd recurrence of this class): a kiosk run
+  window created withdrawn by `getrunwindow()` is only revealed if something later
+  (a) calls `runwindow.wait(..., thenshow=True)` — which only `getrunwindow(msg=...)`
+  does — or (b) calls `runwindow.deiconify()` explicitly. Reveal-via-`waitdone()`
+  silently no-ops when the underlying wait is inactive or was opened on a withdrawn
+  parent (`showafterwait` is False). Fixed three sites:
+  - **macrosort (letter-group) verify** (`sort_ui.build_verify_layout`): relied on
+    `runwindow.waitdone()`, but `SortButtonFrame` builds behind its own
+    `with task.waiting()` opened on the withdrawn TaskWindow, so that wait is gone
+    (and never targeted the run window) by the time we reach the reveal. Now
+    deiconifies explicitly, matching the sort path (`presenttosort`).
+  - **`name_new_glyphs` / glyph rename** (`transcribe_glyph.makewindow`):
+    `getrunwindow(title=…)` with no msg, no wait opened during the build, and the
+    upstream reload-wait already closed — so `waitdone()` was a no-op and the page
+    stayed hidden while `wait_window()` blocked on it. Now deiconifies explicitly.
+  - **ad-hoc/search report** (`generator.getresults`): `getrunwindow()` (no msg)
+    then `runwindow.wait()` without `thenshow` → `showafterwait` False → the results
+    window never showed. Now passes `thenshow=True` so `waitdone()` reveals it.
+
+# Version 1.3.96
+- "Trust" (affirm) now also runs `reconcile_profiles_to_primitives` — so taking
+  the trust action both fills holes (affirm) and repairs existing trusted
+  profiles (constrains primitive-violating ones and realigns drifted `lc`
+  annotations). Idempotent on clean data.
+- KNOWN ISSUE (deferred): groups are still being invalidated/unverified beyond
+  what the join fix addressed. To be investigated after a clean re-sort; see the
+  groups-invalidated note. Prime suspect: the per-slice reload
+  (`reloadstatusdatabycvtpsprofile`) deriving group names differently than the
+  full reload (`generate_status_by_annotations`) — earlier DIAG showed group
+  names flipping glyph (ɩ/ɑj) ↔ integer (2/3) between post-cull and maybesort,
+  dropping verified groups. `DIAG-join-verify` instrumentation left in place.
+
+# Version 1.3.95
+- Affirm/reconcile now keep the profile-sort annotation aligned with the trusted
+  profile. Writing the plain …-x-cvprofile alone left the `lc` annotation showing
+  the old machine value (e.g. plain `CCVC` but `lc`=`CCVCV`) — which misreads as
+  "last sorted into CCVCV" and would trip the normal group/done unverify. New
+  `_set_trusted_profile` writes BOTH the plain DATA and the `name=ftype` ('lc')
+  annotation together, used by affirm and reconcile. `reconcile` also now repairs
+  annotation drift even when the plain profile is already correct (so it fixes
+  knife's stale `lc`=`CCVCV` left by the old raw affirm, which only touched the
+  plain form).
+
+# Version 1.3.94
+- Principled human-vs-machine form selection via a `machine` kwarg, replacing the
+  1.3.91 point-fix. `machine` now threads `fieldvalue → textvaluebylang →
+  getlang`, and `getlang` resolves tone/cvprofile form-langs from
+  `(analang, machine)` via `tonelangname`/`profilelang` — moved AHEAD of the
+  single-form short-circuit, so the lang is determined by intent, never by
+  whichever form happens to exist. This structurally kills the cvprofile
+  plain-vs-`_MT` bug (a missing plain form no longer makes a plain read return the
+  machine value) and sets tone up the same way for human-vs-machine transcription.
+  `cvprofilevalue(…, machine=False)` is now the single reader; `cvprofilemachine
+  value` and the tone readers (`uftonevalue`, `Example.tonevalue`) are thin
+  pass-throughs of `machine`. Supersedes the 1.3.91 explicit lang-pin and the
+  1.3.93 single-form docstrings for cvprofile/tone.
+
+# Version 1.3.93
+- Docstrings: marked `cvprofileuservalue` as UNUSED, and annotated every no-lang
+  `fieldvalue` caller that's currently safe only because its field is single-form
+  (`locationvalue`, `Example.tonevalue`, `uftonevalue`, `verificationtextvalue`)
+  with a note to pin the lang if that field ever gains a second form-lang — so
+  the cvprofile-style "wrong form returned" trap is noticed before it bites.
+
+# Version 1.3.92
+- Fixed `uftonevalue` never persisting a set: it called `fieldvalue('tone',value)`,
+  passing `value` positionally into the `lang` parameter — so a write was treated
+  as a lang lookup and the value was never stored. Now passes `value=value` (tone
+  is single-form, so no lang needed).
+
+# Version 1.3.91
+- Fixed `cvprofilevalue` leaking the machine value. It called `fieldvalue` with
+  NO lang; `fieldvalue→getlang` then falls back to the field's single remaining
+  form. Since `cvprofile_lc` now carries TWO forms (plain `…-x-cvprofile` +
+  machine `…-x-cvprofile_MT`), a word with only the `_MT` form (no confirmed
+  profile) had `cvprofilevalue()` return the MACHINE value — so unprofiled words
+  looked profiled: the "set up profiles?" trigger never fired for them, affirm's
+  `!= m` guard skipped them, and segmental/tone sorts read raw machine as
+  confirmed. `cvprofilevalue` now pins the plain lang (`profilelang(analang)`),
+  mirroring `cvprofilemachinevalue`. (This is why deleting the plain form by hand
+  didn't re-arm the trigger — the lone `_MT` form was answered instead.)
+
+# Version 1.3.90
+- Affirm now FILLS HOLES ONLY: it skips any sense that already has a plain
+  profile, so it can never clobber hand-verified good data (previously it
+  rewrote any sense whose profile differed from the constrained machine value).
+- Added `ProfileAnalyzer.reconcile_profiles_to_primitives()` — the deliberate
+  repair path that DOES touch existing profiles, but only to constrain ones that
+  *violate* their verified #C/C#/syls (a no-op on already-consistent profiles, so
+  good data is untouched). Use it once to clean up the bad profiles the old
+  raw-copy affirm wrote (e.g. `CCVCV` on a C#=C/syls=1 word → `CCVC`). Not yet
+  wired to a menu/trigger — invocation TBD with the user.
+
+# Version 1.3.89
+- "Use the machine analysis as profiles" (affirm) now RESPECTS verified syllable
+  sorting. It copied the raw `…-x-cvprofile_MT` into the plain form, overriding a
+  partly-done syllable sort — e.g. machine `CCVCV` (2 syls, V-final) on a word
+  already verified `C#=C, syls=1`, leaving a plain profile that conflicts with the
+  primitives AND with how the presort/SliceDict already groups the word (`CCVC`).
+  Affirm now writes `constrain_presort_profile(...)` — the machine profile
+  reconciled to the word's confirmed `#C/C#/syls` (no verified primitives → no-op
+  → raw machine, as before). NOTE: this corrects FUTURE affirms; words already
+  affirmed to a conflicting profile aren't auto-repaired (affirm won't re-trigger
+  once they have a profile) — a one-time reconcile sweep can be added if wanted.
+
+# Version 1.3.88
+- `DIAG-join-verify NOTDONE` logging is now scoped to the CURRENT ps (passed as
+  `log_ps` from `generate_status_by_annotations`). Other parts of speech are
+  uncoded simply because no work has happened there, so they flooded the log with
+  irrelevant empty-code lines (which also misled the earlier diagnosis). The
+  `done`-from-LIFT computation still covers all ps; only the log is scoped.
+
+# Version 1.3.87
+- Fixed the greedy unverify behind "joining one group unverifies another".
+  `updatestatuslift` computed `senses` via `getsensesincheckgroup()` with NO
+  args, so it always targeted the CURRENT `status.group()` — ignoring the
+  `check`/`group` it was actually told to (un)verify. So join's
+  `updatestatus(group=lpr[1], verified=False)` stripped the `check=*` verification
+  code off whatever group happened to be current (an unrelated, already-verified
+  group) instead of the joined one. Now passes `check`/`group` through, so it
+  (un)verifies exactly the intended group. (Normal verify is unchanged: there the
+  intended group already IS the current one.) This bug had been stripping the
+  verification code off an unrelated group on every join — the source of "join
+  unverifies y."
+
+# Version 1.3.86
+- Fixed macrosort crash `AttributeError: 'ScrollingFrame' object has no attribute
+  'updatecounts'`. In `sortselected`, the macrosort `recurring_conflicts` branch
+  calls `sort_on_group_by_item`, which redirects via a nested `runcheck`/
+  `maybesort` that rebuilds the display — then returned None, so the outer
+  `sort()` loop kept going and called `updatecounts()` on the stale buttonframe
+  the rebuild left behind. It now returns truthy so the outer loop bails (its
+  `if r: return`), matching the other restart paths.
+- Broadened the `DIAG-join-verify` diagnostic from PARTIAL-only to NOTDONE (any
+  group with members not fully coded), logging the uncoded members and the codes
+  they carry — to distinguish a real data gap from a code-on-wrong-member
+  scramble. (Empty `grep PARTIAL` showed the dropping groups are FULLY uncoded.)
+
+# Version 1.3.85
+- TEMPORARY diagnostic: `verified_groups_by_ps_profile` now logs `DIAG-join-verify
+  … PARTIAL` for any group whose members are split (some carry the
+  `<check>=<group>` code, some don't) — naming the uncoded sense ids and the codes
+  they DO carry. Pinpoints whether a group dropping out of `done` is correct (a
+  word sorted in after verify, or codes on the wrong members) or a recompute bug.
+  To be removed with the rest of the `DIAG-join-verify` instrumentation.
+
+# Version 1.3.84
+- Fix: a join no longer leaves *unrelated* groups needing re-verification. Root
+  cause: `done` (group verified as a whole) was a cached value in the status
+  file, and the full reload a join triggers mishandled it. `done` is now COMPUTED
+  from LIFT on reload (option A): a group is verified iff it has members and every
+  member carries its `<check>=<group>` verification code — exactly what a
+  group-verify writes and a plain sort omits. New `db.verified_groups_by_ps_profile`;
+  `generate_status_by_annotations` sets each segmental (V/C) node's `done` from it.
+  Self-healing, so verified state can't go stale. Scope: segmental only —
+  syllable-prep ('S') `done` is per-slice and left to the prep driver; tone still
+  uses the cached `done` (its membership isn't in the 'lc' annotations this reads).
+- Note: `done` is still cached in the status file and loaded at boot (consistent,
+  since it's written alongside the LIFT codes); fully dropping it from the file
+  (the "file holds only `distinguished`" endpoint) is a follow-up.
+
+# Version 1.3.83
+- TEMPORARY diagnostic logging (`DIAG-join-verify`) to trace how a group's
+  verified (`done`) state moves through a join: logged at join start, after the
+  reload (pre-cull, in updatebygroupsense), post-cull (join_pair_done), and where
+  maybesort computes groups-to-verify. For diagnosing groups becoming unverified
+  after an unrelated join. To be removed once the `done`-from-LIFT fix lands.
+
+# Version 1.3.82
+- Join page never appeared (and the app wedged in wait_window): `getrunwindow`
+  creates the kiosk run window WITHDRAWN, and `join` only called `waitdone()` —
+  a no-op when no wait dialog was active (its getrunwindow had no msg) — with the
+  actual `deiconify()` commented out. So `wait_window` blocked on a window the
+  user could never see or dismiss. `join` now reveals the run window each pair
+  (waitdone → deiconify → update_idletasks), mirroring sort's `presenttosort`.
+
+# Version 1.3.81
+- The "set up profiles?" trigger now counts only words that affirming/sorting
+  could actually profile: no confirmed profile yet AND a real (non-Invalid,
+  non-empty) machine analysis to affirm. Words with no/Invalid machine analysis
+  can never be affirmed, so they no longer keep the prompt alive forever — once
+  "Trust" is taken (and now persisted, 1.3.80), the prompt is fully silenced.
+  Trade-off: those few unprofilable words will silently not be sorted.
+
+# Version 1.3.80
+- "Use the machine analysis as profiles" (affirm) now PERSISTS: it set each
+  sense's plain …-x-cvprofile in memory but never wrote the LIFT, so a restart
+  re-read the file without the profiles and the "set up profiles?" trigger fired
+  again. `affirm_machine_profiles` now calls `maybewrite(definitely=True)` after
+  copying the machine forms. (Words with no/Invalid machine analysis still can't
+  be affirmed — nothing to copy — so any such words remain unprofiled.)
+
+# Version 1.3.79
+- Real fix for the segment-board blank rows: the board was showing the syllable-
+  PREP checks (#C/C#/syls, stored with a '-slice' suffix by older builds) as
+  columns. A profile that has been syllable-sorted carries those nodes WITH
+  groups but has no segmental data, so it drew a row of empty (irrelevant)
+  columns. `makeprogresstable` now drops syllable-prep checks from a
+  segmental/tone board's columns, and `hasboarddata` only counts data in checks
+  the board actually shows (`self.checks`) — so a profile that's only been
+  syllable-sorted no longer appears. (Supersedes the 1.3.75/76 heuristic, which
+  counted those leftover groups as data.)
+
+# Version 1.3.78
+- "Set up syllable profiles?" window now builds withdrawn and is deiconified once
+  composed (update_idletasks → deiconify → lift), instead of mapping empty and
+  reflowing — fixes the slow/mis-placed appearance.
+
+# Version 1.3.77
+- NA ("not applicable") is no longer offered as a selectable group: the group
+  picker (`_getgroup`) filtered every other surface but listed NA as a button.
+  NA stays in the grouping/verification machinery but is never presented AS a
+  group — not in the picker buttons, the sort-into buttons (already filtered),
+  or the status board (1.3.75/1.3.76). NA collects words from two sources: the
+  presort remainder of an `=` check (e.g. a V1≠V2 word under a V1=V2 check) and
+  user-skipped items (taboo/unknown/etc., any check). It is verified exactly
+  ONCE, explicitly, in the presort (`lexicon.py:177–179`) — where the pile is
+  offered for removal → resort and then marked needn't-redo — and is NOT returned
+  by the normal verify loop (`groups(toverify=True)`).
+
+# Version 1.3.76
+- Segment progress board: dropped the "always show the current profile" carve-out
+  from 1.3.75 — no row is shown for a profile with no real data, period; it
+  appears once it has a real (non-NA) group. (`NA` is the presort's
+  unmatched/unsorted remainder bucket — and also where user "skip" files a word —
+  so an NA-only profile has nothing sorted.) Made the current-profile cell
+  highlight defensive (`_cells.get`) so an unlisted current profile no longer
+  KeyErrors.
+
+# Version 1.3.75
+- Fixed `NameError: name 'Options' is not defined` crashing the Segment
+  Interpretation page (`setSdistinctions`). `Options` (the grid-position helper)
+  was stranded in `main.py` after the method was refactored into `ui_shell.py`,
+  which can't import from `main` (circular). Moved it to `utilities/utilities.py`
+  (alongside `Object`), where `ui_shell` already gets it via `import *`.
+- Segment progress board no longer shows empty rows: a profile is listed only if
+  it has real sorted/verified data (a non-NA group, or a verified group) in some
+  check — profiles holding only NA / to-sort placeholders (which render as blank
+  cells) are skipped. The current profile is always shown so the user can see
+  where they are. (Complements 1.3.73's cull, which drops member-less profile
+  nodes; this hides member-ful but as-yet-unworked ones from the board.)
+
+# Version 1.3.74
+- Syllable-profile offer is now resolved BEFORE the segmental/tone sort board
+  appears, instead of popping over it. On a normal open, SortS/SortV/SortC/SortT
+  stay withdrawn until the "Set up syllable profiles?" prompt is answered; the
+  board is only deiconified once the user affirms / cancels / has profiles
+  already. If the user chooses "Sort syllable profiles first," that task opens
+  and this still-hidden board is torn down (new `TaskBase._dismiss_unshown`)
+  rather than left behind the new task. Resume re-entries (redo_glyph /
+  sort_immediately) are unaffected — they show immediately as before.
+
+# Version 1.3.73
+- Turned `PROFILE_CONSTRAINT['force_resort']` OFF (testing flag; also inert since
+  the plain-form flip).
+- `StatusDict.cull` now also drops a profile status node when NO sense currently
+  carries that profile (membership of any kind — not "sorted"/"verified"), so the
+  residue force_resort/the constraint wrote for machine-computed profiles is swept
+  out of data.json as normal maintenance (cull runs from maybeboard). Scoped to
+  segmental cvts (profile = CV profile, tracked in `db.ps_profiles`); 'S'
+  macrogroups/sentinels and not-yet-computed ps are left alone.
+
+# Version 1.3.72
+- Design docs for the record → bulk-ASR → select rework: ADR 0002 (storage
+  schema — ASR drafts as repo-keyed annotations on the -x-audio form, md5
+  staleness) and docs/asr_bulk_transcription_design.md (three-stage
+  architecture, two-pathway loop, CPU timing ~11 h/1700 files × 20 langs,
+  phased plan). No code changes.
+
+# Version 1.3.71
+- Segment status board no longer shows empty/no-data rows: it now lists only
+  profiles present in `db.ps_profiles` (confirmed/affirmed, empty-excluded),
+  rather than every machine-computed profile from `slices.profiles()` — which is
+  where force_resort/machine residue was coming through.
+- The affirm/sort warning now fires when the segmental/tone sort page OPENS (via
+  `after()` in SortS/SortT `__init__`), not only on 'Sort!' — `offer_profile_setup`
+  returns the choice (and refreshes the board on affirm); the runcheck call is now
+  just a guarded fallback.
+
+# Version 1.3.70 (superseded within this session — see 1.3.71)
+- Fixed the segment status board listing no-data profiles after the plain-form
+  flip: `slicebyps_profile`/`get_ps_profiles` now exclude empty/Invalid profiles,
+  so only profiles that actually have confirmed/affirmed data are sliced and
+  listed (words with no profile yet aren't bucketed under an empty profile).
+- Fixed the affirm/sort trigger not firing: it now fires when ANY word in the ps
+  lacks a profile (not only when there are none at all), asked once per task open
+  — so opening a segmental/tone sort with unfinished profiles offers affirm /
+  go-to-SortSyllables / cancel.
+
+# Version 1.3.69
+- Moved the "Not {profile}" escape hatch from under the word into the CHOICE list
+  on the one-word sort page — after "Other {check}", before "Skip this item"
+  (`getanotherskip`). Unverifies the presented word's CV profile and advances;
+  `unverify_profile` now also rebuilds the ps-profile slices so the word drops out.
+  Segmental/tone profile sorts only (the syllable Task-2 keeps its macrogroup escape).
+
+# Version 1.3.68
+- "Not {profile}" escape hatch on the one-word sort page: a button that unverifies
+  the presented word's CV profile (clears the plain …-x-cvprofile and the profile
+  sort-group annotation) and advances, so a misplaced word drops out of its
+  presorted profile and is re-derived on the next presort. (`_reject_profile` /
+  `unverify_profile`; button added in `build_present_sense`.)
+- Trigger when a segmental/tone sort opens with no syllable-profile data for the
+  ps: offers "Use the machine analysis as profiles" (→ affirm_machine_profiles),
+  "Sort syllable profiles first" (→ open SortSyllables), or Cancel — with a note
+  that words lacking a syllable profile won't be sorted for anything else either.
+  (`Sort._maybe_offer_profile_setup` + `sort_ui.offer_profile_setup`.)
+
+# Version 1.3.67
+- Flipped the plain …-x-cvprofile form to confirmed/affirmed-ONLY: `getprofileofsense`
+  no longer auto-seeds it from the machine guess. It's the profile DATA the
+  segmental/tone sorts read, and is now written only by a syllable-profile verify
+  or by `affirm_machine_profiles`. (force_resort no longer affects it — now inert.)
+- Wired the syllable-profile verify to the plain form: `updatestatuslift`, when the
+  check is the ftype (the profile sort, not a #C/C#/syls primitive), sets each
+  verified word's plain …-x-cvprofile to its CV profile group, and clears it on
+  unverify — so confirmed profiles populate the data segmental reads, and an
+  unverify ('Not {profile}', coming next) removes it.
+
+# Version 1.3.66
+- `…-x-cvprofile_MT` now holds the STRAIGHT machine CV analysis, irrespective of
+  constraints (per the agreed model): `getprofileofsense` stores the raw profile
+  in `_MT` and keeps the constrained value only for the presort/data form.
+- New `ProfileAnalyzer.affirm_machine_profiles()`: copies each sense's `_MT`
+  (machine analysis) into the plain `…-x-cvprofile` form (the profile DATA the
+  segmental/tone sorts read) and rebuilds the ps-profile slices — so languages
+  where syllable-profile sorting isn't worth it can accept the machine analysis
+  wholesale and move straight to segmental/tone sorts. (Trigger to offer this on
+  opening a segmental/tone sort without syllable profiles is the next step.)
+
+# Version 1.3.65
+- Syllable-prep seeding now runs at LIFT LOAD, not only on 'Sort!'. The per-sense
+  seeding rule was extracted to `params.seed_sense_primitives` (single source,
+  used by both the prep-task presort and the new load pass, so they can't drift),
+  and `ProfileAnalyzer.run` calls it for every sense after profiles are computed —
+  then rebuilds the syllable-prep slice node. So `syllable_prep_complete` reflects
+  reality at load: a word that became analyzable but was stranded without a syls
+  count (e.g. 'always') gets it on load, keeps prep open, and the 3D board only
+  appears when prep is genuinely complete — no Sort! press required. Gated to
+  databases where prep has started (any word has a #C primitive); pristine DBs are
+  untouched. `presortgroups` refactored onto the shared seeder (dropped the
+  one-time 1.3.21 vowel-initial DIAG; kept the seeded/defaulted/backfilled tally).
+
+# Version 1.3.64
+- Fixed words stuck with syls=None (no syllable count) even after their profile
+  became analyzable. `presortgroups` seeds #C/C#/syls together only on first
+  encounter with a valid profile; a word first seen with an empty/Invalid profile
+  was defaulted #C=C/C#=C WITHOUT syls, and the idempotent "#C already set" guard
+  then skipped it forever — so the "handled when analyzable" promise never fired,
+  and the word, being in no syls group, never blocked syllable_prep_complete (the
+  3D board showed while it was never sorted for syllables). The already-bucketed
+  branch now seeds syls (and the profile annotation) when it's missing and the
+  profile is analyzable (confirmed profile, falling back to the machine value);
+  logs how many words it rescued.
+
+# Version 1.3.63
+- Reworked the syllable-profile presort constraint: SYLLABLES FIRST, then edges
+  (the old version trimmed edges first and could delete a syllable's vowel —
+  e.g. CCCVCCCV → CCCVCCC, dropping it from 2 syllables to 1).
+  1. Syllable count: a profile's count is ambiguous between its vowel-SEQUENCE
+     count (VV=1) and its INDIVIDUAL-vowel count (VV=2); if `syls` is in that
+     range the vowels are left alone, else vowel runs are removed (over-count) or
+     added (under-count), preferring an edge run whose removal/addition also fixes
+     that edge's C/V constraint (one move, two fixes).
+  2. Edges: add/remove CONSONANTS only — never delete a syllable's vowel just to
+     fix an edge.
+  3. Fallback: if still inconsistent, emit 'CV' per syllable (+final C if C#=C,
+     −initial C if #C=V) — guaranteed consistent; logged as a fallback.
+  `constrain_profile` now returns {profile, changed, fallback, valid} and never
+  (by construction) emits a profile that violates the constraints; a validity
+  check logs an error if one somehow does (once per input profile).
+- Logging: conversions and invalid-result errors once per INPUT profile; syls=None
+  (confirmed #C/C# but no verified count — a data anomaly) logged once per sense id.
+
+# Version 1.3.62
+- 3D syllable board cells now follow the segment-group board's conventions
+  instead of invented ones: profiles shown as "profile (count)" (not "profile
+  ×n"), each marked with a trailing "+" when that profile group is verified
+  (same as `g+='+'` in makeprogresstable). Dropped the cell-level "✓" prefix and
+  the arbitrary 6-line cap; the macrogroup keeps its "work remains" border.
+
+# Version 1.3.61
+- TESTING: `PROFILE_CONSTRAINT['force_resort']` flipped ON so the profile
+  constraint re-applies to already-(pre)sorted words. This overwrites confirmed
+  sort data — flip back to False before saving over good data.
+
+# Version 1.3.60
+- Syllable presort now reconciles a machine CV profile with the word's CONFIRMED
+  primitives, so an analysis that contradicts what the user verified (e.g. 'CVCV'
+  for a confirmed C_1_C word) is constrained to fit ('CVCV' → 'CVC'). New
+  `params.constrain_profile` (segment-aware, so length/tone modifiers ride their
+  base segment): trims leading segments to the confirmed #C type, trailing to the
+  confirmed C# type; syllable-count enforcement is a documented OFF-by-default
+  hook (interior vowel-run reduction is ambiguous; edge-trim handles the common
+  over-count). Highly configurable via `params.PROFILE_CONSTRAINT`. Applied in
+  `ProfileAnalyzer.getprofileofsense` (no-op until primitives are verified);
+  logs each DISTINCT conversion once ('CVCV → CVC' once, however many words).
+- 3D syllable progress board cells now show the actual profiles with counts
+  (most common first, capped with the full breakdown + total in the tooltip),
+  instead of just the macrogroup total. '—' marks not-yet-presorted words.
+- TESTING flag `PROFILE_CONSTRAINT['force_resort']` (default off): re-applies the
+  constraint to already-(pre)sorted words so its effect is visible on existing
+  data. It overwrites confirmed sort data — logs a warning when on; don't save.
+
+# Version 1.3.59
+- Fixed a crash on the syllable Task-1 → Task-2 board transition:
+  `_measure_siblings` (window-sizing) iterated the window's children and called
+  `grid_info()` on each, but the "All the syllable groups are checked!"
+  ErrorNotice is a Toplevel child (no `grid_info`). It's now skipped via the
+  existing sibling-skip condition (`isinstance(sib, Toplevel)`), like other
+  non-gridded siblings.
+
+# Version 1.3.58
+- Syllable-count chooser word highlight, take 4 (the one that should show): the
+  background recolour was a no-op because several themes set activebackground ==
+  background. Switched to the button's focus-highlight BORDER (highlightthickness
+  + highlightbackground, the prep board's proven mechanism) in the theme accent
+  ('highlight') colour, restored on Cancel.
+
+# Version 1.3.57
+- Syllable-count chooser word highlight, take 3: recolour the verify BUTTON's
+  background to its active colour (matching the status-table `activate_cell`),
+  not the wrapper frame's border (which didn't render). Added an
+  `update_idletasks()` flush so the recolour is painted before the modal chooser
+  takes the event loop — the likely reason the earlier button attempt showed
+  nothing. Restored on Cancel; Shorter/Longer destroy the button.
+
+# Version 1.3.56
+- Syllable-count chooser placement now estimates the Shorter/Longer offset from
+  the buttons' REQUESTED widths while still withdrawn (no off-screen park — that
+  was visible at the screen edge on some WMs, and no mapping before positioning).
+  Buttons pack left in adjacent columns, so their centre-midpoint is (3*sw+lw)/4
+  (or lw/2 when only 'Longer' exists). The window is mapped once, already in
+  place. Ignores the few-px frame border (an estimate). Falls back to the pointer
+  position if measuring fails.
+
+# Version 1.3.55
+- Syllable-count chooser now APPEARS in its final spot instead of being drawn at
+  the WM default position and visibly jumping. It's created withdrawn, parked
+  off-screen (mapped but invisible) just long enough to measure the Shorter/Longer
+  button geometry, then mapped at the computed position. Falls back to the pointer
+  position (and is always deiconified) if measuring fails, so it can't get stuck
+  hidden.
+
+# Version 1.3.54
+- Status pane now distinguishes the syllable prep primitives. `cvcheckname` keyed
+  the check name on ftype, but #C/C#/syls share one ftype ('lc'), so all three
+  read identically. New `params.syllable_check_name` names the actual primitive
+  ("word-initial sounds" / "word-final sounds" / "syllable counts"), used by
+  `cvcheckname` when on a syllable primitive (Task-2 profile sort still uses the
+  ftype name). The group line (`cvgrouplabel`) now shows the human group name for
+  syllable prep ("= consonant initial", "= 2 syllables") instead of the bare code.
+
+# Version 1.3.53
+- Syllable-count chooser reference, take 2: the active-colour highlight (1.3.49)
+  recoloured the button's BACKGROUND, which is invisible behind the word's
+  illustration (compound image). Now it borders the word's wrapper FRAME
+  (highlightthickness/highlightbackground) — visible around the picture — and
+  restores it on Cancel. (ui.Button is a real tkinter.Button, so it honours
+  background/activebackground; the colour was just occluded by the image.)
+- The chooser is now positioned so the pointer lands BETWEEN the Shorter and
+  Longer buttons (their centre-midpoint, on the button row), not at the window's
+  top-left — so reaching 'Longer' is no longer a longer mouse travel than
+  'Shorter'. With only 'Longer' (n==1), the pointer aims at it.
+
+# Version 1.3.52
+- Removed the temporary blank-row DIAG (added 1.3.50). Confirmed: a non-breaking
+  space in the gloss was the cause (verified by correcting the data); the 1.3.51
+  display normalisation keeps it from blanking the label regardless.
+
+# Version 1.3.51
+- Fix for the illustration-only verify row: a non-breaking space (\xa0) in a
+  word's display text (e.g. the untranslated "?\xa0?" French gloss) blanks the
+  entire label on this Tk/font, leaving only the picture. The DIAG confirmed the
+  formatted text was correct ('bake — …'), so the failure is in rendering, not
+  data. `build_verify_button` now normalises \xa0 → plain space for display
+  (data untouched).
+
+# Version 1.3.50
+- TEMPORARY diagnostic (removable): `verifybutton` logs `text`/`glosslangs`/
+  `frame`/`cvt`/`ftype`/`en`-in-`lc`/`glosses` for any sense whose id contains
+  "bake", to capture why one CAWL entry renders as illustration-only in the
+  syllable verify (the static entry data traces to non-empty text, so this
+  catches the runtime state). Remove once diagnosed.
+
+# Version 1.3.49
+- Syllable-count chooser now refers visibly to the word that opened it: the
+  clicked verify button stays in its active colour while "How many syllables?"
+  is open, and is restored on Cancel (Shorter/Longer move the word out, so the
+  button is destroyed — only Cancel needs the restore). The chooser is also
+  placed at the pointer (where the word was clicked), like a context menu —
+  best-effort, since Wayland/XWayland may ignore a client-set window position.
+
+# Version 1.3.48
+- Fixed: flagging a word in the syllable-count (syls) verify did nothing. The
+  Shorter/Longer chooser was built with `ui.Toplevel(parent, title=…)`, but
+  ui.Toplevel passes kwargs straight to tkinter, so `title=` became the invalid
+  widget option `-title` and raised (swallowed by the Tk error catcher, so the
+  click silently failed). Switched to `ui.Window` like every other dialog (it
+  accepts `title`, themes, builds `.frame`, and surfaces over the kiosk run
+  window); content now grids into `w.frame`, with `w.lift()`.
+
+# Version 1.3.47
+- Syllable PREP navigation: finish the current check (forward + wrap within it,
+  picking up any slice a misfit re-opened) before advancing — fixing 1.3.46,
+  where finishing V# could jump to syls while a C# slice was still pending (the
+  wrap spanned all checks instead of stopping at the check boundary). When the
+  current check IS fully verified, the next slice is the earliest pending in
+  fixed check order (#C, C#, syls), so an unverified slice in an EARLIER check
+  (e.g. one skipped via a board click) is returned to rather than skipped.
+
+# Version 1.3.46
+- Syllable PREP verify navigation now walks each pass FORWARD instead of always
+  jumping to the first unverified slice. `next_unverified_slice` keeps a cursor
+  and returns the next pending slice after it, wrapping only at the end of the
+  order (all #C=C, then #C=V, then C#…, syls…). So moving a misfit into an
+  earlier slice (re-opening it) no longer cuts the user back to it mid-pass
+  (V4 → C27 → V5 → C27…); re-opened slices are picked up on the wrap, after the
+  rest of the pass. The "what's still unverified?" test is now at the end of a
+  pass, not after every group. Board-click selection still overrides (and the
+  pass continues from the clicked slice).
+
+# Version 1.3.45
+- Syllable PREP rebuild now reproduces the interactive slice layout. `assign_slices`
+  mirrors `move_misfit`'s placement: words whose spelling agrees with the group
+  sort in naturally; by-ear-only members (spelling implies another group, or
+  unanalysable) go to the end, clustering in the last slice(s) as a re-verify
+  cohort. So a from-scratch rebuild (now the norm, since the index is session-local)
+  reconstructs the layout from durable data — membership annotation + the
+  spelling-derived value — instead of a flat alphabetisation.
+- The three primitives (`word_initial`/`word_final`/`syllable_count`) + `VOWEL_SYMS`
+  moved from the `Syllables` task mixin to `params` (their canonical home), so they
+  can be reached off the live task — needed because `assign_slices` runs on the
+  board-render rebuild, where `program.task` may not be a syllable task.
+  `Syllables._word_*`/`_syllable_count` now delegate to params; `_orthographic_value`
+  uses params directly (reads the plain `cvprofile` form, matching presort).
+
+# Version 1.3.44
+- Syllable PREP board: clicking a slice cell now SELECTS it as the next slice to
+  verify (and moves the highlight) instead of immediately launching the verify —
+  matching every other sort task (click to select, then 'Sort!' to act). The
+  selection is stored on `program.syllable_preferred_slice` so it survives the
+  SyllableSliceDict rebuild that `runcheck` does between the click and the button
+  press; `next_unverified_slice` honours it once. `verify_prep_slice` →
+  `select_prep_slice`; new `StatusFrame.update_active_prep_cell` moves the
+  highlight (prep cells are keyed by (check,group,idx), not profile). The board
+  highlights the active slice (selection if still pending, else next pending).
+  (Click-to-launch may return as an opt-in workflow later.)
+
+# Version 1.3.43
+- Syllable PREP slice/page index is now SESSION-LOCAL — no longer written to the
+  LIFT as `<check>-slice` annotations. It's packing state, not a lexical fact, so
+  it's recomputed deterministically each session from the durable LIFT data
+  (group membership in the `<check>` annotation + confirmation in the primitive
+  verification field). Boundaries stay stable within a session; across a restart
+  they recompute (same inputs → same boundaries). `build()` writes no LIFT data
+  now, and only persists the `data.json` node cache when it actually changed.
+  `_prep_board_data` builds so the board repopulates from membership after a
+  restart. Legacy `<check>-slice` annotations are ignored (not stripped).
+  Rationale + the accepted minor regression: docs/adr/0001-syllable-slice-index-ephemeral.md
+  (drafted by the AI agent; provisional, pending terminology review).
+- Default words-per-page (`MAX_SLICE`) lowered from 150 to 50.
+- Fixed: the `syllable_max_slice` setting was never persisted/loaded — it was in
+  DOMAIN_MAPPING['ui'] but missing from settings['defaults']['attributes'], so
+  `makesettingsdict` never collected it. It fell back to the default in the label
+  while the slices on file used the user's real cap (disagreement + a needless
+  re-slice on open). Now registered like `buttoncolumns`, so it round-trips.
+
+# Version 1.3.42
+- The "words per page" chooser now closes immediately on selection, before the
+  syllable-prep board re-slices and redraws, instead of lingering on screen
+  through the (slightly slow) re-slice and dying afterward. `setmaxslice`
+  destroys the chooser first, then defers the `build()` + `maybeboard()` to a
+  short `after()` so the window teardown renders first (and no synchronous Tk
+  flush is forced). Bad input still leaves the chooser open to retry.
+
+# Version 1.3.41
+- Changing "words per page" (syllable_max_slice) now re-slices and redraws the
+  syllable PREP board immediately, instead of only updating the label and
+  deferring the reshape to the next prep run. `setmaxslice` now calls
+  `_prep_board_data(ps).build()` (re-slices the checks whose stored slice_cap
+  changed; 'done' is re-derived from the durable per-sense codes so verified
+  words stay verified) followed by `maybeboard()`. Guarded to the syllable
+  task (cvt=='S'). The slice data itself is durable (per-word <check>-slice
+  annotations + the status node in data.json); program.syllable_slices is only
+  the live reader over it.
+
+# Version 1.3.40
+- Syllable PREP (Task 1) status board now refreshes when you close the run window
+  mid-prep. `SyllablePrep._finish_prep_slice` previously bailed out of its
+  close branch without redrawing, so slices verified before closing kept their
+  pre-task appearance until the task was reopened (the data was always persisted
+  correctly — only the redraw was missing). It now calls `self.status.maybeboard()`
+  on that branch, matching the per-completion `maybeboard()` the other sort
+  checks already fire. Per-slice status is reported per slice (synthetic
+  `group␟idx` ids in the `done` cache), and survives re-slicing because doneness
+  is re-derived from durable per-sense primitive verification, not the slice ids.
+
+# Version 1.3.39
+- Wait window is now a SINGLETON owned by the Tk root, reused across waits instead
+  of created+destroyed each time. `Wait` is built once (mastered by tk_root,
+  withdrawn) and shown via `activate()`/`deactivate()` (deiconify/withdraw) rather
+  than `Wait(...)`/`close()`→`destroy()`. `Waitable.wait()` records the window to
+  background (`reveal_parent`/`do_reveal` on the singleton), swaps in the new
+  message, and deiconifies the one window; `waitdone()` reveals the tracked parent
+  then withdraws the singleton. New `Waitable._waitwindow()` resolves the per-root
+  singleton via `self._root()` (so the startup fakeroot gets its own). `iswaiting()`
+  now means "the one wait window is currently shown (active)", not "a ww object
+  exists". Removes the per-wait realize/teardown cost and the extra window-state
+  transition that was stacked right after the parent withdraw — so on the 2nd+ wait
+  the dialog is just a deiconify (~0s) of an already-built window.
+  - Progressbar is now ungridded on `activate()` and re-gridded on demand by
+    `Window.progress()`, so a wait that reports no progress shows no (stale) bar in
+    the reused window.
+  - `make_cancellable()` is idempotent (build once, show/hide) since the window
+    persists; added `hide_cancel()`.
+  - Mirrored in the webview backend (`ui_webview.py` `Wait`/`Root`) and documented
+    in the `WaitInterface`/`WaitableInterface` contract (`ui_interface.py`).
+  - NOTE (scope): the parent window is still withdrawn (`self.withdraw()`) per the
+    agreed design, so the parent-withdraw transition (XWayland deadlock ingredient
+    "B") is unchanged; this change removes the per-wait window churn, not that
+    transition. Putting the verify build back on the `drive_work` pump (so the
+    dialog actually animates during a long build) remains a separate follow-on.
+
+# Version 1.3.38
+- The ~20s "blank" is `waitdone()`'s `update()` (the verify render); the fullscreen
+  deiconify is ~0s (1.3.37 timing). Virtualization is confirmed working — it caps
+  the render at the visible rows (~21), so 150-item slices cost ~the same as 30
+  (the floor is ~21×~1s/item, the XWayland per-item render cost). Virtualization
+  stays (it's what makes big slices viable). For that floor, reordered `waitdone()`
+  to render+reveal the run window WHILE the "Loading…" dialog still covers the
+  screen, then close the dialog — so the user sees "Loading…" during the render
+  instead of a blank screen (the long-requested "cover it" fix). The deeper per-item
+  render cost (~1s/item on this XWayland box) is left as-is — diminishing returns.
+
+# Version 1.3.37
+- Diagnostic: the `verify reveal (waitdone)` numbers show ~17–33s regardless of
+  slice size (30→~22s, 75→~32s, 142→17s) — so it's a FIXED per-slice cost, not the
+  per-item render. Virtualization (1.3.32) was therefore aimed wrong: it caps the
+  visible-render and the scroll is nicer, but the clock barely moved. Split
+  `waitdone()`'s timing (`waitdone: update Xs, deiconify Ys`) to confirm whether the
+  fixed cost is the app-wide `update()` or the fullscreen kiosk `deiconify()` (the
+  per-slice window remap). If it's the deiconify, the fix is to stop remapping the
+  fullscreen window each slice (reuse it mapped) — and virtualization likely reverts.
+
+# Version 1.3.36
+- Fix the empty "Select Words Per Page" dialog: it used `scrolling=True`
+  (`ScrollingListBox`), which rendered no options; switched to `scrolling=False`
+  (`ListBox`), matching the working "button columns" dialog. The 8 options
+  (15/30/50/75/100/150/200/300) fit without scrolling.
+
+# Version 1.3.35
+- Fix startup crash from 1.3.34 (`'Settings' object has no attribute 'get'`):
+  `program.settings` is the legacy `Settings` object, which exposes settings as
+  plain attributes (the `buttoncolumns` pattern), NOT the `.get()/.set()` domain
+  API I'd assumed. Switched all three sites to the attribute (`syllable_max_slice`):
+  `settings.setmaxslice`, the status `maxslicelabel`, and `SyllableSliceDict.max_slice`.
+  (The old `max_slice` read `settings.get()` inside a try/except, so it silently
+  fell back to the default and the setting had never actually applied — now it does.)
+  Persistence still rides `DOMAIN_MAPPING['ui']` like `buttoncolumns`.
+
+# Version 1.3.34
+- Words-per-page (syllable slice size) is now a user setting, field-tunable per
+  machine without code changes — since the right value depends on hardware and
+  we've only tested one box. It lives in the status frame just under "button
+  columns" (shown during syllable sorting, cvt='S'): click to pick from
+  15/30/50/75/100/150/200/300. Stored as `syllable_max_slice` in the `ui` domain
+  (auto-saved); `SyllableSliceDict.max_slice` already reads it, falling back to the
+  `MAX_SLICE` default. Wiring: `Converter.DOMAIN_MAPPING['ui']` += the key;
+  `settings.setmaxslice`; status `maxsliceline`/`maxslicelabel`/`updatemaxslice`;
+  `ui_settings.getmaxslice` dialog.
+
+# Version 1.3.33
+- `MAX_SLICE` 30→150: virtualized verify (1.3.32) renders only the visible rows, so
+  per-page render should be independent of slice size — testing big pages (fewer of
+  them). This run also confirms whether virtualization actually cut the render: the
+  `verify reveal (waitdone)` time at 150 should be small (a few seconds) if so, or
+  ~tens of seconds if the off-screen unmap isn't landing before the render (a fixable
+  timing bug). Scroll-height ceiling: ~150×80px is well under the X11 32767px cap.
+
+# Version 1.3.32
+- EXPERIMENTAL: virtualized verify list. The render wall is that Tk paints every
+  *mapped* gridded child, so all N items render even though ~a dozen are visible
+  (~0.5s/item → the "blank minute"). `_virtualize_verify` now unmaps rows outside
+  the viewport before `waitdone()` renders, pinning each row's height (`minsize`)
+  so the scrollbar still spans the whole list, and re-maps rows as you scroll (via
+  a lightweight 150ms poll on `canvas.yview`). Goal: render ~0.5s×visible instead
+  of ×N, independent of slice size. Contained to the verify build path; comment out
+  the call (or revert this version) to disable. Untested first cut — expect to
+  iterate (row-height estimate, initial-viewport math, scroll-lag are the risky
+  bits). Does NOT touch the ~8s fixed per-slice cost (likely the kiosk deiconify).
+
+# Version 1.3.31
+- Correction: the batch build's "verify build 0.9s" was a misleadingly-scoped timer
+  — the real per-slice cost is RENDERING the items, which moved into `waitdone()`'s
+  `update()` (`verify reveal (waitdone)`), measured at ~22.6s for 30 items (~0.7s/
+  item, roughly linear). So the batch rework didn't speed things up vs streaming; it
+  only relocated (and hid) the cost. The genuine, solid win remains the FREEZE fix
+  (no deadlock at any slice size). Small slices do NOT fix the render.
+- Removed the 1.3.18/.19 full-wordlist image preload (a cache-exoneration DIAG that
+  hoarded ~1700 images → ~4 GB RSS); reverted to the per-slice lookahead. Tests
+  whether that 4 GB was slowing the per-item render (memory/X pressure). The LIFT
+  write is already backgrounded, so it's not the main-thread blocker (GIL contention
+  during its serialization is a possible secondary factor, not yet pursued).
+
+# Version 1.3.30
+- Located the "blank minute": it's `waitdone()`'s `self.update()` (ui_tkinter.py
+  1170), which renders the whole build backlog (N buttons+images, ~1 XWayland
+  round-trip each) AFTER closing the "Loading…" dialog and BEFORE deiconifying the
+  run window — so it's invisible. The actual final paint is only ~2s. Added a timer
+  (`verify reveal (waitdone) Xs`) so that gap is no longer silent.
+- `MAX_SLICE` 75→30: the render is super-linear (~5s at 30 vs ~a minute at 75), so
+  small slices keep each page snappy. (Big-and-fast needs virtualized scroll = #4.)
+- Also surfaced: the LIFT write has grown to ~16s/slice over a session (whole-file
+  rewrite + accumulating durability verification codes), entangled with the build's
+  "residual" — a separate cost to address next, independent of slice size.
+
+# Version 1.3.29
+- Diagnostic: time the single `update()` commit (logs `verify commit (paint) Xs`).
+  The build is fast (~0.9s) but the window appears ~a minute later — the gap is the
+  PAINT (compositing N buttons+images on XWayland), one opaque blocking commit in
+  batch mode. This measures it per slice size to drive the next decision (smaller
+  slices for short paint gaps vs keeping a "Loading…" dialog up through the paint).
+
+# Version 1.3.28
+- Verify build rearchitected (#3): batch-build the whole slice with NO per-item
+  flush, then a single drained `update()` commit. The logs showed the per-item
+  synchronous progressbar flush (not the work — that's ~0.4s total for 75) was the
+  ~0.6s/item cost AND the large-slice deadlock; total time scaled with item count,
+  so page size couldn't fix it. Now: place all buttons under one `suspend_configure`
+  → one `resume_configure` reflow (in `_grid_ok`) → one `runwindow.update()` (which
+  DRAINS the event queue while flushing, avoiding the XWayland write-deadlock a bare
+  `update_idletasks` hits on a big backlog). Expectation: ~44s→a few seconds, no
+  per-item round-trips (so no per-item freeze risk), and big pages potentially both
+  fast and safe. Replaces the `_first`/`_rest` streaming. `MAX_SLICE` stays 75 for
+  the first test, then 150. Fallback if this regresses: restore streaming + one
+  midpoint reflow.
+
+# Version 1.3.27
+- Reverted the 1.3.26 progressbar-flush guard: that flush is LOAD-BEARING — it's
+  what commits the Wayland surface so the window paints during the build. Guarding
+  it removed the large-slice deadlock but left the window unpainted (confirmed: no
+  visible UI at all at 150/page, build never completes, event loop idle = not a
+  deadlock). So the deadlock and the painting are the same call; it can't just be
+  removed. The Wait.__init__ guard (1.3.24) stays (it helped the blank-dialog time
+  and isn't the per-tick paint commit).
+- `MAX_SLICE` 150→75 to find the largest slice that both paints (flush on) and
+  avoids the deadlock. 75 was historically marginal, but the kept Wait guard
+  removed one synchronous flush per slice, which may give it enough margin. If 75
+  still wedges (faulthandler at progressbar→update_idletasks), 30 is the known-good
+  size and large pages await the #3 fix: a non-deadlocking per-tick surface commit
+  (e.g. `update()`, which drains the event queue rather than only flushing).
+
+# Version 1.3.26
+- Freeze fix, part 2: at 150/page the deadlock RELOCATED (faulthandler) from the
+  now-guarded Wait flush to `Progressbar.current`→`update_idletasks` (reached via
+  `waitprogress`/`drive_work`) — same synchronous-flush family, next call down. So
+  it's the flushes, NOT window creation (the Wait window built fine; the hang was
+  mid-drive). Scoped-guarded that flush on Wayland too: the bar value still sets and
+  the `after(1)` event loop paints it, no forced round-trip. `MAX_SLICE` stays 150
+  to test whether this clears the large-page freeze (→ big pages safe, retiring the
+  many-pages cost) or relocates again (→ next flush, or the #3 single-window work).
+
+# Version 1.3.25
+- Diagnostic: `MAX_SLICE` 30→150 to test the second suspected freeze mechanism now
+  that the Wayland flush-deadlock is guarded (1.3.24). 1.3.24 also visibly cut the
+  blank-dialog time from ~6–7s to <1s (the forced flush was delaying the paint it
+  was meant to force). If 150/page builds clean, the guarded flush was the whole
+  story and big pages are safe (retiring the many-pages UX cost); if it wedges,
+  there's a real compositor pixmap/texture limit on the tall 1-column verify list
+  and we add the columns / scroll-height fix.
+
+# Version 1.3.24
+- Freeze fix (item 2): scoped-guard the synchronous `update_idletasks()` in
+  `Wait.__init__` on Wayland. That flush (a blocking server round-trip right after
+  `deiconify()`) is the faulthandler-confirmed XWayland deadlock point; it only
+  force-paints the dialog before the slow work, which `drive_work`'s `after(1)`
+  event loop does ~1ms later anyway — so it's redundant and we skip it on Wayland
+  ONLY. Deliberately NOT the module-wide `WAYLAND_UPDATE_GUARD` (that would also
+  kill the legitimate geometry-measurement flushes); just the one deadlocking call.
+  Keeps the wait dialog (it still paints via the loop). MAX_SLICE stays 30 for the
+  first confirming run; raising it is the next test (whether big pages are now safe).
+
+# Version 1.3.23
+- Syllable PREP verification is now LIFT-durable, fixing an inconsistency the prep
+  rework introduced: the segmental/profile checks persist confirmation per-sense in
+  the LIFT (and status is drawn from it), but prep stored verified-slice state only
+  in data.json — so prep confirmation was lost if data.json died.
+  - New profile- AND ps-INDEPENDENT field `'<ftype> primitive verification'`
+    (`Sense.primitiveverification`, routed via a `PRIMITIVE_VPROFILE` sentinel in
+    `verificationkey`) holding per-sense codes `#C=C` / `C#=V` / `syls=2`. Profile-
+    independent because the primitives DETERMINE the profile (can't be keyed by it;
+    the old `whole-word lc verification` pseudo-profile was that same smell).
+  - `SyllableSliceDict.mark_slice` writes/removes these per-sense codes; the status
+    `done` list is now DERIVED from them in `build()` (a slice is done iff every
+    member is confirmed) — so prep status is reconstructed from the LIFT like
+    everything else.
+  - `mark_for_reverify` no longer strips members' confirmations (a moved-in misfit
+    just lacks a code, so the slice is auto-pending) — preserves real user data.
+  - presort is deliberately UNCHANGED (still idempotent): we do NOT auto-re-derive
+    machine defaults, which would clobber corrected-but-unconfirmed values on
+    restart. The bad-data source (ps-less profiles, threading race) is fixed in
+    1.3.22, so stale pre-fix values (e.g. 'away'='C') are left for manual cleanup.
+  - Note: existing prep `done` (data.json) and the legacy `whole-word lc
+    verification` fields are not migrated; prep re-verifies once, then persists
+    durably in the new field.
+
+# Version 1.3.22
+- CV profiles are now computed for EVERY sense, including ps-less ones (principled
+  de-ps of profile computation). The profile is a ps-independent form fact
+  (`profileofform` ignores ps for the value; it only refused to run when ps was
+  falsy), but `run()` iterated `for ps in db.pss`, and `getpss()` drops falsy ps —
+  so a word with no part of speech (e.g. 'away') never got a profile, and
+  wordlist-wide presort then defaulted it to consonant-initial. Now a ps-less pass
+  computes their profile under a truthy `PSLESS` sentinel, VALUE only (no per-ps
+  aggregation, so no phantom ps leaks into segmental/report views). Words that
+  have a ps still populate every per-ps structure exactly as before.
+- Fixed the profile-computation threading bug: `_getprofiles` spawned a
+  fire-and-forget thread per sense and joined only the last, so ~all profile
+  writes raced on the shared XML tree + aggregation dicts (could land wrong/
+  incomplete, vary run-to-run). Now synchronous — deterministic and race-free
+  (the work is cheap regex; the GIL gave the threads no real CPU win anyway).
+
+# Version 1.3.21
+- Diagnostics only: investigating why, after de-ps (1.3.20), vowel-initial words
+  (e.g. 'a'-initial adjectives) land in the consonant-initial (#C='C') bucket.
+  presort now logs, for each word it defaults to consonant, the form + the RAW
+  `cvprofile_<ftype>` value it read (empty vs 'Invalid' vs a real profile), plus
+  the count skipped as already-bucketed. This distinguishes the candidate causes:
+  empty profile (→ likely the fire-and-forget threading in
+  `ProfileAnalyzer._getprofiles`, which spawns un-joined background threads that
+  mutate the XML tree concurrently and joins only the last) vs 'Invalid' (a real
+  form issue) vs already-bucketed-wrong. No fix yet; awaiting the log.
+
+# Version 1.3.20
+- Syllable PREP is now WORDLIST-WIDE, not per-part-of-speech. The three primitive
+  checks (#C / C# / syls) are ps-INDEPENDENT form facts, so they're established
+  once over the whole wordlist; ps re-enters only downstream as the (profile × ps)
+  intersection for segmental slices. Changes:
+  - `SyllableSliceDict._psenses()` → `db.senses` (all ps), so groups/slices/board
+    span the whole wordlist (this also resolves the cache-test plateau at ≈920 =
+    Nouns-only — prep itself now walks every illustrated word).
+  - Prep verify state moved under a new `params.SYLLABLE_PREP_PS='*'` sentinel ps
+    (shared across ps) instead of the live ps; `_node()` and
+    `syllable_prep_complete()` (now ps-agnostic) follow.
+  - `Syllables.presortgroups()` seeds EVERY word, not just the current ps.
+  - Note: existing per-ps prep verify state is orphaned (re-verify from scratch) —
+    already the case anyway since the 75→30 cap change forces a re-slice.
+
+# Version 1.3.19
+- Diagnostics only: the v1.3.18 full preload plateaued at cache≈920 because
+  `all_uris()` walks the ps-bound slice dict (Nouns only ≈ 924 forms). Repointed
+  the cache-ceiling test at `program.db.senses` (the whole wordlist, all parts of
+  speech) so the cache races to its true ceiling (~all illustrated words). Same
+  intent as 1.3.18: confirm a full cache does not break 30/page builds.
+
+# Version 1.3.18
+- Diagnostics only (agenda item 1 — cache-exoneration test): at syllable-prep
+  start, preload EVERY illustration (new `SyllableSliceDict.all_uris()`) so the
+  image cache races to its full size (~all illustrated words) while the user works
+  30 items/page. The v1.3.17 run already ran clean to cache≈566 / RSS 2 GB with a
+  FLAT ~7.5s `update_idletasks` (cumulative pressure falsified; per-page button
+  count confirmed as the freeze driver). This pushes the cache to its ceiling to
+  confirm absolutely that a large cache does not break small-slice builds — i.e.
+  that we may keep the cache and cache aggressively. No fix; awaiting the run.
+
+# Version 1.3.17
+- Diagnostics only: `MAX_SLICE` knocked 75→30 to falsify the cumulative-pressure
+  hypothesis. The v1.3.16 run showed the freezing `update_idletasks` flush scaling
+  with accumulated session state (1.9s @ cache 0 → 8.5s @ cache 170 → hang @ cache
+  286), *not* with the current slice's button count (a 153-item slice built fine at
+  cache 170; the 75-item slice that built fine early hung later at cache 286). If
+  that read is right, 30/page should still wedge — just after more page rebuilds,
+  as the per-flush cost creeps up. No fix yet; awaiting the run.
+
+# Version 1.3.16
+- Diagnostics only: per-step timing inside the Wait-window build. A SIGUSR1
+  faulthandler dump pinned the freeze at `update_idletasks()` (the synchronous
+  flush right after `deiconify()`) in `Wait.__init__` — the classic XWayland
+  state-transition + flush deadlock; the `WAYLAND_UPDATE_GUARD` that used to skip
+  it is currently OFF. This release logs each sub-step — kiosk withdraw (in
+  `wait()`), realize, widget build, deiconify, update_idletasks — each BEFORE the
+  next risky call, so a frozen run leaves a trail naming the wedged step, plus a
+  per-attempt `cache≈N` (live PhotoImage count, an X-pixmap proxy) to test whether
+  the freeze correlates with accumulated X resources. True server-side counts:
+  align these lines with an external xrestop trace by timestamp.
+
+# Version 1.3.15
+- MAX_SLICE 30 → 75, to re-run the 1.3.14 diagnostic at a larger slice. 1.3.14
+  pinned ~18 of the ~23s per 30-item slice on the Wait dialog (progress-bar
+  updates ~11s + Wait-window creation ~7s), with content ~0.3s. At 75/slice the
+  per-item Wait costs (progressbar, paint) should scale ~2.5×; the goal is to
+  confirm the Wait machinery — not content — dominates at larger N too, before
+  removing it. Re-slices 30→75 on the next prep run via the slice_cap marker.
+  Diagnostics from 1.3.14 retained.
+
+# Version 1.3.14
+- Diagnostics only (no behavior change): finer split of the per-slice build. 1.3.13
+  showed ~all 22s as "residual" — NOT image/widget/reflow (each ~0.1s) and NOT
+  affected by the preloader (a fully-prefetched slice built in the same 22s, so
+  decode/pixmap are conclusively irrelevant). This release splits the residual:
+  (a) a timer around `verifybutton_fn` per item (backend status/annotation work vs
+  the widget build already timed), and (b) `drive_work` instrumented per tick into
+  generator-work / progress-bar-update / event-loop-gap. The gap is `after()` +
+  the Tk event-loop pass that paints the just-added imaged button — one synchronous
+  XWayland round-trip per item, the prime suspect for the ~0.7s/item. The log line
+  now reads: per-item work [image/widgets/backend] | drive: genwork/progressbar/
+  eventloop-paint over N ticks | reflow | residual. To be read, then removed.
+
+# Version 1.3.13
+- Diagnostics only (no behavior change): the per-slice verify build (~22s flat,
+  whether or not the 1.3.12 preloader prefetched — which falsifies the I/O/decode
+  hypothesis) now logs WHERE its seconds go. A second log line under
+  `verify build:` partitions the time into image work (split by path:
+  built/preloader-compiled/full-scaled), widget creation, layout reflow, and
+  residual. The `compiled` path is preloader-fed, so its time is pure Tk
+  `PhotoImage` pixmap upload — if that dominates, the wall is X round-trips and the
+  real fix is fewer/cheaper pixmaps, not off-thread decode. To be read, then likely
+  removed once the bottleneck is identified.
+
+# Version 1.3.12
+- Background image preloader for syllable prep (attacks the proven cause: the
+  per-slice build is I/O/decode-bound — ~0.6–0.7s/image, CPU idle — serialized on
+  the Tk thread, which is what wedged at MAX_SLICE=150). While the user reads the
+  current slice aloud, a daemon worker decodes+resizes the next slices' images
+  OFF the Tk thread; the main-thread build then only does the cheap PhotoImage
+  compile. Confirmed by the 30-across-slices test: slices 2/3 do NOT hang, so the
+  per-slice wait dialog is exonerated and the cost is purely size/load.
+  - `Image.__init__(compile_now=False)` restored: skips the lone Tk call so
+    open/decode can run off-thread; `prepare()` does the PIL resize; `compile()`
+    stays on the main thread.
+  - `SortPresenter.preload_images(iuris)`: one daemon worker + queue; dedupes by
+    (uri, size); never clobbers a fully-built image; a bad image can't kill it.
+  - `set_sense_illustration`: when an image was prepared off-thread, it just
+    `compile()`s (cheap) instead of re-running the resize.
+  - `SyllableSliceDict.upcoming_slices`/`preload_uris` feed the next N pending
+    slices' image URIs in walk order; `verify_slice` queues them once a slice is up.
+  - Lookahead depth configurable: `syllable_preload_lookahead` (default 2).
+  - MAX_SLICE stays 30 for now; the preloader is the lever to raise it later.
+
+# Version 1.3.11
+- Reverted to the known-good test point: MAX_SLICE back to 30 and the per-page
+  background-load WAIT dialog left in place. The 150-slice test failed two ways:
+  a 71s build (I/O-bound) AND a hard hang on slice 2 in *Wait-window creation*
+  (mapping the Wait dialog over the already-mapped kiosk window). Open question
+  to disambiguate by testing 30 across multiple slices: is the slice-2 hang
+  size-dependent (→ I/O/build-size) or the per-slice wait dialog (size-independent)?
+- Kept `Image.prepare()` (PIL resize split from the Tk PhotoImage compile) as
+  groundwork for the I/O hypothesis / a future background preloader. Inert until
+  called. (Its companion, `Image.__init__(compile_now=False)`, was NOT kept.)
+
+# Version 1.3.10
+- MAX_SLICE default back to 150 (was 30) to test whether the suspend_configure
+  reflow fix (1.3.9) makes full-size prep slices build acceptably. The cap-change
+  re-slice in SyllableSliceDict.build will re-slice existing 30-word data to 150
+  on the next prep run (slice_cap marker per check). Still tunable via
+  'syllable_max_slice'.
+
+# Version 1.3.9
+- LIKELY THE REAL FIX for slow verify builds. The data (30 items, 21.5s, no CPU,
+  flat RSS) pointed at per-item blocking, not compute. Cause: the verify build
+  never wrapped item placement in `ScrollingFrame.suspend_configure()` /
+  `resume_configure()` (those exist for exactly this but were called nowhere), so
+  every streamed item triggered a full O(n) scrollregion reflow — a synchronous X
+  round-trip — making the build O(n²) round-trips ("0.7s/item, no CPU"). Now
+  `build_verify_layout` suspends the reflow during the batch and resumes once
+  after the first screenful and once at the end. Expect the per-page time in the
+  "verify build:" log to drop sharply (and likely makes larger slices viable
+  again — retest before raising `syllable_max_slice`).
+
+# Version 1.3.8
+- Build log now also reports live cached-image count ("N cached imgs") — a
+  client-side proxy for X pixmap pressure, since xrestop shows "no pid" for
+  XWayland clients (they don't advertise _NET_WM_PID). Pair with Xwayland's own
+  VmRSS (server-side pixmap memory) to separate build-time from resource limits.
+
+# Version 1.3.7
+- Wayland update guard is now a one-line toggle: `WAYLAND_UPDATE_GUARD` at the top
+  of frontend/ui_tkinter.py (default False = call update through normally; set True
+  to restore the Wayland skip). (Correction: pulling the guard *correlated* with
+  the transition working — not claimed as proven cause.)
+- Instrumented the verify build to measure what's actually limited: logs
+  "verify build: N items in Ts, RSS A→B MB (C cols)" via psutil. Combine with
+  `xrestop` (X pixmaps) to tell build-time (CPU/IO) from resource pressure.
+
+# Version 1.3.6
+- Result (Kent): with the Wayland guard pulled, the post-page window transition
+  works fine — i.e. SKIPPING update_idletasks was the cause of the wedge (stale
+  geometry the next transition choked on), not the cure. Guard stays disabled.
+- Cache scaled illustrations (`SortPresenter.set_sense_illustration`): `scale()`
+  re-ran PIL.resize() AND allocated a fresh Tk PhotoImage (X pixmap) on every
+  call. The same word's 65px image is shown across all 3 prep checks, every
+  re-verify, the profile sort, and transcription — now it's built ONCE per
+  (image, zoom) and the same PhotoImage is reused; loaded images are also stored
+  in theme.image_cache by URI. Big speed win on rebuilds/repeat displays; the
+  trade-off is more steady-state cached pixmaps (bounded by #unique word images
+  ~800) — add an LRU cap if `xrestop`/RSS shows pressure.
+- NOTE: the ~32,767px Tk canvas height cap (16-bit coords) still bounds a SINGLE
+  column (~360 image-rows); big pages need multiple columns (`buttoncolumns`) or
+  a smaller `syllable_max_slice`. Caching does not change that ceiling.
+
+# Version 1.3.5
+- Diagnosis (Kent): 500+ buttons kills the page build itself; ~150 builds fine
+  but the following window transition kills it. So, for testing:
+  - Disabled the Wayland skip on `UI.update`/`update_idletasks` — they call
+    through unconditionally now, so pages refresh when asked (re-enable by putting
+    `if not USING_WAYLAND:` back in front of each super() call).
+  - Restored the per-page background-load WAIT in `build_verify_layout`: build the
+    first screenful behind a "loading" wait, reveal, then stream the rest in
+    behind it (`runwindow.wait` + `wait_and_drive_work`), as the working segmental
+    verify does. Prep verify passes a "Loading the words that are {desc}…" message.
+  - The reused prep run window stays (one window for the whole prep session,
+    content rebuilt per slice), so there's no per-slice fullscreen transition —
+    the "150 kills the following transition" half. MAX_SLICE default stays 30
+    (tunable via 'syllable_max_slice'); raise toward ~150 to test bigger pages.
+
+# Version 1.3.4
+- Keep CAWL images in syllable-prep verify (NOT dropping them — per Kent). The
+  prep freeze tracked with building a whole big slice's images at once (~0.4s
+  each), so instead SHRINK the slice: MAX_SLICE default 150 → 30, so each prep
+  verify builds like a normal image-bearing segmental verify group (which works).
+  Still tunable via the 'syllable_max_slice' setting (raise if the box is happy,
+  lower if a slice is slow to appear).
+- `SyllableSliceDict.build` now re-slices a check ONCE when the cap changes
+  (stores `slice_cap` per check node) — existing per-word slice indices are
+  otherwise sticky, so lowering the default wouldn't re-slice already-sliced data.
+  A normal misfit (slice one-over-cap) does NOT trigger re-slicing.
+
+# Version 1.3.3
+- Fix (the real one): syllable prep recreated the kiosk-fullscreen run window
+  PER SLICE (`getrunwindow` destroys+remaps a new fullscreen window each call);
+  on XWayland a fresh fullscreen MAP wedges the compositor (pure-`mainloop` hang,
+  no Python wait involved). Segmental never hits this because its page loop builds
+  the window ONCE and only rebuilds content. Prep now does the same: ONE reused
+  run window for the whole prep session (`_prep_runwindow` clears + rebuilds its
+  frame per slice; `getrunwindow` fires at most once / reuses the presort window),
+  so there's a single fullscreen map for all slices. `_finish_prep_slice` no
+  longer `on_quit`s between slices; the window closes only when prep completes or
+  the user quits.
+
+# Version 1.3.2
+- Fix: syllable prep froze at `wait_window` (sorting_engine.py:131) — the
+  per-slice destroy→create→deiconify→`wait_window` churn blocks the X server
+  while the new run window's map is still in flight, which XWayland deadlocks
+  (the central guard only covers `update_idletasks`, not `wait_window`/`tkwait`).
+  Reworked the prep loop to be EVENT-DRIVEN: `verify_slice` builds the slice and
+  returns; the OK button (the canary's `<Destroy>`) marks the slice verified and
+  schedules the next via `after()`. No blocking server-wait anywhere in prep.
+  The end-of-prep notice is now `wait=False` for the same reason.
+- NOTE: the shared `verify()` (segmental/tone) still uses `wait_window`; it is
+  single-page so it's the lower-risk case, but for full Wayland-safety it would
+  need the same event-driven treatment (out of this redesign's scope — run Xorg,
+  or ask and I'll convert it).
+
+# Version 1.3.1
+- Fix: syllable-prep verify froze on XWayland again. `build_verify_layout` now
+  builds the (single-page) verify list IN PLACE — reveal the run window and
+  stream items in, with NO Wait dialog. Mapping a Wait transient over the kiosk
+  window (+ its `update_idletasks`) was the deadlock; "designed out" means no
+  dialog, not just one page.
+- Fix: the syllable-prep progress board no longer renders a header-only skeleton
+  before there are slices to show (`makeSyllableprepboard` bails to `makenoboard`
+  unless real slice cells exist — as elsewhere).
+- Restored the central XWayland guard (`UI.update`/`update_idletasks` skip on
+  Wayland; `utilities/display.py`). It's invisible on Windows/X11 (where users
+  run) and keeps every other popup/Wait dialog (ErrorNotice, join, status reload,
+  the end-of-prep notice) from deadlocking on the dev's Wayland box. The
+  verify-in-place change above stands regardless.
+
+# Version 1.3.0
+- syllable_sort_redesign STEPS 2 & 3 — syllable sorting split into two tasks
+  (docs/syllable_sort_redesign.md):
+  - **Task 1 (PREP).** New `SyllableSliceDict` (`backend/core/analysis.py`,
+    `MAX_SLICE=150`, override via `settings 'syllable_max_slice'`): each of the
+    three primitive checks (#C word-initial, C# word-final, syls count) has its
+    groups cut into STABLE per-group slices of ≤MAX_SLICE words. A word's slice
+    index is persisted per-word ('<check>-slice' annotation); removing a word
+    shrinks its slice (no re-verify), only ADDING one (a moved misfit) re-verifies
+    the target slice. Per-(group,slice) verify state is stored as synthetic group
+    ids in the existing sentinel-profile status node.
+  - **Dedicated driver** `SyllablePrep.maybeverifysyllables`/`verify_slice`
+    (`backend/core/sorting_engine.py`), NOT maybesort: picks the next unverified
+    slice, runs a single-page read-aloud verify (so the XWayland freeze is
+    designed out), and on a flag-out applies the misfit rule — recompute the
+    word's orthographic key for the target group, natural-sort it in if it
+    matches else append to that group's last slice, and mark the target for
+    re-verify. Count miscounts use a ±1 Shorter/Longer chooser
+    (`SortPresenter.ask_syllable_count`).
+  - **Task-1 board** `makeSyllableprepboard` (`frontend/ui_shell.py`): columns =
+    groups (#C #V | C# V# | 1 2 3 …) under check headers, ragged rows = slices,
+    live word counts, verified ✓ / bordered; click a cell to verify that slice.
+  - **Task 2 (SORT) gated on Task 1.** `params.syllable_prep_complete(ps)` is the
+    single predicate gating the board choice (prep board vs the kept 2-D
+    macrogroup board) and `SortSyllables.runcheck` (prep vs the macrogroup profile
+    sort). The shared engine's 'S' check set is now just the profile (ftype)
+    check; the primitives are the prep driver's. `SortSyllables` gains
+    `SyllablePrep` first in its MRO.
+
+# Version 1.2.90
+- syllable_sort_redesign STEP 1 (revert to the clean, segmental-matching
+  baseline): removed verify-list PAGINATION (`frontend/sort_ui.py`
+  `build_verify_layout` is now a single straight build — first screenful behind a
+  wait, then the rest streams in; no pages, no `_render_page`/`_grid_nav`/
+  `_verify_goto`, no per-page Wait) and collapsed the `verify()` page loop in
+  `backend/core/sorting_engine.py` to a single `wait_window(verifycanary)`.
+- Removed the global XWayland workarounds: the `UI.update`/`update_idletasks`
+  Wayland no-op overrides and the `on_quit` `-fullscreen` release
+  (`frontend/ui_tkinter.py`), the `notdonewarning` log-vs-popup split (back to the
+  unconditional "Not Done!" popup, `backend/core/lexicon.py`), and the
+  `USING_WAYLAND` flag. `utilities/display.py` is now a tombstone (safe to
+  `git rm`). Kept the `faulthandler` SIGUSR1 dumper (`main.py`).
+- Rationale: the freeze is designed out by keeping every verify list
+  single-page/slice-bounded, not patched per-call-site. Segmental + tone are
+  untouched (every removed line was inside a pagination or `USING_WAYLAND` block).
+  Syllable's own dedicated prep/sort path lands in STEP 2/3.
+
+# Version 1.2.76
+- Release `-fullscreen` before a window is torn down (in `on_quit`), so the
+  compositor (Wayland/mutter especially) restores keyboard focus to the window
+  underneath promptly instead of leaving a gap where you can't type right after
+  exiting a kiosk window. No-op for non-full-screen windows; cleanup()/maybewrite
+  runs between the release and the destroy, giving the compositor a beat to act.
+
+# Version 1.2.89
+- syllable_sort_redesign.md: made "revert pagination + the global Wayland hacks
+  back to the clean, segmental-matching baseline" the explicit STEP 1, so the
+  rebuild starts from known-good code rather than the saga pile.
+
+# Version 1.2.88
+- Wrote docs/syllable_sort_redesign.md: the agreed two-task design (prep =
+  3 checks × per-group stable slices ≤150, groups×slices board, dedicated
+  `maybeverifysyllables`, misfit→last-slice; sort = macrogroup, gated, 2-D
+  board) plus the plan to remove pagination, the cvt='S' branches, and the
+  global Wayland hacks. Spec only — no behavior change.
+
+# Version 1.2.87
+- Make syllable verify behave like the WORKING segmental verify: SINGLE PAGE,
+  no pagination. A sub-agent study of segmental vs syllable confirmed segmental
+  verify works because its groups are slice-bounded (one CV-profile in one ps)
+  and always fit one page, while syllable's primitive checks (#C/C#/syls) span
+  the whole wordlist (~824 words) and are the ONLY verify that paginated — and
+  the page TRANSITION is the XWayland freeze. Forcing npages=1 removes the
+  transition entirely (the build/wait path is exactly the one segmental uses and
+  that has always worked). A large group is tall (column setting manages that,
+  as in every other sort) — no freeze. Next: undo the unnecessary global Wayland
+  hacks (the update() guard etc.), per Kent.
+
+# Version 1.2.86
+- Verify pagination restructured into a page LOOP in verify(), so each page is
+  built OUTSIDE its wait_window. Confirmed by logs: page 1 builds (after-ticks
+  fire inside wait_window), but page 2 — whose build chain is started from a
+  callback nested INSIDE wait_window — stalls at item 1 on XWayland (after-tick
+  never wakes the loop). Fix: a nav button now ENDS its page's wait (destroys the
+  page's canary) and records the target in `_verify_goto`; verify() then renders
+  the next page via `_verify_render_page(page)` OUTSIDE the wait and waits again.
+  Every page now builds the way page 1 did (which always worked). Single column,
+  OK at the end of the list, per-page Wait on X11/Windows — all unchanged.
+
+# Version 1.2.85
+- Verify page transition (still froze after 1.2.84 — dump parked in wait_window,
+  page-2 build not progressing): the Back/OK nav buttons live in the content that
+  `_render` clears, so clicking one destroyed that very button mid-callback —
+  which can wedge Tk event handling and explains why page 1 (no click) builds but
+  page 2 (click → self-destroy) stalls. `_goto` now DEFERS `_render` to a fresh
+  event-loop tick (`runwindow.after(1, _render)`) so the click returns first.
+  Added per-page item-progress logging (item 1, then every 50) to tell a stall
+  from a slow (~0.44s/item) build.
+
+# Version 1.2.84
+- Verify page transition: on WAYLAND ONLY, build each page IN PLACE (no
+  `wait()`/withdraw, no per-page Wait dialog). Confirmed by faulthandler that the
+  1.2.82 guard wasn't enough — page 2 still wedged in `wait_window` because the
+  per-page Wait WITHDRAWS the mapped kiosk-full-screen run window, and that
+  transition deadlocks under XWayland (page 1 builds because it starts
+  withdrawn; page 2 withdraws a visible full-screen window). On Wayland the run
+  window now stays mapped and drive_work fills items in place (update_idletasks
+  skipped by the guard). X11/Windows keep the per-page Wait unchanged — users
+  are unaffected, and the in-place build the user rejected globally is confined
+  to the dev's Wayland session.
+
+# Version 1.2.83
+- Cleanup of the saga-era hacks now that the central Wayland guard (1.2.82)
+  exists. Moved the flag to utilities/display.py (USING_WAYLAND) so backend can
+  read it. Reverted the wait()/waitdone() `-fullscreen` toggle (it flickered on
+  Windows and the guard supersedes it). Gated the on_quit `-fullscreen` release
+  to Wayland only. Restored the "Not Done!" popup on X11/Windows (where it works,
+  for the actual users) while logging it on Wayland (where the dialog can't show
+  over kiosk full-screen). Restored ErrorNotice `-topmost` + the pre-wait_window
+  repaint (now guarded → skipped on Wayland), and trimmed the verbose
+  debug step-logging added during diagnosis. faulthandler SIGUSR1 dumper kept.
+
+# Version 1.2.82
+- Central XWayland guard (Kent's design): detect Wayland once (`USING_WAYLAND`,
+  from `XDG_SESSION_TYPE`/`WAYLAND_DISPLAY`) and override `update()` /
+  `update_idletasks()` on the `UI` base mixin to skip the synchronous X
+  round-trip ON WAYLAND ONLY — the event loop repaints anyway. `UI` is in every
+  widget/window's MRO before the tkinter base, so this one override neutralises
+  every call site at once; X11/Windows behaviour is unchanged. Restored the
+  per-site `update_idletasks()` calls I'd deleted during the saga (Progressbar.
+  current, Wait creation) — they now run on X11 and are skipped centrally on
+  Wayland. This should fix the verify page-transition freeze at the source (the
+  wedge was the ScrollingFrame reconfigure's `update_idletasks` firing as items
+  were added during the build).
+
+# Version 1.2.81
+- wayland_freeze_audit.md: recorded the decision to KEEP kiosk full-screen (it's
+  for the Windows users' presentation; those users have no XWayland so they don't
+  hit the freeze — it's a Linux/Wayland dev-environment issue). Recommendation:
+  the dev develops/tests in an Xorg session (zero code, behaves like Windows);
+  do NOT rewrite verify to build-in-place (rejected, unneeded); treat removing
+  the synchronous-X calls as optional robustness, not an emergency.
+
+# Version 1.2.80
+- Added docs/wayland_freeze_audit.md: a full audit of the XWayland freeze (root
+  cause = a synchronous X round-trip — update/update_idletasks/wait_window/grab —
+  during a window-state transition deadlocks with mutter) and a principled,
+  phased solution, replacing the per-site whack-a-mole. No code changed.
+
+# Version 1.2.79
+- Fixed the verify page-transition freeze at its actual source: `Progressbar.
+  current()` called `self.update_idletasks()` after setting the value, and
+  faulthandler caught the page 1→2 hang wedged in exactly that call (waitprogress
+  → progress → current → update_idletasks). That synchronous X round-trip from a
+  progress tick deadlocks under XWayland/mutter while the run window is
+  backgrounded. Removed it — setting `['value']` updates the bar and the event
+  loop repaints it. (The 1.2.76/1.2.78 `-fullscreen` releases were right but not
+  sufficient; the progress tick was the real wedge.)
+
+# Version 1.2.78
+- `wait()` now releases `-fullscreen` before withdrawing the window to show the
+  Wait dialog, and `waitdone()` restores it on reveal — the same fix as on_quit
+  (1.2.76), applied to the backgrounding path. This is what should fix the verify
+  page 1→2 transition freeze (the per-page Wait withdraws the kiosk-full-screen
+  run window; withdrawing a full-screen window under XWayland/mutter is the
+  freeze). Single-column pagination kept; no in-place build, no multi-column.
+
+# Version 1.2.77
+- REVERTED the 1.2.75 in-place page build (it broke the page 1→2 transition —
+  empty content stuck on "loading page 2/5"). Restored the prior per-page build
+  (first screenful behind the Wait, then stream). Multi-column auto-widening
+  also rejected — columns stay the user's setting. The page-transition freeze
+  under XWayland is still open, to be solved without in-place or multi-column.
+
+# Version 1.2.75 (reverted in 1.2.77)
+- Tried building each page in place to dodge the per-page withdraw; it broke the
+  transition. Reverted.
+
+# Version 1.2.74
+- "Not Done!" freeze, unblock: stop popping the ErrorNotice Toplevel from
+  `notdonewarning` — just log "NOT DONE: …". The dialog's `__init__` now runs to
+  completion (logs through `wait_window returned`, wait=False), so creation is
+  fine; the freeze is that the dialog can't get focus/input once the loop idles
+  under XWayland+mutter+kiosk-full-screen — parent shown → full-screen blocks
+  input; parent withdrawn → transient-parent gone so mutter won't focus it. A
+  no-win for a standalone dialog in this context, and it was blocking exit. So
+  log instead (FYI; maybesort returns right after anyway). TODO: surface the
+  message in a window that already works (task chooser) rather than a dialog.
+
+# Version 1.2.73
+- "Not Done!" freeze, likely real cause (to verify): the app runs under
+  GNOME/Wayland via XWayland, and BOTH the task window and run window are kiosk
+  FULL-SCREEN (takekioskscreen). On XWayland/mutter a normal dialog shown over a
+  full-screen window can't get input → app looks frozen (mainloop runs, nothing
+  responds/paints — matches the dumps and the "not responsive" report). The
+  verify Wait dialog works ONLY because wait() withdraws its full-screen parent
+  before showing it. So ErrorNotice now does the same: withdraw the full-screen
+  parent while the popup is up (re-adding the withdraw I wrongly removed in
+  1.2.72), restore it via on_quit on dismiss. Kept non-modal. UNVERIFIED.
+
+# Version 1.2.72
+- "Not Done!" freeze: 4th dump showed it now wedged in `wait_window` (after
+  update_idletasks was removed). Conclusion from all dumps: ANY blocking Tk call
+  (update_idletasks, wait_window) deadlocks when this popup is shown MODALLY from
+  the verify-teardown callback while its parent is withdrawn — and the Wait
+  dialog that also froze is modal+withdrawn-parent too, whereas the verify Wait
+  that WORKS is non-modal. So: (a) "Not Done!" is now non-modal (wait=False) —
+  it's an FYI and maybesort returns right after it anyway; (b) ErrorNotice no
+  longer withdraws its parent, so the popup shows over a mapped window with no
+  withdrawn-master state to deadlock. faulthandler stays armed.
+
+# Version 1.2.71
+- "Not Done!" / Wait freeze: removed the deadlocking call itself. A 2nd
+  faulthandler dump showed it STILL wedged in `update_idletasks` after -topmost
+  was removed (so -topmost was NOT the cause — wrong again). The deadlocking
+  call is `self.update_idletasks()` itself: a synchronous X round-trip that
+  never returns on this WM when the popup's parent has just been withdrawn.
+  Removed it from both ErrorNotice and the Wait window. ErrorNotice relies on
+  the following `wait_window` (a real event loop) to map+paint; the Wait window
+  relies on the running main loop. faulthandler stays armed — if it ever wedges
+  in `wait_window`/`tkwait` instead, the next dump will say so.
+
+# Version 1.2.70
+- Removed `-topmost` from ErrorNotice + the Wait window. NOTE: did NOT fix the
+  freeze (a later dump still showed `update_idletasks` wedged) — -topmost was
+  not the cause. Kept the removal anyway (harmless; popups are active windows).
+
+# Version 1.2.69
+- Freeze diagnostic: faulthandler SIGUSR1 dump now writes to /tmp/azt_stacks.txt
+  (a file) instead of stderr, so the stack is easy to retrieve after a hang.
+
+# Version 1.2.68
+- "Not Done!" freeze: stop guessing, get ground truth. Reverted 1.2.67's
+  parent-withdraw removal — its premise ("non-withdrawn-parent popups don't
+  hang") was false: the Wait window (non-withdrawn parent) also hangs. The two
+  hanging cases share only being `-topmost` popups that deiconify + do a
+  synchronous X round-trip, intermittently (a WM race). Added a faulthandler
+  stack-dumper on SIGUSR1 (pid logged at startup) so the next hang dumps the
+  exact blocked call — even from inside a C-level Tk/X call — instead of more
+  theorizing. (Kept 1.2.67's duplicate-`wait_window` removal.)
+
+# Version 1.2.67 (reverted into 1.2.68)
+- Attempted parent-withdraw removal for the freeze; premise was wrong, reverted.
+
+# Version 1.2.66
+- Removed `self.lift()` + `self.focus_force()` from ErrorNotice (added in 1.2.57).
+  NOTE: this did NOT fix the "Not Done!" freeze — it still hangs at the same
+  `deiconified` log line. Worth removing anyway (they were my additions and add
+  nothing over `-topmost`), but the freeze is a window-state problem, addressed
+  in 1.2.67.
+
+# Version 1.2.65
+- Verify OK button keeps its affirmation text (oktext, e.g. "These are all
+  consonant initial") with the page indicator appended, instead of being
+  replaced by "OK — page x/y". Now "<oktext> — page x/y ▶" (and "…, finish" on
+  the last page). That's the statement the user is confirming.
+
+# Version 1.2.64
+- Verify wait dialog: keep the prep message ("…verify all the words that are
+  consonant initial") AND add the page indicator, instead of replacing the
+  message with just "Loading page x/y". Now: "<prep>\n(loading page x/y)".
+
+# Version 1.2.63
+- Verify pagination: the OK button is back INSIDE the scroll content, at the end
+  of the word list (where it belongs, as in every other sort) — along with the
+  Back button — instead of in a separate bar outside the scroll frame. The
+  completion sentinel stays separate so it survives per-page rebuilds.
+- Replaced the title's "(N remaining)" (which counted verify groups — e.g.
+  consonant- + vowel-initial = "2 remaining", useless to the reader) with
+  "page x/y".
+- "Not Done!" black box: split the post-deiconify steps into separately-logged
+  calls (deiconified / lifted / focus_forced / updated). The 12:38 log stopped
+  at `deiconify`, so the hang is in deiconify/lift/focus_force — the next run
+  will name the exact call.
+
+# Version 1.2.62
+- Fixed crash loading SortSyllables directly: `SliceDict.count()` read raw
+  `self._profile`, which (a) isn't set before slices are built and (b) never
+  gets set for cvt='S' (which tracks its slice in `_S_macrogroup`). The except
+  only caught KeyError; now catches AttributeError too → count 0 ("empty,
+  because we're still building it"). Flagged in-code that a dedicated syllable
+  SliceDict would remove this whole class of cvt='S' special-casing.
+
+# Version 1.2.61
+- Verify list is now PAGINATED (confirmed cause: content was 39,079px tall,
+  past the ~32,767px X11 frame cap, so lower items couldn't render). Pages of
+  VERIFY_PAGE_ITEMS (200) with a Back / "OK — page x/y" nav bar; the final
+  page's OK finishes. Pagination fixes only the height — NOT the load — so each
+  page keeps the "first screenful first" reveal: VERIFY_FIRST_REVEAL items build
+  behind a "Loading page x/y" progress wait, the page reveals, then the rest of
+  the page streams in behind it. (Total page count computed up front.)
+- "Not Done!" black/frozen popup: still reproduces with the crash gone, so it is
+  a SEPARATE pre-existing bug (NOT the TclError I wrongly blamed — that was a
+  diagnostic I added in 1.2.57). The log stops inside `ErrorNotice.__init__`, so
+  added step-by-step logging there (create / withdraw-parent / label / deiconify
+  / update / wait_window) to pinpoint exactly which call blocks the event loop. the `notdonewarning`
+  diagnostic called `rw.winfo_viewable()` on the run window, which is normally
+  already DESTROYED by the time "Not Done!" fires (the user closed it). That
+  raised `TclError: bad window path name`, which propagated out of the after()
+  callback and out of `mainloop` — killing the event loop and freezing input.
+  All Tk calls in `notdonewarning` are now guarded; confirmed via traceback
+  (it pointed straight at lexicon.py:63). Also learned the run window is gone
+  when the popup is born — relevant to the black-render investigation.
+
+# Version 1.2.59
+- Diagnosing the "buttons disappear on finish" regression. The double-place
+  guard did NOT fire, so it isn't a double-build. Most likely cause: the content
+  frame exceeds the ~32767px X11 window height limit (824 image-buttons at
+  ~90px ≈ 74,000px), so items past the cap can't render. Added a warning that
+  logs the content height when it crosses 32000px to confirm. Real fix is a
+  design choice (multi-column / pagination / text-only for huge groups).
+
+# Version 1.2.58
+- Verify list is now ordered, not a random pile of words: alphabetical by the
+  word form. For word-final tests (the 'C#' syllable primitive) it's sorted from
+  the END of the word instead, so words with like endings group together.
+  (`CheckParameters.is_word_final_check`; sort applied in `verify()`.)
+
+# Version 1.2.57
+- Verify-list load now uses the established `wait_and_drive_work` pattern (as in
+  "Updating forms…"/"Updating annotations…") instead of a bespoke wait setup:
+  - Progress bar now actually moves. It was scaled over the whole list (0→2%
+    over the first 24 of 824, then the dialog vanished — looked frozen); it's
+    now scaled over the FIRST PAGE, 0→100%.
+  - The first page builds behind the wait via `wait_and_drive_work`; on
+    completion drive_work fires `waitdone` (reveals the window) and an `on_done`
+    callback streams the rest in behind it. The run window starts withdrawn, so
+    `wait(prep, thenshow=True)` is set first so `waitdone` actually reveals it.
+- End-of-build button overlap ("buttons on top of buttons at the top"):
+  instrumented + hardened, root cause not yet confirmed. The reveal no longer
+  fires `waitdone()`/`self.update()` from inside the running build generator
+  (which forced a relayout mid-build); reveal is driven by drive_work's
+  completion. Added a double-place guard that refuses to grid the same item
+  index twice and logs if it ever happens — that log will tell us whether the
+  overlap is a double-build (guard prevents it) or a canvas redraw artifact (to
+  chase next).
+- "Not Done!" popup: gave it a keyboard escape hatch (Return/Escape dismiss) and
+  forced focus + a full repaint, so it can no longer hard-block when its content
+  fails to paint (came up black, OK button invisible, killable only). Added a
+  diagnostic logging the run-window wait/viewable state when it appears, to
+  pin down the black-render root cause (prior drive_work-cancel fix missed it).
+
+# Version 1.2.56
+- Verify-list load, corrected approach. The 1.2.55 reflow theory was WRONG:
+  suspending it changed nothing (211s vs 219s = noise), AND it suppressed the
+  scroll-frame sizing so the first page never rendered until the very end ("no
+  UI until streamed remaining"). The real per-item cost is `set_sense_illustration`
+  loading + scaling a unique CAWL image from disk (~0.25s each → ~3.5 min for
+  800 words) — irreducible without dropping/deferring images, which we don't
+  want. So instead of fighting the total time, the load is now non-blocking:
+  - The whole list builds via `drive_work` behind a `ui.Window.wait()` dialog
+    that shows a prep message ("On the next page you will verify all the words
+    that are <consonant initial / 2 syllables / …>") and a progress bar.
+  - The window is revealed the moment the FIRST PAGE is built (a short,
+    acknowledged wait), then the remaining items stream in behind the visible,
+    usable page while the user reads aloud (which takes far longer than the
+    load). `suspend_configure` is no longer used in the verify build.
+
+# Version 1.2.54
+- Fixed the "Not Done!" popup getting stuck (black/unresponsive, freezing input
+  for ~1 min) when quitting during a big verify-list build. Root cause: the
+  build's `drive_work` `after()` chain kept draining the event loop (hundreds of
+  per-item illustration loads, back-to-back) even after the user quit, so the
+  modal that came up next couldn't paint or take its OK click until the build
+  finished. `drive_work` now tracks its pending `after` id and bails early if
+  the window is exiting; `on_quit` and `notdonewarning` cancel any in-flight
+  chain so quitting frees the loop immediately.
+
+# Version 1.2.53
+- Verify list load: build a full first page synchronously (FIRST_VERIFY_ROWS ×
+  columns, min FIRST_VERIFY_MIN items) so the window opens with a complete,
+  readable first screen, then stream the REST via drive_work in document order
+  while the user reads (not scroll-visibility — no images popping in mid-read).
+- Diagnostics: log how long `sensesinslicegroup` takes (pre-build item list) and
+  how long the first page vs the streamed remainder take to build, so we can see
+  exactly where the load time goes rather than guessing.
+
+# Version 1.2.52
+- Verify list: columns now follow the user's column setting (as in every other
+  sort window), not the number of items in the group. Was
+  `bc = buttoncolumns if len(items) >= min_to_multicolumn else 1`; now just the
+  setting. `min_to_multicolumn` no longer gates the verify list.
+
+# Version 1.2.51
+- Verify list: fixed the items drawing on top of one another in a diagonal
+  cascade (and bloating the scroll region). `build_verify_button` gridded the
+  per-item button at `column=<the content-grid column>` *inside its own frame*
+  instead of `column=0`, so in any multi-column verify each item's button was
+  pushed right by its column index — making frames ever-wider, overlapping, and
+  few-per-row (hence very tall). Now `column=0`. Pre-existing; bit any
+  multi-column verify (multi-column is the user's setting, not group size).
+
+# Version 1.2.50
+- SortSyllables verify: fixed the scroll region being ~5× too tall (tiny
+  scrollbar with only a few items). The OK "canary" was gridded at a huge
+  sentinel row (10**6) to keep it after the progressively-built items, which
+  inflated the ScrollingFrame's scrollregion. It's now created up front (so
+  verify can still wait on it) but gridded right after the last item — at
+  `content.nrows()` for macrosort, or at the end of the `drive_work` populate for
+  the normal case.
+
+# Version 1.2.49
+- SortSyllables verify:
+  - Clear text for the binary/count checks: title, OK button, and instructions
+    now name the specific group — "These are all consonant initial" / "Click on
+    any that are NOT consonant initial" / title "consonant initial" (via
+    `params.syllable_group_name`) — instead of the nonsensical "…whole word
+    syllable profile".
+  - The verify item list is now built PROGRESSIVELY via `drive_work` instead of
+    a synchronous loop, so a big group (e.g. all consonant-initial words —
+    hundreds of illustration-laden widgets) paints/shows progress rather than
+    freezing the UI for minutes. Item rows are indexed by placed-count.
+
+# Version 1.2.48
+- SortSyllables progress board:
+  - Only shows once the three primitive checks (#C/C#/syls) are HUMAN-verified —
+    macrogroup slices aren't defined by presort alone. Until then it's the
+    big-icon board.
+  - Zero-syllable counts are nonsense: `_syllable_count` now clamps to ≥1, and
+    the presort normalises any existing `syls=0` annotation to `1`.
+  - Hierarchical headers indicate the 3-D slice: row 0 = initial
+    (consonant/vowel, spanning its finals), row 1 = final (consonant/vowel),
+    rows = syllable count.
+
+# Version 1.2.47
+- SortSyllables: no sort page for the binary word-initial/word-final checks
+  (they're closed classes — like we don't sort-page binaries elsewhere). The
+  presort now buckets EVERY word, defaulting un-analyzable forms (capitalised,
+  multi-word, out-of-alphabet — e.g. "Big Dipper") to consonant for both
+  word-initial and word-final, and logs how many were defaulted so the consonant
+  groups can be reviewed for outliers. `presortgroups` is now idempotent (fills
+  only missing attributes, preserving confirmed ones, no early-return guard), so
+  words a prior presort skipped get bucketed on the next run. The booleans go
+  straight to verify (confirm by ear); syls stays an OPEN class (keeps its sort
+  page / "Other" — `is_syllable_boolean_check` vs `is_syllable_primitive_check`),
+  pending Kent's review of the integer field.
+
+# Version 1.2.46
+- SortSyllables board: when there are no macrogroups yet (the #C/C#/syls
+  primitives haven't been sorted, so no `#C`/`C#`/`syls` annotations exist), the
+  2-D board falls back to the big-icon `makenoboard()` instead of showing an
+  empty grid under "Progress for {ps}" — matching the other no-data boards.
+
+# Version 1.2.45
+- SortSyllables cyclical redesign — flow, board, and escape hatch (ALL chunks
+  now landed; first end-to-end run, untested by me — flow navigation across
+  macrogroups and the escape-window layout are the likely iteration points).
+  - maybesort: join is gated to the profile check only (the closed #C/C#/syls
+    primitives never join); `getanotherskip` suppresses the "Other"/new-group
+    button for those closed checks.
+  - 2-D progress board: `makeSyllableprogresstable` rewritten to rows = syllable
+    count × columns = Beg_End, cells = Beg+count+End macrogroup slices (word
+    count, ✓/bordered/active); clicking sets the current slice. `update_active_cell`/
+    `sync_active_cell` key on the macrogroup for 'S'.
+  - Escape hatch: on the profile sort, a "doesn't belong in this group" button
+    opens a window of one-axis moves (flip word-initial/word-final, Shorter,
+    Longer) to a named destination cell, re-bucketing the word immediately.
+    Configurable macrogroup→prose renderer added on `params`.
+
 # Version 1.2.44
 - SortSyllables cyclical redesign — slicing (still mid-migration; not runnable
   until the flow/board/escape land). The 'S' slice is the Beg+count+End

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 from utilities.i18n import _
-import sys,copy
+import sys,copy,time
 from contextlib import contextmanager
 import platform
 from utilities.times import now
@@ -105,7 +105,7 @@ class Theme(object):
                         ('V4','A alone 4.png'),
                         ('V5','A alone 5.png'),
                         ('V6','A alone 6.png'),
-                        ('CV','ZA alone clear6.png'),
+                        ('S','ZA alone clear6.png'), #syllable-profile (cvt 'S'); was 'CV' (dormant SortCV)
                         ('Word','ZAZA clear stacks6.png'),
                         ('WordRec','ZAZA Rclear stacks6.png'),
                         ('TRec','T Rclear stacks6.png'),
@@ -697,6 +697,12 @@ class Childof():
         else:
             attrs=[attr]
         for attr in attrs:
+            if hasattr(self,attr):
+                # Already set on self — e.g. reserve_kwargs() popped an
+                # explicit kwarg (like wraplength) into self before
+                # super().__init__() ran this inherit(). The parent value is
+                # only a default; don't clobber an explicitly-passed value.
+                continue
             if hasattr(parent,attr):
                 setattr(self,attr,getattr(parent,attr))
                 # log.info(f"inheriting {attr} from parent {type(parent)} "
@@ -1024,6 +1030,12 @@ class Exitable():
         `if self.exitFlag.istrue(): return`"""
         # log.info(f"Quitting window {self}")
         self.exitFlag.true()
+        # Kill any in-flight drive_work (e.g. a long verify-list build) so it
+        # stops draining the event loop the moment the user quits — otherwise
+        # the next modal ("Not Done!") can't paint or take a click until the
+        # build finishes, freezing input. cancel_drive_work lives on Waitable.
+        if hasattr(self, 'cancel_drive_work'):
+            self.cancel_drive_work()
         if (to_root or getattr(self,'ismainwindow',False)) and self.parent:
             self.parent.on_quit(to_root=True)
             return
@@ -1052,34 +1064,71 @@ class Waitable(Exitable):
             yield self
         finally:
             self.waitdone()
+    def _waitwindow(self,create=True):
+        """The single reused Wait window, owned by this widget's Tk root (built
+        once, then withdrawn/deiconified). `self._root()` resolves correctly for
+        both the main tk_root and the startup fakeroot (image scaling), so each
+        root gets its own singleton. Returns None if no live root / not creating."""
+        try:
+            root=self._root()
+        except Exception:
+            return None
+        if root is None or not root.winfo_exists():
+            return None
+        ww=getattr(root,'ww',None)
+        if ww is None or not ww.winfo_exists():
+            if not create:
+                return None
+            ww=Wait(root)
+            root.ww=ww
+        return ww
     def wait(self,msg=None,cancellable=False,thenshow=False):
-        if self.iswaiting():
-            # log.debug("There is already a wait window: {}".format(self.ww))
+        ww=self._waitwindow()
+        if ww is None:
+            return
+        if ww.active:
+            # Already showing → update content; keep the first wait's reveal target
+            # unless this caller explicitly wants itself restored (thenshow).
             if msg:
-                self.ww.msg(msg) #update msg, even if not new wait window
+                ww.msg(msg)
             if cancellable:
-                self.ww.make_cancellable()
+                ww.make_cancellable()
             if thenshow:
                 self.showafterwait=True
+                ww.reveal_parent=self
+                ww.do_reveal=True
             return
         log.info(f"updating wait: {self.winfo_viewable()|thenshow=} "
                 f"{self.winfo_viewable()=} {thenshow=} ")
         self.showafterwait=self.winfo_viewable()|thenshow
         if self.showafterwait:
-            self.withdraw()
-        self.ww=Wait(self,msg,cancellable=cancellable)
+            _w=time.perf_counter()
+            self.withdraw() # DIAG (1.3.16): kiosk withdraw — a state transition that
+            log.info("wait: kiosk withdraw %.2fs", time.perf_counter()-_w) # may wedge
+        ww.activate(parent=self,msg=msg,cancellable=cancellable,
+                    reveal=self.showafterwait)
     def iswaiting(self):
-        return hasattr(self,'ww') and self.ww.winfo_exists()
+        # "Is the one reused wait window currently shown" (not "does a ww exist") —
+        # the window now persists across waits, so activeness is what callers mean.
+        ww=self._waitwindow(create=False)
+        return ww is not None and getattr(ww,'active',False)
     def waitpause(self):
-        self.ww.withdraw()
-        self.ww.paused=True
+        ww=self._waitwindow(create=False)
+        if ww is not None:
+            ww.withdraw()
+            ww.paused=True
     def waitunpause(self):
-        self.ww.deiconify()
-        self.ww.paused=False
+        ww=self._waitwindow(create=False)
+        if ww is not None and ww.active:
+            ww.deiconify()
+            ww.paused=False
     def waitprogress(self,x):
         # log.info(f"updating wait to {x}")
+        ww=self._waitwindow(create=False)
+        if ww is None:
+            return
         try:
-            self.ww.progress(x,r=4,c=1)
+            ww.progress(x,r=4,c=1)
         except Exception as e:
             log.info(f"Couldn't change wait progress ({e})")
     def wait_and_drive_work(self, msg, generator, on_done=None):
@@ -1089,35 +1138,73 @@ class Waitable(Exitable):
         log.info("Waiting, done driving")
     def drive_work(self, generator, on_done=None):
         """Consume a work generator one yield at a time via after(),
-        letting the event loop paint between chunks."""
+        letting the event loop paint between chunks.
+
+        The pending after() id is tracked so the chain can be cancelled (see
+        cancel_drive_work) — otherwise a long build (e.g. a few hundred verify
+        items, each loading an illustration) keeps draining the event loop even
+        after the user has quit the window, starving any modal that comes up
+        next (the "Not Done!" popup) and freezing input for the duration."""
+        # DIAG (1.3.14): decompose each tick — gap (after()+event-loop paint, the
+        # suspected XWayland per-item cost), generator work, progress-bar update.
+        _now=time.perf_counter()
+        _last=getattr(self,'_dw_last_end',None)
+        if _last is not None:
+            self._dw_gap_t=getattr(self,'_dw_gap_t',0.0)+(_now-_last)
+        self._drive_after_id = None
+        if self.exitFlag.istrue():
+            return  # window is going away; abandon the rest of the work
         try:
+            _w=time.perf_counter()
             progress = next(generator)
+            self._dw_work_t=getattr(self,'_dw_work_t',0.0)+(time.perf_counter()-_w)
+            self._dw_ticks=getattr(self,'_dw_ticks',0)+1
             if self.iswaiting():
+                _p=time.perf_counter()
                 self.waitprogress(progress)
-            self.after(1, self.drive_work, generator, on_done)
+                self._dw_prog_t=getattr(self,'_dw_prog_t',0.0)+(time.perf_counter()-_p)
+            self._dw_last_end=time.perf_counter()
+            self._drive_after_id = self.after(
+                1, self.drive_work, generator, on_done)
         except StopIteration:
             if self.iswaiting():
                 self.waitdone()
             if on_done:
                 on_done()
+    def cancel_drive_work(self):
+        """Stop any in-flight drive_work chain on this window. Safe to call
+        repeatedly / when nothing is pending."""
+        after_id = getattr(self, '_drive_after_id', None)
+        if after_id:
+            try:
+                self.after_cancel(after_id)
+            except (tkinter.TclError, ValueError):
+                pass
+            self._drive_after_id = None
     def waitcancel(self):
         self.waitcancelled=True
         log.info("Wait cancel registered; waiting to cancel")
     def waitdone(self):
-        try:
-            self.ww.close()
-        except (tkinter.TclError,AttributeError):
-            pass
-        # except AttributeError:
-            # log.info(f"{self} seems to have tried stopping waiting? {e}")
-        finally:
-            if not self.exitFlag.istrue():
-                if self.showafterwait and self is not self.theme.program.tk_root:
-                    self.update()
-                    try:
-                        self.deiconify()
-                    except tkinter.TclError:
-                        pass
+        # Render + reveal the backgrounded window WHILE the wait dialog still covers
+        # the screen, THEN background the dialog — so the slow (XWayland) update()
+        # render is covered by "Loading…" instead of a blank screen. (1.3.38; the gap
+        # is update(), not the deiconify, which is ~0s — 1.3.37 timing.) The dialog
+        # is WITHDRAWN, not destroyed: it's the one reused window.
+        ww=self._waitwindow(create=False)
+        if ww is None or not ww.active:
+            return
+        parent=ww.reveal_parent
+        if ww.do_reveal and parent is not None and parent.winfo_exists() \
+                and not parent.exitFlag.istrue() and parent is not parent._root():
+            _u=time.perf_counter()
+            parent.update()
+            try:
+                parent.deiconify()
+            except tkinter.TclError:
+                pass
+            log.info("waitdone: update+reveal %.1fs (covered by wait dialog)",
+                     time.perf_counter()-_u)
+        ww.deactivate()
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.showafterwait=True #in case never waited, do this anyway
@@ -1150,6 +1237,27 @@ class Image(): #PIL.ImageTk.PhotoImage is for display
     def compile(self):
         self.scaled=PIL.ImageTk.PhotoImage(getattr(self,'scaled_img',
                                                 self.base_img)) #scaled or not
+    def prepare(self,scale,pixels=100,resolution=5,scaleto='both'):
+        """PIL-only half of scale(): compute self.scaled_img with NO Tk call, so
+        the slow open/decode/resize can run off the main thread (e.g. a background
+        image preloader, to test the I/O-bound hypothesis). compile() then turns
+        scaled_img into the Tk PhotoImage — which MUST stay on the main thread."""
+        if not self.base_img:
+            return
+        if pixels:
+            s=pixels*scale
+            if scaleto == 'both':
+                standard=self.maxhw()
+            elif scaleto == 'height':
+                standard=self.base_img.height
+            elif scaleto == 'width':
+                standard=self.base_img.width
+            r=s/standard
+        else:
+            r=scale
+        aspect=(int(self.base_img.width*r), int(self.base_img.height*r))
+        self.scaled_img=self.base_img.resize(aspect)
+        return self.scaled_img
     def scale(self,scale,pixels=100,resolution=5,scaleto='both'):
         """'resolution*r' and 'resolution' here express a float scaling ratio
         as two integers, so r = 0.7 = 7/10, because the zoom and subsample fns
@@ -1229,14 +1337,19 @@ class Image(): #PIL.ImageTk.PhotoImage is for display
         #         newData.append(item)
         # self.transparency.putdata(newData)
         # return self.transparency
-    def __init__(self,filename):
+    def __init__(self,filename,compile_now=True):
         """This class uses three different images:
         self.base_img: the original image as loaded from file (PIL.Image.Image)
         self.scaled_img: the image as modified for use (PIL.Image.Image)
         self.scaled: the version to display in tkinter (PIL.ImageTk.PhotoImage)
         we keep these because the same image may be scaled differently for
         different uses.
-        """
+
+        compile_now=False skips the final compile() (the ONLY Tk call here), so
+        the slow PIL open/decode can run OFF the main thread — e.g. the syllable
+        prep background preloader, which then prepare()s the resize and leaves the
+        cheap PhotoImage compile() for the main thread. Default True (every
+        existing main-thread caller is unchanged)."""
         if not filename:
             log.error("No filename given to Image")
             return
@@ -1248,7 +1361,8 @@ class Image(): #PIL.ImageTk.PhotoImage is for display
             log.error(f"Exception opening image {filename}: {e}")
             self.base_img=None
             return
-        self.compile()
+        if compile_now:
+            self.compile()
 """below here has UI"""
 _app_root = None  # the application's main themed ui.Root (set in Root.post_tk_init)
 def default_root():
@@ -1296,6 +1410,45 @@ class Root(Waitable,UI,tkinter.Tk):
         if not getattr(self.program,'dummy',False) and not self.noimagescaling:
             global _app_root
             _app_root=self
+            # One app-wide mouse-wheel dispatcher (see _on_global_mousewheel).
+            # bind_all binds on this interpreter's "all" tag, so every widget
+            # is covered; registering once here replaces the old per-frame
+            # claim/release machinery in ScrollingFrame.
+            self.bind_all("<MouseWheel>", self._on_global_mousewheel)
+            self.bind_all("<Button-4>", self._on_global_mousewheel)
+            self.bind_all("<Button-5>", self._on_global_mousewheel)
+    def _on_global_mousewheel(self, event):
+        """Single, app-wide mouse-wheel dispatcher, bound once (bind_all) on the
+        real app root. On each wheel event, find the widget under the pointer
+        and scroll the nearest enclosing ScrollingFrame — so the wheel always
+        targets whatever the pointer is actually over, decided at scroll time.
+
+        This replaces the old per-ScrollingFrame claim/release scheme
+        (<Enter>/<Leave>/<Map>/<Visibility> plus a pointer-gated bind_all), which
+        left the wheel dead whenever the one-shot claim mis-fired during a
+        window's withdraw/deiconify reveal (frames are built inside a wait that
+        withdraws the run window). Deciding the target per-event removes the
+        reveal-timing dependence entirely and also handles multiple/nested
+        scroll frames (innermost under the pointer wins)."""
+        try:
+            w=self.winfo_containing(event.x_root, event.y_root)
+        except (tkinter.TclError, KeyError):
+            return
+        while w is not None and not isinstance(w, ScrollingFrame):
+            w=getattr(w, 'master', None)
+        canvas=getattr(w, 'canvas', None) if w is not None else None
+        if canvas is None or not canvas.winfo_exists():
+            return
+        num=getattr(event, 'num', 0)
+        try:
+            if num == 4:               # X11 wheel up
+                canvas.yview_scroll(-1, "units")
+            elif num == 5:             # X11 wheel down
+                canvas.yview_scroll(1, "units")
+            elif getattr(event, 'delta', 0):  # Windows / macOS
+                canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        except tkinter.TclError:
+            pass
     def __init__(self, program=None, *args, **kwargs):
         """specify theme name in self.program.theme
         bring in program here, send it to theme, everyone accesses scale
@@ -1366,7 +1519,14 @@ class Progressbar(Childof,Gridded,UI,tkinter.ttk.Progressbar):
             value=int(value*100)
         if 0 <= value <= 100:
             self['value']=value
-        self.update_idletasks() #updates just geometry
+        # LOAD-BEARING (1.3.27): this per-tick synchronous flush also COMMITS the
+        # Wayland surface, so it's what paints the window during the build. Guarding
+        # it (1.3.26) removed the large-slice deadlock but left the window unpainted
+        # (nothing commits) — confirmed: no visible UI at 150/page. So it stays; the
+        # freeze is avoided by keeping slices small (where it doesn't deadlock). A
+        # non-deadlocking per-tick commit (e.g. update(), which DRAINS the event
+        # queue instead of only flushing) is the #3 fix needed to enable large slices.
+        self.update_idletasks()
     def __init__(self, parent, *args, **kwargs):
         if 'orient' not in kwargs:
             kwargs['orient']='horizontal' #or 'vertical'
@@ -1413,7 +1573,7 @@ class TextBase():
     def restore_kwargs(self,**kwargs):
         """This restores kwargs needed for the tkinter classes"""
         for k in TextBase.textkwargs: #all, not just those OK for Tk
-            if hasattr(self,k):
+            if k not in kwargs and hasattr(self,k): #don't clobber an explicit kwarg
                 kwargs[k]=getattr(self,k)
         return kwargs
     def my_tk_kwargs(self,**kwargs):
@@ -1487,7 +1647,12 @@ class Text(TextBase):
         kwargs=TextBase.restore_kwargs(self,**kwargs)
         # log.info(f"restore_kwargs: {kwargs}")
         for k in Text.textkwargs: #all, not just those OK for Tk
-            if hasattr(self,k):
+            # Only restore a value that was reserved out of kwargs; do NOT
+            # overwrite one still explicitly present. Otherwise an inherited
+            # default on self (e.g. wraplength, copied from the parent by
+            # Childof.inherit) clobbers an explicit kwarg like wraplength=548,
+            # so every widget wrapped at the root default and overflowed.
+            if k not in kwargs and hasattr(self,k):
                 kwargs[k]=getattr(self,k)
         return kwargs
     def my_tk_kwargs(self,**kwargs):
@@ -1665,7 +1830,7 @@ class Button(Childof,GridinGridded,Text,UI,tkinter.Button):
         its subclasses.
         """
         for k in Button.buttons: #all, not just those OK for Tk
-            if hasattr(self,k):
+            if k not in kwargs and hasattr(self,k): #don't clobber an explicit kwarg
                 # log.info(f"Button restore_kwargs found {k}:{getattr(self,k)}")
                 kwargs[k]=getattr(self,k)
         kwargs=Text.restore_kwargs(self,**kwargs)
@@ -1740,11 +1905,23 @@ class EntryField(Childof,Gridded,TextBase,UI,tkinter.Entry):
         kwargs=TextBase.reserve_kwargs(self,**kwargs)
         # kwargs=self.reserve_kwargs(**kwargs)
         self.render=kwargs.pop('render',False)
-        # Always use a variable for this class, even if not passed one:
-        kwargs['textvariable']=kwargs.get('textvariable',StringVar())
+        # Always use a variable for this class, even if not passed one. NOTE:
+        # reserve_kwargs (above) already POPPED any caller-supplied textvariable
+        # into self.textvariable, so kwargs no longer has it — `kwargs.get(...)`
+        # here always fell through to a throwaway StringVar, the Entry bound to
+        # THAT, and the caller's trace never fired (the "Give a name!" stuck bug on
+        # the New Letter page). Re-inject the caller's own variable; default to a
+        # fresh one only when none was passed.
+        kwargs['textvariable']=getattr(self,'textvariable',None) or StringVar()
         kwargs['background']=kwargs.get('background',parent.theme.white)
         super().__init__(parent, *args, **kwargs)
-        super().post_tk_init()
+        # self.post_tk_init(), NOT super().post_tk_init(): EntryField.post_tk_init
+        # re-binds the Entry to the caller's textvariable. reserve_kwargs pops
+        # 'textvariable' out of kwargs (into self.textvariable), so line above
+        # bound the Entry to a throwaway StringVar; without the override running,
+        # the Entry never tracks the caller's variable, so typing never fires its
+        # trace (e.g. the "Name New Letter" page stayed stuck on "Give a name!").
+        self.post_tk_init()
 class RadioButton(Childof,Gridded,TextBase,UI,tkinter.Radiobutton):
     rb_kwargs={'variable','indicatoron'}
     def reserve_kwargs(self,**kwargs):
@@ -2000,6 +2177,7 @@ class Window(Toplevel):
     def progress(self,value,parent=None,**kwargs):
         # between 0 and 100
         try:
+            self.progressbar.grid() #re-show if a no-progress wait grid_remove()'d it
             self.progressbar.current(value)
             # log.info(f"Window progress updated to {value}")
         except AttributeError:
@@ -2231,56 +2409,66 @@ class ScrollingFrame(Frame):
         """With or without the following, it still scrolls through..."""
         self.grid_propagate(0) #make it not shrink to nothing
         super().post_tk_init()
-    def _bound_to_mousewheel(self, event):
-        # with Windows OS
-        self.canvas.bind_all("<MouseWheel>", self._on_mousewheelMS)
-        # with Linux OS
-        self.canvas.bind_all("<Button-5>", self._on_mousewheelup)
-        self.canvas.bind_all("<Button-4>", self._on_mousewheeldown)
-    def _unbound_to_mousewheel(self, event):
-        self.canvas.unbind_all("<MouseWheel>")
-        self.canvas.unbind_all("<Button-4>")
-        self.canvas.unbind_all("<Button-5>")
-    def _on_mousewheelMS(self, event):
-        self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-    def _on_mousewheelup(self, event):
-        self.canvas.yview_scroll(1,"units")
-    def _on_mousewheeldown(self, event):
-        self.canvas.yview_scroll(-1,"units")
-    def _pointer_inside(self):
-        """True if the mouse pointer is currently over this frame or any of its
-        descendants. winfo_containing returns the deepest widget under the
-        pointer (often a child button/label), so match by widget-path prefix
-        rather than identity against self/canvas/content."""
-        try:
-            w=self.winfo_containing(*self.winfo_pointerxy())
-        except Exception:
-            return False
-        if w is None:
-            return False
-        selfpath=str(self)
-        wpath=str(w)
-        return wpath==selfpath or wpath.startswith(selfpath+'.')
-    def _bind_wheel_if_pointer_inside(self, event=None):
-        """Claim the (global, bind_all) wheel for this frame when it is mapped
-        under the pointer. A frame built/mapped under a stationary pointer
-        receives no <Enter>, so this is what makes it scrollable right away."""
-        if self._pointer_inside():
-            self._bound_to_mousewheel(None)
+    # Mouse-wheel handling is app-wide, not per-frame: a single dispatcher bound
+    # once on the root (Root._on_global_mousewheel) finds the ScrollingFrame
+    # under the pointer at scroll time. See that method for why the old
+    # per-frame claim/release scheme was removed.
     def update(self):
         # self._configure_canvas()
         self._configure_interior()
+    def reflow(self):
+        """Recompute scrollregion + canvas size SYNCHRONOUSLY, vs the debounced,
+        <Configure>-driven _configure_interior. Call after content has been
+        re-gridded (e.g. the alphabet chart reflowing its columns or toggling
+        shown glyphs): the content is a canvas-embedded frame, so a <Configure>
+        may not fire when the canvas pins its actual height, leaving the
+        scrollregion stale and clipping rows.
+
+        The update_idletasks() is REQUIRED, not optional: grid()/grid_forget()
+        schedule the content's requested-size recompute as an idle task, so
+        reading winfo_reqwidth/reqheight without flushing first sees the STALE
+        pre-regrid size and reflows to it (observed: +/- columns and show-all
+        /pictured-only didn't resize the canvas). Unlike SortButtonFrame.reflow
+        — whose caller (presenttosort) already update()s before reflowing — this
+        is called straight after a regrid, so it must settle geometry itself. One
+        idle flush per discrete config action is fine; the XWayland wedge came
+        from per-item flushes in big streamed builds, not single reflows. Safe
+        no-op if there's no scroll. See scrollframe reflow trap."""
+        if not self.winfo_exists():
+            return
+        try:
+            self.update_idletasks()
+            self._do_configure_interior()
+        except Exception as e:
+            log.info("ScrollingFrame.reflow failed: %s", e)
     def _configure_interior(self, event=None):
         if getattr(self, '_configure_pending', False):
             return
         self._configure_pending = True
         self.after_idle(self._do_configure_interior)
+    def suspend_configure(self):
+        """Skip the (O(n)) scrollregion/size recompute while many children are
+        added in a batch (e.g. a streamed verify list). Without this, each
+        added item triggers a full content reflow → O(n^2) for a big group,
+        which is what made big verify pages take minutes to load."""
+        self._suspend_configure = True
+    def resume_configure(self):
+        """Re-enable reflow and do one recompute now."""
+        self._suspend_configure = False
+        self._configure_interior()
     def _do_configure_interior(self):
         self._configure_pending = False
+        if getattr(self, '_suspend_configure', False):
+            return
         if not self.winfo_exists():
             return
         log.log(4,"_configure_interior, on content change")
         size = (self.content.winfo_reqwidth(), self.content.winfo_reqheight())
+        if size[1] > 32000:
+            # X11 caps a window's height at 32767px. A content frame taller than
+            # that can't lay out the items past the cap — they vanish / overlap.
+            log.warning("ScrollingFrame content is %dpx tall (>32767px X11 "
+                        "limit): items past the cap will not render.", size[1])
         self.canvas.config(scrollregion="0 0 %s %s" % size)
         #     self.configured+=1
         # if self.winfo_width() < self.canvas.winfo_width():
@@ -2304,6 +2492,17 @@ class ScrollingFrame(Frame):
         if self.content.winfo_reqheight() != self.canvas.winfo_height():
             # update the canvas's width to fit the inner frame
             self.canvas.config(height=self.content.winfo_reqheight())
+        if getattr(self, '_hug_content', False):
+            # Opt-in (the sort page's SortButtonFrame): make the scroll frame's
+            # OWN height track its content so the viewport HUGS the buttons.
+            # grid_propagate(0) otherwise freezes this height, so a
+            # <Configure>-driven reflow — fired when a group button is added
+            # dynamically or its example image loads late — would grow the canvas
+            # + scrollregion but leave THIS frame too short, clipping the lower
+            # rows (Other/Not-profile/Skip). Re-hug on every reflow path, not just
+            # the explicit reflow() call, so dynamic growth keeps up. Large verify
+            # lists don't set the flag, so they keep a fixed scrolling viewport.
+            self.config(height=self.content.winfo_reqheight())
         log.log(4,"_configure_interior done.")
         self._configure_canvas() #bc we changed the canvas
         # self.hwinfo(event) #if needed, bring event in from _configure_interior
@@ -2418,30 +2617,6 @@ class ScrollingFrame(Frame):
     def totop(self):
         self.update_idletasks()
         self.canvas.yview_moveto(0)
-    def initialize_wheel_bindings(self):
-        self.bind('<Enter>', self._bound_to_mousewheel)
-        self.bind('<Leave>', self._unbound_to_mousewheel)
-        # The wheel uses bind_all (global), so the frame under the pointer must
-        # claim it. We used to grab it unconditionally here, which let whichever
-        # ScrollingFrame was built LAST capture the wheel regardless of pointer
-        # location — so a frame built under a stationary pointer (no <Enter>
-        # fires) stayed unscrollable until the user left and re-entered it.
-        # Instead, bind on <Map> (and now, in case already mapped) only when the
-        # pointer is actually inside this frame.
-        self.bind('<Map>', self._bind_wheel_if_pointer_inside)
-        self._bind_wheel_if_pointer_inside()
-        self.canvas.bind('<Destroy>', self._unbound_to_mousewheel)
-        return
-        # If pointer is already inside, bind immediately                                                                                                                     
-        try:                                                                                                                                                                    
-            x, y = self.winfo_pointerxy() 
-            for w in self.winfo_containing(x, y).winfo_children():
-                log.info(f"pointer in parent of {w=}")
-            log.info(f"pointer in {self.winfo_containing(x, y)=}")                                                                                                                                      
-            if self.winfo_containing(x, y) in (self, self.canvas, self.content):                                                                                                
-                self._bound_to_mousewheel(None)                                                                                                                                 
-        except Exception:                                                                                                                                                                 
-            pass   
     def __init__(self, parent, xscroll=False, *args, **kwargs):
         self.ignore_maxwidth=kwargs.pop('ignore_maxwidth',False)
         """Make this a Frame, with all the inheritances, I need"""
@@ -2489,12 +2664,11 @@ class ScrollingFrame(Frame):
             xscrollbar.config(troughcolor=self.theme.background)
             xscrollbar.config(command=self.canvas.xview)
         yscrollbar.config(command=self.canvas.yview)
-        """Bindings so the mouse wheel works correctly, etc."""
-        w=self.winfo_toplevel()
-        self.initialize_wheel_bindings()
+        # Mouse wheel is handled app-wide by Root._on_global_mousewheel; no
+        # per-frame wheel bindings are needed here.
         # self.canvas.bind('<Configure>', self._configure_canvas) #called by:
         self.content.bind('<Configure>', self._configure_interior)
-        self.bind('<Visibility>', self.windowsize)
+        self.bind('<Visibility>', self.windowsize, add='+')
 class ScrollingButtonFrame(ScrollingFrame):
     """This needs to go inside another frame, for accurrate grid placement"""
     def reserve_kwargs(self,**kwargs):
@@ -2647,29 +2821,58 @@ class ToolTip(object):
             tw.destroy()
 """Move back to main"""
 class Wait(Window): #tkinter.Toplevel?
+    """The single 'Please Wait' window. Built ONCE (mastered by tk_root) and then
+    withdrawn/deiconified rather than destroyed/rebuilt per wait — see
+    docs/CHANGELOG.md and the plan. Waitable owns the one instance on the root
+    (`root.ww`); wait()/waitdone() call activate()/deactivate() to show/hide it.
+
+    `reveal_parent` is the window backgrounded for the current wait (restored on
+    done); `do_reveal` records whether to restore it; `active` is whether the
+    window is currently shown — that's what iswaiting() reports."""
     def post_tk_init(self):
         super().post_tk_init()
     def close(self):
-        # log.info("Wait window disappears")
+        # Genuine teardown only (e.g. shutdown). The hot path uses deactivate(),
+        # which withdraws and keeps the window for reuse.
         self.on_quit()
     def cancel(self):
-        self.parent.waitcancel()
+        target=self.reveal_parent or self.parent
+        target.waitcancel()
         log.info("Sent Wait Cancel")
     def make_cancellable(self):
-        self.cancelbutton=Button(self.outsideframe,text='Cancel',
-                                cmd=self.cancel,
-                                row=3,column=0,sticky='e')
+        # Idempotent: the window is reused, so build the Cancel button once and
+        # just re-show it thereafter (re-creating would stack buttons).
+        if getattr(self,'cancelbutton',None) is None:
+            self.cancelbutton=Button(self.outsideframe,text='Cancel',
+                                    cmd=self.cancel,
+                                    row=3,column=0,sticky='e')
+        else:
+            self.cancelbutton.grid()
+    def hide_cancel(self):
+        if getattr(self,'cancelbutton',None) is not None:
+            self.cancelbutton.grid_remove()
     def msg(self,msg):
-        log.info(f"Waiting ({type(self.parent)}): {msg}")
+        log.info(f"Waiting ({type(self.reveal_parent)}): {msg}")
         self.l1['text']=msg
         self.l1.wrap()
-    def __init__(self, parent, msg=None, cancellable=False, *args, **kwargs):
+    def __init__(self, parent, *args, **kwargs):
+        # `parent` is tk_root — the permanent Tk master. The per-wait window to
+        # background/restore is tracked separately as `reveal_parent` (set in
+        # activate), since Tk can't reparent a Toplevel and we don't need to.
+        _t0=time.perf_counter()
         kwargs['exit']=False
         kwargs['withdrawn']=True
         super().__init__(parent, *args, **kwargs)
+        self.active=False
+        self.reveal_parent=None
+        self.do_reveal=False
+        self.cancelbutton=None
         self.paused=False
         self['background']=parent['background']
-        self.attributes("-topmost", True)
+        # NB: NOT setting `-topmost` — it deadlocks the update_idletasks in
+        # activate() on some Linux WMs (same freeze faulthandler caught in
+        # ErrorNotice). The wait window is the active window (its parent is
+        # withdrawn) so it shows on top regardless.
         title=_("Please Wait! {azt} Dictionary and Orthography Checker "
                 "in Process").format(azt=self._root().program.name)
         self.title(title)
@@ -2679,18 +2882,32 @@ class Wait(Window): #tkinter.Toplevel?
                 row=0,column=0,sticky='we')
         self.l1=Label(self.frame, text='',
                         font='default',anchor='c',row=1,column=0,sticky='we')
-        # if msg is not None:
-        if msg is None:
-            msg="No Particular Reason"
-        self.msg(msg)
-        if not isinstance(self.parent,Root) or not self.parent.noimagescaling:
+        if not isinstance(parent,Root) or not parent.noimagescaling:
             self.l2=Label(self.frame,
                         image='small',
                         text='',
                         row=2,column=0,sticky='we',padx=50,pady=50)
+        log.info("Wait build: realize %.2fs (built once; reused via activate)",
+                 time.perf_counter()-_t0)
+    def activate(self, parent, msg=None, cancellable=False, reveal=True):
+        """Show the reused window for a new wait: record which window to restore,
+        swap in the message, hide any prior progressbar (a no-progress wait shows
+        none; progress() re-grids on demand), (un)show Cancel, then deiconify."""
+        self.reveal_parent=parent
+        self.do_reveal=reveal
+        try:
+            self['background']=parent['background']
+        except (tkinter.TclError,TypeError):
+            pass
+        self.msg(msg if msg is not None else "No Particular Reason")
+        if getattr(self,'progressbar',None) is not None:
+            self.progressbar.grid_remove() #remembers placement; progress() restores
         if cancellable:
             self.make_cancellable()
-        # log.info("Wait window appears")
+        else:
+            self.hide_cancel()
+        self.paused=False
+        self.active=True
         try:
             self.deiconify()
             # SCOPED guard (1.3.24): XWayland wedges on a synchronous flush right
@@ -2701,7 +2918,16 @@ class Wait(Window): #tkinter.Toplevel?
             if not USING_WAYLAND:
                 self.update_idletasks()
         except Exception as e:
-            log.info(f"Wait window Exception: {e}")
+            log.info(f"Wait activate Exception: {e}")
+    def deactivate(self):
+        """Background the reused window (withdraw — never destroy)."""
+        self.active=False
+        self.reveal_parent=None
+        self.do_reveal=False
+        try:
+            self.withdraw()
+        except tkinter.TclError:
+            pass
 """unclassed functions"""
 
 def nfc(x):

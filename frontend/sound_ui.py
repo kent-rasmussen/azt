@@ -239,6 +239,8 @@ class RecordnTranscribeButtonFrame(RecordButtonFrame):
         # log.info(f"scrolling_content size: {scrolling_content.grid_size()}")
         if not sum(scrolling_content.grid_size()):
             self.transcriptionframe.destroy()
+        else:
+            self.transcriptionframe.reflow()  # grow canvas to cover the labels
     def remove_transcriptions(self):
         try:
             self.transcriptionframe.content.destroy()
@@ -456,6 +458,7 @@ class SoundSettingsWindow(ui.Window):
                     cmd=self.soundcheckrefreshdone,
                     row=self.content.nrows(),
                     sticky='')
+        self.scroll.reflow()  # grow canvas to cover the sound-settings rows
     def soundcheckrefreshdone(self):
         self.task.storesoundsettings()
         self.on_quit()

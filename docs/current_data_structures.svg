@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1320 1180" font-family="Helvetica Neue, Arial, sans-serif">
+  <style>
+    .h1   { font-size: 22px; font-weight: 700; fill: #000; }
+    .sub  { font-size: 12.5px; fill: #444; }
+    .band { font-size: 12px; font-weight: 700; fill: #444; letter-spacing: 1px; }
+    .hdr  { font-size: 15px; font-weight: 700; fill: #fff; }
+    .box  { font-size: 12px; font-weight: 700; fill: #000; }
+    .it   { font-size: 11.5px; fill: #000; }
+    .sm   { font-size: 10.5px; fill: #444; }
+    .gray { fill: #555; }
+    .seam { font-size: 11px; fill: #000; }
+    .mono { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 10.5px; fill: #000; }
+    .ok   { font-size: 11.5px; font-weight: 700; fill: #000; }
+  </style>
+
+  <rect x="0" y="0" width="1320" height="1180" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text class="h1" x="32" y="40">AZT sort data structures — CURRENT (as-is)</text>
+  <text class="sub" x="32" y="62">Companion to unified_sort_model.md (v0.4.0). One shared engine, parameterized by `cvt`, with per-tier divergence in storage. (B&amp;W: text is black; box tints/bars only group columns.)</text>
+
+  <!-- ===================== BAND A: SHARED ===================== -->
+  <text class="band" x="32" y="86">SHARED — cvt-parameterized (one engine for every tier)</text>
+  <rect x="30" y="94" width="1256" height="206" rx="10" fill="#f4f4f6" stroke="#b8b8c0"/>
+
+  <!-- params -->
+  <rect x="46" y="110" width="262" height="60" rx="8" fill="#ffffff" stroke="#9aa"/>
+  <text class="box" x="58" y="130">program.params</text>
+  <text class="mono" x="58" y="150"><tspan x="58" dy="0">cvt (C/V/T/S), ps, profile,</tspan><tspan x="58" dy="13">check, ftype</tspan></text>
+
+  <!-- engine -->
+  <rect x="46" y="180" width="262" height="104" rx="8" fill="#ffffff" stroke="#9aa"/>
+  <text class="box" x="58" y="200">Sort engine  (sorting_engine.py)</text>
+  <text class="it" x="58" y="220"><tspan x="58" dy="0">sort → verify → join → macrosort</tspan><tspan x="58" dy="17">mixins: Segments / Tone /</tspan><tspan x="58" dy="14">Syllables  (lexicon.py)</tspan><tspan x="58" dy="14">+ Categories</tspan></text>
+
+  <!-- status -->
+  <rect x="324" y="110" width="290" height="82" rx="8" fill="#ffffff" stroke="#9aa"/>
+  <text class="box" x="336" y="130">program.status  (StatusDict)</text>
+  <text class="mono" x="336" y="150"><tspan x="336" dy="0">[cvt][ps][profile][check] →</tspan><tspan x="336" dy="14">{groups, done, tosort,</tspan><tspan x="336" dy="13">tojoin, recorded}</tspan></text>
+
+  <!-- slices -->
+  <rect x="324" y="202" width="290" height="62" rx="8" fill="#ffffff" stroke="#9aa"/>
+  <text class="box" x="336" y="222">program.slices  (SliceDict)</text>
+  <text class="mono" x="336" y="242"><tspan x="336" dy="0">ps, profile, senses</tspan><tspan x="336" dy="13">(sentinel profile for S)</tspan></text>
+
+  <!-- seams callout -->
+  <rect x="630" y="108" width="640" height="178" rx="8" fill="#fdecea" stroke="#e06a5a"/>
+  <text class="box" x="644" y="128">cvt seams — special-casing leaking into shared code  (what the redesign targets)</text>
+  <text class="seam" x="644" y="150"><tspan x="644" dy="0">• maybesort:   if cvt not in ('T','S'):  …macrosort…   (alphabet phase = segment only)</tspan><tspan x="644" dy="19">• SliceDict:   SYLLABLE_SLICE_SENTINEL ;  profile() returns a profile class for S</tspan><tspan x="644" dy="19">• updatesortingstatus:   cvt=='S' routes to the syllable getter</tspan><tspan x="644" dy="19">• getanotherskip:   suppress "Other"/join for the closed primitive checks</tspan><tspan x="644" dy="19">• naming clash:   SortS (class) = Segment  ≠  cvt 'S' = Syllable</tspan></text>
+
+  <!-- ===================== BAND B: PER-TIER ===================== -->
+  <text class="band" x="32" y="328">PER-TIER DATA  (each column: in-memory structures, LIFT persistence, relationships used).  Tiers nest: Segment → C/V sub-tiers; Tone → tone/register sub-tiers (RTT).</text>
+
+  <!-- SEGMENT column -->
+  <rect x="30" y="340" width="405" height="34" rx="8" fill="#2f6db0"/>
+  <text class="hdr" x="46" y="362">SEGMENT tier   (cvt C / V)</text>
+
+  <rect x="38" y="382" width="389" height="120" rx="8" fill="#eaf2fb" stroke="#2f6db0"/>
+  <text class="box" x="50" y="401">IN-MEMORY</text>
+  <text class="it" x="50" y="421"><tspan x="50" dy="0">program.alphabet  (Alphabet)</tspan><tspan x="62" dy="16">glyphdict, glyph_members</tspan><tspan x="62" dy="15">items_to_macrosort</tspan><tspan x="50" dy="17" font-weight="700">→ AGGREGATION: groups → glyphs</tspan></text>
+
+  <rect x="38" y="512" width="389" height="186" rx="8" fill="#ffffff" stroke="#2f6db0"/>
+  <text class="box" x="50" y="531">LIFT  (persistent)</text>
+  <text class="it" x="50" y="551"><tspan x="50" dy="0">form annotation: name=check,</tspan><tspan x="62" dy="14">value=group        → membership</tspan><tspan x="50" dy="18">cvprofile form (confirmed)</tspan><tspan x="62" dy="14">+ machine form (…_MT)</tspan><tspan x="50" dy="18">profile-ftype verification fields</tspan><tspan x="50" dy="18" font-weight="700">form TEXT rewritten on naming</tspan><tspan x="62" dy="14">(re-spell — segment only)</tspan></text>
+
+  <rect x="38" y="708" width="389" height="150" rx="8" fill="#fafafa" stroke="#2f6db0"/>
+  <text class="box" x="50" y="727">relationships used</text>
+  <text class="ok" x="50" y="749"><tspan x="50" dy="0">membership ✓</tspan><tspan x="50" dy="19">composition —</tspan><tspan x="50" dy="19">refinement —</tspan><tspan x="50" dy="19">aggregation ✓</tspan></text>
+  <text class="sm" x="200" y="749"><tspan x="200" dy="0">word → group, per check</tspan><tspan x="200" dy="19">(checks independent; no UF)</tspan><tspan x="200" dy="19">slice-by-slice only</tspan><tspan x="200" dy="19">alphabet → glyph → re-spell</tspan></text>
+
+  <!-- SYLLABLE column -->
+  <rect x="455" y="340" width="405" height="34" rx="8" fill="#2f8f5b"/>
+  <text class="hdr" x="471" y="362">SYLLABLE tier   (cvt S)</text>
+
+  <rect x="463" y="382" width="389" height="120" rx="8" fill="#e9f6ee" stroke="#2f8f5b"/>
+  <text class="box" x="475" y="401">IN-MEMORY</text>
+  <text class="it" x="475" y="419"><tspan x="475" dy="0" font-weight="700">syllable profile class — DERIVED, not stored</tspan><tspan x="487" dy="15">= Beg + count + End  (code: macrogroup_of_sense)</tspan><tspan x="475" dy="15">a CONVENIENCE to split a long list —</tspan><tspan x="487" dy="14">NOT underlying-real (cf. tone UF)</tspan><tspan x="475" dy="15">label = the CV template (C/V only, right</tspan><tspan x="487" dy="14">count+order; naming task TBD — §6 Lvl 1.5)</tspan></text>
+
+  <rect x="463" y="512" width="389" height="186" rx="8" fill="#ffffff" stroke="#2f8f5b"/>
+  <text class="box" x="475" y="531">LIFT  (persistent)</text>
+  <text class="it" x="475" y="551"><tspan x="475" dy="0">primitive annotation  #C   (boolean*)</tspan><tspan x="475" dy="17">primitive annotation  C#   (boolean*)</tspan><tspan x="475" dy="17">primitive annotation  syls  (int)</tspan><tspan x="475" dy="15" class="gray">* the 3 primitives run on the WHOLE DB</tspan><tspan x="487" dy="14" class="gray">(unsliced; 30/150/pp = pagination)</tspan><tspan x="475" dy="17">profile annotation (per ftype),</tspan><tspan x="487" dy="14">within a profile class</tspan><tspan x="475" dy="16" class="gray">no form rewrite</tspan></text>
+
+  <rect x="463" y="708" width="389" height="150" rx="8" fill="#fafafa" stroke="#2f8f5b"/>
+  <text class="box" x="475" y="727">relationships used</text>
+  <text class="ok" x="475" y="749"><tspan x="475" dy="0">membership ✓</tspan><tspan x="475" dy="19">composition ✓</tspan><tspan x="475" dy="19">refinement ✓</tspan><tspan x="475" dy="19">aggregation —</tspan></text>
+  <text class="sm" x="625" y="749"><tspan x="625" dy="0">3 primitives (unsliced)</tspan><tspan x="625" dy="19">profile class: bounded, concrete</tspan><tspan x="625" dy="19">profile within class</tspan><tspan x="625" dy="19">none yet</tspan></text>
+
+  <!-- TONE column -->
+  <rect x="880" y="340" width="405" height="34" rx="8" fill="#7a4fb0"/>
+  <text class="hdr" x="896" y="362">TONE tier   (cvt T)</text>
+
+  <rect x="888" y="382" width="389" height="120" rx="8" fill="#f1ebfa" stroke="#7a4fb0"/>
+  <text class="box" x="900" y="401">IN-MEMORY</text>
+  <text class="it" x="900" y="421"><tspan x="900" dy="0">program.examples  (ExampleDict)</tspan><tspan x="900" dy="16" font-weight="700">program.analysis (Analysis — TONE ONLY)</tspan><tspan x="912" dy="14">surface→UF: sensedict,</tspan><tspan x="912" dy="14">sensesbygroup, valuesbygroupcheck</tspan><tspan x="900" dy="16">program.toneframes (ToneFrames)</tspan></text>
+
+  <rect x="888" y="512" width="389" height="186" rx="8" fill="#ffffff" stroke="#7a4fb0"/>
+  <text class="box" x="900" y="531">LIFT  (persistent)</text>
+  <text class="it" x="900" y="551"><tspan x="900" dy="0">example per frame → tone field</tspan><tspan x="912" dy="14">= surface tone   → membership</tspan><tspan x="912" dy="14" class="gray">(one facet of the melody, per frame)</tspan><tspan x="900" dy="17">sense tone field (uftonevalue)</tspan><tspan x="912" dy="14">= UF, one per sense → composition</tspan><tspan x="900" dy="17">phonetic / ipa forms (…-x-ipa, _MT)</tspan><tspan x="900" dy="17" class="gray">no form rewrite · uses examples channel</tspan></text>
+
+  <rect x="888" y="708" width="389" height="150" rx="8" fill="#fafafa" stroke="#7a4fb0"/>
+  <text class="box" x="900" y="727">relationships used</text>
+  <text class="ok" x="900" y="749"><tspan x="900" dy="0">membership ✓</tspan><tspan x="900" dy="19">composition ✓</tspan><tspan x="900" dy="19">refinement —</tspan><tspan x="900" dy="19">aggregation ○</tspan></text>
+  <text class="sm" x="1050" y="749"><tspan x="1050" dy="0">surface group, per frame</tspan><tspan x="1050" dy="19">UF = melody: unbounded, theoretical</tspan><tspan x="1050" dy="19">—</tspan><tspan x="1050" dy="19">FUTURE: tone-orthography (deslice)</tspan></text>
+
+  <!-- ===================== LEGEND ===================== -->
+  <rect x="30" y="884" width="1256" height="266" rx="10" fill="#fbfbfc" stroke="#ccc"/>
+  <text class="box" x="46" y="906">LEGEND — the four structural relationships (a tier uses any subset)</text>
+  <text class="it" x="46" y="928"><tspan x="46" dy="0"><tspan font-weight="700">membership</tspan>  — word → group, on one check  (all tiers)</tspan><tspan x="46" dy="18"><tspan font-weight="700">composition</tspan> — a word's memberships across several checks → a derived composite  (syllable profile class; tone UF) — computed, not stored</tspan><tspan x="46" dy="18"><tspan font-weight="700">refinement</tspan>  — a sort scoped within a composite slice  (syllable profile within a profile class)</tspan><tspan x="46" dy="18"><tspan font-weight="700">aggregation</tspan> — per-context groups → a whole-language orthographic inventory  (segment glyphs/alphabet now; tone-orthography ○ = future)</tspan></text>
+
+  <text class="box" x="46" y="1012">Clean cross-tier parallel is at AGGREGATION — not composition (corrects v0.3.0):</text>
+  <text class="sm" x="46" y="1032"><tspan x="46" dy="0">segment  group → glyph   ≈   tone  UF → tone-orthography     (both = macrosort / "deslice": collapse per-context groups into one language-wide unit)</tspan><tspan x="46" dy="17">The two compositions only share the word "composite": syllable profile class = bounded · absolute · concrete · a convenience;   tone UF = unbounded · judgement-joined · theoretical · underlying-real.</tspan></text>
+
+  <text class="box" x="46" y="1090">Why segments abstract once, tone twice:</text>
+  <text class="sm" x="46" y="1110"><tspan x="46" dy="0">a segment is observable in isolation (allophone → phoneme folds into the glyph aggregation) — tone is RELATIVE, meaningless out of context, so the UF must be triangulated across frames BEFORE it can aggregate.</tspan><tspan x="46" dy="17">✓ = used · — = not used · ○ = future.   Red box (above) = today's cvt special-casing in shared code.   Storage differs per tier: segment = form annotations + cvprofile forms; syllable = primitive annotations; tone = examples + tone field (surface) + sense tone field (UF).</tspan></text>
+</svg>

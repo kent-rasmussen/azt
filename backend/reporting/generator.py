@@ -101,9 +101,8 @@ class Report(object):
         log.info(_("Starting reports that didn't work in the background: {reports}").format(reports=unbackground))
         for kwargs in unbackground:
             # log.info("reportmulti unbackground with kwargs {}".format(kwargs))
-            self.ui.wait(msg=kwargs)
-            self.reportfn(**kwargs) #run what failed in background here
-            self.ui.waitdone()
+            with self.ui.waiting(msg=kwargs):
+                self.reportfn(**kwargs) #run what failed in background here
         logfinished(start_time,msg=_("all reports ({reports})").format(reports=all))
     def tonegroupreport(self,usegui=True,**kwargs):
         """This should iterate over at least some profiles; top 2-3?
@@ -468,28 +467,35 @@ class Report(object):
         if usegui: #i.e., showing results in window
             self.program.report_ui.add_label(self.results, text=text
                 ).grid(column=0, row=self.results.row)
-            self.ui.runwindow.wait()
-        si=xlp.Section(xlpr,text)
-        if self.byUFgroup:
-            self.makeanalysis()
-            self.analysis.donoUFanalysis()
-            ufgroupsnsenses=analysis.sensesbygroup.items()
-            kwargs['sectlevel']=4
-            t=_("{count} checks").format(count=self.program.params.cvtdict()[kwargs['cvt']]['sg'])
-            for kwargs['ufgroup'],kwargs['ufsenses'] in ufgroupsnsenses:
-                if 'ufgroup' in kwargs:
-                    log.info("Going to run {sg} report for UF group {group}"
-                            "".format(sg=self.program.params.cvtdict()[kwargs['cvt']]['sg'],
-                                    group=kwargs['ufgroup']))
-                sid=' '.join([t,"for",kwargs['ufgroup']])
-                s2=xlp.Section(si,sid) #,level=2
-                iterateUFgroups(s2,**kwargs)
-        else:
-            kwargs['ufgroup']=_("All")
-            iterateUFgroups(si,**kwargs)
-        xlpr.close(me=self.program.me)
+            # thenshow=True so the results window — created withdrawn by
+            # getrunwindow() with no msg — is revealed when this progress wait
+            # finishes (waitdone() in the finally below). Without it showafterwait
+            # is False (the window isn't viewable yet) and the results never show.
+            self.ui.runwindow.wait(thenshow=True)
+        try:
+            si=xlp.Section(xlpr,text)
+            if self.byUFgroup:
+                self.makeanalysis()
+                self.analysis.donoUFanalysis()
+                ufgroupsnsenses=analysis.sensesbygroup.items()
+                kwargs['sectlevel']=4
+                t=_("{count} checks").format(count=self.program.params.cvtdict()[kwargs['cvt']]['sg'])
+                for kwargs['ufgroup'],kwargs['ufsenses'] in ufgroupsnsenses:
+                    if 'ufgroup' in kwargs:
+                        log.info("Going to run {sg} report for UF group {group}"
+                                "".format(sg=self.program.params.cvtdict()[kwargs['cvt']]['sg'],
+                                        group=kwargs['ufgroup']))
+                    sid=' '.join([t,"for",kwargs['ufgroup']])
+                    s2=xlp.Section(si,sid) #,level=2
+                    iterateUFgroups(s2,**kwargs)
+            else:
+                kwargs['ufgroup']=_("All")
+                iterateUFgroups(si,**kwargs)
+            xlpr.close(me=self.program.me)
+        finally:
+            if usegui:
+                self.ui.runwindow.waitdone()
         if usegui:
-            self.ui.runwindow.waitdone()
             if not hasattr(self,'results'): #i.e., showing results in window
                 self.ui.runwindow.on_quit()
         n=0
@@ -953,85 +959,88 @@ class Report(object):
         kwargs['usegui']=usegui
         if kwargs.get('usegui'): #i.e., showing results in window
             self.ui.wait(msg=_("Running {task}").format(task=_(self.tasktitle)))
-        self.basicreportfile=''.join([str(self.reportbasefilename)
-                                        ,'_',''.join(sorted(self.cvtstodo)[:2])
-                                        ,'_MultisliceReport.txt'])
-        kwargs['psprofiles']=self.psprofilestodo()
-        log.info("kwargs['psprofiles']={profiles}".format(profiles=kwargs['psprofiles']))
-        reporttype='Multislice '+'-'.join(self.cvtstodo)
-        xlpr=self.xlpstart(**kwargs)
-        if not hasattr(xlpr,'node'):
-            log.info(_("Problem creating report; see previous messages."))
+        try:
+            self.basicreportfile=''.join([str(self.reportbasefilename)
+                                            ,'_',''.join(sorted(self.cvtstodo)[:2])
+                                            ,'_MultisliceReport.txt'])
+            kwargs['psprofiles']=self.psprofilestodo()
+            log.info("kwargs['psprofiles']={profiles}".format(profiles=kwargs['psprofiles']))
+            reporttype='Multislice '+'-'.join(self.cvtstodo)
+            xlpr=self.xlpstart(**kwargs)
+            if not hasattr(xlpr,'node'):
+                log.info(_("Problem creating report; see previous messages."))
+                xlpr.cleanup()
+                return
+            si=xlp.Section(xlpr,"Introduction")
+            p=xlp.Paragraph(si,instr)
+            sys.stdout = open(self.basicreportfile, 'w', encoding='utf-8')
+            # inner finally restores stdout even if report generation raises
+            try:
+                print(instr)
+                log.info(instr)
+                #There is no runwindow here...
+                self.basicreported={}
+                self.checkcounts={}
+                # self.printprofilesbyps() #don't really need this
+                # self.printcountssorted() #don't really need this
+                t=_("This report covers {pss} Grammatical categories, "
+                    "with {profiles} syllable profiles in each. "
+                    "This is of course configurable, but I assume you don't want "
+                    "everything."
+                    "").format(pss=_("the top {n}").format(n=self.program.settings.maxpss)
+                                if self.program.settings.maxpss
+                                else _('all'), #fix this!
+                                profiles=_("the top {n}").format(n=self.program.settings.maxprofiles)
+                                            if self.program.settings.maxprofiles
+                                            else _('all'))
+                log.info(t)
+                print(t)
+                p=xlp.Paragraph(si,t)
+                for kwargs['ps'] in kwargs['psprofiles']:
+                    profiles=kwargs['psprofiles'][kwargs['ps']]
+                    t=_("{ps} data: (profiles: {profiles})").format(ps=kwargs['ps'],profiles=profiles)
+                    log.info(t)
+                    print(t)
+                    s1=xlp.Section(xlpr,t)
+                    t=_("This section covers the following top syllable profiles "
+                        "which are found in {ps}s: {profiles}").format(ps=kwargs['ps'],profiles=profiles)
+                    p=xlp.Paragraph(s1,t)
+                    log.info(t)
+                    for kwargs['profile'] in profiles:
+                        # kwargs['formstosearch']=self.formspsprofile(**kwargs)
+                        t=f"{kwargs['profile']} {kwargs['ps']}s"
+                        s2=xlp.Section(s1,t,level=2)
+                        log.info(t)
+                        if self.byUFgroup:
+                            self.makeanalysis(**kwargs)
+                            self.analysis.donoUFanalysis()
+                            ufgroupsnids=[(i,j) for i,j in
+                                        self.analysis.sensesbygroup.items()
+                                        #don't report small groups
+                                        if len(j) >= self.minwords]
+                            kwargs['sectlevel']=4
+                            for kwargs['ufgroup'],kwargs['ufsenses'] in ufgroupsnids:
+                                if 'ufgroup' in kwargs:
+                                    log.info("Going to run report for UF group {group}"
+                                            "".format(group=kwargs['ufgroup']))
+                                sid=' '.join([t,"for",kwargs['ufgroup']])
+                                s3=xlp.Section(s2,sid,level=3)
+                                iteratecvt(parent=s3,**kwargs)
+                                # for check in self.checks: #self.checkcodesbyprofile:
+                                #     """multithread here"""
+                                #     self.docheckreport(parent,check=check,cvt=cvt,**kwargs)
+                        else:
+                            kwargs['sectlevel']=3
+                            iteratecvt(parent=s2,**kwargs)
+                self.coocurrencetables(xlpr)
+                log.info(self.checkcounts)
+                xlpr.close(me=self.program.me)
+            finally:
+                sys.stdout.close()
+                sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
+        finally:
             if kwargs.get('usegui'):
                 self.ui.waitdone()
-            xlpr.cleanup()
-            return
-        si=xlp.Section(xlpr,"Introduction")
-        p=xlp.Paragraph(si,instr)
-        sys.stdout = open(self.basicreportfile, 'w', encoding='utf-8')
-        print(instr)
-        log.info(instr)
-        #There is no runwindow here...
-        self.basicreported={}
-        self.checkcounts={}
-        # self.printprofilesbyps() #don't really need this
-        # self.printcountssorted() #don't really need this
-        t=_("This report covers {pss} Grammatical categories, "
-            "with {profiles} syllable profiles in each. "
-            "This is of course configurable, but I assume you don't want "
-            "everything."
-            "").format(pss=_("the top {n}").format(n=self.program.settings.maxpss)
-                        if self.program.settings.maxpss
-                        else _('all'), #fix this!
-                        profiles=_("the top {n}").format(n=self.program.settings.maxprofiles)
-                                    if self.program.settings.maxprofiles
-                                    else _('all'))
-        log.info(t)
-        print(t)
-        p=xlp.Paragraph(si,t)
-        for kwargs['ps'] in kwargs['psprofiles']:
-            profiles=kwargs['psprofiles'][kwargs['ps']]
-            t=_("{ps} data: (profiles: {profiles})").format(ps=kwargs['ps'],profiles=profiles)
-            log.info(t)
-            print(t)
-            s1=xlp.Section(xlpr,t)
-            t=_("This section covers the following top syllable profiles "
-                "which are found in {ps}s: {profiles}").format(ps=kwargs['ps'],profiles=profiles)
-            p=xlp.Paragraph(s1,t)
-            log.info(t)
-            for kwargs['profile'] in profiles:
-                # kwargs['formstosearch']=self.formspsprofile(**kwargs)
-                t=f"{kwargs['profile']} {kwargs['ps']}s"
-                s2=xlp.Section(s1,t,level=2)
-                log.info(t)
-                if self.byUFgroup:
-                    self.makeanalysis(**kwargs)
-                    self.analysis.donoUFanalysis()
-                    ufgroupsnids=[(i,j) for i,j in
-                                self.analysis.sensesbygroup.items()
-                                #don't report small groups
-                                if len(j) >= self.minwords]
-                    kwargs['sectlevel']=4
-                    for kwargs['ufgroup'],kwargs['ufsenses'] in ufgroupsnids:
-                        if 'ufgroup' in kwargs:
-                            log.info("Going to run report for UF group {group}"
-                                    "".format(group=kwargs['ufgroup']))
-                        sid=' '.join([t,"for",kwargs['ufgroup']])
-                        s3=xlp.Section(s2,sid,level=3)
-                        iteratecvt(parent=s3,**kwargs)
-                        # for check in self.checks: #self.checkcodesbyprofile:
-                        #     """multithread here"""
-                        #     self.docheckreport(parent,check=check,cvt=cvt,**kwargs)
-                else:
-                    kwargs['sectlevel']=3
-                    iteratecvt(parent=s2,**kwargs)
-        self.coocurrencetables(xlpr)
-        log.info(self.checkcounts)
-        xlpr.close(me=self.program.me)
-        sys.stdout.close()
-        sys.stdout=sys.__stdout__ #In case we want to not crash afterwards...:-)
-        if kwargs.get('usegui'):
-            self.ui.waitdone()
     def coocurrencetables(self,xlpr):
         t=_("Summary Co-ocurrence Tables")
         s1s=xlp.Section(xlpr,t)

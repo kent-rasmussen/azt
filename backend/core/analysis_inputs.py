@@ -149,6 +149,306 @@ class CheckParameters(object):
         if not cvt:
             cvt=self.cvt() #this shouldn't necessarily set current cvt.
         return self._cvts[cvt][n]
+    # --- syllable macrogroup helpers (the cvt='S' slice = Beg+count+End) ---
+    SYLLABLE_SLICE_SENTINEL='whole-word' #profile dim while doing the 3 primitives
+    SYLLABLE_PREP_PS='*' #ps dim sentinel: PREP is wordlist-wide. The three
+                #primitives (#C/C#/syls) are ps-INDEPENDENT form facts, so their
+                #slices and verify state live under one shared ps key, not per-ps.
+                #ps re-enters only downstream as the (profile × ps) segmental slice.
+    def compose_macrogroup(self,beg,syls,end):
+        return '{}_{}_{}'.format(beg,syls,end)
+    def parse_macrogroup(self,key):
+        bits=str(key).split('_')
+        return tuple(bits) if len(bits)==3 else (None,None,None)
+    def macrogroup_of_sense(self,sense,ftype=None):
+        """Compose a sense's Beg+count+End macrogroup from its three primitive
+        annotations (#C / syls / C#). None until all three are set."""
+        ftype=ftype or self.ftype()
+        analang=self.program.db.analang
+        beg=sense.annotationvaluebyftypelang(ftype,analang,'#C')
+        syls=sense.annotationvaluebyftypelang(ftype,analang,'syls')
+        end=sense.annotationvaluebyftypelang(ftype,analang,'C#')
+        if not (beg and syls and end):
+            return None
+        return self.compose_macrogroup(beg,syls,end)
+    # --- the three primitives, derived by orthography from a profile string.
+    # Canonical home (they used to live on the Syllables task mixin) so they can
+    # be reached OFF the live task — e.g. assign_slices' orthographic placement on
+    # the board-render rebuild, where program.task may not be a syllable task.
+    # Pure functions of the profile string.
+    VOWEL_SYMS=('V','Ṽ') #vowel symbols in a computed profile string
+    def word_initial(self,profile):
+        return 'V' if profile and profile[0] in self.VOWEL_SYMS else 'C'
+    def word_final(self,profile):
+        return 'V' if profile and profile[-1] in self.VOWEL_SYMS else 'C'
+    def syllable_count(self,profile):
+        # number of maximal vowel-runs (vowel-sequences separated by consonants)
+        n=0; inrun=False
+        for ch in (profile or ''):
+            v=ch in self.VOWEL_SYMS
+            if v and not inrun:
+                n+=1
+            inrun=v
+        return max(n,1)  # every word is at least one syllable (0 is nonsense)
+    def seed_sense_primitives(self,sense,ftype,analang):
+        """Seed a sense's #C/C#/syls primitive annotations (and the profile
+        annotation) from its CV profile, IDEMPOTENTLY — the single seeding rule
+        shared by the load-time pass and the prep-task presort, so they can't
+        drift. Prefers the confirmed profile, falling back to the machine analysis
+        (so a word whose plain profile hasn't synced yet, e.g. 'always', is still
+        analyzable). Returns a tag for the caller's counters:
+          'seeded'    — first bucketing from a valid profile (all three set)
+          'defaulted' — un-analyzable → #C=C/#C#=C, syls intentionally left unset
+          'syls'      — backfilled a missing syls on an already-bucketed, now-
+                        analyzable word (the bug that stranded words like 'always')
+          None        — already complete / nothing to do."""
+        av=sense.annotationvaluebyftypelang
+        if av(ftype,analang,'syls')=='0':       # normalise a nonsensical 0
+            av(ftype,analang,'syls','1')
+        profile=sense.cvprofilevalue(ftype) or sense.cvprofilemachinevalue(ftype)
+        valid=bool(profile) and profile!='Invalid'
+        if not av(ftype,analang,'#C'):          # not yet bucketed
+            if valid:
+                av(ftype,analang,'#C',self.word_initial(profile))
+                av(ftype,analang,'C#',self.word_final(profile))
+                av(ftype,analang,'syls',str(self.syllable_count(profile)))
+                av(ftype,analang,ftype,profile)
+                return 'seeded'
+            # Un-analyzable (capitalised, multi-word, out-of-alphabet …): the
+            # word-initial/final checks are CLOSED binaries with no sort page, so
+            # default both to consonant to bucket the word; leave syls unset.
+            av(ftype,analang,'#C','C'); av(ftype,analang,'C#','C')
+            return 'defaulted'
+        if not av(ftype,analang,'syls') and valid: # backfill a missing syls
+            av(ftype,analang,'syls',str(self.syllable_count(profile)))
+            if not av(ftype,analang,ftype):
+                av(ftype,analang,ftype,profile)
+            return 'syls'
+        return None
+    # --- reconciling a machine CV profile with the user's CONFIRMED primitives.
+    # A machine analysis can contradict what the user verified — e.g. 'CVCV' for a
+    # word confirmed C_1_C. constrain_profile reconciles it SYLLABLES-FIRST, then
+    # edges, so we never "fix" an edge by deleting a syllable's vowel:
+    #   1. Syllable count. A profile's count is ambiguous between its vowel-
+    #      SEQUENCE count (VV=1, a diphthong) and its INDIVIDUAL-vowel count (VV=2,
+    #      hiatus). If the confirmed `syls` lies in [sequences .. individuals] the
+    #      profile is already consistent — leave the vowels alone. Otherwise adjust
+    #      vowel runs — REMOVING a run (when over) or ADDING one (when under) —
+    #      preferring an edge run whose removal OR addition also satisfies that
+    #      edge's C/V constraint (one move, two fixes).
+    #   2. Edges. Add/remove CONSONANTS only so the first segment matches #C and the
+    #      last matches C#. We never delete a syllable's vowel just to fix an edge —
+    #      vowels change ONLY in step 1, and only to reconcile the count.
+    #   3. Fallback. If still inconsistent, emit the canonical 'CV' per syllable
+    #      (+ final C if C#=C, − initial C if #C=V) — guaranteed consistent, flagged
+    #      so the caller logs it.
+    # Returns a dict {profile, changed, fallback, valid}; the caller logs (deduped).
+    # See docs/sort_syllables_design.md.
+    SEGMENT_BASES=set('NGSDCVʔ')|{'Ṽ'} # base segment chars; everything else (length
+                                        # ː, tone, '.', '=', '<', combining marks)
+                                        # is a MODIFIER that rides the prior segment
+    PROFILE_CONSTRAINT={
+        'enabled':True,    # master switch for the whole reconciliation
+        'force_resort':False, # TESTING ONLY. Normally the constrained profile is
+                          # written to the presort/data form only while it's still
+                          # UNCONFIRMED; this also overwrites an already-(pre)sorted
+                          # profile, so you can SEE the constraint act on existing
+                          # data. It CLOBBERS confirmed sort results — never leave
+                          # it on for real work, and don't save over good data.
+    }
+    def _profile_segments(self,profile):
+        """Split a profile into segments: a base char (consonant/vowel class) plus
+        any following MODIFIER chars — so 'Vː' is ONE segment, not two."""
+        segs=[]
+        for ch in (profile or ''):
+            if ch in self.SEGMENT_BASES or not segs:
+                segs.append(ch)
+            else:
+                segs[-1]+=ch # modifier attaches to the preceding segment
+        return segs
+    def _segment_type(self,seg):
+        """'V' if a segment carries a vowel-class char, else 'C'."""
+        return 'V' if any(c in self.VOWEL_SYMS for c in seg) else 'C'
+    def _vowel_runs(self,segs):
+        """(start, stop) index ranges of each maximal vowel-segment run."""
+        runs=[]; i=0; n=len(segs)
+        while i<n:
+            if self._segment_type(segs[i])=='V':
+                j=i
+                while j<n and self._segment_type(segs[j])=='V':
+                    j+=1
+                runs.append((i,j)); i=j
+            else:
+                i+=1
+        return runs
+    def profile_vowel_runs(self,profile):
+        """Vowel-SEQUENCE count of a profile (VV = one). The LOW end of a profile's
+        ambiguous syllable count; the high end is its individual-vowel count."""
+        return len(self._vowel_runs(self._profile_segments(profile)))
+    def _individual_vowels(self,segs):
+        return sum(1 for s in segs if self._segment_type(s)=='V')
+    def profile_satisfies(self,profile,beg=None,end=None,syls=None):
+        """True iff `profile` is consistent with the confirmed primitives: first
+        segment is beg's type, last is end's type, and `syls` lies in the profile's
+        ambiguity range [vowel-sequences .. individual-vowels]."""
+        segs=self._profile_segments(profile)
+        if not segs:
+            return False
+        if beg and self._segment_type(segs[0])!=beg:
+            return False
+        if end and self._segment_type(segs[-1])!=end:
+            return False
+        if syls is not None:
+            try:
+                target=int(syls)
+            except (TypeError,ValueError):
+                target=None
+            if target is not None and not (len(self._vowel_runs(segs))
+                                            <=target<=self._individual_vowels(segs)):
+                return False
+        return True
+    def _default_profile(self,beg=None,end=None,syls=None):
+        """The guaranteed-consistent fallback: 'CV' per syllable, + final C if
+        C#=C, − initial C if #C=V."""
+        try:
+            s=max(int(syls),1)
+        except (TypeError,ValueError):
+            s=1
+        p='CV'*s
+        if end=='C':
+            p+='C'
+        if beg=='V':
+            p=p[1:]
+        return p
+    def _reduce_vowel_runs(self,segs,target,beg,end):
+        """Drop vowel runs until there are `target` of them, preferring an edge run
+        whose removal ALSO satisfies that edge's C constraint (two fixes), else the
+        trailing run."""
+        runs=self._vowel_runs(segs)
+        while len(runs)>max(target,0):
+            if beg=='C' and runs[0][0]==0:            # leading vowel run; #C wants C
+                a,b=runs[0]
+            elif end=='C' and runs[-1][1]==len(segs): # trailing vowel run; C# wants C
+                a,b=runs[-1]
+            else:                                     # otherwise trim from the end
+                a,b=runs[-1]
+            segs=segs[:a]+segs[b:]
+            runs=self._vowel_runs(segs)
+        return segs
+    def _add_vowel_runs(self,segs,target,beg,end):
+        """Add isolated vowels until there are `target` runs, but ONLY at an edge
+        that wants a vowel and lacks one (two fixes: +1 syllable AND the V edge).
+        Interior insertion is unknowable, so any shortfall is left for the fallback."""
+        if beg=='V' and (not segs or self._segment_type(segs[0])=='C') \
+                and len(self._vowel_runs(segs))<target:
+            segs=['V']+segs
+        if end=='V' and (not segs or self._segment_type(segs[-1])=='C') \
+                and len(self._vowel_runs(segs))<target:
+            segs=segs+['V']
+        return segs
+    def constrain_profile(self,profile,beg=None,end=None,syls=None,cfg=None):
+        """Reconcile a machine profile with the confirmed primitives — syllables
+        first, then edges (see the block comment above). Returns a dict
+        {profile, changed, fallback, valid}; primitives given as None are not
+        constrained."""
+        cfg=cfg or self.PROFILE_CONSTRAINT
+        if not cfg.get('enabled') or not profile or profile=='Invalid':
+            return {'profile':profile,'changed':False,'fallback':False,'valid':True}
+        orig=profile
+        try:
+            target=int(syls)
+        except (TypeError,ValueError):
+            target=None
+        segs=self._profile_segments(profile)
+        # 1. SYLLABLES — only when `syls` is outside the profile's ambiguity range.
+        if target is not None:
+            seqs=len(self._vowel_runs(segs)); indiv=self._individual_vowels(segs)
+            if target<seqs:               # too many vowel sequences → remove
+                segs=self._reduce_vowel_runs(segs,target,beg,end)
+            elif target>indiv:            # too few vowels → add (edge-aware only)
+                segs=self._add_vowel_runs(segs,target,beg,end)
+        # 2. EDGES — consonants only; never touch the (now-correct) vowels.
+        if beg=='C' and segs and self._segment_type(segs[0])=='V':
+            segs=['C']+segs
+        elif beg=='V':
+            while segs and self._segment_type(segs[0])=='C':
+                segs.pop(0)
+        if end=='C' and segs and self._segment_type(segs[-1])=='V':
+            segs=segs+['C']
+        elif end=='V':
+            while segs and self._segment_type(segs[-1])=='C':
+                segs.pop()
+        new=''.join(segs)
+        # 3. FALLBACK if reconciliation didn't land a consistent profile.
+        fallback=False
+        if not self.profile_satisfies(new,beg,end,target):
+            new=self._default_profile(beg,end,target); fallback=True
+        valid=self.profile_satisfies(new,beg,end,target)
+        return {'profile':new,'changed':new!=orig,'fallback':fallback,'valid':valid}
+    def is_syllable_primitive_check(self,check=None):
+        # the three sorts that establish the macrogroup (run on the whole
+        # wordlist); none of them join.
+        return (check or self.check()) in ('#C','C#','syls')
+    def is_syllable_boolean_check(self,check=None):
+        # the CLOSED binary checks: no new-group ("Other"), no sort page (the
+        # presort defaults every word). syls is NOT here — it's a small but OPEN
+        # class (users may create new counts), so it keeps a sort page.
+        return (check or self.check()) in ('#C','C#')
+    def is_word_final_check(self,check=None):
+        # a check about the END of the word — its verify list reads more
+        # naturally sorted from the end of the word (the 'C#' primitive).
+        return (check or self.check())=='C#'
+    def syllable_prep_complete(self,ps=None):
+        """Task 1 (syllable PREP) is done when EVERY slice of all three primitive
+        checks (#C/C#/syls) is verified. PREP is wordlist-wide, so the verify state
+        lives under the SYLLABLE_PREP_PS sentinel (not the passed ps, which is
+        ignored — kept only for caller compatibility). The per-(group,slice) state
+        is synthetic group ids in the sentinel-profile status node (see
+        SyllableSliceDict). This one predicate gates the Task-1 board, the Task-2
+        board, and SortSyllables.runcheck — single source of truth."""
+        status=self.program.status
+        for chk in ('#C','C#','syls'):
+            try:
+                n=status.node(cvt='S',ps=self.SYLLABLE_PREP_PS,
+                              profile=self.SYLLABLE_SLICE_SENTINEL,check=chk)
+            except Exception:
+                return False
+            g=set(n.get('groups',[])); d=set(n.get('done',[]))
+            if not g or not (g<=d):
+                return False
+        return True
+    # --- macrogroup → prose (the configurable renderer; tune to user feedback) ---
+    def macrogroup_begend_name(self,beg,end):
+        w={'C':_("consonant"),'V':_("vowel")}
+        return _("{beg}-initial, {end}-final").format(
+                            beg=w.get(beg,beg),end=w.get(end,end))
+    def macrogroup_initial_name(self,beg):
+        return {'C':_("consonant initial"),'V':_("vowel initial")}.get(beg,beg)
+    def macrogroup_final_name(self,end):
+        return {'C':_("consonant final"),'V':_("vowel final")}.get(end,end)
+    def syllable_group_name(self,check,group):
+        """Human name for a specific 'S' group within a check — for verify
+        title/instructions/button (e.g. 'consonant initial', '2 syllables')."""
+        if check=='#C':
+            return self.macrogroup_initial_name(group)
+        if check=='C#':
+            return self.macrogroup_final_name(group)
+        if check=='syls':
+            return self.macrogroup_count_name(group)
+        return str(group)  # profile check: the profile string itself
+    def syllable_check_name(self,check=None):
+        """Human name for a prep primitive CHECK itself (not a group within it),
+        for the status line — so #C/C#/syls don't all read alike (they share one
+        ftype, which is what cvcheckname keyed on)."""
+        return {'#C':_("word-initial sounds"),
+                'C#':_("word-final sounds"),
+                'syls':_("syllable counts")}.get(check or self.check())
+    def macrogroup_count_name(self,syls):
+        return _("{n} syllables").format(n=syls)
+    def macrogroup_prose(self,beg,syls,end):
+        return _("{begend} ({count})").format(
+                            begend=self.macrogroup_begend_name(beg,end),
+                            count=self.macrogroup_count_name(syls))
     def check(self,check=None,unset=False):
         """This needs to change/clear subchecks"""
         if unset or check:
@@ -161,7 +461,11 @@ class CheckParameters(object):
         return self._check
     def build_checknames(self):
         self._checknames={
-            'S':{ 1:[('lc', _("Whole Citation Word Syllable Profile")),
+            'S':{ 1:[
+                ('#C',_("Consonant Intial")),
+                ('C#',_("Consonant Final")),
+                ('syls',_("Syllable Count")),
+                ('lc', _("Whole Citation Word Syllable Profile")),
                 ('lx', _("Whole Root Syllable Profile")),
                 ('pl', _("Whole {field} Word Syllable Profile"
                         "").format(field=self.nominalps_secondfield())),
@@ -301,6 +605,14 @@ class CheckParameters(object):
     def cvcheckname(self,code=None):
         if self.cvt() == 'T':
             code='T'
+        elif self.cvt() == 'S':
+            # The three prep primitives (#C/C#/syls) share one ftype ('lc'), so
+            # keying the name by ftype made them all read identically. Name them
+            # by the actual primitive instead; fall back to ftype for Task-2
+            # (profile) sorting.
+            if self.is_syllable_primitive_check():
+                return self.syllable_check_name()
+            code=self.ftype()
         if not code:
             code=self.check()
         try:
@@ -358,6 +670,7 @@ class CheckParameters(object):
                 'VC':{'sg':'Vowel-Consonant combination',
                         'pl':'Vowel-Consonant combinations'},
                 'T':{'sg':'Tone','pl':'Tones'},
+                'S':{'sg':'Syllable Profile','pl':'Syllable Profiles'},
                 }
         self.cvchecknamesdict()
         self.checkcodes_by_cvt()

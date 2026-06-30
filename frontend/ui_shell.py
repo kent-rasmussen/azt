@@ -21,7 +21,7 @@ from utilities.error_handler import notify_error as ErrorNotice
 from utilities import rx
 from backend.core.report_mixins import Multislice, Multicheck
 from backend.core.lexicon import Tone, Segments, WordCollection, Parse
-from backend.core.analysis import Analysis, StatusDict
+from backend.core.analysis import Analysis, StatusDict, SyllableSliceDict
 from backend.core import templates
 from io_put import sound
 from io_put.cawl import loadCAWL
@@ -658,6 +658,10 @@ class StatusFrame(ui.Frame):
         self.labels['profile']['text'].set(self.profilelabel())
         self.labels['ps']['text'].set(self.pslabel())
     def profilelabel(self):
+        if self.program.params.cvt()=='S':
+            # 'S' sorts the whole ps across all profiles; the per-profile label
+            # doesn't apply (the sentinel 'whole-word' profile would be shown).
+            return _("Sorting whole words by syllable profile")
         profile=self.program.slices.profile()
         if not profile:
             profile=_("<no syllable profile>")
@@ -797,12 +801,22 @@ class StatusFrame(ui.Frame):
             return
         self.labels['cvgroup']['text'].set(self.cvgrouplabel())
     def cvgrouplabel(self):
-        if not self.program.params.check() or 'x' in self.program.params.check():
-            return
-        if self.program.status.group():
-            return (f"= {self.program.status.group()}")
-        else:
+        check=self.program.params.check()
+        if not check or 'x' in check:
+            # Return '' not a bare None: updatecvgroup() does StringVar.set(this),
+            # and set(None) renders the literal "None" in the status frame (seen as
+            # "working on First Vowel None" when the label went stale from an
+            # x-check phase). Blank is the right "no group applies here" display.
+            return ''
+        group=self.program.status.group()
+        if not group:
             return (_("(All groups)"))
+        # For syllable prep the bare code ('C'/'V'/'2') is cryptic; show the
+        # human group name (e.g. 'consonant initial', '2 syllables').
+        if self.program.params.cvt()=='S' and \
+                self.program.params.is_syllable_primitive_check():
+            return f"= {self.program.params.syllable_group_name(check,group)}"
+        return (f"= {group}")
     def cvgroup(self,line):
         self.labels['cvgroup']={'text':self.program.settings.get_ui_var('cvgroup_label', self.cvgrouplabel()),
                                 'columnplus':2,
@@ -832,6 +846,24 @@ class StatusFrame(ui.Frame):
                                 'cmd':self.program.ui_settings.getbuttoncolumns,
                                 'tt':tt}
         self.proselabel(**self.labels['buttoncolumns'])
+    def updatemaxslice(self):
+        if 'maxslice' not in self.labels:
+            return
+        self.labels['maxslice']['text'].set(self.maxslicelabel())
+    def maxslicelabel(self):
+        # default 50 mirrors backend.core.analysis.MAX_SLICE (kept in sync by hand
+        # to avoid the UI importing a backend constant)
+        n=getattr(self.program.settings,'syllable_max_slice',None) or 50
+        return _("Showing {n} words per page").format(n=n)
+    def maxsliceline(self):
+        tt=_("Click to change how many words appear per page when sorting "
+             "syllables (fewer = faster pages, but more of them; tune per machine)")
+        self.newrow()
+        self.labels['maxslice']={'text':self.program.settings.get_ui_var('maxslice_label', self.maxslicelabel()),
+                                'columnplus':1,
+                                'cmd':self.program.ui_settings.getmaxslice,
+                                'tt':tt}
+        self.proselabel(**self.labels['maxslice'])
     def updatemaxprofiles(self):
         if 'maxes' not in self.labels:
             return
@@ -1002,6 +1034,14 @@ class StatusFrame(ui.Frame):
                     else:
                         log.info("Ps {} not in toneframes ({})".format(self.ps,
                                 self.program.toneframes))
+                elif self.cvt == 'S':
+                    # Task 1 (prep) board until the three primitive checks are
+                    # fully verified; then the Task-2 macrogroup board.
+                    if self.program.params.syllable_prep_complete(self.ps):
+                        self.makeSyllableprogresstable()
+                    else:
+                        self.makeSyllableprepboard()
+                    return
                 else:
                     self.makeprogresstable()
                     return
@@ -1069,6 +1109,7 @@ class StatusFrame(ui.Frame):
             self.glyphbuttons[k].destroy()
         for k in groups-set(self.glyphbuttons):
             self.makeglyphbutton(k)
+        self.glyphscroll.reflow()  # grow canvas to cover the (re)built glyph buttons
     def activate_cell(self,cell):
         cell.inactive_background=cell['background'] #store for deactivate
         cell.inactive_command=cell['command'] #store for deactivate
@@ -1082,8 +1123,24 @@ class StatusFrame(ui.Frame):
         if not hasattr(self,'_cells'): #This may be called without a table
             return
         log.info(f"update_active_cell {args=}")
-        new_cell=self._cells.get((self.program.slices.profile(),
-                                    self.program.params.check()))
+        if self.program.params.cvt()=='S': #cells keyed by macrogroup (the slice)
+            new_cell=self._cells.get(self.program.slices.profile())
+        else:
+            new_cell=self._cells.get((self.program.slices.profile(),
+                                        self.program.params.check()))
+        if new_cell and new_cell.winfo_exists():
+            if self._active_cell and self._active_cell.winfo_exists():
+                self.deactivate_cell(self._active_cell)
+            self.activate_cell(new_cell)
+    def update_active_prep_cell(self):
+        """Move the syllable-PREP board highlight to the selected slice
+        (program.syllable_preferred_slice). Light counterpart to
+        update_active_cell, but the prep cells are keyed by (check,group,idx)
+        rather than profile, so it has its own lookup."""
+        if not hasattr(self,'_cells'):
+            return
+        new_cell=self._cells.get(
+                    getattr(self.program,'syllable_preferred_slice',None))
         if new_cell and new_cell.winfo_exists():
             if self._active_cell and self._active_cell.winfo_exists():
                 self.deactivate_cell(self._active_cell)
@@ -1092,9 +1149,12 @@ class StatusFrame(ui.Frame):
         """Update leaderboard highlight to match current profile/check."""
         if not hasattr(self,'_cells'):
             return
-        profile=self.program.slices.profile()
-        check=self.program.params.check()
-        new_cell=self._cells.get((profile,check))
+        if self.program.params.cvt()=='S': #cells keyed by macrogroup (the slice)
+            new_cell=self._cells.get(self.program.slices.profile())
+        else:
+            profile=self.program.slices.profile()
+            check=self.program.params.check()
+            new_cell=self._cells.get((profile,check))
         if new_cell is self._active_cell:
             return
         if self._active_cell and self._active_cell.winfo_exists():
@@ -1116,6 +1176,211 @@ class StatusFrame(ui.Frame):
             self.updatetoneframe()
         else:
             self.updatecvcheck()
+    def _syllable_primitives_verified(self,ps):
+        """The macrogroup slices aren't defined until every slice of the three
+        primitive checks (#C/C#/syls) has been HUMAN-verified — presort alone
+        isn't enough. Delegates to the one canonical predicate (params)."""
+        return self.program.params.syllable_prep_complete(ps)
+    def _prep_board_data(self,ps):
+        """The current Task-1 prep slice reader for the board: the existing
+        SyllableSliceDict if the prep driver built one for this ps, else a fresh
+        one. Calls build() so the (session-local) slice index is populated from
+        the durable LIFT membership — needed because the index isn't persisted, so
+        after a restart the board would otherwise be empty until the user re-ran
+        prep. build() writes no LIFT data; it only assigns the in-memory index and
+        refreshes the node cache, so it's safe to call from this render path."""
+        sl=getattr(self.program,'syllable_slices',None)
+        ftype=self.program.params.ftype()
+        if sl is None or sl.ps!=ps or sl.ftype!=ftype:
+            sl=SyllableSliceDict(self.program,ps,ftype)
+        sl.build()
+        return sl
+    def makeSyllableprepboard(self):
+        """Task-1 (syllable PREP) status board: columns = the primitive-check
+        groups (#C #V | C# V# | 1 2 3 …) under check headers, ragged rows = the
+        stable ≤MAX_SLICE slices within each group. Each cell shows the live word
+        count, dressed verified (✓) / not (bordered); clicking verifies that slice
+        next. See docs/syllable_sort_redesign.md."""
+        self._cells={}
+        self._active_cell=None
+        params=self.program.params
+        ps=self.program.slices.ps()
+        sl=self._prep_board_data(ps)
+        checkheads={'#C':_("Word-initial"),'C#':_("Word-final"),
+                    'syls':_("Syllables")}
+        def collabel(check,group):
+            if check=='#C':
+                return '#C' if group=='C' else '#V'
+            if check=='C#':
+                return 'C#' if group=='C' else 'V#'
+            return str(group)
+        # columns = (check, group, slice indices) in check order; rows = slices.
+        # Build the column plan first and bail to NO board if there are no slices
+        # to show yet — don't render a header-only skeleton (as elsewhere, the
+        # board appears only once there's data). Slices exist only after the user
+        # has run prep (which assigns them); the board is a read-only view.
+        colplan=[]
+        for check in sl.CHECKS:
+            for group in sl.groups_of(check):
+                idxs=sl.slices_of(check,group)
+                if idxs:
+                    colplan.append((check,group,idxs))
+        if not colplan:
+            self.makenoboard()
+            return
+        self.boardtitle()
+        leaderscroll=ui.ScrollingFrame(self.leaderboard)
+        leaderscroll.grid(row=1,column=0)
+        table=self.leaderboardtable=leaderscroll.content
+        # header row 0 = check name (colspan over its groups), row 1 = group label
+        gc=1
+        for check in sl.CHECKS:
+            groups=[(g,idxs) for (c,g,idxs) in colplan if c==check]
+            if not groups:
+                continue
+            ui.Label(table,text=checkheads.get(check,check),font='reportheader',
+                    row=0,column=gc,columnspan=len(groups),sticky='s',padx=4)
+            for group,idxs in groups:
+                ui.Label(table,text=collabel(check,group),font='reportheader',
+                        row=1,column=gc,sticky='s',padx=4)
+                done=set(sl._node(check).get('done',[]))
+                for ri,idx in enumerate(idxs):
+                    wc=sl.count(check,group,idx)
+                    verified=sl.encode(group,idx) in done
+                    tb=ui.Button(table,relief='flat',bd=0,
+                            text=('✓ ' if verified else '')+str(wc),
+                            cmd=lambda c=check,g=group,i=idx:
+                                self.program.task.select_prep_slice(c,g,i),
+                            anchor='c',padx=0,pady=0)
+                    if not verified:
+                        tb.configure(highlightthickness=3,
+                                    highlightbackground=tb.theme.white)
+                    self._cells[(check,group,idx)]=tb
+                    ui.ToolTip(tb,"{}\n{}".format(
+                            params.syllable_group_name(check,group),
+                            _("Verified") if verified
+                            else _("{n} words to verify (part {x})").format(
+                                            n=wc,x=idx+1)))
+                    tb.grid(row=ri+2,column=gc,ipadx=0,ipady=0,sticky='nesw')
+                gc+=1
+        # Click selects only (like the macrogroup board); the 'Sort!' button acts.
+        # Highlight the active slice: the user's selection if still pending, else
+        # the next one the app would verify.
+        pref=getattr(self.program,'syllable_preferred_slice',None)
+        active=pref if (pref in self._cells and pref and sl._slice_pending(*pref)) \
+                    else sl._first_pending_slice()
+        if active in self._cells:
+            self.activate_cell(self._cells[active])
+    def makeSyllableprogresstable(self):
+        """2-D syllable progress board, shown only once the three primitive
+        checks (#C/C#/syls) are VERIFIED. Rows = syllable count; columns grouped
+        hierarchically as initial (consonant/vowel, colspan) × final
+        (consonant/vowel). Each cell is the Beg+count+End macrogroup slice,
+        showing its word count, dressed verified (✓) / not (bordered) / active
+        (highlighted); clicking sets the current slice. See
+        docs/sort_syllables_design.md."""
+        self._cells={}
+        self._active_cell=None
+        params=self.program.params
+        status=self.program.status
+        ps=self.program.slices.ps()
+        ftype=params.ftype()
+        sentinel=params.SYLLABLE_SLICE_SENTINEL
+        if not self._syllable_primitives_verified(ps):
+            # macrogroups aren't defined until the 3 primitives are verified
+            self.makenoboard()
+            return
+        # Bucket the ps words by macrogroup (Beg+count+End), tracking the profile
+        # distribution within each so the cell can show actual profiles + counts.
+        counts={}; begends=set(); sylset=set(); mg_profiles={}
+        for s in self.program.slices.senses(ps=ps,profile=sentinel):
+            mg=params.macrogroup_of_sense(s,ftype=ftype)
+            if not mg:
+                continue
+            counts[mg]=counts.get(mg,0)+1
+            prof=s.cvprofilevalue(ftype) or '—' # confirmed/presort profile ('—' = none yet)
+            d=mg_profiles.setdefault(mg,{}); d[prof]=d.get(prof,0)+1
+            beg,syls,end=params.parse_macrogroup(mg)
+            begends.add((beg,end)); sylset.add(syls)
+        if not counts:
+            self.makenoboard()
+            return
+        self.boardtitle()
+        leaderscroll=ui.ScrollingFrame(self.leaderboard)
+        leaderscroll.grid(row=1,column=0)
+        table=self.leaderboardtable=leaderscroll.content
+        col_order=[('C','C'),('C','V'),('V','C'),('V','V')]
+        cols=[be for be in col_order if be in begends] or sorted(begends)
+        def _sylkey(x):
+            try: return (0,int(x))
+            except (ValueError,TypeError): return (1,str(x))
+        rows=sorted(sylset,key=_sylkey)
+        curmg=(None if params.is_syllable_primitive_check()
+                    else self.program.slices.profile())
+        def _verified(mg):
+            try:
+                n=status.node(cvt='S',ps=ps,profile=mg,check=ftype)
+                g=set(n.get('groups',[])); d=set(n.get('done',[]))
+                return bool(g) and g<=d
+            except Exception:
+                return False
+        # Hierarchical headers: row 0 = initial (colspan over its finals), row 1
+        # = final per column; data rows start at row 2. Indicates the 3-D slice.
+        colmap={}; gc=1
+        for beg in dict.fromkeys(b for (b,e) in cols): #initials in column order
+            finals=[e for (b,e) in cols if b==beg]
+            ui.Label(table,text=params.macrogroup_initial_name(beg),
+                    font='reportheader',row=0,column=gc,columnspan=len(finals),
+                    sticky='s',padx=4)
+            for end in finals:
+                ui.Label(table,text=params.macrogroup_final_name(end),
+                        font='reportheader',row=1,column=gc,sticky='s',padx=4)
+                colmap[(beg,end)]=gc; gc+=1
+        for ri,syls in enumerate(rows):
+            ui.Label(table,text=params.macrogroup_count_name(syls),
+                    row=ri+2,column=0,sticky='e',padx=6)
+            for (beg,end),col in colmap.items():
+                mg=params.compose_macrogroup(beg,syls,end)
+                wc=counts.get(mg,0)
+                if not wc:
+                    continue #no words in this macrogroup; leave the cell blank
+                verified=_verified(mg)
+                # Profiles within this macrogroup, each as "profile (count)" with a
+                # trailing '+' when that profile group is verified — the same
+                # conventions as the segment-group board (name (n); + = verified).
+                try:
+                    done=set(status.node(cvt='S',ps=ps,profile=mg,
+                                        check=ftype).get('done',[]))
+                except Exception:
+                    done=set()
+                profs=sorted(mg_profiles.get(mg,{}).items(),
+                            key=lambda kv:(-kv[1],str(kv[0])))
+                lines=['{}{} ({})'.format(p,'+' if p in done else '',c)
+                        for p,c in profs]
+                tb=ui.Button(table,relief='flat',bd=0,
+                        text='\n'.join(lines) or str(wc),
+                        cmd=lambda m=mg:self.updateSmacrogroup(m),
+                        anchor='c',justify='center',padx=0,pady=0)
+                if not verified: #border the macrogroups still to finish (cf. 2D tosort)
+                    tb.configure(highlightthickness=3,
+                                highlightbackground=tb.theme.white)
+                self._cells[mg]=tb
+                nunverified=sum(1 for p,_c in profs if p not in done)
+                tip="{}\n{}".format(params.macrogroup_prose(beg,syls,end),
+                                    _("{n} words").format(n=wc))
+                if nunverified:
+                    tip+='\n'+_("{k} profiles to verify").format(k=nunverified)
+                elif verified:
+                    tip+='\n'+_("Verified")
+                ui.ToolTip(tb,tip)
+                tb.grid(row=ri+2,column=col,ipadx=0,ipady=0,sticky='nesw')
+        if curmg in self._cells:
+            self.activate_cell(self._cells[curmg])
+    def updateSmacrogroup(self,mg):
+        """Click a macrogroup cell → make that Beg+count+End the current 'S'
+        slice (so its profile sort can be worked) and move the highlight."""
+        self.program.slices.profile(mg)
+        self.update_active_cell()
     def makeprogresstable(self):
         def groupfn(x):
             for i in x:
@@ -1144,7 +1409,11 @@ class StatusFrame(ui.Frame):
         cvt=self.program.params.cvt()
         ps=self.program.slices.ps()
         max_visible_profile_length=20
-        allprofiles=self.program.slices.profiles()
+        # Only profiles with actual DATA (confirmed/affirmed) — db.ps_profiles is
+        # built from the plain …-x-cvprofile and now excludes empty/Invalid. Words
+        # with no profile yet contribute no row (no empty/no-data rows).
+        confirmed=self.program.db.ps_profiles.get(ps,set())
+        allprofiles=[p for p in self.program.slices.profiles() if p in confirmed]
         profiles=[i for i in allprofiles if len(i)<=max_visible_profile_length] #just sort here
         if skipped:=set(allprofiles)-set(profiles):
             log.error(f"Skipped insanely long profiles: {skipped}")
@@ -1158,6 +1427,18 @@ class StatusFrame(ui.Frame):
         allchecks=self.program.status.allcheckswdata()
         self.checks=list(dict.fromkeys(allchecks)) #could unsort slices priority
         # log.info("allchecks dicted: {}".format(allchecks))
+        # The syllable-PREP checks (#C/C#/syls, sometimes stored with a '-slice'
+        # suffix by older builds) belong to the 'S' task only. On a segmental/tone
+        # board they don't apply — but a profile sorted for its syllable profile
+        # carries those nodes WITH data, which would otherwise draw an all-empty
+        # row of irrelevant columns here. Drop them from this board's columns.
+        def _is_syl_prep(check):
+            p=self.program.params
+            return p.is_syllable_primitive_check(check) or \
+                   p.is_syllable_primitive_check(str(check).rsplit('-',1)[0])
+        if self.cvt!='S':
+            self.checks=[c for c in self.checks if not _is_syl_prep(c)]
+        # log.info("allchecks dicted: {}".format(allchecks))
         if self.cvt != 'T': #don't resort tone frames
             self.checks.sort(key= lambda x:(len(x),x),reverse=True) #longest first
         # log.info("allchecks sorted: {}".format(allchecks))
@@ -1166,6 +1447,16 @@ class StatusFrame(ui.Frame):
         ungroups=0
         unsorted_icon='[X]'
         dont_show=['NA']
+        def hasboarddata(node):
+            """True if this profile has real sorted/verified data in a check that
+            this board actually SHOWS (self.checks) — a non-NA group or a verified
+            ('done') group. Checks not on this board (e.g. leftover syllable-prep
+            nodes on a segmental board) don't count, so a profile that's only been
+            syllable-sorted doesn't draw an all-empty row of irrelevant columns."""
+            return any(isinstance(node.get(c),dict) and (
+                        [i for i in node[c].get('done',[]) if i not in dont_show]
+                        or [i for i in node[c].get('groups',[]) if i not in dont_show])
+                    for c in self.checks)
         if self.program.settings.showdetails:
             verified=_("verified")
             unsorted=_("unsorted")
@@ -1186,7 +1477,11 @@ class StatusFrame(ui.Frame):
                                                             ps].keys()):
                 """header first"""
                 if profile in self.program.status[cvt][ps]:
-                    if self.program.status[cvt][ps][profile] == {}:
+                    node=self.program.status[cvt][ps][profile]
+                    # No empty rows, ever: skip a profile with no real data (only
+                    # NA / to-sort placeholders → blank cells). Once it has a real
+                    # group it shows. (Matches longstanding segment behaviour.)
+                    if node == {} or not hasboarddata(node):
                         continue
                     #Make row header
                     t=profile
@@ -1300,7 +1595,11 @@ class StatusFrame(ui.Frame):
                         ttb=ui.ToolTip(tb,tip)
             row+=1
         # if profile == curprofile and check == curcheck:
-        self.activate_cell(self._cells[(curprofile,curcheck)])
+        # The current profile may have no row yet (no real data → not listed),
+        # so its cell can be absent; only highlight when it exists.
+        curcell=self._cells.get((curprofile,curcheck))
+        if curcell:
+            self.activate_cell(curcell)
         # self.labels['profile']['textvariable'].trace_add("write", self.update_active_cell)
         # self.labels['check']['textvariable'].trace_add("write", self.update_active_cell)
         if ungroups > 0:
@@ -1361,6 +1660,8 @@ class StatusFrame(ui.Frame):
             if getattr(self.program.task,'show_buttoncolumnsline'):
                 # isinstance(self.task,Sort) and not isinstance(self.task,Transcribe):
                 self.buttoncolumnsline()
+                if self.program.params.cvt()=='S': # syllable prep: slice size matters
+                    self.maxsliceline()
         if getattr(self.program.task,'show_parser_ui'):
             self.parserlevels()
             self.sensetodo()
@@ -1381,6 +1682,7 @@ class StatusFrame(ui.Frame):
         self.updatecvcheck()
         self.updatecvgroup()
         self.updatebuttoncolumns()
+        self.updatemaxslice()
         self.updatemaxprofiles()
         self.updatemaxpss()
         self.updatemulticheckscope()
@@ -1890,7 +2192,9 @@ class TaskDressing(HasMenus,ui.Window):
                           profile=profile, check=check), column=0, row=0)
             return 1
         kwargs=grouptype(**kwargs) #this just fills in False
-        groups=self.program.status.groups(cvt=cvt,**kwargs)
+        # NA ("not applicable") is never a selectable group — don't offer it as a
+        # button here (it is sorted/verified internally, but never presented).
+        groups=[g for g in self.program.status.groups(cvt=cvt,**kwargs) if g!='NA']
         if not groups:
             ErrorNotice(parent=window.frame,
                           text=_("It looks like you don't have {ps}-{profile} lexemes "
@@ -3243,6 +3547,17 @@ class Settings(object):
                        command=self.program.settings.setbuttoncolumns,
                        scrolling=False,
                        wait=True)
+    def getmaxslice(self,event=None):
+        log.info(_("Asking for words per page (syllable slice size)..."))
+        _option_dialog(self.program.task.ui,
+                       title=_('Select Words Per Page'),
+                       text=_('How many words per page when sorting syllables? '
+                              'Fewer = each page appears faster, but more pages; '
+                              'more = fewer pages. Tune to this machine.'),
+                       optionlist=[15,30,50,75,100,150,200,300],
+                       command=self.program.settings.setmaxslice,
+                       scrolling=False, # match the working getbuttoncolumns (ListBox);
+                       wait=True)       # ScrollingListBox showed no options
     def getmaxpss(self,event=None):
         _option_dialog(self.program.task.ui,
                        title=_('Select Maximum Number of Lexical Categories'),

@@ -80,6 +80,18 @@ class TaskBase:
         self.ui.waitdone()
         self.ui.on_quit(**kwargs)
 
+    def _dismiss_unshown(self):
+        """Quietly tear down this task's still-withdrawn window WITHOUT reviving
+        the parent chooser or quitting to root (both of which on_quit would do).
+        Used when the open-time syllable-profile offer sends the user to a
+        different task: that task is already open, so this board must just go."""
+        try:
+            self.ui.exitFlag.true()
+            self.ui.cleanup()
+            self.ui.destroy()
+        except Exception as e:
+            log.info(f"_dismiss_unshown: {e}")
+
     def makecvtok(self):
         """Should these not be done locally, in Tone and Segments?"""
         if isinstance(self,Tone):
@@ -87,7 +99,9 @@ class TaskBase:
             self.cvt='T'
         if isinstance(self,Segments):
             self.checktypename='check'
-            if self.cvt not in ['V','C','CV']:
+            # 'S' (SortSyllables) inherits Segments for shared helpers but is a
+            # whole-word syllable-profile sort; don't reset it to 'V'.
+            if self.cvt not in ['V','C','CV','S']:
                 self.cvt='V'
         self.cvt=self.program.params.cvt(self.cvt)
 

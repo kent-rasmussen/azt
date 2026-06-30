@@ -557,18 +557,22 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
     def get_senses_by_word_list_n(self):
         self.sensesbyword_list_n={s.word_list_n:s for s in self.senses}
     def slicebyps_profile(self):
+        # Only REAL profiles: skip empty/Invalid. A word with no confirmed/affirmed
+        # CV profile has no profile DATA yet, so it isn't sliced (and the segment
+        # status board won't list an empty/no-data profile).
         self.sensesbyps_profile={ps:{profile:[i for i in self.sensesbyps[ps]
                                             if i.cvprofilevalue() == profile]
                                     for profile in {i.cvprofilevalue()
-                                                    for i in self.sensesbyps[ps]
-                                                    }
+                                                    for i in self.sensesbyps[ps]}
+                                    if profile and profile!='Invalid'
                                     }
                                 for ps in self.sensesbyps
                                 }
         # log.info(f"{self.sensesbyps_profile=}")
     def get_ps_profiles(self):
-        """just a set of each profile by ps keys"""
-        self.ps_profiles={k:{i.cvprofilevalue() for i in v if i}
+        """The set of REAL profiles per ps (empty/Invalid excluded — no data)."""
+        self.ps_profiles={k:{p for p in (i.cvprofilevalue() for i in v if i)
+                            if p and p!='Invalid'}
                             for k,v in self.sensesbyps.items()
                             }
         # log.info(f"{self.ps_profiles=}")
@@ -594,6 +598,70 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                     }
                 for ps in self.ps_profiles
                 }
+    def verified_groups_by_ps_profile(self,ftype='lc',log_ps=None):
+        """Per ps/profile/check, the groups VERIFIED AS A WHOLE — the LIFT-derived
+        'done'. A group is verified iff it has members AND every member sense
+        carries the matching '<check>=<group>' verification code. That code is
+        what a group-verify writes to all members; a plain sort omits it (so a
+        word sorted in unverifies the group). A group with no members is absent —
+        a group exists only with members. This is kept OUT of the status file so
+        it can't go stale (the join-unverifies-siblings bug). Syllable-prep
+        ('S') checks are NOT modelled here — their confirmation is per-slice."""
+        out={}
+        for ps in self.ps_profiles:
+            out[ps]={}
+            for profile in self.ps_profiles[ps]:
+                if not profile:
+                    continue
+                membership={} # {check: {group: [senses]}}
+                codes={}      # id(sense): set(verification codes)
+                for sense in self.sensesbyps_profile[ps][profile]:
+                    for check,group in sense.annotationvaluedictbyftypelang(
+                                            ftype,self.analang).items():
+                        if group:
+                            membership.setdefault(check,{}).setdefault(
+                                                    group,[]).append(sense)
+                    codes[id(sense)]=set(
+                            sense.verificationtextvalue(profile,ftype))
+                checks={}
+                for check,groups in membership.items():
+                    verified=set()
+                    for g,members in groups.items():
+                        uncoded=[s for s in members
+                                 if (check+'='+g) not in codes[id(s)]]
+                        if members and not uncoded:
+                            verified.add(g)
+                        elif members and uncoded and ps==log_ps:
+                            # NOTDONE: at least one member lacks <check>=<g>, so the
+                            # group can't be 'done'. Show the uncoded members and
+                            # the codes they DO carry — to tell a real data gap
+                            # ([] or unrelated) from a scramble (a code for THIS
+                            # check but a DIFFERENT group, e.g. V1=1 on a group-2
+                            # member). Logged only for the CURRENT ps (log_ps) so
+                            # the trace stays relevant — other parts of speech are
+                            # uncoded simply because no work has happened there.
+                            # DIAG (temporary).
+                            log.info("DIAG-join-verify %s/%s %s=%s NOTDONE "
+                                "%d/%d coded; uncoded=%s; their codes=%s",
+                                ps,profile,check,g,len(members)-len(uncoded),
+                                len(members),[s.id for s in uncoded],
+                                [sorted(codes[id(s)]) for s in uncoded])
+                        # DIAG-done (temporary, poss. 1 & 2): EXHAUSTIVE per-member
+                        # read for integer (still-unnamed) groups in the active ps.
+                        # Each member: id, its FULL verification-code set as read
+                        # from LIFT, and whether the exact 'check=g' string is present.
+                        # Distinguishes "no code in LIFT at all" (poss. 1) from "code
+                        # present but our == test misses it" (poss. 2 — whitespace /
+                        # encoding / a code for a different value).
+                        if ps==log_ps and g.isdigit():
+                            log.info("DIAG-done read %s/%s %s=%s verified=%s "
+                                "test=%r members=%s", ps,profile,check,g,
+                                g in verified, check+'='+g,
+                                [(s.id, sorted(codes[id(s)]),
+                                  (check+'='+g) in codes[id(s)]) for s in members])
+                    checks[check]=verified
+                out[ps][profile]=checks
+        return out
     def tone_values_by_ps_profile(self):
         return {ps:{profile:{check:{v
                             for sense in self.sensesbyps_profile[ps][profile]
@@ -2409,7 +2477,7 @@ class Form(Node):
 class FormParent(Node):
     def getanalang(self):
         return self.db.analang
-    def getlang(self,lang=None): #,shortest=False
+    def getlang(self,lang=None,machine=False): #,shortest=False
         """The number of languages in FormParent forms doesn't really tell what
         makes a good default language choice. Some fields typically only have
         one form, in a given language (e.g., 'translation' and
@@ -2437,15 +2505,22 @@ class FormParent(Node):
         they should be wrapped by a method that maintains this requirement."""
         if isinstance(self, Field):
             possibles=list(self.langs()) #This is self.forms.keys()
-            if len(possibles) == 1:
+            # tone/cvprofile carry BOTH a human form and a machine (…_MT) form, so
+            # the form-lang is determined by (analang, machine) — compute it
+            # explicitly, BEFORE the single-form default. Otherwise, when only one
+            # form is present (e.g. the plain cvprofile deleted, leaving the …_MT),
+            # a no-lang read would fall to that lone form and answer the WRONG one
+            # (the cvprofile plain-vs-_MT bug). The `machine` kwarg threads through
+            # fieldvalue/textvaluebylang so callers pick human vs machine.
+            if 'tone' in self.ftype:
+                return self.db.tonelangname(analang,machine=machine)
+            elif 'cvprofile' in self.ftype:
+                return profilelang(analang,machine=machine)
+            elif len(possibles) == 1:
                 return possibles[0]
             elif 'verification' in self.ftype:
                 return pylang(analang)
                 # log.info("using verification pylang {}".format(lang))
-            elif 'tone' in self.ftype:
-                return self.db.tonelangname(analang)
-            elif 'cvprofile' in self.ftype:
-                return profilelang(analang)
             elif self.ftype in ['location', 'SILCAWL']:
                 return self.annotationlang
             elif analang in possibles:
@@ -2478,9 +2553,9 @@ class FormParent(Node):
             return self.forms[lang].textquoted()
         except KeyError:
             return None
-    def textvaluebylang(self,lang=None,value=None):
+    def textvaluebylang(self,lang=None,value=None,machine=False):
         if not lang:
-            lang=self.getlang(lang)
+            lang=self.getlang(lang,machine=machine)
         if lang not in self.forms:
             # log.info(f"Missing '{lang}' lang in textvaluebylang: {self.forms=}")
             if value is not None: #only make if we're populating it, allow ''
@@ -2723,11 +2798,12 @@ class FieldParent(object):
         self.fields.update({type:Field(self,type=type)}) #make field
         # without lang here, annotationlang is used; value=None does nothing
         self.fields[type].textvaluebylang(lang=lang,value=value) #set value?
-    def fieldvalue(self,type,lang=None,value=None):
+    def fieldvalue(self,type,lang=None,value=None,machine=False):
         """lang=None is OK for fields with just one form@lang node, or if
         self.ftype contains 'verification', 'tone', 'cvprofile', 'location',
-        or 'SILCAWL'
-        """
+        or 'SILCAWL'. For 'tone'/'cvprofile' (which carry both a human and a
+        machine …_MT form) pass machine=True/False to pick the form — getlang
+        resolves it by (analang, machine) rather than by whichever form exists."""
         try:
             assert isinstance(self.fields[type],et.Element)
             # log.info("found ET node")
@@ -2754,7 +2830,7 @@ class FieldParent(object):
             else:
                 return None
         # specify value as kwarg because not specifying lang
-        fv=self.fields[type].textvaluebylang(lang=lang,value=value)
+        fv=self.fields[type].textvaluebylang(lang=lang,value=value,machine=machine)
         # log.info(f"fieldvalue returning {fv=} for {self.sense.id}-{type}")
         return fv
     def __init__(self):
@@ -2765,12 +2841,16 @@ class FieldParent(object):
         # log.info("Initialized field parent for {}".format(self))
 class Example(FormParent,FieldParent):
     def locationvalue(self,loc=None):
-        """this should use fieldvalue(self,type,lang=None,value
-        """
+        """No-lang fieldvalue: safe ONLY while 'location' is single-form (one
+        form-lang). If 'location' ever gains a second form-lang, pin the lang
+        here — see cvprofilevalue for the trap this avoids."""
         return self.fieldvalue('location',value=loc)
-    def tonevalue(self,value=None):
+    def tonevalue(self,value=None,machine=False):
+        """Tone on this example's 'tone' field. machine=False → human form;
+        machine=True → …_MT machine-transcription form (getlang resolves by
+        (analang, machine), like cvprofile)."""
         # log.info("Fields @tonevalue: {}".format(self.fields))
-        return self.fieldvalue('tone',value=value)
+        return self.fieldvalue('tone',value=value,machine=machine)
     def translationvalue(self,lang=None,value=None):
         try:
             assert isinstance(self.translation,et.Element)
@@ -2981,6 +3061,10 @@ class Sense(Node,FieldParent):
             # log.info("There is no {} example in sense {}".format(frame,self.id))
             pass
     def cvprofileuservalue(self,ftype='lc',value=None):
+        """UNUSED (defined, no callers as of 1.3.92). The no-lang fieldvalue
+        calls below are safe ONLY while 'cvprofile-user_<ftype>' is single-form.
+        If this is revived AND ever gains a second form-lang (as cvprofile_lc did
+        with …_MT), pin the lang — see cvprofilevalue."""
         type='cvprofile-user_'+ftype
         if value:
             log.info(_("setting {id} to {type} = {value}")
@@ -2991,11 +3075,27 @@ class Sense(Node,FieldParent):
                     .format(id=self.id, type=type, value=val_fv))
         #w/o lang, 'value' must be kwarg:
         return self.fieldvalue(type,value=value)
-    def cvprofilevalue(self,ftype='lc',value=None):
-        type='cvprofile_'+ftype
-        return self.fieldvalue(type,value=value) #wo lang, 'value' must be kwarg
-    def uftonevalue(self,value=None):
-        return self.fieldvalue('tone',value)
+    def cvprofilevalue(self,ftype='lc',value=None,machine=False):
+        """The CV profile on the cvprofile_<ftype> field. machine=False → the
+        plain …-x-cvprofile form (the user-confirmed profile / sorting result);
+        machine=True → the …-x-cvprofile_MT form (the raw machine analysis). The
+        `machine` kwarg threads down to getlang, which resolves the form by
+        (analang, machine) — NOT by whichever form happens to exist — so reading
+        the plain value returns None when only the _MT form is present (the bug
+        that made unprofiled words look profiled: no affirm trigger, affirm's !=m
+        guard skipping them, segmental sorts reading raw machine as confirmed)."""
+        return self.fieldvalue('cvprofile_'+ftype,value=value,machine=machine)
+    def cvprofilemachinevalue(self,ftype='lc',value=None):
+        """The machine-analyzed (computed) profile — the …-x-cvprofile_MT form,
+        alongside (never clobbering) the plain user-confirmed form. Thin wrapper
+        over cvprofilevalue(machine=True). See docs/sort_syllables_design.md."""
+        return self.cvprofilevalue(ftype,value=value,machine=True)
+    def uftonevalue(self,value=None,machine=False):
+        """Underlying-form tone on the 'tone' field. machine=False → the human
+        form; machine=True → the …_MT machine-transcription form (getlang resolves
+        by (analang, machine), like cvprofile). value must be the kwarg — see
+        1.3.92 (positionally it landed in fieldvalue's `lang` slot)."""
+        return self.fieldvalue('tone',value=value,machine=machine)
     def pssubclassvalue(self,value=None):
         try:
             assert isinstance(self.pssubclass,et.Element)
@@ -3241,14 +3341,24 @@ class Sense(Node,FieldParent):
         # log.info(f"Removing {key} verification from {self}")
         self.remove(self.fields[key])
         del self.fields[key]
+    PRIMITIVE_VPROFILE='__primitive__' #internal sentinel: route to the profile-
+                #INDEPENDENT '<ftype> primitive verification' field. The syllable-
+                #prep primitives (#C/C#/syls) DETERMINE the profile, so their
+                #verification can't be keyed by it (nor by ps).
     def verificationkey(self,profile,ftype):
         if ftype in ['alphabet', 'alpha']:
             return f'{ftype} verification'
+        elif profile == self.PRIMITIVE_VPROFILE:
+            return f'{ftype} primitive verification'
         else:
             return f'{profile} {ftype} verification'
     def verificationtextvalue(self,profile,ftype,lang=None,value=None):
-        """value here is the list of verification codes, stored as a string"""
-        """Without lang arg, value must be sent as a kwarg."""
+        """value here is the list of verification codes, stored as a string.
+        Without lang arg, value must be sent as a kwarg.
+        The no-lang fieldvalue(key,...) calls below are safe ONLY because every
+        verification field (key from verificationkey) is single-form (one
+        …-x-py form). If a verification field ever gains a second form-lang, pin
+        the lang here — see cvprofilevalue for the trap this avoids."""
         key=self.verificationkey(profile,ftype)
         #This is an explicit empty value=[], not the default (None)
         if value == [] and key in self.fields: #i.e., if reduced to nothing
@@ -3274,6 +3384,14 @@ class Sense(Node,FieldParent):
         else:
             # log.info(f"verificationtextvalue returning [] ({v=}; {type(v)=})")
             return []
+    def primitiveverification(self,ftype,value=None):
+        """Profile- and ps-INDEPENDENT verification codes for the syllable-prep
+        primitives (#C/C#/syls), in the '<ftype> primitive verification' field.
+        The primitives DETERMINE the profile, so their confirmation can't be keyed
+        by profile (nor ps). Reuses the standard verification storage so prep
+        status is LIFT-durable and reconstructed from it, like the segmental
+        checks. Codes look like '#C=C' / 'C#=V' / 'syls=2'."""
+        return self.verificationtextvalue(self.PRIMITIVE_VPROFILE,ftype,value=value)
     def getcvverificationkeys(self,ftype):
         profile=self.cvprofilevalue(ftype=ftype)
         if not profile or profile in ['Invalid']:
@@ -3350,13 +3468,22 @@ class Sense(Node,FieldParent):
             return r
         except (UnboundLocalError,NameError):
             return []
-    def annotations_to_update(self,all_forms=False):
+    def annotations_to_update(self,all_forms=False,exclude=None):
+        # exclude: optional predicate(annotation_name)->bool; matching keys are
+        # dropped from the displayed annotation dict (the stored data is
+        # untouched). Used by the alphabet-chart "printed examples" notice to
+        # hide the syllable-prep checks (#C/C#/syls and their -slice variants).
+        def _annos(form):
+            d=form.annotationvaluedict()
+            if exclude:
+                d={k:v for k,v in d.items() if not exclude(k)}
+            return d
         return [f"{self.ftypes[ftype].forms[lang].textvalue()} "
-                f"{self.ftypes[ftype].forms[lang].annotationvaluedict()}"
+                f"{_annos(self.ftypes[ftype].forms[lang])}"
                 for ftype in self.ftypes
                 for lang in self.ftypes[ftype].forms
                 if lang == self.db.analang
-                if all_forms or ftype == 'lc' 
+                if all_forms or ftype == 'lc'
                 ]
     def __init__(self, parent, node=None, **kwargs):
         self.imgselectiondir=None

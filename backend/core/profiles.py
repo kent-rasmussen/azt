@@ -4,19 +4,28 @@
 Extracted from settings/__init__.py — this is computational analysis,
 not settings read/write.
 """
-import threading
 from utilities import logsetup, rx
 from utilities.utilities import setnesteddictval
 from utilities.i18n import _
-from backend.core.analysis import SliceDict
+from backend.core.analysis import SliceDict, SyllableSliceDict
 
 log = logsetup.getlog(__name__)
+
+# Truthy sentinel "part of speech" for senses that have none. The CV profile is a
+# ps-INDEPENDENT form fact, so ps-less words still get one — `profileofform`
+# ignores ps for the value and only refuses to run when ps is falsy. They're
+# computed but NOT added to the per-ps aggregation (sextracted/profilesbysense),
+# since they belong to no ps and must not leak a phantom ps into segmental/reports.
+PSLESS = '(no ps)'
 
 
 class ProfileAnalyzer:
     def __init__(self, program):
         self.program = program
         self.program.profiles = self
+        self._profile_conversions_logged = set() # input profiles already logged once
+        self._invalid_logged = set()              # input profiles whose result was bad
+        self._syls_none_logged = set()            # sense ids flagged for syls=None
         self.setvalidcharacters()
 
     def setvalidcharacters(self):
@@ -249,19 +258,231 @@ class ProfileAnalyzer:
                 del self.formstosearch[ps][oldform]
                 log.info(_("Deleted key of empty list"))
 
+    def _confirmed_primitives(self, sense, ftype):
+        """(beg, end, syls) from this sense's VERIFIED syllable primitives (the
+        'lc primitive verification' codes). Each stays None until that primitive
+        is verified, so the profile constraint only acts on confirmed dimensions."""
+        beg = end = syls = None
+        for code in sense.primitiveverification(ftype):
+            k, _sep, v = str(code).partition('=')
+            if k == '#C':
+                beg = v
+            elif k == 'C#':
+                end = v
+            elif k == 'syls':
+                syls = v
+        return beg, end, syls
+
+    def constrain_presort_profile(self, sense, profile, ftype):
+        """Constrain a machine profile to the word's CONFIRMED primitives before it
+        becomes a presort group (e.g. 'CVCV' → 'CVC' for a confirmed C_1_C word).
+        No-op until primitives are verified. Logging: conversions and invalid
+        results once per INPUT profile; syls=None once per sense id."""
+        beg, end, syls = self._confirmed_primitives(sense, ftype)
+        if beg is None and end is None and syls is None:
+            return profile  # nothing confirmed → leave the machine analysis alone
+        sid = getattr(sense, 'id', '?')
+        if syls is None:  # confirmed #C/C# but no verified count — a data anomaly
+            if sid not in self._syls_none_logged:
+                self._syls_none_logged.add(sid)
+                log.warning("Syllable presort: syls=None (no verified count) for "
+                        "sense %s — confirmed #C=%s C#=%s.", sid, beg, end)
+        r = self.program.params.constrain_profile(profile, beg, end, syls)
+        new = r['profile']
+        if not r['valid'] and profile not in self._invalid_logged:
+            self._invalid_logged.add(profile)
+            log.error("Syllable presort: result %s does NOT meet the constraints "
+                    "(#C=%s C#=%s syls=%s) — e.g. sense %s. Please report.",
+                    new, beg, end, syls, sid)
+        if r['changed'] and profile not in self._profile_conversions_logged:
+            self._profile_conversions_logged.add(profile)
+            note = ' [fallback: CV-per-syllable]' if r['fallback'] else ''
+            log.info("Syllable presort: %s → %s%s to fit confirmed primitives "
+                    "(#C=%s C#=%s syls=%s) — logged once per input profile.",
+                    profile, new, note, beg, end, syls)
+        return new
+
     def getprofileofsense(self, sense, ps):
         form = sense.textvaluebyftypelang(self.profilesbysense['ftype'],
                                         self.profilesbysense['analang'])
         if not form:
             return form, None
         profile = self.rxdict.profileofform(form, ps=ps)
-        self.extractsegmentsfromform(form, ps=ps)
+        if ps != PSLESS: # ps-less: compute the profile VALUE only, no per-ps aggregation
+            self.extractsegmentsfromform(form, ps=ps)
+        ftype=self.profilesbysense['ftype']
         if not set(self.profilelegit).issuperset(profile):
             profile = 'Invalid'
-        setnesteddictval(self.profilesbysense, [sense], ps, profile, addval=True)
-        setnesteddictval(self.formstosearch, [sense], ps, form, addval=True)
-        sense.cvprofilevalue(self.profilesbysense['ftype'], profile)
-        return form, profile
+        # …-x-cvprofile_MT keeps the STRAIGHT machine analysis (or 'Invalid'),
+        # irrespective of any constraint — it's the raw reference and the source
+        # the 'affirm' shortcut copies into the data form.
+        machine = profile
+        sense.cvprofilemachinevalue(ftype, machine)  # raw machine analysis (always)
+        # SLICE BY THE CONFIRMED PROFILE — the plain …-x-cvprofile DATA form
+        # (cvprofilevalue, machine=False) — NOT the machine analysis nor a
+        # constrained derivation of it. This makes _profilesbysense agree with the
+        # status slice (sensesbyps_profile reads the same field), so a word is
+        # segmentally sorted ONLY under its trusted profile, and the old two-index
+        # divergence (sorted in CVC by constrained-machine, invisible to status by
+        # data form) is gone. A word with no confirmed form is left OUT of segmental
+        # slicing — it still gets syllable-prep'd to acquire one (senses() cvt='S'
+        # uses the whole wordlist, not _profilesbysense). Keeping the current sort
+        # (lc annotation) legal per primitives and clearing a mismatched cvprofile
+        # verification are handled on load by scrub_sorts_to_primitives, not here.
+        confirmed = sense.cvprofilevalue(ftype)
+        if ps != PSLESS:
+            setnesteddictval(self.formstosearch, [sense], ps, form, addval=True)
+            if confirmed and confirmed != 'Invalid':
+                setnesteddictval(self.profilesbysense, [sense], ps, confirmed,
+                                 addval=True)
+        return form, confirmed
+
+    def _set_trusted_profile(self, sense, ftype, profile):
+        """Write a trusted profile CONSISTENTLY: the plain …-x-cvprofile DATA and
+        the profile-sort annotation (name=ftype, e.g. 'lc') that records the
+        macrogroup the word sits in. Keeping them aligned means the annotation
+        never claims a different 'last sorted' group than the trusted profile,
+        and the normal group/done check won't see a mismatch and unverify it."""
+        sense.cvprofilevalue(ftype, profile)
+        sense.annotationvaluebyftypelang(ftype, self.program.db.analang,
+                                         ftype, profile)
+
+    def affirm_machine_profiles(self, ftype=None, rebuild=True):
+        """Accept the straight machine CV analysis as the (confirmed) profile DATA:
+        copy each sense's …-x-cvprofile_MT into the plain …-x-cvprofile form, which
+        the segmental/tone sorts read. For languages where syllable-profile sorting
+        isn't worth it — they then proceed on the machine analysis as if confirmed,
+        skipping SortSyllables. Rebuilds the ps-profile slices so the sorts pick the
+        profiles up. Returns the number of senses affirmed."""
+        ftype = ftype or self.program.params.ftype()
+        n = 0
+        for s in self.program.db.senses:
+            # Fill HOLES only — never rewrite an existing profile (it may be
+            # hand-verified good data; affirm must not clobber it). To repair
+            # already-written bad profiles, use reconcile_profiles_to_primitives.
+            if s.cvprofilevalue(ftype):
+                continue
+            m = s.cvprofilemachinevalue(ftype)
+            if not m or m == 'Invalid':
+                continue
+            # Respect any verified syllable sorting: affirm the machine profile
+            # CONSTRAINED to the word's confirmed primitives (#C/C#/syls), not the
+            # raw _MT (e.g. machine 'CCVCV', 2 syls/V-final, on a word verified
+            # C#=C, syls=1 → 'CCVC'). No verified primitives → no-op → raw machine.
+            affirmed = self.constrain_presort_profile(s, m, ftype)
+            if affirmed and affirmed != 'Invalid':
+                self._set_trusted_profile(s, ftype, affirmed)
+                n += 1
+        log.info("Affirmed the machine CV analysis as profile data for %d "
+                "sense(s).", n)
+        if n:
+            # Persist the plain forms to LIFT — otherwise a restart re-reads the
+            # file without them and the "set up profiles?" trigger fires again.
+            self.program.maybewrite(definitely=True)
+        if rebuild and n:
+            self.program.db.load_ps_profiles()  # "build slicedict after"
+        return n
+
+    def reconcile_profiles_to_primitives(self, ftype=None, rebuild=True):
+        """Repair path (NOT normal flow): constrain each EXISTING plain profile to
+        the word's confirmed #C/C#/syls. Unlike affirm (which only fills holes),
+        this DOES touch existing profiles — but only to FIX ones that violate the
+        verified primitives (e.g. a raw-machine 'CCVCV' affirmed onto a C#=C/syls=1
+        word → 'CCVC'). A profile already consistent with its primitives is
+        unchanged (constrain is a no-op), so good/verified data is never rewritten.
+        Use this once to clean up profiles written by the old raw-copy affirm.
+        Returns the count changed."""
+        ftype = ftype or self.program.params.ftype()
+        n = 0
+        for s in self.program.db.senses:
+            cur = s.cvprofilevalue(ftype)
+            if not cur or cur == 'Invalid':
+                continue
+            fixed = self.constrain_presort_profile(s, cur, ftype)
+            if not fixed or fixed == 'Invalid':
+                continue
+            anno = s.annotationvaluebyftypelang(ftype, self.program.db.analang,
+                                                ftype)
+            # Repair if the plain profile violated its primitives (fixed != cur)
+            # OR the sort-group annotation drifted from the trusted profile (the
+            # stale 'lc' the old raw affirm left, e.g. CCVCV while plain is CCVC).
+            if fixed != cur or anno != fixed:
+                self._set_trusted_profile(s, ftype, fixed)
+                n += 1
+        log.info("Reconciled %d profile(s) to their confirmed primitives.", n)
+        if n:
+            self.program.maybewrite(definitely=True)
+        if rebuild and n:
+            self.program.db.load_ps_profiles()
+        return n
+
+    def scrub_sorts_to_primitives(self, ftype=None):
+        """Run on EVERY load. Keep the distinction between a word's CURRENT SORT
+        POSITION (the `lc` annotation), which must always be legal per the word's
+        confirmed primitives, and the user's TRUST decision (the confirmed
+        `cvprofile` …-x-cvprofile form), which is what actually includes the word in
+        segmental sorting (read by _profilesbysense / sensesbyps_profile). Per sense,
+        in order:
+          (1) MISSING profile sort (no `lc` annotation) → leave it; only a manual
+              sort or the trust trigger adds one.
+          (2) ILLEGAL profile sort (`lc` annotation violates confirmed primitives,
+              e.g. 'CVCV' with #C=C/C#=C/syls=1) → constrain and rewrite the
+              ANNOTATION (the sort), nothing else.
+          (3) the (now-legal) `lc` annotation no longer matches the confirmed
+              `cvprofile` form → CLEAR that cvprofile verification (do NOT migrate
+              it). The word loses its trusted profile → drops out of segmental
+              slicing → the profile-setup trigger fires so the user re-sets it
+              manually or by trust.
+        The `'<profile> lc verification'` SEGMENTAL fields are context-tagged by the
+        profile they were confirmed under and are NOT touched. Self-healing: once the
+        data is consistent, constrain is a no-op and nothing is written. Profile
+        constraint requires confirmed primitives, so it no-ops on un-prepped words."""
+        ftype = ftype or self.program.params.ftype()
+        analang = self.program.db.analang
+        fixed_sort = cleared_verif = 0
+        for s in self.program.db.senses:
+            anno = s.annotationvaluebyftypelang(ftype, analang, ftype)
+            if not anno or anno == 'Invalid':
+                continue  # (1) missing sort — never auto-add
+            legal = self.constrain_presort_profile(s, anno, ftype)  # (2)
+            if legal and legal != 'Invalid' and legal != anno:
+                s.annotationvaluebyftypelang(ftype, analang, ftype, legal)
+                anno = legal
+                fixed_sort += 1
+            confirmed = s.cvprofilevalue(ftype)  # (3) profile VERIFICATION
+            if confirmed and confirmed != anno:
+                s.cvprofilevalue(ftype, False)  # clear; word drops out → trigger
+                cleared_verif += 1
+        if fixed_sort or cleared_verif:
+            log.info("Profile scrub: corrected %d illegal sort annotation(s); "
+                     "cleared %d cvprofile verification(s) that no longer matched "
+                     "the (legal) sort.", fixed_sort, cleared_verif)
+            self.program.maybewrite(definitely=True)
+        return fixed_sort, cleared_verif
+
+    def migrate_cvprofiles_to_machine_form(self):
+        """One-time migration. Old code wrote the machine analysis into the
+        plain …-x-cvprofile form; now that form holds the user-confirmed sorting
+        result (the data) and the analysis lives in the …-x-cvprofile_MT form.
+        If NO _MT form exists anywhere for this ftype, the existing plain values
+        are old analysis (regenerated every open), not user data — preserve each
+        in its _MT form and clear the plain form so it isn't mistaken for a
+        confirmed value. Idempotent: if any _MT form already exists, assume the
+        migration was done. Runs before analysis reseeds the plain form."""
+        ftype = self.profilesbysense['ftype']
+        senses = self.program.db.senses
+        if any(s.cvprofilemachinevalue(ftype) for s in senses):
+            return  # analysis (_MT) form already present → already migrated
+        moved = 0
+        for s in senses:
+            v = s.cvprofilevalue(ftype)
+            if v:
+                s.cvprofilemachinevalue(ftype, v)  # preserve old analysis in _MT
+                s.cvprofilevalue(ftype, False)      # clear the data form
+                moved += 1
+        if moved:
+            log.info("Migrated {n} '{ftype}' cvprofile value(s) from the data "
+                    "form to the analysis (_MT) form".format(n=moved, ftype=ftype))
 
     def getprofilesbyps(self, ps):
         senses = self.program.db.sensesbyps[ps]
@@ -270,23 +491,20 @@ class ProfileAnalyzer:
         log.info(_("Processed {n} forms to {ps} syllable profiles").format(n=n, ps=ps))
 
     def _getprofiles(self, senses, ps):
-        n = 0
+        # SYNCHRONOUS (1.3.22): the old code spawned a fire-and-forget thread per
+        # sense and joined only the LAST one, so nearly all profile computations
+        # raced — concurrently mutating the shared XML tree and the aggregation
+        # dicts (sextracted/profilesbysense/formstosearch), which could land wrong
+        # or incomplete and even differ run-to-run. Profile computation is cheap
+        # regex work (and under the GIL the threads bought no real CPU win), so run
+        # it in order: deterministic and race-free.
         todo = len(senses)
-        for sense in senses:
-            n += 1
-            if n % 100:
-                t = threading.Thread(target=self.getprofileofsense,
-                                    args=(sense, ps))
-                t.start()
-            else:
-                form, profile = self.getprofileofsense(sense, ps)
+        for n, sense in enumerate(senses, 1):
+            form, profile = self.getprofileofsense(sense, ps)
+            if n % 100 == 0:
                 log.debug(_("{count}: {form} > {profile}").format(
                     count=str(n)+'/'+str(todo), form=form, profile=profile))
-        try:
-            t.join()
-        except UnboundLocalError:
-            pass
-        return n
+        return len(senses)
 
     def extractsegmentsfromform(self, form, ps):
         for s in set(self.profilelegit) & set(self.rxdict.rx):
@@ -324,6 +542,9 @@ class ProfileAnalyzer:
             if val is not None:
                 setattr(self, attr, val)
         self.profileswdatabyentry = {}
+        self._profile_conversions_logged = set() # per run: one line per input profile
+        self._invalid_logged = set()
+        self._syls_none_logged = set()
         self.profilesbysense = {}
         self.profilesbysense['Invalid'] = []
         self.profilesbysense['analang'] = self.program.db.analang
@@ -335,8 +556,28 @@ class ProfileAnalyzer:
         self.polygraphcheck()
         self.checkinterpretations()
         self.setupCVrxs()
+        self.migrate_cvprofiles_to_machine_form()
+        # Keep each word's profile SORT (lc annotation) legal per its confirmed
+        # primitives, and clear any cvprofile verification that no longer matches —
+        # BEFORE the slices below are built (they read the confirmed cvprofile form).
+        self.scrub_sorts_to_primitives()
+        if self.program.params.PROFILE_CONSTRAINT.get('force_resort'):
+            log.warning("PROFILE_CONSTRAINT['force_resort'] is ON (TESTING): "
+                    "re-deriving EVERY word's syllable profile from the "
+                    "constrained machine analysis, OVERWRITING confirmed sort "
+                    "data. Turn it off and don't save over good data.")
         for ps in self.program.db.pss:
             self.getprofilesbyps(ps)
+        # ps-INDEPENDENT coverage: a sense with no part of speech still has a form,
+        # hence a CV profile, hence syllable-prep primitives. The loop above skips
+        # it (db.pss drops falsy ps values), so compute its profile here too —
+        # value only, under the PSLESS sentinel, with no per-ps aggregation.
+        psless=[s for s in self.program.db.senses if not s.psvalue()]
+        if psless:
+            n=self._getprofiles(psless, PSLESS)
+            log.info("Computed CV profiles for {n} part-of-speech-less word(s) "
+                    "(prep is wordlist-wide; they have no ps for per-ps sorts)"
+                    .format(n=n))
         if hasattr(self, 'adhocgroups'):
             for ps in self.adhocgroups:
                 for a in self.adhocgroups[ps]:
@@ -348,6 +589,31 @@ class ProfileAnalyzer:
         else:
             self.adhocgroups = {}
         SliceDict(self.adhocgroups, self.profilesbysense, self.program)
+        # If syllable prep has been STARTED (any word carries a #C primitive),
+        # re-seed the primitives from the now-current profiles and rebuild the prep
+        # slice node AT LOAD — so syllable_prep_complete is honest without waiting
+        # for a 'Sort!' press (a word that only just became analyzable, e.g.
+        # 'always', gets its syls now, not on the next prep run). Pristine DBs are
+        # left untouched. Same idempotent rule (params.seed_sense_primitives) as
+        # the prep-task presort, so the two can't drift.
+        ftype = self.program.params.ftype()
+        analang = self.program.db.analang
+        if any(s.annotationvaluebyftypelang(ftype, analang, '#C')
+                for s in self.program.db.senses):
+            tally = {'seeded': 0, 'defaulted': 0, 'syls': 0}
+            for s in self.program.db.senses:
+                tag = self.program.params.seed_sense_primitives(s, ftype, analang)
+                if tag in tally:
+                    tally[tag] += 1
+            if any(tally.values()):
+                log.info("Load: seeded syllable primitives (seeded=%d defaulted=%d "
+                        "syls-backfilled=%d).", tally['seeded'], tally['defaulted'],
+                        tally['syls'])
+            try:
+                SyllableSliceDict(self.program,
+                                self.program.slices.ps(), ftype).build()
+            except Exception as e:
+                log.info("Load: couldn't rebuild syllable prep slices: %s", e)
         if self.program.slices.profile():
             self.getscounts()
         self.program.settings.storesettingsfile(setting='profiledata')

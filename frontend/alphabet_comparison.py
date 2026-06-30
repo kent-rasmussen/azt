@@ -21,6 +21,7 @@ import math
 # Local module imports (assuming we are in the same directory)
 from utilities import logsetup
 log = logsetup.getlog(__name__)
+from utilities.i18n import _
 from utilities import file
 from io_put import lift, alphabet_comparison_pdf
 from frontend import ui
@@ -159,9 +160,10 @@ class ImageSelector(ui.Window):
                          r=0, c=0)
             except Exception as e:
                 log.error(f"Error loading image {img_path}: {e}")
-                ui.Button(f, text=os.path.basename(img_path), 
+                ui.Button(f, text=os.path.basename(img_path),
                          command=partial(self.select_image, img_path),
                          r=0, c=0)
+        scroll.reflow()  # grow canvas/scrollregion to the loaded image grid
 
 class DescriptionEditor(ui.Window):
     def save(self):
@@ -372,9 +374,10 @@ class PageSetupUI(ui.Window):
                                     border=1)
                                 for glyph in glyphs
                                 ])
-        self.add_more_button.grid(row=self.n_pages()//self.fpr, 
-                                column=self.n_pages()%self.fpr, 
+        self.add_more_button.grid(row=self.n_pages()//self.fpr,
+                                column=self.n_pages()%self.fpr,
                                 )
+        self.scrollFrame.reflow()  # grow canvas to cover the newly added pages
         self.scrollFrame.totop()
         self.scrollFrame.tobottom()
     def open_cover_selector(self):

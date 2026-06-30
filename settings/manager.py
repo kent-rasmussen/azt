@@ -11,6 +11,7 @@ import json
 import os
 import platform
 import getpass
+from contextlib import contextmanager
 from pathlib import Path
 
 class CustomEncoder(json.JSONEncoder):
@@ -44,6 +45,17 @@ class ConfigManager:
         self.user = user or getpass.getuser()
         self.data = {}
         self.filename = self._get_filename()
+        # write-batching state (see batch()/save()); reserved in __setattr__
+        self._defer_writes = False
+        self._pending_write = False
+        self._writes = 0  # count of actual disk writes (diagnostics/tests)
+        # Load on construction so this manager always reflects the file. Every
+        # get/set/save acts on self.data; if a manager is used without an
+        # explicit load() (e.g. a fresh SettingsManager in file_parser or
+        # store_analang) then reads silently return defaults and writes clobber
+        # the on-disk siblings. Loading here makes a fresh manager correct by
+        # default and removes that whole class of data-loss bug.
+        self.load()
 
     def _get_filename(self):
         if self.domain in ['audio', 'project', 'ui', 'preproject']:
@@ -59,8 +71,48 @@ class ConfigManager:
     def save(self, data=None):
         if data is not None:
             self.data = data
+        # Inside a batch(), defer the write and coalesce; otherwise write now.
+        if getattr(self, '_defer_writes', False):
+            self._pending_write = True
+            return
+        self._write()
+
+    def _write(self):
+        """Persist self.data, skipping the write if the file already holds
+        identical content. The comparison is against the file on disk (not a
+        memory cache), so coalescing is always correct even if another writer
+        touched the file."""
+        payload = json.dumps(self.data, indent=4, ensure_ascii=False, cls=CustomEncoder)
+        self._pending_write = False
+        try:
+            if self.filename.exists() and self.filename.read_text(encoding='utf-8') == payload:
+                return  # no change on disk — skip the write
+        except OSError:
+            pass  # unreadable for any reason -> fall through and write
         with open(self.filename, 'w', encoding='utf-8') as f:
-            json.dump(self.data, f, indent=4, ensure_ascii=False, cls=CustomEncoder)
+            f.write(payload)
+        self._writes += 1
+
+    def flush(self):
+        """Write now if a deferred write is pending (no-op otherwise)."""
+        if getattr(self, '_pending_write', False):
+            self._write()
+
+    @contextmanager
+    def batch(self):
+        """Defer disk writes within the block and write at most once on exit,
+        collapsing N set()/attribute writes into one. Safe to nest (only the
+        outermost batch flushes). NOTE: do not read the file back inside a batch
+        expecting an earlier write from the same batch to be on disk yet — those
+        writes are deferred until the block exits."""
+        outer = getattr(self, '_defer_writes', False)
+        self._defer_writes = True
+        try:
+            yield self
+        finally:
+            self._defer_writes = outer
+            if not outer:
+                self.flush()
 
     def get(self, key, default=None):
         return self.data.get(key, default)
@@ -75,8 +127,9 @@ class ConfigManager:
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
 
     def __setattr__(self, name, value):
-        # Allow normal attribute assignment for initialization
-        if name in ['domain', 'base_path', 'hostname', 'user', 'data', 'filename']:
+        # Allow normal attribute assignment for initialization + write-batching state
+        if name in ['domain', 'base_path', 'hostname', 'user', 'data', 'filename',
+                    '_defer_writes', '_pending_write', '_writes']:
             super().__setattr__(name, value)
             return
         

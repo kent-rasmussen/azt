@@ -51,8 +51,14 @@ class SortButtonFrame(ui.ScrollingFrame):
         if '=' in self.check and not self.macrosort:
             skiptext+=f" ({self.check.replace('=','≠')})"
         """This should just add a button, not reload the frame"""
+        # The 'S' word-initial/word-final checks are CLOSED binaries — no
+        # new-group ("Other"). (syls is open: it keeps the normal buttons.)
+        closed=(self.cvt=='S'
+                and self.program.params.is_syllable_boolean_check(self.check))
         bf1=ui.Frame(parent, border=True, row=parent.nrows(), sticky='w')
-        if not self.groups:
+        if closed:
+            pass #fixed groups only; no "Other"/new-group button
+        elif not self.groups:
             # log.info("Making None sorted yet button")
             vardict['ok']=ui.BooleanVar()
             okb=ui.Button(bf1, text=firstOK,
@@ -64,6 +70,23 @@ class SortButtonFrame(ui.ScrollingFrame):
         else:
             # log.info("Making different button")
             differentbutton()
+        # 'Not {profile}' — the presented word doesn't belong in its presorted CV
+        # profile; unverify it (clears the profile DATA + sort-group annotation,
+        # rebuilds slices) and advance so it's re-derived next presort. In the
+        # choice list, after 'Other …' and before 'Skip'. Segmental/tone profile
+        # sorts only (the syllable Task-2 has its own macrogroup escape below).
+        def notprofile():
+            todo=self.task.itemstosort()
+            if todo:
+                self.task.unverify_profile(todo[0])
+            sortnext() #advance with NO group chosen → maybesort restarts w/o it
+        if (self.program.slices.profile() and self.cvt!='S'
+                and not self.macrosort):
+            bfnp=ui.Frame(parent, border=True, row=parent.nrows(), sticky='w')
+            ui.Button(bfnp, text=_("Not {profile}").format(
+                            profile=self.program.slices.profile()),
+                        cmd=notprofile, anchor='w', relief='flat',
+                        font='instructions', column=0, row=0, sticky='ew')
         vardict['skip']=ui.BooleanVar()
         # log.info("Making skip button")
         bf2=ui.Frame(parent, border=True, row=parent.nrows(), sticky='w')
@@ -73,6 +96,56 @@ class SortButtonFrame(ui.ScrollingFrame):
                         relief='flat',
                         font='instructions',
                         column=0, row=0, sticky='ew')
+        # 'S' profile sort: escape hatch — "this word isn't in this macrogroup".
+        if (self.cvt=='S'
+                and not self.program.params.is_syllable_primitive_check(self.check)):
+            bf3=ui.Frame(parent, border=True, row=parent.nrows(), sticky='w')
+            ui.Button(bf3, text=_("This word doesn't belong in this group at all…"),
+                        cmd=self.syllable_escape_window,
+                        anchor='w', relief='flat', font='instructions',
+                        column=0, row=0, sticky='ew')
+    def syllable_escape_window(self):
+        """The word in front of the user is in the wrong macrogroup. Offer the
+        four one-axis moves (flip word-initial / flip word-final / Shorter /
+        Longer); each re-buckets the word into a fully-named destination cell and
+        advances. See docs/sort_syllables_design.md."""
+        params=self.program.params
+        ftype=self.task.ftype
+        analang=self.program.db.analang
+        senses=self.task.itemstosort()
+        if not senses:
+            return
+        sense=senses[0]
+        beg=sense.annotationvaluebyftypelang(ftype,analang,'#C')
+        end=sense.annotationvaluebyftypelang(ftype,analang,'C#')
+        syls=sense.annotationvaluebyftypelang(ftype,analang,'syls')
+        try:
+            n=int(syls)
+        except (TypeError,ValueError):
+            n=1
+        flip=lambda v:'V' if v=='C' else 'C'
+        # (button label = destination macrogroup prose, primitive check, new value)
+        moves=[(params.macrogroup_prose(flip(beg),syls,end),'#C',flip(beg)),
+                (params.macrogroup_prose(beg,syls,flip(end)),'C#',flip(end))]
+        if n>1:
+            moves.append((_("Shorter — ")+params.macrogroup_prose(beg,str(n-1),end),
+                        'syls',str(n-1)))
+        moves.append((_("Longer — ")+params.macrogroup_prose(beg,str(n+1),end),
+                        'syls',str(n+1)))
+        w=ui.Toplevel(self, title=_("Where does this word belong?"))
+        def apply(check,value):
+            # flip one primitive → the word's macrogroup changes → it leaves this
+            # slice. Persist immediately (power-fault tolerant) and advance.
+            sense.annotationvaluebyftypelang(ftype,analang,check,value)
+            self.task.maybewrite()
+            w.destroy()
+            if getattr(self,'sortitem',None):
+                self.sortitem.destroy()  # advance to the next word
+        for r,(label,check,value) in enumerate(moves):
+            ui.Button(w, text=label, cmd=lambda c=check,v=value:apply(c,v),
+                        anchor='w', font='instructions', row=r, column=0, sticky='ew')
+        ui.Button(w, text=_("Cancel"), cmd=w.destroy,
+                    anchor='c', font='instructions', row=len(moves), column=0, sticky='ew')
     def updatecounts(self):
         # log.info("Updating counts for each button")
         for b in self.groupbuttonlist:
@@ -129,6 +202,18 @@ class SortButtonFrame(ui.ScrollingFrame):
             # self.groupbuttonlist: #might be necessary
             b.setcanary(canary)
         self.sortitem=canary
+    def reflow(self):
+        """Recompute the scroll content's size SYNCHRONOUSLY (vs the debounced,
+        <Configure>-driven reflow). Call once the full geometry is settled (after
+        the run window's update()): the content is a canvas-embedded frame, so a
+        reflow that runs mid-build can pin it to a partial height. With
+        ``_hug_content`` set (in __init__), _do_configure_interior also sizes the
+        scroll frame's own height to its content's reqheight, so the viewport hugs
+        the buttons. Safe no-op if there's no scroll."""
+        try:
+            self._do_configure_interior()  # scrollregion + canvas size + hug height
+        except Exception as e:
+            log.info("SortButtonFrame.reflow failed: %s", e)
     def __init__(self, parent, task, groups, *args, **kwargs):
         self.macrosort=kwargs.pop('macrosort',False)
         self.remove_on_click=kwargs.pop('remove_on_click',False)
@@ -137,6 +222,13 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.program=self.task.program
         self.groups=groups
         super(SortButtonFrame, self).__init__(parent, *args, **kwargs)
+        # The sort (item-at-a-time) page holds a small set of group buttons and
+        # wants the scroll viewport to HUG them — so any later content growth (a
+        # new group button created mid-sort, or a slow example image) re-sizes the
+        # frame and never clips Other/Not-profile/Skip. The macrosort VERIFY page
+        # (remove_on_click) can hold many items, so it keeps a fixed scrolling
+        # viewport instead. See ScrollingFrame._do_configure_interior.
+        self._hug_content = not self.remove_on_click
         """Children of self.runwindow.frame.scroll.content"""
         self.groupbuttons=self.content.groups=ui.Frame(self.content,sticky='ew')
         self.content.anotherskip=ui.Frame(self.content, row=1,column=0)
@@ -153,7 +245,6 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.check=self.program.params.check()
         self.cvt=self.program.params.cvt()
         self.maybewrite=self.program.taskchooser.maybewrite
-        waiting=task
         if self.macrosort and not self.remove_on_click:
             msg=[_("Gathering groups"),
                 _("On the next screen, you will sort groups of words into letter groups")]
@@ -176,6 +267,19 @@ class SortButtonFrame(ui.ScrollingFrame):
                 task.waitprogress(i * 100 // max(len(self.groups),1))
             if not self.remove_on_click:
                 self.getanotherskip(self.content.anotherskip,self.groupvars)
+        # Force one scroll reflow now that ALL group buttons + skip exist. The
+        # content is a canvas-embedded frame: if a reflow ran MID-BUILD (the event
+        # loop pumped during a slow example load for a later group — e.g. the 2 s
+        # compound V1=V2 regex/image), it pinned the content window to the partial
+        # height; further buttons then grow the REQUESTED height but not the pinned
+        # actual height, so content's <Configure> never re-fires and the scrollregion
+        # stays clamped to the first button (later buttons + skip clipped,
+        # unscrollable). Re-arm a reflow (run window's update() flushes it with the
+        # full reqheight) — the verify path does the equivalent via resume_configure.
+        try:
+            self.content.master.master._configure_interior()
+        except Exception as e:
+            log.info("SortButtonFrame scroll reflow re-arm failed: %s", e)
 class _GroupButtonFrame(object):
     unbuttonargs=['renew','canary','labelizeonselect',
                         'label','playable','unsortable',

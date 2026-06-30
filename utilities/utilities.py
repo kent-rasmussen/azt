@@ -20,6 +20,29 @@ class Object:
         for k in kwargs:
             setattr(self,k,kwargs[k])
 
+class Options:
+    """A tiny attribute bag with row/column ('r'/'c'/'col') aliases and
+    next()/prev() cursors — used to thread grid position through a window
+    builder. Lives here (not main.py) so frontend builders can import it
+    without a circular dependency on main."""
+    def alias(self,o):
+        return self.odict.get(o,o)
+    def next(self,o):
+        o=self.alias(o)
+        setattr(self,o,getattr(self,o)+1)
+    def prev(self,o):
+        o=self.alias(o)
+        setattr(self,o,getattr(self,o)-1)
+    def get(self,o):
+        o=self.alias(o)
+        return getattr(self,o)
+    def __init__(self,**kwargs):
+        self.odict={'col':'column','c':'column',
+                    'r':'row'
+                    }
+        for arg in kwargs:
+            setattr(self,self.alias(arg),kwargs[arg])
+
 def dictofchilddicts(dict,remove=None):
     # This takes a dict[x][y] and returns a dict[y], with all unique values
     # listed for all dict[*][y].

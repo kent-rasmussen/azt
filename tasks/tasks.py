@@ -3,7 +3,7 @@ from frontend import ui
 from tasks.base import Task
 from backend.core.report_mixins import Multislice, MultisliceS, MultisliceT, Multicheck, Multicheckslice, ByUF, Background
 from backend.reporting.generator import Report
-from backend.core.lexicon import WordCollection, Parse, Tone, Segments, Vowels, Consonants
+from backend.core.lexicon import WordCollection, Parse, Tone, Segments, Syllables, Vowels, Consonants
 from tasks.sound import Sound, Record
 import backend.core.sorting_engine #import Sort
 from backend.core.categories import Categories
@@ -659,6 +659,7 @@ class ToneFrameDrafter(ui.Window):
         exemplify=ui.Button(self.fds,text=text,cmd=self.exemplified,
                             columnspan=2,column=0,row=n+2)
         exemplify.update_idletasks()
+        self.scroll.reflow()  # grow canvas to cover the rebuilt status frame
         self.parent.withdraw() #just in case it's visible
     def setfieldtype(self,choice,window):
         self.forms['field']=choice
@@ -779,6 +780,7 @@ class ToneFrameDrafter(ui.Window):
                                 justify='left', row=0, column=1, padx=15)
         # log.info('sub_btn:{}'.format(stext))
         sub_btn.update_idletasks()
+        self.scroll.reflow()  # grow canvas to cover the example frame just built
     def promptstrings(self,lang=None,context=None):
         #None of this changes in editing. Is that what we want?
         if lang:
@@ -979,56 +981,24 @@ class Sort(backend.core.sorting_engine.Sort):
                 }
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-class SortSyllables(Sort,Segments,Task):
+class SortSyllables(backend.core.sorting_engine.SyllablePrep,
+                    Sort,Syllables,Segments,Task):
+    # SyllablePrep FIRST so its runcheck routes Task 1 (the three primitive
+    # checks, each sliced ≤MAX_SLICE) through maybeverifysyllables, NOT maybesort;
+    # once prep is complete it hands off to Task 2 (macrogroup profile sort) via
+    # the inherited Sort.runcheck/maybesort. Syllables before Segments so its
+    # group/form overrides win (relabel profile groups, never rewrite the surface
+    # form); Segments still supplies shared helpers. presortgroups + the
+    # sort/verify/join cycle come from Syllables (lexicon.py). See
+    # docs/syllable_sort_redesign.md and docs/sort_syllables_design.md.
     taskicon = 'iconWord'
     tasktitle = "Sort Word Syllables" #Citation Form Sorting in Tone Frames
     cvt='S'
     def tooltip(self):
         return _("This task helps you sort words in citation form by whole "
                 "word syllable profiles.")
-    def dobuttonkwargs(self):
-        return {'text':_("Sort!"),
-                'fn':self.runcheck,
-                # column=0,
-                'font':'title',
-                'compound':'bottom', #image bottom, left, right, or top of text
-                'image':self.program.theme.photo['Word'], #self.cvt
-                'sticky':'ew'
-                }
-    def presortgroups(self):
-        """organize all the words that belong to the top X syllable profiles,
-        and mark them belonging to groups defined by profile"""
-        """These groups should be sorted into and out of as for others"""
-        """cvprofilevalue should have set value on boot, so we shouldn't
-        recalculate it here. but once sorted, we shouldn't override on each
-        boot.
-        We should likely store different values, one that is calculated,
-        the other is user data
-        """
-        ps=self.program.slices.ps()
-        for sense in self.program.db.sensesbyps[ps]:
-            valuelist=[k for k in self.program.profiles.profilesbysense[ps]
-                        if sense in self.program.profiles.profilesbysense[ps][k]]
-            if valuelist:
-                sense.cvprofilevalue(self.program.params.ftype(),valuelist[0])
-    def runcheck(self):
-        self.program.settings.storesettingsfile()
-        log.info("Running check...")
-        cvt=self.program.params.cvt()
-        check=self.program.params.check()
-        profiles=self.program.slices.profiles()
-        """further specify check check in maybesort, where you can send the user
-        on to the next setting"""
-        gen=self.presortgroups()
-        def after_presort():
-            self.updatesortingstatus() # Not just tone anymore
-            self.maybesort(firstrun=True)
-        try:
-            self.ui.runwindow.winfo_viewable()
-            w=self.ui.runwindow
-        except Exception:
-            w=self.program.tk_root
-        w.drive_work(gen, on_done=after_presort)
+    # dobuttonkwargs inherited from Sort: image=self.cvt ('S' → the syllable
+    # photo, renamed from 'CV').
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 class SortCV(Sort,Segments,Task):
@@ -1037,16 +1007,29 @@ class SortCV(Sort,Segments,Task):
         super().__init__(**kwargs)
 class SortS(Sort,Segments,Task):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
         """TranscribeS sends us here with redo_glyph, to resume sorting that was interrupted
         by the need to transcribe a segment. This should probably be handled differently."""
         """Sort.update_to_cvt sends us here with sort_immediately if it is asked to sort
         an item with a wrong cvt"""
         """Should consider how this impacts tone logic"""
-        if g:=kwargs.get("redo_glyph"): 
+        # Resume re-entries (redo_glyph / sort_immediately) show immediately; a
+        # normal open stays withdrawn until the syllable-profile offer is
+        # answered, because one answer ('sort') sends the user to a different
+        # task and this board should never paint behind it.
+        if not (kwargs.get("redo_glyph") or kwargs.get("sort_immediately")):
+            kwargs["withdrawn"]=True
+        super().__init__(**kwargs)
+        if g:=kwargs.get("redo_glyph"):
             self.redo_joinglyphs(g)
-        elif g:=kwargs.get("sort_immediately"): 
+        elif g:=kwargs.get("sort_immediately"):
             self.runcheck()
+        elif self.offer_profile_setup(at_open=True)=='sort':
+            # User chose to go sort syllable profiles first; that task is now
+            # open. Drop this still-hidden board rather than leave it behind.
+            self._dismiss_unshown()
+        else:
+            # Profiles fine / affirmed / acknowledged: reveal the board now.
+            self.deiconify()
 class SortV(Vowels,SortS):
     taskicon = 'iconV'
     tasktitle = "Sort Vowels" #Citation Form Sorting in Tone Frames
@@ -1109,7 +1092,15 @@ class SortT(Sort,Tone,Task):
         self.guidstosort.append(guid)
         self.guidssorted.remove(guid)
     def __init__(self, **kwargs): #frame, filename=None
+        # Stay withdrawn until the syllable-profile offer is answered (see SortS):
+        # one answer ('sort') sends the user elsewhere, so this board must not
+        # paint first.
+        kwargs["withdrawn"]=True
         super().__init__(**kwargs)
+        if self.offer_profile_setup(at_open=True)=='sort':
+            self._dismiss_unshown()
+        else:
+            self.deiconify()
     """Doing stuff"""
 class Transcribe(Sound,Categories,Task):
     cvt_sensitive=True
@@ -1743,6 +1734,7 @@ class JoinUFgroups(Tone,Task):
                                     )
                             )
                     cbl.grid(row=idn+nheaders,column=col,sticky='ew')
+        scroll.reflow()  # grow canvas to cover all the group rows just built
         self.ui.runwindow.waitdone()
         self.ui.runwindow.wait_window(scroll)
     def __init__(self, program, **kwargs):

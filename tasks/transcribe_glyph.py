@@ -405,5 +405,14 @@ class GlyphTranscribeHelper:
                                command=lambda: fn(),
                                row=0, column=0)
         self.comparisonbuttons()
+        # The run window was created withdrawn (getrunwindow with no msg, so no
+        # thenshow wait) and nothing opened a wait while building here, so this
+        # waitdone() has no active wait to reveal through — it's a no-op. Deiconify
+        # explicitly, as the sort path does (sorting_engine.presenttosort); without
+        # it the rename / name-new-glyph page stays hidden and wait_window() below
+        # blocks on an invisible window.
         self.runwindow.waitdone()
+        if not self.runwindow.exitFlag.istrue():
+            self.runwindow.deiconify()
+            self.runwindow.update_idletasks()
         self.sub_c.wait_window(self.runwindow)  # blocks until window closes

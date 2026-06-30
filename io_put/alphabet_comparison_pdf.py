@@ -4,6 +4,7 @@ import random
 from utilities import logsetup
 from utilities.i18n import _
 try:
+    # from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import A4, letter, landscape
     from reportlab.lib.units import inch, cm
@@ -17,7 +18,7 @@ log = logsetup.getlog(__name__)
 logsetup.setlevel('INFO', log)
 
 from io_put.pdf_fonts import register_fonts
-
+import os
 def draw_triangular_examples(c, x, y, width, height, items, text_font, font_size):
     """
     Draws 3 items in a triangular layout:

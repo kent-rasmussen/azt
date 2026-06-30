@@ -4,6 +4,7 @@ from utilities import logsetup
 log = logsetup.getlog(__name__)
 logsetup.setlevel('INFO')
 try:
+    from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import A4, letter, landscape
     from reportlab.lib.units import inch, cm
@@ -14,7 +15,7 @@ except ImportError:
     log.warning("ReportLab not installed. PDF generation will not work.")
 
 from io_put.pdf_fonts import register_fonts
-
+import os
 def create_chart(filename, items, title, num_columns=5, pagesize='A4', 
                 font_name="Helvetica", padding=5, spacing=5,
                 one_page=False, copyright_text=None, made_with=None,analang=None):

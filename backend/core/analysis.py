@@ -17,6 +17,7 @@ log=logsetup.getlog(__name__)
 # import threading
 # import json
 import itertools
+import bisect
 # import inspect
 # import multiprocessing
 
@@ -443,9 +444,13 @@ class SliceDict(dict):
     """This stores and returns current ps and profile only; there is no check
     here that the consequences of the change are done (done in check)."""
     def count(self):
+        # _profile/_ps may not exist yet: a sort task can be loaded before the
+        # slices are built, and cvt='S' tracks its slice in _S_macrogroup (not
+        # _profile) so _profile is never set. Treat "no slice yet" as count 0.
+        # (A dedicated syllable SliceDict would remove this special-casing.)
         try:
             return self[(self._profile,self._ps)]
-        except KeyError:
+        except (KeyError, AttributeError):
             return 0
     def scount(self,scount=None):
         """This just stores/returns the values in a dict, keyed by [ps][s]"""
@@ -495,15 +500,39 @@ class SliceDict(dict):
             log.error(_("You asked for the ps, but I don't have any (pss: {pss})"
                         "").format(pss=pss))
     def profiles(self,ps=None):
-        """This returns profiles for either a specified ps or the current one"""
+        """This returns profiles for either a specified ps or the current one.
+        For cvt='S' the 'profiles' (slices) are the Beg+count+End macrogroups
+        present in the ps — derived from the words' primitive annotations."""
         if not ps:
             ps=self.ps()
+        if self.program.params.cvt()=='S':
+            if not hasattr(self,'_sensesbyps'):
+                self.makesensesbyps()
+            params=self.program.params
+            mgs={params.macrogroup_of_sense(s)
+                            for s in self._sensesbyps.get(ps,[])}
+            mgs.discard(None)
+            return sorted(mgs)
         if ps and ps in self._profiles:
             # log.info(_("returning profiles: {profiles}").format(profiles=self._profiles[ps]))
             return self._profiles[ps]
         else:
             return []
     def profile(self,profile=None):
+        # For cvt='S' the slice is Beg+count+End (the macrogroup), not a CV
+        # profile. The 3 primitive checks (#C/C#/syls) run on the whole wordlist
+        # (sentinel profile); the profile check runs within the current
+        # macrogroup. See docs/sort_syllables_design.md.
+        params=self.program.params
+        if params.cvt()=='S':
+            sentinel=params.SYLLABLE_SLICE_SENTINEL
+            if profile is None: #getter
+                if params.is_syllable_primitive_check():
+                    return sentinel
+                return getattr(self,'_S_macrogroup',None) or sentinel
+            self._S_macrogroup=profile #setter: the current macrogroup slice
+            self.renewsenses()
+            return
         if profile and profile in self.profiles(self._ps):
             self._profile=profile
             self.renewsenses()
@@ -585,6 +614,19 @@ class SliceDict(dict):
         else:
             log.error(_("Not sure what happened here!"))
     def senses(self,**kwargs): #ps=None,profile=None,
+        # cvt='S': sentinel profile → the whole wordlist (the 3 primitive
+        # checks); a macrogroup profile → just the words in that Beg+count+End
+        # slice (the profile check). See sort_syllables_design.md.
+        params=self.program.params
+        if params.cvt()=='S':
+            ps=kwargs.get('ps',self._ps)
+            if not hasattr(self,'_sensesbyps'):
+                self.makesensesbyps()
+            allps=self._sensesbyps.get(ps,[])
+            profile=kwargs.get('profile',self.profile())
+            if not profile or profile==params.SYLLABLE_SLICE_SENTINEL:
+                return allps
+            return [s for s in allps if params.macrogroup_of_sense(s)==profile]
         if not kwargs:
             return self._senses #this is always the current slice
         ps=kwargs.get('ps',self._ps)
@@ -603,6 +645,11 @@ class SliceDict(dict):
                 self._sensesbyps[ps]+=self._profilesbysense[ps][prof]
     def renewsenses(self):
         self._senses=[]
+        if self.program.params.cvt()=='S':
+            #'S' current slice = whole wordlist (primitives) or the current
+            # macrogroup (profile check); senses() resolves which.
+            self._senses=list(self.senses(ps=self._ps))
+            return
         try:
             self._senses+=list(self._profilesbysense[self._ps][self._profile])
         except KeyError:
@@ -658,7 +705,8 @@ class SliceDict(dict):
                     wcounts.append((count, profile, ps))
         for i in sorted(wcounts,reverse=True):
             self[(i[1],i[2])]=i[0] #[(profile, ps)]=count
-        e=_("Found {count} valid data slices: {keys}").format(count=len(wcounts),keys=self.keys())
+        e=_("Found {count} valid data slices: {keys}"
+            ).format(count=len(wcounts),keys=list(self.keys())[:10])
         e+='\n'+_("Invalid entries found: {invalid}/{total}").format(invalid=profilecountInvalid,
                                                         total=sum(self.values(),
                                                         profilecountInvalid))
@@ -701,6 +749,410 @@ class SliceDict(dict):
         self.makeprofileok() #so the next won't fail
         self.renewsenses()
         self.program.settings.settingsobjects() #should do this more; can be redone!
+
+# Syllable PREP (Task 1) slicing — see docs/syllable_sort_redesign.md. Each group
+# of the three primitive checks (#C/C#/syls) is cut into STABLE slices of at most
+# MAX_SLICE words, so each verify is one modest, image-bearing list that builds
+# like a normal segmental verify group (which works). Smaller = lighter build =
+# fewer CAWL images loaded at once (each ~0.4s, and a big batch floods XWayland).
+# Tunable via the 'syllable_max_slice' setting; raise it if your box is happy with
+# larger slices, lower it if a slice is slow to appear.
+MAX_SLICE=50 #default words-per-page; tune via the 'syllable_max_slice' setting
+             #(raise for fewer/longer pages, lower for lighter ones). With
+             #virtualized verify (1.3.32) the RENDER is ~visible-rows not ×N, so
+             #slice size mainly trades page count against per-page image load.
+             #Ceiling: rows×rowheight must stay under the X11 32767px scroll cap.
+PRELOAD_LOOKAHEAD=2 #default # of upcoming slices to decode ahead in background
+                    #(override via 'syllable_preload_lookahead')
+
+class SyllableSliceDict(object):
+    """Stable, per-group slicing for the syllable PREP task (Task 1). Deliberately
+    NOT a SliceDict subclass and NOT program.slices: the CV-profile SliceDict
+    stays C/V/T-only (plus the kept macrogroup branches Task 2 reuses), and the
+    prep slices live in their own object so the two never share an attribute set.
+
+    Three independent partition checks, each over the whole wordlist for the ps:
+        #C  word-initial  C/V   (groups 'C'→#C, 'V'→#V)
+        C#  word-final    C/V   (groups 'C'→C#, 'V'→V#)
+        syls syllable count     (groups '1','2','3',…)
+    Each group's words are sorted whole-word (reversed for the word-final check)
+    and packed into slices of ≤cap. A word's slice index is SESSION-LOCAL (held in
+    self._idx, never written to the LIFT), so within a session slices are stable:
+    removing a word shrinks its slice (no re-verify); only ADDING a word (a misfit
+    moved in) needs the target slice re-verified. Across a restart the index is
+    gone and slices recompute deterministically from the durable LIFT membership —
+    same inputs give the same boundaries, so they only differ if words changed
+    between sessions. Verify state per (group, slice) is the synthetic group id in
+    the StatusDict node (persisted in data.json) but is itself a cache: build()
+    re-derives 'done' from each word's primitive verification, so the durable
+    truth — membership (<check> annotation) and confirmation (verification field)
+    — is all in the LIFT. See docs/adr/0001-syllable-slice-index-ephemeral.md.
+    """
+    CHECKS=('#C','C#','syls')
+    SEP='␟' #unit-separator: joins group+slice into a synthetic id, collision-free
+
+    def __init__(self,program,ps,ftype):
+        self.program=program
+        self.ps=ps
+        self.ftype=ftype
+        self.analang=program.db.analang
+        # Session-local slice index: {check: {sense_id: idx}}. NOT persisted —
+        # the slice/page assignment is packing state, not a lexical fact, so it
+        # is recomputed from the durable LIFT data (group membership + primitive
+        # verification) each session. See docs/adr/0001-syllable-slice-index-ephemeral.md.
+        self._idx={}
+        self._cursor=None # last slice served by next_unverified_slice, so the
+                          # verify pass walks forward and only wraps for re-opened
+                          # slices at the end (not cutting back after each one)
+        program.syllable_slices=self
+
+    @property
+    def max_slice(self):
+        # attribute on the (legacy) Settings object, set by settings.setmaxslice and
+        # persisted via DOMAIN_MAPPING['ui'] — like buttoncolumns. (settings has no
+        # .get(); the old settings.get() call here silently fell back, so the setting
+        # never actually applied.)
+        v=getattr(self.program.settings,'syllable_max_slice',None)
+        try:
+            return int(v) if v else MAX_SLICE
+        except (TypeError,ValueError):
+            return MAX_SLICE
+
+    @property
+    def preload_lookahead(self):
+        try:
+            v=self.program.settings.get('syllable_preload_lookahead')
+        except Exception:
+            v=None
+        return int(v) if v is not None and str(v).lstrip('-').isdigit() \
+            else PRELOAD_LOOKAHEAD
+
+    @property
+    def sentinel(self):
+        return self.program.params.SYLLABLE_SLICE_SENTINEL
+
+    # --- synthetic id <-> (group, slice-index) ---
+    def encode(self,group,idx):
+        return '{}{}{}'.format(group,self.SEP,idx)
+    def decode(self,sid):
+        group,_sep,idx=str(sid).partition(self.SEP)
+        return group,(int(idx) if idx.isdigit() else None)
+
+    # --- per-word slice index: SESSION-LOCAL, never written to the LIFT ---
+    # The index is packing state (which ≤cap page a word landed on), not a fact
+    # about the word. Boundaries stay stable WITHIN a session (assign_slices only
+    # fills words that have no index yet) and are recomputed deterministically
+    # each session from the durable LIFT data. Group membership lives in the
+    # <check> annotation and confirmation in the primitive verification field, so
+    # nothing is lost across a restart — only the page boundaries recompute.
+    def _slice_idx(self,sense,check):
+        return self._idx.get(check,{}).get(sense.id)
+    def _set_slice_idx(self,sense,check,idx):
+        self._idx.setdefault(check,{})[sense.id]=int(idx)
+    def _group_of(self,sense,check):
+        return sense.annotationvaluebyftypelang(self.ftype,self.analang,check)
+
+    # --- live membership (annotation-derived, so shrink/grow are free) ---
+    def _psenses(self):
+        # PREP is wordlist-wide: the three primitives are ps-independent form
+        # facts, so membership spans ALL parts of speech, not self.ps. (Name kept
+        # for churn; self.ps is now just a staleness token for the rebuild check.)
+        try:
+            return self.program.db.senses
+        except (AttributeError,KeyError):
+            return []
+    def _members(self,check,group):
+        return [s for s in self._psenses() if self._group_of(s,check)==group]
+    def groups_of(self,check):
+        gs={self._group_of(s,check) for s in self._psenses()}
+        gs.discard(None); gs.discard('')
+        if check=='syls':
+            return sorted(gs,key=lambda g:(0,int(g)) if str(g).isdigit() else (1,str(g)))
+        return sorted(gs) #'C' before 'V'
+    def members_in_slice(self,check,group,idx):
+        return [s for s in self._members(check,group)
+                if self._slice_idx(s,check)==idx]
+    def count(self,check,group,idx):
+        return len(self.members_in_slice(check,group,idx))
+    def slices_of(self,check,group):
+        idxs={self._slice_idx(s,check) for s in self._members(check,group)}
+        idxs.discard(None)
+        return sorted(idxs)
+
+    # --- whole-word sort key (reversed for the word-final check) ---
+    def slice_key(self,check,sense):
+        try:
+            w=(sense.formattedform(self.analang,self.ftype) or '').casefold()
+        except Exception:
+            w=''
+        return w[::-1] if self.program.params.is_word_final_check(check) else w
+
+    # --- stable assignment: only fill words that have no slice index yet ---
+    def assign_slices(self,check):
+        cap=self.max_slice
+        for group in self.groups_of(check):
+            members=self._members(check,group)
+            counts={}; unassigned=[]
+            for s in members:
+                idx=self._slice_idx(s,check)
+                if idx is None:
+                    unassigned.append(s)
+                else:
+                    counts[idx]=counts.get(idx,0)+1
+            if not unassigned:
+                continue
+            # Mirror move_misfit so a from-scratch rebuild reproduces the
+            # interactive layout from durable data alone (membership annotation +
+            # the spelling-derived value): words whose SPELLING agrees with this
+            # group sort in naturally (alphabetised with everyone); by-ear-only
+            # members (spelling says another group — or unanalysable) go to the
+            # END, so they fall into the last slice(s) as a cohort to re-verify.
+            # See docs/adr/0001-syllable-slice-index-ephemeral.md.
+            agreeing=[]; exceptions=[]
+            for s in unassigned:
+                (agreeing if self._orthographic_value(s,check)==group
+                          else exceptions).append(s)
+            agreeing.sort(key=lambda s:self.slice_key(check,s))
+            exceptions.sort(key=lambda s:self.slice_key(check,s))
+            max_idx=max(counts) if counts else -1
+            for s in agreeing+exceptions:
+                placed=False
+                for i in range(0,max_idx+1):
+                    if counts.get(i,0)<cap:
+                        counts[i]=counts.get(i,0)+1
+                        self._set_slice_idx(s,check,i); placed=True; break
+                if not placed:
+                    max_idx+=1; counts[max_idx]=1
+                    self._set_slice_idx(s,check,max_idx)
+
+    # --- StatusDict node for a check's slice verify-state (synthetic ids) ---
+    def _node(self,check):
+        # Wordlist-wide: verify state under the SYLLABLE_PREP_PS sentinel, shared
+        # across all ps (NOT self.ps) — so a slice is verified once, not per-ps.
+        return self.program.status.node(cvt='S',
+                                        ps=self.program.params.SYLLABLE_PREP_PS,
+                                        profile=self.sentinel,check=check)
+    def _clear_slices(self,check):
+        """Drop this check's session-local slice indices so assign_slices reassigns
+        from scratch. Called when the cap changed (a deliberate, pre-verify
+        reshape); it's also the natural starting state each session, since the
+        in-memory index begins empty and is rebuilt from the LIFT membership."""
+        self._idx[check]={}
+    def build(self):
+        """Assign any unsliced words and sync each check's node 'groups' to the
+        current synthetic slice ids (emptied slices simply drop out). Idempotent,
+        and the entry point that (re)builds the session-local index from the LIFT
+        membership — on a fresh session every word is unassigned, so this packs
+        them all. If the cap changed since the last build (the 'syllable_max_slice'
+        setting was edited mid-session), re-slice that check once so the new cap
+        takes effect — within-session indices are otherwise sticky. A normal misfit
+        may push a slice one over the cap; that does NOT re-slice (the stored cap is
+        unchanged), so stable slices stay stable. Writes NO LIFT data (the index is
+        in-memory); the only persisted output is the node cache in data.json."""
+        cap=self.max_slice
+        changed=False # build() now runs on every prep-board render; only persist
+                      # the node cache to data.json when it actually changed.
+        for check in self.CHECKS:
+            n=self._node(check)
+            if n.get('slice_cap')!=cap:
+                self._clear_slices(check) #cap changed → re-slice from scratch
+                n['slice_cap']=cap; changed=True
+            self.assign_slices(check)
+            groups=sorted(self.encode(g,i) for g in self.groups_of(check)
+                                           for i in self.slices_of(check,g))
+            # 'done' is DERIVED from the LIFT (per-sense primitive verification),
+            # so prep status survives a data.json loss and is reconstructed from
+            # the standard durable source: a slice is done iff every current
+            # member is confirmed for this check.
+            done=[self.encode(g,i) for g in self.groups_of(check)
+                  for i in self.slices_of(check,g)
+                  if self._slice_confirmed(check,g,i)]
+            if n.get('groups')!=groups:
+                n['groups']=groups; changed=True
+            if n.get('done')!=done:
+                n['done']=done; changed=True
+        if changed:
+            self.program.status.store()
+    def mark_slice(self,check,group,idx,verified=True):
+        # Persist confirmation to the LIFT (per-sense primitive verification code),
+        # the durable source of truth; the status 'done' list is a synced cache.
+        for s in self.members_in_slice(check,group,idx):
+            self._set_confirmed(s,check,group,verified)
+        n=self._node(check); sid=self.encode(group,idx)
+        done=n.setdefault('done',[])
+        if verified and sid not in done:
+            done.append(sid)
+        elif not verified and sid in done:
+            done.remove(sid)
+        if sid not in n.setdefault('groups',[]):
+            n['groups'].append(sid)
+        self.program.status.store()
+    def mark_for_reverify(self,check,group,idx):
+        # A misfit moved into this slice → it's no longer fully confirmed. 'done'
+        # is derived (all members confirmed) and the newcomer carries no code, so
+        # the slice is already pending; just drop it from the cache. Do NOT strip
+        # the existing members' confirmations (that would discard real user data).
+        sid=self.encode(group,idx); n=self._node(check)
+        if sid in n.get('done',[]):
+            n['done'].remove(sid)
+        self.program.status.store()
+    # --- per-sense confirmation, durable in the LIFT (status 'done' is its cache) --
+    def _confirmed(self,sense,check):
+        return any(c.split('=')[0]==check
+                   for c in sense.primitiveverification(self.ftype))
+    def _set_confirmed(self,sense,check,group,verified=True):
+        codes=[c for c in sense.primitiveverification(self.ftype)
+               if c.split('=')[0]!=check] #drop any existing code for this check
+        if verified:
+            codes.append('{}={}'.format(check,group))
+        sense.primitiveverification(self.ftype,value=codes)
+    def _slice_confirmed(self,check,group,idx):
+        members=self.members_in_slice(check,group,idx)
+        return bool(members) and all(self._confirmed(s,check) for s in members)
+
+    def _slice_pending(self,check,group,idx):
+        return (self.encode(group,idx) not in set(self._node(check).get('done',[]))
+                and self.count(check,group,idx)>=1)
+    def _first_pending_slice(self):
+        for check in self.CHECKS:
+            for group in self.groups_of(check):
+                for idx in self.slices_of(check,group):
+                    if self._slice_pending(check,group,idx):
+                        return (check,group,idx)
+        return None
+    def next_unverified_slice(self):
+        # Board-click override (once): jump straight to the chosen slice, and
+        # continue the pass from there. Stored on program so it survives the
+        # SyllableSliceDict the runcheck rebuild makes between click and 'Sort!'.
+        pref=getattr(self.program,'syllable_preferred_slice',None)
+        self.program.syllable_preferred_slice=None
+        if pref and self._slice_pending(*pref):
+            self._cursor=pref
+            return pref
+        # Finish the CURRENT check before moving to the next section: within a
+        # check, walk slices FORWARD from the last one served (all #C=C, then
+        # #C=V; etc.) and WRAP to pick up any a misfit re-opened — so we neither
+        # cut the user back mid-pass (V4 → C27 → V5…) NOR leave a check early
+        # (finishing V# while a C# slice is still pending).
+        order=self._slice_order()
+        if not order:
+            return None
+        cur=getattr(self,'_cursor',None)
+        if cur and cur[0] in self.CHECKS:
+            seq=[t for t in order if t[0]==cur[0]]
+            if cur in seq:
+                i=seq.index(cur)+1
+                seq=seq[i:]+seq[:i] #forward from the cursor, then wrap WITHIN the check
+            for t in seq:
+                if self._slice_pending(*t):
+                    self._cursor=t
+                    return t
+        # Current check fully verified → the earliest still-pending slice in fixed
+        # check order (#C, C#, syls). Normally that's just the next check; but if
+        # an EARLIER check still has an unverified slice (e.g. one skipped via a
+        # board click), go back THERE rather than skipping ahead to a later check.
+        nxt=self._first_pending_slice()
+        if nxt:
+            self._cursor=nxt
+        return nxt
+
+    # --- background preload of upcoming slices (image decode is I/O-bound) ---
+    def _slice_order(self):
+        """All (check,group,idx) tuples in the order maybeverifysyllables walks
+        them — so the preloader fetches exactly what the user will see next."""
+        return [(c,g,i) for c in self.CHECKS for g in self.groups_of(c)
+                        for i in self.slices_of(c,g)]
+    def upcoming_slices(self,check,group,idx,n):
+        """The next `n` still-pending slices after (check,group,idx)."""
+        order=self._slice_order()
+        try:
+            start=order.index((check,group,idx))+1
+        except ValueError:
+            start=0
+        out=[]
+        for t in order[start:]:
+            if len(out)>=n:
+                break
+            if self._slice_pending(*t):
+                out.append(t)
+        return out
+    def preload_uris(self,check,group,idx,n):
+        """Illustration URIs of the words in the next `n` pending slices (deduped,
+        order preserved), for SortPresenter.preload_images()."""
+        seen=set(); uris=[]
+        for c,g,i in self.upcoming_slices(check,group,idx,n):
+            for s in self.members_in_slice(c,g,i):
+                u=s.illustrationURI()
+                if u and u not in seen:
+                    seen.add(u); uris.append(u)
+        return uris
+    def all_uris(self):
+        """Every slice's illustration URIs across all checks, deduped — for a
+        full upfront preload. DIAG (1.3.18): drives the image cache to its full
+        size at prep start, to confirm a large cache (~all illustrated words)
+        does NOT break small-slice builds (the cache-exoneration test)."""
+        seen=set(); uris=[]
+        for c,g,i in self._slice_order():
+            for s in self.members_in_slice(c,g,i):
+                u=s.illustrationURI()
+                if u and u not in seen:
+                    seen.add(u); uris.append(u)
+        return uris
+
+    # --- misfit: word flagged out of group A, heard as group B (this check) ---
+    def _last_slice_idx(self,check,group):
+        idxs=self.slices_of(check,group)
+        return idxs[-1] if idxs else 0
+    def _bracketing_slice(self,check,group,sense):
+        """Existing slice index whose alphabetical neighbour the word sits beside
+        (so it sorts in naturally), WITHOUT renumbering anyone."""
+        ms=[s for s in self._members(check,group) if s is not sense
+            and self._slice_idx(s,check) is not None]
+        if not ms:
+            return 0
+        ms.sort(key=lambda s:self.slice_key(check,s))
+        keys=[self.slice_key(check,s) for s in ms]
+        pos=bisect.bisect_left(keys,self.slice_key(check,sense))
+        neighbour=ms[min(pos,len(ms)-1)]
+        return self._slice_idx(neighbour,check)
+    def _orthographic_value(self,sense,check):
+        """The check's value implied by the word's spelling (the presort rule),
+        from the stored cvprofile field — to decide whether a word belongs in a
+        group BY SPELLING (vs only by ear). Uses the params helpers (not the live
+        task) so it works on the board-render rebuild too."""
+        params=self.program.params
+        profile=sense.cvprofilevalue(self.ftype)
+        if not profile or profile=='Invalid':
+            return None
+        if check=='#C':
+            return params.word_initial(profile)
+        if check=='C#':
+            return params.word_final(profile)
+        if check=='syls':
+            return str(params.syllable_count(profile))
+        return None
+    def move_misfit(self,sense,check,target=None):
+        """Move a flagged word to group B. Binary checks: B is the other value.
+        Count check: B is the caller-supplied target (Shorter/Longer). Place it by
+        recompute-and-compare — natural slice if its spelling matches B, else B's
+        last slice — then mark B's slice for re-verify. Group A just shrinks."""
+        cur=self._group_of(sense,check)
+        if check in ('#C','C#'):
+            B='V' if cur=='C' else 'C'
+        else:
+            B=str(target) if target is not None else cur
+        if B==cur:
+            return None
+        # Pick B's slice BEFORE moving the word in, so it isn't counted as an
+        # existing B member (keeps "last slice" honest and avoids stale indices).
+        if self._orthographic_value(sense,check)==B:
+            idx=self._bracketing_slice(check,B,sense) #sorts in naturally
+        else:
+            idx=self._last_slice_idx(check,B) #only B by ear → all such at the end
+        sense.annotationvaluebyftypelang(self.ftype,self.analang,check,B)
+        self._set_slice_idx(sense,check,idx)
+        self.mark_for_reverify(check,B,idx) #B gained a member → re-verify it
+        return (B,idx)
 
 class StatusDict(dict):
     """This stores and returns current ps and profile only; there is no check
@@ -877,8 +1329,19 @@ class StatusDict(dict):
         tojoinkwargs['tojoin']=True
         cs=[]
         checks=self.updatechecksbycvt(**kwargs)
-        # if isinstance(self.task(),Sort) or isinstance(self.task(),Transcribe):
-        if kwargs.get('no_correspondence_checks'):
+        # Correspondence ('x') checks — V1xV2, C1xC2, the CV/VC unit checks, etc.
+        # — are a REPORTING construct: the cross-tab chart (e.g. V1×V2), which the
+        # report builds by crossing the single-axis V1/V2 groups (docheckreport).
+        # They are NOT something to ask the user to sort/verify by, so drop them
+        # from a SORT task's check list. Gate on the live task being a sort task
+        # (flag-based, replacing the old isinstance(Sort) check) — NOT on "is a
+        # report", because reports often run with status.task() unset (None) in a
+        # subprocess, and must keep the x-checks. A caller can still force the
+        # filter via the no_correspondence_checks kwarg.
+        no_corr=kwargs.get('no_correspondence_checks')
+        if no_corr is None:
+            no_corr=getattr(self.task(),'is_sort_task',False)
+        if no_corr:
             checks=[i for i in checks if 'x' not in i]
         if not checks:
             return cs
@@ -908,17 +1371,17 @@ class StatusDict(dict):
         return cs
     def all_groups_verified_anywhere(self):
         d=self.dict()
-        log.info(d)
-        log.info({cvt:set([check #i
-                        for ps in d[cvt]
-                        for profile in d[cvt][ps]
-                        for check in d[cvt][ps][profile]
-                        # for i in d[cvt][ps][profile][check]['done']
-                        # if 'done' in d[cvt][ps][profile][check]
-                        # if i not in ['NA']
-                        ])
-                for cvt in d if cvt != 'T'
-                })
+        # log.info(d)
+        # log.info({cvt:set([check #i
+        #                 for ps in d[cvt]
+        #                 for profile in d[cvt][ps]
+        #                 for check in d[cvt][ps][profile]
+        #                 # for i in d[cvt][ps][profile][check]['done']
+        #                 # if 'done' in d[cvt][ps][profile][check]
+        #                 # if i not in ['NA']
+        #                 ])
+        #         for cvt in d if cvt != 'T'
+        #         })
         #prints FIX!
         #{'Noun': {'done', 'recorded', 'last', 'presorted', 'tosort', 
                 # 'groups', 'tojoin'}}
@@ -933,6 +1396,14 @@ class StatusDict(dict):
                 }
     def all_groups_verified_for_cvt(self):
         return self.all_groups_verified_anywhere()[self.program.params.cvt()]
+    def order_groups(self, groups):
+        """Canonical presentation order for groups. Segment/tone groups are
+        unrelated labels (plain alphabetical). Syllable profiles (cvt 'S') are
+        related, so present them shortest→longest, then alphabetically (similar
+        patterns sit together). [Secondary key may grow — see Kent's note.]"""
+        if self.program.params.cvt()=='S':
+            return sorted(groups, key=lambda g: (len(g), g))
+        return sorted(groups)
     def groups(self,g=None, **kwargs):
         # log.info(_("groups kwargs: {kwargs}").format(kwargs=kwargs))
         if kwargs.get('all_for_cvt'): #in this case, nothing else is relevant
@@ -953,13 +1424,13 @@ class StatusDict(dict):
                 log.info(_("No groups to sort into! (using {kwargs} node {sn})"
                     ).format(kwargs=kwargs,sn=sn))
                 return []
-            return sorted(self._groups)
+            return self.order_groups(self._groups)
         if kwargs['toverify']:
             #done is always a subset of groupsː
             sn['done']=sorted(set(sn['done'])&set(sn['groups']))
-            return sorted(set(sn['groups'])-set(sn['done']))
+            return self.order_groups(set(sn['groups'])-set(sn['done']))
         if kwargs['torecord']:
-            return sorted(set(sn['groups'])-set(sn['recorded']))
+            return self.order_groups(set(sn['groups'])-set(sn['recorded']))
         else: #give theoretical possibilities (C or V only)
             """The following two are meaningless, without with kwargs above"""
             if kwargs['cvt'] in ['CV','VC','T']:
@@ -1124,6 +1595,16 @@ class StatusDict(dict):
             for ps in pss:
                 profiles=list(self[t][ps]) #actual, not theoretical
                 for profile in profiles:
+                    # Normal sweep: drop a profile node with NO member words at all
+                    # — no sense currently carries this profile (membership of any
+                    # kind, not "sorted"/"verified"). Segmental cvts only (their
+                    # profile dimension is the CV profile, tracked in db.ps_profiles);
+                    # 'S' macrogroups/sentinels and not-yet-computed ps are left alone.
+                    members=getattr(self.program.db,'ps_profiles',None)
+                    if (t!='S' and members is not None and ps in members
+                            and profile not in members[ps]):
+                        del self[t][ps][profile]
+                        continue
                     checks=list(self[t][ps][profile]) #actual, not theoretical
                     for check in checks:
                         node=self[t][ps][profile][check]
@@ -1133,6 +1614,13 @@ class StatusDict(dict):
                         elif 'groups' in node and node['groups'] == []:
                             del self[t][ps][profile][check]
                         elif 'done' in node and 'groups' in node:
+                            # DIAG-done (temporary): catch groups intersected OUT of
+                            # done by the cull (done entries with no surviving group).
+                            _dropped=set(node['done'])-set(node['groups'])
+                            if _dropped:
+                                log.info("DIAG-done cull DROP %s from %s/%s/%s done "
+                                         "(not in groups %s)", sorted(_dropped),
+                                         ps, profile, check, sorted(node['groups']))
                             node['done']=sorted(set(node['done']
                                                     )&set(node['groups']))
                         elif 'done' in node: #i.e., w/o groups
@@ -1152,7 +1640,14 @@ class StatusDict(dict):
         if cvt not in self._checksdict:
             self._checksdict[cvt]={}
             self.renewchecks(**kwargs)
-        if cvt in ['T','S']:
+        if cvt == 'S':
+            # The shared engine (Task 2) only does the macrogroup PROFILE sort —
+            # the current word-form's ftype check. The three primitive checks
+            # (#C/C#/syls) are owned by the dedicated Task-1 prep driver
+            # (SyllablePrep.maybeverifysyllables) and never ride maybesort. See
+            # docs/syllable_sort_redesign.md.
+            self._checks=[self.program.params.ftype()]
+        elif cvt == 'T':
             """This depends on ps and self.program.toneframes"""
             ps=kwargs.get('ps',self.program.slices.ps())
             if ps not in self._checksdict[cvt]:
@@ -1188,8 +1683,12 @@ class StatusDict(dict):
                 if ps in self.program.toneframes:
                     self._checksdict[cvt][ps]=list(self.program.toneframes[ps])
         elif cvt == 'S':
+            # Task 2 (shared engine) does only the macrogroup profile check
+            # (ftype); the #C/C#/syls primitives are the Task-1 prep driver's.
+            # updatechecksbycvt computes this fresh; cached here for completeness.
+            ftype=self.program.params.ftype()
             for ps in self.program.slices.pss():
-                self._checksdict[cvt][ps]=self.program.params.cvchecknamesdict().keys()
+                self._checksdict[cvt][ps]=[ftype]
         elif profile:
             """This depends on profile only"""
             n=profile.count(cvt)
@@ -1313,6 +1812,9 @@ class StatusDict(dict):
             if group in n['done']:
                 n['done'].remove(group)
                 changed=True
+                # DIAG-done (temporary): catch explicit un-verification of a group.
+                log.info("DIAG-done update REMOVE %s from done (now %s)",
+                         group, n['done'])
         if writestatus and changed:
             self.store()
         # log.info("Verification after update: {}".format(self.verified()))
@@ -1321,6 +1823,13 @@ class StatusDict(dict):
         """This maintains the group we are actually on, pulled from data
         located by current slice and parameters"""
         if group != '<unspecified>': #this needs to be able to be specified None
+            # DIAG-done (temporary): a default integer group must stay a str — an int
+            # here silently breaks getsensesingroup's "annotation==group" match (now
+            # str-guarded) and any other raw compare. Trip if a non-str/non-None
+            # group is ever set, to prove whether ints leak into the group channel.
+            if group is not None and not isinstance(group, str):
+                log.info("DIAG-done group() set to NON-STR %r (%s)",
+                         group, type(group).__name__)
             self._group=group
         return getattr(self,'_group',None)# this needs to be booleanable
     def renamegroup(self,j,k,**kwargs):
@@ -1446,4 +1955,4 @@ class StatusDict(dict):
             self[k]=dict[k]
         self._checksdict={}
         self._cvchecknames={}
-        log.info(f"StatusDict initialized with contents {self}")
+        # log.info(f"StatusDict initialized with contents {self}")
