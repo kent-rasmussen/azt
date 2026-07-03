@@ -1336,8 +1336,10 @@ class StatusFrame(ui.Frame):
                 ui.Label(table,text=params.macrogroup_final_name(end),
                         font='reportheader',row=1,column=gc,sticky='s',padx=4)
                 colmap[(beg,end)]=gc; gc+=1
+        ui.Label(table,text=_('Syls'),font='reportheader',row=1,column=0,
+                sticky='se',padx=6)  # narrow header; no left-right scroll to spare
         for ri,syls in enumerate(rows):
-            ui.Label(table,text=params.macrogroup_count_name(syls),
+            ui.Label(table,text=str(syls),
                     row=ri+2,column=0,sticky='e',padx=6)
             for (beg,end),col in colmap.items():
                 mg=params.compose_macrogroup(beg,syls,end)
@@ -1355,8 +1357,21 @@ class StatusFrame(ui.Frame):
                     done=set()
                 profs=sorted(mg_profiles.get(mg,{}).items(),
                             key=lambda kv:(-kv[1],str(kv[0])))
-                lines=['{}{} ({})'.format(p,'+' if p in done else '',c)
-                        for p,c in profs]
+                if self.program.settings.showdetails:
+                    lines=['{}{} ({})'.format(p,'+' if p in done else '',c)
+                            for p,c in profs]
+                else:
+                    # Collapse the long tail of tiny (<3-example) profiles into two
+                    # summary lines — verified (+) and not — so the cell stays
+                    # legible without left-right scrolling. 'Show details' expands.
+                    lines=['{}{} ({})'.format(p,'+' if p in done else '',c)
+                            for p,c in profs if c>=3]
+                    small_v=[p for p,c in profs if c<3 and p in done]
+                    small_u=[p for p,c in profs if c<3 and p not in done]
+                    if small_v:
+                        lines.append(_('< 3 exs +({n})').format(n=len(small_v)))
+                    if small_u:
+                        lines.append(_('< 3 exs ({n})').format(n=len(small_u)))
                 tb=ui.Button(table,relief='flat',bd=0,
                         text='\n'.join(lines) or str(wc),
                         cmd=lambda m=mg:self.updateSmacrogroup(m),

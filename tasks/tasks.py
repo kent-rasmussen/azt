@@ -1001,6 +1001,26 @@ class SortSyllables(backend.core.sorting_engine.SyllablePrep,
     # photo, renamed from 'CV').
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # Opened mid-session (e.g. 'Not {profile}' → 'sort syllables') we inherit
+        # the previous task's in-memory picture, and the single profile/status
+        # rebuild the defer path skipped (no per-click load_ps_profiles) never ran.
+        # Do it now so the board lands on the correct STAGE (prep vs profile) and
+        # Task-2 verification reflects reality — instead of only self-correcting
+        # after a redundant 'Sort!'. maybeboard keys the board on
+        # syllable_prep_complete, which reads the 'S' prep status node that
+        # syllable_slices resyncs.
+        try:
+            # Enforce the cvprofile↔annotation invariant HERE (scrub otherwise only
+            # runs at boot) so a mid-session divergence is cleared → that word drops
+            # out → it becomes affirmable → the trigger can fix it, instead of a
+            # stuck 'unverified but no trigger' group.
+            self.program.profiles.scrub_sorts_to_primitives()
+            self.program.db.load_ps_profiles()    # refresh profile slices
+            self.syllable_slices(rebuild=True)     # resync the 'S' prep status node
+            self.rebuild_syllable_profile_done()   # profile 'done' from …-x-cvprofile
+            self.status.maybeboard()               # redraw with the true stage
+        except Exception as e:
+            log.info("SortSyllables open refresh failed: %s", e)
 class SortCV(Sort,Segments,Task):
     """docstring for SortCV."""
     def __init__(self, **kwargs):
@@ -1024,9 +1044,11 @@ class SortS(Sort,Segments,Task):
         elif g:=kwargs.get("sort_immediately"):
             self.runcheck()
         elif self.offer_profile_setup(at_open=True)=='sort':
-            # User chose to go sort syllable profiles first; that task is now
-            # open. Drop this still-hidden board rather than leave it behind.
+            # User chose to go sort syllable profiles first: tear down this still-
+            # hidden board, THEN open the syllable task (teardown before launch so
+            # the two boards never coexist).
             self._dismiss_unshown()
+            self.program.taskchooser.maketask('SortSyllables')
         else:
             # Profiles fine / affirmed / acknowledged: reveal the board now.
             self.deiconify()
@@ -1099,6 +1121,7 @@ class SortT(Sort,Tone,Task):
         super().__init__(**kwargs)
         if self.offer_profile_setup(at_open=True)=='sort':
             self._dismiss_unshown()
+            self.program.taskchooser.maketask('SortSyllables')
         else:
             self.deiconify()
     """Doing stuff"""

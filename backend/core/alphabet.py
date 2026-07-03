@@ -181,6 +181,17 @@ class Alphabet():
         d=self.glyph_members()
         if glyph not in d:
             d[glyph]=set()
+        # DIAG-conflict (temporary): every add-path is supposed to resolve
+        # conflict_code first, yet a same-slice pair is landing in one glyph. Log
+        # the collision AND the call stack so we see which path skipped resolution.
+        clash=[m for m in d[glyph]
+               if m!=item and self.conflict_code(m)==self.conflict_code(item)]
+        if clash:
+            import traceback
+            log.warning("DIAG-conflict: add_glyph_member('%s' -> glyph '%s') collides "
+                        "with same-conflict_code %s. Stack:\n%s",
+                        item, glyph, clash,
+                        ''.join(traceback.format_stack(limit=8)))
         d[glyph].add(item)
         self.glyph_members(d)
         log.info(_("Alphabet.add_glyph_member done."))
@@ -200,6 +211,31 @@ class Alphabet():
         elif hasattr(self,'_glyph_members'):
             delattr(self,'_glyph_members')
         log.info(_("Alphabet.rm_glyph_member done."))
+    def prune_empty_glyph_members(self):
+        """Drop glyph members whose sort group has no member senses — e.g. a group
+        emptied by a profile-unsort ('Not {profile}'), whose word left the slice.
+        Such a group has no example, so it would render as a wordless, exampleless
+        letter group in the review (the 'getexample returned None' case). Tests
+        MEMBERSHIP (getexamples), not displayability (getexample): a group with
+        senses but no image is NOT pruned — only truly memberless ones."""
+        d=self.glyph_members()
+        stale=[]
+        for glyph, items in d.items():
+            for item in items:
+                try:
+                    kwargs=self.parse_verificationcode(item)
+                    group=kwargs.pop('group')
+                    if group in ['NA']:  # NA parks unsortable words; never prune
+                        continue
+                    if not self.program.examples.getexamples(group, **kwargs):
+                        stale.append(item)
+                except Exception as e:
+                    log.info("prune_empty_glyph_members skip %s: %s", item, e)
+        for item in stale:
+            log.info("Pruning empty glyph member '%s' (no member senses)", item)
+            self.rm_glyph_member(item)
+        if stale:
+            self.save_settings()
     def mark_glyph_done(self,glyph,cvt):
         """Mark Verified"""
         if glyph in ['NA']:
@@ -294,8 +330,17 @@ class Alphabet():
             for k['ps'],pr_d in ps_d.items():
                 for k['profile'],ch_d in pr_d.items():
                     for k['check'],ch_v in ch_d.items():
+                        # Macrosort-eligible = VERIFIED and fully DISTINGUISHED from
+                        # EVERY verified sibling on this slice — i.e. in NO pending
+                        # distinction pair (same computation the join step uses).
+                        # Per-group: a group going pending only drops itself, not its
+                        # finished siblings; a lone verified group is trivially done.
+                        pend={g for pair in self.program.status.pending_distinctions(
+                                    cvt=k['cvt'],ps=k['ps'],
+                                    profile=k['profile'],check=k['check'])
+                                for g in pair}
                         for k['group'] in [i for i in ch_v['done']
-                                            if i not in ['NA']]: #only verified
+                                            if i not in ['NA'] and i not in pend]:
                             # log.info(f"Adding item for {k}")
                             self.items_present.add(self.verificationcode(**k))
         self.cull_glyph_members()
@@ -322,6 +367,7 @@ class Alphabet():
         self._itemsmacrosorted=set()
         self._itemstomacrosort=set()
         self.refresh_items()
+        self.prune_empty_glyph_members()  # drop groups emptied by profile-unsort
         for item in self.items_present_in_cvt(cvt):
             if item in [i for j in self.glyph_members().values() for i in j]:
                 self._itemsmacrosorted.add(item)

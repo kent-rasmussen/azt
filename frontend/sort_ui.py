@@ -178,10 +178,10 @@ class SortPresenter(PresenterBase):
 
     # -- Composite UI builders --
 
-    def offer_profile_setup(self, parent, note):
+    def offer_profile_setup(self, parent, note, scope=None):
         """No syllable-profile data yet for this ps: offer to affirm the machine
-        analysis as profiles, or go sort syllable profiles first. Returns
-        'affirm' / 'sort' / 'cancel'."""
+        analysis as profiles, or go sort syllable profiles first. `scope` (optional)
+        spells out which words Trust would affect. Returns 'affirm'/'sort'/'cancel'."""
         result={'choice':'cancel'}
         # Build withdrawn, then deiconify — so it appears composed and placed,
         # rather than mapping empty and reflowing (the "took a bit / wrong spot").
@@ -190,17 +190,24 @@ class SortPresenter(PresenterBase):
         n=ui.Label(w.frame, text=note, font='instructions',
                   row=0, column=0, columnspan=3, sticky='ew', padx=10, pady=6)
         n.wrap()
+        brow=1
+        if scope:
+            # Show the SCOPE of the trust decision (which words, their primitives,
+            # and the machine profile they'd get) so it isn't made blind.
+            ui.Label(w.frame, text=scope, font='small', anchor='w', justify='left',
+                    row=1, column=0, columnspan=3, sticky='w', padx=10, pady=4)
+            brow=2
         def choose(c):
             result['choice']=c
             w.destroy()
         ui.Button(w.frame, text=_("Trust machine analysis; \nmaybe correct later"),
                  cmd=lambda:choose('affirm'), font='instructions',
-                 row=1, column=0, sticky='ew', padx=4)
+                 row=brow, column=0, sticky='ew', padx=4)
         ui.Button(w.frame, text=_("Sort syllable profiles manually; \ncome back here later"),
                  cmd=lambda:choose('sort'), font='instructions',
-                 row=1, column=1, sticky='ew', padx=4)
+                 row=brow, column=1, sticky='ew', padx=4)
         ui.Button(w.frame, text=_("Cancel"), cmd=lambda:choose('cancel'),
-                 font='small', row=1, column=2, sticky='ew', padx=4)
+                 font='small', row=brow, column=2, sticky='ew', padx=4)
         w.update_idletasks() #lay out widgets before showing
         w.deiconify()
         w.lift()

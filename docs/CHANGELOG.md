@@ -19,6 +19,62 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.4.3
+- Syllable-profile verification consolidated to the `…-x-cvprofile` form as the
+  single source of truth. The profile-verify no longer *also* writes redundant
+  `lc=<profile>` codes into the `<macrogroup> lc verification` field (that field is
+  for segmental checks); verifying/unverifying just sets/clears `…-x-cvprofile`.
+- New `rebuild_syllable_profile_done`: the profile board's `done` (the `+` marks) is
+  derived from `…-x-cvprofile`, bucketed by cvprofile exactly as the board displays
+  it, and also marks verified profile pairs `distinguished` (distinct cvprofile
+  strings never merge). Runs on SortSyllables open after `scrub_sorts_to_primitives`
+  + `load_ps_profiles`, so the board reflects LIFT on entry (was showing stale/empty
+  `done` because `generate_status_by_annotations` skips 'S').
+- Macrosort eligibility raised: a sort group is macrosortable only when VERIFIED and
+  DISTINGUISHED from every verified sibling — via new shared
+  `StatusDict.pending_distinctions`, which `to_distinguish` now also uses (fixing its
+  latent current-slice keying bug). Stops macrosort from operating on not-yet-joined
+  groups.
+- Syllable profile board UI: the syllable-count column is now a narrow `Syls` header
+  + number (no h-scroll to spare); profiles with <3 examples collapse to a
+  `< 3 exs +(N)` / `< 3 exs (N)` summary, toggled by Show/Hide details (which now
+  actually re-renders this board).
+- The "Set up syllable profiles?" (Trust) window now lists its SCOPE: each affirmable
+  word with its `#C/C#/syls` primitives and the profile Trust would assign (machine
+  analysis CONSTRAINED to those primitives), or just a count when ≥10 — so the trust
+  decision isn't made blind.
+- DIAG (temporary): `DIAG-conflict` in `add_glyph_member` to catch a same-slice group
+  co-located in one glyph (awaiting reproduction; remove once fixed).
+
+# Version 1.4.2
+- FIX ('Not {profile}' escape hatch — decouple from the syllable sort): clicking
+  'Not {profile}' during a segmental sort used to (a) risk opening the syllable
+  sort ON TOP of the still-running segmental sort, and (b) leave the check in a
+  "not done" limbo. Now it DEFERS: it clears the word's confirmed profile + group,
+  drops it from the live slice (`slices._profilesbysense[ps][profile]`) and the
+  to-sort list (`status._sensestosort`) ad hoc — no per-click `load_ps_profiles`
+  rebuild — and advances to the next word (new `_notprofile_advance` flag so
+  `sortselected` doesn't read the empty selection as Exit). The missing-profiles
+  offer (`offer_profile_setup`) is now the single gate: it fires at task open, on
+  finishing a profile, and on 'Sort!', once per batch of newly-unsorted words
+  (re-armed by the defer, not once-per-task), and NO LONGER launches the syllable
+  task itself — the caller tears down the current task first, THEN opens it, so the
+  two boards never coexist. 'Cancel' at the offer now continues sorting the profiled
+  words instead of aborting the check.
+
+# Version 1.4.1
+- FIX (sort page scrolling): the sort ScrollingFrame snapped back to the top on
+  every wheel/scrollbar movement once its content grew past one screen (regressed
+  with the v1.4.0 syllable sort redesign). `_do_configure_interior` sized the
+  canvas viewport — and, for the hugging sort page, the frame itself — to the
+  content's FULL reqheight with no cap, so `yview()` was permanently (0,1):
+  nothing lay outside the viewport, so scrolling had nowhere to go and the OS
+  window clipped the over-tall canvas. Fixed by capping the viewport height at
+  `self.maxheight` while leaving the scrollregion at the full content height, so
+  over-tall content scrolls instead of snapping; short content still hugs (the
+  v1.3.113 Other/Not-profile/Skip clip fix preserved). Only the sort page set
+  `_hug_content`, so no other scroll frame was affected.
+
 # Version 1.4.0
 - MILESTONE: **Syllable sort redesign complete.** Verified end-to-end on a real
   lexicon (2026-06-30): a full sort → macrosort → glyph-naming cycle, with sort

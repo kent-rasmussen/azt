@@ -264,15 +264,17 @@ class Sort(Categories):
                  check, group, type(group).__name__, profile, verified, add, rms,
                  len(_inslice), len(senses), [s.id for s in _inslice],
                  [s.id for s in senses])
-        for sense in _inslice:
-            self.modverification(sense,profile,check,add)
-        # Syllable PROFILE sort (check is the ftype, not a #C/C#/syls primitive):
-        # the verified GROUP is the word's CV profile, so mirror it into the plain
-        # …-x-cvprofile form — the profile DATA the segmental/tone sorts read. Set
-        # it on verify, clear it on unverify ('Not {profile}').
+        # Syllable PROFILE check (check==ftype): verification lives ONLY in the
+        # plain …-x-cvprofile form (the single source of truth) — NOT as an
+        # lc=<profile> code in the <macrogroup> lc verification field. So set/clear
+        # …-x-cvprofile and DON'T write a code. Every other check (segmental
+        # V1/C1…, primitives) keeps its check=group code.
         if self.cvt=='S' and check==ftype:
             for sense in self.program.slices.inslice(senses):
                 sense.cvprofilevalue(ftype, group if verified else False)
+        else:
+            for sense in _inslice:
+                self.modverification(sense,profile,check,add)
         if kwargs.get('write'):
             self.maybewrite() #for when not iterated over, or on last repeat
     def updatestatus(self,verified=False,**kwargs):
@@ -421,16 +423,45 @@ class Sort(Categories):
             self.program.status.nextprofile(toverify=True)
         self._safe_quit_runwindow()
         self.runcheck()
+    def _affirm_scope_text(self,affirmable,ftype):
+        """Human summary of WHAT 'Trust' would affirm, so the choice isn't blind:
+        each unprofiled+affirmable word with its confirmed primitives (#C/C#/syls)
+        and the machine profile that would become its trusted profile. Lists them
+        when fewer than 10; otherwise just the count, to keep the dialog legible."""
+        analang=self.program.db.analang
+        n=len(affirmable)
+        if n>=10:
+            return _("{n} words here would be affirmed to their machine profile.").format(n=n)
+        av=lambda s,c: s.annotationvaluebyftypelang(ftype,analang,c) or '?'
+        lines=[]
+        for s in affirmable:
+            form=s.textvaluebyftypelang(ftype,analang) or '—'
+            machine=s.cvprofilemachinevalue(ftype)
+            # Show what Trust would ACTUALLY assign: the machine profile CONSTRAINED
+            # to the word's primitives (what affirm_machine_profiles does), not the
+            # raw machine read.
+            trusted=self.program.profiles.constrain_presort_profile(s,machine,ftype) \
+                    or machine or '?'
+            lines.append("{f}  (#C={b} C#={e} syls={y})  → {m}".format(
+                f=form, b=av(s,'#C'), e=av(s,'C#'), y=av(s,'syls'), m=trusted))
+        return '\n'.join(lines)
     def offer_profile_setup(self,at_open=False):
         """A segmental/tone sort works on syllable-profile DATA. If a word in this
         ps lacks a confirmed profile but HAS an affirmable machine analysis, warn —
         offer to affirm the machine analysis or go sort syllable profiles first
         (those words won't be sorted for anything until profiled). Fires when the
-        sort page OPENS (and as a guard on the 'Sort!' press), once per task.
+        sort page OPENS, on the 'Sort!' press, and when advancing to a new
+        profile/check — but only ONCE per batch of newly-unsorted words: the gate
+        (_offered_profile_setup) is re-armed by unverify_profile ('Not {profile}'),
+        so a freshly unsorted word triggers it again without nagging otherwise.
+        Does NOT launch the syllable task itself — the caller tears down this task
+        first, THEN launches, so the two sort boards never coexist.
         Returns the user's choice ('affirm'/'sort'/'cancel') or None if not
         offered."""
         if self.program.params.cvt()=='S': # the syllable sort has its own flow
             return None
+        # Once-per-batch gate: set when we offer (below), cleared by
+        # unverify_profile when a word is sent back via 'Not {profile}'.
         if getattr(self,'_offered_profile_setup',False):
             return None
         ftype=self.program.params.ftype()
@@ -443,7 +474,8 @@ class Sort(Categories):
         def _affirmable(s):
             return (not s.cvprofilevalue(ftype)
                     and s.cvprofilemachinevalue(ftype) not in (None,'','Invalid'))
-        if not any(_affirmable(s) for s in senses):
+        _affirm=[s for s in senses if _affirmable(s)]
+        if not _affirm:
             return None # nothing left that affirming/sorting would profile
         self._offered_profile_setup=True
         note=_("Some of these words have no syllable profile yet, so "
@@ -451,7 +483,8 @@ class Sort(Categories):
                 # "a word that hasn't been sorted (or affirmed) for its "
                 # "syllable profile "
                 "they won't be sorted here either.")
-        choice=self.sort_ui.offer_profile_setup(self.ui,note)
+        scope=self._affirm_scope_text(_affirm,ftype)
+        choice=self.sort_ui.offer_profile_setup(self.ui,note,scope)
         if choice=='affirm':
             self.program.profiles.affirm_machine_profiles() # fill holes
             # …and repair existing trusted profiles: constrain any that violate
@@ -460,18 +493,27 @@ class Sort(Categories):
             self.program.profiles.reconcile_profiles_to_primitives()
             if at_open and getattr(self,'status',None):
                 self.status.maybeboard() # refresh the now-populated profile board
-        elif choice=='sort':
-            self.program.taskchooser.maketask('SortSyllables')
+        # 'sort' no longer launches here; the caller tears down this task first,
+        # then opens SortSyllables (teardown-before-launch).
         return choice
     def runcheck(self):
         self.program.settings.storesettingsfile()
         # t=(_('Run Check'))
         log.info("Running check...")
         cvt=self.program.params.cvt()
-        # Fallback guard (the main offer is at task open); abort if the user opts to
-        # sort syllables / cancels rather than proceed on incomplete profile data.
-        if cvt!='S' and self.offer_profile_setup() in ('sort','cancel'):
-            return
+        # The missing-profiles offer also fires here (on 'Sort!' and on advancing
+        # to a new profile/check via ncheck/nprofile). On 'sort' we tear down THIS
+        # live segmental task BEFORE opening the syllable sort, so the two boards
+        # never coexist (the old concurrent-window bug). 'cancel' just aborts.
+        if cvt!='S':
+            choice=self.offer_profile_setup()
+            if choice=='sort':
+                self._safe_quit_runwindow()
+                self.program.taskchooser.maketask('SortSyllables')
+                return
+            # 'affirm' / 'cancel' / None → keep sorting the words that DO have a
+            # profile. 'cancel' means "not now" (set the rest aside), NOT abort the
+            # whole check — so fall through and continue instead of returning.
         self.check=self.program.params.check()
         self.profile=self.program.slices.profile()
         if not self.profile:
@@ -872,15 +914,90 @@ class Sort(Categories):
         return self.sort_ui.build_present_sense(
             self.ui.runwindow.frame, self.buttonframe, text, sense)
     def unverify_profile(self,sense):
-        """Clear the word's CONFIRMED profile DATA (plain …-x-cvprofile) and its
-        profile sort-group annotation, so it drops out of this profile and is
-        re-derived on the next presort. Marks status dirty so maybesort reloads."""
+        """'Not {profile}' — DEFER, don't disrupt. Clear the word's CONFIRMED
+        profile DATA (plain …-x-cvprofile) and its profile sort-group annotation
+        so it leaves this profile and gets re-profiled later. Then:
+          - drop it from the CURRENT in-memory slice so maybesort won't re-present
+            it, WITHOUT the O(lexicon) load_ps_profiles() rebuild (that single
+            rebuild is deferred to the missing-profiles offer / SortSyllables);
+          - re-arm the offer (clear _offered_profile_setup) so the gate fires once
+            for this freshly unsorted word.
+        Crucially this launches NOTHING: the current sort-verify-join continues;
+        the syllable task only opens later, if the user picks 'sort' at the offer."""
         ftype=self.program.params.ftype()
         sense.cvprofilevalue(ftype, False)                       # clear confirmed data
         sense.annotationvaluebyftypelang(ftype, self.analang, ftype, '') # clear group
-        self.program.db.load_ps_profiles() # rebuild profile slices so it drops out
-        self.program.status_dirty=True
+        # Drop the word from the two in-memory places it lives, so it is not
+        # re-presented — WITHOUT the O(lexicon) load_ps_profiles rebuild (deferred):
+        #   1) the profile slice that updatesortingstatus REBUILDS the to-sort list
+        #      from (slices._profilesbysense[ps][profile], read via slices.senses).
+        #      Miss this and the next page's rebuild simply re-adds the word — NOT
+        #      db.sensesbyps_profile, which the sort loop never reads.
+        #   2) the LIVE to-sort list the current sort() loop reads each iteration
+        #      (status._sensestosort via itemstosort).
+        try:
+            ps=self.program.slices.ps(); profile=self.program.slices.profile()
+            # Drop from BOTH profile structures so they stay consistent: the sort
+            # loop reads slices._profilesbysense, while verified_groups_by_ps_profile
+            # (the 'done' derivation) reads db.sensesbyps_profile. Leaving the word in
+            # the latter keeps it counted as a member — and, being uncoded, it can
+            # unverify groups it no longer belongs to.
+            for container in (getattr(self.program.slices,'_profilesbysense',{}),
+                              getattr(self.program.db,'sensesbyps_profile',{})):
+                slice_senses=container.get(ps,{}).get(profile)
+                if slice_senses and sense in slice_senses:
+                    slice_senses.remove(sense)
+        except Exception as e:
+            log.info("unverify_profile slice-drop skipped: %s", e)
+        try:
+            tosort=self.program.status.sensestosort()
+            if tosort and sense in tosort:
+                tosort.remove(sense)
+        except Exception as e:
+            log.info("unverify_profile tosort-drop skipped: %s", e)
+        self._offered_profile_setup=False  # re-arm the offer for this new word
+        self._notprofile_advance=True      # tell sortselected to advance, not Exit
+        self.program.status_dirty=True     # current slice rebuilds (minus this word)
         self.maybewrite()
+    def rebuild_syllable_profile_done(self):
+        """Recompute the syllable PROFILE board's 'groups' + 'done'. Bucket profiles
+        by cvprofilevalue the SAME way the board does (makeSyllableprogresstable
+        ~L1301) so the '+' lines up with the displayed buckets. A profile group is
+        'done' (gets '+') iff every member has a real …-x-cvprofile that MATCHES its
+        lc annotation — that and nothing else. '—' (no profile) and 'Invalid' never
+        qualify → that macrogroup cell stays unverified and (for '—' words) the
+        missing-profiles trigger fires. Keyed on the 'S'/macrogroup/ftype node the
+        board + maybesort read."""
+        ftype=self.program.params.ftype()
+        analang=self.program.db.analang
+        by={}  # {ps: {macrogroup: {cvprofile bucket: all-members-verified bool}}}
+        for s in self.program.db.senses:
+            ps=s.psvalue()
+            mg=self.program.params.macrogroup_of_sense(s, ftype=ftype)
+            if not (ps and mg):
+                continue
+            cvp=s.cvprofilevalue(ftype) or '—'    # bucket key, matching the board
+            ann=s.annotationvaluebyftypelang(ftype, analang, ftype)
+            # '+' (verified) iff the word has a real …-x-cvprofile that MATCHES its
+            # lc annotation — that and nothing else. A profile group is done only if
+            # EVERY member is verified that way ('—'/'Invalid' never qualify).
+            matched=(cvp not in ('—','Invalid') and cvp==ann)
+            bkts=by.setdefault(ps,{}).setdefault(mg,{})
+            bkts[cvp]=bkts.get(cvp,True) and matched
+        for ps,mgs in by.items():
+            for mg,bkts in mgs.items():
+                node=self.program.status.node(cvt='S',ps=ps,profile=mg,check=ftype)
+                done=sorted(cvp for cvp,ok in bkts.items() if ok)
+                node['groups']=sorted(bkts)
+                node['done']=done
+                # Trust the DISTINCTIONS too (status.json only, not LIFT): verified
+                # profiles are distinct cvprofile strings that never meaningfully
+                # merge, so mark every verified pair distinguished. Otherwise
+                # maybesort's join step — which distinguishes pairs of VERIFIED
+                # groups (group_pairs_to_distinguish) — re-fires and 'Sort!' jumps
+                # to a spurious join instead of moving on to the unprofiled words.
+                node['distinguished']=set(itertools.combinations(done,2))
+        self.program.status.store()
     def present_group(self,item):
         log.info("presenting group {item}".format(item=item))
         kwargs=self.program.alphabet.parse_verificationcode(item)
@@ -953,6 +1070,15 @@ class Sort(Categories):
                 return r
         return self.cvt #fail safe for the time being
     def sortselected(self, item, macrosort=False):
+        # 'Not {profile}' (unverify_profile) deferred this word and destroyed the
+        # item WITHOUT selecting a group. Don't read that empty selection as Exit
+        # (which would bail the whole check with a "not done" warning) — just
+        # advance: the word is already dropped from the slice, so the sort() loop
+        # presents the next one.
+        if getattr(self,'_notprofile_advance',False):
+            self._notprofile_advance=False
+            self.buttonframe.reset_selected()
+            return
         selected=self.buttonframe.get_selected()
         log.info("selected groups: {groups}".format(groups=selected))
         if len(selected)>1:
@@ -1398,11 +1524,11 @@ class Sort(Categories):
     def to_distinguish(self, macrosort=False, **kwargs):
         if macrosort:
             d=self.program.alphabet.distinguished_by_cvt()
-        else:
-            d=self.program.status.distinguished(**kwargs)
-        #whatever ordering was stored, remove either if there
-        return self.group_pairs_to_distinguish(macrosort=macrosort
-                                                )-d-{(y,x) for x,y in d}
+            #whatever ordering was stored, remove either if there
+            return self.group_pairs_to_distinguish(macrosort=True)-d-{(y,x) for x,y in d}
+        # non-macrosort: shared with macrosort eligibility (analysis.py). Keys off
+        # THIS slice's verified groups (kwargs), fixing the old current-slice bug.
+        return self.program.status.pending_distinctions(**kwargs)
     def join(self,macrosort=False,sortgroup=None):
         def move_on_cleanly():
             # self.ui.runwindow.withdraw()

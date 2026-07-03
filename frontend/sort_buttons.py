@@ -480,7 +480,12 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                         text=_("Change example word; Right click to back up"))
         self.refresh_button_state()
     def make_check_button(self):
-        ui.Label(self, text=self.check, column=self.ncolumns())
+        # cvprofile on a line ABOVE the check, in ONE label (same cell) so the
+        # profile difference is visible (CVCC over V1 vs CVC over V1) WITHOUT
+        # adding a grid row / making the button taller.
+        profile=self.kwargs.get('profile')
+        text=f"{profile}\n{self.check}" if profile else self.check
+        ui.Label(self, text=text, column=self.ncolumns())
     def unsortbutton(self):
         t=_("<= resort *this* *word*")
         usbkwargs=self.buttonkwargs()

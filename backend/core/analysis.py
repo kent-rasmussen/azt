@@ -1790,6 +1790,15 @@ class StatusDict(dict):
         # log.info(f"{self.distinguished(**kwargs)=}")
         for j in [i for i in self.distinguished(**kwargs) if g in i]:
             self.undistinguish(j,**kwargs)
+    def pending_distinctions(self,**kwargs):
+        """Verified-group pairs on THIS slice not yet distinguished (either
+        ordering). Single source of truth for both the join step (to_distinguish)
+        and macrosort eligibility: a group is fully distinguished iff it appears in
+        NO pending pair — and a lone verified group (no pairs) is trivially done."""
+        v=[g for g in self.node(**kwargs).get('done',[]) if g!='NA']
+        d={tuple(x) for x in self.distinguished(**kwargs)}
+        return {p for p in itertools.combinations(v,2)
+                if p not in d and (p[1],p[0]) not in d}
     def recorded(self,g=None,**kwargs):
         sn=self.node(**kwargs)
         self._recorded=sn['recorded']

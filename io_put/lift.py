@@ -3343,8 +3343,9 @@ class Sense(Node,FieldParent):
         del self.fields[key]
     PRIMITIVE_VPROFILE='__primitive__' #internal sentinel: route to the profile-
                 #INDEPENDENT '<ftype> primitive verification' field. The syllable-
-                #prep primitives (#C/C#/syls) DETERMINE the profile, so their
-                #verification can't be keyed by it (nor by ps).
+                #prep primitives (#C/C#/syls) CONSTRAIN the profile (the user's
+                #sort determines it), so their verification can't be keyed by it
+                #(nor by ps).
     def verificationkey(self,profile,ftype):
         if ftype in ['alphabet', 'alpha']:
             return f'{ftype} verification'
@@ -3387,8 +3388,8 @@ class Sense(Node,FieldParent):
     def primitiveverification(self,ftype,value=None):
         """Profile- and ps-INDEPENDENT verification codes for the syllable-prep
         primitives (#C/C#/syls), in the '<ftype> primitive verification' field.
-        The primitives DETERMINE the profile, so their confirmation can't be keyed
-        by profile (nor ps). Reuses the standard verification storage so prep
+        The primitives CONSTRAIN the profile (the user's sort determines it), so
+        their confirmation can't be keyed by profile (nor ps). Reuses the standard verification storage so prep
         status is LIFT-durable and reconstructed from it, like the segmental
         checks. Codes look like '#C=C' / 'C#=V' / 'syls=2'."""
         return self.verificationtextvalue(self.PRIMITIVE_VPROFILE,ftype,value=value)
