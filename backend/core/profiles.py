@@ -339,8 +339,8 @@ class ProfileAnalyzer:
 
     def _set_trusted_profile(self, sense, ftype, profile):
         """Write a trusted profile CONSISTENTLY: the plain …-x-cvprofile DATA and
-        the profile-sort annotation (name=ftype, e.g. 'lc') that records the
-        macrogroup the word sits in. Keeping them aligned means the annotation
+        the profile-sort annotation (name=ftype, e.g. 'lc') that records which
+        profile the word is sorted into. Keeping them aligned means the annotation
         never claims a different 'last sorted' group than the trusted profile,
         and the normal group/done check won't see a mismatch and unverify it."""
         sense.cvprofilevalue(ftype, profile)

@@ -10,6 +10,11 @@ from io_put import sound
 
 class SortButtonFrame(ui.ScrollingFrame):
     """This is the frame of sort group buttons."""
+    def _profile_class_name(self):
+        """The current syllable PROFILE CLASS for display in button labels, e.g.
+        'C2V' (the stored key is already delimiter-free — see
+        compose_profile_class)."""
+        return str(self.program.slices.profile())
     def getanotherskip(self,parent,vardict):
         """This function presents a group of buttons for the user to choose
         from, after one for each tone group in that location/ps/profile in the
@@ -46,7 +51,10 @@ class SortButtonFrame(ui.ScrollingFrame):
         else:
             name=self.program.params.cvcheckname(self.check)
             firstOK=_("This word has {name}").format(name=name)
-        newgroup=_("Other {check}").format(check=self.check if not self.macrosort else _("Letter"))
+        if self.macrosort:
+            newgroup=_("Other {check}").format(check=_("Letter"))
+        else:
+            newgroup=_("Other {check}").format(check=self.check)
         skiptext=_("Skip this item")
         if '=' in self.check and not self.macrosort:
             skiptext+=f" ({self.check.replace('=','≠')})"
@@ -55,9 +63,21 @@ class SortButtonFrame(ui.ScrollingFrame):
         # new-group ("Other"). (syls is open: it keeps the normal buttons.)
         closed=(self.cvt=='S'
                 and self.program.params.is_syllable_boolean_check(self.check))
+        # The 'S' PROFILE check: a new group is a new CV-profile WITHIN the class,
+        # which must be a REAL, primitive-consistent value — so its new-group
+        # affordance is the two-page picker (pick_syllable_profile), never the
+        # integer stub add_int_group the other checks use. See ADR 0003.
+        syl_profile=(self.cvt=='S'
+                and not self.program.params.is_syllable_primitive_check(self.check))
         bf1=ui.Frame(parent, border=True, row=parent.nrows(), sticky='w')
         if closed:
             pass #fixed groups only; no "Other"/new-group button
+        elif syl_profile:
+            ui.Button(bf1, text=_("Other {cls} profile").format(
+                            cls=self._profile_class_name()),
+                        cmd=self.pick_syllable_profile,
+                        anchor='w', relief='flat', font='instructions',
+                        column=0, row=0, sticky='ew')
         elif not self.groups:
             # log.info("Making None sorted yet button")
             vardict['ok']=ui.BooleanVar()
@@ -74,7 +94,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         # profile; unverify it (clears the profile DATA + sort-group annotation,
         # rebuilds slices) and advance so it's re-derived next presort. In the
         # choice list, after 'Other …' and before 'Skip'. Segmental/tone profile
-        # sorts only (the syllable Task-2 has its own macrogroup escape below).
+        # sorts only (the syllable Task-2 has its own profile-class escape below).
         def notprofile():
             todo=self.task.itemstosort()
             if todo:
@@ -96,16 +116,17 @@ class SortButtonFrame(ui.ScrollingFrame):
                         relief='flat',
                         font='instructions',
                         column=0, row=0, sticky='ew')
-        # 'S' profile sort: escape hatch — "this word isn't in this macrogroup".
+        # 'S' profile sort: escape hatch — "this word isn't in this profile class".
         if (self.cvt=='S'
                 and not self.program.params.is_syllable_primitive_check(self.check)):
             bf3=ui.Frame(parent, border=True, row=parent.nrows(), sticky='w')
-            ui.Button(bf3, text=_("This word doesn't belong in this group at all…"),
+            ui.Button(bf3, text=_("This word doesn't belong in this {cls} profile "
+                        "at all…").format(cls=self._profile_class_name()),
                         cmd=self.syllable_escape_window,
                         anchor='w', relief='flat', font='instructions',
                         column=0, row=0, sticky='ew')
     def syllable_escape_window(self):
-        """The word in front of the user is in the wrong macrogroup. Offer the
+        """The word in front of the user is in the wrong profile class. Offer the
         four one-axis moves (flip word-initial / flip word-final / Shorter /
         Longer); each re-buckets the word into a fully-named destination cell and
         advances. See docs/sort_syllables_design.md."""
@@ -124,28 +145,145 @@ class SortButtonFrame(ui.ScrollingFrame):
         except (TypeError,ValueError):
             n=1
         flip=lambda v:'V' if v=='C' else 'C'
-        # (button label = destination macrogroup prose, primitive check, new value)
-        moves=[(params.macrogroup_prose(flip(beg),syls,end),'#C',flip(beg)),
-                (params.macrogroup_prose(beg,syls,flip(end)),'C#',flip(end))]
+        # (button label = destination profile-class prose, primitive check, new value)
+        moves=[(params.profile_class_prose(flip(beg),syls,end),'#C',flip(beg)),
+                (params.profile_class_prose(beg,syls,flip(end)),'C#',flip(end))]
         if n>1:
-            moves.append((_("Shorter — ")+params.macrogroup_prose(beg,str(n-1),end),
+            moves.append((_("Shorter — ")+params.profile_class_prose(beg,str(n-1),end),
                         'syls',str(n-1)))
-        moves.append((_("Longer — ")+params.macrogroup_prose(beg,str(n+1),end),
+        moves.append((_("Longer — ")+params.profile_class_prose(beg,str(n+1),end),
                         'syls',str(n+1)))
-        w=ui.Toplevel(self, title=_("Where does this word belong?"))
+        w=ui.Window(self, title=_("Where does this word belong?"), exit=False)
         def apply(check,value):
-            # flip one primitive → the word's macrogroup changes → it leaves this
-            # slice. Persist immediately (power-fault tolerant) and advance.
+            # flip one primitive → the word's profile class changes → it leaves this
+            # slice. Persist immediately (power-fault tolerant), then ADVANCE within
+            # the current class (don't kick the user out): drop the word from the
+            # live to-sort list and set _notprofile_advance so sortselected advances
+            # instead of reading the now-empty selection as Exit (which fired the
+            # spurious 'not done' warning). The word re-derives into its new class,
+            # unsorted, to be handled there later. Mirrors 'Not {profile}'.
             sense.annotationvaluebyftypelang(ftype,analang,check,value)
+            try:
+                tosort=self.program.status.sensestosort()
+                if tosort and sense in tosort:
+                    tosort.remove(sense)
+            except Exception as e:
+                log.info("escape tosort-drop skipped: %s", e)
+            self.task._notprofile_advance=True
+            self.program.status_dirty=True   # current slice rebuilds (minus this word)
             self.task.maybewrite()
             w.destroy()
             if getattr(self,'sortitem',None):
                 self.sortitem.destroy()  # advance to the next word
         for r,(label,check,value) in enumerate(moves):
-            ui.Button(w, text=label, cmd=lambda c=check,v=value:apply(c,v),
+            ui.Button(w.frame, text=label, cmd=lambda c=check,v=value:apply(c,v),
                         anchor='w', font='instructions', row=r, column=0, sticky='ew')
-        ui.Button(w, text=_("Cancel"), cmd=w.destroy,
+        ui.Button(w.frame, text=_("Cancel"), cmd=w.destroy,
                     anchor='c', font='instructions', row=len(moves), column=0, sticky='ew')
+    def pick_syllable_profile(self):
+        """'Other {profile class} profile' — page 1. Offer a short, sane list of
+        NEW legal profiles for this class (generated simplest-first, excluding the
+        profiles already sorted here), plus 'Other…' → a by-hand entry page.
+        Picking one sorts the current word into that real, primitive-consistent
+        profile (via sortselected's _pending_new_profile path). See ADR 0003 /
+        cv_group_creation_merging."""
+        params=self.program.params
+        beg,syls,end=params.parse_profile_class(self.program.slices.profile())
+        if beg is None:
+            log.info("pick_syllable_profile: no profile class set; ignoring.")
+            return
+        options=params.unused_profiles_for_class(beg,syls,end,limit=12)
+        cls=self._profile_class_name()
+        w=ui.Window(self,title=_("Which {cls} profile?").format(cls=cls),exit=False)
+        ui.Label(w.frame,text=_("Which profile fits this word?"),
+                    font='instructions',row=0,column=0,sticky='ew')
+        r=1
+        for prof in options:
+            ui.Button(w.frame,text=prof,
+                        cmd=lambda p=prof:self._resolve_new_profile(w,p),
+                        anchor='w',font='normal',row=r,column=0,sticky='ew')
+            r+=1
+        if not options:
+            ui.Label(w.frame,text=_("(every simple profile here is already used)"),
+                        font='instructions',row=r,column=0,sticky='ew'); r+=1
+        # Nav at the bottom, after the options.
+        ui.Button(w.frame,text=_("Other… (set a profile by hand)"),
+                    cmd=lambda:self._syllable_profile_freeentry(w,beg,syls,end),
+                    anchor='w',relief='flat',font='normal',
+                    row=r,column=0,sticky='ew'); r+=1
+        ui.Button(w.frame,text=_("Cancel — go back"),cmd=w.destroy,
+                    anchor='w',relief='flat',font='normal',
+                    row=r,column=0,sticky='ew')
+    def _resolve_new_profile(self,w,profile):
+        """A profile was chosen/entered: record it so sortselected marks the
+        current word into it (the normal new-group path), close the picker, and
+        advance by destroying the sort item (ends the sort wait)."""
+        self._pending_new_profile=profile
+        try:
+            w.destroy()
+        except Exception:
+            pass
+        if getattr(self,'sortitem',None):
+            self.sortitem.destroy()
+    def _syllable_profile_freeentry(self,page1,beg,syls,end):
+        """'Other {profile class} profile' — page 2. Type a profile by hand, with a
+        warning to work with a linguist and a Back button. The entry is validated
+        against the class primitives (word-initial/final + syllable count) before
+        it is accepted."""
+        page1.destroy()
+        params=self.program.params
+        p=self.program.sort_ui
+        cls=self._profile_class_name()
+        # The profiles already IN PLAY for this class (same set the side column
+        # lists) — used to EXCLUDE them from the "e.g." examples too, so the hint
+        # never suggests one the user is told not to re-enter.
+        inplay=sorted(g for g in (self.groups or []) if g not in ('NA',))
+        # Example PROFILES (not the class key) in this class — the two simplest that
+        # are NOT already in play. legal_profiles_for_class has no upper bound, so
+        # even after excluding the in-play ones it still yields more. The class key
+        # (C2V) is NOT a typeable profile, so it must never appear here.
+        eg=' or '.join(params.legal_profiles_for_class(
+                    beg,syls,end,exclude=set(inplay),limit=2))
+        w=ui.Window(self,title=_("Set a {cls} profile by hand").format(cls=cls),
+                    exit=False)
+        warn=ui.Label(w.frame,text='\n'.join([
+            _("⚠ Setting a profile by hand is a linguist's "
+            "call — work with your language team."),
+            _("A wrong profile mis-describes the "
+            "word's syllable structure."),
+            _("This one must be {beg}-initial, {end}-final, and "
+            "{n} syllable(s)").format(beg=beg,end=end,n=syls),
+            _("(use C and V, e.g. {eg}).").format(eg=eg)]),
+            font='instructions',row=0,column=0,columnspan=2,sticky='ew')
+        warn.wrap()
+        var=p.string_var(value='')
+        p.entry_field(w.frame,text=var).grid(row=1,column=0,sticky='ew')
+        msg=ui.Label(w.frame,text='',font='instructions',row=2,column=0,
+                    columnspan=2,sticky='ew')
+        def submit():
+            prof=(var.get() or '').strip().upper()
+            if not params.profile_fits_class(prof,beg,syls,end):
+                msg.configure(text=_("'{p}' isn't {beg}-initial, {end}-final, {n} "
+                    "syllable(s) — try again.").format(
+                        p=prof or '—',beg=beg,end=end,n=syls))
+                return
+            # New or already-existing profile both flow through the pending path
+            # (sortselected's addgroupbutton is guarded against double-adding).
+            self._resolve_new_profile(w,prof)
+        ui.Button(w.frame,text=_("Use this profile"),cmd=submit,anchor='c',
+                    font='instructions',row=3,column=0,sticky='ew')
+        ui.Button(w.frame,text=_("← Back"),
+                    cmd=lambda:(w.destroy(),self.pick_syllable_profile()),
+                    anchor='c',font='instructions',row=3,column=1,sticky='ew')
+        # Second column: the profiles already IN PLAY for this class (computed
+        # above), so the user can see what NOT to re-enter (this page is for a NEW
+        # profile) — the same set excluded from the examples.
+        side=ui.Frame(w.frame)
+        side.grid(row=0,column=2,rowspan=4,sticky='nw',padx=12)
+        ui.Label(side,text=_("\nAlready in play here —\ndon't re-enter these:"),
+                    font='instructions',row=0,column=0,sticky='w')
+        for i,g in enumerate(inplay or [_("(none yet)")]):
+            ui.Label(side,text=g,font='normal',row=i+1,column=0,sticky='w')
     def updatecounts(self):
         # log.info("Updating counts for each button")
         for b in self.groupbuttonlist:

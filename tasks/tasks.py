@@ -985,7 +985,7 @@ class SortSyllables(backend.core.sorting_engine.SyllablePrep,
                     Sort,Syllables,Segments,Task):
     # SyllablePrep FIRST so its runcheck routes Task 1 (the three primitive
     # checks, each sliced ≤MAX_SLICE) through maybeverifysyllables, NOT maybesort;
-    # once prep is complete it hands off to Task 2 (macrogroup profile sort) via
+    # once prep is complete it hands off to Task 2 (profile-class profile sort) via
     # the inherited Sort.runcheck/maybesort. Syllables before Segments so its
     # group/form overrides win (relabel profile groups, never rewrite the surface
     # form); Segments still supplies shared helpers. presortgroups + the

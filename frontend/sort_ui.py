@@ -610,3 +610,31 @@ class SortPresenter(PresenterBase):
             r = 1
         canary = ui.Label(pair_frame, text='', col=1)
         return canary
+
+    def choose_join_direction(self, runwindow, buttonclass, sort_obj, pair,
+                              counts, on_choose, on_back=None):
+        """Chooser for the syllable-profile join DIRECTION: 'We are joining these
+        profiles; which is correct?'. Each option is the group's SORT BUTTON (with
+        its one example) + member count; clicking it picks that profile as the one
+        KEPT — the other re-annotates to it. Back cancels (no join). There's no
+        lexicographic/isdigit default here (both sides are real CV profiles), so
+        this is the only way the direction is chosen. See ADR 0003 /
+        cv_group_creation_merging."""
+        w = ui.Window(runwindow, title=_("Which profile is correct?"), exit=False)
+        f = w.frame
+        ui.Label(f, text=_("We are joining these profiles; which is correct?"),
+                font='instructions', row=0, column=0, columnspan=2, sticky='ew')
+        def pick(g):
+            w.destroy()
+            on_choose(g)
+        for c, group in enumerate(pair):
+            cell = ui.Frame(f, row=1, column=c, padx=12, sticky='n')
+            buttonclass(cell, sort_obj, group=group, showtonegroup=True,
+                        label=True, on_select=lambda g=group: pick(g),
+                        row=0, sticky='n')
+            ui.Label(cell, text=_("{n} words").format(n=counts.get(group, 0)),
+                    font='normal', row=1, column=0, sticky='n')
+        ui.Button(f, text=_("← Back (don't join these)"),
+                cmd=lambda: (w.destroy(), on_back() if on_back else None),
+                font='instructions', row=2, column=0, columnspan=2, sticky='ew')
+        return w

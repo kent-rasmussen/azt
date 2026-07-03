@@ -1036,7 +1036,7 @@ class StatusFrame(ui.Frame):
                                 self.program.toneframes))
                 elif self.cvt == 'S':
                     # Task 1 (prep) board until the three primitive checks are
-                    # fully verified; then the Task-2 macrogroup board.
+                    # fully verified; then the Task-2 profile-class board.
                     if self.program.params.syllable_prep_complete(self.ps):
                         self.makeSyllableprogresstable()
                     else:
@@ -1123,7 +1123,7 @@ class StatusFrame(ui.Frame):
         if not hasattr(self,'_cells'): #This may be called without a table
             return
         log.info(f"update_active_cell {args=}")
-        if self.program.params.cvt()=='S': #cells keyed by macrogroup (the slice)
+        if self.program.params.cvt()=='S': #cells keyed by profile class (the slice)
             new_cell=self._cells.get(self.program.slices.profile())
         else:
             new_cell=self._cells.get((self.program.slices.profile(),
@@ -1149,7 +1149,7 @@ class StatusFrame(ui.Frame):
         """Update leaderboard highlight to match current profile/check."""
         if not hasattr(self,'_cells'):
             return
-        if self.program.params.cvt()=='S': #cells keyed by macrogroup (the slice)
+        if self.program.params.cvt()=='S': #cells keyed by profile class (the slice)
             new_cell=self._cells.get(self.program.slices.profile())
         else:
             profile=self.program.slices.profile()
@@ -1177,7 +1177,7 @@ class StatusFrame(ui.Frame):
         else:
             self.updatecvcheck()
     def _syllable_primitives_verified(self,ps):
-        """The macrogroup slices aren't defined until every slice of the three
+        """The profile-class slices aren't defined until every slice of the three
         primitive checks (#C/C#/syls) has been HUMAN-verified — presort alone
         isn't enough. Delegates to the one canonical predicate (params)."""
         return self.program.params.syllable_prep_complete(ps)
@@ -1263,7 +1263,7 @@ class StatusFrame(ui.Frame):
                                             n=wc,x=idx+1)))
                     tb.grid(row=ri+2,column=gc,ipadx=0,ipady=0,sticky='nesw')
                 gc+=1
-        # Click selects only (like the macrogroup board); the 'Sort!' button acts.
+        # Click selects only (like the profile-class board); the 'Sort!' button acts.
         # Highlight the active slice: the user's selection if still pending, else
         # the next one the app would verify.
         pref=getattr(self.program,'syllable_preferred_slice',None)
@@ -1275,7 +1275,7 @@ class StatusFrame(ui.Frame):
         """2-D syllable progress board, shown only once the three primitive
         checks (#C/C#/syls) are VERIFIED. Rows = syllable count; columns grouped
         hierarchically as initial (consonant/vowel, colspan) × final
-        (consonant/vowel). Each cell is the Beg+count+End macrogroup slice,
+        (consonant/vowel). Each cell is the Beg+count+End profile class,
         showing its word count, dressed verified (✓) / not (bordered) / active
         (highlighted); clicking sets the current slice. See
         docs/sort_syllables_design.md."""
@@ -1287,20 +1287,29 @@ class StatusFrame(ui.Frame):
         ftype=params.ftype()
         sentinel=params.SYLLABLE_SLICE_SENTINEL
         if not self._syllable_primitives_verified(ps):
-            # macrogroups aren't defined until the 3 primitives are verified
+            # profile classes aren't defined until the 3 primitives are verified
             self.makenoboard()
             return
-        # Bucket the ps words by macrogroup (Beg+count+End), tracking the profile
-        # distribution within each so the cell can show actual profiles + counts.
-        counts={}; begends=set(); sylset=set(); mg_profiles={}
+        # Bucket the ps words by profile class (Beg+count+End). Two indicators, same
+        # meaning as every sort board (ADR 0003): a word's SORT VALUE is its lc
+        # annotation (which profile it's sorted into); a word is UNSORTED if it has
+        # none → that drives the cell's white border (like segmental 'tosort'). The
+        # per-profile '+' is VERIFICATION, read from the node's membership-keyed
+        # 'done'. So bucket the profile distribution by the sort annotation (NOT
+        # cvprofilevalue), and count the unsorted words per profile class separately.
+        analang=self.program.db.analang
+        counts={}; begends=set(); sylset=set(); pc_profiles={}; pc_unsorted={}
         for s in self.program.slices.senses(ps=ps,profile=sentinel):
-            mg=params.macrogroup_of_sense(s,ftype=ftype)
-            if not mg:
+            pc=params.profile_class_of_sense(s,ftype=ftype)
+            if not pc:
                 continue
-            counts[mg]=counts.get(mg,0)+1
-            prof=s.cvprofilevalue(ftype) or '—' # confirmed/presort profile ('—' = none yet)
-            d=mg_profiles.setdefault(mg,{}); d[prof]=d.get(prof,0)+1
-            beg,syls,end=params.parse_macrogroup(mg)
+            counts[pc]=counts.get(pc,0)+1
+            ann=s.annotationvaluebyftypelang(ftype,analang,ftype) # sort value
+            if not ann or ann in ('NA','Invalid'):
+                pc_unsorted[pc]=pc_unsorted.get(pc,0)+1 # unsorted → white border
+            else:
+                d=pc_profiles.setdefault(pc,{}); d[ann]=d.get(ann,0)+1
+            beg,syls,end=params.parse_profile_class(pc)
             begends.add((beg,end)); sylset.add(syls)
         if not counts:
             self.makenoboard()
@@ -1315,25 +1324,22 @@ class StatusFrame(ui.Frame):
             try: return (0,int(x))
             except (ValueError,TypeError): return (1,str(x))
         rows=sorted(sylset,key=_sylkey)
-        curmg=(None if params.is_syllable_primitive_check()
-                    else self.program.slices.profile())
-        def _verified(mg):
-            try:
-                n=status.node(cvt='S',ps=ps,profile=mg,check=ftype)
-                g=set(n.get('groups',[])); d=set(n.get('done',[]))
-                return bool(g) and g<=d
-            except Exception:
-                return False
+        # The LAST-USED profile class, read directly — slices.profile()'s getter
+        # masks it as the sentinel whenever a primitive check happens to be active
+        # (common on open), which would always defeat "restore last-used" and drop
+        # us onto the first cell. The Task-2 board is about classes, so read the
+        # stored class itself.
+        curpc=getattr(self.program.slices,'_S_profile_class',None)
         # Hierarchical headers: row 0 = initial (colspan over its finals), row 1
         # = final per column; data rows start at row 2. Indicates the 3-D slice.
         colmap={}; gc=1
         for beg in dict.fromkeys(b for (b,e) in cols): #initials in column order
             finals=[e for (b,e) in cols if b==beg]
-            ui.Label(table,text=params.macrogroup_initial_name(beg),
+            ui.Label(table,text=params.profile_class_initial_name(beg),
                     font='reportheader',row=0,column=gc,columnspan=len(finals),
                     sticky='s',padx=4)
             for end in finals:
-                ui.Label(table,text=params.macrogroup_final_name(end),
+                ui.Label(table,text=params.profile_class_final_name(end),
                         font='reportheader',row=1,column=gc,sticky='s',padx=4)
                 colmap[(beg,end)]=gc; gc+=1
         ui.Label(table,text=_('Syls'),font='reportheader',row=1,column=0,
@@ -1342,20 +1348,22 @@ class StatusFrame(ui.Frame):
             ui.Label(table,text=str(syls),
                     row=ri+2,column=0,sticky='e',padx=6)
             for (beg,end),col in colmap.items():
-                mg=params.compose_macrogroup(beg,syls,end)
-                wc=counts.get(mg,0)
+                pc=params.compose_profile_class(beg,syls,end)
+                wc=counts.get(pc,0)
                 if not wc:
-                    continue #no words in this macrogroup; leave the cell blank
-                verified=_verified(mg)
-                # Profiles within this macrogroup, each as "profile (count)" with a
-                # trailing '+' when that profile group is verified — the same
-                # conventions as the segment-group board (name (n); + = verified).
+                    continue #no words in this profile class; leave the cell blank
+                unsorted_n=pc_unsorted.get(pc,0) # words with no sort value
+                # Two indicators, same meaning as every sort board (ADR 0003):
+                #   • WHITE BORDER  = there is UNSORTED material (like segmental
+                #     'tosort'); those words are presented to sort on 'Sort!'.
+                #   • per-profile '+' = that profile group is VERIFIED, read from the
+                #     node's membership-keyed 'done'; its absence = to-verify.
                 try:
-                    done=set(status.node(cvt='S',ps=ps,profile=mg,
+                    done=set(status.node(cvt='S',ps=ps,profile=pc,
                                         check=ftype).get('done',[]))
                 except Exception:
                     done=set()
-                profs=sorted(mg_profiles.get(mg,{}).items(),
+                profs=sorted(pc_profiles.get(pc,{}).items(),
                             key=lambda kv:(-kv[1],str(kv[0])))
                 if self.program.settings.showdetails:
                     lines=['{}{} ({})'.format(p,'+' if p in done else '',c)
@@ -1372,29 +1380,62 @@ class StatusFrame(ui.Frame):
                         lines.append(_('< 3 exs +({n})').format(n=len(small_v)))
                     if small_u:
                         lines.append(_('< 3 exs ({n})').format(n=len(small_u)))
+                if unsorted_n: #show the to-sort count with the segmental [X] marker
+                    lines.append(_('[X] {n} to sort').format(n=unsorted_n))
                 tb=ui.Button(table,relief='flat',bd=0,
                         text='\n'.join(lines) or str(wc),
-                        cmd=lambda m=mg:self.updateSmacrogroup(m),
+                        cmd=lambda m=pc:self.update_S_profile_class(m),
                         anchor='c',justify='center',padx=0,pady=0)
-                if not verified: #border the macrogroups still to finish (cf. 2D tosort)
+                if unsorted_n: #unsorted material → white border (cf. segmental tosort)
                     tb.configure(highlightthickness=3,
                                 highlightbackground=tb.theme.white)
-                self._cells[mg]=tb
+                self._cells[pc]=tb
                 nunverified=sum(1 for p,_c in profs if p not in done)
-                tip="{}\n{}".format(params.macrogroup_prose(beg,syls,end),
+                tip="{}\n{}".format(params.profile_class_prose(beg,syls,end),
                                     _("{n} words").format(n=wc))
+                if unsorted_n:
+                    tip+='\n'+_("Words to sort!")
                 if nunverified:
                     tip+='\n'+_("{k} profiles to verify").format(k=nunverified)
-                elif verified:
-                    tip+='\n'+_("Verified")
+                if not unsorted_n and not nunverified:
+                    tip+='\n'+_("Sorted and verified!")
                 ui.ToolTip(tb,tip)
                 tb.grid(row=ri+2,column=col,ipadx=0,ipady=0,sticky='nesw')
-        if curmg in self._cells:
-            self.activate_cell(self._cells[curmg])
-    def updateSmacrogroup(self,mg):
-        """Click a macrogroup cell → make that Beg+count+End the current 'S'
+        # Active cell: the LAST-USED class if it's on the board (preserved within a
+        # session, and across restarts when the stored profile round-trips), else
+        # the first class with WORK to do (unsorted words or unverified groups),
+        # else the first (upper-left) cell. Never blindly default to upper-left.
+        # _cells is inserted row-major (rows=syllable count, then columns), so
+        # iteration order is the display order and the first entry is upper-left.
+        def _has_work(pc):
+            if pc_unsorted.get(pc,0):
+                return True  # unsorted words
+            try:
+                n=status.node(cvt='S',ps=ps,profile=pc,check=ftype)
+                g=set(n.get('groups',[])); d=set(n.get('done',[]))
+                return bool(g) and not (g<=d)  # unverified groups
+            except Exception:
+                return False
+        active=None
+        if curpc in self._cells and _has_work(curpc):
+            active=curpc                                   # last-used, still has work
+        if active is None:
+            active=next((pc for pc in self._cells if _has_work(pc)),None)  # first w/ work
+        if active is None and curpc in self._cells:
+            active=curpc                                   # last-used, all done: keep it
+        if active is None and self._cells:
+            active=next(iter(self._cells))                 # upper-left, last resort
+        if active in self._cells:
+            # Make the highlighted cell the CURRENT slice so 'Sort!' works IT — the
+            # highlight and the working slice must not diverge (else Sort! would run
+            # the stale last-used cell, not the one shown active).
+            if getattr(self.program.slices,'_S_profile_class',None)!=active:
+                self.program.slices.profile(active)
+            self.activate_cell(self._cells[active])
+    def update_S_profile_class(self,pc):
+        """Click a profile-class cell → make that Beg+count+End the current 'S'
         slice (so its profile sort can be worked) and move the highlight."""
-        self.program.slices.profile(mg)
+        self.program.slices.profile(pc)
         self.update_active_cell()
     def makeprogresstable(self):
         def groupfn(x):

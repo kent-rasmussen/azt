@@ -419,8 +419,13 @@ class Settings(SettingsUI):
                     _log.error(_("Value of {attr} not found in object").format(attr=s))
                     raise AttributeError(s)
             elif hasattr(o,s):
-                if getattr(o,s) or setting == 'soundsettings': #store Falses
-                    d[s]=getattr(o,s)
+                val=getattr(o,s)
+                # Persist Falses for BOOLEAN settings too (e.g. showdetails,
+                # lowverticalspace) — the old truthy-only test silently dropped a
+                # `False` display pref, so "hide details" never stuck. Non-bool
+                # falsy (None / '' / []) is still skipped as "unset".
+                if val or setting == 'soundsettings' or isinstance(val,bool):
+                    d[s]=val
         """This is the only glosslang > glosslangs conversion"""
         if 'glosslangs' in d and d['glosslangs'] in [None,[]]:
             if 'glosslang' in d and d['glosslang'] is not None:
@@ -991,6 +996,12 @@ class Settings(SettingsUI):
                 self.program.task.getword() #update UI for glosses
         if 'secondformfield' in self.attrschanged:
             self.attrschanged.remove('secondformfield')
+        if 'showdetails' in self.attrschanged:
+            # Display-only pref: persist it now (defaults→ui domain) so the choice
+            # survives a restart, and clear it from attrschanged so it doesn't fall
+            # through to the "Remaining changed attribute!" error / accumulate.
+            self.storesettingsfile()
+            self.attrschanged.remove('showdetails')
         soundattrs=self.settings['soundsettings']['attributes']
         soundattrschanged=set(soundattrs) & set(self.attrschanged)
         for a in soundattrschanged:

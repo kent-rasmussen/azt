@@ -149,19 +149,26 @@ class CheckParameters(object):
         if not cvt:
             cvt=self.cvt() #this shouldn't necessarily set current cvt.
         return self._cvts[cvt][n]
-    # --- syllable macrogroup helpers (the cvt='S' slice = Beg+count+End) ---
+    # --- syllable PROFILE-CLASS helpers (the cvt='S' slice = Beg+count+End,
+    #     DERIVED by composing the three confirmed primitives — NOT a sorted
+    #     group-of-groups; contrast the segmental macrogroup/glyph) ---
     SYLLABLE_SLICE_SENTINEL='whole-word' #profile dim while doing the 3 primitives
     SYLLABLE_PREP_PS='*' #ps dim sentinel: PREP is wordlist-wide. The three
                 #primitives (#C/C#/syls) are ps-INDEPENDENT form facts, so their
                 #slices and verify state live under one shared ps key, not per-ps.
                 #ps re-enters only downstream as the (profile × ps) segmental slice.
-    def compose_macrogroup(self,beg,syls,end):
-        return '{}_{}_{}'.format(beg,syls,end)
-    def parse_macrogroup(self,key):
-        bits=str(key).split('_')
-        return tuple(bits) if len(bits)==3 else (None,None,None)
-    def macrogroup_of_sense(self,sense,ftype=None):
-        """Compose a sense's Beg+count+End macrogroup from its three primitive
+    def compose_profile_class(self,beg,syls,end):
+        # e.g. 'C2V'. beg/end are single 'C'/'V'; syls is the (possibly multi-
+        # digit) count — so no delimiter is needed and parse is positional.
+        return '{}{}{}'.format(beg,syls,end)
+    def parse_profile_class(self,key):
+        # Inverse of compose: first char = beg, last char = end, middle = syls.
+        key=str(key)
+        if len(key)>=3 and key[0] in 'CV' and key[-1] in 'CV' and key[1:-1].isdigit():
+            return (key[0],key[1:-1],key[-1])
+        return (None,None,None)  # sentinel / not a profile class
+    def profile_class_of_sense(self,sense,ftype=None):
+        """Compose a sense's Beg+count+End profile class from its three primitive
         annotations (#C / syls / C#). None until all three are set."""
         ftype=ftype or self.ftype()
         analang=self.program.db.analang
@@ -170,7 +177,87 @@ class CheckParameters(object):
         end=sense.annotationvaluebyftypelang(ftype,analang,'C#')
         if not (beg and syls and end):
             return None
-        return self.compose_macrogroup(beg,syls,end)
+        return self.compose_profile_class(beg,syls,end)
+    def profile_fits_class(self,profile,beg,syls,end):
+        """Is `profile` (a CV string) consistent with a class's primitives? Uses
+        the SAME derivations that define the primitives (word_initial/final,
+        syllable_count), so 'legal' here means exactly 'would seed to this class'.
+        Handles richer symbols (G, digraphs, '=') the way the primitives do
+        (anything non-vowel is consonantal)."""
+        if not profile:
+            return False
+        try:
+            n=int(syls)
+        except (TypeError,ValueError):
+            return False
+        return (self.word_initial(profile)==beg
+                and self.word_final(profile)==end
+                and self.syllable_count(profile)==n)
+    def _distribute_extra(self,total,k,cap):
+        """Yield length-k tuples (each 0..cap) summing to `total` — the 'extra'
+        length added to each slot beyond its baseline 1. Used to enumerate profile
+        candidates by increasing total length (simplest first)."""
+        if k==0:
+            if total==0:
+                yield ()
+            return
+        for first in range(0,min(cap,total)+1):
+            if total-first<=cap*(k-1):
+                for rest in self._distribute_extra(total-first,k-1,cap):
+                    yield (first,)+rest
+    def legal_profiles_for_class(self,beg,syls,end,exclude=(),limit=12,percap=2):
+        """Propose NEW legal CV profiles for a (beg,syls,end) profile class,
+        SIMPLEST-FIRST (all-length-1 baseline, then minimal doublings), skipping
+        any in `exclude` (already-sorted profiles), stopping at `limit`. Anything
+        rarer is set by hand on the free-entry page. `percap` = max extra length
+        per slot (so each C-cluster / V-run is 1..1+percap long; default 1–3). The
+        class skeleton = one C-cluster before the 1st V iff beg=C, one between each
+        adjacent V-run pair (syls-1 interludes), one after the last V iff end=C.
+        See ADR 0003 / cv_group_creation_merging."""
+        try:
+            N=int(syls)
+        except (TypeError,ValueError):
+            return []
+        if N<1 or beg not in ('C','V') or end not in ('C','V'):
+            return []
+        slots=[]
+        if beg=='C':
+            slots.append('C')
+        for i in range(N):
+            slots.append('V')
+            if i<N-1:
+                slots.append('C')  # interlude between this V-run and the next
+        if end=='C':
+            slots.append('C')
+        k=len(slots)
+        exclude=set(exclude)
+        out=[]; seen=set(); extra=0
+        while extra<=percap*k and len(out)<limit:
+            for dist in self._distribute_extra(extra,k,percap):
+                prof=''.join(slots[i]*(1+dist[i]) for i in range(k))
+                if prof in seen:
+                    continue
+                seen.add(prof)
+                if prof in exclude:
+                    continue
+                out.append(prof)
+                if len(out)>=limit:
+                    break
+            extra+=1
+        return out
+    def unused_profiles_for_class(self,beg,syls,end,limit=12):
+        """legal_profiles_for_class MINUS the profiles already sorted into this
+        class (its status node 'groups') — i.e. the pickable NEW options. Kept
+        separate from legal_profiles_for_class so that stays a pure example
+        generator (callers that 'just want an example' don't pay the exclusion)."""
+        cls=self.compose_profile_class(beg,syls,end)
+        try:
+            node=self.program.status.node(cvt='S',ps=self.program.slices.ps(),
+                                          profile=cls,check=self.ftype())
+            inuse=set(node.get('groups',[]))
+        except Exception:
+            inuse=set()
+        return self.legal_profiles_for_class(beg,syls,end,exclude=inuse,limit=limit)
     # --- the three primitives, derived by orthography from a profile string.
     # Canonical home (they used to live on the Syllables task mixin) so they can
     # be reached OFF the live task — e.g. assign_slices' orthographic placement on
@@ -386,7 +473,7 @@ class CheckParameters(object):
         valid=self.profile_satisfies(new,beg,end,target)
         return {'profile':new,'changed':new!=orig,'fallback':fallback,'valid':valid}
     def is_syllable_primitive_check(self,check=None):
-        # the three sorts that establish the macrogroup (run on the whole
+        # the three sorts that establish the profile class (run on the whole
         # wordlist); none of them join.
         return (check or self.check()) in ('#C','C#','syls')
     def is_syllable_boolean_check(self,check=None):
@@ -417,24 +504,24 @@ class CheckParameters(object):
             if not g or not (g<=d):
                 return False
         return True
-    # --- macrogroup → prose (the configurable renderer; tune to user feedback) ---
-    def macrogroup_begend_name(self,beg,end):
+    # --- profile class → prose (the configurable renderer; tune to user feedback) ---
+    def profile_class_begend_name(self,beg,end):
         w={'C':_("consonant"),'V':_("vowel")}
         return _("{beg}-initial, {end}-final").format(
                             beg=w.get(beg,beg),end=w.get(end,end))
-    def macrogroup_initial_name(self,beg):
+    def profile_class_initial_name(self,beg):
         return {'C':_("consonant initial"),'V':_("vowel initial")}.get(beg,beg)
-    def macrogroup_final_name(self,end):
+    def profile_class_final_name(self,end):
         return {'C':_("consonant final"),'V':_("vowel final")}.get(end,end)
     def syllable_group_name(self,check,group):
         """Human name for a specific 'S' group within a check — for verify
         title/instructions/button (e.g. 'consonant initial', '2 syllables')."""
         if check=='#C':
-            return self.macrogroup_initial_name(group)
+            return self.profile_class_initial_name(group)
         if check=='C#':
-            return self.macrogroup_final_name(group)
+            return self.profile_class_final_name(group)
         if check=='syls':
-            return self.macrogroup_count_name(group)
+            return self.profile_class_count_name(group)
         return str(group)  # profile check: the profile string itself
     def syllable_check_name(self,check=None):
         """Human name for a prep primitive CHECK itself (not a group within it),
@@ -443,12 +530,12 @@ class CheckParameters(object):
         return {'#C':_("word-initial sounds"),
                 'C#':_("word-final sounds"),
                 'syls':_("syllable counts")}.get(check or self.check())
-    def macrogroup_count_name(self,syls):
+    def profile_class_count_name(self,syls):
         return _("{n} syllables").format(n=syls)
-    def macrogroup_prose(self,beg,syls,end):
+    def profile_class_prose(self,beg,syls,end):
         return _("{begend} ({count})").format(
-                            begend=self.macrogroup_begend_name(beg,end),
-                            count=self.macrogroup_count_name(syls))
+                            begend=self.profile_class_begend_name(beg,end),
+                            count=self.profile_class_count_name(syls))
     def check(self,check=None,unset=False):
         """This needs to change/clear subchecks"""
         if unset or check:

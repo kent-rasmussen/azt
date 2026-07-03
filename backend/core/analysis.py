@@ -445,7 +445,7 @@ class SliceDict(dict):
     here that the consequences of the change are done (done in check)."""
     def count(self):
         # _profile/_ps may not exist yet: a sort task can be loaded before the
-        # slices are built, and cvt='S' tracks its slice in _S_macrogroup (not
+        # slices are built, and cvt='S' tracks its slice in _S_profile_class (not
         # _profile) so _profile is never set. Treat "no slice yet" as count 0.
         # (A dedicated syllable SliceDict would remove this special-casing.)
         try:
@@ -501,36 +501,37 @@ class SliceDict(dict):
                         "").format(pss=pss))
     def profiles(self,ps=None):
         """This returns profiles for either a specified ps or the current one.
-        For cvt='S' the 'profiles' (slices) are the Beg+count+End macrogroups
-        present in the ps — derived from the words' primitive annotations."""
+        For cvt='S' the 'profiles' (slices) are the Beg+count+End profile classes
+        present in the ps — DERIVED from the words' primitive annotations. Read
+        from the WHOLE ps wordlist (db.sensesbyps), not _profilesbysense, so a
+        profile class whose words are all still unprofiled still shows up (its
+        words need sorting)."""
         if not ps:
             ps=self.ps()
         if self.program.params.cvt()=='S':
-            if not hasattr(self,'_sensesbyps'):
-                self.makesensesbyps()
             params=self.program.params
-            mgs={params.macrogroup_of_sense(s)
-                            for s in self._sensesbyps.get(ps,[])}
-            mgs.discard(None)
-            return sorted(mgs)
+            pcs={params.profile_class_of_sense(s)
+                            for s in self.program.db.sensesbyps.get(ps,[])}
+            pcs.discard(None)
+            return sorted(pcs)
         if ps and ps in self._profiles:
             # log.info(_("returning profiles: {profiles}").format(profiles=self._profiles[ps]))
             return self._profiles[ps]
         else:
             return []
     def profile(self,profile=None):
-        # For cvt='S' the slice is Beg+count+End (the macrogroup), not a CV
+        # For cvt='S' the slice is a Beg+count+End profile class, not a CV
         # profile. The 3 primitive checks (#C/C#/syls) run on the whole wordlist
         # (sentinel profile); the profile check runs within the current
-        # macrogroup. See docs/sort_syllables_design.md.
+        # profile class. See docs/sort_syllables_design.md.
         params=self.program.params
         if params.cvt()=='S':
             sentinel=params.SYLLABLE_SLICE_SENTINEL
             if profile is None: #getter
                 if params.is_syllable_primitive_check():
                     return sentinel
-                return getattr(self,'_S_macrogroup',None) or sentinel
-            self._S_macrogroup=profile #setter: the current macrogroup slice
+                return getattr(self,'_S_profile_class',None) or sentinel
+            self._S_profile_class=profile #setter: the current profile-class slice
             self.renewsenses()
             return
         if profile and profile in self.profiles(self._ps):
@@ -615,18 +616,24 @@ class SliceDict(dict):
             log.error(_("Not sure what happened here!"))
     def senses(self,**kwargs): #ps=None,profile=None,
         # cvt='S': sentinel profile → the whole wordlist (the 3 primitive
-        # checks); a macrogroup profile → just the words in that Beg+count+End
+        # checks); a profile-class profile → just the words in that Beg+count+End
         # slice (the profile check). See sort_syllables_design.md.
         params=self.program.params
         if params.cvt()=='S':
             ps=kwargs.get('ps',self._ps)
-            if not hasattr(self,'_sensesbyps'):
-                self.makesensesbyps()
-            allps=self._sensesbyps.get(ps,[])
+            # 'S' works the WHOLE ps wordlist — NOT _profilesbysense/_sensesbyps,
+            # which hold only words with a CONFIRMED cvprofile (getprofileofsense
+            # adds a word only when `confirmed`). Syllable sorting's JOB is to give
+            # unprofiled words a profile, so they MUST appear here — as UNSORTED
+            # (no lc annotation → white border → presented to sort). Bucketing is
+            # by profile class (the confirmed primitives), independent of cvprofile.
+            # (This restores the documented intent; the old _sensesbyps read
+            # silently hid every unprofiled word from the board and maybesort.)
+            allps=self.program.db.sensesbyps.get(ps,[])
             profile=kwargs.get('profile',self.profile())
             if not profile or profile==params.SYLLABLE_SLICE_SENTINEL:
                 return allps
-            return [s for s in allps if params.macrogroup_of_sense(s)==profile]
+            return [s for s in allps if params.profile_class_of_sense(s)==profile]
         if not kwargs:
             return self._senses #this is always the current slice
         ps=kwargs.get('ps',self._ps)
@@ -647,7 +654,7 @@ class SliceDict(dict):
         self._senses=[]
         if self.program.params.cvt()=='S':
             #'S' current slice = whole wordlist (primitives) or the current
-            # macrogroup (profile check); senses() resolves which.
+            # profile class (profile check); senses() resolves which.
             self._senses=list(self.senses(ps=self._ps))
             return
         try:
@@ -768,7 +775,7 @@ PRELOAD_LOOKAHEAD=2 #default # of upcoming slices to decode ahead in background
 class SyllableSliceDict(object):
     """Stable, per-group slicing for the syllable PREP task (Task 1). Deliberately
     NOT a SliceDict subclass and NOT program.slices: the CV-profile SliceDict
-    stays C/V/T-only (plus the kept macrogroup branches Task 2 reuses), and the
+    stays C/V/T-only (plus the kept profile-class branches Task 2 reuses), and the
     prep slices live in their own object so the two never share an attribute set.
 
     Three independent partition checks, each over the whole wordlist for the ps:
@@ -1599,7 +1606,7 @@ class StatusDict(dict):
                     # — no sense currently carries this profile (membership of any
                     # kind, not "sorted"/"verified"). Segmental cvts only (their
                     # profile dimension is the CV profile, tracked in db.ps_profiles);
-                    # 'S' macrogroups/sentinels and not-yet-computed ps are left alone.
+                    # 'S' profile classes/sentinels and not-yet-computed ps are left alone.
                     members=getattr(self.program.db,'ps_profiles',None)
                     if (t!='S' and members is not None and ps in members
                             and profile not in members[ps]):
@@ -1641,7 +1648,7 @@ class StatusDict(dict):
             self._checksdict[cvt]={}
             self.renewchecks(**kwargs)
         if cvt == 'S':
-            # The shared engine (Task 2) only does the macrogroup PROFILE sort —
+            # The shared engine (Task 2) only does the profile-class PROFILE sort —
             # the current word-form's ftype check. The three primitive checks
             # (#C/C#/syls) are owned by the dedicated Task-1 prep driver
             # (SyllablePrep.maybeverifysyllables) and never ride maybesort. See
@@ -1683,7 +1690,7 @@ class StatusDict(dict):
                 if ps in self.program.toneframes:
                     self._checksdict[cvt][ps]=list(self.program.toneframes[ps])
         elif cvt == 'S':
-            # Task 2 (shared engine) does only the macrogroup profile check
+            # Task 2 (shared engine) does only the profile-class profile check
             # (ftype); the #C/C#/syls primitives are the Task-1 prep driver's.
             # updatechecksbycvt computes this fresh; cached here for completeness.
             ftype=self.program.params.ftype()

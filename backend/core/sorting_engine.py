@@ -35,7 +35,7 @@ class SyllablePrep(object):
     NOT maybesort — prep never sorts/joins/macrosorts, only verifies one ≤MAX_SLICE
     slice at a time. Each slice is a single-page list, so the XWayland
     page-transition freeze is designed out. Once every slice is verified
-    (params.syllable_prep_complete) runcheck hands off to Task 2 (the macrogroup
+    (params.syllable_prep_complete) runcheck hands off to Task 2 (the profile-class
     profile sort) via the inherited Sort.runcheck/maybesort."""
 
     def syllable_slices(self,rebuild=False):
@@ -51,7 +51,7 @@ class SyllablePrep(object):
     def runcheck(self):
         ps=self.program.slices.ps()
         if self.program.params.syllable_prep_complete(ps):
-            # Task 1 done → Task 2 (macrogroup profile sort) on the shared engine.
+            # Task 1 done → Task 2 (profile-class profile sort) on the shared engine.
             # Point the engine at the profile (ftype) check, not a stale primitive.
             self.program.params.check(self.program.params.ftype())
             return super().runcheck()
@@ -88,7 +88,7 @@ class SyllablePrep(object):
         nxt=sl.next_unverified_slice()
         if nxt is None:
             # Every prep slice verified → Task 1 complete. Close the reused window,
-            # refresh the board (now the Task-2 macrogroup board), tell the user.
+            # refresh the board (now the Task-2 profile-class board), tell the user.
             rw=getattr(self.ui,'runwindow',None)
             if rw is not None and rw.winfo_exists() and not rw.exitFlag.istrue():
                 rw.on_quit()
@@ -266,7 +266,7 @@ class Sort(Categories):
                  [s.id for s in senses])
         # Syllable PROFILE check (check==ftype): verification lives ONLY in the
         # plain …-x-cvprofile form (the single source of truth) — NOT as an
-        # lc=<profile> code in the <macrogroup> lc verification field. So set/clear
+        # lc=<profile> code in the <profile-class> lc verification field. So set/clear
         # …-x-cvprofile and DON'T write a code. Every other check (segmental
         # V1/C1…, primitives) keeps its check=group code.
         if self.cvt=='S' and check==ftype:
@@ -668,7 +668,7 @@ class Sort(Categories):
         log.info("Maybe Join")
         self.did['join']=False #runs multiple times, so clear here
         # The 'S' primitive checks (#C/C#/syls) are closed/determined classes —
-        # no joining. Only the profile check (within a macrogroup) joins.
+        # no joining. Only the profile check (within a profile class) joins.
         syl_primitive=(self.cvt=='S'
                         and self.program.params.is_syllable_primitive_check())
         if self.to_distinguish() and not syl_primitive:
@@ -960,35 +960,42 @@ class Sort(Categories):
         self.program.status_dirty=True     # current slice rebuilds (minus this word)
         self.maybewrite()
     def rebuild_syllable_profile_done(self):
-        """Recompute the syllable PROFILE board's 'groups' + 'done'. Bucket profiles
-        by cvprofilevalue the SAME way the board does (makeSyllableprogresstable
-        ~L1301) so the '+' lines up with the displayed buckets. A profile group is
-        'done' (gets '+') iff every member has a real …-x-cvprofile that MATCHES its
-        lc annotation — that and nothing else. '—' (no profile) and 'Invalid' never
-        qualify → that macrogroup cell stays unverified and (for '—' words) the
-        missing-profiles trigger fires. Keyed on the 'S'/macrogroup/ftype node the
+        """Recompute the syllable PROFILE node's 'groups' + 'done' with the SAME
+        membership+verification model segmental sorting uses (see ADR 0003 and
+        io_put/lift.verified_groups_by_ps_profile):
+          - a profile GROUP is the set of words carrying that lc ANNOTATION (the
+            sort membership) — NOT a cvprofilevalue bucket;
+          - the group is 'done' (gets '+') iff every member is VERIFIED, i.e. its
+            …-x-cvprofile form matches its lc annotation (the syllable verify
+            mark, the counterpart of the segmental '<check>=<group>' code).
+        A word with NO lc annotation is UNSORTED: it is not a group here (the
+        board flags its class with a white border and maybesort presents it to
+        sort — the 'tosort' path), so it must NOT become a phantom '—' group.
+        Keying groups (membership) and done (verification) on the ONE annotation
+        key is what keeps maybesort's groups-done from silently dropping
+        sorted-but-unverified words. Keyed on the 'S'/profile-class/ftype node the
         board + maybesort read."""
         ftype=self.program.params.ftype()
         analang=self.program.db.analang
-        by={}  # {ps: {macrogroup: {cvprofile bucket: all-members-verified bool}}}
+        by={}  # {ps: {profile_class: {annotation group: every-member-verified bool}}}
         for s in self.program.db.senses:
             ps=s.psvalue()
-            mg=self.program.params.macrogroup_of_sense(s, ftype=ftype)
-            if not (ps and mg):
+            pc=self.program.params.profile_class_of_sense(s, ftype=ftype)
+            if not (ps and pc):
                 continue
-            cvp=s.cvprofilevalue(ftype) or '—'    # bucket key, matching the board
             ann=s.annotationvaluebyftypelang(ftype, analang, ftype)
-            # '+' (verified) iff the word has a real …-x-cvprofile that MATCHES its
-            # lc annotation — that and nothing else. A profile group is done only if
-            # EVERY member is verified that way ('—'/'Invalid' never qualify).
-            matched=(cvp not in ('—','Invalid') and cvp==ann)
-            bkts=by.setdefault(ps,{}).setdefault(mg,{})
-            bkts[cvp]=bkts.get(cvp,True) and matched
-        for ps,mgs in by.items():
-            for mg,bkts in mgs.items():
-                node=self.program.status.node(cvt='S',ps=ps,profile=mg,check=ftype)
-                done=sorted(cvp for cvp,ok in bkts.items() if ok)
-                node['groups']=sorted(bkts)
+            if not ann or ann in ('NA','Invalid'):
+                continue  # unsorted → no group membership (sort phase handles it)
+            # Verified iff the confirmed …-x-cvprofile matches the sort annotation;
+            # a group is done only if EVERY member is verified that way.
+            verified=(s.cvprofilevalue(ftype)==ann)
+            grps=by.setdefault(ps,{}).setdefault(pc,{})
+            grps[ann]=grps.get(ann,True) and verified
+        for ps,pcs in by.items():
+            for pc,grps in pcs.items():
+                node=self.program.status.node(cvt='S',ps=ps,profile=pc,check=ftype)
+                done=sorted(g for g,ok in grps.items() if ok)
+                node['groups']=sorted(grps)
                 node['done']=done
                 # Trust the DISTINCTIONS too (status.json only, not LIFT): verified
                 # profiles are distinct cvprofile strings that never meaningfully
@@ -1078,6 +1085,20 @@ class Sort(Categories):
         if getattr(self,'_notprofile_advance',False):
             self._notprofile_advance=False
             self.buttonframe.reset_selected()
+            return
+        # Syllable 'Other {profile class} profile' picker resolved to a real,
+        # primitive-consistent profile P (ADR 0003 / cv_group_creation_merging).
+        # Mark the current word into P via the normal NEW-group path — NOT
+        # add_int_group (which mints a meaningless integer). The picker advanced by
+        # destroying the sort item, so this runs with no button selection.
+        pending=getattr(self.buttonframe,'_pending_new_profile',None)
+        if pending is not None and not macrosort:
+            self.buttonframe._pending_new_profile=None
+            self.buttonframe.reset_selected()
+            self.marksortgroup(item, pending, nocheck=True)
+            if pending not in list(self.buttonframe.groupvars)+['NA']:
+                self.buttonframe.addgroupbutton(pending)
+            self.maybewrite()
             return
         selected=self.buttonframe.get_selected()
         log.info("selected groups: {groups}".format(groups=selected))
@@ -1539,9 +1560,9 @@ class Sort(Categories):
             # for w in pair_frame.winfo_children():
             #     w.grid_remove() #don't destroy buttons with canary
             self.canary.destroy()
-        def join_pair():
-            lpr=sorted(self.current_pair,key=str) #put a number first (to remove)
-            log.info("User selected {lpr} to join, joining them (macrosort={macrosort}).".format(lpr=lpr, macrosort=macrosort))
+        def _do_join(lpr):
+            # lpr=[remove, keep]: move the first group into the second.
+            log.info("Joining {lpr} (macrosort={macrosort}).".format(lpr=lpr, macrosort=macrosort))
             msg=_("Now we're going to move group '{group1}' into "
                 "'{group2}', removing '{group1}' and marking '{group2}' unverified.").format(group1=lpr[0], group2=lpr[1])
             self.ui.runwindow.wait(msg=msg)
@@ -1573,6 +1594,26 @@ class Sort(Categories):
             finally:
                 self.ui.runwindow.waitdone()
             self.ui.runwindow.on_quit()
+        def join_pair():
+            pair=self.current_pair
+            # Syllable PROFILE join: both sides are REAL CV profiles (no isdigit
+            # placeholder to break the tie — the picker+scrub keep integers out), so
+            # the DIRECTION is a linguistic call: CVCV→CVCCV and CVCCV→CVCV are NOT
+            # the same result, and one corrupts correct data. Ask which is correct
+            # rather than picking by lexicographic accident. See ADR 0003.
+            if self.cvt=='S' and not self.program.params.is_syllable_primitive_check():
+                counts={g:len(self.getsensesincheckgroup(check=check,group=g))
+                        for g in pair}
+                def _on_choose(winner):
+                    loser=next(g for g in pair if g!=winner)
+                    _do_join([loser,winner])   # [remove, keep]
+                self.sort_ui.choose_join_direction(
+                    self.ui.runwindow, buttonclass, self, list(pair), counts,
+                    _on_choose)  # on_back=None → just close, back to the join page
+                return
+            # Segmental/other: sorted(key=str) puts an isdigit() group first, so the
+            # unnamed placeholder is removed into the real/named group.
+            _do_join(sorted(pair,key=str))
         def distinguish_pair():
             if macrosort:
                 self.program.alphabet.distinguish(self.current_pair)

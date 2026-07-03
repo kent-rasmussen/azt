@@ -20,16 +20,56 @@
 - make showoriginalorthographyinreports a UI switch
 
 # Version 1.4.3
+- Terminology: the syllable Beg+count+End slice is a **profile class** (DERIVED
+  from the three confirmed primitives — not a sorted group-of-groups), renamed
+  throughout the syllable code from the overloaded "macrogroup"
+  (`compose_profile_class`/`parse_profile_class`/`profile_class_of_sense`/
+  `profile_class_prose`/`profile_class_*_name`/`_S_profile_class`/
+  `Syllables.profile_class()`/`update_S_profile_class`). Segmental macrogroups
+  (= glyphs) keep their name. The profile-class key is now delimiter-free (`C2V`,
+  positional parse). See ADR 0003.
+- FIX (companion to the slice regression): `SliceDict.profiles()` for cvt 'S' also
+  read `_profilesbysense` (confirmed-only), so a profile class of only-unprofiled
+  words wasn't enumerated. Now reads the whole ps wordlist, like `senses()`.
+- NEW: "Other {profile class} profile" in the syllable profile sort. Instead of
+  minting a meaningless integer group (`add_int_group`, which for syllables had no
+  resolution step and, if verified, wrote the integer as the word's cvprofile), it
+  opens a two-page picker: page 1 lists NEW legal profiles for the class
+  (generated simplest-first from the all-length-1 baseline, excluding already-used
+  profiles, capped ~12); page 2 ("Other… set by hand") is a free-text field with a
+  work-with-a-linguist warning and a Back button. Both validate against the class
+  primitives (word-initial/final + syllable count) and sort the word into that
+  real, primitive-consistent profile. See ADR 0003 / cv_group_creation_merging.
 - Syllable-profile verification consolidated to the `…-x-cvprofile` form as the
   single source of truth. The profile-verify no longer *also* writes redundant
   `lc=<profile>` codes into the `<macrogroup> lc verification` field (that field is
   for segmental checks); verifying/unverifying just sets/clears `…-x-cvprofile`.
 - New `rebuild_syllable_profile_done`: the profile board's `done` (the `+` marks) is
-  derived from `…-x-cvprofile`, bucketed by cvprofile exactly as the board displays
-  it, and also marks verified profile pairs `distinguished` (distinct cvprofile
-  strings never merge). Runs on SortSyllables open after `scrub_sorts_to_primitives`
-  + `load_ps_profiles`, so the board reflects LIFT on entry (was showing stale/empty
-  `done` because `generate_status_by_annotations` skips 'S').
+  derived from LIFT on SortSyllables open (after `scrub_sorts_to_primitives` +
+  `load_ps_profiles`), because `generate_status_by_annotations` skips 'S'. It uses
+  the SAME membership+verification model as segmental sorting (ADR 0003): a profile
+  group is the set of words with that `lc` annotation (the sort value), and the group
+  is `done` iff every member is VERIFIED (its `…-x-cvprofile` matches its annotation).
+  Also marks verified profile pairs `distinguished` (distinct cvprofile strings never
+  merge).
+- FIX (regression from this version's earlier syllable work, ADR 0003): the profile
+  board and `done` had been keyed on the `cvprofilevalue` bucket while `maybesort`
+  reads `groups` from the `lc` annotation — different keys. A word sorted-but-not-yet-
+  verified (annotation=G, `cvprofile` empty) sat in the `'—'` bucket while G stayed in
+  `done`, so `maybesort`'s `groups − done` dropped it → "all done" → the sort skipped
+  the unverified word. Both `rebuild_syllable_profile_done` and the board's two
+  indicators are now on the membership key. The board now follows the shared contract:
+  WHITE BORDER = the class has UNSORTED words (presented to sort), `+` = that profile
+  is VERIFIED (absence = to-verify) — the same meanings as the segmental board.
+- FIX (companion regression, ADR 0003): the syllable slice (`SliceDict.senses` for
+  cvt 'S') read `_sensesbyps`, built from `_profilesbysense` — which holds only words
+  with a CONFIRMED cvprofile (`getprofileofsense` adds a word only when confirmed). So
+  UNPROFILED words — the very ones syllable sorting exists to profile — were excluded
+  from the board and from `maybesort`, making a wordlist with unprofiled words look
+  entirely "sorted and verified" while `Sort!` just cycled the done macrogroups. 'S'
+  now slices the WHOLE ps wordlist (`db.sensesbyps`), bucketed by macrogroup
+  (primitives), so unprofiled words appear as unsorted and are presented to sort. (The
+  code now matches the intent already documented at `getprofileofsense`.)
 - Macrosort eligibility raised: a sort group is macrosortable only when VERIFIED and
   DISTINGUISHED from every verified sibling — via new shared
   `StatusDict.pending_distinctions`, which `to_distinguish` now also uses (fixing its

@@ -1858,9 +1858,10 @@ class Syllables(Senses):
     """Cyclical syllable sort (see docs/sort_syllables_design.md). FOUR checks:
     three primitive sorts on the WHOLE wordlist — '#C' (word-initial C/V),
     'C#' (word-final C/V), 'syls' (syllable count) — whose outcomes compose into
-    a Beg+count+End **macrogroup** (the 'S' slice); then the whole-word profile
-    sort for the current word-form (the ftype: lc/lx/pl/imp) WITHIN each
-    macrogroup. All four live on the annotation channel (like segments); the
+    a Beg+count+End **profile class** (the 'S' slice, DERIVED from the three
+    primitives — not a sorted group-of-groups); then the whole-word profile sort
+    for the current word-form (the ftype: lc/lx/pl/imp) WITHIN each profile class.
+    All four live on the annotation channel (like segments); the
     surface form is never rewritten. Used before Segments in the MRO so these
     overrides win while Segments supplies shared helpers.
 
@@ -1890,11 +1891,11 @@ class Syllables(Senses):
         return self.program.params.word_final(profile)
     def _syllable_count(self,profile):
         return self.program.params.syllable_count(profile)
-    def macrogroup(self,sense,**kwargs):
-        """The 'S' slice = Beg+count+End, composed on the fly from the three
-        primitive annotations. Delegates to params (the single source of the
-        macrogroup format). Returns e.g. 'C_2_C', or None if not all set."""
-        return self.program.params.macrogroup_of_sense(sense,ftype=self.ftype)
+    def profile_class(self,sense,**kwargs):
+        """The 'S' slice = Beg+count+End profile class, composed on the fly from
+        the three primitive annotations. Delegates to params (the single source of
+        the profile-class format). Returns e.g. 'C2V', or None if not all set."""
+        return self.program.params.profile_class_of_sense(sense,ftype=self.ftype)
     def presortgroups(self,**kwargs):
         """Seed each word's four attributes by orthography so the obvious
         bucketing is pre-done; the user then verifies each (by ear) and fixes
