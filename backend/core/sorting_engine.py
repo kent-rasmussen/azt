@@ -889,12 +889,20 @@ class Sort(Categories):
         def after_annotations():
             error=self.update_annotations_errors
             if error:
-                txt=_("Problem updating annotations to glyphs:")
-                txt+=f'\n{'\n'.join(error)}\n\n'
-                txt+=_("try again?")
+                # Not a fault: a group's sort-name and its target glyph share one
+                # per-slice namespace. A group macrosorted into glyph 'a' but still
+                # holding its original sort-name can't be renamed to 'a' while another
+                # group in that slice is still named 'a' — that group may live in a
+                # DIFFERENT glyph and isn't renamed yet. It clears once that group
+                # takes its own glyph name, so defer (don't abort) and keep going: the
+                # glyphs that DID resolve still get their forms updated, and a later
+                # pass finishes the rest.
+                txt=_("Some groups can't take their glyph name yet — another group in "
+                      "the same slice is still using that name. We'll try again later:")
+                txt+=f'\n{'\n'.join(error)}'
                 ErrorNotice(txt,wait=True)
-                return
-            log.info(_("Glyph annotations updated OK"))
+            else:
+                log.info(_("Glyph annotations updated OK"))
             log.info("Going to update forms now")
             if any(i.mature for i in self.program.data_repo.values()):
                 w.wait_and_drive_work(
