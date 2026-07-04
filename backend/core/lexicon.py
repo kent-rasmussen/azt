@@ -239,6 +239,32 @@ class Segments(Senses):
         conflict_text=_("Not updating '{form}' (conflict in {anno}.").format(form=formvalue, anno=annodict)
         error_nb=_("Check the log for any further conflicts")
         error=False
+        # DIAG-formconform (grep this): the confirmed cvprofile is the TARGET the
+        # updated form must still read as. Log the starting picture per word so the
+        # whole from>to + profile-conforming story is visible.
+        confirmed=sense.cvprofilevalue(self.ftype)
+        ps=sense.psvalue()
+        # PRIMITIVES CONSTRAIN the profile (item Model): if the word's verified
+        # #C/C#/syls make the confirmed cvprofile inconsistent — e.g. 'tribe' has
+        # syls=1 but its cvprofile still reads 2-syl 'CCVCV' — conform to the
+        # primitive-CONSTRAINED profile ('CCVC'), not the raw one. constrain_profile
+        # never yields a syls-violating shape, so this is the authoritative target.
+        target=confirmed
+        av=sense.annotationvaluebyftypelang
+        beg=av(self.ftype,self.analang,'#C'); end=av(self.ftype,self.analang,'C#')
+        syls=av(self.ftype,self.analang,'syls')
+        if confirmed and confirmed!='Invalid' and beg and end and syls:
+            r=self.program.params.constrain_profile(confirmed,beg,end,syls)
+            if r.get('profile') and r['profile']!=confirmed:
+                log.info("DIAG-formconform CONSTRAIN %s: cvprofile %s + (#C=%s C#=%s "
+                         "syls=%s) → target %s", sense.id, confirmed, beg, end, syls,
+                         r['profile'])
+                target=r['profile']
+        # Segmental verified values (V1=…, C1=…) for the one-line RESULT scan (below):
+        # only checks whose '='-parts are all segmental (in rxdict.rx), skipping
+        # primitives/lc/slices/old-form annos.
+        segstr=', '.join('{}={}'.format(c,v) for c,v in annodict.items()
+            if v and all(p in self.rxdict.rx for p in c.split('=')))
         if check: #just update to this annotation
             value=annodict[check]
             if value is None or value.isdigit(): #don't update to unnamed groups
@@ -252,12 +278,13 @@ class Segments(Senses):
                 else:
                     log.error(conflict_text)
                 return
-            elif not do_not_do_these(value,check): 
+            elif not do_not_do_these(value,check):
                 #value not in [None, 'NA']: #should I act on ''?
+                prev=formvalue
                 formvalue=self.rxdict.update(formvalue,check,value)
-                #This should update formstosearch:
-                if formvalue != f:
-                    self.program.profiles.addtoformstosearch(sense,f,formvalue)
+                #This should update formstosearch (prev→new; `f` was undefined):
+                if formvalue != prev:
+                    self.program.profiles.addtoformstosearch(sense,prev,formvalue)
                 if len(value)>1:
                     maybe_add_polygraph(value)
         else: #update to all annotations
@@ -272,17 +299,119 @@ class Segments(Senses):
                         log.error(conflict_text)
                     error=True
                 else:
-                    log.info(f"updateformtoannotations {check}={value},{formvalue}")
+                    prev=formvalue
                     formvalue=self.rxdict.update(formvalue,check,value)
-                    log.info(f"updateformtoannotations {check}={value},{formvalue}")
+                    log.info("DIAG-formconform CHECK %s %s=%s: %r>%r",
+                             sense.id, check, value, prev, formvalue)
         if not error:
+            # Conform the candidate form to the word's TARGET profile (the confirmed
+            # cvprofile, CONSTRAINED to the verified primitives above): the form must
+            # re-parse (profileofform) to it. Applying verified segment values
+            # positionally (rxdict.update) can leave the form the wrong SHAPE ('heart'
+            # CVCC → 'hot' CVC) or with unpronounced/stray segments (silent 'e' →
+            # CVCV; a doubled or mis-read consonant). So:
+            #   • already reads as target → commit;
+            #   • else CONFORM via _conform_form_to_profile — DROP segments the
+            #     profile doesn't want (trailing OR internal: silent 'e', a stray/
+            #     doubled C) and INSERT a missing slot from its verified value — then
+            #     re-verify. Dropping IS the goal (the profile is authoritative about
+            #     which segments exist);
+            #   • if it still can't reach the profile → refuse + flag, unchanged.
+            # All paths logged DIAG-formconform (grep). Check conformance whenever
+            # there's a valid target — NOT only when the update changed the form: a
+            # form already non-conforming (e.g. a prior update corrupted 'year' to
+            # 'ieer', which doesn't read as CVC) must still be caught/conformed, not
+            # slip through as UNCHANGED just because this update was a no-op.
+            if target and target!='Invalid':
+                got=self.rxdict.profileofform(formvalue,ps)
+                if got==target:
+                    log.info("DIAG-formconform OK %s: %r>%r reads %s",
+                             sense.id, form_ori, formvalue, target)
+                else:
+                    self.rxdict.profileofform(formvalue,ps,diag=True) # breakdown on failure only
+                    conf=self._conform_form_to_profile(formvalue,target,annodict,ps)
+                    if conf:
+                        newform,drops,ins=conf
+                        log.info("DIAG-formconform CONFORM %s: %r>%r>%r (dropped=%s "
+                                 "inserted=%s) → %s", sense.id, form_ori, formvalue,
+                                 newform, drops, ins, target)
+                        formvalue=newform
+                    else:
+                        log.error("DIAG-formconform RESULT %s REFUSE %r✗%r reads %s "
+                                 "target=%s segs=[%s] (left unchanged)", sense.id,
+                                 form_ori, formvalue, got, target, segstr)
+                        if not self.updateconflictwarned:
+                            ErrorNotice('\n'.join([_("Not updating '{old}' → '{new}': "
+                                "it can't be made to read as its profile {prof} "
+                                "(reads as {got}).").format(old=form_ori,new=formvalue,
+                                prof=target,got=got),
+                                _("Confirmed segments: {segs}").format(
+                                    segs=segstr or _("(none)")),
+                                _("Left unchanged — review by hand."),error_nb]))
+                            self.updateconflictwarned=True
+                        return
             sense.textvaluebyftypelang(self.ftype,self.analang,formvalue)
             if form_ori != formvalue:
                 key=max([int(i) for i in annodict.keys() if i.isdigit()]+[-1])+1
                 sense.annotationvaluebyftypelang(self.ftype,self.analang,
                                                     str(key),form_ori)
+                log.info("DIAG-formconform RESULT %s COMMIT %r→%r target=%s segs=[%s] "
+                         "(old form saved as anno %s)", sense.id, form_ori, formvalue,
+                         target, segstr, key)
+            else:
+                log.info("DIAG-formconform RESULT %s UNCHANGED %r target=%s segs=[%s]",
+                         sense.id, form_ori, target, segstr)
+        else:
+            log.info("DIAG-formconform RESULT %s REFUSE(conflict) %r target=%s segs=[%s]",
+                     sense.id, form_ori, target, segstr)
         if write:
             self.maybewrite()
+    def _conform_form_to_profile(self, form, target, annodict, ps):
+        """DRAFT (internal drops/inserts): rebuild `form` so profileofform==target.
+        Segment the form (rxdict.segmentsofform), then walk it against the target
+        profile: keep a segment whose class the target wants here; DROP one the
+        target doesn't (trailing OR INTERNAL — a silent 'e', a stray/doubled C);
+        when the target needs a slot the form lacks, INSERT that slot's VERIFIED
+        value (Cn/Vn from annodict) — a justified insert only; an unverified missing
+        slot → give up. Greedy (prefers drops), so the rebuilt form is RE-CHECKED
+        with profileofform; if it doesn't read as target, return None (caller
+        refuses — never a corrupt commit). Returns (newform, dropped, inserted) or
+        None. Logs DIAG-formconform. See rebuild_updateformstoannotations item."""
+        segs=self.rxdict.segmentsofform(form)
+        seg_profile=''.join(c for _,c in segs)
+        if seg_profile!=self.rxdict.profileofform(form,ps):
+            # greedy tokenizer diverged from the oracle; the final re-check still
+            # protects correctness, but note it so odd cases are explainable.
+            log.info("DIAG-formconform SEG-DIVERGE %r: segments=%s profileofform=%s",
+                     form, seg_profile, self.rxdict.profileofform(form,ps))
+        def slot(cls,idx):            # nth (0-based) occurrence of cls → 'C1','V2',…
+            return '{}{}'.format(cls,idx+1)
+        tcount={}; ti=si=0; out=[]; dropped=[]; inserted=[]
+        while ti<len(target) or si<len(segs):
+            tcls=target[ti] if ti<len(target) else None
+            scls=segs[si][1] if si<len(segs) else None
+            if tcls is not None and scls==tcls:               # class matches → keep
+                out.append(segs[si][0]); si+=1
+                tcount[tcls]=tcount.get(tcls,0)+1; ti+=1
+            elif scls is not None:                            # form has an extra → DROP
+                dropped.append(segs[si][0]); si+=1
+            else:                                             # form lacks a slot → INSERT
+                name=slot(tcls,tcount.get(tcls,0))
+                val=annodict.get(name)
+                if not val or val=='NA' or (isinstance(val,str) and val.isdigit()):
+                    log.info("DIAG-formconform INSERT-UNJUSTIFIED %r: target %s slot "
+                             "%s has no verified value; giving up", form, target, name)
+                    return None
+                out.append(val); inserted.append((name,val))
+                tcount[tcls]=tcount.get(tcls,0)+1; ti+=1
+        newform=''.join(out)
+        got=self.rxdict.profileofform(newform,ps)
+        if got!=target:
+            log.info("DIAG-formconform ALIGN-FAIL %r→%r reads %s not target %s "
+                     "(dropped=%s inserted=%s)", form, newform, got, target,
+                     dropped, inserted)
+            return None
+        return newform, dropped, inserted
     def setitemgroup(self,item,check,group,**kwargs):
         # log.info(_("Setting segment sort group"))
         item.annotationvaluebyftypelang(self.ftype,self.analang,check,group)

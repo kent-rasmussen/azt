@@ -594,18 +594,55 @@ class RegexDict(object):
         # log.info('Going to compile {} into this regex : {}'.format(CVs_ori,CVs))
         self.setrx(CVs_ori, CVs, **kwargs)
         return self.getrx(CVs_ori, **kwargs)
-    def profileofform(self,form,ps):
+    def profileofform(self,form,ps,diag=False):
         if not form or not ps:
             # log.info("Either no form ({}) or no ps ({}); returning".format(form,ps))
             return 'Invalid'
         profile=form
+        classes=set(self.profilelegit) & set(self.rx)
+        steps=[] # DIAG: (class, polyn, before>after) for each sub that changed it
         for polyn in range(4,0,-1): #find and sub longer forms first
-            for s in set(self.profilelegit) & set(self.rx):
+            for s in classes:
                 if polyn in self.rx[s]:
                     # log.info(f"Checking for {s} with {self.rx[s][polyn]}")
+                    before=profile
                     profile=self.rx[s][polyn].sub(s,profile)
+                    if diag and profile!=before:
+                        steps.append("{}[{}]:{!r}>{!r}".format(s,polyn,before,profile))
+        if diag:
+            # Shows WHICH class regexes fired (and the legit∩rx class set) so a
+            # form that loses its vowel — e.g. 'bie'→'CC' — is explainable: is 'V'
+            # even in the class set? did a C-class polygraph eat the vowel digraph?
+            log.info("DIAG-profileofform %r → %s | classes=%s | steps=%s",
+                     form, profile, sorted(classes), steps or '(none)')
         # log.info(f"ready to return {formori}>{form}")
         return profile
+    def segmentsofform(self,form):
+        """Ordered [(substring, class)] segmentation of a form, longest-match at each
+        position, using the SAME per-class polygraph patterns as profileofform (the
+        `[0]` = all-lengths pattern per class). A char matching no class → (char,'?').
+        Greedy, so it can diverge from profileofform on overlapping graphemes — the
+        CALLER re-checks profileofform on any rebuilt form, so a bad segmentation only
+        causes a refuse, never a corrupt commit. ''.join(cls) SHOULD equal
+        profileofform(form); the caller logs any mismatch."""
+        classes=set(self.profilelegit)&set(self.rx)
+        spans=[] # (start, end, class)
+        for s in classes:
+            rx0=self.rx[s].get(0)
+            if rx0 is None:
+                continue
+            for m in rx0.finditer(form):
+                if m.group(0):
+                    spans.append((m.start(),m.end(),s))
+        segs=[]; i=0; n=len(form)
+        while i<n:
+            here=[sp for sp in spans if sp[0]==i]
+            if here:
+                st,en,s=max(here,key=lambda x:x[1]-x[0]) # longest match at i
+                segs.append((form[st:en],s)); i=en
+            else:
+                segs.append((form[i],'?')); i+=1
+        return segs
     def makeprofileforcheck(self,**kwargs):
         check=kwargs.get("check")
         replS='\\1'+kwargs.get("group")
