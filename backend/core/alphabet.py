@@ -363,11 +363,44 @@ class Alphabet():
         """This is for one off checking, where a refresh is needed, as well as
         confirmation what we're working with the correct cvt."""
         return item in self.renew_items_tomacrosort(self.cvt_of_item(item))
+    def kick_conflicting_glyph_members(self):
+        """Defensive invariant: NO glyph may hold two members from the SAME slice
+        (same `conflict_code` = ps_profile_ftype_check, different group). Same-slice
+        groups that belong together should have been JOINED within the slice, never
+        co-glyphed. However a conflict got in (stale persisted glyph_members, or a
+        rename that bypassed the sort-time kick), remove all-but-one from the glyph
+        so the kicked one(s) re-enter macrosort — and re-sorting one back into the
+        same glyph re-triggers the existing recurring-conflict → join-within-slice
+        offer. KEEP a non-digit (already-named) group if present; KICK the isdigit
+        (unnamed) one(s) — they need sorting anyway, so the choice doesn't matter.
+        Returns the kicked item codes (also logged DIAG-conflict)."""
+        d=self.glyph_members()
+        kicked=[]
+        for glyph,members in list(d.items()):
+            byslice={}
+            for m in members:
+                byslice.setdefault('_'.join(self.conflict_code(m)),[]).append(m)
+            for _code,ms in byslice.items():
+                if len(ms)<2:
+                    continue
+                nondigit=[m for m in ms
+                          if not self.parse_verificationcode(m)['group'].isdigit()]
+                keep=nondigit[0] if nondigit else ms[0]
+                for m in ms:
+                    if m!=keep:
+                        self.remove_item_from_glyph(m,glyph)
+                        kicked.append((m,glyph,keep))
+        if kicked:
+            log.warning("DIAG-conflict KICK: same-slice glyph conflict(s) resolved by "
+                        "un-glyphing %s (kept sibling shown); they re-enter macrosort.",
+                        kicked)
+        return kicked
     def renew_items_tomacrosort(self,cvt):
         self._itemsmacrosorted=set()
         self._itemstomacrosort=set()
         self.refresh_items()
         self.prune_empty_glyph_members()  # drop groups emptied by profile-unsort
+        self.kick_conflicting_glyph_members()  # un-glyph same-slice conflicts (→ re-sort)
         for item in self.items_present_in_cvt(cvt):
             if item in [i for j in self.glyph_members().values() for i in j]:
                 self._itemsmacrosorted.add(item)

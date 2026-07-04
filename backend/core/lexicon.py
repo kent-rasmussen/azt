@@ -206,6 +206,34 @@ class Segments(Senses):
             if (len(keybits+checkbits) > 2 and set(keybits)&set(checkbits) and
                                     annodict[check] != annodict[key]):
                 return True
+    def build_form_from_verified(self,sense,ftype=None):
+        """Build a word's surface form FROM SCRATCH from its confirmed cvprofile +
+        the VERIFIED segment values — the authoritative rebuild (contrast the
+        conform/patch path, which only mends an existing, maybe-corrupt form).
+
+        ONLY valid once EVERY profile slot is verified: gated by
+        `sense.cvverificationdone(ftype)` (the same all-verified predicate data
+        export uses). Walks the confirmed profile; for each class occurrence (C1,
+        V1, C2, …) takes the verified value from `getcvverificationkeys`' actualkeys
+        and concatenates. Returns the built form, or None if not fully verified /
+        any slot value missing (e.g. a boundary '='-profile the gate rejects).
+        Because it's assembled from verified segments, it can't corrupt — and it
+        doesn't depend on profileofform reading the result correctly."""
+        ftype=ftype or self.ftype
+        if not sense.cvverificationdone(ftype):
+            return None
+        profile=sense.cvprofilevalue(ftype)
+        counts,actualkeys=sense.getcvverificationkeys(ftype)
+        if not (profile and actualkeys):
+            return None
+        seen={}; out=[]
+        for cls in profile:
+            seen[cls]=seen.get(cls,0)+1
+            val=actualkeys.get('{}{}'.format(cls,seen[cls]))
+            if val is None: # gate should preclude this; be safe
+                return None
+            out.append(val)
+        return ''.join(out)
     def updateformtoannotations(self,sense,check=None,write=False):
         """This should take a sense and check, in normal usage.
         provide self.ftype prior to this
@@ -239,6 +267,25 @@ class Segments(Senses):
         conflict_text=_("Not updating '{form}' (conflict in {anno}.").format(form=formvalue, anno=annodict)
         error_nb=_("Check the log for any further conflicts")
         error=False
+        # AUTHORITATIVE path: if EVERY segment is verified, build the form FROM
+        # SCRATCH from the confirmed profile + verified segment values — don't patch
+        # the existing (maybe-corrupted) form. Gated by cvverificationdone. Only on a
+        # whole-word update (no single check); partially-verified words fall through
+        # to the conform/patch stopgap below.
+        if not check:
+            built=self.build_form_from_verified(sense)
+            if built is not None:
+                if built!=form_ori:
+                    key=max([int(i) for i in annodict.keys() if i.isdigit()]+[-1])+1
+                    sense.annotationvaluebyftypelang(self.ftype,self.analang,
+                                                     str(key),form_ori)
+                sense.textvaluebyftypelang(self.ftype,self.analang,built)
+                log.info("DIAG-formconform RESULT %s BUILD %r→%r profile=%s "
+                         "(from verified segments)", sense.id, form_ori, built,
+                         sense.cvprofilevalue(self.ftype))
+                if write:
+                    self.maybewrite()
+                return
         # DIAG-formconform (grep this): the confirmed cvprofile is the TARGET the
         # updated form must still read as. Log the starting picture per word so the
         # whole from>to + profile-conforming story is visible.
