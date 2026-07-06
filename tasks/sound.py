@@ -44,6 +44,23 @@ class Sound(object):
     def _configure_transcription(self, event=None):
         sound_ui.ASRModelSelectionWindow(self)
 
+    def _toggle_top_models(self, event=None):
+        ss = self.program.soundsettings
+        ss.set_top_models_only(not ss.top_models_only())
+        try:
+            self.program.settings.storesettingsfile(setting='soundsettings')
+        except Exception as e:
+            log.info("couldn't persist top_models_only: {}".format(e))
+        try:   # rebuild the context menu so the label flips on next open
+            self.context.menu.destroy()
+        except Exception:
+            pass
+        try:   # refresh the current word's draft buttons under the new filter
+            if hasattr(self, 'show_drafts'):
+                self.show_drafts()
+        except Exception as e:
+            log.info("couldn't refresh drafts after toggle: {}".format(e))
+
     def storesoundsettings(self):
         self.program.soundsettings.store_to_file()
 
@@ -62,6 +79,12 @@ class Record(BackendRecord, Sound):
         super().setcontext()
         self.context.menuitem("Transcription settings",
                               self._configure_transcription)
+        ss = getattr(self.program, 'soundsettings', None)
+        if ss is not None:
+            # label names the OTHER state (the convention), detected from current
+            label = ("Transcribe with all ASR models" if ss.top_models_only()
+                     else "Transcribe with top ASR models only")
+            self.context.menuitem(label, self._toggle_top_models)
 
     def makelabelsnrecordingbuttons(self, parent, node, r, c):
         t = node.formatted(self.analang, self.glosslangs)

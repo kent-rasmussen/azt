@@ -193,6 +193,53 @@ class WordCollectionwRecordings(WordCollection,Record):
                         sticky='ew',
                         **kwargs
                     )
+        # Stage-3 display trigger: if this word already has stored ASR drafts
+        # (from a bulk run or a prior session) and no live recording drove the
+        # display this session, show the draft buttons — deferred so the rest of
+        # the word UI (instructions2 etc.) exists first. Read-only: it builds
+        # buttons and writes no forms.
+        try:
+            self.wordframe.recordFrame.after(1, self.maybe_show_stored_drafts)
+        except Exception as e:
+            log.info(f"couldn't schedule stored-draft display: {e}")
+    def maybe_show_stored_drafts(self):
+        """Show stored ASR drafts for an already-recorded word WITHOUT re-running
+        ASR (the stage-3 decoupled display). No-op if a live recording drove the
+        display this session, or there are no stored drafts. show_drafts is
+        read-only here: it builds buttons and only fills an EMPTY field."""
+        try:
+            rf=getattr(self.wordframe,'recordFrame',None)
+            if rf is None or getattr(getattr(rf,'recorder',None),
+                                     'transcriptions',None):
+                return
+            if self._draft_transcriptions():
+                self.show_drafts()
+        except Exception as e:
+            log.info(f"maybe_show_stored_drafts skipped: {e}")
+    def _draft_transcriptions(self):
+        """Transcription-lane draft candidates {repo: text} for the selector.
+        Sources from the STORED ASR annotations (ADR 0002) — the stage-3
+        contract, identical whether a bulk run or the live path produced them.
+        Falls back to the live recorder's in-memory candidates only if nothing
+        is stored yet (e.g. ASR just ran but persist hasn't landed)."""
+        rf=getattr(self.wordframe,'recordFrame',None)
+        node=getattr(rf,'node',None)
+        tx={}
+        if node is not None and node.isnode():
+            audiolang=self.program.params.audiolang()
+            node.getforms()
+            form=node.forms.get(audiolang)
+            if form is not None:
+                tx=form.load_drafts()[0] or {}
+        if not tx:
+            tx=getattr(getattr(rf,'recorder',None),'transcriptions',None) or {}
+        # 'top models only' (B): show only the kept repos (None == no limit)
+        ss=getattr(self,'soundsettings',None) or getattr(self.program,
+                                                         'soundsettings',None)
+        keep=ss.top_asr_keys() if ss is not None else None
+        if keep is not None:
+            tx={r:v for r,v in tx.items() if r in keep}
+        return tx
     def show_drafts(self,*args):
         # log.info(f"show_drafts got args {args}")
         instructions2=(_("click on the best option(s) above"),
@@ -201,10 +248,17 @@ class WordCollectionwRecordings(WordCollection,Record):
             self.wordframe.draftFrame.destroy()
         except Exception:
             pass
-        content=self.wordframe.recordFrame.recorder.transcriptions
-        log.info(f"Recorder returned {len(content)} transcriptions")
-        if len(content) == 1:
-            self.var.set(list(content.values())[0]) #value of first (only) option
+        drafts=self._draft_transcriptions()
+        # Dedup by VALUE, retaining value -> [repos]: many models/languages emit
+        # the same string, and consensus is the signal we surface.
+        byvalue={}
+        for repo,text in drafts.items():
+            if text:
+                byvalue.setdefault(text,[]).append(repo)
+        log.info(f"show_drafts: {len(drafts)} draft(s) -> {len(byvalue)} unique value(s)")
+        if len(byvalue) == 1:
+            if not self.var.get():  # auto-fill an EMPTY field; never overwrite
+                self.var.set(next(iter(byvalue)))
             return
         c,r=self.wordframe.recordFrame.grid_size()
         self.wordframe.draftFrame=ui.Frame(self.wordframe.recordFrame,
@@ -215,32 +269,34 @@ class WordCollectionwRecordings(WordCollection,Record):
                                             column=c,
                                             row=1
                                         )
-        # log.info(f"{content=}")
-        content=sorted(content.items(),key=lambda x: len(x[1]))
-        # log.info(f"{content=}")
+        # Most-frequent (consensus) first: the value the most models produced on
+        # top. Supersedes the old length-sort, since dedup removes the clutter.
+        ordered=sorted(byvalue.items(),key=lambda kv: len(kv[1]),reverse=True)
         aspect=3/4 #float OK
-        nrows=max(3,int((len(content)*aspect)**.5))
-        buttons=0
+        nrows=max(3,int((len(ordered)*aspect)**.5))
         max_len=20 #don't want words kicking buttons off the page...
-        for repo,line in content:
+        for i,(value,repos) in enumerate(ordered):
             ui.Button(self.wordframe.draftFrame,
-                text=line[:max_len],
-                command=lambda x=repo,y=line:self.draft_entry(x,y),
-                column=buttons//nrows,
-                row=buttons%nrows,
+                text=value[:max_len],
+                command=lambda v=value,rs=repos:self.draft_entry(rs,v),
+                column=i//nrows,
+                row=i%nrows,
             )
-            buttons+=1
-        self.instructions2['text']='\n'.join(instructions2)
+        if hasattr(self,'instructions2'):
+            self.instructions2['text']='\n'.join(instructions2)
         if self.transcription_tone_var.get():
             self.wordframe.toneFrame['text']=self.transcription_tone_var.get()
         else:
             self.wordframe.toneFrame['text']=''
-    def draft_entry(self,repo,value,*args):
-        # This just fills in the visible field. Dictionary may be
-        # overwritten on confirmation later
-        # This is only called when a user clicks on a button, not
-        # automatically, so it should always overwrite the entry field
-        self.program.soundsettings.tally_asr_repo(repo)
+    def draft_entry(self,repos,value,*args):
+        # Fills the visible field (may be overwritten on confirmation later).
+        # Called on a button click (a user choice), so credit EVERY repo behind
+        # the chosen value — after dedup the tally must stay honest, not credit
+        # just one of several models that agreed.
+        if isinstance(repos,str): #tolerate a single-repo caller
+            repos=[repos]
+        for repo in repos:
+            self.program.soundsettings.tally_asr_repo(repo)
         self.var.set(value)
         self.update_idletasks()
         self.program.settings.storesettingsfile(setting='soundsettings')

@@ -342,6 +342,8 @@ class Menus(ui.Menu):
                 (_("Remake Status file (just this profile)"),
                         self.program.settings.reloadstatusdatabycvtpsprofile),
                 (_("Fill CAWL Images"), self.fill_db_images),
+                (_("Bulk transcribe recordings (ASR)"),
+                            self.program.taskchooser.bulk_transcribe),
                 ]
         for m in options:
             self.command(self.advancedmenu,
@@ -2560,6 +2562,16 @@ class ImageFrame(ui.Frame):
         if image is None:
             image=self.image
         image.scale(self.parent.theme.scale,pixels=pixels,scaleto=scaleto)
+        # A 0-byte/corrupt image loads without raising but yields no scaled
+        # bitmap, so every later `.scaled` access (reloadimage, citationframe…)
+        # would crash. Fall back to NoImage so navigation survives a bad file.
+        if getattr(image,'scaled',None) is None:
+            log.info("Image '{}' has no scaled bitmap (corrupt/0-byte?); "
+                     "using NoImage.".format(getattr(self,'url','?')))
+            no=self.parent.theme.photo['NoImage']
+            no.scale(self.parent.theme.scale,pixels=pixels,scaleto=scaleto)
+            if image is self.image:
+                self.image=no
     def pluralframe(self):
         ui.Label(self,text='',image=self.image.scaled,
                 compound='bottom',

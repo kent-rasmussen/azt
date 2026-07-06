@@ -1335,7 +1335,10 @@ class StatusDict(dict):
         tojoinkwargs=kwargs.copy()
         tojoinkwargs['tojoin']=True
         cs=[]
-        checks=self.updatechecksbycvt(**kwargs)
+        # No segmental data yet (e.g. a fresh recordings-only import before any
+        # citation forms) -> updatechecksbycvt returns None. Treat as "no checks"
+        # so the database still opens; makecheckok then unsets the current check.
+        checks=self.updatechecksbycvt(**kwargs) or []
         # Correspondence ('x') checks — V1xV2, C1xC2, the CV/VC unit checks, etc.
         # — are a REPORTING construct: the cross-tab chart (e.g. V1×V2), which the
         # report builds by crossing the single-axis V1/V2 groups (docheckreport).

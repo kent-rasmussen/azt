@@ -335,7 +335,31 @@ class SoundSettings(object):
             self.asr_repos = d
         return self.asr_repos
 
-    def asr_kwarg_dict(self, d):
+    def top_models_only(self):
+        return bool(self.asr_kwargs.get('top_models_only'))
+
+    def set_top_models_only(self, value):
+        self.asr_kwargs['top_models_only'] = bool(value)
+
+    def top_asr_keys(self, n=5, cap=20):
+        """Draft/repo keys to keep when 'top models only' is on: the top n by
+        usage tally, INCLUDING every key tied with the n-th's count, capped at
+        cap. Returns None (== no limit) when the toggle is off, or nothing has
+        been tallied yet (before any selections, all are 0 — so run everything)."""
+        if not self.top_models_only():
+            return None
+        tally = self.asr_repos or {}
+        if not tally:
+            return None
+        ranked = sorted(tally.items(), key=lambda kv: -(kv[1] or 0))
+        threshold = ranked[min(n, len(ranked)) - 1][1] or 0   # n-th place count
+        keep = [k for k, c in ranked if (c or 0) >= threshold]
+        return set(keep[:cap])
+
+    def asr_kwarg_dict(self, d=None):
+        # d omitted -> getter (this is how the settings save calls it, via
+        # fndict['asr_kwargs'](); a required arg here raised TypeError mid-save
+        # and aborted the whole soundsettings write, so asr_kwargs never persisted).
         if d and isinstance(d, dict):
             self.asr_kwargs = d
         return self.asr_kwargs
@@ -358,8 +382,16 @@ class SoundSettings(object):
                                       'sister_languages': self.changed_kwargs['sister_languages']}
 
     def file_ok(self, filename):
-        return (file.exists(filename) and
-                file.getsize(filename) > self.min_audio_file_size())
+        if not file.exists(filename):
+            return False
+        size = file.getsize(filename)
+        # The size floor assumes UNCOMPRESSED wav (fs bytes/sec) to reject
+        # accidental empty recordings. Compressed imports (.m4a/.aac/.mp3/.ogg —
+        # e.g. audio recorded on the phone) are far smaller than that floor, so
+        # only apply it to .wav; for other formats accept any non-trivial file.
+        if str(filename).lower().endswith('.wav'):
+            return size > self.min_audio_file_size()
+        return size > 256
 
     def min_audio_file_size(self):
         return self.fs * self.min_audio_length_ms / 1000

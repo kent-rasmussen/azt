@@ -167,16 +167,63 @@ class RecordButtonFrame(ui.Frame):
         self.makebuttons()
 class RecordnTranscribeButtonFrame(RecordButtonFrame):
     def _stop(self, event):
-        RecordButtonFrame._stop(self)
+        RecordButtonFrame._stop(self)  # records + addlink() writes the audio form
         if self.soundsettings.asrOK and self.recorder.file_write_OK:
             with self.task.waiting("Getting transcriptions..."):
                 self.recorder.get_transcriptions()
                 if self.recorder.error_text:
                     ui.error(self.recorder.error_text)
+                else:
+                    self.persist_drafts()  # ADR 0002: durable drafts for stage 3
         else:
             log.info("Not transcribing because asr is not OK!")
         if hasattr(self.recorder,'transcriptions'):
             self.maketranscriptionlabel()
+    def persist_drafts(self):
+        """Live-path write-through (ADR 0002): store this recording's ASR draft
+        candidates as annotations on the <analang>-x-audio form, so the selector
+        (stage 3) can rebuild them later with no live ASR. The bulk batch (stage
+        2) calls Form.persist_drafts directly with the same contract, so stage 3
+        can't tell which produced the drafts.
+
+        The audio form was just written by addlink()/addmediafields as a raw
+        node; getforms() re-wraps it as a lift.Form carrying persist_drafts."""
+        log.info("persist_drafts: called")
+        if getattr(self,'node',None) is None or not self.node.isnode():
+            log.info("persist_drafts: skipped — no LIFT node to attach drafts to")
+            return
+        rec=self.recorder
+        if not hasattr(rec,'transcriptions'):
+            log.info("persist_drafts: skipped — recorder has no transcriptions")
+            return
+        audiolang=self.program.params.audiolang()
+        self.node.getforms()  # pick up the audio form addlink() just wrote
+        form=self.node.forms.get(audiolang)
+        if form is None:
+            log.error(f"No '{audiolang}' audio form to persist ASR drafts onto.")
+            return
+        # tone_melody is scalar today (single tone source); the ADR tone-{repo}
+        # lane needs a per-repo dict, so only persist tone when it IS a dict —
+        # otherwise skip (the live tone var still shows it this session).
+        tone=rec.tone_melody if isinstance(getattr(rec,'tone_melody',None),dict) else {}
+        tx=getattr(rec,'transcriptions',None) or {}
+        ipa=getattr(rec,'transcriptions_ipa',None) or {}
+        md5=self._audio_md5()
+        form.persist_drafts(transcriptions=tx,ipa=ipa,tone=tone,md5=md5)
+        log.info(f"persist_drafts: {len(tx)} transcription + {len(ipa)} IPA + "
+                 f"{len(tone)} tone draft(s) -> '{audiolang}' audio form "
+                 f"(md5={'set' if md5 else 'none'})")
+        self.task.maybewrite()
+    def _audio_md5(self):
+        """md5 of the current audio file (ADR 0002 staleness key); None if it
+        can't be read, in which case persist_drafts skips the wipe/redraft gate."""
+        import hashlib
+        try:
+            with open(self._filenameURL,'rb') as fh:
+                return hashlib.md5(fh.read()).hexdigest()
+        except OSError as e:
+            log.error(f"Can't md5 audio '{self._filenameURL}': {e}")
+            return None
     def _redo(self, event):
         self.remove_transcriptions()
         RecordButtonFrame._redo(self)
@@ -563,6 +610,7 @@ class ASRModelSelectionWindow(ui.Window):
         self.kwarg_vars['sister_languages'].set(codes)
         self.save_kwarg_to_soundsettings('sister_languages',codes)
         self.last_selection_indexes=self.sisters_listbox.curselection()
+        self._persist_soundsettings()   # a sister-language choice sticks to disk
     def update_n_sisters(self):
         n=len(self.sister_options)-1
         if n:
@@ -575,6 +623,11 @@ class ASRModelSelectionWindow(ui.Window):
                                     ipadx=10,row=0,column=0)
         self.sisters_listbox=ui.ListBox(self.sister_frame,
                 command=self.save_sister,
+                # raw_command: this listbox is filled by manual .insert (not
+                # optionlist), so the default _on_select choice-mapping throws on
+                # an empty self.choices and save_sister never fires. save_sister
+                # reads curselection() directly, so bind it raw to <<ListboxSelect>>.
+                raw_command=True,
                 font='default',
                 selectmode='multiple',
                 optionlist=[], #If analang later, populate then
@@ -601,6 +654,18 @@ class ASRModelSelectionWindow(ui.Window):
     def save_kwargs_to_soundsettings(self):
         for k,v in self.kwarg_vars.items():
             self.save_kwarg_to_soundsettings(k,v)
+        self._persist_soundsettings()
+    def _persist_soundsettings(self):
+        """Write soundsettings (incl. asr_kwargs / sister_languages) to disk so
+        the choice persists across restarts. No-op until the window finishes
+        init, so setup-time saves don't write partial kwargs."""
+        if not getattr(self,'_ready',False):
+            return
+        try:
+            self.program.settings.storesettingsfile(setting='soundsettings')
+            log.info("Saved sound settings (asr_kwargs) to file.")
+        except Exception as e:
+            log.error(f"couldn't persist sound settings: {e}")
     def save_kwarg_to_soundsettings(self,k,v):
         if isinstance(v,ui.Variable):
             value=v.get()
@@ -759,6 +824,7 @@ class ASRModelSelectionWindow(ui.Window):
                             withdrawn=True
                             )
         self.program=task.program #needed to find praat
+        self._ready=False   # persistence off until init completes (below)
         self.soundsettings=self.program.soundsettings
         if 'cache_dir' in self.soundsettings.asr_kwargs and not file.exists(self.soundsettings.asr_kwargs['cache_dir']):
             log.error(f"Cache dir {self.soundsettings.asr_kwargs['cache_dir']} "
@@ -778,6 +844,7 @@ class ASRModelSelectionWindow(ui.Window):
             self.lang.set(self.analang)
             self.get_sister_options() #Not on every change, but on boot
         self.save_kwargs_to_soundsettings()
+        self._ready=True   # from here, changes persist to disk
         if not kwargs.get("withdrawn"):
             self.program.task.withdraw()
             self.deiconify()

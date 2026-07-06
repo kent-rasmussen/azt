@@ -1263,8 +1263,9 @@ class Image(): #PIL.ImageTk.PhotoImage is for display
         as two integers, so r = 0.7 = 7/10, because the zoom and subsample fns
         only work on integers. To not waste computation, resolution starts
         small and increases to what is needed to keep both integers positive"""
-        if not self.base_img:
-            log.info(f"Not scaline missing image for {self.filename}")
+        if not getattr(self,'base_img',None):
+            log.info(f"Not scaling missing image for "
+                     f"{getattr(self,'filename','?')}")
             return
         # def r_off_by(): #how far off does this integer division push this?
         #     return abs(r-(int(resolution*r)/int(resolution)))/r
@@ -1350,10 +1351,11 @@ class Image(): #PIL.ImageTk.PhotoImage is for display
         prep background preloader, which then prepare()s the resize and leaves the
         cheap PhotoImage compile() for the main thread. Default True (every
         existing main-thread caller is unchanged)."""
+        self.filename=filename
         if not filename:
             log.error("No filename given to Image")
+            self.base_img=None   # keep the attribute defined (scale() checks it)
             return
-        self.filename=filename
         try:
             with PIL.Image.open(filename) as self.base_img:
                 self.base_img.load()

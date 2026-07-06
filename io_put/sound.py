@@ -83,6 +83,8 @@ class SoundFilePlayer(object):
                 self.settings.audio_card_out=None
             return
     def streamclose(self):
+        if not hasattr(self,'stream'):
+            return   # nothing opened yet (e.g. first play) — not an error
         try:
             self.stream.stop_stream()
             self.stream.close()
@@ -91,13 +93,63 @@ class SoundFilePlayer(object):
     def getformat(self):
         format=self.pa.get_format_from_width(self.wf.getsampwidth())
         return max(format,2)
+    def _output_rate(self):
+        """A sample rate the current OUTPUT card supports, read from settings
+        (self.settings.cards['out'][audio_card_out] — the same dict play()'s
+        rate check uses). Prefer 44100, else the supported rate closest to it.
+        Falls back to 44100 if the card list can't be read."""
+        try:
+            rates=[int(r) for r in
+                   self.settings.cards['out'][self.settings.audio_card_out]]
+        except (KeyError, AttributeError, TypeError):
+            rates=[]
+        if not rates:
+            return 44100
+        if 44100 in rates:
+            return 44100
+        return min(rates, key=lambda r: abs(r-44100))
+    def _playable_wav(self, src):
+        """The PyAudio/wave playback path only reads WAV. If src is already WAV,
+        return it; if it's compressed (m4a/aac/… — e.g. audio recorded on the
+        phone), decode it to a cached temp WAV via ffmpeg (the decoder the ASR
+        path already uses), resampled to a rate the OUTPUT card supports.
+        Returns a WAV path, or None if decoding failed."""
+        if src.lower().endswith('.wav'):
+            return src
+        cache=getattr(self,'_decoded_cache',None)
+        if cache is None:
+            cache=self._decoded_cache={}
+        out=cache.get(src)
+        if out and file.exists(out):
+            return out
+        import subprocess, tempfile, os
+        out=os.path.join(tempfile.gettempdir(),
+                         os.path.basename(src)+'.play.wav')
+        rate=self._output_rate()
+        try:
+            # resample to a rate the OUTPUT card supports (phone recordings are
+            # often 48000, which some cards reject); -ac 1 mono.
+            subprocess.run(['ffmpeg','-y','-i',src,'-ac','1','-ar',str(rate),out],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                           check=True)
+        except Exception as e:
+            log.error("Couldn't decode '{}' for playback via ffmpeg: {}".format(
+                                                                        src,e))
+            return None
+        cache[src]=out
+        return out
     def play(self,event=None):
         log.debug("I'm playing the recording now ({})".format(self.filenameURL))
+        playURL=self._playable_wav(str(self.filenameURL))
+        if playURL is None:
+            log.error("Can't play '{}': couldn't decode it to WAV.".format(
+                                                            self.filenameURL))
+            return
         self.streamclose() #just in case
         timeout=5 #seconds or None
         process=False
         thread=False
-        self.wf = wave.open(str(self.filenameURL), 'rb')
+        self.wf = wave.open(playURL, 'rb')
         frames = self.wf.getnframes()
         rate=int(self.wf.getframerate())
         duration = frames / float(rate)

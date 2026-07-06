@@ -19,6 +19,58 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.5.0
+- NEW — **three-stage ASR** (record → bulk transcribe → select), so transcription
+  cost moves out of the per-word interaction into one unattended batch (ADR 0002,
+  docs/asr_bulk_transcription_design.md):
+  - **Storage** (`lift.Form.persist_drafts`/`load_drafts`/`wipe_drafts`): ASR
+    drafts are annotations on the `<analang>-x-audio` form — `{repo}`,
+    `ipa-{repo}`, `tone-{repo}`, `md5`; md5 mismatch (re-record) wipes+redrafts;
+    idempotent (re-runs fill gaps). Headless unit test in `tests/test_asr_drafts.py`.
+  - **Live path** now writes through `persist_drafts`, so drafts persist even in
+    today's fused record→transcribe flow.
+  - **Selector (stage 3)** sources from stored drafts, dedups by value (retaining
+    `value→[repos]`), orders buttons **most-frequent (consensus) first**, and
+    tallies **every** contributing repo on click. A display-time trigger shows the
+    stored drafts for an already-recorded word without re-running ASR.
+  - **Bulk task (stage 2)** on the **Advanced menu**: a worker-thread,
+    model-major/language-major sweep (each model once over all files; MMS switches
+    each language's adapter once) with a two-level throttled progress window
+    (Wayland-safe), **checkpointing** every ~100 files via the background writer
+    (crash/power-cut keeps finished work; resume fills gaps), **gap-fill** (skips
+    `(file,model)` already done — adding a model only runs the new one), and
+    Cancel/Done → task chooser. Progress denominators reflect what will actually
+    run (models × supported languages, minus the top-models filter), not lexicon
+    totals.
+- NEW — **"top models only"** toggle (context menu, next to Transcription
+  settings): limits both bulk and the selector to the most-used model/language
+  combos by usage tally (top 5, ties at #5 included, capped 20); off = all.
+- **Macrolanguage handling**: a macro sister language (e.g. `swa`) expands to ALL
+  its members (`swh`, `swc`) so both are transcribed; the macro's own missing MMS
+  adapter is silenced (members cover it); any unsupported language (macro, member,
+  or typo) is logged at info and its unit skipped quietly — no per-run nag.
+- FIX (core ASR): `is_cached` used a bare `cache_dir` (→ `self.cache_dir`);
+  `load_ctc_adaptor` no longer swallows a missing-adapter `OSError` silently;
+  **sister-language preflight** validates codes against available MMS adapters;
+  sister codes are mapped to ISO 639-3 (`en`→`eng`) so MMS actually loads them.
+- FIX (load path): analysis language is now detected from the RECORDINGS
+  (`<lang>-x-audio`) when the text forms are only LWC glosses — a recordings-only
+  import resolves to the object language, not `en`/`fr`; the database opens with no
+  segmental data yet (`checks()` handles an empty check list); `changedatabase`
+  no longer crashes when the LIFT chooser closes during setup; a selected
+  sister-language **subset now persists** to `audio.json` (the listbox bound raw,
+  bypassing the choice-mapping that threw on its empty `choices`).
+- FIX (audio/UI): `.m4a`/`.aac` recordings **play** on desktop (decode to a temp
+  WAV via ffmpeg at a rate the output card supports); `file_ok` accepts compressed
+  audio (WAV size-floor no longer applied to non-WAV); word navigation no longer
+  crashes on a 0-byte/corrupt/missing image (`Image` always defines `base_img`,
+  `scale()` guards it, `scale_image` falls back to NoImage).
+- NEW (tool) — `io_put/lift.clean_lift_file`/`clean_lift_tree`: de-pollute a LIFT
+  file — remove EXACT-duplicate sibling nodes (bad-merge artifacts), strip empty
+  forms and empty senses (keeping the definition parent), drop a lexical-unit form
+  whose lang echoes a gloss/definition lang, and REPORT near-duplicate nodes for
+  hand reconciliation. Report-only unless an output path is given.
+
 # Version 1.4.3
 - Terminology: the syllable Beg+count+End slice is a **profile class** (DERIVED
   from the three confirmed primitives — not a sorted group-of-groups), renamed

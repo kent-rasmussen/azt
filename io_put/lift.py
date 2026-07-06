@@ -1311,27 +1311,50 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                                             and self.language_codes['machine'] not in i]
         #remove those taken
         return [i for i in l_ordered if i not in self.analangs] 
+    def recorded_analang_candidates(self):
+        """Base language codes recovered from the audio/tone/phonetic form langs
+        by stripping their type code (e.g. 'nml-Zxxx-x-audio' -> 'nml'). The
+        language you RECORD/transcribe in IS the object language, so this
+        recovers the analang for a recordings-only import whose text forms are
+        only LWC glosses (en/fr/pt). Valid tags only, order preserved."""
+        out=[]
+        for langtype in ['audiolangs','tonelangs','phoneticlangs']:
+            code=self.language_codes[langtype]
+            for i in getattr(self,langtype,[]):
+                base=i.replace(code,'') if code else i
+                if base and langtags.tag_is_valid(base) and base not in out:
+                    out.append(base)
+        return out
     def find_plausible_analang(self,analang=None):
-        """This priviledges:
-        1. analang from settings (needed in a multilingual dictionary), if in data or no data
-        2. filename base, if in self.analangs
-        3. any language in self.analangs; i.e., valid without other codes
-        4. filename base, if valid
+        """Privileges, in order:
+        1. analang from settings (needed in a multilingual dictionary)
+        2. filename base, if it matches a language in the data (text OR recorded)
+        3. the language of the RECORDINGS/transcriptions — the object language,
+           recovered from audio/tone/phonetic langs; beats text-form langs, which
+           are often just LWC glosses (en/fr/pt)
+        4. any text-form language (self.analangs)
+        5. filename base, if a valid tag
         """
         for glang in {'fr','en'} & set(self.analangs):
             log.info(f"Examples of LWC lang {glang} found; is this correct?")
         # set up a code to try from the filename
         tryname=file.getfilenamebase(self.filename)
+        recorded=self.recorded_analang_candidates()
         # self.analangs have already passed langtags.tag_is_valid
-        if analang or not self.analangs: # The first use of analang, the name provided
+        if analang: # explicit setting wins
             log.info(_("Using analang={analang} from settings.").format(analang=analang))
             self.analang=analang
-        elif tryname in self.analangs:
-            log.info(_("Found file name base in possible analysis languages; "
-                    "assuming that and moving on. To select another "
-                    "analysis language for this database, change it in the "
-                    "settings."))
+        elif tryname in self.analangs or tryname in recorded:
+            log.info(_("Found file name base in the data's languages; assuming "
+                    "that and moving on. To select another analysis language for "
+                    "this database, change it in the settings."))
             self.analang=tryname
+        elif recorded:
+            log.info(_("Using '{a}' — the language of the recordings/transcriptions "
+                    "— as the analysis language (the text forms look like LWC "
+                    "glosses). Change it in settings if this is wrong."
+                    ).format(a=recorded[0]))
+            self.analang=recorded[0]
         elif self.analangs:
             self.analang=self.analangs[0] #if multilingual, pick the most common if not in settings
         elif langtags.tag_is_valid(tryname): #since not limited to self.analangs anymore
@@ -2416,8 +2439,81 @@ class Form(Node):
         elif value:
             self.annotations[name]=Annotation(self,attrib={'name':name,
                                                         'value':value})
-        else:                                                        
+        else:
             return None
+    # --- ASR draft storage (ADR 0002) ---------------------------------------
+    # The <analang>-x-audio form carries ASR transcription drafts as its own
+    # annotations, keyed by ASR repo (provenance):
+    #     {repo}       -> postprocessed transcription text
+    #     ipa-{repo}   -> IPA transcription
+    #     tone-{repo}  -> tone melody
+    #     md5          -> fingerprint of the audio file the drafts describe
+    # Presence of a {repo} annotation IS the record that that model has run on
+    # this file. Both the live record->transcribe path and the bulk batch write
+    # through persist_drafts; the selector (stage 3) reads via load_drafts. See
+    # docs/adr/0002-asr-drafts-as-audio-form-annotations.md.
+    ASR_MD5='md5'
+    ASR_IPA_PREFIX='ipa-'
+    ASR_TONE_PREFIX='tone-'
+    def load_drafts(self):
+        """Read stored ASR drafts back off this audio form. Inverse of
+        persist_drafts. Returns (transcriptions, ipa, tone, md5) where the first
+        three are {repo: text} dicts and md5 is the stored fingerprint (or None).
+        A legacy form with no ASR annotations yields three empty dicts + None."""
+        if not hasattr(self,'annotations'):
+            self.getannotations()
+        transcriptions,ipa,tone={},{},{}
+        md5=None
+        for name in self.annotations:
+            value=self.annotationvalue(name)
+            if name==self.ASR_MD5:
+                md5=value
+            elif name.startswith(self.ASR_IPA_PREFIX):
+                ipa[name[len(self.ASR_IPA_PREFIX):]]=value
+            elif name.startswith(self.ASR_TONE_PREFIX):
+                tone[name[len(self.ASR_TONE_PREFIX):]]=value
+            elif not name.isdigit():   # digit names = revert-history, not ASR
+                transcriptions[name]=value
+        return transcriptions,ipa,tone,md5
+    def wipe_drafts(self):
+        """Remove every ASR-namespace annotation from THIS form node (staleness
+        redraft). Bounded to this node per ADR 0002 — annotations on other forms
+        (e.g. revert-history 0,1,2 on the analang data form) are a different node
+        and untouched. Digit-named annotations here are preserved defensively."""
+        if not hasattr(self,'annotations'):
+            self.getannotations()
+        for name in list(self.annotations):
+            if name.isdigit():
+                continue
+            try:
+                self.remove(self.annotations[name])
+            except ValueError:
+                pass
+        self.getannotations()
+    def persist_drafts(self,transcriptions=None,ipa=None,tone=None,md5=None):
+        """Write ASR drafts as annotations on this audio form (ADR 0002). If md5
+        is given and differs from the stored md5 (or none is stored — e.g. a
+        re-recording), wipe this form's ASR annotations first: latest audio wins.
+        Empty candidate strings are skipped. Idempotent: re-running with more
+        models just fills gaps."""
+        if not hasattr(self,'annotations'):
+            self.getannotations()
+        transcriptions=transcriptions or {}
+        ipa=ipa or {}
+        tone=tone or {}
+        if md5 is not None and self.annotationvalue(self.ASR_MD5)!=md5:
+            self.wipe_drafts()
+        for repo,text in transcriptions.items():
+            if text:
+                self.annotationvalue(repo,text)
+        for repo,text in ipa.items():
+            if text:
+                self.annotationvalue(self.ASR_IPA_PREFIX+repo,text)
+        for repo,text in tone.items():
+            if text:
+                self.annotationvalue(self.ASR_TONE_PREFIX+repo,text)
+        if md5 is not None:
+            self.annotationvalue(self.ASR_MD5,md5)
     def textquoted(self):
         r=quote(self.textnode.text)
         shownot=['lc','example','Frame translation']#lx?
@@ -4400,6 +4496,231 @@ def profilelang(analang,machine=False): #Machine for script compatability
      return ''.join(bits)
 def quote(x):
     return "‘"+str(x)+"’"
+# ---- LIFT de-duplication cleanup (bad-merge artifacts) --------------------
+# Bad merges have left EXACT-duplicate nodes (whole entries/senses/glosses/forms
+# copied verbatim). clean_lift_tree removes ONLY deep-identical sibling nodes
+# (modulo insignificant whitespace), keeping the first, and SEPARATELY reports
+# sibling nodes that are mostly-but-not-identical, so those can be reconciled by
+# hand or a follow-up rule. Nothing is written unless an output path is given
+# (so no-outpath == a safe report-only dry run). Wire __main__ when ready, e.g.:
+#     if __name__=='__main__':
+#         import sys
+#         clean_lift_file(sys.argv[1], sys.argv[2] if len(sys.argv)>2 else None)
+def _clean_norm_text(el):
+    """The element's OWN direct text — usually just inter-tag whitespace in
+    LIFT. Used only for the deep signature; for meaningful content see
+    _clean_content."""
+    return (el.text or '').strip()
+def _clean_content(el):
+    """Meaningful LIFT text: the <text> child's content (form, gloss, field, …),
+    NOT el.text. LIFT stores content in a <text> CHILD, so el.text is whitespace
+    — testing it treated every form/gloss as empty. THIS is what 'empty' means."""
+    return ''.join(el.itertext()).strip()
+# forms in these language scripts carry recordings/derived data — never 'empty',
+# never strip (e.g. nml-Zxxx-x-audio):
+_CLEAN_PROTECTED_CODES=tuple(c for c in (langtags.audio_code,
+                        langtags.phonetic_code, langtags.tone_code,
+                        langtags.machine_transcription_code) if c)
+def _clean_deep_sig(el):
+    """Hashable deep signature for EXACT comparison: tag, sorted attributes,
+    normalized own text, and children IN ORDER. A bad-merge copy is verbatim, so
+    order matters; a merely reordered near-copy is NOT called exact and falls to
+    the near-duplicate report instead."""
+    return (el.tag,
+            tuple(sorted(el.attrib.items())),
+            _clean_norm_text(el),
+            tuple(_clean_deep_sig(c) for c in el))
+def _clean_ident(el):
+    """Short human label of an element, for the report."""
+    bits=[el.tag]
+    for k in ('id','guid','lang','name','type','value','href'):
+        if k in el.attrib:
+            bits.append(f"{k}={el.attrib[k]}")
+    t=_clean_content(el)
+    if t:
+        bits.append(f"text={t!r}")
+    return ' '.join(bits)
+def _clean_near_key(el):
+    """Identity key that a bad-merge near-duplicate would share (so we only
+    compare like with like, and stay O(n) instead of O(n^2) over all siblings)."""
+    a=el.attrib
+    return a.get('guid') or a.get('id') or a.get('lang') or a.get('name') or ''
+def _clean_similarity(a,b):
+    """0..1 similarity of two same-tag elements: fraction of children shared (by
+    deep signature) blended with own attribute/text agreement. 1.0 == exact."""
+    if a.tag!=b.tag:
+        return 0.0
+    if _clean_deep_sig(a)==_clean_deep_sig(b):
+        return 1.0
+    ac=collections.Counter(_clean_deep_sig(c) for c in a)
+    bc=collections.Counter(_clean_deep_sig(c) for c in b)
+    inter=sum((ac & bc).values()); union=sum((ac | bc).values())
+    child=inter/union if union else 1.0
+    keys=set(a.attrib)|set(b.attrib)
+    own_match=sum(1 for k in keys if a.attrib.get(k)==b.attrib.get(k))
+    own_match+=1 if _clean_norm_text(a)==_clean_norm_text(b) else 0
+    own=own_match/(len(keys)+1)
+    score=(0.7*child+0.3*own) if (len(a) or len(b)) else own
+    return round(score,4)
+def _clean_child_diff(a,b):
+    """(only_in_a, only_in_b): idents of child nodes whose deep signature is in
+    one element but not the other — the concrete differences to reconcile."""
+    aset={_clean_deep_sig(c) for c in a}
+    bset={_clean_deep_sig(c) for c in b}
+    only_a=[_clean_ident(c) for c in a if _clean_deep_sig(c) not in bset]
+    only_b=[_clean_ident(c) for c in b if _clean_deep_sig(c) not in aset]
+    return only_a,only_b
+def _clean_is_empty_sense(sense):
+    """A sense with nothing meaningful: no glossed text, no definition/field
+    text, and no grammatical-info, example, illustration, or trait."""
+    if any(_clean_content(g) for g in sense.findall('gloss')):
+        return False
+    if any(_clean_content(d) for d in sense.findall('definition')):
+        return False
+    if any(_clean_content(f) for f in sense.findall('field')):
+        return False
+    for t in ('grammatical-info','example','illustration','trait'):
+        if sense.find(t) is not None:
+            return False
+    return True
+def _clean_entry_langs(entry):
+    """Langs carried by NON-empty glosses and definition forms in an entry — the
+    LWC languages a lexical-unit form must not merely echo (Rule 3)."""
+    langs=set()
+    for g in entry.iter('gloss'):
+        if g.get('lang') and _clean_content(g):
+            langs.add(g.get('lang'))
+    for d in entry.iter('definition'):
+        for f in d.findall('form'):
+            if f.get('lang') and _clean_content(f):
+                langs.add(f.get('lang'))
+    return langs
+def _clean_removal_reason(child, parent_tag, entry_langs,
+                          remove_empty, apply_rule3):
+    """Why (if at all) a child should be removed, independent of duplication.
+    Deliberately narrow (per field testing):
+      * Rule 3: a lexical-unit <form> whose lang echoes a gloss/definition lang;
+      * an EMPTY <form> (no <text> content and no annotation) — but NEVER a
+        recorded/derived form (audio/tone/phonetic/machine) and NEVER a form
+        inside a <field> (e.g. SILCAWL data);
+      * an empty <sense> (safety net).
+    Glosses are NEVER removed (they're needed), and a <definition> element is
+    KEPT even when its empty <form> children are stripped by the empty-form rule.
+    Returns a short reason string, or None to keep."""
+    tag=child.tag
+    if tag=='form':
+        lang=child.get('lang') or ''
+        if any(code in lang for code in _CLEAN_PROTECTED_CODES):
+            return None                       # recorded/derived form: keep
+        if parent_tag=='field':
+            return None                       # field data (e.g. SILCAWL): keep
+        if (apply_rule3 and parent_tag=='lexical-unit'
+                and lang in entry_langs):
+            return 'lexical-unit form duplicates a gloss/definition lang'
+        if (remove_empty and not _clean_content(child)
+                and child.find('annotation') is None):
+            return 'empty form'
+    elif remove_empty and tag=='sense' and _clean_is_empty_sense(child):
+        return 'empty sense'
+    return None
+def clean_lift_tree(root, near_threshold=0.6, remove_exact=True,
+                    remove_empty=True, apply_rule3=True):
+    """In place over a parsed LIFT tree:
+      * remove EXACT-duplicate sibling nodes (deep-identical), keeping the first;
+      * remove empty <form>s and empty <sense>s; strip empty <form> children of
+        a <definition> but KEEP the definition; NEVER remove glosses, nor
+        recorded/derived forms (audio/tone/phonetic/machine), nor <field> forms
+        (remove_empty);
+      * remove a lexical-unit <form lang=L> when L is a gloss/definition lang in
+        the same entry — the LWC-in-lexical-unit pollution (apply_rule3);
+      * collect NEAR-duplicate sibling pairs (same tag + shared identity key,
+        similarity in [near_threshold, 1.0)) for manual/follow-up reconciliation.
+    Returns (removed, near): lists of report dicts. remove_exact=False keeps
+    exact duplicates (still reported); the other rules act independently."""
+    removed=[]; near=[]
+    def walk(parent, where, entry_langs):
+        # 1. rule-based removals: Rule 3 + empty content (predicate per node)
+        if remove_empty or apply_rule3:
+            for child in list(parent):
+                reason=_clean_removal_reason(child, parent.tag, entry_langs,
+                                             remove_empty, apply_rule3)
+                if reason:
+                    removed.append({'where':where,'node':_clean_ident(child),
+                                    'reason':reason,'removed':True})
+                    parent.remove(child)
+        # 2. exact-duplicate removal + near-duplicate report, per tag group
+        by_tag=collections.OrderedDict()
+        for child in list(parent):
+            by_tag.setdefault(child.tag,[]).append(child)
+        for tag,kids in by_tag.items():
+            if len(kids)<2:
+                continue
+            seen={}; survivors=[]
+            for child in kids:
+                sig=_clean_deep_sig(child)
+                if sig in seen:                 # EXACT duplicate of an earlier sibling
+                    removed.append({'where':where,'node':_clean_ident(child),
+                                    'reason':'exact duplicate',
+                                    'removed':bool(remove_exact)})
+                    if remove_exact:
+                        parent.remove(child)
+                    continue
+                seen[sig]=child; survivors.append(child)
+            # NEAR duplicates: compare only survivors that share an identity key
+            buckets=collections.OrderedDict()
+            for s in survivors:
+                buckets.setdefault(_clean_near_key(s),[]).append(s)
+            for key,group in buckets.items():
+                for i in range(len(group)):
+                    for j in range(i+1,len(group)):
+                        sc=_clean_similarity(group[i],group[j])
+                        if near_threshold<=sc<1.0:
+                            only_a,only_b=_clean_child_diff(group[i],group[j])
+                            near.append({'where':where,'tag':tag,'score':sc,
+                                        'a':_clean_ident(group[i]),
+                                        'b':_clean_ident(group[j]),
+                                        'only_in_a':only_a,'only_in_b':only_b})
+        # 3. recurse into survivors, carrying the enclosing entry's gloss/def langs
+        for child in list(parent):
+            child_langs=(_clean_entry_langs(child) if child.tag=='entry'
+                         else entry_langs)
+            label=child.tag
+            ident=child.get('guid') or child.get('id')
+            if ident:
+                label+=f"[{ident}]"
+            walk(child, (where+'/'+label) if where else label, child_langs)
+    walk(root,'',set())
+    return removed,near
+def clean_lift_file(inpath, outpath=None, near_threshold=0.6,
+                    remove_exact=True, remove_empty=True, apply_rule3=True,
+                    report=True):
+    """Parse a LIFT file, apply the cleanup rules, report near-duplicates, and
+    (only if outpath is given) write the cleaned tree — so leaving outpath off is
+    a safe report-only dry run. Returns (removed, near)."""
+    tree=et.parse(inpath)
+    removed,near=clean_lift_tree(tree.getroot(), near_threshold,
+                                 remove_exact, remove_empty, apply_rule3)
+    if report:
+        applied=sum(1 for r in removed if r.get('removed'))
+        print(f"# clean_lift: {inpath}")
+        print(f"# nodes removed: {applied} (of {len(removed)} flagged)")
+        for r in removed:
+            kept='' if r.get('removed') else '  [kept: remove_exact=False]'
+            print(f"  [{r.get('reason','dup')}]  {r['where']}  ::  {r['node']}{kept}")
+        print(f"# near-duplicates to review (>= {near_threshold}): {len(near)}")
+        for n in sorted(near,key=lambda x:-x['score']):
+            print(f"  NEAR {n['score']}  {n['where']}  ({n['tag']})")
+            print(f"        a: {n['a']}")
+            print(f"        b: {n['b']}")
+            if n['only_in_a']:
+                print(f"        only in a: {n['only_in_a']}")
+            if n['only_in_b']:
+                print(f"        only in b: {n['only_in_b']}")
+    if outpath:
+        tree.write(outpath, encoding='UTF-8', xml_declaration=True)
+        if report:
+            print(f"# wrote cleaned tree to {outpath}")
+    return removed,near
 def textornone(x):
     try:
         return x.text

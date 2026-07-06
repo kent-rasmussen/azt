@@ -423,6 +423,10 @@ class TaskChooser(Task):
             # log.info("'verification' not in '{}'".format(f))
         log.info(_("Analysis of what you're done with: {status}").format(status=self.donew))
         log.info(_("You're done enough with: {status}").format(status=self.doneenough))
+    def bulk_transcribe(self):
+        """Stage-2 bulk ASR over every recording (Advanced menu)."""
+        from tasks.bulk_asr import BulkASR
+        BulkASR(self.program).run()
     def changedatabase(self):
         log.debug("Preparing to change database name.")
         try:
@@ -433,7 +437,15 @@ class TaskChooser(Task):
         log.info(_("Current database: {name}").format(name=curname))
         # window=LiftChooser(self,file.getfilenames())
         window=LiftChooser(self.program)
-        window.wait_window(window)
+        # LiftChooser can close itself during setup (e.g. selection made, or the
+        # window destroyed); wait_window() on a gone widget raises TclError
+        # ("bad window path name") and killed changedatabase. Only wait if it's
+        # still alive.
+        try:
+            if window.winfo_exists():
+                window.wait_window(window)
+        except Exception as e:
+            log.info(_("LiftChooser already closed; not waiting ({e})").format(e=e))
         if hasattr(self,'name') and self.name:
             self.filename=self.name
         # text=_("{name} will now exit; restart to work with the new database."

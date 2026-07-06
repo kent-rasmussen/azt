@@ -9,6 +9,8 @@ import whisper
 import torch
 import datetime, copy
 from data import whisper_codes_names
+from data import ethnologue_macrolanguages_members
+_MACRO_MEMBERS = ethnologue_macrolanguages_members.dict  # {macro: [member codes]}
 from transformers import pipeline
 from huggingface_hub import try_to_load_from_cache, _CACHED_NO_EXIST
 # from backend import langtags
@@ -78,21 +80,48 @@ class ASRtoText(object):
     def load_katyayego(self,just_tone=False):
         model="katyayego/Wav2Vec2Phoneme-CSfinetune"
         self.load_ctc_model(model)
+    def _mms_lang(self,code=None):
+        """MMS adapters are keyed by ISO 639-3 (e.g. 'eng'), but sister-language
+        defaults arrive as raw tags (e.g. 'en'). Map to alpha3 so the adapter
+        actually loads; fall back to the raw code if the mapping fails."""
+        code=self.sister_language if code is None else code
+        if not code:
+            return code
+        try:
+            import langcodes
+            return langcodes.Language.get(code).to_alpha3() or code
+        except Exception:
+            return code
     def load_ctc_adaptor(self):
         """This doesn't impact self.model"""
+        if not hasattr(self,'_adapter_failures'):
+            self._adapter_failures=set()
+        code=self._mms_lang()
         for repo in [i for i in self.models
                         if i in self.language_adaptor_models]:
             try:
                 # log.info("Currently using "
                 #     f"{self.models[repo].model.target_lang} adaptor")
-                self.models[repo].model.load_adapter(self.sister_language,
+                self.models[repo].model.load_adapter(code,
                                                     **self.model_kwargs)
-                self.models[repo].tokenizer.set_target_lang(
-                                                    self.sister_language)
-                # print(f"Loaded {repo} model {self.sister_language} "
-                #         "adaptor")
+                self.models[repo].tokenizer.set_target_lang(code)
+                # print(f"Loaded {repo} model {code} adaptor")
             except OSError as e:
-                pass
+                # Don't swallow silently: a code with no adapter (e.g. 'swa' —
+                # MMS uses 'swh') otherwise "succeeds" in ~0s producing nothing.
+                # Record + warn so preflight_sister_languages can report it and
+                # the bulk sweep can skip it.
+                self._adapter_failures.add((repo,self.sister_language))
+                arrow=f" (→{code})" if code!=self.sister_language else ""
+                # An unsupported language (no MMS adapter) — macro or member or
+                # typo — is routine: log and move on, don't nag every run. The
+                # once-per-run preflight summary is where they're all reported.
+                if self._macro_covered_by_members(self.sister_language):
+                    log.info(f"No '{self.sister_language}'{arrow} MMS adapter for "
+                             f"{repo} (macrolanguage); its members cover it.")
+                else:
+                    log.info(f"No '{self.sister_language}'{arrow} MMS adapter for "
+                             f"{repo}; skipping this language.")
     def load_allosaurus(self):
         from allosaurus.app import read_recognizer
         repo='allosaurus'
@@ -350,10 +379,12 @@ class ASRtoText(object):
         elif self.model.__class__.__name__ in [
                                         'AutomaticSpeechRecognitionPipeline'
                                             ]:
+            _slang=self._mms_lang()
             if (self.sister_language and 'facebook/' in self.repo and
-            self.model.model.target_lang != self.sister_language):
+            self.model.model.target_lang != _slang):
                 log.info(f"Model lang {self.model.model.target_lang} != "
-                    f"sister lang {self.sister_language}; not inferring.")
+                    f"sister lang {self.sister_language} (→{_slang}); "
+                    "not inferring.")
                 return self.do_not_return_data()
             self.lang=None
             # data,samplerate=soundfile.read(input_file)
@@ -370,6 +401,196 @@ class ASRtoText(object):
             return self.do_not_return_data()
         else:
             return self.return_data()
+    def set_do_not_return(self):
+        """Models whose output to suppress given the current show_tone/return_ipa
+        flags. Extracted from get_transcriptions so the bulk path shares it."""
+        self.do_not_return={i for i in self.models_that_give_tone
+                            for k,v in self.repo_modelnames.items()
+                            if not getattr(self,k)
+                            and getattr(self,'show_tone')
+                            and v == i and k != 'show_tone'
+                        }
+        self.do_not_return|={i for i in self.models_that_give_IPA
+                            for k,v in self.repo_modelnames.items()
+                            if not getattr(self,k)
+                            and v == i
+                        }
+    def _sister_members(self, code):
+        """Member languages of a macrolanguage (swa -> [swh, swc, …]); [] if the
+        code is not a macrolanguage."""
+        return list(_MACRO_MEMBERS.get(code, []) or [])
+    def effective_sister_languages(self):
+        """Sister languages to actually transcribe: each requested code PLUS, for
+        any macrolanguage (e.g. swa), ALL its member languages (swh, swc, …). MMS
+        keys individual codes, so a macro alone produces nothing — its members
+        provide the coverage, and if swa is asked for, both swh AND swc run."""
+        out, seen = [], set()
+        for code in (self.sister_languages or []):
+            for c in [code] + self._sister_members(code):
+                if c and c not in seen:
+                    seen.add(c); out.append(c)
+        return out
+    def _macro_covered_by_members(self, code):
+        """True if `code` is a macrolanguage whose member(s) are also being
+        transcribed — so its own missing MMS adapter is harmless (don't warn)."""
+        members = self._sister_members(code)
+        return bool(members and set(members) & set(self.effective_sister_languages()))
+    def preflight_sister_languages(self):
+        """Validate the EFFECTIVE sister-language codes (macros expanded to their
+        members) against available MMS adapters before a bulk run. A macrolanguage
+        with no adapter is NOT reported unusable when its members cover it — its
+        absence is expected (MMS keys individual codes). Returns (usable, unusable);
+        requires MMS models loaded (else all pass, moot)."""
+        usable,unusable=set(),set()
+        for code in sorted(set(self.effective_sister_languages())):
+            self.sister_language=code
+            self._adapter_failures=set()
+            self.load_ctc_adaptor()
+            if self._adapter_failures:
+                if not self._macro_covered_by_members(code):
+                    unusable.add(code)
+            else:
+                usable.add(code)
+        self.sister_language=None
+        if unusable:
+            log.info(f"Sister-language codes with no MMS adapter (skipped): "
+                     f"{sorted(unusable)}. Usable: {sorted(usable)}.")
+        return usable,unusable
+    def transcribe_files_bulk(self,files,progress_cb=None,should_cancel=None,
+                              checkpoint_cb=None,checkpoint_every=100,prior=None,
+                              keep_keys=None,usable_langs=None):
+        """Stage-2 MODEL-MAJOR, LANGUAGE-MAJOR sweep (asr_bulk_transcription_design.md).
+        Each model runs across ALL files before the next; for MMS (adapter)
+        models each sister language's adapter loads ONCE then sweeps every file —
+        collapsing the per-file adapter thrash of the file-major live path.
+        Models persist in self.models between files (loaded once).
+
+        Returns {file: (transcriptions, ipa)} with {repo: text} dicts, for the
+        caller to persist via Form.persist_drafts (both stages write identical
+        annotations, so the selector can't tell which produced them).
+
+        progress_cb(model=,lang=,file_idx=,nfiles=,unit_idx=,nunits=) fires per
+        file (throttle in the caller); should_cancel() is polled to abort early.
+        checkpoint_cb(snapshot) fires after each unit with a COPY of the results
+        so far — the caller persists it so a crash/power-cut mid-run keeps what's
+        done (resume just fills gaps; both are idempotent).
+        prior={file: set of decorated repo keys already stored for that file's
+        CURRENT md5}. A (file, model[/lang]) whose key is already present is
+        skipped (gap-fill) — so adding a model only runs the new one, and resume
+        skips finished work. Whisper's key depends on the DETECTED language and
+        can't be predicted, so those are never skipped."""
+        progress_cb=progress_cb or (lambda **k: None)
+        should_cancel=should_cancel or (lambda: False)
+        prior=prior or {}
+        self.set_do_not_return()
+        files=list(files)
+        results={f:({},{}) for f in files}
+        models=list(self.models)
+        spec=[m for m in models if m in self.language_specifiable_models]
+        nonspec=[m for m in models if m not in self.language_specifiable_models]
+        langs=sorted(set(self.effective_sister_languages()))  # macros -> members
+        # one "unit" == one (model) or (model,language) sweep over all files
+        units=[(m,None) for m in nonspec]+[(m,l) for m in spec
+                                            for l in (langs or [None])]
+        processed=[0]   # files inferred across all units, for the N-file cadence
+        touched=set()   # recordings we actually ran ASR on this run (the denom)
+        def snapshot():
+            # a COPY of results-so-far; made on THIS (worker) thread, so no race
+            return {f:(dict(tx),dict(ip))
+                    for f,(tx,ip) in results.items() if tx or ip}
+        def expected_key(repo,lang):
+            # the decorated draft key this (repo,lang) WOULD store, when it's
+            # predictable — so we can gap-fill/skip. None => unpredictable
+            # (whisper decorates by DETECTED language), so never skip those.
+            if repo not in self.language_specifiable_models:
+                return repo                       # non-language model: bare key
+            if repo in self.language_adaptor_models and lang:
+                return f"{repo} ({self._mms_lang(lang)}!)"   # MMS: adapter lang
+            return None
+        def sweep(repo,lang,unit_idx):
+            self.repo=repo
+            self.model=self.models[repo]
+            self.sister_language=lang
+            unit_key=expected_key(repo,lang)
+            # 'top models only': skip a predictable unit whose key isn't in the
+            # keep set. Whisper's key is unpredictable (detected lang) so it runs
+            # and is filtered on output below.
+            if keep_keys is not None and unit_key and unit_key not in keep_keys:
+                return True
+            def done_already(f):
+                return bool(unit_key) and unit_key in prior.get(f,())
+            if unit_key and all(done_already(f) for f in files):
+                return True   # whole unit already stored — don't even load adapter
+            if repo in self.language_adaptor_models and lang:
+                self.load_ctc_adaptor()  # switch adapter ONCE for this language
+                # No adapter for this language (unsupported macro/member/typo) —
+                # skip its dead unit (logged above) rather than infer nothing over
+                # every file.
+                if (repo,lang) in getattr(self,'_adapter_failures',set()):
+                    return True
+            for i,f in enumerate(files):
+                if should_cancel():
+                    return False
+                if done_already(f):
+                    progress_cb(model=repo,lang=lang,file_idx=i,nfiles=len(files),
+                                unit_idx=unit_idx,nunits=len(units))
+                    continue   # gap-fill: this model already drafted this file
+                try:
+                    r,text,ipa=self.infer(str(f))  # pipeline wants a path str
+                except Exception as e:
+                    log.error(f"bulk infer failed on '{f}' with {repo}"
+                                f"{'/'+lang if lang else ''}: {e}")
+                    r,text,ipa=None,'',''
+                touched.add(f)   # inference actually ran on this recording
+                tx,ip=results[f]
+                if r and (keep_keys is None or r in keep_keys):
+                    if text: tx[r]=text        # output filter (also catches whisper)
+                    if ipa: ip[r]=ipa
+                processed[0]+=1
+                # checkpoint every N files so a crash keeps recent work, not just
+                # once per (whole-wordlist) unit
+                if (checkpoint_cb and checkpoint_every
+                        and processed[0]%checkpoint_every==0):
+                    checkpoint_cb(snapshot())
+                progress_cb(model=repo,lang=lang,file_idx=i,nfiles=len(files),
+                            unit_idx=unit_idx,nunits=len(units))
+            return True
+        # Show a correct "of N": pre-drop units that WON'T run — top-filtered,
+        # unsupported language (per preflight's usable set), or already fully done
+        # (gap-fill) — so nunits reflects what will actually be transcribed.
+        def _will_run(repo,lang):
+            # Keep every model/language that STRUCTURALLY runs — the top-models
+            # set and supported languages. Gap-fill (already-transcribed
+            # recordings) is a per-recording skip INSIDE the sweep, so it must NOT
+            # drop a whole model from the count (that made it show "1" not "16").
+            key=expected_key(repo,lang)
+            if keep_keys is not None and key and key not in keep_keys:
+                return False
+            if (repo in self.language_adaptor_models and lang
+                    and usable_langs is not None and lang not in usable_langs):
+                return False
+            return True
+        units=[u for u in units if _will_run(*u)]
+        for unit_idx,(repo,lang) in enumerate(units):
+            if should_cancel():
+                break
+            # announce the unit so the display advances through ALL units — a unit
+            # fully skipped by gap-fill wouldn't otherwise update progress and the
+            # bar would look stuck
+            progress_cb(model=repo,lang=lang,file_idx=0,nfiles=len(files),
+                        unit_idx=unit_idx,nunits=len(units))
+            done=sweep(repo,lang,unit_idx)
+            if checkpoint_cb:
+                checkpoint_cb(snapshot())   # flush this unit's tail (< N files)
+            if not done:
+                break
+        stuck=[f for f in touched if not (results[f][0] or results[f][1])]
+        if stuck:
+            log.info("bulk ASR: %d recording(s) ran but produced NO draft "
+                     "(empty/corrupt/silent audio?): %s",
+                     len(stuck), [str(f) for f in stuck])
+        self._bulk_touched=touched   # how many recordings this run actually processed
+        return results
     def get_transcriptions(self,file):
         """If language(s) given, this currently iterates over languages (or not). Should probably rethink."""
         def add_values_no_dup(x,y,z):
@@ -392,19 +613,7 @@ class ASRtoText(object):
                 self.transcriptions_ipa[x]=z
         self.transcriptions={}
         self.transcriptions_ipa={}
-        kwargs_that_give_tone=[k for k,v in self.repo_modelnames.items()
-                                    if v in self.models_that_give_tone]
-        self.do_not_return={i for i in self.models_that_give_tone
-                            for k,v in self.repo_modelnames.items()
-                            if not getattr(self,k)
-                            and getattr(self,'show_tone')
-                            and v == i and k != 'show_tone'
-                        }
-        self.do_not_return|={i for i in self.models_that_give_IPA
-                            for k,v in self.repo_modelnames.items()
-                            if not getattr(self,k)
-                            and v == i
-                        }
+        self.set_do_not_return()
         # log.info(f"{self.repo_modelnames=}")
         # log.info(f"{self.models_that_give_IPA=}")
         # log.info(f"{self.do_not_return=}")
@@ -415,7 +624,7 @@ class ASRtoText(object):
             self.sister_language=None
             for x,y,z in self.inferall_lang_nonspec(file):
                 add_values_no_dup(x,y,z)
-            for self.sister_language in set(self.sister_languages):
+            for self.sister_language in set(self.effective_sister_languages()):
                 adaptors=[v.model.target_lang for k,v in self.models.items()
                                         if k in self.language_adaptor_models]
                 if set(adaptors)-set(self.sister_language):
@@ -481,7 +690,7 @@ class ASRtoText(object):
             log.info(f"ASR model {repo} unloaded.")
     def is_cached(self,model_name):
         location=try_to_load_from_cache(model_name,
-                                    cache_dir,
+                                    self.cache_dir,
                                 repo_type='model' #by default
                             )
         if location is _CACHED_NO_EXIST:
@@ -596,7 +805,8 @@ class ASRtoText(object):
         self.language_specifiable_models=(self.language_adaptor_models+
                                             self.language_kwarg_models)
         all_kwargs=set(self.repo_modelnames)|set(self.postprocess_kwargs)|set(
-                                ['sister_languages','cache_dir','show_tone'])
+                        ['sister_languages','cache_dir','show_tone',
+                         'top_models_only'])
         if set(kwargs)-all_kwargs:
             log.error(f"unknown kwargs! ({set(kwargs)-all_kwargs})")
         else:
