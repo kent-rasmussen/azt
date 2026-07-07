@@ -213,7 +213,7 @@ class TaskChooser(Task):
     def convertlxtolc(self,window):
         try:
             window.destroy()
-            backup=self.filename+'_backupBeforeLx2LcConversion'
+            backup=self.program.filename+'_backupBeforeLx2LcConversion'
             self.program.db.write(backup)
             self.program.db.convertlxtolc()
             # self.program.db.write(self.file.name+str(now()))
@@ -224,7 +224,7 @@ class TaskChooser(Task):
                     "({backup}) to confirm this did what you wanted, before "
                     "opening {name} again. In case there are any issues, the "
                     "log file is also saved in {log}").format(name=self.program.name,
-                                                file=self.filename,
+                                                file=self.program.filename,
                                                 backup=backup,
                                                 log=conversionlogfile),
                     title=_("Conversion Done!"),
@@ -446,8 +446,9 @@ class TaskChooser(Task):
                 window.wait_window(window)
         except Exception as e:
             log.info(_("LiftChooser already closed; not waiting ({e})").format(e=e))
-        if hasattr(self,'name') and self.name:
-            self.filename=self.name
+        # LiftChooser stores the selection in program.filename
+        # (setfilenameandcontinue); TaskChooser has no filename attribute.
+        newname=self.program.filename
         # text=_("{name} will now exit; restart to work with the new database."
         #         "").format(name=self.program.name)
         # ErrorNotice(text,title=_("Change Database"),wait=True)
@@ -455,8 +456,8 @@ class TaskChooser(Task):
         # subprocess.call?
         # __name__
         # main()
-        log.info(_("Current database: {name}").format(name=self.filename))
-        if self.filename and curname != self.filename:
+        log.info(_("Current database: {name}").format(name=newname))
+        if newname and curname != newname:
             log.info(_("User selected a new database; restarting with it."))
             self.program.restart()
         else:
