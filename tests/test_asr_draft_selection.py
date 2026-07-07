@@ -112,11 +112,11 @@ def test_enabled_prefix_never_matches_sibling_repo():
     assert _filter(tx, ss) == {'whisper-large': 'bbb'}
 
 
-def test_no_asr_object_or_none_enabled_fails_open():
-    # No loaded ASR (no repo map) or a pathological all-off kwarg set must not
-    # blank the selector: show the stored drafts.
+def test_none_enabled_fails_open():
+    # A kwarg set with no model enabled (pathological — nothing could have
+    # produced drafts) must not blank the selector: show the stored drafts.
     tx = {'allosaurus': 'x', 'whisper-large': 'y'}
-    assert _filter(tx, _ss(top_models_only=False)) == tx  # no .asr at all
+    assert _filter(tx, _ss(top_models_only=False)) == tx  # no model kwargs
     ss = _ss(top_models_only=False, models={'mms_all': False})
     assert _filter(tx, ss) == tx
 
@@ -152,6 +152,18 @@ def test_detected_language_and_mismatch_decorations():
     ss = _ss(top_models_only=False,
              models={'mms_all': True, 'whisper-large': True}, sister=('bem',))
     assert _filter(tx, ss) == tx
+
+
+def test_sister_filter_works_before_asr_loads():
+    # Stored drafts display without ASR ever running (stage-3 contract), so
+    # the selection filter must too: no .asr object here — the module-level
+    # REPO_MODELNAMES/sister_members/mms_lang carry it (live 2026-07-07:
+    # flr/kam/lam/myx drafts showed with only bem selected, because the
+    # filter failed open before the first load_ASR).
+    tx = {'facebook/mms-1b-all (bem!)': 'bumi',
+          'facebook/mms-1b-all (flr!)': 'mbumi'}
+    ss = _ss(top_models_only=False, sister=('bem',))
+    assert _filter(tx, ss) == {'facebook/mms-1b-all (bem!)': 'bumi'}
 
 
 def test_output_lane_flags_do_not_enable_their_model():

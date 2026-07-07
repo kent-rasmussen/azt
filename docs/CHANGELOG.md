@@ -104,6 +104,13 @@
     Repo matching is by name prefix, since stored keys carry language
     decorations (`facebook/mms-1b-all (swh!)`). With 101 models in play this
     is also the only practical way to exercise the one-button case.
+  - **The selection filter works before any model loads**: the kwarg→repo
+    mapping and the macrolanguage/alpha-3 helpers moved to module level in
+    `backend/asr.py` (`REPO_MODELNAMES`, `sister_members`, `mms_lang`), so
+    displaying stored drafts respects the selection even in a session where
+    ASR never ran (previously the filter failed open until the first
+    `load_ASR()` — e.g. opening the settings window — letting all stored
+    languages through).
   - **Output-lane flags no longer masquerade as model selections**:
     `return_ipa` (forced on, no checkbox) and `show_tone` alias the
     neurlang/katyayego repos in `repo_modelnames`; they no longer let a
