@@ -19,6 +19,58 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.7.1
+- Collaboration reload offer: declining ("later") snoozes 5 min as before, but a
+  **genuinely new** team change (a peer head we haven't offered for yet) now
+  bypasses the snooze and re-offers promptly — so "I said later" quiets only
+  that specific change, while fresh work always gets through. The poll keeps
+  tracking the newest head while stale without ever advancing the base. Dialog
+  wording fixed to make clear only "Load now" restarts (OK keeps working).
+  Pinned by `tests/test_collab_session.py::test_reload_offer_new_head_bypasses_snooze`.
+
+# Version 1.7.0
+- NEW — **collaboration Phase 3: peer-change detection + reload offer.** A
+  10-second background poll (`App.collab_poll`, tk after-loop) compares the
+  daemon's `head_sha` against the session base; a HEAD advance with the LIFT
+  file untouched on disk (artifact-only commit) silently adopts the new base,
+  while a real content change (peer merge landed via LAN/WAN, or a save that
+  came back MERGED_WITH_LOCAL) raises a rate-limited (5 min) offer: "Load team
+  changes" restarts the app onto the merged file. Correctness never depends on
+  the poll — saves are base-aware — it only bounds how long stale peer data
+  stays displayed.
+- FIX — **base bookkeeping after a merged save** (design-review catch): a
+  `MERGED_WITH_LOCAL` save no longer advances the session base to the merge
+  commit. The in-memory tree still derives from the old base, so advancing
+  would let the *next* save fast-path replace the merged file and content-
+  clobber the peer changes. Keeping the old base makes every subsequent save
+  re-merge (peer changes ride "ours" and survive) until the reload resets the
+  session. Pinned by `tests/test_collab_session.py`.
+- Anchor-preserving in-place reload (no restart) remains future work; the
+  restart-based reload is the honest v1 (azt's own database-switch flow is
+  restart-based too).
+
+# Version 1.6.0
+- NEW — **collaboration-server integration, phase 1–2 (opt-in, per-project)**:
+  a project connected via `backend/core/collab.py::connect_current_project`
+  saves through the azt-collab daemon's base-aware `submit_file` RPC instead
+  of plain `os.replace` + its own git commit. Peer merges that land between
+  saves are three-way merged server-side (never clobbered); push/pull are
+  daemon-owned (scheduler drain + shutdown sync replacing `share()`); legacy
+  VCS (`repocheck`/`repo_commit`/`share`) is disengaged for connected
+  projects only. Non-connected projects run the legacy path bit-for-bit —
+  every seam is a two-branch switch on the per-project `collab` setting.
+  Daemon-unavailable degrades to direct disk writes with a logged warning
+  (saving never blocks on the daemon). Requires azt-collab ≥ 0.53.0, found via
+  a discovery shim (plain import / dev symlink → `AZT_COLLAB_DIR` → an
+  `azt-collab` clone beside the azt folder) — the symlink is a dev convenience,
+  not load-bearing, since Windows checkouts can't rely on git symlinks. Advanced-menu entries: "Connect to
+  Collaboration server" (legacy projects) / "Synchronize with your team now" +
+  "Disconnect" (connected projects); on success these tell the user and then
+  restart the app themselves once the notice is closed (the seams re-branch
+  only at startup). Not yet wired: mid-session reload on peer
+  changes (Phase 3 — merged peer content appears on next open; plan in
+  agenda/azt_run_with_server.md).
+
 # Version 1.5.0
 - NEW — **three-stage ASR** (record → bulk transcribe → select), so transcription
   cost moves out of the per-word interaction into one unattended batch (ADR 0002,

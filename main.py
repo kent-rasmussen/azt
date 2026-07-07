@@ -11,7 +11,7 @@ program={'name':'A-Z+T',
         'production':False, #True for making screenshots (default theme)
         'testing':False, #normal error screens and logs
         'Demo':False, #will get set otherwise later if it is
-        'version':'1.5.0', #This is a string...
+        'version':'1.7.1', #This is a string...
         'testversionname':'testing', #always have some real test branch here
         'url':'https://github.com/kent-rasmussen/azt',
         'Email':'kent_rasmussen@sil.org',
@@ -252,6 +252,16 @@ class App:
         log.info(_("Checking for a data repository"))
         self.data_repo=dict() #then copy to class attribute if there
         self.data_directory=file.getfilenamedir(self.filename)
+        if getattr(self,'collab',None):
+            # Collab mode: the daemon owns this repo (commits via the
+            # submit_file seam, push/pull via its scheduler + shutdown
+            # sync). Building Git/Mercurial objects here would fight it
+            # (author -c injection, .gitignore rewrites, subprocess git
+            # against a daemon-locked repo). data_repo stays empty, so
+            # repo_commit() and the shutdown share() loop are no-ops.
+            log.info(_("Collaboration active; legacy VCS disengaged "
+                        "for this project."))
+            return
         if not self.testing:
             repo={ #start with local variable:
                     'git': Git(self),
@@ -273,6 +283,36 @@ class App:
     def repo_commit(self):
         for r in self.data_repo:
             self.data_repo[r].commit()
+    def collab_poll(self):
+        """Phase-3 background poll (10 s, tk after-loop): notice peer
+        changes the daemon merged into our working tree and offer a
+        reload. Detection lives in CollabSession.poll_remote_change;
+        correctness never depends on this poll (saves are base-aware)
+        — it only bounds how long stale peer data stays displayed."""
+        session=getattr(self,'collab',None)
+        if not session:
+            return #project disconnected mid-session; stop polling
+        try:
+            outcome=session.poll_remote_change()
+            if (outcome == 'changed'
+                    and not getattr(self,'writing',False)
+                    and session.reload_offer_due()):
+                self.collab_offer_reload()
+        except Exception as e:
+            log.info(f"collab_poll: {e}")
+        self.tk_root.after(10000, self.collab_poll)
+    def collab_offer_reload(self):
+        from utilities.error_handler import notify_error
+        log.info(_("Offering reload for team changes"))
+        notify_error(
+            _("Your team made changes to this database. Loading them "
+              "requires {name} to restart — or press OK to keep "
+              "working and load them later. Your saves are safe "
+              "either way, and will be combined with your team's."
+              ).format(name=self.name),
+            title=_("Team changes available"),
+            button=(_("Load now (restart)"),
+                    lambda event=None: self.restart()))
     def askwhichlift(self):
         # put right click menu here
         LiftChooser(self)
@@ -326,6 +366,15 @@ class App:
         self.splash = Splash(self)
         self.splash.draw()
         FileParser(self) #needs self.filename, pick up self.analang from settings or file
+        # Collab seam: no-op unless this project opted in (per-project
+        # 'collab' setting). On success sets self.collab and hooks
+        # db.collab_submit; on daemon-unavailable logs + leaves
+        # self.collab None so repocheck below runs the legacy path.
+        from backend.core import collab
+        if collab.attach(self):
+            # Phase 3: the desktop has no push channel from the daemon
+            # (§17b), so poll for peer changes landing under us.
+            self.tk_root.after(10000, self.collab_poll)
         self.splash.progress(5)
         from frontend.vcs_ui import VCSPresenter
         from frontend.report_ui import ReportPresenter

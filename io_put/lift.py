@@ -1264,6 +1264,26 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 f"{tmp} ({e})")
             log.error(error)
         if write:
+            # Collab seam (see backend/core/collab.py): when this db
+            # belongs to a daemon-connected project, the .part handoff
+            # + commit happen server-side (base-aware, so a merge that
+            # landed since our last save is folded in instead of
+            # clobbered). Only the LIVE file goes through the daemon —
+            # backups/templates (explicit filename arg) stay direct.
+            # 'fallback' means the daemon didn't take it (unavailable);
+            # the legacy replace below then runs unchanged.
+            submit=getattr(self,'collab_submit',None)
+            if submit is not None and str(filename) == str(self.filename):
+                try:
+                    outcome=submit(filename,tmp)
+                except Exception as e:
+                    log.error(f"collab submit raised; falling back to "
+                                f"direct write: {e}")
+                    outcome='fallback'
+                if outcome == 'ok':
+                    self.write_OK=True
+                    self.write_error=None
+                    return
             try:
                 os.replace(tmp,filename)
                 self.write_OK=True

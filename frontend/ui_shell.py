@@ -350,12 +350,64 @@ class Menus(ui.Menu):
                         label=_(m[0]),
                         cmd=m[1]
                         )
+        self.collaboration()
         if getattr(self.parent,'is_sound_task',False):
             self.sound()
             if getattr(self.parent,'is_record_task',False):
                 self.record()
         if getattr(self.parent,'is_sort_task',False):
             self.sort()
+    def collaboration(self):
+        """Advanced-menu section for the collab-daemon opt-in (per-
+        project cutover switch; backend/core/collab.py). Shows
+        Connect when the project is on the legacy path, Disconnect
+        (+ a Sync-now convenience) when a session is active. Either
+        change takes effect at the next restart of the program."""
+        self.advancedmenu.add_separator()
+        if getattr(self.program,'collab',None):
+            self.command(self.advancedmenu,
+                    label=_("Synchronize with your team now"),
+                    cmd=self.collab_sync_now)
+            self.command(self.advancedmenu,
+                    label=_("Disconnect from Collaboration server"),
+                    cmd=self.collab_disconnect)
+        else:
+            self.command(self.advancedmenu,
+                    label=_("Connect to Collaboration server"),
+                    cmd=self.collab_connect)
+    def collab_connect(self):
+        from backend.core import collab
+        ok,msg=collab.connect_current_project(self.program)
+        log.info(f"collab connect: {ok} {msg}")
+        self._collab_notice_maybe_restart(ok,msg)
+    def collab_disconnect(self):
+        from backend.core import collab
+        ok,msg=collab.disconnect_current_project(self.program)
+        log.info(f"collab disconnect: {ok} {msg}")
+        self._collab_notice_maybe_restart(ok,msg)
+    def _collab_notice_maybe_restart(self,ok,msg):
+        """Success needs a restart for the seams to re-branch (the
+        collab session is built once at startup), so tell the user
+        and restart when they close the notice. Failure just shows
+        the refusal."""
+        from utilities.error_handler import notify_error
+        if not ok:
+            notify_error(msg,title=_("Collaboration"))
+            return
+        from frontend.error_notice import ErrorNotice
+        ErrorNotice(msg+'\n'+_("{name} will now restart to apply "
+                                "this.").format(name=self.program.name),
+                    title=_("Collaboration"),
+                    wait=True)
+        self.program.restart()
+    def collab_sync_now(self):
+        from utilities.error_handler import notify_error
+        with self.parent.waiting(msg=_("Synchronizing with your team")):
+            result=self.program.collab.shutdown_sync()
+        if result is not None:
+            from azt_collab_client import translate_result
+            notify_error(translate_result(result),
+                        title=_("Collaboration"))
     def sound(self):
         self.advancedmenu.add_separator()
         options=[(_("Sound Settings"),
@@ -2448,7 +2500,12 @@ class TaskDressing(HasMenus,ui.Window):
             else:
                 log.info(_("No final write to lift"))
             self.program.settings.trackuntrackedfiles()
-        for r in self.program.data_repo:
+        collab=getattr(self.program,'collab',None)
+        if collab:
+            with self.waiting(msg=_("Synchronizing with your team")):
+                collab.shutdown_sync()
+            log.info(_("Done with collaboration shutdown sync"))
+        for r in self.program.data_repo: #empty dict in collab mode
             self.program.data_repo[r].share()
             log.info(_("Done maybe committing/pushing to {repo}").format(repo=r))
         log.info(_("Saving settings for next time"))
