@@ -242,17 +242,23 @@ class WordCollectionwRecordings(WordCollection,Record):
         """The kwarg-selection level of the draft-display funnel: the user's
         enabled models AND selected sister languages (a macrolanguage counts
         for its members) govern display as well as inference. Fails open
-        wherever the selection can't be read (no ASR object loaded, nothing
-        enabled): show rather than hide."""
-        asr_obj=getattr(ss,'asr',None)
-        repo_map=getattr(asr_obj,'repo_modelnames',None)
-        if not repo_map:
+        wherever the selection can't be read (backend.asr unimportable,
+        nothing enabled): show rather than hide."""
+        try:
+            # already imported in any sound-capable session; the mapping and
+            # language helpers are module-level so this filter works BEFORE
+            # any model loads (the stored drafts display without ASR running).
+            from backend import asr
+        except Exception as e:
+            log.info(f"draft display filter unavailable (no backend.asr): {e}")
             return tx
         kwargs=getattr(ss,'asr_kwargs',None) or {}
+        repo_map=(getattr(getattr(ss,'asr',None),'repo_modelnames',None)
+                    or asr.REPO_MODELNAMES)
         # return_ipa/show_tone are output-LANE flags that alias a repo in
-        # repo_modelnames (neurlang/katyayego) — return_ipa is even forced
-        # True with no checkbox — so they must not resurrect a deselected
-        # model's transcription drafts here.
+        # the map (neurlang/katyayego) — return_ipa is even forced True with
+        # no checkbox — so they must not resurrect a deselected model's
+        # transcription drafts here.
         enabled={v for k,v in repo_map.items()
                  if kwargs.get(k) and k not in ('return_ipa','show_tone')}
         if enabled: #none enabled would hide everything; fail open instead
@@ -261,15 +267,11 @@ class WordCollectionwRecordings(WordCollection,Record):
             # but never repo-vs-repo (whisper-large isn't -large-v3).
             tx={r:v for r,v in tx.items()
                 if any(r == e or r.startswith(e+' ') for e in enabled)}
-        try:
-            allowed=set()
-            for code in kwargs.get('sister_languages') or ():
-                for c in [code]+asr_obj._sister_members(code):
-                    allowed.update((c,asr_obj._mms_lang(c))) #raw + alpha3
-            allowed.discard(None)
-        except Exception as e:
-            log.info(f"sister-language draft filter unavailable: {e}")
-            allowed=set()
+        allowed=set()
+        for code in kwargs.get('sister_languages') or ():
+            for c in [code]+asr.sister_members(code):
+                allowed.update((c,asr.mms_lang(c))) #raw + alpha3
+        allowed.discard(None)
         if allowed:
             import re
             def lang_ok(r):

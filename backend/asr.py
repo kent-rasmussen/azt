@@ -11,6 +11,39 @@ import datetime, copy
 from data import whisper_codes_names
 from data import ethnologue_macrolanguages_members
 _MACRO_MEMBERS = ethnologue_macrolanguages_members.dict  # {macro: [member codes]}
+WHISPER_SIZES=['tiny', 'base', 'small', 'medium', 'large-v1',
+                'large-v2', 'large-v3', 'large']
+# kwarg -> model repo, module-level so the draft-display filter can consult
+# the user's selection before any model is loaded. NB return_ipa/show_tone
+# are output-lane flags that alias a model repo, not model selections.
+REPO_MODELNAMES={
+                'neurlang':"neurlang/ipa-whisper-base",
+                'return_ipa':"neurlang/ipa-whisper-base",
+                'allosaurus':'allosaurus',
+                'mms_all': "facebook/mms-1b-all",
+                'mms_1107': "facebook/mms-1b-l1107",
+                'mms_102': "facebook/mms-1b-fl102",
+                'katyayego': "katyayego/Wav2Vec2Phoneme-CSfinetune",
+                'show_tone': "katyayego/Wav2Vec2Phoneme-CSfinetune",
+                'cherokee': "sil-ai/kent-cherokee",
+                'zulgo': "sil-ai/kent-zulgo",
+                'baffanji': "sil-ai/kent-bafanji",
+                **{f'whisper-{i}':f'whisper-{i}' for i in WHISPER_SIZES},
+            }
+def mms_lang(code):
+    """ISO 639-3 form of a raw language tag ('en' -> 'eng'); the raw code
+    itself if the mapping fails."""
+    if not code:
+        return code
+    try:
+        import langcodes
+        return langcodes.Language.get(code).to_alpha3() or code
+    except Exception:
+        return code
+def sister_members(code):
+    """Member languages of a macrolanguage (swa -> [swh, swc, …]); [] if the
+    code is not a macrolanguage."""
+    return list(_MACRO_MEMBERS.get(code, []) or [])
 from transformers import pipeline
 from huggingface_hub import try_to_load_from_cache, _CACHED_NO_EXIST
 # from backend import langtags
@@ -85,13 +118,7 @@ class ASRtoText(object):
         defaults arrive as raw tags (e.g. 'en'). Map to alpha3 so the adapter
         actually loads; fall back to the raw code if the mapping fails."""
         code=self.sister_language if code is None else code
-        if not code:
-            return code
-        try:
-            import langcodes
-            return langcodes.Language.get(code).to_alpha3() or code
-        except Exception:
-            return code
+        return mms_lang(code)
     def load_ctc_adaptor(self):
         """This doesn't impact self.model"""
         if not hasattr(self,'_adapter_failures'):
@@ -418,7 +445,7 @@ class ASRtoText(object):
     def _sister_members(self, code):
         """Member languages of a macrolanguage (swa -> [swh, swc, …]); [] if the
         code is not a macrolanguage."""
-        return list(_MACRO_MEMBERS.get(code, []) or [])
+        return sister_members(code)
     def effective_sister_languages(self):
         """Sister languages to actually transcribe: each requested code PLUS, for
         any macrolanguage (e.g. swa), ALL its member languages (swh, swc, …). MMS
@@ -653,22 +680,7 @@ class ASRtoText(object):
         # log.info(f"self.transcriptions: {self.transcriptions}")
         # log.info(f"self.transcriptions_ipa: {self.transcriptions_ipa}")
     def make_repo_dicts(self):
-        whisper_modelnames={f'whisper-{i}':f'whisper-{i}' for i in
-                                                            self.whisper_sizes}
-        self.repo_modelnames={
-                            'neurlang':"neurlang/ipa-whisper-base",
-                            'return_ipa':"neurlang/ipa-whisper-base",
-                            'allosaurus':'allosaurus',
-                            'mms_all': "facebook/mms-1b-all",
-                            'mms_1107': "facebook/mms-1b-l1107",
-                            'mms_102': "facebook/mms-1b-fl102",
-                            'katyayego': "katyayego/Wav2Vec2Phoneme-CSfinetune",
-                            'show_tone': "katyayego/Wav2Vec2Phoneme-CSfinetune",
-                            'cherokee': "sil-ai/kent-cherokee",
-                            'zulgo': "sil-ai/kent-zulgo",
-                            'baffanji': "sil-ai/kent-bafanji",
-                        }
-        self.repo_modelnames.update(whisper_modelnames)
+        self.repo_modelnames=dict(REPO_MODELNAMES) #module-level, incl. whisper
         whisper_methods={f'whisper-{i}':lambda x=i: self.load_whisper(size=x)
                                 for i in self.whisper_sizes}
         ctc_methods={i:lambda x=i:self.load_ctc_model(x) for i in [
@@ -772,8 +784,7 @@ class ASRtoText(object):
         self.models=dict()
         self.do_not_return=[] #models that should not return transcriptions
         log.info(f"Loading ASR with kwargs {kwargs}")
-        self.whisper_sizes=['tiny', 'base', 'small', 'medium', 'large-v1',
-                        'large-v2','large-v3', 'large']
+        self.whisper_sizes=WHISPER_SIZES
         self.faster_whisper_models=['turbo', 'distil-large-v3',
                         'deepdml/faster-whisper-large-v3-turbo-ct2']
         self.make_repo_dicts()
