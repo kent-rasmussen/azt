@@ -70,6 +70,21 @@
   only at startup). Not yet wired: mid-session reload on peer
   changes (Phase 3 — merged peer content appears on next open; plan in
   agenda/azt_run_with_server.md).
+- FIX — **draft selector no longer collapses to zero buttons.** When the
+  'top models only' window was unanimous (top-5 all emitting the same form),
+  dedup left one value and the selector showed nothing — reading as "ASR didn't
+  work", and hiding that the one available transcription might differ from the
+  visible/citation form (e.g. stored `mbumi` vs on-screen `bumi`). Two changes
+  in `tasks/tasks.py`:
+  - **Adaptive top-X**: the top-models filter now widens 5→10→15… until at
+    least two distinct forms survive, and falls back to *every* stored draft
+    once widening stops adding repos — or when the whole draft set is unanimous
+    anyway (`_filter_top_asr`; headless tests in
+    `tests/test_asr_draft_selection.py`).
+  - **Always ≥1 button**: a single (unanimous) form still gets its button, so
+    the user can SEE what ASR produced and revert to it; auto-fill of an empty
+    field retained. Zero drafts no longer render the "click on the best
+    option(s)" instructions over an empty frame.
 
 # Version 1.5.0
 - NEW — **three-stage ASR** (record → bulk transcribe → select), so transcription

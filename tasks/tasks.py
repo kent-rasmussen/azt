@@ -236,10 +236,32 @@ class WordCollectionwRecordings(WordCollection,Record):
         # 'top models only' (B): show only the kept repos (None == no limit)
         ss=getattr(self,'soundsettings',None) or getattr(self.program,
                                                          'soundsettings',None)
+        return self._filter_top_asr(tx,ss)
+    @staticmethod
+    def _filter_top_asr(tx,ss):
+        """Apply the 'top models only' filter, but never so hard that the
+        selector collapses: a unanimous top-5 leaves one form (one button),
+        which looks broken. Widen n by 5 per iteration until at least two
+        distinct forms survive; once widening stops adding repos — or the
+        full draft set is unanimous anyway — return every stored draft
+        rather than hide what ASR produced."""
         keep=ss.top_asr_keys() if ss is not None else None
-        if keep is not None:
-            tx={r:v for r,v in tx.items() if r in keep}
-        return tx
+        if keep is None:
+            return tx
+        def distinct(d):
+            return len({v for v in d.values() if v})
+        if distinct(tx) < 2:
+            return tx #widening can't help
+        n=5
+        while True:
+            kept={r:v for r,v in tx.items() if r in keep}
+            if distinct(kept) >= 2:
+                return kept
+            n+=5
+            wider=ss.top_asr_keys(n=n,cap=max(20,n))
+            if wider == keep: #tally exhausted (untallied repos never rank)
+                return tx
+            keep=wider
     def show_drafts(self,*args):
         # log.info(f"show_drafts got args {args}")
         instructions2=(_("click on the best option(s) above"),
@@ -256,10 +278,13 @@ class WordCollectionwRecordings(WordCollection,Record):
             if text:
                 byvalue.setdefault(text,[]).append(repo)
         log.info(f"show_drafts: {len(drafts)} draft(s) -> {len(byvalue)} unique value(s)")
-        if len(byvalue) == 1:
-            if not self.var.get():  # auto-fill an EMPTY field; never overwrite
-                self.var.set(next(iter(byvalue)))
-            return
+        if not byvalue:
+            return #no drafts: no buttons, and no 'click above' instructions
+        if len(byvalue) == 1 and not self.var.get():
+            self.var.set(next(iter(byvalue)))  # auto-fill an EMPTY field; never overwrite
+        # A single (unanimous) form still gets its button: it is how the user
+        # sees what ASR produced — and reverts to it — when the visible form
+        # differs (hand edit, earlier mistake, etc).
         c,r=self.wordframe.recordFrame.grid_size()
         self.wordframe.draftFrame=ui.Frame(self.wordframe.recordFrame,
                                             column=c,
