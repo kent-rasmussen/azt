@@ -19,6 +19,14 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.7.2
+- FIX — a daemon outage can no longer silence a pending reload offer: when the
+  session is already stale, `poll_remote_change` reports 'changed' from local
+  knowledge; the status probe only feeds the newest-head snooze bypass (caught
+  by `test_poll_stale_tolerates_probe_failure`). Phase 3 verified live
+  2026-07-07: offer on peer commit, decline → new peer commit re-offers
+  promptly, "Load now" restarts onto the merged file.
+
 # Version 1.7.1
 - Collaboration reload offer: declining ("later") snoozes 5 min as before, but a
   **genuinely new** team change (a peer head we haven't offered for yet) now
