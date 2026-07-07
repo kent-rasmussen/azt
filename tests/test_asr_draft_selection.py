@@ -22,6 +22,11 @@ _REPO_MAP = {
     'allosaurus': 'allosaurus',
     'whisper-large': 'whisper-large',
     'whisper-large-v3': 'whisper-large-v3',
+    # output-lane flags alias model repos in the real map:
+    'neurlang': 'neurlang/ipa-whisper-base',
+    'return_ipa': 'neurlang/ipa-whisper-base',
+    'katyayego': 'katyayego/Wav2Vec2Phoneme-CSfinetune',
+    'show_tone': 'katyayego/Wav2Vec2Phoneme-CSfinetune',
 }
 
 
@@ -147,6 +152,21 @@ def test_detected_language_and_mismatch_decorations():
     ss = _ss(top_models_only=False,
              models={'mms_all': True, 'whisper-large': True}, sister=('bem',))
     assert _filter(tx, ss) == tx
+
+
+def test_output_lane_flags_do_not_enable_their_model():
+    # return_ipa is forced True (no checkbox) and aliases the neurlang repo;
+    # show_tone likewise aliases katyayego. Neither may resurrect a
+    # deselected model's transcription drafts (seen live 2026-07-07: a
+    # neurlang button with only mms/bem selected).
+    tx = {'neurlang/ipa-whisper-base': 'ipaish',
+          'katyayego/Wav2Vec2Phoneme-CSfinetune': 'toneish',
+          'facebook/mms-1b-all (bem!)': 'bumi'}
+    ss = _ss(top_models_only=False,
+             models={'mms_all': True, 'neurlang': False, 'return_ipa': True,
+                     'katyayego': False, 'show_tone': True},
+             sister=('bem',))
+    assert _filter(tx, ss) == {'facebook/mms-1b-all (bem!)': 'bumi'}
 
 
 def test_enabled_unanimous_gives_single_form_despite_disabled_dissent():

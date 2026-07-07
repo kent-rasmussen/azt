@@ -584,7 +584,26 @@ class ASRModelSelectionWindow(ui.Window):
                                                 else i.full_display())
         max_value_len=max([len(self.sisters_listbox.get(i)) for i in range(len(self.sisters_listbox.get(0,'end')))])
         self.sisters_listbox.configure(width=min(max_value_len,60))
+        self.restore_sister_selection()
         self.save_sister() #since it is showing, anyway.
+    def restore_sister_selection(self):
+        """Reflect the SAVED sister_languages subselection in the freshly
+        populated listbox. Without this, the boot-time save_sister() below
+        finds nothing selected, and its nothing-means-all branch silently
+        clobbers the user's saved subselection with the full list
+        (2026-07-07). Saved == full set (or nothing saved) selects the
+        explicit 'all' option instead."""
+        saved=set(self.soundsettings.asr_kwargs.get('sister_languages') or ())
+        codes_by_index={i:opt.iso() for i,opt in enumerate(self.sister_options)
+                        if opt != self.alllangs}
+        wanted=[i for i,c in codes_by_index.items() if c in saved]
+        self.sisters_listbox.select_clear(0,'end')
+        if wanted and len(wanted) < len(codes_by_index):
+            for i in wanted:
+                self.sisters_listbox.select_set(i)
+        else:
+            self.sisters_listbox.select_set(0)
+        self.last_selection_indexes=self.sisters_listbox.curselection()
     def save_sister(self,event=None):
         log.info("Saving sister language now")
         if (0 in self.sisters_listbox.curselection() and
