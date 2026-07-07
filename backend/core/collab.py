@@ -265,20 +265,27 @@ class CollabSession:
           (every save re-merges against our real base) — but the user
           should reload to SEE the team's changes.
         """
+        if self.stale:
+            # Already behind (a merged save, or a peer change detected
+            # earlier) — that's LOCAL knowledge, so report 'changed'
+            # even if the daemon is unreachable right now. The probe
+            # here only tracks the NEWEST head so a genuinely new
+            # change can bypass the offer snooze (reload_offer_due);
+            # NEVER advance base or take the benign path — our
+            # in-memory tree is stale regardless of what's on disk.
+            try:
+                st = _client.project_status(self.langcode)
+                head = getattr(st, 'head_sha', '') if st else ''
+                if head:
+                    self._last_detected_head = head
+            except Exception:
+                pass
+            return 'changed'
         try:
             st = _client.project_status(self.langcode)
         except Exception:
             return 'none'
         head = getattr(st, 'head_sha', '') if st else ''
-        if self.stale:
-            # Already behind (a merged save, or a peer change detected
-            # earlier). Keep tracking the NEWEST head so a genuinely
-            # new change can bypass the offer snooze (reload_offer_due),
-            # but NEVER advance base or take the benign path — our
-            # in-memory tree is stale regardless of what's on disk now.
-            if head:
-                self._last_detected_head = head
-            return 'changed'
         if not head or head == self.base_sha:
             return 'none'
         if not self._lift_changed_on_disk():
