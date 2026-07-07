@@ -46,6 +46,16 @@
     Repo matching is by name prefix, since stored keys carry language
     decorations (`facebook/mms-1b-all (swh!)`). With 101 models in play this
     is also the only practical way to exercise the one-button case.
+  - **Output-lane flags no longer masquerade as model selections**:
+    `return_ipa` (forced on, no checkbox) and `show_tone` alias the
+    neurlang/katyayego repos in `repo_modelnames`; they no longer let a
+    deselected model's transcription drafts through the display filter.
+  - **FIX — opening ASR settings no longer resets sister languages to "all"**:
+    the freshly populated sister-language listbox now restores the SAVED
+    subselection (saved == full set, or nothing saved, selects the explicit
+    "All of the below" option). Previously the boot-time `save_sister()` found
+    nothing selected and its nothing-means-all branch silently replaced the
+    saved subselection with the full list.
 
 # Version 1.5.0
 - NEW — **three-stage ASR** (record → bulk transcribe → select), so transcription

@@ -249,7 +249,12 @@ class WordCollectionwRecordings(WordCollection,Record):
         if not repo_map:
             return tx
         kwargs=getattr(ss,'asr_kwargs',None) or {}
-        enabled={v for k,v in repo_map.items() if kwargs.get(k)}
+        # return_ipa/show_tone are output-LANE flags that alias a repo in
+        # repo_modelnames (neurlang/katyayego) — return_ipa is even forced
+        # True with no checkbox — so they must not resurrect a deselected
+        # model's transcription drafts here.
+        enabled={v for k,v in repo_map.items()
+                 if kwargs.get(k) and k not in ('return_ipa','show_tone')}
         if enabled: #none enabled would hide everything; fail open instead
             # Stored keys carry language decorations, e.g.
             # 'facebook/mms-1b-all (swh!)': match on the repo-name prefix,
@@ -323,7 +328,8 @@ class WordCollectionwRecordings(WordCollection,Record):
         for repo,text in drafts.items():
             if text:
                 byvalue.setdefault(text,[]).append(repo)
-        log.info(f"show_drafts: {len(drafts)} draft(s) -> {len(byvalue)} unique value(s)")
+        log.info(f"show_drafts: {len(drafts)} draft(s) {sorted(drafts)} "
+                 f"-> {len(byvalue)} unique value(s)")
         if not byvalue:
             return #no drafts: no buttons, and no 'click above' instructions
         if len(byvalue) == 1 and not self.var.get():
