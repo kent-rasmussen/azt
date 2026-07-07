@@ -238,27 +238,59 @@ class WordCollectionwRecordings(WordCollection,Record):
                                                          'soundsettings',None)
         return self._filter_top_asr(tx,ss)
     @staticmethod
+    def _enabled_drafts(tx,ss):
+        """The kwarg-selection level of the draft-display funnel: the user's
+        enabled models AND selected sister languages (a macrolanguage counts
+        for its members) govern display as well as inference. Fails open
+        wherever the selection can't be read (no ASR object loaded, nothing
+        enabled): show rather than hide."""
+        asr_obj=getattr(ss,'asr',None)
+        repo_map=getattr(asr_obj,'repo_modelnames',None)
+        if not repo_map:
+            return tx
+        kwargs=getattr(ss,'asr_kwargs',None) or {}
+        enabled={v for k,v in repo_map.items() if kwargs.get(k)}
+        if enabled: #none enabled would hide everything; fail open instead
+            # Stored keys carry language decorations, e.g.
+            # 'facebook/mms-1b-all (swh!)': match on the repo-name prefix,
+            # but never repo-vs-repo (whisper-large isn't -large-v3).
+            tx={r:v for r,v in tx.items()
+                if any(r == e or r.startswith(e+' ') for e in enabled)}
+        try:
+            allowed=set()
+            for code in kwargs.get('sister_languages') or ():
+                for c in [code]+asr_obj._sister_members(code):
+                    allowed.update((c,asr_obj._mms_lang(c))) #raw + alpha3
+            allowed.discard(None)
+        except Exception as e:
+            log.info(f"sister-language draft filter unavailable: {e}")
+            allowed=set()
+        if allowed:
+            import re
+            def lang_ok(r):
+                # '(xxx!)' marks a language-DIRECTED run ('aaa!=bbb!' a
+                # requested/actual pair): hide it when no side is selected.
+                # Bare keys and '(xxx?)' (detected, not directed) pass on
+                # the model alone.
+                m=re.search(r'\(([^)]*!)\)$',r)
+                return (not m or
+                        bool(set(re.findall(r'[A-Za-z]+',m.group(1)))&allowed))
+            tx={r:v for r,v in tx.items() if lang_ok(r)}
+        return tx
+    @staticmethod
     def _filter_top_asr(tx,ss):
-        """Restrict drafts to the models the user has enabled — 'just these
-        models' governs display as well as inference — then apply the 'top
-        models only' filter, but never so hard that the selector collapses: a
+        """The draft-display funnel: everything stored → the user's kwarg
+        selection (models + sister languages: _enabled_drafts) → the 'top
+        models only' boolean. The last step only ever selects WITHIN the
+        kwarg selection, and never so hard that the selector collapses: a
         unanimous top-5 leaves one form (one button), which looks broken.
         Widen n by 5 per iteration until at least two distinct forms survive;
-        once widening stops adding repos — or the enabled draft set is
-        unanimous anyway — return every enabled draft rather than hide what
+        once widening stops adding repos — or the selected draft set is
+        unanimous anyway — return every selected draft rather than hide what
         ASR produced."""
         if ss is None:
             return tx
-        repo_map=getattr(getattr(ss,'asr',None),'repo_modelnames',None)
-        if repo_map:
-            kwargs=getattr(ss,'asr_kwargs',None) or {}
-            enabled={v for k,v in repo_map.items() if kwargs.get(k)}
-            if enabled: #none enabled would hide everything; fail open instead
-                # Stored keys carry language decorations, e.g.
-                # 'facebook/mms-1b-all (swh!)': match on the repo-name prefix,
-                # but never repo-vs-repo (whisper-large isn't -large-v3).
-                tx={r:v for r,v in tx.items()
-                    if any(r == e or r.startswith(e+' ') for e in enabled)}
+        tx=WordCollectionwRecordings._enabled_drafts(tx,ss)
         keep=ss.top_asr_keys()
         if keep is None:
             return tx

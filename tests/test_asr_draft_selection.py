@@ -25,15 +25,22 @@ _REPO_MAP = {
 }
 
 
-def _ss(top_models_only=True, tally=None, models=None):
+def _ss(top_models_only=True, tally=None, models=None, sister=None):
     """Fake-self SoundSettings; `models` (kwarg->bool) also fakes the loaded
-    ASR object whose repo_modelnames the enabled-models display filter reads.
-    Without `models` there is no .asr at all — the filter must fail open."""
+    ASR object whose repo_modelnames/_sister_members/_mms_lang the
+    kwarg-selection display filter reads. Without `models` there is no .asr
+    at all — the filter must fail open."""
     ss = object.__new__(sound.SoundSettings)
     ss.asr_kwargs = {'top_models_only': top_models_only, **(models or {})}
+    if sister is not None:
+        ss.asr_kwargs['sister_languages'] = tuple(sister)
     ss.asr_repos = dict(tally or {})
     if models is not None:
-        ss.asr = SimpleNamespace(repo_modelnames=dict(_REPO_MAP))
+        ss.asr = SimpleNamespace(
+            repo_modelnames=dict(_REPO_MAP),
+            _sister_members=lambda code: {'swa': ['swh', 'swc']}.get(code, []),
+            _mms_lang=lambda code: {'en': 'eng'}.get(code, code),
+        )
     return ss
 
 
@@ -106,6 +113,39 @@ def test_no_asr_object_or_none_enabled_fails_open():
     tx = {'allosaurus': 'x', 'whisper-large': 'y'}
     assert _filter(tx, _ss(top_models_only=False)) == tx  # no .asr at all
     ss = _ss(top_models_only=False, models={'mms_all': False})
+    assert _filter(tx, ss) == tx
+
+
+def test_deselected_sister_language_hidden():
+    # sister_languages down to ('bem',): the swh-directed draft hides, the
+    # bem-directed one stays — top-five (or widening) must not reach past
+    # the user's selection to bring swh back.
+    tx = {'facebook/mms-1b-all (swh!)': 'mbumi',
+          'facebook/mms-1b-all (bem!)': 'bumi'}
+    ss = _ss(top_models_only=False, models={'mms_all': True}, sister=('bem',))
+    assert _filter(tx, ss) == {'facebook/mms-1b-all (bem!)': 'bumi'}
+
+
+def test_macrolanguage_selection_admits_member_drafts():
+    # 'swa' selected: member-language runs (swh) are part of the selection.
+    tx = {'facebook/mms-1b-all (swh!)': 'mbumi'}
+    ss = _ss(top_models_only=False, models={'mms_all': True}, sister=('swa',))
+    assert _filter(tx, ss) == tx
+
+
+def test_alpha2_selection_matches_alpha3_decoration():
+    tx = {'facebook/mms-1b-all (eng!)': 'mbumi'}
+    ss = _ss(top_models_only=False, models={'mms_all': True}, sister=('en',))
+    assert _filter(tx, ss) == tx
+
+
+def test_detected_language_and_mismatch_decorations():
+    # '(en?)' is a detection, not a user direction: passes on the model.
+    # '(bem!=swh!)' names the requested/actual pair: selected on either side.
+    tx = {'whisper-large (en?)': 'aaa',
+          'facebook/mms-1b-all (bem!=swh!)': 'bbb'}
+    ss = _ss(top_models_only=False,
+             models={'mms_all': True, 'whisper-large': True}, sister=('bem',))
     assert _filter(tx, ss) == tx
 
 
