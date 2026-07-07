@@ -239,13 +239,27 @@ class WordCollectionwRecordings(WordCollection,Record):
         return self._filter_top_asr(tx,ss)
     @staticmethod
     def _filter_top_asr(tx,ss):
-        """Apply the 'top models only' filter, but never so hard that the
-        selector collapses: a unanimous top-5 leaves one form (one button),
-        which looks broken. Widen n by 5 per iteration until at least two
-        distinct forms survive; once widening stops adding repos — or the
-        full draft set is unanimous anyway — return every stored draft
-        rather than hide what ASR produced."""
-        keep=ss.top_asr_keys() if ss is not None else None
+        """Restrict drafts to the models the user has enabled — 'just these
+        models' governs display as well as inference — then apply the 'top
+        models only' filter, but never so hard that the selector collapses: a
+        unanimous top-5 leaves one form (one button), which looks broken.
+        Widen n by 5 per iteration until at least two distinct forms survive;
+        once widening stops adding repos — or the enabled draft set is
+        unanimous anyway — return every enabled draft rather than hide what
+        ASR produced."""
+        if ss is None:
+            return tx
+        repo_map=getattr(getattr(ss,'asr',None),'repo_modelnames',None)
+        if repo_map:
+            kwargs=getattr(ss,'asr_kwargs',None) or {}
+            enabled={v for k,v in repo_map.items() if kwargs.get(k)}
+            if enabled: #none enabled would hide everything; fail open instead
+                # Stored keys carry language decorations, e.g.
+                # 'facebook/mms-1b-all (swh!)': match on the repo-name prefix,
+                # but never repo-vs-repo (whisper-large isn't -large-v3).
+                tx={r:v for r,v in tx.items()
+                    if any(r == e or r.startswith(e+' ') for e in enabled)}
+        keep=ss.top_asr_keys()
         if keep is None:
             return tx
         def distinct(d):

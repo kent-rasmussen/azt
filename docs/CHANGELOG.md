@@ -35,6 +35,14 @@
     the user can SEE what ASR produced and revert to it; auto-fill of an empty
     field retained. Zero drafts no longer render the "click on the best
     option(s)" instructions over an empty frame.
+  - **Enabled models govern display, not just inference**: stored drafts from
+    models the user has switched off in ASR settings are hidden (they remain
+    stored, and reappear when the model is re-enabled). Matching is by
+    repo-name prefix, since stored keys carry language decorations
+    (`facebook/mms-1b-all (swh!)`). The top-X widening operates within the
+    enabled set, so "just this one model" shows exactly that model's
+    draft(s) — with 101 models in play, this is also the only practical way
+    to exercise the one-button case.
 
 # Version 1.5.0
 - NEW — **three-stage ASR** (record → bulk transcribe → select), so transcription
