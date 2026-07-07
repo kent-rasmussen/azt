@@ -93,6 +93,17 @@
     the user can SEE what ASR produced and revert to it; auto-fill of an empty
     field retained. Zero drafts no longer render the "click on the best
     option(s)" instructions over an empty frame.
+  - **The user's kwarg selection governs display, not just inference**: the
+    draft buttons now funnel everything-stored → the user's selection
+    (enabled models AND selected `sister_languages`, a macrolanguage counting
+    for its members) → the 'top models' boolean, each step selecting only
+    WITHIN the previous — 'top models' can never reach past the user's
+    selection. Drafts from switched-off models and deselected
+    language-directed runs (`(swh!)` keys; detected-language `(en?)` keys
+    pass on the model) are hidden, not deleted: they reappear on re-enable.
+    Repo matching is by name prefix, since stored keys carry language
+    decorations (`facebook/mms-1b-all (swh!)`). With 101 models in play this
+    is also the only practical way to exercise the one-button case.
 
 # Version 1.5.0
 - NEW — **three-stage ASR** (record → bulk transcribe → select), so transcription
