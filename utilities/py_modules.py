@@ -57,6 +57,11 @@ def pip_install(installs=[],secondtry=False):
             ['packaging'],
             ['patiencediff'],
             ['reportlab'], #for PDF
+            #azt-collab collaboration (daemon runs in this env on desktop):
+            ['dulwich'], #daemon git ops
+            ['cryptography'], #LAN identity (peer keypair + cert)
+            ['zeroconf'], #LAN discovery (mDNS)
+            ['segno'], #pairing-QR rendering
             ]
     else:
         installs=[installs] #do the whole list at once, if given a list

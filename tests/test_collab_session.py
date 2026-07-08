@@ -190,3 +190,65 @@ def test_reload_offer_new_head_bypasses_snooze(session):
     session._last_detected_head = 'h2'                       # new team work
     assert session.reload_offer_due(snooze_s=300) is True    # bypasses snooze
     assert session.reload_offer_due(snooze_s=300) is False   # h2 now snoozed
+
+
+# ── Phase 4: sync() + route_sync_result() ────────────────────────────
+
+
+@pytest.fixture
+def routing(monkeypatch):
+    """Capture the routing side effects: notices shown, settings UI
+    opened. translate_result is stubbed to a codes-string so tests
+    don't depend on translations."""
+    import azt_collab_client as client_pkg
+    from utilities import error_handler
+    seen = types.SimpleNamespace(notices=[], settings_opened=0)
+    monkeypatch.setattr(error_handler, 'notify_error',
+                        lambda text, **kw: seen.notices.append(text))
+    monkeypatch.setattr(client_pkg, 'translate_result',
+                        lambda r: '|'.join(r.codes()))
+    def fake_open_server_ui(on_status=None):
+        seen.settings_opened += 1
+        return {'ok': True, 'pid': 0}
+    monkeypatch.setattr(client_pkg, 'open_server_ui',
+                        fake_open_server_ui)
+    return seen
+
+
+def test_route_config_class_opens_settings(session, routing):
+    session.route_sync_result(_result(('AUTH_REQUIRED', {})))
+    assert routing.settings_opened == 1
+    assert any('AUTH_REQUIRED' in n for n in routing.notices)
+
+
+def test_route_success_notifies_without_settings(session, routing):
+    session.route_sync_result(_result(('PUSHED', {'branch': 'main'})))
+    assert routing.settings_opened == 0
+    assert len(routing.notices) == 1
+
+
+def test_route_pulled_flags_stale_for_reload_offer(session, routing):
+    res = _result(('PULLED', {}), ('PUSHED', {}), head_sha='pull9')
+    session.route_sync_result(res)
+    assert session.stale is True
+    assert session._last_detected_head == 'pull9'
+
+
+def test_sync_retries_once_on_job_interrupted(session, routing):
+    calls = []
+    def fake_sync(lc):
+        calls.append(lc)
+        if len(calls) == 1:
+            return _result(('JOB_INTERRUPTED', {}))
+        return _result(('PUSHED', {}), head_sha='h2')
+    collab._client.sync_project = fake_sync
+    result = session.sync()
+    assert len(calls) == 2
+    assert result.has('PUSHED')
+    assert session._sync_in_flight is False
+
+
+def test_sync_in_flight_guard(session, routing):
+    session._sync_in_flight = True
+    # No sync_project on the stub: a call would AttributeError.
+    assert session.sync() is None

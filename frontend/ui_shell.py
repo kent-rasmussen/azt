@@ -369,12 +369,21 @@ class Menus(ui.Menu):
                     label=_("Synchronize with your team now"),
                     cmd=self.collab_sync_now)
             self.command(self.advancedmenu,
+                    label=_("Collaboration status"),
+                    cmd=self.collab_status)
+            self.command(self.advancedmenu,
+                    label=_("Collaboration settings"),
+                    cmd=self.collab_settings)
+            self.command(self.advancedmenu,
                     label=_("Disconnect from Collaboration server"),
                     cmd=self.collab_disconnect)
         else:
             self.command(self.advancedmenu,
                     label=_("Connect to Collaboration server"),
                     cmd=self.collab_connect)
+            self.command(self.advancedmenu,
+                    label=_("Collaboration settings"),
+                    cmd=self.collab_settings)
     def collab_connect(self):
         from backend.core import collab
         ok,msg=collab.connect_current_project(self.program)
@@ -401,13 +410,18 @@ class Menus(ui.Menu):
                     wait=True)
         self.program.restart()
     def collab_sync_now(self):
-        from utilities.error_handler import notify_error
+        # Full recorder-style routing lives in CollabSession.sync →
+        # route_sync_result (config problems open the settings UI,
+        # PULLED flags stale so the poll offers the reload, etc.).
         with self.parent.waiting(msg=_("Synchronizing with your team")):
-            result=self.program.collab.shutdown_sync()
-        if result is not None:
-            from azt_collab_client import translate_result
-            notify_error(translate_result(result),
-                        title=_("Collaboration"))
+            self.program.collab.sync()
+    def collab_status(self):
+        from utilities.error_handler import notify_error
+        notify_error(self.program.collab.status_summary(),
+                    title=_("Collaboration"))
+    def collab_settings(self):
+        from backend.core import collab
+        collab.open_settings(self.program)
     def sound(self):
         self.advancedmenu.add_separator()
         options=[(_("Sound Settings"),

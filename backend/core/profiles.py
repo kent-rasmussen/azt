@@ -211,7 +211,16 @@ class ProfileAnalyzer:
                         if k in self.s[analang]
                         for i in j
                     ]
-            self.s[analang][cvt].extend(glyphs_present[cvt] - set(there))
+            # Keep encoded syllable-slice ids out of the segment inventory. The
+            # syllable pseudo-cvt 'S' collides with the sonorant class 'S' (the
+            # 'S'-overload trap in CONTEXT.md), so all_groups_verified_anywhere()
+            # hands this loop that node's group␟slice 'done' ids. SEP is
+            # collision-free, so filtering it drops only synthetic ids, never a
+            # real grapheme — otherwise those ids poison C-class expansion and
+            # every fromCV() seed regex matches nothing.
+            fresh = {g for g in glyphs_present[cvt]
+                        if SyllableSliceDict.SEP not in g}
+            self.s[analang][cvt].extend(fresh - set(there))
         self.rxdict = rx.RegexDict(distinguish=self.distinguish,
                                 interpret=self.interpret,
                                 sdict=self.s[self.program.db.analang],

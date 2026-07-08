@@ -19,6 +19,74 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.8.3
+- FIX (presort regression, completes 1.8.2) — for **equality checks** (`=` in
+  the code) words are again presorted into **NA** and offered for verification,
+  with no stray "presented to sort" step. 1.8.2 gated the NA one-shot verify but
+  the pool was still empty; three deeper layers were the real cause:
+  - **Segment inventory poisoned by syllable-slice ids.** The syllable-prep
+    pseudo-cvt `'S'` collides with the sonorant class `'S'` (the CONTEXT.md
+    "S-overload" trap), so `all_groups_verified_anywhere()` fed `setupCVrxs`
+    the syllable node's `group␟slice` `done` ids, which got appended onto the
+    sonorant inventory and folded into C-class expansion — `fromCV('CVC')`
+    matched **zero** real words, so nothing reached NA. Fixed at the injection
+    boundary (`profiles.py`): tokens containing `SyllableSliceDict.SEP` are
+    filtered out before extending the segment inventory (SEP is collision-free,
+    so only synthetic ids drop, never a real grapheme).
+  - **NA excluded from the sort-group list for all checks.**
+    `categorizebygrouping` (`settings/__init__.py`) unconditionally dropped
+    `'NA'` from the rebuilt group list, so even a populated NA never reached
+    `groups(toverify)`. Now the exclusion is gated on check shape: `=` checks
+    keep NA in the list (it rides the verify loop); others still hide it.
+  - **Presort universe too narrow for `=` checks.** The NA pool was seeded from
+    the form regex, stranding profile words whose surface form isn't a clean
+    C·V·C (e.g. nose→n-o-s-e) as "to sort". For `=` checks the universe is now
+    profile membership (`slices.senses(ps,profile)`): every non-equal word lands
+    in NA, nothing is left to sort, and the user verifies matches out of NA.
+
+# Version 1.8.2
+- FIX (presort regression) — for **equality checks** (`=` in the code: C1=C2,
+  C1=C2=C3, V1=V2, CV1=CV2, …) words presorted into **NA** (the not-equal
+  remainder) are again offered in the verify loop, so the user can verify them
+  out (pull back any that actually ARE equal) and re-verify on demand. Root
+  cause: 1.3.77 added a one-shot terminal verify of NA in the presort
+  (`lexicon.py` `presortgroups`) that marked NA `done` for *every* check, so
+  `groups(toverify)=groups−done` never re-offered it — right for skip-piles,
+  wrong for `=` checks where NA is the check's real result set. The one-shot now
+  fires only for non-`=` checks (skip pile stays terminal); `=`-check NA rides
+  the normal `groups−done` loop as it did pre-1.3.77. Keyed on check shape,
+  never a literal code; `x`-correspondence checks are excluded from sort tasks
+  upstream. NA stays off the picker/board (separate filters) and out of the
+  write-unsafe `groups(wsorted)` path.
+
+# Version 1.8.1
+- FIX — "Collaboration settings" no longer dies silently with `spawn_exited`:
+  the daemon settings UI is a Kivy app, and azt's venv may not carry Kivy.
+  `open_settings` now tries candidate interpreters in order —
+  `AZT_COLLAB_UI_PYTHON`, azt's own python, then the suite's recorder/viewer
+  venvs beside the azt-collab clone (client 0.53.4 `python_exe` param) — logs
+  each failure with the child's stderr, and on total failure shows the real
+  detail plus the Kivy hint instead of a bare error code.
+
+# Version 1.8.0
+- NEW — **collaboration Phase 4: sync UX parity.** "Synchronize with your team
+  now" runs the full recorder-style routing table (`CollabSession.sync` →
+  `route_sync_result`): never-silenced codes (DATA_LOSS_RISK,
+  COMMIT_REPEATEDLY_FAILED) surface first; configuration-class refusals
+  (AUTH_REQUIRED, CONTRIBUTOR_UNSET, NO_REMOTE, NOT_A_REPO,
+  WORK_OFFLINE_ENABLED) open the daemon settings UI; GitHub-side blocks
+  (APP_NOT_INSTALLED / APP_SUSPENDED / REPO_NOT_AUTHORIZED / REPO_NO_ACCESS)
+  open the fixing URL in the browser; transient failures just say so;
+  JOB_INTERRUPTED gets one silent retry; PULLED flags the session stale so the
+  Phase-3 poll raises the reload offer (no dialog stacking). In-flight guard
+  per §17c. New Advanced-menu entries: **Collaboration status** (backup truth
+  per §17b 0.53.3: "up to date" requires `wan_unshared == 0 AND main_merged`;
+  also uncommitted count, work-offline, pending team changes, degraded state,
+  contributor) and **Collaboration settings** (daemon settings UI as a
+  separate process; available before connecting too, e.g. to fix the
+  contributor name). Deferred from the Phase-4 list: new-project-at-birth
+  registration under $AZT_HOME (tracked in the agenda item).
+
 # Version 1.7.2
 - FIX — a daemon outage can no longer silence a pending reload offer: when the
   session is already stale, `poll_remote_change` reports 'changed' from local

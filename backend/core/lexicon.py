@@ -156,8 +156,20 @@ class Segments(Senses):
         log.info(msg)
         w=self.ui.getrunwindow(msg=msg)
         self.program.status.renewsensestosort([],[]) #will repopulate
-        self.buildregexnocheck()
-        unsortedids=set(self.sensesbyforminregex(self.regex,ps=ps))
+        check=self.program.params.check()
+        if '=' in (check or ''):
+            # Equality check (C1=C2, V1=V2, …): the universe is the WHOLE
+            # profile by membership. Every word is either equal (→ its group)
+            # or not (→ NA), so there is NO manual "to sort" pile — the user
+            # verifies the genuine matches out of NA by hand. Using the
+            # form-seed here (as non-'=' checks do) would strand any profile
+            # word whose surface form isn't a clean CxVC match (e.g. an extra
+            # grapheme like nose→n-o-s-e) as tosort, dropping it out of the
+            # NA (not-equal) set entirely.
+            unsortedids=set(self.program.slices.senses(ps=ps,profile=profile))
+        else:
+            self.buildregexnocheck()
+            unsortedids=set(self.sensesbyforminregex(self.regex,ps=ps))
         filteredgroups=[i for i in groups if not i.isdigit()]
         ngroups=len(filteredgroups)
         for gi, group in enumerate(filteredgroups):
@@ -176,7 +188,25 @@ class Segments(Senses):
         if unsortedids:
             yield from self.presort(unsortedids,group='NA',startat=80,endat=95)
             self.program.status.group('NA')
-            self.verify() #do this here, just this once.
+            # NA one-shot terminal verify (regression fix 2026-07-08).
+            # NA collects two kinds of word: user-skipped items (any
+            # check) and the presort remainder of an EQUALITY check
+            # (code contains '=', e.g. C1=C2 / C1=C2=C3 / V1=V2): under
+            # an '=' check the presort partitions words into the equal
+            # group(s) (x=y=z) and the not-equal remainder → NA, so for
+            # '=' checks NA is the check's real result set and the user
+            # must be able to verify it out (pull back any words that
+            # actually ARE equal) via the normal verify loop, then
+            # re-verify on demand. For every OTHER check NA is a
+            # terminal skip pile: verify it once here and mark it done
+            # so the loop never re-offers it (only "Resort skipped
+            # data" resurfaces it). 1.3.77 made this one-shot fire for
+            # ALL checks, which silently killed '='-check NA
+            # verification — the regression this restores. NA stays off
+            # the picker/board either way (separate filters); it rides
+            # only the verify loop, and only for '=' checks.
+            if '=' not in (self.program.params.check() or ''):
+                self.verify() #skip pile: verify once, then terminal
         self.program.status.presorted(True)
         self.program.status.store() #after all the above
         self.maybewrite()

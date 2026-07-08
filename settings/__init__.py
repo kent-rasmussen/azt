@@ -900,7 +900,16 @@ class Settings(SettingsUI):
         else:
             if not kwargs.get('cvt'): #default, not on iteration
                 self.program.status.marksensesorted(sense.id)
-            if v not in ['NA','ALLOK']:
+            # NA is normally kept out of the sort-group list (skip pile).
+            # Exception: under an EQUALITY check (code contains '=', e.g.
+            # C1=C2 / V1=V2 / CV1=CV2), the presort partitions words into the
+            # equal group(s) and the not-equal remainder → NA, so NA is that
+            # check's real result set and must ride the verify loop for the
+            # user to pull genuine matches back out by hand. ALLOK (fully
+            # verified) is never a sort group. Keys on the '=' check SHAPE,
+            # not the literal "C1=C2".
+            excluded = ['ALLOK'] if '=' in (check or '') else ['NA','ALLOK']
+            if v not in excluded:
                 self._groups.append(v)
     def updatesortingstatus(self, store=True, **kwargs):
         """This reads LIFT to create lists for sorting, populating lists of
@@ -926,7 +935,7 @@ class Settings(SettingsUI):
         for sense in senses:
             self.categorizebygrouping(fn,sense,**kwargs)
         sorted=set(self._groups)
-        log.info(f"sorted: {sorted}")
+        log.info(f"sorted (check={check}, NA_in_groups={self._groups.count('NA')}): {sorted}")
         self.program.status.groups(list(sorted),**kwargs)
         log.info(f"status.groups: {self.program.status.groups(**kwargs)}")
         if store:

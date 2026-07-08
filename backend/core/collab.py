@@ -163,6 +163,7 @@ class CollabSession:
         self._reload_offered_at = 0.0
         self._last_detected_head = ''  # newest peer head we've seen
         self._offered_head = ''        # head the last dialog was for
+        self._sync_in_flight = False   # user-gesture sync guard (§17c)
 
     def record_lift_stat(self):
         """Remember the on-disk identity of the LIFT as of our last
@@ -363,6 +364,133 @@ class CollabSession:
         except Exception:
             return None
 
+    # ── Phase 4: user-gestured sync + routing (recorder §17 table) ───
+
+    def sync(self):
+        """User-gestured commit+push+pull, with the canonical result
+        routing. Blocks on the network — call under a waiting()
+        context. Returns the final Result (or None when a sync was
+        already in flight)."""
+        if self._sync_in_flight:
+            log.info("sync already in flight; ignoring gesture")
+            return None
+        self._sync_in_flight = True
+        try:
+            result = _client.sync_project(self.langcode)
+            if result.has(S.JOB_INTERRUPTED):
+                # Daemon restarted mid-job — typed-retryable, one
+                # silent retry (recorder discipline).
+                log.info("sync JOB_INTERRUPTED; retrying once")
+                result = _client.sync_project(self.langcode)
+        finally:
+            self._sync_in_flight = False
+        self.route_sync_result(result)
+        return result
+
+    def route_sync_result(self, result):
+        """The user-gesture routing table (adapted from the recorder's
+        ``do_sync``, azt_recorder/main.py §17): never-silenced codes
+        first, then route-to-what-fixes-it, then transient, then the
+        success line. All display goes through ``notify_error`` (the
+        ErrorNotice channel); config-class problems also open the
+        daemon settings UI (a separate process — non-blocking)."""
+        from utilities.error_handler import notify_error
+        from azt_collab_client import translate_result, open_server_ui
+        title = _("Collaboration")
+        # 1. Never-silenced, before any routing.
+        if result.has_any(S.DATA_LOSS_RISK, S.COMMIT_REPEATEDLY_FAILED):
+            notify_error(translate_result(result), title=title)
+        # 2. Piggybacked advisory.
+        if result.has(S.AUTH_REFRESH_STALE):
+            log.warning("AUTH_REFRESH_STALE: GitHub session needs "
+                        "re-authentication soon")
+        # 3. Configuration-class → open the screen that fixes it.
+        if result.has_any(S.NOT_A_REPO, S.NO_REMOTE, S.AUTH_REQUIRED,
+                          S.CONTRIBUTOR_UNSET, S.WORK_OFFLINE_ENABLED):
+            notify_error(translate_result(result), title=title)
+            try:
+                open_server_ui()
+            except Exception as e:
+                log.error(f"open_server_ui: {e}")
+        elif result.has_any(S.APP_NOT_INSTALLED, S.APP_SUSPENDED,
+                            S.REPO_NOT_AUTHORIZED, S.REPO_NO_ACCESS):
+            # GitHub-side problem; the Result carries the URL that
+            # fixes it when known.
+            url = ''
+            for code in (S.APP_NOT_INSTALLED, S.APP_SUSPENDED,
+                         S.REPO_NOT_AUTHORIZED, S.REPO_NO_ACCESS):
+                url = result.param(code, 'url', '') or url
+            notify_error(translate_result(result), title=title)
+            if url:
+                try:
+                    import webbrowser
+                    webbrowser.open(url)
+                except Exception as e:
+                    log.error(f"webbrowser.open({url!r}): {e}")
+        elif result.has_any(S.SERVER_UNAVAILABLE, S.SERVER_ERROR,
+                            S.BUSY, S.JOB_INTERRUPTED):
+            # Transient — say so, nothing else to route.
+            notify_error(translate_result(result), title=title)
+        else:
+            # Success-shaped (PUSHED / PULLED / NOTHING_TO_COMMIT /
+            # COMMITTED_*): show the one-line outcome.
+            notify_error(translate_result(result), title=title)
+        # 4. Content dimension, independent of the above: a pull that
+        # changed local bytes means our in-memory tree is behind.
+        # Flag stale; the 10 s poll raises the reload offer (avoids
+        # stacking a second dialog right on top of this one).
+        if result.has(S.PULLED):
+            self.stale = True
+            head = getattr(result, 'head_sha', '')
+            if head:
+                self._last_detected_head = head
+            log.info(_("Sync pulled team changes; reload offer will "
+                       "follow."))
+
+    def status_summary(self):
+        """One human-readable block for the 'Collaboration status'
+        popup. Backup truth per §17b (0.53.3): backed-up requires
+        wan_unshared == 0 AND main_merged — the count can reach 0
+        while bytes await their merge on a topic ref."""
+        st = self.status()
+        if st is None:
+            return _("The collaboration server is not responding.")
+        lines = [_("Project: {langcode}").format(langcode=self.langcode)]
+        remote = getattr(st, 'remote_url', '')
+        wan = getattr(st, 'wan_unshared', 0)
+        merged = getattr(st, 'main_merged', True)
+        if not remote:
+            lines.append(_("Backup: local only (not yet published "
+                           "to GitHub)"))
+        elif wan == 0 and merged:
+            lines.append(_("Backup: up to date on GitHub"))
+        elif wan == 0:
+            lines.append(_("Backup: finishing (merging on GitHub)…"))
+        else:
+            lines.append(_("Backup: {n} commit(s) not yet on GitHub"
+                           ).format(n=wan))
+        n_changes = getattr(st, 'n_changes', 0)
+        if n_changes:
+            lines.append(_("{n} change(s) not yet committed"
+                           ).format(n=n_changes))
+        if getattr(st, 'work_offline', False):
+            lines.append(_("Work-offline is ON (nothing will be "
+                           "sent until it is turned off)"))
+        if self.stale:
+            lines.append(_("Team changes are waiting — reload to "
+                           "see them"))
+        if self.degraded:
+            lines.append(_("Server was unreachable earlier; saves "
+                           "are going directly to disk"))
+        try:
+            contributor = _client.get_contributor()
+            if contributor:
+                lines.append(_("Contributor: {name}"
+                               ).format(name=contributor))
+        except Exception:
+            pass
+        return '\n'.join(lines)
+
 
 # ── session construction ─────────────────────────────────────────────
 
@@ -512,6 +640,72 @@ def connect_current_project(program):
     return True, _(
         "Connected! Saves will now go through the collaboration "
         "server.")
+
+
+def _settings_ui_pythons():
+    """Candidate interpreters for the daemon settings UI, which needs
+    Kivy — azt's own venv typically doesn't have it (tkinter app; the
+    Kivy-free daemon spawn is unaffected). Order: explicit override,
+    our own interpreter (covers a Kivy-equipped azt env), then the
+    suite's Kivy venvs beside the azt-collab clone."""
+    import sys
+    cands = []
+    env_py = os.environ.get('AZT_COLLAB_UI_PYTHON', '')
+    if env_py:
+        cands.append(env_py)
+    cands.append(sys.executable)
+    try:
+        collab_root = os.path.dirname(os.path.dirname(
+            os.path.abspath(_client.__file__)))
+        suite_root = os.path.dirname(collab_root)
+        for app in ('azt_recorder', 'azt-viewer'):
+            py = os.path.join(suite_root, app, 'env', 'bin', 'python')
+            if os.path.isfile(py):
+                cands.append(py)
+    except Exception:
+        pass
+    seen = set()
+    return [c for c in cands if not (c in seen or seen.add(c))]
+
+
+def open_settings(program):
+    """Open the daemon settings UI (contributor, credentials,
+    work-offline, LAN) — a separate process; returns immediately.
+    Useful before AND after connecting, so it isn't gated on a
+    session. Tries each candidate interpreter until one survives the
+    spawn (the UI needs Kivy; see ``_settings_ui_pythons``)."""
+    from utilities.error_handler import notify_error
+    if not AVAILABLE:
+        notify_error(_("The collaboration client could not be found; "
+                       "clone azt-collab beside the azt folder, or "
+                       "set AZT_COLLAB_DIR."),
+                     title=_("Collaboration"))
+        return
+    last = {}
+    for py in _settings_ui_pythons():
+        try:
+            result = _client.open_server_ui(python_exe=py)
+        except TypeError:
+            # Client predates the python_exe param (0.53.4).
+            result = _client.open_server_ui()
+        except Exception as e:
+            result = {'ok': False, 'error': str(e)}
+        if result.get('ok'):
+            log.info(f"settings UI spawned with {py}")
+            return
+        last = result
+        log.warning(
+            f"settings UI spawn with {py} failed: "
+            f"{result.get('error')} rc={result.get('returncode')} "
+            f"detail={result.get('detail', '')!r}")
+    detail = last.get('detail', '') or last.get('error', 'unknown')
+    notify_error(_(
+        "Could not open the collaboration settings: {detail}\n"
+        "The settings window needs the Kivy package; install it in "
+        "one of the A-Z+T suite's Python environments, or set "
+        "AZT_COLLAB_UI_PYTHON to a python that has it."
+        ).format(detail=detail),
+        title=_("Collaboration"))
 
 
 def disconnect_current_project(program):
