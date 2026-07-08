@@ -157,24 +157,42 @@ class Segments(Senses):
         w=self.ui.getrunwindow(msg=msg)
         self.program.status.renewsensestosort([],[]) #will repopulate
         check=self.program.params.check()
-        if '=' in (check or ''):
-            # Equality check (C1=C2, V1=V2, …): the universe is the WHOLE
-            # profile by membership. Every word is either equal (→ its group)
-            # or not (→ NA), so there is NO manual "to sort" pile — the user
-            # verifies the genuine matches out of NA by hand. Using the
-            # form-seed here (as non-'=' checks do) would strand any profile
-            # word whose surface form isn't a clean CxVC match (e.g. an extra
-            # grapheme like nose→n-o-s-e) as tosort, dropping it out of the
-            # NA (not-equal) set entirely.
+        # Presort is a best-effort GUESS, and we constrain on cvprofile
+        # MEMBERSHIP (data), never re-derive shape by regex (analysis —
+        # cvprofile is authoritative). For a single positional check (C1, C2,
+        # V1, …: no '='/'x') we guess each member's group from THAT position
+        # alone via the positional matcher (rxdict.rx[check] — start-anchored,
+        # captures the first consonant and ignores the rest of the form): a
+        # 'p'-initial word joins the other 'p' words even if the rest of the
+        # form doesn't parse as the profile (e.g. an apparently-CV word the
+        # user has recorded as CVC). Wrong guesses are corrected by the user at
+        # verify. '=' checks keep the whole-form match (equality needs both
+        # positions) but also draw their universe from membership so the
+        # not-equal remainder reaches NA. Any other check falls back to the
+        # form-seed.
+        posrx=None
+        if '=' not in (check or '') and 'x' not in (check or ''):
+            posrx=self.rxdict.rx.get(check)
+        if posrx is not None or '=' in (check or ''):
             unsortedids=set(self.program.slices.senses(ps=ps,profile=profile))
         else:
             self.buildregexnocheck()
             unsortedids=set(self.sensesbyforminregex(self.regex,ps=ps))
+        posgroups={} #position value (C1 guess) -> senses; only for positional checks
+        if posrx is not None:
+            for sense in unsortedids:
+                form=sense.ftypes[self.ftype].textvaluebylang(self.analang)
+                m=posrx.search(form) if form else None
+                if m and m.groups():
+                    posgroups.setdefault(m.groups()[-1],set()).add(sense)
         filteredgroups=[i for i in groups if not i.isdigit()]
         ngroups=len(filteredgroups)
         for gi, group in enumerate(filteredgroups):
-            self.buildregex(group=group,cvt=cvt,profile=profile)
-            s=set(self.sensesbyforminregex(self.regex,ps=ps))
+            if posrx is not None:
+                s=set(posgroups.get(group,()))
+            else:
+                self.buildregex(group=group,cvt=cvt,profile=profile)
+                s=set(self.sensesbyforminregex(self.regex,ps=ps))
             if s:
                 yield from self.presort(list(s),group,
                     startat=gi*80//max(ngroups,1),
@@ -185,28 +203,22 @@ class Segments(Senses):
                                         count=len(unsortedids),
                                         ids=unsortedids
                                         ))
-        if unsortedids:
+        if '=' in (check or '') and unsortedids:
+            # ONLY equality checks auto-populate NA. For an '=' check the
+            # not-equal remainder (e.g. C1≠C2) IS the check's result set, so it
+            # goes to NA and the user verifies it out by hand — it rides the
+            # normal verify loop (layer-3: NA is kept in the group list for '='
+            # checks) and is deliberately NOT marked done here.
+            #
+            # For every OTHER check, words the presort couldn't place are left
+            # UNSORTED (to-sort) and simply get presented to sort — NA is NOT a
+            # catch-all. NA means the USER skipped the word (taboo, unknown, …)
+            # and is terminal; only a user gesture during sorting puts a word
+            # there, and it stays out of the verify loop because
+            # categorizebygrouping excludes NA from the group list for non-'='
+            # checks.
             yield from self.presort(unsortedids,group='NA',startat=80,endat=95)
             self.program.status.group('NA')
-            # NA one-shot terminal verify (regression fix 2026-07-08).
-            # NA collects two kinds of word: user-skipped items (any
-            # check) and the presort remainder of an EQUALITY check
-            # (code contains '=', e.g. C1=C2 / C1=C2=C3 / V1=V2): under
-            # an '=' check the presort partitions words into the equal
-            # group(s) (x=y=z) and the not-equal remainder → NA, so for
-            # '=' checks NA is the check's real result set and the user
-            # must be able to verify it out (pull back any words that
-            # actually ARE equal) via the normal verify loop, then
-            # re-verify on demand. For every OTHER check NA is a
-            # terminal skip pile: verify it once here and mark it done
-            # so the loop never re-offers it (only "Resort skipped
-            # data" resurfaces it). 1.3.77 made this one-shot fire for
-            # ALL checks, which silently killed '='-check NA
-            # verification — the regression this restores. NA stays off
-            # the picker/board either way (separate filters); it rides
-            # only the verify loop, and only for '=' checks.
-            if '=' not in (self.program.params.check() or ''):
-                self.verify() #skip pile: verify once, then terminal
         self.program.status.presorted(True)
         self.program.status.store() #after all the above
         self.maybewrite()

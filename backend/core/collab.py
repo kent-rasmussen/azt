@@ -159,6 +159,12 @@ class CollabSession:
         self.lift_stat = None    # (mtime_ns, size) of the LIFT as last
         #                          written/loaded by US — the cheap "did
         #                          someone else change the file" probe.
+        self.base_lift_blob = ''  # LIFT blob SHA (git) at our base_sha,
+        #                          learned from project_status whenever
+        #                          base==head — the content-identity
+        #                          anchor that lets a stale latch heal
+        #                          (F2): HEAD's LIFT blob == this ⇒ the
+        #                          advance changed no LIFT we can't see.
         self._warned_uncommitted = False
         self._reload_offered_at = 0.0
         self._last_detected_head = ''  # newest peer head we've seen
@@ -234,11 +240,27 @@ class CollabSession:
         # save is OK; a legacy replace would find no source and report
         # a false write failure.
         if not os.path.exists(str(staged)):
+            # The daemon consumed the staged file (os.replace succeeded)
+            # then failed to commit: the DEST LIFT now holds OUR bytes.
+            # Record its stat so the poll recognises the eventual HEAD
+            # advance (when the commit catches up) as OUR content, not a
+            # peer change — omitting this was the root of the spurious
+            # "Team changes available" popup (F1).
+            self.record_lift_stat()
             log.warning(_(
                 "Collaboration server reported a problem after "
                 "storing the file ({codes}); save is safe, history "
                 "may catch up on the next save.").format(
                     codes=result.codes()))
+            # F5: the client wrapper preserves the daemon's exception
+            # text as Status('SERVER_ERROR', {'error': str(ex)}); log
+            # it too — codes() alone discarded the root cause of the
+            # persistent submit_file failure on both incidents.
+            detail = result.param('SERVER_ERROR', 'error', '')
+            if detail:
+                log.warning(_(
+                    "Collaboration server error detail: {detail}"
+                    ).format(detail=detail))
             return 'ok'
         if not self.degraded:
             self.degraded = True
@@ -268,15 +290,34 @@ class CollabSession:
         """
         if self.stale:
             # Already behind (a merged save, or a peer change detected
-            # earlier) — that's LOCAL knowledge, so report 'changed'
-            # even if the daemon is unreachable right now. The probe
-            # here only tracks the NEWEST head so a genuinely new
-            # change can bypass the offer snooze (reload_offer_due);
-            # NEVER advance base or take the benign path — our
-            # in-memory tree is stale regardless of what's on disk.
+            # earlier) — LOCAL knowledge, so normally report 'changed'
+            # even if the daemon is unreachable. NEVER advance base or
+            # take the benign path on the strength of file stat alone —
+            # our in-memory tree is stale regardless of what's on disk.
+            #
+            # BUT self-heal a FALSE latch (F2): if our on-disk LIFT is
+            # still exactly what we last wrote AND the LIFT blob at HEAD
+            # equals the blob at our base, then the advance changed no
+            # LIFT content we can't already see — the latch was spurious
+            # (a LAN hard-reset receive that rewrote identical bytes, or
+            # a save the daemon stored but couldn't commit until now).
+            # Un-latch by CONTENT identity instead of nagging to reload.
             try:
                 st = _client.project_status(self.langcode)
                 head = getattr(st, 'head_sha', '') if st else ''
+                head_blob = getattr(st, 'lift_blob_sha', '') if st else ''
+                if (head_blob and self.base_lift_blob
+                        and head_blob == self.base_lift_blob
+                        and not self._lift_changed_on_disk()):
+                    self.stale = False
+                    if head:
+                        self.base_sha = head
+                    self.base_lift_blob = head_blob
+                    self._last_detected_head = ''
+                    self._offered_head = ''
+                    log.info(_("Team-changes latch cleared: HEAD advanced "
+                               "but the lexicon content is unchanged."))
+                    return 'benign'
                 if head:
                     self._last_detected_head = head
             except Exception:
@@ -287,7 +328,13 @@ class CollabSession:
         except Exception:
             return 'none'
         head = getattr(st, 'head_sha', '') if st else ''
+        head_blob = getattr(st, 'lift_blob_sha', '') if st else ''
         if not head or head == self.base_sha:
+            # At base: our in-memory tree derives from this LIFT, so
+            # anchor its blob as our base blob (content-identity anchor
+            # for the F2 self-heal above).
+            if head_blob:
+                self.base_lift_blob = head_blob
             return 'none'
         if not self._lift_changed_on_disk():
             # HEAD moved but not the LIFT: our own artifact commit (or
@@ -295,6 +342,8 @@ class CollabSession:
             # the new base — the file our in-memory tree derives from
             # is byte-identical to disk.
             self.base_sha = head
+            if head_blob:
+                self.base_lift_blob = head_blob
             return 'benign'
         self.stale = True
         self._last_detected_head = head
@@ -314,7 +363,15 @@ class CollabSession:
         promptly."""
         import time
         now = time.time()
-        new_change = bool(self._last_detected_head) and (
+        # A genuinely new peer head bypasses the snooze — but only once
+        # we have ACTUALLY offered before (``_offered_head`` non-empty).
+        # Without that guard the first offer (fired via the time check
+        # below) could store an empty ``_offered_head`` while
+        # ``_last_detected_head`` was still empty; the next poll fills
+        # the real head, which then reads as "new" and bypasses the
+        # snooze → two dialogs back-to-back (the observed quirk).
+        new_change = bool(self._last_detected_head) and bool(
+            self._offered_head) and (
             self._last_detected_head != self._offered_head)
         if not new_change and now - self._reload_offered_at < snooze_s:
             return False
