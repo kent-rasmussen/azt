@@ -11,7 +11,7 @@ program={'name':'A-Z+T',
         'production':False, #True for making screenshots (default theme)
         'testing':False, #normal error screens and logs
         'Demo':False, #will get set otherwise later if it is
-        'version':'1.8.3', #This is a string...
+        'version':'1.8.4', #This is a string...
         'testversionname':'testing', #always have some real test branch here
         'url':'https://github.com/kent-rasmussen/azt',
         'Email':'kent_rasmussen@sil.org',
@@ -302,9 +302,21 @@ class App:
             log.info(f"collab_poll: {e}")
         self.tk_root.after(10000, self.collab_poll)
     def collab_offer_reload(self):
+        # F6: one open offer at a time. Multiple polls detecting team
+        # changes used to each spawn their own "Team changes available"
+        # window (6+ stacked observed). If an offer is still open, don't
+        # stack another — the existing one already says "reload", and
+        # its restart action pulls the newest HEAD regardless of which
+        # poll opened it.
+        existing = getattr(self, '_collab_offer_win', None)
+        try:
+            if existing is not None and existing.winfo_exists():
+                return
+        except Exception:
+            pass
         from utilities.error_handler import notify_error
         log.info(_("Offering reload for team changes"))
-        notify_error(
+        self._collab_offer_win = notify_error(
             _("Your team made changes to this database. Loading them "
               "requires {name} to restart — or press OK to keep "
               "working and load them later. Your saves are safe "

@@ -19,6 +19,25 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.8.4
+- FIX (presort, follow-on to 1.8.3) — positional checks now presort by that
+  position alone, over cvprofile MEMBERSHIP, not whole-word regex shape.
+  - **C1 (and any single Cn/Vn check) presorts by first/that consonant (or
+    vowel), ignoring the rest of the form.** A word the linguist recorded as
+    CVC whose surface form doesn't parse as CVC (e.g. `poe`/`doe` → the
+    algorithm reads CV, `ʌng` → VCC) is now grouped by its C1 anyway — "if it
+    starts with p, it goes with the other p words"; wrong guesses are corrected
+    by the user at verify. Presort uses the positional matcher
+    (`rxdict.rx[check]`) over `slices.senses(ps, profile)`; the whole-form
+    `makeprofileforcheck`/`fromCV` match is bypassed for these checks.
+    **cvprofile + check values are DATA and authoritative; `profileofform`
+    is analysis and must never override the stored profile.**
+  - **NA is no longer a catch-all.** Only equality (`=`) checks auto-populate
+    NA (the not-equal set the user verifies out). For every other check, words
+    the presort can't place are left UNSORTED (presented to sort) — NA means
+    the user deliberately skipped a word (taboo, unknown, …) and is terminal.
+  - `=` checks unchanged from 1.8.3 (whole-form match, membership universe).
+
 # Version 1.8.3
 - FIX (presort regression, completes 1.8.2) — for **equality checks** (`=` in
   the code) words are again presorted into **NA** and offered for verification,

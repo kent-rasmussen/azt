@@ -17,8 +17,11 @@ def _default_handler(text, **kwargs):
 _handler = _default_handler
 
 def notify_error(text, **kwargs):
-    """Show an error to the user. Backend-safe — no tkinter dependency."""
-    _handler(text, **kwargs)
+    """Show an error to the user. Backend-safe — no tkinter dependency.
+    Returns whatever the handler returns (the notice window instance for
+    the ErrorNotice handler), so callers that need to track a single
+    open dialog can — see App.collab_offer_reload (F6)."""
+    return _handler(text, **kwargs)
 
 def set_error_handler(handler):
     """Set the error display function. Called once at startup with ErrorNotice."""
