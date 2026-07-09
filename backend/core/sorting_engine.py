@@ -1073,7 +1073,21 @@ class Sort(Categories):
         # unscrollable. Recompute here, when reqheight is final.
         if hasattr(self,'buttonframe') and hasattr(self.buttonframe,'reflow'):
             self.buttonframe.reflow()
-        self.ui.runwindow.wait_window(window=self.sortitem)
+        try:
+            self.ui.runwindow.wait_window(window=self.sortitem)
+        except Exception as e:
+            # The update()/reflow above re-enter the tk event loop; a
+            # scheduled callback (a 'Not profile' / profile-picker
+            # auto-advance, an autoplay clock, a reload) can destroy the
+            # sort item BEFORE we reach wait_window, so it raises
+            # TclError "bad window path name" and crashes the mainloop.
+            # That's the SAME end state as the window being destroyed
+            # DURING the wait (the normal button path), so don't crash —
+            # fall through to the shared return below; sortselected then
+            # consumes any auto-advance flag or reads the selection just
+            # as it would have, and an unhandled vanish simply re-presents
+            # the still-unsorted word on the next loop pass.
+            log.info("sort item gone before wait_window (%s); continuing", e)
         if not self.ui.runwindow.exitFlag.istrue():
             return item
     def pageicon(self,macrosort=False):

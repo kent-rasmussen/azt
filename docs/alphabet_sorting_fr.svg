@@ -1,0 +1,496 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="2480" height="3480" viewBox="0 0 2480 3480"
+     font-family="'Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3.5 L0,7 Z" fill="#111111"/>
+    </marker>
+    <marker id="arrT" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3.5 L0,7 Z" fill="#111111"/>
+    </marker>
+    <style>
+      .colh   { font-size:24px; font-weight:700; fill:#111; }
+      .colsub { font-size:13.5px; fill:#111; }
+      .num    { font-size:20px; font-weight:700; fill:#111; }
+      .pt     { font-size:19px; font-weight:700; fill:#111; }
+      .tbtxt  { font-size:14.5px; font-weight:700; fill:#fff; }
+      .tbsm   { font-size:11px; fill:#fff; }
+      .q      { font-size:14px; font-weight:700; font-style:italic; fill:#111; }
+      .b      { font-size:12.5px; fill:#111; }
+      .sm     { font-size:11px; fill:#111; }
+      .chip   { font-size:13px; fill:#111; }
+      .chipsm { font-size:12px; fill:#111; }
+      .dq     { font-size:12.5px; font-weight:600; fill:#111; text-anchor:middle; }
+      .lbl    { font-size:11.5px; fill:#111; paint-order:stroke; stroke:#fff; stroke-width:4px; stroke-linejoin:round; }
+      .win    { fill:#ffffff; stroke:#111; stroke-width:2; }
+      .tbar   { fill:#111; }
+      .pill   { fill:#ffffff; stroke:#111; stroke-width:1.6; }
+      .act    { fill:#e6e6e6; stroke:#333; stroke-width:1.4; }
+      .mock   { fill:#fafafa; stroke:#888; stroke-width:1; }
+      .dlg    { fill:#ffffff; stroke:#111; stroke-width:1.4; stroke-dasharray:6 4; }
+      .dbar   { fill:#e6e6e6; stroke:none; }
+      .dia    { fill:#ffffff; stroke:#111; stroke-width:2; }
+      .frame  { fill:none; stroke:#777; stroke-width:1.2; stroke-dasharray:2 3; }
+      .flow   { stroke:#111; stroke-width:2; fill:none; }
+      .trunk  { stroke:#111; stroke-width:3.2; fill:none; }
+      .thin   { stroke:#111; stroke-width:1.4; fill:none; }
+      .dsh    { stroke:#111; stroke-width:1.3; fill:none; stroke-dasharray:5 4; }
+      .node   { fill:#111; }
+    </style>
+  </defs>
+
+  <text class="colh" x="40" y="44" font-size="30px">A&#8209;Z+T — tri de l’alphabet</text>
+
+  <g transform="translate(-1220,0)">
+  <!-- ================================================================
+       COLONNE 1 · TRI SEGMENTAL
+       ================================================================ -->
+  <text class="colh" x="1260" y="90">1 · TRI SEGMENTAL</text>
+
+  <!-- entrée + porte -->
+  <circle class="node" cx="1350" cy="118" r="7"/>
+  <path class="flow" marker-end="url(#arr)" d="M1350,125 V144"/>
+  <polygon class="dia" points="1350,150 1438,200 1350,250 1262,200"/>
+  <text class="dq" x="1350" y="196">chaque mot a-t-il</text>
+  <text class="dq" x="1350" y="212">un profil ?</text>
+  <text class="lbl" x="1446" y="192">non</text>
+  <path class="flow" marker-end="url(#arr)" d="M1438,200 H1456"/>
+  <text class="lbl" x="1360" y="282">oui</text>
+  <path class="flow" marker-end="url(#arr)" d="M1350,250 V520 Q1350,532 1362,532 H1456"/>
+
+  <!-- 11 · dialogue des profils -->
+  <text class="num" x="2066" y="166">11</text>
+  <rect class="win" x="1460" y="140" width="600" height="260" rx="8"/>
+  <rect class="tbar" x="1460" y="140" width="600" height="36" rx="8"/>
+  <rect class="tbar" x="1460" y="162" width="600" height="14"/>
+  <text class="tbtxt" x="1476" y="164">Configurer les profils syllabiques ?</text>
+  <text class="q" x="1486" y="200">Certains de ces mots n’ont pas encore de profil syllabique ;</text>
+  <text class="q" x="1486" y="220">ils ne seront donc pas triés ici non plus.</text>
+  <text class="sm" x="1486" y="242">dɔ̀k&#160;&#160;(#C=C C#=C syls=1)&#160;&#160;→ CVC&#160;&#160;·&#160;&#160;… (chaque mot listé)</text>
+  <rect class="pill" x="1486" y="254" width="330" height="36" rx="16"/>
+  <text class="chipsm" x="1502" y="277" font-size="11px">Faire confiance à l’analyse automatique ; corriger plus tard</text>
+  <path class="flow" marker-end="url(#arr)" d="M1816,272 H2076"/>
+  <rect class="act" x="2080" y="250" width="340" height="44"/>
+  <text class="b" x="2094" y="277">les mots listés prennent leur profil automatique</text>
+  <path class="flow" marker-end="url(#arr)" d="M2420,272 Q2444,272 2444,260 V130 Q2444,118 2432,118 H1364 Q1356,118 1354,120"/>
+  <rect class="pill" x="1486" y="304" width="330" height="36" rx="16"/>
+  <text class="chipsm" x="1502" y="327" font-size="11px">Trier les profils syllabiques manuellement ; revenir plus tard</text>
+  <path class="flow" marker-end="url(#arr)" d="M1816,322 H2076"/>
+  <rect class="act" x="2080" y="300" width="340" height="44"/>
+  <text class="b" x="2094" y="327" font-weight="700">Quitter — lancer le Tri des syllabes</text>
+  <rect class="pill" x="1486" y="354" width="120" height="32" rx="15"/>
+  <text class="chip" x="1502" y="375">Annuler</text>
+  <path class="flow" marker-end="url(#arr)" d="M1546,386 V436"/>
+
+  <!-- 12 · tableau de bord -->
+  <text class="num" x="1428" y="466">12</text>
+  <rect class="win" x="1460" y="440" width="600" height="240" rx="8"/>
+  <rect class="tbar" x="1460" y="440" width="600" height="36" rx="8"/>
+  <rect class="tbar" x="1460" y="462" width="600" height="14"/>
+  <text class="tbtxt" x="1476" y="464">Trier Voyelles</text>
+  <rect class="pill" x="1490" y="500" width="150" height="60" rx="16"/>
+  <text x="1565" y="538" text-anchor="middle" font-size="20" font-weight="700" fill="#111">Trier!</text>
+  <text class="b" x="1690" y="512">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;V1&#160;&#160;&#160;&#160;V2&#160;&#160;&#160;&#160;V1=V2</text>
+  <text class="b" x="1690" y="538">CVC&#160;&#160;&#160;&#160;[ ✓ ]&#160;[ ▣ ]&#160;[&#160;&#160;&#160;]</text>
+  <text class="b" x="1690" y="564">CV&#160;&#160;&#160;&#160;&#160;&#160;[ ✓ ]&#160;[&#160;&#160;&#160;]&#160;[&#160;&#160;&#160;]</text>
+  <text class="b" x="1690" y="590">CVCV&#160;&#160;[&#160;&#160;&#160;]&#160;[&#160;&#160;&#160;]&#160;[&#160;&#160;&#160;]</text>
+  <text class="sm" x="1690" y="620">lignes = profils · colonnes = tests</text>
+  <text class="sm" x="1490" y="596">travaille sur UNE catégorie grammaticale,</text>
+  <text class="sm" x="1490" y="612">UN test (V1), UN profil (CVC)</text>
+  <text class="sm" x="1490" y="628">à la fois</text>
+  <path class="flow" marker-end="url(#arr)" d="M1565,560 C1565,660 1350,630 1350,708"/>
+
+  <!-- point d’entrée A + prétrié ? -->
+  <circle class="node" cx="1350" cy="720" r="8"/>
+  <text class="pt" x="1316" y="728">A</text>
+  <path class="flow" marker-end="url(#arr)" d="M1350,728 V746"/>
+  <polygon class="dia" points="1350,750 1438,800 1350,850 1262,800"/>
+  <text class="dq" x="1350" y="796">ce groupe est-il</text>
+  <text class="dq" x="1350" y="812">prétrié ?</text>
+  <text class="lbl" x="1446" y="792">non</text>
+  <path class="flow" marker-end="url(#arr)" d="M1438,800 H2076"/>
+  <rect class="act" x="2080" y="778" width="340" height="44"/>
+  <text class="b" x="2094" y="805">prétri par orthographe (première fois seulement)</text>
+  <text class="lbl" x="1360" y="880">oui</text>
+  <path class="flow" marker-end="url(#arr)" d="M1350,850 V906"/>
+
+  <!-- D1 -->
+  <polygon class="dia" points="1350,910 1438,960 1350,1010 1262,960"/>
+  <text class="dq" x="1350" y="956">des mots pas encore</text>
+  <text class="dq" x="1350" y="972">dans un groupe ?</text>
+  <text class="lbl" x="1446" y="952">oui</text>
+  <path class="flow" marker-end="url(#arr)" d="M1438,960 H1456"/>
+  <text class="lbl" x="1360" y="1038">non</text>
+  <path class="flow" marker-end="url(#arr)" d="M1350,1010 V1506"/>
+
+  <!-- 13 · appartient à quel groupe (V1) -->
+  <text class="num" x="1428" y="936">13</text>
+  <rect class="win" x="1460" y="910" width="600" height="540" rx="8"/>
+  <rect class="tbar" x="1460" y="910" width="600" height="36" rx="8"/>
+  <rect class="tbar" x="1460" y="932" width="600" height="14"/>
+  <text class="tbtxt" x="1476" y="934">... appartient à quel groupe?&#160;&#160;(par Première voyelle)</text>
+  <image xlink:href="../images/Sort%20List.png" x="1476" y="954" width="214" height="486"/>
+  <rect class="mock" x="1690" y="960" width="330" height="70" rx="6"/>
+  <text x="1706" y="1002" font-size="17" font-weight="700" fill="#111">dɔ̀k ‘cheval’&#160;&#160;🖼 ▶</text>
+  <text class="sm" x="1960" y="982">7/41</text>
+  <rect class="pill" x="1690" y="1050" width="330" height="40" rx="18"/>
+  <text class="chip" x="1706" y="1075">a — dɔ̀ŋ ‘marmite’ 🖼&#160;&#160;🔃 12</text>
+  <rect class="pill" x="1690" y="1100" width="330" height="40" rx="18"/>
+  <text class="chip" x="1706" y="1125">ɔ — kɔ̀ŋ ‘lance’ 🖼&#160;&#160;🔃 4</text>
+  <rect class="pill" x="1690" y="1150" width="330" height="40" rx="18"/>
+  <text class="chipsm" x="1706" y="1175" font-size="11px">Ce mot a Première voyelle&#160;&#160;/&#160;&#160;Autre V1</text>
+  <rect class="pill" x="1690" y="1200" width="330" height="40" rx="18"/>
+  <text class="chip" x="1706" y="1225">Pas CVC</text>
+  <rect class="pill" x="1690" y="1250" width="330" height="40" rx="18"/>
+  <text class="chip" x="1706" y="1275">Ignorer cet élément</text>
+  <path class="flow" marker-end="url(#arr)" d="M2020,1070 H2076"/>
+  <path class="flow" marker-end="url(#arr)" d="M2020,1120 C2050,1120 2064,1094 2076,1082"/>
+  <path class="flow" marker-end="url(#arr)" d="M2020,1170 H2076"/>
+  <path class="flow" marker-end="url(#arr)" d="M2020,1220 H2076"/>
+  <path class="flow" marker-end="url(#arr)" d="M2020,1270 C2050,1270 2064,1288 2074,1296"/>
+  <rect class="act" x="2080" y="1044" width="340" height="44"/>
+  <text class="b" x="2094" y="1071">le mot rejoint le groupe (groupe non vérifié)</text>
+  <rect class="act" x="2080" y="1148" width="340" height="44"/>
+  <text class="b" x="2094" y="1175">un NOUVEAU groupe est créé (non vérifié ; 1, 2, 3…)</text>
+  <rect class="act" x="2080" y="1204" width="340" height="44"/>
+  <text class="b" x="2094" y="1231">le profil du mot est effacé</text>
+  <path class="flow" marker-end="url(#arr)" d="M2250,1248 V1276"/>
+  <rect class="act" x="2080" y="1280" width="340" height="44"/>
+  <text class="b" x="2094" y="1307">non traité ici</text>
+
+  <!-- D2 + un seul mot ? -->
+  <polygon class="dia" points="1350,1510 1438,1560 1350,1610 1262,1560"/>
+  <text class="dq" x="1350" y="1556">un groupe</text>
+  <text class="dq" x="1350" y="1572">à vérifier ?</text>
+  <text class="lbl" x="1446" y="1552">oui</text>
+  <path class="flow" marker-end="url(#arr)" d="M1438,1560 H1486"/>
+  <text class="lbl" x="1360" y="1638">non</text>
+  <path class="flow" marker-end="url(#arr)" d="M1350,1610 V2131"/>
+  <polygon class="dia" points="1560,1520 1630,1560 1560,1600 1490,1560"/>
+  <text class="dq" x="1560" y="1557" font-size="11px">un seul mot</text>
+  <text class="dq" x="1560" y="1571" font-size="11px">dans le groupe ?</text>
+  <text class="lbl" x="1568" y="1512">oui</text>
+  <path class="flow" marker-end="url(#arr)" d="M1560,1520 Q1560,1506 1574,1506 H2420 Q2432,1506 2432,1518 V1896 Q2432,1906 2424,1908"/>
+  <text class="lbl" x="1640" y="1550">non</text>
+  <path class="flow" marker-end="url(#arr)" d="M1630,1560 Q1650,1560 1650,1572 V1636"/>
+
+  <!-- 14 · vérifier V1 -->
+  <text class="num" x="1428" y="1666">14</text>
+  <rect class="win" x="1460" y="1640" width="600" height="500" rx="8"/>
+  <rect class="tbar" x="1460" y="1640" width="600" height="36" rx="8"/>
+  <rect class="tbar" x="1460" y="1662" width="600" height="14"/>
+  <text class="tbtxt" x="1476" y="1664">Vérifier pour ‘V1’ (Première voyelle)&#160;&#160;&#160;(3 restant)</text>
+  <image xlink:href="../images/Verify%20List.png" x="1476" y="1684" width="214" height="446"/>
+  <text class="q" x="1690" y="1686">Lisez cette liste à voix haute. Cliquez</text>
+  <text class="q" x="1690" y="1706">sur un son Première voyelle différent.</text>
+  <rect class="pill" x="1690" y="1730" width="300" height="32" rx="8"/>
+  <text class="chip" x="1706" y="1751">dɔ̀k ‘cheval’&#160;&#160;🖼</text>
+  <rect class="pill" x="1690" y="1770" width="300" height="32" rx="8"/>
+  <text class="chip" x="1706" y="1791">dɔ̀ŋ ‘marmite’&#160;&#160;🖼</text>
+  <rect class="pill" x="1690" y="1810" width="300" height="32" rx="8"/>
+  <text class="chip" x="1706" y="1831">kɔ̀m ‘chef’&#160;&#160;🖼</text>
+  <text class="b" x="1690" y="1862">…</text>
+  <path class="flow" marker-end="url(#arr)" d="M1990,1746 C2030,1746 2050,1758 2076,1766"/>
+  <path class="flow" marker-end="url(#arr)" d="M1990,1786 H2076"/>
+  <path class="flow" marker-end="url(#arr)" d="M1990,1826 C2030,1826 2050,1810 2076,1798"/>
+  <rect class="act" x="2080" y="1756" width="340" height="44"/>
+  <text class="b" x="2094" y="1783" font-size="11.5px">ce mot quitte le groupe (2 restants ? les deux partent)</text>
+  <rect class="dlg" x="2080" y="1640" width="340" height="88" rx="8"/>
+  <rect class="dbar" x="2080" y="1640" width="340" height="24"/>
+  <text class="b" x="2094" y="1657" font-weight="700">Ou :</text>
+  <text class="sm" x="2094" y="1680">NA : « …cliquez sur tous ceux qui ont</text>
+  <text class="sm" x="2094" y="1694">‹ Première voyelle › » — OK : « Tous ces</text>
+  <text class="sm" x="2094" y="1708">éléments n’ont PAS Première voyelle »</text>
+  <rect class="pill" x="1690" y="1910" width="330" height="40" rx="18"/>
+  <text class="chipsm" x="1706" y="1935" font-size="10.5px">OK : Tous ces éléments ont tous le même Première voyelle (V1)</text>
+  <path class="flow" marker-end="url(#arr)" d="M2020,1930 H2076"/>
+  <rect class="act" x="2080" y="1908" width="340" height="44"/>
+  <text class="b" x="2094" y="1935">le groupe ✓ vérifié (pas encore distingué)</text>
+
+  <!-- entrée + D3 -->
+  <circle class="node" cx="1350" cy="2140" r="7"/>
+  <path class="flow" marker-end="url(#arr)" d="M1350,2147 V2164"/>
+  <polygon class="dia" points="1350,2170 1438,2220 1350,2270 1262,2220"/>
+  <text class="dq" x="1350" y="2216">des groupes</text>
+  <text class="dq" x="1350" y="2232">à distinguer ?</text>
+  <text class="lbl" x="1446" y="2212">oui</text>
+  <path class="flow" marker-end="url(#arr)" d="M1438,2220 H1456"/>
+  <text class="lbl" x="1360" y="2298">non</text>
+  <path class="flow" marker-end="url(#arr)" d="M1350,2270 V2700 Q1350,2712 1362,2712 H2460 Q2472,2712 2472,2700 V208 Q2472,196 2482,196"/>
+
+  <!-- 15 · revoir les groupes de tri (V1) -->
+  <text class="num" x="1428" y="2196">15</text>
+  <rect class="win" x="1460" y="2170" width="600" height="490" rx="8"/>
+  <rect class="tbar" x="1460" y="2170" width="600" height="36" rx="8"/>
+  <rect class="tbar" x="1460" y="2192" width="600" height="14"/>
+  <text class="tbtxt" x="1476" y="2194">Revoir les groupes de tri (‘V1’)</text>
+  <text class="tbsm" x="1920" y="2194">· progression</text>
+  <image xlink:href="../images/Join%20List.png" x="1476" y="2214" width="214" height="436"/>
+  <rect class="mock" x="1690" y="2220" width="330" height="38" rx="6"/>
+  <text class="b" x="1706" y="2244">a — dɔ̀ŋ ‘marmite’&#160;&#160;🖼</text>
+  <rect class="mock" x="1690" y="2268" width="330" height="38" rx="6"/>
+  <text class="b" x="1706" y="2292">1 — kàŋ ‘crabe’&#160;&#160;🖼</text>
+  <rect class="pill" x="1690" y="2340" width="150" height="96" rx="10"/>
+  <text class="chipsm" x="1765" y="2361" text-anchor="middle" font-weight="700">Même chose</text>
+  <image xlink:href="../images/Join%20List%20same.png" x="1710" y="2369" width="110" height="58"/>
+  <rect class="pill" x="1860" y="2340" width="160" height="96" rx="10"/>
+  <text class="chip" x="1940" y="2361" text-anchor="middle" font-weight="700">Différent</text>
+  <image xlink:href="../images/Join%20List%20different.png" x="1880" y="2369" width="120" height="58"/>
+  <path class="flow" marker-end="url(#arr)" d="M1840,2360 C1950,2340 2020,2320 2074,2306"/>
+  <rect class="act" x="2080" y="2280" width="340" height="44"/>
+  <text class="b" x="2094" y="2307" font-size="11.5px">les groupes fusionnent en un seul groupe ‘a’ (non vérifié)</text>
+  <path class="flow" marker-end="url(#arr)" d="M2020,2388 H2076"/>
+  <rect class="act" x="2080" y="2366" width="340" height="44"/>
+  <text class="b" x="2094" y="2393">paire enregistrée comme distincte</text>
+
+  <!-- tronc : tout revient à A -->
+  <path class="trunk" marker-end="url(#arr)" d="M2420,2388 H2431 Q2448,2388 2448,2371 V734 Q2448,720 2434,720 H1362"/>
+  <path class="flow" d="M2420,2302 C2436,2302 2444,2296 2446,2286"/>
+  <path class="flow" d="M2420,1930 C2436,1930 2444,1924 2446,1914"/>
+  <path class="flow" d="M2420,1302 C2436,1302 2444,1296 2446,1286"/>
+  <path class="flow" d="M2420,1170 C2436,1170 2444,1164 2446,1154"/>
+  <path class="flow" d="M2420,1066 C2436,1066 2444,1060 2446,1050"/>
+  <path class="flow" d="M2420,800 C2436,800 2444,794 2446,784"/>
+
+  <!-- ================================================================
+       COLONNE 2 · TRI ORTHOGRAPHIQUE
+       ================================================================ -->
+  <text class="colh" x="2480" y="90">2 · TRI ORTHOGRAPHIQUE</text>
+  <text class="colsub" x="2480" y="114">réunir les données catégorie&#8209;profil&#8209;test</text>
+
+  <!-- prétri → B -->
+  <rect class="act" x="2480" y="160" width="340" height="88"/>
+  <text class="b" x="2494" y="182" font-weight="700">prétrier chaque groupe de sons :</text>
+  <text class="sm" x="2494" y="202">si sa graphie correspond à une lettre existante, et si</text>
+  <text class="sm" x="2494" y="218">cette lettre n’a aucun groupe du même catégorie&#8209;profil&#8209;test,</text>
+  <text class="sm" x="2494" y="234">il y est classé automatiquement</text>
+  <path class="flow" marker-end="url(#arr)" d="M2570,248 V278"/>
+  <circle class="node" cx="2570" cy="290" r="8"/>
+  <text class="pt" x="2536" y="298">B</text>
+  <path class="flow" marker-end="url(#arr)" d="M2570,298 V316"/>
+
+  <!-- O1 -->
+  <polygon class="dia" points="2570,320 2658,370 2570,420 2482,370"/>
+  <text class="dq" x="2570" y="366">un groupe de sons</text>
+  <text class="dq" x="2570" y="382">sans lettre ?</text>
+  <text class="lbl" x="2666" y="362">oui</text>
+  <path class="flow" marker-end="url(#arr)" d="M2658,370 H2676"/>
+  <text class="lbl" x="2580" y="448">non</text>
+  <path class="flow" marker-end="url(#arr)" d="M2570,420 V1002"/>
+
+  <!-- 16 · appartient à quel groupe (lettres) -->
+  <text class="num" x="2640" y="346">16</text>
+  <rect class="win" x="2680" y="310" width="600" height="640" rx="8"/>
+  <rect class="tbar" x="2680" y="310" width="600" height="36" rx="8"/>
+  <rect class="tbar" x="2680" y="332" width="600" height="14"/>
+  <text class="tbtxt" x="2696" y="334">... appartient à quel groupe?</text>
+  <image xlink:href="../images/Sort%20List%20Stack%20Groups.png" x="2696" y="354" width="214" height="586"/>
+  <rect class="mock" x="2910" y="360" width="330" height="80" rx="6"/>
+  <text class="sm" x="2926" y="382">l’élément est un groupe de sons entier :</text>
+  <text x="2926" y="410" font-size="15" font-weight="700" fill="#111">dɔ̀ŋ ‘marmite’ 🖼&#160;&#160;— V1</text>
+  <text class="sm" x="2926" y="430">(un groupe membre du test V1)</text>
+  <rect class="pill" x="2910" y="460" width="330" height="70" rx="10"/>
+  <text x="2940" y="505" font-size="26" font-weight="700" fill="#111">a</text>
+  <text class="chip" x="2994" y="500">dɔ̀ŋ ‘marmite’&#160;&#160;🖼</text>
+  <text class="sm" x="3184" y="486">V1</text>
+  <text class="sm" x="3184" y="514">🔃 3</text>
+  <rect class="pill" x="2910" y="545" width="330" height="50" rx="10"/>
+  <text x="2940" y="580" font-size="20" font-weight="700" fill="#111">ɔ</text>
+  <text class="chip" x="2994" y="578">kɔ̀ŋ ‘lance’ 🖼&#160;&#160;— V1&#160;&#160;🔃 2</text>
+  <text class="sm" x="2910" y="620">grande lettre · exemple d’un membre · son test · 🔃 défile</text>
+  <rect class="pill" x="2910" y="640" width="330" height="40" rx="18"/>
+  <text class="chip" x="2926" y="665">Autre Lettre</text>
+  <path class="flow" marker-end="url(#arr)" d="M3240,495 C3272,495 3286,424 3296,378"/>
+  <path class="flow" marker-end="url(#arr)" d="M3240,570 C3272,570 3288,466 3296,394"/>
+  <path class="flow" marker-end="url(#arr)" d="M3240,660 C3272,660 3288,720 3296,754"/>
+
+  <!-- classement + logique de conflit -->
+  <rect class="act" x="3300" y="360" width="340" height="44"/>
+  <text class="b" x="3314" y="387">le groupe est classé sous ‘a’ (‘a’ non vérifié)</text>
+  <path class="flow" marker-end="url(#arr)" d="M3470,404 V424"/>
+  <polygon class="dia" points="3470,430 3560,470 3470,510 3380,470"/>
+  <text class="dq" x="3470" y="466" font-size="11px">groupe du même test</text>
+  <text class="dq" x="3470" y="480" font-size="11px">déjà dans ‘a’ ?</text>
+  <text class="lbl" x="3572" y="462">non</text>
+  <path class="flow" d="M3560,470 H3676 Q3688,470 3688,458"/>
+  <text class="lbl" x="3480" y="530">oui</text>
+  <path class="flow" marker-end="url(#arr)" d="M3470,510 V534"/>
+  <polygon class="dia" points="3470,540 3560,580 3470,620 3380,580"/>
+  <text class="dq" x="3470" y="576" font-size="11px">déjà retiré</text>
+  <text class="dq" x="3470" y="590" font-size="11px">deux fois ?</text>
+  <text class="lbl" x="3480" y="640">non</text>
+  <path class="flow" marker-end="url(#arr)" d="M3470,620 V644"/>
+  <rect class="act" x="3300" y="650" width="340" height="44"/>
+  <text class="b" x="3314" y="677">le groupe PRÉCÉDENT est retiré de ‘a’</text>
+  <path class="flow" d="M3640,678 Q3678,678 3684,668"/>
+  <text class="lbl" x="3580" y="572">oui</text>
+  <path class="flow" marker-end="url(#arr)" d="M3560,580 H3642 Q3654,580 3654,568 V148 Q3654,136 3642,136 H1264 Q1252,136 1252,148 V2126 Q1252,2140 1266,2140 H1336"/>
+  <rect class="act" x="3300" y="740" width="340" height="44"/>
+  <text class="b" x="3314" y="767" font-size="11.5px">une NOUVELLE lettre sans nom est créée (« ? » ; non vérifiée)</text>
+  <path class="flow" d="M3640,762 Q3678,762 3684,752"/>
+
+  <!-- tronc retour vers B (côté droit) -->
+  <path class="trunk" marker-end="url(#arr)" d="M3640,1330 Q3688,1330 3688,1318 V302 Q3688,290 3676,290 H2582"/>
+
+  <!-- entrée + O2 -->
+  <circle class="node" cx="2570" cy="1010" r="7"/>
+  <path class="flow" marker-end="url(#arr)" d="M2570,1017 V1034"/>
+  <polygon class="dia" points="2570,1040 2658,1090 2570,1140 2482,1090"/>
+  <text class="dq" x="2570" y="1086">une lettre</text>
+  <text class="dq" x="2570" y="1102">à vérifier ?</text>
+  <text class="lbl" x="2666" y="1082">oui</text>
+  <path class="flow" marker-end="url(#arr)" d="M2658,1090 H2676"/>
+  <text class="lbl" x="2580" y="1168">non</text>
+  <path class="flow" marker-end="url(#arr)" d="M2570,1140 V1572"/>
+
+  <!-- 17 · vérifier la lettre -->
+  <text class="num" x="2640" y="1066">17</text>
+  <rect class="win" x="2680" y="1040" width="600" height="480" rx="8"/>
+  <rect class="tbar" x="2680" y="1040" width="600" height="36" rx="8"/>
+  <rect class="tbar" x="2680" y="1062" width="600" height="14"/>
+  <text class="tbtxt" x="2696" y="1064">Vérifier lettre ‘a’</text>
+  <text class="tbsm" x="2900" y="1064">(sans nom : « Vérifier groupe de lettres »)</text>
+  <image xlink:href="../images/Verify%20Group%20List.png" x="2696" y="1084" width="214" height="426"/>
+  <text class="q" x="2910" y="1086">Lisez cette liste à voix haute. Notez où</text>
+  <text class="q" x="2910" y="1106">chacun a été trié (V1, V2). Cliquez sur</text>
+  <text class="q" x="2910" y="1126">un autre son voyelle à cet endroit.</text>
+  <rect class="pill" x="2910" y="1150" width="330" height="32" rx="8"/>
+  <text class="chip" x="2926" y="1171">dɔ̀ŋ ‘marmite’ — V1&#160;&#160;🔃</text>
+  <rect class="pill" x="2910" y="1190" width="330" height="32" rx="8"/>
+  <text class="chip" x="2926" y="1211">dɛ̀m ‘langue’ — V2&#160;&#160;🔃</text>
+  <rect class="pill" x="2910" y="1230" width="330" height="32" rx="8"/>
+  <text class="chip" x="2926" y="1251">kɔ̀m ‘chef’ — V1&#160;&#160;🔃</text>
+  <path class="flow" marker-end="url(#arr)" d="M3240,1166 C3268,1166 3282,1178 3296,1188"/>
+  <path class="flow" marker-end="url(#arr)" d="M3240,1206 H3296"/>
+  <path class="flow" marker-end="url(#arr)" d="M3240,1246 C3268,1246 3282,1232 3296,1220"/>
+  <rect class="act" x="3300" y="1180" width="340" height="44"/>
+  <text class="b" x="3314" y="1207">retiré de ‘a’</text>
+  <path class="flow" marker-end="url(#arr)" d="M3470,1180 C3470,1146 3300,1140 3246,1160"/>
+  <rect class="pill" x="2910" y="1330" width="330" height="40" rx="18"/>
+  <text class="chipsm" x="2926" y="1355" font-size="10.5px">OK : Tous doivent utiliser la même lettre (actuellement ‘a’)</text>
+  <path class="flow" marker-end="url(#arr)" d="M3240,1350 C3270,1350 3286,1340 3296,1334"/>
+  <rect class="act" x="3300" y="1308" width="340" height="44"/>
+  <text class="b" x="3314" y="1336">lettre ✓ vérifiée (pas encore distinguée)</text>
+
+  <!-- entrée + O3 -->
+  <circle class="node" cx="2570" cy="1580" r="7"/>
+  <path class="flow" marker-end="url(#arr)" d="M2570,1587 V1604"/>
+  <polygon class="dia" points="2570,1610 2658,1660 2570,1710 2482,1660"/>
+  <text class="dq" x="2570" y="1656">des lettres</text>
+  <text class="dq" x="2570" y="1672">à distinguer ?</text>
+  <text class="lbl" x="2666" y="1652">oui</text>
+  <path class="flow" marker-end="url(#arr)" d="M2658,1660 H2676"/>
+  <text class="lbl" x="2580" y="1738">non</text>
+  <path class="flow" marker-end="url(#arr)" d="M2570,1710 V2142"/>
+
+  <!-- 18 · revoir les groupes de lettres -->
+  <text class="num" x="2640" y="1636">18</text>
+  <rect class="win" x="2680" y="1610" width="600" height="480" rx="8"/>
+  <rect class="tbar" x="2680" y="1610" width="600" height="36" rx="8"/>
+  <rect class="tbar" x="2680" y="1632" width="600" height="14"/>
+  <text class="tbtxt" x="2696" y="1634">Revoir les groupes de lettres</text>
+  <text class="tbsm" x="3120" y="1634">· progression</text>
+  <image xlink:href="../images/Join%20Stack%20Groups.png" x="2696" y="1654" width="214" height="426"/>
+  <rect class="mock" x="2910" y="1660" width="330" height="38" rx="6"/>
+  <text class="b" x="2926" y="1684">a — dɔ̀ŋ ‘marmite’&#160;&#160;🖼</text>
+  <rect class="mock" x="2910" y="1708" width="330" height="38" rx="6"/>
+  <text class="b" x="2926" y="1732">ɔ — kɔ̀ŋ ‘lance’&#160;&#160;🖼</text>
+  <rect class="pill" x="2910" y="1780" width="150" height="96" rx="10"/>
+  <text class="chipsm" x="2985" y="1801" text-anchor="middle" font-weight="700">Même chose</text>
+  <image xlink:href="../images/Join%20Stack%20Groups%20same.png" x="2930" y="1809" width="110" height="58"/>
+  <rect class="pill" x="3080" y="1780" width="160" height="96" rx="10"/>
+  <text class="chip" x="3160" y="1801" text-anchor="middle" font-weight="700">Différent</text>
+  <image xlink:href="../images/Join%20Stack%20Groups%20different.png" x="3100" y="1809" width="120" height="58"/>
+  <path class="flow" marker-end="url(#arr)" d="M3060,1800 C3160,1780 3240,1772 3296,1780"/>
+  <rect class="act" x="3300" y="1760" width="340" height="44"/>
+  <text class="b" x="3314" y="1787">les deux lettres fusionnent (fusion non vérifiée)</text>
+  <path class="flow" marker-end="url(#arr)" d="M3640,1782 Q3664,1782 3664,1770 V1022Q3664,1010 3652,1010 H2582"/>
+  <path class="flow" marker-end="url(#arr)" d="M3240,1828 C3270,1840 3288,1866 3296,1892"/>
+  <rect class="act" x="3300" y="1880" width="340" height="44"/>
+  <text class="b" x="3314" y="1907">paire enregistrée comme distincte</text>
+
+  <!-- tronc retour vers l’entrée O3 (côté droit) -->
+  <path class="flow" marker-end="url(#arr)" d="M3270,2303 H3296"/>
+  <rect class="act" x="3300" y="2281" width="340" height="44"/>
+  <text class="b" x="3314" y="2308">deux groupes marqués non distingués</text>
+  <path class="trunk" marker-end="url(#arr)" d="M3640,2303 H3664 Q3688,2303 3688,2291 V1592 Q3688,1580 3676,1580 H2582"/>
+  <path class="flow" d="M3640,1902 Q3682,1902 3687,1890"/>
+
+  <!-- entrée + O4 -->
+  <circle class="node" cx="2570" cy="2150" r="7"/>
+  <path class="flow" marker-end="url(#arr)" d="M2570,2157 V2174"/>
+  <polygon class="dia" points="2570,2180 2658,2230 2570,2280 2482,2230"/>
+  <text class="dq" x="2570" y="2226">une lettre encore</text>
+  <text class="dq" x="2570" y="2242">sans nom (« ? ») ?</text>
+  <text class="lbl" x="2666" y="2222">oui</text>
+  <path class="flow" marker-end="url(#arr)" d="M2658,2230 H2676"/>
+  <text class="lbl" x="2580" y="2308">non</text>
+  <path class="flow" marker-end="url(#arr)" d="M2570,2280 V2856"/>
+
+  <!-- 19 · nommer une nouvelle lettre -->
+  <text class="num" x="2640" y="2206">19</text>
+  <rect class="win" x="2680" y="2180" width="600" height="640" rx="8"/>
+  <rect class="tbar" x="2680" y="2180" width="600" height="36" rx="8"/>
+  <rect class="tbar" x="2680" y="2202" width="600" height="14"/>
+  <text class="tbtxt" x="2696" y="2204">Nommer Nouveau — Lettre (voyelle)</text>
+  <text class="tbsm" x="2990" y="2204">(ou : Renommer la lettre ‘a’)</text>
+  <text class="q" x="2700" y="2242">Quelle(s) lettre(s) utiliserez pour ce groupe de voyelle?</text>
+  <rect class="mock" x="2700" y="2260" width="180" height="36"/>
+  <text x="2714" y="2286" font-size="18" font-weight="700" fill="#111">ɛ▏</text>
+  <rect class="mock" x="2700" y="2306" width="180" height="48"/>
+  <text class="sm" x="2712" y="2324">a e i o u ɛ ɔ ə ɨ ʉ</text>
+  <text class="sm" x="2712" y="2342">æ ã ɛ̃ ɔ̃ ĩ õ …</text>
+  <text class="sm" x="2920" y="2272">Ne pas utiliser les autres groupes :</text>
+  <text class="sm" x="2920" y="2288">a e i o u</text>
+  <text class="sm" x="2920" y="2316" font-style="italic">Donnez un nom à ce groupe!</text>
+  <text class="sm" x="2920" y="2332" font-style="italic">Désolé, il y a déjà un groupe avec cette</text>
+  <text class="sm" x="2920" y="2346" font-style="italic">étiquette ; voir la comparaison ci-dessous.</text>
+  <rect class="pill" x="3130" y="2260" width="140" height="86" rx="12"/>
+  <text class="sm" x="3200" y="2280" text-anchor="middle" fill="#111" font-size="10px">Revenez en arrière</text>
+  <text class="sm" x="3200" y="2294" text-anchor="middle" fill="#111" font-size="10px">et rejoignez avec l’un</text>
+  <text class="sm" x="3200" y="2308" text-anchor="middle" fill="#111" font-size="10px">des groupes suivants :</text>
+  <text class="sm" x="3200" y="2322" text-anchor="middle" fill="#111" font-size="10px">← ces groupes</text>
+  <rect class="mock" x="2700" y="2390" width="280" height="56" rx="6"/>
+  <text class="chip" x="2714" y="2424">a?&#160;&#160;|&#160;&#160;dɔ̀ŋ ‘marmite’ 🖼 ▶ 🔃</text>
+  <rect class="pill" x="3000" y="2390" width="270" height="56" rx="14"/>
+  <text class="chipsm" x="3014" y="2412">OK: Ajouter la lettre ‘ɛ’</text>
+  <text class="chipsm" x="3014" y="2430">à mon alphabet pour ce son</text>
+  <rect class="pill" x="2700" y="2480" width="240" height="40" rx="18"/>
+  <text class="chipsm" x="2714" y="2505" font-size="11px">Comparer avec un autre groupe</text>
+  <path class="dsh" marker-end="url(#arrT)" d="M2820,2520 V2546"/>
+  <rect class="mock" x="2700" y="2550" width="280" height="50" rx="6"/>
+  <text class="chip" x="2714" y="2582">e&#160;&#160;|&#160;&#160;dɛ̀m ‘langue’ ▶ 🔃</text>
+  <rect class="pill" x="3000" y="2550" width="270" height="40" rx="18"/>
+  <text class="chipsm" x="3014" y="2575" font-size="11px">Basculer les lettres avec ce groupe</text>
+  <path class="flow" marker-end="url(#arr)" d="M3270,2418 H3296"/>
+  <rect class="act" x="3300" y="2396" width="340" height="44"/>
+  <text class="b" x="3314" y="2423">la lettre est nommée ɛ</text>
+  <path class="flow" marker-end="url(#arr)" d="M3640,2418 Q3664,2418 3664,2406 V2162 Q3664,2150 3652,2150 H2588 Q2580,2150 2578,2150"/>
+  <path class="flow" marker-end="url(#arr)" d="M3270,2570 H3296"/>
+  <rect class="act" x="3300" y="2548" width="340" height="44"/>
+  <text class="b" x="3314" y="2568">les deux groupes échangent leurs lettres</text>
+  <text class="b" x="3314" y="2584">(l’un reste à nommer)</text>
+  <path class="flow" d="M3640,2570 Q3664,2570 3664,2558 V2408"/>
+
+  <!-- mise à jour + test suivant -->
+  <rect class="act" x="2480" y="2860" width="340" height="64"/>
+  <text class="b" x="2494" y="2884" font-weight="700">Mise à jour des noms de groupes… puis</text>
+  <text class="b" x="2494" y="2902" font-weight="700">Mise à jour des formes des mots</text>
+  <path class="flow" marker-end="url(#arr)" d="M2650,2924 V2938"/>
+  <rect class="act" x="2480" y="2942" width="340" height="44"/>
+  <text class="b" x="2494" y="2969">le test / profil suivant est sélectionné</text>
+  <path class="flow" marker-end="url(#arr)" d="M2480,2964 H1256 Q1244,2964 1244,2952 V130 Q1244,118 1256,118 H1330 Q1340,118 1342,118"/>
+  </g>
+
+  <!-- ================================================================
+       ICÔNES DES TESTS · A (voyelle) et Z (consonne), 1–3 — centrées
+       ================================================================ -->
+  <image xlink:href="../images/A%20alone%201.png" x="52" y="3040" width="396" height="400"/>
+  <image xlink:href="../images/A%20alone%202.png" x="448" y="3040" width="396" height="400"/>
+  <image xlink:href="../images/A%20alone%203.png" x="844" y="3040" width="396" height="400"/>
+  <image xlink:href="../images/Z%20alone%201.png" x="1240" y="3040" width="396" height="400"/>
+  <image xlink:href="../images/Z%20alone%202.png" x="1636" y="3040" width="396" height="400"/>
+  <image xlink:href="../images/Z%20alone%203.png" x="2032" y="3040" width="396" height="400"/>
+
+</svg>

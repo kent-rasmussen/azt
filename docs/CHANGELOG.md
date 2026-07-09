@@ -19,6 +19,30 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.8.5
+- FIX (collaboration — spurious "Team changes available" popup, azt side).
+  Companion to azt-collab 0.53.8. All in `backend/core/collab.py` unless noted.
+  - **F1 (root cause):** the consumed-but-errored save branch of
+    `CollabSession.submit` (daemon stored the file but the commit step failed)
+    returned OK without re-recording the LIFT stat, so azt's stat went stale
+    against its OWN save and the next HEAD advance read as a peer change. Now
+    calls `record_lift_stat()` there. Eliminates the whole observed popup class.
+  - **F2 (self-healing latch):** once `stale` latched, `poll_remote_change`
+    returned `'changed'` forever with no recovery. Now un-latches when the
+    on-disk LIFT still matches our last write AND HEAD's LIFT blob equals our
+    base's blob (content identity, via 0.53.8's new `lift_blob_sha`). Also fixes
+    the double-dialog quirk (snooze-bypass now requires a non-empty prior offer).
+  - **F5 (diagnosability):** the safe-save warning now also logs the daemon's
+    preserved `SERVER_ERROR` detail, not just `result.codes()`.
+  - **F6 (UX):** one reload-offer window at a time (`_collab_offer_win`
+    `winfo_exists()` guard; `error_handler.notify_error` now returns the notice)
+    — no more stacked "Team changes available" windows.
+- FIX (sort robustness) — `Sort.presenttosort` no longer crashes the mainloop
+  with `TclError: bad window path name` when the sort item is destroyed during
+  the pre-wait `update()`/`reflow()` re-entrancy; `wait_window` is now guarded
+  and falls through to the normal return (same end state as the item being
+  destroyed during the wait). *(Pending field confirmation of no re-loop.)*
+
 # Version 1.8.4
 - FIX (presort, follow-on to 1.8.3) — positional checks now presort by that
   position alone, over cvprofile MEMBERSHIP, not whole-word regex shape.
