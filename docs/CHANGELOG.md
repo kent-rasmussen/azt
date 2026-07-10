@@ -19,6 +19,14 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.8.6
+- FIX (sorting — segmental join direction). When joining two groups where neither
+  name is a digit placeholder, the SIMPLER (shorter) existing name is now kept and
+  the longer one removed into it ('g' + 'gu' → keep 'g'), instead of the previous
+  lexicographic accident of `sorted(key=str)` (which kept 'gu'). Digit placeholders
+  still always lose to real names. No new names are invented — we only choose
+  between the two that exist. `backend/core/sorting_engine.py` `join_pair`.
+
 # Version 1.8.5
 - FIX (collaboration — spurious "Team changes available" popup, azt side).
   Companion to azt-collab 0.53.8. All in `backend/core/collab.py` unless noted.
