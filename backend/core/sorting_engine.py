@@ -1633,9 +1633,14 @@ class Sort(Categories):
                     self.ui.runwindow, buttonclass, self, list(pair), counts,
                     _on_choose)  # on_back=None → just close, back to the join page
                 return
-            # Segmental/other: sorted(key=str) puts an isdigit() group first, so the
-            # unnamed placeholder is removed into the real/named group.
-            _do_join(sorted(pair,key=str))
+            # Segmental/other: choose remove-vs-keep between the two EXISTING names
+            # (lpr=[remove, keep] — first is removed into second). Rank:
+            #   1. digit placeholder first → unnamed placeholder removed into a real name;
+            #   2. between two real names, the LONGER is removed into the SHORTER (simpler)
+            #      one ('g' + 'gu' → keep 'g'), not the lexicographic accident of key=str;
+            #   3. equal length → lexicographic tiebreak (stable, arbitrary as before).
+            _do_join(sorted(pair, key=lambda g: (0 if str(g).isdigit() else 1,
+                                                 -len(str(g)), str(g))))
         def distinguish_pair():
             if macrosort:
                 self.program.alphabet.distinguish(self.current_pair)
