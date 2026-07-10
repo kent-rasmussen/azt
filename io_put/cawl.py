@@ -17,7 +17,7 @@ def loadCAWL():
     try:
         cawldb=lift.LiftXML(str(stockCAWL),tostrip=True) # Don't load everything
     except lift.BadParseError as e:
-        text=_("{file} doesn't look like a well formed lift file; please "
+        text=_("{file} doesn’t look like a well formed lift file; please "
                 "try again. ({error})").format(file=stockCAWL,error=e)
         return text
     except Exception as e:

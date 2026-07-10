@@ -31,9 +31,9 @@ class AlphabetChart(AlphabetChartData, OrderAlphabetUI):
             from frontend import ui
             if isinstance(value, ui.Variable):
                 value = value.get()
-                log.info(_("found '{key}' ui.Variable: {value}").format(key=k, value=value))
+                log.info(_("found ‘{key}’ ui.Variable: {value}").format(key=k, value=value))
             else:
-                log.info(_("Didn't find '{key}' ui.Variable: {value}").format(key=k, value=value))
+                log.info(_("Didn’t find ‘{key}’ ui.Variable: {value}").format(key=k, value=value))
             getattr(self.program.settings, 'alpha_' + k)(value)
         self.program.settings.storesettingsfile(setting='alphabet')
     def __init__(self, program):

@@ -13,7 +13,7 @@ class Report(object):
     def __init__(self,filename,report,langname,program):
         #use program, if only for it's name
         if not hasattr(program, 'name'):
-            raise AttributeError(_("the program argument to xlp.Report needs a 'name' attribute"))
+            raise AttributeError(_("the program argument to xlp.Report needs a ‘name’ attribute"))
         self.start_time=times.now()
         self.filename=filename
         self.tmpfile=self.filename+'.tmp'
@@ -31,7 +31,7 @@ class Report(object):
         self.title="{} {} output report for {}".format(report,
                                                         program.name,
                                                         langname)
-        log.info(_("Starting XLingPaper report file at {} with title '{}'").format(
+        log.info(_("Starting XLingPaper report file at {} with title ‘{}’").format(
                                                         filename,self.title))
         self.authors=[{'name':'Kent Rasmussen',
                         'affiliation':'SIL International',
@@ -75,7 +75,7 @@ class Report(object):
         try:
             import lxml.etree
         except ImportError:
-            log.info(_("Couldn't find/import lxml, so not compiling report."))
+            log.info(_("Couldn’t find/import lxml, so not compiling report."))
             return
         """from http://xmlsoft.org/XSLT/python.html:
         This is a basic test of XSLT interfaces: loading a stylesheet and a document, transforming the document and saving the result.
@@ -173,7 +173,7 @@ class Report(object):
             for ext in exts:
                 file.remove(outfile.replace('.xml', '.'+ext))
         except Error as e:
-            log.info(_("The call to xelatex didn't work: {}").format(e))
+            log.info(_("The call to xelatex didn’t work: {}").format(e))
         # Another Java class that reads the output of that transform and makes
         # sure all IDs are in a form that XeLaTeX can handle.  The class name
         # is NonASCIIIDandIDREFConversion (and it's in the file named
@@ -380,7 +380,7 @@ class Cell(ET.Element):
         elif header == True:
             tag='th'
         else:
-            log.error(_("Not sure what kind of cell you're looking for: {}"
+            log.error(_("Not sure what kind of cell you’re looking for: {}"
                         ).format(header))
         self.node=ET.SubElement(parent.node,tag)
         if linebreakwords == True:

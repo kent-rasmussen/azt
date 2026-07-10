@@ -42,9 +42,9 @@ class Senses(object):
         return self.program.status.group(value,**kwargs)
     def notdonewarning(self):
         buttontxt=_("Sort!")
-        text=_("Hey, you're not done with {ps} {profile} words by {check}!"
+        text=_("Hey, you’re not done with {ps} {profile} words by {check}!"
                 "\nCome back when you have time; restart where you left "
-                "off by pressing '{button}'").format(ps=self.ps,profile=self.profile,check=self.check,
+                "off by pressing ‘{button}’").format(ps=self.ps,profile=self.profile,check=self.check,
                                                 button=buttontxt)
         # self.ui.withdraw()
         # Make sure no verify/sort build is still streaming via drive_work — a
@@ -99,7 +99,7 @@ class Segments(Senses):
         """Provides self.regex"""
         profile=kwargs.get('profile',self.program.slices.profile())
         if profile is None:
-            log.info(_("You haven't picked a syllable profile yet."))
+            log.info(_("You haven’t picked a syllable profile yet."))
             return
         self.regex=self.rxdict.makeprofileforcheck(
                         profile=profile,
@@ -258,7 +258,8 @@ class Segments(Senses):
         export uses). Walks the confirmed profile; for each class occurrence (C1,
         V1, C2, …) takes the verified value from `getcvverificationkeys`' actualkeys
         and concatenates. Returns the built form, or None if not fully verified /
-        any slot value missing (e.g. a boundary '='-profile the gate rejects).
+        any slot value missing (e.g. a boundary '='-profile the gate rejects) /
+        any slot verified into a still-unnamed (digit-placeholder or NA) group.
         Because it's assembled from verified segments, it can't corrupt — and it
         doesn't depend on profileofform reading the result correctly."""
         ftype=ftype or self.ftype
@@ -273,6 +274,16 @@ class Segments(Senses):
             seen[cls]=seen.get(cls,0)+1
             val=actualkeys.get('{}{}'.format(cls,seen[cls]))
             if val is None: # gate should preclude this; be safe
+                return None
+            if val=='NA' or val.isdigit():
+                # Verified into a group whose NAME is still a digit placeholder
+                # (e.g. V1='1'): the verification stands, but an unnamed group
+                # must never be written into the form ('bʊsh'→'b1sh'). Defer the
+                # build until the group is named — same guard as the patch paths
+                # (do_not_do_these) and the conform INSERT.
+                log.info("DIAG-formconform BUILD-DEFER %s: %s%s verified into "
+                         "unnamed group %r; not building until named",
+                         sense.id, cls, seen[cls], val)
                 return None
             out.append(val)
         return ''.join(out)
@@ -301,12 +312,12 @@ class Segments(Senses):
             return value in ['NA',None] or (check and check.isdigit()) or value.isdigit()
         form_ori=formvalue=sense.textvaluebyftypelang(self.ftype,self.analang)
         if not formvalue:
-            log.info(_("updateformtoannotations didn't return a form value for "
+            log.info(_("updateformtoannotations didn’t return a form value for "
                     "{id}, {check}, {ftype}, {ana}").format(id=sense.id, check=check, ftype=self.ftype, ana=self.analang))
             return
         # log.info("fnode: {}; text: {}".format(fnode,t.text))
         annodict=sense.annotationvaluedictbyftypelang(self.ftype,self.analang)
-        conflict_text=_("Not updating '{form}' (conflict in {anno}.").format(form=formvalue, anno=annodict)
+        conflict_text=_("Not updating ‘{form}’ (conflict in {anno}.").format(form=formvalue, anno=annodict)
         error_nb=_("Check the log for any further conflicts")
         error=False
         # AUTHORITATIVE path: if EVERY segment is verified, build the form FROM
@@ -430,8 +441,8 @@ class Segments(Senses):
                                  "target=%s segs=[%s] (left unchanged)", sense.id,
                                  form_ori, formvalue, got, target, segstr)
                         if not self.updateconflictwarned:
-                            ErrorNotice('\n'.join([_("Not updating '{old}' → '{new}': "
-                                "it can't be made to read as its profile {prof} "
+                            ErrorNotice('\n'.join([_("Not updating ‘{old}’ → ‘{new}’: "
+                                "it can’t be made to read as its profile {prof} "
                                 "(reads as {got}).").format(old=form_ori,new=formvalue,
                                 prof=target,got=got),
                                 _("Confirmed segments: {segs}").format(
@@ -546,13 +557,13 @@ class Segments(Senses):
                 continue
             if (item.split('_')[-1] != glyph and
                 newform(item) in [i for j in gm.values() for i in j]):
-                txt=_("Conflict: cannot rename '{item}' to '{glyph}'; "
-                    "'{new}' already exists.").format(item=item, glyph=glyph, new=newform(item))
+                txt=_("Conflict: cannot rename ‘{item}’ to ‘{glyph}’; "
+                    "‘{new}’ already exists.").format(item=item, glyph=glyph, new=newform(item))
                 log.error(txt)
                 self.update_annotations_error=txt
                 return
         self.update_annotations_error=None
-        log.info(_("update_annotations_by_glyph safely: '{members}' to '{glyph}'").format(members=gm[glyph], glyph=glyph))
+        log.info(_("update_annotations_by_glyph safely: ‘{members}’ to ‘{glyph}’").format(members=gm[glyph], glyph=glyph))
         items=list(gm[glyph])
         nitems=len(items)
         for ii, item in enumerate(items):
@@ -570,7 +581,7 @@ class Segments(Senses):
             self.program.status.renamegroup(kwargs.pop('group'),glyph,**kwargs)
             self.program.alphabet.rename_glyph_member(item,newform(item))
             yield ii * 100 // max(nitems,1)
-        log.info(_("update_annotations_by_glyph done with '{members}' to '{glyph}'").format(members=gm[glyph], glyph=glyph))
+        log.info(_("update_annotations_by_glyph done with ‘{members}’ to ‘{glyph}’").format(members=gm[glyph], glyph=glyph))
     def default_glyphs(self):
         return [i for i in 
                 self.program.alphabet.glyphdict()[self.program.params.cvt()]
@@ -634,7 +645,7 @@ class Segments(Senses):
     def rename_macrogroup(self,x,y,updatestatus=False):
         for item in list(self.program.alphabet.glyph_members()[x]):
             kwargs=self.program.alphabet.parse_verificationcode(item)
-            log.info(_("Updating verification from '{old}' to '{new}' for {args}").format(old=x, new=y, args=kwargs))
+            log.info(_("Updating verification from ‘{old}’ to ‘{new}’ for {args}").format(old=x, new=y, args=kwargs))
             self.rename_group_verification(x,y,**kwargs)
         #Do the above first, before glyph_members changes
         self.program.alphabet.rename_glyph(x,y)
@@ -692,7 +703,7 @@ class WordCollection(Segments):
             fn=self.run_addCAWLentries
             text=_("Add remaining CAWL entries")
             tttext=_("This will add entries from the Comparative African "
-                    "Wordlist (CAWL) which aren't already in your database "
+                    "Wordlist (CAWL) which aren’t already in your database "
                     "(you are missing {} CAWL tags). If the appropriate "
                     "glosses are found in your database, CAWL tags will be "
                     "merged with those entries."
@@ -702,7 +713,7 @@ class WordCollection(Segments):
             text=_("Add a Word")
             fn=self.addmorpheme
             tttext=_("This adds any word, but is best used after filling out a "
-                    "wordlist, if the word you want to add isn't there "
+                    "wordlist, if the word you want to add isn’t there "
                     "already.")
         return {'text':text,
                 'fn':fn,
@@ -745,7 +756,7 @@ class WordCollection(Segments):
     def getinstructions(self):
         return _("Type the word in your language that goes with these meanings."
                 "\nGive a single word (not a phrase) wherever possible."
-                "\nJust type consonants and vowels; don't worry about tone "
+                "\nJust type consonants and vowels; don’t worry about tone "
                 "for now.")
     def getwords(self):
         p = self.lex_ui
@@ -766,10 +777,10 @@ class WordCollection(Segments):
             ok=_('Use this form')
             skip=None
         else:
-            text=_("What does '{form}' mean in {lang}?").format(
+            text=_("What does ‘{form}’ mean in {lang}?").format(
                             form=self.ui.runwindow.form[self.analang],
                             lang=self.program.settings.languagenames[lang])
-            ok=_("Use this {lang} gloss for '{form}'").format(
+            ok=_("Use this {lang} gloss for ‘{form}’").format(
                             lang=self.program.settings.languagenames[lang],
                             form=self.ui.runwindow.form[self.analang])
             self.ui.runwindow.glosslangs.append(lang)
@@ -924,7 +935,7 @@ class WordCollection(Segments):
         else:
             title=_("Error trying to add SILCAWL entries")
             text=_("We seem to have not added or modded any entries, which "
-                    "shouldn't happen! (missing: {missing})"
+                    "shouldn’t happen! (missing: {missing})"
                     "").format(missing=self.program.taskchooser.cawlmissing)
         log.info(text)
         ErrorNotice(text,title=title)
@@ -1091,7 +1102,7 @@ class WordCollection(Segments):
             return dir,[i for i in file.getfilesofdirectory(dir)
                                 if "terms.txt" not in str(i)]
         else:
-            log.info(_("{dir} doesn't seem to exist.").format(dir=dir))
+            log.info(_("{dir} doesn’t seem to exist.").format(dir=dir))
     def selectimageormoveon(self,event=None):
         if self.selectimage():
             self.nextword(nostore=False)
@@ -1108,7 +1119,7 @@ class WordCollection(Segments):
         if files:
             self.showimagestoselect(files)
         else:
-            log.info(_("There don't seem to be any images to show."))
+            log.info(_("There don’t seem to be any images to show."))
             return 1
     def downloadallCAWLimages(self):
         for self.sense in self.program.db.senses:
@@ -1265,11 +1276,11 @@ class WordCollection(Segments):
             try:
                 self.index=self.entries.index(self.entry)
             except Exception as e:
-                log.info(_("self.entry doesn't seem to be in entries; OK for now"))
+                log.info(_("self.entry doesn’t seem to be in entries; OK for now"))
             self.instructions['text']=self.getinstructions() #in case changed
             self.dowordframe()
         elif not self.entries:
-            text=_("It looks like you're done filling out the empty "
+            text=_("It looks like you’re done filling out the empty "
             "entries in your database! Congratulations! \nYou can still add words "
             "through the button on the left ({text})."
             "").format(text=self.dobuttonkwargs()['text'])
@@ -1292,7 +1303,7 @@ class WordCollection(Segments):
         self.glossesthere=' — '.join([glosses[i] for i in glosses if i])
         # log.info("glosses there: {}".format(self.glossesthere))
         if not self.glossesthere:
-            log.info(_("entry {id} doesn't have glosses; not showing.").format(id=self.entry.get('id')))
+            log.info(_("entry {id} doesn’t have glosses; not showing.").format(id=self.entry.get('id')))
             self.dirfn(nostore=True)
         self.glossesline['text']=self.glossesthere
         self.glossesline.wrap()
@@ -1532,7 +1543,7 @@ class Parse(Segments):
         w=p.window(self)
         w.title(_("Select second form"))
         t=p.label(w.frame,
-                    text=_("What is the {sfname} or {sfname2} of \n'{lc}' ({gloss})?"
+                    text=_("What is the {sfname} or {sfname2} of \n‘{lc}’ ({gloss})?"
                         "").format(
                         sfname=self.secondformfield[self.nominalps],
                         sfname2=self.secondformfield[self.verbalps],
@@ -1659,7 +1670,7 @@ class Parse(Segments):
         w=p.window(self)
         w.title(_("Type second form"))
         l=p.label(w.frame,
-                text=_("What {sfname} form goes with '{lc}' ({gloss})?"
+                text=_("What {sfname} form goes with ‘{lc}’ ({gloss})?"
                     "").format(sfname=sfname,
                             lc=self.parser.entry.lcvalue(),
                             gloss=self.getgloss()),
@@ -2145,7 +2156,7 @@ class Syllables(Senses):
                     "that had #C/C# but no syllable count — they re-enter the "
                     "syls check.", tally['syls'])
         if tally['defaulted']:
-            log.info(_("{n} word(s) couldn't be auto-analyzed; defaulted "
+            log.info(_("{n} word(s) couldn’t be auto-analyzed; defaulted "
                     "word-initial AND word-final to consonant. Review the "
                     "consonant groups for outliers.").format(n=tally['defaulted']))
         self.program.status.presorted(True)

@@ -231,7 +231,7 @@ class TaskChooser(Task):
                     wait=True)
             self.program.restart()
         except Exception as e:
-            ErrorNotice(_(f"There was a problem converting fields as you asked; you "
+            ErrorNotice(_("There was a problem converting fields as you asked; you "
                 "should fix this before moving on."))
     def asktoconvertlxtolc(self):
         title=_("Convert lexeme field data to citation form fields?")
@@ -249,13 +249,13 @@ class TaskChooser(Task):
                         "is typically in error. {name} can help you analyze your "
                         "citation forms into lexeme forms, but they first need "
                         "to be moved to the correct fields in your database."
-                        "".format(name=self.program.name))
+                        "").format(name=self.program.name)
         Question=_("Do you want {name} to move data from your lexeme fields to "
                     "citation fields, for each entry with no citation field "
                     "data?").format(name=self.program.name)
         infot=_("See {url} for more information.").format(url=url)
         oktext=_("Move lexeme field data to citation fields")
-        noktext=_("No thanks; I'll manage this myself")
+        noktext=_("No thanks; I’ll manage this myself")
         nbtext=_("N.B.: This is a fairly radical change to your database, "
                 "so it would be wise to back up your data.")
         noktttext=_("You will need to do this yourself, either in FLEx, or "
@@ -357,7 +357,7 @@ class TaskChooser(Task):
                     log.info(_("Using audiolang {audio} for analang {analang}")
                                 .format(audio=al,analang=l))
                 else:
-                    log.info(_("Couldn't find plausible audiolang (among {audios}) "
+                    log.info(_("Couldn’t find plausible audiolang (among {audios}) "
                         "for analang {analang}").format(audios=self.program.db.audiolangs,analang=l))
             if al not in sortsrecorded:
                 sortsrecorded[al]={}
@@ -421,8 +421,8 @@ class TaskChooser(Task):
                 self.doneenough['analysis']=True
                 break
             # log.info("'verification' not in '{}'".format(f))
-        log.info(_("Analysis of what you're done with: {status}").format(status=self.donew))
-        log.info(_("You're done enough with: {status}").format(status=self.doneenough))
+        log.info(_("Analysis of what you’re done with: {status}").format(status=self.donew))
+        log.info(_("You’re done enough with: {status}").format(status=self.doneenough))
     def bulk_transcribe(self):
         """Stage-2 bulk ASR over every recording (Advanced menu)."""
         from tasks.bulk_asr import BulkASR
@@ -432,7 +432,7 @@ class TaskChooser(Task):
         try:
             self.program.task.withdraw() #so users don't do stuff while waiting
         except (AttributeError, Exception):
-            log.info(_("There doesn't seem to be a task to hide; moving on."))
+            log.info(_("There doesn’t seem to be a task to hide; moving on."))
         curname = self.program.filename
         log.info(_("Current database: {name}").format(name=curname))
         # window=LiftChooser(self,file.getfilenames())
@@ -461,7 +461,7 @@ class TaskChooser(Task):
             log.info(_("User selected a new database; restarting with it."))
             self.program.restart()
         else:
-            log.info(_("User didn't select a new database; continuing."))
+            log.info(_("User didn’t select a new database; continuing."))
             self.program.task.deiconify()
         # self.restart(self.filename)
     def usbcheck(self):
@@ -514,9 +514,9 @@ class TaskChooser(Task):
         self.program.splash.maketexts() #update for translation change
         self.usbcheck()
         if self.program.nosound:
-            e=_("You don't have the sound module installed. For best use of {name},"
+            e=_("You don’t have the sound module installed. For best use of {name},"
                 "you should switch back to the main branch, connect to the "
-                "internet, and restart. In the mean time. You won't be able "
+                "internet, and restart. In the mean time. You won’t be able "
                 "to record or play audio!"
                 ).format(name=self.program.name)
             ErrorNotice(e)

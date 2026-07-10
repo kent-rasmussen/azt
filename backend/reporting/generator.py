@@ -89,7 +89,7 @@ class Report(object):
                 all+=[kwargs.copy()]
                 time.sleep(0.2) #give it 200ms before checking if it returned already
                 if not t.is_alive():
-                    ErrorNotice(_("Looks like that didn't work; you may need "
+                    ErrorNotice(_("Looks like that didn’t work; you may need "
                                     "to run a report first, or not do it in "
                                     "the background ({kwargs})."
                                 ).format(kwargs=kwargs))
@@ -98,7 +98,7 @@ class Report(object):
         for k in unbackground:
             done.remove(k)
         logfinished(start_time,msg=_("setting up background reports {reports}").format(reports=done))
-        log.info(_("Starting reports that didn't work in the background: {reports}").format(reports=unbackground))
+        log.info(_("Starting reports that didn’t work in the background: {reports}").format(reports=unbackground))
         for kwargs in unbackground:
             # log.info("reportmulti unbackground with kwargs {}".format(kwargs))
             with self.ui.waiting(msg=kwargs):
@@ -166,13 +166,13 @@ class Report(object):
             log.info(_("Looks like the analysis is good; moving on."))
             self.analysis.donoUFanalysis() #based on (sense) UF fields
         elif callerfn() == 'run': #self.tonegroupreportmulti
-            log.info(_("Sorry, the analysis isn't good, and we're running "
-                    "in the background. That isn't going to work, so I'm "
+            log.info(_("Sorry, the analysis isn’t good, and we’re running "
+                    "in the background. That isn’t going to work, so I’m "
                     "stopping here."))
             return
         else:
-            log.info(_("Looks like the analysis isn't good, but we're not "
-                    "in the background, so I'm doing a new analysis now."))
+            log.info(_("Looks like the analysis isn’t good, but we’re not "
+                    "in the background, so I’m doing a new analysis now."))
             self.analysis.do() #full analysis from scratch, output to UF fields
         """These are from LIFT, ordered by similarity for the report."""
         if not self.analysis.orderedchecks or not self.analysis.orderedUFs:
@@ -271,7 +271,7 @@ class Report(object):
             ptext+=_("This is a default report, where {program} "
                 "intentionally splits these groups, so you can see wherever "
                 "differences lie, even if those differences are likely "
-                "meaningless (e.g., 'NA' means the user skipped sorting those "
+                "meaningless (e.g., ‘NA’ means the user skipped sorting those "
                 "words in that frame, but this will still distinguish one "
                 "group from another). To help the qualified analyst navigate "
                 "such a large selection of small slices of the data, the data "
@@ -286,8 +286,8 @@ class Report(object):
                         checks=str(self.analysis.comparisonchecks))
         else:
             ptext+=_("This is a non-default report, where a user has changed "
-            "the default (hyper-split) groups created by {program}.".format(
-                                                        program=self.program.name))
+            "the default (hyper-split) groups created by {program}.").format(
+                                                        program=self.program.name)
         p0=xlp.Paragraph(s1s,text=ptext)
         self.analysis.orderedchecks=list(self.analysis.valuesbycheckgroup)
         for slice in range(int(len(self.analysis.orderedchecks)/m)+1):
@@ -413,7 +413,7 @@ class Report(object):
                     ).format(kwargs=kwargs))
         time.sleep(0.2) #give it 200ms before checking if it returned already
         if not t.is_alive():
-            msg=_("Looks like that didn't work; "
+            msg=_("Looks like that didn’t work; "
                             # "you may need "
                             # "to run a report first, or "
                             "trying again not in "
@@ -985,7 +985,7 @@ class Report(object):
                 # self.printcountssorted() #don't really need this
                 t=_("This report covers {pss} Grammatical categories, "
                     "with {profiles} syllable profiles in each. "
-                    "This is of course configurable, but I assume you don't want "
+                    "This is of course configurable, but I assume you don’t want "
                     "everything."
                     "").format(pss=_("the top {n}").format(n=self.program.settings.maxpss)
                                 if self.program.settings.maxpss

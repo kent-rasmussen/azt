@@ -65,7 +65,7 @@ class Alphabet():
             glyphdict = {k: set(v) for k, v in glyphdict.items()}
             conflict=glyphdict['C']&glyphdict['V']
             if conflict:
-                ErrorNotice(_("You have the glyph(s) '{conflict}' as consonant "
+                ErrorNotice(_("You have the glyph(s) ‘{conflict}’ as consonant "
                             "and as vowel! ({glyphs})").format(conflict=conflict,glyphs=glyphdict),wait=True)
                 raise
             self._glyphdict={k:{str(i) for i in v} for k,v in glyphdict.items()}
@@ -80,14 +80,14 @@ class Alphabet():
     def rename_glyph(self,x,y):
         gm=self.glyph_members()
         if y in gm:
-            log.error(_("'glyph_members' contains {new}; not renaming {old}").format(new=y, old=x))
+            log.error(_("‘glyph_members’ contains {new}; not renaming {old}").format(new=y, old=x))
             return
         gd=self.glyphdict()
         for k in gd:
             if y in gd[k]:
-                log.error(_("'glyphdict' contains {new}; not renaming {old}").format(new=y, old=x))
+                log.error(_("‘glyphdict’ contains {new}; not renaming {old}").format(new=y, old=x))
                 return
-        log.info(_("'rename_glyph' can safely rename {old} to {new}").format(old=x, new=y))
+        log.info(_("‘rename_glyph’ can safely rename {old} to {new}").format(old=x, new=y))
         self.glyph_members({y if k == x else k:v for k,v in gm.items()})
         # log.info(f"'glyph_members' renamed {x} to {y}")
         self.glyphdict({k:{y if i == x else i for i in v} for k,v in gd.items()})
@@ -242,7 +242,7 @@ class Alphabet():
             ErrorNotice("Never mark NA glyphs done!")
         d=self.glyphdict()
         d[cvt].add(glyph)
-        log.info(_("'{glyph}' added to verified list").format(glyph=glyph))
+        log.info(_("‘{glyph}’ added to verified list").format(glyph=glyph))
         return self.glyphdict(d)
     def mark_glyph_not_done(self,glyph,cvt=None):
         """Mark Unverified"""
@@ -252,7 +252,7 @@ class Alphabet():
         else:
             for cvt in [cvt for cvt,glyphs in d.items() if glyph in glyphs]:
                 d[cvt].remove(glyph)
-        log.info(_("'{glyph}' removed from verified list").format(glyph=glyph))
+        log.info(_("‘{glyph}’ removed from verified list").format(glyph=glyph))
         return self.glyphdict(d)
     def cull_glyphdict(self):
         """This limits the verified glyphs to those that actually have members.
@@ -321,6 +321,7 @@ class Alphabet():
                 'check':check,'group':group}
     def refresh_items(self):
         self.items_present=set()
+        self.items_existing=set()
         k={'ftype':self.ftype} #ftype may need to iterate some day
         for _ in self.program.settings.reloadstatusdata():
             pass
@@ -330,6 +331,16 @@ class Alphabet():
             for k['ps'],pr_d in ps_d.items():
                 for k['profile'],ch_d in pr_d.items():
                     for k['check'],ch_v in ch_d.items():
+                        # EXISTENCE ≠ ELIGIBILITY (2026-07-10). A group EXISTS as
+                        # long as it holds members ('groups'), whatever its verify/
+                        # distinguish state — and existence is what glyph MEMBERSHIP
+                        # keys on: unverifying a group (e.g. a join into it) must
+                        # never cost it its glyph; the glyph re-verifies instead.
+                        # Conflating the two made every join silently drain
+                        # alphabet.json and re-demand macrosorts.
+                        for k['group'] in [i for i in ch_v.get('groups',[])
+                                            if i not in ['NA']]:
+                            self.items_existing.add(self.verificationcode(**k))
                         # Macrosort-eligible = VERIFIED and fully DISTINGUISHED from
                         # EVERY verified sibling on this slice — i.e. in NO pending
                         # distinction pair (same computation the join step uses).
@@ -345,10 +356,14 @@ class Alphabet():
                             self.items_present.add(self.verificationcode(**k))
         self.cull_glyph_members()
     def cull_glyph_members(self):
-        """This removes items from the sorting piles if they don't exist"""
+        """Remove glyph members whose group no longer EXISTS (no members in its
+        status node — e.g. joined away, renamed). Keyed on items_existing, NOT
+        items_present: an unverified or distinction-pending group keeps its
+        glyph membership (the glyph re-verifies instead of the group being
+        re-macrosorted). See refresh_items."""
         for glyph,members in list(self.glyph_members().items()):
             for i in list(members):
-                if i not in self.items_present:
+                if i not in self.items_existing:
                     self.rm_glyph_member(i,glyph)
         self.save_settings()
     def glyphstoverify(self):
@@ -430,7 +445,7 @@ class Alphabet():
         if glyph in self.unsorted and item in self.unsorted[glyph]:
             log.error("Not presorting, since it looks like we unsorted this one before.")
             return
-        log.info(_("presort_item moving {item} into '{glyph}'").format(item=item, glyph=glyph))
+        log.info(_("presort_item moving {item} into ‘{glyph}’").format(item=item, glyph=glyph))
         if not glyph.isdigit() and not self.conflicting_items(item,glyph):
             self.mark_item_glyph(item,glyph) #This should never produce conflicts
     def have_only_distinguished_items(self,x,y):
@@ -466,11 +481,11 @@ class Alphabet():
             self.conflicts[glyph]=set(conflicts)
         if conflicts:
             if recurring_conflicts:
-                text='\n'+_("This is the second time I've removed this item recently; "
-                "so I'm going to ask you to consider joining them now.")
+                text='\n'+_("This is the second time I’ve removed this item recently; "
+                "so I’m going to ask you to consider joining them now.")
             else:
                 text=''
-            ErrorNotice(_("Removing {items} from '{glyph}' to make room for {new}{text}"
+            ErrorNotice(_("Removing {items} from ‘{glyph}’ to make room for {new}{text}"
                         ).format(items=conflicts,glyph=glyph,new=item,text=text),
                                 wait=True)
         for i in conflicts:
@@ -484,9 +499,9 @@ class Alphabet():
         self.add_glyph_member(item,glyph)
         self.mark_item_macrosorted(item)
         if item in self.glyph_members()[glyph]:
-            log.info(_("mark_item_glyph added '{item}' to '{glyph}'").format(item=item, glyph=glyph))
+            log.info(_("mark_item_glyph added ‘{item}’ to ‘{glyph}’").format(item=item, glyph=glyph))
         else:
-            log.info(_("mark_item_glyph failed to add '{item}' to '{glyph}'").format(item=item, glyph=glyph))
+            log.info(_("mark_item_glyph failed to add ‘{item}’ to ‘{glyph}’").format(item=item, glyph=glyph))
             # log.info(f"{self.glyph_members()=}")
         return recurring_conflicts
     def remove_item_from_glyph(self,item,glyph=None):

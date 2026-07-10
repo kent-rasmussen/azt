@@ -79,7 +79,7 @@ class ToneFrames(dict):
     def addframe(self,ps,name,defn):
         """This needs to change checks"""
         if not isinstance(defn,dict):
-            log.error(_("The supplied frame definition isn't a dictionary: {defn}"
+            log.error(_("The supplied frame definition isn’t a dictionary: {defn}"
                         "").format(defn=defn))
         elif name in self:
             log.error(_("The supplied frame name is already there: {name} ({defn})"

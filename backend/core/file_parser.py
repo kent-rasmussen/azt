@@ -16,7 +16,7 @@ class FileParser(object):
             #This program key will only be available after this finishes
             self.program.db=lift.LiftXML(str(self.filename),self.program.analang)
         except lift.BadParseError:
-            text=_("{filename} doesn't look like a well formed lift file; please "
+            text=_("{filename} doesn’t look like a well formed lift file; please "
                     "try again.").format(filename=self.filename)
             log.info("'lift_url.py' removed.")
             if self.program.tk_root.exitFlag.istrue():
@@ -38,7 +38,7 @@ class FileParser(object):
         if not file.exists(self.program.db.backupfilename):
             self.program.db.write(self.program.db.backupfilename)
         else:
-            print(_("Apparently we've run this before today; not backing "
+            print(_("Apparently we’ve run this before today; not backing "
             "up again."))
     def getwritingsystemsinfo(self):
         """This doesn't actually do anything yet, as we can't parse ldml."""

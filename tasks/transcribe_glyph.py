@@ -208,21 +208,21 @@ class GlyphTranscribeHelper:
         # Transcribe task — the helper is also driven by Sort.name_new_glyphs,
         # whose task (SortV/SortC) has no such method.
         if len(newvalue) != 1 or len(self.group) != 1:
-            warning = [_("This name change ('{group}' > '{new}') impacts your "
+            warning = [_("This name change (‘{group}’ > ‘{new}’) impacts your "
                         "digraph and trigraph settings."
                         ).format(group=self.group, new=newvalue)]
             if len(newvalue) > 1:
-                warning.append(_("{azt} will add '{new}' to those settings."
+                warning.append(_("{azt} will add ‘{new}’ to those settings."
                             ).format(azt=self.program.name, new=newvalue))
                 if newvalue not in self.program.profiles.polygraphs[self.analang][self.cvt]:
                     self.program.profiles.polygraphs[self.analang][self.cvt][newvalue] = True
                     self.program.settings.storesettingsfile('profiledata')
             if len(self.group) > 1:
-                warning.append(_("{azt} will *not* remove '{group}' from "
+                warning.append(_("{azt} will *not* remove ‘{group}’ from "
                             "those settings, because you may still be "
                             "using it elsewhere."
                             ).format(azt=self.program.name, group=self.group))
-            warning.extend(['', _("**If this isn't what you wanted, "
+            warning.extend(['', _("**If this isn’t what you wanted, "
                         "fix and confirm your digraph and "
                         "trigraph settings in the menu "
                         "\n(this will make {azt} restart and redo "
@@ -254,7 +254,7 @@ class GlyphTranscribeHelper:
         if (not hasattr(self, 'group') or not hasattr(self, 'group_comparison')
                 and not comparison):
             log.error(_("Missing either group or comparison, without value "
-                        "specified; can't switch them."))
+                        "specified; can’t switch them."))
             return
         log.info(_("Switching groups; using \u2018{comp}\u2019 for "
                    "\u2018{group}\u2019").format(comp=self.group_comparison, group=self.group))
@@ -348,7 +348,7 @@ class GlyphTranscribeHelper:
                              row=0, column=1, sticky='')
         g = nn(self.otherglyphs, perline=len(self.otherglyphs) // 3)
         glyphslabel = ui.Label(infoframe,
-                               text='\n'.join([_("Don't use Other Groups:"), g]),
+                               text='\n'.join([_("Don’t use Other Groups:"), g]),
                                column=1,
                                sticky='new',
                                padx=padx,

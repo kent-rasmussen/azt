@@ -461,7 +461,7 @@ class SliceDict(dict):
         pss=self.pss()
         if not pss:
             self._ps=None #only before data collection
-            log.info(_("I don't have a ps to use; I hope that's OK!"))
+            log.info(_("I don’t have a ps to use; I hope that’s OK!"))
         elif not hasattr(self,'_ps') or self._ps not in pss:
             self.ps(pss[0])
     def makeprofileok(self):
@@ -470,7 +470,7 @@ class SliceDict(dict):
         profiles=self.profiles()
         if not profiles:
             self._profile=None #only before data collection
-            log.info(_("I don't have a profile to use; I hope that's OK!"))
+            log.info(_("I don’t have a profile to use; I hope that’s OK!"))
             return
         try:
             profiles+=self.adhoc()[self._ps].keys()
@@ -492,12 +492,12 @@ class SliceDict(dict):
             self.makeprofileok() #keyed by ps
             self.renewsenses()
         elif ps:
-            log.error(_("You asked to change to ps {ps}, which isn't in the list "
+            log.error(_("You asked to change to ps {ps}, which isn’t in the list "
                         "of pss: {pss}").format(ps=ps,pss=pss))
         elif hasattr(self,'_ps'):
             return self._ps
         else:
-            log.error(_("You asked for the ps, but I don't have any (pss: {pss})"
+            log.error(_("You asked for the ps, but I don’t have any (pss: {pss})"
                         "").format(pss=pss))
     def profiles(self,ps=None):
         """This returns profiles for either a specified ps or the current one.
@@ -588,7 +588,7 @@ class SliceDict(dict):
         elif ps in self._validbyps:
             return self._validbyps[ps]
         else:
-            log.error(_("You asked for valid ps data, but that ps isn't there."))
+            log.error(_("You asked for valid ps data, but that ps isn’t there."))
     def validate(self):
         #These are keyed by (profile,ps) tuples
         self._valid={}
@@ -743,7 +743,7 @@ class SliceDict(dict):
         self._profilesbysense={k:v for k,v in profilesbysense.items()
                                                 if k not in ['analang','ftype']}
         if not self._profilesbysense:
-            ErrorNotice(_("There doesn't seem to be any profile data, but "
+            ErrorNotice(_("There doesn’t seem to be any profile data, but "
                         "you asked for a slice dictionary. This is a problem; "
                         "please report it!"))
         self.updateslices() #any time we add to self._profilesbysense
@@ -1927,7 +1927,7 @@ class StatusDict(dict):
             # log.info(f"Working on checks '{self.checks()}'")
             # log.info(f"Working on updatechecksbycvt '{self.updatechecksbycvt()}'")
             for check in self.updatechecksbycvt():
-                log.info(_("Working on check '{check}'").format(check=check))
+                log.info(_("Working on check ‘{check}’").format(check=check))
                 analysisl.append(self.last('analysis',**{**kwargs,'check':check}))
                 sortl.append(self.last('sort',**{**kwargs,'check':check}))
                 ufjoinl.append(self.last('joinUF',**{**kwargs,'check':check}))

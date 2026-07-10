@@ -121,7 +121,7 @@ class HasMenus():
                 "it has been sorted, storing the recorded audio file in a "
                 "directory, with links to each file in the dictionary database."
                 " Recordings can be made up to 192khz/32float, according to "
-                "your recording equipment's capacity.").format(
+                "your recording equipment’s capacity.").format(
                                                     name=self.program.name)
         webtext=_("For help with this tool, please check out the documentation "
                 "at {url} ").format(url=self.program.url)
@@ -540,7 +540,7 @@ class Menus(ui.Menu):
             else:
                 helpitems+=[(_("Revert to {azt} main version").format(azt=self.program.name),
                                 self.parent.reverttomainazt)]
-        helpitems+=[(_("What's with the New Interface?"),
+        helpitems+=[(_("What’s with the New Interface?"),
                         self.parent.helpnewinterface)
                     ]
         for m in helpitems:
@@ -695,7 +695,7 @@ class StatusFrame(ui.Frame):
             field=self.program.settings.secondformfield[ps]
         else:
             field='<unset>'
-        return (_("Using second form field '{field}' ({ps})").format(field=field, ps=ps))
+        return (_("Using second form field ‘{field}’ ({ps})").format(field=field, ps=ps))
     def fieldsline(self):
         # log.info("Starting fieldsline w/self {} ({})".format(self,type(self)))
         # log.info("Starting fieldsline w/task {} ({})".format(self.task,
@@ -801,7 +801,7 @@ class StatusFrame(ui.Frame):
         elif check not in checks:
             return _("no tone frame selected.")
         else:
-            return (_("working on '{check}' tone frame").format(check=check))
+            return (_("working on ‘{check}’ tone frame").format(check=check))
     def toneframe(self,line):
         # log.info("toneframes: {}".format(self.program.toneframes))
         # log.info("maketoneframes: {}".format(self.program.toneframes))
@@ -823,7 +823,7 @@ class StatusFrame(ui.Frame):
             self.program.params.check(), self.program.status.group()
             return _("(no framed group)")
         else:
-            return (_("(framed group: '{group}')").format(group=self.program.status.group()))
+            return (_("(framed group: ‘{group}’)").format(group=self.program.status.group()))
     def tonegroup(self,line):
         check=self.program.params.check()
         group=self.program.status.group()
@@ -2030,7 +2030,7 @@ class TaskDressing(HasMenus,ui.Window):
         title=_("{name} Dictionary and Orthography Checker: {task}").format(
                                             name=self.program.name,task=self._tasktitle())
         if self.program.theme.name != 'greygreen':
-            log.info(_("Using theme '{theme}' on {task}.").format(theme=self.program.theme.name,
+            log.info(_("Using theme ‘{theme}’ on {task}.").format(theme=self.program.theme.name,
                                                         task=self._tasktitle()))
             title+=f' ({self.program.theme.name})'
         self.title(title)
@@ -2066,7 +2066,7 @@ class TaskDressing(HasMenus,ui.Window):
             if hasattr(self.program.settings,attr):
                 setattr(self,attr,getattr(self.program.settings,attr))
             else:
-                log.info(_("Didn't find {attr} in {settings}").format(attr=attr,settings=self.program.settings))
+                log.info(_("Didn’t find {attr} in {settings}").format(attr=attr,settings=self.program.settings))
         # #For convenience:
         # self.analang=self.program.params.analang()
     def on_quit(self,**kwargs):
@@ -2112,7 +2112,7 @@ class TaskDressing(HasMenus,ui.Window):
             levels.sort(key=lambda x:x[0],reverse=True)
             return levels
         except AttributeError as e:
-            log.info(_("Evidently there isn't a parser running ({error})").format(error=e))
+            log.info(_("Evidently there isn’t a parser running ({error})").format(error=e))
             return
     def getparserasklevel(self,event=None):
         log.info(_("Asking for parserasklevel..."))
@@ -2206,16 +2206,16 @@ class TaskDressing(HasMenus,ui.Window):
         if not checks:
             if self.program.params.cvt() == 'T':
                 btext=_("Define a New Tone Frame")
-                text=_("You don't seem to have any tone frames set up.\n"
-                "Click '{button}' below to define a tone frame. \nPlease "
-                "pay attention to the instructions, and if \nthere's anything "
-                "you don't understand, or if you're not \nsure what a tone "
+                text=_("You don’t seem to have any tone frames set up.\n"
+                "Click ‘{button}’ below to define a tone frame. \nPlease "
+                "pay attention to the instructions, and if \nthere’s anything "
+                "you don’t understand, or if you’re not \nsure what a tone "
                 "frame is, please ask for help. \nWhen you are done making "
-                "frames, click 'Exit' to continue.").format(button=btext)
+                "frames, click ‘Exit’ to continue.").format(button=btext)
                 cmd=lambda w=window: self.addframe(window=w)
             else:
                 btext=_("Return to {name}, to fix settings").format(name=self.program.name)
-                text=_("I can't find any checks for kwargs {kwargs}."
+                text=_("I can’t find any checks for kwargs {kwargs}."
                         " Probably that means there is a problem with your "
                         " settings, or with your syllable profile analysis"
                         "").format(kwargs=kwargs)
@@ -2277,7 +2277,7 @@ class TaskDressing(HasMenus,ui.Window):
             # log.info(f"_getglyph comparison options: {g2} ({type(g2)}))")
             if not g2:
                 window.destroy()
-                ErrorNotice(text=_("There don't seem to be any glyphs "
+                ErrorNotice(text=_("There don’t seem to be any glyphs "
                             "to compare with!"))
                 return
             optionlist=g2
@@ -2321,8 +2321,8 @@ class TaskDressing(HasMenus,ui.Window):
         groups=[g for g in self.program.status.groups(cvt=cvt,**kwargs) if g!='NA']
         if not groups:
             ErrorNotice(parent=window.frame,
-                          text=_("It looks like you don't have {ps}-{profile} lexemes "
-                          "grouped in the '{check}' check yet \n({kwargs})."
+                          text=_("It looks like you don’t have {ps}-{profile} lexemes "
+                          "grouped in the ‘{check}’ check yet \n({kwargs})."
                           "").format(ps=ps,profile=profile,check=check,kwargs=kwargs), column=0, row=0)
             return
         if kwargs.get('intfirst') and kwargs.get('guess'):
@@ -2345,7 +2345,7 @@ class TaskDressing(HasMenus,ui.Window):
             g2.remove(self.program.status.group()) #group() is not cvt aware
             if not g2:
                 window.destroy()
-                ErrorNotice(text=_("There don't seem to be any groups "
+                ErrorNotice(text=_("There don’t seem to be any groups "
                             "to compare with!"))
                 return
             if len(g2) == 1:
@@ -2538,7 +2538,7 @@ class TaskDressing(HasMenus,ui.Window):
             log.info(_("Finishing thread for {thread}").format(thread=x))
             self.thread_names.remove(x)
         else:
-            log.info(_("Didn't find thread for {thread}; can't mark finished.").format(thread=x))
+            log.info(_("Didn’t find thread for {thread}; can’t mark finished.").format(thread=x))
     def thread_update(self):
         if self.thread_names:
             log.info(_("{count} threads running: {threads}").format(count=len(self.thread_names), threads=self.thread_names))
@@ -2827,7 +2827,7 @@ class LiftChooser(ui.Window,HasMenus):
         self.private_use_frame=ui.Frame(self.subtags_frame, **defaults)
         # this
         self.show_private_w=ui.Button(self.private_use_frame,
-                            text=_("I'm working on a dialect of this language"),
+                            text=_("I’m working on a dialect of this language"),
                             command=self.show_private_use,
                             r=0, **defaults
                         )
@@ -3050,7 +3050,7 @@ class LiftChooser(ui.Window,HasMenus):
     def _analang_code_complete(self):
         log.info("analang_code_complete: self.code={}".format(self.code))
         if not self.code:
-            ErrorNotice(_("There doesn't seem to be an ethnologue code ({code})")
+            ErrorNotice(_("There doesn’t seem to be an ethnologue code ({code})")
                         .format(code=self.code),wait=True)
             return
         # waiting() guarantees the progress dialog closes even if the work
@@ -3090,10 +3090,10 @@ class LiftChooser(ui.Window,HasMenus):
                         newdirname=newdirname.with_suffix('')
                     if file.exists(newdirname):
                         # log.info("Exists!")
-                        msg=_("The directory {newdirname} already exists, so I'm "
+                        msg=_("The directory {newdirname} already exists, so I’m "
                                 "not going to copy your data there."
                                 "\nDo you already have your data on your "
-                                "computer? \nIf so, click '{other}' on the next "
+                                "computer? \nIf so, click ‘{other}’ on the next "
                                 "screen.").format(newdirname=newdirname,other=self.other)
                         log.info(msg)
                         ErrorNotice(msg,wait=True)
@@ -3115,7 +3115,7 @@ class LiftChooser(ui.Window,HasMenus):
             return
         log.info(f"Media directory {mediadir=} {homedir=}")
         if not file.exists(homedir): #this should never happen
-            ErrorNotice(_("I can't find your home directory ({homedir}); please "
+            ErrorNotice(_("I can’t find your home directory ({homedir}); please "
                         "submit a bug report!").format(homedir=homedir))
         newrepo=None
         from backend.core.vcs import Git, Mercurial
@@ -3124,7 +3124,7 @@ class LiftChooser(ui.Window,HasMenus):
             log.info("trying with Mercurial")
             newrepo=makenewrepo(Mercurial,mediadir)
         if not newrepo: # if there, already exists
-            log.error(_("Couldn't find a repository at {mediadir}").format(mediadir=mediadir))
+            log.error(_("Couldn’t find a repository at {mediadir}").format(mediadir=mediadir))
         filename=self.findrepolift(newrepo) #find the lift file
         # log.info("found filename {}".format(filename))
         if filename: #this will be None, if no or multiple *.lift files
@@ -3141,7 +3141,7 @@ class LiftChooser(ui.Window,HasMenus):
                             "your new file. ({newfile})").format(newfile=newfile))
         else:
             msg=_("It looks like the repository was cloned, but "
-                        "I can't find just one lift file."
+                        "I can’t find just one lift file."
                         "\nTell {azt} which file you want to "
                         "Analyze on the next page.").format(azt=self.program.name)
             # log.info(msg)
@@ -3238,7 +3238,7 @@ class LiftChooser(ui.Window,HasMenus):
         #Do users care about this? it may be useful for USB cloning?
         return #not for now
         msg=_("Your new LIFT file is at {newfile}."
-                "\nIf you don't want it there, close {azt} and move the whole "
+                "\nIf you don’t want it there, close {azt} and move the whole "
                 "{folder} folder wherever you like."
                 "\nThen open {azt} and tell it where you put the LIFT file."
                 ).format(newfile=newfile,
@@ -3587,7 +3587,7 @@ class Settings(object):
                                     setcmd=setcmd,
                                     # other=True
                                     )
-        log.info(_("Asking for '{ps}' second form field...").format(ps=ps))
+        log.info(_("Asking for ‘{ps}’ second form field...").format(ps=ps))
         try:
             assert other == False
             othernames=[i for i in self.program.db.fieldnames[self.program.params.analang()]
@@ -3597,11 +3597,11 @@ class Settings(object):
         if othernames:
             if len(othernames)-1:
                 text=_("Select a database field "
-                        "to use for second forms of '{ps}' words").format(ps=ps)
+                        "to use for second forms of ‘{ps}’ words").format(ps=ps)
                 otherbuttontext=_("None of these; make a new field")
             else:
-                text=_("Select the '{field}' database field "
-                        "for second forms of '{ps}' words").format(field=othernames[0],ps=ps)
+                text=_("Select the ‘{field}’ database field "
+                        "for second forms of ‘{ps}’ words").format(field=othernames[0],ps=ps)
                 otherbuttontext=_("No; make a new field")
             cmd=getother
             optionslist=othernames
@@ -3759,15 +3759,15 @@ class Settings(object):
                         if self.program.profiles.distinguish[s]==changed[s][1]:
                             self.program.profiles.distinguish[s]=changed[s][0] #(oldvar,newvar):
                         else:
-                            log.error(_("Changed to value ({new}) doesn't match "
-                            "current setting for '{setting}': {current}").format(new=changed[s][1],
+                            log.error(_("Changed to value ({new}) doesn’t match "
+                            "current setting for ‘{setting}’: {current}").format(new=changed[s][1],
                                                         setting=s,current=self.distinguish[s]))
                     elif s in self.program.profiles.interpret:
                         if self.program.profiles.interpret[s]==changed[s][1]:
                             self.program.profiles.interpret[s]=changed[s][0] #(oldvar,newvar):
                         else:
-                            log.error(_("Changed to value ({new}) doesn't match "
-                            "current setting for '{setting}': {current}").format(new=changed[s][1],
+                            log.error(_("Changed to value ({new}) doesn’t match "
+                            "current setting for ‘{setting}’: {current}").format(new=changed[s][1],
                                                         setting=s,current=self.interpret[s]))
             r=True #only false if changes made, and user exits notice
             changed={}

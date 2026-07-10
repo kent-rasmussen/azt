@@ -120,7 +120,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         if (self.cvt=='S'
                 and not self.program.params.is_syllable_primitive_check(self.check)):
             bf3=ui.Frame(parent, border=True, row=parent.nrows(), sticky='w')
-            ui.Button(bf3, text=_("This word doesn't belong in this {cls} profile "
+            ui.Button(bf3, text=_("This word doesn’t belong in this {cls} profile "
                         "at all…").format(cls=self._profile_class_name()),
                         cmd=self.syllable_escape_window,
                         anchor='w', relief='flat', font='instructions',
@@ -247,10 +247,10 @@ class SortButtonFrame(ui.ScrollingFrame):
         w=ui.Window(self,title=_("Set a {cls} profile by hand").format(cls=cls),
                     exit=False)
         warn=ui.Label(w.frame,text='\n'.join([
-            _("⚠ Setting a profile by hand is a linguist's "
+            _("⚠ Setting a profile by hand is a linguist’s "
             "call — work with your language team."),
             _("A wrong profile mis-describes the "
-            "word's syllable structure."),
+            "word’s syllable structure."),
             _("This one must be {beg}-initial, {end}-final, and "
             "{n} syllable(s)").format(beg=beg,end=end,n=syls),
             _("(use C and V, e.g. {eg}).").format(eg=eg)]),
@@ -263,7 +263,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         def submit():
             prof=(var.get() or '').strip().upper()
             if not params.profile_fits_class(prof,beg,syls,end):
-                msg.configure(text=_("'{p}' isn't {beg}-initial, {end}-final, {n} "
+                msg.configure(text=_("‘{p}’ isn’t {beg}-initial, {end}-final, {n} "
                     "syllable(s) — try again.").format(
                         p=prof or '—',beg=beg,end=end,n=syls))
                 return
@@ -280,7 +280,7 @@ class SortButtonFrame(ui.ScrollingFrame):
         # profile) — the same set excluded from the examples.
         side=ui.Frame(w.frame)
         side.grid(row=0,column=2,rowspan=4,sticky='nw',padx=12)
-        ui.Label(side,text=_("\nAlready in play here —\ndon't re-enter these:"),
+        ui.Label(side,text=_("\nAlready in play here —\ndon’t re-enter these:"),
                     font='instructions',row=0,column=0,sticky='w')
         for i,g in enumerate(inplay or [_("(none yet)")]):
             ui.Label(side,text=g,font='normal',row=i+1,column=0,sticky='w')
@@ -793,7 +793,7 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                     for f in self.frameargs}
         super().__init__(parent, **frameargs)
         if self.group not in self.program.alphabet.glyph_members():
-            ui.Label(self,text=_("group '{group}' isn't in glyphs! "
+            ui.Label(self,text=_("group ‘{group}’ isn’t in glyphs! "
                     "({members})").format(group=self.group, members=list(self.program.alphabet.glyph_members())),
                     c=0)
             self.hasexample=True #make this error visible

@@ -25,8 +25,7 @@ msgstr "\n\n"
 
 #: /home/kentr/bin/raspy/azt/main.py:17634
 #, python-brace-format
-msgid "\n\n"
-"If this information doesn't help you fix this, please click on this text to Email me your log (to {addr})"
+msgid "\n\nIf this information doesn’t help you fix this, please click on this text to Email me your log (to {addr})"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:646
@@ -49,8 +48,7 @@ msgstr "\n"
 "(deviner [{lang}]; si ce n'est pas correct, quittez maintenant et corrigez !)"
 
 #: /home/kentr/bin/raspy/azt/main.py:2785
-msgid "\n"
-"*** There don't seem to be any possible digraphs or trigraphs in your data ***\n"
+msgid "\n*** There don’t seem to be any possible digraphs or trigraphs in your data ***\n"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:4182
@@ -143,17 +141,17 @@ msgstr "# Ce fichier de paramètres de transition a été fait sur {date} sur {n
 
 #: /home/kentr/bin/raspy/azt/main.py:6230
 #, python-brace-format
-msgid "'glyph_members' contains {new}; not renaming {old}"
+msgid "‘glyph_members’ contains {new}; not renaming {old}"
 msgstr "'glyph_members' contient {new}; ne pas renommer {old}"
 
 #: /home/kentr/bin/raspy/azt/main.py:6235
 #, python-brace-format
-msgid "'glyphdict' contains {new}; not renaming {old}"
+msgid "‘glyphdict’ contains {new}; not renaming {old}"
 msgstr "'glyphdict' contient {new}; ne pas renommer {old}"
 
 #: /home/kentr/bin/raspy/azt/main.py:6237
 #, python-brace-format
-msgid "'rename_glyph' can safely rename {old} to {new}"
+msgid "‘rename_glyph’ can safely rename {old} to {new}"
 msgstr "'rename_glyph' peut renommer en toute sécurité {old} en {new}"
 
 #: /home/kentr/bin/raspy/azt/main.py:1506
@@ -235,8 +233,7 @@ msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:12364
 #, python-brace-format
-msgid "**If this isn't what you wanted, fix and confirm your digraph and trigraph settings in the menu \n"
-"(this will make {azt} restart and redo the syllable profile analysis)."
+msgid "**If this isn’t what you wanted, fix and confirm your digraph and trigraph settings in the menu \n(this will make {azt} restart and redo the syllable profile analysis)."
 msgstr "**Si ce n'est pas ce que vous vouliez, corrigez et confirmez vos paramètres de digraphe et de trigraph dans le menu \n"
 "(cela fera redémarrer {azt} et refaire l'analyse du profil syllabe)."
 
@@ -526,7 +523,7 @@ msgstr "Analyse & Tâches de Décision"
 
 #: /home/kentr/bin/raspy/azt/main.py:5861
 #, python-brace-format
-msgid "Analysis of what you're done with: {status}"
+msgid "Analysis of what you’re done with: {status}"
 msgstr "Analyse de ce que vous avez fait : {status}"
 
 #: /home/kentr/bin/raspy/azt/main.py:3944
@@ -542,17 +539,17 @@ msgid "Apparently self.pyaudio doesn't exist, or isn't initialized."
 msgstr "Apparemment, self.pyaudio n'existe pas, ou n'est pas initialisé."
 
 #: /home/kentr/bin/raspy/azt/main.py:887
-msgid "Apparently we've run this before today; not backing up again."
+msgid "Apparently we’ve run this before today; not backing up again."
 msgstr "Apparemment, nous avons exécuté ceci avant aujourd'hui; pas de sauvegarde à nouveau."
 
 #: /home/kentr/bin/raspy/azt/main.py:17142
 #, python-brace-format
-msgid "Apparently you tried to pull text out of a non element, and it's not a simple string, either: {element}"
+msgid "Apparently you tried to pull text out of a non element, and it’s not a simple string, either: {element}"
 msgstr "Apparemment, vous avez essayé d'extraire du texte d'un élément non élémentaire, et ce n'est pas une simple chaîne, non plus : {element}"
 
 #: /home/kentr/bin/raspy/azt/main.py:3075
 #, python-brace-format
-msgid "Apparently {sense} isn't under {form}?"
+msgid "Apparently {sense} isn’t under {form}?"
 msgstr "Apparemment {sense} n'est pas sous {form}?"
 
 #: /home/kentr/bin/raspy/azt/lift.py:4017
@@ -667,7 +664,7 @@ msgstr "À {group} des groupes ({groups})."
 
 #: /home/kentr/bin/raspy/azt/main.py:2188
 #, python-brace-format
-msgid "Attribute {s} didn't make it back"
+msgid "Attribute {s} didn’t make it back"
 msgstr "L'attribut {s} ne l'a pas récupéré"
 
 #: /home/kentr/bin/raspy/azt/main.py:2161
@@ -718,23 +715,7 @@ msgid "Basic report on Consonants and Vowels (to file)"
 msgstr "Rapport de base des Consonnes et Voyelles (vers fichier)"
 
 #: /home/kentr/bin/raspy/azt/lift.py:3779
-msgid "Basic usage of this class includes the following kwargs:\n"
-"\tbase: node from which we are pulling (should be supplied)\n"
-"\ttarget: node we are looking for\n"
-"\tget: thing we want: node (default)/'text'/attribute name\n"
-"Below here implies an entry node:\n"
-"\tguid: id used to identify a lift entry\n"
-"\tlxform: form to find in lexeme form fields\n"
-"\tlcform: form to find in citation form fields\n"
-"\tmorphtype: type of morpheme (stem, affix, etc)\n"
-"\tpronunciation: form to find in pronunciation form fields\n"
-"Below here implies a sense node:\n"
-"\tsenseid: id used to identify a lift sense\n"
-"\tdefinition: definition of sense\n"
-"\tgloss: gloss (one word definition) of sense\n"
-"Below here implies an example node:\n"
-"\ttranslation: Translation of example forms\n"
-"\ttonevalue: value of an example tone group (from sorting)\n"
+msgid "Basic usage of this class includes the following kwargs:\n\tbase: node from which we are pulling (should be supplied)\n\ttarget: node we are looking for\n\tget: thing we want: node (default)/‘text’/attribute name\nBelow here implies an entry node:\n\tguid: id used to identify a lift entry\n\tlxform: form to find in lexeme form fields\n\tlcform: form to find in citation form fields\n\tmorphtype: type of morpheme (stem, affix, etc)\n\tpronunciation: form to find in pronunciation form fields\nBelow here implies a sense node:\n\tsenseid: id used to identify a lift sense\n\tdefinition: definition of sense\n\tgloss: gloss (one word definition) of sense\nBelow here implies an example node:\n\ttranslation: Translation of example forms\n\ttonevalue: value of an example tone group (from sorting)\n"
 msgstr "L'utilisation de base de cette classe inclut les kwargs suivants :\n"
 "\tbase: nœud à partir duquel nous tirons (devrait être fourni)\n"
 "\ttarget: node que nous recherchons\n"
@@ -1108,12 +1089,12 @@ msgstr "Correspondance du troisième VC"
 
 #: /home/kentr/bin/raspy/azt/main.py:16124
 #, python-brace-format
-msgid "Couldn't find a local drive to pull from via {repo}; giving up"
+msgid "Couldn’t find a local drive to pull from via {repo}; giving up"
 msgstr "Impossible de trouver un lecteur local à extraire via {repo}; abandonnez"
 
 #: /home/kentr/bin/raspy/azt/main.py:16140
 #, python-brace-format
-msgid "Couldn't find a local drive to push to via {repo}; giving up"
+msgid "Couldn’t find a local drive to push to via {repo}; giving up"
 msgstr "Impossible de trouver un lecteur local à envoyer via {repo}; abandonnez"
 
 #: /home/kentr/bin/raspy/azt/main.py:16099
@@ -1127,16 +1108,16 @@ msgstr "Impossible de trouver un parent; le message d'erreur suit"
 
 #: /home/kentr/bin/raspy/azt/main.py:560
 #, python-brace-format
-msgid "Couldn't find a repository at {mediadir}"
+msgid "Couldn’t find a repository at {mediadir}"
 msgstr "Impossible de trouver un dépôt à {mediadir}"
 
 #: /home/kentr/bin/raspy/azt/main.py:5797
 #, python-brace-format
-msgid "Couldn't find plausible audiolang (among {audios}) for analang {analang}"
+msgid "Couldn’t find plausible audiolang (among {audios}) for analang {analang}"
 msgstr "Impossible de trouver un audio plausible (parmi {audios}) pour l'analang {analang}"
 
 #: /home/kentr/bin/raspy/azt/xlp.py:81
-msgid "Couldn't find/import lxml, so not compiling report."
+msgid "Couldn’t find/import lxml, so not compiling report."
 msgstr "Impossible de trouver/importer lxml, donc pas de compiler le rapport."
 
 #: /home/kentr/bin/raspy/azt/main.py:16246
@@ -1182,12 +1163,12 @@ msgstr "Modifications de dict ; vérification des attributs et mise à jour de l
 
 #: /home/kentr/bin/raspy/azt/main.py:5321
 #, python-brace-format
-msgid "Didn't find thread for {thread}; can't mark finished."
+msgid "Didn’t find thread for {thread}; can’t mark finished."
 msgstr "Le sujet n'a pas été trouvé pour {thread}; impossible de marquer comme terminé."
 
 #: /home/kentr/bin/raspy/azt/main.py:4082
 #, python-brace-format
-msgid "Didn't find {attr} in {settings}"
+msgid "Didn’t find {attr} in {settings}"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:6550
@@ -1287,11 +1268,11 @@ msgid "Doing guid triage by ps... This also takes awhile?..."
 msgstr "Le triage guid par ps... Cela prend aussi du temps ?..."
 
 #: /home/kentr/bin/raspy/azt/main.py:12582
-msgid "Don't use Other Groups:"
+msgid "Don’t use Other Groups:"
 msgstr "Ne pas utiliser les autres groupes :"
 
 #: /home/kentr/bin/raspy/azt/main.py:8129
-msgid "Don't use this task."
+msgid "Don’t use this task."
 msgstr "Ne pas utiliser cette tâche."
 
 #: /home/kentr/bin/raspy/azt/xlp.py:48
@@ -1410,13 +1391,13 @@ msgstr "ErrorNotice: “{text}”"
 
 #: /home/kentr/bin/raspy/azt/main.py:4564
 #, python-brace-format
-msgid "Evidently there isn't a parser running ({error})"
+msgid "Evidently there isn’t a parser running ({error})"
 msgstr "Évidemment, il n'y a pas d'analyseur en cours d'exécution ({error})"
 
 #: /home/kentr/bin/raspy/azt/main.py:17526
 #: /home/kentr/bin/raspy/azt/main.py:17592
 #, python-brace-format
-msgid "Evidently you can't make a root window? ({error})"
+msgid "Evidently you can’t make a root window? ({error})"
 msgstr "Évidemment, vous ne pouvez pas faire une fenêtre racine? ({error})"
 
 #: /home/kentr/bin/raspy/azt/main.py:9223
@@ -1974,7 +1955,7 @@ msgstr "Hé! Vous avez trouvé un problème ! (détails et solution ci-dessous)"
 
 #: /home/kentr/bin/raspy/azt/lift.py:3602
 #, python-brace-format
-msgid "Hey, I've looked back {g} generations, and I don't see an ancestor of {head} (target) which is also an ancestor of {node} (current node)."
+msgid "Hey, I’ve looked back {g} generations, and I don’t see an ancestor of {head} (target) which is also an ancestor of {node} (current node)."
 msgstr "Hé, j'ai regardé les générations {g} et je ne vois pas un ancêtre de {head} (cible) qui est aussi un ancêtre de {node} (nœud actuel)."
 
 #: /home/kentr/bin/raspy/azt/xlp.py:237
@@ -2066,24 +2047,24 @@ msgstr "Je ne trouve aucune vérification de type {cvt}, ps {ps}, profil {profil
 
 #: /home/kentr/bin/raspy/azt/main.py:552
 #, python-brace-format
-msgid "I can't find your home directory ({homedir}); please submit a bug report!"
+msgid "I can’t find your home directory ({homedir}); please submit a bug report!"
 msgstr "Je ne trouve pas votre répertoire personnel ({homedir}); merci de soumettre un rapport de bogue!"
 
 #: /home/kentr/bin/raspy/azt/utilities.py:35
-msgid "I can't tell the terminal's encoding, sorry!"
+msgid "I can’t tell the terminal’s encoding, sorry!"
 msgstr "Je ne peux pas dire l'encodage du terminal, désolé !"
 
 #: /home/kentr/bin/raspy/azt/main.py:14633
-msgid "I don't have a profile to use; I hope that's OK!"
+msgid "I don’t have a profile to use; I hope that’s OK!"
 msgstr "Je n'ai pas de profil à utiliser, j'espère que c'est OK!"
 
 #: /home/kentr/bin/raspy/azt/main.py:14624
-msgid "I don't have a ps to use; I hope that's OK!"
+msgid "I don’t have a ps to use; I hope that’s OK!"
 msgstr "Je n'ai pas de ps à utiliser, j'espère que c'est OK!"
 
 #: /home/kentr/bin/raspy/azt/main.py:12784
 #, python-brace-format
-msgid "I don't have any sorted data for check: {check}, ps-profile: {ps}-{profile},"
+msgid "I don’t have any sorted data for check: {check}, ps-profile: {ps}-{profile},"
 msgstr "Je n'ai pas de données triées pour la vérification : {check}, ps-profile: {ps}-{profile},"
 
 #: /home/kentr/bin/raspy/azt/main.py:17611
@@ -2093,20 +2074,18 @@ msgid "I have tried to install some Python dependencies for you. If everything b
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/py_modules.py:114
-msgid "I'm going to give up now, sorry!\n"
+msgid "I’m going to give up now, sorry!\n"
 "{}"
 msgstr "Je vais abandonner maintenant, désolé!\n"
 "{}"
 
 #: /home/kentr/bin/raspy/azt/main.py:429
-msgid "I'm working on a dialect of this language"
+msgid "I’m working on a dialect of this language"
 msgstr "Je travaille sur un dialecte de cette langue"
 
 #: /home/kentr/bin/raspy/azt/main.py:9420
 #, python-brace-format
-msgid "I've tried (randomly, then through each) {count} times, and not found one of your {total} senses with data in each of these languages: {langs}. \n"
-"Are you asking for gloss languages which actually have data in your database? \n"
-"Or, are you missing gloss fields (i.e., you have only 'definition' fields)?"
+msgid "I’ve tried (randomly, then through each) {count} times, and not found one of your {total} senses with data in each of these languages: {langs}. \nAre you asking for gloss languages which actually have data in your database? \nOr, are you missing gloss fields (i.e., you have only ‘definition’ fields)?"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/sound_ui.py:462
@@ -2115,15 +2094,15 @@ msgstr "Si Praat est installé dans le chemin de votre système d'exploitation, 
 
 #: /home/kentr/bin/raspy/azt/main.py:17629
 #, python-brace-format
-msgid "If the log below doesn't include the text '{text}', or if it happened after a longer work session, please attach your compressed log file"
+msgid "If the log below doesn’t include the text ‘{text}’, or if it happened after a longer work session, please attach your compressed log file"
 msgstr "Si le journal ci-dessous n'inclut pas le texte '{text}', ou si cela s'est produit après une session de travail plus longue, veuillez joindre votre fichier journal compressé"
 
 #: /home/kentr/bin/raspy/azt/setdefaults.py:40
-msgid "If you don't like these selections, they can be changed later."
+msgid "If you don’t like these selections, they can be changed later."
 msgstr "Si vous n'aimez pas ces sélections, elles peuvent être modifiées plus tard."
 
 #: /home/kentr/bin/raspy/azt/main.py:2774
-msgid "If you expect one (already in your data) that isn't listed here, please click here to Email me, and I can add it."
+msgid "If you expect one (already in your data) that isn’t listed here, please click here to Email me, and I can add it."
 msgstr "Si vous vous attendez à une (déjà dans vos données) qui n'est pas listée ici, veuillez cliquer ici pour m'envoyer un courriel, et je peux l'ajouter."
 
 #: /home/kentr/bin/raspy/azt/py_modules.py:28
@@ -2137,7 +2116,7 @@ msgstr "Si vous apportez des modifications, ce bouton==> \n"
 "redémarrera le programme pour réanalyser vos données."
 
 #: /home/kentr/bin/raspy/azt/setdefaults.py:41
-msgid "If you're working on a multilingual dictionary, we need to figure out how to deal with that, later.  :-)"
+msgid "If you’re working on a multilingual dictionary, we need to figure out how to deal with that, later.  :-)"
 msgstr "Si vous travaillez sur un dictionnaire multilingue, nous devons comprendre comment gérer cela plus tard. :-)"
 
 #: /home/kentr/bin/raspy/azt/main.py:7755
@@ -2235,8 +2214,7 @@ msgstr "Il semble que ni votre LWC ({analang}) ni votre langage d'interface ({in
 
 #: /home/kentr/bin/raspy/azt/main.py:576
 #, python-brace-format
-msgid "It looks like the repository was cloned, but I can't find just one lift file.\n"
-"Tell {azt} which file you want to Analyze on the next page."
+msgid "It looks like the repository was cloned, but I can’t find just one lift file.\nTell {azt} which file you want to Analyze on the next page."
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:5051
@@ -2248,13 +2226,12 @@ msgstr "Il semble que vous n'ayez pas {ps}- lexèmes{profile} regroupés dans la
 
 #: /home/kentr/bin/raspy/azt/main.py:7954
 #, python-brace-format
-msgid "It looks like you're done filling out the empty entries in your database! Congratulations! \n"
-"You can still add words through the button on the left ({text})."
+msgid "It looks like you’re done filling out the empty entries in your database! Congratulations! \nYou can still add words through the button on the left ({text})."
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:2980
 #, python-brace-format
-msgid "It looks like you're working on your LWC; using {lang} digraph defaults"
+msgid "It looks like you’re working on your LWC; using {lang} digraph defaults"
 msgstr "Il semble que vous travaillez sur votre LWC ; en utilisant les valeurs par défaut du digraphe {lang}"
 
 #: /home/kentr/bin/raspy/azt/utilities.py:157
@@ -2482,17 +2459,17 @@ msgstr "On dirait que j'ai trouvé un code iso avec des données pour analang ! 
 
 #: /home/kentr/bin/raspy/azt/parser.py:496
 #, python-brace-format
-msgid "Looks like a form is missing, or {lx} isn't a subset of {lc} ({pl};{imp})"
+msgid "Looks like a form is missing, or {lx} isn’t a subset of {lc} ({pl};{imp})"
 msgstr "On dirait qu'un formulaire est manquant, ou {lx} n'est pas un sous-ensemble de {lc} ({pl};{imp})"
 
 #: /home/kentr/bin/raspy/azt/main.py:11285
 #, python-brace-format
-msgid "Looks like that didn't work; trying again not in the background ({kwargs})."
+msgid "Looks like that didn’t work; trying again not in the background ({kwargs})."
 msgstr "On dirait que cela n'a pas fonctionné ; essayer à nouveau en arrière-plan ({kwargs})."
 
 #: /home/kentr/bin/raspy/azt/main.py:10955
 #, python-brace-format
-msgid "Looks like that didn't work; you may need to run a report first, or not do it in the background ({kwargs})."
+msgid "Looks like that didn’t work; you may need to run a report first, or not do it in the background ({kwargs})."
 msgstr "On dirait que cela n'a pas fonctionné ; vous devrez peut-être exécuter un rapport en premier, ou ne pas le faire en arrière-plan ({kwargs})."
 
 #: /home/kentr/bin/raspy/azt/main.py:11029
@@ -2500,7 +2477,7 @@ msgid "Looks like the analysis is good; moving on."
 msgstr "On dirait que l'analyse est bonne; elle va de l'avant."
 
 #: /home/kentr/bin/raspy/azt/main.py:11037
-msgid "Looks like the analysis isn't good, but we're not in the background, so I'm doing a new analysis now."
+msgid "Looks like the analysis isn’t good, but we’re not in the background, so I’m doing a new analysis now."
 msgstr "On dirait que l'analyse n'est pas bonne, mais nous ne sommes pas en arrière-plan, donc je fais une nouvelle analyse maintenant."
 
 #: /home/kentr/bin/raspy/azt/main.py:2696
@@ -2517,14 +2494,13 @@ msgstr "On dirait qu'il y a eu une erreur, après tout : {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:2498
 #, python-brace-format
-msgid "Looks like there's a problem with your directory... {file}\n"
-"{dir}"
+msgid "Looks like there’s a problem with your directory... {file}\n{dir}"
 msgstr "On dirait qu'il y a un problème avec votre répertoire... {file}\n"
 "{dir}"
 
 #: /home/kentr/bin/raspy/azt/parser.py:493
 #, python-brace-format
-msgid "Looks like {lx} isn't a subset of {pl} or {imp} ({error})"
+msgid "Looks like {lx} isn’t a subset of {pl} or {imp} ({error})"
 msgstr "On dirait que {lx} n'est pas un sous-ensemble de {pl} ou {imp} ({error})"
 
 #: /home/kentr/bin/raspy/azt/utilities.py:70
@@ -2597,7 +2573,7 @@ msgid "Max profiles: {max_profiles}; "
 msgstr "Max profiles: {max_profiles}; "
 
 #: /home/kentr/bin/raspy/azt/main.py:3875
-msgid "Maybe status/slices aren't set up yet."
+msgid "Maybe status/slices aren’t set up yet."
 msgstr "Peut-être que le statut/les tranches ne sont pas encore configurés."
 
 #: /home/kentr/bin/raspy/azt/lift.py:3574
@@ -2641,7 +2617,7 @@ msgid "Microphone: ‘{cur}’"
 msgstr "Microphone: ‘{cur}’"
 
 #: /home/kentr/bin/raspy/azt/main.py:12287
-msgid "Missing either group or comparison, without value specified; can't switch them."
+msgid "Missing either group or comparison, without value specified; can’t switch them."
 msgstr "Il manque un groupe ou une comparaison, sans valeur spécifiée ; ne peut pas les changer."
 
 #: /home/kentr/bin/raspy/azt/parser.py:305
@@ -2650,7 +2626,7 @@ msgid "Missing forms! (lc:{lc}; pl:{pl} imp:{imp})"
 msgstr "Formes manquantes ! (lc:{lc}; pl:{pl} imp:{imp})"
 
 #: /home/kentr/bin/raspy/azt/praatfns.py:419
-msgid "Missing sound file; can't continue!"
+msgid "Missing sound file; can’t continue!"
 msgstr "Fichier son manquant ; ne peut pas continuer !"
 
 #: /home/kentr/bin/raspy/azt/main.py:6995
@@ -2776,7 +2752,7 @@ msgstr "Ni analang ne ressemble à un code iso, prenant celui avec le plus de do
 
 #: /home/kentr/bin/raspy/azt/parser.py:378
 #, python-brace-format
-msgid "Neither noun nor verb! This shouldn't happen! ({sense_id})"
+msgid "Neither noun nor verb! This shouldn’t happen! ({sense_id})"
 msgstr "Ni nom ni verbe! Cela ne devrait pas se produire! ({sense_id})"
 
 #: /home/kentr/bin/raspy/azt/parser.py:186
@@ -2898,7 +2874,7 @@ msgid "No final write to lift"
 msgstr "Pas d'écriture finale à lever"
 
 #: /home/kentr/bin/raspy/azt/sound_ui.py:142
-msgid "No framed value, nor testing; can't continue..."
+msgid "No framed value, nor testing; can’t continue..."
 msgstr "Aucune valeur encadrée, ni test ; ne peut pas continuer..."
 
 #: /home/kentr/bin/raspy/azt/main.py:12323
@@ -2964,7 +2940,7 @@ msgid "No task, apparently; not destroying."
 msgstr "Aucune tâche, apparemment; pas détruire."
 
 #: /home/kentr/bin/raspy/azt/main.py:5695
-msgid "No thanks; I'll manage this myself"
+msgid "No thanks; I’ll manage this myself"
 msgstr "Non merci; Je vais gérer ça moi-même"
 
 #: /home/kentr/bin/raspy/azt/parser.py:329
@@ -3004,12 +2980,12 @@ msgstr "Aucune glose {lang} trouvée !"
 
 #: /home/kentr/bin/raspy/azt/main.py:16496
 #, python-brace-format
-msgid "No {repo} useremail found; using '{email}'"
+msgid "No {repo} useremail found; using ‘{email}’"
 msgstr "Aucun email utilisateur {repo} trouvé ; en utilisant '{email}'"
 
 #: /home/kentr/bin/raspy/azt/main.py:16492
 #, python-brace-format
-msgid "No {repo} username found; using '{name}'"
+msgid "No {repo} username found; using ‘{name}’"
 msgstr "Aucun nom d'utilisateur {repo} trouvé ; en utilisant '{name}'"
 
 #: /home/kentr/bin/raspy/azt/main.py:16249
@@ -3125,7 +3101,7 @@ msgid "Not sure what happened here!"
 msgstr "Vous ne savez pas ce qui s'est passé ici!"
 
 #: /home/kentr/bin/raspy/azt/xlp.py:383
-msgid "Not sure what kind of cell you're looking for: {}"
+msgid "Not sure what kind of cell you’re looking for: {}"
 msgstr "Vous ne savez pas quel type de cellule vous cherchez : {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:7576
@@ -3148,7 +3124,7 @@ msgid "Not using multiple button columns"
 msgstr "Ne pas utiliser les colonnes de plusieurs boutons"
 
 #: /home/kentr/bin/raspy/azt/main.py:10481
-msgid "Not verifying tone examples which don't exist."
+msgid "Not verifying tone examples which don’t exist."
 msgstr "Ne pas vérifier les exemples de tonalités qui n'existent pas."
 
 #: /home/kentr/bin/raspy/azt/sound_ui.py:524
@@ -3711,8 +3687,7 @@ msgstr "Suppression du sens {id} de la sous-vérification {group}"
 msgid "Removing {item} from ‘{glyph}’ to make room for {new}"
 msgstr "Retirer {item} de ‘{glyph}’ pour faire de la place pour {new}"
 
-msgid "This is the second time I've removed this item recently; "
-"so I'm going to ask you to consider joining them now."
+msgid "This is the second time I’ve removed this item recently; so I’m going to ask you to consider joining them now."
 msgstr "C'est maintenant la deuxieme fois que j'ai supprimé cet element; "
 "donc je vais vous demander de considérer de les joindre maintenant."
 #: /home/kentr/bin/raspy/azt/main.py:12549
@@ -3756,7 +3731,7 @@ msgstr "Rapports"
 
 #: /home/kentr/bin/raspy/azt/main.py:16187
 #, python-brace-format
-msgid "Repository at {dir} looks empty, so I'm assuming you just initialized it"
+msgid "Repository at {dir} looks empty, so I’m assuming you just initialized it"
 msgstr "Le dépôt {dir} semble vide, donc je suppose que vous venez de l'initialiser"
 
 #: /home/kentr/bin/raspy/azt/main.py:13712
@@ -4332,12 +4307,12 @@ msgstr "Afficher les détails"
 #: /home/kentr/bin/raspy/azt/lift.py:3656
 #: /home/kentr/bin/raspy/azt/lift.py:3666
 #, python-brace-format
-msgid "Showing '{c}', nearest ancenstor"
+msgid "Showing ‘{c}’, nearest ancenstor"
 msgstr "Affichage de '{c}', ancêtre le plus proche"
 
 #: /home/kentr/bin/raspy/azt/lift.py:3639
 #, python-brace-format
-msgid "Showing '{head}', child of {node}"
+msgid "Showing ‘{head}’, child of {node}"
 msgstr "Affichage de '{head}', enfant de {node}"
 
 #: /home/kentr/bin/raspy/azt/main.py:14222
@@ -4410,14 +4385,13 @@ msgid "Something happened! (language not keyed in segment dictionary)"
 msgstr "Quelque chose s'est passé ! (langue non clée dans le dictionnaire du segment)"
 
 #: /home/kentr/bin/raspy/azt/lift.py:3494
-msgid "Sorry, I can't tell what form to pass to this field;\n"
-"What is its parent?"
+msgid "Sorry, I can’t tell what form to pass to this field;\nWhat is its parent?"
 msgstr "Désolé, je ne peux pas dire quel formulaire passer à ce champ;\n"
 "Qu'est-ce que son parent ?"
 
 #: /home/kentr/bin/raspy/azt/main.py:17296
 #, python-brace-format
-msgid "Sorry, I don't know this OS: {os}"
+msgid "Sorry, I don’t know this OS: {os}"
 msgstr "Désolé, je ne connais pas cet OS : {os}"
 
 #: /home/kentr/bin/raspy/azt/file.py:339
@@ -4452,11 +4426,11 @@ msgstr "Désolé, quelque chose d'autre qu'un élément de liste trouvé : {list
 "Vouliez-vous vouloir utiliser \"othersOK=True\"? Ne rien retourner !"
 
 #: /home/kentr/bin/raspy/azt/ui_tkinter.py:275
-msgid "Sorry, that theme doesn't seem to be set up. Pick from these options:"
+msgid "Sorry, that theme doesn’t seem to be set up. Pick from these options:"
 msgstr "Désolé, ce thème ne semble pas être configuré. Choisissez parmi ces options :"
 
 #: /home/kentr/bin/raspy/azt/main.py:11032
-msgid "Sorry, the analysis isn't good, and we're running in the background. That isn't going to work, so I'm stopping here."
+msgid "Sorry, the analysis isn’t good, and we’re running in the background. That isn’t going to work, so I’m stopping here."
 msgstr "Désolé, l'analyse n'est pas bonne et nous sommes en cours d'exécution en arrière-plan. Cela ne fonctionnera pas, donc je m'arrête ici."
 
 #: /home/kentr/bin/raspy/azt/main.py:7142
@@ -4555,7 +4529,7 @@ msgid "Starting XLP background report with kwargs {kwargs}"
 msgstr "Démarrage du rapport d'arrière-plan XLP avec kwargs {kwargs}"
 
 #: /home/kentr/bin/raspy/azt/xlp.py:38
-msgid "Starting XLingPaper report file at {} with title '{}'"
+msgid "Starting XLingPaper report file at {} with title ‘{}’"
 msgstr "Démarrage du fichier de rapport XLingPaper à {} avec le titre '{}'"
 
 #: /home/kentr/bin/raspy/azt/main.py:11000
@@ -4565,7 +4539,7 @@ msgstr "Démarrage du signalement {ps} {profile}"
 
 #: /home/kentr/bin/raspy/azt/main.py:10964
 #, python-brace-format
-msgid "Starting reports that didn't work in the background: {reports}"
+msgid "Starting reports that didn’t work in the background: {reports}"
 msgstr "Rapports de démarrage qui n'ont pas fonctionné en arrière-plan : {reports}"
 
 #: /home/kentr/bin/raspy/azt/main.py:14585
@@ -4653,7 +4627,7 @@ msgstr "Tâche de test (ne fait rien)"
 
 #: /home/kentr/bin/raspy/azt/main.py:491
 #, python-brace-format
-msgid "That doesn't look like an ethnologue code ({analang})"
+msgid "That doesn’t look like an ethnologue code ({analang})"
 msgstr "Cela ne ressemble pas à un code ethnologue ({analang})"
 
 #: /home/kentr/bin/raspy/azt/main.py:12946
@@ -4667,11 +4641,11 @@ msgstr "Ce nom est déjà utilisé !"
 
 #: /home/kentr/bin/raspy/azt/main.py:12979
 #, python-brace-format
-msgid "The analysis still isn't OK after retrying; Check your settings and try again (e.g., {ps} {profile} checks: {checks})"
+msgid "The analysis still isn’t OK after retrying; Check your settings and try again (e.g., {ps} {profile} checks: {checks})"
 msgstr "L'analyse n'est toujours pas correcte après une nouvelle tentative; Vérifiez vos paramètres et réessayez (par exemple, les vérifications {ps} {profile} : {checks})"
 
 #: /home/kentr/bin/raspy/azt/xlp.py:176
-msgid "The call to xelatex didn't work: {}"
+msgid "The call to xelatex didn’t work: {}"
 msgstr "L'appel à xelatex n'a pas fonctionné : {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:5659
@@ -4690,14 +4664,12 @@ msgstr "Le dictionnaire à {}.{} ne semble pas exister, ou est null ; création.
 
 #: /home/kentr/bin/raspy/azt/main.py:16192
 #, python-brace-format
-msgid "The directory {dir} doesn't seem to have a repository related to {url}; removing."
+msgid "The directory {dir} doesn’t seem to have a repository related to {url}; removing."
 msgstr "Le répertoire {dir} ne semble pas avoir de dépôt lié à {url}; suppression."
 
 #: /home/kentr/bin/raspy/azt/main.py:530
 #, python-brace-format
-msgid "The directory {newdirname} already exists, so I'm not going to copy your data there.\n"
-"Do you already have your data on your computer? \n"
-"If so, click '{other}' on the next screen."
+msgid "The directory {newdirname} already exists, so I’m not going to copy your data there.\nDo you already have your data on your computer? \nIf so, click ‘{other}’ on the next screen."
 msgstr "Le répertoire {newdirname} existe déjà, donc je ne vais pas y copier vos données.\n"
 "Avez-vous déjà vos données sur votre ordinateur ? \n"
 "Si oui, cliquez sur '{other}' sur l'écran suivant."
@@ -4747,7 +4719,7 @@ msgstr "Le langage avec le plus de données de lexème ressemble à un code iso 
 
 #: /home/kentr/bin/raspy/azt/main.py:14870
 #, python-brace-format
-msgid "The supplied frame definition isn't a dictionary: {defn}"
+msgid "The supplied frame definition isn’t a dictionary: {defn}"
 msgstr "La définition de la trame fournie n'est pas un dictionnaire : {defn}"
 
 #: /home/kentr/bin/raspy/azt/main.py:14873
@@ -4792,27 +4764,27 @@ msgid "There doesn't seem to be a big button"
 msgstr "Il ne semble pas y avoir de gros bouton"
 
 #: /home/kentr/bin/raspy/azt/main.py:5879
-msgid "There doesn't seem to be a runwindow to hide; moving on."
+msgid "There doesn’t seem to be a runwindow to hide; moving on."
 msgstr "Il ne semble pas y avoir de fenêtre d'exécution à cacher."
 
 #: /home/kentr/bin/raspy/azt/main.py:5893
-msgid "There doesn't seem to be a task to hide; moving on."
+msgid "There doesn’t seem to be a task to hide; moving on."
 msgstr "Il ne semble pas y avoir de tâche à cacher."
 
 #: /home/kentr/bin/raspy/azt/main.py:14853
-msgid "There doesn't seem to be any profile data, but you asked for a slice dictionary. This is a problem; please report it!"
+msgid "There doesn’t seem to be any profile data, but you asked for a slice dictionary. This is a problem; please report it!"
 msgstr "Il ne semble pas y avoir de données de profil, mais vous avez demandé un dictionnaire de tranche. Ceci est un problème; veuillez le signaler !"
 
 #: /home/kentr/bin/raspy/azt/main.py:5009
-msgid "There don't seem to be any glyphs to compare with!"
+msgid "There don’t seem to be any glyphs to compare with!"
 msgstr "Il ne semble pas y avoir de glyphes à comparer avec !"
 
 #: /home/kentr/bin/raspy/azt/main.py:5075
-msgid "There don't seem to be any groups to compare with!"
+msgid "There don’t seem to be any groups to compare with!"
 msgstr "Il ne semble pas y avoir de formes linguistiques pour y comparer !"
 
 #: /home/kentr/bin/raspy/azt/main.py:7795
-msgid "There don't seem to be any images to show."
+msgid "There don’t seem to be any images to show."
 msgstr "Il ne semble pas y avoir d'images à afficher."
 
 #: /home/kentr/bin/raspy/azt/main.py:3452
@@ -4879,7 +4851,7 @@ msgstr "Troisième Voyelle"
 #: /home/kentr/bin/raspy/azt/main.py:7411
 #: /home/kentr/bin/raspy/azt/main.py:8845
 #: /home/kentr/bin/raspy/azt/main.py:8890
-msgid "This adds any word, but is best used after filling out a wordlist, if the word you want to add isn't there already."
+msgid "This adds any word, but is best used after filling out a wordlist, if the word you want to add isn’t there already."
 msgstr "Cela ajoute n'importe quel mot, mais il est préférable de l'utiliser après avoir rempli une liste de mots, si le mot que vous souhaitez ajouter n'y est pas déjà."
 
 #: /home/kentr/bin/raspy/azt/reports.py:105
@@ -4887,16 +4859,16 @@ msgid "This can take some time."
 msgstr "Cela peut prendre un certain temps."
 
 #: /home/kentr/bin/raspy/azt/main.py:12907
-msgid "This doesn't save the curent group"
+msgid "This doesn’t save the curent group"
 msgstr "Ceci n'enregistre pas le groupe courant"
 
 #: /home/kentr/bin/raspy/azt/lift.py:2428
 #, python-brace-format
-msgid "This doesn't seem to be called on a child of entry ({entry} child of {parent}), or the entry's first sense ({sense}) doesn't have gloss languages ({glosses})."
+msgid "This doesn’t seem to be called on a child of entry ({entry} child of {parent}), or the entry’s first sense ({sense}) doesn’t have gloss languages ({glosses})."
 msgstr "Cela ne semble pas être appelé sur un enfant d'entrée (enfant{entry} de {parent}), ou le premier sens de l'entrée ({sense}) n'a pas de langues glose ({glosses})."
 
 #: /home/kentr/bin/raspy/azt/lift.py:2426
-msgid "This entry doesn't seem to have a sense."
+msgid "This entry doesn’t seem to have a sense."
 msgstr "Cette entrée ne semble pas avoir de sens."
 
 #: /home/kentr/bin/raspy/azt/parser.py:268
@@ -4917,7 +4889,7 @@ msgstr "Ceci est un espace réservé à la vérification."
 
 #: /home/kentr/bin/raspy/azt/main.py:11134
 #, python-brace-format
-msgid "This is a default report, where {program} intentionally splits these groups, so you can see wherever differences lie, even if those differences are likely meaningless (e.g., 'NA' means the user skipped sorting those words in that frame, but this will still distinguish one group from another). To help the qualified analyst navigate such a large selection of small slices of the data, the data is sorted (both here and in the section ordering) by similarity of groups. That similarity is structured, and it is provided here, so you can see the analysis of group relationships for yourself: {ufs}. And here are the structured similarity relationships for the Frames: {checks}"
+msgid "This is a default report, where {program} intentionally splits these groups, so you can see wherever differences lie, even if those differences are likely meaningless (e.g., ‘NA’ means the user skipped sorting those words in that frame, but this will still distinguish one group from another). To help the qualified analyst navigate such a large selection of small slices of the data, the data is sorted (both here and in the section ordering) by similarity of groups. That similarity is structured, and it is provided here, so you can see the analysis of group relationships for yourself: {ufs}. And here are the structured similarity relationships for the Frames: {checks}"
 msgstr "Ceci est un rapport par défaut, où {program} divise intentionnellement ces groupes, pour que vous puissiez voir où se situent les différences, même si ces différences sont probablement sans sens (e. ., 'NA' signifie que l'utilisateur a sauté le tri de ces mots dans ce cadre, mais cela va toujours distinguer un groupe d'un autre). Pour aider l'analyste qualifié à naviguer dans une si grande sélection de petites tranches de données, les données sont triées (ici et dans l'ordre des sections) par similitude des groupes. Cette similitude est structurée, et elle est fournie ici, de sorte que vous pouvez voir l'analyse des relations de groupe par vous-même : {ufs}. Et voici les relations structurées de similitude pour les Frames : {checks}"
 
 #: /home/kentr/bin/raspy/azt/main.py:9706
@@ -4955,10 +4927,7 @@ msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:9721
 #, python-brace-format
-msgid "This page will allow you to set up your own sets of dictionary senses to sort, within the '{0}' lexical category. \n"
-"You should only do this if the '{0}' lexical category is so small that sorting them by syllable profile gives you unusably small slices of your database.\n"
-"If you want to compare words that are currently in different grammatical categories, put them first into the same lexical category in another tool (e.g., FLEx or WeSay), then put them in an Ad Hoc group here.\n"
-"If you want to create a new group, exit here, select a non-Ad Hoc syllable profile, and try this window again."
+msgid "This page will allow you to set up your own sets of dictionary senses to sort, within the ‘{0}’ lexical category. \nYou should only do this if the ‘{0}’ lexical category is so small that sorting them by syllable profile gives you unusably small slices of your database.\nIf you want to compare words that are currently in different grammatical categories, put them first into the same lexical category in another tool (e.g., FLEx or WeSay), then put them in an Ad Hoc group here.\nIf you want to create a new group, exit here, select a non-Ad Hoc syllable profile, and try this window again."
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:8327
@@ -4973,7 +4942,7 @@ msgstr "Ce rapport contient des sens {senses} , des exemples {examples} et des f
 
 #: /home/kentr/bin/raspy/azt/main.py:11844
 #, python-brace-format
-msgid "This report covers {pss} Grammatical categories, with {profiles} syllable profiles in each. This is of course configurable, but I assume you don't want everything."
+msgid "This report covers {pss} Grammatical categories, with {profiles} syllable profiles in each. This is of course configurable, but I assume you don’t want everything."
 msgstr "Ce rapport couvre les catégories grammaticales {pss} , avec des profils syllabes {profiles} dans chacune. C'est bien sûr configurable, mais je suppose que vous ne voulez pas tout."
 
 #: /home/kentr/bin/raspy/azt/main.py:11090
@@ -5154,16 +5123,14 @@ msgstr "C'était votre erreur:\n"
 
 #: /home/kentr/bin/raspy/azt/main.py:8835
 #, python-brace-format
-msgid "This will add entries from the Comparative African Wordlist (CAWL) which aren't already in your database (you are missing {count} CAWL tags). If the appropriate glosses are found in your database, CAWL tags will be merged with those entries.\n"
-"Depending on the number of entries, this may take awhile."
+msgid "This will add entries from the Comparative African Wordlist (CAWL) which aren’t already in your database (you are missing {count} CAWL tags). If the appropriate glosses are found in your database, CAWL tags will be merged with those entries.\nDepending on the number of entries, this may take awhile."
 msgstr "Ceci ajoutera des entrées de la liste de mots comparatifs africains (CAWL) qui ne sont pas déjà dans votre base de données (il vous manque des balises {count} CAWL). Si les gloses appropriées sont trouvées dans votre base de données, les balises CAWL seront fusionnées avec ces entrées.\n"
 "En fonction du nombre d'entrées, cela peut prendre un certain temps."
 
 #: /home/kentr/bin/raspy/azt/main.py:7401
 #: /home/kentr/bin/raspy/azt/main.py:8880
 #: /home/kentr/bin/raspy/azt/main.py:8972
-msgid "This will add entries from the Comparative African Wordlist (CAWL) which aren't already in your database (you are missing {} CAWL tags). If the appropriate glosses are found in your database, CAWL tags will be merged with those entries.\n"
-"Depending on the number of entries, this may take awhile."
+msgid "This will add entries from the Comparative African Wordlist (CAWL) which aren’t already in your database (you are missing {} CAWL tags). If the appropriate glosses are found in your database, CAWL tags will be merged with those entries.\nDepending on the number of entries, this may take awhile."
 msgstr "Cela ajoutera des entrées de la Comparative African Wordlist (CAWL) qui ne sont pas déjà dans votre base de données (il vous manque {} balises CAWL). Si les gloses appropriées sont trouvées dans votre base de données, les balises CAWL seront fusionnées avec ces entrées.\n"
 "Selon le nombre d'entrées, cela peut prendre un certain temps."
 
@@ -5270,11 +5237,11 @@ msgid "Transcription settings"
 msgstr "Paramètres de transcription"
 
 #: /home/kentr/bin/raspy/azt/file.py:155
-msgid "Tried to move {} to {}, but I can't find it (or overwrite?)."
+msgid "Tried to move {} to {}, but I can’t find it (or overwrite?)."
 msgstr "Vous avez essayé de déplacer {} vers {}, mais je ne peux pas le trouver (ou l'écraser ?)."
 
 #: /home/kentr/bin/raspy/azt/file.py:163
-msgid "Tried to remove {}, but I can't find it."
+msgid "Tried to remove {}, but I can’t find it."
 msgstr "Essayé enlever {}, mais je ne l'ai pas trouver."
 
 #: /home/kentr/bin/raspy/azt/main.py:728
@@ -5301,7 +5268,7 @@ msgid "Try {azt} test version"
 msgstr "Essayez la version test {azt}"
 
 #: /home/kentr/bin/raspy/azt/py_modules.py:24
-msgid "Trying a second time, with '--force-reinstall'"
+msgid "Trying a second time, with ‘--force-reinstall’"
 msgstr "Essai une deuxième fois, avec '--force-reinstall'"
 
 #: /home/kentr/bin/raspy/azt/py_modules.py:103
@@ -5346,7 +5313,7 @@ msgid "Two fields parse together"
 msgstr "Deux champs analysent ensemble"
 
 #: /home/kentr/bin/raspy/azt/parser.py:188
-msgid "Two fields, which don't parse"
+msgid "Two fields, which don’t parse"
 msgstr "Deux champs, qui n'analysent pas"
 
 #: /home/kentr/bin/raspy/azt/main.py:8522
@@ -5358,9 +5325,7 @@ msgid "Type the name of your language in the field, then find and select the ful
 msgstr "Tapez le nom de votre langue dans le champ, puis trouvez et sélectionnez le nom complet ci-dessous."
 
 #: /home/kentr/bin/raspy/azt/main.py:7442
-msgid "Type the word in your language that goes with these meanings.\n"
-"Give a single word (not a phrase) wherever possible.\n"
-"Just type consonants and vowels; don't worry about tone for now."
+msgid "Type the word in your language that goes with these meanings.\nGive a single word (not a phrase) wherever possible.\nJust type consonants and vowels; don’t worry about tone for now."
 msgstr "Tapez le mot dans votre langue qui va avec ces significations.\n"
 "Donnez un seul mot (pas une phrase) dans la mesure du possible. \n"
 "Tapez simplement les consonnes et les voyelles ; ne vous souciez pas du ton pour l'instant."
@@ -5456,7 +5421,7 @@ msgid "User asked for changes to polygraph settings, but no changes found."
 msgstr "L'utilisateur a demandé des modifications aux paramètres du polygraphe, mais aucun changement n'a été trouvé."
 
 #: /home/kentr/bin/raspy/azt/main.py:5912
-msgid "User didn't select a new database; continuing."
+msgid "User didn’t select a new database; continuing."
 msgstr "L'utilisateur n'a pas sélectionné de nouvelle base de données ; continuer."
 
 #: /home/kentr/bin/raspy/azt/main.py:6910
@@ -5524,12 +5489,12 @@ msgstr "Utiliser les colonnes de boutons {n}"
 
 #: /home/kentr/bin/raspy/azt/main.py:16489
 #, python-brace-format
-msgid "Using {repo} useremail '{email}'"
+msgid "Using {repo} useremail ‘{email}’"
 msgstr "Utilisation de l'email utilisateur {repo} '{email}'"
 
 #: /home/kentr/bin/raspy/azt/main.py:16487
 #, python-brace-format
-msgid "Using {repo} username '{name}'"
+msgid "Using {repo} username ‘{name}’"
 msgstr "Utiliser le nom d'utilisateur {repo} '{name}'"
 
 #: /home/kentr/bin/raspy/azt/main.py:2645
@@ -5603,12 +5568,12 @@ msgstr "AVERTISSEMENT : {type} Exécutable Manquant!"
 
 #: /home/kentr/bin/raspy/azt/lift.py:2533
 #, python-brace-format
-msgid "We normally shouldn't create empty fields: {lang}/{value}"
+msgid "We normally shouldn’t create empty fields: {lang}/{value}"
 msgstr "Normalement, nous ne devrions pas créer de champs vides : {lang}/{value}"
 
 #: /home/kentr/bin/raspy/azt/main.py:7615
 #, python-brace-format
-msgid "We seem to have not added or modded any entries, which shouldn't happen! (missing: {missing})"
+msgid "We seem to have not added or modded any entries, which shouldn’t happen! (missing: {missing})"
 msgstr "Il semble que nous n'ayons ajouté ou modifié aucune entrée, ce qui ne devrait pas arriver ! (manquant : {missing})"
 
 #: /home/kentr/bin/raspy/azt/main.py:5001
@@ -5799,7 +5764,7 @@ msgid "What {type} do you want to {purpose}?"
 msgstr "Quel {type} voulez-vous pour {purpose}?"
 
 #: /home/kentr/bin/raspy/azt/main.py:1197
-msgid "What's with the New Interface?"
+msgid "What’s with the New Interface?"
 msgstr "Que se passe-t-il avec la nouvelle interface ?"
 
 #: /home/kentr/bin/raspy/azt/main.py:657
@@ -5830,7 +5795,7 @@ msgid "Will write to {}, adding tiers."
 msgstr "Écrira à {}, ajoutera des niveaux."
 
 #: /home/kentr/bin/raspy/azt/praatfns.py:425
-msgid "Will write to {}, which isn't there yet."
+msgid "Will write to {}, which isn’t there yet."
 msgstr "Ecrira à {}, qui n'est pas encore là."
 
 #: /home/kentr/bin/raspy/azt/main.py:5312
@@ -5838,7 +5803,7 @@ msgid "Window killed"
 msgstr "Fenêtre tuée"
 
 #: /home/kentr/bin/raspy/azt/praatfns.py:520
-msgid "Won't add {} annotations (first 5: {})"
+msgid "Won’t add {} annotations (first 5: {})"
 msgstr "Impossible d'ajouter {} annotations (d'abord 5 : {})"
 
 #: /home/kentr/bin/raspy/azt/main.py:8131
@@ -5904,7 +5869,7 @@ msgstr "XML lu OK"
 msgid "Yes"
 msgstr "Oui"
 
-msgid "Yes, it's perfect"
+msgid "Yes, it’s perfect"
 msgstr "Oui, c'est parfait"
 
 msgid "I see spelling problems; \nshow me word data"
@@ -5928,31 +5893,31 @@ msgstr "Vous avez demandé un champ, sans spécifier ftype ou lang; pas ajouter 
 
 #: /home/kentr/bin/raspy/azt/main.py:14658
 #, python-brace-format
-msgid "You asked for the ps, but I don't have any (pss: {pss})"
+msgid "You asked for the ps, but I don’t have any (pss: {pss})"
 msgstr "Tu as demandé les ps, mais je n'en ai pas (pss : {pss})"
 
 #: /home/kentr/bin/raspy/azt/main.py:14724
-msgid "You asked for valid ps data, but that ps isn't there."
+msgid "You asked for valid ps data, but that ps isn’t there."
 msgstr "Vous avez demandé des données ps valides, mais ce n'est pas le cas."
 
 #: /home/kentr/bin/raspy/azt/main.py:14653
 #, python-brace-format
-msgid "You asked to change to ps {ps}, which isn't in the list of pss: {pss}"
+msgid "You asked to change to ps {ps}, which isn’t in the list of pss: {pss}"
 msgstr "Vous avez demandé à passer à ps {ps}, qui n'est pas dans la liste de pss: {pss}"
 
 #: /home/kentr/bin/raspy/azt/main.py:16467
 #, python-brace-format
-msgid "You can keep using {name} without installing {repo}, but it is not recommended, and you will continue to see this warning. And sooner or later that's going to get really annoying"
+msgid "You can keep using {name} without installing {repo}, but it is not recommended, and you will continue to see this warning. And sooner or later that’s going to get really annoying"
 msgstr "Vous pouvez continuer à utiliser {name} sans installer {repo}, mais ce n'est pas recommandé, et vous continuerez à voir cet avertissement. Et tôt ou tard, ça va devenir vraiment ennuyeux"
 
 #: /home/kentr/bin/raspy/azt/main.py:6026
 #, python-brace-format
-msgid "You don't have the sound module installed. For best use of {name},you should switch back to the main branch, connect to the internet, and restart. In the mean time. You won't be able to record or play audio!"
+msgid "You don’t have the sound module installed. For best use of {name},you should switch back to the main branch, connect to the internet, and restart. In the mean time. You won’t be able to record or play audio!"
 msgstr "Vous n'avez pas le module de son installé. Pour une meilleure utilisation de {name}, vous devez revenir à la branche principale, vous connecter à internet et redémarrer. En attendant, vous ne pourrez pas enregistrer ou jouer de l'audio !"
 
 #: /home/kentr/bin/raspy/azt/main.py:13052
 #, python-brace-format
-msgid "You don't seem to have any analyzed {ps} groups to join/rename. Have you done a tone analyis for {ps} words?"
+msgid "You don’t seem to have any analyzed {ps} groups to join/rename. Have you done a tone analyis for {ps} words?"
 msgstr "Vous ne semblez pas avoir de groupes {ps} analysés pour rejoindre/renommer. Avez-vous fait une analyse de ton pour les mots {ps}?"
 
 #: /home/kentr/bin/raspy/azt/main.py:4941
@@ -5997,7 +5962,7 @@ msgid "You have {lexemes} entries with lexeme data, and only {citations} with ci
 msgstr "Vous avez des entrées {lexemes} avec des données de lexème, et seulement {citations} avec des données de référence."
 
 #: /home/kentr/bin/raspy/azt/main.py:6598
-msgid "You haven't picked a syllable profile yet."
+msgid "You haven’t picked a syllable profile yet."
 msgstr "Vous n'avez pas encore sélectionné de profil syllabe."
 
 #: /home/kentr/bin/raspy/azt/main.py:5038
@@ -6011,7 +5976,7 @@ msgid "You need to set \n"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:16541
-msgid "You passed me a remotes value that isn't a dict?"
+msgid "You passed me a remotes value that isn’t a dict?"
 msgstr "Vous m'avez passé une valeur distante qui n'est pas un dictionnaire ?"
 
 #: /home/kentr/bin/raspy/azt/main.py:2189
@@ -6029,7 +5994,7 @@ msgstr "Vous ne semblez pas avoir installé l'exécutable {repo} dans le PATH de
 
 #: /home/kentr/bin/raspy/azt/main.py:5862
 #, python-brace-format
-msgid "You're done enough with: {status}"
+msgid "You’re done enough with: {status}"
 msgstr "Vous en avez fait assez avec: {status}"
 
 #: /home/kentr/bin/raspy/azt/main.py:14410
@@ -6038,9 +6003,7 @@ msgstr "Votre base de données de dictionnaire est en cours de chargement..."
 
 #: /home/kentr/bin/raspy/azt/main.py:734
 #, python-brace-format
-msgid "Your new LIFT file is at {newfile}.\n"
-"If you don't want it there, close {azt} and move the whole {folder} folder wherever you like.\n"
-"Then open {azt} and tell it where you put the LIFT file."
+msgid "Your new LIFT file is at {newfile}.\nIf you don’t want it there, close {azt} and move the whole {folder} folder wherever you like.\nThen open {azt} and tell it where you put the LIFT file."
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/lift.py:1900
@@ -6080,7 +6043,7 @@ msgstr "analang deviné : {lang} (Si vous n'aimez pas, changez-le dans les menus
 
 #: /home/kentr/bin/raspy/azt/main.py:3434
 #, python-brace-format
-msgid "analang in use: {analang} (If you don't like this, change it in the menus)"
+msgid "analang in use: {analang} (If you don’t like this, change it in the menus)"
 msgstr "analang en cours d'utilisation : {analang} (Si vous n'aimez pas, changez-le dans les menus)"
 
 #: /home/kentr/bin/raspy/azt/main.py:9096
@@ -6119,7 +6082,7 @@ msgstr "attr {attr} introuvable !"
 
 #: /home/kentr/bin/raspy/azt/main.py:2174
 #, python-brace-format
-msgid "attribute {lang} doesn't seem to be there"
+msgid "attribute {lang} doesn’t seem to be there"
 msgstr "l'attribut {lang} ne semble pas être là"
 
 #: /home/kentr/bin/raspy/azt/main.py:2241
@@ -6244,8 +6207,7 @@ msgstr "langue de glose actuelle"
 
 #: /home/kentr/bin/raspy/azt/main.py:12339
 #, python-brace-format
-msgid "current group ({group}) doesn't seem to be in list of groups: ({groups})\n"
-"\tThis may be because we're looking for data that isn't there, or maybe a setting is off."
+msgid "current group ({group}) doesn’t seem to be in list of groups: ({groups})\n\tThis may be because we’re looking for data that isn’t there, or maybe a setting is off."
 msgstr "le groupe actuel ({group}) ne semble pas être dans la liste des groupes : ({groups})\n"
 "\tPeut-être parce que nous recherchons des données qui ne sont pas là, ou peut-être un paramètre est désactivé."
 
@@ -6258,7 +6220,7 @@ msgid "demo"
 msgstr "démo"
 
 #: /home/kentr/bin/raspy/azt/xmletfns.py:32
-msgid "didn't prettyprint {}"
+msgid "didn’t prettyprint {}"
 msgstr "pas prettyprint {}"
 
 #: /home/kentr/bin/raspy/azt/main.py:16063
@@ -6294,7 +6256,7 @@ msgstr "vide"
 
 #: /home/kentr/bin/raspy/azt/main.py:7977
 #, python-brace-format
-msgid "entry {id} doesn't have glosses; not showing."
+msgid "entry {id} doesn’t have glosses; not showing."
 msgstr "l'entrée {id} n'a pas de gloses; ne s'affichent pas."
 
 #: /home/kentr/bin/raspy/azt/export.py:25
@@ -6351,7 +6313,7 @@ msgid "give two to eight (2-8) characters to identify your dialect"
 msgstr "donner deux à huit caractères (2-8) pour identifier votre dialecte"
 
 #: /home/kentr/bin/raspy/azt/parser.py:610
-msgid "given senseid, but can't really get sense"
+msgid "given senseid, but can’t really get sense"
 msgstr "senseid donné, mais ne peut vraiment pas avoir de sens"
 
 #: /home/kentr/bin/raspy/azt/main.py:9283
@@ -6422,7 +6384,7 @@ msgstr "élément {item} entre en conflit avec le glyphe {glyph}"
 
 #: /home/kentr/bin/raspy/azt/main.py:16326
 #, python-brace-format
-msgid "iwascalledby {caller}, but don't have upstream."
+msgid "iwascalledby {caller}, but don’t have upstream."
 msgstr "iwascalledby {caller}, mais pas amont."
 
 #: /home/kentr/bin/raspy/azt/main.py:4506
@@ -6478,7 +6440,7 @@ msgstr "Locale.getdefaultlocale sortie pour comparaison : {locale}"
 
 #: /home/kentr/bin/raspy/azt/main.py:16953
 #, python-brace-format
-msgid "locale.getlocale doesn't seem to have returned any results: {locale} (OS: {os})Using English user interface"
+msgid "locale.getlocale doesn’t seem to have returned any results: {locale} (OS: {os})Using English user interface"
 msgstr "locale.getlocale ne semble avoir retourné aucun résultat : {locale} (OS: {os})Utiliser l'interface utilisateur anglaise"
 
 #: /home/kentr/bin/raspy/azt/profiles.py:65
@@ -6500,11 +6462,11 @@ msgstr "ressemble à un verbe; analyse impérative"
 
 #: /home/kentr/bin/raspy/azt/py_modules.py:93
 #: /home/kentr/bin/raspy/azt/py_modules.py:109
-msgid "looks like it was at last successful; so I'm going to reboot in a bit. Output follows:"
+msgid "looks like it was at last successful; so I’m going to reboot in a bit. Output follows:"
 msgstr "on dirait que c'était enfin réussi ; donc je vais redémarrer un peu. Sortie suit:"
 
 #: /home/kentr/bin/raspy/azt/py_modules.py:80
-msgid "looks like it was successful; so I'm going to reboot in a bit. Output follows:"
+msgid "looks like it was successful; so I’m going to reboot in a bit. Output follows:"
 msgstr "on dirait que ça a été réussi; donc je vais redémarrer un peu. Sortie :"
 
 #: /home/kentr/bin/raspy/azt/main.py:4138
@@ -6754,7 +6716,7 @@ msgid "self._checkcodes_by_cvt={codes}"
 msgstr "self._checkcodes_by_cvt={codes}"
 
 #: /home/kentr/bin/raspy/azt/main.py:7950
-msgid "self.entry doesn't seem to be in entries; OK for now"
+msgid "self.entry doesn’t seem to be in entries; OK for now"
 msgstr "self.entry ne semble pas être dans les entrées ; OK pour l'instant"
 
 #: /home/kentr/bin/raspy/azt/alphabet_chart.py:63
@@ -6856,8 +6818,7 @@ msgstr "le top {n}"
 
 #: /home/kentr/bin/raspy/azt/lift.py:3564
 #, python-brace-format
-msgid "this is where we're at: {kwargs}\n"
-"  {url}"
+msgid "this is where we’re at: {kwargs}\n  {url}"
 msgstr "c'est là que nous sommes : {kwargs}\n"
 "  {url}"
 
@@ -6892,7 +6853,7 @@ msgstr "trackuntrackedfiles terminés."
 
 #: /home/kentr/bin/raspy/azt/lift.py:3013
 #, python-brace-format
-msgid "tried to remove what wasn't there? ({error})"
+msgid "tried to remove what wasn’t there? ({error})"
 msgstr "a essayé de supprimer ce qui n'existait pas? ({error})"
 
 #: /home/kentr/bin/raspy/azt/main.py:3532
@@ -6954,7 +6915,7 @@ msgstr "vérifications des formulaires de mise à jour"
 
 #: /home/kentr/bin/raspy/azt/main.py:6734
 #, python-brace-format
-msgid "updateformtoannotations didn't return a form value for {id}, {check}, {ftype}, {ana}"
+msgid "updateformtoannotations didn’t return a form value for {id}, {check}, {ftype}, {ana}"
 msgstr "updateformtoannotations n'ont pas retourné de valeur de formulaire pour {id}, {check}, {ftype}, {ana}"
 
 #: /home/kentr/bin/raspy/azt/main.py:7365
@@ -7143,7 +7104,7 @@ msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:7778
 #, python-brace-format
-msgid "{dir} doesn't seem to exist."
+msgid "{dir} doesn’t seem to exist."
 msgstr "{dir} ne semble pas exister."
 
 #: /home/kentr/bin/raspy/azt/main.py:7789
@@ -7153,17 +7114,17 @@ msgstr "{dir} semble là, mais vide."
 
 #: /home/kentr/bin/raspy/azt/main.py:865
 #, python-brace-format
-msgid "{filename} doesn't look like a well formed lift file; please try again."
+msgid "{filename} doesn’t look like a well formed lift file; please try again."
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:2216
 #, python-brace-format
-msgid "{file} doesn't exist!"
+msgid "{file} doesn’t exist!"
 msgstr "{file} n'existe pas !"
 
 #: /home/kentr/bin/raspy/azt/main.py:17200
 #, python-brace-format
-msgid "{file} doesn't look like a well formed lift file; please try again. ({error})"
+msgid "{file} doesn’t look like a well formed lift file; please try again. ({error})"
 msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:9939
@@ -7205,10 +7166,7 @@ msgstr ""
 
 #: /home/kentr/bin/raspy/azt/main.py:167
 #, python-brace-format
-msgid "{name} is a computer program that accelerates community-based language development by facilitating the sorting of a beginning dictionary by vowels, consonants and tone.\n"
-"It does this by presenting users with sets of words from a LIFT dictionary database, one part of speech and syllable profile at a time. These words are sorted into groups based on consonants, vowels, and tone. \n"
-"Tone frames are customizable and stored in the database for each word, allowing for a number of approaches to collecting this data. A tone report aids the drafting of underlying categories by grouping words based on sorting across tone frames. \n"
-"{name} then allows the user to record a word in each of the frames where it has been sorted, storing the recorded audio file in a directory, with links to each file in the dictionary database. Recordings can be made up to 192khz/32float, according to your recording equipment's capacity."
+msgid "{name} is a computer program that accelerates community-based language development by facilitating the sorting of a beginning dictionary by vowels, consonants and tone.\nIt does this by presenting users with sets of words from a LIFT dictionary database, one part of speech and syllable profile at a time. These words are sorted into groups based on consonants, vowels, and tone. \nTone frames are customizable and stored in the database for each word, allowing for a number of approaches to collecting this data. A tone report aids the drafting of underlying categories by grouping words based on sorting across tone frames. \n{name} then allows the user to record a word in each of the frames where it has been sorted, storing the recorded audio file in a directory, with links to each file in the dictionary database. Recordings can be made up to 192khz/32float, according to your recording equipment’s capacity."
 msgstr "{name} est un programme informatique qui accélère le développement du langage à base communautaire en facilitant le tri d'un dictionnaire simple par voyelles, consonnes et ton. \n"
 "Il le fait en présentant aux utilisateurs des ensembles de mots provenant d'un base de données dictionnaire LIFT, une partie du  discours et profil des syllabes à la fois. Ces mots sont triés en groupes en fonction des consonnes, des voyelles et du ton. \n"
 "Les cadres de ton sont personnalisables et stockés dans la base de données pour chaque mot, ce qui permet un certain nombre d'approches pour collecter ces données. Un rapport de ton facilite la rédaction des catégories sous-jacentes en regroupant les mots en fonction du tri entre les cadres de ton. \n"

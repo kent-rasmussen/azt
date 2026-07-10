@@ -416,13 +416,13 @@ class Align():
         self.new_breath_pitch_rise_min=15 #hz
         self.files=Files(file_name)
         if not hasattr(self.files,'sound'):
-            print(_("Missing sound file; can't continue!"))
+            print(_("Missing sound file; can’t continue!"))
         if not hasattr(self.files,'plaintext'):
             print(_("Missing text file with whole text transcription!"))
         self.textgrid_name=self.files.file_w_ext('TextGrid')
         if (not os.path.isfile(self.textgrid_name) or
                         not os.path.getsize(self.textgrid_name)):
-            print(_("Will write to {}, which isn't there yet.").format(self.textgrid_name))
+            print(_("Will write to {}, which isn’t there yet.").format(self.textgrid_name))
             self.files.start_textgrid(self.textgrid_name)
         else:
             print(_("Will write to {}, adding tiers.").format(self.textgrid_name))
@@ -516,13 +516,13 @@ class TextGrid(tgt.core.TextGrid):
         for tier in tgt_text_grid.tiers:
             # print(tier.name)
             if self.has_tier(tier.name):
-                print(_("Tier '{}' is already there!").format(tier.name))
-                print(_("Won't add "
+                print(_("Tier ‘{}’ is already there!").format(tier.name))
+                print(_("Won’t add "
                 "{} "
                 "annotations (first 5: "
                 "{})").format(len(tier.annotations),[i.text for i in tier.annotations[:5]]))
             else:
-                print(_("Tier '{}' not there, adding!").format(tier.name))
+                print(_("Tier ‘{}’ not there, adding!").format(tier.name))
                 self.add_tier(tier.name)
                 self.get_tier_by_name(tier.name).add_annotations(tier.annotations)
             print("Done with",tier.name)

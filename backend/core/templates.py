@@ -25,16 +25,16 @@ class WordListTemplate():
             self.analang_obj=self.program.languages.get_obj(code)
         except langtags.langcodes.tag_parser.LanguageTagError:
             # log.info(
-            return _("self.analang_obj didn't parse.")
+            return _("self.analang_obj didn’t parse.")
         except Exception as e:
-            return _("self.analang_obj didn't parse ({e}).").format(e=e)
+            return _("self.analang_obj didn’t parse ({e}).").format(e=e)
         if not self.analang_obj.is_valid():
             return (f"It looks like your code ({code}) isn't valid "
                         f"({self.analang_obj.full_display()})")
         if not langtags.tag_is_valid(code):
             # e=ErrorNotice(
             #             ,wait=True)
-            return _("That doesn't look like an ethnologue code ({analang})"
+            return _("That doesn’t look like an ethnologue code ({analang})"
                     ).format(analang=code)
         # self.db.get_langs(analang=code) #This sets self.db.analang
         self.analang=code

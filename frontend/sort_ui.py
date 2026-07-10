@@ -4,6 +4,7 @@
 Backend sorting_engine.py delegates all UI widget creation here, so it
 has zero frontend imports.
 """
+import re
 import time
 import threading
 import queue
@@ -15,6 +16,38 @@ from utilities.i18n import _
 from utilities import logsetup
 
 log = logsetup.getlog(__name__)
+
+
+def choose_shown_checks(checks_per_frame):
+    """Pick the default member (check position) each glyph frame should show
+    when a Review-Letter-Groups page is presented.
+
+    Privilege FIRST the number of frames that can show the same position, THEN
+    (on ties) the position nearest the front of the word — lowest first digit,
+    so C1 beats C2, and a compound like C1=C2 counts as position 1; digitless
+    checks (T, lc…) rank last. Frames that can't show the winning position get
+    the same rule applied again among themselves, so each ends up on its best
+    remaining shared position, or its own frontmost when nothing is shared.
+
+    Takes one list of check codes per frame; returns the chosen check per
+    frame (None for a frame with no checks). Pure — no widget access — so the
+    caller maps checks back to member indexes."""
+    def frontness(check):
+        m=re.search(r'\d+',check or '')
+        return int(m.group()) if m else float('inf')
+    chosen=[None]*len(checks_per_frame)
+    unassigned=[i for i,checks in enumerate(checks_per_frame) if checks]
+    while unassigned:
+        counts={}
+        for i in unassigned:
+            for c in set(checks_per_frame[i]):
+                counts[c]=counts.get(c,0)+1
+        best=min(counts,key=lambda c:(-counts[c],frontness(c),str(c)))
+        covered=[i for i in unassigned if best in checks_per_frame[i]]
+        for i in covered:
+            chosen[i]=best
+        unassigned=[i for i in unassigned if i not in covered]
+    return chosen
 
 
 def _rss_mb():
@@ -412,25 +445,40 @@ class SortPresenter(PresenterBase):
                 # VIRTUALIZE (1.3.32): unmap rows outside the viewport so waitdone's
                 # render paints only the ~visible dozen, not all N. EXPERIMENTAL —
                 # comment out this block (or revert the version) to disable.
-                try:
-                    self._virtualize_verify(buttonframe, nav_row+1, bc)
-                except Exception as e:
-                    log.info("verify virtualize skipped: %s", e)
+                # Skipped when the whole list fits the first screenful: nothing to
+                # unmap, and its winfo/grid round-trips are pure risk (2026-07-10
+                # wedge was somewhere between _grid_ok and the reveal).
+                # DIAG-reveal breadcrumbs (grep to remove): one line BEFORE each
+                # synchronous-Tk step after the build, so a wedge names its call
+                # even without a faulthandler stack.
+                if ntotal>reveal:
+                    log.info("DIAG-reveal virtualize starting (%d items)", ntotal)
+                    try:
+                        self._virtualize_verify(buttonframe, nav_row+1, bc)
+                    except Exception as e:
+                        log.info("verify virtualize skipped: %s", e)
                 if runwindow.iswaiting():
                     _wd=time.perf_counter() # DIAG (1.3.30): waitdone()'s full update()
-                    runwindow.waitdone()    # renders the build backlog while the window
-                    log.info("verify reveal (waitdone) %.1fs", # is hidden — the real gap
+                    log.info("DIAG-reveal waitdone starting") # renders the build backlog
+                    runwindow.waitdone()    # while the window is hidden — the real gap
+                    log.info("verify reveal (waitdone) %.1fs",
                              time.perf_counter()-_wd)
-                # ONE commit so the complete window paints (no per-item flush did it).
-                # update() DRAINS the event queue while flushing, which avoids the
-                # XWayland write-deadlock a bare update_idletasks hits on a large
-                # backlog — the single remaining synchronous round-trip of the build.
-                _c=time.perf_counter() # DIAG (1.3.29): measure the PAINT — the gap
-                try:                    # between "verify build" and the window appearing
-                    runwindow.update()
-                except Exception as e:
-                    log.info("verify commit update() failed: %s", e)
-                log.info("verify commit (paint) %.1fs", time.perf_counter()-_c)
+                else:
+                    # ONE commit so the complete window paints (no per-item flush did
+                    # it). ONLY when no wait covered the build: waitdone above already
+                    # did parent.update()+deiconify, so repeating update() here was a
+                    # redundant second synchronous drain right after deiconify — the
+                    # known XWayland wedge shape (cf. Wait.activate's scoped guard).
+                    # update() DRAINS the event queue while flushing, which avoids the
+                    # XWayland write-deadlock a bare update_idletasks hits on a large
+                    # backlog.
+                    _c=time.perf_counter() # DIAG (1.3.29): measure the PAINT — the gap
+                    log.info("DIAG-reveal commit update() starting") # between "verify
+                    try:                    # build" and the window appearing
+                        runwindow.update()
+                    except Exception as e:
+                        log.info("verify commit update() failed: %s", e)
+                    log.info("verify commit (paint) %.1fs", time.perf_counter()-_c)
             # Suspend the per-item scrollregion reflow (each grid otherwise schedules
             # an O(n) winfo_reqheight reflow — a synchronous X round-trip — so a naive
             # build is O(n²) round-trips). One reflow at the end, in _grid_ok.
@@ -608,8 +656,24 @@ class SortPresenter(PresenterBase):
                                             group=group, showtonegroup=True,
                                             label=True, row=r, sticky='w')
             r = 1
+        self.show_default_members([buttons[g] for g in current_pair])
         canary = ui.Label(pair_frame, text='', col=1)
         return canary
+
+    def show_default_members(self, frames):
+        """Coordinate which member each glyph frame shows when the page is
+        presented (choose_shown_checks: same position across the pair when
+        possible, else frontmost). Default only — the user can still cycle
+        members and examples afterwards. No-op for sort-group frames (no
+        member .items) and for cached frames already on the chosen check."""
+        frames=[f for f in frames if getattr(f,'items',None)]
+        if not frames:
+            return
+        member_checks=[[m.check for m in f.items] for f in frames]
+        for f,checks,check in zip(frames,member_checks,
+                                  choose_shown_checks(member_checks)):
+            if check is not None and checks[f.shown_index]!=check:
+                f.show_one(checks.index(check))
 
     def choose_join_direction(self, runwindow, buttonclass, sort_obj, pair,
                               counts, on_choose, on_back=None):
@@ -634,7 +698,7 @@ class SortPresenter(PresenterBase):
                         row=0, sticky='n')
             ui.Label(cell, text=_("{n} words").format(n=counts.get(group, 0)),
                     font='normal', row=1, column=0, sticky='n')
-        ui.Button(f, text=_("← Back (don't join these)"),
+        ui.Button(f, text=_("← Back (don’t join these)"),
                 cmd=lambda: (w.destroy(), on_back() if on_back else None),
                 font='instructions', row=2, column=0, columnspan=2, sticky='ew')
         return w

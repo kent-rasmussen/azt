@@ -23,7 +23,7 @@ def prettyprint(node):
     # This fn is for seeing the Element contents before writing them (in case of
     # ElementTree errors that aren't otherwise understandable).
     if not isinstance(node,ET.Element):
-        log.info(_("didn't prettyprint {}").format(node))
+        log.info(_("didn’t prettyprint {}").format(node))
         return
     t=0
     lines=[]

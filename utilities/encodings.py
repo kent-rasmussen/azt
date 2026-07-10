@@ -10,7 +10,7 @@ def stouttostr(x):
     if type(x) is str:
         return x.strip()
     if not sys.stdout.encoding:
-        return 'ENCODING_ERROR: '+_("I can't tell the terminal's encoding, sorry!")
+        return 'ENCODING_ERROR: '+_("I can’t tell the terminal’s encoding, sorry!")
     else:
         try:
             return x.decode(sys.stdout.encoding,
@@ -18,7 +18,7 @@ def stouttostr(x):
         except Exception as e:
             #if the computer doesn't know what encoding it is actually using,
             # this should give us some info to debug.
-            return 'ENCODING_ERROR: '+_("Can't decode {this} (in {encoding}; {error}):"
+            return 'ENCODING_ERROR: '+_("Can’t decode {this} (in {encoding}; {error}):"
                         ).format(this=x,
                                 encoding=sys.stdout.encoding, 
                                 error=e)

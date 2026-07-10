@@ -213,7 +213,7 @@ class CollabSession:
             self.record_lift_stat()
             n = result.param(S.MERGED_WITH_LOCAL, 'n_conflicts', 0)
             log.warning(_(
-                "Teammates' changes were merged with your last save "
+                "Teammates’ changes were merged with your last save "
                 "({n} conflict(s) annotated). Reload to see them; "
                 "saving remains safe meanwhile.").format(n=n))
             return 'ok'
@@ -410,7 +410,7 @@ class CollabSession:
         except Exception:
             pass
         if result.has(S.PULLED):
-            log.info(_("Teammates' changes were pulled; they will "
+            log.info(_("Teammates’ changes were pulled; they will "
                        "appear the next time this database is opened."))
         return result
 
@@ -637,7 +637,7 @@ def connect_current_project(program):
     if (os.path.isdir(os.path.join(working_dir, '.hg'))
             and not os.path.isdir(os.path.join(working_dir, '.git'))):
         return False, _(
-            "This project's history is in Mercurial, which "
+            "This project’s history is in Mercurial, which "
             "collaboration does not support; it stays on the legacy "
             "path.")
     # Eligibility: non-GitHub internet remotes → refuse for now.
@@ -759,7 +759,7 @@ def open_settings(program):
     notify_error(_(
         "Could not open the collaboration settings: {detail}\n"
         "The settings window needs the Kivy package; install it in "
-        "one of the A-Z+T suite's Python environments, or set "
+        "one of the A-Z+T suite’s Python environments, or set "
         "AZT_COLLAB_UI_PYTHON to a python that has it."
         ).format(detail=detail),
         title=_("Collaboration"))

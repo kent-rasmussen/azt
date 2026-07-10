@@ -51,7 +51,9 @@ class _Slices:
 
 
 class _Program:
-    pass
+    # cull()'s membership sweep reads program.db.ps_profiles; None means
+    # "not computed yet", which cull() treats as sweep-nothing.
+    db = None
 
 
 def make_status(initial=None):

@@ -20,7 +20,7 @@ def pip_install(installs=[],secondtry=False):
     Yes, this is excessive, but better than leaving users hanging if they can't
     resolve pip install issues."""
     if secondtry:
-        log.info(_("Trying a second time, with '--force-reinstall'"))
+        log.info(_("Trying a second time, with ‘--force-reinstall’"))
     else:
         log.info(_("Installing python dependencies"))
     if platform.system() == 'Linux':
@@ -82,7 +82,7 @@ def pip_install(installs=[],secondtry=False):
                                         stderr=subprocess.STDOUT)
             o=stouttostr(o)
             if not o or "Successfully installed" in o:
-                log.info(_("looks like it was successful; so I'm going to reboot "
+                log.info(_("looks like it was successful; so I’m going to reboot "
                             "in a bit. Output follows:"))
                 thisinstalled=installedsomething=True
         except subprocess.CalledProcessError as e:
@@ -96,14 +96,14 @@ def pip_install(installs=[],secondtry=False):
                     o=stouttostr(o)
                     if not o or "Successfully installed" in o:
                         log.info(_("looks like it was at last successful; so "
-                                "I'm going to reboot in a bit. Output follows:"))
+                                "I’m going to reboot in a bit. Output follows:"))
                         thisinstalled=installedsomething=True
                 except subprocess.CalledProcessError as e:
                     o=stouttostr(e.output)
                     if "Could not find a version" in o:
                         errors=[i for i in o.splitlines() if "ERROR:" in i]
                         log.info(_("Please make sure your internet is connected, then "
-                        "click {}\n{}".format(_("OK"),'\n'.join(errors))))
+                        "click {}\n{}").format(_("OK"),'\n'.join(errors)))
                         # ErrorNotice(text=t,parent=ui.Root(),wait=True)
                         log.info(_("Trying again, hopefully with internet"))
                         try:
@@ -112,12 +112,12 @@ def pip_install(installs=[],secondtry=False):
                             o=stouttostr(o)
                             if not o or "Successfully installed" in o:
                                 log.info(_("looks like it was at last successful;"
-                                        " so I'm going to reboot in a bit. "
+                                        " so I’m going to reboot in a bit. "
                                         "Output follows:"))
                                 thisinstalled=installedsomething=True
                         except Exception as e:
-                            log.info(_("I'm going to give up now, sorry!\n{}"
-                                "".format('\n'.join(errors))))
+                            log.info(_("I’m going to give up now, sorry!\n{}"
+                                "").format('\n'.join(errors)))
                             # ErrorNotice(text=t,parent=ui.Root(),wait=True)
                             log.error(_("Looks like there was an error, "
                                         "after all: {}").format(e))

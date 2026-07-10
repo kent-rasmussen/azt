@@ -11,7 +11,7 @@ program={'name':'A-Z+T',
         'production':False, #True for making screenshots (default theme)
         'testing':False, #normal error screens and logs
         'Demo':False, #will get set otherwise later if it is
-        'version':'1.8.6', #This is a string...
+        'version':'1.9.0', #This is a string...
         'testversionname':'testing', #always have some real test branch here
         'url':'https://github.com/kent-rasmussen/azt',
         'Email':'kent_rasmussen@sil.org',
@@ -205,7 +205,7 @@ class App:
                 #         f"results ({code})")
                 code=self.getlangfromlocale()
                 if not code:
-                    log.info(_("locale.getlocale doesn't seem to have "
+                    log.info(_("locale.getlocale doesn’t seem to have "
                     "returned any results: "
                     "{locale} (OS: {os})"
                     "Using English user interface").format(locale=locale.getlocale(),
@@ -320,7 +320,7 @@ class App:
             _("Your team made changes to this database. Loading them "
               "requires {name} to restart — or press OK to keep "
               "working and load them later. Your saves are safe "
-              "either way, and will be combined with your team's."
+              "either way, and will be combined with your team’s."
               ).format(name=self.name),
             title=_("Team changes available"),
             button=(_("Load now (restart)"),
@@ -420,7 +420,7 @@ class App:
         try:
             self.tk_root = ui.Root(program=self)
         except Exception as e:
-            log.info(_("Evidently you can't make a root window? ({error})").format(error=e))
+            log.info(_("Evidently you can’t make a root window? ({error})").format(error=e))
             return
         if program['tkinter']:
             # tkinter: setup runs synchronously, then mainloop blocks
@@ -474,7 +474,7 @@ class App:
                 newtk=True
                 log.info(_("Starting with new root"))
             except Exception as e:
-                log.info(_("Evidently you can't make a root window? ({error})").format(error=e))
+                log.info(_("Evidently you can’t make a root window? ({error})").format(error=e))
                 log.info(_("This was your error:\n{error}").format(error=logsetup.contents(50)))
                 return
         self.tk_root.withdraw()
@@ -494,7 +494,7 @@ class App:
             m.bind("<Button-1>", lambda e: openweburl(durl))
             m2=ui.Label(errorw.frame,
                 text=_("I have tried to install some Python dependencies for you. "
-                        "If everything but 'patiencediff' installed "
+                        "If everything but ‘patiencediff’ installed "
                         "(see log below), just close this window and {azt} "
                         "will restart. "
                         "\nIf you see connectivity errors, check your internet "
@@ -511,12 +511,12 @@ class App:
         eurl+='&body='
         eurl+=_("Please replace this text with a description of what you just did.")
         eurl+='%0d%0a'
-        eurl+=_("If the log below doesn't include the text '{text}', or if it happened "
+        eurl+=_("If the log below doesn’t include the text ‘{text}’, or if it happened "
                 "after a longer work session, please attach "
                 "your compressed log file").format(
                 text='Traceback (most recent call last): ')+' ('+(file)+')'
         eurl+='%0d%0a--log info--%0d%0a{info}'.format(info='%0d%0a'.join(lcontents))
-        n=ui.Label(errorw.frame,text=_("\n\nIf this information doesn't help "
+        n=ui.Label(errorw.frame,text=_("\n\nIf this information doesn’t help "
             "you fix this, please click on this text to Email me your log (to {addr})"
             "").format(addr=addr),justify='left', font='default',
             row=3,column=0
@@ -596,7 +596,7 @@ class App:
         try:
             self.task.runwindow.withdraw() #so users don't do stuff while waiting
         except (AttributeError, Exception):
-            log.info(_("There doesn't seem to be a runwindow to hide; moving on."))
+            log.info(_("There doesn’t seem to be a runwindow to hide; moving on."))
         while self.writing:
             # log.info("towrite: {}; writing: {}; taskwrite: {}".format(
             #     self.towrite,self.writing,self.taskchooser.writing))
@@ -646,7 +646,7 @@ class App:
             log.info(_("Done writing to lift ({status}).").format(status=self.db.write_OK))
             if not self.db.write_OK:
                 ErrorNotice(_("Write to lift returned "
-                            "'{error}'.").format(error=self.db.write_error),wait=True)
+                            "‘{error}’.").format(error=self.db.write_error),wait=True)
             self.writing=False
             if self.towrite:
                 log.info(_("Found previous request to write; doing again."))

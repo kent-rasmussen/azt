@@ -61,7 +61,7 @@ class OrderAlphabetUI(ui.Window):
                     'image':self.exobjs[g].image.scaled,
                 }
         elif self.exids[g]:
-            log.error(_("self.exids for '{g}' is there ({i}), but self.exobjs isn't? "
+            log.error(_("self.exids for ‘{g}’ is there ({i}), but self.exobjs isn’t? "
                     "{objs} {ids}").format(g=g,i=self.exids[g],objs=self.exobjs,ids=self.exids))
         else:
             return {'text':"?"}
@@ -354,7 +354,7 @@ class OrderAlphabetUI(ui.Window):
         self.reflow_chart() #don't do this if self.columns is messed with
         q=ui.Window(self,title=_("Is this a final PDF?"))
         q_text=_("Are you done with this PDF?")
-        q_button_text=_("Yes, it's perfect")
+        q_button_text=_("Yes, it’s perfect")
         q_text+='\n'+_("Click {yes} to store and share with your data."
                         "").format(yes=q_button_text)
         ui.Label(q.frame,text=q_text,sticky='news')
@@ -599,7 +599,7 @@ class SelectFromPicturableWords(ui.Window):
         # while images load and the button grid is built — slow on XWayland — then
         # reveal the finished window under cover (waitdone does update()+deiconify).
         # Avoids the blank-window-then-trickle-in paint.
-        self.wait(_("Loading words for '{glyph}'…").format(glyph=glyph),
+        self.wait(_("Loading words for ‘{glyph}’…").format(glyph=glyph),
                     thenshow=True)
         try:
             self.set_up_images()
@@ -610,7 +610,7 @@ class SelectFromPicturableWords(ui.Window):
                         if hasattr(i,'image')]
             ui.Label(self.frame,text=title,font='title',c=0,r=0)
             if optionlist:
-                ui.Label(self.frame,text=_("Select a word to exemplify '{glyph}'").format(glyph=glyph),
+                ui.Label(self.frame,text=_("Select a word to exemplify ‘{glyph}’").format(glyph=glyph),
                         c=0,r=1)
                 ui.ScrollingButtonFrame(self.frame,
                                 optionlist=optionlist,
@@ -621,19 +621,19 @@ class SelectFromPicturableWords(ui.Window):
             else:
                 kind,nmembers,nverified=self._diag
                 if kind=='no_alphabet':
-                    msg=_("Can't determine verified words for '{glyph}' — no sort "
-                        "data is loaded. Sort and verify this letter's group(s) "
+                    msg=_("Can’t determine verified words for ‘{glyph}’ — no sort "
+                        "data is loaded. Sort and verify this letter’s group(s) "
                         "first.").format(glyph=glyph)
                 elif kind=='no_members':
-                    msg=_("No sort members are recorded for '{glyph}' yet "
-                        "(unexpected if you've macrosorted it). Sort/macrosort "
+                    msg=_("No sort members are recorded for ‘{glyph}’ yet "
+                        "(unexpected if you’ve macrosorted it). Sort/macrosort "
                         "this letter first.").format(glyph=glyph)
                 elif kind=='unverified':
-                    msg=_("'{glyph}' has {n} sorted group(s), but none is verified "
+                    msg=_("‘{glyph}’ has {n} sorted group(s), but none is verified "
                         "yet. Verify the group(s), then come back.").format(
                         glyph=glyph,n=nmembers)
                 else:  # 'no_picture'
-                    msg=_("'{glyph}' has {n} verified word(s), but none has a "
+                    msg=_("‘{glyph}’ has {n} verified word(s), but none has a "
                         "picture.").format(glyph=glyph,n=nverified)
                 ui.Label(self.frame,text=msg,c=0,r=1)
         finally:

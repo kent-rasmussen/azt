@@ -180,7 +180,7 @@ class Engine(object):
         return {
         5: _("Never"),#"This level is never satisfied",
         4: _("Three fields parse with matching ps"),
-        0: _("Two fields, which don't parse"),
+        0: _("Two fields, which don’t parse"),
         1: _("One field of two parses"),
         2: _("Two fields each parse"),
         3: _("Two fields parse together")
@@ -370,7 +370,7 @@ class Engine(object):
             sf=imp
             ps=self.verbalps
         else:
-            log.error(_("Neither noun nor verb! This shouldn't happen! ({sense_id})")
+            log.error(_("Neither noun nor verb! This shouldn’t happen! ({sense_id})")
                         .format(sense_id=self.senseid))
             raise
         sfafxs=tuple(sf.split(best[1]))
@@ -485,10 +485,10 @@ class Engine(object):
                     self.catalog.addaffixset(afv)
                 return 1 #The only successful parse exit point
             else:
-                log.info(_("Looks like {lx} isn't a subset of {pl} or {imp} ({error})")
+                log.info(_("Looks like {lx} isn’t a subset of {pl} or {imp} ({error})")
                             .format(lx=lx,pl=pl,imp=imp,error=ps.node))
         else:
-            log.info(_("Looks like a form is missing, or {lx} isn't a subset of {lc} ({pl};{imp})")
+            log.info(_("Looks like a form is missing, or {lx} isn’t a subset of {lc} ({pl};{imp})")
                         .format(lx=lx,lc=lc,pl=pl,imp=imp))
     def dooneformparse(self,x,window):
         # x is (sf,ps,root,lcafxs,sfafxs)
@@ -602,7 +602,7 @@ class Engine(object):
             self.entry=sense.entry
         elif senseid:
             self.senseid=senseid #save for later
-            log.error(_("given senseid, but can't really get sense"))
+            log.error(_("given senseid, but can’t really get sense"))
             self.sense=entry.sense
             self.entry=sense.entry
         elif entry:
@@ -629,12 +629,12 @@ class Engine(object):
         ls=self.levels()
         if isinstance(l,int) and l in ls:
             self.ask=l
-        log.info(_("Parser set to ask for '{ask_level}'").format(ask_level=ls[self.ask]))
+        log.info(_("Parser set to ask for ‘{ask_level}’").format(ask_level=ls[self.ask]))
     def autolevel(self,l=None):
         ls=self.levels()
         if isinstance(l,int) and l in ls:
             self.auto=l
-        log.info(_("Parser set to auto for '{auto_level}'").format(auto_level=ls[self.auto]))
+        log.info(_("Parser set to auto for ‘{auto_level}’").format(auto_level=ls[self.auto]))
     def setlevels(self,auto=5,ask=4): #default for first auto run
         self.auto=auto
         self.ask=ask

@@ -397,7 +397,7 @@ class WordCollectionwRecordings(WordCollection,Record):
         # WordCollection.__init__(self,**kwargs)
 class WordCollectionLexeme(WordCollection,Task):
     def tooltip(self):
-        return _("Don't use this task.")
+        return _("Don’t use this task.")
     tasktitle = "Word Collection for Lexeme Forms"
     def __init__(self, program, **kwargs): #frame, filename=None
         """This should never really be used, though I made it first, so I've
@@ -494,7 +494,7 @@ class WordCollectnParse(Parse,WordCollection,Task):
             fn=self.run_addCAWLentries
             text=_("Add remaining CAWL entries")
             tttext=_("This will add entries from the Comparative African "
-                    "Wordlist (CAWL) which aren't already in your database "
+                    "Wordlist (CAWL) which aren’t already in your database "
                     "(you are missing {count} CAWL tags). If the appropriate "
                     "glosses are found in your database, CAWL tags will be "
                     "merged with those entries."
@@ -504,7 +504,7 @@ class WordCollectnParse(Parse,WordCollection,Task):
             text=_("Add a Word")#?
             fn=self.addmorpheme#?
             tttext=_("This adds any word, but is best used after filling out a "
-                    "wordlist, if the word you want to add isn't there "
+                    "wordlist, if the word you want to add isn’t there "
                     "already.")
         return {'text':text,
                 'fn':fn,
@@ -535,7 +535,7 @@ class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,Task):
             fn=self.run_addCAWLentries
             text=_("Add remaining CAWL entries")
             tttext=_("This will add entries from the Comparative African "
-                    "Wordlist (CAWL) which aren't already in your database "
+                    "Wordlist (CAWL) which aren’t already in your database "
                     "(you are missing {} CAWL tags). If the appropriate "
                     "glosses are found in your database, CAWL tags will be "
                     "merged with those entries."
@@ -545,7 +545,7 @@ class WordCollectnParsewRecordings(Parse,WordCollectionwRecordings,Task):
             text=_("Add a Word")#?
             fn=self.addmorpheme#?
             tttext=_("This adds any word, but is best used after filling out a "
-                    "wordlist, if the word you want to add isn't there "
+                    "wordlist, if the word you want to add isn’t there "
                     "already.")
         return {'text':text,
                 'fn':fn,
@@ -617,7 +617,7 @@ class Placeholder(Task):
         fn=self.addCAWLentries
         text=_("Add remaining CAWL entries")
         tttext=_("This will add entries from the Comparative African "
-                "Wordlist (CAWL) which aren't already in your database "
+                "Wordlist (CAWL) which aren’t already in your database "
                 "(you are missing {} CAWL tags). If the appropriate "
                 "glosses are found in your database, CAWL tags will be "
                 "merged with those entries."
@@ -1064,12 +1064,12 @@ class ToneFrameDrafter(ui.Window):
             tried+=1
             log.info("Values found: {}".format(f))
             if tried> self.program.db.nsenses*3.5:
-                errortext=_("I've tried (randomly, then through each) {count} "
+                errortext=_("I’ve tried (randomly, then through each) {count} "
                 "times, and not found one "
                 "of your {total} senses with data in each of these languages: "
                 "{langs}. \nAre you asking for gloss "
                 "languages which actually have data in your database? \nOr, are "
-                "you missing gloss fields (i.e., you have only 'definition' "
+                "you missing gloss fields (i.e., you have only ‘definition’ "
                 "fields)?").format(count=tried,total=self.program.db.nsenses,langs=langs)
                 log.error(errortext)
                 return #errortext
@@ -1290,10 +1290,10 @@ class Transcribe(Sound,Categories,Task):
         if (not hasattr(self,'group') or not hasattr(self,'group_comparison')
             and not comparison):
             log.error(_("Missing either group or comparison, without value "
-                        "specified; can't switch them."))
+                        "specified; can’t switch them."))
             return
-        log.info(_("Swtiching groups; using '{comp}' for "
-                "'{group}'").format(comp=self.group_comparison, group=self.group))
+        log.info(_("Swtiching groups; using ‘{comp}’ for "
+                "‘{group}’").format(comp=self.group_comparison, group=self.group))
         #actually change the data, not the group settings:
         #This method should go somewhere more reasonable:
         g=self.add_int_group(self) #Don't merge groups!
@@ -1341,9 +1341,9 @@ class Transcribe(Sound,Categories,Task):
         try:
             self.othergroups.remove(self.group)
         except ValueError:
-            log.error(_("current group ({group}) doesn't seem to be in list of "
-                "groups: ({groups})\n\tThis may be because we're looking for data "
-                "that isn't there, or maybe a setting is off.").format(
+            log.error(_("current group ({group}) doesn’t seem to be in list of "
+                "groups: ({groups})\n\tThis may be because we’re looking for data "
+                "that isn’t there, or maybe a setting is off.").format(
                                                     group=self.group, groups=self.groups))
             return
         return 1
@@ -1492,7 +1492,7 @@ class TranscribeS(Transcribe,Segments):
                                         redo_glyph=self.group)
     def set_ok_w_form(self,error=False):
         form=self.transcriber.formfield.get()
-        self.oktext.set(_("OK: Add the letter '{form}' {newline}to my alphabet "
+        self.oktext.set(_("OK: Add the letter ‘{form}’ {newline}to my alphabet "
                         "{newline}for this sound").format(form=form,newline="\n"))
         if form and not error:
             self.ok_button['state'] = 'normal'
@@ -1591,7 +1591,7 @@ class TranscribeT(Transcribe,Tone):
                 # log.info("I asked for a check name, but didn't get one.")
                 return
         if not self.program.status.groups(wsorted=True):
-            log.error(_("I don't have any sorted data for check: {check}, "
+            log.error(_("I don’t have any sorted data for check: {check}, "
                         "ps-profile: {ps}-{profile},").format(check=check,ps=ps,profile=profile))
             return
         groupsok=self.updategroups()
@@ -1604,7 +1604,7 @@ class TranscribeT(Transcribe,Tone):
             pady=0
         else:
             pady=10
-        title=_("Rename {ps} {profile} {noun_sg} group '{group}' in '{check}' frame"
+        title=_("Rename {ps} {profile} {noun_sg} group ‘{group}’ in ‘{check}’ frame"
                         ).format(ps=ps,profile=profile,
                         noun_sg=self.program.params.cvtdict()[cvt]['sg'],
                         group=self.group,check=check)
@@ -1616,7 +1616,7 @@ class TranscribeT(Transcribe,Tone):
                         "group?").format(sg=self.program.params.cvtdict()[cvt]['sg'])]
         if cvt == 'T':
             getformtext.append(_("A label that describes the surface tone form "
-                        "in this context would be best, like '[˥˥˥ ˨˨˨]'"))
+                        "in this context would be best, like ‘[˥˥˥ ˨˨˨]’"))
         getform=ui.Label(self.ui.runwindow.frame,
                         text='\n'.join(getformtext),
                         font='read',
@@ -1714,7 +1714,7 @@ class TranscribeT(Transcribe,Tone):
         local variables):"""
     def __init__(self, program, **kwargs): #frame, filename=None
         self.switch_text=_("Switch transcriptions with this group")
-        self.switch_tt=_("This doesn't save the curent group")
+        self.switch_tt=_("This doesn’t save the curent group")
         self.glyphspossible=None
         program.params.cvt('T')
         super().__init__(program=program, **kwargs)
@@ -1753,7 +1753,7 @@ class JoinUFgroups(Tone,Task):
             log.info(f"groupsselected:{groupsselected}")
             if uf in self.analysis.orderedUFs and uf not in groupsselected:
                 deja=_("That name is already there! (did you forget to include "
-                        "the '{uf}' group?)").format(uf=uf)
+                        "the ‘{uf}’ group?)").format(uf=uf)
                 log.debug(deja)
                 errorlabel['text'] = deja
                 return
@@ -1784,7 +1784,7 @@ class JoinUFgroups(Tone,Task):
                 #otherwise, the user will almost certainly be upset to have to do it later
                 redo(timestamps)
             else:
-                txt=_("The analysis still isn't OK after retrying; "
+                txt=_("The analysis still isn’t OK after retrying; "
                         "Check your settings and try again (e.g., "
                         "{ps} {profile} checks: {checks})").format(ps=ps, profile=profile, checks=self.program.status.checks())
                 ErrorNotice(txt,wait=True,parent=self)
@@ -1810,7 +1810,7 @@ class JoinUFgroups(Tone,Task):
                 "a name. You can then repeat this for other groups "
                 "that should be joined. \nIf for any reason you want to undo "
                 "the groups you create here, you can start over with an new "
-                "analysis by pressing the '{redo}' button. \nOtherwise, these "
+                "analysis by pressing the ‘{redo}’ button. \nOtherwise, these "
                 "joined groups will be reflected in reports until you sort "
                 "more data.").format(ps=ps,profile=profile,program=self.program.name,
                                                 redo=redotext.replace('\n',' '))
@@ -1857,7 +1857,7 @@ class JoinUFgroups(Tone,Task):
             self.ui.runwindow.on_quit()
             ErrorNotice(title=_("No draft UF groups found for {ps} words!"
                                 "").format(ps=ps),
-                        text=_("You don't seem to have any analyzed {ps} groups "
+                        text=_("You don’t seem to have any analyzed {ps} groups "
                         "to join/rename. Have you done a tone analyis for {ps} "
                         "words?").format(ps=ps)
                         )

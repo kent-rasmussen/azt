@@ -236,7 +236,7 @@ class Repository(object):
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
-            log.info(_("Couldn't find a local drive to pull from via {repo}; "
+            log.info(_("Couldn’t find a local drive to pull from via {repo}; "
                     "giving up").format(repo=self.repotypename))
             return
         for remote in remotes:
@@ -258,7 +258,7 @@ class Repository(object):
         if not remotes:
             remotes=self.findpresentremotes() #do once
         if not remotes:
-            log.info(_("Couldn't find a local drive to push to via {repo}; "
+            log.info(_("Couldn’t find a local drive to push to via {repo}; "
                     "giving up").format(repo=self.repotypename))
             return
         for remote in remotes:
@@ -305,12 +305,12 @@ class Repository(object):
         if len(commonhashes) >1: #just in case we find one...
             return True
         elif not len(thatrepohashes):
-            log.info(_("Repository at {dir} looks empty, so I'm assuming you "
+            log.info(_("Repository at {dir} looks empty, so I’m assuming you "
             "just initialized it").format(dir=directory))
             log.info("This use case should probably go away!! Are we "
                 "initializing empty repos somewhere, or asking the user to?")
             return True
-        error=_("The directory {dir} doesn't seem to have a repository related "
+        error=_("The directory {dir} doesn’t seem to have a repository related "
                 "to {url}; removing.").format(dir=directory,url=self.url)
         log.info(error)
         self.removeremote(directory)
@@ -452,7 +452,7 @@ class Repository(object):
                     if r and 'fatal' not in r:
                         self.pull(**kwargs)
             if 'The current branch master has no upstream branch.' in output:
-                log.info(_("iwascalledby {caller}, but don't have upstream."
+                log.info(_("iwascalledby {caller}, but don’t have upstream."
                             "").format(caller=iwascalledby))
                 if iwascalledby not in ['push']:
                     try:
@@ -575,17 +575,17 @@ class Repository(object):
         if hasattr(self,'argstogetuseremail'):
             self.useremail=self.do(self.argstogetuseremail)
         if self.username:
-            log.info(_("Using {repo} username '{name}'").format(repo=self.repotypename,
+            log.info(_("Using {repo} username ‘{name}’").format(repo=self.repotypename,
                                                                 name=self.username))
             if self.useremail:
-                log.info(_("Using {repo} useremail '{email}'").format(repo=self.repotypename,email=self.useremail))
+                log.info(_("Using {repo} useremail ‘{email}’").format(repo=self.repotypename,email=self.useremail))
         else:
             self.username='-'.join([self.program.name,os.getlogin(),self.program.hostname])
-            log.info(_("No {repo} username found; using '{name}'"
+            log.info(_("No {repo} username found; using ‘{name}’"
                     "").format(repo=self.repotypename,name=self.username))
         if not self.useremail:
             self.useremail=self.program.name+'-'+os.getlogin()+'@'+self.program.hostname
-            log.info(_("No {repo} useremail found; using '{email}'"
+            log.info(_("No {repo} useremail found; using ‘{email}’"
             "").format(repo=self.repotypename,email=self.useremail))
         self.usernameargs=self.argstoputuserids(self.username,self.useremail)
     def addUSBremote(self):
@@ -630,7 +630,7 @@ class Repository(object):
         if remotes and type(remotes) is dict:
             self._remotes=remotes
         elif remotes:
-            log.info(_("You passed me a remotes value that isn't a dict?"))
+            log.info(_("You passed me a remotes value that isn’t a dict?"))
         else:
             return getattr(self,'_remotes',{}).copy() #so I can iterate and change
     def branchname(self):

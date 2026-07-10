@@ -225,7 +225,7 @@ class Sort(Categories):
         if frames and self.check in frames:
             return frames.get(self.check)
         else:
-            text=_("Looking for tone check '{check}', but not "
+            text=_("Looking for tone check ‘{check}’, but not "
                     "in {ps} frames: {frames}").format(check=self.check, ps=self.ps, frames=frames)
             ErrorNotice(text,wait=True)
     def updatestatuslift(self,verified=False,**kwargs):
@@ -340,8 +340,8 @@ class Sort(Categories):
             p.label(self.ui.runwindow.frame,text=title,font='title',
                     ).grid(row=0,column=0,sticky='ew')
             text=_("This page will allow you to set up your own sets of dictionary "
-                    "senses to sort, within the '{0}' lexical category. \nYou "
-                    "should only do this if the '{0}' lexical category is so "
+                    "senses to sort, within the ‘{0}’ lexical category. \nYou "
+                    "should only do this if the ‘{0}’ lexical category is so "
                     "small that sorting them by syllable profile gives you "
                     "unusably small slices of your database."
                     "\nIf you want to compare words that are currently in "
@@ -482,7 +482,7 @@ class Sort(Categories):
                 # "Segmental and tone sorts work on syllable-profile data — "
                 # "a word that hasn't been sorted (or affirmed) for its "
                 # "syllable profile "
-                "they won't be sorted here either.")
+                "they won’t be sorted here either.")
         scope=self._affirm_scope_text(_affirm,ftype)
         choice=self.sort_ui.offer_profile_setup(self.ui,note,scope)
         if choice=='affirm':
@@ -597,7 +597,18 @@ class Sort(Categories):
                 pass #just return, below, if the task is exited
             elif return_value:
                 log.info("runwindow finished; restarting maybesort")
+                self._maybesort_rescheduled=True
                 self.after(10,self.maybesort) #if neither exited, continue
+            elif getattr(self,'_maybesort_rescheduled',False):
+                # Nested unwind (2026-07-10): a completed inner pass (e.g. a join
+                # reached via an after()-fired maybesort inside THIS frame's
+                # wait_window) tears down the shared runwindow, so this frame's
+                # page returns "unfinished" — but nothing was abandoned: the
+                # inner pass already scheduled the continuation. Warning here
+                # nagged "you're not done" mid-flow between a join and its
+                # verify. A genuine walk-away schedules nothing and still warns.
+                log.info("the runwindow didn't finish, but a maybesort restart "
+                         "is already scheduled; not warning")
             else:
                 log.info("the runwindow didn't finish; Not done with maybesort")
                 self.notdonewarning() #warn if runwindow exited, but not task
@@ -605,6 +616,8 @@ class Sort(Categories):
         if firstrun:
             self.resetsortbutton()
         log.info("Starting maybesort with did={did}".format(did=[k for k,v in self.did.items() if v]))
+        self._maybesort_rescheduled=False # see warnorcontinue: covers only the
+        # window between an inner pass scheduling the restart and it running
         if self.ui.exitFlag.istrue(): #if the task has been shut down, stop
             return
         w=self._get_safe_window()
@@ -796,7 +809,7 @@ class Sort(Categories):
             fn=self.nprofile
         else:
             fn=None
-        done=_("All '{profile}' groups in the '{check}' "
+        done=_("All ‘{profile}’ groups in the ‘{check}’ "
                 "{typename} are verified and distinct!").format(profile=self.profile,
                 check=self.check, typename=self.checktypename)
                 #only on first two ifs:
@@ -897,8 +910,8 @@ class Sort(Categories):
                 # takes its own glyph name, so defer (don't abort) and keep going: the
                 # glyphs that DID resolve still get their forms updated, and a later
                 # pass finishes the rest.
-                txt=_("Some groups can't take their glyph name yet — another group in "
-                      "the same slice is still using that name. We'll try again later:")
+                txt=_("Some groups can’t take their glyph name yet — another group in "
+                      "the same slice is still using that name. We’ll try again later:")
                 txt+=f'\n{'\n'.join(error)}'
                 ErrorNotice(txt,wait=True)
             else:
@@ -1196,7 +1209,7 @@ class Sort(Categories):
         """Titles"""
         if self.cvt == 'T':
             context=_("tone melody")
-            descripttext=_("in '{check}' frame").format(check=self.check)
+            descripttext=_("in ‘{check}’ frame").format(check=self.check)
         else:
             context=self.program.params.cvcheckname(self.check)
             descripttext=_("by {check}").format(check=self.check)
@@ -1249,7 +1262,7 @@ class Sort(Categories):
             w.wait_window(w)
             glyph=self.program.alphabet.glyph()
             if glyph not in done: #i.e., still
-                log.info(_("I asked for a glyph, but didn't get one ")+''
+                log.info(_("I asked for a glyph, but didn’t get one ")+''
                         f"({glyph} not in {done}).")
                 return
         self.program.alphabet.mark_glyph_not_done(glyph)
@@ -1326,12 +1339,12 @@ class Sort(Categories):
             if group.isdigit():
                 title.append(_("letter group"))
             else:
-                title.append(_("letter '{group}'").format(group=group))
+                title.append(_("letter ‘{group}’").format(group=group))
             checks={self.program.alphabet.parse_verificationcode(i)['check']
                     for i in items}
             oktext=_("These all should use the same letter")
             if not group.isdigit():
-                oktext+=_(" (currently '{group}')").format(group=group)
+                oktext+=_(" (currently ‘{group}’)").format(group=group)
             instructions=_("Read this list aloud. Note where each "
                 "was sorted ({checks})."
                 "\nClick on any with a different "
@@ -1375,8 +1388,8 @@ class Sort(Categories):
                 oktext=_('These all DO NOT have {checkname}').format(checkname=checkname)
                 #These words seem to NOT have '{checkname}'.
                 instructions=_("Read this list aloud, and click on any that "
-                            "DOES have '{checkname}'.").format(checkname=checkname)
-                title.append(_("for '{check}' (NOT {checkname})").format(check=check.replace('=','≠'),
+                            "DOES have ‘{checkname}’.").format(checkname=checkname)
+                title.append(_("for ‘{check}’ (NOT {checkname})").format(check=check.replace('=','≠'),
                                                             checkname=checkname))
             elif is_syl:
                 # Name the specific group being verified, e.g. "consonant
@@ -1391,12 +1404,12 @@ class Sort(Categories):
                             ).format(checkname=checkname,check=check)
                 instructions=_("Read this list aloud. Click on any with a "
                             "different {checkname} sound.").format(checkname=checkname)
-                title.append(_("for '{check}' ({checkname})").format(check=check, checkname=checkname))
+                title.append(_("for ‘{check}’ ({checkname})").format(check=check, checkname=checkname))
             if group in self.program.status.verified():
-                log.info(_("'{group}' already verified, continuing.").format(group=group))
+                log.info(_("‘{group}’ already verified, continuing.").format(group=group))
                 return 1
             if self.program.params.cvt() == 'T' and not hasattr(self.program, 'examples'):
-                log.error(_("Not verifying tone examples which don't exist."))
+                log.error(_("Not verifying tone examples which don’t exist."))
                 return 
         # The title for this page changes by group, below.
         self.program.status.build()
@@ -1420,7 +1433,7 @@ class Sort(Categories):
                         "".format(groups=self.groups(toverify=True)))
             return
         elif len(items) == 1 and not getattr(self,'reverifying',False):
-            log.info(_("Group '{group}' only has {count} example; marking verified and "
+            log.info(_("Group ‘{group}’ only has {count} example; marking verified and "
                     "continuing.").format(group=group,count=len(items)))
             updatestatus(True)
             return 1
@@ -1431,7 +1444,7 @@ class Sort(Categories):
         # window is revealed (waitdone) as soon as the first page is built, then
         # the rest streams in behind it. See build_verify_layout.
         if macrosort:
-            prep=_("Preparing the {item_name} '{group}' to verify…").format(
+            prep=_("Preparing the {item_name} ‘{group}’ to verify…").format(
                                             item_name=item_name, group=group)
         elif is_syl:
             prep=_("On the next page, you will verify all the words that are "
@@ -1585,8 +1598,8 @@ class Sort(Categories):
         def _do_join(lpr):
             # lpr=[remove, keep]: move the first group into the second.
             log.info("Joining {lpr} (macrosort={macrosort}).".format(lpr=lpr, macrosort=macrosort))
-            msg=_("Now we're going to move group '{group1}' into "
-                "'{group2}', removing '{group1}' and marking '{group2}' unverified.").format(group1=lpr[0], group2=lpr[1])
+            msg=_("Now we’re going to move group ‘{group1}’ into "
+                "‘{group2}’, removing ‘{group1}’ and marking ‘{group2}’ unverified.").format(group1=lpr[0], group2=lpr[1])
             self.ui.runwindow.wait(msg=msg)
             """All the senses we're looking at, by ps/profile"""
             if not macrosort:
@@ -1601,6 +1614,21 @@ class Sort(Categories):
                     self.updatestatus(group=lpr[1],
                                     verified=False,
                                     writestatus=True)
+                    # The joined-into group keeps its glyph MEMBERSHIP (Kent
+                    # 2026-07-10: a join unverifies the group in its check and
+                    # in its glyph — it never un-macrosorts it). So mark that
+                    # glyph not-done here; the existence-keyed cull leaves the
+                    # membership in place.
+                    try:
+                        _item=self.program.alphabet.verificationcode(group=lpr[1])
+                        _glyph=self.program.alphabet.glyph_of_item(_item)
+                        if _glyph:
+                            self.program.alphabet.mark_glyph_not_done(_glyph)
+                            self.program.alphabet.save_settings()
+                            log.info("DIAG-join-verify glyph %r unverified "
+                                     "(member %s changed by join)",_glyph,_item)
+                    except Exception as e:
+                        log.info("join glyph-unverify skipped: %s",e)
                     self.did[f'join{img_mod}']=True
                     self.ui.runwindow.on_quit()
                 self.ui.runwindow.drive_work(

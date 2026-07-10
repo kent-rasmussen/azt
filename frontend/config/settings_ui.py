@@ -116,7 +116,7 @@ class SettingsUI(object):
                         column=0, row=row
                         )
         instr.wrap()
-        t=_("If you expect one (already in your data) that isn't listed "
+        t=_("If you expect one (already in your data) that isn’t listed "
             "here, please click here to Email me, and I can add it.")
         row+=1
         t2=ui.Label(pgw.frame,text=t,column=0, row=row)
@@ -125,9 +125,9 @@ class SettingsUI(object):
         t2.bind("<Button-1>", lambda e: openweburl(eurl))
         if hasdata:
             t=_("Making changes will restart {name} and trigger another syllable profile analysis. \n"
-                "If you don't want that, click '{btn}'.").format(name=self.program.name, btn=nochangetext)
+                "If you don’t want that, click ‘{btn}’.").format(name=self.program.name, btn=nochangetext)
         else:
-            t=_("\n*** There don't seem to be any possible digraphs or trigraphs "
+            t=_("\n*** There don’t seem to be any possible digraphs or trigraphs "
                 "in your data ***\n")
         row+=1
         t3=ui.Label(pgw.frame,text=t,column=0, row=row)

@@ -119,7 +119,7 @@ class TaskBase:
             self.program.slices.makeprofileok()
             self.program.status.makecheckok()
         except AttributeError as e:
-            log.info(_("Maybe status/slices aren't set up yet."))
+            log.info(_("Maybe status/slices aren’t set up yet."))
 
 class Task(TaskBase):
     """Task with a separate TaskWindow. Creates the window on init."""

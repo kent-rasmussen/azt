@@ -45,8 +45,8 @@ class VCSPresenter:
         from utilities.utilities import sysrestart, openweburl
         title = _("Warning: {type} Executable Missing!").format(
             type=repo.repotypename)
-        text = _("you don't seem to have the {repo} executable installed in "
-                 "your computer's PATH.").format(repo=repo.repotypename)
+        text = _("you don’t seem to have the {repo} executable installed in "
+                 "your computer’s PATH.").format(repo=repo.repotypename)
         if repo.repotypename == 'Mercurial':
             text += '\n' + _("(Mercurial is used by Chorus and "
                              "languagedepot.org)")
@@ -84,7 +84,7 @@ class VCSPresenter:
                 "You can keep using {name} without installing {repo}, but "
                 "it is not recommended, and you will continue to see "
                 "this warning."
-                " And sooner or later that's going to get really annoying"
+                " And sooner or later that’s going to get really annoying"
             ).format(name=self.program.name, repo=repo.repotypename)
         r = ui.Label(w.frame, text=text, column=0, row=4)
         r.wrap()

@@ -224,21 +224,21 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         lang_stats=collections.Counter(present_langs).most_common()
         langs=set(present_langs)
         if current_lang in self.glosslangs:
-            log.error(_("'{lang}' is a gloss lang! ({langs})!").format(lang=current_lang, langs=self.glosslangs))
+            log.error(_("‘{lang}’ is a gloss lang! ({langs})!").format(lang=current_lang, langs=self.glosslangs))
             return
         if current_lang == new_lang:
-            log.error(_("'{new}' is the same as '{current}'!")
+            log.error(_("‘{new}’ is the same as ‘{current}’!")
                 .format(new=new_lang, current=current_lang))
             return
         if current_lang not in langs:
-            log.error(_("'{current}' not in langs={langs}!")
+            log.error(_("‘{current}’ not in langs={langs}!")
                     .format(current=current_lang, langs=langs))
             return
         if new_lang in langs and not new_already_ok:
-            log.error(_("'{new}' already in langs={langs}!")
+            log.error(_("‘{new}’ already in langs={langs}!")
                     .format(new=new_lang, langs=langs))
             return
-        log.info(_("found '{current}', and not '{new}' in langs={langs}.")
+        log.info(_("found ‘{current}’, and not ‘{new}’ in langs={langs}.")
                 .format(current=current_lang, new=new_lang, langs=langs))
         for fn in [None,self.tonelangname,
                     self.audiolangname,
@@ -1261,7 +1261,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             write=True
         except Exception as e:
             error=_("There was a problem writing to partial file: "
-                f"{tmp} ({e})")
+                "{tmp} ({e})").format(tmp=tmp,e=e)
             log.error(error)
         if write:
             # Collab seam (see backend/core/collab.py): when this db
@@ -1291,9 +1291,11 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 return
             except OSError:
                 error=_("There was a problem writing "
-                    f"{pathlib.Path(filename).name} file to " f"{pathlib.Path(filename).parent} "
-                    "directory. This is what's here: "
-                    f"{os.listdir(pathlib.Path(filename).parent)}")
+                    "{name} file to {parent} "
+                    "directory. This is what’s here: "
+                    "{listing}").format(name=pathlib.Path(filename).name,
+                        parent=pathlib.Path(filename).parent,
+                        listing=os.listdir(pathlib.Path(filename).parent))
                 log.error(error)
         self.write_OK=False
         self.write_error=error
@@ -1365,12 +1367,12 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             log.info(_("Using analang={analang} from settings.").format(analang=analang))
             self.analang=analang
         elif tryname in self.analangs or tryname in recorded:
-            log.info(_("Found file name base in the data's languages; assuming "
+            log.info(_("Found file name base in the data’s languages; assuming "
                     "that and moving on. To select another analysis language for "
                     "this database, change it in the settings."))
             self.analang=tryname
         elif recorded:
-            log.info(_("Using '{a}' — the language of the recordings/transcriptions "
+            log.info(_("Using ‘{a}’ — the language of the recordings/transcriptions "
                     "— as the analysis language (the text forms look like LWC "
                     "glosses). Change it in settings if this is wrong."
                     ).format(a=recorded[0]))
@@ -1379,11 +1381,11 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             self.analang=self.analangs[0] #if multilingual, pick the most common if not in settings
         elif langtags.tag_is_valid(tryname): #since not limited to self.analangs anymore
             log.info(_("No valid language-encoded data yet: extrapolating analysis "
-                    f"language from file name ({tryname})."))
+                    "language from file name ({tryname}).").format(tryname=tryname))
             self.analang=tryname
         else:
             self.analang=None #don't require hasattr
-            return _("I can't find a plausible analang! {analangs} {filename} {tryname}"
+            return _("I can’t find a plausible analang! {analangs} {filename} {tryname}"
                         ).format(analangs=self.analangs,filename=self.filename,tryname=tryname)
     def find_plausible_otherlangs(self):
         """for possible audio, phonetic and tone language scripts:
@@ -1392,7 +1394,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         3. otherwise, leave as None for now.
         """
         if not self.analang:
-            return _("No analang found; can't find other langs.")
+            return _("No analang found; can’t find other langs.")
         for langtype in ['audiolang','tonelang','phoneticlang']:
             langtypepl=langtype+'s'
             should_be=self.analang+self.language_codes[langtypepl]
@@ -2123,7 +2125,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                 print("No problems!")
                 log.info(_("Your regular expressions look OK for {lang} (there are "
                     "no segments in your {lang} data that are not in a regex). "
-                    "".format(lang=lang)))
+                    "").format(lang=lang))
                 log.info("Note, this doesn't say anything about digraphs or "
                     "complex segments which should be counted as a single "
                     "segment.")
@@ -2725,7 +2727,7 @@ class FormParent(Node):
                 guid=(self.parent.entry.guid if hasattr(self.parent,'entry')
                                             else self.parent.guid)
                 log.error(f"{self.tag} node {num} in entry {guid} has multiple "
-                    "forms for '{lang}' lang. While this is legal LIFT, "
+                    f"forms for '{lang}' lang. While this is legal LIFT, "
                     "it is almost certainly an error, and will lead to "
                     "unexpected behavior.")
                 forms=self.findall(f'form[@lang="{lang}"]')
@@ -2798,10 +2800,10 @@ class FormParent(Node):
                     l.append(g)
             return ' '.join([i for i in l if i]) #put it all together
         except IndexError:
-            log.info(_("This entry doesn't seem to have a sense."))
+            log.info(_("This entry doesn’t seem to have a sense."))
         except AttributeError:
-            log.info(_("This doesn't seem to be called on a child of entry "
-                    "({entry} child of {parent}), or the entry's first sense ({sense}) doesn't "
+            log.info(_("This doesn’t seem to be called on a child of entry "
+                    "({entry} child of {parent}), or the entry’s first sense ({sense}) doesn’t "
                     "have gloss languages ({glosses})."
                     ).format(entry=type(self),parent=type(self.parent),
                             sense=self.sense.id,
@@ -2850,6 +2852,49 @@ class Translation(FormParent):
         super(Translation, self).__init__(parent, node, **kwargs)
         self.set('type','Frame translation')
 class Field(FormParent):
+    def consolidate_forms_by_lang(self):
+        """Repair a single-form-per-lang field that a collab merge left with
+        DUPLICATE same-lang forms (2026-07-10, 'wife': one ['V1=ai','C2=f'] +
+        28× ['V1=ai','C1=wh'] — two devices verified different checks, the
+        merge kept both forms, then re-duplicated one across later merges).
+        Reads/writes only ever see self.forms[lang] (the document-FIRST node
+        getforms wrapped), so the duplicates silently shadow real data.
+
+        UNION the code lists across duplicates into that survivor; a check
+        whose value CONFLICTS across duplicates (V1=a vs V1=b) is dropped
+        entirely — it must re-verify. Remove the extra form nodes. Idempotent;
+        cheap when there are no duplicates. Persists at the next write."""
+        for lang in list(self.langs()):
+            dupes=[f for f in self.findall('form') if f.get('lang')==lang]
+            if len(dupes)<2:
+                continue
+            merged={}; order=[]; conflicted=set()
+            for f in dupes:
+                t=f.find('text')
+                raw=t.text if t is not None else None
+                try:
+                    codes=xmlfns.stringtoobject(raw) if raw else []
+                except Exception:
+                    codes=[]
+                for code in codes:
+                    parts=str(code).split('=') #compound checks: split on LAST =
+                    c,v='='.join(parts[:-1]),parts[-1]
+                    if c in merged and merged[c]!=v:
+                        conflicted.add(c)
+                    elif c not in merged:
+                        merged[c]=v; order.append(c)
+            keep=['{}={}'.format(c,merged[c]) for c in order
+                    if c not in conflicted]
+            survivor=self.forms[lang] #the wrapped document-first node
+            for f in dupes:
+                if f is not survivor:
+                    self.remove(f)
+            survivor.textvalue(str(keep))
+            log.warning("Consolidated %d duplicate %r forms in '%s' of %s: "
+                        "kept %s%s", len(dupes), lang, self.ftype,
+                        getattr(self.parent,'id',self.parent), keep,
+                        ' (dropped conflicting checks {})'.format(
+                            sorted(conflicted)) if conflicted else '')
     def __init__(self, parent, node=None, **kwargs):
         kwargs['tag']='field'
         super(Field, self).__init__(parent, node, **kwargs)
@@ -2905,7 +2950,7 @@ class FieldParent(object):
         """use fieldvalue below"""
         raise
         if not value:
-            log.info(_("We normally shouldn't create empty fields: {lang}/{value}")
+            log.info(_("We normally shouldn’t create empty fields: {lang}/{value}")
                     .format(lang=lang, value=value))
         if type in self.fields:
             log.error(_("There is already a {type} field here! ({fields})")
@@ -3451,7 +3496,7 @@ class Sense(Node,FieldParent):
             v.remove(value)
             self.verificationtextvalue(profile,ftype,value=v) #remove on []
         except Exception as e:
-            log.info(_("tried to remove what wasn't there? ({error})").format(error=e))
+            log.info(_("tried to remove what wasn’t there? ({error})").format(error=e))
     def rmverificationnode(self,profile,ftype):
         key=self.verificationkey(profile,ftype)
         # log.info(f"Removing {key} verification from {self}")
@@ -3477,6 +3522,8 @@ class Sense(Node,FieldParent):
         …-x-py form). If a verification field ever gains a second form-lang, pin
         the lang here — see cvprofilevalue for the trap this avoids."""
         key=self.verificationkey(profile,ftype)
+        if key in self.fields: #merge-dupe repair BEFORE any read/write: see
+            self.fields[key].consolidate_forms_by_lang() #Field method docstring
         #This is an explicit empty value=[], not the default (None)
         if value == [] and key in self.fields: #i.e., if reduced to nothing
             self.rmverificationnode(profile,ftype) #remove what's there
@@ -3970,7 +4017,7 @@ class LiftURL():
     def show(self,nodename,parent=None): #call this directly if you know you want it
         if nodename == 'form': #args:value,lang
             if parent is None:
-                log.error(_("Sorry, I can't tell what form to pass to this field;"
+                log.error(_("Sorry, I can’t tell what form to pass to this field;"
                             "\nWhat is its parent?"))
                 return
             else:
@@ -4039,7 +4086,7 @@ class LiftURL():
                 val_url = self.drafturl()
                 log.error(_("last level {target} (of {parents}) not in {level}; this is a problem!")
                         .format(target=target, parents=parents, level=self.level))
-                log.error(_("this is where we're at: {kwargs}\n  {url}")
+                log.error(_("this is where we’re at: {kwargs}\n  {url}")
                         .format(kwargs=self.kwargs, url=val_url))
                 raise RuntimeError(_("last level {target} (of {parents}) not in {level}")
                         .format(target=target, parents=parents, level=self.level))
@@ -4078,7 +4125,7 @@ class LiftURL():
             if g>10:
                 giveup=True
         if giveup is True:
-            log.error(_("Hey, I've looked back {g} generations, and I don't see "
+            log.error(_("Hey, I’ve looked back {g} generations, and I don’t see "
                     "an ancestor of {head} (target) which is also an ancestor of "
                     "{node} (current node).").format(g=g, head=self.targethead, node=nodename))
     def showtargetinhighestdecendance(self,nodename):
@@ -4115,7 +4162,7 @@ class LiftURL():
         log.log(4,_("Greatgrandchildren of {node}: {greatgrandchildren}")
                 .format(node=nodename, greatgrandchildren=greatgrandchildren))
         if self.targethead in children:
-            log.log(4,_("Showing '{head}', child of {node}")
+            log.log(4,_("Showing ‘{head}’, child of {node}")
                     .format(head=self.targethead, node=nodename))
             self.show(self.targethead,nodename)
         elif self.targethead in grandchildren:
@@ -4123,7 +4170,7 @@ class LiftURL():
                     .format(head=self.targethead, node=nodename, grandchildren=grandchildren))
             for c in children:
                 if c in self.children and self.targethead in self.children[c]:
-                    log.log(4,_("Showing '{c}', nearest ancenstor").format(c=c))
+                    log.log(4,_("Showing ‘{c}’, nearest ancenstor").format(c=c))
                     self.show(c,nodename) #others will get picked up below
                     self.showtargetinhighestdecendance(c)
         elif self.targethead in greatgrandchildren:
@@ -4132,7 +4179,7 @@ class LiftURL():
             for c in children:
                 for cc in grandchildren:
                     if cc in self.children and self.targethead in self.children[cc]:
-                        log.log(4,_("Showing '{c}', nearest ancenstor").format(c=c))
+                        log.log(4,_("Showing ‘{c}’, nearest ancenstor").format(c=c))
                         self.show(c,nodename) #others will get picked up below
                         self.showtargetinhighestdecendance(c)
         elif self.targethead in gggrandchildren:
@@ -4142,7 +4189,7 @@ class LiftURL():
                 for cc in grandchildren:
                     for ccc in greatgrandchildren:
                         if ccc in self.children and self.targethead in self.children[ccc]:
-                            log.log(4,_("Showing '{c}', nearest ancenstor").format(c=c))
+                            log.log(4,_("Showing ‘{c}’, nearest ancenstor").format(c=c))
                             self.show(c,nodename) #others will get picked up below
                             self.showtargetinhighestdecendance(c)
         else:
@@ -4259,7 +4306,7 @@ class LiftURL():
         log.info(_("Basic usage of this class includes the following kwargs:\n"
                 "\tbase: node from which we are pulling (should be supplied)\n"
                 "\ttarget: node we are looking for\n"
-                "\tget: thing we want: node (default)/'text'/attribute name\n"
+                "\tget: thing we want: node (default)/‘text’/attribute name\n"
                 "Below here implies an entry node:\n"
                 "\tguid: id used to identify a lift entry\n"
                 "\tlxform: form to find in lexeme form fields\n"

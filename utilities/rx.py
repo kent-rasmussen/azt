@@ -371,7 +371,7 @@ class RegexDict(object):
         # log.info("updated {} > {}".format(tori,t))
         for match in matches:
             if len(match)>1:
-                txt=_("NOTICE: '{match}' was removed from this form. Remove it from the "
+                txt=_("NOTICE: ‘{match}’ was removed from this form. Remove it from the "
                 "polygraph settings once it is gone altogether.").format(match=match)
                 try:
                     log.info(txt)

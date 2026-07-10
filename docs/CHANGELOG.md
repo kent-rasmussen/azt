@@ -19,6 +19,67 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.9.0
+- FEATURE (sorting — Review Letter Groups). Position-matched default presentation:
+  when a pair of letter groups is shown, each glyph frame now defaults to the
+  member whose check position best matches the other's — privileging FIRST the
+  number of frames shown in the same position, THEN the position nearest the
+  front of the word (C1 before C2; `C1=C2` counts as position 1; digitless
+  checks last). Uncovered frames pair among themselves or fall to their own
+  frontmost. Default only — manual cycling of groups/examples is untouched.
+  `frontend/sort_ui.py` `choose_shown_checks` + `show_default_members`;
+  tests in `tests/test_choose_shown_checks.py`. (Previously the shown member
+  was set-iteration-order accident.)
+- I18N (smartquotes sweep). All user-facing `_()` strings now use typographic
+  quotes (‘ ’ / “ ” / don’t): 226 msgids across 39 files, with the matching
+  msgids rewritten in lockstep in all five `translations/*.po` so no
+  translation was orphaned. Machine-parsed quotes untouched.
+- FIX (i18n — 13 latent translation misses). `.format()`/f-strings INSIDE `_()`
+  made runtime lookup keys differ from extracted msgids (translation never
+  matched); interpolation moved outside `_()` in `lift.py` ×4, `sound_ui.py` ×2
+  (whose existing curly-quoted .po translations now finally apply),
+  `py_modules.py` ×2, `utilities.py` ×2 (also fixes literal `{val} ({type(val)})`
+  printing), `chooser.py` ×2, `generator.py` ×1.
+- FIX (sorting — form corruption guard). `build_form_from_verified` (the
+  authoritative whole-word rebuild) concatenated raw verified values, so a slot
+  verified into a still-UNNAMED (digit-placeholder) group entered the form:
+  'bʊsh'→'b1sh'. Now defers (logs `DIAG-formconform BUILD-DEFER`) until every
+  slot's group is named — the same guard every patch path already had.
+  Corrupted forms self-heal on the next whole-word update once named.
+  `backend/core/lexicon.py`; tests in `tests/test_build_form_from_verified.py`.
+- FIX (sorting — joins drained glyph memberships). `cull_glyph_members` treated
+  "not currently done+distinguished" as "doesn't exist", so every join stripped
+  the joined-into group's code from its glyph, deleted the emptied glyph from
+  alphabet.json, and re-demanded a macrosort after re-verify. Existence
+  (`items_existing`: group has members) now keys the cull; a join instead marks
+  the containing glyph not-done (membership persists, the glyph re-verifies).
+  `backend/core/alphabet.py` `refresh_items`/`cull_glyph_members`,
+  `backend/core/sorting_engine.py` `join_pair_done`. NOTE: previously-drained
+  memberships are not resurrected — re-macrosort once.
+- FIX (sorting — spurious "Hey, you're not done…" notice). A completed inner
+  pass (e.g. a join reached via an after()-fired maybesort inside an outer
+  page's wait_window) tore down the shared runwindow, making the outer frame
+  read as abandoned and warn mid-flow. Suppressed when a maybesort restart is
+  already scheduled (`_maybesort_rescheduled`); genuine walk-aways still warn.
+  Also removes the modal notice's 2s stall between a join and the next verify.
+- FIX (data repair — collab-merge duplicate forms). A merge left a verification
+  field with duplicate same-lang `<form>` nodes (observed ×29 on one entry),
+  which shadow real data (reads/writes only see the document-first node).
+  `Field.consolidate_forms_by_lang` (invoked from `verificationtextvalue`)
+  unions the code lists into the surviving form, drops checks whose values
+  conflict across duplicates (they re-verify), removes the extras, and logs a
+  WARNING. Root cause (the merge itself) tracked in azt-collab.
+- FIX (platform — XWayland wedges). Two hangs, one faulthandler-confirmed:
+  `ScrollingFrame.reflow`'s bare `update_idletasks` deadlocked over a large
+  backlog (booklet `add_pages`, ~40 page frames) — now a draining `update()`
+  on Wayland only. The verify-page reveal path also drops its redundant second
+  synchronous drain when the wait dialog already covered the build (waitdone
+  did update+deiconify), skips pointless virtualization for lists that fit one
+  screenful, and gains `DIAG-reveal` breadcrumbs so any future wedge names its
+  call in the log.
+- TESTS. `tests/test_status_dict.py` fake program gains `db=None` (cull()'s
+  membership sweep reads `program.db.ps_profiles`; None = not computed).
+
 # Version 1.8.6
 - FIX (sorting — segmental join direction). When joining two groups where neither
   name is a digit placeholder, the SIMPLER (shorter) existing name is now kept and

@@ -180,7 +180,7 @@ def firstoflist(l,othersOK=False,all=False,ignore=[None]):
         return l[0]
     elif othersOK == False: #(i.e., with `len(list) != 1`)
         return _('Sorry, something other than one list item found: {list}'
-                '\nDid you mean to use "othersOK=True"?').format(list=l)
+                '\nDid you mean to use “othersOK=True”?').format(list=l)
 def t(element):
     if type(element) is str:
         return element
@@ -191,7 +191,7 @@ def t(element):
             return element.text
         except AttributeError:
             return _("Apparently you tried to pull text out of a non "
-                        "element, and it's not a simple string, either: {element}"
+                        "element, and it’s not a simple string, either: {element}"
                         ).format(element=element)
 def nonspace(x):
     """Return a space instead of None (for the GUI)"""
@@ -262,7 +262,7 @@ def pathseparate(path):
     elif os == 'Linux':
         sep=':'
     else:
-        return _("I can't tell what operating system you're running ({os})!").format(os=os)
+        return _("I can’t tell what operating system you’re running ({os})!").format(os=os)
     return path.split(sep)
 def findpath():
     spargs={
@@ -407,9 +407,11 @@ def setnesteddictval(dictionary,val,*keys,addval=False):
             if type(val) == type(d[k]) == set:
                 d[k]|=val
             elif type(val) == set or type(d[k]) == set:
-                raise TypeError(_("you're trying to add {val} ({type(val)}) "
-                                f"to {d[k]} ({type(d[k])}), but "
-                                "one is a set and the other isn't"))
+                raise TypeError(_("you’re trying to add {val} ({vtype}) "
+                                "to {dk} ({dktype}), but "
+                                "one is a set and the other isn’t").format(
+                                    val=val,vtype=type(val),
+                                    dk=d[k],dktype=type(d[k])))
             else:
                 d[k]+=val
         else:
@@ -430,7 +432,8 @@ def iteratelistitem(l,item,val,circular=False):
         return l[newindex]
     else:
         return (_("problem with iteration value type "
-                f"({type(val)}) or index type ({type(initindex)})"))
+                "({vtype}) or index type ({itype})").format(
+                    vtype=type(val),itype=type(initindex)))
 def open_file(path):
     """Opens a file with the default application in a cross-platform way."""
     import subprocess, os, platform

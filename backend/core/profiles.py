@@ -87,7 +87,7 @@ class ProfileAnalyzer:
         analang = self.program.params.analang()
         langnames = self.program.settings.languagenames
         if analang in lwcdefaults:
-            log.info(_("It looks like you're working on your LWC; using {lang} digraph defaults")
+            log.info(_("It looks like you’re working on your LWC; using {lang} digraph defaults")
                     .format(lang=langnames[analang]))
             return lwcdefaults[analang]
         try:
@@ -261,7 +261,7 @@ class ProfileAnalyzer:
                 log.info(_("Removed {form} ({val})").format(
                     form=form, val=self.formstosearch[ps][form]))
             except ValueError:
-                log.error(_("Apparently {sense} isn't under {form}?").format(
+                log.error(_("Apparently {sense} isn’t under {form}?").format(
                     sense=sense, form=form))
             if not self.formstosearch[ps][oldform]:
                 del self.formstosearch[ps][oldform]

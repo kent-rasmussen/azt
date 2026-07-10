@@ -182,7 +182,7 @@ def move(file,newfile):
     if exists(file) and not exists(newfile):
         os.rename(file,newfile)
     else:
-        return _("Tried to move {} to {}, but I can't find it "
+        return _("Tried to move {} to {}, but I can’t find it "
                     "(or overwrite?).").format(file,newfile)
 def remove(file):
     if exists(file):
@@ -190,7 +190,7 @@ def remove(file):
     elif exists(pathname_from_base_dir(file)):
         os.remove(pathname_from_base_dir(file))
     else:
-        return _("Tried to remove {}, but I can't find it.").format(file)
+        return _("Tried to remove {}, but I can’t find it.").format(file)
 def makedir(dir,**kwargs):
     if type(dir) is str:
         dir=getfile(dir)
@@ -380,7 +380,7 @@ def findexecutable(exe):
         if exe == 'sendpraat':
             exeOS='sendpraat-mac'
     else:
-        return _("Sorry, I don't know this OS: {os}").format(os=os)
+        return _("Sorry, I don’t know this OS: {os}").format(os=os)
     exeURL=None
     try:
         exeURL=subprocess.check_output([which,exeOS], shell=False)

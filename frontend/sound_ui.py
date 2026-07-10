@@ -134,7 +134,7 @@ class RecordButtonFrame(ui.Frame):
                                 self.soundsettings.fs,
                                 self.soundsettings.sample_format)
         else:
-            t=_("No framed value, nor testing; can't continue...")
+            t=_("No framed value, nor testing; can’t continue...")
             log.error(t)
         # Just do these each once, since their dependencies don't change
         self.recorder=sound.SoundFileRecorder(self._filenameURL,self.pa,
@@ -487,15 +487,15 @@ class SoundSettingsWindow(ui.Window):
                             row=self.content.nrows(),
                             sticky='')
         play=_("Play")
-        l=_("Plug in your microphone, and make sure 'record' and '{play}' work "
-            "well here, before recording real data!".format(play=play))
+        l=_("Plug in your microphone, and make sure ‘record’ and ‘{play}’ work "
+            "well here, before recording real data!").format(play=play)
         caveat=ui.Label(self.content,
                 text=l,font='read',
                 row=self.content.nrows(),
                 sticky='')
         caveat.wrap()
-        l=_("If Praat is installed in your OS path, right click on '{}' above "
-            "to open in Praat.".format(play))
+        l=_("If Praat is installed in your OS path, right click on ‘{}’ above "
+            "to open in Praat.").format(play)
         caveat3=ui.Label(self.content,
                 text=l,font='default',
                 row=self.content.nrows())

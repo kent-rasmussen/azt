@@ -279,7 +279,7 @@ class Theme(object):
             self.name='highcontrast' #for low light environments
             self.name=pot[randint(0, len(pot)-1)] #mostly defaulttheme
         elif self.name not in self.themes:
-            print(_("Sorry, that theme doesn't seem to be set up. Pick from "
+            print(_("Sorry, that theme doesn’t seem to be set up. Pick from "
             "these options:"),self.themes.keys())
             exit()
         for k in self.themes[self.name]:
@@ -2426,20 +2426,28 @@ class ScrollingFrame(Frame):
         may not fire when the canvas pins its actual height, leaving the
         scrollregion stale and clipping rows.
 
-        The update_idletasks() is REQUIRED, not optional: grid()/grid_forget()
+        The flush is REQUIRED, not optional: grid()/grid_forget()
         schedule the content's requested-size recompute as an idle task, so
         reading winfo_reqwidth/reqheight without flushing first sees the STALE
         pre-regrid size and reflows to it (observed: +/- columns and show-all
         /pictured-only didn't resize the canvas). Unlike SortButtonFrame.reflow
         — whose caller (presenttosort) already update()s before reflowing — this
-        is called straight after a regrid, so it must settle geometry itself. One
-        idle flush per discrete config action is fine; the XWayland wedge came
-        from per-item flushes in big streamed builds, not single reflows. Safe
-        no-op if there's no scroll. See scrollframe reflow trap."""
+        is called straight after a regrid, so it must settle geometry itself.
+
+        HOW to flush is platform-scoped: a bare update_idletasks() over a LARGE
+        unflushed backlog write-deadlocks XWayland (faulthandler-confirmed
+        2026-07-10: booklet add_pages built ~40 PageFrames, then this very call
+        wedged — disproving the earlier "single reflows can't wedge" note).
+        update() DRAINS events while flushing, the proven escape (verify build
+        1.3.29); scoped to Wayland so plain X keeps the cheaper idle flush.
+        Safe no-op if there's no scroll. See scrollframe reflow trap."""
         if not self.winfo_exists():
             return
         try:
-            self.update_idletasks()
+            if USING_WAYLAND:
+                self.update()
+            else:
+                self.update_idletasks()
             self._do_configure_interior()
         except Exception as e:
             log.info("ScrollingFrame.reflow failed: %s", e)

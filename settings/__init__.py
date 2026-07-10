@@ -293,7 +293,7 @@ class Settings(SettingsUI):
                     try:
                         delattr(self,lang) #because this would be made above
                     except AttributeError:
-                        _log.info(_("attribute {lang} doesn't seem to be there").format(lang=lang))
+                        _log.info(_("attribute {lang} doesn’t seem to be there").format(lang=lang))
         dict1=self.makesettingsdict(setting=setting)
         self.storesettingsfile(setting=setting) #do last
         self.loadsettingsfile(setting=setting) #verify write and read
@@ -307,7 +307,7 @@ class Settings(SettingsUI):
                 _log.error(_("Problem with attribute {s}; {val1}≠{val2}").format(s=s,
                                             val1=str(dict1[s]), val2=str(dict2[s])))
             else:
-                _log.error(_("Attribute {s} didn't make it back").format(s=s))
+                _log.error(_("Attribute {s} didn’t make it back").format(s=s))
                 _log.error(_("You should send in an error report for this."))
                 raise AttributeError(s)
         _log.info(_("Settings file {legacy} converted to {savefile}, with each value verified.")
@@ -341,7 +341,7 @@ class Settings(SettingsUI):
         for setting in self.settings:
             savefile=self.settingsfile(setting)
             if not file.exists(savefile):
-                _log.debug(_("{file} doesn't exist!").format(file=savefile))
+                _log.debug(_("{file} doesn’t exist!").format(file=savefile))
                 legacy=savefile.with_suffix('.py')
                 if file.exists(legacy):
                     _log.debug(_("But legacy file {legacy} does; converting!").format(legacy=legacy))
@@ -587,7 +587,7 @@ class Settings(SettingsUI):
     def getdirectories(self):
         self.directory=file.getfilenamedir(self.liftfilename)
         if not file.exists(self.directory):
-            _log.info(_("Looks like there's a problem with your directory... "
+            _log.info(_("Looks like there’s a problem with your directory... "
                         "{file}\n{dir}")
                         .format(file=self.liftfilename,dir=self.directory))
             raise FileNotFoundError(self.directory)
@@ -700,7 +700,7 @@ class Settings(SettingsUI):
         else:
             self.guess_verbalps()
         try:
-            _log.info(_("Using '{noun}' for nouns, and '{verb}' for verbs").format(
+            _log.info(_("Using ‘{noun}’ for nouns, and ‘{verb}’ for verbs").format(
                 noun=self.nominalps,
                 verb=self.verbalps))
         except AttributeError:
@@ -944,7 +944,7 @@ class Settings(SettingsUI):
         """Analang should be easily deduceable from the lift file, and/or
         explicit in the settings."""
         self.analang=self.program.db.analang
-        _log.info(_("analang in use: {analang} (If you don't like this, change it in the menus)").format(analang=self.analang))
+        _log.info(_("analang in use: {analang} (If you don’t like this, change it in the menus)").format(analang=self.analang))
     def makeglosslangs(self):
         if self.glosslangs:
             self.glosslangs=Glosslangs(self.glosslangs)
