@@ -32,7 +32,7 @@ class Sound(object):
     def mikecheck(self):
         self.ui.withdraw()
         self.program.soundsettings.confirm_pyaudio()
-        self.soundsettingswindow = sound_ui.SoundSettingsWindow(self.program)
+        self.soundsettingswindow = sound_ui.SoundSettingsWindow(self)
         if not self.soundsettingswindow.exitFlag.istrue():
             self.soundsettingswindow.wait_window(self.soundsettingswindow)
         self.program.soundsettings.done_pyaudio()
@@ -119,7 +119,25 @@ class Record(BackendRecord, Sound):
             senses = self.program.db.senses
         nperpage = 5
         pages = [senses[i:i + nperpage] for i in range(0, len(senses), nperpage)]
-        for page in pages:
+        # A5 in-place reload: resume at the page the user was on. The old task
+        # stashes its position as _record_anchor (below); reload_database hands
+        # it over as program._reload_anchor; consume it here (once) by seeking
+        # to the page holding the anchored sense in the anchored slice.
+        start = 0
+        anchor = getattr(self.program, '_reload_anchor', None)
+        if (anchor and anchor.get('ps') == ps
+                and anchor.get('profile') == profile):
+            ids = [s.id for s in senses]
+            if anchor.get('senseid') in ids:
+                start = ids.index(anchor['senseid']) // nperpage
+                log.info("record page: resuming at page %d (reload anchor)",
+                         start)
+            self.program._reload_anchor = None
+        for pageno, page in enumerate(pages):
+            if pageno < start:
+                continue
+            self._record_anchor = {'ps': ps, 'profile': profile,
+                                   'senseid': page[0].id}
             if self.ui.runwindow.exitFlag.istrue():
                 return
             with self.ui.runwindow.waiting(thenshow=True):

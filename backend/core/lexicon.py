@@ -763,6 +763,17 @@ class WordCollection(Segments):
         self.entries=self.getlisttodo()
         self.nentries=len(self.entries)
         self.index=0
+        # A5 in-place reload: resume at the word the user was on. Guid-keyed
+        # (not index) because the todo list may have shifted with the merged
+        # data. Set in getword(); handed over by reload_database.
+        anchor=getattr(self.program,'_reload_anchor',None)
+        if anchor and anchor.get('guid'):
+            guids=[getattr(e,'guid',None) for e in self.entries]
+            if anchor['guid'] in guids:
+                self.index=guids.index(anchor['guid'])
+                log.info("word collection: resuming at %s (reload anchor)",
+                         anchor['guid'])
+            self.program._reload_anchor=None
         self.wordsframe=p.frame(self.ui.frame,row=1,column=1,sticky='ew')
         self.instructions=p.label(self.wordsframe,
                                     text=self.getinstructions(),
@@ -1297,6 +1308,9 @@ class WordCollection(Segments):
         # log.info("entries: {}".format(self.entries))
         log.info(_("index: {index}").format(index=self.index))
         self.sense=self.entry.sense
+        # A5 in-place reload: remember where the user IS, so a reload
+        # relaunch resumes here (consumed in getwords; see reload_database).
+        self._record_anchor={'guid': getattr(self.entry,'guid',None)}
         glosses={}
         for g in set(self.glosslangs) & set(self.sense.glosses):
             glosses[g]=', '.join(self.sense.formattedgloss(g,quoted=True))

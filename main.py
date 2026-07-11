@@ -11,7 +11,7 @@ program={'name':'A-Z+T',
         'production':False, #True for making screenshots (default theme)
         'testing':False, #normal error screens and logs
         'Demo':False, #will get set otherwise later if it is
-        'version':'1.9.0', #This is a string...
+        'version':'1.10.0', #This is a string...
         'testversionname':'testing', #always have some real test branch here
         'url':'https://github.com/kent-rasmussen/azt',
         'Email':'kent_rasmussen@sil.org',
@@ -298,9 +298,33 @@ class App:
                     and not getattr(self,'writing',False)
                     and session.reload_offer_due()):
                 self.collab_offer_reload()
+            self.collab_title_status(session)
         except Exception as e:
             log.info(f"collab_poll: {e}")
         self.tk_root.after(10000, self.collab_poll)
+    def collab_title_status(self,session):
+        """Ambient sync status, title-bar cheap (Kent 2026-07-11): every
+        poll tick, append the one-phrase collab truth to the visible
+        window titles (task window + its runwindow — whichever the user
+        is actually looking at). The separator marks our suffix so we
+        never eat the real title; tasks that reset their own titles just
+        get re-suffixed on the next tick."""
+        SEP=' ⇅ '
+        try:
+            txt=session.ambient_status()
+        except Exception:
+            return
+        task=getattr(self,'task',None)
+        win=getattr(task,'ui',None) if task is not None \
+            else getattr(getattr(self,'taskchooser',None),'ui',None)
+        for w in {win, getattr(win,'runwindow',None)} - {None}:
+            try:
+                if not w.winfo_exists():
+                    continue
+                base=w.title().split(SEP)[0]
+                w.title(base+SEP+txt if txt else base)
+            except Exception as e:
+                log.info(f"collab_title_status: {e}")
     def collab_offer_reload(self):
         # F6: one open offer at a time. Multiple polls detecting team
         # changes used to each spawn their own "Team changes available"
@@ -581,14 +605,33 @@ class App:
     def reload_database(self):
         """A5 (in-place reload): re-read the LIFT from disk and rebuild
         everything derived from it — no process restart. Used when the
-        collab daemon merged team changes under us. The process keeps
-        its Tk root, theme and presenters; db + derived layers + the
-        task view rebuild in _run_setup's exact post-FileParser order.
-        The user's position (current check/group/slice) is durable
-        state, so re-entering the same task class resumes close to
-        where they were. ANY failure falls back to the trusted full
-        restart — continuity is best-effort, correctness is not."""
+        collab daemon merged team changes under us.
+
+        DESTROY NOTHING (lesson of the first live run, 2026-07-10): the
+        whole session runs NESTED inside the boot stack's wait_window
+        event loops (_run_setup → TaskChooser.__init__ → maketask → …),
+        and the chooser's window is effectively the application's main
+        window — destroying it killed the Tk app, and the resumed outer
+        frames then crashed on Tk calls a try/except here cannot catch.
+        So: rebuild the BACKEND objects only (program.* swaps under the
+        live UI), then swap the task view with the SAME machinery a
+        user's task switch exercises daily — maketask() launches the
+        new task, whose window-init retires the old task's UI
+        (i_am_mainwindow → finish_task_ui), and the old frames unwind
+        through their proven exit branches. The user's position
+        (current check/group/slice) is durable state, so re-entering
+        the same task class resumes close to where they were. Failures
+        BEFORE the task swap fall back to the trusted full restart."""
         log.info("In-place reload: starting")
+        w=None
+        try: #cover the seconds of synchronous rebuild with a wait dialog
+            w=self.taskchooser.ui
+            w.wait(_("Loading your team’s changes…"))
+            w.update() #paint it NOW: the rebuild blocks the event loop, so
+            #           without one draining update() it stays black (2026-07-11)
+        except Exception as e:
+            log.info("reload: no wait dialog (%s)",e)
+            w=None
         try:
             # Quiesce writes (as restart() does): the reload must read a
             # settled file, and no write thread may straddle the db swap.
@@ -598,30 +641,13 @@ class App:
                 log.info(_("Waiting to finish writing to lift"))
                 time.sleep(1)
                 self.check_if_write_done()
-            # Wind down the task view with the machinery user-quit uses:
-            # on_quit sets the exit flag THEN destroys, so any nested
-            # wait_window frames unwind through their normal exit
-            # branches. The chooser is destroyed directly instead — its
-            # own on_quit chains to app shutdown.
             prev_task_class=None
             task=getattr(self,'task',None)
-            chooser=getattr(self,'taskchooser',None)
-            if task is not None and task is not chooser:
+            if task is not None and task is not getattr(self,'taskchooser',None):
                 prev_task_class=type(task)
-                try:
-                    task.ui.on_quit()
-                except Exception as e:
-                    log.info("reload: task teardown: %s",e)
-            self.task=None
-            if chooser is not None:
-                try:
-                    chooser.ui.exitFlag.true() #pending afters exit early…
-                    chooser.ui.destroy() #…and no app-quit on_quit chain
-                except Exception as e:
-                    log.info("reload: chooser teardown: %s",e)
             # Rebuild: boot-parity with _run_setup's post-FileParser
             # chain (same constructors, same order; presenters/root/
-            # theme/langtags are process-lifetime and stay).
+            # theme/langtags/TaskChooser are process-lifetime and stay).
             FileParser(self)
             if getattr(self,'collab',None):
                 self.collab.adopt_reloaded_db()
@@ -633,18 +659,55 @@ class App:
             ExampleDict(self)
             Alphabet(self)
             UISettings(self)
-            TaskChooser(self)
-            try: #usbcheck may have redrawn the boot splash; never leave it up
-                self.splash.withdraw()
-            except Exception:
-                pass
-            if prev_task_class is not None:
-                self.taskchooser.maketask(prev_task_class)
-            log.info("In-place reload: done")
+            # Boot-parity tail: at boot TaskChooser.__init__ runs these BEFORE
+            # any task exists — whatsdone() (task-availability state) and
+            # profiles.run() (derives profiles AND builds profiles.rxdict,
+            # which Task __init__ reads). The reload keeps the chooser, so run
+            # them here explicitly.
+            self.taskchooser.whatsdone()
+            self.profiles.run()
+            self.status_dirty=True #force the first maybesort to rebuild
         except Exception as e:
-            log.error("In-place reload failed (%s); falling back to a "
-                      "full restart.", e)
+            log.error("In-place reload failed before the task swap (%s); "
+                      "falling back to a full restart.", e)
             self.restart()
+            return
+        finally:
+            if w is not None:
+                try:
+                    w.waitdone()
+                except Exception:
+                    pass
+        # Task swap OUTSIDE the try: from here the app must ride the
+        # normal task-switch path; a restart from these depths is what
+        # crashed run one.
+        log.info("In-place reload: backend rebuilt; swapping task view "
+                 "(%s)", prev_task_class)
+        # Retire the OLD task's window BEFORE launching the new one:
+        # maketask() does not return until the new task ENDS (the task's
+        # life nests inside it), so nothing after it can clean up — and
+        # leaving the old window alive gave two TaskWindows whose shared
+        # exit closed the whole app (2026-07-11 morning). on_quit is NOT
+        # the tool (it revives the chooser / quits toward root — the
+        # 16:42 ghost shutdown): _dismiss_unshown is the purpose-built
+        # silent board teardown for "another task is taking over".
+        old=getattr(self,'task',None)
+        if old is not None and old is not self.taskchooser:
+            # Anchor hand-off: tasks that track a within-task position (e.g.
+            # the record page loop) expose it as _record_anchor; the relaunch
+            # consumes program._reload_anchor to resume there — the "user
+            # barely notices the reload" bar.
+            self._reload_anchor=getattr(old,'_record_anchor',None)
+            try:
+                old._dismiss_unshown()
+            except Exception as e:
+                log.info("reload: old task dismiss: %s",e)
+        self.task=None
+        if prev_task_class is not None:
+            self.taskchooser.maketask(prev_task_class)
+        else:
+            self.taskchooser.gettask() #re-present the chooser
+        log.info("In-place reload: done")
     def restart(self,filename=None):
         log.info(_("Restarting from App"))
         file.writefilename(self.filename)

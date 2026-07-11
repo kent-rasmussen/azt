@@ -19,6 +19,40 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.10.0
+- FEATURE (collaboration — in-place reload, "A5"). "Load now" on the team-changes
+  offer now reloads the database IN PLACE: no process restart. Backend objects
+  rebuild in boot order under the live UI; the task view swaps through the
+  normal task-switch machinery; the collab session rebases to the daemon's head
+  (`adopt_reloaded_db`, unit-pinned); a wait dialog covers the rebuild; and the
+  task resumes AT THE USER'S POSITION (guid-keyed anchors for word collection
+  and the record page). Any failure before the task swap falls back to the
+  full restart. Field-verified through five hardening iterations (main.py
+  `reload_database`; teardown lessons documented in the code).
+- FEATURE (collaboration — ambient sync status). The visible window titles
+  (task + runwindow) carry a live suffix from the 10 s poll: "N change(s) not
+  yet shared" / "shared with team ✓" / "team changes available" / "saving
+  locally — server unreachable". Keyed on `at_risk` (commits no other device
+  has) so it's meaningful for LAN-only projects, where `wan_unshared` counts
+  forever. (`CollabSession.ambient_status` + `App.collab_title_status`.)
+- FIX (collaboration — NOTHING_TO_COMMIT is benign). Identical-content saves
+  (unchanged autosaves; the healthy aftermath of a degraded direct write the
+  respawned daemon already committed) no longer warn "history may catch up" on
+  every save: adopt head, clear degraded, done. Unit-pinned.
+- FIX (record tasks resurrected). `RecordCitation`/`RecordCitationT` lost the
+  `Task` base at some refactor, making them unconstructible (kwargs rode the
+  cooperative super() chain into `object`); `mikecheck` passed `program` where
+  `SoundSettingsWindow` expects the task. Both fixed; record flows run again.
+- FIX (LIFT serialization — whitespace hygiene). `Node.__init__`'s append path
+  now maintains `.tail` whitespace, so azt-created nodes (citation, fields,
+  forms, annotations) no longer serialize glued (`</sense><citation>`) —
+  ending the meaningless whitespace diffs that inflated every merge.
+- Field validation (2026-07-11, desktop ↔ phone over LAN): drills A1
+  (phone→desktop incl. reload offer), A2 (desktop→phone), A3 (no-clobber:
+  offline divergence both sides, merged, converged, nothing lost), A4
+  (kill-daemon: silent degraded save, auto-respawn ≤10 s via the status poll,
+  history self-caught-up), and no-gesture convergence in both directions.
+
 # Version 1.9.0
 - FEATURE (sorting — Review Letter Groups). Position-matched default presentation:
   when a pair of letter groups is shown, each glyph frame now defaults to the

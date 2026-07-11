@@ -76,6 +76,20 @@ def test_submit_fast_path_advances_base(session):
     assert session.stale is False
 
 
+def test_submit_nothing_to_commit_is_benign(session):
+    """Identical-content saves (autosave cadence; post-degraded-write
+    catch-up) answer NOTHING_TO_COMMIT: adopt head, clear degraded,
+    'ok' — NOT the consumed-but-errored warning path (2026-07-11)."""
+    staged = _stage(session)
+    session.degraded = True
+    collab._client.submit_file = lambda *a: _result(
+        ('NOTHING_TO_COMMIT', {'head_sha': 'head3'}), head_sha='head3')
+    assert session.submit(session.lift_path, staged) == 'ok'
+    assert session.base_sha == 'head3'
+    assert session.degraded is False
+    assert session.stale is False
+
+
 def test_submit_merged_keeps_base_and_flags_stale(session):
     """Invariant 2 — the clobber-prevention regression test."""
     staged = _stage(session)

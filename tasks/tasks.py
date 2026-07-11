@@ -1897,7 +1897,7 @@ class JoinUFgroups(Tone,Task):
         self.ui.runwindow.wait_window(scroll)
     def __init__(self, program, **kwargs):
         super().__init__(program=program, **kwargs)
-class RecordCitation(Record,Segments):
+class RecordCitation(Record,Segments,Task):
     def tooltip(self):
         return _("This task helps you record words in isolation forms.")
     def dobuttonkwargs(self):
@@ -1913,7 +1913,7 @@ class RecordCitation(Record,Segments):
     is_record_task=True
     def __init__(self, program, **kwargs): #frame, filename=None
         super().__init__(program=program, **kwargs)
-class RecordCitationT(Record,Tone):
+class RecordCitationT(Record,Tone,Task):
     def tooltip(self):
         return _("This task helps you record words in tone frames, in citation form.")
     def dobuttonkwargs(self):

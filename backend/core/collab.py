@@ -222,6 +222,19 @@ class CollabSession:
             self.degraded = False
             self.record_lift_stat()
             return 'ok'
+        # NOTHING_TO_COMMIT is BENIGN, not a problem (2026-07-11): the daemon
+        # stored the file and found it IDENTICAL to HEAD — everything is
+        # already in history. Routine (azt autosaves unchanged content) and
+        # also the normal aftermath of a degraded direct write that the
+        # respawned daemon's startup reconcile already committed. Previously
+        # this fell into the consumed-but-errored branch and warned "history
+        # may catch up" on every such save. getattr guard: keep working even
+        # if the client's S predates the constant.
+        if result.has(getattr(S, 'NOTHING_TO_COMMIT', 'NOTHING_TO_COMMIT')):
+            self.base_sha = result.head_sha or self.base_sha
+            self.degraded = False
+            self.record_lift_stat()
+            return 'ok'
         if result.has(S.CONTRIBUTOR_UNSET):
             self.record_lift_stat()
             # The daemon landed the bytes but refused the commit until
@@ -269,6 +282,33 @@ class CollabSession:
                 "directly to disk (legacy mode) until it returns."
                 ).format(codes=result.codes()))
         return 'fallback'
+
+    def ambient_status(self):
+        """One short phrase for ambient display (the title bar; Kent
+        2026-07-11): the safety-relevant truth — is anything here still
+        unshared? Keyed on ``at_risk`` (commits NO other device has),
+        which is meaningful for LAN-only and remoted projects alike —
+        unlike ``wan_unshared``, which counts forever on LAN-only
+        projects. Returns None when there's nothing worth saying.
+        Never raises."""
+        if self.degraded:
+            return _("saving locally — server unreachable")
+        if self.stale:
+            return _("team changes available")
+        try:
+            st = _client.project_status(self.langcode)
+        except Exception:
+            return None
+        if st is None:
+            return None
+        at_risk = getattr(st, 'at_risk', None)
+        if at_risk is None:
+            at_risk = getattr(st, 'lan_unshared', None)
+        if at_risk is None:
+            return None
+        if at_risk:
+            return _("{n} change(s) not yet shared").format(n=at_risk)
+        return _("shared with team ✓")
 
     def adopt_reloaded_db(self):
         """After an IN-PLACE reload (A5) rebuilt ``program.db`` from the

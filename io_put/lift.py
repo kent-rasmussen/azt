@@ -2403,7 +2403,23 @@ class Node(et.Element):
                 parent.remove(node)
                 parent.insert(self.index,self)
             else:
+                # Append WITH whitespace hygiene (2026-07-11): a bare append
+                # carries no .tail, gluing the serialization ('</sense>
+                # <citation>' became '</sense><citation>') — meaningless diff
+                # that inflates every future merge. The new LAST child takes
+                # the old last child's tail (the indent that closes the
+                # parent); that child gets the parent's child-indent
+                # (parent.text). Whitespace-only values only; content never
+                # touched.
+                def _ws(x):
+                    return x if (x and not x.strip()) else None
+                prev=parent[-1] if len(parent) else None
                 parent.append(self) # add new elements after other children
+                if prev is not None and _ws(prev.tail):
+                    self.tail=prev.tail
+                    prev.tail=_ws(parent.text) or prev.tail
+                else:
+                    self.tail=_ws(parent.tail) or _ws(parent.text)
             self.db=parent.db #keep this available
         elif isinstance(parent,LiftXML): # root element parent is object
             self.db=parent
