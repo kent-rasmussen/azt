@@ -317,14 +317,13 @@ class App:
         from utilities.error_handler import notify_error
         log.info(_("Offering reload for team changes"))
         self._collab_offer_win = notify_error(
-            _("Your team made changes to this database. Loading them "
-              "requires {name} to restart — or press OK to keep "
-              "working and load them later. Your saves are safe "
-              "either way, and will be combined with your team’s."
-              ).format(name=self.name),
+            _("Your team made changes to this database. Press "
+              "‘Load now’ to load them — or OK to keep working and "
+              "load them later. Your saves are safe either way, and "
+              "will be combined with your team’s."),
             title=_("Team changes available"),
-            button=(_("Load now (restart)"),
-                    lambda event=None: self.restart()))
+            button=(_("Load now"),
+                    lambda event=None: self.reload_database()))
     def askwhichlift(self):
         # put right click menu here
         LiftChooser(self)
@@ -579,6 +578,73 @@ class App:
             return name[:-len(cvt)]
         else:
             log.info(f"cvt {cvt} not in task name {name}; not sure how to derive a base")
+    def reload_database(self):
+        """A5 (in-place reload): re-read the LIFT from disk and rebuild
+        everything derived from it — no process restart. Used when the
+        collab daemon merged team changes under us. The process keeps
+        its Tk root, theme and presenters; db + derived layers + the
+        task view rebuild in _run_setup's exact post-FileParser order.
+        The user's position (current check/group/slice) is durable
+        state, so re-entering the same task class resumes close to
+        where they were. ANY failure falls back to the trusted full
+        restart — continuity is best-effort, correctness is not."""
+        log.info("In-place reload: starting")
+        try:
+            # Quiesce writes (as restart() does): the reload must read a
+            # settled file, and no write thread may straddle the db swap.
+            if self.towrite:
+                self.maybewrite(definitely=True)
+            while self.writing:
+                log.info(_("Waiting to finish writing to lift"))
+                time.sleep(1)
+                self.check_if_write_done()
+            # Wind down the task view with the machinery user-quit uses:
+            # on_quit sets the exit flag THEN destroys, so any nested
+            # wait_window frames unwind through their normal exit
+            # branches. The chooser is destroyed directly instead — its
+            # own on_quit chains to app shutdown.
+            prev_task_class=None
+            task=getattr(self,'task',None)
+            chooser=getattr(self,'taskchooser',None)
+            if task is not None and task is not chooser:
+                prev_task_class=type(task)
+                try:
+                    task.ui.on_quit()
+                except Exception as e:
+                    log.info("reload: task teardown: %s",e)
+            self.task=None
+            if chooser is not None:
+                try:
+                    chooser.ui.exitFlag.true() #pending afters exit early…
+                    chooser.ui.destroy() #…and no app-quit on_quit chain
+                except Exception as e:
+                    log.info("reload: chooser teardown: %s",e)
+            # Rebuild: boot-parity with _run_setup's post-FileParser
+            # chain (same constructors, same order; presenters/root/
+            # theme/langtags are process-lifetime and stay).
+            FileParser(self)
+            if getattr(self,'collab',None):
+                self.collab.adopt_reloaded_db()
+            ToneFrames(self)
+            Settings(self)
+            CheckParameters(self)
+            self.settings.post_lift_init()
+            ProfileAnalyzer(self)
+            ExampleDict(self)
+            Alphabet(self)
+            UISettings(self)
+            TaskChooser(self)
+            try: #usbcheck may have redrawn the boot splash; never leave it up
+                self.splash.withdraw()
+            except Exception:
+                pass
+            if prev_task_class is not None:
+                self.taskchooser.maketask(prev_task_class)
+            log.info("In-place reload: done")
+        except Exception as e:
+            log.error("In-place reload failed (%s); falling back to a "
+                      "full restart.", e)
+            self.restart()
     def restart(self,filename=None):
         log.info(_("Restarting from App"))
         file.writefilename(self.filename)

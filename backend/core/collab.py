@@ -270,6 +270,37 @@ class CollabSession:
                 ).format(codes=result.codes()))
         return 'fallback'
 
+    def adopt_reloaded_db(self):
+        """After an IN-PLACE reload (A5) rebuilt ``program.db`` from the
+        on-disk LIFT: re-hook the new db's write seam and adopt the
+        daemon's current head as our base — the in-memory tree now
+        derives from that content, so the stale latch clears and saves
+        return to the fast path. Daemon unreachable → keep the old base
+        (every save still re-merges against it; safe, just not fast).
+        If a peer merge lands in the tiny window between the disk read
+        and this rebase, the lift-stat probe flags it on the next poll."""
+        try:
+            self.program.db.collab_submit = self.submit
+        except Exception as e:
+            log.error(f"adopt_reloaded_db hook: {e}")
+        try:
+            st = _client.project_status(self.langcode)
+            head = getattr(st, 'head_sha', '') if st else ''
+            head_blob = getattr(st, 'lift_blob_sha', '') if st else ''
+            if head:
+                self.base_sha = head
+            if head_blob:
+                self.base_lift_blob = head_blob
+        except Exception as e:
+            log.info(f"adopt_reloaded_db status probe: {e}")
+        self.record_lift_stat()
+        self.stale = False
+        self._last_detected_head = ''
+        self._offered_head = ''
+        log.info(_("Collaboration rebased after in-place reload "
+                   "(base {base}).").format(
+                       base=self.base_sha[:12] or '<none>'))
+
     # ── Phase 3: remote-change detection (§17b applied to desktop) ───
 
     def poll_remote_change(self):

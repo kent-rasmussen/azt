@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1560" viewBox="0 0 2400 1560" font-family="monospace" fill="black">
+  <!-- Vowels: from LIFT database through ps-profile slices and position checks
+       to verified groups, united into alphabet letters. Companion to
+       "AZT Process Flow Chart.png" (tone); same visual grammar:
+       full detail in ONE slice (N CVCV) and ONE letter (i); dots + etc
+       elsewhere to show breadth. Monochrome; print from a browser. -->
+  <style>
+    .box{fill:white;stroke:black;stroke-width:3}
+    .chk{fill:white;stroke:black;stroke-width:2.5}
+    .grp{fill:white;stroke:black;stroke-width:2.5}
+    .act{fill:#d8d8d8;stroke:#555;stroke-width:1.5}
+    .ln{stroke:black;stroke-width:2;fill:none}
+    .tangle{stroke:#444;stroke-width:1.5;fill:none}
+    .lbl{font-size:30px;font-weight:bold}
+    .etc{font-size:34px;font-weight:bold}
+    .small{font-size:24px}
+    text{fill:black}
+  </style>
+
+  <!-- ══ LIFT Database ══ -->
+  <ellipse cx="1200" cy="95" rx="520" ry="70" class="box"/>
+  <text x="1200" y="112" text-anchor="middle" font-size="56" font-weight="bold">LIFT Database</text>
+  <line x1="1720" y1="80" x2="2330" y2="80" class="ln"/>
+  <text x="2340" y="92" class="etc">etc</text>
+
+  <!-- ══ Row label: ps + profile ══ -->
+  <text x="40" y="290" class="lbl">Part of Speech</text>
+  <text x="40" y="326" class="lbl">Syllable Profile</text>
+
+  <!-- slice boxes -->
+  <line x1="900" y1="156" x2="475" y2="240" class="ln"/>
+  <line x1="1050" y1="164" x2="755" y2="240" class="ln"/>
+  <line x1="1205" y1="166" x2="1255" y2="240" class="ln"/>
+  <line x1="1450" y1="159" x2="1855" y2="240" class="ln"/>
+  <rect x="400" y="240" width="150" height="95" class="box"/>
+  <text x="475" y="280" text-anchor="middle" font-size="34" font-weight="bold">V</text>
+  <text x="475" y="318" text-anchor="middle" font-size="34" font-weight="bold">CVC</text>
+  <rect x="680" y="240" width="150" height="95" class="box"/>
+  <text x="755" y="280" text-anchor="middle" font-size="34" font-weight="bold">N</text>
+  <text x="755" y="318" text-anchor="middle" font-size="34" font-weight="bold">CV</text>
+  <rect x="1180" y="240" width="150" height="95" class="box"/>
+  <text x="1255" y="280" text-anchor="middle" font-size="34" font-weight="bold">N</text>
+  <text x="1255" y="318" text-anchor="middle" font-size="34" font-weight="bold">CVCV</text>
+  <rect x="1780" y="240" width="150" height="95" class="box"/>
+  <text x="1855" y="280" text-anchor="middle" font-size="34" font-weight="bold">N</text>
+  <text x="1855" y="318" text-anchor="middle" font-size="34" font-weight="bold">CVC</text>
+  <text x="2260" y="300" class="etc">etc</text>
+
+  <!-- ══ Row label: checks ══ -->
+  <text x="40" y="480" class="lbl">Vowel Position</text>
+  <text x="40" y="516" class="lbl">(one check each)</text>
+
+  <!-- checks: N CV → V1 ; N CVCV → V1 V2 ; N CVC → V1 -->
+  <line x1="755" y1="335" x2="755" y2="450" class="ln"/>
+  <rect x="700" y="450" width="110" height="48" class="chk"/>
+  <text x="755" y="483" text-anchor="middle" font-size="30" font-weight="bold">V1</text>
+
+  <line x1="1230" y1="335" x2="1135" y2="450" class="ln"/>
+  <line x1="1280" y1="335" x2="1385" y2="450" class="ln"/>
+  <rect x="1080" y="450" width="110" height="48" class="chk"/>
+  <text x="1135" y="483" text-anchor="middle" font-size="30" font-weight="bold">V1</text>
+  <rect x="1330" y="450" width="110" height="48" class="chk"/>
+  <text x="1385" y="483" text-anchor="middle" font-size="30" font-weight="bold">V2</text>
+
+  <line x1="1855" y1="335" x2="1855" y2="450" class="ln"/>
+  <rect x="1800" y="450" width="110" height="48" class="chk"/>
+  <text x="1855" y="483" text-anchor="middle" font-size="30" font-weight="bold">V1</text>
+  <text x="2260" y="485" class="etc">etc</text>
+
+  <!-- ══ Row label: groups ══ -->
+  <text x="40" y="640" class="lbl">Sorted, then</text>
+  <text x="40" y="676" class="lbl">Verified, into</text>
+  <text x="40" y="712" class="lbl">Vowel Groups</text>
+
+  <!-- groups per check (circles); a digit = a group not yet named -->
+  <!-- N CV V1 -->
+  <line x1="735" y1="498" x2="660" y2="605" class="ln"/>
+  <line x1="775" y1="498" x2="770" y2="605" class="ln"/>
+  <circle cx="655" cy="640" r="34" class="grp"/>
+  <text x="655" y="653" text-anchor="middle" font-size="32" font-weight="bold">i</text>
+  <circle cx="770" cy="640" r="34" class="grp"/>
+  <text x="770" y="653" text-anchor="middle" font-size="32" font-weight="bold">a</text>
+
+  <!-- N CVCV V1 (full-detail slice) -->
+  <line x1="1110" y1="498" x2="1015" y2="605" class="ln"/>
+  <line x1="1135" y1="498" x2="1125" y2="605" class="ln"/>
+  <line x1="1160" y1="498" x2="1235" y2="605" class="ln"/>
+  <circle cx="1010" cy="640" r="34" class="grp"/>
+  <text x="1010" y="653" text-anchor="middle" font-size="32" font-weight="bold">i</text>
+  <circle cx="1120" cy="640" r="34" class="grp"/>
+  <text x="1120" y="653" text-anchor="middle" font-size="32" font-weight="bold">ɛ</text>
+  <circle cx="1230" cy="640" r="34" class="grp"/>
+  <text x="1230" y="653" text-anchor="middle" font-size="32" font-weight="bold">a</text>
+
+  <!-- N CVCV V2 -->
+  <line x1="1365" y1="498" x2="1345" y2="605" class="ln"/>
+  <line x1="1390" y1="498" x2="1455" y2="605" class="ln"/>
+  <line x1="1415" y1="498" x2="1565" y2="605" class="ln"/>
+  <circle cx="1340" cy="640" r="34" class="grp"/>
+  <text x="1340" y="653" text-anchor="middle" font-size="32" font-weight="bold">i</text>
+  <circle cx="1450" cy="640" r="34" class="grp"/>
+  <text x="1450" y="653" text-anchor="middle" font-size="32" font-weight="bold">a</text>
+  <circle cx="1560" cy="640" r="34" class="grp"/>
+  <text x="1560" y="653" text-anchor="middle" font-size="32" font-weight="bold">ə</text>
+
+  <!-- N CVC V1 -->
+  <line x1="1830" y1="498" x2="1755" y2="605" class="ln"/>
+  <line x1="1855" y1="498" x2="1865" y2="605" class="ln"/>
+  <line x1="1880" y1="498" x2="1975" y2="605" class="ln"/>
+  <circle cx="1750" cy="640" r="34" class="grp"/>
+  <text x="1750" y="653" text-anchor="middle" font-size="32" font-weight="bold">i</text>
+  <circle cx="1860" cy="640" r="34" class="grp"/>
+  <text x="1860" y="653" text-anchor="middle" font-size="32" font-weight="bold">ʊ</text>
+  <circle cx="1970" cy="640" r="34" class="grp"/>
+  <text x="1970" y="653" text-anchor="middle" font-size="32" font-weight="bold">1</text>
+  <text x="2260" y="655" class="etc">etc</text>
+  <text x="1970" y="742" text-anchor="middle" class="small">(“1”: sorted, not</text>
+  <text x="1970" y="770" text-anchor="middle" class="small">yet named)</text>
+
+  <!-- ══ Row label: letters ══ -->
+  <text x="40" y="1170" class="lbl">Alphabet Letters</text>
+  <text x="40" y="1206" class="lbl">(sort groups</text>
+  <text x="40" y="1242" class="lbl">into letters)</text>
+
+  <!-- tangle: same-sound groups across slices and positions converge on one letter -->
+  <line x1="655"  y1="674" x2="850"  y2="1090" class="tangle"/>
+  <line x1="1010" y1="674" x2="880"  y2="1090" class="tangle"/>
+  <line x1="1340" y1="674" x2="905"  y2="1090" class="tangle"/>
+  <line x1="1750" y1="674" x2="930"  y2="1090" class="tangle"/>
+  <line x1="1120" y1="674" x2="1090" y2="1090" class="tangle"/>
+  <line x1="770"  y1="674" x2="1300" y2="1090" class="tangle"/>
+  <line x1="1230" y1="674" x2="1330" y2="1090" class="tangle"/>
+  <line x1="1450" y1="674" x2="1360" y2="1090" class="tangle"/>
+  <line x1="1860" y1="674" x2="1560" y2="1090" class="tangle"/>
+  <line x1="1560" y1="674" x2="1760" y2="1090" class="tangle"/>
+  <line x1="1970" y1="674" x2="1790" y2="1090" class="tangle"/>
+
+  <!-- letter boxes -->
+  <rect x="810" y="1090" width="150" height="120" class="box"/>
+  <text x="885" y="1170" text-anchor="middle" font-size="64" font-weight="bold">i</text>
+  <rect x="1040" y="1090" width="150" height="120" class="box"/>
+  <text x="1115" y="1170" text-anchor="middle" font-size="64" font-weight="bold">ɛ</text>
+  <rect x="1270" y="1090" width="150" height="120" class="box"/>
+  <text x="1345" y="1170" text-anchor="middle" font-size="64" font-weight="bold">a</text>
+  <rect x="1500" y="1090" width="150" height="120" class="box"/>
+  <text x="1575" y="1170" text-anchor="middle" font-size="64" font-weight="bold">ʊ</text>
+  <rect x="1730" y="1090" width="150" height="120" class="box"/>
+  <text x="1805" y="1170" text-anchor="middle" font-size="64" font-weight="bold">?</text>
+  <text x="1805" y="1240" text-anchor="middle" class="small">(not yet decided)</text>
+  <text x="1960" y="1170" class="etc">etc</text>
+
+  <!-- full detail: what the letter i unites -->
+  <line x1="885" y1="1210" x2="885" y2="1290" class="ln"/>
+  <rect x="620" y="1290" width="700" height="130" class="grp"/>
+  <text x="640" y="1330" font-size="28" font-weight="bold">One letter ⟨i⟩ =</text>
+  <text x="640" y="1368" font-size="26">[N CV V1 i] ~ [N CVCV V1 i] ~ [N CVCV V2 i]</text>
+  <text x="640" y="1400" font-size="26">~ [N CVC V1 i] ~ [V CVC V1 i] ~ etc</text>
+
+  <!-- automatic action, poster convention: gray hard-edged box -->
+  <rect x="1380" y="1290" width="450" height="150" class="act"/>
+  <text x="1400" y="1330" font-size="26">Once EVERY C and V of a</text>
+  <text x="1400" y="1362" font-size="26">word is verified, A-Z+T</text>
+  <text x="1400" y="1394" font-size="26">updates its spelling</text>
+  <text x="1400" y="1426" font-size="26">from its verified groups.</text>
+
+  <text x="40" y="1515" font-size="30" font-weight="bold">Each verified group joins ONE letter; each letter collects that sound everywhere it occurs.</text>
+</svg>

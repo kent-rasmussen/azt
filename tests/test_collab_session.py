@@ -171,6 +171,45 @@ def test_poll_probe_failure_is_never_an_event(session):
     assert session.poll_remote_change() == 'none'
 
 
+# ── adopt_reloaded_db(): A5 in-place-reload rebase ────────────────────
+
+
+def test_adopt_reloaded_db_rebases_and_clears_latch(session):
+    """After an in-place reload the in-memory tree derives from the
+    on-disk (merged) LIFT: base adopts the daemon's head, the stale
+    latch and offer memory clear, and the NEW db gets the write seam."""
+    session.stale = True
+    session._last_detected_head = 'head9'
+    session._offered_head = 'head9'
+    db = types.SimpleNamespace()
+    session.program.db = db
+    collab._client.project_status = lambda lc: types.SimpleNamespace(
+        head_sha='head9', lift_blob_sha='blob9')
+    session.adopt_reloaded_db()
+    assert db.collab_submit == session.submit
+    assert session.base_sha == 'head9'
+    assert session.base_lift_blob == 'blob9'
+    assert session.stale is False
+    assert session._last_detected_head == ''
+    assert session._offered_head == ''
+
+
+def test_adopt_reloaded_db_daemon_down_keeps_base(session):
+    """Daemon unreachable at rebase: keep the old base (saves stay
+    safe — they re-merge against it), still hook the new db and clear
+    the latch (the tree DOES now derive from the on-disk merge)."""
+    session.stale = True
+    db = types.SimpleNamespace()
+    session.program.db = db
+    def boom(lc):
+        raise OSError('down')
+    collab._client.project_status = boom
+    session.adopt_reloaded_db()
+    assert db.collab_submit == session.submit
+    assert session.base_sha == 'base1'
+    assert session.stale is False
+
+
 # ── reload_offer_due() rate limiting + new-head bypass ───────────────
 
 

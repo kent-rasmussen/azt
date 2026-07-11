@@ -4563,16 +4563,6 @@ def profilelang(analang,machine=False): #Machine for script compatability
      return ''.join(bits)
 def quote(x):
     return "‘"+str(x)+"’"
-# ---- LIFT de-duplication cleanup (bad-merge artifacts) --------------------
-# Bad merges have left EXACT-duplicate nodes (whole entries/senses/glosses/forms
-# copied verbatim). clean_lift_tree removes ONLY deep-identical sibling nodes
-# (modulo insignificant whitespace), keeping the first, and SEPARATELY reports
-# sibling nodes that are mostly-but-not-identical, so those can be reconciled by
-# hand or a follow-up rule. Nothing is written unless an output path is given
-# (so no-outpath == a safe report-only dry run). Wire __main__ when ready, e.g.:
-#     if __name__=='__main__':
-#         import sys
-#         clean_lift_file(sys.argv[1], sys.argv[2] if len(sys.argv)>2 else None)
 def _clean_norm_text(el):
     """The element's OWN direct text — usually just inter-tag whitespace in
     LIFT. Used only for the deep signature; for meaningful content see
@@ -5490,6 +5480,16 @@ if __name__ == '__main__':
     # revert_stuff(**kwargs) #depends on lift (above)
     # print(lift.get_segments_annotated())
     # report()
+    # ---- LIFT de-duplication cleanup (bad-merge artifacts) --------------------
+    # Bad merges have left EXACT-duplicate nodes (whole entries/senses/glosses/forms
+    # copied verbatim). clean_lift_tree removes ONLY deep-identical sibling nodes
+    # (modulo insignificant whitespace), keeping the first, and SEPARATELY reports
+    # sibling nodes that are mostly-but-not-identical, so those can be reconciled by
+    # hand or a follow-up rule. Nothing is written unless an output path is given
+    # (so no-outpath == a safe report-only dry run). Wire __main__ when ready, e.g.:
+    #     if __name__=='__main__':
+    #         import sys
+    #         clean_lift_file(sys.argv[1], sys.argv[2] if len(sys.argv)>2 else None)
     def writetofile(name):
         f = open(str(name)+'.txt', 'w', encoding='utf-8') # to append, "a"
         f.write(prettyprint(lift.nodes))

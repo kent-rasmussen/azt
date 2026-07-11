@@ -7,7 +7,8 @@
 
 ## Goals
 - Work through the sorting of consonants in at least one syllable profile for nouns and verbs
+- Discuss orthographic options if you have any new consonants.
 
 ## Follow-up Action Items
-- Work through the sorting of Consonants in at least the three most populous syllable profiles for nouns and verbs
-- Send your database to your consultant.
+- Work through the sorting of Consonants in at least the **three** most populous syllable profiles for nouns **and** verbs.
+- Keep your database up to date for your consultant.
