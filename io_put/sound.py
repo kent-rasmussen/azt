@@ -145,10 +145,21 @@ class SoundFilePlayer(object):
             log.error("Can't play '{}': couldn't decode it to WAV.".format(
                                                             self.filenameURL))
             return
+        # A play may still be in flight — including one wedged inside
+        # pyaudio's blocking write() (2026-07-14: 192kHz/32int test play
+        # froze the whole UI). Never stack another stream on top of it.
+        prev=getattr(self,'_playthread',None)
+        if prev is not None and prev.is_alive():
+            log.info("Previous play still busy; ignoring this play request")
+            return
         self.streamclose() #just in case
         timeout=5 #seconds or None
         process=False
-        thread=False
+        # Run playback OFF the Tk main thread: a blocking stream.write() on
+        # the main thread freezes the UI for the whole clip — or forever, if
+        # pyaudio wedges. join(timeout) below caps any wait; the daemon flag
+        # means a wedged write can't hold the app open at exit.
+        thread=True
         self.wf = wave.open(playURL, 'rb')
         frames = self.wf.getnframes()
         rate=int(self.wf.getframerate())
@@ -203,7 +214,7 @@ class SoundFilePlayer(object):
                 try:
                     self.data = self.wf.readframes(self.chunk)
                 except OSError as e:
-                    if "Output underflowed" in e.arg[0]:
+                    if "Output underflowed" in e.args[0]:
                         self.streamopen(rate,channels)
                     log.exception("Unexpected exception trying to read "
                                 f"frames {sys.exc_info()[0]}")
@@ -248,7 +259,8 @@ class SoundFilePlayer(object):
         elif thread:
             from threading import Thread
             log.info("Running as threaded")
-            p = Thread(target=block)
+            p = Thread(target=block, daemon=True)
+            self._playthread=p
         else:
             log.info("Running in line")
             block()
@@ -265,7 +277,13 @@ class SoundFilePlayer(object):
                 raise p.exception
             if process:
                 p.terminate()
-        self.wf.close()
+        if thread and p.is_alive():
+            # join timed out with playback (or a wedged write) still going —
+            # the thread owns self.wf; closing it under the reader raises.
+            log.info("play still running after %ss; leaving it to finish "
+                     "in the background",timeout)
+        else:
+            self.wf.close()
     def __init__(self,filenameURL,pyaudio,settings):
         self.pa=pyaudio
         self.filenameURL=filenameURL

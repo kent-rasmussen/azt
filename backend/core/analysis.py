@@ -717,7 +717,12 @@ class SliceDict(dict):
         e+='\n'+_("Invalid entries found: {invalid}/{total}").format(invalid=profilecountInvalid,
                                                         total=sum(self.values(),
                                                         profilecountInvalid))
-        if self.program.db.analangs and not len(wcounts):
+        if (self.program.db.analangs and not len(wcounts)
+                and profilecountInvalid):
+            # entries were analyzed and ALL failed to slice — a real problem
+            # (probably the analysis language). 0 slices from 0 entries (a
+            # fresh project before collection) is expected: log only, no
+            # modal (the "Found 0 valid data slices: [] / 0/0" nag).
             e+='\n'+_("This may be a problem with your analysis language: {lang}"
                     "").format(lang=self.program.db.analang)
             e+='\n'+_("Or a problem with your database.")
@@ -1624,13 +1629,6 @@ class StatusDict(dict):
                         elif 'groups' in node and node['groups'] == []:
                             del self[t][ps][profile][check]
                         elif 'done' in node and 'groups' in node:
-                            # DIAG-done (temporary): catch groups intersected OUT of
-                            # done by the cull (done entries with no surviving group).
-                            _dropped=set(node['done'])-set(node['groups'])
-                            if _dropped:
-                                log.info("DIAG-done cull DROP %s from %s/%s/%s done "
-                                         "(not in groups %s)", sorted(_dropped),
-                                         ps, profile, check, sorted(node['groups']))
                             node['done']=sorted(set(node['done']
                                                     )&set(node['groups']))
                         elif 'done' in node: #i.e., w/o groups
@@ -1831,9 +1829,6 @@ class StatusDict(dict):
             if group in n['done']:
                 n['done'].remove(group)
                 changed=True
-                # DIAG-done (temporary): catch explicit un-verification of a group.
-                log.info("DIAG-done update REMOVE %s from done (now %s)",
-                         group, n['done'])
         if writestatus and changed:
             self.store()
         # log.info("Verification after update: {}".format(self.verified()))
@@ -1842,13 +1837,6 @@ class StatusDict(dict):
         """This maintains the group we are actually on, pulled from data
         located by current slice and parameters"""
         if group != '<unspecified>': #this needs to be able to be specified None
-            # DIAG-done (temporary): a default integer group must stay a str — an int
-            # here silently breaks getsensesingroup's "annotation==group" match (now
-            # str-guarded) and any other raw compare. Trip if a non-str/non-None
-            # group is ever set, to prove whether ints leak into the group channel.
-            if group is not None and not isinstance(group, str):
-                log.info("DIAG-done group() set to NON-STR %r (%s)",
-                         group, type(group).__name__)
             self._group=group
         return getattr(self,'_group',None)# this needs to be booleanable
     def renamegroup(self,j,k,**kwargs):

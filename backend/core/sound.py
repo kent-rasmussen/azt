@@ -474,6 +474,10 @@ class SoundSettings(object):
         self.makedefaultifnot()
         # Exclude accidental recordings: 44.8 kHz @ 1 s = 14.6 k
         self.min_audio_length_ms = 500
+        # bulk-ASR visibility (Kent 2026-07-14): which model/language units
+        # the current/last bulk run still has to do and has done. Persisted
+        # as a top-level audio.json key; updated live by tasks/bulk_asr.py.
+        self.asr_in_process = {'todo': [], 'done': []}
         try:
             assert 'backend.asr' in sys.modules, "ASR module not loaded"
             self.initial_ASR_kwargs(analang_obj)

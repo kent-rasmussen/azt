@@ -254,16 +254,6 @@ class Sort(Categories):
                                                                     add,rms))
         """The above doesn't test for profile, so we restrict that next"""
         _inslice=list(self.program.slices.inslice(senses)) #only for this ps-profile
-        # DIAG-done (temporary, poss. 1 root): EVERY verify write — list exactly
-        # which senses get the code, the group NAME and its python TYPE (to catch a
-        # glyph/int name flip), and the add/remove value. If the read-side later
-        # shows a member with no code, compare: absent from this write
-        # (getsensesincheckgroup/inslice missed it / wrong name) or failed to persist?
-        log.info("DIAG-done write %s=%r (%s) profile=%s verified=%s add=%r rms=%r "
-                 "-> coding %d/%d inslice senses: %s (full group %s)",
-                 check, group, type(group).__name__, profile, verified, add, rms,
-                 len(_inslice), len(senses), [s.id for s in _inslice],
-                 [s.id for s in senses])
         # Syllable PROFILE check (check==ftype): verification lives ONLY in the
         # plain …-x-cvprofile form (the single source of truth) — NOT as an
         # lc=<profile> code in the <profile-class> lc verification field. So set/clear
@@ -666,9 +656,6 @@ class Sort(Categories):
                 self.did['sort']=True
             return
         log.info("Maybe Verify")
-        _vn=self.program.status.node()
-        log.info("DIAG-join-verify maybesort node check=%s done=%s groups=%s",
-                 self.program.params.check(),_vn.get('done'),_vn.get('groups'))
         groupstoverify=self.groups(toverify=True)
         if groupstoverify:
             log.info("Going to verify the first of these groups now: {groups}".format(
@@ -1425,9 +1412,9 @@ class Sort(Categories):
             if group in groups:
                 groups.remove(group)
             # log.info("Group-groups: {group}-{groups}".format(group=group,groups=groups))
-            log.info(f"verify status.groups: {self.program.status.groups(wsorted=True)}")
+            log.debug(f"verify status.groups: {self.program.status.groups(wsorted=True)}")
             self.program.status.groups(groups,wsorted=True)
-            log.info(f"verify status.groups: {self.program.status.groups(wsorted=True)}")
+            log.debug(f"verify status.groups: {self.program.status.groups(wsorted=True)}")
             log.info("All groups: {groups}".format(groups=self.groups(wsorted=True)))
             log.info("Groups to verify: {groups}"
                         "".format(groups=self.groups(toverify=True)))
@@ -1607,10 +1594,6 @@ class Sort(Categories):
                 # via waitdone() on StopIteration — do NOT waitdone() here.
                 def join_pair_done():
                     self.program.settings.reloadstatusdata_cleanup()
-                    _cn=self.program.status.node()
-                    log.info("DIAG-join-verify post-cull node check=%s done=%s "
-                             "groups=%s",self.program.params.check(),
-                             _cn.get('done'),_cn.get('groups'))
                     self.updatestatus(group=lpr[1],
                                     verified=False,
                                     writestatus=True)
@@ -1625,7 +1608,7 @@ class Sort(Categories):
                         if _glyph:
                             self.program.alphabet.mark_glyph_not_done(_glyph)
                             self.program.alphabet.save_settings()
-                            log.info("DIAG-join-verify glyph %r unverified "
+                            log.info("Glyph %r unverified "
                                      "(member %s changed by join)",_glyph,_item)
                     except Exception as e:
                         log.info("join glyph-unverify skipped: %s",e)
@@ -1691,9 +1674,6 @@ class Sort(Categories):
         check=self.program.params.check()
         ps=self.program.slices.ps()
         profile=self.program.slices.profile()
-        _bn=self.program.status.node()
-        log.info("DIAG-join-verify join-start node check=%s done=%s groups=%s",
-                 check,_bn.get('done'),_bn.get('groups'))
         pairs=get_pairs()
         if sortgroup: #sometimes we just limit this to one group
             pairs=[g for g in pairs if sortgroup in g]

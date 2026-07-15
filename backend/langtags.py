@@ -33,6 +33,10 @@ private: a code starting with x- that has no defined meaning.
 
 maybe pull ldml from https://ldml.api.sil.org/langtags.json, then add PUA
 """
+#once-per-run guards for static language-support log blocks (classes here are
+#instantiated more than once per boot; the numbers never change within a run)
+_support_logged=False
+_json_logged=False
 tag_is_valid=langcodes.tag_is_valid
 tone_code='-x-tone'
 phonetic_code='-x-ipa'
@@ -150,10 +154,13 @@ class SisterLanguages(object):
         self.mms_tts_support=self.mms_support('tts')
         self.load_whisper_dict()
         self.whisper_support=self.whisper_codes_alpha3()
-        log.info(f"Whisper language support for {len(self.whisper_dict)} "
-                "languages")
-        log.info(f"Facebook MMS language support for {len(self.mms_data)} "
-                f"languages ({len(self.mms_support('asr'))} for ASR)")
+        global _support_logged #static info; log once per run, not per instance
+        if not _support_logged:
+            _support_logged=True
+            log.info(f"Whisper language support for {len(self.whisper_dict)} "
+                    "languages")
+            log.info(f"Facebook MMS language support for {len(self.mms_data)} "
+                    f"languages ({len(self.mms_support('asr'))} for ASR)")
 class Languages(dict):
     def fix_data(self):
         qafar_names={'localname': 'Qafar', 'localnames': ['Qafar af']}
@@ -203,12 +210,15 @@ class Languages(dict):
                                     if 'api' not in i
                                     if i['tag'] != '_phonvar'
                                 ]
-        log.info(f"Loaded JSON language data with {len(self.full_codes)} "
-            "full language codes "
-            f"and {len(self.region_codes)} regions ("
-            f"v{self.data_version}; {self.data_date})")
-        log.info(f"found phonetic labels {self.phonetic_labels}")
-        log.info(f"Remaining metadata: {metadata}")
+        global _json_logged #static info; log once per run, not per instance
+        if not _json_logged:
+            _json_logged=True
+            log.info(f"Loaded JSON language data with {len(self.full_codes)} "
+                "full language codes "
+                f"and {len(self.region_codes)} regions ("
+                f"v{self.data_version}; {self.data_date})")
+            log.info(f"found phonetic labels {self.phonetic_labels}")
+            log.info(f"Remaining metadata: {metadata}")
     def load_by_iso(self):
         self.by_iso=dict_by('language code')
         for i in self.by_iso:
@@ -457,12 +467,12 @@ class Language(langcodes.Language):
             n=min(len(self.lineage),3)
             meta+=['/'.join(self.lineage[-n:])]
         return (f"{self.display_name()} [{self.alpha23()}] ({'; '.join(meta)})")
-    def supported_ancestor_objs_prioritized(self):
+    def supported_ancestor_objs_prioritized(self, broaden=0):
         return [self.languages.get_obj(i)
-                    for i in self.supported_ancestor_codes_prioritized()
+                    for i in self.supported_ancestor_codes_prioritized(broaden)
                     if i]
-    def supported_ancestor_codes_prioritized(self):
-        d=self.supported_ancestors()
+    def supported_ancestor_codes_prioritized(self, broaden=0):
+        d=self.supported_ancestors(broaden)
         sisters=[]
         if d:
             for o in ['both','whisper','mms_asr']: #in this order
@@ -472,22 +482,34 @@ class Language(langcodes.Language):
                         if i not in sisters] #no repeats
                     )
         return sisters
-    def supported_ancestors(self):
+    def supported_ancestors(self, broaden=0):
+        """The FIRST (most specific) lineage level with ASR support — the
+        long-standing default — then `broaden` further steps UP the tree
+        (each step = a broader family = more sister languages). Kent
+        2026-07-13: the ASR settings 'Include more/fewer languages' buttons
+        drive `broaden`; 0 keeps the old first-found behavior."""
         # lineage=self.lineage() #for macrolanguages, just the shared bit
+        i0=None
         for i in range(len(self.lineage),0,-1):
             all=self.languages.descendants_of(self.lineage[:i])
-            ancestors={'whisper':all&self.languages.sisters.whisper_support,
-                        'mms_asr':all&self.languages.sisters.mms_asr_support,
-                        'mms_lid':all&self.languages.sisters.mms_lid_support,
-                        'mms_tts':all&self.languages.sisters.mms_tts_support,
-                        }
-            total=[len(v) for k,v in ancestors.items()
-                                if k in ['whisper','mms_asr']]
-            if sum(total):
-                ancestors['both']=ancestors['whisper']&ancestors['mms_asr']
-                log.info(f"Support found for "
-                    f"{'/'.join(self.lineage[:i])} languages: {ancestors}")
-                return ancestors
+            if (all & self.languages.sisters.whisper_support
+                    or all & self.languages.sisters.mms_asr_support):
+                i0=i
+                break
+        if i0 is None:
+            return
+        i=max(i0-max(int(broaden or 0),0),1)
+        all=self.languages.descendants_of(self.lineage[:i])
+        ancestors={'whisper':all&self.languages.sisters.whisper_support,
+                    'mms_asr':all&self.languages.sisters.mms_asr_support,
+                    'mms_lid':all&self.languages.sisters.mms_lid_support,
+                    'mms_tts':all&self.languages.sisters.mms_tts_support,
+                    }
+        ancestors['both']=ancestors['whisper']&ancestors['mms_asr']
+        log.info(f"Support found for "
+            f"{'/'.join(self.lineage[:i])} languages (broaden={broaden}; "
+            f"default level {'/'.join(self.lineage[:i0])}): {ancestors}")
+        return ancestors
     def report(self):
         log.info(f"{self.display_name()} ({self.display_name('fr')}; "
             f"tag '{self.tag()}' "

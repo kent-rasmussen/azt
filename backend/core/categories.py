@@ -169,9 +169,9 @@ class Categories:
         newgroup=max(values)+1
         groups.append(str(newgroup))
         if not macrosort: #for macrosort, marksortgroup does this
-            log.info(f"add_int_group status.groups: {self.program.status.groups(wsorted=True)}")
+            log.debug(f"add_int_group status.groups: {self.program.status.groups(wsorted=True)}")
             self.program.status.groups(groups,wsorted=True)
-            log.info(f"add_int_group status.groups: {self.program.status.groups(wsorted=True)}")
+            log.debug(f"add_int_group status.groups: {self.program.status.groups(wsorted=True)}")
             self.program.status.store()
         log.info("Groups (appended): {groups}".format(groups=groups))
         return str(newgroup)
@@ -213,9 +213,6 @@ class Categories:
             yield i * 50 // n  # 0-50 for marksortgroup phase
         if updatestatus:
             yield from self.program.settings.reloadstatusdata() # 0-100 mapped to ~50 already
-            _rn=self.program.status.node()
-            log.info("DIAG-join-verify after-reload (pre-cull) node check=%s "
-                     "done=%s groups=%s",check,_rn.get('done'),_rn.get('groups'))
         for t in list(self.program.status.distinguished()):
             if x in t:
                 self.program.status.undistinguish(t)

@@ -21,8 +21,8 @@ class Converter:
             'examplespergrouptorecord', 'syllable_max_slice'
         ],
         'audio': [
-            'sample_format', 'fs', 'audio_card_in', 'audio_card_out', 
-            'asr_kwargs', 'asr_repos', 'soundsettingsok'
+            'sample_format', 'fs', 'audio_card_in', 'audio_card_out',
+            'asr_kwargs', 'asr_repos', 'soundsettingsok', 'asr_in_process'
         ],
         'alphabet': [
             'glyphdict', 'alphabet_order', 'alphabet_ncolumns', 

@@ -21,8 +21,10 @@ class LexiconPresenter(PresenterBase):
     def image(self, path):
         return ui.Image(path)
 
-    def image_frame(self, parent, sense, **kwargs):
-        return ImageFrame(parent, sense, **kwargs)
+    def image_frame(self, parent, url=None, **kwargs):
+        # ImageFrame takes (parent, url) — callers pass url positionally or
+        # as a keyword (the image-selection grid); 'sense' here was stale.
+        return ImageFrame(parent, url, **kwargs)
 
     @property
     def LEFT(self):

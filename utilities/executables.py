@@ -18,6 +18,11 @@ def praatopen(program,file,newpraat=False,event=None):
     The same version also introduced the '--hide-picture' command line option,
     so we only use that when praatversioncheck() passes.
     """
+    if str(file).lower().endswith('.m4a'):
+        # praat can't read m4a; don't hand it one (callers also skip the
+        # right-click bind for m4a, this is the backstop for any other path)
+        log.info(f"Not opening {file} in praat (praat doesn’t read m4a)")
+        return
     if not newpraat and hasattr(program, 'sendpraat') and program.sendpraat:
         """sendpraat sends the command to a running praat instance. If there
         isn't one, just open praat."""

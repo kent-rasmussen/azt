@@ -342,8 +342,9 @@ class Menus(ui.Menu):
                 (_("Remake Status file (just this profile)"),
                         self.program.settings.reloadstatusdatabycvtpsprofile),
                 (_("Fill CAWL Images"), self.fill_db_images),
-                (_("Bulk transcribe recordings (ASR)"),
-                            self.program.taskchooser.bulk_transcribe),
+                # Bulk ASR moved INTO the ASR settings window (Kent
+                # 2026-07-13): launching it from here skipped the language
+                # selection and swept in English only.
                 ]
         for m in options:
             self.command(self.advancedmenu,
@@ -1678,6 +1679,20 @@ class StatusFrame(ui.Frame):
                             totalwverified+=[g]
                         donenum=groupfn(done)
                         totalnum=groupfn(total)
+                        # Kent 2026-07-13 (the invisible-wh incident): a bare
+                        # count reads as "done" while silently including
+                        # unverified groups or undistinguished pairs — both of
+                        # which block groups from ever becoming letters. Mark
+                        # the aggregate: '+' = every group verified;
+                        # '✓' = and every pair distinguished (macrosort-
+                        # eligible); bare number = something's unverified.
+                        pend=None
+                        if total and not nunverified:
+                            try:
+                                pend=self.program.status.pending_distinctions(
+                                    cvt=cvt,ps=ps,profile=profile,check=check)
+                            except Exception:
+                                pend=None
                         if (not totalnum and
                                 tosort and
                                 self.program.settings.showdetails): #these should go together
@@ -1688,6 +1703,10 @@ class StatusFrame(ui.Frame):
                             (type(totalnum) is int and type(donenum) is int)):
                             # donenum='{}/{}'.format(donenum,totalnum)
                             donenum=totalnum
+                            if totalnum and not nunverified:
+                                donenum='{}{}'.format(totalnum,
+                                    '✓' if pend is not None and not pend
+                                    else '+')
                         else:
                             donenum=nn(totalwverified,oneperline=True)
                         if (tosort and totalnum and self.program.settings.showdetails):
@@ -1711,8 +1730,13 @@ class StatusFrame(ui.Frame):
                         if nunverified:
                             tips.extend([(_("{count} groups to verify!")
                                         ).format(count=nunverified)])
+                        if pend:
+                            tips.extend([(_("{count} group pair(s) to compare "
+                                        "(same or different?)")
+                                        ).format(count=len(pend))])
                         if not tips:
-                            tips.extend([_("Sorted and verified!")])
+                            tips.extend([_("Sorted, verified and "
+                                           "distinguished!")])
                         tip='\n'.join(tips)
                         tb.grid(row=row,column=column,ipadx=0,ipady=0,
                                                                 sticky='nesw')

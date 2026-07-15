@@ -438,12 +438,14 @@ def open_file(path):
     """Opens a file with the default application in a cross-platform way."""
     import subprocess, os, platform
     
+    # Never BLOCK the UI thread on the viewer (2026-07-13): xdg-open can sit
+    # on a desktop portal for a long time; Popen dispatches and returns.
     if platform.system() == 'Darwin':       # macOS
-        subprocess.call(('open', path))
+        subprocess.Popen(('open', path))
     elif platform.system() == 'Windows':    # Windows
         os.startfile(path)
     else:                                   # linux variants
-        subprocess.call(('xdg-open', path))
+        subprocess.Popen(('xdg-open', path))
 def unlist(l, ignore=[None]):
     from io_put import lift
     if l and isinstance(l[0], lift.et.Element):

@@ -555,7 +555,9 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             b['image']=self._illustration
             b['compound']='left'
         bttext=_("Click to hear this utterance")
-        if self.program.praat:
+        if (self.program.praat
+                and not str(self._filenameURL).lower().endswith('.m4a')):
+            # praat can't read m4a: no bind, and no tooltip advertising it
             bttext+='; '+_("right click to open in praat")
             b.bind('<Button-3>',
                     lambda x: executables.praatopen(self.program, self._filenameURL))
@@ -709,9 +711,9 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         kwargs['gridwait']=True
         kwargs['var']=self.var()
         # kwargs['playable']=True #This needs to apply with Sound...
-        log.info(_("Ready to build SortGroupButtonFrame with {kwargs}").format(kwargs=kwargs))
+        log.debug(_("Ready to build SortGroupButtonFrame with {kwargs}").format(kwargs=kwargs))
         self.items.append(SortGroupButtonFrame(self, self.task, **kwargs))
-        log.info(_("Built SGBF for {item} ({items})").format(item=item, items=self.items))
+        log.debug(_("Built SGBF for {item} ({items})").format(item=item, items=self.items))
         if self.items[-1].hasexample:
             # log.info(_("Built {group} SortGroupButtonFrame with ex").format(group=kwargs['group']))
             self.hasexample=True
@@ -816,7 +818,7 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         self._n=ui.IntVar()
         self.make_refresh()
         for item in self.program.alphabet.glyph_members()[self.group]:
-            log.info(_("Making Glyph member {item} button").format(item=item))
+            log.debug(_("Making Glyph member {item} button").format(item=item))
             self.make_sgbf(item, **kwargs)
         if self.items:
             self.updatecount()

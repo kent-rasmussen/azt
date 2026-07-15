@@ -599,6 +599,10 @@ class ParseSlice(Parse):
                 "for one slice(?PS??!?) of the dictionary at a time.")
     def __init__(self, **kwargs): #frame, filename=None
         super().__init__(**kwargs)
+        # parse-only task: only already-collected words (Parse.__init__ no
+        # longer sets these globally; collection variants take the full list)
+        self.dodone=True
+        self.dodoneonly=True
 class ParseSliceWords(ParseSlice):
     """This task is likely obsolete"""
     tasktitle = "Parse One Slice, word by word"

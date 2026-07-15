@@ -497,7 +497,8 @@ class ProfileAnalyzer:
         senses = self.program.db.sensesbyps[ps]
         self.sextracted[ps] = {}
         n = self._getprofiles(senses, ps)
-        log.info(_("Processed {n} forms to {ps} syllable profiles").format(n=n, ps=ps))
+        log.debug(_("Processed {n} forms to {ps} syllable profiles").format(n=n, ps=ps))
+        return n
 
     def _getprofiles(self, senses, ps):
         # SYNCHRONOUS (1.3.22): the old code spawned a fire-and-forget thread per
@@ -575,8 +576,8 @@ class ProfileAnalyzer:
                     "re-deriving EVERY word's syllable profile from the "
                     "constrained machine analysis, OVERWRITING confirmed sort "
                     "data. Turn it off and don't save over good data.")
-        for ps in self.program.db.pss:
-            self.getprofilesbyps(ps)
+        counts={ps:self.getprofilesbyps(ps) for ps in self.program.db.pss}
+        log.info("Processed forms to syllable profiles by ps: {}".format(counts))
         # ps-INDEPENDENT coverage: a sense with no part of speech still has a form,
         # hence a CV profile, hence syllable-prep primitives. The loop above skips
         # it (db.pss drops falsy ps values), so compute its profile here too —

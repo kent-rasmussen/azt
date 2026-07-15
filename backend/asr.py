@@ -57,6 +57,11 @@ class ASRtoText(object):
             model_kwargs['download_root']=model_kwargs.pop('cache_dir')
         except KeyError:
             pass #don't set root if no cache
+        # openai-whisper's load_model accepts only (name, device,
+        # download_root, in_memory); the shared ASR kwargs carry HF-pipeline
+        # extras (dtype, …) that TypeError here (2026-07-13). Whitelist.
+        model_kwargs={k:v for k,v in model_kwargs.items()
+                      if k in ('download_root','in_memory')}
         self.models[repo]=whisper.load_model(size,
                                         device=device,
                                         **model_kwargs
@@ -485,7 +490,8 @@ class ASRtoText(object):
         return usable,unusable
     def transcribe_files_bulk(self,files,progress_cb=None,should_cancel=None,
                               checkpoint_cb=None,checkpoint_every=100,prior=None,
-                              keep_keys=None,usable_langs=None):
+                              keep_keys=None,usable_langs=None,dead_after=10,
+                              plan_cb=None,unit_done_cb=None):
         """Stage-2 MODEL-MAJOR, LANGUAGE-MAJOR sweep (asr_bulk_transcription_design.md).
         Each model runs across ALL files before the next; for MMS (adapter)
         models each sister language's adapter loads ONCE then sweeps every file —
@@ -505,7 +511,15 @@ class ASRtoText(object):
         CURRENT md5}. A (file, model[/lang]) whose key is already present is
         skipped (gap-fill) — so adding a model only runs the new one, and resume
         skips finished work. Whisper's key depends on the DETECTED language and
-        can't be predicted, so those are never skipped."""
+        can't be predicted, so those are never skipped.
+        dead_after: if a model/language unit's first N actual inferences ALL
+        come back empty (no text, no IPA), abandon the rest of that unit and
+        move on — a dead model shouldn't chunk through the whole wordlist
+        producing ''. 0/None disables the bail-out.
+        plan_cb(names) fires once with the final pruned unit list (which
+        model/language sweeps WILL run); unit_done_cb(name) fires as each
+        completes — so the caller can persist to-do/done visibly
+        (audio.json asr_in_process)."""
         progress_cb=progress_cb or (lambda **k: None)
         should_cancel=should_cancel or (lambda: False)
         prior=prior or {}
@@ -555,6 +569,8 @@ class ASRtoText(object):
                 # every file.
                 if (repo,lang) in getattr(self,'_adapter_failures',set()):
                     return True
+            inferred=0        # real inferences this unit (gap-fill skips don't count)
+            produced=False    # any non-empty output yet this unit?
             for i,f in enumerate(files):
                 if should_cancel():
                     return False
@@ -569,6 +585,16 @@ class ASRtoText(object):
                                 f"{'/'+lang if lang else ''}: {e}")
                     r,text,ipa=None,'',''
                 touched.add(f)   # inference actually ran on this recording
+                inferred+=1
+                if (text and text.strip()) or (ipa and ipa.strip()):
+                    produced=True
+                elif dead_after and inferred>=dead_after and not produced:
+                    # dead model/adapter: first N inferences all empty — don't
+                    # burn CPU on the rest of the wordlist for nothing
+                    log.warning(f"bulk ASR: {repo}{'/'+lang if lang else ''} "
+                                f"produced no output for its first {inferred} "
+                                f"recordings; skipping the rest of this model")
+                    return True
                 tx,ip=results[f]
                 if r and (keep_keys is None or r in keep_keys):
                     if text: tx[r]=text        # output filter (also catches whisper)
@@ -598,6 +624,10 @@ class ASRtoText(object):
                 return False
             return True
         units=[u for u in units if _will_run(*u)]
+        def unit_name(repo,lang):
+            return f"{repo} ({lang})" if lang else repo
+        if plan_cb:
+            plan_cb([unit_name(*u) for u in units])
         for unit_idx,(repo,lang) in enumerate(units):
             if should_cancel():
                 break
@@ -611,6 +641,8 @@ class ASRtoText(object):
                 checkpoint_cb(snapshot())   # flush this unit's tail (< N files)
             if not done:
                 break
+            if unit_done_cb:
+                unit_done_cb(unit_name(repo,lang))
         stuck=[f for f in touched if not (results[f][0] or results[f][1])]
         if stuck:
             log.info("bulk ASR: %d recording(s) ran but produced NO draft "

@@ -311,24 +311,35 @@ class PageSetupUI(ui.Window):
     selected_cover_path, selected_logo_path) to be set by AlphabetComparisonData
     before __init__ is called."""
     def show_frequencies(self):
+        """Two truths per glyph: VERIFIED word count (what orders the booklet
+        pages — Kent 2026-07-13) and, in parentheses, the whole-database
+        extraction count (every form, verified or not)."""
         counts=self.program.slices.scount()
-        log.info(f"{counts}")
-        log.info(f"{counts.values()} {[type(i) for i in counts.values()]}")
-        totals=[(sum([c for psv in counts.values()
-            for cvtv in psv.values()
-            for glyph,c in cvtv
-            if glyph==g]),g)
-            for g in self.program.alphabet.order()]
+        extraction={}
+        for psv in counts.values():
+            for cvtv in psv.values():
+                for glyph,c in cvtv:
+                    extraction[glyph]=extraction.get(glyph,0)+c
+        verified=self.program.alphabet.glyph_frequency()
+        totals=[(verified.get(str(g),0),extraction.get(g,0),g)
+                for g in self.program.alphabet.order()]
         totals.sort(reverse=True)
-        notice=ui.Window(self,title=_("Glyph Frenquency"))
-        for i in range(0,len(totals),10):
-            # text_this=text+'\n'.join(text_list[i:i+9])
-            text_this='\n'.join([f"{x}: {y}" for y,x in totals[i:i+9]])
+        notice=ui.Window(self,title=_("Glyph Frequency"))
+        ui.Label(notice.frame,anchor='w',padx=5,r=0,c=0,columnspan=5,
+                 text=_("verified words (all words in database)"))
+        for n,i in enumerate(range(0,len(totals),10)):
+            text_this='\n'.join([f"{g}: {v} ({e})" for v,e,g in totals[i:i+10]])
             # if the lack of justification here bothers, make this
             # into individual labels by row, as well
-            ui.Label(notice.frame,text=text_this,anchor='w',c=i,padx=5)
-            log.info(text_this)
-        # log.info(f"{sorted(totals,reverse=True)}")
+            ui.Label(notice.frame,text=text_this,anchor='w',r=1,c=n,padx=5)
+        redo=ui.Button(notice.frame,text=_("Redo pages by these stats"),
+                  command=lambda:(self.redo_pages_from_stats(),
+                                  notice.destroy()),
+                  r=2,c=0,columnspan=5,sticky='ew')
+        ui.ToolTip(redo,_("Replace the page order with a fresh proposal from "
+                          "your current verified letters (frequency + similar "
+                          "sounds facing). Your hand-picked example words are "
+                          "kept."))
     def __init__(self, parent, **kwargs):
         """Data attributes must already be set by AlphabetComparisonData.init_comparison_data()."""
         title = "Alphabet Comparison Setup"

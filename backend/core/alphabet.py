@@ -8,6 +8,110 @@ from utilities.error_handler import notify_error as ErrorNotice
 
 from backend.core.sorting_engine import Sort
 
+def chart_example_rank(cls, glyph, keys):
+    """Rank a candidate example word for `glyph` (class 'C' or 'V') from its
+    verified segment keys (getcvverificationkeys actualkeys, e.g.
+    {'C1':'b','V1':'a','C1=C2':'g'}), per Kent's DECIDED rule (agenda
+    default_image_page_ordering, 2026-07-11):
+      0 — the glyph is the ONLY distinct segment of its class in the word
+          (all C slots == the glyph for a C-glyph; e.g. CVCV with C1=C2);
+      1 — else the glyph is word-initial for its class (C1 / V1);
+      2 — else merely present.
+    Lower is better. Whether the word has a picture is gated by the caller —
+    only pictured words are eligible at all."""
+    slots={}
+    for k,v in (keys or {}).items():
+        parts=str(k).split('=')
+        if parts and all(p and p[0]==cls and p[1:].isdigit() for p in parts):
+            for p in parts:
+                slots[p]=v
+    if slots and all(v==glyph for v in slots.values()):
+        return 0
+    if slots.get(cls+'1')==glyph:
+        return 1
+    return 2
+
+# ── booklet page ordering (Kent 2026-07-11): 'a' first, then vowels in
+# facing pairs (LEFT = most frequent remaining, RIGHT = its most similar
+# sound), then consonants likewise — voiced/voiceless and near neighbors
+# oppose each other. Similarity from compact feature tables; symbols the
+# tables don't know pair by frequency (distance 99 ties → frequency). ──
+
+_SEG_NORMALIZE = { # common digraph spellings → the IPA the tables know
+    'sh':'ʃ','zh':'ʒ','ch':'tʃ','ny':'ɲ','gn':'ɲ','ng':'ŋ',
+    'th':'θ','dh':'ð','kh':'x','gh':'ɣ','ph':'ɸ','bh':'β','ꞌ':'ʔ',"'":'ʔ',
+}
+_VOWEL_FEAT = { # (height 0=high…2.5=low, backness 0=front…2=back, rounded)
+    'i':(0,0,0),'ɪ':(0.5,0,0),'ɩ':(0.5,0,0),'y':(0,0,1),'e':(1,0,0),
+    # 'a' is FRONT low (cardinal [a]) — so an a-less inventory seeds with æ
+    # ("the 'a' of this language" — Kent 2026-07-13), then ɑ, then ʌ.
+    'ɛ':(1.5,0,0),'æ':(2,0,0),'a':(2.5,0,0),'ɑ':(2.5,2,0),'ə':(1.25,1,0),
+    'ɨ':(0,1,0),'ʉ':(0,1,1),'u':(0,2,1),'ʊ':(0.5,2,1),'ɷ':(0.5,2,1),
+    'o':(1,2,1),'ɔ':(1.5,2,1),'ʌ':(1.5,2,0),'ø':(1,0,1),'œ':(1.5,0,1),
+}
+_CONS_FEAT = { # (place 0=labial…4=glottal, manner 0=stop…4=glide, voiced)
+    'p':(0,0,0),'b':(0,0,1),'m':(0,2,1),'ɸ':(0,1,0),'β':(0,1,1),
+    'f':(0.5,1,0),'v':(0.5,1,1),'θ':(1,1,0),'ð':(1,1,1),
+    't':(1,0,0),'d':(1,0,1),'n':(1,2,1),'s':(1,1,0),'z':(1,1,1),
+    'ts':(1,0.5,0),'l':(1,3,1),'r':(1,3.5,1),'ɾ':(1,3.5,1),
+    'ʃ':(1.5,1,0),'ʒ':(1.5,1,1),'tʃ':(1.5,0.5,0),'dʒ':(1.5,0.5,1),
+    'c':(2,0,0),'ɟ':(2,0,1),'ɲ':(2,2,1),'j':(2,4,1),
+    'k':(3,0,0),'g':(3,0,1),'ŋ':(3,2,1),'x':(3,1,0),'ɣ':(3,1,1),'w':(3,4,1),
+    'q':(3.5,0,0),'ʔ':(4,0,0),'h':(4,1,0),
+    'y':(2,4,1), # orthographic y = the palatal glide (IPA j)
+}
+
+def _seg_features(g, cls):
+    import unicodedata
+    table=_VOWEL_FEAT if cls=='V' else _CONS_FEAT
+    g=str(g).lower()
+    for cand in (g,_SEG_NORMALIZE.get(g)):
+        if cand and cand in table:
+            return table[cand]
+    base=''.join(c for c in unicodedata.normalize('NFD',g)
+                 if not unicodedata.combining(c))
+    for cand in (base,_SEG_NORMALIZE.get(base),base[:1]):
+        if cand and cand in table:
+            return table[cand]
+    return None
+
+def segment_distance(a, b, cls):
+    """Smaller = more similar. 99.0 when either symbol is unknown to the
+    tables (caller's tie-break then decides)."""
+    fa=_seg_features(a,cls); fb=_seg_features(b,cls)
+    if fa is None or fb is None:
+        return 99.0
+    if cls=='V':
+        return 2*abs(fa[0]-fb[0])+abs(fa[1]-fb[1])+abs(fa[2]-fb[2])
+    return abs(fa[0]-fb[0])+abs(fa[1]-fb[1])+0.5*abs(fa[2]-fb[2])
+
+def propose_page_sequence(vowels, consonants, freq):
+    """The page list per Kent's rule. Pure: takes glyph iterables + a
+    {glyph: count} frequency dict; returns the ordered glyph list."""
+    out=[]
+    for cls,glyphs,seed in (('V',vowels,'a'),('C',consonants,None)):
+        remaining=sorted({str(g) for g in glyphs if str(g) not in ('NA','')},
+                         key=lambda g:(-freq.get(g,0),g))
+        if seed is not None and remaining:
+            if seed not in remaining:
+                # No literal 'a' in this inventory (e.g. only ɑ/æ/ʌ):
+                # page 1 is the vowel MOST SIMILAR to 'a' — the faithful
+                # reading of "the first page should be 'a'" (Kent
+                # 2026-07-13, after 'e' led an a-less inventory).
+                seed=min(remaining,
+                         key=lambda g:(segment_distance(seed,g,cls),
+                                       -freq.get(g,0),g))
+            out.append(seed); remaining.remove(seed)
+        while remaining:
+            left=remaining.pop(0) # most frequent remaining → LEFT page
+            out.append(left)
+            if remaining:         # its most similar sound → facing RIGHT page
+                right=min(remaining,
+                          key=lambda g:(segment_distance(left,g,cls),
+                                        -freq.get(g,0),g))
+                remaining.remove(right); out.append(right)
+    return out
+
 class Alphabet():
     """This class stores two dictionaries for alphabet glyphs:
     glyphdict: keyed on C and V, values contain a list of all verified consonants
@@ -194,7 +298,7 @@ class Alphabet():
                         ''.join(traceback.format_stack(limit=8)))
         d[glyph].add(item)
         self.glyph_members(d)
-        log.info(_("Alphabet.add_glyph_member done."))
+        log.debug(_("Alphabet.add_glyph_member done."))
     def rm_glyph_member(self,item,glyph=None):
         #If this raises KeyError, use discard
         d=self.glyph_members()
@@ -210,7 +314,7 @@ class Alphabet():
             self.glyph_members(d) # Adding empty dict does nothing; see below
         elif hasattr(self,'_glyph_members'):
             delattr(self,'_glyph_members')
-        log.info(_("Alphabet.rm_glyph_member done."))
+        log.debug(_("Alphabet.rm_glyph_member done."))
     def prune_empty_glyph_members(self):
         """Drop glyph members whose sort group has no member senses — e.g. a group
         emptied by a profile-unsort ('Not {profile}'), whose word left the slice.
@@ -305,6 +409,73 @@ class Alphabet():
                     continue
                 if code in set(s.verificationtextvalue(profile,ftype)):
                     seen.add(id(s)); out.append(s)
+        return out
+    def propose_comparison_examples(self,glyph,n=3):
+        """Top-n PICTURED example words for one glyph → [sense_id,…] (may be
+        shorter). Candidates = senses VERIFIED into the glyph
+        (senses_for_glyph) with an existing illustration file, ranked by
+        chart_example_rank (glyph-is-only-segment-of-its-class first, then
+        word-initial). Kent 2026-07-11: the booklet's three examples use 'the
+        same algorithm for the best, second and third best'."""
+        g=str(glyph)
+        members=self.glyph_members().get(g,set())
+        if not members:
+            return []
+        classes={self.cvt_of_item(m) for m in members}
+        cls='C' if 'C' in classes else ('V' if 'V' in classes else None)
+        if cls is None:
+            return []
+        ranked=[]
+        for i,s in enumerate(self.senses_for_glyph(g)):
+            try:
+                uri=s.illustrationURI()
+                if not (uri and file.exists(uri)):
+                    continue
+                counts,keys=s.getcvverificationkeys(self.ftype)
+            except Exception:
+                continue
+            ranked.append((chart_example_rank(cls,g,keys),i,s.id))
+        ranked.sort()
+        return [sid for _r,_i,sid in ranked[:n]]
+    def propose_chart_example(self,glyph):
+        """The single best pictured example (the chart's one word per glyph):
+        head of the same ranking the booklet uses."""
+        ids=self.propose_comparison_examples(glyph,n=1)
+        return ids[0] if ids else None
+    def glyph_frequency(self):
+        """{glyph: n senses VERIFIED into it}. Kent 2026-07-13: page order
+        should rank by the language's DONE words, not the whole-lexicon
+        machine extraction (slices.scount() counts every form in the
+        database — 'e' read ~640 in a barely-sorted Demo_en). A letter's
+        frequency here = how many verified words back it (senses_for_glyph),
+        which is also exactly the pool its example words draw from."""
+        freq={}
+        for g in self.glyph_members():
+            try:
+                freq[str(g)]=len(self.senses_for_glyph(g))
+            except Exception:
+                freq[str(g)]=0
+        return freq
+    def propose_page_order(self):
+        """Booklet page order per Kent's 2026-07-11 rule: page 1 'a'; the rest
+        of the vowels in facing pairs (LEFT = most frequent remaining, RIGHT =
+        its most similar sound); then consonants likewise."""
+        gd=self.glyphdict()
+        return propose_page_sequence(gd.get('V',()),gd.get('C',()),
+                                     self.glyph_frequency())
+    def propose_chart_examples(self,glyphs,existing=None):
+        """Fill-only-empties batch: {glyph: sense_id} proposals for the glyphs
+        in `glyphs` whose `existing` value is falsy. Never returns entries for
+        glyphs the user already chose (the never-clobber rule)."""
+        existing=existing or {}
+        out={}
+        for glyph in glyphs:
+            g=str(glyph)
+            if existing.get(g):
+                continue
+            sid=self.propose_chart_example(g)
+            if sid:
+                out[g]=sid
         return out
     def conflict_code(self,code):
         return code.split('_')[:4]
@@ -554,7 +725,15 @@ class Alphabet():
         self.ftype=self.program.params.ftype()
         self.program.settings.settingsobjects() #should do this more; can be redone!
         # self.renew_items_tomacrosort() #if needed, run then, with cvt
-        self.save_settings()
+        # Defense-in-depth (2026-07-11 data wipe): NEVER let the init-time
+        # save write empty glyph state over the settings file. If the push
+        # above didn't populate us (whatever the reason), saving now could
+        # only destroy data on disk — skip and say so.
+        if self.glyph_members() or any(self.glyphdict().values()):
+            self.save_settings()
+        else:
+            log.info("Alphabet init: no glyph state in memory; NOT saving "
+                     "(protects any on-disk alphabet data)")
         self.conflicts={} #keep track of what has been kicked out of a group before
         self.unsorted={}
 
@@ -593,6 +772,24 @@ class AlphabetChartData:
                       if i not in ['NA']]
         log.info(f"Using this alphabetical order: {self.order}")
         log.info(f"Using these exids: {self.exids}")
+        # DEFAULTS (Kent 2026-07-11, agenda default_image_page_ordering): a
+        # NEW chart opens with every glyph's example ALREADY SET to a pictured
+        # word — fill ONLY empty slots; a user's saved choice is never
+        # overwritten. Rule: glyph-is-the-only-C/V-in-the-word first, then
+        # word-initial, pictured words only (Alphabet.propose_chart_example).
+        if hasattr(self.program,'alphabet'):
+            try:
+                proposed=self.program.alphabet.propose_chart_examples(
+                    self.order,self.exids if isinstance(self.exids,dict) else {})
+            except Exception as e:
+                log.info("chart example proposal skipped: %s",e)
+                proposed={}
+            if proposed:
+                if not isinstance(self.exids,dict):
+                    self.exids={}
+                self.exids.update(proposed)
+                log.info("Proposed default examples for %d glyph(s): %s",
+                         len(proposed),proposed)
         p = self.program.lex_ui
         if self.exids:
             for k in set(self.order) - set(self.exids):
@@ -647,6 +844,26 @@ class AlphabetComparisonData:
         self.vowels = list(glyphdict['V'])
         self.consonants = list(glyphdict['C'])
         self.settings = self.load_settings()
+        # DEFAULTS (Kent 2026-07-11, agenda default_image_page_ordering): an
+        # unsaved booklet opens with the page order proposed ('a' first, then
+        # vowels in facing similar-pairs by frequency, then consonants) and
+        # each page's THREE examples pre-picked by the same ranking as the
+        # chart. Unset values only; saved choices are never overwritten, and
+        # nothing persists until the user saves (save_pages/save_examples).
+        if hasattr(self.program, 'alphabet'):
+            alph = self.program.alphabet
+            try:
+                if not self.settings.get('pages'):
+                    self.settings['pages'] = alph.propose_page_order()
+                    log.info("Proposed booklet page order: %s",
+                             self.settings['pages'])
+                for g in self.settings.get('pages') or []:
+                    if not self.settings.get(g):
+                        ex = alph.propose_comparison_examples(g)
+                        if ex:
+                            self.settings[g] = ex
+            except Exception as e:
+                log.info("booklet defaults proposal skipped: %s", e)
 
     def load_settings(self):
         try:
@@ -669,6 +886,36 @@ class AlphabetComparisonData:
         except Exception as e:
             log.warning(f"Could not save settings via manager: {e}")
 
+    def redo_pages_from_stats(self):
+        """'Redo pages by current stats' (Kent 2026-07-13): re-propose the
+        page ORDER from the current verified data, replacing the saved
+        layout — the sanctioned alternative to hand-editing reports.json.
+        Explicit gesture, so never-clobber stays intact elsewhere. Example
+        words: filled only where a page has no saved choice (manual example
+        picks survive a redo)."""
+        try:
+            alph = self.program.alphabet
+            pages = alph.propose_page_order()
+            if not pages:
+                log.warning("redo pages: nothing verified to propose from")
+                return
+            self.settings['pages'] = pages
+            for g in pages:
+                if not self.settings.get(g):
+                    ex = alph.propose_comparison_examples(g)
+                    if ex:
+                        self.settings[g] = ex
+        except Exception as e:
+            log.warning(f"redo pages proposal failed: {e}")
+            return
+        for f in list(getattr(self, 'pageFrames', [])):
+            try:
+                f.destroy()
+            except Exception:
+                pass
+        self.pageFrames = []
+        self.add_pages(*pages)
+        self.save_pages()  # persist: this IS the user's explicit choice
     def save_pages(self):
         self.settings['pages'] = [i.glyph for i in self.pageFrames]
         self.save_settings_file()

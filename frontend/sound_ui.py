@@ -65,7 +65,9 @@ class RecordButtonFrame(ui.Frame):
         # self.p.bind('<ButtonRelease>', self.function)
         self.p.grid(row=0, column=1,sticky='nsw')
         pttext=_("Click to hear")
-        if hasattr(self.program, 'praat'):
+        if (hasattr(self.program, 'praat')
+                and not str(self._filenameURL).lower().endswith('.m4a')):
+            # praat can't read m4a: no bind, and no tooltip advertising it
             pttext+='; '+_("right click to open in praat")
             self.p.bind('<Button-3>',
                         lambda x: executables.praatopen(
@@ -575,7 +577,8 @@ class ASRModelSelectionWindow(ui.Window):
         self.language=self.languages.get_obj(self.lang_cur)
         self.sister_options=[self.alllangs]
         self.sister_options.extend(
-                self.language.supported_ancestor_objs_prioritized()
+                self.language.supported_ancestor_objs_prioritized(
+                    getattr(self,'sister_broaden',0))
                                 )
         self.update_n_sisters()
         self.sisters_listbox.delete(0, "end")
@@ -637,6 +640,29 @@ class ASRModelSelectionWindow(ui.Window):
             self.sister_frame.grid()
         else:
             self.sister_frame.grid_remove()
+    def change_sister_scope(self,step):
+        """'Include more/fewer languages' (Kent 2026-07-13): walk the
+        language tree UP (broader family = more sister candidates) or back
+        DOWN toward the first-found default (broaden=0, the old behavior).
+        If a step up changes nothing (already at the top of the tree), the
+        counter reverts so 'fewer' stays predictable."""
+        old=getattr(self,'sister_broaden',0)
+        new=max(old+step,0)
+        if new==old:
+            return
+        before=[str(i) for i in self.sister_options]
+        self.sister_broaden=new
+        self.get_sister_options()
+        if step>0 and [str(i) for i in self.sister_options]==before:
+            self.sister_broaden=old #top of the tree; nothing broader
+            return
+        # A scope change means the user wants the NEW set, not their old
+        # subselection (which restore_sister_selection just reinstated over
+        # the rebuilt list): auto-select 'All of the below' and persist.
+        self.sisters_listbox.select_clear(0,'end')
+        self.sisters_listbox.select_set(0)
+        self.last_selection_indexes=self.sisters_listbox.curselection()
+        self.save_sister()
     def sister_selection(self):
         self.n_sisters=ui.Label(self.sister_frame,text='',
                                     ipadx=10,row=0,column=0)
@@ -653,6 +679,11 @@ class ASRModelSelectionWindow(ui.Window):
                 row=1,column=0,
                 sticky='ew'
                 )
+        scope=ui.Frame(self.sister_frame,row=2,column=0,sticky='ew')
+        ui.Button(scope,text=_("Include more languages"),
+                cmd=lambda:self.change_sister_scope(1),row=0,column=0)
+        ui.Button(scope,text=_("Include fewer languages"),
+                cmd=lambda:self.change_sister_scope(-1),row=0,column=1)
     def make_kwargVars(self):
         log.info(f"making kwargVars for {self.soundsettings.asr_kwargs}")
         for k in self.soundsettings.asr_kwargs:
@@ -778,6 +809,12 @@ class ASRModelSelectionWindow(ui.Window):
                             command=self.reload_model,
                             row=0,column=1,
                             anchor='e',sticky='ew')
+        # Next to Reload Model (Kent 2026-07-13: the page bottom is
+        # inaccessible until its layout is fixed, so the button lives here).
+        ui.Button(self.reload_frame, text=_("Run Bulk ASR"),
+                            command=self._run_bulk_asr,
+                            row=0,column=2,
+                            anchor='e',sticky='ew')
     def settings_grid(self):
         self.title=ui.Label(self,text=self.page_title,font='title',
                                                     row=0,column=1)
@@ -867,6 +904,12 @@ class ASRModelSelectionWindow(ui.Window):
         if not kwargs.get("withdrawn"):
             self.program.task.withdraw()
             self.deiconify()
+    def _run_bulk_asr(self):
+        try:
+            self.withdraw()
+            self.program.taskchooser.bulk_transcribe()
+        except Exception as e:
+            log.error(f"Bulk ASR launch failed: {e}")
 class Task(ui.Window):
     def wait(self,x):
         print(x)

@@ -109,6 +109,15 @@ class TaskChooser(Task):
         else:
             self.ui._select_chooser_tab('datacollection')
         self.ui.deiconify()
+        # Post-PDF blank-chooser freezes (3× by 2026-07-13, always after the
+        # chart PDF opened a viewer over us): the chooser deiconifies while
+        # OCCLUDED and its surface comes back blank and input-deaf. Apply the
+        # proven XWayland rule — after mapping, DRAIN (update(), not
+        # update_idletasks) so the surface commits.
+        try:
+            self.ui.update()
+        except Exception as e:
+            log.info("chooser post-deiconify drain: %s",e)
     def makedefaulttask(self):
         """This function makes the task after the highest optimally
         satisfied task"""
@@ -319,8 +328,8 @@ class TaskChooser(Task):
         nentries=self.program.db.nguids
         lexemesdone=self.program.db.nentrieswlexemedata
         citationsdone=self.program.db.nentrieswcitationdata
-        log.info("lexemesdone by lang: {}".format(lexemesdone))
-        log.info("citationsdone by lang: {}".format(citationsdone))
+        log.debug("lexemesdone by lang: {}".format(lexemesdone))
+        log.debug("citationsdone by lang: {}".format(citationsdone))
         # There should never be more lexemes than citation forms.
         for l in lexemesdone:
             if not self.program.settings.askedlxtolc and (l not in citationsdone
@@ -331,17 +340,17 @@ class TaskChooser(Task):
                 self.program.settings.storesettingsfile()
                 break #just ask this once
         self.getcawlmissing()
-        log.info("nfields in db: {}".format(self.program.db.nfields))
-        log.info("wannotations in db: {}".format(self.program.db.nfieldswannotations))
+        log.debug("nfields in db: {}".format(self.program.db.nfields))
+        log.debug("wannotations in db: {}".format(self.program.db.nfieldswannotations))
         sorts={k:v for (k,v) in self.program.db.nfields.items()
                                             if 'sense/example' in v}
         sorts.update({k:v for (k,v) in self.program.db.nfieldswannotations.items()
                                             if 'sense/example' not in v})
         # log.info("nfields by lang (updated): {}".format(sorts))
         sortsrecorded=self.program.db.nfieldswsoundfiles
-        log.info("nfieldswsoundfiles by lang: {}".format(sortsrecorded))
+        log.debug("nfieldswsoundfiles by lang: {}".format(sortsrecorded))
         sortsnotrecorded={}
-        log.info(f"sorts: {sorts}")
+        log.debug(f"sorts: {sorts}")
         if self.program.me:
             enough=0
         else:
@@ -395,7 +404,7 @@ class TaskChooser(Task):
                     if sortsnotrecorded[l][f] < enough:
                         self.doneenough['torecord']=True
                 # log.info("Finished looking at [{}]{} field: {}".format(l,f,self.doneenough))
-                log.info(_("Finished looking at [{lang}]{field} field: {status}").format(lang=l, field=f, status=self.doneenough))
+                log.debug(_("Finished looking at [{lang}]{field} field: {status}").format(lang=l, field=f, status=self.doneenough))
         # log.info("nfieldswosoundfiles by lang: {}".format(sortsnotrecorded))
         for lang in self.program.db.nentrieswlexemedata:
             remaining=self.program.db.nentrieswcitationdata[lang

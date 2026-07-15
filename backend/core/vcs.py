@@ -504,6 +504,9 @@ class Repository(object):
             return
         t=stouttostr(output)
         # log.info("iwascalledby2 {}".format(iwascalledby))
+        #routine config reads: log at debug, not info (boot-log noise)
+        quiet=['isbare','getusernameargs','get_all_safe','mark_safe','getfiles']
+        logfn=log.debug if iwascalledby in quiet else log.info
         if iwascalledby in ['commithashes', #never log these, even w/output
                             'lastcommitdate',
                             'lastcommitdaterelative'
@@ -512,12 +515,12 @@ class Repository(object):
         elif t and iwascalledby not in ['diff', #These give massive output!
                                         'getfiles',
                                         ]:
-            log.info(_("{repo} {caller} {args}: {output}").format(repo=self.repotypename,
+            logfn(_("{repo} {caller} {args}: {output}").format(repo=self.repotypename,
                                             caller=iwascalledby,args=args[1:],output=t))
         elif iwascalledby not in ['add', #these should log only w/output
                                     'commit',
                                     ]:
-            log.info(_("{repo} {caller} {args} OK").format(repo=self.repotypename,
+            logfn(_("{repo} {caller} {args} OK").format(repo=self.repotypename,
                                             caller=iwascalledby,args=args[1:]))
         return t
     def alreadythere(self,url):
@@ -578,7 +581,7 @@ class Repository(object):
             log.info(_("Using {repo} username ‘{name}’").format(repo=self.repotypename,
                                                                 name=self.username))
             if self.useremail:
-                log.info(_("Using {repo} useremail ‘{email}’").format(repo=self.repotypename,email=self.useremail))
+                log.debug(_("Using {repo} useremail ‘{email}’").format(repo=self.repotypename,email=self.useremail))
         else:
             self.username='-'.join([self.program.name,os.getlogin(),self.program.hostname])
             log.info(_("No {repo} username found; using ‘{name}’"
@@ -639,7 +642,7 @@ class Repository(object):
             repoheadfile=self.branchnamefile
         else:
             repoheadfile='.'+self.code+'/'+self.branchnamefile
-        log.info(_("Looking for {repo} branch name in {file}").format(repo=self.repotypename,
+        log.debug(_("Looking for {repo} branch name in {file}").format(repo=self.repotypename,
                                                             file=repoheadfile))
         try:
             with file.getdiredurl(self.url,repoheadfile).open() as f:
@@ -647,7 +650,7 @@ class Repository(object):
                 # log.info("Found repo head info {}".format(c))
                 if c:
                     self.branch=c.split('/')[-1].strip()
-                    log.info(_("Found branch: {branch}").format(branch=self.branch))
+                    log.debug(_("Found branch: {branch}").format(branch=self.branch))
             # return self.branch
         except Exception as e:
             log.error(_("Problem finding branch name: {error}").format(error=e))
@@ -657,7 +660,7 @@ class Repository(object):
         #this is done on normal __init__, or after an init later on.
         #These are things that need an actual repository there
         self.bare=bool(self.isbare())
-        log.info(_("Repo {url} is bare: {bare}").format(url=self.url,bare=self.bare))
+        log.debug(_("Repo {url} is bare: {bare}").format(url=self.url,bare=self.bare))
         self.remotenames=self.getremotenames()
         self.branchname() #This is needed for the following
         self.getusernameargs()
@@ -685,7 +688,7 @@ class Repository(object):
             return url.resolve()
         except Exception: #if not already pathlib.Path
             url=file.getfile(url).resolve()
-        log.info(f"abs_path returning {url} ({type(url)})")
+        log.debug(f"abs_path returning {url} ({type(url)})")
         return url
     def __init__(self, program, url=None):
         super().__init__()
@@ -880,7 +883,7 @@ class Git(Repository):
         if r:
             r=[self.abs_path(i) for i in r.split('\n') if r]
         if r:
-            log.info(_("get_all_safe returned {result}").format(result=r)) #str
+            log.debug(_("get_all_safe returned {result}").format(result=r)) #str
             return r
         else:
             return []

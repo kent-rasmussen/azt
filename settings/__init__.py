@@ -216,7 +216,8 @@ class Settings(SettingsUI):
                                             'audio_card_in',
                                             'audio_card_out',
                                             'asr_kwargs',
-                                            'asr_repos'
+                                            'asr_repos',
+                                            'asr_in_process'
                                             ]},
             'alphabet':{
                                 'file':'alphabetsettingsfile',
@@ -351,17 +352,17 @@ class Settings(SettingsUI):
                     self.program.data_repo[r].add(savefile)
     def moveattrstoobjects(self):
         to_do=set(self.fndict)-self.attrs_moved_to_object
-        _log.info(f"moveattrstoobjects to do: {to_do}")
+        _log.debug(f"moveattrstoobjects to do: {to_do}")
         for attr in to_do:
             if hasattr(self,attr):
-                _log.info(_("moving attr {attr} to object ({val})").format(attr=attr,val=getattr(self,attr)))
+                _log.debug(_("moving attr {attr} to object ({val})").format(attr=attr,val=getattr(self,attr)))
                 self.fndict[attr](getattr(self,attr))
                 if attr not in ['glosslangs']: #obj and attr have same name...
                     delattr(self,attr)
                 self.attrs_moved_to_object.add(attr)
             else:
-                _log.info(_("attr {attr} not found!").format(attr=attr))
-        _log.info(_("attrs_moved_to_object={val}").format(val=self.attrs_moved_to_object))
+                _log.debug(_("attr {attr} not found!").format(attr=attr))
+        _log.debug(_("attrs_moved_to_object={val}").format(val=self.attrs_moved_to_object))
     def settingsobjects(self):
         """These should each push and pull values to/from objects"""
         self.fndict=fns={}
@@ -392,7 +393,9 @@ class Settings(SettingsUI):
             fns['asr_kwargs']=self.program.soundsettings.asr_kwarg_dict
             fns['hgurls']=self.program.data_repo['hg'].remoteurls
         except Exception as e:
-            _log.error(_("Only finished settingsobjects up to {keys} ({error})").format(keys=fns.keys(),error=e))
+            # Expected during progressive startup (objects appear in stages);
+            # ERROR here reads as a crash, so log at info.
+            _log.info(_("Only finished settingsobjects up to {keys} ({error})").format(keys=fns.keys(),error=e))
             self.moveattrstoobjects() #always do this next
             return []
         _log.info(_("Finished settingsobjects up to {keys}").format(keys=fns.keys()))
@@ -825,8 +828,7 @@ class Settings(SettingsUI):
         # LIFT-derived 'done' (group verified as a whole = every member carries
         # its <check>=<group> code). Recomputed here so verified state can't go
         # stale in the status file — a join no longer drops sibling groups.
-        verified=self.program.db.verified_groups_by_ps_profile(
-                                    log_ps=self.program.slices.ps())
+        verified=self.program.db.verified_groups_by_ps_profile()
         k={}
         for k['ps'],profile_dict in d.items():
             for k['profile'],check_dict in profile_dict.items():
@@ -842,23 +844,6 @@ class Settings(SettingsUI):
                         _verif=verified.get(k['ps'],{}).get(k['profile'],{}
                                     ).get(k['check'],set())
                         done=sorted(_verif & set(groups))
-                        # DIAG-done (temporary, poss. 3): the FULL reload recomputes
-                        # done = (LIFT-verified ∩ annotation-groups). Log all three so
-                        # we can tell apart: a group read NOT-verified at all
-                        # (absent from _verif → poss. 1/2 upstream); vs read verified
-                        # but absent from the annotation 'groups' list, so dropped by
-                        # the ∩ (poss. 3 — verified-but-not-built-into-done). Gated to
-                        # the active ps so the trace stays readable.
-                        if k['ps']==self.program.slices.ps():
-                            _verif_not_grouped=sorted(set(_verif)-set(groups))
-                            if set(groups)-set(done) or _verif_not_grouped:
-                                _log.info("DIAG-done full-reload SET %s/%s/%s "
-                                          "done=%s verified=%s groups=%s "
-                                          "NOT-done=%s verified-but-not-in-groups=%s",
-                                          k['ps'], k['profile'], k['check'], done,
-                                          sorted(_verif), sorted(groups),
-                                          sorted(set(groups)-set(done)),
-                                          _verif_not_grouped)
                         self.program.status.node(**k)['done']=done
                     yield start_at + (end_at-start_at) * len(k)/len(d) #maybe more detail later
     def generate_status_by_tone_groups(self,**kwargs):
@@ -922,7 +907,7 @@ class Settings(SettingsUI):
         check=kwargs.get('check',self.program.params.check())
         kwargs['wsorted']=True #ever not?
         senses=self.program.slices.senses(ps=ps,profile=profile)
-        _log.info(_("Working on {count} sense.ids (first 5): {ids}").format(count=len(senses),
+        _log.debug(_("Working on {count} sense.ids (first 5): {ids}").format(count=len(senses),
                                                     ids=[i.id for i in senses[:5]]))
         self.program.status.renewsensestosort([],[]) #will repopulate
         self._groups=[]
@@ -935,9 +920,9 @@ class Settings(SettingsUI):
         for sense in senses:
             self.categorizebygrouping(fn,sense,**kwargs)
         sorted=set(self._groups)
-        log.info(f"sorted (check={check}, NA_in_groups={self._groups.count('NA')}): {sorted}")
+        log.debug(f"sorted (check={check}, NA_in_groups={self._groups.count('NA')}): {sorted}")
         self.program.status.groups(list(sorted),**kwargs)
-        log.info(f"status.groups: {self.program.status.groups(**kwargs)}")
+        log.debug(f"status.groups: {self.program.status.groups(**kwargs)}")
         if store:
             self.storesettingsfile(setting='status')
     def dont_guessanalang(self):
@@ -1133,7 +1118,7 @@ class Settings(SettingsUI):
             _log.error(_("No analysis language; exiting."))
             return
         #set the field names used in this db:
-        log.info(f"{self.secondformfield=}")
+        log.debug(f"{self.secondformfield=}")
         self.pss() #sets self.nominalps and self.verbalps
         self.fields() #just reports
         self.secondformfields() #sets self.pluralname and self.imperativename

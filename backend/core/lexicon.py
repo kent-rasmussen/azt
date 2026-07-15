@@ -743,11 +743,19 @@ class WordCollection(Segments):
             log.info("Working on {} entries".format(len(all)))
         else:
             log.info("start_at_entry not found")
+        # DIAG-todo (2026-07-13, Kent: parse/no-parse variants presented
+        # DIFFERENT words, and Add-and-Parse said "all done" falsely): one
+        # line per build naming the basis this task's list keys on.
+        log.info("DIAG-todo %s: ftype=%r dodone=%s dodoneonly=%s all=%d",
+                 type(self).__name__, self.ftype,
+                 getattr(self,'dodone',None), getattr(self,'dodoneonly',None),
+                 len(all))
         if self.dodone and not self.dodoneonly: #i.e., all data
             return all
         done=[i for i in all
                     if i.sense.textvaluebyftypelang(self.ftype,self.analang)]
         if self.dodone: #i.e., dodoneonly
+            log.info("DIAG-todo %s: done-only=%d",type(self).__name__,len(done))
             return done
         # At this point, done isn't wanted
         todo=[x for x in all if x not in done] #set-set may be better
@@ -1291,10 +1299,18 @@ class WordCollection(Segments):
             self.instructions['text']=self.getinstructions() #in case changed
             self.dowordframe()
         elif not self.entries:
-            text=_("It looks like you’re done filling out the empty "
-            "entries in your database! Congratulations! \nYou can still add words "
-            "through the button on the left ({text})."
-            "").format(text=self.dobuttonkwargs()['text'])
+            if getattr(self,'dodoneonly',False):
+                # done-only tasks (e.g., Parse Already Collected Words): an
+                # empty list means nothing has been collected yet — the
+                # opposite of "all done".
+                text=_("There are no already-collected words to work on "
+                "here yet. \nCollect some words first (e.g., through an "
+                "“Add Words” task), then come back to this task.")
+            else:
+                text=_("It looks like you’re done filling out the empty "
+                "entries in your database! Congratulations! \nYou can still add words "
+                "through the button on the left ({text})."
+                "").format(text=self.dobuttonkwargs()['text'])
             self.killwordframe()
             self.instructions['text']=text
             self.instructions.wrap()
@@ -1625,10 +1641,9 @@ class Parse(Segments):
         lx,lc,pl,imp = self.parser.texts()
         if lx:
             return _("{root}: {forms} ({ps}), {sfname}: {forms2}"
-                ).format(root_val=lx,
-                        forms=''.join([i for i in [pl,imp] if i]),
-                        forms2=''.join([i for i in [pl,imp] if i]), # Wait, this logic was weird in original: ''.join([i for i in [pl,imp] if i]) was used for the second {}
-                        root=_("Root"),
+                ).format(root=_("Root"),
+                        forms=lx,
+                        forms2=''.join([i for i in [pl,imp] if i]),
                         ps=self.parser.sense.psvalue(),
                         sfname=self.secondformfield[self.nominalps] if pl
                         else self.secondformfield[self.verbalps]
@@ -1964,9 +1979,14 @@ class Parse(Segments):
         self.ftype=self.program.params.ftype('lc') #Is this always correct?
         # self.ftype=self.program.params.ftype('lx') #I think once we parse, we want this
         # self.nodetag='citation'
-        self.dodone=True #give me words with citation done
+        # dodone/dodoneonly are deliberately NOT set here: the Add-and-Parse
+        # collection variants must present the SAME full wordlist as the plain
+        # collection tasks (Segments defaults: all entries, in db order).
+        # Setting dodoneonly=True here made a fresh project's Add-and-Parse
+        # list EMPTY (0 collected words) and falsely congratulate "all done".
+        # Tasks that really want only-already-collected words (WordsParse,
+        # ParseSlice) set dodoneonly=True in their own __init__.
         self.checkeach=False #don't confirm each word (default)
-        self.dodoneonly=True #don't give me other words
         self.userresponse=Object(rootchange=False,value=False)
         p = self.lex_ui
         self.cparsetext=p.string_var() #store UI parse info here

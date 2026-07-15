@@ -598,7 +598,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                     }
                 for ps in self.ps_profiles
                 }
-    def verified_groups_by_ps_profile(self,ftype='lc',log_ps=None):
+    def verified_groups_by_ps_profile(self,ftype='lc'):
         """Per ps/profile/check, the groups VERIFIED AS A WHOLE — the LIFT-derived
         'done'. A group is verified iff it has members AND every member sense
         carries the matching '<check>=<group>' verification code. That code is
@@ -631,34 +631,6 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                                  if (check+'='+g) not in codes[id(s)]]
                         if members and not uncoded:
                             verified.add(g)
-                        elif members and uncoded and ps==log_ps:
-                            # NOTDONE: at least one member lacks <check>=<g>, so the
-                            # group can't be 'done'. Show the uncoded members and
-                            # the codes they DO carry — to tell a real data gap
-                            # ([] or unrelated) from a scramble (a code for THIS
-                            # check but a DIFFERENT group, e.g. V1=1 on a group-2
-                            # member). Logged only for the CURRENT ps (log_ps) so
-                            # the trace stays relevant — other parts of speech are
-                            # uncoded simply because no work has happened there.
-                            # DIAG (temporary).
-                            log.info("DIAG-join-verify %s/%s %s=%s NOTDONE "
-                                "%d/%d coded; uncoded=%s; their codes=%s",
-                                ps,profile,check,g,len(members)-len(uncoded),
-                                len(members),[s.id for s in uncoded],
-                                [sorted(codes[id(s)]) for s in uncoded])
-                        # DIAG-done (temporary, poss. 1 & 2): EXHAUSTIVE per-member
-                        # read for integer (still-unnamed) groups in the active ps.
-                        # Each member: id, its FULL verification-code set as read
-                        # from LIFT, and whether the exact 'check=g' string is present.
-                        # Distinguishes "no code in LIFT at all" (poss. 1) from "code
-                        # present but our == test misses it" (poss. 2 — whitespace /
-                        # encoding / a code for a different value).
-                        if ps==log_ps and g.isdigit():
-                            log.info("DIAG-done read %s/%s %s=%s verified=%s "
-                                "test=%r members=%s", ps,profile,check,g,
-                                g in verified, check+'='+g,
-                                [(s.id, sorted(codes[id(s)]),
-                                  (check+'='+g) in codes[id(s)]) for s in members])
                     checks[check]=verified
                 out[ps][profile]=checks
         return out

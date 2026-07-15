@@ -456,10 +456,10 @@ class Theme(object):
         modifier=1 #2 seemed necessary in the transition to xwayland; no idea why
         h = self.program.screenh = root.winfo_screenheight()/modifier
         w = self.program.screenw = root.winfo_screenwidth()/modifier
-        log.info(f'{root.winfo_screenmmwidth()=}')
-        log.info(f'{root.winfo_screenmmheight()=}')
-        log.info(f'{root.winfo_screenheight()=}')
-        log.info(f'{root.winfo_screenwidth()=}')
+        log.debug(f'{root.winfo_screenmmwidth()=}')
+        log.debug(f'{root.winfo_screenmmheight()=}')
+        log.debug(f'{root.winfo_screenheight()=}')
+        log.debug(f'{root.winfo_screenwidth()=}')
         wmm = root.winfo_screenmmwidth()/modifier
         hmm = root.winfo_screenmmheight()/modifier
         #this computer as a ratio of mine, 1080 (286mm) x 1920 (508mm):
@@ -467,8 +467,8 @@ class Theme(object):
         wx=w/1920
         hmmx=hmm/286
         wmmx=wmm/508
-        log.info("screen height: {} ({}mm, ratio: {}/{})".format(h,hmm,hx,hmmx))
-        log.info("screen width: {} ({}mm, ratio: {}/{})".format(w,wmm,wx,wmmx))
+        log.debug("screen height: {} ({}mm, ratio: {}/{})".format(h,hmm,hx,hmmx))
+        log.debug("screen width: {} ({}mm, ratio: {}/{})".format(w,wmm,wx,wmmx))
         xmin=min(hx,wx,hmmx,wmmx)
         xmax=max(hx,wx,hmmx,wmmx)
         if xmax-1 > 1-xmin:
@@ -476,12 +476,12 @@ class Theme(object):
         else:
             self.scale=xmin
         if self.scale < 1.02 and self.scale > 0.98:
-            log.info("Probably shouldn't scale in this case (scale: {})".format(
+            log.debug("Probably shouldn't scale in this case (scale: {})".format(
                                                         self.scale))
             self.scale=1
         # self.scale=0.75 #for testing
-        log.info("Largest variance from 1:1 ratio: {} (this will be used to scale "
-                "stuff.)".format(self.scale))
+        log.info("Screen {}x{} ({}x{}mm); scaling by largest variance from "
+                "1:1 ratio: {}".format(int(w),int(h),wmm,hmm,self.scale))
     def setpads(self,**kwargs):
         for kwarg in ['ipady','ipadx','pady','padx']:
             if kwarg in kwargs:
@@ -1197,11 +1197,25 @@ class Waitable(Exitable):
         if ww.do_reveal and parent is not None and parent.winfo_exists() \
                 and not parent.exitFlag.istrue() and parent is not parent._root():
             _u=time.perf_counter()
-            parent.update()
-            try:
-                parent.deiconify()
-            except tkinter.TclError:
-                pass
+            if USING_WAYLAND:
+                # XWayland DEADLOCKS draining a big render backlog into a
+                # WITHDRAWN window (faulthandler-confirmed 2026-07-13:
+                # waitdone→update() wedged revealing a verify page). Map the
+                # window FIRST — the wait dialog still covers it, so the UX
+                # is unchanged — then drain.
+                try:
+                    parent.deiconify()
+                except tkinter.TclError:
+                    pass
+                parent.update()
+            else:
+                # Original 1.3.38 order elsewhere: render while hidden, then
+                # reveal — the slow paint stays covered by the dialog.
+                parent.update()
+                try:
+                    parent.deiconify()
+                except tkinter.TclError:
+                    pass
             log.info("waitdone: update+reveal %.1fs (covered by wait dialog)",
                      time.perf_counter()-_u)
         ww.deactivate()

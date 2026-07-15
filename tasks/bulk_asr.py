@@ -41,12 +41,16 @@ class BulkASR:
         <analang>-x-audio form) so we can transcribe the file and persist onto
         its form."""
         pairs = []
+        seen = set()  # entry-level fields (lx/lc/pl/imp) appear in EVERY
+        # sense's ftypes — without dedup a two-sense entry's citation
+        # recording is enumerated (and transcribed) once per sense.
         for sense in self.program.db.senses:
             nodes = list((getattr(sense, 'ftypes', {}) or {}).values())
             nodes += list((getattr(sense, 'examples', {}) or {}).values())
             for node in nodes:
                 try:
-                    if node.hassoundfile():
+                    if node.hassoundfile() and node.audiofileURL not in seen:
+                        seen.add(node.audiofileURL)
                         pairs.append((node.audiofileURL, node))
                 except Exception as e:
                     log.info(f"skipping a node while collecting audio: {e}")
@@ -174,12 +178,39 @@ class BulkASR:
                 should_cancel=self.cancel.is_set,
                 checkpoint_cb=lambda snap: self.q.put(('checkpoint', snap)),
                 prior=prior, keep_keys=keep,
-                usable_langs=getattr(self, '_usable_sisters', None))
+                usable_langs=getattr(self, '_usable_sisters', None),
+                plan_cb=lambda names: self.q.put(('plan', names)),
+                unit_done_cb=lambda name: self.q.put(('unit_done', name)))
         except Exception as e:
             log.error(f"bulk ASR worker failed: {e}")
             self.q.put(('error', str(e)))
             return
         self.q.put(('done', None))
+
+    def _track_units(self, todo=None, done=None):
+        """Maintain audio.json's top-level asr_in_process {'todo': [...],
+        'done': [...]} so the user can see which model/language sweeps this
+        bulk run will do and has done. Called on the main thread only."""
+        ss = getattr(self.program, 'soundsettings', None)
+        if ss is None:
+            return
+        state = getattr(ss, 'asr_in_process', None)
+        if not isinstance(state, dict):
+            state = {}
+        if todo is not None:            # plan: fresh run replaces old state
+            state = {'todo': list(todo), 'done': []}
+        if done is not None:            # one unit finished: move it over
+            state.setdefault('todo', [])
+            state.setdefault('done', [])
+            if done in state['todo']:
+                state['todo'].remove(done)
+            if done not in state['done']:
+                state['done'].append(done)
+        ss.asr_in_process = state
+        try:
+            self.program.settings.storesettingsfile(setting='soundsettings')
+        except Exception as e:
+            log.info(f"couldn't persist asr_in_process: {e}")
 
     def _poll(self):
         last = None            # coalesce: one UI update per poll (throttle)
@@ -188,6 +219,13 @@ class BulkASR:
                 kind, payload = self.q.get_nowait()
                 if kind == 'progress':
                     last = payload
+                elif kind == 'plan':
+                    # audio.json asr_in_process: the pruned unit list this run
+                    # WILL do (Kent 2026-07-14: "which models it will do, or
+                    # has done"). Main thread — safe to write settings here.
+                    self._track_units(todo=payload)
+                elif kind == 'unit_done':
+                    self._track_units(done=payload)
                 elif kind == 'checkpoint':
                     if last:
                         self._update_progress(last); last = None

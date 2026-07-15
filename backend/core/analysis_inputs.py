@@ -683,7 +683,7 @@ class CheckParameters(object):
                     }
                 for cvt,syl_dict in self._checknames.items()
                 }
-        log.info(_("self._checkcodes_by_cvt={codes}").format(codes=self._checkcodes_by_cvt))
+        log.debug(_("self._checkcodes_by_cvt={codes}").format(codes=self._checkcodes_by_cvt))
     def cvt_of_check(self,check):
         for cvt,codes in self._checkcodes_by_cvt.items():
             # log.info(f"{cvt=},{codes=}")

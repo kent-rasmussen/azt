@@ -651,6 +651,19 @@ class App:
             FileParser(self)
             if getattr(self,'collab',None):
                 self.collab.adopt_reloaded_db()
+            # Make the rebuild BOOT-LIKE for the settings push (2026-07-11
+            # DATA-WIPE root cause): moveattrstoobjects pushes each stored
+            # value into its object ONCE per Settings instance. At boot,
+            # params/slices/alphabet don't exist when Settings initializes,
+            # so the push correctly waits for them. On reload the OLD objects
+            # still existed → the push fired into them, consumed itself, and
+            # the NEW Alphabet starved — whose init-save then wrote EMPTY
+            # glyph data over alphabet.json (wiped Kent's verified letters,
+            # 16:18). Deleting the stale objects first restores boot order.
+            for _stale in ('alphabet','params','slices','status','examples',
+                           'profiles'):
+                if hasattr(self,_stale):
+                    delattr(self,_stale)
             ToneFrames(self)
             Settings(self)
             CheckParameters(self)

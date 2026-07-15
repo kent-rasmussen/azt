@@ -34,7 +34,7 @@ def shutdown():
 def getlog(name,loglevel=loglevel_default):
     thislog=logging.getLogger(name)
     setlevel(loglevel,thislog)
-    log.info(f"Logging {loglevel} for {name}")
+    log.debug(f"Logging {loglevel} for {name}")
     return thislog
 def setlevel(loglevel=loglevel_default,thislog=None):
     if not thislog:
