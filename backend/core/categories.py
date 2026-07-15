@@ -65,7 +65,7 @@ class Categories:
         annogroup=self.getitemgroup(sense,check) #Segment or Tone
         vals=sense.verificationtextvalue(profile,self.ftype)
         curvalues=[i.split('=')[-1]  #last (value), if multiple
-                    for i in sense.verificationtextvalue(profile,ftype)
+                    for i in sense.verificationtextvalue(profile,self.ftype)
                     if check in i]
         # Length is relevant here because V1 must match V1=V2, if present
         nvals=len(set(curvalues))
@@ -82,14 +82,14 @@ class Categories:
         if curvalue == annogroup: #only update if starting w/ same value
             return True
         elif not curvalue:
-            log.error("Problem updating verification to {}; current "
+            log.error("Problem updating verification; current "
                         "value not there (should be {})"
-                        "".format(group, annogroup))
+                        "".format(annogroup))
         else: #not sure what to do here; maybe  throw bigger error?
-            log.error("Problem updating verification to {}; current "
+            log.error("Problem updating verification; current "
                         "value ({}) is there, but not the same as "
                         "current sort group ({})."
-                        "".format(group, curvalue, annogroup))
+                        "".format(curvalue, annogroup))
     def marksortgroup(self,sense,group,**kwargs):
         check=kwargs.get('check',self.program.params.check())
         profile=kwargs.get('profile',self.program.slices.profile())
@@ -111,7 +111,7 @@ class Categories:
         if kwargs.get('updateforms'):
             if self.ftype != self.program.params.ftype():
                 ErrorNotice(_("{ftype} differs from {pftype}; this is a problem!").format(
-                            ftype=ftype, pftype=self.program.params.ftype()),
+                            ftype=self.ftype, pftype=self.program.params.ftype()),
                             wait=True)
             self.updateformtoannotations(sense,check)
         if not kwargs.get('not_sorting'): #default is sorting

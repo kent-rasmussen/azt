@@ -822,10 +822,6 @@ class Gridded():
         widgets, or it will block those widgets from becoming targets, neither
         of which work for me"""
         return
-        x = event.widget.winfo_x() + (event.x - widget.pointer_startX)
-        y = event.widget.winfo_y() + (event.y - widget.pointer_startY)
-        widget.place(x=x, y=y)
-        event.widget.update_idletasks()
     def dnd_leave(self, source, event):
         if not self.initial_widget:
             self.dnd_focus_off()
@@ -2263,7 +2259,9 @@ class Window(Toplevel):
                                             )
         if backcmd is not False: #This one, too...
             b=(_("Back"))
-            cmd=lambda:backcmd(parent, window, check, entry, choice)
+            # (was backcmd(parent, window, check, entry, choice) — three of
+            # those names never existed here; no current callers pass backcmd)
+            cmd=lambda:backcmd(parent, self, choice)
             self.backButton=Button(self.outsideframe, width=10, text=b,
                                 command=cmd,
                                 column=3,row=2

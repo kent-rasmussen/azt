@@ -72,11 +72,9 @@ def getincluded(filename,iterated=False):
         r=file.getdiredrelURL(dir,r.get('href'))
         log.info(_("Found reference to filename {}").format(r))
         getincluded(r)
-class TreeParsed(object):
-    def __init__(self, lift):
-        self=Tree(lift).parsed
-        log.info(self.glosslang)
-        Tree.__init__(self, db, guid=guid)
+class BadParseError(Exception):
+    """Mirrors io_put.lift.BadParseError (importing lift here would be
+    circular — lift imports this module)."""
 class XML(object): #fns called outside of this class call self.nodes here.
     """The job of this class is to expose the XML as python object
     attributes. Nothing more, not thing else, should be done here."""

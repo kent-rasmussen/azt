@@ -4,7 +4,7 @@ import collections
 # import re
 # import tkinter as tk
 from utilities.utilities import *
-from utilities import file, logsetup, htmlfns
+from utilities import file, logsetup, htmlfns, rx
 from io_put import lift
 import time
 import webbrowser
@@ -1205,6 +1205,9 @@ class Report(object):
                         value=''
                     cell=xlp.Cell(h,content=value)
     def __init__(self, **kwargs):
+        # Run the rest of the MRO first: Task (deeper in the chain) sets
+        # self.program/self.ui, which everything below reads.
+        super().__init__(**kwargs)
         self.reportbasefilename=self.program.settings.reportbasefilename
         self.reporttoaudiorelURL=self.program.settings.reporttoaudiorelURL
         self.distinguish=self.program.profiles.distinguish
@@ -1213,7 +1216,6 @@ class Report(object):
             self.minwords=self.program.settings.minimumwordstoreportUFgroup
         else: #provide a default, return to settings file for modification
             self.minwords=self.program.settings.minimumwordstoreportUFgroup=3
-        self.s=self.program.settings.s
         self.byUFgroup=False
         if not isinstance(self,Multicheck) and not self.program.params.check():
             self.getcheck()

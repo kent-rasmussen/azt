@@ -4,6 +4,7 @@ import gettext
 _ = gettext.gettext
 
 from utilities import logsetup
+from utilities.encodings import stouttostr
 log=logsetup.getlog(__name__)
 logsetup.setlevel('INFO',log) #for this file
 import subprocess

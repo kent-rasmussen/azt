@@ -20,6 +20,46 @@
 - make showoriginalorthographyinreports a UI switch
 
 # Version 1.10.2
+- FEATURE (install — collab module self-heal). On startup (top of
+  `utilities/py_modules.py`), if `azt_collab_client` isn't importable and no
+  sister `azt-collab`/`azt_collab` clone (or `AZT_COLLAB_DIR`) exists, azt
+  clones https://github.com/kent-rasmussen/azt-collab.git beside its own
+  repo — so a fresh `git clone azt` install gets collaboration with no
+  manual step. No git / no internet / timeout / unrecognizable existing
+  directory all log-and-continue; startup is never blocked, and collab
+  attaches in the same session on success.
+- FIX (pyflakes sweep — undefined names). Beyond the crash-driven fixes below
+  (`ToneFrameDrafter`, `randint`, `fixnaivedatetime`, `nowruntime`), a full
+  pyflakes pass caught the rest: `categories.py` `ftype`→`self.ftype` ×2 and
+  undefined `group` in two error messages; `lift.py` `childrenwtext` `i`→`self`
+  (gloss-node path) and `prettyprint`→`et.prettyprint`; `xlp.py`
+  `except Error`→`Exception`; `encodings.py` missing `_` import;
+  `executables.py` missing `stouttostr` import; `file_sound.py` missing
+  io/os/tarfile + file-helper imports (librosa now lazy);
+  `alphabet_comparison_pdf.py` `logging`→module `log`; `xmletfns.py` broken
+  dead `TreeParsed` removed + local `BadParseError` defined (was a NameError
+  on any bad-XML parse); chooser `logfinished`→log line; dnd_motion dead code
+  removed; `Window` backcmd lambda no longer references never-existent names;
+  `asr.py` faster-whisper stub gets `threads=4`; `langtags.unprivate` (never
+  functional, no callers) now raises NotImplementedError.
+  `utilities/openclipart.py` left as-is (documented orphan, not imported).
+- FIX (reports — scope/background mixin init order). The report mixins
+  (`Multislice`/`MultisliceS`/`MultisliceT`/`Multicheck`/`Background`) ran
+  their bodies BEFORE the task chain initialized: `Background` read `self.do`
+  before any report class had set it (crash opening every backgrounded
+  report, e.g. Tone Report by frames), the scope mixins touched
+  `self.program`/`self.status` before `Task.__init__`, and `Multicheck`
+  didn't call `super().__init__` at all — so its variants never built a task
+  window. All now run `super().__init__` first, set their report function
+  via a shared `set_do()` (which re-applies the background wrap for
+  Background variants), and rebuild the final buttons after changing `do`.
+- FIX (tone — join/rename pages never appeared). `tonegroupsjoinrename` and
+  the rename-group comparison page blocked on `wait_window` over a runwindow
+  that was never deiconified (created withdrawn; the reveal-via-wait path is
+  gated on a mature legacy repo, which never exists under collab). Explicit
+  `deiconify()` after `waitdone()` at both sites.
+- FIX (tone — `fixnaivedatetime` NameError in `isanalysisOK`). Imported from
+  `utilities.times` alongside `now`.
 - FIX (tone frames — names containing 'x' vanished). The sort-task check list
   drops correspondence checks (V1xV2 etc.) by testing `'x' not in name` — safe
   for machine-generated segmental names, but it silently swallowed user-named

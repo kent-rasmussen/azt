@@ -184,9 +184,9 @@ def draw_svg(canvas, path, x, y, width=None, height=None, center=False):
         renderPDF.draw(drawing, canvas, dx, dy)
         
     except ImportError:
-        logging.getLogger(__name__).warning("svglib not installed. Cannot render SVG.")
+        log.warning("svglib not installed. Cannot render SVG.")
     except Exception as e:
-        logging.getLogger(__name__).error(f"Error rendering SVG {path}: {e}")
+        log.error(f"Error rendering SVG {path}: {e}")
 
 def split_extra_text(title, body, image_path, text_font, font_size, width, first_page_h, other_page_h):
     """Splits body text into page-sized chunks with spacing between paragraphs."""
@@ -757,6 +757,7 @@ def make_signatures(pages):
 
 if __name__ == "__main__":
     # Basic test
+    import logging
     logging.basicConfig(level=logging.INFO)
     l_data = {
         'symbol': 'b',

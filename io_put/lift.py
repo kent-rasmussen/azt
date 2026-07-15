@@ -2320,7 +2320,7 @@ class Node(et.Element):
             return n
     def childrenwtext(self):
         if self.tag == 'gloss':
-            if i.findall('text'):
+            if self.findall('text'):
                 return [self]
         else:
             return [i for i in self
@@ -5480,7 +5480,7 @@ if __name__ == '__main__':
     #         clean_lift_file(sys.argv[1], sys.argv[2] if len(sys.argv)>2 else None)
     def writetofile(name):
         f = open(str(name)+'.txt', 'w', encoding='utf-8') # to append, "a"
-        f.write(prettyprint(lift.nodes))
+        f.write(et.prettyprint(lift.nodes))
         f.close()
     # lift.report_counts()
     # lift.convert_langtag('lol-x-HIS30147','lol-x-his30147')

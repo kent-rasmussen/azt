@@ -342,11 +342,9 @@ class Language(langcodes.Language):
         else:
             return iso
     def unprivate(self):
-        broader=self.broader_tags().remove['und']
-        check in self.languages.by_iso
-        self.privatex=self.private
-        self.private=None
-        self.reset_tag()
+        # Never worked (list.remove subscripted; bare 'check' expression) and
+        # has no callers; fail loudly if that changes rather than corrupting.
+        raise NotImplementedError("unprivate() was never functional")
     def iso(self):
         r=self.to_alpha3()
         if r in macrolanguage_members:

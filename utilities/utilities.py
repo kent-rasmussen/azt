@@ -154,6 +154,10 @@ def grouptype(**kwargs):
         kwargs[arg]=kwargs.get(arg,False)
     # log.info("Returning grouptype kwargs {}".format(kwargs))
     return kwargs
+def nowruntime():
+    """Aware-UTC now, for run-duration deltas (start_time=nowruntime();
+    … nowruntime()-start_time)."""
+    return datetime.datetime.now(datetime.timezone.utc)
 def ifone(l,nt=None):
     if l and not len(l)-1:
         return l[0]

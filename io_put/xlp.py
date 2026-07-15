@@ -172,7 +172,7 @@ class Report(object):
             # exts+=['xmla','xmlb','xmlc','tex'] #once this is working...
             for ext in exts:
                 file.remove(outfile.replace('.xml', '.'+ext))
-        except Error as e:
+        except Exception as e:
             log.info(_("The call to xelatex didn’t work: {}").format(e))
         # Another Java class that reads the output of that transform and makes
         # sure all IDs are in a form that XeLaTeX can handle.  The class name

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 import sys
+from utilities.i18n import _
 def stouttostr(x):
     # This fn is necessary (and problematic) because not all computers seem to
     # reply to subprocess.check_output with the same kind of data. I have even

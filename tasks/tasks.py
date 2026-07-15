@@ -1717,6 +1717,7 @@ class TranscribeT(Transcribe,Tone):
                         )
         self.comparisonbuttons()
         self.ui.runwindow.waitdone()
+        self.ui.runwindow.deiconify() #created withdrawn; see tonegroupsjoinrename
         self.sub_c.wait_window(self.ui.runwindow) #then move to next step
         """Store these variables above, finish with (destroying window with
         local variables):"""
@@ -1902,6 +1903,10 @@ class JoinUFgroups(Tone,Task):
                     cbl.grid(row=idn+nheaders,column=col,sticky='ew')
         scroll.reflow()  # grow canvas to cover all the group rows just built
         self.ui.runwindow.waitdone()
+        # runwindow is created withdrawn; waitdone only reveals it when a
+        # thenshow wait dialog ran (mature-repo path). Reveal explicitly, or
+        # this waits forever on an invisible window.
+        self.ui.runwindow.deiconify()
         self.ui.runwindow.wait_window(scroll)
     def __init__(self, program, **kwargs):
         super().__init__(program=program, **kwargs)

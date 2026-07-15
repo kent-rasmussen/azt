@@ -72,6 +72,7 @@ class ASRtoText(object):
         from transformers import AutoModelForSpeechSeq2Seq,AutoProcessor
         from faster_whisper import WhisperModel,BatchedInferencePipeline
         repo=model_id.split('/')[0]
+        threads=4 #faster_whisper default; 0 takes OMP_NUM_THREADS
         for compute_type in ["float32","int8"]:
                 self.models[f"{repo}_{compute_type}"]=WhisperModel(
                                                      model_id,

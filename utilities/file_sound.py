@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # coding=UTF-8
+import io
+import os
+import tarfile
 import soundfile
+# No import cycle: file.py pulls file_sound in lazily (inside a function).
+from utilities.file import (escapecommas, exists, getfilenamefrompath,
+                            findexecutable)
 class Buffered():
     def towavbuffer(self,hz=16000):
             with soundfile.SoundFile(self.buffer, mode='wb',
@@ -33,6 +39,7 @@ class SoundFile(soundfile.SoundFile,Buffered):
     """
     def downsampled(self,hz=None):
         if hz and self.samplerate != hz:
+            import librosa #optional dep; only needed when resampling
             return librosa.resample(self.read(),
                                     orig_sr=self.samplerate,
                                     target_sr=hz)

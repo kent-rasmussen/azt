@@ -18,7 +18,7 @@ from tasks.tasks import (Sound, SortV,
     WordsParse, TranscribeV, TranscribeC, TranscribeT,
     JoinUFgroups, ReportConsultantCheck)
 from frontend.ui_shell import LiftChooser
-from utilities.utilities import sysrestart, sysshutdown, openweburl
+from utilities.utilities import sysrestart, sysshutdown, openweburl, nowruntime
 from utilities.i18n import _
 from utilities import file
 from utilities import logsetup
@@ -80,7 +80,7 @@ class TaskChooser(Task):
         #     if guid not in self.formstosearch[self.analangs[0]][None]:
         #         guids+=[guid]
         # print(len(guids),guids)
-        logfinished(start_time)
+        log.info("guidtriage finished in {}".format(nowruntime()-start_time))
     def guidtriagebyps(self): #obsolete
         log.info(_("Doing guid triage by ps... This also takes awhile?..."))
         self.guidsvalidbyps={}
