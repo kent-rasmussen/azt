@@ -13,6 +13,7 @@ from io_put import export
 from tasks.alphabet_chart import AlphabetChart
 from tasks.alphabet_comparison import AlphabetComparisonPages
 from utilities.i18n import _
+from random import randint
 log = logsetup.getlog(__name__)
 
 from utilities.error_handler import notify_error as ErrorNotice
@@ -659,7 +660,7 @@ class ToneFrameDrafter(ui.Window):
     def stripftypecode(self,x):
         return x.removesuffix('_'+self.forms['field'])
     def status(self):
-        if self.ui.exitFlag.istrue():
+        if self.exitFlag.istrue(): #this IS the window; no .ui here
             return
         try:
             self.fds.destroy()
@@ -851,6 +852,7 @@ class ToneFrameDrafter(ui.Window):
                         justify=ui.LEFT,anchor='w',
                         row=0,column=0,
                         sticky='w')
+            self.scroll.reflow() #or the label stays invisible
             return
         #don't give exs w/o all glosses
         """Define the new frame"""
@@ -887,6 +889,7 @@ class ToneFrameDrafter(ui.Window):
                     row=row,column=0,
                     sticky='w',
                     padx=padx,pady=pady)
+            self.scroll.reflow() #or the label stays invisible
             return
         for lang,forms in formdict.items():
             row+=1
@@ -980,10 +983,10 @@ class ToneFrameDrafter(ui.Window):
         else:
             self.w.title(_("New {ps} Tone frame for {lang}: Name the Frame").format(
                         ps=self.ps,lang=self.program.settings.languagenames[self.analang]))
-        self.ui.withdraw() #Don't show status when asking for a value
+        self.withdraw() #Don't show status when asking for a value
         getform=ui.Label(self.w.frame,text=strings['prompt'],
                         font='read',row=0,column=0,
-                        wraplength=self.program.root.wraplength/2,
+                        wraplength=self.wraplength/2, #inherit()ed; program.root doesn't exist
                         padx=self.padx,
                         pady=self.pady)
         #field rendering is better in another frame, with no sticky!:
@@ -1018,8 +1021,8 @@ class ToneFrameDrafter(ui.Window):
                             command = submitform,
                             anchor ='c',row=2,column=0,sticky='')
         sub_btn.wait_window(formfield) #then move to next step
-        if not self.ui.exitFlag.istrue():
-            self.ui.deiconify()
+        if not self.exitFlag.istrue():
+            self.deiconify()
     def submit(self,checkdefntoadd,checktoadd,event=None):
         log.info("Submitting {} frame with these values: {}".format(
                                                 checktoadd,checkdefntoadd
@@ -1082,6 +1085,7 @@ class ToneFrameDrafter(ui.Window):
     def __init__(self,parent):
         ui.Window.__init__(self,parent)
         self.task=parent #this should always be called by a window task
+        self.program=parent.program #inherit() doesn't carry program
         self.analang=parent.analang
         self.ps=self.program.slices.ps()
         self.forms={}
@@ -1097,7 +1101,7 @@ class ToneFrameDrafter(ui.Window):
         title=_("Define a New {ps} Tone Frame for {lang}").format(ps=self.ps,
                         lang=self.program.settings.languagenames[self.analang])
         self.title(title)
-        t(f"Add {self.ps} Tone Frame for {self.program.settings.languagenames[self.analang]}")#+'\n'?
+        t=f"Add {self.ps} Tone Frame for {self.program.settings.languagenames[self.analang]}"#+'\n'?
         ui.Label(self.frame,text=t,font='title',row=0,column=0)
         self.scroll=ui.ScrollingFrame(self.frame,row=1,column=0)
         self.content=self.scroll.content

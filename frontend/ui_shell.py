@@ -1080,6 +1080,8 @@ class StatusFrame(ui.Frame):
                 return #just do one at a time
     """Right side"""
     def maybeboard(self):
+        if not self.winfo_exists(): #stale after()/post-wait call; this frame's
+            return                  #window was destroyed (e.g. task switch)
         if hasattr(self,'leaderboard') and type(self.leaderboard) is ui.Frame:
             self.leaderboard.destroy()
         self.leaderboard=ui.Frame(self,row=0,column=1,sticky='') #nesw

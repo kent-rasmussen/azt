@@ -55,3 +55,4 @@ bin/
 test_data/**
 agenda.txt
 resources.log
+TextPrompts/

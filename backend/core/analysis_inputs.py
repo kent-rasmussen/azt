@@ -88,6 +88,8 @@ class ToneFrames(dict):
             if not ps in self:
                 self[ps]={}
             self[ps][name]=defn
+            log.info("Added tone frame %s/%s (now %s)",
+                     ps, name, list(self[ps]))
     def store(self):
         log.info(_("Saving toneframes dict to file"))
         self.program.settings.storesettingsfile('toneframes')

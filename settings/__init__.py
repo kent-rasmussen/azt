@@ -6,6 +6,7 @@ from .audio import AudioConfig
 from .alphabet import AlphabetConfig
 from .contributors import ContributorsConfig
 from .data import DataConfig
+from .tone_frames import ToneFramesConfig
 from .reports import ReportsConfig
 from .app import AppConfig
 
@@ -58,6 +59,7 @@ class SettingsManager:
         self.alphabet = AlphabetConfig(base_path, hostname, user)
         self.contributors = ContributorsConfig(base_path, hostname, user)
         self.data = DataConfig(base_path, hostname, user)
+        self.tone_frames = ToneFramesConfig(base_path, hostname, user)
         self.reports = ReportsConfig(base_path, hostname, user)
         self._domains = {
             'project': self.project,
@@ -66,8 +68,16 @@ class SettingsManager:
             'alphabet': self.alphabet,
             'contributors': self.contributors,
             'data': self.data,
+            'tone_frames': self.tone_frames,
             'reports': self.reports,
         }
+        # One-time relocation: toneframes briefly landed in the data domain
+        # (1.10.1); move any such key to its own file so the two can't diverge.
+        if 'toneframes' in self.data.data:
+            if not self.tone_frames.get('toneframes'):
+                self.tone_frames.save({'toneframes': self.data.data['toneframes']})
+            del self.data.data['toneframes']
+            self.data.save()
 
     def domain_for(self, attr):
         """Return the ConfigManager instance that owns the given attribute."""
@@ -146,7 +156,7 @@ class Settings(SettingsUI):
             'alphabet': ['alphabet'],
             'contributors': ['contributors'],
             'status': ['data'],
-            'toneframes': ['data'],
+            'toneframes': ['tone_frames'],
             'adhocgroups': ['data'],
             'profiledata': ['data']
         }
@@ -454,6 +464,18 @@ class Settings(SettingsUI):
                 d={k:v[k] for k in v if k != 'DEFAULT'}
                 # _log.info(_("makestatus from file: {status}").format(status=d))
                 self.makestatus(d)
+            elif s == 'toneframes':
+                # program.toneframes IS the data object (like status above);
+                # the generic setattr below would park the dict on settings
+                # and the loaded frames would never be seen. (The legacy .ini
+                # path had this case; the JSON path lost it in the migration.)
+                d={k:v[k] for k in v if k != 'DEFAULT'}
+                _log.info("Loaded tone frames: %s",
+                          {ps:list(d[ps]) for ps in d})
+                if hasattr(self.program,'toneframes'):
+                    self.program.toneframes.source(d)
+                else:
+                    self.maketoneframes(d)
             elif (isinstance(v,dict) and
                 hasattr(o,s) and isinstance(getattr(o,s),dict)):
                 getattr(o,s).update(v)
@@ -1025,7 +1047,7 @@ class Settings(SettingsUI):
                 except AttributeError:
                     pass
     def maketoneframes(self,dict={}):
-        ToneFrames(dict,self.program)
+        ToneFrames(self.program,dict) #signature is (program, dict)
     def makestatus(self,dict={}):
         StatusDict(self.settingsfile('status'), dict, self.program)
     def localize_langnames(self):

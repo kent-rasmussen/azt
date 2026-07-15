@@ -1908,7 +1908,7 @@ class Root(_WebviewWidget):
     def drive_work(self, generator, on_done=None):
         """Consume a work generator one yield at a time, letting the event
         loop breathe. Webview stub — runs synchronously for now."""
-        for progress in generator:
+        for progress in generator or ():
             if self.iswaiting():
                 self.waitprogress(progress)
         self.waitdone()

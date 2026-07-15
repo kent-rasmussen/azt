@@ -2039,6 +2039,7 @@ class Tone(Senses):
         not going to sort afterwards –unless you need the groups."""
         self.updatesortingstatus() #this gets groups, too
     def addframe(self,**kwargs):
+        from tasks.tasks import ToneFrameDrafter #local: backend can't import tasks at module level
         if 'window' in kwargs:
             kwargs['window'].destroy() #in any case; if fails, try again.
         self.ui.withdraw()

@@ -1154,6 +1154,12 @@ class Waitable(Exitable):
         self._drive_after_id = None
         if self.exitFlag.istrue():
             return  # window is going away; abandon the rest of the work
+        if generator is None: # no work (e.g. presort already done/not applicable)
+            if self.iswaiting():
+                self.waitdone()
+            if on_done:
+                on_done()
+            return
         try:
             _w=time.perf_counter()
             progress = next(generator)

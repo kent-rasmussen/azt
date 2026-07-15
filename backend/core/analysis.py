@@ -1356,7 +1356,11 @@ class StatusDict(dict):
         no_corr=kwargs.get('no_correspondence_checks')
         if no_corr is None:
             no_corr=getattr(self.task(),'is_sort_task',False)
-        if no_corr:
+        # Correspondence checks exist only for segmental (C/V) types, where
+        # check names are machine-generated so a bare 'x' is diagnostic. Tone
+        # checks are USER-NAMED frames — a frame called e.g. 'Exists' must not
+        # be swallowed by this filter.
+        if no_corr and kwargs.get('cvt',self.program.params.cvt()) != 'T':
             checks=[i for i in checks if 'x' not in i]
         if not checks:
             return cs

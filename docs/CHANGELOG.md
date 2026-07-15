@@ -19,6 +19,70 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.10.2
+- FIX (tone frames — names containing 'x' vanished). The sort-task check list
+  drops correspondence checks (V1xV2 etc.) by testing `'x' not in name` — safe
+  for machine-generated segmental names, but it silently swallowed user-named
+  tone frames like 'Exists'/"Doesn'tExist" (and demoted the current check on
+  every boot, which mimicked a persistence bug). The filter now skips cvt 'T'.
+- FIX (tone frames — persistence). Tone frames survive reboots again. The JSON
+  settings migration had dropped the load-side special case: a saved
+  `toneframes` dict was parked on the settings object instead of reaching
+  `program.toneframes` (the legacy .ini reader had this case; `readsettingsdict`
+  didn't). Frames now route through `toneframes.source()` on load, mirroring
+  `status`. Also fixed swapped constructor args in `maketoneframes`.
+- CHANGE (tone frames — own settings file). Tone frames now live in
+  `<project>.tone_frames.json` (new `tone_frames` settings domain) instead of
+  inside `<project>.data.json`. One-time relocation moves any `toneframes` key
+  found in the data domain into the new file. Legacy `.ToneFrames.dat`
+  migration now actually works too — it was permanently masked before because
+  the data-domain JSON always had content, which suppressed the legacy reader.
+- FIX (tone frames — drafter revival). The Define-a-New-Tone-Frame dialog
+  (`ToneFrameDrafter`) had bit-rotted: missing `ToneFrameDrafter` import at the
+  lexicon call site (backend-safe local import), missing `self.program`, a
+  `t(...)` call on an undefined name, task-style `self.ui.…` calls in a class
+  that IS the window (exitFlag/withdraw/deiconify), `program.root.wraplength`
+  (no such attr; windows inherit `wraplength`), missing `randint` import, and
+  example frames built without `scroll.reflow()` on the empty-name/no-example
+  paths (invisible content). All repaired; frame definition verified live
+  end-to-end (define → examples → submit → picker → reboot → still there).
+- FIX (UI — drive_work robustness). `drive_work` now treats a `None` generator
+  as zero work (close wait dialog, run on_done) in both backends — Tone's
+  no-op `presortgroups` and the "presort already done" early return both
+  produce None, which crashed with "'NoneType' object is not an iterator".
+- FIX (UI — stale StatusFrame guard). `maybeboard()` returns early if its Tk
+  widget was destroyed (task switch during the blocking "Done!" notice) —
+  was: TclError "bad window path name … statusframe".
+- Logging: one-line info on tone-frame load and add (real state changes);
+  the DIAG-toneframes diagnosis lines from this arc are removed.
+
+# Version 1.10.1
+- CLEANUP (logging — DIAG scaffolding stripped). The groups-unverified diagnosis
+  instrumentation is gone: all `DIAG-done` lines (analysis.py update-REMOVE,
+  cull-DROP, group() non-str tripwire; settings full-reload SET; lift.py
+  per-member read dump; sorting_engine.py verify-write dump) and all
+  `DIAG-join-verify` node dumps (lift.py NOTDONE; sorting_engine.py
+  maybesort/post-cull/join-start; categories.py after-reload). The join
+  glyph-unverify line survives (real state change) without the DIAG prefix.
+  `verified_groups_by_ps_profile` lost its now-unused `log_ps` parameter.
+  Kept: DIAG-formconform, DIAG-conflict, DIAG-reveal (their arcs are open).
+- CLEANUP (logging — boot/session noise demoted to debug, info kept for real
+  events). A boot log drops from ~330 lines to ~40. Demotions: per-module
+  "Logging INFO for …" (logsetup); the safe.directory triple dump + routine
+  git config reads (vcs.py `do()` quiet-caller list: isbare, getusernameargs,
+  get_all_safe, mark_safe, getfiles; plus abs_path, branch lookup, is-bare,
+  useremail); settings moveattrstoobjects chatter — and its "Only finished
+  settingsobjects up to …" line no longer logs at ERROR during normal
+  progressive startup; chooser whatsdone() input dumps + per-field lines (the
+  two done-with summaries stay); ui_tkinter screen-geometry block → one
+  summary line; per-ps syllable-profile lines → one dict line; SGBF/glyph
+  widget-build chatter; duplicated status.groups dumps (verify, add_int_group,
+  categorizesenses); `_checkcodes_by_cvt`/`secondformfield` structure dumps.
+  langtags' static language-support block now logs once per run (that module
+  pins its logger to DEBUG, so it got once-guards instead of demotion).
+  Everything demoted is still available at DEBUG loglevel; nothing that marks
+  a data write, state change, error, or warning was removed.
+
 # Version 1.10.0
 - FEATURE (collaboration — in-place reload, "A5"). "Load now" on the team-changes
   offer now reloads the database IN PLACE: no process restart. Backend objects

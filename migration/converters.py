@@ -33,8 +33,11 @@ class Converter:
             'contributors'
         ],
         'data': [
-            'status', 'toneframes', 'adhocgroups', 'scount', 'sextracted', 
+            'status', 'adhocgroups', 'scount', 'sextracted',
             'distinguish', 'interpret', 'polygraphs'
+        ],
+        'tone_frames': [
+            'toneframes'
         ],
         'reports': [
             # alphabet_comparison_settings.json will be handled separately
@@ -48,7 +51,7 @@ class Converter:
         'alphabet': ['alphabet'],
         'contributors': ['contributors'],
         'status': ['data'],
-        'toneframes': ['data'],
+        'toneframes': ['tone_frames'],
         'adhocgroups': ['data'],
         'profiledata': ['data'],
     }
