@@ -771,11 +771,12 @@ def connect_current_project(program):
 
 
 def _settings_ui_pythons():
-    """Candidate interpreters for the daemon settings UI, which needs
-    Kivy — azt's own venv typically doesn't have it (tkinter app; the
-    Kivy-free daemon spawn is unaffected). Order: explicit override,
-    our own interpreter (covers a Kivy-equipped azt env), then the
-    suite's Kivy venvs beside the azt-collab clone."""
+    """Candidate interpreters for the daemon's Kivy helper UIs (the
+    settings window AND the project picker) — azt's own venv typically
+    doesn't have Kivy (tkinter app; the Kivy-free daemon spawn is
+    unaffected). Order: explicit override, our own interpreter (covers
+    a Kivy-equipped azt env), then the suite's Kivy venvs beside the
+    azt-collab clone."""
     import sys
     cands = []
     env_py = os.environ.get('AZT_COLLAB_UI_PYTHON', '')
