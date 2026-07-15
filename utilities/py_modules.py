@@ -127,55 +127,21 @@ def pip_install(installs=[],secondtry=False):
     if not installedsomething and not secondtry:
         pip_install(secondtry=True) #force reinstalls, just once
 
-def ensure_collab_clone():
-    """The collab daemon+client live in the azt-collab repo, normally a SISTER
-    clone of this repo (the lookup order here mirrors
-    backend/core/collab.py::_ensure_client_importable — keep them in step).
-    On a fresh install, clone it so collaboration works without a manual
-    step. Every failure path just logs and returns: azt runs fine without
-    collab, so this must never block startup."""
-    import os, shutil
+def ensure_sister_repos():
+    """azt expects some repos cloned beside its own clone: the collab
+    daemon+client, the CAWL illustration set, and the stock wordlist
+    templates. utilities/sister_repos.py owns the table and mechanics
+    (clone if absent, symlink/junction the in-repo access points); each
+    is optional, so this must never block startup."""
     try:
-        import azt_collab_client  # noqa: F401 — dev symlink or pip install
-        return True
-    except ImportError:
-        pass
-    azt_root=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    suite_root=os.path.dirname(azt_root)
-    candidates=[c for c in [os.environ.get('AZT_COLLAB_DIR',''),
-                            os.path.join(suite_root,'azt-collab'),
-                            os.path.join(suite_root,'azt_collab')] if c]
-    for c in candidates:
-        if os.path.isfile(os.path.join(c,'azt_collab_client','__init__.py')):
-            return True # already cloned
-    dest=os.path.join(suite_root,'azt-collab')
-    if os.path.exists(dest):
-        log.warning(_("{dest} exists but doesn’t contain the collab client; "
-                    "not touching it. Move it aside (or fix it) and restart "
-                    "to enable collaboration.").format(dest=dest))
-        return False
-    git=shutil.which('git')
-    if not git:
-        log.info(_("No git executable found; not cloning azt-collab "
-                    "(collaboration stays off)."))
-        return False
-    url='https://github.com/kent-rasmussen/azt-collab.git'
-    log.info(_("Collab module not found; cloning {url} to {dest}...").format(
-                                                            url=url,dest=dest))
-    try:
-        o=subprocess.check_output([git,'clone',url,dest],shell=False,
-                                    stderr=subprocess.STDOUT,timeout=600)
-        log.info(stouttostr(o))
-        log.info(_("azt-collab cloned; collaboration is available."))
-        return True
-    except subprocess.TimeoutExpired:
-        log.info(_("Cloning azt-collab timed out; will try again next start."))
-    except subprocess.CalledProcessError as e:
-        log.info(_("Couldn’t clone azt-collab ({error}); maybe no internet? "
-                    "Collaboration stays off; will try again next start."
-                    "").format(error=stouttostr(e.output)))
-    return False
-ensure_collab_clone()
+        from utilities import sister_repos
+        for name,ok in sister_repos.ensure_all().items():
+            if not ok:
+                log.info(_("Sister repo {name} unavailable (see above); "
+                            "continuing without it.").format(name=name))
+    except Exception as e:
+        log.error("Sister-repo setup failed ({}); continuing.".format(e))
+ensure_sister_repos()
 
 try:
     o=[]

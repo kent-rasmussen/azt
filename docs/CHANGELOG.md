@@ -20,14 +20,24 @@
 - make showoriginalorthographyinreports a UI switch
 
 # Version 1.10.2
-- FEATURE (install — collab module self-heal). On startup (top of
-  `utilities/py_modules.py`), if `azt_collab_client` isn't importable and no
-  sister `azt-collab`/`azt_collab` clone (or `AZT_COLLAB_DIR`) exists, azt
-  clones https://github.com/kent-rasmussen/azt-collab.git beside its own
-  repo — so a fresh `git clone azt` install gets collaboration with no
-  manual step. No git / no internet / timeout / unrecognizable existing
-  directory all log-and-continue; startup is never blocked, and collab
-  attaches in the same session on success.
+- FEATURE (install — sister-repo self-heal, one mechanism). New
+  `utilities/sister_repos.py` owns a declarative table of the repos azt
+  expects cloned beside its own clone — `azt-collab` (daemon+client),
+  `images_CAWL` (illustrations, linked at `images/toselect`), and
+  `lift_templates` (stock wordlists, linked at `lift_templates/SILCAWL`) —
+  and the shared mechanics: startup `ensure_all()` from `py_modules` clones
+  whatever is missing and creates the in-repo access links (symlink;
+  Windows falls back to a directory junction, which needs no Developer
+  Mode); a fresh `git clone azt` install self-completes on first run.
+  Principles: never block startup (no git / offline / timeout /
+  unrecognizable existing dir all log-and-continue), never touch anything
+  the run didn't create, no network when a local copy is already reachable
+  (dev symlink, pip, `AZT_COLLAB_DIR`, existing clone — boot never pulls).
+  `images/to_select_update.py` and `lift_templates/SILCAWL_update.py` are
+  now thin wrappers over it (their standalone CLI use and
+  `io_put/cawl.py`'s lazy `ensure_available()` unchanged); their old
+  copies' `sys.exit(1)` foot-gun (would have killed the app when the link
+  target was a real directory) is gone with the duplication.
 - FIX (pyflakes sweep — undefined names). Beyond the crash-driven fixes below
   (`ToneFrameDrafter`, `randint`, `fixnaivedatetime`, `nowruntime`), a full
   pyflakes pass caught the rest: `categories.py` `ftype`→`self.ftype` ×2 and

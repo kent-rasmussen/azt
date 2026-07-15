@@ -615,7 +615,7 @@ class Report(object):
         reportfileXLP='_'.join(bits)+'.xml'
         xlpreport=xlp.Report(reportfileXLP,reporttype,
                         self.program.settings.languagenames[self.analang],
-                        program # who is calling this report?
+                        self.program # who is calling this report?
                         )
         # langsalreadythere=[]
         if hasattr(xlpreport,'node'): #otherwise, this will fail
