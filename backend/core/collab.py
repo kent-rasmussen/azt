@@ -837,6 +837,75 @@ def open_settings(program):
         title=_("Collaboration"))
 
 
+def pick_team_project():
+    """Open the daemon's project picker (GitHub sign-in, list, clone or
+    create team projects) and return ``(lift_path, error_message)``.
+    Blocks while the picker window is open. ``lift_path`` is None on
+    cancel or failure; ``error_message`` is None on success and on a
+    plain cancel. This is the LiftChooser's "Get a project from your
+    team" seam — the picker clones under the daemon's project root and
+    registers the project daemon-side; we then pre-set azt's
+    per-project collab flag (what ``attach()`` gates on) so the project
+    opens CONNECTED, same as one adopted via connect_current_project.
+
+    The picker is a Kivy app; try each candidate interpreter until one
+    survives the spawn (see ``_settings_ui_pythons``), same as
+    ``open_settings``. A cancel from a WORKING picker must not fall
+    through to the next interpreter."""
+    if not AVAILABLE:
+        return None, _("The collaboration client could not be found; "
+                       "clone azt-collab beside the azt folder, or "
+                       "set AZT_COLLAB_DIR.")
+    last = {}
+    for py in _settings_ui_pythons():
+        try:
+            r = _client.pick_project(python_exe=py)
+        except TypeError:
+            # Client predates the python_exe param (0.54.6).
+            r = _client.pick_project()
+        except Exception as e:
+            r = {'ok': False, 'error': str(e)}
+        if r.get('ok'):
+            path = r.get('path')
+            _preconnect_picked_project(path, r.get('langcode', ''))
+            return path, None
+        if r.get('error') == 'cancelled':
+            return None, None
+        last = r
+        log.warning(
+            f"picker spawn with {py} failed: {r.get('error')} "
+            f"rc={r.get('returncode')} detail={r.get('detail', '')!r}")
+    detail = last.get('detail', '') or last.get('error', 'unknown')
+    return None, _(
+        "Could not open the team project picker: {detail}\n"
+        "The picker window needs the Kivy package; install it in "
+        "one of the A-Z+T suite’s Python environments, or set "
+        "AZT_COLLAB_UI_PYTHON to a python that has it."
+        ).format(detail=detail)
+
+
+def _preconnect_picked_project(lift_path, langcode):
+    """Flip azt's per-project collab switch for a picker-returned
+    project so attach() connects it on open. The daemon side is already
+    registered (the picker only returns daemon-known projects). Best
+    effort: on any failure the project just opens legacy, and
+    Advanced → Connect remains available."""
+    if not (lift_path and langcode):
+        if lift_path:
+            log.info("picker returned no langcode (pre-0.54 daemon?); "
+                     "project will open legacy — use Advanced → Connect")
+        return
+    try:
+        mgr = _settings_mgr(lift_path)
+        mgr.project.set('collab', True)
+        mgr.project.set('collab_langcode', langcode)
+        mgr.project.save()
+        log.info(f"picked project pre-connected ({langcode})")
+    except Exception as e:
+        log.info(f"couldn’t pre-connect picked project ({e}); "
+                 "use Advanced → Connect after opening")
+
+
 def disconnect_current_project(program):
     """Flip the per-project switch off (rollback path). The daemon
     registration and git history stay — reconnecting is one call."""

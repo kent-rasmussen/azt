@@ -3278,6 +3278,8 @@ class LiftChooser(ui.Window,HasMenus):
         restart=False
         if choice == 'New':
             name=self.startnewfile()
+        elif choice == 'Team':
+            name=self.pickteamproject()
         elif choice == 'Other':
             name=file.lift()
         elif choice == 'Clone':
@@ -3296,6 +3298,16 @@ class LiftChooser(ui.Window,HasMenus):
             self.setfilenameandcontinue(name,restart)
         elif not hasattr(self,'name') or not self.name: #If not either, trust that Demo is working
             self.deiconify() #let user pick again
+    def pickteamproject(self):
+        """Open the collab daemon's project picker (GitHub sign-in /
+        list / clone / create) and return the chosen .lift path, or
+        None on cancel/failure. Blocks while the picker is open."""
+        log.info("Opening the team project picker")
+        from backend.core import collab
+        name,err=collab.pick_team_project()
+        if err:
+            notify_error(err,title=_("Collaboration"))
+        return name
     def setfilenameandcontinue(self,name,restart=False,event=None):
         log.info(_("Running setfilenameandcontinue with "
                     "name={name} and restart={restart}").format(name=name, restart=restart))
@@ -3326,6 +3338,7 @@ class LiftChooser(ui.Window,HasMenus):
         text=_('What do you want to work on?') #LIFT database
         ui.Label(self.frame, text=text, font='title', column=0, row=0)
         optionlist=[('New',_("Start work on a new language"))]
+        optionlist+=[('Team',_("Get a project from your team (GitHub)"))]
         optionlist+=[('Clone',_("Copy work from a USB drive"))]
         filenamelist=file.getfilenames()
         if filenamelist:

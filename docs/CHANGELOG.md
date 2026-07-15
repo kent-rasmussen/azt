@@ -20,6 +20,18 @@
 - make showoriginalorthographyinreports a UI switch
 
 # Version 1.10.2
+- FEATURE (collaboration — open a team project from GitHub). The LiftChooser
+  gains "Get a project from your team (GitHub)": spawns the collab daemon's
+  project picker (sign-in, list, clone or create; the same picker the
+  recorder uses), and opens the returned project CONNECTED — the picker's
+  langcode pre-sets the per-project collab flag that `attach()` gates on, so
+  no Advanced → Connect step is needed. The picker is a Kivy app, so azt
+  drives it through the existing interpreter-candidate loop
+  (`AZT_COLLAB_UI_PYTHON` → own python → suite venvs); requires client
+  0.54.6 (`pick_project(python_exe=…)` — older clients fall back to the
+  host interpreter, which works only if it has Kivy). Cancel returns to the
+  chooser. Note: the daemon settings-UI's own project switching remains
+  daemon-side only — azt reads its own last-file, not `last_project()`.
 - FEATURE (install — sister-repo self-heal, one mechanism). New
   `utilities/sister_repos.py` owns a declarative table of the repos azt
   expects cloned beside its own clone — `azt-collab` (daemon+client),
