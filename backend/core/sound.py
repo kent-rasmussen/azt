@@ -7,16 +7,37 @@ validation, ASR kwargs). Persistent user config lives in ``settings/audio.py``
 """
 import copy
 import sys
-import pyaudio
 from utilities import file, rx, logsetup
 from utilities import utilities as utils
 log = logsetup.getlog(__name__)
+# pyaudio/numpy are OPTIONAL app-wide (program['nosound']): this module must
+# stay importable without them — its importers are everywhere, and a hard
+# import here killed boot on machines where pyaudio didn't build
+# (2026-07-16). Audio CLASSES fail at USE instead.
+SOUND_PROBLEMS = []  # (component, error) — main.py surfaces these LOUDLY
+#                      (blocking startup notice): degraded sound must never
+#                      be silent in a sound-centric app (Kent 2026-07-16).
+try:
+    import pyaudio
+    _PYAUDIO_BASE = pyaudio.PyAudio
+    PYAUDIO_OK = True
+except Exception as _e:
+    pyaudio = None
+    PYAUDIO_OK = False
+    SOUND_PROBLEMS.append(('pyaudio (recording/playback)', str(_e)))
+    log.error(f"pyaudio unavailable ({_e}); sound features are off.")
+    class _PYAUDIO_BASE(object):
+        """Import-time stand-in so AudioInterface can be DEFINED; any
+        attempt to actually construct it says what's missing."""
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError("pyaudio is not installed (sound is off)")
 try:
     import numpy
-except ModuleNotFoundError:
-    log.error("This isn't going to work, but you can hopefully reboot after "
-              "installing Numpy.")
-    raise
+except Exception as _e:
+    numpy = None
+    SOUND_PROBLEMS.append(('numpy (audio data)', str(_e)))
+    log.error(f"numpy unavailable ({_e}); sound/ASR features are off "
+              "until it installs.")
 try:
     from backend import asr
     log.info("ASR loaded OK")
@@ -26,6 +47,7 @@ except Exception as e:
     # transcription, not kill every importer of the sound stack (it took
     # the whole app down via ui_shell→io_put.sound→here, 2026-07-16).
     asr = None
+    SOUND_PROBLEMS.append(('ASR (transcription)', str(e)))
     log.error(f"ASR unavailable ({e}); recording/playback still work, "
               "transcription is off until this is fixed.")
 
@@ -36,7 +58,7 @@ except NameError:
         return x
 
 
-class AudioInterface(pyaudio.PyAudio):
+class AudioInterface(_PYAUDIO_BASE):
     def stop(self):
         self.terminate()
         log.info("PyAudio Terminated")

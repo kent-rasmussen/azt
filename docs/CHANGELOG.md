@@ -47,6 +47,17 @@
   `MIN_PYTHON` gates interpreter age: an outdated child env is rebuilt
   automatically from a new-enough base python; an outdated sister/base
   python gets a clear install-newer-python message. Never blocks startup.
+- CHANGE (robustness — degraded sound boots LOUDLY, as a last resort).
+  Policy (Kent 2026-07-16): the self-heal installers get their chance every
+  start; if pyaudio/numpy/ASR still can't load, azt boots for sorting and
+  reports — but only after a BLOCKING startup notice ("Sound is not
+  working!") naming each broken component and its error, so nobody records
+  silence or skips transcription unknowingly. The sound stack's root
+  imports (io_put/sound.py, backend/core/sound.py) are guarded once — so
+  every transitive importer (tasks, sound_ui, transcriber, sort_buttons,
+  which each used to kill boot outright) degrades together; audio classes
+  fail at use with a clear message; `main.py` reads `PYAUDIO_OK` explicitly
+  for `nosound`; play buttons fall back to plain labels.
 - FIX (robustness — broken ASR stack no longer kills boot). The nosound
   guard in main.py was bypassed by two other importers of the sound stack:
   `ui_shell.py`'s `from io_put import sound` (dead import — removed) and
@@ -62,11 +73,16 @@
   ALSA `write()` — e.g. a 192 kHz settings test — can't freeze the UI) had
   no recovery: the busy-guard refused every later play while the wedged
   thread lived, i.e. forever. `play()` now tracks a deadline (clip length
-  + grace); a previous play alive past it is treated as wedged, its stream
-  aborted (which raises inside the stuck thread and frees it), and
-  playback proceeds. The play loop also exits on a dead stream instead of
-  logging an exception per chunk, and output-underflow recovery moved to
-  the write exception where it actually occurs.
+  + grace); a play alive past it is treated as wedged and ABANDONED: its
+  stream is kept referenced but detached (NEVER closed from another thread
+  — a first attempt at that corrupted the heap: PortAudio forbids closing
+  a stream mid-blocked-write; `malloc_consolidate` crash 2026-07-16), a
+  generation counter tells the zombie to exit at its next between-chunks
+  check without touching shared state, and playback proceeds on a fresh
+  stream. Cost: one leaked device handle per wedge until restart. The play
+  loop also exits on a dead stream instead of logging an exception per
+  chunk, and underflow recovery moved to the write exception where it
+  occurs.
 - CHANGE (audio — librosa dropped for scipy). The one librosa call
   (`file_sound.downsampled`, export-tarball resampling) now uses
   `scipy.signal.resample_poly` — scipy is already in the tree via

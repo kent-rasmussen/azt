@@ -45,7 +45,13 @@ import migration
 try:
     from io_put import sound
     from frontend import transcriber, sound_ui
-    program['nosound']=False
+    # These imports now SUCCEED without pyaudio (the sound modules guard
+    # their own roots and degrade), so read the flag rather than relying
+    # on an ImportError to reach us.
+    program['nosound']=not sound.PYAUDIO_OK
+    if program['nosound']:
+        log.error("pyaudio unavailable; sound features are off "
+                    "(recording/playback disabled, sorting etc. fine).")
 except Exception as e:
     program['nosound']=True
     log.error("Problem importing Sound/pyaudio. Is it installed? {}"
@@ -370,6 +376,34 @@ class App:
         if self.filename and 'Demo' in str(self.filename):
             self.demo=True #not used?
             file.writefilename() #clear this to select next time
+    def warn_sound_problems(self):
+        """Booting with degraded sound is a LAST RESORT and must be noisy
+        (Kent 2026-07-16): the self-heal installers get their chance every
+        start; if problems remain, the user must acknowledge them before
+        doing any work — a fieldworker must never record silence, or skip
+        transcription, without knowing why."""
+        from backend.core.sound import SOUND_PROBLEMS
+        if not SOUND_PROBLEMS:
+            return
+        lines=[_("This computer’s sound support is BROKEN, and A-Z+T "
+                 "couldn’t repair it automatically:"),'']
+        lines+=[f"• {component}: {error}"
+                for component,error in SOUND_PROBLEMS]
+        if (platform.system() == 'Linux'
+                and any(c.startswith('pyaudio') for c,e in SOUND_PROBLEMS)):
+            lines+=['',_("If you have errors containing ˋportaudioˊ above, "
+                     "you should install pyaudio with your package manager "
+                     "(e.g. ˋsudo apt install portaudio19-devˊ, then restart "
+                     "{name} so it can rebuild pyaudio).").format(
+                                                            name=self.name)]
+        lines+=['',_("You can sort and run reports, but recording, playback "
+                 "and/or transcription will NOT work until this is fixed. "
+                 "Fix the problem (see the log for details), or ask for "
+                 "help, before collecting data on this machine."),'',
+                _("Restarting {name} retries the automatic repair."
+                  ).format(name=self.name)]
+        ErrorNotice('\n'.join(lines),title=_("Sound is not working!"),
+                    wait=True) #blocking: acknowledge before any work
     def _run_setup(self):
         """All setup that must happen after the UI event loop is live.
 
@@ -395,6 +429,8 @@ class App:
                 pass
             screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
             log.info(_("MS Windows screen size: {size}").format(size=screensize))
+        self.warn_sound_problems() #LOUD, blocking; degraded sound must never
+        #                           be silent in a sound-centric app
         self.prep_to_write()
         langtags.Languages(self)
         self.get_lift_file() #self.filename, maybe LiftChooser (NOT self.analang)

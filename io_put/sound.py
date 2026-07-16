@@ -6,15 +6,26 @@ Audio device state (PyAudio handle, cards, rates, ASR) lives in
 ``backend.core.sound``. This module holds only the I/O classes that read
 and write WAV files via PyAudio streams.
 """
-import pyaudio
 import wave
 import sys
 import traceback
 
-import numpy
+# The sound stack is OPTIONAL app-wide (program['nosound']): importing this
+# module must never fail just because pyaudio/numpy aren't installed — half
+# the app imports it transitively, and a hard import here killed boot on any
+# machine where pyaudio didn't build (2026-07-16). Guard the roots ONCE here
+# (and in backend.core.sound) instead of at every importer.
+try:
+    import pyaudio
+except Exception as _e:
+    pyaudio=None
+try:
+    import numpy
+except Exception as _e:
+    numpy=None
 
 from utilities import logsetup, file
-from backend.core.sound import AudioInterface, SoundSettings
+from backend.core.sound import AudioInterface, SoundSettings, PYAUDIO_OK
 
 log = logsetup.getlog(__name__)
 logsetup.setlevel('DEBUG', log)
@@ -158,14 +169,20 @@ class SoundFilePlayer(object):
             if _time.time() < getattr(self,'_play_deadline',0):
                 log.info("Previous play still busy; ignoring this play request")
                 return
-            log.info("Previous play is past its deadline (wedged?); "
-                     "aborting its stream to recover")
-            self.streamclose()
-            prev.join(1)
-            if prev.is_alive():
-                log.warning("Wedged play thread survived the stream abort; "
-                            "continuing anyway — this next play may fail "
-                            "once if the device is still held.")
+            # DO NOT close/stop its stream from here: PortAudio forbids
+            # closing a stream mid-blocked-write — doing so corrupted the
+            # heap (malloc_consolidate crash, 2026-07-16). Instead ABANDON:
+            # keep a reference (no GC), detach it from self so streamopen
+            # can't close it either, and bump the generation so the zombie
+            # exits at its next between-chunks check if it ever unblocks.
+            # Cost: one leaked device stream until process exit.
+            log.warning("Previous play is past its deadline (wedged); "
+                        "abandoning it and playing on a fresh stream. "
+                        "(Its device handle leaks until restart.)")
+            self._abandoned=getattr(self,'_abandoned',[])
+            if hasattr(self,'stream'):
+                self._abandoned.append(self.stream)
+                del self.stream
         self.streamclose() #just in case
         timeout=5 #seconds or None
         process=False
@@ -200,8 +217,11 @@ class SoundFilePlayer(object):
             self.play()
             return
         def block():
+            gen=getattr(self,'_playgen',0) #abandonment check (see play())
             self.streamopen(rate,channels)
-            if not hasattr(self,'stream'):
+            stream=getattr(self,'stream',None) #OUR stream, held locally: a
+            #   later play may replace self.stream after abandoning us
+            if stream is None:
                 log.info("Sorry, couldn't make stream!")
                 return
             log.debug("running play block with args "
@@ -219,30 +239,40 @@ class SoundFilePlayer(object):
             framesleft = frames
             self.data = self.wf.readframes(self.settings.chunk)
             while len(self.data) > 0:
+                if getattr(self,'_playgen',gen) != gen:
+                    # we were abandoned as wedged; a newer play owns the
+                    # shared state now — exit WITHOUT touching stream/wf
+                    log.info("Abandoned play thread exiting.")
+                    return
                 try:
-                    self.stream.write(self.data)
+                    stream.write(self.data)
                 except Exception as e:
                     if "Output underflowed" in str(e):
                         self.streamopen(rate,channels) #recover and continue
+                        stream=getattr(self,'stream',None)
+                        if stream is None:
+                            return
                     else:
-                        # stream dead/aborted (incl. the wedge-recovery
-                        # abort from play()): exit instead of grinding an
+                        # stream dead: exit instead of grinding an
                         # exception per chunk through the rest of the file.
                         log.exception("Other exception trying to play "
                                     f"sound! {sys.exc_info()[0]}")
                         log.info("The above may indicate a systemic problem! "
                                  "Abandoning this playback.")
                         break
+                if getattr(self,'_playgen',gen) != gen:
+                    log.info("Abandoned play thread exiting.")
+                    return
                 try:
                     self.data = self.wf.readframes(self.chunk)
                 except OSError as e:
-                    if "Output underflowed" in e.args[0]:
-                        self.streamopen(rate,channels)
                     log.exception("Unexpected exception trying to read "
                                 f"frames {sys.exc_info()[0]}")
                     log.info("The above may indicate a systemic problem!")
+                    break
             log.debug("apparently we're out of data")
-            self.streamclose()
+            if getattr(self,'_playgen',gen) == gen: #still the owner
+                self.streamclose()
         def callback():
             import time
             log.info("Playing {} sample rate with card {} on {} channels with "
@@ -286,6 +316,10 @@ class SoundFilePlayer(object):
             self._playthread=p
             # wedge detection: alive past clip length + grace = stuck write
             self._play_deadline=_time.time()+duration+5
+            # generation: an abandoned (wedged) thread sees this changed and
+            # exits at its next between-chunks check instead of touching
+            # state a newer play now owns
+            self._playgen=getattr(self,'_playgen',0)+1
         else:
             log.info("Running in line")
             block()

@@ -6,7 +6,14 @@ from utilities import logsetup
 log=logsetup.getlog(__name__)
 from frontend import ui
 from utilities import file, executables
-from io_put import sound
+try:
+    from io_put import sound
+except Exception as e:
+    # optional (pyaudio & friends): sorting must work on a nosound machine —
+    # this import killed boot on any install where pyaudio failed (2026-07-16).
+    sound=None
+    log.info(f"sound stack unavailable ({e}); play buttons will fall back "
+             "to plain labels")
 
 class SortButtonFrame(ui.ScrollingFrame):
     """This is the frame of sort group buttons."""
@@ -544,6 +551,9 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             self.label['image']=self._illustration
             self.label['compound']='left'
     def playbutton(self):
+        if sound is None: #no sound stack on this machine; show a plain label
+            self.labelbutton()
+            return
         self.player=sound.SoundFilePlayer(self._filenameURL,self.task.pyaudio,
                                             self.program.settings.soundsettings)
         b=ui.Button(self, text=self._text,
