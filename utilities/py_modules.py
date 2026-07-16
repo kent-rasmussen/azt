@@ -153,16 +153,38 @@ def _venv_python(envdir):
         py=os.path.join(envdir,'bin','python')
     return py if os.path.isfile(py) else None
 
-def _python_version(py):
-    """(major, minor) of an interpreter, or None."""
+def _rmtree_force(path):
+    """shutil.rmtree that also handles Windows read-only files/dirs (a
+    half-created venv can be left read-only, and plain rmtree then fails
+    on every boot — seen 2026-07-16). Returns True when the dir is gone."""
+    import os, shutil, stat
+    def _onerr(fn,p,exc):
+        try:
+            os.chmod(p, stat.S_IWRITE)
+            fn(p)
+        except Exception:
+            pass
+    try:
+        shutil.rmtree(path, onerror=_onerr)
+    except Exception as e:
+        log.error("Couldn’t remove {} ({})".format(path,e))
+    return not os.path.isdir(path)
+
+def _python_probe(py):
+    """((major,minor), is_venv) of an interpreter, or (None, None) when it
+    can't even run (zombie venv). is_venv matters: a half-created Windows
+    venv can hold a python.exe that runs as a PLAIN python (no working
+    pyvenv.cfg) — sync_requirements then silently refuses to manage it
+    (2026-07-16)."""
     try:
         out=subprocess.check_output(
             [py,'-c','import sys;print(sys.version_info[0],'
-                     'sys.version_info[1])'],timeout=30)
-        maj,minor=out.split()
-        return (int(maj),int(minor))
+                     'sys.version_info[1],'
+                     'int(sys.prefix!=sys.base_prefix))'],timeout=30)
+        maj,minor,isvenv=out.split()
+        return (int(maj),int(minor)),bool(int(isvenv))
     except Exception:
-        return None
+        return None,None
 
 def ensure_venv():
     """azt should run inside a venv named 'env', so its heavy dependency
@@ -202,22 +224,42 @@ def ensure_venv():
         if py:
             break
     if py:
-        v=_python_version(py)
-        if v and v < MIN_PYTHON:
+        v,isvenv=_python_probe(py)
+        rebuild=None
+        if v is None:
+            # The env's python couldn't even report a version — the classic
+            # Windows zombie venv: its base python was moved/uninstalled, so
+            # env\Scripts\python.exe just prints "No Python at '...'" and
+            # dies. Relaunching into it kills the app on every start
+            # (2026-07-16, Windows) — rebuild ours, route around the user's.
+            rebuild=_("its python doesn’t run — was the python it was "
+                      "made from uninstalled or moved?")
+        elif not isvenv:
+            # runs, but as a PLAIN python: half-created venv (Windows,
+            # 2026-07-16) — requirements management silently disowns it.
+            rebuild=_("its python isn’t actually a virtual environment "
+                      "(creation half-failed?)")
+        elif v < MIN_PYTHON:
+            rebuild=_("python {old} < {need}").format(
+                        old='.'.join(map(str,v)),
+                        need='.'.join(map(str,MIN_PYTHON)))
+        if rebuild:
             if (envdir == child and sys.version_info[:2] >= MIN_PYTHON):
-                #ours, outdated, and we have a good base: rebuild it
-                log.info(_("Rebuilding {dir} (python {old} < {need})..."
-                        "").format(dir=envdir,
-                                   old='.'.join(map(str,v)),
-                                   need='.'.join(map(str,MIN_PYTHON))))
-                import shutil
-                try:
-                    shutil.rmtree(envdir)
-                except Exception as e:
-                    log.error("Couldn’t remove the outdated env ({}); "
-                                "continuing with it.".format(e))
-                py=None if not os.path.isdir(envdir) else py
-            else: #the user's sister env, or no better base: warn only
+                #ours, broken/outdated, and we have a good base: rebuild it
+                log.info(_("Rebuilding {dir} ({why})...").format(
+                                                dir=envdir,why=rebuild))
+                if not _rmtree_force(envdir):
+                    log.error("Couldn’t remove the broken env; "
+                                "continuing outside it.")
+                    return
+                py=None #fall through to fresh creation below
+            elif v is None or not isvenv: #the user's sister env, unusable:
+                log.warning(_("The env at {dir} is broken ({why}); leaving "
+                    "it alone and using {child} instead. Delete or fix "
+                    "{dir} to use it again.").format(dir=envdir,why=rebuild,
+                                                     child=child))
+                py=None #creation below makes the child
+            else: #the user's sister env, old but functional: warn only
                 log.warning(_("The env at {dir} runs python {old}; A-Z+T "
                     "wants {need}+. It may still work, but plan to "
                     "recreate it from a newer python.").format(dir=envdir,
@@ -231,6 +273,15 @@ def ensure_venv():
                 "").format(have='.'.join(map(str,sys.version_info[:2])),
                            need='.'.join(map(str,MIN_PYTHON))))
             return
+        if os.path.isdir(child):
+            # exists but unusable (no python.exe: creation died partway,
+            # possibly left read-only — Windows 2026-07-16): clear it fully
+            # rather than trusting venv to repair a corpse.
+            log.info(_("Clearing the broken env at {dir} before "
+                        "recreating...").format(dir=child))
+            if not _rmtree_force(child):
+                log.error("Couldn’t clear it; continuing without a venv.")
+                return
         log.info(_("First run: creating a python virtual environment at "
                     "{dir} (dependencies will install there)...").format(
                                                                 dir=child))
@@ -244,6 +295,13 @@ def ensure_venv():
         if py is None:
             log.error("venv created but its python is missing; "
                         "continuing with {}".format(sys.executable))
+            return
+        v,isvenv=_python_probe(py) #validate BEFORE relaunching into it:
+        if not isvenv: #runs as plain python = half-made (Windows 2026-07-16)
+            log.error("The created venv doesn’t function as one; clearing "
+                        "it and continuing with {} (will retry next start)"
+                        "".format(sys.executable))
+            _rmtree_force(child)
             return
     log.info(_("Relaunching inside the virtual environment: {py}").format(
                                                                     py=py))
@@ -270,10 +328,16 @@ def sync_requirements():
     the venv, so unchanged requirements cost one file read per boot."""
     import os, hashlib
     if sys.prefix == sys.base_prefix:
+        log.info("Not in a venv; not syncing requirements.txt here "
+                    "(the per-package fallback below still runs). "
+                    "AZT_NO_VENV set, or did the venv bootstrap fail?")
         return #only manage a venv, never a system python
     root=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     req=os.path.join(root,'requirements.txt')
     if not os.path.isfile(req):
+        log.error("requirements.txt not found at {} — this azt copy is "
+                    "incomplete; only the per-package fallback list will "
+                    "install.".format(req))
         return
     with open(req,'rb') as f:
         cur=hashlib.sha256(f.read()).hexdigest()

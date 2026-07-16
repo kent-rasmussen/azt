@@ -46,7 +46,12 @@
   venv — so version pins/bumps propagate, not just missing packages — and
   `MIN_PYTHON` gates interpreter age: an outdated child env is rebuilt
   automatically from a new-enough base python; an outdated sister/base
-  python gets a clear install-newer-python message. Never blocks startup.
+  python gets a clear install-newer-python message. A BROKEN env — its
+  python won't run at all (Windows zombie venv after its base python was
+  moved/uninstalled: "No Python at '…'"; this killed every start on the
+  first Windows test) — is rebuilt when it's ours, or bypassed with a
+  warning (child created/repaired) when it's the user's own sister env.
+  Never blocks startup.
 - CHANGE (robustness — degraded sound boots LOUDLY, as a last resort).
   Policy (Kent 2026-07-16): the self-heal installers get their chance every
   start; if pyaudio/numpy/ASR still can't load, azt boots for sorting and
