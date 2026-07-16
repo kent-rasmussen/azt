@@ -68,7 +68,8 @@ except ModuleNotFoundError:
 # (librosa dropped 2026-07-16 — resampling now scipy; see file_sound.py)
 import io
 import tarfile
-from packaging import version
+# packaging is imported lazily in praatversioncheck: this module loads on the
+# BARE-venv bootstrap path (py_modules→logsetup→file), before pip deps exist.
 from importlib import reload as modulereload
 import subprocess
 from utilities.encodings import stouttostr
@@ -345,6 +346,7 @@ def praatversioncheck(praat_exe):
         versionraw=subprocess.check_output(praatvargs, shell=False)
     except Exception as e:
         return True
+    from packaging import version #lazy: see module-top note
     try:
         if b'\x00' in versionraw:
             characters=versionraw.decode('utf-16')

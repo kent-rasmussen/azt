@@ -290,19 +290,32 @@ def sync_requirements():
           '-f',os.path.join(root,'modulestoinstall'),
           '-r',req]
     for args in (base+['--no-index'],base): #offline-first, then online
+        passname='offline' if '--no-index' in args else 'online'
         try:
-            subprocess.check_call(args)
+            o=subprocess.check_output(args,stderr=subprocess.STDOUT)
+            o=stouttostr(o)
+            installed=[l for l in o.splitlines()
+                       if l.startswith('Successfully installed')]
+            log.info(_("Python packages synchronized ({mode}): {what}"
+                        "").format(mode=passname,
+                                   what=installed[-1] if installed
+                                        else 'nothing to change'))
             with open(stampfile,'w') as f:
                 f.write(cur)
-            log.info(_("Python packages synchronized."))
             return
-        except Exception as e:
-            if '--no-index' in args:
-                log.info("offline package sync incomplete ({}); trying "
-                            "online".format(e))
+        except subprocess.CalledProcessError as e:
+            o=stouttostr(e.output)
+            tail='\n'.join(o.splitlines()[-12:])
+            if passname == 'offline':
+                log.info("offline package sync incomplete; trying online. "
+                            "pip said:\n{}".format(tail))
             else:
-                log.error("package sync failed ({}); continuing with "
-                            "what’s installed".format(e))
+                log.error("package sync FAILED — the requirements did NOT "
+                            "install; the per-package backstop below will "
+                            "try individually. pip said:\n{}".format(tail))
+        except Exception as e:
+            log.error("package sync failed ({}); continuing with "
+                        "what’s installed".format(e))
 sync_requirements()
 
 def ensure_sister_repos():
