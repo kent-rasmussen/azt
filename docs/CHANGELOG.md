@@ -63,6 +63,19 @@
   window. All now run `super().__init__` first, set their report function
   via a shared `set_do()` (which re-applies the background wrap for
   Background variants), and rebuild the final buttons after changing `do`.
+- FIX (reports — missing stylesheet killed the report silently).
+  `xlp.stylesheet()` assumed `stylesheetdir` even though init explicitly
+  supports its absence (no `xlpstylesheets/` ships with azt) — `close()`
+  died there BEFORE `write()`, so the report file never landed and the
+  failure was invisible (background thread). Reports are now written
+  unstyled when no stylesheet directory exists, with one info line.
+- FIX (reports — crashed run blocked all future runs). The 0-byte `.tmp`
+  in-process sentinel is only cleared by `cleanup()` at the END of a
+  successful `close()`, so any crash left it behind and every later run
+  bailed at init ("already in process; not doing again") — forever.
+  `close()` now clears the sentinel in a `finally:`, and init treats a
+  sentinel older than an hour as stale (clears it and proceeds), so a
+  crashed run self-heals instead of wedging the report.
 - FIX (tone — join/rename pages never appeared). `tonegroupsjoinrename` and
   the rename-group comparison page blocked on `wait_window` over a runwindow
   that was never deiconified (created withdrawn; the reveal-via-wait path is

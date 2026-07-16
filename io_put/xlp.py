@@ -18,9 +18,22 @@ class Report(object):
         self.filename=filename
         self.tmpfile=self.filename+'.tmp'
         if file.exists(self.tmpfile):
-            log.info(_("Report {} already in process; not doing again."
-                    ).format(self.filename))
-            return
+            # In-process sentinel (cleared by close()->cleanup()). A crashed
+            # run never reaches cleanup, so honor only a FRESH sentinel (a
+            # genuinely concurrent report); clear a stale one and carry on —
+            # otherwise one crash blocks this report forever.
+            import os as _os
+            try:
+                age=times.now().timestamp()-_os.path.getmtime(self.tmpfile)
+            except OSError:
+                age=0
+            if age < 3600:
+                log.info(_("Report {} already in process; not doing again."
+                        ).format(self.filename))
+                return
+            log.info(_("Clearing stale report lock {} (left by a crashed "
+                        "run).").format(self.tmpfile))
+            file.remove(self.tmpfile)
         open(self.tmpfile, 'wb').close()
         self.stylesheetdir=file.getstylesheetdir(filename)
         if self.stylesheetdir and not file.exists(self.stylesheetdir):
@@ -44,12 +57,15 @@ class Report(object):
         log.info(_("Done initializing Report"))
     def close(self,me=False):
         log.info(_("Done; setting back matter, etc, now."))
-        self.backmatter()
-        self.languages()
-        self.xlptypes()
-        self.stylesheet()
-        self.write()
-        self.cleanup()
+        try:
+            self.backmatter()
+            self.languages()
+            self.xlptypes()
+            self.stylesheet()
+            self.write()
+        finally:
+            self.cleanup() #ALWAYS drop the .tmp sentinel — a crash here used
+            #               to leave it behind, blocking every future run
         t=times.now()-self.start_time
         # m=int(t/60)
         # s=t%60
@@ -247,8 +263,13 @@ class Report(object):
     def xlptype(self, parent, t):
         tp=ET.SubElement(parent, 'type',attrib=t)
     def stylesheet(self):
-        if hasattr(self,'stylesheetdir'):
-            print('self.stylesheetdir:',self.stylesheetdir)
+        if not getattr(self,'stylesheetdir',None):
+            # init found no stylesheet dir (logged there) and set None;
+            # the report is written unstyled rather than dying here —
+            # this used to crash close() BEFORE write(), so the whole
+            # report silently never landed on disk.
+            log.info(_("No stylesheet directory; writing report unstyled."))
+            return
         stylesheetname='CannedPaperStylesheet.xml'
         url=file.getdiredurl(self.stylesheetdir,stylesheetname)
         tree = ET.parse(url)
