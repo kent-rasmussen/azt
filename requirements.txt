@@ -1,0 +1,76 @@
+# azt dependencies. THIS FILE IS THE ROLLOUT MECHANISM: py_modules.
+# sync_requirements() re-runs `pip install -r requirements.txt` on every
+# install whose venv stamp doesn't match this file's hash — so adding or
+# pinning here updates every install on its next start.
+# PIN DISCIPLINE: a pin here actively DOWN/UP-grades every install, so pin
+# only from a known-good env (pip freeze), and never below what deployed
+# envs already run (2026-07-16: a stale numpy<=2.0 cap broke a working
+# ASR stack by downgrading under its scipy/transformers).
+# (Audited 2026-07-16 against actual imports; see agenda/rework_install_procedure.md.)
+allosaurus              # backend/asr.py (IPA recognizer)
+faster_whisper          # backend/asr.py
+huggingface_hub[hf_xet] # model downloads (large-file backend)
+langcodes
+language_data
+scipy                   # utilities/file_sound.py resampling (replaced librosa
+                        # 2026-07-16: numba/llvmlite dependency storms); also a
+                        # transformers dependency anyway
+lxml
+numpy>=2.1,<2.5         # direct: io_put/sound, core/sound, asr.
+                        # >=2.1: the old <=2.0 cap downgraded a working env below
+                        # its scipy/transformers (2026-07-16 breakage).
+                        # <2.5: numba (openai-whisper dep) requires numpy<2.5 —
+                        # uncapped, pip installed 2.5.1 and numba went
+                        # ResolutionImpossible. Recheck when numba's cap moves.
+openai_whisper          # provides `import whisper`
+packaging
+patiencediff
+praat-parselmouth       # praatfns.py
+Pillow
+polib                   # not imported by azt itself; translation tooling
+psutil
+PyAudio
+pydub                   # not imported by azt itself (candidate to drop post-workshop)
+reportlab               # PDF output (alphabet chart/booklet)
+samplerate              # not imported (utilities/file.py has it commented; candidate to drop)
+#setuptools<=58.0
+soundfile
+svglib                  # io_put/alphabet_comparison_pdf.py (SVG rendering)
+tgt                     # praatfns.py (TextGridTools)
+torch==2.7.1+cpu
+tqdm
+transformers
+urllib3
+# REMOVED 2026-07-16: `whisper` — that PyPI name is Graphite's database
+# library, NOT speech; `import whisper` comes from openai_whisper above.
+# REMOVED 2026-07-16: `backports.statistics` — stale; the only backports
+# use in code is a `from backports import lzma` fallback for pythons
+# without stdlib lzma (<3.3), which we don't support.
+# azt-collab collaboration (the daemon runs in this env on desktop):
+# dulwich = git ops; cryptography+zeroconf = LAN identity + discovery;
+# segno = pairing-QR rendering. See agenda/rework_install_procedure.md.
+cryptography
+dulwich
+segno
+zeroconf
+# kivy: NOT imported by azt itself — the collab daemon's project picker and
+# settings UI are Kivy subprocesses, and on a standalone install azt's venv
+# is the only python available to run them (decision 2026-07-16; see
+# agenda/rework_install_procedure.md item 6 and team_project_picker.md).
+kivy
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+#ERROR: Ignored the following versions that require a different python version: 1.21.2 Requires-Python >=3.7,<3.11; 1.21.3 Requires-Python >=3.7,<3.11; 1.21.4 Requires-Python >=3.7,<3.11; 1.21.5 Requires-Python >=3.7,<3.11; 1.21.6 Requires-Python >=3.7,<3.11; 1.26.0 Requires-Python >=3.9,<3.13; 1.26.1 Requires-Python >=3.9,<3.13
+#ERROR: Could not find a version that satisfies the requirement torch==2.6.0+cpu (from versions: 2.5.0, 2.5.1, 2.6.0, 2.7.0, 2.7.1, 2.8.0)
+#ERROR: No matching distribution found for torch==2.6.0+cpu
+
+# ROCM 6.3 (Linux only)
+#pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/rocm6.3
+# CUDA 11.8
+#pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu118
+# CUDA 12.6
+#pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu126
+# CUDA 12.8
+#pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128
+# CPU only
+#pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cpu
