@@ -297,7 +297,10 @@ def sysrestart(event=None):
     if osys == 'Linux':
         os.execl(sys.executable, sys.executable, *sys.argv, '--restart')
     elif osys == 'Windows':
-        subprocess.run([sys.executable, *sys.argv, '--restart'])
+        # Popen, NOT run: run() waits, so restart chains stacked one live
+        # "waiter" process per restart and tripped the duplicate gate
+        # (3 found, 2026-07-16). Exit as soon as the successor is launched.
+        subprocess.Popen([sys.executable, *sys.argv, '--restart'])
     sys.exit()
 if __name__ == '__main__':
     from utilities import logsetup

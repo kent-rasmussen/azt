@@ -2,10 +2,17 @@
 # coding=UTF-8
 """Consider making the above work for a venv"""
 """This file runs the actual GUI for lexical file manipulation/checking"""
+# Duplicate gate FIRST: py_modules MUTATES shared state (creates the venv,
+# runs pip, clones sister repos) — a second instance must be stopped before
+# racing the first (two pips in one venv can corrupt packages).
+try:
+    from utilities import duplicates
+    if duplicates.running_file(__file__):
+        exit()
+except ImportError: #psutil not installed yet — only true on a machine's
+    pass            #very first boot, when nothing can be racing anyway;
+                    #py_modules below installs it, so every later boot gates.
 import utilities.py_modules #This tries importing, and installs on failure
-from utilities import duplicates
-if duplicates.running_file(__file__):
-    exit()
 program={'name':'A-Z+T',
         'tkinter':True, #for some day
         'production':False, #True for making screenshots (default theme)

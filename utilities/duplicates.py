@@ -15,11 +15,17 @@ def running_file(path):
     # us may not have finished exiting yet — exclude exactly that pid,
     # once (pop: don't inherit into restarts).
     skip_pids={os.environ.pop('AZT_BOOTSTRAP_PARENT_PID','')}
-    # Generic rule: our DIRECT spawner is never an independent copy — it's
-    # the venv-bootstrap parent, or the old instance waiting out a Windows
-    # sysrestart (subprocess.run blocks). A user-launched duplicate is
-    # never our parent, so this can't weaken the real gate.
-    skip_pids.add(str(os.getppid()))
+    # Generic rule: our ANCESTORS are never independent copies — they're
+    # the venv-bootstrap parent, or old instances waiting out Windows
+    # sysrestarts (subprocess.run blocks, so restart CHAINS accumulate one
+    # waiter per restart — three found after two restarts, 2026-07-16). A
+    # user-launched duplicate is never our ancestor, so this can't weaken
+    # the real gate.
+    try:
+        for anc in psutil.Process().parents():
+            skip_pids.add(str(anc.pid))
+    except Exception:
+        skip_pids.add(str(os.getppid()))
     skip_pids.discard('')
     resolved=pathlib.Path(path).resolve()
     # psutil.process_iter.cache_clear() #doesn't seem to help

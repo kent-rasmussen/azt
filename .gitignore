@@ -30,6 +30,8 @@ backupBeforeLx2LcConversion
 XLingPaperPDFTemp/**
 *backupBeforeLx2LcConversion
 *.txt
+!requirements.txt
+!requirements-dev.txt
 *.7z
 *.zip
 *ori

@@ -7,7 +7,10 @@
 # envs already run (2026-07-16: a stale numpy<=2.0 cap broke a working
 # ASR stack by downgrading under its scipy/transformers).
 # (Audited 2026-07-16 against actual imports; see agenda/rework_install_procedure.md.)
-allosaurus              # backend/asr.py (IPA recognizer)
+allosaurus; sys_platform == "linux"  # backend/asr.py (IPA recognizer;
+                        # optional engine). Linux-only marker: its
+                        # editdistance C-extension has no Windows py3.13
+                        # wheel and killed the whole -r there (2026-07-16).
 faster_whisper          # backend/asr.py
 huggingface_hub[hf_xet] # model downloads (large-file backend)
 langcodes
