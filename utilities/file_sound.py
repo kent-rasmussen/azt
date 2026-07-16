@@ -39,13 +39,14 @@ class SoundFile(soundfile.SoundFile,Buffered):
     """
     def downsampled(self,hz=None):
         if hz and self.samplerate != hz:
-            import librosa #optional dep; only needed when resampling
-            return librosa.resample(self.read(),
-                                    orig_sr=self.samplerate,
-                                    target_sr=hz)
-             # res_type='soxr_hq', fix=True, scale=False, axis=-1, **kwargs)
-            # return samplerate.converters.resample(self.read(),
-            #     hz/self.samplerate)
+            # scipy, not librosa (librosa dropped 2026-07-16: its numba/
+            # llvmlite dependencies are a recurring pip-resolution storm,
+            # and scipy is already in the tree via transformers).
+            from math import gcd
+            from scipy.signal import resample_poly
+            g=gcd(int(hz),int(self.samplerate))
+            return resample_poly(self.read(), int(hz)//g,
+                                 int(self.samplerate)//g)
         else:
             return self.read()
     def __init__(self,file): # file name or object

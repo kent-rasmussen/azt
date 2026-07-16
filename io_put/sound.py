@@ -147,11 +147,25 @@ class SoundFilePlayer(object):
             return
         # A play may still be in flight — including one wedged inside
         # pyaudio's blocking write() (2026-07-14: 192kHz/32int test play
-        # froze the whole UI). Never stack another stream on top of it.
+        # froze the whole UI). Never stack another stream on top of it —
+        # but a play alive PAST ITS DEADLINE (clip length + grace) is wedged,
+        # and without recovery it blocks every later play for the whole
+        # session (2026-07-16). Abort its stream: the blocked write() then
+        # raises inside the thread, which exits its loop.
         prev=getattr(self,'_playthread',None)
         if prev is not None and prev.is_alive():
-            log.info("Previous play still busy; ignoring this play request")
-            return
+            import time as _time
+            if _time.time() < getattr(self,'_play_deadline',0):
+                log.info("Previous play still busy; ignoring this play request")
+                return
+            log.info("Previous play is past its deadline (wedged?); "
+                     "aborting its stream to recover")
+            self.streamclose()
+            prev.join(1)
+            if prev.is_alive():
+                log.warning("Wedged play thread survived the stream abort; "
+                            "continuing anyway — this next play may fail "
+                            "once if the device is still held.")
         self.streamclose() #just in case
         timeout=5 #seconds or None
         process=False
@@ -207,10 +221,18 @@ class SoundFilePlayer(object):
             while len(self.data) > 0:
                 try:
                     self.stream.write(self.data)
-                except Exception:
-                    log.exception("Other exception trying to play "
-                                f"sound! {sys.exc_info()[0]}")
-                    log.info("The above may indicate a systemic problem!")
+                except Exception as e:
+                    if "Output underflowed" in str(e):
+                        self.streamopen(rate,channels) #recover and continue
+                    else:
+                        # stream dead/aborted (incl. the wedge-recovery
+                        # abort from play()): exit instead of grinding an
+                        # exception per chunk through the rest of the file.
+                        log.exception("Other exception trying to play "
+                                    f"sound! {sys.exc_info()[0]}")
+                        log.info("The above may indicate a systemic problem! "
+                                 "Abandoning this playback.")
+                        break
                 try:
                     self.data = self.wf.readframes(self.chunk)
                 except OSError as e:
@@ -258,9 +280,12 @@ class SoundFilePlayer(object):
             p = Process(target=block)
         elif thread:
             from threading import Thread
+            import time as _time
             log.info("Running as threaded")
             p = Thread(target=block, daemon=True)
             self._playthread=p
+            # wedge detection: alive past clip length + grace = stuck write
+            self._play_deadline=_time.time()+duration+5
         else:
             log.info("Running in line")
             block()

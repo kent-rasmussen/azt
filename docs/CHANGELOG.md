@@ -32,6 +32,57 @@
   host interpreter, which works only if it has Kivy). Cancel returns to the
   chooser. Note: the daemon settings-UI's own project switching remains
   daemon-side only — azt reads its own last-file, not `last_project()`.
+- FEATURE (install — self-bootstrapping venv + requirements sync). Fresh
+  Windows procedure is now: run the python.org installer, clone azt, run
+  azt. On a start outside a venv, `py_modules.ensure_venv()` finds the
+  suite convention SISTER env (`<azt>/../env`) or the CHILD (`<azt>/env`),
+  creates the child if neither exists, and relaunches inside (preserving
+  pythonw for double-click launchers; the duplicate-process check excuses
+  the exiting parent by pid; `--restart` already re-execs the venv python
+  so it's unaffected; opt out with `AZT_NO_VENV=1`). Upgrades roll out
+  smoothly to old installs: `sync_requirements()` re-runs
+  `pip install -r requirements.txt` (offline-first from modulestoinstall/,
+  then online) whenever the file's hash differs from the stamp in the
+  venv — so version pins/bumps propagate, not just missing packages — and
+  `MIN_PYTHON` gates interpreter age: an outdated child env is rebuilt
+  automatically from a new-enough base python; an outdated sister/base
+  python gets a clear install-newer-python message. Never blocks startup.
+- FIX (robustness — broken ASR stack no longer kills boot). The nosound
+  guard in main.py was bypassed by two other importers of the sound stack:
+  `ui_shell.py`'s `from io_put import sound` (dead import — removed) and
+  the unguarded `from backend import asr` in `backend/core/sound.py`
+  (→ transformers → scipy → numpy; a numpy version mismatch took the whole
+  app down). ASR import failure now degrades to sound-without-transcription
+  with a clear log line; recording/playback unaffected. requirements.txt
+  also drops its stale `numpy<=2.0` cap (numpy>=2.1), which — once
+  sync_requirements made the file authoritative — had downgraded a working
+  env underneath its scipy/transformers and caused exactly this breakage.
+- FIX (audio — one wedged play no longer kills playback for the session).
+  The 2026-07-14 fix that moved playback off the Tk thread (so a wedged
+  ALSA `write()` — e.g. a 192 kHz settings test — can't freeze the UI) had
+  no recovery: the busy-guard refused every later play while the wedged
+  thread lived, i.e. forever. `play()` now tracks a deadline (clip length
+  + grace); a previous play alive past it is treated as wedged, its stream
+  aborted (which raises inside the stuck thread and frees it), and
+  playback proceeds. The play loop also exits on a dead stream instead of
+  logging an exception per chunk, and output-underflow recovery moved to
+  the write exception where it actually occurs.
+- CHANGE (audio — librosa dropped for scipy). The one librosa call
+  (`file_sound.downsampled`, export-tarball resampling) now uses
+  `scipy.signal.resample_poly` — scipy is already in the tree via
+  transformers, while librosa drags numba/llvmlite, whose numpy caps are a
+  recurring pip-resolution storm (bit again 2026-07-16). numpy pinned
+  `>=2.1,<2.5` (numba's cap, via openai-whisper, still binds).
+- CHANGE (install — Kivy becomes a standard azt dependency). Decision (a)
+  from the install-rework item: the collab daemon's project picker and
+  settings UI are Kivy subprocesses, and a standalone install (esp.
+  Windows) has no other python to run them — so `kivy` joins
+  requirements.txt and the `py_modules` auto-install, with a
+  `find_spec`-only presence check (kivy is NEVER imported in azt's own
+  process — its import-time argv parser is the known hazard). Existing
+  installs self-heal with a one-time pip pass on next start. Also fixed:
+  the interpreter-candidate loop now finds Windows suite venvs
+  (`env\Scripts\python.exe`) alongside posix ones.
 - FEATURE (install — sister-repo self-heal, one mechanism). New
   `utilities/sister_repos.py` owns a declarative table of the repos azt
   expects cloned beside its own clone — `azt-collab` (daemon+client),

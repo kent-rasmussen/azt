@@ -788,9 +788,11 @@ def _settings_ui_pythons():
             os.path.abspath(_client.__file__)))
         suite_root = os.path.dirname(collab_root)
         for app in ('azt_recorder', 'azt-viewer'):
-            py = os.path.join(suite_root, app, 'env', 'bin', 'python')
-            if os.path.isfile(py):
-                cands.append(py)
+            for rel in (('env', 'bin', 'python'),           # posix venv
+                        ('env', 'Scripts', 'python.exe')):  # windows venv
+                py = os.path.join(suite_root, app, *rel)
+                if os.path.isfile(py):
+                    cands.append(py)
     except Exception:
         pass
     seen = set()

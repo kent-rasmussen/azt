@@ -17,8 +17,17 @@ except ModuleNotFoundError:
     log.error("This isn't going to work, but you can hopefully reboot after "
               "installing Numpy.")
     raise
-from backend import asr
-log.info("ASR loaded OK")
+try:
+    from backend import asr
+    log.info("ASR loaded OK")
+except Exception as e:
+    # ASR pulls in the heavy ML stack (transformers/torch/scipy); damage
+    # there (e.g. a numpy version mismatch) must degrade to sound-without-
+    # transcription, not kill every importer of the sound stack (it took
+    # the whole app down via ui_shell→io_put.sound→here, 2026-07-16).
+    asr = None
+    log.error(f"ASR unavailable ({e}); recording/playback still work, "
+              "transcription is off until this is fixed.")
 
 try:
     _
@@ -316,6 +325,9 @@ class SoundSettings(object):
 
     def load_ASR(self):
         """Only do this if there is no ASR; reload above."""
+        if asr is None:
+            log.info("ASR module unavailable; not loading models.")
+            return
         try:
             assert isinstance(self.asr, asr.ASRtoText)
             self.reload_ASR()
@@ -365,7 +377,8 @@ class SoundSettings(object):
         return self.asr_kwargs
 
     def get_changed_kwargs(self):
-        if not hasattr(self, 'asr') or not isinstance(self.asr, asr.ASRtoText):
+        if (asr is None or not hasattr(self, 'asr')
+                or not isinstance(self.asr, asr.ASRtoText)):
             return 1
         changed_kwargs = {k: v for k, v in self.asr_kwargs.items()
                           if not hasattr(self.asr, k) or v != getattr(self.asr, k)}

@@ -23,7 +23,6 @@ from backend.core.report_mixins import Multislice, Multicheck
 from backend.core.lexicon import Tone, Segments, WordCollection, Parse
 from backend.core.analysis import Analysis, StatusDict, SyllableSliceDict
 from backend.core import templates
-from io_put import sound
 from io_put.cawl import loadCAWL
 
 

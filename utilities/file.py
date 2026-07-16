@@ -65,10 +65,7 @@ except ModuleNotFoundError:
     print("Module soundfile not installed; to use sound features, install.")
     soundfileOK=False
 # import samplerate
-try:
-    import librosa
-except ModuleNotFoundError:
-    print("Module librosa not installed; to use sound features, install.")
+# (librosa dropped 2026-07-16 — resampling now scipy; see file_sound.py)
 import io
 import tarfile
 from packaging import version

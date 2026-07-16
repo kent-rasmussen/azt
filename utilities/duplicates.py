@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 
+import os
 import psutil
 import pathlib
 import sys
@@ -10,6 +11,10 @@ def running_file(path):
     ok_processes=1
     if '--restart' in sys.argv:
         ok_processes+=1
+    # venv bootstrap (py_modules.ensure_venv): the parent that relaunched
+    # us may not have finished exiting yet — exclude exactly that pid,
+    # once (pop: don't inherit into restarts).
+    skip_pid=os.environ.pop('AZT_BOOTSTRAP_PARENT_PID','')
     resolved=pathlib.Path(path).resolve()
     # psutil.process_iter.cache_clear() #doesn't seem to help
     try:
@@ -22,8 +27,10 @@ def running_file(path):
         else:
             l=list() #may be less efficient
             for q in psutil.process_iter(['cmdline']):
-                qcmd=q.info['cmdline'] 
-                if qcmd is None or '-X' in qcmd or [i for i in qcmd 
+                if skip_pid and str(q.pid) == skip_pid:
+                    continue #the exiting bootstrap parent (see above)
+                qcmd=q.info['cmdline']
+                if qcmd is None or '-X' in qcmd or [i for i in qcmd
                                                 if 'py.exe' in i]: #avoids need for try/except
                     continue
                 for c in qcmd:
