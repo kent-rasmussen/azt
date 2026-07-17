@@ -872,6 +872,12 @@ def pick_team_project():
             _preconnect_picked_project(path, r.get('langcode', ''))
             return path, None
         if r.get('error') == 'cancelled':
+            # Log the subprocess's last words even on a "cancel" —
+            # a quiet rc plus empty stderr is a real user cancel, but
+            # this line is the only evidence trail when it wasn't
+            # (Windows change-project flash, 2026-07-17).
+            log.info(f"picker cancelled: rc={r.get('returncode')} "
+                     f"stderr tail: {r.get('detail', '')!r}")
             return None, None
         last = r
         log.warning(
