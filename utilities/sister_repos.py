@@ -190,22 +190,65 @@ def ensure(name):
 
 
 def update(name):
-    """git pull an existing sister clone (CLI/maintenance use — ensure()
-    deliberately never pulls at boot), then ensure availability. A failed
-    pull is logged and does NOT prevent linking the existing clone."""
+    """git pull an existing sister clone (ensure() deliberately never
+    pulls at boot), then ensure availability. A failed pull is logged
+    and does NOT prevent linking the existing clone.
+
+    Returns ``(ok, code, output)``: ``ok`` is availability after the
+    attempt; ``code`` is one of ``'updated'`` / ``'current'`` /
+    ``'pull-failed'`` / ``'installed'`` (no clone existed; ensure()
+    fetched one) / ``'missing'`` — drive logic off the code, never off
+    ``output`` (raw git text / error, display only). ``--ff-only``
+    because rollout clones must never grow local merge state; a
+    diverged clone surfaces as ``pull-failed`` for a human to look at."""
     spec = REPOS[name]
+    code, output = '', ''
     for c in _candidates(name, spec):
         if os.path.isdir(os.path.join(c, '.git')):
             log.info(_("Updating {dir}...").format(dir=c))
             try:
-                subprocess.check_call([shutil.which('git') or 'git',
-                                       '-C', c, 'pull'],
-                                      timeout=spec.get('timeout', 600))
+                r = subprocess.run([shutil.which('git') or 'git',
+                                    '-C', c, 'pull', '--ff-only'],
+                                   capture_output=True, text=True,
+                                   timeout=spec.get('timeout', 600))
+                output = ((r.stdout or '') + (r.stderr or '')).strip()
+                if r.returncode != 0:
+                    code = 'pull-failed'
+                    log.info(_("Pull failed ({error}); continuing with "
+                                "the existing clone.").format(error=output))
+                elif 'Already up to date' in output \
+                        or 'Already up-to-date' in output:
+                    code = 'current'
+                else:
+                    code = 'updated'
             except Exception as e:
+                code, output = 'pull-failed', str(e)
                 log.info(_("Pull failed ({error}); continuing with the "
                             "existing clone.").format(error=e))
             break
-    return ensure(name)
+    ok = ensure(name)
+    if not code:
+        code = 'installed' if ok else 'missing'
+    return ok, code, output
+
+
+def describe(code):
+    """Translated one-phrase summary of an update() code, for display."""
+    return {
+        'updated': _("updated (restart to use)"),
+        'current': _("already up to date"),
+        'pull-failed': _("could not update; keeping the current copy"),
+        'installed': _("newly installed"),
+        'missing': _("not available (no internet?)"),
+    }.get(code, code)
+
+
+def update_all():
+    """Update every sister repo (git pull + ensure); the in-app update
+    flow (``main.updateazt``) runs this so machines that never touch a
+    shell — Windows field laptops — still get server/client updates.
+    Returns ``{name: (ok, code, output)}``."""
+    return {name: update(name) for name in REPOS}
 
 
 def ensure_all():

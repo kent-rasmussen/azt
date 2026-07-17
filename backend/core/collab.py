@@ -886,6 +886,26 @@ def pick_team_project():
         ).format(detail=detail)
 
 
+def restart_collab_daemon():
+    """Ask the running collab daemon to restart, so it picks up a
+    just-pulled azt-collab. The daemon is a detached process that
+    outlives azt restarts, so a sister-repo update does nothing for
+    the server until it is bounced (main.updateazt calls this when
+    the azt-collab pull moved). Quiet best-effort: True when a daemon
+    accepted the restart, False otherwise (none running, client
+    missing or too old)."""
+    if not AVAILABLE:
+        return False
+    try:
+        r = _client.restart_server()
+    except AttributeError:
+        return False  # client predates restart_server
+    except Exception as e:
+        log.info(f"restart_collab_daemon: {e}")
+        return False
+    return bool(r is not None and r.has('RESTARTING'))
+
+
 def _preconnect_picked_project(lift_path, langcode):
     """Flip azt's per-project collab switch for a picker-returned
     project so attach() connects it on open. The daemon side is already

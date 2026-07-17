@@ -950,6 +950,11 @@ def updateazt(event=None,**kwargs): #should only be parent, for errorroot
         log.info(_("parent title: {title}").format(title=kwargs['parent'].title()))
         w=ui.Wait(msg=_("Updating {azt}").format(azt=program.name), **kwargs)
         r=program.source_repo.share() #t is a dict of main and testing results
+        # Sister repos ride along with every azt update — a Windows
+        # field machine has no other path to server/client (azt-collab)
+        # updates; nobody runs git in a shell there.
+        from utilities import sister_repos
+        sisters=sister_repos.update_all()
         w.close()
         if r:
             t='\n'.join([i for j in r.items() #each tuple
@@ -962,6 +967,15 @@ def updateazt(event=None,**kwargs): #should only be parent, for errorroot
             program.source_repo.clonetoUSB()
             tryagain()
             return
+        for sname,(sok,scode,sout) in sisters.items():
+            t+='\n{}: {}'.format(sname,sister_repos.describe(scode))
+        if sisters.get('azt-collab',(False,'',''))[1]=='updated':
+            # The daemon is detached and outlives azt restarts; new
+            # server code does nothing until it is bounced.
+            from backend.core import collab
+            if collab.restart_collab_daemon():
+                t+='\n'+_("(Collaboration service restarted with its "
+                            "update)")
         button=False
         if internetconnectionproblemin(t):
             if tryagain:
@@ -976,7 +990,10 @@ def updateazt(event=None,**kwargs): #should only be parent, for errorroot
             elif [i for i in r.values() if updated(i)]: #anything updated
                 t+='\n'+_("(Restart {name} to use this update)"
                         ).format(name=program.name)
-            if [i for i in r.values() if not uptodate(i)]:
+            if [i for i in r.values() if not uptodate(i)] \
+                    or any(s[1]=='updated' for s in sisters.values()):
+                # sister 'updated' needs a restart too: azt has the old
+                # azt_collab_client already imported in-process.
                 button=(_("Restart Now"),sysrestart)
         try:
             try:

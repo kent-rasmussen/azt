@@ -20,6 +20,16 @@
 - make showoriginalorthographyinreports a UI switch
 
 # Version 1.10.2
+- FEATURE (update — sister repos ride along). "Update A-Z+T" now also
+  `git pull --ff-only`s every sister repo (azt-collab, images_CAWL,
+  lift_templates) via `sister_repos.update_all()` and reports each one in
+  the update-output window — the only update path on machines that never
+  touch a shell (Windows field laptops previously froze azt-collab at its
+  first-boot clone). When the azt-collab pull moved, azt asks the running
+  collab daemon to restart (it is detached and outlives azt restarts, so
+  new server code is inert until bounced) and the Restart Now button also
+  arms, since the in-process client copy is stale too. A diverged sister
+  clone reports "could not update" rather than growing merge state.
 - FEATURE (collaboration — open a team project from GitHub). The LiftChooser
   gains "Get a project from your team (GitHub)": spawns the collab daemon's
   project picker (sign-in, list, clone or create; the same picker the
