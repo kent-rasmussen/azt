@@ -20,6 +20,13 @@
 - make showoriginalorthographyinreports a UI switch
 
 # Version 1.10.3
+- FIX (fresh project — TaskChooser crash on boot log line). `task_base()`
+  did `cvt in name` with `params.cvt()` still None — the chooser doesn't
+  seed a cvt, and a freshly-copied project has none persisted, so the
+  `base.py` "Done initializing" log line TypeError'd during chooser init.
+  None is now treated as the normal fresh-project state (returns the task
+  class name); a cvt-suffixed task whose params disagree still derives its
+  base from the class name.
 - FEATURE (update — sister repos ride along). "Update A-Z+T" now also
   `git pull --ff-only`s every sister repo (azt-collab, images_CAWL,
   lift_templates) via `sister_repos.update_all()` and reports each one in

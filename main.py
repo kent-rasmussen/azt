@@ -641,10 +641,21 @@ class App:
             return "No task"
         cvt=self.params.cvt()
         name=self.task.__class__.__name__
-        if cvt in name:
+        # cvt is None on a fresh project before any cvt-bearing task
+        # has run (the chooser doesn't seed params.cvt) — normal, not
+        # an anomaly; crashed TaskChooser init via the base.py boot
+        # log line (field 2026-07-17, fresh project copy).
+        if cvt and cvt in name:
             return name[:-len(cvt)]
-        else:
-            log.info(f"cvt {cvt} not in task name {name}; not sure how to derive a base")
+        if getattr(self.task,'cvt_sensitive',False) \
+                and name.endswith(('S','T')):
+            # params.cvt out of sync with a cvt-suffixed task class;
+            # the class name itself carries the suffix.
+            return name[:-1]
+        if cvt:
+            log.info(f"cvt {cvt} not in task name {name}; "
+                     "not sure how to derive a base")
+        return name
     def reload_database(self):
         """A5 (in-place reload): re-read the LIFT from disk and rebuild
         everything derived from it — no process restart. Used when the
