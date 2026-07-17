@@ -44,7 +44,7 @@ samplerate              # not imported (utilities/file.py has it commented; cand
 soundfile
 svglib                  # io_put/alphabet_comparison_pdf.py (SVG rendering)
 tgt                     # praatfns.py (TextGridTools)
-torch==2.7.1+cpu
+torch==2.12.1+cpu
 tqdm
 transformers
 urllib3
