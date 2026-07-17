@@ -583,11 +583,17 @@ class Repository(object):
             if self.useremail:
                 log.debug(_("Using {repo} useremail ‘{email}’").format(repo=self.repotypename,email=self.useremail))
         else:
-            self.username='-'.join([self.program.name,os.getlogin(),self.program.hostname])
+            # getpass, not os.getlogin(): getlogin raises OSError with no
+            # console (pythonw double-click on Windows), and this fallback
+            # runs at boot on any machine without a git user.name.
+            import getpass
+            _user=getpass.getuser()
+            self.username='-'.join([self.program.name,_user,self.program.hostname])
             log.info(_("No {repo} username found; using ‘{name}’"
                     "").format(repo=self.repotypename,name=self.username))
         if not self.useremail:
-            self.useremail=self.program.name+'-'+os.getlogin()+'@'+self.program.hostname
+            import getpass
+            self.useremail=self.program.name+'-'+getpass.getuser()+'@'+self.program.hostname
             log.info(_("No {repo} useremail found; using ‘{email}’"
             "").format(repo=self.repotypename,email=self.useremail))
         self.usernameargs=self.argstoputuserids(self.username,self.useremail)

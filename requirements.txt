@@ -19,6 +19,10 @@ scipy                   # utilities/file_sound.py resampling (replaced librosa
                         # 2026-07-16: numba/llvmlite dependency storms); also a
                         # transformers dependency anyway
 lxml
+opencv-python           # collab QR pairing: desktop webcam scan (client
+                        # qr_scan.py, 0.54.6). TRULY optional at runtime —
+                        # its absence just hides the Scan affordance — so
+                        # it's not in py_modules' import check.
 numpy>=2.1,<2.5         # direct: io_put/sound, core/sound, asr.
                         # >=2.1: the old <=2.0 cap downgraded a working env below
                         # its scipy/transformers (2026-07-16 breakage).

@@ -80,8 +80,13 @@ def tryfilehandler(self,lessiso=16):
         handler.setLevel(0) #Let the loglevel determine what to show
         handler.setFormatter(logformat('fullformat'))
         self.addHandler(handler)
-    except PermissionError as e:
-        log.info(f"Logfile permission problem ({e}); trying again.")
+    except OSError as e: #PermissionError, or an invalid filename — on
+        #Windows, slicing below lessiso=13 leaves a ':' in the name
+        #(WinError 123), so don't recurse into ever-worse names
+        if lessiso <= 13:
+            log.info(f"Logfile problem ({e}); console logging only.")
+            return
+        log.info(f"Logfile problem ({e}); trying again.")
         tryfilehandler(self,lessiso=lessiso-3)
 def test(self):
     self.debug("Debug!")

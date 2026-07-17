@@ -19,12 +19,17 @@ except ImportError:
 
 if REPORTLAB_AVAILABLE:
     if platform.system() == 'Windows':
-        for path in [r'C:\Windows\Fonts',
-                    r''.join([r'C:\Users\\',
-                            str(os.getlogin()),
-                            r'\AppData\Local\Microsoft\Windows\Fonts'
-                            ])
-                    ]:
+        # NO os.getlogin() here: it raises OSError under pythonw (no
+        # console) — and this runs AT IMPORT, on the boot path, so it
+        # killed double-click launches while cmd launches worked
+        # (found 2026-07-16). Env vars are the safe identity source.
+        _user_fonts = os.path.join(
+            os.environ.get('LOCALAPPDATA')
+            or os.path.join(os.path.expanduser('~'), 'AppData', 'Local'),
+            'Microsoft', 'Windows', 'Fonts')
+        for path in [os.path.join(os.environ.get('WINDIR', r'C:\Windows'),
+                                  'Fonts'),
+                     _user_fonts]:
             TTFSearchPath.append(path)
     # enable font subdirectories:
     for i in list(TTFSearchPath):
