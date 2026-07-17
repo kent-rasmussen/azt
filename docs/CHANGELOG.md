@@ -37,7 +37,7 @@
   new server code is inert until bounced) and the Restart Now button also
   arms, since the in-process client copy is stale too. A diverged sister
   clone reports "could not update" rather than growing merge state.
-  Companion azt-collab 0.54.7 ships the honest LAN/GitHub-clone failure
+  Companion azt-collab 0.54.9 ships the honest LAN/GitHub-clone failure
   messages, live clone progress on the receive popup, and a Restart
   server button in the picker footer.
 
