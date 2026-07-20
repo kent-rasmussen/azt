@@ -31,6 +31,6 @@ If you want any of these workshops in your home area, please consider inviting a
 ## [Consonants](ws/CONSONANTS.md)
 ## [Text Collection](ws/TEXT_COLLECTION.md)
 
-#If you're doing tone
+# If you're doing tone
 ## [Sorting Nouns for Tone](ws/NOUN_ROOT_TONE.md)
 ## [Sorting Verbs for Tone](ws/VERB_ROOT_TONE.md)
