@@ -69,6 +69,17 @@ REPOS = {
 }
 
 
+def _git_noninteractive():
+    """Environment for rollout git runs: no terminal is attached (and the
+    caller may be on the UI thread), so any credential/passphrase prompt
+    must fail immediately — surfacing as 'pull-failed' — rather than hang
+    the subprocess until its timeout."""
+    env = dict(os.environ)
+    env['GIT_TERMINAL_PROMPT'] = '0'
+    env.setdefault('GIT_SSH_COMMAND', 'ssh -oBatchMode=yes')
+    return env
+
+
 def _has_marker(directory, marker):
     if not os.path.isdir(directory):
         return False
@@ -174,6 +185,8 @@ def ensure(name):
             if spec.get('size_note'):
                 log.info(spec['size_note'])
             subprocess.check_call([git, 'clone', spec['url'], dest],
+                                  stdin=subprocess.DEVNULL,
+                                  env=_git_noninteractive(),
                                   timeout=spec.get('timeout', 600))
             target = dest
         lp = linkpath(spec)
@@ -210,6 +223,8 @@ def update(name):
                 r = subprocess.run([shutil.which('git') or 'git',
                                     '-C', c, 'pull', '--ff-only'],
                                    capture_output=True, text=True,
+                                   stdin=subprocess.DEVNULL,
+                                   env=_git_noninteractive(),
                                    timeout=spec.get('timeout', 600))
                 output = ((r.stdout or '') + (r.stderr or '')).strip()
                 if r.returncode != 0:
