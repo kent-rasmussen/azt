@@ -881,7 +881,7 @@ class AlphabetComparisonData:
         try:
             reports_mgr = self.program.settings.mgr.reports
             reports_mgr.save(self.settings)
-            if hasattr(self.program, 'git') and self.program.git:
+            if 'git' in getattr(self.program, 'data_repo', {}):
                 self.program.data_repo['git'].add(reports_mgr.filename, force=True)
         except Exception as e:
             log.warning(f"Could not save settings via manager: {e}")
@@ -961,7 +961,7 @@ class AlphabetComparisonData:
                         lines = f.readlines()
                     if not lines:
                         continue
-                    if hasattr(self.program, 'repo'):
+                    if 'git' in getattr(self.program, 'data_repo', {}):
                         self.program.data_repo['git'].add(txt_path, force=True)
                     title_line = lines[0].strip()
                     body = "".join(lines[1:]).strip()
@@ -971,7 +971,7 @@ class AlphabetComparisonData:
                         img_cand = os.path.join(texts_dir, base_name + ext)
                         if os.path.exists(img_cand):
                             img_path = img_cand
-                            if hasattr(self.program, 'git'):
+                            if 'git' in getattr(self.program, 'data_repo', {}):
                                 self.program.data_repo['git'].add(img_cand, force=True)
                             break
                     extra_pages.append({

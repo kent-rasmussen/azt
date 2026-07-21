@@ -896,7 +896,7 @@ def restart_collab_daemon():
     """Ask the running collab daemon to restart, so it picks up a
     just-pulled azt-collab. The daemon is a detached process that
     outlives azt restarts, so a sister-repo update does nothing for
-    the server until it is bounced (main.updateazt calls this when
+    the server until it is bounced (main.App.updateazt calls this when
     the azt-collab pull moved). Quiet best-effort: True when a daemon
     accepted the restart, False otherwise (none running, client
     missing or too old)."""

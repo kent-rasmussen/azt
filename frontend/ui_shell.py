@@ -526,12 +526,12 @@ class Menus(ui.Menu):
         # changestuffmenu.add_cascade(label=_("Settings"), menu=settingsmenu)
         """help"""
     def help(self):
-        from main import updateazt
         self.cascade(self,_("Help"),'helpmenu')
         helpitems=[(_("About"), self.parent.helpabout)]
-        if hasattr(self.program.source_repo,'git'):
+        if hasattr(self.program.source_repo,'files'): #set only when repo init succeeded
             # clonetoUSB should be called if updateazt doesn't have a source (incl internet)
-            helpitems+=[(_("Update {azt}").format(azt=self.program.name), updateazt)]
+            helpitems+=[(_("Update {azt}").format(azt=self.program.name),
+                            self.program.updateazt)]
             if 'git' in self.program.data_repo:
                 helpitems+=[(_("Share data to USB"), self.program.data_repo['git'].share)]
             if self.program.source_repo.branch == 'main':
@@ -2523,8 +2523,7 @@ class TaskDressing(HasMenus,ui.Window):
                ]
             ErrorNotice("\n".join(l))
     def updateazt(self,event=None):
-        from main import updateazt
-        updateazt()
+        self.program.updateazt()
     def maybewrite(self,definitely=False):
         self.program.maybewrite(definitely=definitely)
     def killall(self):
@@ -2749,7 +2748,6 @@ class Splash(ui.Window):
             return
         self.progressbar.current(value)
     def __init__(self, program):
-        from main import updateazt
         self.program=program
         # try:
         #     parent.withdraw()
@@ -2792,7 +2790,8 @@ class Splash(ui.Window):
         self.h = self.winfo_reqheight()
         y=int(self.parent.winfo_screenheight()/2 -(self.h/2))
         # self.geometry('+%d+%d' % (x, y))
-        self.labels['v'].bind('<Button-1>', lambda e,x=self:updateazt(parent=x))
+        self.labels['v'].bind('<Button-1>',
+                        lambda e,x=self:x.program.updateazt(parent=x))
 class ResultWindow(ui.Window):
     def __init__(self, parent, msg=None, title=None):
         """Can't test for widget/window if the attribute hasn't been assigned,
