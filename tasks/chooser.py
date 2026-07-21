@@ -175,9 +175,9 @@ class TaskChooser(Task):
                 tasks.append(ReportCitationByUFMultichecksliceBackground)
         elif category == 'datacollection':
             tasks=[
-                    WordCollectionCitation,
+                    # WordCollectionCitation,
                     WordCollectionCitationwRecordings,
-                    WordCollectnParse,
+                    # WordCollectnParse,
                     WordCollectnParsewRecordings,
                     RecordCitation
                     ]

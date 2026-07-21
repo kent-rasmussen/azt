@@ -1464,7 +1464,9 @@ class Parse(Segments):
                 text='-'.join([i for i in lcmorphs if i]),font='title',
                 row=0,column=0)
         url=self.sense.illustrationURI()
-        p.image_frame(self.lcframe, url, ftype=ftype,
+        # citation (singular) side: single image; plural/imperative imagery
+        # belongs only on the second-form side
+        p.image_frame(self.lcframe, url,
                     row=1, column=0, sticky='')
         p.label(self.lcframe,
                 text=glosslc,font='readbig',
@@ -1541,92 +1543,70 @@ class Parse(Segments):
             pfx,sfx=l[-1]
             root=l[2]
             return '-'.join([i for i in [pfx,root,sfx] if i])
-            if pfx:
-                pfx+='-'
-            if sfx:
-                sfx='-'+sfx
-            if pfx or sfx:
-                rootafxs=[root,'affixes:',pfx,sfx]
-            else:
-                rootafxs=[root]
-            return "{} ({} root: {})".format(*l[:2],' '.join(rootafxs))
-        def neither():
-            # These count askparsed; evaluated and moving on
-            self.parsecatalog.addneither(self.parser.sense.id)
-            #don't leave 'neither' with ps indication
-            self.parser.sense.rmpsnode()
-            # self.parser.rmpssubclassnode() #leave this for posterity?
-            t.destroy()
         # log.info("Selecting from option list: {}".format(l))
         if self.ui.exitFlag.istrue():
             return
         if self.ui.iswaiting():
             self.ui.waitpause()
-        ln=[(i,formattuple(i)) for i in l if i[1] == self.nominalps
+        cands={ps:[(i,formattuple(i)) for i in l if i[1] == ps
                         if len(i[-1]) == 2] #each must have (only) pfx and sfx
-        ln+=[('ON',_("Other {field}").format(field=self.secondformfield[self.nominalps]))]
-        # log.info("noun option list: {}".format(ln))
-        lv=[(i,formattuple(i)) for i in l if i[1] == self.verbalps
-                         if len(i[-1]) == 2] #each must have (only) pfx and sfx
-        lv+=[('OV',_("Other {field}").format(field=self.secondformfield[self.verbalps]))]
-        # log.info("verb option list: {}".format(lv))
-        w=p.window(self)
-        w.title(_("Select second form"))
-        t=p.label(w.frame,
-                    text=_("What is the {sfname} or {sfname2} of \n‘{lc}’ ({gloss})?"
-                        "").format(
-                        sfname=self.secondformfield[self.nominalps],
-                        sfname2=self.secondformfield[self.verbalps],
-                        lc=self.parser.entry.lcvalue(),
-                        gloss=self.getgloss()
-                                ),
-                    font='title',
-                    row=0,column=0,columnspan=2)
-        t.wrap()
-        if ln:
-            noun=p.frame(w.frame, row=1, column=0, sticky='n')
+                for ps in [self.nominalps, self.verbalps]}
+        other={self.nominalps:'ON', self.verbalps:'OV'}
+        ftypes={self.nominalps:'pl', self.verbalps:'imp'}
+        # One ps at a time: the ps with the most analytical possibilities
+        # is offered first; ties (including no possibilities either way)
+        # offer the noun first (stable sort keeps the list order).
+        order=sorted([self.nominalps, self.verbalps],
+                        key=lambda ps:-len(cands[ps]))
+        for ps in order:
+            if self.ui.exitFlag.istrue():
+                break
+            sfname=self.secondformfield[ps]
+            w=p.window(self)
+            w.title(_("Select second form"))
+            t=p.label(w.frame,
+                        text=_("What is the {sfname} of \n‘{lc}’ ({gloss})?"
+                            "").format(
+                            sfname=sfname,
+                            lc=self.parser.entry.lcvalue(),
+                            gloss=self.getgloss()
+                                    ),
+                        font='title',
+                        row=0,column=0,columnspan=2)
+            t.wrap()
             url=self.sense.illustrationURI()
-            p.image_frame(noun, url, ftype='pl', row=0, column=0, sticky='')
-            p.label(noun,
-                    text=_("Select {field} form").format(
-                                        field=self.secondformfield[self.nominalps]),
-                    row=1,column=0,
-                    columnspan=2)
-            bfn=p.scrolling_button_frame(noun, optionlist=ln, window=t,
-                                        command=self.parser.dooneformparse,
-                                        row=2, column=0,
-                                        columnspan=2
-                                        )
-        if lv:
-            verb=p.frame(w.frame, row=1, column=1, sticky='n')
-            url=self.sense.illustrationURI()
-            p.image_frame(verb, url, ftype='imp', row=0, column=0, sticky='')
-            p.label(verb,
-                    text=_("Select {field} form").format(
-                                        field=self.secondformfield[self.verbalps]),
-                    row=1,column=0)
-            bfv=p.scrolling_button_frame(verb, optionlist=lv, window=t,
+            p.image_frame(w.frame, url, ftype=ftypes[ps],
+                        row=1, column=0, sticky='')
+            opts=cands[ps]+[(other[ps],
+                        _("Other {field}").format(field=sfname))]
+            p.scrolling_button_frame(w.frame, optionlist=opts, window=t,
                                         command=self.parser.dooneformparse,
                                         row=2, column=0)
-        neitherb=p.button(w.frame, text=_("Neither"),
-                        command=neither,
-                        row=1, column=2, sticky='ns')
-        p.label(w.frame,text=self.currentformnotice(),
-                    font='small',justify='l',
-                    row=2,column=0,columnspan=3)
-        w.bind_all('<Escape>', lambda event:w.on_quit)
-        w.wait_window(t)
-        if w.exitFlag.istrue():
-            self.exited=True
-        # w.on_quit()
-        w.destroy()
+            p.button(w.frame, text=_("Not a {ps}").format(ps=ps),
+                            cmd=t.destroy, #decline: move on to the next ps
+                            row=1, column=1, sticky='ns')
+            p.label(w.frame,text=self.currentformnotice(),
+                        font='small',justify='l',
+                        row=3,column=0,columnspan=2)
+            w.wait_window(t)
+            if w.exitFlag.istrue():
+                self.exited=True
+            w.destroy()
+            if self.exited or self.done() or self.parser.sense.psvalue():
+                break #selected a parse, or an 'Other' (typed form follows)
+        else: #declined every ps: count askparsed; evaluated and moving on
+            self.parsecatalog.addneither(self.parser.sense.id)
+            #don't leave 'neither' with ps indication
+            self.parser.sense.rmpsnode()
+            # self.parser.rmpssubclassnode() #leave this for posterity?
         if self.ui.iswaiting():
             self.ui.waitunpause()
     def asksegmentsnops(self):
+        #no analytical possibilities to go on here: offer the noun first
         for ps in [self.nominalps, self.verbalps]:
             r=self.asksegments(ps=ps)
-            if r in [None,1] or self.exited: #i.e., returned OK or not this ps
-                break
+            if r is None or self.exited: #form given (or exited): done;
+                break                    #r=1 (not this ps): ask the next ps
     def asksegmentsotherps(self):
         pss=[i for i in [self.nominalps, self.verbalps]
                     if i != self.parser.sense.psvalue()]

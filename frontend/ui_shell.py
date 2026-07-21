@@ -3383,6 +3383,14 @@ class Settings(object):
                        optionlist=options,
                        command=self.program.settings.interfacelangwrapper,
                        scrolling=False)
+    def dialogparent(self):
+        """These dialogs normally launch from a live task, but some (e.g.
+        analysis-language naming in the new-project flow) fire with
+        program.task=None — fall back to the main window, then the root."""
+        task=getattr(self.program,'task',None)
+        return (getattr(task,'ui',None) if task else None) \
+                or getattr(self.program,'mainwindow',None) \
+                or self.program.tk_root
     def getanalangname(self,event=None):
         log.info(_("this sets the language name"))
         def submit(event=None):
@@ -3400,7 +3408,7 @@ class Settings(object):
             self.program.settings.storesettingsfile()
             self.program.mainwindow.status.updateanalang() #ui
             window.destroy()
-        window=ui.Window(self.program.task.ui,title=_('Enter Analysis Language Name'))
+        window=ui.Window(self.dialogparent(),title=_('Enter Analysis Language Name'))
         curname=self.program.settings.languagenames[self.program.params.analang()]
         defaultname=_("Language with code [{code}]").format(code=self.program.params.analang())
         t=_("How do you want to display the name of {name}").format(name=curname)
@@ -3423,7 +3431,7 @@ class Settings(object):
             return
         log.info(_("this sets the language"))
         if self.program.db.analangs is None:
-            window=ui.Window(self.program.task.ui,title=_('Select Analysis Language'))
+            window=ui.Window(self.dialogparent(),title=_('Select Analysis Language'))
             ui.Label(window.frame,
                           text=_('Error: please set Lift file first! ({file})').format(
                           file=self.program.db.filename)
@@ -3432,7 +3440,7 @@ class Settings(object):
             langs=[{'code':lang,
                     'name':self.program.settings.languagenames[lang]}
                    for lang in self.program.db.analangs]
-            _option_dialog(self.program.task.ui,
+            _option_dialog(self.dialogparent(),
                            title=_('Select Analysis Language'),
                            text=_('What language do you want to analyze?'),
                            optionlist=langs,
@@ -3448,7 +3456,7 @@ class Settings(object):
             langs.append({'code':None,
                     'name':_('just use {name}').format(name=self.program.settings.languagenames[
                                     self.program.settings.glosslangs.lang2()])})
-        _option_dialog(self.program.task.ui,
+        _option_dialog(self.dialogparent(),
                        title=_('Select Gloss Language'),
                        text=_('What Language do you want to use for glosses?'),
                        optionlist=langs,
@@ -3464,7 +3472,7 @@ class Settings(object):
         langs.append({'code':None,
                     'name':_('just use {name}').format(name=self.program.settings.languagenames[
                                     self.program.settings.glosslangs.lang1()])})
-        _option_dialog(self.program.task.ui,
+        _option_dialog(self.dialogparent(),
                        title=_('Select Second Gloss Language'),
                        text=_('What other language do you want to use for glosses?'),
                        optionlist=langs,
@@ -3482,7 +3490,7 @@ class Settings(object):
             cvts[x]['name']=tdict[cvt]['pl']
             cvts[x]['code']=cvt
             x+=1
-        return _option_dialog(self.program.task.ui,
+        return _option_dialog(self.dialogparent(),
                               title=_('Select Check Type'),
                               text=_('What part of the sound system do you '
                                      'want to work with?'),
@@ -3495,7 +3503,7 @@ class Settings(object):
             pss=self.program.db.pss+self.program.settings.additionalps
         else:
             pss=self.program.db.pss
-        _option_dialog(self.program.task.ui,
+        _option_dialog(self.dialogparent(),
                        title=_('Select Lexical Category'),
                        text=_('What lexical category do you '
                               'want to work with (Part of speech)?'),
@@ -3527,7 +3535,7 @@ class Settings(object):
                 log.error(_("No profiles of {type} type found!").format(type=kwargs))
             # log.info("count types: {}, {}".format(type(profilecounts),
             #                                         type(profilecountsAdHoc)))
-            window=ui.Window(self.program.task.ui,title=_('Select Syllable Profile'))
+            window=ui.Window(self.dialogparent(),title=_('Select Syllable Profile'))
             ui.Label(window.frame, text=_('What ({ps}) syllable profile do you '
                                     'want to work with?').format(ps=ps)
                                     ).grid(column=0, row=0)
@@ -3580,7 +3588,7 @@ class Settings(object):
             setcmd(custom.get())
             window.on_quit()
         title=_('Make Custom Second Form Field for {ps}').format(ps=ps)
-        window=ui.Window(self.program.task.ui,title=title)
+        window=ui.Window(self.dialogparent(),title=title)
         #should never be othername
         l=ui.Label(window,
                 text=_("What field name do you want to use for {ps} words?"
@@ -3653,7 +3661,7 @@ class Settings(object):
             # cmd=getcustom
             # optionslist=opts
         title=_('Select Second Form Field for {ps}').format(ps=ps)
-        window=ui.Window(self.program.task.ui,title=title)
+        window=ui.Window(self.dialogparent(),title=title)
         ui.Label(window.frame, text=text, column=0, row=0)
         """What does this extra frame do?"""
         window.scroll=ui.Frame(window.frame)
@@ -3693,7 +3701,7 @@ class Settings(object):
             for opt in options:
                 if len(opt['code']) == 1:
                     opt['name']+=' '+_("(only)")
-            _option_dialog(self.program.task.ui,
+            _option_dialog(self.dialogparent(),
                            title=_('Select Scope of Checks'),
                            text=_('What kinds of checks to you want to run?'),
                            optionlist=options,
@@ -3715,7 +3723,7 @@ class Settings(object):
                 self.program.settings.secondformfield[self.program.settings.nominalps])
     def getbuttoncolumns(self,event=None):
         log.info(_("Asking for number of button columns..."))
-        _option_dialog(self.program.task.ui,
+        _option_dialog(self.dialogparent(),
                        title=_('Select Button Columns'),
                        text=_('How many columns do you want to use for '
                               'the sort buttons?'),
@@ -3725,7 +3733,7 @@ class Settings(object):
                        wait=True)
     def getmaxslice(self,event=None):
         log.info(_("Asking for words per page (syllable slice size)..."))
-        _option_dialog(self.program.task.ui,
+        _option_dialog(self.dialogparent(),
                        title=_('Select Words Per Page'),
                        text=_('How many words per page when sorting syllables? '
                               'Fewer = each page appears faster, but more pages; '
@@ -3735,14 +3743,14 @@ class Settings(object):
                        scrolling=False, # match the working getbuttoncolumns (ListBox);
                        wait=True)       # ScrollingListBox showed no options
     def getmaxpss(self,event=None):
-        _option_dialog(self.program.task.ui,
+        _option_dialog(self.dialogparent(),
                        title=_('Select Maximum Number of Lexical Categories'),
                        text=_('How many lexical categories to report (2 = Noun and Verb) ?'),
                        optionlist=list(range(1,10)),
                        command=self.program.settings.setmaxpss,
                        wait=True)
     def getmaxprofiles(self,event=None):
-        _option_dialog(self.program.task.ui,
+        _option_dialog(self.dialogparent(),
                        title=_('Select Maximum Number of Syllable Profiles'),
                        text=_('How many syllable profiles to report?'),
                        optionlist=list(range(1,10)),
@@ -4007,7 +4015,7 @@ class Settings(object):
             {'code':1000,'name':_("1000 - All examples in VERY large databases")}
                         ]
         title=_('Select Number of Examples per Group to Record')
-        window=ui.Window(self.program.task.ui, title=title)
+        window=ui.Window(self.dialogparent(), title=title)
         text=_("The {name} tone report splits sorted data into "
                 "draft underlying tone melody groups. "
                 # ", with distinct values for each of your tone frames. This "

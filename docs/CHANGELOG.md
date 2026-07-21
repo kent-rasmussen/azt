@@ -19,6 +19,59 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.11.0
+- FIX (Help menu — Update items restored). "Update A-Z+T", "Share data to
+  USB", and the test/main version toggle were gated on
+  `hasattr(source_repo,'git')` — an attribute nothing has set since git
+  detection moved into the repo init — so they could never appear. Seven
+  phantom `git`/`repo` attribute checks replaced with real signals
+  (`source_repo.files` for "repo initialized", `repo.cmd` for "git
+  installed", `'git' in data_repo` for data-repo work).
+- FIX (update flow — rot repair through `updateazt`). Unreachable for so
+  long it had decayed at every step: it read module-global `program` as
+  the App (a double-import trap: `from main import updateazt` loads a
+  second copy of main.py, so even swapping the global in couldn't fix
+  it) — now an App method, callers use `program.updateazt`; its dialog
+  parent read the long-retired `taskchooser.mainwindowis` (now
+  `program.mainwindow` with root fallback); it built `ui.Wait(msg=...)`
+  from the pre-singleton API (now `parent.waiting(...)`); its Try Again
+  button held a flag instead of the retry function (local rebinding
+  shadowed the nested def); and the no-source path looped the
+  "find media" prompt forever (now retries once, and only when
+  clonetoUSB actually yielded a source).
+- FEATURE (update — off the UI thread). The git work (azt `share()` +
+  sister-repo pulls) runs on a worker thread: the wait dialog stays
+  live instead of the whole app freezing with inert dialogs, and
+  results/notices are shown from the main thread. Error notices raised
+  from worker threads are marshaled onto the UI thread via
+  `set_error_handler(App.notify_error_threadsafe)`.
+- FIX (sister repos — non-interactive git). Rollout pulls/clones run
+  with `GIT_TERMINAL_PROMPT=0`, `ssh -oBatchMode=yes`, and stdin from
+  /dev/null: a credential/passphrase prompt (e.g. an SSH-origin dev
+  clone) now reports "could not update" in under a second instead of
+  hanging the subprocess to its 600 s timeout.
+- FIX (Settings dialogs before any task). Every dialog in
+  `ui_shell.Settings` parented itself to `program.task.ui`, which is
+  None in pre-task contexts (e.g. naming the analysis language in the
+  new-project flow) — crash. All 16 sites now use `dialogparent()`:
+  live task window, else main window, else root.
+- FIX (parse — singular shown with plural imagery). The
+  "Confirm this combination of affixes?" window passed the second
+  form's `ftype` to the citation panel too, so a noun's singular got
+  the deliberate two-image plural depiction. Citation side now always
+  single-image.
+- CHANGE (parse — second-form requests are sequential and principled).
+  The old "Select second form" screen showed noun and verb panels side
+  by side with "Neither". Now one category is offered at a time: the
+  category with the most affix-parse candidates first (tie — including
+  no candidates at all — offers Noun first); "Not a Noun/Verb" advances
+  to the other category; declining both keeps the old "Neither"
+  bookkeeping. The typed path (`asksegmentsnops`) had the same intent
+  but its loop broke on decline as well as on success (present since
+  the file's creation — predates recent merges), so the imperative
+  question was unreachable; declining the plural now continues to the
+  imperative request, and it offers Noun first for the same reason.
+
 # Version 1.10.3
 - FIX (fresh project — TaskChooser crash on boot log line). `task_base()`
   did `cvt in name` with `params.cvt()` still None — the chooser doesn't
