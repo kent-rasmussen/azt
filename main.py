@@ -286,7 +286,7 @@ class App:
                     log.info(_("Found {name} Repository!"
                                 ).format(name=repo[r].repotypename))
                     self.data_repo[r]=repo[r]
-                elif r == 'git' and hasattr(self,'git') and self.git:
+                elif r == 'git' and repo[r].cmd: #git executable found
                     #don't worry about hg, if not there already
                     log.info(_("No Git data repository found; creating."))
                     repo[r].init()
@@ -488,7 +488,7 @@ class App:
         except Exception as e:
             log.info(_("Evidently you can’t make a root window? ({error})").format(error=e))
             return
-        if program['tkinter']:
+        if self.tkinter:
             # tkinter: setup runs synchronously, then mainloop blocks
             self._run_setup()
             self.tk_root.mainloop()
@@ -607,16 +607,17 @@ class App:
         scroll.tobottom()
         f=ui.Frame(errorw.outsideframe,row=1,column=2)
         buttonwraplength=75
-        if hasattr(self,'git') and self.git:
+        if (hasattr(self,'source_repo')
+                and hasattr(self.source_repo,'files')): #repo init succeeded
             ui.Button(f,
                     text=_("Check for {azt} updates").format(azt=self.name),
-                    cmd=lambda x=errorw:updateazt(parent=x),
+                    cmd=lambda x=errorw:self.updateazt(parent=x),
                     wraplength=buttonwraplength,
                     row=0,column=0,
                     pady=20)
-            if self.repo.branch != 'main':
+            if getattr(self.source_repo,'branch','main') != 'main':
                 revertb=ui.Button(f,
-                        text=_("Revert to main branch of {azt}").format(azt=program.name),
+                        text=_("Revert to main branch of {azt}").format(azt=self.name),
                         cmd=reverttomain,
                         wraplength=buttonwraplength,
                         row=1,column=0,
@@ -878,8 +879,74 @@ class App:
         if not self.theme:
             self.theme=hard_themes.get(platform.uname().node,None)
         log.info(f"Using theme {self.theme}")
+    def updateazt(self,event=None,**kwargs): #kwargs should only be parent, for errorroot
+        def tryagain(event=None):
+            kwargs['tryagain']=True
+            self.updateazt(**kwargs)
+        log.info(_("Updating {azt}").format(azt=self.name))
+        retrying=kwargs.get('tryagain')
+        if hasattr(self.source_repo, 'files'): #set only when repo init succeeded
+            parent=kwargs.get('parent')
+            if not parent or not parent.winfo_exists(): #take kwarg if there
+                kwargs['parent']=getattr(self, 'mainwindow', None) or self.tk_root
+            log.info(_("parent title: {title}").format(title=kwargs['parent'].title()))
+            w=ui.Wait(msg=_("Updating {azt}").format(azt=self.name), **kwargs)
+            r=self.source_repo.share() #t is a dict of main and testing results
+            # Sister repos ride along with every azt update — a Windows
+            # field machine has no other path to server/client (azt-collab)
+            # updates; nobody runs git in a shell there.
+            from utilities import sister_repos
+            sisters=sister_repos.update_all()
+            w.close()
+            if r:
+                t='\n'.join([i for j in r.items() #each tuple
+                            for k in j #each tuple item
+                            if k #don't give empty items
+                            for i in [l for l in k.split('\n')# each tuple item line
+                                    if 'hint: ' not in l][:10] #first 10 w/o hint
+                                    ])
+            else:
+                self.source_repo.clonetoUSB()
+                tryagain()
+                return
+            for sname,(sok,scode,sout) in sisters.items():
+                t+='\n{}: {}'.format(sname,sister_repos.describe(scode))
+            if sisters.get('azt-collab',(False,'',''))[1]=='updated':
+                # The daemon is detached and outlives azt restarts; new
+                # server code does nothing until it is bounced.
+                from backend.core import collab
+                if collab.restart_collab_daemon():
+                    t+='\n'+_("(Collaboration service restarted with its "
+                                "update)")
+            button=False
+            if internetconnectionproblemin(t):
+                if retrying:
+                    t=t+'\n'+_("Insert USB with A−Z+T source")
+                    button=(_("USB inserted"),self.source_repo.clonetoUSB)
+                else:
+                    t=t+_('\n(Check your internet connection and try again)')
+                    button=(_("Try Again"),tryagain)
+            elif not self.me:
+                if [i for i in r.values() if 'fatal: ' in i]: #any fatal problem
+                    t+='\n'+_("(Problem! You will likely need help with this.)")
+                elif [i for i in r.values() if updated(i)]: #anything updated
+                    t+='\n'+_("(Restart {name} to use this update)"
+                            ).format(name=self.name)
+                if [i for i in r.values() if not uptodate(i)] \
+                        or any(s[1]=='updated' for s in sisters.values()):
+                    # sister 'updated' needs a restart too: azt has the old
+                    # azt_collab_client already imported in-process.
+                    button=(_("Restart Now"),sysrestart)
+            try:
+                try:
+                    title=_("Update (Git) output")
+                except Exception: #in case translation isn't working yet
+                    title="Update (Git) output"
+                ErrorNotice(t,title=title,button=button,wait=True,**kwargs)
+            except Exception:
+                log.info(set(kwargs.keys()))
+                log.info(set(['parent']))
     def __init__(self,program):
-        # globals()['program'] = self  # replace dict with App; LazyGlobal resolves to self
         sys.excepthook = self.handle_exception
         self.show_scaling_from_windows()
         self.file = file.getfile(__file__)
@@ -945,75 +1012,5 @@ class App:
             self.maybe_run_problem()
         sys.exit()
 from io_put.cawl import loadCAWL  # moved; re-exported for compatibility
-def updateazt(event=None,**kwargs): #should only be parent, for errorroot
-    def tryagain(event=None):
-        kwargs['tryagain']=True
-        updateazt(**kwargs)
-    log.info(_("Updating {azt}").format(azt=program.name))
-    tryagain=kwargs.get('tryagain')
-    if hasattr(program, 'git'):
-        parent=kwargs.get('parent')
-        if not parent or not parent.winfo_exists(): #take kwarg if there
-            if hasattr(program, 'taskchooser'):
-                kwargs['parent']=program.taskchooser.mainwindowis
-            else:
-                kwargs['parent']=program.tk_root
-        log.info(_("parent title: {title}").format(title=kwargs['parent'].title()))
-        w=ui.Wait(msg=_("Updating {azt}").format(azt=program.name), **kwargs)
-        r=program.source_repo.share() #t is a dict of main and testing results
-        # Sister repos ride along with every azt update — a Windows
-        # field machine has no other path to server/client (azt-collab)
-        # updates; nobody runs git in a shell there.
-        from utilities import sister_repos
-        sisters=sister_repos.update_all()
-        w.close()
-        if r:
-            t='\n'.join([i for j in r.items() #each tuple
-                        for k in j #each tuple item
-                        if k #don't give empty items
-                        for i in [l for l in k.split('\n')# each tuple item line
-                                if 'hint: ' not in l][:10] #first 10 w/o hint
-                                ])
-        else:
-            program.source_repo.clonetoUSB()
-            tryagain()
-            return
-        for sname,(sok,scode,sout) in sisters.items():
-            t+='\n{}: {}'.format(sname,sister_repos.describe(scode))
-        if sisters.get('azt-collab',(False,'',''))[1]=='updated':
-            # The daemon is detached and outlives azt restarts; new
-            # server code does nothing until it is bounced.
-            from backend.core import collab
-            if collab.restart_collab_daemon():
-                t+='\n'+_("(Collaboration service restarted with its "
-                            "update)")
-        button=False
-        if internetconnectionproblemin(t):
-            if tryagain:
-                t=t+'\n'+_("Insert USB with A−Z+T source")
-                button=(_("USB inserted"),program.source_repo.clonetoUSB)
-            else:
-                t=t+_('\n(Check your internet connection and try again)')
-                button=(_("Try Again"),tryagain)
-        elif not program.me:
-            if [i for i in r.values() if 'fatal: ' in i]: #any fatal problem
-                t+='\n'+_("(Problem! You will likely need help with this.)")
-            elif [i for i in r.values() if updated(i)]: #anything updated
-                t+='\n'+_("(Restart {name} to use this update)"
-                        ).format(name=program.name)
-            if [i for i in r.values() if not uptodate(i)] \
-                    or any(s[1]=='updated' for s in sisters.values()):
-                # sister 'updated' needs a restart too: azt has the old
-                # azt_collab_client already imported in-process.
-                button=(_("Restart Now"),sysrestart)
-        try:
-            try:
-                title=_("Update (Git) output")
-            except Exception: #in case translation isn't working yet
-                title="Update (Git) output"
-            ErrorNotice(t,title=title,button=button,wait=True,**kwargs)
-        except Exception:
-            log.info(set(kwargs.keys()))
-            log.info(set(['parent']))
 if __name__ == '__main__':
     App(program)

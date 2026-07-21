@@ -245,7 +245,7 @@ def describe(code):
 
 def update_all():
     """Update every sister repo (git pull + ensure); the in-app update
-    flow (``main.updateazt``) runs this so machines that never touch a
+    flow (``main.App.updateazt``) runs this so machines that never touch a
     shell — Windows field laptops — still get server/client updates.
     Returns ``{name: (ok, code, output)}``."""
     return {name: update(name) for name in REPOS}
