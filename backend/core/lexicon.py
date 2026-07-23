@@ -1809,7 +1809,16 @@ class Parse(Segments):
                 'sense':self.sense
                 }
         self.parser.parseentry(**kwargs) #sets entry, sense, and sense.id for parser
-        log.info("lx: {}, lc: {}, pl: {}, imp: {}".format(*self.parser.texts()))
+        texts=self.parser.texts()
+        log.info("lx: {}, lc: {}, pl: {}, imp: {}".format(*texts))
+        lc=texts[1]
+        if lc and any(c.isspace() for c in lc):
+            # Multiword citation forms don't parse into prefixes and
+            # suffixes, and we aren't going to use them anyway — skip
+            # the whole ladder and move on to the next word.
+            log.info("Citation form ‘{}’ contains a space; not parsing."
+                        "".format(lc))
+            return
         if min(self.parser.auto, self.parser.ask) <= 4:# and not badps:
             r=self.trythreeforms() #other functions will be triggered from here.
         else:

@@ -523,6 +523,12 @@ class Engine(object):
         if not lc:
             log.info(_("No citation form!"))
             return
+        def presentable(afxs):
+            """Fit to SUGGEST: no whitespace of any kind in any affix —
+            no word breaks, just prefixes and suffixes. The catalog
+            keeps whatever it collected (for backtracking later); this
+            gates presentation only."""
+            return not any(c.isspace() for a in afxs for c in (a or ''))
         possibilities=[]
         try:
             for ps in [self.nominalps, self.verbalps]:
@@ -530,6 +536,8 @@ class Engine(object):
                     continue
                 for lcafxs in self.catalog.lcaffixes[ps]:
                     # log.info("lcafxs: {} ({})".format(lcafxs,type(lcafxs)))
+                    if not presentable(lcafxs):
+                        continue
                     if lc.startswith(lcafxs[0]) and lc.endswith(lcafxs[1]):
                         root=rx.sub('^'+lcafxs[0],'',
                                     rx.sub(lcafxs[1]+'$','',lc,1)
@@ -539,6 +547,8 @@ class Engine(object):
                         for afxs in self.catalog.affixes[ps]:
                             if afxs[0] == lcafxs:
                                 sfafxs=afxs[1]
+                                if not presentable(sfafxs):
+                                    continue
                                 sf=root.join(sfafxs)
                                 # log.info("sf: {} ({}; {}, {})"
                                 #         "".format(sf,ps,root,sfafx))
@@ -547,6 +557,8 @@ class Engine(object):
                                 # store This pair as priority
                         for sfafxs in self.catalog.sfaffixes[ps]:
                             if sfafxs not in collected:
+                                if not presentable(sfafxs):
+                                    continue
                                 sf=root.join(sfafxs)
                                 # log.info("sf2: {} ({}; {}, {})"
                                 #         "".format(sf,ps,root,sfafxs))
