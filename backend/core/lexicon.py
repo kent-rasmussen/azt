@@ -1337,7 +1337,7 @@ class WordCollection(Segments):
             self.dirfn(nostore=True)
         self.glossesline['text']=self.glossesthere
         self.glossesline.wrap()
-        url=self.sense.illustrationURI()
+        url=self.sense.illustrationURI_or_default()
         if hasattr(getattr(self.wordframe,'pic',None),'changeurl'):
             self.wordframe.pic.changeurl(url)
         else:
@@ -1463,10 +1463,10 @@ class Parse(Segments):
         self.l=p.label(self.lcframe,
                 text='-'.join([i for i in lcmorphs if i]),font='title',
                 row=0,column=0)
-        url=self.sense.illustrationURI()
+        url=self.sense.illustrationURI_or_default()
         # citation (singular) side: single image; plural/imperative imagery
         # belongs only on the second-form side
-        p.image_frame(self.lcframe, url,
+        p.image_frame(self.lcframe, url, show_none=True,
                     row=1, column=0, sticky='')
         p.label(self.lcframe,
                 text=glosslc,font='readbig',
@@ -1480,8 +1480,8 @@ class Parse(Segments):
         p.label(self.sfframe,
                 text='-'.join([i for i in sfmorphs if i]),font='title',
                 row=0,column=1)
-        url=self.sense.illustrationURI()
-        p.image_frame(self.sfframe, url, ftype=ftype,
+        url=self.sense.illustrationURI_or_default()
+        p.image_frame(self.sfframe, url, ftype=ftype, show_none=True,
                     row=1, column=1, sticky='')
         p.label(self.sfframe,
                 text=glosssf,font='readbig',
@@ -1574,8 +1574,8 @@ class Parse(Segments):
                         font='title',
                         row=0,column=0,columnspan=2)
             t.wrap()
-            url=self.sense.illustrationURI()
-            p.image_frame(w.frame, url, ftype=ftypes[ps],
+            url=self.sense.illustrationURI_or_default()
+            p.image_frame(w.frame, url, ftype=ftypes[ps], show_none=True,
                         row=1, column=0, sticky='')
             opts=cands[ps]+[(other[ps],
                         _("Other {field}").format(field=sfname))]
@@ -1690,8 +1690,9 @@ class Parse(Segments):
             ftype='pl'
         elif ps == self.verbalps:
             ftype='imp'
-        url=self.parser.sense.illustrationURI()
-        p.image_frame(w.frame, url, ftype=ftype, row=0, column=2)
+        url=self.parser.sense.illustrationURI_or_default()
+        p.image_frame(w.frame, url, ftype=ftype, show_none=True,
+                        row=0, column=2)
         segments=p.string_var()
         segments.set(self.parser.entry.lcvalue())
         e=p.entry_field(w.frame,text=segments,

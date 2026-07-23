@@ -2265,26 +2265,9 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             # log.info("Image directory present: {}".format(file.exists(sense.imgselectiondir)))
             # log.info("Working with image files {}".format(
             #                                 file.getfilesofdirectory(sense.imgselectiondir)))
-            if sense.word_list_n and not sense.has_image_file():
             # If lift thinks there's a file there, but there isn't,
-            # fill in that, too.
-                if not sense.illustrationvalue():
-                    sense.illustrationvalue(sense.imagename()) #new file name
-                if not sense.imgselectiondir:
-                    sense.getglosses()
-                #This should be ...azt/images/0000_glosses:
-                dir=file.pathname_from_base_dir(sense.imgselectiondir)
-                # log.info("Found CAWL sense without image field")
-                if file.exists(dir): #particular to each sense
-                    urls=file.getfilesofdirectory(dir)
-                    if urls:
-                        ok=[i for i in urls if '__' in str(i) and '.png' in str(i)]
-                        if not ok:
-                            ok=[i for i in urls if '__' in str(i)]
-                        if not ok:
-                            ok=urls
-                        if ok: # the first from whichever prioritization succeded
-                            sense.save_illustration_to_file(ok[0])
+            # fill in that, too (gating inside the method):
+            sense.backfill_illustration()
             yield self.senses.index(sense)*100/len(self.senses)
 class EmptyTextNodePlaceholder(object):
     """Just be able to return self.text when asked."""
@@ -3321,6 +3304,44 @@ class Sense(Node,FieldParent):
             self.word_list_n=None
     def has_image_file(self):
         return file.exists(self.illustrationURI(write_to=True))
+    def backfill_illustration(self):
+        """Fill in this sense's illustration from its image-selection
+        directory, preferring the shipped default image ('__' in the
+        filename is the standard, .png first) — the same rule the
+        recorder applies. Returns True when an image file is in place
+        afterwards."""
+        if not self.word_list_n:
+            return False
+        if self.has_image_file():
+            return True
+        if not self.illustrationvalue():
+            self.illustrationvalue(self.imagename()) #new file name
+        if not self.imgselectiondir:
+            self.getglosses()
+        #This should be ...azt/images/0000_glosses:
+        dir=file.pathname_from_base_dir(self.imgselectiondir)
+        if not file.exists(dir): #particular to each sense
+            return False
+        urls=file.getfilesofdirectory(dir)
+        if not urls:
+            return False
+        ok=[i for i in urls if '__' in str(i) and '.png' in str(i)]
+        if not ok:
+            ok=[i for i in urls if '__' in str(i)]
+        if not ok:
+            ok=urls
+        self.save_illustration_to_file(ok[0]) #first from whichever
+        return True                           #prioritization succeeded
+    def illustrationURI_or_default(self):
+        """illustrationURI, backfilling from the sense's shipped default
+        image when there is none: the display seam for pages that should
+        show the default (or the no-image placeholder) rather than
+        nothing."""
+        url=self.illustrationURI()
+        if url:
+            return url
+        if self.backfill_illustration():
+            return self.illustrationURI()
     def illustrationURI(self,write_to=False):
         """1. File in lift node, if in db.imgdir, else
         2. url of resolved image online, by word list number, else
