@@ -192,3 +192,30 @@ def test_enabled_unanimous_gives_single_form_despite_disabled_dissent():
     kept = _filter(tx, ss)
     assert set(kept.values()) == {'mbumi'}
     assert 'allosaurus' not in kept
+
+
+def test_top_only_caps_buttons_at_twenty():
+    # 2026-07-23: 'top only' also promises a page that fits. Top-5
+    # unanimous + 30 untallied dissenting repos exhausts widening and
+    # returns the full selection — which must arrive capped at 20
+    # distinct forms, with the top-tallied form guaranteed a slot.
+    tx = {f'top{i}': 'agreed' for i in range(5)}
+    tx.update({f'r{i}': f'form{i}' for i in range(30)})
+    ss = _ss(top_models_only=True, tally={f'top{i}': 9 for i in range(5)})
+    forms = {v for v in _filter(tx, ss).values() if v}
+    assert len(forms) == 20
+    assert 'agreed' in forms  # top-tallied forms are kept first
+
+
+def test_top_only_caps_even_before_any_tally():
+    # Toggle on, nothing tallied yet: the model window is unlimited
+    # (run everything), but the page cap still applies.
+    tx = {f'r{i}': f'form{i}' for i in range(25)}
+    forms = {v for v in _filter(tx, _ss(top_models_only=True)).values() if v}
+    assert len(forms) == 20
+
+
+def test_all_models_shows_everything_uncapped():
+    # Explicitly selecting all models means all buttons, page be damned.
+    tx = {f'r{i}': f'form{i}' for i in range(30)}
+    assert _filter(tx, _ss(top_models_only=False, tally={'r0': 9})) == tx

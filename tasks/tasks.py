@@ -285,6 +285,31 @@ class WordCollectionwRecordings(WordCollection,Record):
                         bool(set(re.findall(r'[A-Za-z]+',m.group(1)))&allowed))
             tx={r:v for r,v in tx.items() if lang_ok(r)}
         return tx
+    MAX_DRAFT_BUTTONS=20 #more pushes everything else off the page
+    @staticmethod
+    def _cap_draft_forms(tx,ss,maxforms=None):
+        """'Top models only' also promises a page that fits: never more
+        than MAX_DRAFT_BUTTONS distinct forms (== buttons). Forms from
+        the highest-tallied repos are kept first; ties — beyond the top
+        ranks every tally is 1/0, so most forms tie — fill the remaining
+        slots at random. ('All models' never comes here: the user asked
+        to see everything, whatever it does to the page.)"""
+        if maxforms is None:
+            maxforms=WordCollectionwRecordings.MAX_DRAFT_BUTTONS
+        values={v for v in tx.values() if v}
+        if len(values) <= maxforms:
+            return tx
+        tally=getattr(ss,'asr_repos',{}) or {}
+        def besttally(v):
+            return max((tally.get(r,0) or 0)
+                        for r,val in tx.items() if val==v)
+        import random
+        ranked=sorted(values,key=lambda v:(-besttally(v),random.random()))
+        chosen=set(ranked[:maxforms])
+        log.info(f"draft-form cap: {len(values)} unique forms -> "
+                 f"{maxforms} (top models only)")
+        #empty-valued repos pass through (they make no buttons anyway):
+        return {r:v for r,v in tx.items() if not v or v in chosen}
     @staticmethod
     def _filter_top_asr(tx,ss):
         """The draft-display funnel: everything stored → the user's kwarg
@@ -295,26 +320,32 @@ class WordCollectionwRecordings(WordCollection,Record):
         Widen n by 5 per iteration until at least two distinct forms survive;
         once widening stops adding repos — or the selected draft set is
         unanimous anyway — return every selected draft rather than hide what
-        ASR produced."""
+        ASR produced. In the other direction, 'top models only' also caps
+        the distinct forms shown at MAX_DRAFT_BUTTONS (_cap_draft_forms);
+        with the toggle off, everything shows, uncapped."""
         if ss is None:
             return tx
         tx=WordCollectionwRecordings._enabled_drafts(tx,ss)
-        keep=ss.top_asr_keys()
-        if keep is None:
-            return tx
         def distinct(d):
             return len({v for v in d.values() if v})
+        def cap(d):
+            return WordCollectionwRecordings._cap_draft_forms(d,ss)
+        keep=ss.top_asr_keys()
+        if keep is None:
+            #toggle off (no cap), or toggle on with nothing tallied yet
+            #(run everything, but still keep the page intact):
+            return cap(tx) if ss.top_models_only() else tx
         if distinct(tx) < 2:
-            return tx #widening can't help
+            return tx #widening can't help (and ≤1 form needs no cap)
         n=5
         while True:
             kept={r:v for r,v in tx.items() if r in keep}
             if distinct(kept) >= 2:
-                return kept
+                return cap(kept)
             n+=5
             wider=ss.top_asr_keys(n=n,cap=max(20,n))
             if wider == keep: #tally exhausted (untallied repos never rank)
-                return tx
+                return cap(tx)
             keep=wider
     def show_drafts(self,*args):
         # log.info(f"show_drafts got args {args}")
