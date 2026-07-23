@@ -512,6 +512,20 @@ class CollabSession:
                 result = _client.sync_project(self.langcode)
         finally:
             self._sync_in_flight = False
+        # The unified gesture also nudges LAN (burst discovery + peer
+        # fan-out) and clears WAN backoff. sync_project alone never
+        # touches LAN when there is nothing to commit (LAN fan-out
+        # rides on _run_commit), so without this a GitHub-credentials
+        # failure ends the gesture without ever trying peers.
+        # Fire-and-forget: its outcome never gates the sync Result.
+        try:
+            nudge = _client.sync_nudge(self.langcode)
+            codes = [getattr(s, 'code', '?')
+                     for s in getattr(nudge, 'statuses', [])]
+            if codes:
+                log.info(f"sync_nudge: {codes}")
+        except Exception as e:
+            log.error(f"sync_nudge: {e}")
         self.route_sync_result(result)
         return result
 
