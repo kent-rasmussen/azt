@@ -234,6 +234,13 @@ class WordCollectionwRecordings(WordCollection,Record):
                 tx=form.load_drafts()[0] or {}
         if not tx:
             tx=getattr(getattr(rf,'recorder',None),'transcriptions',None) or {}
+        # Buttons show diacritic-free forms (models emit tone marks we
+        # don't want at collection); the LIFT-stored drafts keep them.
+        # Normalizing HERE — before dedup/consensus/cap — also means a
+        # click credits every model whose raw draft collapses to the
+        # chosen form (draft_entry tallies all repos behind the value).
+        from utilities.encodings import strip_diacritics
+        tx={r:strip_diacritics(v) for r,v in tx.items()}
         # 'top models only' (B): show only the kept repos (None == no limit)
         ss=getattr(self,'soundsettings',None) or getattr(self.program,
                                                          'soundsettings',None)

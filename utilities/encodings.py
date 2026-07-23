@@ -1,7 +1,19 @@
 #!/usr/bin/env python3
 # coding=UTF-8
 import sys
+import unicodedata
 from utilities.i18n import _
+def strip_diacritics(s):
+    """Remove combining marks (accents, tone diacritics) while keeping
+    base letters: non-ASCII letters like ŋ or ɔ survive, ɔ́ becomes ɔ,
+    and precomposed é loses its accent too (via NFD). Recomposed to NFC
+    on the way out."""
+    if not s:
+        return s
+    decomposed=unicodedata.normalize('NFD', s)
+    stripped=''.join(c for c in decomposed
+                        if unicodedata.category(c) != 'Mn')
+    return unicodedata.normalize('NFC', stripped)
 def stouttostr(x):
     # This fn is necessary (and problematic) because not all computers seem to
     # reply to subprocess.check_output with the same kind of data. I have even
