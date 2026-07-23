@@ -535,6 +535,52 @@ class ExitFlag(object):
         self.value=False
     def __init__(self):
         self.false()
+_fontfilecache={}
+def findfontfile(filename):
+    """Locate an installed font file by name, searching where fonts
+    actually land — including the per-user Windows fonts directory
+    (%LOCALAPPDATA%/Microsoft/Windows/Fonts), which a font-dialog
+    'Install' uses and which PIL's own search never checks. Returns an
+    absolute path or None; results (including misses) are cached per
+    filename, so a font installed mid-session needs a restart."""
+    if filename in _fontfilecache:
+        return _fontfilecache[filename]
+    import glob as globmod
+    if platform.system() == 'Windows':
+        dirs=[os.path.join(os.environ.get('WINDIR',r'C:\Windows'),'Fonts'),
+              os.path.join(os.environ.get('LOCALAPPDATA')
+                or os.path.join(os.path.expanduser('~'),'AppData','Local'),
+                'Microsoft','Windows','Fonts')]
+    else: #Linux and mac directories; absent ones are just skipped
+        dirs=['/usr/share/fonts','/usr/local/share/fonts',
+              os.path.expanduser('~/.fonts'),
+              os.path.expanduser('~/.local/share/fonts'),
+              '/System/Library/Fonts','/Library/Fonts',
+              os.path.expanduser('~/Library/Fonts')]
+    found=None
+    for d in dirs:
+        if not os.path.isdir(d):
+            continue
+        hits=globmod.glob(os.path.join(globmod.escape(d),'**',filename),
+                            recursive=True)
+        if hits:
+            found=hits[0]
+            break
+    _fontfilecache[filename]=found
+    return found
+
+def charisfiles(fonttypewords,fonttype):
+    """Charis font file names in priority order: tstv variants first,
+    then the ≤v6 'CharisSIL-*' names, then the v7 'Charis-*' names (v7
+    renames the family from 'Charis SIL' to 'Charis' and its files to
+    match) — a given Windows machine may carry any of these."""
+    return ['CharisSIL-tstv-{}.ttf'.format(fonttypewords),
+            'CharisSIL-tstv-{}.ttf'.format(fonttype),
+            'CharisSIL-{}.ttf'.format(fonttypewords),
+            'CharisSIL-{}.ttf'.format(fonttype),
+            'Charis-{}.ttf'.format(fonttypewords),
+            'Charis-{}.ttf'.format(fonttype)]
+
 class Renderer():
     def __init__(self,test=False,**kwargs):
         global pilisactive
@@ -596,10 +642,7 @@ class Renderer():
                 files+=['Andika-tstv-{}.ttf'.format(fonttype)]
                 files+=['Andika-{}.ttf'.format(fonttype)]
             elif fname in ["Charis","Charis SIL"]:
-                files=['CharisSIL-tstv-{}.ttf'.format(fonttypewords)]
-                files+=['CharisSIL-tstv-{}.ttf'.format(fonttype)]
-                files+=['CharisSIL-{}.ttf'.format(fonttypewords)]
-                files+=['CharisSIL-{}.ttf'.format(fonttype)]
+                files=charisfiles(fonttypewords,fonttype)
             elif fname in ["Gentium","Gentium SIL","Gentium Plus"]:
                 files=['GentiumPlus-tstv-{}.ttf'.format(fonttypewords)]
                 files+=['GentiumPlus-{}.ttf'.format(fonttypewords)]
@@ -623,25 +666,40 @@ class Renderer():
                 files=['DejaVuSans-tstv-{}.ttf'.format(fonttype)]
                 files+=['DejaVuSans{}.ttf'.format(fonttype)]
             else:
-                log.error("Sorry, I have no info on font {}".format(fname))
-                return
-            for file in files:
-                try:
-                    font = PIL.ImageFont.truetype(font=file, size=fsize)
-                    self.imagefonts[str(fontkey)]=font
-                    log.info("Using font file {}".format(file))
+                log.warning("No info on font {}; falling back to Charis"
+                            "".format(fname))
+                files=charisfiles(fonttypewords,fonttype)
+            for fontfile in files:
+                found=None
+                #bare name first (PIL's own search), then our finder,
+                #which also covers per-user Windows installs:
+                for candidate in [fontfile, findfontfile(fontfile)]:
+                    if not candidate:
+                        continue
+                    try:
+                        found = PIL.ImageFont.truetype(font=candidate,
+                                                        size=fsize)
+                        log.info("Using font file {}".format(candidate))
+                        break
+                    except OSError as e:
+                        if 'cannot open resource' in str(e):
+                            log.debug("no file {}, checking next"
+                                        "".format(candidate))
+                        else:
+                            raise
+                if found:
+                    font=self.imagefonts[str(fontkey)]=found
                     break
-                except OSError as e:
-                    if 'cannot open resource' in str(e):
-                        log.debug("no file {}, checking next".format(file))
-                    else:
-                        raise
         else: #i.e., if it was done before
             font=self.imagefonts[str(fontkey)]
         if str(fontkey) not in self.imagefonts: #i.e., neither before nor now
-            log.error("Cannot find font file for {}; giving up".format(fname))
-            self.img=None
-            return
+            log.error("Cannot find any font file for {}; using the PIL "
+                        "default font rather than breaking".format(fname))
+            try:
+                font=PIL.ImageFont.load_default(size=fsize)
+            except TypeError: #Pillow <10.1 takes no size argument
+                font=PIL.ImageFont.load_default()
+            self.imagefonts[str(fontkey)]=font
         img = PIL.Image.new("1", (10,10), 255)
         draw = PIL.ImageDraw.Draw(img)
         w, h = self.gettextsize(draw, text, font, fspacing)

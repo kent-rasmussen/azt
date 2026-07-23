@@ -150,6 +150,14 @@ from frontend.config.settings_ui import SettingsUI
 
 class Settings(SettingsUI):
     """Full Settings class: backend logic + UI methods from SettingsUI."""
+    # Candidate second-form field names. Class attributes so they (and the
+    # not-found state of the guessed names below) exist even when the UI
+    # asks before guess_*_secondformfield has run:
+    plopts=['Plural', 'plural', 'pl', 'Pluriel', 'pluriel']
+    impopts=['Imperative', 'imperative', 'imp', 'Imp',
+                'Imperatif', 'imperatif']
+    pluralname=None
+    imperativename=None
     domain_mapping = {
             'defaults': ['project', 'ui'],
             'soundsettings': ['audio'],
@@ -748,8 +756,7 @@ class Settings(SettingsUI):
             self.fieldnames=[]
         _log.info(_("Fields found in lexicon: {fields}").format(fields=self.fieldnames))
     def guess_nominal_secondformfield(self):
-        self.plopts=['Plural', 'plural', 'pl', 'Pluriel', 'pluriel']
-        for opt in self.plopts:
+        for opt in self.plopts: #class attribute; always present
             if opt in self.fieldnames:
                 self.secondformfield[self.nominalps]=self.pluralname=opt
                 break
@@ -761,9 +768,7 @@ class Settings(SettingsUI):
             _log.info(_('Looks like there is no Plural field in the database'))
             self.pluralname=None
     def guess_verbal_secondformfield(self):
-        self.impopts=['Imperative', 'imperative', 'imp', 'Imp', 
-                        'Imperatif', 'imperatif']
-        for opt in self.impopts:
+        for opt in self.impopts: #class attribute; always present
             if opt in self.fieldnames:
                 self.secondformfield[self.verbalps]=self.imperativename=opt
                 break
