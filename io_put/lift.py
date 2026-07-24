@@ -3342,14 +3342,18 @@ class Sense(Node,FieldParent):
             return url
         if self.backfill_illustration():
             return self.illustrationURI()
-    def illustrationURI(self,write_to=False):
+    def illustrationURI(self,write_to=False,local_only=False):
         """1. File in lift node, if in db.imgdir, else
         2. url of resolved image online, by word list number, else
         3. file in lift node if set (even if not in db.imgdir - dead link)
         4. else default name from word list number
         Hence: privilege actual files, but always return writable path,
         so we can make this file where it aught to be.
-        """
+
+        local_only: never consult the online (GitHub CAWL) resolver —
+        after collection, only a user's explicit choice adds an image,
+        so e.g. the sort presentation shows an image only if one is
+        already on disk (and compiles), else moves on."""
         v=self.illustrationvalue() #get value in XML file
         if v:
             local=file.getdiredurl(self.db.imgdir,v)
@@ -3361,8 +3365,10 @@ class Sense(Node,FieldParent):
             if not v:
                 v=self.imagename()
             return file.getdiredurl(self.db.imgdir,v)
-        # Fall back to GitHub-hosted CAWL image if reading and 
+        # Fall back to GitHub-hosted CAWL image if reading and
         # no local file
+        if local_only:
+            return
         if self.word_list_n:
             resolver=self.db.get_img_resolver()
             if resolver:

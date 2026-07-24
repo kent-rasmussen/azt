@@ -1094,7 +1094,8 @@ class SyllableSliceDict(object):
         seen=set(); uris=[]
         for c,g,i in self.upcoming_slices(check,group,idx,n):
             for s in self.members_in_slice(c,g,i):
-                u=s.illustrationURI()
+                u=s.illustrationURI(local_only=True) #images are data;
+                                        #never fetch at display time
                 if u and u not in seen:
                     seen.add(u); uris.append(u)
         return uris
@@ -1106,7 +1107,8 @@ class SyllableSliceDict(object):
         seen=set(); uris=[]
         for c,g,i in self._slice_order():
             for s in self.members_in_slice(c,g,i):
-                u=s.illustrationURI()
+                u=s.illustrationURI(local_only=True) #images are data;
+                                        #never fetch at display time
                 if u and u not in seen:
                     seen.add(u); uris.append(u)
         return uris

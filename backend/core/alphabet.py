@@ -428,7 +428,7 @@ class Alphabet():
         ranked=[]
         for i,s in enumerate(self.senses_for_glyph(g)):
             try:
-                uri=s.illustrationURI()
+                uri=s.illustrationURI(local_only=True) #images are data
                 if not (uri and file.exists(uri)):
                     continue
                 counts,keys=s.getcvverificationkeys(self.ftype)

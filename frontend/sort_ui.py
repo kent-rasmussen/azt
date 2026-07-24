@@ -154,8 +154,10 @@ class SortPresenter(PresenterBase):
         try:
             if not sense.image or not sense.image.base_img:
                 # don't reload images unnecessarily;
-                # base_img is None if image failed to load
-                iuri=sense.illustrationURI()
+                # base_img is None if image failed to load.
+                # local_only: sorting never fetches images (no GitHub
+                # resolver) — show what's on disk, or move on.
+                iuri=sense.illustrationURI(local_only=True)
                 if iuri in self.theme.image_cache:
                     sense.image=self.theme.image_cache[iuri]
                 elif iuri:
