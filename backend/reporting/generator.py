@@ -132,7 +132,7 @@ class Report(object):
             if 'profile' in kwargs:
                 log.error("{ps} {profile} came up with no checks.".format(ps=ps,profile=profile))
                 return
-            self.getprofile(wsorted=True)
+            self.program.ui_settings.getprofile(wsorted=True) #chooser dialog
         startnotice=_("Starting report {ps} {profile}").format(ps=ps,profile=profile)
         log.info(startnotice)
         self.program.settings.storesettingsfile()

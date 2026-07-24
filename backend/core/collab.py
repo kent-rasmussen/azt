@@ -677,6 +677,30 @@ def attach(program):
             "not registered; running in legacy mode this session."
             ).format(langcode=langcode))
         return None
+    # Identity guard (2026-07-24): binding by langcode alone let a file
+    # whose settings say collab=True silently join a daemon project
+    # managing a DIFFERENT local tree (two 'baf' copies): saves land in
+    # the daemon's copy while the opened file goes stale, and the next
+    # session can regress the tip. The daemon's registered path is
+    # authoritative — refuse loudly instead.
+    ours=os.path.realpath(str(program.filename))
+    theirs=str(getattr(proj,'lift_path','') or '')
+    if not theirs and getattr(proj,'working_dir',''):
+        theirs=os.path.join(proj.working_dir,os.path.basename(ours))
+    theirs=os.path.realpath(theirs) if theirs else ''
+    if theirs and ours != theirs:
+        from utilities.error_handler import notify_error
+        msg=_("This file says it belongs to collaboration project "
+                "“{langcode}”, but the collaboration server manages a "
+                "different copy:\n{theirs}\nYou opened:\n{ours}\n"
+                "To avoid splitting the project’s history, "
+                "collaboration is OFF for this session. Open the "
+                "server’s copy, or disconnect this file from "
+                "collaboration.").format(langcode=langcode,
+                                        theirs=theirs,ours=ours)
+        log.warning(msg)
+        notify_error(msg,title=_("Collaboration"))
+        return None
     st = None
     try:
         st = _client.project_status(langcode)

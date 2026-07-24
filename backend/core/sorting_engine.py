@@ -456,7 +456,15 @@ class Sort(Categories):
             return None
         ftype=self.program.params.ftype()
         ps=self.program.slices.ps()
-        senses=self.program.db.sensesbyps.get(ps,[])
+        if ps:
+            senses=self.program.db.sensesbyps.get(ps,[])
+        else:
+            # Boot with NO confirmed profiles anywhere: the ps-profile
+            # dict (confirmed values only) has no ps keys yet — the
+            # FIRST affirm/sort creates them (affirm persists to LIFT
+            # and rebuilds the dict). Offer wordlist-wide, which is the
+            # scope affirm operates on anyway.
+            senses=self.program.db.senses
         # Only count words that affirming/sorting could actually profile: no
         # confirmed profile yet, but a real machine analysis to affirm. Words with
         # no/Invalid machine analysis can never be affirmed, so they must not keep
@@ -468,19 +476,32 @@ class Sort(Categories):
         if not _affirm:
             return None # nothing left that affirming/sorting would profile
         self._offered_profile_setup=True
-        note=_("Some of these words have no syllable profile yet, so "
+        if ps:
+            note=_("Some of these words have no syllable profile yet, so "
                 # "Segmental and tone sorts work on syllable-profile data — "
                 # "a word that hasn't been sorted (or affirmed) for its "
                 # "syllable profile "
                 "they won’t be sorted here either.")
+        else:
+            # Zero confirmed profiles: unlike the some-words case, there
+            # is no minimal data to continue on — say so instead of
+            # implying sorting can proceed meanwhile.
+            note=_("No word has a confirmed syllable profile yet, so "
+                    "there is nothing to sort here until you either "
+                    "affirm the machine analysis or sort syllable "
+                    "profiles.")
         scope=self._affirm_scope_text(_affirm,ftype)
         choice=self.sort_ui.offer_profile_setup(self.ui,note,scope)
         if choice=='affirm':
-            self.program.profiles.affirm_machine_profiles() # fill holes
+            # Both passes defer the (expensive, full) slice rebuild so it
+            # runs ONCE, and runs whenever EITHER pass changed anything:
+            n=self.program.profiles.affirm_machine_profiles(rebuild=False)
             # …and repair existing trusted profiles: constrain any that violate
             # their verified primitives and realign drifted sort-group annotations
             # (the stale 'lc' the old raw affirm left). Idempotent on clean data.
-            self.program.profiles.reconcile_profiles_to_primitives()
+            m=self.program.profiles.reconcile_profiles_to_primitives(rebuild=False)
+            if n or m:
+                self.program.profiles.rebuild_slices()
             if at_open and getattr(self,'status',None):
                 self.status.maybeboard() # refresh the now-populated profile board
         # 'sort' no longer launches here; the caller tears down this task first,
@@ -507,7 +528,7 @@ class Sort(Categories):
         self.check=self.program.params.check()
         self.profile=self.program.slices.profile()
         if not self.profile:
-            self.getprofile()
+            self.program.ui_settings.getprofile() #the chooser dialog
             self.profile=self.program.slices.profile()
         """further specify check check in maybesort, where you can send the user
         on to the next setting"""

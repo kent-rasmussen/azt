@@ -2019,7 +2019,8 @@ class ReportCitation(Report,Segments,Task):
         check=self.program.params.check()
         profile=self.program.slices.profile()
         if not profile:
-            self.getprofile()
+            self.program.ui_settings.getprofile() #the chooser dialog
+            profile=self.program.slices.profile()
         if not profile or not ps:
             window=ui.Window(self)
             text=_('Error: please set Ps-Profile first! ({ps}/{check}/{profile})').format(

@@ -356,6 +356,16 @@ class ProfileAnalyzer:
         sense.annotationvaluebyftypelang(ftype, self.program.db.analang,
                                          ftype, profile)
 
+    def rebuild_slices(self):
+        """FULL post-trust rebuild: refresh the db-level ps/profile
+        dicts, then re-run the analyzer — run() re-aggregates
+        _profilesbysense from the (newly) confirmed cvprofile forms and
+        ends by constructing a fresh SliceDict, which registers itself
+        as program.slices with real ps/profile priorities.
+        db.load_ps_profiles alone leaves the session's SliceDict stale,
+        so a trust looked like a no-op until restart (2026-07-24)."""
+        self.program.db.load_ps_profiles()
+        self.run()
     def affirm_machine_profiles(self, ftype=None, rebuild=True):
         """Accept the straight machine CV analysis as the (confirmed) profile DATA:
         copy each sense's …-x-cvprofile_MT into the plain …-x-cvprofile form, which
@@ -389,7 +399,7 @@ class ProfileAnalyzer:
             # file without them and the "set up profiles?" trigger fires again.
             self.program.maybewrite(definitely=True)
         if rebuild and n:
-            self.program.db.load_ps_profiles()  # "build slicedict after"
+            self.rebuild_slices()
         return n
 
     def reconcile_profiles_to_primitives(self, ftype=None, rebuild=True):
@@ -422,7 +432,7 @@ class ProfileAnalyzer:
         if n:
             self.program.maybewrite(definitely=True)
         if rebuild and n:
-            self.program.db.load_ps_profiles()
+            self.rebuild_slices()
         return n
 
     def scrub_sorts_to_primitives(self, ftype=None):
@@ -509,12 +519,15 @@ class ProfileAnalyzer:
         # regex work (and under the GIL the threads bought no real CPU win), so run
         # it in order: deterministic and race-free.
         todo = len(senses)
-        for n, sense in enumerate(senses, 1):
-            form, profile = self.getprofileofsense(sense, ps)
+        withforms = 0 # senses with a form to profile: the honest count —
+        for n, sense in enumerate(senses, 1): # template entries awaiting
+            form, profile = self.getprofileofsense(sense, ps) # collection
+            if form:                                     # have no form and
+                withforms += 1                           # profile nothing
             if n % 100 == 0:
                 log.debug(_("{count}: {form} > {profile}").format(
                     count=str(n)+'/'+str(todo), form=form, profile=profile))
-        return len(senses)
+        return withforms
 
     def extractsegmentsfromform(self, form, ps):
         for s in set(self.profilelegit) & set(self.rxdict.rx):
@@ -577,7 +590,9 @@ class ProfileAnalyzer:
                     "constrained machine analysis, OVERWRITING confirmed sort "
                     "data. Turn it off and don't save over good data.")
         counts={ps:self.getprofilesbyps(ps) for ps in self.program.db.pss}
-        log.info("Processed forms to syllable profiles by ps: {}".format(counts))
+        log.info("Machine-profiled senses WITH FORMS by ps (senses without "
+                "a form — e.g. uncollected template entries — profile "
+                "nothing and aren't counted): {}".format(counts))
         # ps-INDEPENDENT coverage: a sense with no part of speech still has a form,
         # hence a CV profile, hence syllable-prep primitives. The loop above skips
         # it (db.pss drops falsy ps values), so compute its profile here too —
