@@ -982,22 +982,44 @@ class WordCollection(Segments):
         else:
             self.index-=1
         self.getword()
+    def check_input_warnings(self,*args):
+        """Red, live feedback under the entry field: inform — never
+        block — about input that later stages treat specially: internal
+        spaces (stored, but phrases are never parsed) and diacritics
+        (stripped to base letters on store)."""
+        from utilities.encodings import strip_diacritics
+        v=self.var.get()
+        warnings=[]
+        if any(c.isspace() for c in v.strip()):
+            warnings.append(_("This contains a space; that’s OK, "
+                                "but phrases will not be analyzed."))
+        if v != strip_diacritics(v):
+            warnings.append(_("This contains a diacritic; we will "
+                                "strip all but consonants and vowels."))
+        if getattr(self,'inputwarning',None) is not None:
+            self.inputwarning['text']='\n'.join(warnings)
     def storethisword(self):
-        log.info(_("WordCollection trying to store {value} ({type})").format(value=self.var.get(),type=self.ftype))
+        from utilities.encodings import strip_diacritics
+        value=strip_diacritics(self.var.get())
+        if value != self.var.get():
+            log.info("Stripping typed diacritics for storage: {} > {}"
+                        "".format(self.var.get(),value))
+            self.var.set(value) #show what will be stored
+        log.info(_("WordCollection trying to store {value} ({type})").format(value=value,type=self.ftype))
         try:
             if self.ftype in ['lc','lx']:
                 self.sense.textvaluebyftypelang(self.ftype,
                                             self.analang,
-                                            self.var.get())
+                                            value)
             elif self.ftype == 'pl':
                 self.entry.plvalue(
                     self.program.settings.secondformfield[self.program.settings.nominalps],
-                    self.var.get())
+                    value)
                 # lift.prettyprint(self.entry.pl)
             elif self.ftype == 'imp':
                 self.entry.fieldvalue(
                         self.program.settings.secondformfield[self.program.settings.verbalps],
-                        self.var.get())
+                        value)
             # self.entry.lc.textvaluebylang(self.analang,self.var.get())
             self.maybewrite() #only if above is successful
             # lift.prettyprint(self.entry)
@@ -1264,6 +1286,10 @@ class WordCollection(Segments):
                                         row=6, column=1,
                                         sticky='w',
                                         anchor='w')
+        self.inputwarning=p.label(self.wordframe,text='',font='small',
+                        fg='red',
+                        row=7,column=0,columnspan=3,sticky='ew')
+        self.var.trace_add('write',self.check_input_warnings)
         next.bind_all('<Up>',lambda event: self.backword(nostore=True))
         next.bind_all('<Prior>',lambda event: self.backword(nostore=True))
         next.bind_all('<Down>',lambda event: self.nextword(nostore=True))
@@ -1924,9 +1950,14 @@ class Parse(Segments):
                 log.error("self.status not found after {} tries @ {}ms; giving up"
                         "".format(self.try_times,self.try_each_ms))
     def storethisword(self):
-        log.info(_("Parse trying to store {value} ({type})").format(value=self.var.get(),type=self.ftype))
+        from utilities.encodings import strip_diacritics
+        v=strip_diacritics(self.var.get())
+        if v != self.var.get():
+            log.info("Stripping typed diacritics for storage: {} > {}"
+                        "".format(self.var.get(),v))
+            self.var.set(v) #show what will be stored
+        log.info(_("Parse trying to store {value} ({type})").format(value=v,type=self.ftype))
         try:
-            v=self.var.get()
             assert v
             self.entry.fields[self.ftype].textvaluebylang(self.analang,v)
             if not self.done():

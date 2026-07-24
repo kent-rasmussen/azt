@@ -26,7 +26,7 @@ msgstr "\n\n"
 #: /home/kentr/bin/raspy/azt/main.py:17634
 #, python-brace-format
 msgid "\n\nIf this information doesn’t help you fix this, please click on this text to Email me your log (to {addr})"
-msgstr ""
+msgstr "\n\nSi ces informations ne vous aident pas à résoudre ce problème, veuillez cliquer sur ce texte pour m'envoyer votre journal par e-mail (à {addr})"
 
 #: /home/kentr/bin/raspy/azt/main.py:646
 msgid "\n"
@@ -49,19 +49,21 @@ msgstr "\n"
 
 #: /home/kentr/bin/raspy/azt/main.py:2785
 msgid "\n*** There don’t seem to be any possible digraphs or trigraphs in your data ***\n"
-msgstr ""
+msgstr "\n*** Il ne semble y avoir aucun digraphe ou trigraphe possible dans vos données ***\n"
 
 #: /home/kentr/bin/raspy/azt/main.py:4182
 #, python-brace-format
 msgid "\n"
 "=> You are no longer distinguishing {items}."
-msgstr ""
+msgstr "\n"
+"=> Vous ne distinguez plus {items}."
 
 #: /home/kentr/bin/raspy/azt/main.py:4186
 #, python-brace-format
 msgid "\n"
 "=> Your interpretation of {items} changed."
-msgstr ""
+msgstr "\n"
+"=> Votre interprétation de {items} a changé."
 
 #: /home/kentr/bin/raspy/azt/main.py:3463
 #, python-brace-format
@@ -70,13 +72,18 @@ msgid "\n"
 "{file} \n"
 "change that or add some data to your database, so I know what language we're working on. \n"
 "Or select a different database on the next screen."
-msgstr ""
+msgstr "\n"
+"De plus, votre fichier LIFT ne semble pas indiquer votre code de langue : \n"
+"{file} \n"
+"changez cela ou ajoutez des données à votre base de données, pour que je sache sur quelle langue nous travaillons. \n"
+"Ou sélectionnez une autre base de données sur l'écran suivant."
 
 #: /home/kentr/bin/raspy/azt/main.py:4188
 #, python-brace-format
 msgid "\n"
 "Here is the full info, in form setting: (from, to): {changed}."
-msgstr ""
+msgstr "\n"
+"Voici les informations complètes, au format paramètre : (de, à) : {changed}."
 
 #: /home/kentr/bin/raspy/azt/main.py:7607
 #, python-brace-format
@@ -89,7 +96,8 @@ msgstr "\n"
 #, python-brace-format
 msgid "\n"
 "Please see {url}"
-msgstr ""
+msgstr "\n"
+"Veuillez consulter {url}"
 
 #: /home/kentr/bin/raspy/azt/main.py:7873
 #, python-brace-format
@@ -229,7 +237,7 @@ msgstr "({count} restant)"
 #: /home/kentr/bin/raspy/azt/main.py:3646
 #, python-brace-format
 msgid "**Changed {attr}; should restart!**"
-msgstr ""
+msgstr "**{attr} modifié ; redémarrage conseillé !**"
 
 #: /home/kentr/bin/raspy/azt/main.py:12364
 #, python-brace-format
@@ -1169,7 +1177,7 @@ msgstr "Le sujet n'a pas été trouvé pour {thread}; impossible de marquer comm
 #: /home/kentr/bin/raspy/azt/main.py:4082
 #, python-brace-format
 msgid "Didn’t find {attr} in {settings}"
-msgstr ""
+msgstr "{attr} n'a pas été trouvé dans {settings}"
 
 #: /home/kentr/bin/raspy/azt/main.py:6550
 #, python-brace-format
@@ -1559,7 +1567,7 @@ msgstr "Terminé avec tous les threads en cours d'exécution"
 #: /home/kentr/bin/raspy/azt/main.py:16909
 #, python-brace-format
 msgid "Finished {msg}at {now} ({m:1.0f}m, {s:2.3f}s)"
-msgstr ""
+msgstr "Terminé {msg}à {now} ({m:1.0f}m, {s:2.3f}s)"
 
 #: /home/kentr/bin/raspy/azt/main.py:16912
 #, python-brace-format
@@ -1569,7 +1577,7 @@ msgstr "Terminé {msg}à {now}, après {duration} secondes"
 #: /home/kentr/bin/raspy/azt/ui_tkinter.py:156
 #, python-brace-format
 msgid "Finished {msg}at {time} ({minutes:1.0f}m, {seconds:2.3f}s)"
-msgstr ""
+msgstr "Terminé {msg}à {time} ({minutes:1.0f}m, {seconds:2.3f}s)"
 
 #: /home/kentr/bin/raspy/azt/main.py:7369
 #, python-brace-format
@@ -2071,7 +2079,8 @@ msgstr "Je n'ai pas de données triées pour la vérification : {check}, ps-prof
 #, python-brace-format
 msgid "I have tried to install some Python dependencies for you. If everything but ‘patiencediff’ installed (see log below), just close this window and {azt} will restart. \n"
 "If you see connectivity errors, check your internet connection before running {azt} again; we need to download some stuff for this."
-msgstr ""
+msgstr "J'ai essayé d'installer certaines dépendances Python pour vous. Si tout est installé sauf ‘patiencediff’ (voir le journal ci-dessous), fermez simplement cette fenêtre et {azt} redémarrera. \n"
+"Si vous voyez des erreurs de connectivité, vérifiez votre connexion internet avant de relancer {azt} ; nous devons télécharger quelques éléments pour cela."
 
 #: /home/kentr/bin/raspy/azt/py_modules.py:114
 msgid "I’m going to give up now, sorry!\n"
@@ -2086,7 +2095,7 @@ msgstr "Je travaille sur un dialecte de cette langue"
 #: /home/kentr/bin/raspy/azt/main.py:9420
 #, python-brace-format
 msgid "I’ve tried (randomly, then through each) {count} times, and not found one of your {total} senses with data in each of these languages: {langs}. \nAre you asking for gloss languages which actually have data in your database? \nOr, are you missing gloss fields (i.e., you have only ‘definition’ fields)?"
-msgstr ""
+msgstr "J'ai essayé (au hasard, puis une par une) {count} fois, sans trouver un seul de vos {total} sens avec des données dans chacune de ces langues : {langs}. \nDemandez-vous des langues de glose qui ont réellement des données dans votre base de données ? \nOu bien vous manque-t-il des champs de glose (c.-à-d. que vous n'avez que des champs ‘definition’) ?"
 
 #: /home/kentr/bin/raspy/azt/sound_ui.py:462
 msgid "If Praat is installed in your OS path, right click on ‘{}’ above to open in Praat."
@@ -2215,7 +2224,7 @@ msgstr "Il semble que ni votre LWC ({analang}) ni votre langage d'interface ({in
 #: /home/kentr/bin/raspy/azt/main.py:576
 #, python-brace-format
 msgid "It looks like the repository was cloned, but I can’t find just one lift file.\nTell {azt} which file you want to Analyze on the next page."
-msgstr ""
+msgstr "Il semble que le dépôt ait été cloné, mais je ne trouve pas un seul fichier lift.\nIndiquez à {azt} quel fichier vous voulez analyser sur la page suivante."
 
 #: /home/kentr/bin/raspy/azt/main.py:5051
 #, python-brace-format
@@ -2227,7 +2236,7 @@ msgstr "Il semble que vous n'ayez pas {ps}- lexèmes{profile} regroupés dans la
 #: /home/kentr/bin/raspy/azt/main.py:7954
 #, python-brace-format
 msgid "It looks like you’re done filling out the empty entries in your database! Congratulations! \nYou can still add words through the button on the left ({text})."
-msgstr ""
+msgstr "Il semble que vous ayez fini de remplir les entrées vides de votre base de données ! Félicitations ! \nVous pouvez toujours ajouter des mots avec le bouton à gauche ({text})."
 
 #: /home/kentr/bin/raspy/azt/main.py:2980
 #, python-brace-format
@@ -3390,7 +3399,7 @@ msgstr "Veuillez spécifier un nom de palier (-t) dans {}"
 #: /home/kentr/bin/raspy/azt/sound_ui.py:455
 #, python-brace-format
 msgid "Plug in your microphone, and make sure ‘record’ and ‘{play}’ work well here, before recording real data!"
-msgstr ""
+msgstr "Branchez votre microphone, et vérifiez que ‘record’ et ‘{play}’ fonctionnent bien ici, avant d'enregistrer de vraies données !"
 
 #: /home/kentr/bin/raspy/azt/main.py:2682
 #, python-brace-format
@@ -4737,7 +4746,9 @@ msgstr "L'exemple {item_name} ‘{group}’ a seulement {n} ; vérifié."
 msgid "The {name} tone report splits sorted data into draft underlying tone melody groups. Even before a linguist has been able to evaluate these groups, it may be helpful to record your sorted data. {name} can give you a window for each lexicon sense in a tone group, with a record button for each sorted sense-frame combination. \n\n"
 "Those windows will be presented to the user from one tone report group after another, until all groups have had one page presented. Then {name} will repeat this process, until it has done a number of rounds equal to the number selected below. \n"
 "Picking a larger number could delay opening the recording window; picking a smaller number could mean data not getting recorded. Up to how many examples do you want to record for each group?"
-msgstr ""
+msgstr "Le rapport de ton {name} répartit les données triées en groupes provisoires de mélodies tonales sous-jacentes. Même avant qu'un linguiste ait pu évaluer ces groupes, il peut être utile d'enregistrer vos données triées. {name} peut vous présenter une fenêtre pour chaque sens du lexique dans un groupe de ton, avec un bouton d'enregistrement pour chaque combinaison sens-cadre triée. \n\n"
+"Ces fenêtres seront présentées à l'utilisateur d'un groupe du rapport de ton à l'autre, jusqu'à ce que tous les groupes aient eu une page présentée. Ensuite {name} répétera ce processus, jusqu'à avoir fait un nombre de tours égal au nombre sélectionné ci-dessous. \n"
+"Choisir un nombre plus grand peut retarder l'ouverture de la fenêtre d'enregistrement ; choisir un nombre plus petit peut signifier que des données ne seront pas enregistrées. Jusqu'à combien d'exemples voulez-vous enregistrer pour chaque groupe ?"
 
 #: /home/kentr/bin/raspy/azt/main.py:14987
 #, python-brace-format
@@ -4923,12 +4934,16 @@ msgid "This page allows you to join the {ps}-{profile} draft underlying tone gro
 "Looking at a draft report, and making your own judgement about which groups belong together, select all the groups that belong together in one group, and give that new group a name. You can then repeat this for other groups that should be joined. \n"
 "If for any reason you want to undo the groups you create here, you can start over with an new analysis by pressing the ‘{redo}’ button. \n"
 "Otherwise, these joined groups will be reflected in reports until you sort more data."
-msgstr ""
+msgstr "Cette page vous permet de joindre les groupes provisoires de ton sous-jacent {ps}-{profile} créés pour vous par {program}, \n"
+"qui sont presque certainement trop petits pour vous. \n"
+"En regardant un rapport provisoire, et en jugeant vous-même quels groupes vont ensemble, sélectionnez tous les groupes qui vont ensemble dans un même groupe, et donnez un nom à ce nouveau groupe. Vous pouvez ensuite répéter cela pour d'autres groupes à joindre. \n"
+"Si pour une raison quelconque vous voulez défaire les groupes créés ici, vous pouvez recommencer avec une nouvelle analyse en appuyant sur le bouton ‘{redo}’. \n"
+"Sinon, ces groupes joints seront reflétés dans les rapports jusqu'à ce que vous triiez plus de données."
 
 #: /home/kentr/bin/raspy/azt/main.py:9721
 #, python-brace-format
 msgid "This page will allow you to set up your own sets of dictionary senses to sort, within the ‘{0}’ lexical category. \nYou should only do this if the ‘{0}’ lexical category is so small that sorting them by syllable profile gives you unusably small slices of your database.\nIf you want to compare words that are currently in different grammatical categories, put them first into the same lexical category in another tool (e.g., FLEx or WeSay), then put them in an Ad Hoc group here.\nIf you want to create a new group, exit here, select a non-Ad Hoc syllable profile, and try this window again."
-msgstr ""
+msgstr "Cette page vous permettra de définir vos propres ensembles de sens du dictionnaire à trier, au sein de la catégorie lexicale ‘{0}’. \nVous ne devriez le faire que si la catégorie lexicale ‘{0}’ est si petite que le tri par profil syllabique vous donne des tranches inutilisables de votre base de données.\nSi vous voulez comparer des mots qui sont actuellement dans des catégories grammaticales différentes, mettez-les d'abord dans la même catégorie lexicale dans un autre outil (p. ex. FLEx ou WeSay), puis mettez-les dans un groupe Ad Hoc ici.\nSi vous voulez créer un nouveau groupe, quittez ici, sélectionnez un profil syllabique non Ad Hoc, et réessayez cette fenêtre."
 
 #: /home/kentr/bin/raspy/azt/main.py:8327
 #, python-brace-format
@@ -5333,7 +5348,7 @@ msgstr "Tapez le mot dans votre langue qui va avec ces significations.\n"
 #: /home/kentr/bin/raspy/azt/main.py:5681
 #, python-brace-format
 msgid "Typically, dictionary work starts by collecting citation forms, and later moves to analyzing those forms into lexemes (meaningful, but not necessarily pronounceable, word parts). Sometimes, people store those citation forms in lexeme fields, though this is typically in error. {name} can help you analyze your citation forms into lexeme forms, but they first need to be moved to the correct fields in your database."
-msgstr ""
+msgstr "Typiquement, le travail de dictionnaire commence par la collecte des formes de citation, puis passe à l'analyse de ces formes en lexèmes (parties de mots porteuses de sens, mais pas nécessairement prononçables). Parfois, on stocke ces formes de citation dans des champs de lexème, bien que ce soit généralement une erreur. {name} peut vous aider à analyser vos formes de citation en formes de lexème, mais elles doivent d'abord être déplacées vers les bons champs de votre base de données."
 
 #: /home/kentr/bin/raspy/azt/main.py:16515
 #, python-brace-format
@@ -5928,7 +5943,12 @@ msgid "You don't seem to have any tone frames set up.\n"
 "there's anything you don't understand, or if you're not \n"
 "sure what a tone frame is, please ask for help. \n"
 "When you are done making frames, click ‘Exit’ to continue."
-msgstr ""
+msgstr "Vous ne semblez avoir défini aucun cadre de ton.\n"
+"Cliquez sur '{button}' ci-dessous pour définir un cadre de ton. \n"
+"Veuillez prêter attention aux instructions, et si \n"
+"vous ne comprenez pas quelque chose, ou si vous n'êtes pas \n"
+"sûr de ce qu'est un cadre de ton, demandez de l'aide. \n"
+"Quand vous avez fini de créer des cadres, cliquez sur ‘Exit’ pour continuer."
 
 #: /home/kentr/bin/raspy/azt/main.py:1955
 #, python-brace-format
@@ -5973,7 +5993,12 @@ msgid "You need to set \n"
 "Syllable Profile (currently {profile}), and \n"
 "Tone Frame (currently {check})\n"
 "Before choosing a sort group!"
-msgstr ""
+msgstr "Vous devez définir \n"
+"le type de vérification (Ton, actuellement {type}) \n"
+"la catégorie grammaticale (actuellement {ps})\n"
+"le profil syllabique (actuellement {profile}), et \n"
+"le cadre de ton (actuellement {check})\n"
+"avant de choisir un groupe de tri !"
 
 #: /home/kentr/bin/raspy/azt/main.py:16541
 msgid "You passed me a remotes value that isn’t a dict?"
@@ -6004,7 +6029,7 @@ msgstr "Votre base de données de dictionnaire est en cours de chargement..."
 #: /home/kentr/bin/raspy/azt/main.py:734
 #, python-brace-format
 msgid "Your new LIFT file is at {newfile}.\nIf you don’t want it there, close {azt} and move the whole {folder} folder wherever you like.\nThen open {azt} and tell it where you put the LIFT file."
-msgstr ""
+msgstr "Votre nouveau fichier LIFT est à {newfile}.\nSi vous ne le voulez pas là, fermez {azt} et déplacez le dossier {folder} entier où vous voulez.\nEnsuite, ouvrez {azt} et indiquez-lui où vous avez mis le fichier LIFT."
 
 #: /home/kentr/bin/raspy/azt/lift.py:1900
 #, python-brace-format
@@ -7049,7 +7074,7 @@ msgstr "{azt} essaie de faire le plus possible automatiquement, et selon le nive
 #: /home/kentr/bin/raspy/azt/main.py:12360
 #, python-brace-format
 msgid "{azt} will *not* remove ‘{group}’ from those settings, because you may still be using it elsewhere."
-msgstr ""
+msgstr "{azt} ne supprimera *pas* ‘{group}’ de ces paramètres, parce que vous l'utilisez peut-être encore ailleurs."
 
 #: /home/kentr/bin/raspy/azt/main.py:12354
 #, python-brace-format
@@ -7095,12 +7120,12 @@ msgstr "Fichiers {count} {extension} pour vérifier le dépôt {repo}"
 #: /home/kentr/bin/raspy/azt/main.py:3122
 #, python-brace-format
 msgid "{count}: {form} > {profile}"
-msgstr ""
+msgstr "{count}: {form} > {profile}"
 
 #: /home/kentr/bin/raspy/azt/sound_ui.py:283
 #, python-brace-format
 msgid "{cur}"
-msgstr ""
+msgstr "{cur}"
 
 #: /home/kentr/bin/raspy/azt/main.py:7778
 #, python-brace-format
@@ -7115,7 +7140,7 @@ msgstr "{dir} semble là, mais vide."
 #: /home/kentr/bin/raspy/azt/main.py:865
 #, python-brace-format
 msgid "{filename} doesn’t look like a well formed lift file; please try again."
-msgstr ""
+msgstr "{filename} ne ressemble pas à un fichier lift bien formé ; veuillez réessayer."
 
 #: /home/kentr/bin/raspy/azt/main.py:2216
 #, python-brace-format
@@ -7125,12 +7150,12 @@ msgstr "{file} n'existe pas !"
 #: /home/kentr/bin/raspy/azt/main.py:17200
 #, python-brace-format
 msgid "{file} doesn’t look like a well formed lift file; please try again. ({error})"
-msgstr ""
+msgstr "{file} ne ressemble pas à un fichier lift bien formé ; veuillez réessayer. ({error})"
 
 #: /home/kentr/bin/raspy/azt/main.py:9939
 #, python-brace-format
 msgid "{ftype} differs from {pftype}; this is a problem!"
-msgstr ""
+msgstr "{ftype} diffère de {pftype} ; c'est un problème !"
 
 #: /home/kentr/bin/raspy/azt/main.py:6281
 #, python-brace-format
@@ -7140,7 +7165,7 @@ msgstr "{glyphs} fourni, mais sans bonnes clés"
 #: /home/kentr/bin/raspy/azt/main.py:17009
 #, python-brace-format
 msgid "{item} is not a list; returning nothing."
-msgstr ""
+msgstr "{item} n'est pas une liste ; ne renvoie rien."
 
 #: /home/kentr/bin/raspy/azt/lift.py:2991
 #, python-brace-format
@@ -7162,7 +7187,9 @@ msgstr "Vérificateur de dictionnaire et orthographie {name} : {task}"
 msgid "{name} has a new interface, starting mid January 2022. You should still be able to do everything you did before, though you will probably get to each function a bit differently —hopefully more intuitively.\n"
 "Tasks are organized into Data Collection and Analysis, and you can switch between them with the button in the upper right of the main {name} window.\n"
 "Either window allows you to run reports."
-msgstr ""
+msgstr "{name} a une nouvelle interface, depuis mi-janvier 2022. Vous devriez pouvoir faire tout ce que vous faisiez avant, mais vous accéderez probablement à chaque fonction un peu différemment — en espérant plus intuitivement.\n"
+"Les tâches sont organisées en Collecte de données et Analyse, et vous pouvez basculer entre elles avec le bouton en haut à droite de la fenêtre principale de {name}.\n"
+"Chaque fenêtre vous permet de lancer des rapports."
 
 #: /home/kentr/bin/raspy/azt/main.py:167
 #, python-brace-format
@@ -7206,7 +7233,8 @@ msgstr "{ps} {profile} Résumé des Données"
 #, python-brace-format
 msgid "{ps} {profile} Tone Report in Process\n"
 "({timestamps})"
-msgstr ""
+msgstr "Rapport de ton {ps} {profile} en cours\n"
+"({timestamps})"
 
 #: /home/kentr/bin/raspy/azt/main.py:2544
 #, python-brace-format
@@ -7251,12 +7279,35 @@ msgstr "Le noeud {tag} dans l'entrée {guid} n'a pas d'exemple avec la localisat
 #: /home/kentr/bin/raspy/azt/lift.py:3682
 #, python-brace-format
 msgid "{target} : {bits}"
-msgstr ""
+msgstr "{target} : {bits}"
 
 #: /home/kentr/bin/raspy/azt/main.py:4167
 #, python-brace-format
 msgid "{type} makestatusframe iteration finished"
 msgstr "Itération du makestatusframe {type} terminée"
+
+# Added locally 2026-07-24 (new strings not yet through extract/Crowdin):
+msgid "This contains a space; that’s OK, but phrases will not be analyzed."
+msgstr "Ceci contient un espace ; ce n'est pas grave, mais les phrases ne seront pas analysées."
+
+msgid "This contains a diacritic; we will strip all but consonants and vowels."
+msgstr "Ceci contient un diacritique ; nous ne garderons que les consonnes et les voyelles."
+
+#, python-brace-format
+msgid "No usable {azt} source repository; not updating."
+msgstr "Aucun dépôt source {azt} utilisable ; pas de mise à jour."
+
+#, python-brace-format
+msgid "Update failed: {error}"
+msgstr "Échec de la mise à jour : {error}"
+
+#, python-brace-format
+msgid "Problem updating {azt}: {error}"
+msgstr "Problème lors de la mise à jour de {azt} : {error}"
+
+#, python-brace-format
+msgid "Marshaling error notice from thread {name}: {text}"
+msgstr "Transfert d'un avis d'erreur depuis le thread {name} : {text}"
 
 #: /home/kentr/bin/raspy/azt/main.py:2566
 #, python-brace-format
