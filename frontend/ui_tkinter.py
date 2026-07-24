@@ -2793,7 +2793,15 @@ class ScrollingListBox(Frame):
     ScrollingButtonFrame.
     """
     def __init__(self,parent,**kwargs):
-        super().__init__(parent,**kwargs)
+        # Grid kwargs place THIS frame; everything else (optionlist,
+        # command, window…) belongs to the ListBox. Forwarding the raw
+        # kwargs to both made every call with a row/column a TypeError
+        # (multiple values for 'row') — after the parent window's label
+        # was already drawn, leaving an empty-looking dialog.
+        gridkw={k:kwargs.pop(k) for k in ('row','column','sticky',
+                    'columnspan','rowspan','padx','pady')
+                if k in kwargs}
+        super().__init__(parent,**gridkw)
         self.listbox=ListBox(self,
                             row=0,column=0,sticky='nsew',
                             **kwargs)
