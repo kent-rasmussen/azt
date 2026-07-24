@@ -251,10 +251,20 @@ class SortPresenter(PresenterBase):
         sortitem = ui.Frame(runwindow_frame, column=1, row=1,
                            sticky='nw', border=True)
         l = ui.Label(sortitem, text=text, font='readbig', sticky='w')
-        if sense.image:
-            sense.image.scale(l.theme.scale, pixels=65, scaleto='height')
-            l['image'] = sense.image.scaled
-            l['compound'] = 'left'
+        img = getattr(sense, 'image', None)
+        if img:
+            try:
+                img.scale(l.theme.scale, pixels=65, scaleto='height')
+                scaled = getattr(img, 'scaled', None)
+            except Exception as e:
+                log.info(f"Couldn't scale image for {sense.id}: {e}")
+                scaled = None
+            # A missing/corrupt file can load without raising but yield no
+            # scaled bitmap: sorting just shows NO image (word collection
+            # shows its 'no image' placeholder via ImageFrame instead).
+            if scaled is not None:
+                l['image'] = scaled
+                l['compound'] = 'left'
         l.wrap()
         buttonframe.sortitem = sortitem
         return sortitem

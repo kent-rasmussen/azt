@@ -2281,7 +2281,16 @@ class Window(Toplevel):
                             )
             self.outsideframe.grid_rowconfigure(1, weight=3)
             self.outsideframe.grid_columnconfigure(1, weight=3)
+    def _fullscreen_toggle_ok(self,event):
+        """The <Double-Button-1> toggle is bound on the WINDOW, so tk fires
+        it for double-clicks on every descendant too. Rapid clicking a
+        scrollbar (scrolling without a wheel) must not toggle the window
+        state — ignore the gesture there."""
+        w=getattr(event,'widget',None)
+        return not isinstance(w,(tkinter.Scrollbar,tkinter.ttk.Scrollbar))
     def releasefullscreen(self,event=None):
+        if event is not None and not self._fullscreen_toggle_ok(event):
+            return
         self.attributes('-fullscreen', False)
         self.bind('<Double-Button-1>', self.takefullscreen)
     def takekioskscreen(self,event=None):
@@ -2291,6 +2300,8 @@ class Window(Toplevel):
         self.bind('<Double-Button-1>', self.releasefullscreen)
         self.bind('<Escape>', self.releasefullscreen)
     def takefullscreen(self,event=None):
+        if event is not None and not self._fullscreen_toggle_ok(event):
+            return
         #This maximizes window, though leaves dressing in place:
         try:
             self.wm_attributes('-zoomed', True)
