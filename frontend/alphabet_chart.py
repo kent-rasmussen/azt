@@ -311,7 +311,7 @@ class OrderAlphabetUI(ui.Window):
                  word = sense.entry.lcvalue()
                  # Get absolute path to image
                  image_path = None
-                 uri = sense.illustrationURI()
+                 uri = sense.illustrationURI(local_only=True) #images are data
                  if uri and file.exists(uri):
                      image_path = uri
                  
@@ -641,7 +641,7 @@ class SelectFromPicturableWords(ui.Window):
 def getimagelocationURI(sense):
     if hasattr(sense,'image') and isinstance(sense.image,ui.Image):
         return
-    di=sense.illustrationURI()
+    di=sense.illustrationURI(local_only=True) #images are data
     if file.exists(di):
         try:
             sense.image=ui.Image(di)

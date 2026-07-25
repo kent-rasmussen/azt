@@ -19,6 +19,25 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.11.1
+- FIX (collab — trivial merges no longer nag to reload). A save that came
+  back `MERGED_WITH_LOCAL` with `merged_identical=True` (daemon 0.54.73+:
+  the merged file is byte-identical to the bytes we submitted) now adopts
+  the merge commit as the session base and moves on — no stale latch, no
+  "Team changes available" offer. Client-contract § 8b obligation 2; the
+  field repro was an offline solo machine nagging "updates from your
+  team" over the user's own content. Older daemons omit the param and
+  keep the existing latch-and-offer behavior.
+- FIX (collab — fallback saves re-anchor the LIFT snapshot). When the
+  daemon is unavailable/busy and `Lift.write()` falls back to its direct
+  `os.replace`, the collab session's `(mtime, size)` snapshot now gets
+  refreshed after the replace (new `collab_record_stat` hook alongside
+  `collab_submit`). Previously the snapshot went stale against our own
+  bytes, so when the returning daemon committed them, the change-poll
+  latched a false "team changes" prompt that the blob-identity self-heal
+  could never clear (it requires the on-disk file to match our last
+  write). Client-contract § 8b obligation 6.
+
 # Version 1.11.0
 - FIX (Help menu — Update items restored). "Update A-Z+T", "Share data to
   USB", and the test/main version toggle were gated on

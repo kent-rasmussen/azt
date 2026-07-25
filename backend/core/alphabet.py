@@ -799,7 +799,7 @@ class AlphabetChartData:
                                     else None)
                            for g in self.exids}
             for glyph, sense in [(k, v) for k, v in self.exobjs.items() if v is not None]:
-                di = sense.illustrationURI()
+                di = sense.illustrationURI(local_only=True) #images are data
                 if file.exists(di):
                     try:
                         sense.image = p.image(di)
@@ -936,7 +936,7 @@ class AlphabetComparisonData:
                 if eid and eid in self.db.sensedict:
                     sense = self.db.sensedict[eid]
                     word = sense.entry.lcvalue()
-                    uri = sense.illustrationURI()
+                    uri = sense.illustrationURI(local_only=True) #images are data
                     items.append((page.glyph, word, uri))
             return {'symbol': page.glyph, 'items': items}
 

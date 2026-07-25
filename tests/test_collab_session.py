@@ -102,6 +102,34 @@ def test_submit_merged_keeps_base_and_flags_stale(session):
     assert session.stale is True
 
 
+def test_submit_merged_identical_advances_base_without_latch(session):
+    """§ 8b obligation 2 (daemon 0.54.73+): a trivial merge whose result
+    is byte-identical to the submitted bytes carries
+    ``merged_identical=True`` — adopt the merge commit as base, no stale
+    latch, no reload owed. (Field repro 2026-07-25: an offline solo
+    machine nagging "updates from your team" over its own content.)"""
+    staged = _stage(session)
+    collab._client.submit_file = lambda *a: _result(
+        ('MERGED_WITH_LOCAL', {'merged_identical': True}),
+        head_sha='merge2')
+    session.degraded = True
+    assert session.submit(session.lift_path, staged) == 'ok'
+    assert session.base_sha == 'merge2'
+    assert session.stale is False
+    assert session.degraded is False
+
+
+def test_submit_merged_identical_absent_still_latches(session):
+    """Pre-0.54.73 daemons omit the param: behavior must stay exactly
+    invariant 2 (base kept, stale latched)."""
+    staged = _stage(session)
+    collab._client.submit_file = lambda *a: _result(
+        ('MERGED_WITH_LOCAL', {'n_conflicts': 0}), head_sha='merge3')
+    assert session.submit(session.lift_path, staged) == 'ok'
+    assert session.base_sha == 'base1'
+    assert session.stale is True
+
+
 def test_submit_contributor_unset_is_ok_without_base_move(session):
     staged = _stage(session)
     collab._client.submit_file = lambda *a: _result(
@@ -201,6 +229,7 @@ def test_adopt_reloaded_db_rebases_and_clears_latch(session):
         head_sha='head9', lift_blob_sha='blob9')
     session.adopt_reloaded_db()
     assert db.collab_submit == session.submit
+    assert db.collab_record_stat == session.record_lift_stat
     assert session.base_sha == 'head9'
     assert session.base_lift_blob == 'blob9'
     assert session.stale is False

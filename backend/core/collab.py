@@ -199,6 +199,17 @@ class CollabSession:
         result = _client.submit_file(
             self.langcode, rel, str(staged), self.base_sha)
         if result.has(S.MERGED_WITH_LOCAL):
+            if result.param(S.MERGED_WITH_LOCAL, 'merged_identical',
+                            False):
+                # Trivial merge (daemon 0.54.73+, § 8b obligation 2):
+                # the merged file is byte-identical to the bytes we
+                # just submitted, so the in-memory tree already matches
+                # disk — adopt the merge commit as base, owe no reload.
+                # False default: pre-0.54.73 daemons omit the param.
+                self.base_sha = result.head_sha or self.base_sha
+                self.degraded = False
+                self.record_lift_stat()
+                return 'ok'
             # Peer changes were merged with this save — nothing lost,
             # but our in-memory tree no longer matches disk. The base
             # deliberately does NOT advance to the merge commit: our
@@ -321,6 +332,7 @@ class CollabSession:
         and this rebase, the lift-stat probe flags it on the next poll."""
         try:
             self.program.db.collab_submit = self.submit
+            self.program.db.collab_record_stat = self.record_lift_stat
         except Exception as e:
             log.error(f"adopt_reloaded_db hook: {e}")
         try:
@@ -715,6 +727,10 @@ def attach(program):
     # The write seam: Lift.write() hands its .part to the session.
     try:
         program.db.collab_submit = session.submit
+        # § 8b obligation 6: on the daemon-unavailable fallback the
+        # caller does the os.replace itself, so IT must re-anchor the
+        # session's LIFT snapshot afterwards — the daemon can't.
+        program.db.collab_record_stat = session.record_lift_stat
     except Exception as e:
         log.error(f"collab.attach db hook: {e}")
         program.collab = None

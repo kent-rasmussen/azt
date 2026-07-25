@@ -1245,6 +1245,7 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             # 'fallback' means the daemon didn't take it (unavailable);
             # the legacy replace below then runs unchanged.
             submit=getattr(self,'collab_submit',None)
+            collab_fallback=False
             if submit is not None and str(filename) == str(self.filename):
                 try:
                     outcome=submit(filename,tmp)
@@ -1256,10 +1257,23 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
                     self.write_OK=True
                     self.write_error=None
                     return
+                collab_fallback=True
             try:
                 os.replace(tmp,filename)
                 self.write_OK=True
                 self.write_error=None
+                if collab_fallback:
+                    # The daemon didn't take this save, so it can't
+                    # re-anchor the session's LIFT snapshot either
+                    # (§ 8b obligation 6). Without this, our own bytes
+                    # read as team changes once the daemon returns and
+                    # commits them.
+                    record=getattr(self,'collab_record_stat',None)
+                    if record is not None:
+                        try:
+                            record()
+                        except Exception as e:
+                            log.error(f"collab stat re-anchor: {e}")
                 return
             except OSError:
                 error=_("There was a problem writing "

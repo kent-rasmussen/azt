@@ -394,6 +394,10 @@ class SortPresenter(PresenterBase):
             # "verify build: N items in Ts, RSS A→B MB".
             _t0=time.perf_counter(); _rss0=_rss_mb()
             self._diag_reset() # DIAG: partition this build's seconds
+            # Breadcrumb BEFORE the build: a wedged build used to log
+            # nothing at all — not even its size (2026-07-24, the
+            # crippled V1=V2 NA page).
+            log.info("verify build starting: %d items, %d cols", ntotal, bc)
             # DIAG (1.3.14): reset the run window's per-tick drive_work counters.
             runwindow._dw_work_t=runwindow._dw_prog_t=runwindow._dw_gap_t=0.0
             runwindow._dw_ticks=0; runwindow._dw_last_end=None
@@ -453,6 +457,10 @@ class SortPresenter(PresenterBase):
                     if runwindow.exitFlag.istrue():
                         return
                     _place(slot)
+                    if slot % 50 == 49: # progress: how far, and is it images?
+                        log.info("verify build progress: %d/%d (img %.1fs "
+                                 "of %.1fs)", slot+1, ntotal, self._img_t,
+                                 time.perf_counter()-_t0)
                 _grid_ok() # OK button + single resume_configure reflow + timing log
                 # VIRTUALIZE (1.3.32): unmap rows outside the viewport so waitdone's
                 # render paints only the ~visible dozen, not all N. EXPERIMENTAL —
