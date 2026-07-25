@@ -139,6 +139,18 @@ MIN_PYTHON=(3,10) #raise deliberately when azt needs newer; ensure_venv
 #                  rolls it out: an outdated CHILD env is rebuilt from a
 #                  new-enough base python; an outdated base/sister just warns.
 
+BOOTSTRAP_PROBLEMS=[] #(component, problem) pairs the user MUST see.
+#  ensure_venv/sync_requirements run before any UI exists, so a failure
+#  here can only reach the log — which nobody reads when the app then
+#  starts and half-works (Kent 2026-07-25: a Linux install died on a
+#  missing ensurepip and "just failed and continued"). main.py's
+#  warn_bootstrap_problems() shows these once the UI is live, the same
+#  discipline as backend.core.sound's SOUND_PROBLEMS.
+
+def _bootstrap_problem(component,problem):
+    log.error("{}: {}".format(component,problem))
+    BOOTSTRAP_PROBLEMS.append((component,problem))
+
 def _venv_python(envdir):
     """The interpreter inside envdir, or None. Keeps the launcher's
     flavor on Windows: a double-click shortcut usually runs pythonw.exe
@@ -185,6 +197,109 @@ def _python_probe(py):
         return (int(maj),int(minor)),bool(int(isvenv))
     except Exception:
         return None,None
+
+def _venv_package_hint():
+    """The distro package that carries ensurepip for THIS python —
+    Debian/Ubuntu split it out of the stdlib, so a plain python3.x
+    install can't make a venv until it's installed."""
+    return 'python{}.{}-venv'.format(*sys.version_info[:2])
+
+def _venv_has_pip(py):
+    """Whether an env's python can run pip. A venv made with
+    --without-pip (the ensurepip fallback below) has none until we
+    bootstrap one, and sync_requirements can't manage a pip-less env —
+    relaunching into one would fail every dependency install, forever."""
+    try:
+        subprocess.check_output([py,'-m','pip','--version'],
+                                stderr=subprocess.STDOUT,timeout=120)
+        return True
+    except Exception:
+        return False
+
+def _run_venv(args):
+    """Run ``python -m venv <args>``; return (ok, combined output). The
+    output matters: check_call sent the child's diagnosis to a console
+    nobody sees on a double-click launch, leaving only 'returned
+    non-zero exit status 1' in the log — the ensurepip failure named
+    its own cure and we threw it away (2026-07-25)."""
+    try:
+        out=subprocess.check_output([sys.executable,'-m','venv']+args,
+                                    stderr=subprocess.STDOUT,timeout=1800)
+        return True,stouttostr(out or b'')
+    except subprocess.CalledProcessError as e:
+        return False,stouttostr(e.output or b'')
+    except Exception as e:
+        return False,str(e)
+
+def _bootstrap_pip_into(py):
+    """Install pip into an env created with --without-pip, from
+    get-pip.py — the same source installfiles/RunMetoInstall_Linux.sh
+    uses for the base python. Needs the network, needs no sudo, and
+    uses stdlib only (this is the bootstrap path)."""
+    import os, tempfile, urllib.request
+    url='https://bootstrap.pypa.io/get-pip.py'
+    tmp=os.path.join(tempfile.gettempdir(),'azt_get_pip.py')
+    try:
+        with urllib.request.urlopen(url,timeout=120) as response:
+            script=response.read()
+        with open(tmp,'wb') as fh:
+            fh.write(script)
+    except Exception as e:
+        log.error("Couldn’t fetch {} ({})".format(url,e))
+        return False
+    try:
+        out=subprocess.check_output([py,tmp],stderr=subprocess.STDOUT,
+                                    timeout=1800)
+        log.info(stouttostr(out or b''))
+    except Exception as e:
+        log.error("get-pip.py didn’t install pip ({})".format(e))
+        return False
+    finally:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+    return _venv_has_pip(py)
+
+def _create_venv(child):
+    """Create the child venv and guarantee it has pip. Returns True on
+    a usable env; on False the caller must NOT relaunch into it.
+
+    Debian/Ubuntu ship ensurepip in a separate package, so on a machine
+    without it ``-m venv`` dies with "ensurepip is not available"
+    (field failure 2026-07-25 — and the Linux installer didn't install
+    that package either). ``--without-pip`` skips ensurepip entirely,
+    so we can still build the env and then put pip in it ourselves, no
+    sudo and no package manager needed."""
+    ok,out=_run_venv([child])
+    if out.strip():
+        log.info(out)
+    if ok:
+        py=_venv_python(child)
+        if py is None or _venv_has_pip(py):
+            return ok
+        log.warning("The new env has no pip; installing one...")
+    elif 'ensurepip' not in out:
+        return False
+    else:
+        log.info(_("This python can’t make a virtual environment because "
+            "its ˋensurepipˊ is missing (on Debian/Ubuntu that lives in "
+            "the ˋ{pkg}ˊ package). Building the environment without pip "
+            "and installing pip into it instead...").format(
+                                                pkg=_venv_package_hint()))
+        _rmtree_force(child) #clear whatever the failed run left behind
+        ok,out=_run_venv(['--without-pip',child])
+        if out.strip():
+            log.info(out)
+        if not ok:
+            return False
+    py=_venv_python(child)
+    if py is None:
+        return False
+    if _bootstrap_pip_into(py):
+        log.info(_("pip is now working in the new environment."))
+        return True
+    return False
 
 def ensure_venv():
     """azt should run inside a venv named 'env', so its heavy dependency
@@ -285,11 +400,24 @@ def ensure_venv():
         log.info(_("First run: creating a python virtual environment at "
                     "{dir} (dependencies will install there)...").format(
                                                                 dir=child))
-        try:
-            subprocess.check_call([sys.executable,'-m','venv',child])
-        except Exception as e:
-            log.error("Couldn’t create a venv ({}); continuing with {}"
-                        "".format(e,sys.executable))
+        if not _create_venv(child):
+            # No usable env (and no pip in it): every dependency install
+            # and update is now impossible here, so say so out loud
+            # instead of half-working. Clear the corpse — a pip-less env
+            # would be adopted on the next boot and fail forever.
+            _rmtree_force(child)
+            hint=''
+            if platform.system() == 'Linux':
+                hint=_(" On Debian/Ubuntu Linux, install python’s "
+                    "ˋensurepipˊ with ˋsudo apt install {pkg}ˊ (and check "
+                    "the log for what else the attempt reported), then "
+                    "restart A-Z+T.").format(pkg=_venv_package_hint())
+            _bootstrap_problem(_("virtual environment"),
+                _("A-Z+T couldn’t create its python environment at {dir}, "
+                  "so it cannot install or update the modules it needs on "
+                  "this computer.{hint}").format(dir=child,hint=hint))
+            log.error("Continuing with {} — dependencies will NOT be "
+                        "managed".format(sys.executable))
             return
         py=_venv_python(child)
         if py is None:

@@ -20,6 +20,22 @@
 - make showoriginalorthographyinreports a UI switch
 
 # Version 1.11.1
+- FIX (install — missing `ensurepip` no longer fails silently). A fresh
+  Linux install died creating `env/` because Debian/Ubuntu ship `ensurepip`
+  in a separate `python3.x-venv` package — and `ensure_venv()` logged one
+  line and continued, so the app started, managed no dependencies, and
+  looked fine. Three changes: (1) `python3.12-venv` added to
+  `installfiles/RunMetoInstall_Linux.sh` (the root cause for new installs);
+  (2) when `ensurepip` is missing, `_create_venv()` now retries with
+  `--without-pip` and bootstraps pip from get-pip.py — no sudo, no package
+  manager, so most machines self-heal on the next start; (3) if that fails
+  too, the broken env is cleared and the failure is recorded in
+  `BOOTSTRAP_PROBLEMS`, which `main.py`'s new `warn_bootstrap_problems()`
+  shows as a blocking notice (with the exact `apt install` command on
+  Linux) — same discipline as the degraded-sound warning. `venv` runs now
+  capture the child's output too: `check_call` sent the diagnosis to a
+  console nobody sees on a double-click launch, so the log only ever held
+  "returned non-zero exit status 1".
 - FIX (collab — trivial merges no longer nag to reload). A save that came
   back `MERGED_WITH_LOCAL` with `merged_identical=True` (daemon 0.54.73+:
   the merged file is byte-identical to the bytes we submitted) now adopts

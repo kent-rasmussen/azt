@@ -9,11 +9,13 @@ pafile=pa_stable_v190700_20210406.tgz
 # tar -xf ${pafile}
 # cd portaudio && ./configure && make && sudo make install
 echo "The following assumes you have a debian system; if you don't, install"
-echo "python3.12-{tk,dev} libpython3.12 git portaudio19-dev texlive-xetex"
+echo "python3.12-{tk,dev,venv} libpython3.12 git portaudio19-dev texlive-xetex"
 echo "with your package manager"
+# python3.12-venv carries ensurepip: without it A-Z+T's first run can't create
+# its env/ virtual environment (field failure 2026-07-25).
 sudo add-apt-repository --yes ppa:deadsnakes/ppa
 sudo apt update
-sudo apt-get install -y python3.12-{tk,dev} libpython3.12 git portaudio19-dev texlive-xetex
+sudo apt-get install -y python3.12-{tk,dev,venv} libpython3.12 git portaudio19-dev texlive-xetex
 # python3-tk python3-pip python3-pyaudio
 echo "The following assumes you have a debian system; if you don't, install"
 echo "the SIL package repository manually (instructions at https://packages.sil.org/)"

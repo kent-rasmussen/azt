@@ -411,6 +411,28 @@ class App:
                   ).format(name=self.name)]
         ErrorNotice('\n'.join(lines),title=_("Sound is not working!"),
                     wait=True) #blocking: acknowledge before any work
+    def warn_bootstrap_problems(self):
+        """Setup failures (venv, pip) happen before any UI exists, so
+        py_modules can only log them — and a machine that then starts
+        and half-works looks healthy (Kent 2026-07-25: a Linux install
+        failed on a missing ensurepip and "just failed and continued").
+        Surface them here, blocking, like degraded sound."""
+        from utilities.py_modules import BOOTSTRAP_PROBLEMS
+        if not BOOTSTRAP_PROBLEMS:
+            return
+        lines=[_("{name} couldn’t finish setting itself up on this "
+                 "computer:").format(name=self.name),'']
+        lines+=[f"• {component}: {problem}"
+                for component,problem in BOOTSTRAP_PROBLEMS]
+        lines+=['',_("It will run with whatever modules are already "
+                 "installed, so some features may fail or behave oddly, "
+                 "and updates won’t reach this machine. Fix this (see the "
+                 "log for details), or ask for help, before relying on "
+                 "this computer for real work."),'',
+                _("Restarting {name} retries the automatic setup."
+                  ).format(name=self.name)]
+        ErrorNotice('\n'.join(lines),title=_("Setup did not finish!"),
+                    wait=True) #blocking: acknowledge before any work
     def _run_setup(self):
         """All setup that must happen after the UI event loop is live.
 
@@ -436,6 +458,8 @@ class App:
                 pass
             screensize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
             log.info(_("MS Windows screen size: {size}").format(size=screensize))
+        self.warn_bootstrap_problems() #first: a failed venv is usually WHY
+        #                               sound (or anything else) is degraded
         self.warn_sound_problems() #LOUD, blocking; degraded sound must never
         #                           be silent in a sound-centric app
         self.prep_to_write()
