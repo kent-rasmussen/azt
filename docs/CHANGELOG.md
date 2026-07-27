@@ -19,6 +19,23 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.11.2
+- DIAG (verify page shows only its title on `=` checks). The 2026-07-27 field
+  log disproved the slow-images theory: the crippled `V1=V2` NA page builds all
+  46 items in 0.3s (14 images, reflow 0.0s) and `waitdone` takes the reveal
+  branch — so the list is complete and the window IS deiconified, then the user
+  sees only the title. The only step in between is the experimental virtualizer
+  (`sort_ui.py::_virtualize_verify`), which is gated on `ntotal > min(24,ntotal)`
+  — exactly matching "all `=` checks, nothing without `=`", since NA is the only
+  group big enough to cross 24 and only `=` checks have an NA group. Added
+  `DIAG-virt` lines (grep to remove) reporting the four numbers that separate
+  the two remaining mechanisms: `rowH` (with the row-0/1 reqheights it came
+  from, and whether `rows*rowH` passes the X11 32767px scroll cap) and, per
+  mapped-window change, the canvas height, raw `yview`, and the resulting
+  `[lo,hi)` row window with mapped/unmapped counts. A stale `yview` is the prime
+  suspect: the run window is reused, and the user reaches the previous page's OK
+  button by scrolling to its bottom. Instrumentation only — no behavior change.
+
 # Version 1.11.1
 - FIX (install — missing `ensurepip` no longer fails silently). A fresh
   Linux install died creating `env/` because Debian/Ubuntu ship `ensurepip`

@@ -526,24 +526,52 @@ class SortPresenter(PresenterBase):
         # Row height: a real reqheight if Tk has computed it, else a safe estimate.
         # (Do NOT update_idletasks here — that would render all N before we unmap.)
         rowH=0
-        for ws in (rowmap.get(0),rowmap.get(1)):
-            for w in (ws or []):
-                try: rowH=max(rowH,w.winfo_reqheight())
+        _reqh={} # DIAG-virt: what rows 0/1 actually measured
+        for _r in (0,1):
+            for w in (rowmap.get(_r) or []):
+                try:
+                    _h=w.winfo_reqheight()
+                    _reqh.setdefault(_r,[]).append(_h)
+                    rowH=max(rowH,_h)
                 except Exception: pass
+        _measured=rowH
         if rowH<10: rowH=80
         for r in range(nrows):
             content.rowconfigure(r, minsize=rowH)
+        # DIAG-virt (2026-07-27, grep to remove): the numbers that discriminate
+        # the "big verify page shows only its title" failure. Two candidates,
+        # both in this function: (a) rowH inflated by a tall UNSCALED image in
+        # row 0/1 — every row then inherits it as minsize, and rows*rowH can
+        # pass the X11 32767px scroll-region cap; (b) the mapped window is
+        # computed from a STALE yview, since the run window is REUSED and the
+        # user reaches the previous page's OK button by scrolling to its bottom.
+        _pinned=nrows*rowH
+        log.info("DIAG-virt setup: rows=%d rowH=%d (measured=%d%s; reqheights "
+                 "%s) pinned=%dpx%s", nrows, rowH, _measured,
+                 '' if _measured>=10 else ' → fallback 80', _reqh, _pinned,
+                 ' OVER the 32767px X11 scroll cap!' if _pinned>32767 else '')
         state={'win':None}
         def window():
             if not canvas.winfo_exists(): return
-            ch=canvas.winfo_height()
+            ch_raw=canvas.winfo_height()
+            ch=ch_raw
             if ch<=1: ch=canvas.winfo_screenheight() # not mapped yet → estimate
-            try: top=canvas.yview()[0]
-            except Exception: top=0.0
+            try: yv=canvas.yview()
+            except Exception: yv=None
+            top=yv[0] if yv else 0.0
             first=int(top*nrows); visible=int(ch/rowH)+1; buf=6
             lo,hi=max(0,first-buf),min(nrows,first+visible+buf)
             if state['win']==(lo,hi): return
             state['win']=(lo,hi)
+            # BEFORE the grid calls (DIAG-reveal discipline: a wedge must name
+            # its step). Counts come from rowmap, so this needs no Tk call.
+            log.info("DIAG-virt window: canvas h=%d%s yview=%s top=%.4f "
+                     "first=%d visible=%d → mapping rows [%d,%d) of %d "
+                     "(mapped=%d unmapped=%d)", ch_raw,
+                     (' → screen estimate %d' % ch) if ch_raw<=1 else '',
+                     yv, top, first, visible, lo, hi, nrows,
+                     sum(1 for r in rowmap if lo<=r<hi),
+                     sum(1 for r in rowmap if not lo<=r<hi))
             for r,ws in rowmap.items():
                 vis=lo<=r<hi
                 for w in ws:
