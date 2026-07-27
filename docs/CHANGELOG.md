@@ -19,6 +19,20 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.11.4
+- CHANGE (update-forms no longer pops up when a word isn't fully verified). The
+  REFUSE branch of `updateformtoannotations` — the form can't be made to read as
+  its confirmed profile, so it's left unchanged — showed an ErrorNotice naming the
+  old/new form and the confirmed segments. That is the NORMAL state of a partly
+  verified word (the segments needed to place the rest aren't confirmed yet), so
+  it interrupted every update-forms run with nothing the user could act on. The
+  notice is COMMENTED OUT, not deleted, so it can be restored in one edit; its
+  `log.error("DIAG-formconform RESULT … REFUSE …")` line is untouched and still
+  carries the full detail. Behavior is otherwise identical — the form is still
+  left unchanged and the update still returns there. Note: with the notice off,
+  this branch no longer sets `updateconflictwarned`, so the separate
+  annotation-CONFLICT notices are unaffected and still fire once per session.
+
 # Version 1.11.3
 - FIX (verify page showed only its title on `=` checks — CONFIRMED and fixed).
   The 1.11.2 `DIAG-virt` lines named it: on a `C1=C2=C3` NA page of 48 items the

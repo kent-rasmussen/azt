@@ -440,15 +440,23 @@ class Segments(Senses):
                         log.error("DIAG-formconform RESULT %s REFUSE %r✗%r reads %s "
                                  "target=%s segs=[%s] (left unchanged)", sense.id,
                                  form_ori, formvalue, got, target, segstr)
-                        if not self.updateconflictwarned:
-                            ErrorNotice('\n'.join([_("Not updating ‘{old}’ → ‘{new}’: "
-                                "it can’t be made to read as its profile {prof} "
-                                "(reads as {got}).").format(old=form_ori,new=formvalue,
-                                prof=target,got=got),
-                                _("Confirmed segments: {segs}").format(
-                                    segs=segstr or _("(none)")),
-                                _("Left unchanged — review by hand."),error_nb]))
-                            self.updateconflictwarned=True
+                        # POPUP OFF (Kent 2026-07-27): a form that can't be made
+                        # to read as its profile is the NORMAL state while a word
+                        # is only partly verified — the segments needed to place
+                        # the rest aren't confirmed yet — so this interrupted
+                        # every update-forms run with nothing the user could act
+                        # on. The log.error above carries the whole story (old and
+                        # candidate form, what it reads as, target profile,
+                        # confirmed segments). Uncomment to bring the notice back.
+                        # if not self.updateconflictwarned:
+                        #     ErrorNotice('\n'.join([_("Not updating ‘{old}’ → ‘{new}’: "
+                        #         "it can’t be made to read as its profile {prof} "
+                        #         "(reads as {got}).").format(old=form_ori,new=formvalue,
+                        #         prof=target,got=got),
+                        #         _("Confirmed segments: {segs}").format(
+                        #             segs=segstr or _("(none)")),
+                        #         _("Left unchanged — review by hand."),error_nb]))
+                        #     self.updateconflictwarned=True
                         return
             sense.textvaluebyftypelang(self.ftype,self.analang,formvalue)
             if form_ori != formvalue:
