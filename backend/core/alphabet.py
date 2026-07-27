@@ -541,6 +541,18 @@ class Alphabet():
         try:
             if 'NA' in self.glyph_members():
                 for i in list(self.glyph_members().get('NA') or ()):
+                    if self.parse_verificationcode(i)['group'] in ['NA']:
+                        # An NA sort GROUP is not a macrosort item at all —
+                        # un-glyph it and stop there. Releasing it with
+                        # remove_item_from_glyph would mark it to-macrosort,
+                        # and renew_items_tomacrosort's rebuild only ADDS to
+                        # that set (it is cleared BEFORE refresh_items runs),
+                        # so the mark would survive and macrosort would offer
+                        # a letter to e.g. 'C1=C2=NA' on this one pass.
+                        log.info("Dropping NA sort group %s from the obsolete "
+                                 "NA glyph (not a macrosort item).", i)
+                        self.rm_glyph_member(i,'NA')
+                        continue
                     log.info("Releasing %s from the obsolete NA glyph back "
                              "to macrosort.", i)
                     self.remove_item_from_glyph(i,'NA')

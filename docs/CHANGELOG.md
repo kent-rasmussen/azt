@@ -19,6 +19,18 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.12.4
+- FIX (1.12.2's NA-glyph repair could itself queue an NA group for macrosort).
+  The repair released every member of an obsolete `NA` glyph with
+  `remove_item_from_glyph`, which marks the item to-macrosort. But
+  `renew_items_tomacrosort` clears `_itemstomacrosort` BEFORE calling
+  `refresh_items` (where the repair runs) and its rebuild loop only ADDS, so
+  that mark survived the rebuild — meaning a member whose group is NA (e.g.
+  `C1=C2=NA` from an `=` check) would have been offered a letter on that one
+  pass. `mark_item_glyph` would have refused it, but it should never be shown.
+  Such members are now un-glyphed with `rm_glyph_member` and NOT queued; only
+  real groups (a pre-1.12.2 macrosort skip) are released back to macrosort.
+
 # Version 1.12.3
 - CHANGE ('Skip this item' is a SORT affordance; stashed for macrosort). The
   button was created unconditionally in `getanotherskip`, apparently by
