@@ -19,6 +19,34 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.11.3
+- FIX (verify page showed only its title on `=` checks — CONFIRMED and fixed).
+  The 1.11.2 `DIAG-virt` lines named it: on a `C1=C2=C3` NA page of 48 items the
+  virtualizer read `yview=(2.0, 2.0)`, giving `top=2.0` → `first=98` of 49 rows →
+  a mapped range of `[92,49)`, which is INVERTED, so `lo<=r<hi` was false for
+  every row and all 49 were `grid_remove()`d (`mapped=0 unmapped=49`). The list
+  itself built fine (48 items, 0.3s) and the window was revealed — there was
+  simply nothing left mapped in it. Cause: the run window is REUSED, and the user
+  reaches the previous page's OK button by scrolling to its bottom, so the canvas
+  arrives holding an offset that is far past this (shorter) page's scrollregion —
+  `yview` being a fraction of the CURRENT region, that reads as >1.0. Three
+  changes, all in `_virtualize_verify`: reset the view to the top for the new page
+  (`yview_moveto(0)` — where a fresh verify list belongs anyway); clamp `top`
+  outside 0.0–1.0 to 0.0, so a stale or unmapped canvas can't steer the window;
+  and enforce the invariant that the mapped range is never empty, falling back to
+  the first screenful. Only pages over the 24-item virtualize threshold were
+  affected, and NA under an `=` check is the only group that big — hence "all `=`
+  checks, nothing without `=`".
+- KNOWN, not fixed (contributing factor, now harmless): the same log shows
+  `rowH=80 (measured=1 → fallback 80; reqheights {0: [1], 1: [1]})` — Tk has not
+  computed item heights when the virtualizer measures (the window is withdrawn,
+  and `update_idletasks` is deliberately avoided there), so every row is pinned to
+  the 80px fallback while real image-bearing rows are taller. Unmapped rows
+  therefore collapse below their true height and the scrollregion understates the
+  content, which is what lets a carried-over offset exceed it in the first place.
+  The clamp above makes this non-fatal; a real per-row height would also make the
+  scrollbar proportional.
+
 # Version 1.11.2
 - DIAG (verify page shows only its title on `=` checks). The 2026-07-27 field
   log disproved the slow-images theory: the crippled `V1=V2` NA page builds all

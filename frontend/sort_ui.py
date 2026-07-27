@@ -550,6 +550,16 @@ class SortPresenter(PresenterBase):
                  "%s) pinned=%dpx%s", nrows, rowH, _measured,
                  '' if _measured>=10 else ' → fallback 80', _reqh, _pinned,
                  ' OVER the 32767px X11 scroll cap!' if _pinned>32767 else '')
+        # A NEW page starts at the top, and must NOT inherit the previous page's
+        # scroll offset: the run window is REUSED, and the user reaches the last
+        # page's OK button by scrolling to its bottom. yview is a fraction of the
+        # CURRENT scrollregion, so a leftover offset against this page's
+        # (shorter) region reads far past the end — field log 2026-07-27:
+        # yview=(2.0,2.0) → first=98 of 49 rows → the mapped range came out
+        # INVERTED, [92,49), so EVERY row was unmapped and the page showed only
+        # its title.
+        try: canvas.yview_moveto(0)
+        except Exception: pass
         state={'win':None}
         def window():
             if not canvas.winfo_exists(): return
@@ -559,8 +569,11 @@ class SortPresenter(PresenterBase):
             try: yv=canvas.yview()
             except Exception: yv=None
             top=yv[0] if yv else 0.0
+            if not 0.0<=top<=1.0: top=0.0 # stale/unmapped canvas: distrust it
             first=int(top*nrows); visible=int(ch/rowH)+1; buf=6
             lo,hi=max(0,first-buf),min(nrows,first+visible+buf)
+            if lo>=hi: # INVARIANT: never unmap every row (that blanks the page)
+                lo,hi=0,min(nrows,visible+buf)
             if state['win']==(lo,hi): return
             state['win']=(lo,hi)
             # BEFORE the grid calls (DIAG-reveal discipline: a wedge must name
