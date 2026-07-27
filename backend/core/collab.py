@@ -165,6 +165,13 @@ class CollabSession:
         #                          anchor that lets a stale latch heal
         #                          (F2): HEAD's LIFT blob == this ⇒ the
         #                          advance changed no LIFT we can't see.
+        self.changes_since = None # § 8b obl. 3a: {'known','count',
+        #                          'bot_count','capped','authors'} for
+        #                          base→HEAD, human commits only. None =
+        #                          didn't ask / can't tell — NEVER read as
+        #                          "nothing changed".
+        self._peers_known = False  # does any paired peer share this
+        self._peers_checked_at = 0.0  # project? (cached; see _lan_has_peers)
         self._warned_uncommitted = False
         self._reload_offered_at = 0.0
         self._last_detected_head = ''  # newest peer head we've seen
@@ -294,32 +301,93 @@ class CollabSession:
                 ).format(codes=result.codes()))
         return 'fallback'
 
-    def ambient_status(self):
-        """One short phrase for ambient display (the title bar; Kent
-        2026-07-11): the safety-relevant truth — is anything here still
-        unshared? Keyed on ``at_risk`` (commits NO other device has),
-        which is meaningful for LAN-only and remoted projects alike —
-        unlike ``wan_unshared``, which counts forever on LAN-only
-        projects. Returns None when there's nothing worth saying.
-        Never raises."""
+    def _lan_has_peers(self):
+        """Does any paired peer share THIS project? ``lan_unshared`` is 0
+        both when everything has been delivered AND when nobody is paired
+        (the daemon's "nothing to be behind on" convention), so the count
+        alone can't tell "shared" from "no one to share with" — and
+        showing the second as a tick is the same false reassurance § 20
+        hard rule 1 exists to forbid. Cached for a minute: pairing changes
+        are rare, and § 17c says don't spend an RPC per tick on it."""
+        import time
+        now = time.time()
+        if now - self._peers_checked_at < 60:
+            return self._peers_known
+        self._peers_checked_at = now
+        try:
+            rows = _client.lan_peer_sync() or []
+            self._peers_known = any(
+                r.get('langcode') == self.langcode for r in rows)
+        except Exception as e:
+            log.info(f"lan_peer_sync probe: {e}") # keep the last answer
+        return self._peers_known
+
+    def ambient_status(self, st=None):
+        """One short phrase for ambient display (the title bar). Reports
+        the TWO channels SEPARATELY — ``WAN:✓ LAN:✓`` (Kent 2026-07-27):
+        a single tick can't say WHICH kind of up-to-date this is, and
+        § 20's first hard rule is that LAN delivery to a teammate's phone
+        is not a github backup. Renderings:
+
+        - ``WAN:✓``   nothing owed to github (needs ``main_merged`` too —
+          since 0.53.3 ``wan_unshared`` reaches 0 while bytes sit on a
+          topic ref awaiting the final merge into main)
+        - ``WAN:0⋯``  all bytes uploaded, that final merge still pending
+        - ``WAN:{n}`` n commits not on github
+        - ``LAN:✓``   nothing owed to a paired peer
+        - ``LAN:{n}`` n commits no paired peer has yet
+        - ``LAN:—``   no paired peer shares this project: nothing to be
+          shared WITH, which is not the same as being shared
+
+        Pass *st* to reuse the tick's ProjectStatus (§ 17c rule 4: one
+        ``project_status`` per UI event). Never raises."""
         if self.degraded:
             return _("saving locally — server unreachable")
-        if self.stale:
-            return _("team changes available")
-        try:
-            st = _client.project_status(self.langcode)
-        except Exception:
-            return None
+        if st is None:
+            st = self.status()
         if st is None:
             return None
-        at_risk = getattr(st, 'at_risk', None)
-        if at_risk is None:
-            at_risk = getattr(st, 'lan_unshared', None)
-        if at_risk is None:
+        wan = getattr(st, 'wan_unshared', None)
+        if wan is None:
             return None
-        if at_risk:
-            return _("{n} change(s) not yet shared").format(n=at_risk)
-        return _("shared with team ✓")
+        if wan:
+            wan_txt = str(wan)
+        elif getattr(st, 'main_merged', True):
+            wan_txt = '✓'
+        else:
+            wan_txt = '0⋯'
+        if not self._lan_has_peers():
+            lan_txt = '—'
+        else:
+            lan = getattr(st, 'lan_unshared', 0) or 0
+            lan_txt = str(lan) if lan else '✓'
+        txt = _("WAN:{wan} LAN:{lan}").format(wan=wan_txt, lan=lan_txt)
+        if self.stale:
+            txt += ' · ' + _("team changes available")
+        return txt
+
+    def changes_summary(self):
+        """One human phrase for the reload offer: WHO changed WHAT, from
+        § 8b obl. 3a's ``changes_since``. '' when there is nothing honest
+        to say. Never turns missing data into "nothing changed" — an
+        unknown base (re-clone, GC'd history) reads as "can't tell", and
+        a prompt that can't say what changed is indistinguishable from a
+        spurious one."""
+        cs = self.changes_since or {}
+        if not cs:
+            return ''
+        if not cs.get('known'):
+            return _("(couldn’t tell what changed)")
+        n = cs.get('count') or 0
+        if not n:
+            return ''
+        # capped: both counts are floors, not exact — phrase as "N+".
+        count = '{}+'.format(n) if cs.get('capped') else str(n)
+        authors = [a for a in (cs.get('authors') or []) if a]
+        if authors:
+            return _("{count} change(s) from {who}").format(
+                count=count, who=', '.join(authors))
+        return _("{count} change(s)").format(count=count)
 
     def adopt_reloaded_db(self):
         """After an IN-PLACE reload (A5) rebuilt ``program.db`` from the
@@ -355,21 +423,28 @@ class CollabSession:
 
     # ── Phase 3: remote-change detection (§17b applied to desktop) ───
 
-    def poll_remote_change(self):
+    def poll_remote_change(self, st=None):
         """Cheap periodic probe (caller schedules it ~every 10 s on the
         UI loop). Returns:
 
         - ``'none'``    — nothing new (or daemon unreachable; a probe
           failure is never an event).
-        - ``'benign'``  — HEAD advanced but the LIFT on disk is still
-          exactly what we last wrote (artifact-only commit, e.g. the
-          settings JSONs). The base is advanced silently; a save after
-          this stays on the fast path.
+        - ``'benign'``  — HEAD advanced but nothing we need arrived: the
+          LIFT on disk is still exactly what we last wrote (artifact-only
+          commit, e.g. the settings JSONs), OR every commit in the range
+          is a daemon merge with no human commit among them (§ 8b obl. 3a).
+          The base is advanced silently; a save after this stays on the
+          fast path.
         - ``'changed'`` — the LIFT changed under us (peer merge landed
           via LAN/WAN, or an earlier save came back MERGED_WITH_LOCAL).
           The base is deliberately NOT advanced — saving stays safe
           (every save re-merges against our real base) — but the user
           should reload to SEE the team's changes.
+
+        Pass *st* to reuse the caller's ProjectStatus for this tick
+        (§ 17c rule 4: one ``project_status`` per UI event). The
+        ``since_sha`` enrichment below is a second call, made only once
+        HEAD is known to have moved.
         """
         if self.stale:
             # Already behind (a merged save, or a peer change detected
@@ -386,7 +461,8 @@ class CollabSession:
             # a save the daemon stored but couldn't commit until now).
             # Un-latch by CONTENT identity instead of nagging to reload.
             try:
-                st = _client.project_status(self.langcode)
+                if st is None:
+                    st = _client.project_status(self.langcode)
                 head = getattr(st, 'head_sha', '') if st else ''
                 head_blob = getattr(st, 'lift_blob_sha', '') if st else ''
                 if (head_blob and self.base_lift_blob
@@ -406,10 +482,11 @@ class CollabSession:
             except Exception:
                 pass
             return 'changed'
-        try:
-            st = _client.project_status(self.langcode)
-        except Exception:
-            return 'none'
+        if st is None:
+            try:
+                st = _client.project_status(self.langcode)
+            except Exception:
+                return 'none'
         head = getattr(st, 'head_sha', '') if st else ''
         head_blob = getattr(st, 'lift_blob_sha', '') if st else ''
         if not head or head == self.base_sha:
@@ -428,12 +505,43 @@ class CollabSession:
             if head_blob:
                 self.base_lift_blob = head_blob
             return 'benign'
+        # § 8b obl. 3a: we're about to raise a prompt, so find out WHY —
+        # the commits between our base and HEAD, human-only. A SECOND
+        # status call on purpose: the contract says pass ``since_sha``
+        # only on the polls whose result you'd actually show, and until
+        # this line we didn't know HEAD had moved. We cannot compute this
+        # ourselves — hard rule #1 forbids reading ``.git``.
+        self.changes_since = None
+        try:
+            enriched = _client.project_status(self.langcode,
+                                             since_sha=self.base_sha)
+            self.changes_since = getattr(enriched, 'changes_since', None)
+        except Exception as e:
+            log.info(f"changes_since probe: {e}") # older daemon/client
+        cs = self.changes_since or {}
+        if cs.get('known') and not cs.get('count') and cs.get('bot_count'):
+            # HEAD advanced, but every commit in the range is a daemon
+            # merge — nobody edited anything. Contract 3a makes this a
+            # suppression signal in its own right (independent of
+            # merged_identical), and it's the direct cure for the
+            # empty-merge prompts of the 2026-07-25 field arc. Adopt the
+            # new head: no human work arrived, so there is nothing our
+            # in-memory tree is missing.
+            self.base_sha = head
+            if head_blob:
+                self.base_lift_blob = head_blob
+            log.info("Not prompting: HEAD advanced by %s bot merge(s) "
+                     "with no human commits.", cs.get('bot_count'))
+            return 'benign'
         self.stale = True
         self._last_detected_head = head
-        log.info(_(
-            "Team changes detected (HEAD {head} != base {base}); "
-            "reload needed to display them.").format(
-                head=head[:12], base=self.base_sha[:12] or '<none>'))
+        # msgid unchanged on purpose — the summary is appended OUTSIDE it,
+        # so the five existing catalogs keep this translation.
+        msg = _("Team changes detected (HEAD {head} != base {base}); "
+                "reload needed to display them.").format(
+                    head=head[:12], base=self.base_sha[:12] or '<none>')
+        summary = self.changes_summary()
+        log.info('%s%s', msg, ' ' + summary if summary else '')
         return 'changed'
 
     def reload_offer_due(self, snooze_s=300):
@@ -554,10 +662,17 @@ class CollabSession:
         # 1. Never-silenced, before any routing.
         if result.has_any(S.DATA_LOSS_RISK, S.COMMIT_REPEATEDLY_FAILED):
             notify_error(translate_result(result), title=title)
-        # 2. Piggybacked advisory.
+        # 2. Piggybacked advisory. § 17: silent on auto paths, but on a
+        # USER GESTURE (which is all this router handles) surface the
+        # translated toast — it names GitHub Connect as the next step.
+        # Logging alone left the user's only warning invisible until sync
+        # started failing outright with AUTH_REQUIRED.
+        shown = False
         if result.has(S.AUTH_REFRESH_STALE):
             log.warning("AUTH_REFRESH_STALE: GitHub session needs "
                         "re-authentication soon")
+            notify_error(translate_result(result), title=title)
+            shown = True # don't let the success-shaped tail repeat it
         # 3. Configuration-class → open the screen that fixes it.
         if result.has_any(S.NOT_A_REPO, S.NO_REMOTE, S.AUTH_REQUIRED,
                           S.CONTRIBUTOR_UNSET, S.WORK_OFFLINE_ENABLED):
@@ -581,11 +696,18 @@ class CollabSession:
                     webbrowser.open(url)
                 except Exception as e:
                     log.error(f"webbrowser.open({url!r}): {e}")
+        elif result.has(S.BUSY):
+            # § 17: "**Silent.** Even on user-gesture: showing 'Another
+            # sync is in progress' toasts back-to-back is just punishing
+            # the user for the peer's missing in-flight guard." We have
+            # that guard (_sync_in_flight), the lock clears in ms, and the
+            # next tick covers it — so log and say nothing.
+            log.info("sync BUSY (daemon lock held); next tick covers it")
         elif result.has_any(S.SERVER_UNAVAILABLE, S.SERVER_ERROR,
-                            S.BUSY, S.JOB_INTERRUPTED):
+                            S.JOB_INTERRUPTED):
             # Transient — say so, nothing else to route.
             notify_error(translate_result(result), title=title)
-        else:
+        elif not shown:
             # Success-shaped (PUSHED / PULLED / NOTHING_TO_COMMIT /
             # COMMITTED_*): show the one-line outcome.
             notify_error(translate_result(result), title=title)

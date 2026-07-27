@@ -161,8 +161,8 @@ def test_submit_failure_with_staged_consumed_is_ok(session):
 # ── poll_remote_change() ─────────────────────────────────────────────
 
 
-def _status(head):
-    return types.SimpleNamespace(head_sha=head)
+def _status(head, **kw):
+    return types.SimpleNamespace(head_sha=head, **kw)
 
 
 def test_poll_none_when_head_equals_base(session):
@@ -211,6 +211,132 @@ def test_poll_probe_failure_is_never_an_event(session):
     assert session.poll_remote_change() == 'none'
     collab._client.project_status = lambda lc: None
     assert session.poll_remote_change() == 'none'
+
+
+# ── § 8b obl. 3a: changes_since (why are we prompting?) ──────────────
+
+
+def test_poll_suppresses_prompt_when_only_bot_merges(session):
+    """Contract 3a: count==0 with bot_count>0 means HEAD moved but nobody
+    edited anything — don't prompt. This is the empty-merge prompt class
+    of the 2026-07-25 field arc, suppressed independently of
+    merged_identical."""
+    def status(lc, since_sha=''):
+        if since_sha:
+            return _status('head9', changes_since={
+                'known': True, 'count': 0, 'bot_count': 4,
+                'capped': False, 'authors': []})
+        return _status('head9')
+    collab._client.project_status = status
+    with open(session.lift_path, 'ab') as fh:
+        fh.write(b'<!--merge-->')           # LIFT rewritten by the merge
+    assert session.poll_remote_change() == 'benign'
+    assert session.stale is False
+    assert session.base_sha == 'head9'      # adopted: no human work missing
+
+
+def test_poll_prompts_and_summarises_human_changes(session):
+    def status(lc, since_sha=''):
+        if since_sha:
+            return _status('head9', changes_since={
+                'known': True, 'count': 3, 'bot_count': 2,
+                'capped': False, 'authors': ['Marie', 'Jean']})
+        return _status('head9')
+    collab._client.project_status = status
+    with open(session.lift_path, 'ab') as fh:
+        fh.write(b'<!--peer-->')
+    assert session.poll_remote_change() == 'changed'
+    assert session.stale is True
+    summary = session.changes_summary()
+    assert '3' in summary and 'Marie' in summary and 'Jean' in summary
+
+
+def test_changes_summary_unknown_base_never_claims_nothing(session):
+    """known=False is "can't tell" — it must NOT render as silence, which
+    would read as "nothing changed"."""
+    session.changes_since = {'known': False, 'count': 0, 'bot_count': 0,
+                             'capped': False, 'authors': []}
+    assert session.changes_summary()          # non-empty
+
+
+def test_changes_summary_capped_is_a_floor(session):
+    session.changes_since = {'known': True, 'count': 20, 'bot_count': 0,
+                             'capped': True, 'authors': ['Marie']}
+    assert '20+' in session.changes_summary()
+
+
+def test_changes_summary_silent_without_data(session):
+    session.changes_since = None
+    assert session.changes_summary() == ''
+
+
+# ── ambient_status(): the two channels, separately ───────────────────
+
+
+def _amb(session, **fields):
+    """ambient_status over a supplied status, with LAN peers present
+    unless the test says otherwise."""
+    session._peers_checked_at = 1e12   # freeze the cache
+    session._peers_known = fields.pop('peers', True)
+    return session.ambient_status(st=types.SimpleNamespace(**fields))
+
+
+def test_ambient_both_clear(session):
+    assert _amb(session, wan_unshared=0, lan_unshared=0,
+                main_merged=True) == 'WAN:✓ LAN:✓'
+
+
+def test_ambient_wan_behind_counts(session):
+    assert _amb(session, wan_unshared=3, lan_unshared=0,
+                main_merged=True) == 'WAN:3 LAN:✓'
+
+
+def test_ambient_wan_zero_but_unmerged_is_not_ok(session):
+    """0.53.3: wan_unshared hits 0 while bytes sit on a topic ref awaiting
+    the final merge — that is 'finishing', NOT backed up."""
+    assert _amb(session, wan_unshared=0, lan_unshared=0,
+                main_merged=False) == 'WAN:0⋯ LAN:✓'
+
+
+def test_ambient_no_paired_peers_reads_dash_not_tick(session):
+    """§ 20 hard rule 1: lan_unshared is 0 when nobody is paired, and
+    rendering that as ✓ tells a solo machine its work reached a teammate."""
+    assert _amb(session, wan_unshared=0, lan_unshared=0, main_merged=True,
+                peers=False) == 'WAN:✓ LAN:—'
+
+
+def test_ambient_appends_stale_note(session):
+    session.stale = True
+    assert 'WAN:✓ LAN:✓' in _amb(session, wan_unshared=0, lan_unshared=0,
+                                 main_merged=True)
+
+
+def test_ambient_degraded_short_circuits(session):
+    session.degraded = True
+    # No status call at all on the stub client → would AttributeError.
+    assert 'server' in session.ambient_status()
+
+
+# ── route_sync_result(): silence rules ───────────────────────────────
+
+
+def test_route_busy_is_silent_even_on_gesture(session, routing):
+    """§ 17: BUSY is 'Silent. Even on user-gesture' — back-to-back
+    'another sync is in progress' toasts punish the user for a missing
+    in-flight guard, and we have one."""
+    session.route_sync_result(_result(('BUSY', {})))
+    assert routing.notices == []
+
+
+def test_route_auth_refresh_stale_is_surfaced_on_gesture(session, routing):
+    session.route_sync_result(_result(('AUTH_REFRESH_STALE', {})))
+    assert any('AUTH_REFRESH_STALE' in n for n in routing.notices)
+    assert len(routing.notices) == 1   # advisory only, not also the tail
+
+
+def test_route_transient_still_surfaces(session, routing):
+    session.route_sync_result(_result(('SERVER_UNAVAILABLE', {})))
+    assert len(routing.notices) == 1
 
 
 # ── adopt_reloaded_db(): A5 in-place-reload rebase ────────────────────

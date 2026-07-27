@@ -90,6 +90,16 @@ class RecordButtonFrame(ui.Frame):
                                 # ftype=ftype,
                                 write=False)
         self.task.maybewrite()
+        # Client contract § 8b obl. 4: the .wav itself is a non-LIFT
+        # artifact, so it only enters git on some LATER commit's
+        # whole-tree staging — a session that ends here, or crashes,
+        # would leave the recording on disk but out of history entirely.
+        # Kent 2026-07-27: commit after every recording (cheap — the
+        # daemon debounces commit_project at 500 ms, and small commits
+        # are the wanted granularity).
+        session=getattr(self.program,'collab',None)
+        if session is not None:
+            session.commit_artifacts()
         self.program.status.last('recording',update=True)
     def __init__(self,parent,task,node=None,**kwargs): #filenames
         """Uses node to make framed data, just for soundfile name"""

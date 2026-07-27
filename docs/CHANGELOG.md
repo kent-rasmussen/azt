@@ -19,6 +19,69 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.12.0
+- NEW (title bar shows the two sync channels separately: `WAN:✓ LAN:✓`).
+  The ambient status was keyed on `at_risk` alone, so it printed "shared with
+  team ✓" in exactly the state client-contract § 20 hard rule 1 forbids
+  treating as synced — delivered to a teammate's phone on the same Wi-Fi, not
+  backed up to GitHub. Now each channel reports itself: `✓` when clear, the
+  pending commit count when behind (`WAN:3`, `LAN:2`), `WAN:0⋯` for the
+  0.53.3 window where all bytes are uploaded to a topic ref but the final
+  merge into main is pending (`wan_unshared == 0` without `main_merged` is
+  NOT backed up), and `LAN:—` when no paired peer shares this project —
+  because `lan_unshared` is also 0 when there is nobody to be behind on, and
+  rendering that as a tick is the same false reassurance. "team changes
+  available" now appends to the indicator instead of replacing it. Paired-peer
+  existence comes from `lan_peer_sync`, cached 60 s (§ 17c: not an RPC per
+  tick).
+- NEW (the reload prompt says WHY — § 8b obligation 3a, daemon 0.54.92+).
+  When HEAD has moved, azt now passes its base as `project_status(langcode,
+  since_sha=base)` and reads `changes_since`, so the dialog names the work:
+  "Your team made changes to this database: 3 change(s) from Marie, Jean."
+  Counts are HUMAN commits only (the daemon mints merge commits under its bot
+  identity, so a raw count reports the daemon's own merge activity as team
+  work). `capped` renders as "N+"; an unknown base renders as "couldn't tell
+  what changed" and never as silence, which would read as "nothing changed".
+  The enriching call is made only once HEAD is known to have moved, per the
+  contract's "not on every liveness ping".
+- FIX (no more prompts for merges nobody made). `changes_since` gives a
+  second suppression signal, independent of 1.11.1's `merged_identical`:
+  `count == 0` with `bot_count > 0` means HEAD advanced purely by daemon merge
+  commits and no human edited anything, so azt adopts the new head and stays
+  quiet. This is the direct cure for the empty-merge prompt family of the
+  2026-07-25 field arc.
+- FIX (`BUSY` no longer pops a dialog on a Sync gesture). § 17 specifies
+  "**Silent.** Even on user-gesture" — the lock clears in milliseconds and the
+  next tick covers it. azt was routing it into the transient-error branch, i.e.
+  producing exactly the back-to-back "another sync is in progress" toasts the
+  rule exists to prevent. Logged now, not shown.
+- FIX (`AUTH_REFRESH_STALE` is now visible). § 17 wants the translated toast on
+  a user gesture; azt only logged it, so the one warning that the GitHub
+  session needs re-authentication was invisible until sync began failing with
+  `AUTH_REQUIRED`. Surfaced once — the success-shaped tail no longer repeats it.
+- FIX (collab dialogs follow azt's language — § 6). azt ships its own catalog
+  but never chained the client's underneath it, and since client 0.43.1 there
+  is no second-chance retry, so a French session showed English collab strings
+  unless the language had also been set in the daemon UI. `interfacelang` now
+  calls `chain_collab_translations`: re-language the client, add its catalog as
+  a gettext fallback under azt's (once per translation object), install azt's
+  translator, and subscribe to `subscribe_language_change` so the chain is
+  rebuilt if the daemon's toggle fires.
+- FIX (recordings enter history when made — § 8b obligation 4). `commit_artifacts`
+  existed with no callers, so a `.wav` only reached git via some later commit's
+  whole-tree staging, and a crash left it on disk but out of history. Now called
+  right after each recording's `addlink` (Kent's choice of boundary; the daemon
+  debounces `commit_project` at 500 ms, and small commits are the wanted
+  granularity).
+- FIX (one `project_status` per poll tick — § 17c rule 4). `poll_remote_change`
+  and the title-bar badge each fired their own, so the tick cost two RPCs and
+  the "stale" decision and the badge were computed from different snapshots.
+  `collab_poll` now fetches once and passes it to both.
+- Tests: 16 new units in `tests/test_collab_session.py` covering the indicator
+  states (including `WAN:0⋯` and the `LAN:—` no-peers case), the bot-only
+  suppression, `changes_summary` rendering rules (unknown base, capped, no
+  data), and the two silence rules.
+
 # Version 1.11.4
 - CHANGE (update-forms no longer pops up when a word isn't fully verified). The
   REFUSE branch of `updateformtoannotations` — the form can't be made to read as

@@ -18,7 +18,7 @@ program={'name':'A-Z+T',
         'production':False, #True for making screenshots (default theme)
         'testing':False, #normal error screens and logs
         'Demo':False, #will get set otherwise later if it is
-        'version':'1.11.4', #This is a string...
+        'version':'1.12.0', #This is a string...
         'testversionname':'testing', #always have some real test branch here
         'url':'https://github.com/kent-rasmussen/azt',
         'Email':'kent_rasmussen@sil.org',
@@ -231,9 +231,57 @@ class App:
                 lang=code
         if lang and lang != curlang and lang in self.i18n:
             set_translator(self.i18n[lang].gettext)
+            self.chain_collab_translations(lang)
             file.uilang(lang)
             return lang
         return curlang
+    def chain_collab_translations(self,lang):
+        """Client contract § 6. azt ships its own catalog, so the collab
+        client's catalog must be chained UNDERNEATH it as a gettext
+        fallback: since client 0.43.1 there is no second-chance retry, so
+        a host translator that returns the msgid unchanged leaves every
+        client-owned string (i.e. every sync/collab dialog) rendering as
+        English — the French-app-with-English-collab-dialogs split. Also
+        re-languages the client itself, and subscribes so the chain is
+        rebuilt if the daemon's language toggle fires (without that hook
+        azt's catalog stays frozen at the startup language while the
+        client catalog re-languages under it). Never blocks startup: with
+        no client importable there is simply nothing to chain."""
+        try:
+            import azt_collab_client
+            from azt_collab_client import i18n as collab_i18n
+        except Exception:
+            return #legacy mode / client not importable
+        try:
+            t=self.i18n.get(lang)
+            collab_i18n.set_language(lang)
+            if t is None:
+                # No azt catalog for this language (English): let the
+                # client use its own catalog rather than a null host one.
+                azt_collab_client.set_translator(None)
+                return
+            if not getattr(t,'_azt_collab_fallback',False):
+                # gettext accumulates fallbacks; only add ours once per
+                # translation object (they're per-language singletons).
+                t.add_fallback(collab_i18n.gettext_translation())
+                t._azt_collab_fallback=True
+            azt_collab_client.set_translator(t.gettext)
+            collab_i18n.subscribe_language_change(
+                self._collab_language_changed) #idempotent per contract
+        except Exception as e:
+            log.info(f"collab translation chain: {e}")
+    def _collab_language_changed(self,lang):
+        """The client re-languaged (daemon settings toggle): rebuild the
+        chain so azt follows. Terminates — interfacelang() only re-chains
+        when the language actually CHANGED, and by the time this fires our
+        translator is already on *lang*."""
+        try:
+            if lang in getattr(self,'i18n',{}):
+                self.interfacelang(lang)
+            else:
+                self.chain_collab_translations(lang)
+        except Exception as e:
+            log.info(f"collab language change: {e}")
     def getlangfromlocale(self):
         loc,enc=locale.getlocale()
         log.info(f"Found locale {loc}, encoding {enc}")
@@ -306,16 +354,22 @@ class App:
         if not session:
             return #project disconnected mid-session; stop polling
         try:
-            outcome=session.poll_remote_change()
+            # ONE project_status per tick, shared by the change-detection
+            # and the title-bar badge (client contract § 17c rule 4: never
+            # fire it from several handlers for the same UI event). It also
+            # means both read the SAME snapshot, instead of deciding
+            # "stale" and "shared" from two different ones.
+            st=session.status()
+            outcome=session.poll_remote_change(st=st)
             if (outcome == 'changed'
                     and not getattr(self,'writing',False)
                     and session.reload_offer_due()):
                 self.collab_offer_reload()
-            self.collab_title_status(session)
+            self.collab_title_status(session,st=st)
         except Exception as e:
             log.info(f"collab_poll: {e}")
         self.tk_root.after(10000, self.collab_poll)
-    def collab_title_status(self,session):
+    def collab_title_status(self,session,st=None):
         """Ambient sync status, title-bar cheap (Kent 2026-07-11): every
         poll tick, append the one-phrase collab truth to the visible
         window titles (task window + its runwindow — whichever the user
@@ -324,7 +378,7 @@ class App:
         get re-suffixed on the next tick."""
         SEP=' ⇅ '
         try:
-            txt=session.ambient_status()
+            txt=session.ambient_status(st=st)
         except Exception:
             return
         task=getattr(self,'task',None)
@@ -353,11 +407,27 @@ class App:
             pass
         from utilities.error_handler import notify_error
         log.info(_("Offering reload for team changes"))
-        self._collab_offer_win = notify_error(
-            _("Your team made changes to this database. Press "
+        # § 8b obl. 3a: say WHY. A prompt that can't name what changed is
+        # indistinguishable from a spurious one, and users learn to
+        # dismiss both. summary is '' when there's nothing honest to say.
+        summary=''
+        try:
+            summary=self.collab.changes_summary()
+        except Exception as e:
+            log.info(f"changes_summary: {e}")
+        # The paragraph below keeps its original msgid so the five
+        # existing catalogs still translate it; the summary rides ABOVE it
+        # as one new string rather than editing the old one (a changed
+        # msgid orphans every translation of it).
+        text=_("Your team made changes to this database. Press "
               "‘Load now’ to load them — or OK to keep working and "
               "load them later. Your saves are safe either way, and "
-              "will be combined with your team’s."),
+              "will be combined with your team’s.")
+        if summary:
+            text=_("What changed: {summary}").format(
+                    summary=summary)+'\n\n'+text
+        self._collab_offer_win = notify_error(
+            text,
             title=_("Team changes available"),
             button=(_("Load now"),
                     lambda event=None: self.reload_database()))
