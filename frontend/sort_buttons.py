@@ -114,15 +114,27 @@ class SortButtonFrame(ui.ScrollingFrame):
                             profile=self.program.slices.profile()),
                         cmd=notprofile, anchor='w', relief='flat',
                         font='instructions', column=0, row=0, sticky='ew')
-        vardict['skip']=ui.BooleanVar()
-        # log.info("Making skip button")
-        bf2=ui.Frame(parent, border=True, row=parent.nrows(), sticky='w')
-        skipb=ui.Button(bf2, text=skiptext,
-                        cmd=skip,
-                        anchor='w',
-                        relief='flat',
-                        font='instructions',
-                        column=0, row=0, sticky='ew')
+        # SORT ONLY — stashed, not removed, for macrosort (Kent 2026-07-27).
+        # In sort, 'skip' records a durable judgement about a WORD (taboo /
+        # unknown / unpronounceable → NA, which returns only when the user
+        # asks via tryNAgain), and for '=' checks the label carries the ≠
+        # hint above. A macrosort item is a verified sort GROUP being given a
+        # letter: there is no equivalent judgement to record, since the group
+        # exists, has member words, and must land in SOME letter or the
+        # alphabet is incomplete. Kept rather than deleted in case there is a
+        # use we haven't thought of — drop the `if` below (one line) to
+        # restore it. Revisit 2026-08-16:
+        # azt/agenda/macrosort_skip_affordance.md
+        if not self.macrosort:
+            vardict['skip']=ui.BooleanVar()
+            # log.info("Making skip button")
+            bf2=ui.Frame(parent, border=True, row=parent.nrows(), sticky='w')
+            skipb=ui.Button(bf2, text=skiptext,
+                            cmd=skip,
+                            anchor='w',
+                            relief='flat',
+                            font='instructions',
+                            column=0, row=0, sticky='ew')
         # 'S' profile sort: escape hatch — "this word isn't in this profile class".
         if (self.cvt=='S'
                 and not self.program.params.is_syllable_primitive_check(self.check)):

@@ -19,6 +19,63 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.12.3
+- CHANGE ('Skip this item' is a SORT affordance; stashed for macrosort). The
+  button was created unconditionally in `getanotherskip`, apparently by
+  accident: its neighbours are macrosort-aware (the new-group label becomes
+  "Other Letter", "Not {profile}" is gated on `not self.macrosort`) and even the
+  skip LABEL has a macrosort branch — the `≠` hint is added only for `=` checks
+  in sort — so macrosort was considered for the wording but never for whether
+  the button belonged. It is now created only when `not self.macrosort`. In sort
+  it is unchanged, `≠` hint included.
+  Stashed rather than removed, per Kent: the code stays in place behind a
+  one-line `if`, so restoring it is deleting that line. The defensive macrosort
+  branch in `sortselected` stays too, in case anything else ever sets
+  `vardict['skip']`. Revisit 2026-08-16 —
+  `azt/agenda/macrosort_skip_affordance.md` records the question: in sort, skip
+  is a durable judgement about a WORD (→ NA, returning only via `tryNAgain`),
+  whereas a macrosort item is a verified sort GROUP that must land in SOME
+  letter or the alphabet is incomplete, so there is no equivalent judgement to
+  store.
+
+# Version 1.12.2
+- FIX (root cause: NA is sort-only, so no NA glyph is ever created). 1.12.1
+  filtered NA out of the macrosort distinction display; per Kent that treated a
+  symptom — NA belongs to the SORT phase and does not exist in the macrosort
+  space at all. Two sources removed:
+  - A **skip during macrosort** mapped to `category='NA'` and called
+    `mark_item_glyph(item,'NA')`, minting an NA glyph (`sortselected`). A skip
+    there now means "not this one now": the item is left to-macrosort so it
+    comes back, and no glyph is marked.
+  - `mark_item_glyph` asserted the OPPOSITE invariant ("Never mark NA sort
+    groups other than in NA glyph!") and only warned, so it proceeded to build
+    that glyph anyway. It now refuses both directions — `glyph == 'NA'`, and
+    macrosorting an item whose group is NA — and logs why.
+- FIX (repairs existing data). `cull_glyph_members` now releases anything parked
+  in an `NA` glyph back to macrosort and drops the key. Without this, a real
+  group left in that glyph by a pre-1.12.2 skip looked macrosorted forever and
+  would never be offered a letter. Members whose *group* is NA were already
+  dropped by the `items_existing` pass.
+- The 1.12.1 display filters stay as defence in depth, and `glyphstoverify`
+  keeps its filter so no stored NA can be offered as a letter to verify.
+
+# Version 1.12.1
+- FIX (NA is never offered as a letter in macrosort). A `C2=NA` appeared in the
+  macrosort distinction section (Kent, field). `group_pairs_to_distinguish` was
+  the one surface that didn't filter it: the macrosort branch passed
+  `alphabet.glyphs()` through unfiltered, while its own non-macrosort branch
+  and every sibling path (`items_existing`, `items_present`,
+  `pending_distinctions`) already dropped NA. An `NA` key can legitimately be
+  in `glyph_members` — a 'skip' during macrosort turns `category='skip'` into
+  `'NA'` and calls `mark_item_glyph(item,'NA')` — so the data is kept and only
+  the presentation is filtered, per Kent: store it in the status file, never
+  show it. `glyphstoverify` got the same treatment, so a skipped pile can't be
+  offered for letter verification either. For checks without `=`, NA means only
+  "the user skipped this word"; those words return solely when the user asks
+  (`tryNAgain`), which removes the NA annotation as it goes. Checks WITH `=`
+  are untouched — there NA is a real result group and belongs in the verify
+  loop (1.8.3 layer 3).
+
 # Version 1.12.0
 - NEW (title bar shows the two sync channels separately: `WAN:✓ LAN:✓`).
   The ambient status was keyed on `at_risk` alone, so it printed "shared with

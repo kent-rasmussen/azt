@@ -1160,6 +1160,16 @@ class Sort(Categories):
             """Add button later, after marking sort group"""
         else:
             if category == 'skip':
+                if macrosort:
+                    # NA is a SORT concept only — it does not exist in the
+                    # macrosort space (Kent 2026-07-27). Mapping a macrosort
+                    # skip to NA minted an 'NA' GLYPH, which then turned up
+                    # as a letter to distinguish and to verify. A skip here
+                    # means "not this one now": leave the item to-macrosort so
+                    # it comes back, and mark no glyph at all.
+                    log.info("Macrosort skip on %s: left to macrosort "
+                             "(no NA glyph — NA is sort-only)", item)
+                    return
                 category='NA'
         if macrosort:
             recurring_conflicts=self.program.alphabet.mark_item_glyph(item, category)
@@ -1581,7 +1591,18 @@ class Sort(Categories):
                 ]
     def group_pairs_to_distinguish(self, macrosort=False):
         if macrosort:
-            groups=self.program.alphabet.glyphs()
+            # NA is NOT a letter and must never be offered as one side of a
+            # distinction pair (Kent 2026-07-27: a 'C2=NA' turned up in the
+            # macrosort distinction section). A 'skip' during macrosort marks
+            # the item NA (sortselected: category 'skip' → 'NA') and calls
+            # mark_item_glyph(item,'NA'), so an 'NA' key can legitimately
+            # exist in glyph_members — we STORE that, we just never SHOW it.
+            # For checks without '=', NA means only "the user skipped this",
+            # and those words come back solely when the user asks for them
+            # (tryNAgain), which removes the NA as it goes. Every sibling
+            # surface already filters it: items_existing / items_present
+            # (alphabet.refresh_items) and pending_distinctions.
+            groups=[g for g in self.program.alphabet.glyphs() if g != 'NA']
         else:
             groups=[i for i in self.program.status.verified() if i != 'NA']
         return set(itertools.combinations(groups, 2))

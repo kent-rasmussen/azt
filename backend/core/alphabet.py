@@ -532,14 +532,36 @@ class Alphabet():
         items_present: an unverified or distinction-pending group keeps its
         glyph membership (the glyph re-verifies instead of the group being
         re-macrosorted). See refresh_items."""
+        # REPAIR (1.12.2): release anything parked in an 'NA' GLYPH. NA is a
+        # sort-phase concept only (Kent 2026-07-27); until 1.12.2 a macrosort
+        # skip minted this glyph, and a real group left sitting in it looked
+        # macrosorted forever — so it never came back to be given a letter.
+        # Members whose GROUP is NA are dropped by the items_existing pass
+        # below; this frees the rest back to macrosort.
+        try:
+            if 'NA' in self.glyph_members():
+                for i in list(self.glyph_members().get('NA') or ()):
+                    log.info("Releasing %s from the obsolete NA glyph back "
+                             "to macrosort.", i)
+                    self.remove_item_from_glyph(i,'NA')
+                d=self.glyph_members()
+                if 'NA' in d: # was empty, so rm_glyph_member never ran
+                    del d['NA']
+                    self.glyph_members(d)
+        except Exception as e:
+            log.error(f"NA-glyph repair skipped: {e}")
         for glyph,members in list(self.glyph_members().items()):
             for i in list(members):
                 if i not in self.items_existing:
                     self.rm_glyph_member(i,glyph)
         self.save_settings()
     def glyphstoverify(self):
-        """Which glyphs are sorted, but not verified yet (or added to since)?"""
-        sorted=set(self.glyphs()) #this is constrained by cvt
+        """Which glyphs are sorted, but not verified yet (or added to since)?
+
+        NA excluded: a macrosort 'skip' stores an 'NA' key here (see
+        group_pairs_to_distinguish), but it is a parking spot, not a letter —
+        never offer it for verification."""
+        sorted={g for g in self.glyphs() if g != 'NA'} #constrained by cvt
         return sorted-{i for k,v in self.glyphdict().items() for i in v}
     def itemstosort(self):
         return sorted(self._itemstomacrosort)
@@ -663,8 +685,22 @@ class Alphabet():
             self.remove_item_from_glyph(i)
         return recurring_conflicts
     def mark_item_glyph(self,item,glyph):#maybe move to Alphabet Sort
-        if self.parse_verificationcode(item)['group'] in ['NA'] and glyph not in ['NA']:
-            ErrorNotice("Never mark NA sort groups other than in NA glyph!")
+        # INVARIANT (Kent 2026-07-27): NA belongs to SORTING only — there is no
+        # such thing as an NA glyph, and an NA sort group is never macrosorted.
+        # The old guard here asserted the opposite ("never mark NA sort groups
+        # other than in NA glyph"), and only warned, so it went ahead and built
+        # the NA glyph that later surfaced as a letter to distinguish. Refuse
+        # both directions instead; callers treat a falsy return as "nothing
+        # conflicted", and the item simply stays to-macrosort.
+        if glyph in ['NA']:
+            log.error("Refusing to make an NA glyph (item %s): NA is a "
+                      "sort-phase parking spot, not a letter.", item)
+            return
+        if self.parse_verificationcode(item)['group'] in ['NA']:
+            log.error("Refusing to macrosort NA sort group %s: NA words are "
+                      "skipped/unsortable and only return when the user asks "
+                      "for them (tryNAgain), which clears the NA.", item)
+            return
         self.rm_glyph_member(item) # in case elsewhere
         recurring_conflicts=self.remove_conflicting_items(item,glyph) #other group from same check
         self.add_glyph_member(item,glyph)
