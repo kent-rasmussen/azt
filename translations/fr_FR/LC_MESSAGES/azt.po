@@ -3931,8 +3931,8 @@ msgid "Same First/only Two CVs"
 msgstr "les même premier/seul Deux CVs"
 
 #: /home/kentr/bin/raspy/azt/main.py:15797
-msgid "Same First Two Same Consonants"
-msgstr "les même premier Deux et même Consonnes"
+msgid "First Two Same Consonants"
+msgstr "les deux premier et même Consonnes"
 
 #: /home/kentr/bin/raspy/azt/main.py:15801
 msgid "Same Second Two Consonants"
