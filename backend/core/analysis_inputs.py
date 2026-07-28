@@ -181,20 +181,36 @@ class CheckParameters(object):
             return None
         return self.compose_profile_class(beg,syls,end)
     def profile_fits_class(self,profile,beg,syls,end):
-        """Is `profile` (a CV string) consistent with a class's primitives? Uses
-        the SAME derivations that define the primitives (word_initial/final,
-        syllable_count), so 'legal' here means exactly 'would seed to this class'.
-        Handles richer symbols (G, digraphs, '=') the way the primitives do
-        (anything non-vowel is consonantal)."""
+        """Is `profile` (a CV string) COMPATIBLE with a class's primitives?
+
+        Delegates to profile_satisfies, the one range-aware predicate: a syllable
+        is one OR MORE vowels, so a vowel run can be read as one syllable or
+        several and 'CVVCV' is legitimately 2 or 3 syllables — compatible with
+        both C2V and C3V. This used to demand syllable_count(profile)==n, i.e.
+        the LOW end of that range only, and so rejected 'CVVCV' as not
+        "3 syllable(s)" on the by-hand entry page (Kent 2026-07-28). Compatible
+        is also the right question here: which class a profile SEEDS to by
+        default is a separate, single-valued thing (the low end — see
+        syllable_count and its callers).
+
+        profile_satisfies is additionally modifier-aware ('Vː' is one vowel
+        segment), where word_initial/word_final look at bare first/last chars."""
         if not profile:
             return False
-        try:
-            n=int(syls)
-        except (TypeError,ValueError):
-            return False
-        return (self.word_initial(profile)==beg
-                and self.word_final(profile)==end
-                and self.syllable_count(profile)==n)
+        return self.profile_satisfies(profile,beg=beg,end=end,syls=syls)
+    def profile_syllable_range(self,profile):
+        """(low, high) syllable readings of a profile: vowel-SEQUENCES ..
+        individual vowels. The ambiguity a class membership test has to allow;
+        equal when the profile has no multi-vowel run."""
+        segs=self._profile_segments(profile)
+        return len(self._vowel_runs(segs)),self._individual_vowels(segs)
+    def profile_edges(self,profile):
+        """(first,last) segment TYPES ('C'/'V'), the modifier-aware counterpart of
+        word_initial/word_final. (None,None) for an empty profile."""
+        segs=self._profile_segments(profile)
+        if not segs:
+            return None,None
+        return self._segment_type(segs[0]),self._segment_type(segs[-1])
     def _distribute_extra(self,total,k,cap):
         """Yield length-k tuples (each 0..cap) summing to `total` — the 'extra'
         length added to each slot beyond its baseline 1. Used to enumerate profile

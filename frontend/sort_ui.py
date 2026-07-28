@@ -463,9 +463,13 @@ class SortPresenter(PresenterBase):
         # items (so it sits right below them and doesn't inflate the scrollregion
         # — gridding it at a huge sentinel row blew the scroll region up ~5x).
         if macrosort:
+            # reverifiable: each row here is a VERIFIED sort group being checked
+            # against a letter. Left click removes it from the letter; right click
+            # sends it back to verify, for when the group itself is the problem
+            # (Kent 2026-07-28).
             buttonframe = SortButtonFrame(f, sort_obj,
                                          list(items), macrosort=True,
-                                         show_check=True,
+                                         show_check=True, reverifiable=True,
                                          remove_on_click=True, column=1,
                                          row=1, sticky='nsew', columnspan=2)
             verifycanary = ui.Frame(buttonframe.content, sticky='ew')
@@ -880,11 +884,21 @@ class SortPresenter(PresenterBase):
             on_choose(g)
         for c, group in enumerate(pair):
             cell = ui.Frame(f, row=1, column=c, padx=12, sticky='n')
+            # NAME THE PROFILE (Kent 2026-07-28). The question is which of two
+            # profiles is correct, and the cells carried only an example word and
+            # a count — so the user was asked to choose between two unlabelled
+            # buttons. The group IS the profile here (both sides are real CV
+            # profiles on this page), so show it as the heading of its option.
+            ui.Label(cell, text=group, font='readbig',
+                    row=0, column=0, sticky='n')
+            # NO label=True: it makes SortGroupButtonFrame build a Label, and
+            # on_select is wired only by selectbutton — so both options rendered
+            # as click-dead labels that still looked like buttons.
             buttonclass(cell, sort_obj, group=group, showtonegroup=True,
-                        label=True, on_select=lambda g=group: pick(g),
-                        row=0, sticky='n')
+                        on_select=lambda g=group: pick(g),
+                        row=1, sticky='n')
             ui.Label(cell, text=_("{n} words").format(n=counts.get(group, 0)),
-                    font='normal', row=1, column=0, sticky='n')
+                    font='normal', row=2, column=0, sticky='n')
         ui.Button(f, text=_("← Back (don’t join these)"),
                 cmd=lambda: (w.destroy(), on_back() if on_back else None),
                 font='instructions', row=2, column=0, columnspan=2, sticky='ew')

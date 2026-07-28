@@ -110,7 +110,11 @@ syllable analog of a segment **profile** as a slice.
 One of the three stored per-word syllable judgements: `#C` (word-initial
 C/V), `C#` (word-final C/V), `syls` (count, a bounded integer). The
 **macrogroup** derives from them; the per-macrogroup **profile** sort is a
-separate, finer level.
+separate, finer level. A judgement here may be the user's (a syllable-prep
+sort) or **trusted** — "Trust machine analysis" records the primitives implied
+by the profile it trusts, so a word always sits in some macrogroup and can be
+sent back one level at a time rather than re-derived from zero. A user sort
+always outranks a trusted value and is never overwritten by one.
 
 ### Tone terms
 

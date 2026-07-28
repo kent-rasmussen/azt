@@ -415,14 +415,16 @@ class Sort(Categories):
         self.runcheck()
     def _affirm_scope_text(self,affirmable,ftype):
         """Human summary of WHAT 'Trust' would affirm, so the choice isn't blind:
-        each unprofiled+affirmable word with its confirmed primitives (#C/C#/syls)
-        and the machine profile that would become its trusted profile. Lists them
-        when fewer than 10; otherwise just the count, to keep the dialog legible."""
+        each unprofiled+affirmable word with the machine profile that would become
+        its trusted profile and the primitives (#C/C#/syls) recorded with it.
+        Lists them when fewer than 10; otherwise just the count, to keep the
+        dialog legible."""
         analang=self.program.db.analang
         n=len(affirmable)
         if n>=10:
-            return _("{n} words here would be affirmed to their machine profile.").format(n=n)
-        av=lambda s,c: s.annotationvaluebyftypelang(ftype,analang,c) or '?'
+            return _("{n} words here would be affirmed to their machine profile."
+                    ).format(n=n)
+        params=self.program.params
         lines=[]
         for s in affirmable:
             form=s.textvaluebyftypelang(ftype,analang) or '—'
@@ -432,8 +434,19 @@ class Sort(Categories):
             # raw machine read.
             trusted=self.program.profiles.constrain_presort_profile(s,machine,ftype) \
                     or machine or '?'
-            lines.append("{f}  (#C={b} C#={e} syls={y})  → {m}".format(
-                f=form, b=av(s,'#C'), e=av(s,'C#'), y=av(s,'syls'), m=trusted))
+            # …and the primitives DERIVED from that profile, because Trust now
+            # records them (trust_primitives_from_profile). This used to print the
+            # raw #C/C#/syls annotations — mostly '?' at this point — under a
+            # docstring calling them "confirmed primitives", which both
+            # understated what Trust writes and implied the primitives were
+            # already settled.
+            if trusted and trusted not in ('?','Invalid'):
+                b,e,y=(params.word_initial(trusted),params.word_final(trusted),
+                        str(params.syllable_count(trusted)))
+            else:
+                b=e=y='?'
+            lines.append("{f}  → {m}  (#C={b} C#={e} syls={y})".format(
+                f=form, m=trusted, b=b, e=e, y=y))
         return '\n'.join(lines)
     def offer_profile_setup(self,at_open=False):
         """A segmental/tone sort works on syllable-profile DATA. If a word in this
@@ -493,14 +506,31 @@ class Sort(Categories):
         scope=self._affirm_scope_text(_affirm,ftype)
         choice=self.sort_ui.offer_profile_setup(self.ui,note,scope)
         if choice=='affirm':
-            # Both passes defer the (expensive, full) slice rebuild so it
-            # runs ONCE, and runs whenever EITHER pass changed anything:
-            n=self.program.profiles.affirm_machine_profiles(rebuild=False)
+            # All three passes defer BOTH the write and the (expensive, full)
+            # slice rebuild, so each happens ONCE for the whole Trust action and
+            # only if some pass changed something. A write is the entire LIFT file
+            # — a whole-file submit under collab — so it costs the same for 15
+            # changed words as for 1500; three passes writing independently paid
+            # that three times over (Kent 2026-07-28).
+            n=self.program.profiles.affirm_machine_profiles(rebuild=False,
+                                                            write=False)
             # …and repair existing trusted profiles: constrain any that violate
             # their verified primitives and realign drifted sort-group annotations
             # (the stale 'lc' the old raw affirm left). Idempotent on clean data.
-            m=self.program.profiles.reconcile_profiles_to_primitives(rebuild=False)
-            if n or m:
+            m=self.program.profiles.reconcile_profiles_to_primitives(
+                                                rebuild=False,write=False)
+            # …and give ALREADY-trusted words the primitives their profile implies,
+            # which the two passes above never reach (one skips words that have a
+            # profile, the other only rewrites profiles that violate their
+            # primitives). This is the Trust decision applied to the whole
+            # lexicon, not just the words being affirmed right now.
+            b=self.program.profiles.backfill_primitives_for_trusted(
+                                                rebuild=False,write=False)
+            if n or m or b:
+                # Write BEFORE the rebuild, as each pass used to: the rebuild
+                # re-derives in-memory slices, and a crash between the two must
+                # not lose the LIFT changes.
+                self.program.maybewrite(definitely=True)
                 self.program.profiles.rebuild_slices()
             if at_open and getattr(self,'status',None):
                 self.status.maybeboard() # refresh the now-populated profile board
@@ -959,6 +989,25 @@ class Sort(Categories):
         flag set from the verify page would sit there and swallow the next
         sort's first real selection."""
         ftype=self.program.params.ftype()
+        # KEEP THE WORD IN ITS PROFILE CLASS on the way out (Kent 2026-07-28). The
+        # profile being removed implies #C/C#/syls, so write those down (only the
+        # dimensions not already verified) BEFORE clearing it. Then 'Not CVCV'
+        # removes just the profile and the word can be re-sorted INSIDE
+        # C-initial/2-syllable/V-final, instead of falling out of every class
+        # (profile_class_of_sense is None until all three annotations exist) and
+        # having to be re-derived from zero. If the class itself is wrong, the
+        # verify page's one-axis moves bump it up a level.
+        #   This is also the only back-fill for a lexicon trusted BEFORE trust
+        # started writing primitives: reconcile_profiles_to_primitives runs solely
+        # from the Trust branch, and that offer stops appearing once every word
+        # has a profile — so a word gets its class harvested here, one at a time,
+        # exactly when it is sent back.
+        old=sense.cvprofilevalue(ftype)
+        if old and old!='Invalid':
+            try:
+                self.program.profiles.trust_primitives_from_profile(sense,ftype,old)
+            except Exception as e:
+                log.info("unverify_profile primitive harvest skipped: %s", e)
         sense.cvprofilevalue(ftype, False)                       # clear confirmed data
         sense.annotationvaluebyftypelang(ftype, self.analang, ftype, '') # clear group
         # Drop the word from the two in-memory places it lives, so it is not

@@ -282,9 +282,37 @@ class SortButtonFrame(ui.ScrollingFrame):
         def submit():
             prof=(var.get() or '').strip().upper()
             if not params.profile_fits_class(prof,beg,syls,end):
-                msg.configure(text=_("‘{p}’ isn’t {beg}-initial, {end}-final, {n} "
-                    "syllable(s) — try again.").format(
-                        p=prof or '—',beg=beg,end=end,n=syls))
+                # Say which dimension actually failed and what the entry reads as.
+                # The old message asserted all three at once ("isn't C-initial,
+                # V-final, 3 syllable(s)") even when only one was wrong — and
+                # asserted a single syllable count, when a vowel run can be one
+                # syllable or several, so a count is a RANGE (Kent 2026-07-28).
+                got_beg,got_end=params.profile_edges(prof)
+                lo,hi=params.profile_syllable_range(prof)
+                try:
+                    want=int(syls)
+                except (TypeError,ValueError):
+                    want=None
+                why=[]
+                if not prof:
+                    why.append(_("nothing entered"))
+                else:
+                    if got_beg!=beg:
+                        why.append(_("it starts with {got}, not {want}").format(
+                                    got=got_beg,want=beg))
+                    if got_end!=end:
+                        why.append(_("it ends with {got}, not {want}").format(
+                                    got=got_end,want=end))
+                    if want is not None and not (lo<=want<=hi):
+                        if lo==hi:
+                            why.append(_("it is {lo} syllable(s), not {want}"
+                                        ).format(lo=lo,want=want))
+                        else:
+                            why.append(_("it is {lo}–{hi} syllables, not {want}"
+                                        ).format(lo=lo,hi=hi,want=want))
+                msg.configure(text=_("‘{p}’ doesn’t fit {cls}: {why}. Try again."
+                            ).format(p=prof or '—',cls=cls,
+                                    why='; '.join(why) or _("it doesn’t fit")))
                 return
             # New or already-existing profile both flow through the pending path
             # (sortselected's addgroupbutton is guarded against double-adding).
@@ -326,6 +354,13 @@ class SortButtonFrame(ui.ScrollingFrame):
             frame_class=SortGroupButtonFrame #this takes item code or sort group
         if self.macrosort and self.remove_on_click:
             kwargs=self.program.alphabet.parse_verificationcode(group)
+        # Right-click → reverify THIS sort group, where the frame was asked for it
+        # (the macrosort verify page). Set after the parse above, which replaces
+        # the kwargs dict wholesale. Left click there REMOVES the group from the
+        # letter — "this group needs verifying again" had no expression at all
+        # (Kent 2026-07-28).
+        if self.reverifiable:
+            kwargs['reverifiable']=True
         b=frame_class(self.groupbuttons, self.task,
                         showtonegroup=True,
                         alwaysrefreshable=True,
@@ -375,6 +410,10 @@ class SortButtonFrame(ui.ScrollingFrame):
         self.macrosort=kwargs.pop('macrosort',False)
         self.remove_on_click=kwargs.pop('remove_on_click',False)
         self.show_check=kwargs.pop('show_check',False)
+        # Hand a reverify context menu to each group button this frame makes
+        # (addgroupbutton). Opt-in per page, not per frame class: the sort page's
+        # group buttons are ANSWERS to 'which group?' and don't get one.
+        self.reverifiable=kwargs.pop('reverifiable',False)
         self.task=task
         self.program=self.task.program
         self.groups=groups
@@ -542,7 +581,14 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
     def makebuttons(self):
         # log.info(f"Making buttons with {self.kwargs=}")
         self._playable=False
-        if self.kwargs['label']:
+        if self.kwargs.get('on_select'):
+            # An explicit click handler OUTRANKS label/playable. Only
+            # selectbutton wires on_select, so a caller that passed both it and
+            # label=True got a Label whose click did nothing — dead UI that still
+            # looked like a button (the syllable join-direction chooser, Kent
+            # 2026-07-28). Passing on_select means "this is an option to click".
+            self.selectbutton()
+        elif self.kwargs['label']:
             self.labelbutton()
         elif self.kwargs['playable'] and self._sense is not None and self._filenameURL:
                 self.playbutton()

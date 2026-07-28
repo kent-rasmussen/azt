@@ -346,15 +346,123 @@ class ProfileAnalyzer:
                                  addval=True)
         return form, confirmed
 
+    def _primitive_codes(self, sense, ftype):
+        """{'#C':…,'C#':…,'syls':…} from this sense's primitive VERIFICATION
+        codes — only the dimensions actually verified appear."""
+        out = {}
+        for code in sense.primitiveverification(ftype):
+            k, _sep, v = str(code).partition('=')
+            if k in ('#C', 'C#', 'syls'):
+                out[k] = v
+        return out
+
+    def trust_primitives_from_profile(self, sense, ftype, profile):
+        """A trusted profile IMPLIES its three primitives — CVC is C-initial,
+        C-final, one syllable — so record them as trusted too: the #C/C#/syls
+        ANNOTATIONS (what puts the word in a profile class) and the primitive
+        VERIFICATION codes (what makes the class confirmed).
+
+        Why (Kent 2026-07-28): trusting only the profile made 'trust, maybe
+        change a few later' a dead end. 'Not CVCV' clears the profile, and a word
+        with no primitive annotations has NO profile class at all
+        (profile_class_of_sense returns None until all three are set) — so
+        sending two words back meant re-deriving them from zero instead of
+        re-sorting them inside C-initial/2-syllable/V-final. The primitives are
+        derivable from the profile at any time; the only thing missing was
+        writing them down.
+
+        Never overrides a VERIFIED primitive: a real sort outranks the machine,
+        and affirm already constrained the profile to those dimensions anyway, so
+        the derived values agree. Returns the checks written."""
+        params = self.program.params
+        analang = self.program.db.analang
+        implied = {'#C': params.word_initial(profile),
+                   'C#': params.word_final(profile),
+                   'syls': str(params.syllable_count(profile))}
+        verified = self._primitive_codes(sense, ftype)
+        codes = list(sense.primitiveverification(ftype))
+        added = []      # dimensions that gained a verification code
+        touched = []    # …plus annotation-only repairs, for the caller's count
+        for check, value in implied.items():
+            if check in verified:
+                # Verified already. Its ANNOTATION can still be missing (legacy
+                # data), and without it the word has no profile class — so write
+                # the verified value, not the derived one.
+                if not sense.annotationvaluebyftypelang(ftype, analang, check):
+                    sense.annotationvaluebyftypelang(ftype, analang, check,
+                                                     verified[check])
+                    touched.append(check)
+                continue
+            sense.annotationvaluebyftypelang(ftype, analang, check, value)
+            codes.append('{}={}'.format(check, value))
+            added.append(check)
+            touched.append(check)
+        if added: # only rewrite the codes field when a code actually changed
+            sense.primitiveverification(ftype, value=codes)
+        return touched
+
+    def needs_primitive_backfill(self, sense, ftype):
+        """Does this sense have a trusted/verified profile but not the confirmed
+        primitives that put it in a macrogroup? True when any of #C/C#/syls lacks
+        a verification code or its annotation. Deliberately NOT used to decide
+        whether to SHOW the Trust offer: primitives only matter when a word is
+        sent back, so a word that is never untrusted never needs them written
+        (Kent 2026-07-28), and the offer keeps its own trigger."""
+        cur = sense.cvprofilevalue(ftype)
+        if not cur or cur == 'Invalid':
+            return False # nothing to derive from; sorting has to supply it
+        verified = self._primitive_codes(sense, ftype)
+        analang = self.program.db.analang
+        for check in ('#C', 'C#', 'syls'):
+            if check not in verified:
+                return True
+            if not sense.annotationvaluebyftypelang(ftype, analang, check):
+                return True
+        return False
+
+    def backfill_primitives_for_trusted(self, ftype=None, rebuild=True,
+                                        write=True):
+        """At the 'I choose to Trust' decision (Kent 2026-07-28): any word that
+        already has a profile but NO confirmed primitives gets them, derived from
+        that profile. Covers lexicons trusted before trust started writing
+        primitives — `affirm_machine_profiles` skips words that already have a
+        profile, and `reconcile_profiles_to_primitives` only rewrites profiles
+        that violate their primitives, so neither back-fills.
+
+        Deliberately NOT run at open, and never from the syllable task: it must
+        not touch the presort. Trust is a user decision about the machine
+        analysis, and this is part of what that decision now means. Verified
+        primitives are never overwritten (trust_primitives_from_profile).
+        Returns the number of senses changed."""
+        ftype = ftype or self.program.params.ftype()
+        n = 0
+        for s in self.program.db.senses:
+            if not self.needs_primitive_backfill(s, ftype):
+                continue
+            if self.trust_primitives_from_profile(s, ftype,
+                                                  s.cvprofilevalue(ftype)):
+                n += 1
+        log.info("Back-filled syllable primitives from the trusted profile for "
+                "%d sense(s).", n)
+        if n and write: # see affirm_machine_profiles on write=False
+            self.program.maybewrite(definitely=True)
+        if n and rebuild:
+            self.rebuild_slices()
+        return n
+
     def _set_trusted_profile(self, sense, ftype, profile):
         """Write a trusted profile CONSISTENTLY: the plain …-x-cvprofile DATA and
         the profile-sort annotation (name=ftype, e.g. 'lc') that records which
         profile the word is sorted into. Keeping them aligned means the annotation
         never claims a different 'last sorted' group than the trusted profile,
-        and the normal group/done check won't see a mismatch and unverify it."""
+        and the normal group/done check won't see a mismatch and unverify it.
+        The profile's implied primitives go down with it (see
+        trust_primitives_from_profile), so the word sits in a real profile class
+        and can be sent back to sorting one word at a time."""
         sense.cvprofilevalue(ftype, profile)
         sense.annotationvaluebyftypelang(ftype, self.program.db.analang,
                                          ftype, profile)
+        self.trust_primitives_from_profile(sense, ftype, profile)
 
     def rebuild_slices(self):
         """FULL post-trust rebuild: refresh the db-level ps/profile
@@ -366,13 +474,18 @@ class ProfileAnalyzer:
         so a trust looked like a no-op until restart (2026-07-24)."""
         self.program.db.load_ps_profiles()
         self.run()
-    def affirm_machine_profiles(self, ftype=None, rebuild=True):
+    def affirm_machine_profiles(self, ftype=None, rebuild=True, write=True):
         """Accept the straight machine CV analysis as the (confirmed) profile DATA:
         copy each sense's …-x-cvprofile_MT into the plain …-x-cvprofile form, which
         the segmental/tone sorts read. For languages where syllable-profile sorting
         isn't worth it — they then proceed on the machine analysis as if confirmed,
         skipping SortSyllables. Rebuilds the ps-profile slices so the sorts pick the
-        profiles up. Returns the number of senses affirmed."""
+        profiles up. Returns the number of senses affirmed.
+
+        write=False for a caller running several passes in one action: a write is
+        the WHOLE LIFT file (a whole-file submit under collab), so it costs the
+        same whether 15 words changed or 1500 — the caller writes once at the end
+        instead of once per pass (Kent 2026-07-28). Same bargain as rebuild."""
         ftype = ftype or self.program.params.ftype()
         n = 0
         for s in self.program.db.senses:
@@ -394,7 +507,7 @@ class ProfileAnalyzer:
                 n += 1
         log.info("Affirmed the machine CV analysis as profile data for %d "
                 "sense(s).", n)
-        if n:
+        if n and write:
             # Persist the plain forms to LIFT — otherwise a restart re-reads the
             # file without them and the "set up profiles?" trigger fires again.
             self.program.maybewrite(definitely=True)
@@ -402,7 +515,8 @@ class ProfileAnalyzer:
             self.rebuild_slices()
         return n
 
-    def reconcile_profiles_to_primitives(self, ftype=None, rebuild=True):
+    def reconcile_profiles_to_primitives(self, ftype=None, rebuild=True,
+                                         write=True):
         """Repair path (NOT normal flow): constrain each EXISTING plain profile to
         the word's confirmed #C/C#/syls. Unlike affirm (which only fills holes),
         this DOES touch existing profiles — but only to FIX ones that violate the
@@ -429,7 +543,7 @@ class ProfileAnalyzer:
                 self._set_trusted_profile(s, ftype, fixed)
                 n += 1
         log.info("Reconciled %d profile(s) to their confirmed primitives.", n)
-        if n:
+        if n and write: # see affirm_machine_profiles on write=False
             self.program.maybewrite(definitely=True)
         if rebuild and n:
             self.rebuild_slices()

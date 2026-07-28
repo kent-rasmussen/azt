@@ -1906,7 +1906,24 @@ class TaskDressing(HasMenus,ui.Window):
         for n,o in enumerate(tasktuples):
             if n == optionlist_maxi and int(n/bpr):
                 columnspan=bpr-n%bpr #*.02125
-            screen_wrap=self.program.tk_root.winfo_width()*self.theme.scale*.8
+            # WRAPLENGTH (Kent 2026-07-28, twice: labels wrapping after 3-4
+            # letters inside a wide button). This read winfo_width() — the root's
+            # CURRENT width, which is 1 until the root is mapped, and these tabs
+            # are populated before that. int(1*scale*.8/3) is 0-1px, so Tk broke
+            # the label at every word. Use the real window width only when it has
+            # one, else the screen, as everywhere else in this file (l.83, 138,
+            # 2782, 3616). Also dropped *theme.scale: winfo_* are already pixels,
+            # and scaling a pixel width by the FONT scale wrapped later than the
+            # column is wide on a scaled display.
+            avail=self.program.tk_root.winfo_width()
+            if avail < 100: #unmapped (1) or absurd → the screen is a safe proxy
+                avail=self.program.tk_root.winfo_screenwidth()
+            screen_wrap=avail*.8
+            # sticky='nesw' (kept, per Kent 2026-07-28: content-sized buttons
+            # looked ugly). The columns below are weight=1 + uniform, so this
+            # fills each button to an equal third of the window — deliberate; the
+            # wraplength fix above is what stopped the labels wrapping after a few
+            # letters inside all that width.
             b=ui.Button(frame,
                         text=o[1],
                         command=lambda t=o[0]:self._maketask_fn(t),

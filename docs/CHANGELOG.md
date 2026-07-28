@@ -20,6 +20,84 @@
 - make showoriginalorthographyinreports a UI switch
 
 # Unreleased (pending live verify; version bump on confirmation)
+- FIX ("Which profile is correct?" showed neither profile, and neither option
+  could be clicked). The syllable join-direction chooser
+  (`choose_join_direction`) built each option as
+  `SortGroupButtonFrame(..., label=True, on_select=…)` — but `makebuttons` lets
+  `label` win and builds a **Label**, and `on_select` is wired only by
+  `selectbutton`. So both options were click-dead while still looking like
+  buttons, and the page could only be left by Back. `label=True` is gone from
+  that call site, and `makebuttons` now treats an explicit `on_select` as
+  outranking `label`/`playable`, so this can't silently recur: passing a click
+  handler means "this is an option to click".
+- FIX (same page: nothing said which profile each option WAS). Each cell carried
+  an example word and a member count, so the user was asked to choose between two
+  unlabelled buttons. The group is the profile on this page (both sides are real
+  CV profiles), so it is now the heading of its option, above the example word.
+- FIX (a by-hand profile was rejected for a syllable count it legitimately has).
+  Typing `CVVCV` on the "Set a C3V profile by hand" page was refused with
+  "‘CVVCV’ isn’t C-initial, V-final, 3 syllable(s)" — though it is C-initial,
+  V-final, and readable as 3 syllables. A syllable is one or MORE vowels, so a
+  vowel run can be read as one syllable or several and a profile's count is a
+  RANGE: `CVVCV` is 2 **or** 3. That rule already existed as `profile_satisfies`
+  ("`syls` lies in the profile's ambiguity range [vowel-sequences ..
+  individual-vowels]") and `constrain_profile` uses it; only
+  `profile_fits_class` — the entry-page validator — diverged, testing
+  `syllable_count(profile)==n`, i.e. the low end alone. It now delegates to
+  `profile_satisfies`, which also makes it modifier-aware (`Vː` is one vowel
+  segment) where `word_initial`/`word_final` read bare first/last characters.
+  Which class a profile SEEDS to by default is unchanged and still single-valued
+  (the low end).
+- FIX (that page's rejection message asserted things it hadn't checked). It named
+  all three dimensions whenever any one failed, and asserted a single syllable
+  count. It now names only what actually failed and reports what the entry reads
+  as — e.g. "‘CVVCV’ doesn’t fit C4V: it is 2–3 syllables, not 4" — via two new
+  helpers, `profile_syllable_range` and `profile_edges`.
+- CHANGE (Trust now trusts the primitives too, so "maybe correct later" costs one
+  word, not the database). "Trust machine analysis" wrote only the profile DATA
+  and its sort annotation; `#C`/`C#`/`syls` were left untouched. Since
+  `profile_class_of_sense` returns None until all three annotations exist, a
+  trusted word had NO macrogroup — so 'Not CVCV' on two words dropped them out of
+  every class and they had to be re-derived from zero, defeating the "maybe
+  correct later" the button promises. Now `_set_trusted_profile` also records the
+  primitives the trusted profile implies (`trust_primitives_from_profile`):
+  `word_initial`/`word_final`/`syllable_count` of the profile, written as both the
+  annotations (what puts the word in a class) and the primitive verification codes
+  (what makes the class confirmed). 'Not CVCV' then removes only the profile, and
+  the word can be re-sorted inside e.g. C-initial/2-syllable/V-final; if the class
+  itself is wrong, the verify page's one-axis moves bump it up a level.
+  - A VERIFIED primitive is never overwritten — a real sort outranks the machine,
+    and affirm already constrains the profile to those dimensions, so the derived
+    values agree anyway. A verified primitive missing its annotation (legacy) gets
+    the annotation written from the verified value.
+  - Pressing Trust also back-fills words that ALREADY had a profile but no
+    confirmed primitives (`backfill_primitives_for_trusted`), which neither
+    existing pass reaches — `affirm_machine_profiles` skips words that have a
+    profile, and `reconcile_profiles_to_primitives` only rewrites profiles that
+    violate their primitives. The Trust decision is the right home for it (Kent):
+    it is a decision about the machine analysis, and it must not run at open or
+    from the syllable task, where it would disturb the presort. Nothing new
+    triggers the offer — if it never appears, the pass never runs, which costs
+    nothing: primitives only matter when a word is sent back.
+  - `unverify_profile` harvests the class from the profile it is about to clear,
+    so a word sent back gets its primitives at that moment even if no Trust press
+    ever covered it. This is what makes the un-triggered case harmless.
+  - ONE write per Trust press, not one per pass. A write is the entire LIFT file
+    (a whole-file submit under collab), so it costs the same for 15 changed words
+    as for 1500 — and the three passes were each calling
+    `maybewrite(definitely=True)` independently, paying that up to three times.
+    They now take `write=False` (the same bargain as the existing `rebuild=False`)
+    and the Trust branch writes once, before its single `rebuild_slices()`, only
+    if some pass changed something. Defaults are unchanged, so any other caller
+    still writes for itself.
+  - The Trust dialog's word list now shows the primitives Trust WILL record
+    (derived from the profile it would assign) instead of the raw annotations,
+    which were mostly '?' at that point under a docstring calling them "confirmed
+    primitives".
+  - NOTE for live verify: because the primitive verification codes are now
+    written, a trusted lexicon will read as syllable-PREP-verified for those
+    words. That follows from what Trust means, but it is the behavioural change to
+    watch.
 - NEW (right-click escape hatches on the pages that had none). Three context
   menus, all reaching actions that already existed but were hard to get at:
   - VERIFY page, on each word: "Not {profile}" — the same escape hatch the sort
@@ -38,6 +116,10 @@
     reverifies the LETTER (`reverify_glyph`).
   - MACROSORT page, on the group being given a letter: same "Reverify this
     group", for when the right move is to fix the group before lettering it.
+  - MACROSORT VERIFY page ("these all should use the same letter"), on each sort
+    group in the list: same "Reverify this group". Left click there means "this
+    one doesn't belong to this letter" and removes it from the letter; the group
+    itself needing another verification pass had no expression on the page.
   Previously all of this was Advanced → Reverify current group / Reverify Glyph,
   which act on whatever is *current*. New `reverify_group(group, check, ps,
   profile)` names its target instead — ps/profile matter because macrosort spans
@@ -54,6 +136,19 @@
   serial so the posting right-click doesn't cancel itself; and a `<Destroy>`
   binding on the subject widget, since the menu hangs off the root (that's what
   lets it post over the page) and would otherwise outlive the word it acts on.
+- FIX (taskchooser task buttons: labels wrapped after 3-4 letters inside an
+  over-padded button). Two causes in `_populate_chooser_tab`:
+  - the wrap width came from `tk_root.winfo_width()`, which is **1 until the root
+    is mapped** — and the chooser tabs are populated before that. `int(1 * scale *
+    .8 / bpr)` is 0-1px, so Tk broke every label at every word. Now it uses the
+    window's real width when it has one and `winfo_screenwidth()` otherwise, as
+    the rest of the file already does (l.83, 138, 2782, 3616). The bogus
+    `* theme.scale` is gone too: `winfo_*` are already pixels, and scaling a pixel
+    width by the FONT scale wraps later than the column is wide.
+  No `ipadx` was ever set on these: grid `ipadx` defaults to 0, and the theme-pads
+  path in `UI.post_tk_init` is inert because the Theme is never built with pads.
+  `sticky='nesw'` (equal-width buttons filling each column) is unchanged — tried
+  content-sizing them and it looked worse, so the wrap width was the whole fix.
 - FIX (`reverify_glyph` raised on its normal path). `glyph` was bound only inside
   the branch that ASKS for a letter, so Advanced → Reverify Glyph with a verified
   current letter — the ordinary case — hit UnboundLocalError. It now takes an
