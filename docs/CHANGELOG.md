@@ -19,6 +19,48 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Unreleased (pending live verify; version bump on confirmation)
+- NEW (right-click escape hatches on the pages that had none). Three context
+  menus, all reaching actions that already existed but were hard to get at:
+  - VERIFY page, on each word: "Not {profile}" — the same escape hatch the sort
+    page has had as a button since 1.4.2. Left-clicking a word here means "this
+    one is different", which un-SORTS it and sends it straight back to be sorted
+    into the same wrong profile; the word actually being in the wrong CV profile
+    had no expression on this page. Calls `unverify_profile` with the new
+    `advance=False` (nothing is mid-sort here, and a leaked
+    `_notprofile_advance` would swallow the next sort's first selection), then
+    drops the word from the page like the syllable-misfit path does. Gated as the
+    sort-page button is: a profile to leave, and not cvt 'S' (syllable sorting
+    has its own misfit machinery).
+  - DISTINGUISH page ("Review Sort/Letter Groups"), on each of the two groups:
+    "Reverify this group" — "same or different?" can't be answered when one of
+    the groups is itself wrong. On the letter version of the page the menu
+    reverifies the LETTER (`reverify_glyph`).
+  - MACROSORT page, on the group being given a letter: same "Reverify this
+    group", for when the right move is to fix the group before lettering it.
+  Previously all of this was Advanced → Reverify current group / Reverify Glyph,
+  which act on whatever is *current*. New `reverify_group(group, check, ps,
+  profile)` names its target instead — ps/profile matter because macrosort spans
+  slices, so unverifying "the current node" could hit an unrelated group of the
+  same name. Opt-in per call site (`reverifiable=True`), so the sort page's group
+  buttons deliberately don't get it: there a group is the answer, not the
+  subject.
+- Dismissal (Kent 2026-07-28: "these can't just stick around"): the menu keeps
+  the grab `tk_popup` gives it, so ANY click — on it or off it — puts it away.
+  (The first cut released that grab immediately, copying `ui.ContextMenu`'s
+  "don't do Tk redundant grab", which left the menu posted until an item was
+  picked.) Two backstops: a `<Button>` binding per toplevel (once, not per word)
+  in case the grab is displaced — XWayland does that here — guarded on the event
+  serial so the posting right-click doesn't cancel itself; and a `<Destroy>`
+  binding on the subject widget, since the menu hangs off the root (that's what
+  lets it post over the page) and would otherwise outlive the word it acts on.
+- FIX (`reverify_glyph` raised on its normal path). `glyph` was bound only inside
+  the branch that ASKS for a letter, so Advanced → Reverify Glyph with a verified
+  current letter — the ordinary case — hit UnboundLocalError. It now takes an
+  optional `glyph`, defaults to the current one, and makes its target current
+  (`alphabet.glyph(glyph)`) so a right-click on one letter can't send the user to
+  a different one.
+
 # Version 1.12.4
 - FIX (1.12.2's NA-glyph repair could itself queue an NA group for macrosort).
   The repair released every member of an obsolete `NA` glyph with

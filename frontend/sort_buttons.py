@@ -444,6 +444,8 @@ class _GroupButtonFrame(object):
                         'showtonegroup', 'remove_on_click',
                         'goback','all_for_cvt', 'on_select',
                         'show_check',
+                        'reverifiable', #right-click → reverify THIS group
+
                         'gridwait', #frame-only: must NOT reach child buttons,
                         #or they grid_remove themselves and never restore
                         #(macrosort glyph-member buttons rendered blank)
@@ -549,13 +551,39 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             self.selectbutton()
         if self.kwargs['unsortable']:
             self.unsortbutton()
+        self.maybe_reverify_menu()
         self.makerefreshbutton()
         if (self.check and self.kwargs.get('show_check') and
             not isinstance(self.parent, SortGlyphGroupButtonFrame)):
             self.make_check_button()
+    def maybe_reverify_menu(self):
+        """Right-click → reverify THIS group. Only on the pages that show a group
+        the user may need to fix BEFORE they can answer the page's question: the
+        distinguish page (‘same or different?’ — unanswerable if one group is
+        wrong) and the macrosort page (‘which letter?’ — pointless if the group
+        shouldn't exist as it stands). Opt-in per call site via reverifiable=True;
+        the sort page's group buttons deliberately don't get it, since there a
+        group is the ANSWER rather than the subject. Kent 2026-07-28: previously
+        only reachable through Advanced → Reverify current group, which acts on
+        whatever group happens to be current."""
+        if not self.kwargs.get('reverifiable'):
+            return
+        w=getattr(self,'_display',None)
+        if w is None:
+            return
+        def reverify():
+            # ps/profile matter on the macrosort page: it spans slices, so the
+            # group in front of the user often lives outside the current one.
+            self.task.reverify_group(self.group,
+                                    check=self.check,
+                                    ps=self.kwargs.get('ps'),
+                                    profile=self.kwargs.get('profile'))
+        self.program.sort_ui.attach_context_menu(w,
+                [(_("Reverify this group (‘{group}’)").format(group=self.group),
+                    reverify)])
     """buttons"""
     def labelbutton(self):
-        self.label=ui.Label(self, text=self._text,
+        self.label=self._display=ui.Label(self, text=self._text,
                     column=1, row=0, sticky='ew',
                     **self.buttonkwargs()
                     )
@@ -568,7 +596,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             return
         self.player=sound.SoundFilePlayer(self._filenameURL,self.task.pyaudio,
                                             self.program.settings.soundsettings)
-        b=ui.Button(self, text=self._text,
+        b=self._display=ui.Button(self, text=self._text,
                     cmd=self.player.play,
                     column=1, row=0,
                     sticky='nesw',
@@ -593,7 +621,8 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             cmd=self.selectnremove
         else:
             cmd=self.selectnsortnext
-        b=self.button_select=ui.Button(self, text=self._text, cmd=cmd,
+        b=self.button_select=self._display=ui.Button(self, text=self._text,
+                    cmd=cmd,
                     column=1, row=0, sticky='ew',
                     **self.buttonkwargs())
         if hasattr(self,'_illustration'):
@@ -804,6 +833,10 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         self.program=self.task.program
         self.group=kwargs.pop('group')
         # self.check=kwargs.get('check')
+        # Consumed HERE, not passed down: on a letter page the reverifiable group
+        # is the LETTER (reverify_glyph), and leaving it in kwargs would also hang
+        # a sort-group menu on every member word button below.
+        self.reverifiable=kwargs.pop('reverifiable',False)
         log.info(_("Building SortGlyphGroupButtonFrame for {group}").format(group=self.group))
         # self.showtonegroup=kwargs.pop('showtonegroup',False)
         # self.alwaysrefreshable=kwargs.pop('alwaysrefreshable',False)
@@ -833,6 +866,12 @@ class SortGlyphGroupButtonFrame(ui.Frame,_GroupButtonFrame):
                                 font='readbig',
                                 borderwidth=5,
                                 width=5, col=0)
+        if self.reverifiable:
+            # Same move as SortGroupButtonFrame.maybe_reverify_menu, one level up:
+            # on the letter distinguish page the group in question is the letter.
+            self.program.sort_ui.attach_context_menu(self.glyph_label,
+                [(_("Reverify this letter (‘{glyph}’)").format(glyph=self.group),
+                    lambda: self.task.reverify_glyph(glyph=self.group))])
         self.grid_columnconfigure(0, weight=1, uniform="label")
         self.items=list()
         self.hasexample=False #make sure at least one of these has an example

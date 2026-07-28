@@ -942,7 +942,7 @@ class Sort(Categories):
         text=sense.formatted(self.analang, self.glosslangs, self.ftype, frame)
         return self.sort_ui.build_present_sense(
             self.ui.runwindow.frame, self.buttonframe, text, sense)
-    def unverify_profile(self,sense):
+    def unverify_profile(self,sense,advance=True):
         """'Not {profile}' — DEFER, don't disrupt. Clear the word's CONFIRMED
         profile DATA (plain …-x-cvprofile) and its profile sort-group annotation
         so it leaves this profile and gets re-profiled later. Then:
@@ -952,7 +952,12 @@ class Sort(Categories):
           - re-arm the offer (clear _offered_profile_setup) so the gate fires once
             for this freshly unsorted word.
         Crucially this launches NOTHING: the current sort-verify-join continues;
-        the syllable task only opens later, if the user picks 'sort' at the offer."""
+        the syllable task only opens later, if the user picks 'sort' at the offer.
+
+        advance=False for callers that are NOT mid-sort (the verify page's
+        context menu): _notprofile_advance is consumed by sortselected, so a
+        flag set from the verify page would sit there and swallow the next
+        sort's first real selection."""
         ftype=self.program.params.ftype()
         sense.cvprofilevalue(ftype, False)                       # clear confirmed data
         sense.annotationvaluebyftypelang(ftype, self.analang, ftype, '') # clear group
@@ -985,7 +990,8 @@ class Sort(Categories):
         except Exception as e:
             log.info("unverify_profile tosort-drop skipped: %s", e)
         self._offered_profile_setup=False  # re-arm the offer for this new word
-        self._notprofile_advance=True      # tell sortselected to advance, not Exit
+        if advance:
+            self._notprofile_advance=True  # tell sortselected to advance, not Exit
         self.program.status_dirty=True     # current slice rebuilds (minus this word)
         self.maybewrite()
     def rebuild_syllable_profile_done(self):
@@ -1273,9 +1279,19 @@ class Sort(Categories):
     def re_presort(self):
         self.program.status.presorted(False)
         self.runcheck()
-    def reverify_glyph(self):
+    def reverify_glyph(self,glyph=None):
+        """Unverify a letter so the next pass brings it back up to verify.
+
+        glyph names WHICH letter — the letter distinguish page's context menu
+        passes the one the user right-clicked (Kent 2026-07-28). Without it the
+        current letter is used, and the user is asked only when that isn't a
+        verified one. (The no-argument path also used to raise
+        UnboundLocalError: glyph was bound only inside the ask branch, so
+        reverifying the CURRENT letter — the normal case — never worked.)"""
         done=self.program.alphabet.glyphdict()[self.cvt]
-        if not self.program.alphabet.glyph() in self.program.alphabet.glyphdict()[self.cvt]:
+        if glyph is None:
+            glyph=self.program.alphabet.glyph()
+        if glyph not in done:
             w=self.getglyph(toverify=True) #assumes system cvt
             w.wait_window(w)
             glyph=self.program.alphabet.glyph()
@@ -1283,9 +1299,47 @@ class Sort(Categories):
                 log.info(_("I asked for a glyph, but didn’t get one ")+''
                         f"({glyph} not in {done}).")
                 return
+        log.info("Reverifying letter ‘%s’, at user request.",glyph)
         self.program.alphabet.mark_glyph_not_done(glyph)
+        # Make it the CURRENT letter too: maybesort verifies the current glyph
+        # when it's still to-verify, else the first of the list — so without
+        # this a right-click on one letter could send the user to another.
+        self.program.alphabet.glyph(glyph)
+        self.program.alphabet.save_settings()
         # done.remove(group)
         # self.program.status.verified(done)
+        self.reverifying=True
+        self.runcheck()
+    def reverify_group(self,group,check=None,ps=None,profile=None):
+        """Unverify a NAMED group and re-run the check, so it comes back up to
+        verify. The context-menu counterpart of reverify() (which works on
+        whatever group is current, asking when that isn't a verified one).
+
+        check/ps/profile locate the group when it isn't in the current slice:
+        the macrosort page spans ps and profile, so the group in front of the
+        user often lives elsewhere, and unverifying it in the current node
+        would hit an unrelated group of the same name. Omitted parts mean
+        'current' — which is all the distinguish page needs, since its pair is
+        drawn from this slice's verified groups."""
+        if ps and ps!=self.program.slices.ps():
+            self.program.slices.ps(ps) #also makes profile ok, renews senses
+        if profile and profile!=self.program.slices.profile():
+            self.program.slices.profile(profile)
+        if check and check!=self.program.params.check():
+            self.program.params.check(check)
+        self.program.status.group(group)
+        check=self.program.params.check()
+        log.info("Reverifying group at user request (context menu): "
+                "{check}-{group} (ps={ps}, profile={profile})".format(
+                    check=check,group=group,ps=self.program.slices.ps(),
+                    profile=self.program.slices.profile()))
+        done=self.program.status.verified()
+        if group in done:
+            done.remove(group)
+            self.program.status.verified(done)
+        else:
+            log.info("Group ‘{group}’ wasn’t marked verified; re-running the "
+                    "check anyway.".format(group=group))
         self.reverifying=True
         self.runcheck()
     def reverify(self):
@@ -1567,6 +1621,25 @@ class Sort(Categories):
                 self.verifycanary.destroy()
             self.maybewrite()
             bf.destroy()
+        def notprofile():
+            """Right-click → 'Not {profile}': this word doesn't belong to this CV
+            profile at all. The sort page has had this escape hatch as a button
+            since 1.4.2; the verify page had none, so a mis-profiled word could
+            only be un-SORTED here (left click), which sends it straight back to
+            be sorted into the same wrong profile (Kent 2026-07-28).
+
+            Same call as the sort-page button, minus the advance flag (nothing is
+            mid-sort here), then take the word off THIS page exactly as the
+            syllable-misfit path above does."""
+            log.info("Not-profile (verify page) for %s", sense.id)
+            self.unverify_profile(sense,advance=False)
+            if sense in self.currentsortitems:
+                self.currentsortitems.remove(sense)
+            # Under two words there's no group left to verify as a group; end the
+            # page (the OK semantics verify() already applies at one item).
+            if len(self.currentsortitems) < 2:
+                self.verifycanary.destroy()
+            (bf or b).destroy()
         if 'font' not in kwargs:
             kwargs['font']='read'
         if 'anchor' not in kwargs:
@@ -1579,8 +1652,19 @@ class Sort(Categories):
             ipady=0
         else:
             ipady=15*self.theme.scale
+        # Gated like the sort-page button (sort_buttons.getanotherskip): there must
+        # be a CV profile to leave, and cvt 'S' is excluded because syllable
+        # sorting has its own misfit machinery (_prep_verify above, and
+        # syllable_escape_window). No macrosort test is needed — that page builds
+        # its rows from SortButtonFrame (groups), never from here (words).
+        profile=self.program.slices.profile()
+        menu_items=[]
+        if profile and self.cvt!='S':
+            menu_items.append((_("Not {profile}").format(profile=profile),
+                                notprofile))
         b, bf = self.sort_ui.build_verify_button(
-            parent, text, sense, label, notok, row, column, ipady, **kwargs)
+            parent, text, sense, label, notok, row, column, ipady,
+            menu_items=menu_items, **kwargs)
     def reset_selected(self):
         for k in self.groupvars:
             self.groupvars[k].set(False)

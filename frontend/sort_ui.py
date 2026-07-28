@@ -149,6 +149,117 @@ class SortPresenter(PresenterBase):
     def progressbar(self, parent, **kwargs):
         return ui.Progressbar(parent, **kwargs)
 
+    def attach_context_menu(self, widget, items):
+        """Right-click menu on ONE widget (a word on the verify page, a group on
+        the distinguish/macrosort pages). ``items`` is [(label, cmd), …]; falsy
+        entries are skipped so callers can assemble the list conditionally, and
+        an empty list attaches nothing at all.
+
+        The menu is built on FIRST popup, not here: these pages carry hundreds
+        of widgets, and a Tk menu per word up front costs real widget memory for
+        an affordance most words never use. Deliberately NOT ui.ContextMenu —
+        that one binds the whole window through parent.setcontext(), while these
+        menus are per-item and each needs its own sense/group."""
+        items=[i for i in items if i]
+        if not items:
+            return
+        held={}   # {'menu': the lazily-built ui.Menu}
+        def popup(event=None):
+            try:
+                self.dismiss_context_menu() # never two posted at once
+                m=held.get('menu')
+                if m is None or not m.winfo_exists():
+                    m=held['menu']=ui.Menu(widget._root(), tearoff=0)
+                    for label, cmd in items:
+                        m.add_command(label=label,
+                                      command=self._context_invoke(cmd))
+                self._open_context_menu=m
+                self._context_post_serial=getattr(event,'serial',None)
+                m.tk_popup(event.x_root, event.y_root)
+                # NO grab_release() here. The grab tk_popup takes IS what makes a
+                # click anywhere — on the menu or off it — put the menu away;
+                # releasing it immediately (as ui.ContextMenu does, "don't do Tk
+                # redundant grab") leaves the menu posted until an item is picked
+                # (Kent 2026-07-28: "these can't just stick around"). tk_popup
+                # saves and restores any grab it displaces, so this doesn't
+                # fight the app's modal waits.
+            except Exception as e:
+                # A context menu is a convenience: never take the page down
+                # with it (a destroyed widget mid-list is the likely cause).
+                log.info("context menu failed: %s", e)
+        def gone(event=None):
+            """The word (or group) this menu belongs to was destroyed — the page
+            advanced, or the action the menu itself offered removed the row — so
+            the menu goes with it. A menu whose subject is gone would act on a
+            dead sense, and it isn't parented to the widget (it hangs off the
+            root, which is what lets it post over the page), so nothing else
+            reaps it. Mostly redundant with the click dismissal above, per Kent
+            2026-07-28 — but not when the row is destroyed by code."""
+            m=held.pop('menu', None)
+            if m is None:
+                return
+            if m is getattr(self, '_open_context_menu', None):
+                self._open_context_menu=None
+                self._context_post_serial=None
+            try:
+                if m.winfo_exists():
+                    m.unpost()
+                    m.grab_release()
+                    m.destroy()
+            except Exception as e:
+                log.info("context menu teardown failed: %s", e)
+        # add='+' so this never displaces a binding the widget already has
+        # (the play button's praat open, the glyph frame's prev_item).
+        widget.bind('<Button-3>', popup, add='+')
+        widget.bind('<Destroy>', gone, add='+')
+        try:
+            if widget._root().tk.call('tk','windowingsystem')=='aqua':
+                widget.bind('<Control-Button-1>', popup, add='+') # no Button-3
+        except Exception as e:
+            log.info("context menu aqua bind skipped: %s", e)
+        # Fallback dismissal: if the grab above isn't honoured (this box's
+        # XWayland does displace grabs), a click that reaches the WINDOW still
+        # clears the menu. Bound once per toplevel — one binding per word would
+        # be hundreds — and it dismisses whichever menu is open, not this one.
+        try:
+            top=widget.winfo_toplevel()
+            if not getattr(top,'_azt_ctx_dismiss_bound',False):
+                top.bind('<Button>', self.dismiss_context_menu, add='+')
+                top._azt_ctx_dismiss_bound=True
+        except Exception as e:
+            log.info("context menu dismiss bind skipped: %s", e)
+
+    def _context_invoke(self, cmd):
+        """Wrap a menu command so choosing it also forgets the menu (Tk unposts
+        it for us, but the handle must not outlive the click — the command may
+        tear the whole page down)."""
+        def run():
+            self.dismiss_context_menu()
+            cmd()
+        return run
+
+    def dismiss_context_menu(self, event=None):
+        """Put away any posted per-item context menu. Safe to call when none is
+        open (the toplevel <Button> fallback calls it on EVERY click)."""
+        m=getattr(self, '_open_context_menu', None)
+        if m is None:
+            return
+        # Widget bindings fire before the toplevel's, so the very right-click
+        # that posted the menu would otherwise arrive here and unpost it again
+        # immediately. Same event serial = same click; leave it alone.
+        if (event is not None and getattr(event, 'serial', None) is not None
+                and getattr(event, 'serial', None)
+                    == getattr(self, '_context_post_serial', None)):
+            return
+        self._open_context_menu=None
+        self._context_post_serial=None
+        try:
+            if m.winfo_exists():
+                m.unpost()
+                m.grab_release() # hand input back to the page
+        except Exception as e:
+            log.info("context menu dismiss failed: %s", e)
+
     def set_sense_illustration(self, sense):
         _t0=time.perf_counter() # DIAG (1.3.13): see build_verify_layout log
         try:
@@ -277,8 +388,12 @@ class SortPresenter(PresenterBase):
         sortitem = ui.Frame(runwindow_frame, border=True,
                            column=1, row=1, sticky='nw')
         ui.Label(sortitem, text='', width=5, sticky='')
+        # reverifiable: the group presented for macrosorting may be the wrong
+        # group to be giving a letter to at all — right-click reverifies it
+        # first (Kent 2026-07-28), instead of hunting the Advanced menu.
         tosort_frame = SortGroupButtonFrame(sortitem, sort_obj,
                                            show_check=True, label=True,
+                                           reverifiable=True,
                                            sticky='', **kwargs)
         if tosort_frame.hasexample:
             buttonframe.sortitem = sortitem
@@ -651,8 +766,12 @@ class SortPresenter(PresenterBase):
         return result['value']
 
     def build_verify_button(self, parent, text, sense, is_label,
-                           notok_fn, row, column, ipady, **kwargs):
-        """Build a single verify button or label. Returns (widget, frame_or_None)."""
+                           notok_fn, row, column, ipady, menu_items=None,
+                           **kwargs):
+        """Build a single verify button or label. Returns (widget, frame_or_None).
+        menu_items (see attach_context_menu) hangs a right-click menu on the
+        word — the verify page's escape hatches, which the left click can't
+        carry (it already means "this one is different")."""
         # A non-breaking space (\xa0) in the text — e.g. an untranslated "?\xa0?"
         # gloss — can blank the WHOLE label on this Tk/font, leaving the row
         # showing only its illustration. Normalise it to a plain space for
@@ -673,6 +792,8 @@ class SortPresenter(PresenterBase):
         self._wid_t+=time.perf_counter()-_w
         b['image'] = self.set_sense_illustration(sense)
         b['compound'] = 'left'
+        if menu_items:
+            self.attach_context_menu(b, menu_items)
         return b, bf
 
     def build_join_layout(self, runwindow, title, page_icon, img_mod):
@@ -713,9 +834,14 @@ class SortPresenter(PresenterBase):
             if group in buttons:
                 buttons[group].grid(row=r)
             else:
+                # reverifiable: 'Same or different?' is unanswerable when one of
+                # the two groups is itself wrong — right-click reverifies THAT
+                # group (Kent 2026-07-28). Cached frames (the `if` above) keep
+                # the menu they were built with.
                 buttons[group] = buttonclass(pair_frame, sort_obj,
                                             group=group, showtonegroup=True,
-                                            label=True, row=r, sticky='w')
+                                            label=True, reverifiable=True,
+                                            row=r, sticky='w')
             r = 1
         self.show_default_members([buttons[g] for g in current_pair])
         canary = ui.Label(pair_frame, text='', col=1)
