@@ -20,6 +20,21 @@
 - make showoriginalorthographyinreports a UI switch
 
 # Unreleased (pending live verify; version bump on confirmation)
+- NEW (the chart says WHY a letter is blank). Opening the alphabet chart on a
+  half-filled chart gave no way to tell whether the letter had no verified words,
+  no picture, or a picture that failed — it took a code read to answer. One log
+  line per EMPTY glyph now names the gate it failed, via
+  `Alphabet.chart_example_gap_reason`: no glyph members / members but no verified
+  words / verified words but none pictured on this machine (pointing at Advanced ▸
+  Fill CAWL Images) / pictured words available but the ranking bailed. Only the
+  empty glyphs are examined, once per open.
+  - Separately surfaced by the same line: `init_chart_data` re-loads each chosen
+    example's image and, when it can't load or scale, clears `exids`/`exobjs` for
+    that glyph — which silently discards a SAVED user choice, not just a proposal.
+    A 0-byte file gets through the proposal's `file.exists()` and dies here (cf.
+    the zero-byte CAWL image item), so a letter reads blank while its words are
+    still selectable. Now logged as "the example for this letter was CLEARED, even
+    if you had chosen it".
 - FIX ("Which profile is correct?" showed neither profile, and neither option
   could be clicked). The syllable join-direction chooser
   (`choose_join_direction`) built each option as

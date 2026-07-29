@@ -463,6 +463,39 @@ class Alphabet():
         gd=self.glyphdict()
         return propose_page_sequence(gd.get('V',()),gd.get('C',()),
                                      self.glyph_frequency())
+    def chart_example_gap_reason(self,glyph):
+        """Why has this glyph no proposed example? Names the gate
+        propose_comparison_examples stopped at, for the chart-open diagnostic:
+          - no glyph members (nothing macrosorted into this letter yet);
+          - members but no VERIFIED words (senses_for_glyph is verification-keyed,
+            not orthography-keyed — a word merely spelled with the letter doesn't
+            count);
+          - verified words but none with a local picture (proposals are
+            pictured-only, local_only — no CAWL/GitHub fetch here);
+          - pictured words ARE available, which means the ranking itself bailed
+            (no C/V class on the members, or getcvverificationkeys raised) — worth
+            seeing, since it shouldn't happen."""
+        g=str(glyph)
+        members=self.glyph_members().get(g,set())
+        if not members:
+            return "no glyph members (nothing sorted into this letter yet)"
+        senses=self.senses_for_glyph(g)
+        if not senses:
+            return ("{n} member group(s), but no verified words in them"
+                    ).format(n=len(members))
+        pictured=0
+        for s in senses:
+            try:
+                uri=s.illustrationURI(local_only=True)
+            except Exception:
+                continue
+            if uri and file.exists(uri):
+                pictured+=1
+        if not pictured:
+            return ("{n} verified word(s), none with a picture on this machine "
+                    "(try Advanced ▸ Fill CAWL Images)").format(n=len(senses))
+        return ("{p} of {n} verified word(s) ARE pictured — the ranking bailed; "
+                "check the class of its members").format(p=pictured,n=len(senses))
     def propose_chart_examples(self,glyphs,existing=None):
         """Fill-only-empties batch: {glyph: sense_id} proposals for the glyphs
         in `glyphs` whose `existing` value is falsy. Never returns entries for
@@ -846,6 +879,7 @@ class AlphabetChartData:
                                     if self.exids[g] in self.db.sensedict
                                     else None)
                            for g in self.exids}
+            blanked = {} # glyph → the image URI that wouldn't load (diagnostic)
             for glyph, sense in [(k, v) for k, v in self.exobjs.items() if v is not None]:
                 di = sense.illustrationURI(local_only=True) #images are data
                 if file.exists(di):
@@ -856,11 +890,33 @@ class AlphabetChartData:
                 if hasattr(sense, 'image') and sense.image:
                     sense.image.scale(1, pixels=100, scaleto='height')
                 else:
+                    # NOTE this drops a SAVED user choice too, not just a
+                    # proposal — see the log line below.
+                    blanked[str(glyph)] = str(di)
                     self.exobjs[str(glyph)] = None
                     self.exids[str(glyph)] = None
         else:
+            blanked = {}
             self.exids = {str(g): None for g in self.order}
             self.exobjs = {str(g): None for g in self.order}
+        # WHY IS THIS LETTER BLANK? (Kent 2026-07-29) One line per empty glyph,
+        # naming which of the gates it failed, so a half-filled chart is
+        # answerable from the log instead of a code read. Cheap: only the EMPTY
+        # glyphs are examined, once per chart open.
+        try:
+            for g in [str(i) for i in self.order]:
+                if (self.exids or {}).get(g):
+                    continue
+                if g in blanked:
+                    log.info("chart: ‘%s’ blank — its picture (%s) exists but "
+                            "would not load (0-byte/corrupt?); the example for "
+                            "this letter was CLEARED, even if you had chosen it",
+                            g, blanked[g])
+                elif hasattr(self.program, 'alphabet'):
+                    log.info("chart: ‘%s’ has no example — %s", g,
+                            self.program.alphabet.chart_example_gap_reason(g))
+        except Exception as e:
+            log.info("chart blank-letter diagnostic skipped: %s", e)
         self.buttons = {}
         self.order_bits = {}
         self.show_bits = {}
