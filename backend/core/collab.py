@@ -533,6 +533,23 @@ class CollabSession:
             log.info("Not prompting: HEAD advanced by %s bot merge(s) "
                      "with no human commits.", cs.get('bot_count'))
             return 'benign'
+        if self._only_our_own_commits(cs):
+            # EVERY human commit in the range is OURS (Kent 2026-07-29: a
+            # machine updated that morning was asked to take a "team update"
+            # citing one change from that same machine). Our own save, committed
+            # by the daemon after our base was set, is a human commit like any
+            # other — so it latched, and the § 8b obl. 3a summary then politely
+            # named us as the author. There is nothing to reload: our in-memory
+            # tree IS that work. Adopt the new head, exactly as the bot-only
+            # branch does.
+            self.base_sha = head
+            if head_blob:
+                self.base_lift_blob = head_blob
+            log.info(_("Not prompting: HEAD advanced by {count} change(s), all "
+                       "written by us ({who}) — our own work, not the team’s."
+                       ).format(count=cs.get('count'),
+                                who=', '.join(cs.get('authors') or [])))
+            return 'benign'
         self.stale = True
         self._last_detected_head = head
         # msgid unchanged on purpose — the summary is appended OUTSIDE it,

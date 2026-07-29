@@ -19,7 +19,39 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
-# Unreleased (pending live verify; version bump on confirmation)
+# Unreleased
+- CHANGE (manual Update Forms updates what it can and STOPS, instead of kicking
+  the user into sorting). Advanced ▸ Update Forms aborted on the first blocker and
+  teleported: a group needing a sort sent the user into that sort
+  (`sort_on_group_by_item` "ends on runcheck"), and an unnamed letter opened the
+  naming page — so a menu item that asked for one thing took over the session, and
+  no form got updated at all. Those blockers are now REPORTED and the update runs
+  on everything ready, ending on a refreshed board. Safe word by word, which is
+  what makes reporting-instead-of-obeying legitimate:
+  `updateformtoannotations.do_not_do_these` skips any annotation value that
+  `isdigit()`, so a word still in an unnamed/placeholder group is left alone, and
+  `build_form_from_verified` only rebuilds fully-verified words.
+  - The two C/V-status checks still stop: an unnamed glyph that is neither
+    consonant nor vowel (or both) is broken data the annotation pass would be
+    working from.
+  - The first-blocker scan stops at the first group rather than listing them all:
+    `item_needs_sorting` calls `updatesortingstatus`, so walking every item would
+    churn slice state — and move the user's position — just to build a message.
+  - The AUTOMATIC path (maybesort's tail) still names letters and sorts as needed:
+    there the update is one step of a sequence, not a standalone request.
+
+# Version 1.13.0
+
+Minor, not a patch: new affordances (per-item context menus, `NotifyUser`, the
+class escape on the verify page) alongside the fixes.
+
+VERIFIED LIVE 2026-07-29 (Kent): the four sort/verify context menus; the CVVCV
+syllable-range fix; the C2V class escape on the profile verify page; the Trust
+primitives work ("seems good" — the ~10-of-17 C#=C slices still want a look).
+NOT yet field-verified, and first suspects if something looks off: the pixel-based
+font sizes + `setscale` mm handling (Windows), `NotifyUser`'s status window, the
+Update Forms completion, the chooser-button wrap width, and the alphabet-chart
+blank-letter diagnostic.
 - FIX (Update Forms bricked after finishing — it was racing its own teardown).
   Reported as "no `on_done` on the final drive_work", which was true but not the
   whole of it. In `maybesort`'s glyph tail the form update is *scheduled*, and the

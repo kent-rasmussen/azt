@@ -925,13 +925,30 @@ class Sort(Categories):
             log.info(f"{kwargs['group']} needs to distinguish (with {kwargs=})")
             return True
     def manual_form_update(self):
+        """Advanced ▸ Update Forms — a MANUAL nudge: update every form we can and
+        STOP. Never take the user somewhere else (Kent 2026-07-29: "I just ran
+        update forms manually, and it kicked me into sorting … it would be nice
+        (on manual nudge) to just update the forms we can, and stop").
+
+        It used to abort on the first blocker and TELEPORT: an item needing a sort
+        sent the user into that sort (`sort_on_group_by_item` "ends on runcheck")
+        and an unnamed letter opened the naming page. That is right for the
+        AUTOMATIC flow — maybesort's tail still does exactly that, because there
+        the update is one step of a sequence — and wrong for a menu item that asked
+        for one thing.
+
+        Doing the partial update is safe word by word, which is why the blockers
+        can be reported instead of obeyed: `updateformtoannotations.do_not_do_these`
+        skips any annotation value that `isdigit()`, so a word still sitting in an
+        unnamed/placeholder group is left alone, and `build_form_from_verified`
+        only rebuilds words whose segments are all verified."""
         default_glyphs=[k for k in self.program.alphabet.glyph_members() if k.isdigit()]
         cvts=[self.program.alphabet.cvt_of_glyph(i) for i in default_glyphs]
         #These shouldn't die on empty groups:
+        # The two C/V-status checks DO still stop: an unnamed glyph that is neither
+        # consonant nor vowel (or both) is broken data, and the annotation pass
+        # would be working from it.
         if max([len(i) for i in cvts]+[1]) > 1:
-            # These five are all "here's why Update Forms isn't running / what
-            # it's doing instead" — status, not decisions. They were modals in a
-            # flow the user triggers repeatedly (Kent 2026-07-29).
             NotifyUser(_("You have at least one unnamed glyph with ambiguous status as "
                         "Consonant or Vowel: {cvts}").format(cvts=cvts),
                         title=_("Not updating forms yet"))
@@ -941,32 +958,30 @@ class Sort(Categories):
                         "Consonant or Vowel: {cvts}").format(cvts=cvts),
                         title=_("Not updating forms yet"))
             return
-        #Iterate across what's there, and sort on first problem. Come back and 
-        # get the others later
+        # Blockers from here on are REPORTED, not obeyed. Stop at the FIRST group
+        # needing a sort rather than enumerating them all: item_needs_sorting calls
+        # updatesortingstatus, so walking every item would churn slice state (and
+        # move the user's position) for a message.
+        blocked=None
         for glyph in default_glyphs:
             for item in self.program.alphabet.glyph_members()[glyph]:
                 if self.item_needs_sorting(item):
-                    NotifyUser(_("Item {i} needs sorting (check log for details), so "
-                                "not updating forms yet. "
-                                "\nFinish sorting, then ask again.").format(i=item),
-                        title=_("Not updating forms yet"))
-                    self.sort_on_group_by_item(item) #this ends on runcheck
-                    return
-        for i in default_glyphs:
-            cvt=list(self.program.alphabet.cvt_of_glyph(i))[0] #should be exactly one already
-        # cvt={next(iter(i)) for i in cvts}
-        # if default_glyphs:
-            NotifyUser(_("You have {cvts} glyphs that need names still "
-                        "({default_glyphs})!"
-                        "\nGoing to start with {i} ({cvt})"
-                            ).format(cvts=cvts,cvt=cvt,
-                                    default_glyphs=default_glyphs,
-                                    i=i),
-                            title=_("Naming letters first"))
-            if self.cvt != cvt:
-                self.program.params.cvt(cvt)
-            self.name_new_glyphs() #keep cvt the same
-            return
+                    blocked=item
+                    break
+            if blocked:
+                break
+        if blocked:
+            NotifyUser(_("At least one group still needs sorting ({i}), so its "
+                        "words are left as they are. Everything ready is being "
+                        "updated now.").format(i=blocked),
+                        title=_("Updating what’s ready"))
+        if default_glyphs:
+            NotifyUser(_("{n} letter(s) still need names ({glyphs}), so their "
+                        "words are left as they are. Everything ready is being "
+                        "updated now; name those letters to finish the job."
+                        ).format(n=len(default_glyphs),
+                                glyphs=', '.join(sorted(default_glyphs))),
+                        title=_("Updating what’s ready"))
         w=self._get_safe_window()
         def after_annotations():
             error=self.update_annotations_errors
