@@ -24,6 +24,7 @@ from io_put import lift
 log=logsetup.getlog(__name__)
 
 from utilities.error_handler import notify_error as ErrorNotice
+from utilities.error_handler import notify_user as NotifyUser
 
 from utilities.i18n import _
 from utilities import rx
@@ -68,7 +69,13 @@ class Senses(object):
                  _safe(lambda: rw.iswaiting()) if rw else None,
                  _safe(lambda: rw.winfo_viewable()) if rw else None)
         if not self.program.Demo: #Should anyone see this?
-            ErrorNotice(text=text,title=_("Not Done!"),parent=self,wait=True)
+            # NotifyUser (Kent 2026-07-29). This was a BLOCKING modal on a window
+            # that is frequently already destroyed — which is why the guards
+            # above exist at all: cancel_drive_work so a streaming build
+            # wouldn't starve its event loop and leave it black, and _safe()
+            # around every Tk call on the dead run window. A message that only
+            # says "you didn't finish" never needed to seize the UI to say it.
+            NotifyUser(text=text,title=_("Not Done!"))
         # self.ui.deiconify()
     def checktosort(self):
         return self.program.status.checktosort() #bool tosort on cur check

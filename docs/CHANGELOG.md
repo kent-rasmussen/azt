@@ -20,6 +20,76 @@
 - make showoriginalorthographyinreports a UI switch
 
 # Unreleased (pending live verify; version bump on confirmation)
+- NEW ("This word doesn’t belong in this C2V profile at all…" on the syllable
+  PROFILE verify page). The SORT page has offered the class escape — the four
+  one-axis moves (flip word-initial, flip word-final, Shorter, Longer, each
+  naming its destination class in prose) — but the verify page that follows it
+  could not say the same thing, though that is exactly where a misfiled word gets
+  noticed. Right-click a word there now offers it.
+  - The window, the moves and the data write moved OUT of
+    `SortButtonFrame.syllable_escape_window` into `sort_ui.ask_class_escape` +
+    `Sort.escape_profile_class`, so the two pages share one implementation
+    instead of drifting (which is how they came to differ in the first place).
+    Each page still supplies the two page-specific parts: WHICH word, and what
+    advancing means — the sort page destroys its sort item and sets
+    `_notprofile_advance`; the verify page drops the row and its
+    `currentsortitems` entry, and does NOT set that flag (nothing is mid-sort).
+  - The blanket `cvt != 'S'` exclusion on verify-page context menus is gone,
+    replaced by a per-check rule: the PROFILE check gets the class escape; the
+    PREP checks (#C/C#/syls) get nothing and need nothing — #C/C# are closed
+    binaries whose only wrong answer is the flip a left click already performs,
+    and `syls` has its own longer/shorter chooser (Kent 2026-07-29).
+- NEW (`NotifyUser`: one status window, appended, instead of a Toplevel per
+  message). `ErrorNotice` is unchanged and still used wherever a notice SHOULD
+  block — boot warnings, decisions, hard failures. Everything merely worth saying
+  now goes to `frontend.status_window`, reached through the existing backend seam
+  (`utilities.error_handler.notify_user`, wired at startup beside
+  `notify_error`, with the same worker-thread marshaling). It accepts and ignores
+  ErrorNotice's `wait`/`parent`, so a site converts by changing only the name.
+  The window is created once per session, lazily; never touches its parent, never
+  sets `-topmost`, never grabs, never waits; is parented to the app ROOT so a
+  closing task can't take the session's messages with it; and messages grid at
+  DESCENDING rows so the newest is at the top with no re-layout and no fight with
+  the scroll position. If the user CLOSES it, the next message draws it again.
+  First offenders converted (Kent's list):
+  - "Done!" ×2 — syllable prep complete, and the end-of-profile/check "all groups
+    verified and distinct" that fires constantly and sat between the user and the
+    next piece of work (the very next line advances them to it);
+  - "Not Done!" (`notdonewarning`) — a blocking modal raised on a run window
+    that is usually ALREADY DESTROYED, which is why it carries
+    `cancel_drive_work` and a `_safe()` wrapper around every Tk call. Saying
+    "you didn't finish" never needed to seize the UI;
+  - Update Forms ×5 — every "why this isn't running / what it's doing instead"
+    stop in `manual_form_update`, each of them in a flow the user re-triggers.
+- FIX (oversized/early-wrapping text, worst on Windows: fonts were sized in
+  POINTS while every layout number is PIXELS). `Theme.setfonts` built each font
+  with a positive Tk `size`, which Tk reads as **points** and converts via
+  `tk scaling` — the display's pixels-per-point: ~1.33 at 96 dpi on Linux, but
+  1.67 / 2.0 on a Windows machine at 125% / 150% display scaling. So identical
+  code rendered text up to 50% larger there, while `wraplength`, image pixels,
+  `ipadx/ipady` and widths — all raw pixels — got no such multiplier. Text
+  outgrew the space computed for it: labels wrapping after a few letters inside
+  buttons stretched to their full share of the window. Sizes are now NEGATIVE,
+  which Tk reads as pixels on every platform, so `theme.scale` is the one size
+  knob (it already grows with resolution). The 4/3 factor preserves today's
+  Linux appearance — 18pt at 96 dpi is 24px.
+- FIX (one bad screen-millimetre reading could rescale the whole UI). `setscale`
+  compared the machine to a 1920×1080 / 508×286mm reference across four ratios —
+  two pixel, two millimetre — and kept whichever deviated MOST from 1, so a
+  single outlier dominated. Windows is where that bites: it derives screen mm
+  from `GetDeviceCaps`, often synthesised from an assumed 96 dpi and sometimes
+  physical, so the mm and pixel ratios can disagree wildly on one machine — and
+  `scale` multiplies fonts AND images. The mm are now ADVISORY: they're used only
+  if the DPI they imply is plausible (60-500), else the scale comes from pixels
+  alone, logged as `mm trusted: False`. The result is clamped to 0.5-3.0 (logged
+  as an error if it clamps), since nothing wants a quarter-size or triple-size UI.
+- NEW (a missing Charis SIL says so at boot). Tk substitutes a missing family
+  SILENTLY and the substitute's metrics differ, so text wraps and buttons size
+  unlike every other machine — which reads as a layout bug, not a missing font.
+  `setfonts` now checks what actually resolved (`Font.actual('family')`) and
+  records it; `App.warn_font_problems` raises a blocking notice at boot naming
+  the wanted family and the substitute, alongside the existing degraded-sound and
+  failed-setup warnings.
 - FIX (vowel-final words parked in C#=C, and whole prep slices stuck unverified).
   Reported: after Trust, ~10 of 17 slices of C#=C words stayed unverified, holding
   words that end in plain vowels. One population, two symptoms:

@@ -145,60 +145,27 @@ class SortButtonFrame(ui.ScrollingFrame):
                         anchor='w', relief='flat', font='instructions',
                         column=0, row=0, sticky='ew')
     def syllable_escape_window(self):
-        """The word in front of the user is in the wrong profile class. Offer the
-        four one-axis moves (flip word-initial / flip word-final / Shorter /
-        Longer); each re-buckets the word into a fully-named destination cell and
-        advances. See docs/sort_syllables_design.md."""
-        params=self.program.params
-        ftype=self.task.ftype
-        analang=self.program.db.analang
+        """'This word doesn’t belong in this {cls} profile at all…' on the SORT
+        page. The window, the four one-axis moves and the data write now live in
+        the presenter + the task (sort_ui.ask_class_escape →
+        task.escape_profile_class), because the profile VERIFY page offers the
+        SAME escape as of 2026-07-29 and two copies would drift. What stays here is
+        the only part that is page-specific: WHICH word, and what advancing means.
+        See docs/sort_syllables_design.md."""
         senses=self.task.itemstosort()
         if not senses:
             return
         sense=senses[0]
-        beg=sense.annotationvaluebyftypelang(ftype,analang,'#C')
-        end=sense.annotationvaluebyftypelang(ftype,analang,'C#')
-        syls=sense.annotationvaluebyftypelang(ftype,analang,'syls')
-        try:
-            n=int(syls)
-        except (TypeError,ValueError):
-            n=1
-        flip=lambda v:'V' if v=='C' else 'C'
-        # (button label = destination profile-class prose, primitive check, new value)
-        moves=[(params.profile_class_prose(flip(beg),syls,end),'#C',flip(beg)),
-                (params.profile_class_prose(beg,syls,flip(end)),'C#',flip(end))]
-        if n>1:
-            moves.append((_("Shorter — ")+params.profile_class_prose(beg,str(n-1),end),
-                        'syls',str(n-1)))
-        moves.append((_("Longer — ")+params.profile_class_prose(beg,str(n+1),end),
-                        'syls',str(n+1)))
-        w=ui.Window(self, title=_("Where does this word belong?"), exit=False)
-        def apply(check,value):
-            # flip one primitive → the word's profile class changes → it leaves this
-            # slice. Persist immediately (power-fault tolerant), then ADVANCE within
-            # the current class (don't kick the user out): drop the word from the
-            # live to-sort list and set _notprofile_advance so sortselected advances
-            # instead of reading the now-empty selection as Exit (which fired the
-            # spurious 'not done' warning). The word re-derives into its new class,
-            # unsorted, to be handled there later. Mirrors 'Not {profile}'.
-            sense.annotationvaluebyftypelang(ftype,analang,check,value)
-            try:
-                tosort=self.program.status.sensestosort()
-                if tosort and sense in tosort:
-                    tosort.remove(sense)
-            except Exception as e:
-                log.info("escape tosort-drop skipped: %s", e)
+        def advance():
+            # The word is already out of the live to-sort list, so tell
+            # sortselected to ADVANCE rather than read the now-empty selection as
+            # Exit (which fired the spurious 'not done' warning), then destroy the
+            # item to end the sort wait. Mirrors 'Not {profile}'.
             self.task._notprofile_advance=True
-            self.program.status_dirty=True   # current slice rebuilds (minus this word)
-            self.task.maybewrite()
-            w.destroy()
             if getattr(self,'sortitem',None):
-                self.sortitem.destroy()  # advance to the next word
-        for r,(label,check,value) in enumerate(moves):
-            ui.Button(w.frame, text=label, cmd=lambda c=check,v=value:apply(c,v),
-                        anchor='w', font='instructions', row=r, column=0, sticky='ew')
-        ui.Button(w.frame, text=_("Cancel"), cmd=w.destroy,
-                    anchor='c', font='instructions', row=len(moves), column=0, sticky='ew')
+                self.sortitem.destroy()
+        return self.program.sort_ui.ask_class_escape(self,self.task,sense,
+                                                    on_applied=advance)
     def pick_syllable_profile(self):
         """'Other {profile class} profile' — page 1. Offer a short, sane list of
         NEW legal profiles for this class (generated simplest-first, excluding the

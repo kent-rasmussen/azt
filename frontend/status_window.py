@@ -1,0 +1,115 @@
+# coding=UTF-8
+"""The ONE status window (Kent 2026-07-29).
+
+`notify_user(text)` APPENDS a message to a single window for the whole session,
+instead of building a new Toplevel per message the way `ErrorNotice` does.
+`ErrorNotice` stays exactly as it is for the notices that SHOULD block —
+boot warnings, decisions, hard failures. Everything merely worth saying comes
+here.
+
+Why appending rather than a new window each time: every `ErrorNotice` is a fresh
+Toplevel that **withdraws its parent**, builds, sets `-topmost`, deiconifies,
+runs a synchronous `update_idletasks()`, optionally `wait_window()`s, then
+deiconifies the parent again. That withdraw/deiconify cycle around a synchronous
+paint is what costs ~a second per message on a field machine, and under XWayland
+it is the shape that wedges. So this window:
+
+  - is created ONCE per session, lazily, on the first message;
+  - never touches the parent window;
+  - never sets `-topmost`, never grabs, never waits;
+  - is parented to the app ROOT, not to a task — so it outlives the task that
+    happened to speak first, instead of dying with it and being rebuilt.
+
+The one exception Kent named: if the window has been KILLED (the user closed
+it), the next message may draw it again — and that one becomes the live one.
+"""
+from utilities.i18n import _
+from utilities import logsetup
+log = logsetup.getlog(__name__)
+from frontend import ui
+
+_window = None  # the ONE status window for this session (may be dead)
+
+
+class StatusWindow(ui.Window):
+    """Append-only message list, NEWEST FIRST.
+
+    Newest-first is done by gridding each message at a DESCENDING row number
+    (empty rows collapse to nothing in Tk), so the message that just arrived is
+    at the top of the content and visible with no scrolling — without re-laying
+    out the messages already there, and without fighting the scroll canvas for
+    its position. That keeps the per-message cost to one Label."""
+    FIRST_ROW = 9999      # counts DOWN from here; also the message cap
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent, title=_("Messages"), exit=False,
+                        withdrawn=True)
+        if hasattr(self, 'theme'):
+            self['background'] = self.theme.background
+        self.scroll = ui.ScrollingFrame(self.frame, row=0, column=0,
+                                        sticky='nsew')
+        self.frame.grid_rowconfigure(0, weight=1)
+        self.frame.grid_columnconfigure(0, weight=1)
+        ui.Button(self.frame, text=_("Close"), cmd=self.on_quit,
+                 font='instructions', row=1, column=0, sticky='e')
+        self._row = self.FIRST_ROW
+        self.deiconify() # once, for the first message — not per message
+    def add(self, text, title=None):
+        """Append one message. Cheap by design: one Label, one scroll reflow."""
+        if self._row <= 1:
+            return # cap reached; the log has everything anyway
+        line = '{}: {}'.format(title, text) if title else str(text)
+        self._row -= 1
+        l = ui.Label(self.scroll.content, text=line, anchor='w',
+                    row=self._row, column=0, sticky='ew')
+        try:
+            l.wrap()
+        except Exception as e:
+            log.info("status message wrap failed: %s", e)
+        try:
+            # The DEBOUNCED reflow (after_idle), deliberately not reflow() —
+            # that one flushes synchronously (update() under Wayland), which is
+            # the very cost this window exists to avoid, and a status message can
+            # arrive mid-teardown of the window that produced it. The Label is
+            # already gridded and visible; only the scrollregion waits for idle.
+            self.scroll._configure_interior()
+        except Exception as e:
+            log.info("status window reflow failed: %s", e)
+        try:
+            # Minimised/withdrawn by the user, but not killed: show it again so
+            # the message isn't lost. Still no new window, and no -topmost.
+            if not self.winfo_viewable():
+                self.deiconify()
+        except Exception as e:
+            log.info("status window reveal failed: %s", e)
+
+
+def notify_user(text, title=None, **kwargs):
+    """Append a message to the one status window, creating it only when there
+    isn't a live one. Never blocks. `wait`/`parent` are accepted and IGNORED so
+    an ErrorNotice call site converts by changing only the name — in particular
+    `parent`: the status window belongs to the app root, so a task closing can't
+    take the session's messages with it."""
+    global _window
+    if not text:
+        return
+    log.info("NotifyUser: %s%s", (str(title) + ': ') if title else '', text)
+    try:
+        alive = _window is not None and _window.winfo_exists()
+    except Exception:
+        alive = False
+    if not alive:
+        root = ui.default_root()
+        if root is None:
+            return # no UI yet — the log line above is the whole record
+        try:
+            _window = StatusWindow(root)
+        except Exception as e:
+            log.error("Couldn’t open the status window (%s); message was: %s",
+                    e, text)
+            _window = None
+            return
+    try:
+        _window.add(text, title=title)
+    except Exception as e:
+        # A status message must never take down the work that produced it.
+        log.info("status window append failed: %s", e)

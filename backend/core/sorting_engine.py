@@ -21,6 +21,7 @@ import itertools
 log=logsetup.getlog(__name__)
 
 from utilities.error_handler import notify_error as ErrorNotice
+from utilities.error_handler import notify_user as NotifyUser
 
 from utilities.i18n import _
 from backend.core.lexicon import Tone
@@ -93,9 +94,9 @@ class SyllablePrep(object):
             if rw is not None and rw.winfo_exists() and not rw.exitFlag.istrue():
                 rw.on_quit()
             self.status.maybeboard()
-            ErrorNotice(text=_("All the syllable groups are checked! You can now "
+            NotifyUser(text=_("All the syllable groups are checked! You can now "
                         "sort the words by syllable profile."),
-                        title=_("Done!"),wait=False,parent=self)
+                        title=_("Done!"))
             return
         check,group,idx=nxt
         self.program.params.check(check)
@@ -853,7 +854,10 @@ class Sort(Categories):
                 #only on first two ifs:
         if fn:
             done+='\n'+_("Moving on to the next {next_thing}!").format(next_thing=next)
-        ErrorNotice(text=done,title=_("Done!"),wait=True,parent=self)
+        # NotifyUser, not a modal: this fires at the end of EVERY profile/check,
+        # and the very next line advances the user to the next one — so a window
+        # they must dismiss sat between them and the work each time.
+        NotifyUser(text=done,title=_("Done!"))
         self.status.maybeboard()
         if fn:
             fn() #only on first two ifs, calls runcheck w/resetsortbutton
@@ -901,37 +905,40 @@ class Sort(Categories):
         cvts=[self.program.alphabet.cvt_of_glyph(i) for i in default_glyphs]
         #These shouldn't die on empty groups:
         if max([len(i) for i in cvts]+[1]) > 1:
-            ErrorNotice(_("You have at least one unnamed glyph with ambiguous status as "
+            # These five are all "here's why Update Forms isn't running / what
+            # it's doing instead" — status, not decisions. They were modals in a
+            # flow the user triggers repeatedly (Kent 2026-07-29).
+            NotifyUser(_("You have at least one unnamed glyph with ambiguous status as "
                         "Consonant or Vowel: {cvts}").format(cvts=cvts),
-                        wait=True)
+                        title=_("Not updating forms yet"))
             return
         if min([len(i) for i in cvts]+[1]) < 1:
-            ErrorNotice(_("You have at least one unnamed glyph with NO status as "
+            NotifyUser(_("You have at least one unnamed glyph with NO status as "
                         "Consonant or Vowel: {cvts}").format(cvts=cvts),
-                        wait=True)
+                        title=_("Not updating forms yet"))
             return
         #Iterate across what's there, and sort on first problem. Come back and 
         # get the others later
         for glyph in default_glyphs:
             for item in self.program.alphabet.glyph_members()[glyph]:
                 if self.item_needs_sorting(item):
-                    ErrorNotice(_("Item {i} needs sorting (check log for details), so "
+                    NotifyUser(_("Item {i} needs sorting (check log for details), so "
                                 "not updating forms yet. "
                                 "\nFinish sorting, then ask again.").format(i=item),
-                        wait=True)
+                        title=_("Not updating forms yet"))
                     self.sort_on_group_by_item(item) #this ends on runcheck
                     return
         for i in default_glyphs:
             cvt=list(self.program.alphabet.cvt_of_glyph(i))[0] #should be exactly one already
         # cvt={next(iter(i)) for i in cvts}
         # if default_glyphs:
-            ErrorNotice(_("You have {cvts} glyphs that need names still "
+            NotifyUser(_("You have {cvts} glyphs that need names still "
                         "({default_glyphs})!"
                         "\nGoing to start with {i} ({cvt})"
                             ).format(cvts=cvts,cvt=cvt,
                                     default_glyphs=default_glyphs,
                                     i=i),
-                            wait=True)
+                            title=_("Naming letters first"))
             if self.cvt != cvt:
                 self.program.params.cvt(cvt)
             self.name_new_glyphs() #keep cvt the same
@@ -951,7 +958,7 @@ class Sort(Categories):
                 txt=_("Some groups can’t take their glyph name yet — another group in "
                       "the same slice is still using that name. We’ll try again later:")
                 txt+=f'\n{'\n'.join(error)}'
-                ErrorNotice(txt,wait=True)
+                NotifyUser(txt,title=_("Some letters renamed later"))
             else:
                 log.info(_("Glyph annotations updated OK"))
             log.info("Going to update forms now")
@@ -1042,6 +1049,27 @@ class Sort(Categories):
         if advance:
             self._notprofile_advance=True  # tell sortselected to advance, not Exit
         self.program.status_dirty=True     # current slice rebuilds (minus this word)
+        self.maybewrite()
+    def escape_profile_class(self,sense,check,value):
+        """"This word doesn’t belong in this {class} at all" — write ONE primitive
+        (#C, C# or syls), which re-buckets the word into a different, fully-named
+        profile class. The DATA half of the class escape; the UI half (the four
+        one-axis moves) is sort_ui.ask_class_escape.
+
+        Shared by the sort page and — since Kent 2026-07-29 — the syllable PROFILE
+        verify page, which had no way to say this at all. Persist immediately
+        (power-fault tolerant) and drop the word from the LIVE to-sort list so the
+        current page can't re-present it; what "advance" means on the page is the
+        caller's business, not ours."""
+        ftype=self.program.params.ftype()
+        sense.annotationvaluebyftypelang(ftype,self.analang,check,value)
+        try:
+            tosort=self.program.status.sensestosort()
+            if tosort and sense in tosort:
+                tosort.remove(sense)
+        except Exception as e:
+            log.info("class escape tosort-drop skipped: %s", e)
+        self.program.status_dirty=True # the current slice rebuilds without it
         self.maybewrite()
     def rebuild_syllable_profile_done(self):
         """Recompute the syllable PROFILE node's 'groups' + 'done' with the SAME
@@ -1670,6 +1698,23 @@ class Sort(Categories):
                 self.verifycanary.destroy()
             self.maybewrite()
             bf.destroy()
+        def class_escape():
+            """Right-click on the syllable PROFILE verify page → the same four
+            one-axis moves the sort page offers (flip word-initial / flip
+            word-final / Shorter / Longer). Kent 2026-07-29: the sort page could
+            say "this doesn't belong in C2V at all" and the verify page that
+            follows it could not, though that is where you see the misfit.
+            Advancing here means dropping the row, exactly as notprofile does —
+            NOT _notprofile_advance, since nothing is mid-sort on this page."""
+            def gone():
+                if sense in self.currentsortitems:
+                    self.currentsortitems.remove(sense)
+                # Under two words there's no group left to verify as a group.
+                if len(self.currentsortitems) < 2:
+                    self.verifycanary.destroy()
+                (bf or b).destroy()
+            self.sort_ui.ask_class_escape(self.ui.runwindow,self,sense,
+                                        on_applied=gone)
         def notprofile():
             """Right-click → 'Not {profile}': this word doesn't belong to this CV
             profile at all. The sort page has had this escape hatch as a button
@@ -1701,14 +1746,25 @@ class Sort(Categories):
             ipady=0
         else:
             ipady=15*self.theme.scale
-        # Gated like the sort-page button (sort_buttons.getanotherskip): there must
-        # be a CV profile to leave, and cvt 'S' is excluded because syllable
-        # sorting has its own misfit machinery (_prep_verify above, and
-        # syllable_escape_window). No macrosort test is needed — that page builds
-        # its rows from SortButtonFrame (groups), never from here (words).
+        # No macrosort test is needed — that page builds its rows from
+        # SortButtonFrame (groups), never from here (words).
         profile=self.program.slices.profile()
         menu_items=[]
-        if profile and self.cvt!='S':
+        if self.cvt=='S':
+            # SYLLABLE pages. The PROFILE page gets the class escape the sort page
+            # has always had — "this word isn't in this class at all" — because the
+            # verify page is where a misfiled word is actually noticed, and it had
+            # no way to say so (Kent 2026-07-29). The PREP checks get nothing, and
+            # need nothing: #C/C# are closed binaries whose only wrong answer is
+            # the flip a left click already performs, and syls has its own
+            # longer/shorter chooser (see notok's _prep_verify branch above).
+            if not self.program.params.is_syllable_primitive_check(check):
+                menu_items.append((_("This word doesn’t belong in this {cls} "
+                                    "profile at all…").format(cls=profile),
+                                    class_escape))
+        elif profile:
+            # Segmental/tone: leave the CV profile entirely (the sort page's
+            # 'Not {profile}' button, sort_buttons.getanotherskip).
             menu_items.append((_("Not {profile}").format(profile=profile),
                                 notprofile))
         b, bf = self.sort_ui.build_verify_button(

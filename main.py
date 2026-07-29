@@ -13,12 +13,13 @@ except ImportError: #psutil not installed yet — only true on a machine's
     pass            #very first boot, when nothing can be racing anyway;
                     #py_modules below installs it, so every later boot gates.
 import utilities.py_modules #This tries importing, and installs on failure
+__version__='1.12.4' #This is a string...
 program={'name':'A-Z+T',
         'tkinter':True, #for some day
         'production':False, #True for making screenshots (default theme)
         'testing':False, #normal error screens and logs
         'Demo':False, #will get set otherwise later if it is
-        'version':'1.12.4', #This is a string...
+        'version':__version__, 
         'testversionname':'testing', #always have some real test branch here
         'url':'https://github.com/kent-rasmussen/azt',
         'Email':'kent_rasmussen@sil.org',
@@ -112,9 +113,12 @@ from backend.core.profiles import ProfileAnalyzer
 from frontend.ui_shell import (HasMenus, Menus, StatusFrame, TaskDressing,
     LiftChooser, ImageFrame, Splash, ResultWindow, Settings as UISettings)
 from utilities.error_handler import notify_error as ErrorNotice
-from utilities.error_handler import set_error_handler
-import frontend.error_notice 
+from utilities.error_handler import notify_user as NotifyUser
+from utilities.error_handler import set_error_handler, set_user_notifier
+import frontend.error_notice
+import frontend.status_window
 set_error_handler(frontend.error_notice.ErrorNotice)
+set_user_notifier(frontend.status_window.notify_user)
 from frontend.sort_buttons import (SortButtonFrame, _GroupButtonFrame,
     SortGroupButtonFrame, SortGlyphGroupButtonFrame)
 from tasks.base import Task
@@ -503,6 +507,26 @@ class App:
                   ).format(name=self.name)]
         ErrorNotice('\n'.join(lines),title=_("Setup did not finish!"),
                     wait=True) #blocking: acknowledge before any work
+    def warn_font_problems(self):
+        """Charis SIL missing (Kent 2026-07-29: "this should never be; if we're
+        missing charis SIL at boot, please let's put up an error notice saying
+        so"). Tk substitutes a missing family SILENTLY, and the substitute's
+        metrics differ — so text wraps and buttons size differently from every
+        other machine, which reads as a layout bug rather than a missing font.
+        Theme.setfonts records what actually resolved."""
+        missing=getattr(getattr(self,'theme',None),'missing_font_families',None)
+        if not missing:
+            return
+        lines=[_("{name} can’t find the font(s) it lays its screens out with "
+                 "on this computer:").format(name=self.name),'']
+        lines+=[_("• {wanted} — your computer used ‘{got}’ instead"
+                  ).format(wanted=wanted,got=got) for wanted,got in missing]
+        lines+=['',_("Text will be a different size here than on other "
+                 "machines, so words may wrap oddly and buttons may look "
+                 "wrong. Install the missing font(s) and restart {name} — "
+                 "they are free from software.sil.org."
+                 ).format(name=self.name)]
+        ErrorNotice('\n'.join(lines),title=_("Missing font!"),wait=True)
     def _run_setup(self):
         """All setup that must happen after the UI event loop is live.
 
@@ -532,6 +556,8 @@ class App:
         #                               sound (or anything else) is degraded
         self.warn_sound_problems() #LOUD, blocking; degraded sound must never
         #                           be silent in a sound-centric app
+        self.warn_font_problems() #a substituted font silently changes every
+        #                          layout on this machine only
         self.prep_to_write()
         langtags.Languages(self)
         self.get_lift_file() #self.filename, maybe LiftChooser (NOT self.analang)
@@ -585,6 +611,7 @@ class App:
         # Now that a root exists, error notices from worker threads can —
         # and must — be marshaled onto the main thread:
         set_error_handler(self.notify_error_threadsafe)
+        set_user_notifier(self.notify_user_threadsafe)
         if self.tkinter:
             # tkinter: setup runs synchronously, then mainloop blocks
             self._run_setup()
@@ -985,6 +1012,15 @@ class App:
         log.info(_("Marshaling error notice from thread {name}: {text}"
                     ).format(name=threading.current_thread().name,text=text))
         self.tk_root.after(0,lambda:frontend.error_notice.ErrorNotice(text,**kwargs))
+    def notify_user_threadsafe(self,text,**kwargs):
+        """Same marshaling as notify_error_threadsafe: the status window is Tk
+        widgets, so a worker thread must not append to it directly."""
+        if threading.current_thread() is threading.main_thread():
+            return frontend.status_window.notify_user(text,**kwargs)
+        log.info(_("Marshaling status message from thread {name}: {text}"
+                    ).format(name=threading.current_thread().name,text=text))
+        self.tk_root.after(0,
+                lambda:frontend.status_window.notify_user(text,**kwargs))
     def updateazt(self,event=None,**kwargs): #kwargs should only be parent, for errorroot
         log.info(_("Updating {azt}").format(azt=self.name))
         if not hasattr(self.source_repo, 'files'): #set only when repo init succeeded

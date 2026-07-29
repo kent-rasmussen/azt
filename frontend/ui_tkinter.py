@@ -410,17 +410,36 @@ class Theme(object):
     def setfonts(self,fonttheme='default'):
         scale=self.scale #just reading this here
         log.info("Setting fonts with {} theme".format(fonttheme))
+        # FONT SIZES ARE IN PIXELS (negative), NOT POINTS (Kent 2026-07-29,
+        # "worst on windows machines"). A POSITIVE Tk size is POINTS, converted
+        # to pixels by `tk scaling` = the display's points-per-pixel: ~1.33 at
+        # 96 dpi on Linux, but 1.67 / 2.0 on a Windows box at 125% / 150%
+        # display scaling. So the SAME size rendered up to 50% larger there —
+        # while every layout number in this app (wraplength, image pixels,
+        # ipadx/ipady, widths) is raw pixels and gets no such multiplier. Text
+        # then outgrows the space computed for it: labels wrapping after a few
+        # letters inside buttons stretched to their full share of the window.
+        # A NEGATIVE size is PIXELS on every platform, which is the unit the
+        # rest of the layout already speaks, so self.scale becomes the ONE
+        # size knob (it already grows with resolution — see setscale).
+        # The 4/3 keeps today's Linux appearance: 18pt at 96 dpi == 24px.
+        PT_TO_PX=4/3
         if fonttheme == 'smaller':
-            default=int(12*scale)
+            default=int(12*scale*PT_TO_PX)
         else:
-            default=int(18*scale)
+            default=int(18*scale*PT_TO_PX)
         title=bigger=int(default*2)
         big=int(default*5/3)
         normal=int(default*4/3)
         default=int(default)
         small=int(default*2/3)
         tiny=int(default*1/2)
-        log.info("Using default font size: {}".format(default))
+        # Tk reads a negative size as pixels; sizes are held positive above so
+        # the ratios stay readable, and negated once here.
+        title,bigger,big,normal,default,small,tiny=(
+            -title,-bigger,-big,-normal,-default,-small,-tiny)
+        log.info("Using default font size: {}px (scale {})".format(
+                                                -default,scale))
         andika="Andika"# not "Andika SIL"
         charis="Charis SIL"
         self.fonts={
@@ -443,6 +462,25 @@ class Theme(object):
                 'italic':tkinter.font.Font(family=charis, size=default, slant='italic'),
                 'fixed':tkinter.font.Font(family='Courier', size=small)
                     }
+        # MISSING FONT (Kent 2026-07-29: "this should never be; if we're missing
+        # charis SIL at boot, please let's put up an error notice saying so").
+        # Tk substitutes a missing family SILENTLY, and the substitute's metrics
+        # differ — usually wider per character — so text wraps where the layout
+        # didn't expect it, and no two machines agree. Record it here; App
+        # surfaces it at boot (warn_font_problems), like degraded sound.
+        self.missing_font_families=[]
+        for wanted in [charis]:
+            try:
+                got=tkinter.font.Font(family=wanted,
+                                    size=default).actual('family')
+            except Exception as e:
+                log.info("Couldn’t check the {!r} font: {}".format(wanted,e))
+                continue
+            if str(got).strip().casefold()!=wanted.strip().casefold():
+                log.error("Font %r is NOT installed on this machine; Tk "
+                        "substituted %r. Text metrics will differ from every "
+                        "other machine (wrapping, button sizes).",wanted,got)
+                self.missing_font_families.append((wanted,str(got)))
         """additional keyword options (ignored if font is specified):
         family - font family i.e. Courier, Times
         size - font size (in points, |-x| in pixels)
@@ -469,8 +507,32 @@ class Theme(object):
         wmmx=wmm/508
         log.debug("screen height: {} ({}mm, ratio: {}/{})".format(h,hmm,hx,hmmx))
         log.debug("screen width: {} ({}mm, ratio: {}/{})".format(w,wmm,wx,wmmx))
-        xmin=min(hx,wx,hmmx,wmmx)
-        xmax=max(hx,wx,hmmx,wmmx)
+        # PIXELS ARE THE TRUSTWORTHY SIGNAL; mm are ADVISORY (Kent 2026-07-29,
+        # "worst on windows machines"). This used to take min/max over all four
+        # ratios and keep whichever deviated MOST from 1 — so a single bad number
+        # dominated the entire UI. Windows is exactly where that bites: it derives
+        # screen mm from GetDeviceCaps, often synthesised from an assumed 96 dpi
+        # and sometimes physical, so the mm ratio can disagree wildly with the
+        # pixel ratio on the same machine. And `scale` multiplies fonts AND images
+        # together, so one wrong reading rescales everything.
+        # Sanity-check the mm by the DPI they imply: a real display is roughly
+        # 60-500 dpi. Implausible → ignore the mm entirely and scale by pixels.
+        dpis=[]
+        for px,mm in ((w,wmm),(h,hmm)):
+            try:
+                dpis.append(px/(mm/25.4))
+            except (TypeError,ZeroDivisionError):
+                dpis.append(None)
+        mm_ok=all(d is not None and 60 <= d <= 500 for d in dpis)
+        if mm_ok:
+            ratios=[hx,wx,hmmx,wmmx]
+        else:
+            ratios=[hx,wx]
+            log.info("Ignoring screen mm ({}x{}mm → {} dpi): implausible, so "
+                    "scaling by pixels alone.".format(wmm,hmm,
+                    [round(d,1) if d else d for d in dpis]))
+        xmin=min(ratios)
+        xmax=max(ratios)
         if xmax-1 > 1-xmin:
             self.scale=xmax
         else:
@@ -479,9 +541,19 @@ class Theme(object):
             log.debug("Probably shouldn't scale in this case (scale: {})".format(
                                                         self.scale))
             self.scale=1
+        # Last-resort clamp: whatever the readings, no machine wants a UI at a
+        # quarter size or triple size, and an unbounded scale multiplies every
+        # font and every image.
+        clamped=min(max(self.scale,0.5),3.0)
+        if clamped!=self.scale:
+            log.error("Computed UI scale %.2f is out of range; clamping to %.2f. "
+                    "Screen %dx%d (%sx%smm).",self.scale,clamped,int(w),int(h),
+                    wmm,hmm)
+            self.scale=clamped
         # self.scale=0.75 #for testing
-        log.info("Screen {}x{} ({}x{}mm); scaling by largest variance from "
-                "1:1 ratio: {}".format(int(w),int(h),wmm,hmm,self.scale))
+        log.info("Screen {}x{} ({}x{}mm, mm trusted: {}); scaling by largest "
+                "variance from 1:1 ratio: {}".format(int(w),int(h),wmm,hmm,
+                                                    mm_ok,self.scale))
     def setpads(self,**kwargs):
         for kwarg in ['ipady','ipadx','pady','padx']:
             if kwarg in kwargs:
