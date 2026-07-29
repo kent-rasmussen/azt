@@ -20,6 +20,29 @@
 - make showoriginalorthographyinreports a UI switch
 
 # Unreleased (pending live verify; version bump on confirmation)
+- FIX (Update Forms bricked after finishing — it was racing its own teardown).
+  Reported as "no `on_done` on the final drive_work", which was true but not the
+  whole of it. In `maybesort`'s glyph tail the form update is *scheduled*, and the
+  advance that follows ran IMMEDIATELY: it announced "Done!", refreshed the board
+  and called `fn()` — which `_safe_quit_runwindow()`s — while that same window was
+  still driving `updateformsallchecks()`. So the update raced the teardown of the
+  window driving it, and whatever survived ended on a finished page with nothing
+  following. Both call sites now complete properly:
+  - the tail (lines that computed the next check/profile, the "Done!" message, the
+    board refresh and `fn()`) became `Sort._advance_after_slice`, and the glyph
+    flow passes it as the form update's `on_done` instead of running it in
+    parallel — then returns, so it can't advance twice;
+  - `manual_form_update` (Advanced ▸ Update Forms) gained a `forms_done` that
+    reports completion, closes the work window and leaves the user on a refreshed
+    board — where they were when they chose the menu item. It deliberately does
+    NOT advance to the next check/profile: there the update is one step of a flow,
+    here the user asked for this one thing.
+  - the `log.info("Done updating forms")` that ran at SCHEDULE time (claiming
+    completion before a single form was touched) now says what it means, and the
+    real completion is logged from `forms_done`.
+  Worth knowing for the earlier "does it happen automatically?" question: it
+  already did — `maybesort`'s tail runs the same chain once every glyph is named
+  and verified. The brick was the whole bug, in both paths.
 - NEW ("This word doesn’t belong in this C2V profile at all…" on the syllable
   PROFILE verify page). The SORT page has offered the class escape — the four
   one-axis moves (flip word-initial, flip word-final, Shorter, Longer, each

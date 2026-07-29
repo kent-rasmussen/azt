@@ -814,17 +814,41 @@ class Sort(Categories):
             """all int() groups and macrogroups are gone at this point!"""
             # Aligns all annotations and verifications, then updates forms
             w=self._get_safe_window()
+            def forms_done():
+                """The form update FINISHING (Kent 2026-07-29: "update forms
+                bricked, I think after finishing … when it's done, it needs to
+                return to where it was").
+
+                Nothing waited for it before. The advance below ran the moment
+                this work was SCHEDULED — announcing "Done!" and calling fn(),
+                which quits the run window — while that same window was still
+                driving updateformsallchecks(). So the update was racing its own
+                teardown, and whatever survived ended on a finished page with no
+                way forward. Now the advance happens HERE, after the forms land."""
+                log.info("Done updating forms")
+                NotifyUser(_("Forms are up to date with the letters you’ve "
+                            "named."),title=_("Done!"))
+                self._advance_after_slice()
             def after_annotations():
                 if any(i.mature for i in self.program.data_repo.values()):
                     w.wait_and_drive_work(
                     _("Updating forms..."),
-                    self.updateformsallchecks())
+                    self.updateformsallchecks(),
+                    on_done=forms_done)
                 else:
-                    w.drive_work(self.updateformsallchecks())
+                    w.drive_work(self.updateformsallchecks(),
+                                on_done=forms_done)
             w.wait_and_drive_work(
                 _("Updating annotations..."),
                 self.update_annotations_to_glyphs(),
                 on_done=after_annotations)
+            return # forms_done advances; do NOT also advance in parallel
+        self._advance_after_slice()
+    def _advance_after_slice(self):
+        """Everything for this profile/check is sorted, verified and joined: say so
+        and move to the next work. Factored out of maybesort's tail so the glyph
+        flow can run it as the form update's on_done instead of alongside the
+        update (see forms_done)."""
         """The following is to iterate to the next work to do. So we want
         everything for a check to be complete to be done by now.
         A user may want to change the name of a group; if so, they should stop
@@ -965,14 +989,36 @@ class Sort(Categories):
             if any(i.mature for i in self.program.data_repo.values()):
                 w.wait_and_drive_work(
                     _("Updating forms..."),
-                    self.updateformsallchecks())
+                    self.updateformsallchecks(),
+                    on_done=forms_done)
             else:
-                w.drive_work(self.updateformsallchecks())
+                w.drive_work(self.updateformsallchecks(),
+                            on_done=forms_done)
+        def forms_done():
+            """Manual (Advanced ▸ Update Forms) completion. Nothing followed the
+            update, so the app sat on a finished page with no way onward — the
+            "bricked after finishing" report (Kent 2026-07-29). Report it, close
+            the work window, and leave the user on a refreshed board: where they
+            were when they picked the menu item. The AUTOMATIC path (maybesort's
+            glyph tail) advances to the next check/profile instead — there the
+            update is one step of a flow; here the user asked for this one thing."""
+            log.info("Done updating forms")
+            NotifyUser(_("Forms are up to date with the letters you’ve named."),
+                        title=_("Done!"))
+            self._safe_quit_runwindow()
+            try:
+                self.status.maybeboard()
+            except Exception as e:
+                log.info("board refresh after form update skipped: %s", e)
         w.wait_and_drive_work(
             _("Updating annotations..."),
             self.update_annotations_to_glyphs(),
             on_done=after_annotations)
-        log.info("Done updating forms")
+        # NOT "Done updating forms" here: this line ran when the chain was
+        # SCHEDULED, so the log claimed completion before any form was touched —
+        # forms_done says it when it's true.
+        log.info("Form update scheduled (annotations → forms); "
+                "forms_done reports completion")
     def present_sense(self,sense):
         log.info("presenting to sort {sense_id}".format(sense_id=sense.id))
         frame=self.get_frame()
