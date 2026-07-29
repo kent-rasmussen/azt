@@ -207,7 +207,21 @@ class Sort(Categories):
             return self.ui.runwindow
         except (AttributeError,AssertionError) as e:
             log.info(str(e))
-            return self.ui.getrunwindow()
+            w=self.ui.getrunwindow()
+            # getrunwindow() creates the run window WITHDRAWN and withdraws the
+            # task window too, but reveals nothing unless it shows a wait — and
+            # that is gated on a mature repo ("Found new repo; not showing wait").
+            # On a new repo that leaves the app running with NO window at all, and
+            # the user's only remaining target is the console, which kills Python
+            # (field 2026-07-29: "closing that window left them with nothing at
+            # all, so we had to restart"). We are about to drive work in this
+            # window, so it has to be visible.
+            try:
+                if w is not None and not w.winfo_viewable():
+                    w.deiconify()
+            except Exception as ex:
+                log.info("run window reveal in _get_safe_window: %s", ex)
+            return w
 
     def _safe_quit_runwindow(self):
         """Quit runwindow if it exists, silently ignore if not."""

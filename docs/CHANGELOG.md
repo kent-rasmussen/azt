@@ -20,6 +20,58 @@
 - make showoriginalorthographyinreports a UI switch
 
 # Unreleased
+- FIX (`'SortV' object has no attribute 'pyaudio'` — three times in one evening,
+  notably leaving the vowel-letters page for sort/join). `playbutton` passed
+  `self.task.pyaudio` to `SoundFilePlayer`, but `pyaudio` is set by the SOUND task
+  mixin alone (`tasks/sound.py:28`). SortC/SortV don't need audio in themselves —
+  but the TranscribeC/V letters page reached after macrosorting DOES want to play,
+  and its frames are built with the SORT task as their task, so the lookup fell
+  through `TaskBase.__getattr__` and raised. Audio is a program-level resource
+  already: `Sound.confirm_pyaudio` (`backend/core/sound.py:434-439`) reuses
+  `program.pyaudio` and builds one only when absent. New
+  `_audio_interface()` follows the same three steps — task's own, else the program
+  singleton, else build it — so that page plays instead of degrading. Both probes
+  use `getattr(…, None)`, which safely swallows the AttributeError the delegation
+  chain raises. A plain label remains the outcome only when the machine genuinely
+  has no audio (import failed, or `program.nosound`), and that case is logged.
+- FIX (same path, one step later: `self.player` when there was no player).
+  `makebuttons` set `_playable=True` unconditionally after calling `playbutton()`,
+  so a fallback-to-label still claimed to be playable and `again()` then reached
+  for `self.player`. `playbutton` now returns True only when a player was really
+  made, and `_playable` keys on that. This was already reachable via the
+  no-sound-stack fallback.
+- FIX (app left running with NO window at all, on a new repo). `getrunwindow()`
+  creates the run window WITHDRAWN and withdraws the task window as well, but
+  reveals nothing unless it shows a wait — and that is gated on
+  `any(i.mature …)`, so a new repo logs "Found new repo; not showing wait" and
+  every window stays hidden. The user is then left with only the console, and
+  closing it kills Python (field 2026-07-29: "closing that window left them with
+  nothing at all, so we had to restart"). `_get_safe_window` — whose whole job is
+  to hand back a window to drive work in — now deiconifies it when it isn't
+  viewable. Narrow on purpose: the flows that build behind a withdrawn window and
+  deiconify when ready (presenttosort, the macrosort verify build, join) are
+  untouched.
+  - NOT the cause, though both were on screen: `'SortV' object has no attribute
+    'runwindow'` is `_get_safe_window` logging its own caught AttributeError
+    before falling back, and the `NotifyUser:` line is the status window's log
+    echo. The route that got there — Update Forms teleporting into a sort — is the
+    one removed earlier the same day.
+- FIX (asked to take a "team update" whose only change was written by this same
+  computer). `poll_remote_change` already suppressed three ways — LIFT unchanged
+  on disk, bot-merge-only ranges, and a content-identity self-heal for an existing
+  latch — but a commit authored by OUR OWN contributor is a human commit like any
+  other, so our own save, committed by the daemon after our base was set, latched
+  as a team change. The § 8b obl. 3a summary then politely named us as the author,
+  which is the diagnosis rather than a coincidence. New fourth branch: when every
+  author between base and HEAD is our own contributor, adopt HEAD and return
+  `'benign'` — our in-memory tree IS that work.
+  - Deliberately strict, since a false positive silently swallows real incoming
+    work: requires `known`, NOT `capped` (a capped walk can hide a peer past the
+    cap), a non-empty author list, and a set contributor name matching every
+    author (casefolded, stripped).
+  - Known limit, logged when it bites: two machines sharing ONE contributor name
+    are indistinguishable here. Device names differ in practice; a shared name is
+    project-identity work, not something to guess at here.
 - CHANGE (manual Update Forms updates what it can and STOPS, instead of kicking
   the user into sorting). Advanced ▸ Update Forms aborted on the first blocker and
   teleported: a group needing a sort sent the user into that sort

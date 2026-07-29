@@ -366,6 +366,49 @@ class CollabSession:
             txt += ' · ' + _("team changes available")
         return txt
 
+    def _only_our_own_commits(self, cs):
+        """Is every human commit between our base and HEAD one WE wrote?
+
+        `changes_since` (§ 8b obl. 3a) already excludes the merge bot, so the
+        authors it reports are people; if the only person is us, HEAD moved on our
+        own saved work and there is nothing of the team's to reload.
+
+        Deliberately strict, because a false True silently swallows real incoming
+        work — the opposite and worse failure:
+          - `known` must be True (an unknown base can't be reasoned about);
+          - NOT `capped`: a capped walk makes the count a floor and the author list
+            possibly incomplete, so a peer could be hiding past the cap;
+          - there must BE authors (no authors + a count is a shape we don't
+            understand — leave it to prompt);
+          - and our contributor name must be set and match every author, compared
+            case-insensitively on stripped text (the daemon seeds it from
+            `git user.name`, so spelling drift is the realistic failure).
+
+        Known limit, logged when it bites: two machines sharing ONE contributor
+        name (the same person on a desktop and a laptop) are indistinguishable
+        here, so genuine work from the other one would be adopted silently. Device
+        names differ in practice ('Kent Phone', 'kent tablet'); a shared name is
+        the case to fix with project identity, not by guessing here."""
+        if not (cs.get('known') and not cs.get('capped')):
+            return False
+        authors = [str(a).strip() for a in (cs.get('authors') or []) if a]
+        if not authors:
+            return False
+        try:
+            ours = (_client.get_contributor() or '').strip()
+        except Exception as e:
+            log.info(f"contributor probe for self-authored check: {e}")
+            return False
+        if not ours:
+            return False
+        if not all(a.casefold() == ours.casefold() for a in authors):
+            return False
+        if len(authors) == 1 and cs.get('count', 0) > 1:
+            log.info("Self-authored suppression: %s commit(s), all under our own "
+                     "name %r. If another machine also uses that name, its work "
+                     "is being adopted silently here.", cs.get('count'), ours)
+        return True
+
     def changes_summary(self):
         """One human phrase for the reload offer: WHO changed WHAT, from
         § 8b obl. 3a's ``changes_since``. '' when there is nothing honest

@@ -558,8 +558,12 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         elif self.kwargs['label']:
             self.labelbutton()
         elif self.kwargs['playable'] and self._sense is not None and self._filenameURL:
-                self.playbutton()
-                self._playable=True
+                # _playable ONLY when a player was really made. It used to be set
+                # unconditionally, so a playbutton() that fell back to a label
+                # still claimed to be playable — and again() then reached for
+                # self.player, which doesn't exist. Same shape as the crash below,
+                # one step later.
+                self._playable=bool(self.playbutton())
         else:
             self.selectbutton()
         if self.kwargs['unsortable']:
@@ -603,11 +607,64 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         if hasattr(self,'_illustration'):
             self.label['image']=self._illustration
             self.label['compound']='left'
+    def _audio_interface(self):
+        """The PyAudio interface to play through, or None if this machine has no
+        audio at all. Order: the task's own (a Sound task), else the program-level
+        singleton, else build it — the same three steps as
+        ``Sound.confirm_pyaudio`` (backend/core/sound.py:434-439), so a page that
+        isn't a Sound task can still play.
+
+        ``getattr`` with a default on both probes is deliberate: it swallows the
+        AttributeError ``TaskBase.__getattr__`` raises when the delegation chain
+        comes up empty, which is what surfaced as "'SortV' object has no attribute
+        'pyaudio'". Respects ``program['nosound']`` and never raises: a failure to
+        build one is a label, not a traceback."""
+        pyaudio=getattr(self.task,'pyaudio',None)
+        if pyaudio is not None:
+            return pyaudio
+        pyaudio=getattr(self.program,'pyaudio',None)
+        if pyaudio is not None:
+            return pyaudio
+        # attribute, not a key: main.py sets program['nosound'] on the dict before
+        # App absorbs it, and consumers read it as self.program.nosound
+        # (tasks/chooser.py:525).
+        if sound is None or getattr(self.program,'nosound',False):
+            return None
+        try:
+            from backend.core.sound import AudioInterface
+            self.program.pyaudio=AudioInterface()
+            log.info("Built the program-level audio interface for %s (no Sound "
+                    "task in play).",type(self.task).__name__)
+            return self.program.pyaudio
+        except Exception as e:
+            log.info("Couldn’t open an audio interface for %s: %s",
+                    type(self.task).__name__,e)
+            return None
     def playbutton(self):
-        if sound is None: #no sound stack on this machine; show a plain label
+        """A play button, or a plain LABEL when this machine can't play at all.
+        Returns True only when a player was made (makebuttons keys _playable on
+        that, so nothing later reaches for self.player)."""
+        # AUDIO IS A PROGRAM RESOURCE, NOT A TASK ONE (Kent 2026-07-29: "'SortV'
+        # object has no attribute 'pyaudio'" three times in one evening — and
+        # "we should have the button on that page playable, though"). `pyaudio` is
+        # set by the SOUND task mixin alone (tasks/sound.py:28), so a segmental
+        # sort task that owns a playable frame — the vowel-letters page on the way
+        # back to sort/join — had nothing to hand the player and the lookup raised
+        # through TaskBase.__getattr__. But the interface is already a
+        # program-level singleton: confirm_pyaudio (backend/core/sound.py:434-439)
+        # reuses `program.pyaudio` and only builds one when it's absent. So follow
+        # the same order here — task, then program, then build one — instead of
+        # degrading a page that SHOULD play.
+        pyaudio=self._audio_interface()
+        if sound is None or pyaudio is None:
+            # Genuinely no audio on this machine (import failed, or 'nosound'):
+            # show the word rather than crash, as a missing sound stack already did.
+            log.info("No audio interface available for %s; showing %r as a plain "
+                    "label instead of a play button.",
+                    type(self.task).__name__, self._text)
             self.labelbutton()
             return
-        self.player=sound.SoundFilePlayer(self._filenameURL,self.task.pyaudio,
+        self.player=sound.SoundFilePlayer(self._filenameURL,pyaudio,
                                             self.program.settings.soundsettings)
         b=self._display=ui.Button(self, text=self._text,
                     cmd=self.player.play,
@@ -625,6 +682,7 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
             b.bind('<Button-3>',
                     lambda x: executables.praatopen(self.program, self._filenameURL))
         bt=ui.ToolTip(b,bttext)
+        return True #a real player exists; see makebuttons' _playable
     def selectbutton(self):
         if self.kwargs.get('on_select'):
             cmd=self.kwargs['on_select']
