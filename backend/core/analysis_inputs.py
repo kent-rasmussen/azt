@@ -282,6 +282,43 @@ class CheckParameters(object):
     # the board-render rebuild, where program.task may not be a syllable task.
     # Pure functions of the profile string.
     VOWEL_SYMS=('V','Ṽ') #vowel symbols in a computed profile string
+    def orthographic_edges(self,sense,ftype=None,analang=None):
+        """(#C, C#) read off the FORM — for words whose CV profile can't be
+        analyzed. The two edge primitives are facts about the first and last
+        SEGMENT, so they don't need a whole-word profile: segment the form with the
+        same per-class polygraph patterns profileofform uses
+        (rxdict.segmentsofform) and read the outermost SEGMENTAL classes.
+
+        Skipped when reading the edges: characters no class matches (returned as
+        '?'), and the non-segmental classes — tone, length, nasalization, '.', '=',
+        '<'. So one out-of-alphabet letter mid-word (the usual reason a profile
+        comes back 'Invalid') no longer costs the edges, and a tone-marked final
+        vowel is still a vowel.
+
+        (None,None) when the form is missing or nothing in it classifies at all —
+        the caller decides what to do with genuinely unreadable input."""
+        ftype=ftype or self.ftype()
+        analang=analang or self.program.db.analang
+        form=sense.textvaluebyftypelang(ftype,analang)
+        if not form:
+            return None,None
+        profiles=getattr(self.program,'profiles',None)
+        rxdict=getattr(profiles,'rxdict',None)
+        if rxdict is None or not hasattr(rxdict,'segmentsofform'):
+            return None,None
+        segmental=(set(getattr(profiles,'profilesegments',
+                                ['N','G','S','D','C','V','ʔ']))
+                    |set(self.VOWEL_SYMS))
+        try:
+            classes=[c for _sub,c in rxdict.segmentsofform(form)
+                        if c in segmental]
+        except Exception as e:
+            log.info("orthographic_edges(%s): %s",getattr(sense,'id','?'),e)
+            return None,None
+        if not classes:
+            return None,None
+        edge=lambda c:'V' if c in self.VOWEL_SYMS else 'C'
+        return edge(classes[0]),edge(classes[-1])
     def word_initial(self,profile):
         return 'V' if profile and profile[0] in self.VOWEL_SYMS else 'C'
     def word_final(self,profile):
@@ -303,7 +340,10 @@ class CheckParameters(object):
         (so a word whose plain profile hasn't synced yet, e.g. 'always', is still
         analyzable). Returns a tag for the caller's counters:
           'seeded'    — first bucketing from a valid profile (all three set)
-          'defaulted' — un-analyzable → #C=C/#C#=C, syls intentionally left unset
+          'edges'     — no readable profile, but the form's first/last SEGMENT gave
+                        #C/C# (orthographic_edges); syls intentionally left unset
+          'defaulted' — nothing in the form classified either → #C=C/C#=C, the
+                        last-resort bucket, syls left unset
           'syls'      — backfilled a missing syls on an already-bucketed, now-
                         analyzable word (the bug that stranded words like 'always')
           None        — already complete / nothing to do."""
@@ -319,11 +359,18 @@ class CheckParameters(object):
                 av(ftype,analang,'syls',str(self.syllable_count(profile)))
                 av(ftype,analang,ftype,profile)
                 return 'seeded'
-            # Un-analyzable (capitalised, multi-word, out-of-alphabet …): the
-            # word-initial/final checks are CLOSED binaries with no sort page, so
-            # default both to consonant to bucket the word; leave syls unset.
-            av(ftype,analang,'#C','C'); av(ftype,analang,'C#','C')
-            return 'defaulted'
+            # Un-analyzable (capitalised, multi-word, out-of-alphabet …). The edges
+            # are still facts about the first/last SEGMENT, so READ THEM OFF THE
+            # FORM rather than calling both consonant: the old blanket default
+            # parked vowel-final words in C#=C for no reason visible to the user,
+            # and #C/C# are closed binaries with no sort page, so nothing ever
+            # offered them for correction (Kent 2026-07-29). syls stays unset —
+            # that IS the judgement a missing profile deprives us of, and the syls
+            # sort will ask for it.
+            beg,end=self.orthographic_edges(sense,ftype,analang)
+            av(ftype,analang,'#C',beg or 'C')
+            av(ftype,analang,'C#',end or 'C')
+            return 'defaulted' if (beg is None or end is None) else 'edges'
         if not av(ftype,analang,'syls') and valid: # backfill a missing syls
             av(ftype,analang,'syls',str(self.syllable_count(profile)))
             if not av(ftype,analang,ftype):

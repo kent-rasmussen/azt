@@ -2206,21 +2206,27 @@ class Syllables(Senses):
         n=max(len(senses),1)
         # Per-sense seeding is the shared params.seed_sense_primitives rule (also
         # run at LIFT load), so the two paths can't drift. Tally what it did.
-        tally={'seeded':0,'defaulted':0,'syls':0}
+        tally={'seeded':0,'edges':0,'defaulted':0,'syls':0}
         for i,sense in enumerate(senses):
             tag=self.program.params.seed_sense_primitives(sense,ftype,analang)
             if tag in tally:
                 tally[tag]+=1
             yield i*100//n
-        log.info("Presort (wordlist-wide): total=%d seeded=%d defaulted→#C=C=%d "
-                "syls-backfilled=%d", n, tally['seeded'], tally['defaulted'],
-                tally['syls'])
+        log.info("Presort (wordlist-wide): total=%d seeded=%d edges-from-form=%d "
+                "defaulted→#C=C=%d syls-backfilled=%d", n, tally['seeded'],
+                tally['edges'], tally['defaulted'], tally['syls'])
         if tally['syls']:
             log.info("Presort: backfilled syls for %d already-bucketed word(s) "
                     "that had #C/C# but no syllable count — they re-enter the "
                     "syls check.", tally['syls'])
+        if tally['edges']:
+            log.info(_("{n} word(s) had no readable syllable profile; their "
+                    "word-initial/word-final values were read from the "
+                    "spelling instead, and they still need a syllable count."
+                    ).format(n=tally['edges']))
         if tally['defaulted']:
-            log.info(_("{n} word(s) couldn’t be auto-analyzed; defaulted "
+            log.info(_("{n} word(s) couldn’t be auto-analyzed at all (nothing in "
+                    "the spelling matched a known segment); defaulted "
                     "word-initial AND word-final to consonant. Review the "
                     "consonant groups for outliers.").format(n=tally['defaulted']))
         self.program.status.presorted(True)

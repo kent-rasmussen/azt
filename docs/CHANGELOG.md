@@ -20,6 +20,43 @@
 - make showoriginalorthographyinreports a UI switch
 
 # Unreleased (pending live verify; version bump on confirmation)
+- FIX (vowel-final words parked in C#=C, and whole prep slices stuck unverified).
+  Reported: after Trust, ~10 of 17 slices of C#=C words stayed unverified, holding
+  words that end in plain vowels. One population, two symptoms:
+  - `params.seed_sense_primitives` — the seeding rule shared by the load pass and
+    the presort — set `#C=C` AND `C#=C` for any word with no readable CV profile
+    ("un-analyzable … default both to consonant to bucket the word"). The last
+    letter was never consulted, so vowel-final words were bucketed as C-final for
+    no reason a user could see — and #C/C# are closed binaries with NO sort page,
+    so nothing ever offered them for correction.
+  - every Trust path required a profile (`affirm_machine_profiles` skips
+    `Invalid`; `needs_primitive_backfill` returned False without one), so those
+    words could never get a primitive verification code. And since a prep slice
+    counts as confirmed only when EVERY member is
+    (`SyllableSliceDict._slice_confirmed`), one such word left its whole slice of
+    ~50 unverified — hence 10 of 17.
+  Now: new `params.orthographic_edges(sense)` reads #C/C# off the FORM, segmenting
+  it with the same per-class polygraph patterns `profileofform` uses
+  (`rxdict.segmentsofform`) and taking the outermost SEGMENTAL classes — so an
+  out-of-alphabet letter mid-word no longer costs the edges, and a tone-marked or
+  lengthened final vowel is still a vowel (the tone/length/nasalization classes and
+  unmatched '?' characters are skipped). The seeder uses it instead of the blanket
+  C, falling back to C/C only when nothing in the spelling classifies at all (new
+  `'edges'` tally, logged separately from `'defaulted'` at both call sites).
+  Trust covers the same population: `trust_primitives_from_orthography` verifies
+  the two edges for profile-less words (`syls` deliberately left open — that IS
+  what a missing profile deprives us of), reached from
+  `backfill_primitives_for_trusted`, whose gate no longer excludes them. Since the
+  back-fill writes the annotation as well as the code, one Trust press also
+  RE-BUCKETS words the old default mis-stamped — the only path that reaches
+  existing data, as the seeder never revisits a word that already has `#C`.
+  A verified primitive is still never overwritten: a user's sort outranks any
+  derivation.
+- Consequence for "a profile is *data*, so the machine's 'Invalid' must be
+  overridable" (Kent): with edges present, such a word now enters the syls sort,
+  gains a full profile class once counted, and its class's "Other {cls} profile" →
+  by-hand entry page is the override. Previously it had no class, so no page
+  offered it a profile at all.
 - NEW (the chart says WHY a letter is blank). Opening the alphabet chart on a
   half-filled chart gave no way to tell whether the letter had no verified words,
   no picture, or a picture that failed — it took a code read to answer. One log

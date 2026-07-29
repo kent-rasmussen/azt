@@ -375,10 +375,37 @@ class ProfileAnalyzer:
         and affirm already constrained the profile to those dimensions anyway, so
         the derived values agree. Returns the checks written."""
         params = self.program.params
+        return self._trust_primitives(sense, ftype, {
+                    '#C': params.word_initial(profile),
+                    'C#': params.word_final(profile),
+                    'syls': str(params.syllable_count(profile))})
+
+    def trust_primitives_from_orthography(self, sense, ftype):
+        """The EDGES for a word whose CV profile can't be analyzed. #C/C# are facts
+        about the first and last segment, so an unreadable profile is no reason to
+        leave them unverified — and leaving them unverified blocked whole prep
+        SLICES, since a slice counts as confirmed only when every member is (one
+        un-analyzable word poisoned ~50). Kent 2026-07-29: "do primitive
+        verification the same way we do presorting, which should also include
+        invalid/whatever."
+
+        `syls` is deliberately NOT written: a syllable count is a judgement about
+        the whole word, which is exactly what a missing profile deprives us of. The
+        word therefore still comes up in the syls sort — and once it has a count it
+        has a full profile class, which is what makes the by-hand profile entry
+        reachable, i.e. how the user overrides the machine's 'Invalid'."""
+        beg, end = self.program.params.orthographic_edges(sense, ftype)
+        if beg is None or end is None:
+            return [] # nothing in the form classifies; leave it for the user
+        return self._trust_primitives(sense, ftype, {'#C': beg, 'C#': end})
+
+    def _trust_primitives(self, sense, ftype, implied):
+        """Write trusted primitives: the ANNOTATION (what buckets the word) plus the
+        VERIFICATION code (what makes the bucket confirmed), for each check in
+        `implied`. Never overrides a VERIFIED dimension — a user's sort outranks any
+        derivation. Returns the checks touched (including annotation-only repairs),
+        so a bulk caller can count senses changed."""
         analang = self.program.db.analang
-        implied = {'#C': params.word_initial(profile),
-                   'C#': params.word_final(profile),
-                   'syls': str(params.syllable_count(profile))}
         verified = self._primitive_codes(sense, ftype)
         codes = list(sense.primitiveverification(ftype))
         added = []      # dimensions that gained a verification code
@@ -409,11 +436,16 @@ class ProfileAnalyzer:
         sent back, so a word that is never untrusted never needs them written
         (Kent 2026-07-28), and the offer keeps its own trigger."""
         cur = sense.cvprofilevalue(ftype)
-        if not cur or cur == 'Invalid':
-            return False # nothing to derive from; sorting has to supply it
-        verified = self._primitive_codes(sense, ftype)
+        # NO PROFILE IS NOT AN EXCUSE (Kent 2026-07-29). Such a word still has
+        # readable EDGES (orthographic_edges), and it was the excluded population:
+        # defaulted into C#=C by the seeder and then reachable by no trust path, so
+        # every prep slice holding one stayed unverified. Only `syls` genuinely
+        # needs the profile, so it isn't expected of these words.
         analang = self.program.db.analang
-        for check in ('#C', 'C#', 'syls'):
+        checks = (('#C', 'C#', 'syls') if (cur and cur != 'Invalid')
+                    else ('#C', 'C#'))
+        verified = self._primitive_codes(sense, ftype)
+        for check in checks:
             if check not in verified:
                 return True
             if not sense.annotationvaluebyftypelang(ftype, analang, check):
@@ -435,15 +467,24 @@ class ProfileAnalyzer:
         primitives are never overwritten (trust_primitives_from_profile).
         Returns the number of senses changed."""
         ftype = ftype or self.program.params.ftype()
-        n = 0
+        n = edges = 0
         for s in self.program.db.senses:
             if not self.needs_primitive_backfill(s, ftype):
                 continue
-            if self.trust_primitives_from_profile(s, ftype,
-                                                  s.cvprofilevalue(ftype)):
+            cur = s.cvprofilevalue(ftype)
+            if cur and cur != 'Invalid':
+                touched = self.trust_primitives_from_profile(s, ftype, cur)
+            else:
+                # No readable profile: verify the EDGES from the orthography, which
+                # is all that population was ever missing (syls stays open).
+                touched = self.trust_primitives_from_orthography(s, ftype)
+                if touched:
+                    edges += 1
+            if touched:
                 n += 1
-        log.info("Back-filled syllable primitives from the trusted profile for "
-                "%d sense(s).", n)
+        log.info("Back-filled syllable primitives for %d sense(s) — %d from the "
+                "trusted profile, %d edge-only from the orthography (no readable "
+                "profile).", n, n - edges, edges)
         if n and write: # see affirm_machine_profiles on write=False
             self.program.maybewrite(definitely=True)
         if n and rebuild:
@@ -739,14 +780,15 @@ class ProfileAnalyzer:
         analang = self.program.db.analang
         if any(s.annotationvaluebyftypelang(ftype, analang, '#C')
                 for s in self.program.db.senses):
-            tally = {'seeded': 0, 'defaulted': 0, 'syls': 0}
+            tally = {'seeded': 0, 'edges': 0, 'defaulted': 0, 'syls': 0}
             for s in self.program.db.senses:
                 tag = self.program.params.seed_sense_primitives(s, ftype, analang)
                 if tag in tally:
                     tally[tag] += 1
             if any(tally.values()):
-                log.info("Load: seeded syllable primitives (seeded=%d defaulted=%d "
-                        "syls-backfilled=%d).", tally['seeded'], tally['defaulted'],
+                log.info("Load: seeded syllable primitives (seeded=%d "
+                        "edges-from-form=%d defaulted=%d syls-backfilled=%d).",
+                        tally['seeded'], tally['edges'], tally['defaulted'],
                         tally['syls'])
             try:
                 SyllableSliceDict(self.program,
