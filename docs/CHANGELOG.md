@@ -20,6 +20,32 @@
 - make showoriginalorthographyinreports a UI switch
 
 # Unreleased
+- FIX (BUSY is an answer, not silence: a one-second lock no longer flips the
+  session into legacy mode and calls the server unavailable). A project receiving
+  LAN pushes takes `project_lock` briefly but often — a post-receive absorb every
+  ~40 s, a second or two each — so an ordinary save landing in one of those windows
+  got BUSY from a healthy daemon and was routed into the same branch as "server
+  unavailable": permanent mode switch, alarming text, for a hold that was already
+  over. Now `_submit_with_busy_retry` retries up to 3 times, 0.7 s apart (~2.1 s
+  worst case), silent when it succeeds. `_busy_only` keeps BUSY strictly apart from
+  SERVER_UNAVAILABLE/SERVER_ERROR, which are not retried — nobody is listening
+  there.
+  - If BUSY comes back but the staged file is already gone, it does NOT resubmit:
+    the daemon consumed the bytes and then hit the lock, and the existing
+    "staged is gone means it landed" branch is right.
+  - A genuinely long hold falls through to the fallback with honest wording —
+    "the server is busy with another job, so this save went straight to disk; your
+    work is safe; it will enter project history on the next save that gets
+    through" — and no longer sets `degraded`, because nothing is unavailable.
+  - Confirmed while here (the item asked): legacy mode does not persist for the
+    session. `degraded` is cleared on all three success branches, so the next save
+    that gets through leaves it.
+  - NOT fixed, and tracked in the item: the retry bounds azt's sleeping, not the
+    RPC. `rpc.call` defaults to 300 s and `submit_file` exposes no timeout, so a
+    minutes-long hold still blocks the UI for the length of the call. Fixing that
+    needs either a timeout argument in the client (azt-collab lane) or the save
+    moved off the UI thread (a real refactor — the fallback path ends in the
+    caller's `os.replace`).
 - FIX (`'SortV' object has no attribute 'pyaudio'` — three times in one evening,
   notably leaving the vowel-letters page for sort/join). `playbutton` passed
   `self.task.pyaudio` to `SoundFilePlayer`, but `pyaudio` is set by the SOUND task

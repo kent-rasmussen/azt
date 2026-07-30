@@ -35,6 +35,7 @@ serves both processes at once.
 import os
 import subprocess
 import sys
+import time
 
 from utilities import logsetup
 log = logsetup.getlog(__name__)
@@ -197,14 +198,72 @@ class CollabSession:
 
     # ── the write seam ────────────────────────────────────────────────
 
+    # BUSY retry budget. Deliberately small: this runs on the CALLING (UI)
+    # thread, so the total sleep has to stay under "did it freeze?" — while
+    # still covering the common hold, a post-receive absorb or debounced
+    # commit of a second or two.
+    BUSY_RETRIES = 3
+    BUSY_RETRY_WAIT = 0.7   # seconds; ≈2.1 s total worst case
+
+    @staticmethod
+    def _busy_only(result):
+        """Did the daemon answer BUSY — a held project lock — and nothing worse?
+
+        BUSY is an ANSWER: the request arrived and the daemon reported that the
+        lock was held. A dead daemon cannot produce it; that is
+        SERVER_UNAVAILABLE, which is NOT retried here (nobody is listening) and
+        must keep its own "unavailable" handling."""
+        busy = getattr(S, 'BUSY', 'BUSY')
+        if not result.has(busy):
+            return False
+        for worse in ('SERVER_UNAVAILABLE', 'SERVER_ERROR'):
+            if result.has(getattr(S, worse, worse)):
+                return False
+        return True
+
+    def _submit_with_busy_retry(self, rel, staged):
+        """``submit_file``, retrying a briefly-held lock before giving up.
+
+        Why (Kent 2026-07-29): on a project receiving LAN pushes the daemon takes
+        ``project_lock`` briefly but OFTEN — a post-receive absorb roughly every
+        40 s, a second or two each. An ordinary save landing in one of those
+        windows got BUSY from a perfectly healthy daemon, and the old code routed
+        that into the same branch as "server unavailable": a permanent
+        legacy-mode switch plus alarming text, for a one-second hold.
+
+        A minutes-long hold (a big push, a large merge) is NOT retried away — it
+        falls through to the fallback, which keeps the user's work on disk. The
+        other half of that story, bounding the RPC itself (``rpc.call``'s 300 s
+        default, not settable through ``submit_file``) and moving the save off the
+        UI thread, is client/daemon-lane work tracked in the item."""
+        result = _client.submit_file(
+            self.langcode, rel, str(staged), self.base_sha)
+        for attempt in range(1, self.BUSY_RETRIES + 1):
+            if not self._busy_only(result):
+                return result
+            if not os.path.exists(str(staged)):
+                # BUSY, yet the staged file is gone: the daemon consumed our
+                # bytes and then hit the lock. Don't resubmit a file that no
+                # longer exists — the caller's "staged is gone means the bytes
+                # landed" branch handles this correctly.
+                log.info("BUSY but the staged file is already consumed; not "
+                         "resubmitting.")
+                return result
+            log.info("Save hit a held project lock (BUSY); retrying "
+                     "%d/%d in %.1fs.", attempt, self.BUSY_RETRIES,
+                     self.BUSY_RETRY_WAIT)
+            time.sleep(self.BUSY_RETRY_WAIT)
+            result = _client.submit_file(
+                self.langcode, rel, str(staged), self.base_sha)
+        return result
+
     def submit(self, filename, staged):
         """Hand a fully-serialized staged sibling file to the daemon
         (base-aware). Returns ``'ok'`` (bytes landed; caller must NOT
         replace) or ``'fallback'`` (caller should do its legacy
         ``os.replace`` of *staged* itself)."""
         rel = os.path.basename(str(filename))
-        result = _client.submit_file(
-            self.langcode, rel, str(staged), self.base_sha)
+        result = self._submit_with_busy_retry(rel, staged)
         if result.has(S.MERGED_WITH_LOCAL):
             if result.param(S.MERGED_WITH_LOCAL, 'merged_identical',
                             False):
@@ -293,6 +352,18 @@ class CollabSession:
                     "Collaboration server error detail: {detail}"
                     ).format(detail=detail))
             return 'ok'
+        if self._busy_only(result):
+            # A LONG hold — the short ones were already retried above. The daemon
+            # is alive and working, so never call it unavailable, and do NOT set
+            # `degraded`: that means "legacy mode until the server returns", and
+            # nothing here is gone. What the user actually needs to know is that
+            # the work is safe on disk (Kent 2026-07-29: "what should the user
+            # do?" — nothing).
+            log.warning(_(
+                "The collaboration server is busy with another job, so this "
+                "save went straight to disk. Your work is safe; it will enter "
+                "project history on the next save that gets through."))
+            return 'fallback'
         if not self.degraded:
             self.degraded = True
             log.warning(_(
