@@ -5,6 +5,7 @@ import os
 import psutil
 import pathlib
 import sys
+import time
 # print(sys.argv)
 use_list_comprehension=False
 def running_file(path):
@@ -15,6 +16,15 @@ def running_file(path):
     # us may not have finished exiting yet — exclude exactly that pid,
     # once (pop: don't inherit into restarts).
     skip_pids={os.environ.pop('AZT_BOOTSTRAP_PARENT_PID','')}
+    # Restart predecessors, handed over explicitly by utilities.sysrestart
+    # (2026-07-30). NOT popped: the list must survive into the next restart so a
+    # chain skips every predecessor, not just the immediate one. It exists because
+    # the ancestor walk below is unreliable exactly when it matters — a Tk app with
+    # worker threads does not exit promptly, and one dead intermediate truncates
+    # ppid walking, so a lingering grandparent counted as a duplicate ("too many
+    # processes" on restart after update, Windows, field 2026-07-30).
+    skip_pids |= {p for p in
+                    os.environ.get('AZT_PREDECESSOR_PIDS','').split(',') if p}
     # Generic rule: our ANCESTORS are never independent copies — they're
     # the venv-bootstrap parent, or old instances waiting out Windows
     # sysrestarts (subprocess.run blocks, so restart CHAINS accumulate one
@@ -31,7 +41,11 @@ def running_file(path):
     # psutil.process_iter.cache_clear() #doesn't seem to help
     try:
         if use_list_comprehension:
-            l=[q.info['cmdline'] for q in psutil.process_iter(['cmdline'])
+            # Dead branch (the flag is False): kept for reference, but note it
+            # honours neither skip_pids nor the (pid, age, cmdline) shape the
+            # reporting below needs — the tuple keeps it at least printable.
+            l=[(q.pid,-1,q.info['cmdline'])
+                for q in psutil.process_iter(['cmdline'])
                 if q.info['cmdline'] and '-X' not in q.info['cmdline']
                         and not [c for c in q.info['cmdline'] if 'py.exe' in c]
                 and resolved in [pathlib.Path(c).resolve() for c in q.info['cmdline']]
@@ -47,7 +61,15 @@ def running_file(path):
                     continue
                 for c in qcmd:
                     if resolved == pathlib.Path(c).resolve():
-                        l.append(qcmd)
+                        # Keep the pid and age: when this gate fires wrongly the
+                        # printed list is the only evidence, and "which pid, how
+                        # old" is what distinguishes a lingering predecessor from a
+                        # genuine second copy the user launched.
+                        try:
+                            age=int(time.time()-q.create_time())
+                        except Exception:
+                            age=-1
+                        l.append((q.pid,age,qcmd))
     except OSError as e:
         print(f"OS Error checking for running file: {e}")
         return
@@ -63,6 +85,10 @@ def running_file(path):
             running="is already running"
             enter="Press ENTER, or close this window, to exit"
         print(f"\n{pathlib.Path(path).resolve()} {running}:\n\n",
-                '\n'.join([str(i) for i in l]))
+                '\n'.join(f"pid {pid} ({age}s old): {cmd}"
+                            for pid,age,cmd in l))
+        print(f"(this process: pid {os.getpid()}; "
+                f"allowed {ok_processes}; skipped pids: "
+                f"{sorted(skip_pids) or 'none'})")
         input('\n' + enter + '\n')
         return True

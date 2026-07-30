@@ -438,6 +438,13 @@ def ensure_venv():
              AZT_BOOTSTRAP_PARENT_PID=str(os.getpid())) #we're still alive
              #  when the child's duplicate-process check runs; it excludes
              #  this pid once (utilities/duplicates.py), then forgets it.
+    # …and add ourselves to the DURABLE predecessor list too (2026-07-30). The
+    # one-shot above covers this single hop; the list survives further restarts,
+    # so a relaunch chain (update → restart → venv relaunch) can't leave a
+    # lingering copy that the successor counts as a duplicate. dict(os.environ)
+    # above already carries any inherited value through.
+    _prior=[p for p in env.get('AZT_PREDECESSOR_PIDS','').split(',') if p]
+    env['AZT_PREDECESSOR_PIDS']=','.join((_prior+[str(os.getpid())])[-8:])
     try:
         subprocess.Popen([py]+sys.argv,env=env)
     except Exception as e:

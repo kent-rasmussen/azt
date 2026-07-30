@@ -20,6 +20,30 @@
 - make showoriginalorthographyinreports a UI switch
 
 # Unreleased
+- FIX (restart after update reported "too many processes" with no second copy
+  running — Windows). `sysrestart` does `Popen` then `sys.exit()`, but a Tk app with
+  worker threads doesn't exit promptly, so the successor's duplicate check runs
+  while predecessors are still listed. `running_file` allowed for that by skipping
+  its ANCESTORS — and that walk follows `ppid`, so ONE dead intermediate truncates
+  it and a lingering grandparent counts as a duplicate. Restart-after-update is
+  exactly the longer chain (old → restart → venv relaunch when requirements moved),
+  which is why a plain restart looked fine. Third round on this gate; the
+  2026-07-16 fix removed the blocking `run()` waiters, this is the residue.
+  - `sysrestart` now hands the successor an explicit `AZT_PREDECESSOR_PIDS`
+    (appending to whatever it inherited, last 8 kept), and `running_file` skips
+    that whole set. Independent of the process tree, so no walk to truncate. NOT
+    popped, unlike `AZT_BOOTSTRAP_PARENT_PID`: it has to survive into the next
+    restart. This can't weaken the real gate — a user-launched copy is never in
+    that list.
+  - `ensure_venv` appends to the same list. Its `dict(os.environ, …)` already
+    carried an inherited value through, but it added only the one-shot bootstrap
+    pid, so its own was forgotten after one hop.
+  - `--restart` no longer accumulates in argv (every hop was appending another).
+  - The gate now prints evidence: each offender as `pid N (Ns old): cmdline`, plus
+    our pid, the allowance and the skipped pids. Ages of seconds on pids missing
+    from the skip list mean a hand-off gap; minutes on an unrelated pid means the
+    gate is right. The old message printed cmdlines only, which are identical in
+    both cases.
 - FIX (my own regression from `NotifyUser`: a finished page left blank and
   fullscreen with only a Quit button, and the notice never appeared). Two separate
   mistakes in yesterday's conversion, both from replacing a modal with something

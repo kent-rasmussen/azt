@@ -300,7 +300,25 @@ def sysrestart(event=None):
         # Popen, NOT run: run() waits, so restart chains stacked one live
         # "waiter" process per restart and tripped the duplicate gate
         # (3 found, 2026-07-16). Exit as soon as the successor is launched.
-        subprocess.Popen([sys.executable, *sys.argv, '--restart'])
+        #
+        # HAND THE SUCCESSOR OUR PID (2026-07-30). Popen + sys.exit() does not
+        # mean we are gone: a Tk app with live worker threads takes a while to
+        # finalize, so the successor's duplicate check often runs while we are
+        # still listed. duplicates.running_file skips its ANCESTORS for that
+        # reason — but it walks ppid, so ONE dead intermediate truncates the walk
+        # and a still-lingering grandparent gets counted as a duplicate. That is
+        # the "too many processes" on restart-after-update, where the chain is
+        # longer (update → restart, plus a venv relaunch if requirements moved).
+        # An explicit, inherited list of predecessor pids doesn't depend on the
+        # process tree at all. Trimmed so a long session can't grow the env.
+        env=dict(os.environ)
+        prior=[p for p in env.get('AZT_PREDECESSOR_PIDS','').split(',') if p]
+        env['AZT_PREDECESSOR_PIDS']=','.join((prior+[str(os.getpid())])[-8:])
+        # Don't let --restart accumulate: sys.argv already carries it when THIS
+        # process was itself started by a restart, and every hop was appending
+        # another copy.
+        argv=[a for a in sys.argv if a != '--restart']
+        subprocess.Popen([sys.executable, *argv, '--restart'], env=env)
     sys.exit()
 if __name__ == '__main__':
     from utilities import logsetup
