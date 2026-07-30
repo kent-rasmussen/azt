@@ -52,7 +52,30 @@ class StatusWindow(ui.Window):
         ui.Button(self.frame, text=_("Close"), cmd=self.on_quit,
                  font='instructions', row=1, column=0, sticky='e')
         self._row = self.FIRST_ROW
-        self.deiconify() # once, for the first message — not per message
+        self._surface() # once, for the first message — not per message
+    def _surface(self):
+        """Bring the window to the front WITHOUT holding it there.
+
+        The app's pages are FULLSCREEN kiosk windows (`Window.takekioskscreen`), so
+        a plain new toplevel is created BEHIND them and is simply invisible — which
+        is why the first notices "weren't appearing" at all (Kent 2026-07-30).
+        `ErrorNotice` sets `-topmost` for exactly this reason. A status window that
+        STAYS on top would cover the work, so pulse it: raise, then release. Still
+        no grab and no wait — it must never block."""
+        try:
+            if not self.winfo_viewable():
+                self.deiconify()
+            self.lift()
+            self.attributes('-topmost', True)
+            self.after(1200, self._release_topmost)
+        except Exception as e:
+            log.info("status window surface failed: %s", e)
+    def _release_topmost(self):
+        try:
+            if self.winfo_exists():
+                self.attributes('-topmost', False)
+        except Exception as e:
+            log.info("status window topmost release failed: %s", e)
     def add(self, text, title=None):
         """Append one message. Cheap by design: one Label, one scroll reflow."""
         if self._row <= 1:
@@ -74,13 +97,9 @@ class StatusWindow(ui.Window):
             self.scroll._configure_interior()
         except Exception as e:
             log.info("status window reflow failed: %s", e)
-        try:
-            # Minimised/withdrawn by the user, but not killed: show it again so
-            # the message isn't lost. Still no new window, and no -topmost.
-            if not self.winfo_viewable():
-                self.deiconify()
-        except Exception as e:
-            log.info("status window reveal failed: %s", e)
+        # Raise it for the new message: minimised by the user, or (the usual case)
+        # sitting behind a fullscreen kiosk page. Still no new window.
+        self._surface()
 
 
 def notify_user(text, title=None, **kwargs):

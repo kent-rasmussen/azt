@@ -20,6 +20,23 @@
 - make showoriginalorthographyinreports a UI switch
 
 # Unreleased
+- FIX (my own regression from `NotifyUser`: a finished page left blank and
+  fullscreen with only a Quit button, and the notice never appeared). Two separate
+  mistakes in yesterday's conversion, both from replacing a modal with something
+  that doesn't touch windows:
+  - **The modal was load-bearing.** `ErrorNotice(parent=self, wait=True)` withdrew
+    the task window and deiconified it again after OK — that is what put the board
+    back. When `_advance_after_slice` has nothing to advance to (`fn` is None),
+    nothing else closed the run window, so the user was left on the finished page.
+    It now closes it explicitly, which runs `runwindowcleanup` and its
+    `deiconify()` (`ui_shell.py:2488`) to restore the board; `fn()` already did
+    this via ncheck/nprofile.
+  - **The status window was invisible.** The app's pages are FULLSCREEN kiosk
+    windows, so a plain toplevel is created BEHIND them — `ErrorNotice` sets
+    `-topmost` for exactly that reason, and I had deliberately not. It now pulses:
+    `lift()` + `-topmost` for 1.2 s, then releases, on creation and on every
+    appended message. Still no grab and no wait, so it can't block; it just stops
+    hiding behind the work.
 - FIX (BUSY is an answer, not silence: a one-second lock no longer flips the
   session into legacy mode and calls the server unavailable). A project receiving
   LAN pushes takes `project_lock` briefly but often — a post-receive absorb every

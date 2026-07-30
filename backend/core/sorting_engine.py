@@ -899,6 +899,19 @@ class Sort(Categories):
         self.status.maybeboard()
         if fn:
             fn() #only on first two ifs, calls runcheck w/resetsortbutton
+        else:
+            # NOTHING LEFT TO ADVANCE TO — so nothing else closes the finished run
+            # window, and the user was left staring at a blank fullscreen page with
+            # only a Quit button (Kent 2026-07-30). The modal this replaced was
+            # accidentally load-bearing: ErrorNotice(parent=self, wait=True)
+            # withdrew the task window and deiconified it again after OK, which is
+            # what put the board back. NotifyUser doesn't touch windows, so say so
+            # explicitly: quitting the run window runs runwindowcleanup, whose
+            # deiconify() (ui_shell.py:2488) restores the task window. fn() already
+            # does this via ncheck/nprofile.
+            log.info("Nothing further to sort or verify here; closing the run "
+                     "window to return to the board.")
+            self._safe_quit_runwindow()
     def update_to_cvt(self):
         log.info(_("Group is on a different CVT; updating to that to sort."))
         self._safe_quit_runwindow()
