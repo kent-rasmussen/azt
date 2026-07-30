@@ -603,6 +603,23 @@ class CollabSession:
                 return 'none'
         head = getattr(st, 'head_sha', '') if st else ''
         head_blob = getattr(st, 'lift_blob_sha', '') if st else ''
+        if head and not self.base_sha:
+            # NO BASE = NOTHING TO COMPARE (field 2026-07-30: reboot, then a "team
+            # changes" prompt carrying no information). attach() takes the base
+            # from project_status and falls back to '' when that call fails — which
+            # is what a just-rebooted machine does while its daemon is still
+            # starting. Every later poll then reads head != '' as movement, and the
+            # since_sha probe can't walk from an empty base, so the prompt has
+            # nothing to say. "HEAD moved relative to your base" is meaningless
+            # without a base: adopt this head as the base instead. Our in-memory
+            # tree came from the file on disk, which is what this head describes.
+            self.base_sha = head
+            if head_blob:
+                self.base_lift_blob = head_blob
+            log.info(_("Adopting {head} as the session base: we had none (the "
+                       "server was unreachable when this project opened)."
+                       ).format(head=head[:12]))
+            return 'benign'
         if not head or head == self.base_sha:
             # At base: our in-memory tree derives from this LIFT, so
             # anchor its blob as our base blob (content-identity anchor
@@ -626,12 +643,25 @@ class CollabSession:
         # this line we didn't know HEAD had moved. We cannot compute this
         # ourselves — hard rule #1 forbids reading ``.git``.
         self.changes_since = None
+        probe_failed = False
         try:
             enriched = _client.project_status(self.langcode,
                                              since_sha=self.base_sha)
             self.changes_since = getattr(enriched, 'changes_since', None)
         except Exception as e:
+            probe_failed = True
             log.info(f"changes_since probe: {e}") # older daemon/client
+        if probe_failed:
+            # The probe ERRORED (not "the daemon said it can't tell"). We know HEAD
+            # moved and the LIFT differs, but we cannot say a word about why — and a
+            # prompt that can't say why is indistinguishable from a spurious one
+            # (§ 8b obl. 3a). Don't latch on a failed probe: leave the base alone
+            # and try again on the next tick, ~10 s away, by which time a
+            # starting/busy daemon is usually answering. A real peer change is still
+            # there next tick; only the blind prompt is gone.
+            log.info("Not prompting yet: HEAD moved but the changes_since probe "
+                     "failed; retrying on the next poll.")
+            return 'none'
         cs = self.changes_since or {}
         if cs.get('known') and not cs.get('count') and cs.get('bot_count'):
             # HEAD advanced, but every commit in the range is a daemon

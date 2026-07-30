@@ -1603,6 +1603,20 @@ class Sort(Categories):
                 item_name=_("{check} Group").format(check=check)
             groups=self.groups(toverify=True) #needed for progress
             self.group=group=self.program.status.group()
+            if (group=='NA'
+                    and not self.program.status._na_is_a_result(check=check)):
+                # NA IS NEVER PRESENTED except on an EQUALITY check (Kent
+                # 2026-07-30: "it's also presenting as a group. That needs to stop
+                # now"). NA is tracked on disk for every check and offered for
+                # verification only where the presort's not-equal remainder IS the
+                # check's result set. The to-verify list applies that gate when it
+                # CHOOSES a group — but this is the site that PRESENTS one, and the
+                # group here comes from status.group(), which anything may have set.
+                # So enforce the invariant here rather than trusting the caller.
+                log.info("Not verifying NA on ‘%s’: without ‘=’ in the check, NA "
+                         "is the skip pile — tracked, never presented. Returning "
+                         "so the flow picks a real group.",check)
+                return 1
             _t0=time.perf_counter()
             self.currentsortitems=items=self.program.examples.sensesinslicegroup(group,check)
             log.info("verify: sensesinslicegroup(%s,%s) → %d items in %.2fs",

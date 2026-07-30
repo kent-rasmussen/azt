@@ -19,6 +19,33 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Unreleased
+- FIX (NA presented as a group on the verify page). Making NA membership
+  unconditional (1.13.2) fixed its verification surviving a rebuild, but the `=`
+  gate was applied only where a group is CHOSEN (`StatusDict.groups` to-verify).
+  `verify()` takes its group from `status.group()`, which anything may have set, so
+  the invariant is now enforced at the site that PRESENTS one: NA is never shown
+  for a check without `=` — it is the skip pile there, tracked and never presented.
+  Logged with the check name when it fires, since the path that selected NA is not
+  yet identified (the to-verify gate should have prevented it) — that's the first
+  thing for the 2026-07-31 NA audit.
+- FIX (reboot, then a "team changes available" prompt with no information —
+  field 2026-07-30). Two causes, both about not knowing rather than about change:
+  - **No base to compare against.** `attach()` takes the session base from
+    `project_status` and falls back to `''` when that call fails — which is what a
+    just-rebooted machine does while its daemon is still starting. Every later poll
+    then read `head != ''` as movement, and the `since_sha` probe can't walk from an
+    empty base, so the prompt had nothing to say. "HEAD moved relative to your
+    base" is meaningless without a base: the poll now adopts that head as the base
+    (our in-memory tree came from the file on disk, which is what the head
+    describes) and says so in the log.
+  - **A probe that ERRORED is not a daemon saying "can't tell".** When the enriched
+    `changes_since` call raises — same starting/busy daemon — the poll no longer
+    latches. It leaves the base alone and retries on the next tick ~10 s later, by
+    which time the daemon is usually answering. A real peer change is still there
+    next tick; only the blind prompt is gone. A daemon that answers `known: False`
+    still prompts, and still says "(couldn't tell what changed)".
+
 # Version 1.13.2
 - CHANGE (the save-cost line now times `os.replace` too):
   `save cost: N MB | indent Xs + serialize Ys + submit Zs + replace Ws = Ts
