@@ -19,7 +19,72 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
-# Unreleased
+# Version 1.13.2
+- CHANGE (the save-cost line now times `os.replace` too):
+  `save cost: N MB | indent Xs + serialize Ys + submit Zs + replace Ws = Ts
+  (thread) | outcome O`. The first field sample showed 5-6 s between that line and
+  "Done writing to lift", so the measured section plainly wasn't the whole cost;
+  the replace is the only azt work left in the write thread, so timing it separates
+  disk time from the completion-poll latency on the main thread. `replace —` means
+  the daemon consumed the staged file (no replace on that path).
+- FIX (a verified `C1=C2` NA had to be re-verified with no word added to it). The
+  NA rule was implemented in two places that disagreed about group MEMBERSHIP:
+  `settings.categorizebygrouping` (per-slice rebuild) dropped NA from `groups`
+  unless the check contained `=`, while `generate_status_by_annotations` (full
+  status remake) took groups straight from the annotations, where NA is just
+  another value. `StatusDict.cull` then reduces `done` to `done ∩ groups`, so NA's
+  stored verification was culled away whenever a per-slice rebuild followed a
+  remake — re-verification with nothing added, which is the one case where
+  re-verifying is wrong.
+  - NA is now tracked unconditionally: in `groups`, on disk, for every check
+    (Kent: "it has to be in groups on disk, but excluded from MOST uses").
+  - Whether NA is OFFERED moved to where that is decided:
+    `StatusDict._na_is_a_result` (the check name contains `=`), consulted by the
+    to-verify, to-record and theoretical-list branches of `StatusDict.groups`. An
+    unknown/None check answers "not a result set", so the skip pile is never
+    offered when we can't tell what we're looking at.
+  - Behaviour for `=` checks is unchanged, and non-`=` checks see no NA anywhere
+    they didn't before: to-record and the theoretical list got the same gate, so
+    making membership unconditional doesn't newly offer the skip pile. Display
+    sites already filtered it (`sort()`'s button list, `_getgroup`'s choosers, the
+    distinction pairs, the glyph paths).
+  - NOT changed, deliberately: adding a word to NA still re-opens the WHOLE group
+    for verification. That full re-read is the occasion to remove anything added in
+    error (Kent) — presenting only the uncoded words would lose it.
+  - An audit of every other NA site is filed for 2026-07-31
+    (`azt/agenda/na_audit.md`): this fix was found by reading four files, and the
+    rest were spot-checked, which isn't the same thing.
+
+# Version 1.13.1
+
+Bumped because 1.13.0 stopped discriminating: the version was raised this morning
+and then everything below was added under the same label, so a field machine
+reporting "1.13.0" could hold any subset of it. The boot line's update timestamp
+was doing the work the version should do. Bump per batch from here.
+
+- FIX (a "Team changes available" prompt with NO explanation at all — field
+  2026-07-30, seen on 1.13.0). `collab_offer_reload` prepends "What changed: …"
+  only `if summary`, so whenever `changes_summary()` returned '' the user got a
+  bare demand to reload — the exact thing § 8b obl. 3a exists to prevent, three
+  lines under a comment saying so. It now says "(couldn’t tell what changed)"
+  instead of nothing (same literal as the unknown-base case, so it shares that
+  translation) and logs `Reload prompt with NO attribution: changes_since=…` at
+  warning. That names which of the two causes fired: an empty `changes_since`
+  means the probe failed or the daemon predates it; `known` with `count 0` and
+  `bot_count 0` means the daemon attributed nothing to the range.
+- NEW (save-cost measurement — Phase 0 of the desktop save-cost item). One
+  greppable line per save, `save cost: N MB | indent Xs + serialize Ys + submit Zs
+  = Ts | outcome O`, so the four O(file) passes a one-line edit triggers can be
+  told apart on the machine that actually struggles. It logs before the
+  success-path early return, so the common case isn't the unmeasured one, and it
+  can't break a save (the whole line is wrapped). Not gated on a debug flag: it's
+  one line per save and the machine that needs measuring is a field machine.
+  - Recorded in the item at the same time: Phase 2's premise was WRONG. It ranked
+    dirty-flag skip as "the single biggest win" on the strength of "azt autosaves
+    unchanged content routinely" — but `maybewrite` IS the autosave, fired per
+    change, so the content genuinely differs every time and there is nothing to
+    skip. The real cost is that a one-line edit rewrites a ~16 MB document, which
+    makes Phase 3 (surgical per-entry submit) the main event.
 - FIX (restart after update reported "too many processes" with no second copy
   running — Windows). `sysrestart` does `Popen` then `sys.exit()`, but a Tk app with
   worker threads doesn't exit promptly, so the successor's duplicate check runs

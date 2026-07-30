@@ -1425,6 +1425,20 @@ class StatusDict(dict):
         if self.program.params.cvt()=='S':
             return sorted(groups, key=lambda g: (len(g), g))
         return sorted(groups)
+    @staticmethod
+    def _na_is_a_result(**kwargs):
+        """Is NA a real result set for this check, rather than the skip pile?
+
+        True only for EQUALITY checks (the code contains '=', e.g. C1=C2 / V1=V2 /
+        CV1=CV2): there the presort partitions words into the equal group(s) and
+        the not-equal remainder → NA, so NA is what the check produced and the user
+        verifies it. Everywhere else NA is words set aside, tracked on disk but
+        never offered or shown.
+
+        Keys on the check SHAPE, not the literal "C1=C2". An unknown/None check
+        answers False — don't offer the skip pile when we can't tell what we're
+        looking at."""
+        return '=' in str(kwargs.get('check') or '')
     def groups(self,g=None, **kwargs):
         # log.info(_("groups kwargs: {kwargs}").format(kwargs=kwargs))
         if kwargs.get('all_for_cvt'): #in this case, nothing else is relevant
@@ -1449,9 +1463,31 @@ class StatusDict(dict):
         if kwargs['toverify']:
             #done is always a subset of groupsː
             sn['done']=sorted(set(sn['done'])&set(sn['groups']))
-            return self.order_groups(set(sn['groups'])-set(sn['done']))
+            toverify=set(sn['groups'])-set(sn['done'])
+            # NA IS TRACKED BUT NOT ALWAYS OFFERED (Kent 2026-07-30). Under an
+            # EQUALITY check (code contains '=', e.g. C1=C2 / V1=V2 / CV1=CV2) the
+            # presort partitions words into the equal group(s) and the not-equal
+            # remainder → NA, so NA is that check's real result set and must ride
+            # the verify loop: verifying it is how the user pulls genuine matches
+            # back out by hand, and any word ADDED to it re-opens the whole group
+            # (that re-read is the occasion to remove anything added in error).
+            # For every other check NA is the skip pile — tracked on disk, never
+            # offered. This gate used to live in group MEMBERSHIP
+            # (settings.categorizebygrouping), where it fought the full status
+            # remake and cost NA its stored verification; membership is now
+            # unconditional and only the OFFER is conditional. Keys on the '='
+            # check SHAPE, not the literal "C1=C2".
+            if not self._na_is_a_result(**kwargs):
+                toverify.discard('NA')
+            return self.order_groups(toverify)
         if kwargs['torecord']:
-            return self.order_groups(set(sn['groups'])-set(sn['recorded']))
+            torecord=set(sn['groups'])-set(sn['recorded'])
+            # Same rule, so making NA membership unconditional doesn't newly offer
+            # the skip pile for RECORDING on non-'=' checks (it was already offered
+            # on '=' checks, where NA is a real result set — unchanged).
+            if not self._na_is_a_result(**kwargs):
+                torecord.discard('NA')
+            return self.order_groups(torecord)
         else: #give theoretical possibilities (C or V only)
             """The following two are meaningless, without with kwargs above"""
             if kwargs['cvt'] in ['CV','VC','T']:
@@ -1465,7 +1501,10 @@ class StatusDict(dict):
                 for s in thispsdict:
                     if s != 'V':
                         todo.extend([i[0] for i in thispsdict[s]])
-            todo=sorted(set(todo)|set(sn['groups'])) #either way, add current groups
+            todo=set(todo)|set(sn['groups']) #either way, add current groups
+            if not self._na_is_a_result(**kwargs):
+                todo.discard('NA') #theoretical list is shown to users
+            todo=sorted(todo)
             # log.info(_("Returning groups: {groups}").format(groups=todo))
             return todo
     def sensestosort(self):

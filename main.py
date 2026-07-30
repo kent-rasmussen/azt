@@ -13,7 +13,7 @@ except ImportError: #psutil not installed yet — only true on a machine's
     pass            #very first boot, when nothing can be racing anyway;
                     #py_modules below installs it, so every later boot gates.
 import utilities.py_modules #This tries importing, and installs on failure
-__version__='1.13.0' #This is a string...
+__version__='1.13.2' #This is a string...
 program={'name':'A-Z+T',
         'tkinter':True, #for some day
         'production':False, #True for making screenshots (default theme)
@@ -430,6 +430,24 @@ class App:
         if summary:
             text=_("What changed: {summary}").format(
                     summary=summary)+'\n\n'+text
+        else:
+            # NEVER PROMPT WITHOUT A REASON (field 2026-07-30, 1.13.0: a "Team
+            # changes available" window carrying no explanation at all). The
+            # comment above states obl. 3a's rule — an unexplained prompt is
+            # indistinguishable from a spurious one — and then the `if` quietly
+            # allowed exactly that whenever changes_summary() came back ''.
+            # changes_summary returns '' in two cases: the changes_since probe
+            # failed (or the daemon predates it), or the daemon reported a range it
+            # could attribute nothing to. Either way, SAY so; the string is the
+            # same literal changes_summary uses for an unknown base, so it shares
+            # that translation.
+            text=_("What changed: {summary}").format(
+                    summary=_("(couldn’t tell what changed)"))+'\n\n'+text
+            log.warning("Reload prompt with NO attribution: changes_since=%r "
+                        "— empty means the probe failed or the daemon predates "
+                        "it; known with count 0 and bot_count 0 means the daemon "
+                        "attributed nothing in the range.",
+                        getattr(self.collab,'changes_since',None))
         self._collab_offer_win = notify_error(
             text,
             title=_("Team changes available"),

@@ -912,16 +912,23 @@ class Settings(SettingsUI):
         else:
             if not kwargs.get('cvt'): #default, not on iteration
                 self.program.status.marksensesorted(sense.id)
-            # NA is normally kept out of the sort-group list (skip pile).
-            # Exception: under an EQUALITY check (code contains '=', e.g.
-            # C1=C2 / V1=V2 / CV1=CV2), the presort partitions words into the
-            # equal group(s) and the not-equal remainder → NA, so NA is that
-            # check's real result set and must ride the verify loop for the
-            # user to pull genuine matches back out by hand. ALLOK (fully
-            # verified) is never a sort group. Keys on the '=' check SHAPE,
-            # not the literal "C1=C2".
-            excluded = ['ALLOK'] if '=' in (check or '') else ['NA','ALLOK']
-            if v not in excluded:
+            # NA IS TRACKED, ALWAYS (Kent 2026-07-30: "it has to be in groups on
+            # disk, but excluded from MOST uses"). It used to be dropped here for
+            # any check without '=', which made group membership disagree with the
+            # full status remake (generate_status_by_annotations takes groups
+            # straight from the annotations, where NA is just another value). Since
+            # `cull` reduces done to done∩groups, NA's stored verification was
+            # culled away on the next per-slice rebuild — so users re-verified NA
+            # with no word added, which is the one case where re-verifying is
+            # wrong.
+            #
+            # Whether NA is OFFERED for verification is a different question, and
+            # now lives where to-verify is computed (StatusDict.groups); whether it
+            # is SHOWN is each use site's business (sort() filters it from the
+            # button list, group_pairs_to_distinguish and pending_distinctions drop
+            # it, glyphstoverify and senses_for_glyph skip it).
+            # ALLOK (fully verified) is never a sort group.
+            if v not in ['ALLOK']:
                 self._groups.append(v)
     def updatesortingstatus(self, store=True, **kwargs):
         """This reads LIFT to create lists for sorting, populating lists of

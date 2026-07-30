@@ -24,6 +24,7 @@ import datetime
 import re #needed?
 import os
 # import rx
+import time #save-cost instrumentation (Lift._log_save_cost)
 import ast #For string list interpretation
 import copy
 import collections
@@ -1215,6 +1216,27 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         return compressed
     def writebackup(self):
         self.write(self.backupfilename)
+    def _log_save_cost(self,nbytes,t_indent,t_ser,t_submit,outcome,
+                        t_replace=None):
+        """One greppable line per save: where the time went, and how big the file
+        is. Phase 0 of desktop_save_cost_reduction.md — a one-line edit rewrites
+        the whole document, so the split between the full-tree reindent, the
+        serialize+write, and the daemon submit is what decides whether per-entry
+        submission (Phase 3) is worth a contract change or whether the cost is all
+        daemon-side. Grep: 'save cost:'.
+
+        Deliberately not gated on a debug flag: it is one line per save, and the
+        machine that needs measuring is a field machine we can't attach to."""
+        try:
+            total=t_indent+t_ser+t_submit+(t_replace or 0.0)
+            log.info("save cost: %.1f MB | indent %.2fs + serialize %.2fs + "
+                    "submit %.2fs + replace %s = %.2fs (thread) | outcome %s",
+                    (nbytes/1048576.0) if nbytes and nbytes>0 else -1,
+                    t_indent,t_ser,t_submit,
+                    '—' if t_replace is None else '%.2fs'%t_replace,
+                    total,outcome)
+        except Exception as e: # a measurement must never break a save
+            log.info("save cost line failed: %s", e)
     def write(self,filename=None):
         """This writes changes back to XML."""
         if filename is None:
@@ -1222,14 +1244,25 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
         # log.info(f"{filename=} ({type(filename)=})")
         write=0
         nodes=self.nodes
+        # SAVE-COST INSTRUMENTATION (2026-07-30, desktop_save_cost_reduction.md
+        # Phase 0). A one-line edit rewrites the WHOLE file — easily 16 MB — so
+        # before changing anything we need the split: how much is the full-tree
+        # reindent, how much the serialize+write, how much the daemon submit. These
+        # are the numbers that say whether per-entry submission (Phase 3) is worth
+        # a contract change, or whether the cost is all daemon-side.
+        _t_start=time.perf_counter()
         xmlfns.indent(self.nodes)
+        _t_indent=time.perf_counter()-_t_start
         tree=et.ElementTree(self.nodes)
+        _t_ser=0.0
         try:
             tmp=str(filename)+'.part'
             if file.exists(tmp):
                 file.remove(tmp)
             # log.info(f"{tmp=} ({type(tmp)=})")
+            _t0=time.perf_counter()
             tree.write(tmp, encoding="UTF-8")
+            _t_ser=time.perf_counter()-_t0
             write=True
         except Exception as e:
             error=_("There was a problem writing to partial file: "
@@ -1244,22 +1277,44 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             # backups/templates (explicit filename arg) stay direct.
             # 'fallback' means the daemon didn't take it (unavailable);
             # the legacy replace below then runs unchanged.
+            try:
+                _bytes=os.path.getsize(tmp)
+            except OSError:
+                _bytes=-1
             submit=getattr(self,'collab_submit',None)
             collab_fallback=False
+            _t_submit=0.0
+            outcome='(no daemon)'
             if submit is not None and str(filename) == str(self.filename):
+                _t0=time.perf_counter()
                 try:
                     outcome=submit(filename,tmp)
                 except Exception as e:
                     log.error(f"collab submit raised; falling back to "
                                 f"direct write: {e}")
                     outcome='fallback'
+                _t_submit=time.perf_counter()-_t0
                 if outcome == 'ok':
+                    # Log BEFORE this early return, or every successful collab
+                    # save — the common case — goes unmeasured. No replace on this
+                    # path: the daemon consumed the staged file.
+                    self._log_save_cost(_bytes,_t_indent,_t_ser,_t_submit,outcome)
                     self.write_OK=True
                     self.write_error=None
                     return
                 collab_fallback=True
+            _t_replace=0.0
             try:
+                _t0=time.perf_counter()
                 os.replace(tmp,filename)
+                _t_replace=time.perf_counter()-_t0
+                # Logged AFTER the replace (2026-07-30): the first field numbers
+                # showed 5-6 s between this line and "Done writing to lift", so the
+                # measured section clearly wasn't the whole cost. The replace is the
+                # only azt work left in the thread, so timing it separates disk time
+                # from the completion-poll latency on the main thread.
+                self._log_save_cost(_bytes,_t_indent,_t_ser,_t_submit,outcome,
+                                    t_replace=_t_replace)
                 self.write_OK=True
                 self.write_error=None
                 if collab_fallback:
