@@ -61,8 +61,18 @@ class OrderAlphabetUI(ui.Window):
                     'image':self.exobjs[g].image.scaled,
                 }
         elif self.exids[g]:
-            log.error(_("self.exids for ‘{g}’ is there ({i}), but self.exobjs isn’t? "
-                    "{objs} {ids}").format(g=g,i=self.exids[g],objs=self.exobjs,ids=self.exids))
+            # A CHOSEN word with no displayable picture. Since 2026-07-30 a saved
+            # pick whose image won't load KEEPS its id instead of being silently
+            # deleted, so this branch is now REACHABLE — and it used to fall off the
+            # end returning None, which the caller unpacks with .items(). Show the
+            # word without a picture: the user's choice is visible, and the log line
+            # from init_chart_data says why there's no image.
+            sense=self.db.sensedict.get(self.exids[g])
+            try:
+                return {'text':sense.entry.lcvalue() if sense is not None else "?"}
+            except Exception as e:
+                log.info("chart: no text for chosen ‘%s’ (%s)",g,e)
+                return {'text':"?"}
         else:
             return {'text':"?"}
     def column_config(self,change,event=None):
@@ -331,20 +341,29 @@ class OrderAlphabetUI(ui.Window):
         
         made_with = f"Made with {self.program.name} ({self.program.url})"
         
-        self.ncolumns=alphabet_chart_pdf.create_chart(filepath, items, title, 
+        made=alphabet_chart_pdf.create_chart(filepath, items, title,
                         self.ncolumns, self.pagesize, font_name,
                         one_page=one_page,
                         copyright_text=self.chart_copyright.get(),
                         made_with=made_with,
                         analang=self.db.analang)
-        
+        #create_chart returns the column count it ACTUALLY used (one_page can
+        #shrink it), or the string "using_helvetica", or None if it bailed. Only a
+        #real count may become self.ncolumns: anything else makes every later
+        #redraw die on n//self.ncolumns (and gets persisted to alphabet_ncolumns).
+        if isinstance(made,int) and made > 0:
+            self.ncolumns=made
+        elif made not in (None,"using_helvetica"):
+            log.warning("create_chart returned %r, which is not a column count; "
+                        "keeping %s columns.",made,self.ncolumns)
+
         try:
             from utilities.utilities import open_file
             open_file(filepath)
         except Exception as e:
             log.warning(f"Could not open PDF automatically: {e}")
 
-        if self.ncolumns == "using_helvetica":
+        if made == "using_helvetica":
             q=ui.Window(self,title=_("Helvetica warning"))
             ui.Label(q.frame,text=_("This PDF uses Helvetica because neither Charis nor Andika were found; "
             "install one of them for better glyph treatment."),sticky='news')

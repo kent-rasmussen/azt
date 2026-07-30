@@ -19,7 +19,39 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
-# Unreleased
+# Version 1.13.3
+
+The two reload-prompt fixes below are the ones to deploy if a machine is still
+being asked to take "team changes" it can't explain: 1.13.1 made the prompt SAY
+that it couldn't tell, and this version stops raising it at all when the reason we
+can't tell is that the probe failed or the session never had a base.
+
+- FIX (Advanced ▸ Fill CAWL Images did nothing — `unexpected 'do_wait'`). The menu
+  handler called `db.fill_db_images(do_wait=True)`, but `Lift.fill_db_images(self)`
+  takes no arguments, so the call raised TypeError before touching a single image.
+  Kwarg dropped; the wait dialog was always the caller's (opened one line above,
+  closed by `drive_work` on StopIteration). Worth noting this is the command
+  suggested on 2026-07-29 as the remedy for letters with no picture — it could not
+  have worked.
+- CHANGE (alphabet chart picks an example that WORKS instead of picking then
+  clearing). `propose_chart_example` returned the head of the ranked candidate list
+  with only a `file.exists()` test, and `init_chart_data` then blanked the letter if
+  that image failed to load — a 0-byte or truncated file passes `exists()` and dies
+  at load, so a letter went blank with usable candidates still in its list.
+  `propose_chart_examples` now returns the ranked LIST per glyph, and
+  `init_chart_data` takes the first candidate whose image actually loads and scales
+  (the load IS the eligibility test; it can only live in the caller, which holds the
+  UI). Ranking unchanged — this changes the winner only when a better candidate is
+  unusable.
+  - A SAVED pick whose image won't load now KEEPS its id instead of being deleted:
+    it's the user's choice, and silent deletion was what the 2026-07-29 diagnostic
+    caught. The letter shows the chosen WORD without a picture, and the log says
+    which image failed. Two follow-ons that fell out of that, both fixed here: the
+    blank-letter diagnostic now keys on the missing OBJECT rather than a missing id
+    (or it would have skipped exactly this case), and
+    `OrderAlphabetUI.get_kwargs`'s "id but no object" branch — previously
+    unreachable, since the two were always cleared together — no longer falls off
+    the end returning None into a caller that unpacks it with `.items()`.
 - FIX (NA presented as a group on the verify page). Making NA membership
   unconditional (1.13.2) fixed its verification surviving a rebuild, but the `=`
   gate was applied only where a group is CHOSEN (`StatusDict.groups` to-verify).

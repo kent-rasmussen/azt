@@ -496,19 +496,26 @@ class Alphabet():
                     "(try Advanced ▸ Fill CAWL Images)").format(n=len(senses))
         return ("{p} of {n} verified word(s) ARE pictured — the ranking bailed; "
                 "check the class of its members").format(p=pictured,n=len(senses))
-    def propose_chart_examples(self,glyphs,existing=None):
-        """Fill-only-empties batch: {glyph: sense_id} proposals for the glyphs
-        in `glyphs` whose `existing` value is falsy. Never returns entries for
-        glyphs the user already chose (the never-clobber rule)."""
+    def propose_chart_examples(self,glyphs,existing=None,n=6):
+        """Fill-only-empties batch: {glyph: [sense_id, …]} — the ranked CANDIDATES
+        for each glyph whose `existing` value is falsy. Never returns entries for
+        glyphs the user already chose (the never-clobber rule).
+
+        A LIST, not one id (Kent 2026-07-30: "let's pick a word that works. there
+        are plenty in the list"). Eligibility here can only check that an
+        illustration file EXISTS — a 0-byte or truncated one passes that and then
+        fails to load, which used to blank the letter even with usable candidates
+        left in the list. Only the caller can try a real load (it holds the UI), so
+        it gets the whole ranked list and takes the first that works."""
         existing=existing or {}
         out={}
         for glyph in glyphs:
             g=str(glyph)
             if existing.get(g):
                 continue
-            sid=self.propose_chart_example(g)
-            if sid:
-                out[g]=sid
+            sids=self.propose_comparison_examples(g,n=n)
+            if sids:
+                out[g]=sids
         return out
     def conflict_code(self,code):
         return code.split('_')[:4]
@@ -822,6 +829,23 @@ class AlphabetChartData:
     """Backend data/logic mixin for alphabet chart. No UI imports."""
     my_settings = ['exids', 'order', 'ncolumns', 'chart_title', 'pagesize']
 
+    @staticmethod
+    def _sane_columns(value, default):
+        """A column count must be a positive int: the chart grids on
+        n//ncolumns, so a str (e.g. "using_helvetica", once returned by
+        create_chart and stored) kills every redraw. Digit strings are accepted
+        and coerced, since JSON round-trips have produced them."""
+        if isinstance(value, bool): #True//x is legal and meaningless
+            value = None
+        if isinstance(value, int) and value > 0:
+            return value
+        if str(value).isdigit() and int(value) > 0:
+            return int(value)
+        if value not in (None, False, 0, ''):
+            log.warning("Stored alphabet column count %r is unusable; "
+                        "using %s.", value, default)
+        return default
+
     def init_chart_data(self, **kwargs):
         # self.program = program
         self.show_at_least = 5
@@ -831,13 +855,12 @@ class AlphabetChartData:
             defs = {'ncolumns': 5, 'pagesize': 'A4', 'order': [], 'exids': {}, 'chart_title': ''}
             for k in self.my_settings:
                 setattr(self, k, self.program.settings.mgr.get('alphabet_' + k, defs.get(k)))
+            self.ncolumns = self._sane_columns(self.ncolumns, defs['ncolumns'])
             self.analangname = self.program.settings.languagenames[self.db.analang]
         else:
             for k in ['exids', 'order']:
                 setattr(self, k, kwargs.get(k, 0))
-            self.ncolumns = kwargs.get('ncolumns', False)
-            if type(self.ncolumns) != int and not str(self.ncolumns).isdigit():
-                self.ncolumns = 8
+            self.ncolumns = self._sane_columns(kwargs.get('ncolumns', False), 8)
             self.analangname = self.db.analang
             self.pagesize = 'letter'
         self.imgdir = self.db.imgdir
@@ -858,60 +881,99 @@ class AlphabetChartData:
         # word — fill ONLY empty slots; a user's saved choice is never
         # overwritten. Rule: glyph-is-the-only-C/V-in-the-word first, then
         # word-initial, pictured words only (Alphabet.propose_chart_example).
-        if hasattr(self.program,'alphabet'):
-            try:
-                proposed=self.program.alphabet.propose_chart_examples(
-                    self.order,self.exids if isinstance(self.exids,dict) else {})
-            except Exception as e:
-                log.info("chart example proposal skipped: %s",e)
-                proposed={}
-            if proposed:
-                if not isinstance(self.exids,dict):
-                    self.exids={}
-                self.exids.update(proposed)
-                log.info("Proposed default examples for %d glyph(s): %s",
-                         len(proposed),proposed)
         p = self.program.lex_ui
-        if self.exids:
-            for k in set(self.order) - set(self.exids):
-                self.exids[str(k)] = None
-            self.exobjs = {str(g): (self.db.sensedict[self.exids[g]]
-                                    if self.exids[g] in self.db.sensedict
-                                    else None)
-                           for g in self.exids}
-            blanked = {} # glyph → the image URI that wouldn't load (diagnostic)
-            for glyph, sense in [(k, v) for k, v in self.exobjs.items() if v is not None]:
-                di = sense.illustrationURI(local_only=True) #images are data
-                if file.exists(di):
-                    try:
-                        sense.image = p.image(di)
-                    except Exception:
-                        sense.image = None
-                if hasattr(sense, 'image') and sense.image:
-                    sense.image.scale(1, pixels=100, scaleto='height')
+        def _loadable(sense):
+            """Can this sense's illustration actually be DISPLAYED? The only honest
+            test is the load itself: file.exists() passes a 0-byte or truncated
+            image, which then fails at p.image()/scale — and that is what used to
+            blank a letter. Leaves sense.image set on success."""
+            if sense is None:
+                return False
+            try:
+                di=sense.illustrationURI(local_only=True) #images are data
+                if not file.exists(di):
+                    return False
+                sense.image=p.image(di)
+                if not getattr(sense,'image',None):
+                    return False
+                sense.image.scale(1,pixels=100,scaleto='height')
+                return True
+            except Exception as e:
+                log.info("chart: %r unusable as an example (%s)",
+                        getattr(sense,'id','?'),e)
+                sense.image=None
+                return False
+        if not isinstance(self.exids,dict):
+            self.exids={}
+        self.exobjs={}
+        blanked={} # glyph → the image URI that wouldn't load (diagnostic)
+        # PICK ONE THAT WORKS, don't pick then clear (Kent 2026-07-30). Proposals
+        # walk the ranked candidate list — glyph-is-the-only-C/V-in-the-word first,
+        # then word-initial (Alphabet.propose_chart_examples) — and take the first
+        # whose picture actually loads, instead of taking the head and blanking the
+        # letter when that one happens to be broken. Fill ONLY empty slots; a user's
+        # saved choice is never overwritten.
+        try:
+            candidates=self.program.alphabet.propose_chart_examples(
+                        self.order,self.exids) if hasattr(
+                        self.program,'alphabet') else {}
+        except Exception as e:
+            log.info("chart example proposal skipped: %s",e)
+            candidates={}
+        proposed={}
+        for g in [str(i) for i in self.order]:
+            saved=self.exids.get(g)
+            if saved:
+                # A SAVED pick: try it, and if its picture is unusable KEEP THE ID
+                # (it is the user's choice, not ours to delete — that silent
+                # deletion is what the 2026-07-29 diagnostic caught) and leave the
+                # slot blank, logged below.
+                sense=self.db.sensedict.get(saved)
+                if _loadable(sense):
+                    self.exobjs[g]=sense
                 else:
-                    # NOTE this drops a SAVED user choice too, not just a
-                    # proposal — see the log line below.
-                    blanked[str(glyph)] = str(di)
-                    self.exobjs[str(glyph)] = None
-                    self.exids[str(glyph)] = None
-        else:
-            blanked = {}
-            self.exids = {str(g): None for g in self.order}
-            self.exobjs = {str(g): None for g in self.order}
+                    self.exobjs[g]=None
+                    try:
+                        blanked[g]=str(sense.illustrationURI(local_only=True)
+                                        ) if sense is not None else '(no sense)'
+                    except Exception:
+                        blanked[g]='(unknown)'
+                continue
+            self.exobjs[g]=None
+            self.exids[g]=None
+            for sid in candidates.get(g,[]):
+                sense=self.db.sensedict.get(sid)
+                if _loadable(sense):
+                    self.exids[g]=sid
+                    self.exobjs[g]=sense
+                    proposed[g]=sid
+                    break
+            else:
+                # Every candidate failed to load (or there were none) — the
+                # blank-letter diagnostic below says which case.
+                if candidates.get(g):
+                    log.info("chart: ‘%s’ — all %d pictured candidate(s) failed "
+                            "to load; leaving it for manual choice.",
+                            g,len(candidates[g]))
+        if proposed:
+            log.info("Proposed default examples for %d glyph(s): %s",
+                     len(proposed),proposed)
         # WHY IS THIS LETTER BLANK? (Kent 2026-07-29) One line per empty glyph,
         # naming which of the gates it failed, so a half-filled chart is
         # answerable from the log instead of a code read. Cheap: only the EMPTY
         # glyphs are examined, once per chart open.
         try:
             for g in [str(i) for i in self.order]:
-                if (self.exids or {}).get(g):
+                # Keyed on the OBJECT, not the id: a saved pick whose picture won't
+                # load now KEEPS its id (2026-07-30), so testing exids here would
+                # skip exactly the case worth reporting.
+                if (self.exobjs or {}).get(g) is not None:
                     continue
                 if g in blanked:
-                    log.info("chart: ‘%s’ blank — its picture (%s) exists but "
-                            "would not load (0-byte/corrupt?); the example for "
-                            "this letter was CLEARED, even if you had chosen it",
-                            g, blanked[g])
+                    log.info("chart: ‘%s’ has no picture — the chosen word's image "
+                            "(%s) exists but would not load (0-byte/corrupt?). The "
+                            "saved choice is KEPT, not deleted: fix or replace that "
+                            "image, or pick another word.", g, blanked[g])
                 elif hasattr(self.program, 'alphabet'):
                     log.info("chart: ‘%s’ has no example — %s", g,
                             self.program.alphabet.chart_example_gap_reason(g))

@@ -213,9 +213,13 @@ class Menus(ui.Menu):
         if getattr(self.parent,'is_sort_task',False):
             self.parameterslice()
     def fill_db_images(self):
+        # No do_wait kwarg: Lift.fill_db_images takes none, so passing it raised
+        # TypeError and Advanced ▸ Fill CAWL Images did nothing at all (field
+        # 2026-07-30). The wait belongs to the CALLER anyway — it's opened on the
+        # line above, and drive_work closes it on StopIteration.
         self.program.tk_root.wait(msg=_("Filling images..."))
         self.program.tk_root.drive_work(
-            self.program.db.fill_db_images(do_wait=True))
+            self.program.db.fill_db_images())
     def languages(self):
         """Language stuff"""
         self.cascade(self.changemenu,_("Languages"),'languagemenu')
