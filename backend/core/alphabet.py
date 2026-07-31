@@ -855,21 +855,13 @@ class AlphabetChartData:
             defs = {'ncolumns': 5, 'pagesize': 'A4', 'order': [], 'exids': {},
                     'chart_title': '', 'copyright': ''}
             for k in self.my_settings:
-                # READ THROUGH THE SAME ACCESSOR save_settings WRITES THROUGH.
-                # save_settings does settings.alpha_<k>(value); this read used
-                # settings.mgr.get('alphabet_<k>') — a different store — so a
-                # value that lives on the accessor never came back, and the
-                # chart title and copyright reverted every open (Kent
-                # 2026-07-31). One path in, one path out; mgr.get stays only as
-                # the fallback for keys with no accessor.
-                getter = getattr(self.program.settings, 'alpha_' + k, None)
-                if callable(getter):
-                    try:
-                        setattr(self, k, getter())
-                        continue
-                    except Exception as e:
-                        log.info("alphabet setting %r via alpha_%s failed "
-                                 "(%s); falling back to mgr", k, k, e)
+                # alphabet.json (the domain store) is authoritative — read it.
+                # 1.13.16 routed this through the alpha_<k>() accessors instead;
+                # that was wrong and actively harmful, because an accessor whose
+                # private attr is unset returns a hardcoded DEFAULT, which
+                # save_settings then wrote back over the user's stored value.
+                # The accessors now fall back to this same store (see
+                # settings.__init__._alpha), so the two agree either way.
                 setattr(self, k, self.program.settings.mgr.get('alphabet_' + k, defs.get(k)))
             self.ncolumns = self._sane_columns(self.ncolumns, defs['ncolumns'])
             self.analangname = self.program.settings.languagenames[self.db.analang]

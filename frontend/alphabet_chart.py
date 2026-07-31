@@ -57,7 +57,26 @@ class OrderAlphabetUI(ui.Window):
                 self.buttons[glyph].b['image']=''
             for k,v in kw.items():
                 self.buttons[glyph].b[k]=v
-            # log.info(f"{self.exids=}")
+            # DIAG-chartimg (2026-07-31, grep to remove): the picture shows on
+            # the picker page and not here, with no error anywhere — so the
+            # bitmap is good and the button DID get an image. That leaves a
+            # silent Tk failure: the PhotoImage garbage-collected, or made in a
+            # different interpreter than this widget (there is a second
+            # "fakeroot" for image scaling). Print the identity of both sides.
+            try:
+                img=getattr(self.exobjs[glyph],'image',None)
+                ph=getattr(img,'scaled',None)
+                b=self.buttons[glyph].b
+                log.info("DIAG-chartimg %s: sense=%s img=%s photo=%s "
+                         "size=%sx%s widget_image=%r compound=%r "
+                         "tk_photo=%s tk_widget=%s",
+                         glyph, id(self.exobjs[glyph]), id(img) if img else None,
+                         ph, getattr(ph,'width',lambda:'?')(),
+                         getattr(ph,'height',lambda:'?')(),
+                         b['image'], b['compound'],
+                         getattr(ph,'tk',None), getattr(b,'tk',None))
+            except Exception as e:
+                log.info("DIAG-chartimg failed for %s: %s",glyph,e)
         self.chart.reflow()  # sync: grow canvas/scrollregion to new content
         self.deiconify()
         self.update_idletasks()

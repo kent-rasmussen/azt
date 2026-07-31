@@ -678,27 +678,51 @@ class Settings(SettingsUI):
             # overwrite if that string is elsewhere in the dict
             self._alphabet_exids={str(k):value[k] for k in value if type(k) is int}
             self._alphabet_exids.update({str(k):value[k] for k in value if type(k) is not int})
-        return getattr(self,'_alphabet_exids',value)
+        if hasattr(self,'_alphabet_exids'):
+            return self._alphabet_exids
+        # Same store-before-default rule as _alpha: without it, a save made
+        # before any pick had been loaded wrote {} over the user's examples.
+        try:
+            stored=self.mgr.get('alphabet_exids',None)
+        except Exception:
+            stored=None
+        return stored if stored else value
+    def _alpha(self,key,value,default):
+        """One shape for every alphabet setting: set-if-given, else read.
+
+        THE READ FALLS BACK TO alphabet.json BEFORE ANY HARDCODED DEFAULT
+        (Kent 2026-07-31: "it IS reading from alphabet.json, and putting
+        default values there which overwrite user preferences"). These
+        accessors are what `makesettingsdict` serialises the file FROM, so an
+        accessor that answered a placeholder — because its private attr hadn't
+        been populated this session — wrote that placeholder straight over the
+        user's stored value on the next save. Consulting the store first makes
+        a save idempotent: with nothing new to set, it rewrites what is
+        already there."""
+        attr='_alphabet_'+key
+        if value not in (None,'',[],{},0,False):
+            setattr(self,attr,value)
+        if hasattr(self,attr):
+            return getattr(self,attr)
+        try:
+            stored=self.mgr.get('alphabet_'+key,None)
+        except Exception as e:
+            _log.info("alphabet_{} not readable from the domain store "
+                      "({}); using the default".format(key,e))
+            stored=None
+        return default if stored in (None,'',[],{}) else stored
     def alpha_ncolumns(self,value=0):
-        if value:
-            self._alphabet_ncolumns=value
-        return getattr(self,'_alphabet_ncolumns',5)
+        return self._alpha('ncolumns',value,5)
     def alpha_chart_title(self,value=''):
-        if value:
-            self._alphabet_chart_title=value
-        return getattr(self,'_alphabet_chart_title',value)
+        return self._alpha('chart_title',value,'')
     def alpha_copyright(self,value=''):
-        if value:
-            self._alphabet_copyright=value
-        return getattr(self,'_alphabet_copyright',_("Set Alphabet Copyright!"))
+        return self._alpha('copyright',value,_("Set Alphabet Copyright!"))
     def alphabet_contributors(self,value=None):
         if value is not None:
             self._contributors=value
         return getattr(self,'_contributors',[])
     def alpha_pagesize(self,value=''):
-        if value:
-            self._alphabet_pagesize=value
-        return getattr(self,'_alphabet_pagesize','A4')
+        return self._alpha('pagesize',value,'A4')
     def guess_nominalps(self):
         topn=3 #just in case N and V aren't the first two, finish with top
         n_opts=['N','n','Noun','noun', 'Nom','nom','S','s',

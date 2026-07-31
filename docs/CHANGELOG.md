@@ -19,6 +19,38 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.13.18
+
+- FIX alphabet settings overwritten with DEFAULTS, and user values not reaching
+  the file (field 2026-07-31). `alphabet.json` is the authoritative store, and
+  `makesettingsdict` serialises it FROM the `alpha_*` accessors — but each of
+  those answered a hardcoded default whenever its private `_alphabet_*` attr
+  hadn't been populated this session (`alpha_copyright` returned the literal
+  "Set Alphabet Copyright!"). So a save wrote that placeholder straight over the
+  stored value. New `Settings._alpha` gives them one shape: set-if-given, then
+  read the private attr, then **the domain store**, and only then the default.
+  A save with nothing new to set is now idempotent — it rewrites what is already
+  there instead of a placeholder. `alpha_ncolumns`, `alpha_chart_title`,
+  `alpha_copyright`, `alpha_pagesize` use it; `alpha_exids` keeps its int-key
+  normalisation and gains the same store-before-default rule, which stops an
+  early save writing `{}` over the user's chosen example words.
+- REVERT the 1.13.16 half of this. Routing `init_chart_data`'s reads through the
+  `alpha_<k>()` accessors was wrong and made the clobber worse: it loaded the
+  accessors' defaults into the chart, which `save_settings` then wrote back.
+  Reads come from `mgr.get('alphabet_<k>')` again, and with the accessors now
+  falling back to the same store the two agree either way.
+
+# Version 1.13.17
+
+- DIAG-chartimg (temporary, grep to remove): the chart's chosen picture shows on
+  the word-picker page and then not on the chart, with nothing in the log or the
+  console. Since the "no usable image" lines never fire, the bitmap is fine and
+  the button DID receive an image — which points at a silent Tk failure
+  (PhotoImage garbage-collected, or created in a different interpreter than the
+  widget; there is a second "fakeroot" used for image scaling). `select_example`
+  now logs both sides' identity: sense/image/photo ids, photo dimensions, the
+  widget's `image` and `compound`, and each side's `tk` interpreter.
+
 # Version 1.13.16
 
 - FIX alphabet-chart settings not persisting (chart title, copyright — field

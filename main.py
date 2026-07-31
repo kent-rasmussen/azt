@@ -13,7 +13,7 @@ except ImportError: #psutil not installed yet — only true on a machine's
     pass            #very first boot, when nothing can be racing anyway;
                     #py_modules below installs it, so every later boot gates.
 import utilities.py_modules #This tries importing, and installs on failure
-__version__='1.13.16' #This is a string...
+__version__='1.13.18' #This is a string...
 program={'name':'A-Z+T',
         'tkinter':True, #for some day
         'production':False, #True for making screenshots (default theme)
