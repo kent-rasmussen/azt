@@ -17,6 +17,7 @@ import tkinter.scrolledtext
 import tkinter.ttk
 import tkinter.dnd
 from utilities import file #for image pathnames
+from utilities import fonts as fontlib #family aliases + font-file search
 from random import randint #for theme selection
 import datetime
 try: #PIL
@@ -440,8 +441,42 @@ class Theme(object):
             -title,-bigger,-big,-normal,-default,-small,-tiny)
         log.info("Using default font size: {}px (scale {})".format(
                                                 -default,scale))
-        andika="Andika"# not "Andika SIL"
-        charis="Charis SIL"
+        # WHICH NAME DOES THIS MACHINE USE? Charis v6 ships the family
+        # "Charis SIL"; v7 renames it to plain "Charis". Both are in the
+        # field (Kent 2026-07-31), and hard-coding "Charis SIL" made a
+        # Charis-7 machine report the font as MISSING at boot and lay
+        # itself out in Tk's silent substitute — "fonts that claim to be
+        # installed". Ask for whichever alias actually resolves.
+        def _tk_has(name):
+            return (str(tkinter.font.Font(family=name,
+                                          size=default).actual('family')
+                        ).strip().casefold() == name.strip().casefold())
+        # MISSING FONT (Kent 2026-07-29: "this should never be; if we're
+        # missing charis SIL at boot, please let's put up an error notice
+        # saying so"). Tk substitutes a missing family SILENTLY, and the
+        # substitute's metrics differ — usually wider per character — so
+        # text wraps where the layout didn't expect it, and no two
+        # machines agree. Record it here; App surfaces it at boot
+        # (warn_font_problems), like degraded sound. Only when NO alias
+        # resolves is the font genuinely absent.
+        self.missing_font_families=[]
+        charis=fontlib.resolve_family('charis',_tk_has)
+        andika=fontlib.resolve_family('andika',_tk_has) or "Andika"
+        if not charis:
+            charis=fontlib.CHARIS_FAMILIES[0]
+            try:
+                got=str(tkinter.font.Font(family=charis,
+                                    size=default).actual('family'))
+            except Exception as e:
+                got=str(e)
+            log.error("None of %s is installed on this machine; Tk "
+                    "substituted %r. Text metrics will differ from every "
+                    "other machine (wrapping, button sizes).",
+                    fontlib.CHARIS_FAMILIES,got)
+            self.missing_font_families.append(
+                            (' / '.join(fontlib.CHARIS_FAMILIES),got))
+        else:
+            log.info("Using installed font family %r",charis)
         self.fonts={
                 'title':tkinter.font.Font(family=charis, size=title), #Charis
                 'instructions':tkinter.font.Font(family=charis,
@@ -462,25 +497,6 @@ class Theme(object):
                 'italic':tkinter.font.Font(family=charis, size=default, slant='italic'),
                 'fixed':tkinter.font.Font(family='Courier', size=small)
                     }
-        # MISSING FONT (Kent 2026-07-29: "this should never be; if we're missing
-        # charis SIL at boot, please let's put up an error notice saying so").
-        # Tk substitutes a missing family SILENTLY, and the substitute's metrics
-        # differ — usually wider per character — so text wraps where the layout
-        # didn't expect it, and no two machines agree. Record it here; App
-        # surfaces it at boot (warn_font_problems), like degraded sound.
-        self.missing_font_families=[]
-        for wanted in [charis]:
-            try:
-                got=tkinter.font.Font(family=wanted,
-                                    size=default).actual('family')
-            except Exception as e:
-                log.info("Couldn’t check the {!r} font: {}".format(wanted,e))
-                continue
-            if str(got).strip().casefold()!=wanted.strip().casefold():
-                log.error("Font %r is NOT installed on this machine; Tk "
-                        "substituted %r. Text metrics will differ from every "
-                        "other machine (wrapping, button sizes).",wanted,got)
-                self.missing_font_families.append((wanted,str(got)))
         """additional keyword options (ignored if font is specified):
         family - font family i.e. Courier, Times
         size - font size (in points, |-x| in pixels)
@@ -607,51 +623,18 @@ class ExitFlag(object):
         self.value=False
     def __init__(self):
         self.false()
-_fontfilecache={}
-def findfontfile(filename):
-    """Locate an installed font file by name, searching where fonts
-    actually land — including the per-user Windows fonts directory
-    (%LOCALAPPDATA%/Microsoft/Windows/Fonts), which a font-dialog
-    'Install' uses and which PIL's own search never checks. Returns an
-    absolute path or None; results (including misses) are cached per
-    filename, so a font installed mid-session needs a restart."""
-    if filename in _fontfilecache:
-        return _fontfilecache[filename]
-    import glob as globmod
-    if platform.system() == 'Windows':
-        dirs=[os.path.join(os.environ.get('WINDIR',r'C:\Windows'),'Fonts'),
-              os.path.join(os.environ.get('LOCALAPPDATA')
-                or os.path.join(os.path.expanduser('~'),'AppData','Local'),
-                'Microsoft','Windows','Fonts')]
-    else: #Linux and mac directories; absent ones are just skipped
-        dirs=['/usr/share/fonts','/usr/local/share/fonts',
-              os.path.expanduser('~/.fonts'),
-              os.path.expanduser('~/.local/share/fonts'),
-              '/System/Library/Fonts','/Library/Fonts',
-              os.path.expanduser('~/Library/Fonts')]
-    found=None
-    for d in dirs:
-        if not os.path.isdir(d):
-            continue
-        hits=globmod.glob(os.path.join(globmod.escape(d),'**',filename),
-                            recursive=True)
-        if hits:
-            found=hits[0]
-            break
-    _fontfilecache[filename]=found
-    return found
+# The font-file search moved to utilities.fonts so ReportLab can use the
+# SAME one (its TTFSearchPath globs only one directory deep, and Charis
+# installs two levels down on Linux). Re-exported here: existing callers
+# in this module are unchanged.
+findfontfile=fontlib.findfontfile
 
 def charisfiles(fonttypewords,fonttype):
-    """Charis font file names in priority order: tstv variants first,
-    then the ≤v6 'CharisSIL-*' names, then the v7 'Charis-*' names (v7
-    renames the family from 'Charis SIL' to 'Charis' and its files to
-    match) — a given Windows machine may carry any of these."""
-    return ['CharisSIL-tstv-{}.ttf'.format(fonttypewords),
-            'CharisSIL-tstv-{}.ttf'.format(fonttype),
-            'CharisSIL-{}.ttf'.format(fonttypewords),
-            'CharisSIL-{}.ttf'.format(fonttype),
-            'Charis-{}.ttf'.format(fonttypewords),
-            'Charis-{}.ttf'.format(fonttype)]
+    """Charis font file names in priority order — kept as a thin wrapper
+    so nothing that calls it has to change. The list itself (tstv, then
+    ≤v6 'CharisSIL-*', then v7 'Charis-*') now lives in utilities.fonts,
+    which every subsystem shares."""
+    return fontlib.face_files('charis',fonttypewords)
 
 class Renderer():
     def __init__(self,test=False,**kwargs):
@@ -707,40 +690,22 @@ class Renderer():
                             ).replace('R','Regular')
             """Each of these is in a list, in priority order (newer, then older,
             hide staves, then don't), use the first found."""
-            if fname in ["Andika","Andika SIL"]:
-                files=['Andika-tstv-{}.ttf'.format(fonttypewords)]
-                files+=['Andika-{}.ttf'.format(fonttypewords)]
-                fonttype='R' #There's only this one for these
-                files+=['Andika-tstv-{}.ttf'.format(fonttype)]
-                files+=['Andika-{}.ttf'.format(fonttype)]
-            elif fname in ["Charis","Charis SIL"]:
-                files=charisfiles(fonttypewords,fonttype)
-            elif fname in ["Gentium","Gentium SIL","Gentium Plus"]:
-                files=['GentiumPlus-tstv-{}.ttf'.format(fonttypewords)]
-                files+=['GentiumPlus-{}.ttf'.format(fonttypewords)]
-                if fonttype == 'B':
-                    fonttype='R'
-                if fonttype == 'BI':
-                    fonttype='I'
-                files+=['Gentium-{}.ttf'.format(fonttype)]
-                files+=['Gentium-tstv-{}.ttf'.format(fonttype)]
-            elif fname in ["Gentium Book Basic","Gentium Book Basic SIL",
-                                                "Gentium Book Plus"]:
-                files=['GentiumBookPlus-tstv-{}.ttf'.format(fonttypewords)]
-                files+=['GentiumBookPlus-{}.ttf'.format(fonttypewords)]
-                files+=['GenBkBas{}.ttf'.format(fonttype)]
-                files+=['GenBkBas-tstv-{}.ttf'.format(fonttype)]
-            elif fname in ["DejaVu Sans"]:
-                fonttype=fonttype.replace('B','Bold').replace('I','Oblique'
-                                                    ).replace('R','')
-                if len(fonttype)>0:
-                    fonttype='-'+fonttype
-                files=['DejaVuSans-tstv-{}.ttf'.format(fonttype)]
-                files+=['DejaVuSans{}.ttf'.format(fonttype)]
-            else:
+            # One table for every subsystem (utilities.fonts). The old
+            # per-family if/elif chain had each family's aliases spelled
+            # out separately here, in ui_webview, and in pdf_fonts — which
+            # is how "Charis" (v7) and "Charis SIL" (v6) came to be
+            # handled in some places and not others.
+            key=fontlib.key_for_family(fname)
+            if key is None:
                 log.warning("No info on font {}; falling back to Charis"
                             "".format(fname))
-                files=charisfiles(fonttypewords,fonttype)
+                key=fontlib.DEFAULT_KEY
+            files=fontlib.face_files(key,fonttypewords)
+            if key!=fontlib.DEFAULT_KEY:
+                # Charis last: it renders the orthography even when the
+                # requested family ships no file for this face (Andika
+                # has only Regular in some releases).
+                files+=fontlib.face_files(fontlib.DEFAULT_KEY,fonttypewords)
             for fontfile in files:
                 found=None
                 #bare name first (PIL's own search), then our finder,

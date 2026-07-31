@@ -19,6 +19,51 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.13.6
+
+Fonts that ARE installed were reported missing. One shared table now answers
+"what is this font called and where does it live" for Tk, PIL, the webview, and
+ReportLab — `utilities/fonts.py`.
+
+- FIX the big one: `register_fonts()` was all-or-nothing across BOTH families.
+  The four Andika `registerFont` calls sat outside the per-family try, so a
+  machine with Charis and no Andika raised into the outer handler and returned
+  **False** — which both PDF generators read as "no fonts at all", logging "is
+  Charis installed?" and producing a Helvetica chart. Neither installer ships
+  Andika (`RunMeAsAdmin…bat`, `RunMetoInstall_Linux.sh` install Charis only), so
+  that was the DEFAULT supported install. Families now register independently
+  and `register_fonts()` is true if ANY succeeded — Charis alone is enough.
+- FIX partial registration. Registering face by face let an exception abort
+  mid-family, leaving `Charis-Regular` present, `Charis-Bold` absent and
+  `registerFontFamily` never called — so `setFont("Charis-Bold")` died at DRAW
+  time, long after the log line. `_register_one` resolves all four faces before
+  committing anything to `pdfmetrics`.
+- NEW `pdf_font()`: requested family → **Charis** → Helvetica, and
+  `warn_if_downgraded()` says so in a user notice. Asking for Andika on a
+  Charis-only machine now yields a real Unicode font instead of Helvetica, and
+  the user is told which font the PDF actually used. `"using_helvetica"` still
+  flows to the existing chart notice unchanged.
+- FIX Charis v6 vs v7 at the family level. v6 is the family "Charis SIL"; v7
+  renames it to plain "Charis". `ui_tkinter` hard-coded "Charis SIL", so a
+  Charis-7 machine got Tk's silent substitute for every screen AND a blocking
+  "Missing font!" notice at boot — on a machine where Charis is installed. The
+  theme now probes the alias list and uses whichever resolves; only when NO
+  alias resolves is the font recorded as missing.
+- The v6/v7 file names were known in `ui_tkinter.charisfiles` but nowhere else:
+  `ui_webview` knew only `CharisSIL-*`, and `pdf_fonts` tried its two spellings
+  in a loop that could break early. All three now call
+  `utilities.fonts.face_files`. DejaVu keeps its own suffix spelling
+  (bare Regular, `Oblique` not `Italic`) via an explicit override, so a font
+  that works today still works.
+- `findfontfile` moved to `utilities/fonts.py` (re-exported from `ui_tkinter`,
+  so its callers are unchanged) and ReportLab now uses it as a FALLBACK after
+  its own `TTFSearchPath` — bare name first, absolute path second. Nothing is
+  taken away from `TTFSearchPath`: the Windows entries and ReportLab's defaults
+  are untouched, and the posix font dirs (never added — only Windows had a
+  branch) are appended. Charis lives two levels down on Linux
+  (`/usr/share/fonts/truetype/charis/`) where the existing one-level `'/*'` glob
+  could not reach it.
+
 # Version 1.13.5
 
 A team project that boots without its server now SAYS SO, distinctly, every

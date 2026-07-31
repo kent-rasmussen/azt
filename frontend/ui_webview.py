@@ -821,16 +821,14 @@ class Renderer:
         if not fonttype:
             fonttype = 'R'
         fonttypewords = fonttype.replace('B', 'Bold').replace('I', 'Italic').replace('R', 'Regular')
-        if 'Charis' in fname:
-            files = [f'CharisSIL-{fonttypewords}.ttf', f'CharisSIL-{fonttype}.ttf']
-        elif 'Andika' in fname:
-            files = [f'Andika-{fonttypewords}.ttf', f'Andika-{fonttype}.ttf']
-        elif 'Gentium' in fname and 'Book' in fname:
-            files = [f'GentiumBookPlus-{fonttypewords}.ttf']
-        elif 'Gentium' in fname:
-            files = [f'GentiumPlus-{fonttypewords}.ttf']
-        else:
-            files = []
+        # Same table as Tk and ReportLab (utilities.fonts): this branch
+        # knew only the v6 'CharisSIL-*' file names, so a Charis-7 machine
+        # found nothing here.
+        from utilities import fonts as fontlib
+        key = fontlib.key_for_family(fname)
+        if key is None and 'Charis' in str(fname):
+            key = 'charis'   # tolerate a family string we don't list
+        files = fontlib.face_files(key, fonttypewords) if key else []
         for f in files:
             try:
                 pil_font = PIL.ImageFont.truetype(font=f, size=fsize)

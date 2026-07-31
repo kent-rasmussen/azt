@@ -14,7 +14,7 @@ except ImportError:
     REPORTLAB_AVAILABLE = False
     log.warning("ReportLab not installed. PDF generation will not work.")
 
-from io_put.pdf_fonts import register_fonts
+from io_put.pdf_fonts import register_fonts, pdf_font, warn_if_downgraded
 import os
 def create_chart(filename, items, title, num_columns=5, pagesize='A4', 
                 font_name="Helvetica", padding=5, spacing=5,
@@ -38,22 +38,21 @@ def create_chart(filename, items, title, num_columns=5, pagesize='A4',
         log.error("Cannot generate PDF: ReportLab is not installed.")
         return
 
-    # Try to register the requested font
-    if register_fonts():
-        title_font = f"{font_name}-Bold"
-        text_font = f"{font_name}-Regular"
-        glyph_font = f"{font_name}-Bold"
-        using_helvetica=False
-    else:
-        using_helvetica=True
-        log.error("Problem loading fonts (is Charis installed?)")
-        # log.warning(f"Could not register fonts: {e}")
+    # Requested family if it registered, else Charis, else Helvetica.
+    # Charis-before-Helvetica is the point: asking for Andika on a
+    # Charis-only machine used to yield HELVETICA for the whole chart,
+    # because register_fonts() was all-or-nothing across both families.
+    family, downgraded = pdf_font(font_name)
+    warn_if_downgraded(downgraded, family)
+    using_helvetica = (family == 'Helvetica')
+    if using_helvetica:
         log.warning("Proceeding with Helvetica")
-        title_font = "Helvetica-Bold"
+        title_font = glyph_font = "Helvetica-Bold"
         text_font = "Helvetica"
-        glyph_font = "Helvetica-Bold"
-        # raise
-    
+    else:
+        title_font = glyph_font = f"{family}-Bold"
+        text_font = f"{family}-Regular"
+
     if pagesize.lower() in ['a4','european','default']:
         _pagesize=A4
     elif pagesize.lower() in ['letter','us']:

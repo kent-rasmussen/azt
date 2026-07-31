@@ -17,7 +17,7 @@ except ImportError:
 log = logsetup.getlog(__name__)
 logsetup.setlevel('INFO', log)
 
-from io_put.pdf_fonts import register_fonts
+from io_put.pdf_fonts import register_fonts, pdf_font, warn_if_downgraded
 import os
 def draw_triangular_examples(c, x, y, width, height, items, text_font, font_size):
     """
@@ -273,18 +273,19 @@ def create_comparison_chart(filename, *data,
     # if not register_fonts():
     #     log.error("Problem loading fonts (is Charis installed?)")
     #     raise
-    if register_fonts():
-        title_font = f"{font_name}-Bold"
-        text_font = f"{font_name}-Regular"
-        using_helvetica=False
-    else:
-        using_helvetica=True
-        log.error("Problem loading fonts (is Charis installed?)")
-        # log.warning(f"Could not register fonts: {e}")
+    # See alphabet_chart_pdf: requested → Charis → Helvetica, and SAY so
+    # when we downgrade instead of silently producing Helvetica.
+    family, downgraded = pdf_font(font_name)
+    warn_if_downgraded(downgraded, family)
+    using_helvetica = (family == 'Helvetica')
+    if using_helvetica:
         log.warning("Proceeding with Helvetica")
         title_font = "Helvetica-Bold"
         text_font = "Helvetica"
-    
+    else:
+        title_font = f"{family}-Bold"
+        text_font = f"{family}-Regular"
+
     if pagesize.lower() == 'a4':
         _pagesize = landscape(A4)
     else:
