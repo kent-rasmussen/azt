@@ -19,6 +19,38 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.13.11
+
+- FIX `AttributeError` on `image.scaled` in `OrderAlphabetUI.get_kwargs`
+  (`frontend/alphabet_chart.py:61`). `.scaled` is a LAZY CACHE — `scale()` and
+  `compile()` populate it, and `Image(compile_now=False)` skips it — so a
+  picture that loads and displays fine elsewhere can still have no `scaled`, and
+  reading it straight raised. `get_kwargs` now scales the image itself
+  (`scale(1,pixels=100,scaleto='height')`, the same call the word picker uses)
+  and only falls back to a word-without-picture if that fails. The user picked
+  that word to see it; dropping the illustration is not an acceptable fallback.
+- `select_example` clears the button's image when the new kwargs carry none —
+  it UPDATES an existing button, so the previous pick's picture would otherwise
+  stay under the new word.
+
+# Version 1.13.10
+
+- REVERT the 1.13.7 `_getgroup` hunk. Putting NA back in the to-verify list for
+  `=` checks made NA verify pages reachable again, and an NA verify page's click
+  action REMOVES the word from NA — which unsorts it and sends it back to the
+  sort queue. Field 2026-07-31: "words are being presented to sort, which had
+  been sorted NA… i.e., major regression". Losing sort work outranks being able
+  to verify, so NA is out of that list again until the verify page's behaviour
+  on NA is settled.
+- This re-opens the 1.13.7 bug: an `=` check whose only remaining group is NA
+  reports "you don't have {ps}-{profile} lexemes grouped in the ‘{check}’ check
+  yet". That is the lesser harm, and it is now the open question — the NA verify
+  page needs an action that is not "remove from group" before NA can ride the
+  verify queue.
+- KEPT: 1.13.8 and 1.13.9 (exact check matching in `modverification` and
+  `confirmverificationgroup`). Those strictly narrow what a write touches and
+  cannot unsort anything.
+
 # Version 1.13.9
 
 - FIX the second half of 1.13.8, which I had left in place on the grounds that it

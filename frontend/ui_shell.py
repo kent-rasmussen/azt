@@ -2412,14 +2412,17 @@ class TaskDressing(HasMenus,ui.Window):
         # this check yet" and returned — verification died on every '=' check
         # (Kent 2026-07-31). status.groups(toverify=True) already applies rule
         # B's gate itself (_na_is_a_result), so asking it directly is safe.
-        na_rides=bool(kwargs.get('toverify')
-                      and self.program.status._na_is_a_result(check=check))
-        if na_rides:
-            groups=self.program.status.groups(cvt=cvt,**kwargs)
-            advance=self.program.status.nextgroup
-        else:
-            groups=self.program.status.groups_visible(cvt=cvt,**kwargs)
-            advance=self.program.status.nextgroup_visible
+        # REVERTED 1.13.10 (Kent 2026-07-31: "words are being presented to sort,
+        # which had been sorted NA" → "i.e., major regression"). 1.13.7 put NA
+        # back in this chooser's to-verify list for '=' checks, which made NA
+        # verify pages reachable again — and an NA verify page's click action
+        # REMOVES the word from NA, i.e. unsorts it. Losing sort work outranks
+        # being able to verify, so NA is out of the list again until the verify
+        # page's behaviour on NA is settled. This re-opens the 1.13.7 bug (an
+        # '=' check whose only remaining group is NA reports "no lexemes
+        # grouped in this check yet"); that is the lesser harm.
+        groups=self.program.status.groups_visible(cvt=cvt,**kwargs)
+        advance=self.program.status.nextgroup_visible
         if not groups:
             ErrorNotice(parent=window.frame,
                           text=_("It looks like you don’t have {ps}-{profile} lexemes "

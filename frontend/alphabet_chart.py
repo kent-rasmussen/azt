@@ -49,7 +49,13 @@ class OrderAlphabetUI(ui.Window):
             self.exids[glyph]=w.selected #.id
             self.exobjs[glyph]=self.db.sensedict[w.selected]
             self.save_settings()
-            for k,v in self.get_kwargs(glyph).items():
+            kw=self.get_kwargs(glyph)
+            if 'image' not in kw:
+                # get_kwargs omits 'image' when there's no compiled bitmap;
+                # this is an UPDATE of an existing button, so the previous
+                # pick's picture would otherwise stay under the new word.
+                self.buttons[glyph].b['image']=''
+            for k,v in kw.items():
                 self.buttons[glyph].b[k]=v
             # log.info(f"{self.exids=}")
         self.chart.reflow()  # sync: grow canvas/scrollregion to new content
@@ -57,9 +63,27 @@ class OrderAlphabetUI(ui.Window):
         self.update_idletasks()
     def get_kwargs(self,g):
         if self.exobjs[g] is not None:
-            return {'text':self.exobjs[g].entry.lcvalue(),
-                    'image':self.exobjs[g].image.scaled,
-                }
+            # `.scaled` is a LAZY CACHE, not something an Image always has:
+            # scale()/compile() populate it, and Image(compile_now=False) skips
+            # it entirely. A perfectly good picture can therefore have base_img
+            # and no `scaled`, and reading it straight raised AttributeError.
+            # SCALE IT rather than dropping the picture — the user picked that
+            # word to see it. Same call the picker uses (set_up_images).
+            kw={'text':self.exobjs[g].entry.lcvalue()}
+            img=getattr(self.exobjs[g],'image',None)
+            scaled=getattr(img,'scaled',None) if img is not None else None
+            if scaled is None and img is not None:
+                try:
+                    scaled=img.scale(1,pixels=100,scaleto='height')
+                except Exception as e:
+                    log.info("chart: couldn’t scale the image for ‘%s’ (%s)",g,e)
+                    scaled=None
+            if scaled is not None:
+                kw['image']=scaled
+            else:
+                log.info("chart: ‘%s’ has an example with no usable image; "
+                         "showing the word without a picture.",g)
+            return kw
         elif self.exids[g]:
             # A CHOSEN word with no displayable picture. Since 2026-07-30 a saved
             # pick whose image won't load KEEPS its id instead of being silently
