@@ -19,6 +19,50 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.13.5
+
+A team project that boots without its server now SAYS SO, distinctly, every
+time. Kent 2026-07-31: "we MUST see this, or we can't fix it" — field machines
+were working whole sessions off the server with no way to tell.
+
+- FIX the silent serverless boot. `collab.attach()` had eight paths that leave
+  `program.collab = None`; seven were `log.*` only, and only the identity
+  mismatch ever put anything on screen. All of them now go through `_decline()`,
+  which records the cause on `program.collab_wanted` and shows a notice whose
+  TITLE names that cause: settings unreadable / client software not found / no
+  project code stored / server not answering / wrong copy of the project / could
+  not hook the save path. Every notice states the fix, and every one ends with
+  the same first fact — the work is safe, this session saves straight to disk.
+- The ONE silent case left is a project that never opted in (`collab` unset).
+  Its check stays first and alone, so a legacy project can't reach a notice via
+  some later read raising — only "we can't tell whether this is a team project"
+  is loud, and that one deserves to be.
+- ADD Advanced → **"Reconnect to Collaboration server ({reason})"**, replacing
+  the plain "Connect to Collaboration server" that a serverless team project used
+  to show — the same label a never-connected legacy project shows, which is what
+  made the outage invisible after the notice was dismissed. Next to it,
+  "Why is collaboration off?" re-shows the boot notice.
+- ADD `retry_connection()`, behind both the notice's "Try the server again now"
+  button and the Reconnect menu item. It asks the daemon to restart itself first
+  (`restart_server`), then re-probes `open_project`. A merely CONFUSED daemon is
+  fixed by exactly this. A WEDGED one — up, holding the port, not answering —
+  cannot accept the RPC by definition, so azt reports it and says to restart the
+  server or its computer; recovering that is daemon-side work (agenda #1).
+- Reconnect is a RESTART, not a hot swap. `attach()` is contractually required to
+  run BEFORE `repocheck()` (which skips legacy VCS construction when a session
+  exists), so hot-attaching mid-session would leave legacy repo objects built
+  alongside a live collab session. Success takes the same restart path
+  Connect/Disconnect already use.
+- `backend/core` keeps zero frontend imports: the blocking acknowledge goes
+  through `notify_error(..., wait=True)`, which carries the kwarg to
+  `ErrorNotice`, rather than importing it. The "your work is safe" tail is a
+  FUNCTION, not a module constant — a module-level `_()` would freeze the
+  untranslated string at import, before `set_translator()` runs.
+
+Still open (in `azt/agenda/boot_without_server_access.md`): no ⇅ title-bar state
+for the outage, and no re-attach without a restart. Neither is needed to SEE the
+problem, which is what this version is for.
+
 # Version 1.13.4
 
 Audio is a PROGRAM resource, and there is exactly one accessor for it:

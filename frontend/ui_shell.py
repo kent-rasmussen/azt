@@ -381,6 +381,22 @@ class Menus(ui.Menu):
             self.command(self.advancedmenu,
                     label=_("Disconnect from Collaboration server"),
                     cmd=self.collab_disconnect)
+        elif (wanted:=getattr(self.program,'collab_wanted',None)):
+            # This project WANTS collaboration and didn't get it. The old
+            # menu showed the same "Connect to Collaboration server" a
+            # never-connected legacy project shows, so a team member
+            # working serverless all day had no way to tell (Kent
+            # 2026-07-31). Name the reason, and offer the retry.
+            self.command(self.advancedmenu,
+                    label=_("Reconnect to Collaboration server "
+                            "({why})").format(why=wanted['short']),
+                    cmd=self.collab_reconnect)
+            self.command(self.advancedmenu,
+                    label=_("Why is collaboration off?"),
+                    cmd=self.collab_why_off)
+            self.command(self.advancedmenu,
+                    label=_("Collaboration settings"),
+                    cmd=self.collab_settings)
         else:
             self.command(self.advancedmenu,
                     label=_("Connect to Collaboration server"),
@@ -388,6 +404,24 @@ class Menus(ui.Menu):
             self.command(self.advancedmenu,
                     label=_("Collaboration settings"),
                     cmd=self.collab_settings)
+    def collab_why_off(self):
+        """Re-show the boot notice. It appears once at open; this is how
+        the user gets it back after dismissing it (or after walking away
+        during startup)."""
+        from utilities.error_handler import notify_error
+        wanted=getattr(self.program,'collab_wanted',None) or {}
+        notify_error(wanted.get('message',
+                        _("Collaboration is off for this session.")),
+                     title=_("Collaboration is off"))
+    def collab_reconnect(self):
+        """Probe the server for a project that booted without it. A
+        successful reconnect is a RESTART, not a hot swap — attach() must
+        run before repocheck(), so the seams re-branch on the way up
+        (same rule as Connect/Disconnect below)."""
+        from backend.core import collab
+        ok,msg=collab.retry_connection(self.program)
+        log.info(f"collab reconnect: {ok} {msg}")
+        self._collab_notice_maybe_restart(ok,msg)
     def collab_connect(self):
         from backend.core import collab
         ok,msg=collab.connect_current_project(self.program)

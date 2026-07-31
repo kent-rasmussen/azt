@@ -1017,10 +1017,14 @@ NO_SERVER   = 'server-not-answering'
 WRONG_TREE  = 'wrong-copy'
 NO_HOOK     = 'save-hook-failed'
 
-# Every notice ends with this: the ONE thing the user needs to know
-# before anything else is that they have not lost any work (contract D9).
-_SAFE = _("Your work is safe — this session saves straight to disk, "
-          "exactly as A-Z+T did before collaboration existed.")
+def _safe_tail():
+    """Every notice ends with this: the ONE thing the user needs to know
+    before anything else is that they have not lost any work (contract
+    D9). A FUNCTION, not a module constant — utilities.i18n swaps the
+    live translator in at startup, so a module-level _() would freeze the
+    untranslated string at import time."""
+    return _("Your work is safe — this session saves straight to disk, "
+             "exactly as A-Z+T did before collaboration existed.")
 
 
 def _decline(program, langcode, reason, short, title, message,
@@ -1039,7 +1043,7 @@ def _decline(program, langcode, reason, short, title, message,
         kwargs['button'] = (_("Try the server again now"),
                             lambda e=None: _retry_from_notice(program))
     try:
-        notify_error(message + '\n\n' + _SAFE, **kwargs)
+        notify_error(message + '\n\n' + _safe_tail(), **kwargs)
     except Exception as e: # a notice that can't paint must not kill boot
         log.error(f"couldn't show the collaboration notice: {e}")
     return None
@@ -1056,11 +1060,13 @@ def _retry_from_notice(program):
     if not ok:
         notify_error(msg, title=_("Collaboration: still not answering"))
         return False
+    # notify_error carries `wait` through to ErrorNotice, so we get the
+    # blocking acknowledge WITHOUT importing frontend here (backend/core
+    # keeps zero frontend imports — see azt/CLAUDE.md).
     try:
-        from frontend.error_notice import ErrorNotice
-        ErrorNotice(msg + '\n' + _("{name} will now restart to "
-                                   "reconnect.").format(name=program.name),
-                    title=_("Collaboration"), wait=True)
+        notify_error(msg + '\n' + _("{name} will now restart to "
+                                    "reconnect.").format(name=program.name),
+                     title=_("Collaboration"), wait=True)
         program.restart()
     except Exception as e:
         log.error(f"collab retry restart: {e}")
@@ -1119,11 +1125,13 @@ def attach(program):
     never lose the ability to save), but NEVER silently: see _decline."""
     program.collab = None
     program.collab_wanted = None
+    # The opt-in check stays FIRST and alone, exactly as before: a
+    # non-collab project must not be able to reach a notice because some
+    # LATER read raised. Only "can't tell whether this is a team project"
+    # is loud.
     try:
         mgr = _settings_mgr(program.filename)
         wants = mgr.project.get('collab', False)
-        langcode = (mgr.project.get('collab_langcode', '')
-                    or mgr.project.get('analang', ''))
     except Exception as e:
         # We can't even tell whether this is a team project, so we must
         # not assume it isn't — that assumption is what made a corrupt
@@ -1138,6 +1146,12 @@ def attach(program):
               "restart.").format(error=e))
     if not wants:
         return None    # a genuine legacy project: the one silent case
+    try:
+        langcode = (mgr.project.get('collab_langcode', '')
+                    or mgr.project.get('analang', ''))
+    except Exception as e:
+        langcode = ''   # falls into the NO_LANGCODE notice below
+        log.warning(f"collab.attach langcode read: {e}")
     if not AVAILABLE:
         return _decline(program, langcode, NO_CLIENT,
             _("client software missing"),
@@ -1192,18 +1206,17 @@ def attach(program):
         theirs=os.path.join(proj.working_dir,os.path.basename(ours))
     theirs=os.path.realpath(theirs) if theirs else ''
     if theirs and ours != theirs:
-        from utilities.error_handler import notify_error
-        msg=_("This file says it belongs to collaboration project "
+        return _decline(program, langcode, WRONG_TREE,
+            _("wrong copy open"),
+            _("Collaboration: wrong copy of the project"),
+            _("This file says it belongs to collaboration project "
                 "“{langcode}”, but the collaboration server manages a "
                 "different copy:\n{theirs}\nYou opened:\n{ours}\n"
                 "To avoid splitting the project’s history, "
-                "collaboration is OFF for this session. Open the "
-                "server’s copy, or disconnect this file from "
+                "collaboration is OFF for this session.\nFix: open the "
+                "server’s copy instead, or disconnect this file from "
                 "collaboration.").format(langcode=langcode,
-                                        theirs=theirs,ours=ours)
-        log.warning(msg)
-        notify_error(msg,title=_("Collaboration"))
-        return None
+                                        theirs=theirs,ours=ours))
     st = None
     try:
         st = _client.project_status(langcode)
@@ -1223,9 +1236,15 @@ def attach(program):
         # session's LIFT snapshot afterwards — the daemon can't.
         program.db.collab_record_stat = session.record_lift_stat
     except Exception as e:
-        log.error(f"collab.attach db hook: {e}")
         program.collab = None
-        return None
+        return _decline(program, langcode, NO_HOOK,
+            _("save path not hooked"),
+            _("Collaboration: could not hook the save path"),
+            _("A-Z+T reached the collaboration server for project "
+              "“{langcode}”, but could not connect its own save path to "
+              "it, so saves would not reach your team:\n{error}\nFix: "
+              "restart A-Z+T. Please report this if it happens again."
+              ).format(langcode=langcode, error=e))
     log.info(_("Collaboration active for {langcode} "
                "(base {base}).").format(langcode=langcode,
                                         base=base[:12] or '<none>'))
