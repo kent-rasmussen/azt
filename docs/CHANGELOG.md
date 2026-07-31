@@ -19,6 +19,43 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.13.9
+
+- FIX the second half of 1.13.8, which I had left in place on the grounds that it
+  was unreachable. `Categories.confirmverificationgroup` now matches the check
+  exactly, like `modverification`. Its old comment — "Length is relevant here
+  because V1 must match V1=V2, if present" — was exactly backwards: a code's
+  check part is everything before the LAST `=`, so `V1` and `V1=V2` are
+  different checks with different groups, and treating one as the other is the
+  bug.
+- Scope of the 1.13.8/1.13.9 collision, correctly stated: it needs TWO checks in
+  play where one's name is a prefix of the other's — `C1=C2` alongside
+  `C1=C2=C3`, as in the field screenshot. Verifying the shorter deleted the
+  longer's code. It is not specific to NA; NA is where it showed, because an NA
+  code's check part is compound whenever the check is.
+
+# Version 1.13.8
+
+- FIX (compound `=` checks unverified each other forever — field screenshot
+  2026-07-31 showing "Tous les groupes ‘CVCCV’ de la ‘C1=C2=C3’ check sont
+  vérifiés et distincts!" cycling C1=C2=C3 → C1=C2 → C1=C2=C3 → C2=C3 → …).
+  `Categories.modverification` found the code to replace with a SUBSTRING test,
+  `check in '='.join(i.split('=')[:-1])`, where its own comment says "the *whole*
+  current check". A verification code is `<check>=<group>` and checks are
+  themselves compound, so verifying under `C1=C2` matched both its own
+  `C1=C2=NA` and the sibling `C1=C2=C3=NA`: the loop replaced the first, set
+  `add=None`, then took the `else: values.remove(code)` branch for the second and
+  DELETED the longer check's verification. Every pass over the shorter check
+  unverified the longer one. Now an equality test.
+  - Asymmetric by construction: only the SHORTER check clobbers the LONGER one
+    (`'C1=C2=C3' in 'C1=C2'` is False), which is why the damage looked like
+    groups spontaneously reverting rather than like a write failing.
+  - Most visible on NA, whose membership overlaps heavily across an `=` check
+    and its compound siblings — hence "x=y=NA isn't keeping verification" while
+    `={a,e,i…}` appeared to hold.
+  - `confirmverificationgroup` had the same substring shape (`if check in i`) —
+    fixed in 1.13.9, see below.
+
 # Version 1.13.7
 
 - FIX (REGRESSION from 1.13.3's NA work: verification died on every `=` check —

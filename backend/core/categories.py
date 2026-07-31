@@ -41,7 +41,19 @@ class Categories:
         if add and not values:
             v=sense.verificationtextvalue(profile,self.ftype,value=[add])
             return #if more complex, continue
-        for code in [i for i in values if check in '='.join(i.split('=')[:-1])]:
+        # EXACT match on the check part, not a substring one. A verification
+        # code is '<check>=<group>', split on the LAST '=' because checks are
+        # themselves compound ('C1=C2=C3'). Using `in` here meant the SHORTER
+        # check matched the LONGER sibling's code — verifying under 'C1=C2'
+        # found both 'C1=C2=NA' and 'C1=C2=C3=NA', replaced the first, set
+        # add=None, and then fell into the remove branch for the second. So
+        # every pass over 'C1=C2' silently DELETED 'C1=C2=C3's verification,
+        # and the two checks unverified each other forever: the field screen
+        # cycled "Tous les groupes … sont vérifiés et distincts!" through
+        # C1=C2=C3 → C1=C2 → C1=C2=C3 → … (Kent 2026-07-31). Most visible on
+        # NA, whose membership overlaps heavily across an '=' check and its
+        # compound siblings.
+        for code in [i for i in values if '='.join(i.split('=')[:-1])==check]:
             #look for a code for the *whole* current check, replace or remove.
             if add:
                 if add != code:
@@ -64,10 +76,18 @@ class Categories:
                     "before making changes."))
         annogroup=self.getitemgroup(sense,check) #Segment or Tone
         vals=sense.verificationtextvalue(profile,self.ftype)
+        # EXACT check match, for the same reason as modverification above.
+        # The old `if check in i` was justified by "V1 must match V1=V2, if
+        # present" — which is exactly backwards: a code's check part is
+        # everything before the LAST '=', so 'V1' and 'V1=V2' are different
+        # checks with different groups, and conflating them is what let one
+        # unverify the other. The collision needs two checks where one name is a
+        # PREFIX of the other ('C1=C2' alongside 'C1=C2=C3'); NA is where it
+        # showed, because an NA code's check part is compound whenever the check
+        # is (Kent 2026-07-31: "x=y=NA is NECESSARILY a compound check").
         curvalues=[i.split('=')[-1]  #last (value), if multiple
                     for i in sense.verificationtextvalue(profile,self.ftype)
-                    if check in i]
-        # Length is relevant here because V1 must match V1=V2, if present
+                    if '='.join(i.split('=')[:-1])==check]
         nvals=len(set(curvalues))
         if nvals == 1:
             curvalue=curvalues[0]
