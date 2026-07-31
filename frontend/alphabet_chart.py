@@ -688,7 +688,16 @@ def getimagelocationURI(sense):
     if file.exists(di):
         try:
             sense.image=ui.Image(di)
-        except Exception:
+        except Exception as e:
+            # This was a BARE `except: return 1` — the only branch here with no
+            # output at all, so a word silently became "not picturable" and the
+            # chart reported `0 picturable (diag=no_picture)` with nothing in
+            # the log OR the terminal (Kent 2026-07-31, on a PNG that opens and
+            # compiles fine standalone). Image.__init__ catches its own OPEN
+            # failure but calls compile() outside that try, so a PhotoImage
+            # failure propagates out of the constructor to here. Say which.
+            log.error("Image for %s (%s) failed to build: %s: %s",
+                      getattr(sense,'id','?'), di, type(e).__name__, e)
             return 1
     elif not sense.illustrationvalue():
         print("no illustration value!")

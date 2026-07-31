@@ -19,7 +19,44 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
-# Version 1.13.11
+# Version 1.13.15
+
+- `getimagelocationURI` (`frontend/alphabet_chart.py`) had a BARE
+  `except Exception: return 1` around `ui.Image(di)` — the only branch there
+  with no output, so a word silently became "not picturable" and the chart
+  reported `0 picturable (diag=no_picture)` with nothing in the log or the
+  terminal, on a PNG that opens and compiles fine standalone (field
+  2026-07-31). It now logs the sense id, the resolved path, and the exception.
+  - Why the exception gets there at all: `Image.__init__` catches its own OPEN
+    failure (the "Exception opening image" line) but calls `compile()` OUTSIDE
+    that try, so a `PhotoImage` failure propagates out of the constructor.
+
+# Version 1.13.14
+
+- The form-update conflict message is a NotifyUser, not a blocking ErrorNotice
+  (`backend/core/lexicon.py`, both branches of `updateformtoannotations`). The
+  form is left unchanged and the pass carries on, so it is worth saying and not
+  worth stopping for.
+
+# Version 1.13.13
+
+- `SortGroupButtonFrame._playback` is permissive again. 1.13.4 introduced two
+  new ways for it to report "no audio" — `SoundSettings.ensure()` raising (a
+  machine with speakers but no mic hits `default_in`'s AttributeError) and a
+  `check_missing_attrs()` gate — and each turns a play button into an inert
+  LABEL, which reads as "the buttons don't work". The gate is gone, and an
+  `ensure()` failure now falls back to whatever settings object already exists
+  (task → program → program.settings) and to the task/program PyAudio handle.
+  Only a total absence gives up. A play that fails at CLICK time is recoverable
+  and says so; a label is a dead control.
+- This was made in response to "buttons doesn't work for sort groups, at least
+  not in tone" — which turned out to mean the `buttoncolumns` SETTING (1/2/3
+  columns), not the button widgets. So this change fixes nothing that was
+  reported. Kept because it only widens fallbacks and cannot break a path that
+  worked. The actual report is `azt/agenda/sort_group_buttons_dead.md`, and it
+  is untouched.
+
+# Version 1.13.12
 
 - FIX `AttributeError` on `image.scaled` in `OrderAlphabetUI.get_kwargs`
   (`frontend/alphabet_chart.py:61`). `.scaled` is a LAZY CACHE — `scale()` and

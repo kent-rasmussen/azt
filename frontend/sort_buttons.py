@@ -637,6 +637,14 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         # (tasks/chooser.py:525).
         if sound is None or getattr(self.program,'nosound',False):
             return None,None
+        # PERMISSIVE ON PURPOSE (Kent 2026-07-31: "buttons doesn't work for sort
+        # groups, at least not in tone"). Every failure here downgrades the
+        # button to an inert LABEL, which reads as "the buttons are broken" —
+        # so only give up when there is genuinely nothing to play with. An
+        # earlier draft also refused when check_missing_attrs() said the output
+        # settings didn't validate; that gate is gone. A play that fails at
+        # CLICK time is recoverable and says so; a label is a dead control.
+        ss=None
         try:
             from backend.core.sound import SoundSettings
             try:
@@ -651,19 +659,20 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         except Exception as e:
             # e.g. a machine with speakers but no mic: makedefaultifnot ->
             # default_in raises AttributeError even though playback needs no
-            # input card (backend/core/sound.py:126-128).
-            log.info("Couldn’t get audio settings for %s: %s",
-                    type(self.task).__name__,e)
+            # input card (backend/core/sound.py:126-128). Fall back to whatever
+            # a Sound task already built rather than losing the button.
+            log.info("SoundSettings.ensure failed for %s (%s); falling back to "
+                    "an existing settings object.",type(self.task).__name__,e)
+            ss=(getattr(self.task,'soundsettings',None)
+                or getattr(self.program,'soundsettings',None)
+                or getattr(getattr(self.program,'settings',None),
+                           'soundsettings',None))
+        if ss is None:
             return None,None
-        # required_attrs is OUTPUT-only (fs/sample_format/audio_card_out) —
-        # exactly what a player needs. Deliberately NOT soundcheck(), whose
-        # check() MUTATES the card/rate choice: drawing a button must not
-        # reconfigure the audio device behind the user.
-        if ss.check_missing_attrs():
-            log.info("Audio output isn't configured yet; showing a label "
-                    "instead of a play button for %s.",type(self.task).__name__)
-            return None,None
-        return getattr(ss,'pyaudio',None),ss
+        pyaudio=(getattr(ss,'pyaudio',None)
+                 or getattr(self.task,'pyaudio',None)
+                 or getattr(self.program,'pyaudio',None))
+        return pyaudio,ss
     def playbutton(self):
         """A play button, or a plain LABEL when this machine can't play at all.
         Returns True only when a player was made (makebuttons keys _playable on

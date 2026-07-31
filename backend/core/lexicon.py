@@ -383,8 +383,11 @@ class Segments(Senses):
                 #         f"{check}={value}")
                 return
             elif self.check_with_conflicting_value(annodict,check):
+                # NotifyUser, not ErrorNotice (Kent 2026-07-31): the form is
+                # left alone and the work continues, so this must not block —
+                # it's worth saying, not worth stopping for.
                 if not self.updateconflictwarned:
-                    ErrorNotice('\n'.join([conflict_text,error_nb]))
+                    NotifyUser('\n'.join([conflict_text,error_nb]))
                     self.updateconflictwarned=True
                 else:
                     log.error(conflict_text)
@@ -403,8 +406,10 @@ class Segments(Senses):
                 if do_not_do_these(value,check):
                     continue #don't make changes for NA checks
                 elif self.check_with_conflicting_value(annodict,check):
+                    # NotifyUser, not ErrorNotice — see the single-check branch
+                    # above. The form is left unchanged and the pass carries on.
                     if not self.updateconflictwarned:
-                        ErrorNotice('\n'.join([conflict_text,error_nb]))
+                        NotifyUser('\n'.join([conflict_text,error_nb]))
                         self.updateconflictwarned=True
                     else:
                         log.error(conflict_text)
