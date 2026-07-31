@@ -19,6 +19,18 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.13.16
+
+- FIX alphabet-chart settings not persisting (chart title, copyright — field
+  2026-07-31). The chart SAVED through one store and LOADED from another:
+  `AlphabetChart.save_settings` writes `settings.alpha_<k>(value)`, while
+  `AlphabetChartData.init_chart_data` read
+  `settings.mgr.get('alphabet_<k>')`. Anything whose value lives on the
+  accessor therefore never came back, and the field reverted on every open.
+  The read now goes through the same `alpha_<k>()` accessor it was written
+  through; `mgr.get` remains only as the fallback for keys with no accessor.
+  `copyright` also gained a default (it had none, so it loaded as `None`).
+
 # Version 1.13.15
 
 - `getimagelocationURI` (`frontend/alphabet_chart.py`) had a BARE

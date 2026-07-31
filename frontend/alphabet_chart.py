@@ -492,7 +492,7 @@ class OrderAlphabetUI(ui.Window):
         copyright_grid={'c':1,'sticky':'w'}
         import migration.converters
         if 'alphabet_copyright' in migration.converters.Converter.attrs_for_legacy_setting('alphabet'):
-             default_copyright = getattr(self.program.settings, 'alpha_copyright', lambda: "Set Alphabet Copyright!")() if hasattr(self.program.settings, 'alpha_copyright') else "Set Alphabet Copyright!"
+             default_copyright = getattr(self.program.settings, 'alpha_copyright', lambda: "DATE Set Alphabet Copyright!")() if hasattr(self.program.settings, 'alpha_copyright') else "Set Alphabet Copyright!"
              self.chart_copyright.set(self.program.settings.mgr.get('alphabet_copyright', default_copyright))
         
         self.copyrightframe=ui.Frame(self.frame, r=1, c=1, sticky='ew')

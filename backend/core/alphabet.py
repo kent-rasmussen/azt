@@ -852,8 +852,24 @@ class AlphabetChartData:
         self.ncolopts = range(1, 15)
         self.db = getattr(self.program, 'db', kwargs.get('db'))
         if hasattr(self.program, 'settings'):
-            defs = {'ncolumns': 5, 'pagesize': 'A4', 'order': [], 'exids': {}, 'chart_title': ''}
+            defs = {'ncolumns': 5, 'pagesize': 'A4', 'order': [], 'exids': {},
+                    'chart_title': '', 'copyright': ''}
             for k in self.my_settings:
+                # READ THROUGH THE SAME ACCESSOR save_settings WRITES THROUGH.
+                # save_settings does settings.alpha_<k>(value); this read used
+                # settings.mgr.get('alphabet_<k>') — a different store — so a
+                # value that lives on the accessor never came back, and the
+                # chart title and copyright reverted every open (Kent
+                # 2026-07-31). One path in, one path out; mgr.get stays only as
+                # the fallback for keys with no accessor.
+                getter = getattr(self.program.settings, 'alpha_' + k, None)
+                if callable(getter):
+                    try:
+                        setattr(self, k, getter())
+                        continue
+                    except Exception as e:
+                        log.info("alphabet setting %r via alpha_%s failed "
+                                 "(%s); falling back to mgr", k, k, e)
                 setattr(self, k, self.program.settings.mgr.get('alphabet_' + k, defs.get(k)))
             self.ncolumns = self._sane_columns(self.ncolumns, defs['ncolumns'])
             self.analangname = self.program.settings.languagenames[self.db.analang]
