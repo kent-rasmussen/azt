@@ -19,6 +19,14 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.13.20
+
+- `getimagelocationURI`'s two remaining `print()` calls are now `log.error` with
+  the sense id, the resolved path, and the raw `illustrationvalue()`. Those two
+  lines are the only account of WHY a word has no picture, and sending them to
+  stdout in a GUI app meant they were lost. With this, the line immediately
+  above "couldn't attach an image to the chosen word" always names the cause.
+
 # Version 1.13.19
 
 - FIX the chart picture that shows on the word-picker page and then not on the

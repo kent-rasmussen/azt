@@ -731,10 +731,15 @@ def getimagelocationURI(sense):
                       getattr(sense,'id','?'), di, type(e).__name__, e)
             return 1
     elif not sense.illustrationvalue():
-        print("no illustration value!")
+        # log, not print: these two were the only account of WHY a word has no
+        # picture, and going to stdout in a GUI app meant they were lost.
+        log.error("No illustration value for %s (no picture for this word).",
+                  getattr(sense,'id','?'))
         return 1
     else:
-        print(f"file {di} doesn't exist!")
+        log.error("Illustration for %s is %r, which does not exist on this "
+                  "machine (illustrationvalue=%r).",
+                  getattr(sense,'id','?'), str(di), sense.illustrationvalue())
         return 1
 if __name__ == '__main__':
     try:
