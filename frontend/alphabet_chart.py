@@ -47,7 +47,10 @@ class OrderAlphabetUI(ui.Window):
         w.wait_window(w)
         if hasattr(w,'selected'):
             self.exids[glyph]=w.selected #.id
-            self.exobjs[glyph]=self.db.sensedict[w.selected]
+            # The picker's own object first — db.sensedict returns a different
+            # sense for the same id, with no illustrationvalue (see select()).
+            self.exobjs[glyph]=(getattr(w,'selected_sense',None)
+                                or self.db.sensedict[w.selected])
             self.save_settings()
             kw=self.get_kwargs(glyph)
             if 'image' not in kw:
@@ -598,8 +601,17 @@ class SelectFromPicturableWords(ui.Window):
             else:
                 i.image.scale(1,pixels=100,scaleto='height')
     def select(self,x,event=None):
-        print('selected:',x)
+        log.info("select-words: selected %s",x)
         self.selected=x
+        # HAND BACK THE OBJECT, not just the id. The caller used to re-look the
+        # id up in db.sensedict, which returns a DIFFERENT sense object for the
+        # same id — one whose illustrationvalue() is empty, so the chart then
+        # reported "No illustration value" for a word whose picture this very
+        # window had just displayed (Kent 2026-07-31). The senses here come from
+        # alphabet.senses_for_glyph and are filtered on illustrationvalue(), so
+        # this object is known to have both the illustration and the compiled
+        # image.
+        self.selected_sense=getattr(self,'_by_id',{}).get(x)
         self.destroy()
         self.parent.deiconify
     def __init__(self, parent, db, glyph, ps=None):
@@ -682,6 +694,8 @@ class SelectFromPicturableWords(ui.Window):
                         'image':i.image.scaled}
                         for i in self.examples
                         if hasattr(i,'image')]
+            # id -> the very sense object shown, so select() can return it
+            self._by_id={i.id:i for i in self.examples if hasattr(i,'image')}
             ui.Label(self.frame,text=title,font='title',c=0,r=0)
             if optionlist:
                 ui.Label(self.frame,text=_("Select a word to exemplify ‘{glyph}’").format(glyph=glyph),

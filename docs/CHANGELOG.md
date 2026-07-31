@@ -19,6 +19,25 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.13.21
+
+- FIX the chosen chart word losing its picture, root cause found. The word
+  picker's `optionlist` carries only `{'code': i.id}`, so `select_example`
+  re-looked the id up in `db.sensedict` — which returns a DIFFERENT sense object
+  for the same id, one whose `illustrationvalue()` is empty. Hence "No
+  illustration value for <id>" for a word whose picture the picker had just
+  displayed. The picker now hands back the object it showed
+  (`selected_sense`, via an id→sense map built alongside `optionlist`), and
+  `select_example` prefers it, falling back to the `sensedict` lookup. Those
+  senses come from `alphabet.senses_for_glyph` filtered on
+  `illustrationvalue()`, so the returned object is known to carry both the
+  illustration and the compiled image.
+- `select()`'s `print` became a log line.
+- NOT a regression, for the record: more words now appear in the picker (9 where
+  3 showed before) because it lists VERIFIED senses, and 1.13.8/1.13.9 stopped
+  compound `=` checks deleting each other's verification codes. More words stay
+  verified, so more are offered.
+
 # Version 1.13.20
 
 - `getimagelocationURI`'s two remaining `print()` calls are now `log.error` with
