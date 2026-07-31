@@ -1411,7 +1411,9 @@ class Sort(Categories):
         else:
             current_list_fn=self.itemstosort
             self.first_sort=list(current_list_fn()) #current list
-            groups=[i for i in self.groups(wsorted=True) if i != 'NA']
+            #wsorted explicit: groups_visible passes flags straight through, and a
+            #flagless call means the theoretical list, not membership.
+            groups=self.groups_visible(wsorted=True) #NA never listed (rule C)
             img_mod=''
             instructions+=' '+_("(by {context})").format(context=context)
         log.info("Going to sort these items: {items}".format(items=self.first_sort))

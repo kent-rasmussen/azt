@@ -324,7 +324,10 @@ class SettingsUI(object):
         if hasattr(self,'group_comparison'):
             log.debug(_("group_comparison: {val}").format(val=self.group_comparison))
         self.set('group_comparison',choice,window,refresh=False)
-        log.debug(_("group_comparison: {val}").format(val=self.group_comparison))
+        #getattr: same reason as the guarded read above — a log line must never be
+        #able to raise (see tasks.transcribe_glyph.setgroup_comparison).
+        log.debug(_("group_comparison: {val}").format(
+                        val=getattr(self,'group_comparison',None)))
     def setcheck(self,choice=None,window=None,**kwargs):
         if not choice:
             choice=self.program.status.nextcheck(**kwargs)

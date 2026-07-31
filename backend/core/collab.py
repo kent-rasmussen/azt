@@ -177,6 +177,10 @@ class CollabSession:
         self._reload_offered_at = 0.0
         self._last_detected_head = ''  # newest peer head we've seen
         self._offered_head = ''        # head the last dialog was for
+        self._unlatch_probed_head = '' # head we've asked "is it all ours?"
+        #                                about while latched (once per head)
+        self._probe_failed_head = ''   # head whose changes_since probe ERRORED;
+        #                                a second failure for it prompts anyway
         self._sync_in_flight = False   # user-gesture sync guard (§17c)
 
     def record_lift_stat(self):
@@ -531,6 +535,7 @@ class CollabSession:
         self.stale = False
         self._last_detected_head = ''
         self._offered_head = ''
+        self._unlatch_probed_head = '' #new base ⇒ the old answer doesn't apply
         log.info(_("Collaboration rebased after in-place reload "
                    "(base {base}).").format(
                        base=self.base_sha[:12] or '<none>'))
@@ -593,8 +598,51 @@ class CollabSession:
                     return 'benign'
                 if head:
                     self._last_detected_head = head
-            except Exception:
-                pass
+                # AUTHOR self-heal (Kent 2026-07-30: "the log said Our own work;
+                # not showing... but it showed"). Both halves of that report are
+                # true and they are about DIFFERENT ticks. The ours-only
+                # suppression lives below this early return, so it only ever runs
+                # while we are NOT latched; once anything sets `stale`, every
+                # later tick returns 'changed' from here without asking who
+                # wrote the commits. And the content self-heal just above cannot
+                # cover the case, because when OUR OWN save is what moved HEAD
+                # the blob differs by construction (we wrote new bytes) — so
+                # head_blob != base_lift_blob and the latch stands forever.
+                #
+                # The content-blind latcher is `maybe_sync`: `result.has(PULLED)`
+                # means the daemon pulled SOMETHING, not that it pulled the
+                # TEAM's something — our own commits coming back over LAN/WAN
+                # latch it just the same.
+                #
+                # So ask the same strict question here. A MERGED_WITH_LOCAL latch
+                # survives it: the team commits our save was merged with are in
+                # base..HEAD, so the range is not ours-only.
+                # Probed once per head, and only marked probed once the call
+                # SUCCEEDS: a probe that errors must be retried next tick, or one
+                # transient failure would sentence us to the prompt for as long
+                # as HEAD sits still.
+                if head and head != getattr(self, '_unlatch_probed_head', ''):
+                    enriched = _client.project_status(self.langcode,
+                                                      since_sha=self.base_sha)
+                    self._unlatch_probed_head = head
+                    cs = getattr(enriched, 'changes_since', None) if enriched \
+                        else None
+                    if cs and self._only_our_own_commits(cs):
+                        self.stale = False
+                        self.base_sha = head
+                        if head_blob:
+                            self.base_lift_blob = head_blob
+                        self._last_detected_head = ''
+                        self._offered_head = ''
+                        log.info(_("Team-changes latch cleared: all {count} "
+                                   "change(s) since our base were written by us "
+                                   "({who}) — our own work, not the team’s."
+                                   ).format(count=cs.get('count'),
+                                            who=', '.join(cs.get('authors')
+                                                          or [])))
+                        return 'benign'
+            except Exception as e:
+                log.info(f"stale-latch self-heal: {e}")
             return 'changed'
         if st is None:
             try:
@@ -655,13 +703,31 @@ class CollabSession:
             # The probe ERRORED (not "the daemon said it can't tell"). We know HEAD
             # moved and the LIFT differs, but we cannot say a word about why — and a
             # prompt that can't say why is indistinguishable from a spurious one
-            # (§ 8b obl. 3a). Don't latch on a failed probe: leave the base alone
-            # and try again on the next tick, ~10 s away, by which time a
-            # starting/busy daemon is usually answering. A real peer change is still
-            # there next tick; only the blind prompt is gone.
-            log.info("Not prompting yet: HEAD moved but the changes_since probe "
-                     "failed; retrying on the next poll.")
-            return 'none'
+            # (§ 8b obl. 3a). So defer ONE tick: ~10 s later a starting/busy daemon
+            # is usually answering, and a real peer change is still there.
+            #
+            # But NEVER defer indefinitely (bug caught by
+            # test_poll_changed_on_foreign_lift_write, 2026-07-31). Two reasons:
+            # we reached this line only because _lift_changed_on_disk() said the
+            # LIFT changed under us — INDEPENDENT local evidence that does not
+            # depend on the probe at all — and a daemon too old to accept
+            # since_sha (the original reason for this except: "older
+            # daemon/client") fails the probe on EVERY tick, forever. Silently
+            # swallowing a real foreign change is far worse than a prompt that
+            # can't name the author, so on a second consecutive failure for the
+            # SAME head, fall through and prompt unattributed — 1.13.1 already
+            # made that prompt admit it couldn't tell what changed.
+            if self._probe_failed_head != head:
+                self._probe_failed_head = head
+                log.info("Not prompting yet: HEAD moved but the changes_since probe "
+                         "failed; retrying on the next poll.")
+                return 'none'
+            log.warning("changes_since probe failed again for %s — prompting "
+                        "WITHOUT attribution. The LIFT changed on disk, so this is "
+                        "real even though we cannot say who wrote it; a daemon too "
+                        "old for since_sha never answers this.", head[:12])
+        else:
+            self._probe_failed_head = ''
         cs = self.changes_since or {}
         if cs.get('known') and not cs.get('count') and cs.get('bot_count'):
             # HEAD advanced, but every commit in the range is a daemon

@@ -191,9 +191,16 @@ class GlyphTranscribeHelper:
             if w and w.winfo_exists():
                 log.info("Waiting for {w}".format(w=w))
                 w.wait_window(w)
+        # getattr, not attribute access: the very next line guards this same
+        # attribute with hasattr, because settings only HAS it once a comparison
+        # has been picked. Closing the glyph picker without picking one (the else
+        # branch above returns from wait_window with nothing set) used to die
+        # here — an AttributeError raised while BUILDING A LOG MESSAGE, taking
+        # the glyph transcribe page down with it (Kent 2026-07-30).
         log.info(_("Groups: {group} (of {groups}); "
                    "{comp}?").format(group=self.group, groups=self.groups,
-                                    comp=self.program.settings.group_comparison))
+                                    comp=getattr(self.program.settings,
+                                                 'group_comparison', None)))
         if hasattr(self.program.settings, 'group_comparison'):
             self.group_comparison = self.program.settings.group_comparison
         if self.errorlabel['text'] == _("Sorry, pick a comparison first!"):

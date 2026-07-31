@@ -1365,7 +1365,11 @@ class Transcribe(Sound,Categories,Task):
             self.switchgroups(comparison)
     def updategroups(self):
         # Update locals group, groups, and othergroups from objects
-        self.groups=self.program.status.groups(wsorted=True)
+        # VISIBLE, not membership: self.groups feeds self.othergroups (below) =
+        # the glyph page's comparison targets, so NA must not be among them (NA
+        # audit, rule C). Nothing writes self.groups back — submitform stores by
+        # NAME via renamegroup — so the read-modify-write hazard doesn't apply.
+        self.groups=self.program.status.groups_visible(wsorted=True)
         # log.info("self.groups: {}".format(self.groups))
         self.groupsdone=self.program.status.verified()
         self.group=self.program.status.group()
@@ -1432,7 +1436,9 @@ class Transcribe(Sound,Categories,Task):
             else:
                 log.info("Didn't Find integer groups: {groups}".format(
                     groups=self.program.status.groups(wsorted=True)))
-                self.program.status.nextgroup(wsorted=True)
+                #_visible: this advances to the next group to NAME, and NA is not a
+                #name-able group on any check (NA audit, rule C).
+                self.program.status.nextgroup_visible(wsorted=True)
             # log.debug("group: {}".format(group))
             self.makewindow()
     def nextcheck(self):
@@ -1460,8 +1466,12 @@ class Transcribe(Sound,Categories,Task):
             if w and w.winfo_exists(): #This window may be already gone
                 log.info("Waiting for {w}".format(w=w))
                 w.wait_window(w)
+        #getattr: the next line guards the same attribute, since settings only has
+        #it once a comparison is picked. See transcribe_glyph.setgroup_comparison.
         log.info(_("Groups: {group} (of {groups}); "
-                "{comp}?").format(group=self.group, groups=self.groups, comp=self.program.settings.group_comparison))
+                "{comp}?").format(group=self.group, groups=self.groups,
+                                comp=getattr(self.program.settings,
+                                            'group_comparison', None)))
         if hasattr(self.program.settings,'group_comparison'):
             self.group_comparison=self.program.settings.group_comparison
         if self.errorlabel['text'] == _("Sorry, pick a comparison first!"):

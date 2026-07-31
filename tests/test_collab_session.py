@@ -179,12 +179,35 @@ def test_poll_benign_artifact_commit_advances_base(session):
 
 
 def test_poll_changed_on_foreign_lift_write(session):
-    collab._client.project_status = lambda lc: _status('head9')
+    # **kw, not bare lc: the real project_status takes since_sha, and the
+    # enrichment probe passes it once HEAD is known to have moved (§ 8b obl. 3a).
+    # A lambda that rejects it made the probe RAISE, which the deferral path then
+    # read as "daemon not answering yet" — see the sibling test below.
+    collab._client.project_status = lambda lc, **kw: _status(
+                'head9', changes_since={'known': True, 'count': 1,
+                                        'authors': ['Someone Else'],
+                                        'bot_count': 0})
     with open(session.lift_path, 'ab') as fh:
         fh.write(b'<!--peer-->')            # size change → stat differs
     assert session.poll_remote_change() == 'changed'
     assert session.base_sha == 'base1'      # NOT advanced
     assert session.stale is True
+
+
+def test_poll_probe_failure_defers_once_then_prompts(session):
+    """A changes_since probe that ERRORS must not silence a real foreign change
+    forever (2026-07-31). One tick's grace for a starting/busy daemon; after that
+    we prompt unattributed, because _lift_changed_on_disk() is independent
+    evidence and a daemon too old for since_sha fails this probe every time."""
+    collab._client.project_status = lambda lc: _status('head9')  # rejects since_sha
+    with open(session.lift_path, 'ab') as fh:
+        fh.write(b'<!--peer-->')
+    assert session.poll_remote_change() == 'none'    # deferred, base untouched
+    assert session.base_sha == 'base1'
+    assert session.stale is False
+    assert session.poll_remote_change() == 'changed' # same head, failed twice
+    assert session.stale is True
+    assert session.base_sha == 'base1'               # still NOT advanced
 
 
 def test_poll_stale_stays_changed_and_never_advances_base(session):

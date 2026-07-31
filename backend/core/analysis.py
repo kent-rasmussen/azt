@@ -1264,10 +1264,28 @@ class StatusDict(dict):
                 nextcheck=checks[idx+1] #overwrite default in this one case
         self.program.params.check(nextcheck)
         return nextcheck
+    def nextgroup_visible(self, **kwargs):
+        """Advance the current group within the VISIBLE list — NA never landed on.
+
+        Use this wherever the advance is on the user's behalf through groups they
+        could have picked themselves: the glyph page's "next" (naming NA is
+        meaningless), and the choosers' auto-pick (which must agree with the list it
+        just decided was short enough to skip showing).
+
+        NA is still REACHED for verification on an '=' check — but through
+        groups(toverify=True), which keeps it there, not through this."""
+        return self._advance_group(self.groups_visible(**grouptype(**kwargs)),
+                                   **kwargs)
     def nextgroup(self, **kwargs):
-        kwargs=grouptype(**kwargs)
+        """Advance the current group within MEMBERSHIP — NA included if present.
+
+        Navigates exactly the list its kwargs name, with no NA opinion: the NA rule
+        belongs to whoever chose the list (see groups_visible / nextgroup_visible).
+        No caller today wants this; it is kept for a verification advance that
+        legitimately needs NA on an '=' check."""
+        return self._advance_group(self.groups(**grouptype(**kwargs)), **kwargs)
+    def _advance_group(self, groups, **kwargs):
         group=self.group()
-        groups=self.groups(**kwargs)
         log.info(_("At {group} of ({groups}) groups.").format(group=group,groups=groups))
         if not groups:
             log.error(_("There are no such groups! kwargs: {kwargs}").format(kwargs=kwargs))
@@ -1439,6 +1457,50 @@ class StatusDict(dict):
         answers False — don't offer the skip pile when we can't tell what we're
         looking at."""
         return '=' in str(kwargs.get('check') or '')
+    def groups_visible(self, g=None, **kwargs):
+        """The groups the USER may see LISTED — whatever list you ask groups() for,
+        minus NA, always, for every check including the '=' ones.
+
+        NA is writable by name and never listable (NA audit, rule C): the user puts
+        words there by clicking skip (on an '=' check, the `V1<>V2` button) and
+        presort puts them there wholesale — but NA must never appear in a list of
+        groups to choose among, whether that list is sort buttons, the reassignment
+        buttons on the VERIFY page, or a chooser. Use this anywhere a list is shown;
+        use groups(wsorted=True) only when you mean membership as stored on disk.
+
+        As a SETTER this re-adds NA when NA is already in membership, so that a
+        read-modify-write through this accessor cannot silently delete the skip pile
+        from disk (Kent 2026-07-30). Belt-and-braces — don't read this and write it
+        back regardless; that is what groups(wsorted=True) is for. It does NOT
+        invent NA membership where the slice has none, because a group exists only
+        while it has members (verify() deletes empty ones).
+        """
+        # PURE PASS-THROUGH: hand kwargs to groups() untouched and strip NA from
+        # whatever list comes back. Rule C is "never LISTED", so it applies to every
+        # flavour — wsorted, toverify, torecord, tojoin, and the flagless
+        # "theoretical possibilities" list too. Deliberately NO default to
+        # wsorted: an earlier draft defaulted flagless calls to membership, which
+        # silently changed _getgroup (whose flagless path means the theoretical
+        # list, not membership). Callers who mean membership say wsorted=True.
+        #
+        # The user still REACHES an NA verification on an '=' check — through
+        # groups(toverify=True), which keeps it — just never by picking it off a
+        # list. That keeping is rule B's gate; this is rule C's.
+        if g is not None:
+            if not kwargs.get('wsorted'):
+                log.warning("groups_visible called as a SETTER without wsorted=%r: "
+                            "groups() only writes on the wsorted branch, so this "
+                            "stores nothing. kwargs=%r", True, kwargs)
+            stored=self.groups(**kwargs) #membership as it stands, NA included
+            g=list(g)
+            if 'NA' in stored and 'NA' not in g:
+                g.append('NA')
+                log.info("groups_visible setter: NA restored to membership — the "
+                         "caller wrote back a list it got from a VISIBLE read. "
+                         "Fix the caller; use groups(wsorted=True) to modify "
+                         "membership.")
+            return [i for i in self.groups(g,**kwargs) if i != 'NA']
+        return [i for i in self.groups(**kwargs) if i != 'NA']
     def groups(self,g=None, **kwargs):
         # log.info(_("groups kwargs: {kwargs}").format(kwargs=kwargs))
         if kwargs.get('all_for_cvt'): #in this case, nothing else is relevant
@@ -1482,11 +1544,15 @@ class StatusDict(dict):
             return self.order_groups(toverify)
         if kwargs['torecord']:
             torecord=set(sn['groups'])-set(sn['recorded'])
-            # Same rule, so making NA membership unconditional doesn't newly offer
-            # the skip pile for RECORDING on non-'=' checks (it was already offered
-            # on '=' checks, where NA is a real result set — unchanged).
-            if not self._na_is_a_result(**kwargs):
-                torecord.discard('NA')
+            # RECORDING FOLLOWS RULE C, NOT RULE B (Kent 2026-07-30, asked and
+            # answered "yes"). Recording is per check per group — N
+            # (examplespergrouptorecord) senses out of each group of the current
+            # check — so a group is offered here because it is a sound class worth
+            # hearing. Under an '=' check NA means "the test does not apply"
+            # (V1≠V2): it is a real result set to VERIFY but not a class to record,
+            # so recording N examples of it captures nothing comparable. Hence
+            # unconditional, unlike the toverify branch above.
+            torecord.discard('NA')
             return self.order_groups(torecord)
         else: #give theoretical possibilities (C or V only)
             """The following two are meaningless, without with kwargs above"""

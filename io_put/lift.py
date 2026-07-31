@@ -1284,7 +1284,23 @@ class LiftXML(object): #fns called outside of this class call self.nodes here.
             submit=getattr(self,'collab_submit',None)
             collab_fallback=False
             _t_submit=0.0
-            outcome='(no daemon)'
+            # DISTINGUISH THE TWO NON-DAEMON REASONS (2026-07-30). This used to read
+            # '(no daemon)' for both, which is actively misleading in the save-cost
+            # log: it made three measured saves look like "the daemon was down" when
+            # the daemon was up and simply wasn't asked. Note a daemon that IS asked
+            # and fails logs 'fallback', never this — so neither label below ever
+            # means "the server broke".
+            #   not-attached  → this Lift has no collab_submit (project not attached)
+            #   other-file    → a backup/template write, which by design never goes
+            #                   through the daemon (writebackup → self.filename
+            #                   differs). Such a save is NOT the hot path and its
+            #                   timings must not be read as one.
+            if submit is None:
+                outcome='(collab not attached)'
+            elif str(filename) != str(self.filename):
+                outcome='(backup/other file — not the hot path)'
+            else:
+                outcome='(no daemon)' #unreachable; kept so outcome is always set
             if submit is not None and str(filename) == str(self.filename):
                 _t0=time.perf_counter()
                 try:

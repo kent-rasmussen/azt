@@ -2364,7 +2364,9 @@ class TaskDressing(HasMenus,ui.Window):
         kwargs=grouptype(**kwargs) #this just fills in False
         # NA ("not applicable") is never a selectable group — don't offer it as a
         # button here (it is sorted/verified internally, but never presented).
-        groups=[g for g in self.program.status.groups(cvt=cvt,**kwargs) if g!='NA']
+        # groups_visible keeps whichever list kwargs asked for (wsorted/toverify/
+        # torecord — this one chooser serves all three) and drops NA from it.
+        groups=self.program.status.groups_visible(cvt=cvt,**kwargs)
         if not groups:
             ErrorNotice(parent=window.frame,
                           text=_("It looks like you don’t have {ps}-{profile} lexemes "
@@ -2377,12 +2379,14 @@ class TaskDressing(HasMenus,ui.Window):
             if l:
                 self.program.settings.setgroup(str(min(l)),window)
             else:
-                self.program.status.nextgroup(cvt=cvt,**kwargs)
+                # _visible: this auto-picks INSTEAD of showing the chooser, so it
+                # must agree with the list `groups` above — which excludes NA.
+                self.program.status.nextgroup_visible(cvt=cvt,**kwargs)
                 window.destroy()
             return
         elif kwargs.get('guess') or (len(groups) == 1
                                         and not kwargs.get('comparison')):
-            self.program.status.nextgroup(cvt=cvt,**kwargs)
+            self.program.status.nextgroup_visible(cvt=cvt,**kwargs)
             window.destroy()
             return
         cvt_name=self.program.params.cvtdict()[cvt]['sg']

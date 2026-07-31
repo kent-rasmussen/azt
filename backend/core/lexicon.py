@@ -39,6 +39,10 @@ class Senses(object):
     be reconsidered. (see Tone class below)"""
     def groups(self,**kwargs): #toverify=True
         return self.program.status.groups(**kwargs)
+    def groups_visible(self,g=None,**kwargs):
+        """Groups the user may see listed — NA never appears. See
+        StatusDict.groups_visible; don't write back what you read from it."""
+        return self.program.status.groups_visible(g,**kwargs)
     def group(self,value=None,**kwargs):#get/set
         return self.program.status.group(value,**kwargs)
     def notdonewarning(self):

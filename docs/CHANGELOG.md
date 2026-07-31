@@ -21,10 +21,94 @@
 
 # Version 1.13.3
 
-The two reload-prompt fixes below are the ones to deploy if a machine is still
-being asked to take "team changes" it can't explain: 1.13.1 made the prompt SAY
-that it couldn't tell, and this version stops raising it at all when the reason we
-can't tell is that the probe failed or the session never had a base.
+The reload-prompt fixes below are the ones to deploy if a machine is still being
+asked to take "team changes" it can't explain: 1.13.1 made the prompt SAY that it
+couldn't tell, and this version stops raising it at all when the reason we can't
+tell is that the probe failed, the session never had a base, or the work is ours.
+
+- FIX (a failed `changes_since` probe could silence a REAL foreign change forever —
+  caught by `test_poll_changed_on_foreign_lift_write`, 2026-07-31). The
+  probe-failure deferral added earlier returned `'none'` on every tick the probe
+  errored, and a daemon too old to accept `since_sha` — the original reason that
+  `except` exists — errors on EVERY tick. So the user would never learn their LIFT
+  had changed under them. `poll_remote_change` reaches that line only because
+  `_lift_changed_on_disk()` said the file changed, which is independent local
+  evidence that doesn't depend on the probe at all. Now: defer ONE tick per head
+  (the starting/busy-daemon case, ~10 s), then prompt unattributed — 1.13.1 already
+  made that prompt admit it couldn't tell what changed. Silently swallowing a real
+  change is worse than a prompt that can't name the author. The test's fake
+  `project_status` also took bare `lc`, rejecting the `since_sha` the real client
+  accepts, which is what made the probe raise in the first place; fixed, and a
+  second test now pins the defer-once-then-prompt behaviour.
+- FIX (the log said "our own work, not the team’s" — and the prompt showed anyway;
+  Kent 2026-07-30). Both halves of that report were true, about different ticks.
+  The ours-only suppression added in 1.13.2 sits in `poll_remote_change` BELOW the
+  `if self.stale:` early return, so it only ever ran while we were not yet latched;
+  once anything set `stale`, every later tick reported 'changed' from that early
+  return without asking who wrote the commits. The content self-heal beside it
+  can't cover the case either — when OUR OWN save is what moved HEAD, the LIFT blob
+  differs by construction, so `head_blob != base_lift_blob` and the latch stood
+  forever. The content-blind latcher is `maybe_sync`: `result.has(PULLED)` means the
+  daemon pulled *something*, not that it pulled the *team's* something, so our own
+  commits arriving back over LAN/WAN latch it identically. The stale branch now
+  asks the same strict ours-only question (once per head, marked probed only after
+  the call succeeds, so a transient probe failure doesn't sentence the session to
+  the prompt) and un-latches when every human commit since our base is ours. A
+  `MERGED_WITH_LOCAL` latch deliberately survives it: the team commits our save was
+  merged with are inside base..HEAD, so that range is not ours-only.
+- NA AUDIT (`agenda/na_audit.md`), and the three defects it found. The audit's
+  product is that "groups" was doing three jobs with a different NA rule in each,
+  which is why two implementations could both look right and disagree:
+  **A membership/tracking** (NA always kept, every check), **B verify offer** (NA
+  only where the check contains `=`), **C group listing** (NA never listed, any
+  check — but still writable by name). C had no gate anywhere, and it is stricter
+  than B: on a `V1=V2` check NA is a legitimate thing to VERIFY and never a
+  legitimate thing to appear in a list of groups. NA is written by the user clicking
+  skip (`sortselected`: `'skip'` → `category='NA'`) and by presort — so "never
+  offered" was never "never a destination".
+  - `StatusDict.groups_visible(g=None, **kwargs)`: whichever list the caller asked
+    for (wsorted/toverify/torecord/tojoin; membership by default), minus NA. Its
+    SETTER re-adds NA when membership already has it, so a read-modify-write through
+    the display accessor can't silently delete the skip pile from disk — the
+    show-vs-track boundary Kent asked for, enforced rather than documented.
+  - `nextgroup_visible()` split out from `nextgroup()` (shared `_advance_group`), so
+    the two usages are distinguishable at the call site. All three existing callers
+    want `_visible`: the glyph page's "next group to name", and `_getgroup`'s two
+    auto-pick paths — which had a latent inconsistency, deciding "only one group, skip
+    the chooser" from an NA-free list and then advancing through a list that could
+    land on NA. Verification never advances through `nextgroup`; it picks from
+    `groups(toverify=True)`, where NA's rule-B gate already lives.
+  - FIX: NA was reaching the glyph page as a comparison target
+    (`tasks.py:1368 updategroups` read raw membership into `self.othergroups`).
+  - FIX: recording moved from rule B to rule C. Recording is per check per group —
+    `examplespergrouptorecord` senses out of each group — so a group is offered
+    because it is a sound class worth hearing. Under an `=` check NA means "the test
+    does not apply", which is verifiable but not recordable.
+  - Left deliberately: `sorting_engine.py:1669-1680` still deletes NA from disk
+    membership when NA has no examples in the slice. That is correct — a group exists
+    only while it has members — and is a different thing from the 2026-07-30 cull
+    bug, which dropped NA's *verification* while its members remained.
+- FIX (glyph transcribe page died with `Settings has no group_comparison`).
+  `transcribe_glyph.setgroup_comparison` built its "Groups: … ?" log message from
+  `self.program.settings.group_comparison` — unguarded, on the line immediately
+  BEFORE the `hasattr` check for that same attribute. Settings only carries it once
+  a comparison has been picked, so closing the glyph picker without picking one
+  (the `else` branch returns from `wait_window` with nothing set) raised
+  AttributeError *while formatting a log message* and took the page with it. Same
+  code in `tasks.py:1464` and an unguarded read in `settings_ui.py:327`; all three
+  now use `getattr(…, None)`. A log line must never be able to raise.
+- FIX (alphabet chart crashed on redraw after a PDF export:
+  `unsupported operand type(s) for //: 'int' and 'str'` at
+  `frontend/alphabet_chart.py`). `alphabet_chart_pdf.create_chart` returns either
+  the column count it actually used, or the string `"using_helvetica"`, or `None` —
+  and the call site assigned that return value straight into `self.ncolumns`. So on
+  any machine lacking both Charis and Andika, exporting a PDF turned the column
+  count into a string and the next chart redraw died on `n//self.ncolumns`; it was
+  also persisted to `alphabet_ncolumns`, so the chart kept crashing after restart.
+  The return value now goes to a local, only a positive int is adopted, and
+  `AlphabetChartData._sane_columns` scrubs what's already stored (both the settings
+  and the kwargs branch — the settings branch, which is the one the app takes, had
+  no sanity check at all).
 
 - FIX (Advanced ▸ Fill CAWL Images did nothing — `unexpected 'do_wait'`). The menu
   handler called `db.fill_db_images(do_wait=True)`, but `Lift.fill_db_images(self)`
