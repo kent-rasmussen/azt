@@ -22,16 +22,22 @@ class Transcriber(ui.Frame):
             y=self.hash_sp.sub('#',x)
             z=self.hash_nbsp.sub('.',y)
             self.namehash.set(z)
-            self.formfieldplay.grid()
+            if self.beeps is not None: # no audio → no play button to offer
+                self.formfieldplay.grid()
         else:
             self.namehash.set('')
             self.formfieldplay.grid_remove()
         self.labelcompiled=False
     def playbeeps(self,pitches):
+        if self.beeps is None:
+            log.info("No audio on this machine; can't play tone beeps.")
+            return
         if not self.labelcompiled:
             self.beeps.compile(pitches)
         self.beeps.play()
     def configurebeeps(self,event=None):
+        if self.beeps is None: # only reachable via the play button, which stays
+            return             # hidden without beeps — but it's event-bound
         def higher():
             self.beeps.higher()
             self.labelcompiled=False
@@ -78,13 +84,28 @@ class Transcriber(ui.Frame):
         self.newname=ui.StringVar(value=initval)
         self.namehash=ui.StringVar()
         self.hash_t,self.hash_sp,self.hash_nbsp=rx.tonerxs()
-        self.pyaudio=sound.AudioInterface()
-        if soundsettings:
-            self.soundsettings=soundsettings
-        else:
-            self.soundsettings=sound.SoundSettings(self.pyaudio)
-        self.beeps=sound.BeepGenerator(pyAudio=self.pyaudio,
+        # AUDIO HERE IS THE PROGRAM'S, NOT THIS WIDGET'S. SoundSettings owns the
+        # PyAudio handle (its confirm_pyaudio reuses program.pyaudio), so the
+        # caller's settings object already carries the one to use. What was here
+        # built a fresh AudioInterface for every Transcriber — a second handle
+        # racing any stream an open Sound task already had (AUDIT_FINDINGS.md:354)
+        # — and its no-settings fallback, `SoundSettings(self.pyaudio)`, passed a
+        # PyAudio where the constructor wants `program`. That doesn't raise
+        # (`program` is only dereferenced in load/store_to_file), it silently
+        # yields a THIRD handle and a second, never-persisted settings object
+        # divergent from program.soundsettings. Callers hand us the singleton
+        # (tasks/transcribe_glyph.py gets it from SoundSettings.ensure); with no
+        # audio on this machine we simply have no beeps, which is a hidden play
+        # button, not a traceback.
+        self.soundsettings=soundsettings
+        self.pyaudio=getattr(soundsettings,'pyaudio',None)
+        self.beeps=None
+        if self.pyaudio is not None:
+            try:
+                self.beeps=sound.BeepGenerator(pyAudio=self.pyaudio,
                                             settings=self.soundsettings)
+            except Exception as e:
+                log.info("No tone beeps in this transcriber: {}".format(e))
         if 'chars' in kwargs and kwargs['chars'] and type(kwargs['chars']) is list:
             chars=kwargs.pop('chars')
             if len(chars)> 50:

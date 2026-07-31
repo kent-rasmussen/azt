@@ -19,6 +19,60 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.13.4
+
+Audio is a PROGRAM resource, and there is exactly one accessor for it:
+`SoundSettings.ensure()`. Every place that reached for a piece of it raw is now
+routed through that call. Shipped unverified — Kent verifies on live machines,
+which needs a version to ship.
+
+- FIX (the second half of the "'SortV' object has no attribute 'pyaudio'" bug,
+  2026-07-31). `playbutton` needs TWO program-level things — the PyAudio handle
+  and the device settings — and 1.13.2 only fixed the first, by hand-rolling
+  `_audio_interface()`: task's own, else program's, else build one, a copy of
+  `confirm_pyaudio`'s ordering living in the frontend. The settings argument
+  stayed raw at `self.program.settings.soundsettings`, an attribute only ever
+  created by `SoundSettings.ensure()` — which only the Sound task mixin runs. So
+  a `SortV`/`SortC` verify page, which PLAYS but never records, missed it exactly
+  as it had missed `pyaudio`, one argument to the right. `_audio_interface` is
+  replaced by `_playback()`, which returns both halves from the single `ensure()`
+  call: it stores the singleton at `program.settings.soundsettings` AND
+  `program.soundsettings`, loads the persisted device choices from file, and via
+  `confirm_pyaudio` in its `__init__` reuses or builds `program.pyaudio`.
+- NOT a case for subclassing. `SortV`/`SortC` must NOT inherit the `Sound` mixin:
+  `Sound` isn't "can play audio", it's "this task's job requires a validated
+  CAPTURE device" — its `__init__` runs `soundcheck()`, which opens the mic-check
+  window when the config doesn't validate, and it adds the Sound-settings menu
+  item. A segmental sort would then interrupt sorting with a mic dialog on any
+  machine with stale audio config, for a page that only plays. Playback has no
+  per-task state; it stays a program singleton. The one asymmetry kept explicit
+  in `_playback()`: a Sound task FIXES a bad config interactively, a sort page
+  DEGRADES to a label.
+- FIX two ways `_playback()` can now decline instead of crashing or building a
+  dead player: a machine with speakers but no mic (`makedefaultifnot` →
+  `default_in()` raises `AttributeError("audio_card_in")` even though playback
+  needs no input card), and an output config that doesn't validate. The latter
+  tests `check_missing_attrs()` — the OUTPUT-only `required_attrs` — deliberately
+  NOT `soundcheck()`, whose `check()` MUTATES the card/rate choice: drawing a
+  button must never reconfigure the audio device behind the user.
+- `_playback()` passes the analang to `ensure()`. `ensure()` applies
+  `analang_obj` only when it CONSTRUCTS, so whoever calls first decides; a sort
+  page arriving first would otherwise leave ASR seeded with `sister_languages=
+  ['en']` for the rest of the session.
+- FIX the same shape in `frontend/transcriber.py` (found auditing the above).
+  Two bugs, both silent: it built a fresh `AudioInterface()` for EVERY
+  Transcriber — a second handle racing any stream an open Sound task already had
+  (`AUDIT_FINDINGS.md:354`) — and its no-settings fallback,
+  `SoundSettings(self.pyaudio)`, passed a PyAudio where the constructor wants
+  `program`. That never raised, because `program` is only dereferenced in
+  `load_from_file`/`store_to_file`; it quietly produced a THIRD handle and a
+  second, never-persisted settings object divergent from `program.soundsettings`.
+  The Transcriber now takes the handle off the settings object the caller passes,
+  and `beeps=None` (hidden play button) is the no-audio answer.
+- `tasks/transcribe_glyph.py` fed that fallback: it read
+  `program.settings.soundsettings` raw and passed `None` whenever no Sound task
+  had run this session. It now prefers the task's own, else `ensure()`.
+
 # Version 1.13.3
 
 The reload-prompt fixes below are the ones to deploy if a machine is still being

@@ -298,11 +298,29 @@ class GlyphTranscribeHelper:
         Blocks (via wait_window) until the user submits or closes.
         Sets self.ok_done and self.window_failed accordingly.
         """
-        # Sound settings (optional)
-        soundsettings = getattr(self.program.settings, 'soundsettings', None)
+        # Sound settings (optional): the PROGRAM singleton. A Sound task already
+        # holds it; anyone else must go through SoundSettings.ensure, the one
+        # accessor that creates it, loads the persisted device choices, and (via
+        # confirm_pyaudio) owns program.pyaudio. Reading
+        # program.settings.soundsettings raw handed None to the Transcriber
+        # whenever no Sound task had run this session — same miss as the sort
+        # play button. Never raises: no audio here just means no tone beeps.
+        soundsettings = getattr(self.task, 'soundsettings', None)
+        if soundsettings is None and not getattr(self.program, 'nosound', False):
+            try:
+                from backend.core.sound import SoundSettings
+                try:   # seed ASR for the right language if we're first to ensure
+                    analang_obj = self.program.languages.get_obj(
+                                            getattr(self.task, 'analang', None))
+                except Exception:
+                    analang_obj = None
+                soundsettings = SoundSettings.ensure(self.program,
+                                                     analang_obj=analang_obj)
+            except Exception as e:
+                log.info("No audio settings for glyph transcription: {}".format(e))
+                soundsettings = None
         if soundsettings is not None:
             soundsettings.confirm_pyaudio()
-            soundsettings = getattr(self.task, 'soundsettings', soundsettings)
 
         self.ok_done = False
         if glyph:

@@ -998,46 +998,188 @@ class CollabSession:
 # ── session construction ─────────────────────────────────────────────
 
 
+# ── boot-time refusal reasons ────────────────────────────────────────
+# EVERY path that leaves program.collab None on a project that WANTS
+# collaboration must land in _decline (Kent 2026-07-31: "any boot without
+# server MUST set at least a user_notice — we MUST see this, or we can't
+# fix it"). Silence is correct ONLY for a project that never opted in.
+# Before this, eight distinct causes collapsed into one indistinguishable
+# silent legacy fallback, and only the identity mismatch ever spoke — see
+# azt/agenda/boot_without_server_access.md for the audit.
+#
+# The reason is kept on program.collab_wanted so the Advanced menu can
+# say WHICH failure this was instead of showing the same "Connect to
+# Collaboration server" a never-connected legacy project shows.
+NO_SETTINGS = 'settings-unreadable'
+NO_LANGCODE = 'no-project-code'
+NO_CLIENT   = 'client-missing'
+NO_SERVER   = 'server-not-answering'
+WRONG_TREE  = 'wrong-copy'
+NO_HOOK     = 'save-hook-failed'
+
+# Every notice ends with this: the ONE thing the user needs to know
+# before anything else is that they have not lost any work (contract D9).
+_SAFE = _("Your work is safe — this session saves straight to disk, "
+          "exactly as A-Z+T did before collaboration existed.")
+
+
+def _decline(program, langcode, reason, short, title, message,
+             retriable=False):
+    """Refuse collaboration for THIS session, visibly. Records the reason
+    on ``program.collab_wanted``, logs it, and puts a distinct notice on
+    screen. Always returns None so callers can ``return _decline(...)``."""
+    program.collab_wanted = {'langcode': langcode, 'reason': reason,
+                             'short': short, 'message': message,
+                             'retriable': retriable}
+    log.warning(f"collab OFF [{reason}] {langcode or '<no code>'}: "
+                f"{message}")
+    from utilities.error_handler import notify_error
+    kwargs = {'title': title}
+    if retriable:
+        kwargs['button'] = (_("Try the server again now"),
+                            lambda e=None: _retry_from_notice(program))
+    try:
+        notify_error(message + '\n\n' + _SAFE, **kwargs)
+    except Exception as e: # a notice that can't paint must not kill boot
+        log.error(f"couldn't show the collaboration notice: {e}")
+    return None
+
+
+def _retry_from_notice(program):
+    """The notice's action button. Reconnecting is a RESTART, not a hot
+    swap: attach() is contractually required to run BEFORE repocheck()
+    (which skips legacy VCS construction when a session exists), so
+    attaching mid-session would leave the legacy repo objects built
+    alongside a live collab session. Probe, then restart if it's back."""
+    ok, msg = retry_connection(program)
+    from utilities.error_handler import notify_error
+    if not ok:
+        notify_error(msg, title=_("Collaboration: still not answering"))
+        return False
+    try:
+        from frontend.error_notice import ErrorNotice
+        ErrorNotice(msg + '\n' + _("{name} will now restart to "
+                                   "reconnect.").format(name=program.name),
+                    title=_("Collaboration"), wait=True)
+        program.restart()
+    except Exception as e:
+        log.error(f"collab retry restart: {e}")
+        notify_error(msg + '\n' + _("Please restart {name} to reconnect."
+                                    ).format(name=program.name),
+                     title=_("Collaboration"))
+    return True
+
+
+def retry_connection(program):
+    """Is the daemon answering for this project NOW? Returns (ok, msg).
+
+    Used by the boot notice's action button and by Advanced → Reconnect.
+    Tries the daemon's own restart first when we have a client at all: a
+    daemon that is merely CONFUSED accepts restart_server and comes back,
+    which is the whole fix for that case. A daemon that is WEDGED — up,
+    holding the port, not answering — cannot accept the RPC by
+    definition, so azt can only report it; recovering that one is the
+    daemon's job (agenda #1, daemon_wedges_before_serving.md)."""
+    wanted = getattr(program, 'collab_wanted', None) or {}
+    langcode = wanted.get('langcode', '')
+    if not AVAILABLE:
+        return False, _("The collaboration client software still isn’t "
+                        "installed, so there is nothing to reconnect to.")
+    if not langcode:
+        return False, _("This project has no collaboration project code "
+                        "stored, so there is nothing to reconnect to.")
+    restarted = restart_collab_daemon()
+    log.info(f"retry_connection: restart_server accepted={restarted}")
+    try:
+        _client.configure(app_id='azt')
+        proj = _client.open_project(langcode)
+    except Exception as e:
+        log.info(f"retry_connection open_project: {e}")
+        proj = None
+    if proj is not None:
+        return True, _("The collaboration server is answering again.")
+    if restarted:
+        return False, _(
+            "The collaboration server accepted a restart but is still "
+            "not answering for project “{langcode}”. Give it a few "
+            "seconds and try again.").format(langcode=langcode)
+    return False, _(
+        "The collaboration server is still not answering for project "
+        "“{langcode}”. It is either not running, or it started but got "
+        "stuck before it could serve. Restart the server (or the "
+        "computer running it) and try again.").format(langcode=langcode)
+
+
 def attach(program):
     """Create ``program.collab`` for an opted-in project (else None).
     Call once at startup, after FileParser (needs ``program.db`` +
     ``program.filename``) and BEFORE ``repocheck`` (which skips legacy
     VCS construction when a session exists). Daemon-unavailable at
-    open degrades to the legacy path with a logged warning — a field
-    tool must never lose the ability to save (contract D9)."""
+    open degrades to the legacy path (contract D9 — a field tool must
+    never lose the ability to save), but NEVER silently: see _decline."""
     program.collab = None
+    program.collab_wanted = None
     try:
         mgr = _settings_mgr(program.filename)
-        if not mgr.project.get('collab', False):
-            return None
+        wants = mgr.project.get('collab', False)
         langcode = (mgr.project.get('collab_langcode', '')
                     or mgr.project.get('analang', ''))
     except Exception as e:
-        log.info(f"collab.attach settings read: {e}")
-        return None
+        # We can't even tell whether this is a team project, so we must
+        # not assume it isn't — that assumption is what made a corrupt
+        # settings file look identical to a legacy project.
+        return _decline(program, '', NO_SETTINGS,
+            _("settings unreadable"),
+            _("Collaboration: project settings unreadable"),
+            _("A-Z+T could not read this project’s settings, so it "
+              "cannot tell whether this is a team project:\n{error}\n"
+              "If this IS a team project, its saves are NOT reaching "
+              "your team. Check the project folder is readable, then "
+              "restart.").format(error=e))
+    if not wants:
+        return None    # a genuine legacy project: the one silent case
     if not AVAILABLE:
-        log.warning(_(
-            "This project is set to use collaboration, but the "
-            "azt_collab_client package could not be found (clone "
-            "azt-collab beside the azt folder, or set "
-            "AZT_COLLAB_DIR); running in legacy mode."))
-        return None
+        return _decline(program, langcode, NO_CLIENT,
+            _("client software missing"),
+            _("Collaboration: client software not found"),
+            _("This project is set to use collaboration, but the "
+              "azt_collab_client package could not be found, so A-Z+T "
+              "cannot reach your team’s server at all.\nFix: clone "
+              "azt-collab beside the azt folder, or set the "
+              "AZT_COLLAB_DIR environment variable to point at it, "
+              "then restart A-Z+T."))
     if not langcode:
-        log.warning(_("Collaboration is on but no language code is "
-                      "stored; running in legacy mode."))
-        return None
+        return _decline(program, '', NO_LANGCODE,
+            _("no project code"),
+            _("Collaboration: no project code stored"),
+            _("This project is set to use collaboration, but no "
+              "collaboration project code is stored for it, so A-Z+T "
+              "doesn’t know which team project to join.\nFix: "
+              "Advanced → Connect to Collaboration server, which "
+              "re-registers this file and stores the code."))
     try:
         _client.configure(app_id='azt')
         proj = _client.open_project(langcode)
     except Exception as e:
         proj = None
-        log.warning(f"collab.attach open_project: {e}")
+        log.warning(f"collab.attach open_project raised: {e}")
     if proj is None:
-        log.warning(_(
-            "Collaboration server unavailable or project {langcode} "
-            "not registered; running in legacy mode this session."
-            ).format(langcode=langcode))
-        return None
+        # The daemon-side causes (down / wedged / too old / busy) and
+        # "not registered" are indistinguishable from here: open_project
+        # returns a bare None. Asking the collab team for the reason is
+        # filed in azt/agenda/desktop_collab_unavailable_visible.md.
+        return _decline(program, langcode, NO_SERVER,
+            _("server not answering"),
+            _("Collaboration: server not answering"),
+            _("The collaboration server did not answer for project "
+              "“{langcode}”, so your saves are NOT reaching your team "
+              "this session.\nUsually it is not running, or it started "
+              "but got stuck before it could serve. Less often, this "
+              "project was never registered with it.\nFix: use the "
+              "button below, or Advanced → Reconnect to Collaboration "
+              "server. If it keeps failing, restart the server — or the "
+              "computer running it.").format(langcode=langcode),
+            retriable=True)
     # Identity guard (2026-07-24): binding by langcode alone let a file
     # whose settings say collab=True silently join a daemon project
     # managing a DIFFERENT local tree (two 'baf' copies): saves land in
