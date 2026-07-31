@@ -90,6 +90,18 @@ class OrderAlphabetUI(ui.Window):
             # word to see it. Same call the picker uses (set_up_images).
             kw={'text':self.exobjs[g].entry.lcvalue()}
             img=getattr(self.exobjs[g],'image',None)
+            if img is None:
+                # LOAD IT. `.image` is only ever attached by
+                # getimagelocationURI, which runs over the PICKER's sense list —
+                # so an example that came from a saved exid, or from a different
+                # object out of db.sensedict, arrives here with no image at all
+                # and used to fall straight through to "no usable image" with no
+                # attempt and no error (Kent 2026-07-31: the picture shows on the
+                # picker page and not on the chart).
+                if getimagelocationURI(self.exobjs[g]):
+                    log.info("chart: ‘%s’ — couldn’t attach an image to the "
+                             "chosen word.",g)
+                img=getattr(self.exobjs[g],'image',None)
             scaled=getattr(img,'scaled',None) if img is not None else None
             if scaled is None and img is not None:
                 try:

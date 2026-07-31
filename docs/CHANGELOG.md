@@ -19,6 +19,19 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.13.19
+
+- FIX the chart picture that shows on the word-picker page and then not on the
+  chart. `get_kwargs` re-scaled when `.scaled` was missing but gave up when
+  `.image` itself was missing — and `.image` is only ever attached by
+  `getimagelocationURI`, which runs over the PICKER's sense list. An example
+  reaching the chart from a saved exid (or as a different object out of
+  `db.sensedict`) therefore had no image at all, and fell through to "no usable
+  image" with no attempt and no error. It now loads one, the same way the picker
+  does. Diagnosis came from the field console: the "no usable image" line fired
+  with no "couldn't scale" line beside it and no DIAG-chartimg, which places the
+  call in `create_chart` and proves `img` was None rather than unscalable.
+
 # Version 1.13.18
 
 - FIX alphabet settings overwritten with DEFAULTS, and user values not reaching
