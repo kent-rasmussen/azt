@@ -19,6 +19,35 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.13.7
+
+- FIX (REGRESSION from 1.13.3's NA work: verification died on every `=` check —
+  C1=C2, V1=V2, CV1=CV2 — field 2026-07-31). `_getgroup` was switched to
+  `groups_visible()` for ALL three of its flavours. That is right for `wsorted`
+  and `torecord`, but the to-verify queue on an equality check is the one list
+  where NA legitimately belongs: the presort partitions words into the equal
+  group(s) and the not-equal remainder → NA, so NA IS that check's result set,
+  and verifying it is how the user pulls genuine matches back out by hand.
+  Stripping it meant that as soon as the real group was verified the list came
+  back EMPTY, and `_getgroup` reported *"you don't have {ps}-{profile} lexemes
+  grouped in the ‘{check}’ check yet"* and returned — so the whole check read as
+  having nothing to verify. Where the presort had put everything in NA, that hit
+  immediately.
+  - The two rules were already written down and simply got crossed: rule C
+    ("NA is never LISTED") governs lists you pick a TARGET from — sort buttons,
+    the reassignment buttons on the verify page; rule B is the verify queue,
+    whose gate `StatusDict.groups(toverify=True)` already applies itself via
+    `_na_is_a_result`. `StatusDict.nextgroup`'s docstring even reserved itself
+    for "a verification advance that legitimately needs NA on an '=' check" —
+    which had no caller until now.
+  - `_getgroup` now picks its list AND its advance together: `groups()` +
+    `nextgroup()` when `toverify` and the check contains `=`, else
+    `groups_visible()` + `nextgroup_visible()` exactly as before. The auto-pick
+    branches must navigate the same list they were shown, or they can never land
+    on the only group left.
+  - Non-`=` checks are untouched: NA stays tracked, never listed, never
+    presented (`sorting_engine.verify` keeps its own guard at the PRESENT site).
+
 # Version 1.13.6
 
 Fonts that ARE installed were reported missing. One shared table now answers

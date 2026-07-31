@@ -2400,7 +2400,26 @@ class TaskDressing(HasMenus,ui.Window):
         # button here (it is sorted/verified internally, but never presented).
         # groups_visible keeps whichever list kwargs asked for (wsorted/toverify/
         # torecord — this one chooser serves all three) and drops NA from it.
-        groups=self.program.status.groups_visible(cvt=cvt,**kwargs)
+        #
+        # EXCEPT the to-verify queue on an '=' check. Rule C ("NA is never
+        # LISTED") governs lists you pick a TARGET from — sort buttons, the
+        # reassignment buttons on the verify page. The to-verify queue is rule
+        # B's: on an equality check the presort's not-equal remainder IS the
+        # check's result set, and verifying NA is how the user pulls genuine
+        # matches back out by hand. Applying rule C to this chooser's toverify
+        # flavour meant that once the real group was done the list came back
+        # EMPTY, so the branch below reported "you don't have lexemes grouped in
+        # this check yet" and returned — verification died on every '=' check
+        # (Kent 2026-07-31). status.groups(toverify=True) already applies rule
+        # B's gate itself (_na_is_a_result), so asking it directly is safe.
+        na_rides=bool(kwargs.get('toverify')
+                      and self.program.status._na_is_a_result(check=check))
+        if na_rides:
+            groups=self.program.status.groups(cvt=cvt,**kwargs)
+            advance=self.program.status.nextgroup
+        else:
+            groups=self.program.status.groups_visible(cvt=cvt,**kwargs)
+            advance=self.program.status.nextgroup_visible
         if not groups:
             ErrorNotice(parent=window.frame,
                           text=_("It looks like you don’t have {ps}-{profile} lexemes "
@@ -2413,14 +2432,16 @@ class TaskDressing(HasMenus,ui.Window):
             if l:
                 self.program.settings.setgroup(str(min(l)),window)
             else:
-                # _visible: this auto-picks INSTEAD of showing the chooser, so it
-                # must agree with the list `groups` above — which excludes NA.
-                self.program.status.nextgroup_visible(cvt=cvt,**kwargs)
+                # `advance` auto-picks INSTEAD of showing the chooser, so it must
+                # navigate the SAME list as `groups` above: _visible normally,
+                # membership (NA included) on an '=' check's verify queue —
+                # otherwise the auto-pick can never land on the one group left.
+                advance(cvt=cvt,**kwargs)
                 window.destroy()
             return
         elif kwargs.get('guess') or (len(groups) == 1
                                         and not kwargs.get('comparison')):
-            self.program.status.nextgroup_visible(cvt=cvt,**kwargs)
+            advance(cvt=cvt,**kwargs)
             window.destroy()
             return
         cvt_name=self.program.params.cvtdict()[cvt]['sg']
