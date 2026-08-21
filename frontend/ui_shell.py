@@ -2576,7 +2576,60 @@ class TaskDressing(HasMenus,ui.Window):
         #withdraw one way or another, but just waitdone to return
             self.runwindow.wait(msg=msg,thenshow=True)
         self.withdraw() #this is the parent of the runwindow, the task
+        self.guardvisible()
         return self.runwindow
+    RUNWINDOW_GUARD_MS=2000
+    def guardvisible(self,delay=None):
+        """Safety net: getrunwindow returns with BOTH windows hidden unless a
+        wait was started, and that needs a msg AND a mature repo — so a caller
+        that passes no msg, or any caller at all on a new repo, leaves nothing
+        on screen and something later must deiconify. The 2026-07-29 field bug
+        was exactly a path where nothing did: console only, and closing it lost
+        the app. Rather than audit ~15 call sites and hope, make the mechanism
+        incapable of it — if nothing is viewable when this fires, reveal the run
+        window (empty is better than absent) and log it loudly, since a user with
+        no window cannot file a useful report."""
+        if delay is None:
+            delay=self.RUNWINDOW_GUARD_MS
+        def anythingviewable():
+            widgets=[w for w in (self,getattr(self,'runwindow',None))
+                    if w is not None]
+            try:
+                root=ui.default_root()
+            except Exception:
+                root=None
+            if root is not None:
+                widgets.append(root)
+                try:
+                    widgets+=list(root.winfo_children())
+                except Exception:
+                    pass
+            for w in widgets:
+                try:
+                    if w.winfo_exists() and w.winfo_viewable():
+                        return True
+                except Exception:
+                    continue #a dead or half-built widget just isn't evidence
+            return False
+        def check():
+            try:
+                if self.exitFlag.istrue():
+                    return
+                if anythingviewable():
+                    return
+                w=getattr(self,'runwindow',None)
+                if w is None or not w.winfo_exists():
+                    w=self
+                log.warning("NO WINDOW: nothing viewable %sms after getrunwindow; "
+                        "revealing %s. Some caller left every window withdrawn.",
+                        delay,w)
+                w.deiconify()
+            except Exception:
+                log.exception("visibility guard failed")
+        try:
+            self.after(delay,check)
+        except Exception:
+            log.exception("could not schedule visibility guard")
     def isrunwindow(self):
         log.info(f"{hasattr(self,'runwindow')=}")
         widgets=[self]
