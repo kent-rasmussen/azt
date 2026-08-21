@@ -380,6 +380,27 @@ class SortPresenter(PresenterBase):
                 l['compound'] = 'left'
         l.wrap()
         buttonframe.sortitem = sortitem
+        # The class escape was a button at the BOTTOM of the page until Kent
+        # 2026-08-21 — now it is a right-click on the word, matching the verify
+        # page. Same gate the button had (SortButtonFrame: 'S' sort, non-primitive
+        # check); advancing still means what it meant there.
+        try:
+            params = buttonframe.program.params
+            if (getattr(buttonframe, 'cvt', None) == 'S'
+                    and not params.is_syllable_primitive_check(
+                        getattr(buttonframe, 'check', None))):
+                def advance():
+                    # The word is already out of the live to-sort list, so tell
+                    # sortselected to ADVANCE rather than read the now-empty
+                    # selection as Exit (which fired the spurious 'not done'
+                    # warning). Mirrors 'Not {profile}'.
+                    buttonframe.task._notprofile_advance = True
+                    if getattr(buttonframe, 'sortitem', None):
+                        buttonframe.sortitem.destroy()
+                self.attach_context_menu(l, self.class_escape_items(
+                            buttonframe.task, sense, on_applied=advance))
+        except Exception as e:
+            log.info("sort-page class-escape menu skipped: %s", e)
         return sortitem
 
     def build_present_group(self, runwindow_frame, buttonframe, sort_obj,
@@ -769,18 +790,23 @@ class SortPresenter(PresenterBase):
         parent.wait_window(w)
         return result['value']
 
-    def ask_class_escape(self, parent, task, sense, on_applied=None):
-        """"This word doesn’t belong in this {class} profile at all…" — the four
-        one-axis moves out of a syllable profile class: flip word-initial, flip
-        word-final, Shorter, Longer. Each names its DESTINATION class in prose, so
-        the user picks where the word goes rather than just rejecting where it is.
+    def class_escape_items(self, task, sense, on_applied=None):
+        """[(label, cmd), …] for attach_context_menu: the one-axis moves out of a
+        syllable profile class — flip word-initial, flip word-final, Shorter,
+        Longer. Three of them at one syllable, since nothing is shorter.
 
-        Lives here, not on the sort button frame, because BOTH the sort page and
-        the profile VERIFY page offer it (Kent 2026-07-29 — the verify page is
-        where a misfiled word actually gets noticed, and it had no escape). The
-        data write is the task's (`escape_profile_class`); `on_applied` is how each
-        page says what "the word is gone from here" means — the sort page destroys
-        its sort item to advance, the verify page drops the row."""
+        Was a WINDOW (ask_class_escape) until Kent 2026-08-21 asked for the moves
+        to be offered directly on the word, on both the sort page and the profile
+        verify page — the verify page already had a context-menu entry whose only
+        job was to open that window, and the sort page had a button at the bottom
+        of the page.
+
+        Lives here, not on the sort button frame, because BOTH pages offer it
+        (Kent 2026-07-29 — the verify page is where a misfiled word actually gets
+        noticed, and it had no escape). The data write is the task's
+        (`escape_profile_class`); `on_applied` is how each page says what "the word
+        is gone from here" means — the sort page destroys its sort item to advance,
+        the verify page drops the row."""
         params=task.program.params
         ftype=task.ftype
         analang=task.program.db.analang
@@ -794,28 +820,25 @@ class SortPresenter(PresenterBase):
             n=1
             syls=str(n) # unset syls: don't put '' into the destination prose
         flip=lambda v:'V' if v=='C' else 'C'
-        # (button label = destination profile-class prose, primitive check, value)
-        moves=[(params.profile_class_prose(flip(beg),syls,end),'#C',flip(beg)),
-                (params.profile_class_prose(beg,syls,flip(end)),'C#',flip(end))]
+        # (button label, primitive check, value). Each label names ONLY the axis
+        # it moves. Labelling every button with the whole destination class made
+        # all four restate all three dimensions, so the one thing that differed
+        # sat mid-string; the class is stated ONCE below instead (Kent 2026-08-21).
+        # The per-axis renderers already existed next to begend_name.
+        moves=[(params.profile_class_initial_name(flip(beg)),'#C',flip(beg)),
+                (params.profile_class_final_name(flip(end)),'C#',flip(end))]
         if n>1:
-            moves.append((_("Shorter — ")+params.profile_class_prose(beg,str(n-1),end),
-                        'syls',str(n-1)))
-        moves.append((_("Longer — ")+params.profile_class_prose(beg,str(n+1),end),
-                        'syls',str(n+1)))
-        w=ui.Window(parent, title=_("Where does this word belong?"), exit=False)
+            moves.append((_("Shorter"),'syls',str(n-1)))
+        moves.append((_("Longer"),'syls',str(n+1)))
         def apply(check,value):
             task.escape_profile_class(sense,check,value)
-            w.destroy()
             if on_applied:
                 on_applied()
-        for r,(label,check,value) in enumerate(moves):
-            ui.Button(w.frame, text=label, cmd=lambda c=check,v=value:apply(c,v),
-                        anchor='w', font='instructions', row=r, column=0,
-                        sticky='ew')
-        ui.Button(w.frame, text=_("Cancel"), cmd=w.destroy,
-                    anchor='c', font='instructions', row=len(moves), column=0,
-                    sticky='ew')
-        return w
+        # No "this word is currently marked …" header any more: the menu is posted
+        # on the word itself, so the context is the gesture. attach_context_menu
+        # takes (label, cmd) pairs and has no disabled-header entry.
+        return [(label,lambda c=check,v=value:apply(c,v))
+                    for label,check,value in moves]
 
     def build_verify_button(self, parent, text, sense, is_label,
                            notok_fn, row, column, ipady, menu_items=None,

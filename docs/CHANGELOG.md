@@ -19,6 +19,78 @@
 - ?check on bug with getprofile in reports bringing up taskchooser; fixed in other tasks, but not reports?
 - make showoriginalorthographyinreports a UI switch
 
+# Version 1.13.24
+
+Consolidates the 1.13.22 and 1.13.23 bumps, which carried no notes.
+
+- **The UI no longer freezes when the daemon stops answering.** `collab_poll` was calling
+  `session.status()` on the Tk main thread, so a daemon that listened without answering
+  blocked the whole app for `rpc.call`'s 300 s default — and because the poll can fire
+  inside `wait_window`'s nested loop, the freeze could land mid-sort (Kent's faulthandler
+  dump, 2026-08-21). Both daemon calls now run on a worker thread, `poll_remote_change`
+  included: its own docstring says the `since_sha` enrichment is a *second* call once HEAD
+  has moved, so leaving it behind would have kept half the hang. New `_collab_poll_done`
+  does the widget work back on the UI loop, re-checking `self.collab is session` in case
+  the project was disconnected while the RPC was in flight. `_collab_poll_busy` makes a
+  tick skip while one is outstanding (one thread on a wedged daemon, not one per 10 s),
+  and rescheduling moved into the tail's `finally`, so the cadence is 10 s after
+  *completion* and the loop can't die. Interim visibility: the outage is now announced
+  once to the status window, with a recovery line and elapsed minutes, since threading it
+  otherwise made an unreachable daemon completely silent. Deliberately does not claim
+  saves are unaffected — a wedged daemon may block those too.
+- **`getrunwindow` can no longer return with every window hidden.** It reveals the run
+  window only when a wait was started, and that needs a msg AND a mature repo, so any
+  caller without a msg — and *every* caller on a new repo — depended on something later
+  deiconifying. The 2026-07-29 field bug was a path where nothing did: console only, and
+  closing it lost the app. New `guardvisible()` schedules a check 2 s out; if nothing is
+  viewable (`self`, the run window, the root and its children, so an active wait or any
+  open dialog counts) it reveals the run window and logs `NO WINDOW: nothing viewable …`
+  at warning. Deferred rather than revealing unconditionally, to leave the fast path and
+  XWayland's expensive deiconify alone. Uses only `ui_interface` methods, so it holds for
+  the webview backend.
+- **Three `UnboundLocalError`s of one shape: a branch chain with no `else`.**
+  - `ui_shell.getgroup` had branches for `'V'/'C'/'CV'/'T'` only, so selecting a syllable
+    profile to sort ("Sort Word profiles", cvt `'S'`) fell through to `return w` with `w`
+    never assigned. `'S'` now has its own branch, titled from `syllable_check_name`
+    ("Which word-initial sounds?"), and a residual `else` opens a generic picker while
+    logging the cvt — a caller landing there may want a different picker.
+  - `analysis.groups`'s theoretical-possibilities branch is documented "C or V only" and
+    reached `todo=set(todo)|…` with `todo` unbound for anything else. `'S'` primitives
+    take their groups from the node, so `todo` now starts empty and the existing union
+    returns exactly the current groups.
+  - Found en route, NOT fixed (filed as `cv_group_selection_dead.md`): the `'CV'` branch
+    omits `_getgroup`'s required `window`, reads `status.group()` before the user has
+    picked, and `groups()` returns `None` for CV/VC/T while `groups_visible` iterates it.
+- **A primitive change now invalidates what it contradicts.** `escape_profile_class` wrote
+  the annotation and nothing else, so marking `C#=False` left the sense's own
+  `lc primitive verification` asserting `C#=C` while the annotation read `V` — and stored
+  check values are authoritative, so every reader was right to trust the stale code and
+  the word kept coming back in later tests (Kent 2026-08-21). It now drops that sense's
+  code for the changed check (same rule as `analysis._set_confirmed`: check is everything
+  before the first `=`), and the `lc` code under `SYLLABLE_SLICE_SENTINEL`, whose
+  pseudo-profile is a constant a word cannot leave. Verification keyed by a profile or
+  class the word HAS left is harmless residue and is left alone. Dropping rather than
+  re-asserting is deliberate: "wrong group" is not "I verified the new one", and an
+  unconfirmed primitive is what lets `profile_satisfies`/`constrain_profile` reconcile the
+  profile on its normal terms instead of overriding confirmed data. Root cause worth
+  keeping: `_set_confirmed` is only ever called from `mark_slice`, which iterates
+  `members_in_slice` — the slice, not the mover — and `mark_for_reverify` deliberately
+  preserves member confirmations, so a sense moving between groups never had its own code
+  invalidated. Other move paths may need the same two calls.
+- **The syllable class escape is a context menu on the word, on both pages.** It was a
+  window reached from a button at the bottom of the sort page, and from a verify-page
+  menu entry whose only job was to open it. `ask_class_escape` became
+  `class_escape_items(task, sense, on_applied)`, returning `(label, cmd)` pairs for
+  `attach_context_menu`; the verify page extends its menu with the moves themselves, and
+  `build_present_sense` hangs them on the word Label with the sort page's gate and
+  advance behaviour carried over. En route the labels stopped restating the whole
+  destination class four times — each names only the axis it moves (`consonant initial`,
+  `vowel final`, `Shorter`, `Longer`, three of them at one syllable), reusing the
+  `profile_class_initial_name`/`_final_name` renderers that already existed.
+- `profile_class_count_name` said "1 syllables". Now two whole msgids (`1 syllable` /
+  `{n} syllables`), not a fragment plus an `s`, which fixes it everywhere the renderer is
+  used.
+
 # Version 1.13.21
 
 - FIX the chosen chart word losing its picture, root cause found. The word

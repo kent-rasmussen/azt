@@ -13,7 +13,7 @@ except ImportError: #psutil not installed yet — only true on a machine's
     pass            #very first boot, when nothing can be racing anyway;
                     #py_modules below installs it, so every later boot gates.
 import utilities.py_modules #This tries importing, and installs on failure
-__version__='1.13.23' #This is a string...
+__version__='1.13.24' #This is a string...
 program={'name':'A-Z+T',
         'tkinter':True, #for some day
         'production':False, #True for making screenshots (default theme)
@@ -353,18 +353,74 @@ class App:
         changes the daemon merged into our working tree and offer a
         reload. Detection lives in CollabSession.poll_remote_change;
         correctness never depends on this poll (saves are base-aware)
-        — it only bounds how long stale peer data stays displayed."""
+        — it only bounds how long stale peer data stays displayed.
+
+        The daemon calls run on a WORKER thread, and only the widget-
+        touching tail returns to the UI loop (_collab_poll_done). Before
+        that they ran here, so a daemon that listened without answering
+        froze the Tk main loop for rpc.call's 300s default — and because
+        this fires inside wait_window's nested loop too, the freeze could
+        land mid-sort. Nothing here is load-bearing, per the paragraph
+        above, so it must never be able to block the UI."""
         session=getattr(self,'collab',None)
         if not session:
             return #project disconnected mid-session; stop polling
-        try:
+        if getattr(self,'_collab_poll_busy',False):
+            # Still waiting on the daemon. Skipping beats stacking a thread
+            # per tick on a wedged daemon; log once, then stay quiet.
+            if not getattr(self,'_collab_poll_skipped',False):
+                self._collab_poll_skipped=True
+                log.info("collab_poll: daemon slow to answer; skipping ticks")
+            self.tk_root.after(10000, self.collab_poll)
+            return
+        def work():
             # ONE project_status per tick, shared by the change-detection
             # and the title-bar badge (client contract § 17c rule 4: never
             # fire it from several handlers for the same UI event). It also
             # means both read the SAME snapshot, instead of deciding
             # "stale" and "shared" from two different ones.
-            st=session.status()
-            outcome=session.poll_remote_change(st=st)
+            # poll_remote_change belongs here too: it makes a SECOND call
+            # (since_sha enrichment) once HEAD is known to have moved.
+            st=outcome=None
+            try:
+                st=session.status()
+                outcome=session.poll_remote_change(st=st)
+            except Exception as e:
+                log.info(f"collab_poll worker: {e}")
+            try:
+                self.tk_root.after(
+                        0,lambda: self._collab_poll_done(session,st,outcome))
+            except Exception:
+                pass #root already gone; shutting down
+        self._collab_poll_busy=True
+        try:
+            threading.Thread(target=work,daemon=True,
+                    name='collab_poll').start()
+        except Exception as e:
+            # Never let a thread failure end the poll loop for the session.
+            self._collab_poll_busy=False
+            log.info(f"collab_poll: could not start worker: {e}")
+            self.tk_root.after(10000, self.collab_poll)
+    def _collab_poll_done(self,session,st,outcome):
+        """UI-thread tail of collab_poll — everything here touches widgets."""
+        self._collab_poll_busy=False
+        self._collab_poll_skipped=False
+        try:
+            if getattr(self,'collab',None) is not session:
+                return #disconnected (or reconnected) while we were waiting
+            # Say it out loud, ONCE per outage. status() returns None on every
+            # failure, so without this an unreachable daemon is now completely
+            # silent — the freeze used to be the only symptom. Interim: the
+            # real cause is the daemon wedging before it serves.
+            if st is None and not getattr(self,'_collab_silent_since',None):
+                self._collab_silent_since=time.time()
+                NotifyUser(_("The collaboration server has stopped answering. "
+                        "Sync status will be out of date until it responds."))
+            elif st is not None and getattr(self,'_collab_silent_since',None):
+                mins=(time.time()-self._collab_silent_since)/60
+                self._collab_silent_since=None
+                NotifyUser(_("The collaboration server is answering again "
+                        "(after {mins:.0f} minutes).").format(mins=mins))
             if (outcome == 'changed'
                     and not getattr(self,'writing',False)
                     and session.reload_offer_due()):
@@ -372,7 +428,8 @@ class App:
             self.collab_title_status(session,st=st)
         except Exception as e:
             log.info(f"collab_poll: {e}")
-        self.tk_root.after(10000, self.collab_poll)
+        finally:
+            self.tk_root.after(10000, self.collab_poll)
     def collab_title_status(self,session,st=None):
         """Ambient sync status, title-bar cheap (Kent 2026-07-11): every
         poll tick, append the one-phrase collab truth to the visible

@@ -596,6 +596,14 @@ class CheckParameters(object):
                 'C#':_("word-final sounds"),
                 'syls':_("syllable counts")}.get(check or self.check())
     def profile_class_count_name(self,syls):
+        # Two whole msgids, not a fragment + an 's' — assembling a sentence from
+        # pieces is what the 2026-07-10 sweep found breaks catalogs.
+        try:
+            one=int(syls)==1
+        except (TypeError,ValueError):
+            one=False
+        if one:
+            return _("1 syllable")
         return _("{n} syllables").format(n=syls)
     def profile_class_prose(self,beg,syls,end):
         return _("{begend} ({count})").format(

@@ -1567,6 +1567,16 @@ class StatusDict(dict):
                 for s in thispsdict:
                     if s != 'V':
                         todo.extend([i[0] for i in thispsdict[s]])
+            else:
+                # No theoretical list exists for this cvt: the syllable 'S'
+                # primitives ('#C', 'C#', 'syls') take their groups from the node,
+                # not from the segment inventory. Empty is the honest start — the
+                # union below then yields exactly the current groups, instead of
+                # reaching it with `todo` unbound (Kent 2026-08-21, selecting a
+                # profile to sort in "Sort Word profiles" with cvt='S').
+                todo=list()
+                log.info("groups: no theoretical group list for cvt=%r; using "
+                        "the node's current groups",kwargs['cvt'])
             todo=set(todo)|set(sn['groups']) #either way, add current groups
             if not self._na_is_a_result(**kwargs):
                 todo.discard('NA') #theoretical list is shown to users

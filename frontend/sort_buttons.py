@@ -135,37 +135,11 @@ class SortButtonFrame(ui.ScrollingFrame):
                             relief='flat',
                             font='instructions',
                             column=0, row=0, sticky='ew')
-        # 'S' profile sort: escape hatch — "this word isn't in this profile class".
-        if (self.cvt=='S'
-                and not self.program.params.is_syllable_primitive_check(self.check)):
-            bf3=ui.Frame(parent, border=True, row=parent.nrows(), sticky='w')
-            ui.Button(bf3, text=_("This word doesn’t belong in this {cls} profile "
-                        "at all…").format(cls=self._profile_class_name()),
-                        cmd=self.syllable_escape_window,
-                        anchor='w', relief='flat', font='instructions',
-                        column=0, row=0, sticky='ew')
-    def syllable_escape_window(self):
-        """'This word doesn’t belong in this {cls} profile at all…' on the SORT
-        page. The window, the four one-axis moves and the data write now live in
-        the presenter + the task (sort_ui.ask_class_escape →
-        task.escape_profile_class), because the profile VERIFY page offers the
-        SAME escape as of 2026-07-29 and two copies would drift. What stays here is
-        the only part that is page-specific: WHICH word, and what advancing means.
-        See docs/sort_syllables_design.md."""
-        senses=self.task.itemstosort()
-        if not senses:
-            return
-        sense=senses[0]
-        def advance():
-            # The word is already out of the live to-sort list, so tell
-            # sortselected to ADVANCE rather than read the now-empty selection as
-            # Exit (which fired the spurious 'not done' warning), then destroy the
-            # item to end the sort wait. Mirrors 'Not {profile}'.
-            self.task._notprofile_advance=True
-            if getattr(self,'sortitem',None):
-                self.sortitem.destroy()
-        return self.program.sort_ui.ask_class_escape(self,self.task,sense,
-                                                    on_applied=advance)
+        # 'S' profile sort: the escape hatch — "this word isn't in this profile
+        # class" — was a button here until Kent 2026-08-21. It is now a right-click
+        # on the WORD (sort_ui.build_present_sense → class_escape_items), which is
+        # both fewer clicks and the same gesture the verify page uses. The gate it
+        # had (cvt 'S', non-primitive check) moved with it.
     def pick_syllable_profile(self):
         """'Other {profile class} profile' — page 1. Offer a short, sane list of
         NEW legal profiles for this class (generated simplest-first, excluding the

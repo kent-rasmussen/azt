@@ -2531,6 +2531,26 @@ class TaskDressing(HasMenus,ui.Window):
             w=ui.Window(self,title=title_mod(_('Select Framed Tone Group')))
             self._getgroup(window=w,**kwargs) #guess=guess,
             # windowT.wait_window(window=windowT) #?!?
+        elif cvt == 'S':
+            # The syllable-prep primitives ('#C', 'C#', 'syls') and the profile
+            # checks. These fell through with `w` unbound, so "Sort Word profiles"
+            # died on an UnboundLocalError at the return below (Kent 2026-08-21).
+            # This is select-an-existing-group, so _getgroup is the right picker —
+            # NOT sort_buttons.pick_syllable_profile, which generates NEW profiles
+            # for one word and needs a profile class already set.
+            params=self.program.params
+            name=params.syllable_check_name(kwargs.get('check',params.check()))
+            w=ui.Window(self,title=title_mod(
+                        _('Which {type}?').format(type=name) if name
+                        else _('Select Group')))
+            self._getgroup(w,**kwargs)
+        else:
+            # Genuinely unknown cvt. Open something rather than crash, and say so
+            # loudly — a caller landing here probably wants a different picker.
+            log.warning("getgroup: no branch for cvt=%r; opening a generic "
+                    "group picker. Check whether this caller wants another.",cvt)
+            w=ui.Window(self,title=title_mod(_('Select Group')))
+            self._getgroup(w,**kwargs)
         return w #so others can wait for this
     def getgroupwsorted(self,event=None,**kwargs):
         kwargs['wsorted']=True

@@ -1151,6 +1151,35 @@ class Sort(Categories):
         caller's business, not ours."""
         ftype=self.program.params.ftype()
         sense.annotationvaluebyftypelang(ftype,self.analang,check,value)
+        # The sense's OWN primitive verification code still asserts the value we
+        # just replaced — 'C#=C' while the annotation now reads V (Kent
+        # 2026-08-21). Stored check values are authoritative, so every reader is
+        # right to trust that stale code, and the word keeps coming back in later
+        # tests. Drop only the code for THIS check (same rule as
+        # analysis._set_confirmed: the check is everything before the first '='),
+        # leaving the other primitives' confirmations alone. Dropping rather than
+        # re-asserting is deliberate: "this is the wrong group" is not the same
+        # claim as "I have verified the new one", and an unconfirmed primitive is
+        # what lets profile_satisfies/constrain_profile reconcile the profile on
+        # its normal terms instead of overriding confirmed data.
+        try:
+            codes=[c for c in sense.primitiveverification(ftype)
+                        if c.split('=')[0]!=check]
+            sense.primitiveverification(ftype,value=codes)
+        except Exception as e:
+            log.info("class escape primitive-unverify skipped: %s", e)
+        # Same problem one level up. Verification keyed by a profile or class the
+        # word has just LEFT is harmless — nothing reads 'CVCV lc verification'
+        # for a word that is no longer CVCV (Kent 2026-08-21) — but the
+        # SYLLABLE_SLICE_SENTINEL profile is a constant, not a profile the word
+        # can leave, so its 'lc=<profile>' code stays live and now asserts a
+        # profile these primitives contradict. All three primitives constrain the
+        # profile, so any of them changing invalidates it.
+        try:
+            self.rmverification(sense,
+                        self.program.params.SYLLABLE_SLICE_SENTINEL,ftype)
+        except Exception as e:
+            log.info("class escape profile-unverify skipped: %s", e)
         try:
             tosort=self.program.status.sensestosort()
             if tosort and sense in tosort:
@@ -1817,8 +1846,7 @@ class Sort(Categories):
                 if len(self.currentsortitems) < 2:
                     self.verifycanary.destroy()
                 (bf or b).destroy()
-            self.sort_ui.ask_class_escape(self.ui.runwindow,self,sense,
-                                        on_applied=gone)
+            return gone
         def notprofile():
             """Right-click → 'Not {profile}': this word doesn't belong to this CV
             profile at all. The sort page has had this escape hatch as a button
@@ -1863,9 +1891,11 @@ class Sort(Categories):
             # the flip a left click already performs, and syls has its own
             # longer/shorter chooser (see notok's _prep_verify branch above).
             if not self.program.params.is_syllable_primitive_check(check):
-                menu_items.append((_("This word doesn’t belong in this {cls} "
-                                    "profile at all…").format(cls=profile),
-                                    class_escape))
+                # The moves themselves, not an entry that opens a window to show
+                # them (Kent 2026-08-21). class_escape() now just returns its
+                # `gone` callback for the items to run after the write.
+                menu_items.extend(self.sort_ui.class_escape_items(
+                            self,sense,on_applied=class_escape()))
         elif profile:
             # Segmental/tone: leave the CV profile entirely (the sort page's
             # 'Not {profile}' button, sort_buttons.getanotherskip).
