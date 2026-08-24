@@ -822,7 +822,7 @@ class Gridded():
                         'column','columnspan','colspan',
                         'r','c','col',
                         'padx','pady','ipadx','ipady',
-                        'gridwait','draggable','droppable'
+                        'gridwait','draggable','droppable','dragthreshold'
                     }
     gridkwargs_for_child_buttons={'b'+i for i in gridkwargs}
     def pre_tk_init(self,**kwargs):
@@ -863,9 +863,33 @@ class Gridded():
                 pass
     """The following are for draggable widgets"""
     def draggable_bindings(self):
-        self.bind("<ButtonPress-1>", self.on_drag_start)
+        if self.dragthreshold:
+            # A widget that is ALSO clickable can't start its drag on the press —
+            # dnd_start grabs the pointer and the click never lands. So defer to
+            # the first motion past `dragthreshold` pixels: press and release stay
+            # the widget's own, so a click still clicks and a right-click menu
+            # still posts, while a deliberate drag still drags. Opt-in, so the
+            # alphabet chart's draggable Labels (no click action) are untouched.
+            self.bind("<ButtonPress-1>", self._arm_drag, add='+')
+            self.bind("<B1-Motion>", self._maybe_drag, add='+')
+            self.bind("<ButtonRelease-1>", self._disarm_drag, add='+')
+        else:
+            self.bind("<ButtonPress-1>", self.on_drag_start)
         self.bind("<Enter>", self.dnd_focus_on)
         self.bind("<Leave>", self.dnd_focus_off)
+    def _arm_drag(self,event):
+        self._drag_origin=(event.x_root,event.y_root)
+    def _disarm_drag(self,event=None):
+        self._drag_origin=None
+    def _maybe_drag(self,event):
+        o=getattr(self,'_drag_origin',None)
+        if not o:
+            return
+        if (abs(event.x_root-o[0])<self.dragthreshold
+                and abs(event.y_root-o[1])<self.dragthreshold):
+            return #still a click, as far as we know
+        self._drag_origin=None
+        self.on_drag_start(event)
     def dnd_bindings(self):
         self.initial_widget=False
     def on_drag_start(self,event):
@@ -1022,6 +1046,10 @@ class Gridded():
             self.gridwait=kwargs.pop('gridwait',False)
         self.draggable=kwargs.pop('draggable',False)
         self.droppable=kwargs.pop('droppable',False)
+        # px of movement before a draggable that is ALSO clickable commits to a
+        # drag; 0/False = the old start-on-press behaviour.
+        self.dragthreshold=kwargs.pop('dragthreshold',0)
+        self._drag_origin=None
         self.super_kwargs=kwargs #whenever we make a change
         super().__init__(*args, **kwargs)
 class GridinGridded(Gridded):

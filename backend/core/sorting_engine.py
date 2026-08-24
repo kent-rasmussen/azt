@@ -1138,6 +1138,36 @@ class Sort(Categories):
             self._notprofile_advance=True  # tell sortselected to advance, not Exit
         self.program.status_dirty=True     # current slice rebuilds (minus this word)
         self.maybewrite()
+    def rename_profile_group(self,old,new):
+        """Rename a syllable PROFILE group: every word marked `old` becomes `new`.
+
+        For a group that is internally consistent but MISNAMED — the members
+        already agree with each other, so nothing is re-profiled, only renamed
+        (Kent 2026-08-24: a whole group genuinely CCVCCVC, all marked CCVCVVC).
+        Join cannot do this when `new` doesn't exist yet, which is the common
+        case: the legal-profile space is far larger than the attested one, so a
+        misnamed group usually has nothing to merge into.
+
+        `rename_group` does the work — moves the senses, updates forms, and
+        carries the verified list across via `rename_group_verification` — so a
+        STRICT rename keeps its verification, which is right here because the
+        data was correct and only the name was wrong. Anything that changes what
+        a word IS must not come through here."""
+        if not new or new==old:
+            return
+        log.info("Renaming profile group %s > %s", old, new)
+        self.rename_group(old,new)
+        # Come back to the SAME group under its real name, rather than moving on
+        # to another one (Kent 2026-08-24: "minimally confusing, if not wrong").
+        # The user renamed THIS group and has not yet verified it; reverify_group
+        # makes it current, drops it from verified, and sets self.reverifying, so
+        # the verify loop returns to it instead of advancing.
+        try:
+            self.reverify_group(new)
+        except Exception as e:
+            log.info("post-rename reverify skipped: %s", e)
+        self.program.status_dirty=True
+        self.maybewrite()
     def escape_profile_class(self,sense,check,value):
         """"This word doesn’t belong in this {class} at all" — write ONE primitive
         (#C, C# or syls), which re-buckets the word into a different, fully-named
@@ -1937,16 +1967,16 @@ class Sort(Categories):
         # non-macrosort: shared with macrosort eligibility (analysis.py). Keys off
         # THIS slice's verified groups (kwargs), fixing the old current-slice bug.
         return self.program.status.pending_distinctions(**kwargs)
-    def join(self,macrosort=False,sortgroup=None):
-        def move_on_cleanly():
-            # self.ui.runwindow.withdraw()
-            # self.last_pair=pair_frame.winfo_children()
-            # self.last_pair=self.current_pair
-            for w in self.current_pair:
-                buttons[w].grid_remove() #don't destroy buttons with canary
-            # for w in pair_frame.winfo_children():
-            #     w.grid_remove() #don't destroy buttons with canary
-            self.canary.destroy()
+    def join_groups(self,pair,macrosort=False):
+        """Join two groups: move one into the other, per the direction rules.
+
+        Lifted out of `join()`'s closures 2026-08-24 (Kent) so a caller that is
+        NOT the join page — the sort page's drag-and-drop — can join a pair. The
+        join page still routes through here, so its behaviour is unchanged; every
+        value the closures used to capture is derived here instead (`img_mod`
+        from macrosort, `check` from params, the button class from sort_ui)."""
+        img_mod='glyphs' if macrosort else ''
+        check=self.program.params.check()
         def _do_join(lpr):
             # lpr=[remove, keep]: move the first group into the second.
             log.info("Joining {lpr} (macrosort={macrosort}).".format(lpr=lpr, macrosort=macrosort))
@@ -1992,31 +2022,45 @@ class Sort(Categories):
             finally:
                 self.ui.runwindow.waitdone()
             self.ui.runwindow.on_quit()
+        # Syllable PROFILE join: both sides are REAL CV profiles (no isdigit
+        # placeholder to break the tie — the picker+scrub keep integers out), so
+        # the DIRECTION is a linguistic call: CVCV→CVCCV and CVCCV→CVCV are NOT
+        # the same result, and one corrupts correct data. Ask which is correct
+        # rather than picking by lexicographic accident. See ADR 0003.
+        if self.cvt=='S' and not self.program.params.is_syllable_primitive_check():
+            counts={g:len(self.getsensesincheckgroup(check=check,group=g))
+                    for g in pair}
+            def _on_choose(winner):
+                loser=next(g for g in pair if g!=winner)
+                _do_join([loser,winner])   # [remove, keep]
+            self.sort_ui.choose_join_direction(
+                self.ui.runwindow, self.sort_ui.group_button_class(macrosort),
+                self, list(pair), counts,
+                _on_choose)  # on_back=None → just close, back to the join page
+            return
+        # Segmental/other: choose remove-vs-keep between the two EXISTING names
+        # (lpr=[remove, keep] — first is removed into second). Rank:
+        #   1. digit placeholder first → unnamed placeholder removed into a real name;
+        #   2. between two real names, the LONGER is removed into the SHORTER (simpler)
+        #      one ('g' + 'gu' → keep 'g'), not the lexicographic accident of key=str;
+        #   3. equal length → lexicographic tiebreak (stable, arbitrary as before).
+        _do_join(sorted(pair, key=lambda g: (0 if str(g).isdigit() else 1,
+                                             -len(str(g)), str(g))))
+    def join(self,macrosort=False,sortgroup=None):
+        def move_on_cleanly():
+            # self.ui.runwindow.withdraw()
+            # self.last_pair=pair_frame.winfo_children()
+            # self.last_pair=self.current_pair
+            for w in self.current_pair:
+                buttons[w].grid_remove() #don't destroy buttons with canary
+            # for w in pair_frame.winfo_children():
+            #     w.grid_remove() #don't destroy buttons with canary
+            self.canary.destroy()
         def join_pair():
-            pair=self.current_pair
-            # Syllable PROFILE join: both sides are REAL CV profiles (no isdigit
-            # placeholder to break the tie — the picker+scrub keep integers out), so
-            # the DIRECTION is a linguistic call: CVCV→CVCCV and CVCCV→CVCV are NOT
-            # the same result, and one corrupts correct data. Ask which is correct
-            # rather than picking by lexicographic accident. See ADR 0003.
-            if self.cvt=='S' and not self.program.params.is_syllable_primitive_check():
-                counts={g:len(self.getsensesincheckgroup(check=check,group=g))
-                        for g in pair}
-                def _on_choose(winner):
-                    loser=next(g for g in pair if g!=winner)
-                    _do_join([loser,winner])   # [remove, keep]
-                self.sort_ui.choose_join_direction(
-                    self.ui.runwindow, buttonclass, self, list(pair), counts,
-                    _on_choose)  # on_back=None → just close, back to the join page
-                return
-            # Segmental/other: choose remove-vs-keep between the two EXISTING names
-            # (lpr=[remove, keep] — first is removed into second). Rank:
-            #   1. digit placeholder first → unnamed placeholder removed into a real name;
-            #   2. between two real names, the LONGER is removed into the SHORTER (simpler)
-            #      one ('g' + 'gu' → keep 'g'), not the lexicographic accident of key=str;
-            #   3. equal length → lexicographic tiebreak (stable, arbitrary as before).
-            _do_join(sorted(pair, key=lambda g: (0 if str(g).isdigit() else 1,
-                                                 -len(str(g)), str(g))))
+            # Body lifted to Sort.join_groups 2026-08-24, so callers other than
+            # this page (sort-page drag-and-drop) can join a pair. Behaviour
+            # here is unchanged — this page still supplies the pair.
+            self.join_groups(self.current_pair, macrosort=macrosort)
         def distinguish_pair():
             if macrosort:
                 self.program.alphabet.distinguish(self.current_pair)

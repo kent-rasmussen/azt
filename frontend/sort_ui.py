@@ -445,6 +445,106 @@ class SortPresenter(PresenterBase):
                                      row=1, sticky='nsew', columnspan=2)
         return groupsFrame, buttonframe
 
+    def attach_group_rename(self, widgets, parent, task, group,
+                           on_renamed=None):
+        """Right-click → "this group is misnamed" on every surface that shows the
+        profile NAME: the verify page's title, instructions and last button
+        (Kent 2026-08-24 — the same trio `syllable_group_name`'s docstring
+        names). Deliberately NOT the group button beside "Reverify this group":
+        reverify appears alone.
+
+        No-op outside the syllable PROFILE check — the primitives' groups
+        ('C'/'V', syllable counts) are not names anyone renames."""
+        try:
+            params=task.program.params
+            if getattr(task,'cvt',None)!='S':
+                return
+            if params.is_syllable_primitive_check(params.check()):
+                return
+            items=[(_("These words aren’t {group}…").format(group=group),
+                    lambda: self.ask_group_rename(parent, task, group,
+                                                on_renamed=on_renamed))]
+            for w in widgets:
+                if w is not None:
+                    self.attach_context_menu(w, items)
+        except Exception as e:
+            log.info("group-rename menu skipped: %s", e)
+
+    def ask_group_rename(self, parent, task, group, on_renamed=None):
+        """'These words aren't {group}…' — page 1. The same chooser
+        `pick_syllable_profile` uses for ONE word, with the verb changed: it
+        renames the GROUP. Legal profiles for this class that aren't already in
+        play, plus 'Other…' → by-hand entry."""
+        params=task.program.params
+        beg,syls,end=params.parse_profile_class(task.program.slices.profile())
+        if beg is None:
+            log.info("ask_group_rename: no profile class set; ignoring.")
+            return
+        options=[p for p in params.unused_profiles_for_class(beg,syls,end,
+                                                    limit=12) if p!=group]
+        w=ui.Window(parent, title=_("What is this group really?"), exit=False)
+        ui.Label(w.frame, text=_("These words are all marked {group}. "
+                    "What should they be?").format(group=group),
+                    font='instructions', row=0, column=0, sticky='ew')
+        def apply(new):
+            w.destroy()
+            task.rename_profile_group(group,new)
+            if on_renamed:
+                on_renamed()
+        r=1
+        for prof in options:
+            ui.Button(w.frame, text=prof, cmd=lambda p=prof:apply(p),
+                        anchor='w', font='normal', row=r, column=0,
+                        sticky='ew'); r+=1
+        if not options:
+            ui.Label(w.frame, text=_("(every simple profile here is already used)"),
+                        font='instructions', row=r, column=0, sticky='ew'); r+=1
+        ui.Button(w.frame, text=_("Other… (set a profile by hand)"),
+                    cmd=lambda:self._group_rename_freeentry(w, parent, task,
+                                                group, beg, syls, end, apply),
+                    anchor='w', relief='flat', font='normal',
+                    row=r, column=0, sticky='ew'); r+=1
+        ui.Button(w.frame, text=_("Cancel — go back"), cmd=w.destroy,
+                    anchor='w', relief='flat', font='normal',
+                    row=r, column=0, sticky='ew')
+        return w
+
+    def _group_rename_freeentry(self, page1, parent, task, group,
+                               beg, syls, end, apply):
+        """Page 2: type the profile by hand, validated against the class
+        primitives exactly as `_syllable_profile_freeentry` does for one word."""
+        page1.destroy()
+        params=task.program.params
+        w=ui.Window(parent, title=_("Set a profile by hand"), exit=False)
+        warn=ui.Label(w.frame, text='\n'.join([
+            _("⚠ Setting a profile by hand is a linguist’s "
+            "call — work with your language team."),
+            _("This renames EVERY word marked {group}.").format(group=group),
+            _("It must be {beg}-initial, {end}-final, and "
+            "{n} syllable(s)").format(beg=beg,end=end,n=syls)]),
+            font='instructions', row=0, column=0, columnspan=2, sticky='ew')
+        warn.wrap()
+        var=self.string_var(value='')
+        self.entry_field(w.frame, text=var).grid(row=1, column=0, sticky='ew')
+        msg=ui.Label(w.frame, text='', font='instructions', row=2, column=0,
+                    columnspan=2, sticky='ew')
+        def submit():
+            prof=(var.get() or '').strip().upper()
+            if not params.profile_fits_class(prof,beg,syls,end):
+                msg['text']=_("‘{p}’ doesn’t fit this class.").format(p=prof)
+                return
+            w.destroy()
+            apply(prof)
+        ui.Button(w.frame, text=_("Use this profile"), cmd=submit,
+                    anchor='c', font='instructions', row=3, column=0,
+                    sticky='ew')
+        ui.Button(w.frame, text=_("← Back"),
+                    cmd=lambda:(w.destroy(),
+                                self.ask_group_rename(parent,task,group)),
+                    anchor='c', font='instructions', row=3, column=1,
+                    sticky='ew')
+        return w
+
     def build_verify_layout(self, runwindow, title, page_icon, instructions,
                            prog_text, img_mod, group,
                            items, sort_obj, macrosort, oktext,
@@ -458,7 +558,7 @@ class SortPresenter(PresenterBase):
         f.grid_rowconfigure(1, weight=1)
         f.grid_columnconfigure(1, weight=1)
         titles = ui.Frame(f, column=1, row=0, columnspan=1, sticky='w')
-        ui.Label(titles, text=' '.join(title), font='title',
+        titlelabel = ui.Label(titles, text=' '.join(title), font='title',
                 column=0, row=0, sticky='w')
         # Optional progress indicator beside the title (e.g. "(N remaining)" /
         # "(last group)"); supplied by the caller as prog_text, blank if None.
@@ -551,9 +651,16 @@ class SortPresenter(PresenterBase):
                 # other sort); clicking it ends the verify (destroys the canary).
                 navframe=ui.Frame(buttonframe.content, sticky='ew')
                 navframe.grid(row=nav_row, column=0, columnspan=bc, sticky='ew')
-                ui.Button(navframe, text=oktext, font='instructions',
+                okbutton=ui.Button(navframe, text=oktext, font='instructions',
                          cmd=verifycanary.destroy,
                          column=0, row=0, sticky='ew', padx=4)
+                # The profile name is shown in all three of these, so "this
+                # group is misnamed" is available wherever the name is (Kent
+                # 2026-08-24). Renaming ends the page: the group the user was
+                # verifying no longer exists under that name.
+                self.attach_group_rename([titlelabel, i, okbutton], runwindow,
+                            sort_obj, group,
+                            on_renamed=verifycanary.destroy)
                 _r=time.perf_counter()
                 buttonframe.resume_configure() # one reflow now the list is whole
                 self._reflow_t+=time.perf_counter()-_r
