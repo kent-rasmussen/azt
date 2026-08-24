@@ -49,8 +49,8 @@ class StatusWindow(ui.Window):
                                         sticky='nsew')
         self.frame.grid_rowconfigure(0, weight=1)
         self.frame.grid_columnconfigure(0, weight=1)
-        ui.Button(self.frame, text=_("Close"), cmd=self.on_quit,
-                 font='instructions', row=1, column=0, sticky='e')
+        # ui.Button(self.frame, text=_("Close"), cmd=self.on_quit,
+        #          font='instructions', row=1, column=0, sticky='e')
         self._row = self.FIRST_ROW
         self._surface() # once, for the first message — not per message
     def _surface(self):
