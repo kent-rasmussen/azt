@@ -123,6 +123,16 @@ class Categories:
         else: #unless specifically doing otherwise, marking should unverify:
             self.rmverification(sense,profile,check)
         self.setitemgroup(sense,check,group)
+        # This group's membership just changed, so the cached example nodes for
+        # it are stale. removeitemfromgroup has always cleared the cache; ADDING
+        # never did, so ExampleDict.getexample kept serving the prefetched
+        # node list and every group's button under-counted by however many words
+        # had been sorted into it since boot — 76 where a recompute said 84,
+        # 3 where it said 4 (Kent's DIAG, 2026-08-24). `group` is positional
+        # here, so put it in the kwargs the code is built from, exactly as
+        # getexample does.
+        self.program.examples.clear_cache(**{**kwargs,'group':group,
+                                            'check':check})
         if not nocheck:
             newgroup=self.getitemgroup(sense,check)
             if newgroup != group:

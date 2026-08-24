@@ -1439,8 +1439,28 @@ class StatusDict(dict):
         """Canonical presentation order for groups. Segment/tone groups are
         unrelated labels (plain alphabetical). Syllable profiles (cvt 'S') are
         related, so present them shortest→longest, then alphabetically (similar
-        patterns sit together). [Secondary key may grow — see Kent's note.]"""
-        if self.program.params.cvt()=='S':
+        patterns sit together).
+
+        EXCEPT the whole-word PROFILE check, which is a chooser: there the
+        profile most words are already in should be nearest to hand, so order by
+        MEMBER COUNT, biggest first (Kent 2026-08-21). Length then alphabetical
+        stay as tie-breaks, so groups of equal size keep the related-patterns
+        order and the list doesn't reshuffle between rebuilds.
+
+        The syllable PRIMITIVES keep the old order deliberately: '#C'/'C#' are
+        'C' before 'V', and 'syls' must stay numeric — neither reads better by
+        popularity. Counts come from the same source the buttons display
+        (`examples.getexamples`), so the order can't disagree with the numbers
+        on screen."""
+        params=self.program.params
+        if params.cvt()=='S':
+            if not params.is_syllable_primitive_check(params.check()):
+                try:
+                    exs=self.program.examples
+                    n={g:len(exs.getexamples(g)) for g in groups}
+                    return sorted(groups, key=lambda g: (-n[g], len(g), g))
+                except Exception as e:
+                    log.info("order_groups: size ordering skipped (%s)", e)
             return sorted(groups, key=lambda g: (len(g), g))
         return sorted(groups)
     @staticmethod

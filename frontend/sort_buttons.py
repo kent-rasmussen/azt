@@ -710,6 +710,15 @@ class SortGroupButtonFrame(ui.Frame,_GroupButtonFrame):
         else:
             nodes=self.exs.getexamples(self.group,**self.kwargs)
             # log.info(_("Found {count} examples: {nodes}").format(count=len(nodes),nodes=nodes))
+            # DIAG group_count_reverts_on_refresh: the button's number has TWO
+            # sources — get_button_data (which normalises via exampletype AND
+            # reads the nodes_by_code cache) and this recompute (which does
+            # neither). Sorting shows 3→4 and refresh reverts to 1, so one of
+            # them is wrong; this says which, with the kwargs both were given.
+            was=self._n.get()
+            if was != len(nodes):
+                log.info("DIAG-count %s: button had %s, recompute says %s "
+                        "(kwargs=%r)", self.group, was, len(nodes), self.kwargs)
             self._n.set(len(nodes))
         if hasattr(self,'refreshbutton'):
             self.refresh_button_state()
